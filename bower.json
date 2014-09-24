@@ -1,0 +1,22 @@
+{
+  "name": "tehkaiyu.github.io",
+  "version": "0.0.0",
+  "homepage": "http://kaiyu.rocks",
+  "authors": [
+    "Kaiyu Hsu"
+  ],
+  "description": "Portfolio site",
+  "main": "index.html",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.4.1"
+  }
+}
