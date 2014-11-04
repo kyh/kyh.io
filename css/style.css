@@ -9,6 +9,7 @@ body {
     background: lightgray;
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
+    -webkit-overflow-scrolling: touch;
 }
 
 .scene {
