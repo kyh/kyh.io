@@ -6,32 +6,25 @@ html, body {
 }
 
 body {
-    background: #53bfe0;
-    vertical-align: middle;
-    text-align: center;
-    -moz-transform: translate3d(0, 0, 0);
-    -ms-transform: translate3d(0, 0, 0);
-    -o-transform: translate3d(0, 0, 0);
+    background: lightgray;
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
 }
 
-body:before {
-    content: "";
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
-    margin-right: -0.25em
-}
-
 .scene {
-    display: inline-block;
-    vertical-align: middle;
+    position: relative;
+    text-align: center;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
 }
 
 .text {
-    color: white;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 2em;
-    font-family: helvetica;
+    color: white;
     font-weight: bold;
+    letter-spacing: -0.8px;
+    line-height: 0.7;
+    margin-bottom: 15px;
 }
