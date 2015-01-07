@@ -1,0 +1,101 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: lightgray;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-overflow-scrolling: touch;
+}
+
+.scene {
+    position: relative;
+    text-align: center;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+}
+
+.text {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 2em;
+    color: white;
+    font-weight: bold;
+    letter-spacing: -0.8px;
+    line-height: 0.7;
+    margin-bottom: 15px;
+}
+
+my-sheep {
+    position: relative;
+}
+
+
+
+
+
+/* CHANGE ME TO ANY COLOR TO EXPERIMENT */
+$change-me: #f8fafb;
+
+::-moz-selection { background: #5af; color: #fff; text-shadow: none; }
+::selection { background: #5af; color: #fff; text-shadow: none; }
+
+$brand-font: 'Open Sans', sans-serif;
+
+body {
+  background: lighten($change-me, 40%);
+  margin: 0;
+}
+
+.content {
+  padding: 75px 0;
+}
+
+.stripes-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  @include background(
+    linear-gradient(45deg, 
+      rgba(255, 255, 255, .15) 25%, 
+      transparent 50%, 
+      transparent)
+  );
+  @include background-size(4px 4px);
+  z-index: -1;
+}
+
+h1 {
+  font-size: 5em;
+  text-align: center;
+  margin-bottom: .5em;
+}
+p {
+  font-size: 1.5em;
+  font-family: sans-serif;
+  font-weight: 100;
+  text-align: center;
+  color: darken(rgba($change-me, .75), 35%);
+}
+
+.brand {
+  font-family: $brand-font;
+  font-weight: 700;
+  color: rgba($change-me, .75);
+  letter-spacing: -7px;
+}
+
+/* the magic */
+
+.inner-shadow {
+  @include text-shadow(
+    0.5px 0.866px 2px lighten($change-me, 45%),
+    0px 0px 0px darken($change-me, 100%),
+    0px 0px 2px lighten($change-me, 80%)
+   );
+}
+
