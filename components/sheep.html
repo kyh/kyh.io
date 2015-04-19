@@ -3,226 +3,101 @@
 <polymer-element name="my-sheep" noscript>
   <template>
     <style>
-      .sheep {
-        display: inline-block;
-        position: relative;
-        font-size: 1em;
-      }
-
-      .sheep * {
-        -webkit-transition: -webkit-transform 0.3s;
+    .sheep-container .sheep-body {
+      animation: sheep 1s infinite;
+      -webkit-animation: sheep 1s infinite;
+      -moz-animation: sheep 1s infinite; }
+      .sheep-container .sheep-body .sheep-head {
         transition: transform 0.3s;
-      }
+        -webkit-transition: -webkit-transform 0.3s;
+        transform-origin: 65px 75px; }
+        .sheep-container .sheep-body .sheep-head * {
+          transition: transform 0.3s;
+          -webkit-transition: -webkit-transform 0.3s; }
+        .sheep-container .sheep-body .sheep-head .eye {
+          transform-origin: 50%; }
+        .sheep-container .sheep-body .sheep-head .ear {
+          transform-origin: 50%; }
+          .sheep-container .sheep-body .sheep-head .ear.front-ear {
+            -webkit-transform: rotate(90deg);
+            transform: rotate(90deg); }
+          .sheep-container .sheep-body .sheep-head .ear.back-ear {
+            -webkit-transform: rotate(40deg);
+            transform: rotate(40deg); }
+        .sheep-container .sheep-body .sheep-head:hover .front-ear {
+          -webkit-transform: rotate(60deg);
+          transform: rotate(60deg); }
+        .sheep-container .sheep-body .sheep-head:hover .back-ear {
+          -webkit-transform: rotate(70deg);
+          transform: rotate(70deg); }
+      .sheep-container .sheep-body:hover {
+        animation-play-state: paused;
+        -webkit-animation-play-state: paused;
+        /* Safari and Chrome */ }
+        .sheep-container .sheep-body:hover .sheep-head {
+          -webkit-transform: rotate(30deg);
+          transform: rotate(30deg); }
+        .sheep-container .sheep-body:hover .eye {
+          -ms-transform: scale(1.3);
+          -webkit-transform: scale(1.3);
+          transform: scale(1.3); }
+          .sheep-container .sheep-body:hover .eye .eye-ball {
+            -webkit-transform: translate(3px, -3px);
+            transform: translate(3px, -3px); }
 
-      .sheep .top {
-        position: relative;
-        top: 0;
-        animation:sheep 1s infinite;
-        -webkit-animation:sheep 1s infinite;
-        -moz-animation:sheep 1s infinite;
-      }
+    @-webkit-keyframes sheep {
+      0% {
+        transform: translateY(0);
+        -webkit-transform: translateY(0); }
 
-      .sheep:hover .head {
-        -webkit-transform: rotate(0deg);
-        transform: rotate(0deg)
-      }
+      50% {
+        transform: translateY(0.2em);
+        -webkit-transform: translateY(0.2em); } }
 
-      .sheep:hover .head .eye {
-        width: 1.25em;
-        height: 1.25em;
-      }
+    @keyframes sheep {
+      0% {
+        transform: translateY(0);
+        -webkit-transform: translateY(0); }
 
-      .sheep:hover .head .eye:before {
-        right: 30%;
-      }
+      50% {
+        transform: translateY(0.2em);
+        -webkit-transform: translateY(0.2em); } }
 
-      .sheep:hover .top {
-        animation-play-state:paused;
-        -webkit-animation-play-state:paused; /* Safari and Chrome */
-      }
-
-      .sheep .head {
-        display: inline-block;
-        width: 5em;
-        height: 5em;
-        border-radius: 100%;
-        background: #211e21;
-        vertical-align: middle;
-        position: relative;
-        top: 1em;
-        -webkit-transform: rotate(30deg);
-        transform: rotate(30deg);
-      }
-
-      .sheep .head:before {
-        content: "";
-        display: inline-block;
-        width: 80%;
-        height: 50%;
-        background: #211e21;
-        position: absolute;
-        bottom: 0;
-        right: -10%;
-        border-radius: 50% 40%;
-      }
-
-      .sheep .head:hover .ear.one, .sheep .head:hover .ear.two {
-        -webkit-transform: rotate(0deg);
-        transform: rotate(0deg);
-      }
-
-      .sheep .head .eye {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        border-radius: 100%;
-        background: white;
-        position: absolute;
-        overflow: hidden;
-      }
-
-      .sheep .head .eye:before {
-        content: "";
-        display: inline-block;
-        background: black;
-        width: 50%;
-        height: 50%;
-        border-radius: 100%;
-        position: absolute;
-        right: 10%;
-        bottom: 10%;
-        -webkit-transition: all 0.3s;
-        transition: all 0.3s;
-      }
-
-      .sheep .head .eye.one {
-        right: -2%;
-        top: 1.7em;
-      }
-
-      .sheep .head .eye.two {
-        right: 2.5em;
-        top: 1.7em;
-      }
-
-      .sheep .head .ear {
-        background: #211e21;
-        width: 50%;
-        height: 30%;
-        border-radius: 100%;
-        position: absolute;
-      }
-
-      .sheep .head .ear.one {
-        left: -10%;
-        top: 5%;
-        -webkit-transform: rotate(-30deg);
-        transform: rotate(-30deg);
-      }
-
-      .sheep .head .ear.two {
-        top: 2%;
-        right: -5%;
-        -webkit-transform: rotate(20deg);
-        transform: rotate(20deg);
-      }
-
-      .sheep .body {
-        display: inline-block;
-        width: 7em;
-        height: 7em;
-        border-radius: 100%;
-        background: white;
-        position: relative;
-        vertical-align: middle;
-        margin-right: -3em;
-      }
-
-      .sheep .legs {
-        display: inline-block;
-        position: absolute;
-        top: 80%;
-        left: 10%;
-        z-index: -1;
-      }
-
-      .sheep .legs .leg {
-        display: inline-block;
-        background: #141214;
-        width: 0.5em;
-        height: 2.5em;
-        margin: 0.2em;
-      }
-
-      .sheep:before {
-        content: "";
-        display: inline-block;
-        position: absolute;
-        top: 112%;
-        width: 90%;
-        height: 10%;
-        border-radius: 100%;
-        background: rgba(0, 0, 0, 0.4)
-      }
-
-      .grass {
-        position: absolute;
-        top: 37px;
-        right: -3px;
-      }
-
-      @-webkit-keyframes sheep {
-        0% {
-          transform: translateY(0);
-          -webkit-transform: translateY(0);
-        } 
-        50% {
-          transform: translateY(0.2em);
-          -webkit-transform: translateY(0.2em);
-        }
-      }
-      @keyframes sheep {
-        0% {
-          transform: translateY(0);
-          -webkit-transform: translateY(0);
-        } 
-        50% {
-          transform: translateY(0.2em);
-          -webkit-transform: translateY(0.2em);
-        }
-      }
     </style>
-
-    <!-- CARD CONTENTS GO HERE -->
-    <div class="sheep">
-      <span class="top">
-        <div class="body"></div>
-        <div class="head">
-          <div class="eye one"></div>
-          <div class="eye two"></div>
-          <div class="ear one"></div>
-          <div class="ear two"></div>
-        </div>
-      </span>
-        <div class="legs">
-          <div class="leg"></div>
-          <div class="leg"></div>
-          <div class="leg"></div>
-          <div class="leg"></div>
-      </div>
+    
+    <div class="sheep-container">      
+      <svg version="1.1" id="sheep" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         width="159.8px" height="136.1px" viewBox="0 0 159.8 136.1" preserveAspectRatio="xMidYMid meet">
+      <ellipse id="shadow" opacity="0.6" fill="#919191" cx="90.6" cy="130" rx="69.2" ry="6.1"/>
+      <g id="legs">
+        <rect x="76.8" y="92.6" width="8" height="39.5"/>
+        <rect x="96.3" y="92.6" width="8" height="39.5"/>
+        <rect x="113.8" y="92.6" width="8" height="39.5"/>
+        <rect x="132.8" y="92.1" width="8" height="40"/>
+      </g>
+      <g class="sheep-body">
+        <circle id="body" fill="#FFFFFF" cx="102.6" cy="56.3" r="56.3"/>
+        <g class="sheep-head">
+          <ellipse class="back-ear ear" fill="#211E21" cx="15.3" cy="63" rx="11.7" ry="19.8"/>
+          <path id="face" fill="#211E21" d="M89.5,73.6c0-21.9-17.8-39.7-39.7-39.7S10.1,51.7,10.1,73.6c0,8.6,2.7,16.5,7.4,23
+            c-3.3,6-3.2,10.6-1.1,14.9c3.7,7.6,9.4,11.3,18.1,10.9c12.7-0.6,15.3-3.7,24-7.7c0,0,11-5.7,20.2-13.3
+            C90.5,89.6,89.5,73.6,89.5,73.6z"/>
+            <ellipse class="front-ear ear" fill="#211E21" cx="62.9" cy="38.1" rx="11.3" ry="19.6"/>
+          <g class="left-eye eye">
+            <ellipse class="left-eye-eye" fill="#FFFFFF" cx="54.3" cy="65.3" rx="8.2" ry="8.2"/>
+            <ellipse class="left-eye-ball eye-ball" cx="54.1" cy="68.7" rx="4.2" ry="4.1"/>
+          </g>
+          <g class="right-eye eye">
+            <ellipse class="right-eye-eye" fill="#FFFFFF" cx="19" cy="85.6" rx="8.2" ry="8.2"/>
+            <ellipse class="right-eye-ball eye-ball" cx="17.7" cy="89.7" rx="4.2" ry="4.1"/>
+          </g>
+        </g>
+      </g>
+      <path id="grass" fill="#63A14D" d="M29.4,135.5c6.8,0.1,27.4,0.2,27.4,0.2s-0.4-10,6.8-11.8c-4.9-0.6-8.7,3.2-11.6,4.9
+        c-0.2-10,5.9-12,5.8-12c-6.6,1.1-7.7,4.1-10.3,7.6C46,118,43.3,108,36,102.1c3.1,6.8,6.4,12.7,4.5,24.4c-3.9-11.7-6.7-12.8-9.1-14.4
+        c4.9,9.2,2.8,16.2,2.8,16.2s-4.7-5-8.9-5.9C29.4,125.8,30.6,131.3,29.4,135.5z"/>
+      </svg>
     </div>
-
-    <svg version="1.1" class="grass" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" width="40px" height="73.7px" viewBox="0 0 88 73.7">
-    <g>
-      <path fill="#63A14D" d="M63,1.8c0.4-0.6,0.7-1.2,1.1-1.8c-4.2,4.3-8,8.8-11.4,13.7c-2.5,3.8-4.8,7.7-6.9,11.7
-        c-3.3,6.7-5.6,13.7-6.9,21c-0.2,1.2-0.4,2.5-0.5,3.7L35.9,46c-0.3-0.3-0.5-0.7-0.7-1c-5-7-12-10.9-21.1-11.8
-        c6.1,2.3,10,6.7,11.7,13.2c1.1,3.9,2.1,8.6,2.9,14.1c-0.8-0.8-1.7-1.6-2.7-2.4c-2.8-2.4-6-4.4-9.5-6.1C10.9,49.3,5.4,48,0,48.2
-        c3.7,0.2,7.7,2.5,12,7.2c2.4,2.4,3.9,5.4,4.5,9c0.5,2.8,0.5,5.9,0.2,9.3h60.4C76.5,58.3,80.2,48.9,88,45.4c-1,0.1-2,0.4-2.9,0.6
-        c-5.4,1.6-10.1,4.5-14,8.6c-1,1-2,2-3,3l-1.2,1.2c-0.2-0.8-0.3-1.5-0.3-2.2C66,50.3,66.4,44.1,67.9,38c1.3-5.4,3.2-10.6,5.9-15.6
-        c-0.6,0.4-1.1,0.8-1.7,1.2c-4.7,3.3-8.3,7.2-10.7,11.8c-2.3,4.5-4,8.4-5.1,11.6c-1.1,3.2-1.9,5.3-2.4,6.3c-0.4,1-0.7,1.6-0.8,1.8
-        c-0.1-0.4-0.2-0.9-0.3-1.3c-0.5-5.8-0.6-11.6-0.2-17.3c0.4-6.2,1.5-12.1,3.1-17.9C57.5,12.8,59.9,7.2,63,1.8z"/>
-    </g>
-    </svg>
     
   </template>
 </polymer-element>
