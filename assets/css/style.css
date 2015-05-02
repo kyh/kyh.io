@@ -47,6 +47,8 @@ my-sheep {
     transition: all 300ms ease-in-out; }
     .social-media a.git:hover {
       color: #333; }
+    .social-media a.twitter:hover {
+      color: #55acee; }
     .social-media a.linkedin:hover {
       color: #4875B4; }
     .social-media a.dribbble:hover {
