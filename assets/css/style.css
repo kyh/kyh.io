@@ -40,6 +40,7 @@ my-sheep {
   .social-media a {
     margin-right: 5px;
     color: #99999a;
+    padding: 6px;
     text-decoration: none;
     -webkit-transition: all 300ms ease-in-out;
     -moz-transition: all 300ms ease-in-out;
