@@ -1,7 +1,9 @@
 <link rel="import" href="../assets/lib/polymer/polymer.html">
 
-<polymer-element name="my-sheep" noscript>
+<dom-module id="my-sheep">
   <template>
+
+    <!-- scoped CSS -->
     <style>
     .sheep-container .sheep-body {
       animation: sheep 1s infinite;
@@ -66,8 +68,8 @@
         -webkit-transform: translateY(0.2em); } }
 
     </style>
-    
-    <div class="sheep-container">      
+
+    <div class="sheep-container">
       <svg version="1.1" id="sheep" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          width="159.8px" height="136.1px" viewBox="0 0 159.8 136.1" preserveAspectRatio="xMidYMid meet">
       <ellipse id="shadow" opacity="0.6" fill="#919191" cx="90.6" cy="130" rx="69.2" ry="6.1"/>
@@ -100,6 +102,13 @@
         c4.9,9.2,2.8,16.2,2.8,16.2s-4.7-5-8.9-5.9C29.4,125.8,30.6,131.3,29.4,135.5z"/>
       </svg>
     </div>
-    
+
   </template>
-</polymer-element>
+
+  <script>
+    Polymer({
+      is: 'my-sheep'
+    });
+  </script>
+
+</dom-module>

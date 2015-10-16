@@ -2,10 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Kaiyu's Portfolio</title>
+  <title>Kaiyu's Site</title>
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <link rel="icon" type="image/ico" href="assets/img/favicon.ico" />
+  <link rel="icon" type="image/ico" href="assets/img/favicon.ico">
   <link rel="import" href="components/sheep.html">
+
   <style>
   html, body {
       margin: 0;
@@ -97,8 +98,12 @@
         webkitRequestAnimationFrame || msRequestAnimationFrame;
     if (raf) raf(cb);
     else window.addEventListener('load', cb);
+
+    window.Polymer = window.Polymer || {};
+    window.Polymer.dom = 'shadow';
   </script>
-  <script src="assets/lib/platform/platform.js" async></script>
+
+  <script src="assets/lib/webcomponentsjs/webcomponents-lite.min.js" async></script>
 
 </body>
 </html>
