@@ -1,0 +1,27 @@
+{
+  "name": "kyh.io",
+  "version": "1.0.0",
+  "description": "Landing page to Kaiyu's website",
+  "main": "index.js",
+  "scripts": {
+    "test": "wct --plugin sauce"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://tehkaiyu@github.com/tehkaiyu/tehkaiyu.github.io.git"
+  },
+  "keywords": [
+    "Kaiyu",
+    "Polymer"
+  ],
+  "author": "Kaiyu Hsu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
+  },
+  "homepage": "https://github.com/tehkaiyu/tehkaiyu.github.io",
+  "devDependencies": {
+    "web-component-tester": "*",
+    "bower": "*"
+  }
+}
