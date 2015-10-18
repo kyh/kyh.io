@@ -1,9 +1,13 @@
 sudo: false
 language: node_js
 node_js:
-  - '0.10'
-  - '0.12'
-  - 'iojs'
+- '0.10'
+- '0.12'
+- iojs
 branches:
   except:
   - gh-pages
+env:
+  global:
+  - secure: FTWUyIuj+ZOFsOVjqwXERcT2ig00EYYJwCxQu1IkZKuIX9ijUZvUscqWGPlVUHkaD3aACKV8mUUF17gWtyJdlDbj+nWxVS8a0dpIaPfqbXCS+MTDCHXAKkk58H2JJcAdxuSTMCY29PE7xofoRDNEyGIfM4Xej3Ee7YXueNuxcqw=
+  - secure: im6UKB47tQ/v9GOcL0bUVNBQd9dJ0JumgxqzjxAFL4dqL7vTp32vrwLBEac/Mybto7pMsCxjPKX/5y/qwA/8LXQ3bCzN9bpziRVTlUM8M5O1kXzMv5rO3ZTf63Ol+dw8M9RER6pYq/NN58EJFDBsQXaqnGKZvhfAHhgAG2Iojvo=
