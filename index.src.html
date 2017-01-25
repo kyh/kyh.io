@@ -30,7 +30,7 @@
               transform: translateY(-50%);
   }
 
-  .text {
+  .title {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       font-size: 2em;
       color: white;
@@ -38,6 +38,14 @@
       letter-spacing: -0.8px;
       line-height: 0.7;
       margin-bottom: 15px;
+  }
+
+  .subtitle {
+      font-family: Georgia, serif;
+  }
+
+  .subtitle > a {
+      color: #fafafa;
   }
 
   my-sheep {
@@ -70,8 +78,8 @@
 <body>
 
   <main class="scene">
-    <h1 class="text">Hi I'm Kaiyu.</h1>
-    <p>I sometimes <a href="https://github.com/tehkaiyu">type things</a>, other times I <a href="https://dribbble.com/tehKaiyu">draw things</a></p>
+    <h1 class="title">Hi I'm Kaiyu.</h1>
+    <p class="subtitle">I sometimes <a href="https://dribbble.com/tehKaiyu">draw things</a>, other times I <a href="https://github.com/tehkaiyu">\type\ things</a>.</p>
     <my-sheep></my-sheep>
     <section class="sm-wrapper">
       <a class="git" href="https://github.com/tehkaiyu" target="_blank">
