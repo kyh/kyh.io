@@ -1,0 +1,116 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: lightgray;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scene {
+  padding: 0 50px;
+  position: relative;
+  text-align: center;
+}
+
+.title {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: white;
+  letter-spacing: -0.8px;
+  line-height: 0.7;
+  margin-bottom: 15px;
+}
+
+.subtitle {
+  font-family: Georgia, serif;
+  line-height: 1.4;
+}
+
+.subtitle > a {
+  color: #fafafa;
+}
+
+my-sheep {
+  position: relative;
+}
+
+.sm-wrapper {
+  line-height: 30px;
+  margin-top: 10px;
+}
+.sm-wrapper a {
+  margin-right: 5px;
+  color: #99999a;
+  padding: 6px;
+  text-decoration: none;
+  transition: color 300ms ease-in-out;
+}
+
+.sm-wrapper a.git:hover {
+  color: #333;
+}
+.sm-wrapper a.twitter:hover {
+  color: #55acee;
+}
+.sm-wrapper a.linkedin:hover {
+  color: #4875B4;
+}
+.sm-wrapper a.dribbble:hover {
+  color: #ea4c89;
+}
+
+/* SHEEP */
+.sheep-container .sheep-body {
+  animation: sheep 1s infinite;
+}
+.sheep-container .sheep-body .sheep-head {
+  transition: transform 0.3s;
+  transform-origin: 65px 75px;
+}
+.sheep-container .sheep-body .sheep-head * {
+  transition: transform 0.3s;
+}
+.sheep-container .sheep-body .sheep-head .eye,
+.sheep-container .sheep-body .sheep-head .ear {
+  transform-origin: 50%;
+}
+.sheep-container .sheep-body .sheep-head .ear.front-ear {
+  transform: rotate(90deg);
+}
+.sheep-container .sheep-body .sheep-head .ear.back-ear {
+  transform: rotate(40deg);
+}
+.sheep-container .sheep-body .sheep-head:hover .front-ear,
+.sheep-container .sheep-body .sheep-head:active .front-ear {
+  transform: rotate(60deg);
+}
+.sheep-container .sheep-body .sheep-head:hover .back-ear,
+.sheep-container .sheep-body .sheep-head:active .back-ear {
+  transform: rotate(70deg);
+}
+.sheep-container .sheep-body:hover,
+.sheep-container .sheep-body:active {
+  animation-play-state: paused;
+}
+.sheep-container .sheep-body:hover .sheep-head,
+.sheep-container .sheep-body:active .sheep-head {
+  transform: rotate(30deg);
+}
+.sheep-container .sheep-body:hover .eye,
+.sheep-container .sheep-body:active .eye {
+  transform: scale(1.3);
+}
+.sheep-container .sheep-body:hover .eye .eye-ball,
+.sheep-container .sheep-body:active .eye .eye-ball {
+  transform: translate(3px, -3px);
+}
+
+@keyframes sheep {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(0.2em); }
+}
