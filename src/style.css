@@ -12,6 +12,10 @@ body {
   justify-content: center;
 }
 
+h1, p {
+  margin: 0;
+}
+
 .scene {
   padding: 0 50px;
   position: relative;
@@ -19,49 +23,49 @@ body {
 }
 
 .title {
+  display: inline-block;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: white;
   letter-spacing: -0.8px;
-  line-height: 0.7;
-  margin-bottom: 15px;
+  line-height: 2;
+  margin-bottom: -10px;
 }
 
 .subtitle {
   font-family: Georgia, serif;
-  line-height: 1.4;
+  line-height: 2;
+  margin-bottom: 15px;
 }
 
 .subtitle > a {
   color: #fafafa;
 }
 
-my-sheep {
-  position: relative;
-}
-
 .sm-wrapper {
   line-height: 30px;
   margin-top: 10px;
 }
-.sm-wrapper a {
+.sm-wrapper > a {
   margin-right: 5px;
-  color: #99999a;
-  padding: 6px;
+  padding: 7px;
   text-decoration: none;
-  transition: color 300ms ease-in-out;
 }
 
-.sm-wrapper a.git:hover {
-  color: #333;
+.sm-wrapper > a path {
+  transition: fill 300ms ease-in-out;
 }
-.sm-wrapper a.twitter:hover {
-  color: #55acee;
+
+.sm-wrapper > a.git:hover path {
+  fill: #333;
 }
-.sm-wrapper a.linkedin:hover {
-  color: #4875B4;
+.sm-wrapper > a.twitter:hover path {
+  fill: #55acee;
 }
-.sm-wrapper a.dribbble:hover {
-  color: #ea4c89;
+.sm-wrapper > a.linkedin:hover path {
+  fill: #4875B4;
+}
+.sm-wrapper > a.dribbble:hover path {
+  fill: #ea4c89;
 }
 
 /* SHEEP */
@@ -113,4 +117,15 @@ my-sheep {
 @keyframes sheep {
   0% { transform: translateY(0); }
   50% { transform: translateY(0.2em); }
+}
+
+.block-revealer__element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  pointer-events: none;
+  opacity: 0;
 }
