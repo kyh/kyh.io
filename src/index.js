@@ -30,5 +30,3 @@ function revealElement(elementClass, bgcolor, delay) {
 
 revealElement('.title', '#68788c', 300);
 revealElement('.subtitle', '#a1aeb7', 550);
-
-console.log('hello world');

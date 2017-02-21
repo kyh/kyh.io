@@ -32,7 +32,16 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
     }),
     new HtmlWebpackPlugin({
-      template: 'src/index.html'
+      template: 'src/index.html',
+      minify: {
+        collapseWhitespace: true,
+        minifyCSS: true,
+        minifyJS: true,
+        removeComments: true,
+        sortAttributes: true,
+        sortClassName: true,
+        useShortDoctype: true
+      }
     })
   ]
 };
