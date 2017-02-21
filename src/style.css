@@ -44,6 +44,11 @@ h1, p {
 
 .subtitle a {
   color: #6b74e6;
+  transition: color 300ms ease-in-out;
+}
+
+.subtitle a:hover, .subtitle a:active {
+  color: #2e38bd;
 }
 
 .sm-wrapper {
