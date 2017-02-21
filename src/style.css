@@ -6,7 +6,7 @@ html, body {
 }
 
 body {
-  background: lightgray;
+  background: #edf3f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,25 +25,29 @@ h1, p {
 .title {
   display: inline-block;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: white;
+  color: #68788c;
   letter-spacing: -0.8px;
   line-height: 2;
-  margin-bottom: -10px;
+  margin-bottom: -20px;
+  padding: 0 20px;
+  z-index: 1;
 }
 
 .subtitle {
   font-family: Georgia, serif;
-  line-height: 2;
-  margin-bottom: 15px;
+  color: #5f6b73;
+  line-height: 1.4;
+  padding: 20px;
+  margin-top: -10px;
+  margin-bottom: 10px;
 }
 
-.subtitle > a {
-  color: #fafafa;
+.subtitle a {
+  color: #6b74e6;
 }
 
 .sm-wrapper {
-  line-height: 30px;
-  margin-top: 10px;
+  padding: 15px;
 }
 .sm-wrapper > a {
   margin-right: 5px;

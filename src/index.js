@@ -28,7 +28,7 @@ function revealElement(elementClass, bgcolor, delay) {
   $el.reveal();
 }
 
-revealElement('.title', '#7f40f1', 300);
-revealElement('.subtitle', '#fcf652', 550);
+revealElement('.title', '#68788c', 300);
+revealElement('.subtitle', '#a1aeb7', 550);
 
 console.log('hello world');
