@@ -46,7 +46,6 @@ h6 { line-height: 1.6; font-size: 1.2rem;  }
 
 p {
   margin-top: 0;
-  margin-bottom: 2rem;
 }
 
 figure {
@@ -68,10 +67,12 @@ img {
   line-height: 1;
   border-bottom: 1px dotted #6b74e6;
   color: #6b74e6;
+  transition: border-color 0.4s ease;
 }
 
 .link:hover {
   color: #6b74e6;
+  border-color: #424242;
 }
 
 .link::after {
@@ -126,14 +127,23 @@ img {
 .content {
   position: relative;
   background: #fff;
-  padding: 11% 30px 10% 14%;
+  padding: 11% 30px 10% 13%;
   width: 56%;
   /* box-shadow: 0 3px 10px rgba(50,50,93,.11), 0 1px 2px rgba(0,0,0,.08); */
+}
+
+.content-section {
+  margin-bottom: 2rem;
+}
+
+.content-header > h3 {
+  margin-bottom: 1rem;
 }
 
 .content-section span {
   display: inline-block;
   white-space: nowrap;
+  margin-bottom: 5px;
 }
 
 .sm-wrapper {
