@@ -11,6 +11,8 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "three": "0.84.0",
+    "tween.js": "16.6.0",
     "vue": "^2.2.2"
   },
   "devDependencies": {

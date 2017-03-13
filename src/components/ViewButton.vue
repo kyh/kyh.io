@@ -1,17 +1,22 @@
 <template>
-  <a class="link" href="#" :data-letters="title">{{title}}</a>
+  <a
+    class="link"
+    :data-letters="title"
+    v-on:click.prevent="onClick(title)"
+    v-bind:class="{ active: currentView === title }"
+  >{{title}}</a>
 </template>
 
 <script>
 export default {
-  name: 'Button',
-  props: ['title'],
+  name: 'ViewButton',
+  props: ['title', 'onClick', 'currentView'],
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .link {
+  cursor: pointer;
   font-weight: 500;
   outline: none;
   text-decoration: none;
@@ -61,5 +66,18 @@ export default {
 
 .link:hover::before {
   width: 100%;
+}
+
+.link.active {
+  overflow: visible;
+}
+
+.link.active:hover::after,
+.link.active::after {
+  width: 110%;
+  height: 21px;
+  top: -2px;
+  background-color: #6b74e6;
+  transform: translate3d(0,0,0);
 }
 </style>

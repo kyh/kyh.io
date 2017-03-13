@@ -23,8 +23,8 @@
       <header class="content-header">
         <h3>Cardiogram</h3>
       </header>
-      <span>We're an AI <Button title="startup" /> that uses heart rate data to <Button title="predict" /> and</span>
-      <span><Button title="prevent" /> heart disease. My time is split between building out new</span>
+      <span>We're an AI <ViewButton :currentView="currentView" :onClick="toggleView" title="startup" /> that uses heart rate data to <ViewButton :currentView="currentView" :onClick="toggleView" title="predict" /> and</span>
+      <span><ViewButton :currentView="currentView" :onClick="toggleView" title="prevent" /> heart disease. My time is split between building out new</span>
       <span>features, designing user-driven experiences, and debating</span>
       <span>healthcare reform.</span>
     </section>
@@ -36,29 +36,30 @@
       <span>Before that I was the third engineer hire at Slyce. The team grew</span>
       <span>to over 100 employees and eventually went public. I led the front</span>
       <span>end team there and worked on a wide variety of projects ranging</span>
-      <span>from <Button title="product" />, <Button title="SDKs" />, <Button title="internal tools" />, to powerful <Button title="data analysis" /> apps.</span>
+      <span>from <ViewButton :currentView="currentView" :onClick="toggleView" title="product" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="SDKs" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="internal tools" />, to powerful <ViewButton :currentView="currentView" :onClick="toggleView" title="data analysis" /> apps.</span>
     </section>
 
     <section class="content-section">
       <header class="content-header">
         <h3>Once upon a time</h3>
       </header>
-      <span>I helped start <Button title="TEDxUofT" /> as their Creative Director and eventually</span>
-      <span>went on to join the <Button title="TEDxToronto" /> team. I also had a short lived</span>
-      <span>career in advertising as an Art Director for brands such as <Button title="Nissan" /></span>
-      <span>and <Button title="ING Direct" />.</span>
+      <span>I helped start <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxUofT" /> as their Creative Director and eventually</span>
+      <span>went on to join the <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxToronto" /> team. I also had a short lived</span>
+      <span>career in advertising as an Art Director for brands such as <ViewButton :currentView="currentView" :onClick="toggleView" title="Nissan" /></span>
+      <span>and <ViewButton :currentView="currentView" :onClick="toggleView" title="ING Direct" />.</span>
     </section>
 
     <section class="content-section">
       <span>You'll occasionally find me dabbling in the open source world,</span>
-      <span>contributing to <Button title="Facebook" /> projects, <Button title="Bootstrap" />, and <Button title="Wikipedia" />.</span>
-      <span>I sometimes <Button title="draw things" /> when I’m bored, but spend most</span>
-      <span>of my days <Button title="procrastinating" />.</span>
+      <span>contributing to <ViewButton :currentView="currentView" :onClick="toggleView" title="Facebook" /> projects, <ViewButton :currentView="currentView" :onClick="toggleView" title="Bootstrap" />, and <ViewButton :currentView="currentView" :onClick="toggleView" title="Wikipedia" />.</span>
+      <span>I sometimes <ViewButton :currentView="currentView" :onClick="toggleView" title="draw things" /> when I’m bored, but spend most</span>
+      <span>of my days <ViewButton :currentView="currentView" :onClick="toggleView" title="procrastinating" />.</span>
     </section>
 
     <section class="content-section">
       <span>I’d love to see your beautiful face, so feel free to reach out if you’re</span>
-      <span>in the Bay Area.</span>
+      <span>in the Bay Area. If you're elsewhere, I'd still love to hear from you!</span>
+      <span>Shoot me a message on LinkedIn or just tweet at me.</span>
     </section>
 
     <section class="sm-wrapper">
@@ -84,16 +85,27 @@
       </a>
     </section>
   </section>
+  <keep-alive>
+    <component v-bind:is="currentView" />
+  </keep-alive>
 </main>
 </template>
 
 <script>
-import Button from './components/Button';
+import ViewButton from './components/ViewButton';
 
 export default {
   name: 'app',
+  data: () => ({ currentView: 'TEDxUofT' }),
   components: {
-    Button,
+    ViewButton,
+    // Projects
+    TEDxUofT: () => import('./projects/TEDxUofT'),
+  },
+  methods: {
+    toggleView(view) {
+      this.currentView = view;
+    },
   },
 };
 </script>
