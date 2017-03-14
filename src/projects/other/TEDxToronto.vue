@@ -1,16 +1,13 @@
 <template>
-  <section id="tedx">Lala</section>
+  <section id="tedx" />
 </template>
 
 <script>
-import THREE from 'three';
-import TWEEN from 'tween.js';
-
 /* ignore jslint start */
 export default {
-  name: 'TEDxUofT',
+  name: 'TEDxToronto',
   mounted: () => {
-    console.log(THREE, TWEEN);
+
   },
 };
 </script>

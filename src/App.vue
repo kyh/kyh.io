@@ -96,11 +96,11 @@ import ViewButton from './components/ViewButton';
 
 export default {
   name: 'app',
-  data: () => ({ currentView: 'TEDxUofT' }),
+  data: () => ({ currentView: 'product' }),
   components: {
     ViewButton,
     // Projects
-    TEDxUofT: () => import('./projects/TEDxUofT'),
+    // TEDxUofT: () => import('./projects/other/TEDxUofT'),
   },
   methods: {
     toggleView(view) {

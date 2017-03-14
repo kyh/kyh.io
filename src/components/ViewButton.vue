@@ -69,15 +69,6 @@ export default {
 }
 
 .link.active {
-  overflow: visible;
-}
-
-.link.active:hover::after,
-.link.active::after {
-  width: 110%;
-  height: 21px;
-  top: -2px;
-  background-color: #6b74e6;
-  transform: translate3d(0,0,0);
+  color: #424242;
 }
 </style>
