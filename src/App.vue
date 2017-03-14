@@ -96,10 +96,14 @@ import ViewButton from './components/ViewButton';
 
 export default {
   name: 'app',
-  data: () => ({ currentView: 'product' }),
+  data: () => ({ currentView: null }),
   components: {
     ViewButton,
     // Projects
+    // Cardiogram:
+    // Slyce:
+    product: () => import('./projects/slyce/product'),
+    // Other:
     // TEDxUofT: () => import('./projects/other/TEDxUofT'),
   },
   methods: {
@@ -113,24 +117,24 @@ export default {
 <style>
 @font-face {
   font-family: 'Gilroy';
-  src: url('assets/fonts/Gilroy-Regular.eot');
-  src: url('assets/fonts/Gilroy-Regular.eot?#iefix') format('embedded-opentype'),
-    url('assets/fonts/Gilroy-Regular.woff2') format('woff2'),
-    url('assets/fonts/Gilroy-Regular.woff') format('woff'),
-    url('assets/fonts/Gilroy-Regular.ttf') format('truetype'),
-    url('assets/fonts/Gilroy-Regular.svg#Gilroy-Regular') format('svg');
+  src: url('/static/fonts/Gilroy-Regular.eot');
+  src: url('/static/fonts/Gilroy-Regular.eot?#iefix') format('embedded-opentype'),
+    url('/static/fonts/Gilroy-Regular.woff2') format('woff2'),
+    url('/static/fonts/Gilroy-Regular.woff') format('woff'),
+    url('/static/fonts/Gilroy-Regular.ttf') format('truetype'),
+    url('/static/fonts/Gilroy-Regular.svg#Gilroy-Regular') format('svg');
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Gilroy';
-  src: url('assets/fonts/Gilroy-Medium.eot');
-  src: url('assets/fonts/Gilroy-Medium.eot?#iefix') format('embedded-opentype'),
-    url('assets/fonts/Gilroy-Medium.woff2') format('woff2'),
-    url('assets/fonts/Gilroy-Medium.woff') format('woff'),
-    url('assets/fonts/Gilroy-Medium.ttf') format('truetype'),
-    url('assets/fonts/Gilroy-Medium.svg#Gilroy-Medium') format('svg');
+  src: url('/static/fonts/Gilroy-Medium.eot');
+  src: url('/static/fonts/Gilroy-Medium.eot?#iefix') format('embedded-opentype'),
+    url('/static/fonts/Gilroy-Medium.woff2') format('woff2'),
+    url('/static/fonts/Gilroy-Medium.woff') format('woff'),
+    url('/static/fonts/Gilroy-Medium.ttf') format('truetype'),
+    url('/static/fonts/Gilroy-Medium.svg#Gilroy-Medium') format('svg');
   font-weight: 500;
   font-style: normal;
 }
