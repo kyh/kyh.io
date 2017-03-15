@@ -1,17 +1,24 @@
 <template>
+<transition name="fade">
   <section id="slyce">
-    <div class="isolayer isolayer--deco1 isolayer--shadow">
-      <ul class="grid">
-        <li class="grid__item" v-for="(product, index) in products" :key="product.url">
-          <ImageLoader
-            class="grid__img layer"
-            :url="product.url"
-            :loResSrc="product.lowRes"
-          />
-        </li>
-      </ul>
-    </div>
+    <ul class="grid products">
+      <li class="grid__item" v-for="(product, index) in products" :key="product.url">
+        <ImageLoader
+          class="grid__img"
+          :url="product.url"
+        />
+      </li>
+    </ul>
+    <ul class="grid white">
+      <li class="grid__item" v-for="(product, index) in white" :key="product.url">
+        <ImageLoader
+          class="grid__img"
+          :url="product.url"
+        />
+      </li>
+    </ul>
   </section>
+</transition>
 </template>
 
 <script>
@@ -26,6 +33,8 @@ export default {
       { url: '/static/images/3.png' },
       { url: '/static/images/4.png' },
       { url: '/static/images/5.png' },
+    ],
+    white: [
       { url: '/static/images/6.png' },
       { url: '/static/images/7.png' },
       { url: '/static/images/8.png' },
@@ -40,24 +49,19 @@ export default {
 </script>
 
 <style scoped>
-#slyce {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+  opacity: 0
 }
 
-.isolayer {
-  width: 1200px;
-  height: 900px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: 50% 100%;
+#slyce {
+  position: fixed;
+  display: flex;
   transform-style: preserve-3d;
-  transform: translateX(40%) translateY(-50%) rotateX(55deg) rotateZ(35deg);
+  transform: rotateX(55deg) rotateZ(35deg);
+  /*z-index: -1;*/
 }
 
 .grid {
@@ -67,78 +71,11 @@ export default {
 }
 
 .grid__item {
-  width: 400px;
-  height: 300px;
-  padding: 15px;
-  display: inline-block;
   margin: 10px;
 }
 
-.grid__img {
-  display: block;
-  max-width: 100%;
-}
-
-.grid__title {
-  font-size: 0.65em;
-  font-weight: 600;
-  position: absolute;
-  z-index: -1;
-  bottom: 0;
-  width: 100%;
-  text-align: center;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  opacity: 0;
-  color: #fff;
-  -webkit-transform: translate3d(0,-20px,0);
-  transform: translate3d(0,-20px,0);
-  -webkit-transition: -webkit-transform 0.3s, opacity 0.3s;
-  transition: transform 0.3s, opacity 0.3s;
-}
-
-.grid__item:hover .grid__title {
-  opacity: 1;
-  -webkit-transform: translate3d(0,0,0);
-  transform: translate3d(0,0,0);
-}
-
-.layer {
-  position: relative;
-  display: block;
-}
-
-.layer:not(:first-child) {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-/* Shadow effect */
-.isolayer--shadow .grid__link::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: 5px;
-  right: 5px;
-  bottom: 5px;
-  left: 5px;
-  opacity: 0.6;
-  background: rgba(0,0,0,0.8);
-  box-shadow: 0 0 0 0 rgba(0,0,0,0.8);
-  -webkit-transform: translateZ(-1px) scale(0.95);
-  transform: translateZ(-1px) scale(0.95);
-  -webkit-transition: transform 0.3s, opacity 0.3s, box-shadow 0.3s;
-  transition: transform 0.3s, opacity 0.3s, box-shadow 0.3s;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-.isolayer--shadow .grid__item:hover .grid__link::before {
-  opacity: 0.2;
-  box-shadow: 0 0 20px 10px rgba(0,0,0,0.8);
-  -webkit-transform: translateZ(-1px) scale(1);
-  transform: translateZ(-1px) scale(1);
+.grid__img > img {
+  box-shadow: 0 3px 10px rgba(50,50,93,.11), 0 1px 2px rgba(0,0,0,.08);
 }
 
 </style>

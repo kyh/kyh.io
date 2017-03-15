@@ -6,9 +6,6 @@
 /* ignore jslint start */
 export default {
   name: 'SlyceSDK',
-  mounted: () => {
-
-  },
 };
 </script>
 

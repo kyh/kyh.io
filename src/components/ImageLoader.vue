@@ -1,21 +1,15 @@
 <template>
   <transition-group name="blur" tag="div">
-    <div v-show="currentSrc === null" class="placeholder blur-transition" key="placeholder" />
     <img v-show="currentSrc" :src="currentSrc" key="image" class="blur-transition" />
   </transition-group>
 </template>
 
 <style scoped>
-  img, .placeholder {
-    height: 300px;
-    width: 400px;
-    position: absolute;
-  }
-  .placeholder {
-    background-color: rgba(0,0,0,.02);
+  img {
+    max-width: 100%;
   }
   .blur-transition {
-    transition: opacity linear .4s 0s;
+    transition: opacity linear .4s;
     opacity: 1;
   }
   .blur-enter, .blur-leave {
