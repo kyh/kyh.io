@@ -1,5 +1,10 @@
 <template>
-<transition name="fade">
+<transition
+  v-on:before-enter="beforeEnter"
+  v-on:enter="enter"
+  v-on:leave="leave"
+  mode="out-in"
+>
   <section id="slyce">
     <ul class="grid products">
       <li class="grid__item" v-for="(product, index) in products" :key="product.url">
@@ -23,6 +28,7 @@
 
 <script>
 import ImageLoader from '../../components/ImageLoader';
+import anime from 'animejs';
 
 export default {
   name: 'SlyceProduct',
@@ -45,23 +51,52 @@ export default {
   components: {
     ImageLoader,
   },
+  methods: {
+    toggleView(view) {
+      this.currentView = view;
+    },
+    beforeEnter(el) {
+      el.firstChild.style.transform = 'translateY(500px)';
+      el.lastChild.style.transform = 'translateY(-2500px)';
+    },
+    // the done callback is optional when
+    // used in combination with CSS
+    enter(el, done) {
+      console.log('enter');
+      anime({
+        targets: [el.firstChild, el.lastChild],
+        translateY: -900,
+        duration: 1000,
+        easing: 'easeInOutQuart',
+        complete: done,
+      });
+    },
+    leave(el, done) {
+      anime({
+        targets: el.lastChild,
+        translateY: 400,
+        duration: 1000,
+        easing: 'easeInOutQuart',
+      });
+      anime({
+        targets: el.firstChild,
+        translateY: -2500,
+        duration: 1000,
+        easing: 'easeInOutQuart',
+        complete: done,
+      });
+    },
+  },
 };
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .5s
-}
-.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
-  opacity: 0
-}
-
 #slyce {
   position: fixed;
   display: flex;
   transform-style: preserve-3d;
   transform: rotateX(55deg) rotateZ(35deg);
-  /*z-index: -1;*/
+  z-index: -1;
 }
 
 .grid {
