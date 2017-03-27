@@ -200,4 +200,31 @@ RevealFx.prototype.reveal = function(revealSettings) {
   anime(animationSettings);
 };
 
+export function generateDefaultReveal(element) {
+  return new Promise((resolve) => {
+    return new RevealFx(element, {
+      revealSettings: {
+        bgcolor: '#a1aeb7',
+        easing: 'easeOutExpo',
+        direction: 'lr',
+        onStart(contentEl) {
+          anime.remove(contentEl);
+          contentEl.style.opacity = 0;
+        },
+        onCover(contentEl) {
+          anime({
+            targets: contentEl,
+            duration: 800,
+            delay: 80,
+            easing: 'easeOutExpo',
+            translateX: [-40, 0],
+            opacity: [0, 1],
+          });
+        },
+        onComplete: resolve,
+      },
+    }).reveal();
+  });
+}
+
 export default RevealFx;
