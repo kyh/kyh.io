@@ -1,61 +1,68 @@
 <template>
 <main id="app" class="scene">
-  <section class="content">
-    <Logo />
+  <transition
+    appear
+    v-on:appear="enter"
+  >
+    <section class="content-wrapper">
+      <section class="content">
+        <Logo />
 
-    <h1>Hello there,</h1>
-    <section class="content-section">
-      <span>My name is Kaiyu (you can call me Kai) and I type things to make</span>
-      <span>programs go. I hold a B.Sc. from the University of Toronto</span>
-      <span>where I studied design and cognitive psychology, but on a day to</span>
-      <span>day basis, I’m a Design Engineer at Cardiogram.</span>
+        <h1 class="content-title">Hello there,</h1>
+        <section class="content-section">
+          My name is Kaiyu (you can call me Kai) and I type things to make
+          programs go. I hold a B.Sc. from the University of Toronto
+          where I studied design and cognitive psychology, but on a day to
+          day basis, I’m a Design Engineer at Cardiogram.
+        </section>
+
+        <section class="content-section">
+          <header class="content-header">
+            <h3>Cardiogram</h3>
+          </header>
+          We're an AI <ViewButton :currentView="currentView" :onClick="toggleView" title="startup" /> that uses heart rate data to <ViewButton :currentView="currentView" :onClick="toggleView" title="predict" /> and
+          <ViewButton :currentView="currentView" :onClick="toggleView" title="prevent" /> heart disease. My time is split between building out new
+          features, designing user-driven experiences, and debating
+          healthcare reform.
+        </section>
+
+        <section class="content-section">
+          <header class="content-header">
+            <h3>Slyce</h3>
+          </header>
+          Before that I was the third engineer hire at Slyce. The team grew
+          to over 100 employees and eventually went public. I led the front
+          end team there and worked on a wide variety of projects ranging
+          from <ViewButton :currentView="currentView" :onClick="toggleView" title="product" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="SDKs" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="internal tools" />, to powerful <ViewButton :currentView="currentView" :onClick="toggleView" title="data analysis" /> apps.
+        </section>
+
+        <section class="content-section">
+          <header class="content-header">
+            <h3>Once upon a time</h3>
+          </header>
+          I helped start <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxUofT" /> as their Creative Director and eventually
+          went on to join the <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxToronto" /> team. I also had a short lived
+          career in advertising as an Art Director for brands such as <ViewButton :currentView="currentView" :onClick="toggleView" title="Nissan" />
+          and <ViewButton :currentView="currentView" :onClick="toggleView" title="ING Direct" />.
+        </section>
+
+        <section class="content-section">
+          You'll occasionally find me dabbling in the open source world,
+          contributing to <ViewButton :currentView="currentView" :onClick="toggleView" title="Facebook" /> projects, <ViewButton :currentView="currentView" :onClick="toggleView" title="Bootstrap" />, and <ViewButton :currentView="currentView" :onClick="toggleView" title="Wikipedia" />.
+          I sometimes <ViewButton :currentView="currentView" :onClick="toggleView" title="draw things" /> when I’m bored, but spend most
+          of my days <ViewButton :currentView="currentView" :onClick="toggleView" title="procrastinating" />.
+        </section>
+
+        <section class="content-section">
+          I’d love to see your beautiful face, so feel free to reach out if you’re
+          in the Bay Area. If you're elsewhere, I'd still love to hear from you!
+          Shoot me a message on LinkedIn or just tweet at me.
+        </section>
+
+        <Social />
+      </section>
     </section>
-
-    <section class="content-section">
-      <header class="content-header">
-        <h3>Cardiogram</h3>
-      </header>
-      <span>We're an AI <ViewButton :currentView="currentView" :onClick="toggleView" title="startup" /> that uses heart rate data to <ViewButton :currentView="currentView" :onClick="toggleView" title="predict" /> and</span>
-      <span><ViewButton :currentView="currentView" :onClick="toggleView" title="prevent" /> heart disease. My time is split between building out new</span>
-      <span>features, designing user-driven experiences, and debating</span>
-      <span>healthcare reform.</span>
-    </section>
-
-    <section class="content-section">
-      <header class="content-header">
-        <h3>Slyce</h3>
-      </header>
-      <span>Before that I was the third engineer hire at Slyce. The team grew</span>
-      <span>to over 100 employees and eventually went public. I led the front</span>
-      <span>end team there and worked on a wide variety of projects ranging</span>
-      <span>from <ViewButton :currentView="currentView" :onClick="toggleView" title="product" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="SDKs" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="internal tools" />, to powerful <ViewButton :currentView="currentView" :onClick="toggleView" title="data analysis" /> apps.</span>
-    </section>
-
-    <section class="content-section">
-      <header class="content-header">
-        <h3>Once upon a time</h3>
-      </header>
-      <span>I helped start <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxUofT" /> as their Creative Director and eventually</span>
-      <span>went on to join the <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxToronto" /> team. I also had a short lived</span>
-      <span>career in advertising as an Art Director for brands such as <ViewButton :currentView="currentView" :onClick="toggleView" title="Nissan" /></span>
-      <span>and <ViewButton :currentView="currentView" :onClick="toggleView" title="ING Direct" />.</span>
-    </section>
-
-    <section class="content-section">
-      <span>You'll occasionally find me dabbling in the open source world,</span>
-      <span>contributing to <ViewButton :currentView="currentView" :onClick="toggleView" title="Facebook" /> projects, <ViewButton :currentView="currentView" :onClick="toggleView" title="Bootstrap" />, and <ViewButton :currentView="currentView" :onClick="toggleView" title="Wikipedia" />.</span>
-      <span>I sometimes <ViewButton :currentView="currentView" :onClick="toggleView" title="draw things" /> when I’m bored, but spend most</span>
-      <span>of my days <ViewButton :currentView="currentView" :onClick="toggleView" title="procrastinating" />.</span>
-    </section>
-
-    <section class="content-section">
-      <span>I’d love to see your beautiful face, so feel free to reach out if you’re</span>
-      <span>in the Bay Area. If you're elsewhere, I'd still love to hear from you!</span>
-      <span>Shoot me a message on LinkedIn or just tweet at me.</span>
-    </section>
-
-    <Social />
-  </section>
+  </transition>
   <keep-alive>
     <component v-bind:is="currentView" />
   </keep-alive>
@@ -63,9 +70,11 @@
 </template>
 
 <script>
+import anime from 'animejs';
 import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
 import Social from './components/Social';
+import RevealFx from './services/reveal';
 
 export default {
   name: 'app',
@@ -85,6 +94,40 @@ export default {
   methods: {
     toggleView(view) {
       this.currentView = view;
+    },
+    enter(el, done) {
+      const $el = new RevealFx(document.querySelector('.content-header h3'), {
+        revealSettings: {
+          bgcolor: '#a1aeb7',
+          easing: 'easeOutExpo',
+          direction: 'lr',
+          onStart(contentEl) {
+            anime.remove(contentEl);
+            contentEl.style.opacity = 0;
+          },
+          onCover(contentEl) {
+            anime({
+              targets: contentEl,
+              duration: 800,
+              delay: 80,
+              easing: 'easeOutExpo',
+              translateX: [-40, 0],
+              opacity: [0, 1],
+            });
+          },
+        },
+      });
+
+      anime({
+        targets: el,
+        width: '56%',
+        duration: 1300,
+        easing: 'easeInOutQuart',
+        complete: () => {
+          $el.reveal();
+          done();
+        },
+      });
     },
   },
 };
@@ -180,22 +223,28 @@ img {
 
 .scene {
   display: flex;
-  padding: 30px 5%;
+  padding: 30px 65px;
+}
+
+.content-wrapper {
+  position: relative;
+  background: #fff;
+  width: 0;
+  overflow: hidden;
 }
 
 .content {
-  position: relative;
-  background: #fff;
-  padding: 11% 30px 10% 10%;
-  width: 56%;
+  padding: 120px 60px 70px 100px;
   /* box-shadow: 0 3px 10px rgba(50,50,93,.11), 0 1px 2px rgba(0,0,0,.08); */
 }
 
 .content-section {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  line-height: 2;
 }
 
 .content-header > h3 {
+  display: inline-block;
   margin-bottom: 1rem;
 }
 
