@@ -58,9 +58,6 @@
       <Social />
     </section>
   </section>
-  <keep-alive>
-    <component v-bind:is="currentView" />
-  </keep-alive>
 </main>
 </template>
 
@@ -70,6 +67,29 @@ import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
 import Social from './components/Social';
 import { generateDefaultReveal } from './services/reveal';
+
+const URL_MAP = {
+  // Cardiogram:
+  startup: 'https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/',
+  predict: '',
+  prevent: '',
+  // Slyce:
+  product: '',
+  sdks: '',
+  'internal tools': '',
+  'data analysis': '',
+  // Before:
+  TEDxUofT: '',
+  TEDxToronto: '',
+  Nissan: '',
+  'ING Direct': '',
+  // Other:
+  Facebook: '',
+  Bootstrap: '',
+  Wikipedia: '',
+  'draw things': 'https://itunes.apple.com/US/app/id1209391711',
+  procrastinating: 'http://itsbananas.club/',
+};
 
 function $(qs) {
   return document.querySelector(qs);
@@ -85,15 +105,15 @@ export default {
     // Projects
     // Cardiogram:
     // Slyce:
-    product: () => import('./projects/slyce/product'),
-    sdks: () => import('./projects/slyce/sdks'),
+    // product: () => import('./projects/slyce/product'),
+    // sdks: () => import('./projects/slyce/sdks'),
     // Other:
     // TEDxUofT: () => import('./projects/other/TEDxUofT'),
   },
   mounted: () => {
     anime({
       targets: $('.content-wrapper'),
-      width: '56%',
+      width: 640,
       duration: 1300,
       easing: 'easeInOutQuart',
       complete: () => {
@@ -104,6 +124,7 @@ export default {
   methods: {
     toggleView(view) {
       this.currentView = view;
+      window.open(URL_MAP[view], '_blank');
     },
   },
 };
