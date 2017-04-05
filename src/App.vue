@@ -16,10 +16,7 @@
         <header class="content-header">
           <h3>Cardiogram</h3>
         </header>
-        We're an AI <ViewButton :currentView="currentView" :onClick="toggleView" title="startup" /> that uses heart rate data to <ViewButton :currentView="currentView" :onClick="toggleView" title="predict" /> and
-        <ViewButton :currentView="currentView" :onClick="toggleView" title="prevent" /> heart disease. My time is split between building out new
-        features, designing user-driven experiences, and debating
-        healthcare reform.
+        We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /> heart disease. My time is split between building out new features, designing user-driven experiences, and debating healthcare reform.
       </section>
 
       <section class="content-section">
@@ -29,24 +26,24 @@
         Before that I was the third engineer hire at Slyce. The team grew
         to over 100 employees and eventually went public. I led the front
         end team there and worked on a wide variety of projects ranging
-        from <ViewButton :currentView="currentView" :onClick="toggleView" title="product" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="SDKs" />, <ViewButton :currentView="currentView" :onClick="toggleView" title="internal tools" />, to powerful <ViewButton :currentView="currentView" :onClick="toggleView" title="data analysis" /> apps.
+        from <ViewButton link="http://craves.io/" title="product" />, <ViewButton link="https://dribbble.com/shots/2763799-Slyce-Developer-Portal" title="SDKs" />, internal tools, to powerful data analysis apps.
       </section>
 
       <section class="content-section">
         <header class="content-header">
           <h3>Once upon a time</h3>
         </header>
-        I helped start <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxUofT" /> as their Creative Director and eventually
-        went on to join the <ViewButton :currentView="currentView" :onClick="toggleView" title="TEDxToronto" /> team. I also had a short lived
-        career in advertising as an Art Director for brands such as <ViewButton :currentView="currentView" :onClick="toggleView" title="Nissan" />
-        and <ViewButton :currentView="currentView" :onClick="toggleView" title="ING Direct" />.
+        I helped start <ViewButton link="http://kyh.io/TEDxUofT/" title="TEDxUofT" /> as their Creative Director and eventually
+        went on to join the <ViewButton link="http://www.tedxtoronto.com/" title="TEDxToronto" /> team. I also had a short lived
+        career in advertising as an Art Director for brands such as <ViewButton link="http://www.nissan.ca" title="Nissan" />
+        and <ViewButton link="https://www.bloomberg.com/news/articles/2013-11-05/scotiabank-rebrands-ing-direct-as-tangerine" title="ING Direct" />.
       </section>
 
       <section class="content-section">
         You'll occasionally find me dabbling in the open source world,
-        contributing to <ViewButton :currentView="currentView" :onClick="toggleView" title="Facebook" /> projects, <ViewButton :currentView="currentView" :onClick="toggleView" title="Bootstrap" />, and <ViewButton :currentView="currentView" :onClick="toggleView" title="Wikipedia" />.
-        I sometimes <ViewButton :currentView="currentView" :onClick="toggleView" title="draw things" /> when I’m bored, but spend most
-        of my days <ViewButton :currentView="currentView" :onClick="toggleView" title="procrastinating" />.
+        contributing to <ViewButton link="https://github.com/facebook/react" title="Facebook" /> projects, <ViewButton link="https://github.com/angular-ui/bootstrap" title="Bootstrap" />, and <ViewButton link="https://en.wikipedia.org/wiki/User:Tehkaiyu" title="Wikipedia" />.
+        I sometimes <ViewButton link="https://itunes.apple.com/US/app/id1209391711" title="draw things" /> when I’m bored, but spend most
+        of my days <ViewButton link="http://itsbananas.club/" title="procrastinating" />.
       </section>
 
       <section class="content-section">
@@ -58,6 +55,11 @@
       <Social />
     </section>
   </section>
+
+  <ImageLoader
+    class="fg"
+    url="/static/images/fg.png"
+  />
 </main>
 </template>
 
@@ -66,30 +68,33 @@ import anime from 'animejs';
 import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
 import Social from './components/Social';
-import { generateDefaultReveal } from './services/reveal';
+import ImageLoader from './components/ImageLoader';
+import RevealFx from './services/reveal';
 
-const URL_MAP = {
-  // Cardiogram:
-  startup: 'https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/',
-  predict: '',
-  prevent: '',
-  // Slyce:
-  product: '',
-  sdks: '',
-  'internal tools': '',
-  'data analysis': '',
-  // Before:
-  TEDxUofT: '',
-  TEDxToronto: '',
-  Nissan: '',
-  'ING Direct': '',
-  // Other:
-  Facebook: '',
-  Bootstrap: '',
-  Wikipedia: '',
-  'draw things': 'https://itunes.apple.com/US/app/id1209391711',
-  procrastinating: 'http://itsbananas.club/',
-};
+function createRevealConfig(delay = 0) {
+  return {
+    revealSettings: {
+      bgcolor: '#a1aeb7',
+      easing: 'easeOutExpo',
+      direction: 'lr',
+      delay,
+      onStart(contentEl) {
+        anime.remove(contentEl);
+        contentEl.style.opacity = 0;
+      },
+      onCover(contentEl) {
+        anime({
+          targets: contentEl,
+          duration: 800,
+          delay: 80,
+          easing: 'easeOutExpo',
+          translateX: [-40, 0],
+          opacity: [0, 1],
+        });
+      },
+    },
+  };
+}
 
 function $(qs) {
   return document.querySelector(qs);
@@ -102,6 +107,7 @@ export default {
     ViewButton,
     Social,
     Logo,
+    ImageLoader,
     // Projects
     // Cardiogram:
     // Slyce:
@@ -111,20 +117,23 @@ export default {
     // TEDxUofT: () => import('./projects/other/TEDxUofT'),
   },
   mounted: () => {
+    // Create reveal elements
+    const $title = new RevealFx($('.content-title'), createRevealConfig());
+
+    // Animate content in
     anime({
       targets: $('.content-wrapper'),
       width: 640,
       duration: 1300,
       easing: 'easeInOutQuart',
       complete: () => {
-        generateDefaultReveal($('.content-header h3'));
+        $title.reveal();
       },
     });
   },
   methods: {
     toggleView(view) {
       this.currentView = view;
-      window.open(URL_MAP[view], '_blank');
     },
   },
 };
@@ -178,7 +187,7 @@ body {
   font-family: 'Gilroy', 'Helvetica', sans-serif;
   font-size: 1.5rem;
   line-height: 1.6;
-  background: #f9f9f9;
+  background: linear-gradient(0deg, #fff, #f6f8fd 80%) fixed;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -219,6 +228,7 @@ img {
 */
 
 .scene {
+  position: relative;
   display: flex;
   padding: 30px 65px;
 }
@@ -235,9 +245,15 @@ img {
   /* box-shadow: 0 3px 10px rgba(50,50,93,.11), 0 1px 2px rgba(0,0,0,.08); */
 }
 
+.content-title {
+  display: inline-block;
+  padding-right: 20px;
+}
+
 .content-section {
   margin-bottom: 3rem;
   line-height: 2;
+  /*opacity: 0;*/
 }
 
 .content-header > h3 {
@@ -260,5 +276,13 @@ img {
   background: #000;
   pointer-events: none;
   opacity: 0;
+}
+
+.fg {
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: -50px;
+  right: -50px;
 }
 </style>

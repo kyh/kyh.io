@@ -2,15 +2,15 @@
   <a
     class="link"
     :data-letters="title"
-    v-on:click.prevent="onClick(title)"
-    v-bind:class="{ active: currentView === title }"
+    :href="link"
+    target="_blank"
   >{{title}}</a>
 </template>
 
 <script>
 export default {
   name: 'ViewButton',
-  props: ['title', 'onClick', 'currentView'],
+  props: ['title', 'link'],
 };
 </script>
 
