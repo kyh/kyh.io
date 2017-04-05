@@ -285,4 +285,17 @@ img {
   left: -50px;
   right: -50px;
 }
+
+@media (max-width: 500px) {
+  .scene {
+    padding: 0 0 90px;
+  }
+  .content {
+    padding: 120px 40px 30px;
+  }
+  .fg {
+    left: -20px;
+    right: -20px;
+  }
+}
 </style>
