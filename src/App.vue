@@ -14,14 +14,14 @@
 
       <section class="content-section">
         <header class="content-header">
-          <h3>Cardiogram</h3>
+          <h3 class="cardiogram">Cardiogram</h3>
         </header>
         We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /> heart disease. My time is split between building out new features, designing user-driven experiences, and debating healthcare reform.
       </section>
 
       <section class="content-section">
         <header class="content-header">
-          <h3>Slyce</h3>
+          <h3 class="slyce">Slyce</h3>
         </header>
         Before that I was the third engineer hire at Slyce. The team grew
         to over 100 employees and eventually went public. I led the front
@@ -31,7 +31,7 @@
 
       <section class="content-section">
         <header class="content-header">
-          <h3>Once upon a time</h3>
+          <h3 class="other">Once upon a time</h3>
         </header>
         I helped start <ViewButton link="http://kyh.io/TEDxUofT/" title="TEDxUofT" /> as their Creative Director and eventually
         went on to join the <ViewButton link="http://www.tedxtoronto.com/" title="TEDxToronto" /> team. I also had a short lived
@@ -117,19 +117,31 @@ export default {
     // TEDxUofT: () => import('./projects/other/TEDxUofT'),
   },
   mounted: () => {
-    // Create reveal elements
-    const $title = new RevealFx($('.content-title'), createRevealConfig());
-
     // Animate content in
     anime({
       targets: $('.content-wrapper'),
-      width: 640,
+      maxWidth: 640,
       duration: 1300,
       easing: 'easeInOutQuart',
-      complete: () => {
-        $title.reveal();
-      },
     });
+
+    // Create reveal elements
+    new RevealFx(
+      $('.content-title'),
+      createRevealConfig(700)
+    ).reveal();
+    new RevealFx(
+      $('.cardiogram'),
+      createRevealConfig(1200)
+    ).reveal();
+    new RevealFx(
+      $('.slyce'),
+      createRevealConfig(1700)
+    ).reveal();
+    new RevealFx(
+      $('.other'),
+      createRevealConfig(2200)
+    ).reveal();
   },
   methods: {
     toggleView(view) {
@@ -190,6 +202,7 @@ body {
   background: linear-gradient(0deg, #fff, #f6f8fd 80%) fixed;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 *, *:before, *:after {
@@ -236,7 +249,7 @@ img {
 .content-wrapper {
   position: relative;
   background: #fff;
-  width: 0;
+  max-width: 0;
   overflow: hidden;
 }
 
@@ -253,7 +266,6 @@ img {
 .content-section {
   margin-bottom: 3rem;
   line-height: 2;
-  /*opacity: 0;*/
 }
 
 .content-header > h3 {
@@ -264,7 +276,6 @@ img {
 .content-section span {
   display: inline-block;
   white-space: nowrap;
-  margin-bottom: 5px;
 }
 
 .block-revealer__element {

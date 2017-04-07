@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "animejs": "2.0.1",
-    "scrollmonitor": "^1.2.3",
     "three": "0.84.0",
     "tween.js": "16.6.0",
     "vue": "^2.2.2"
