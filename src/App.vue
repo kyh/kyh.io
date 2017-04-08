@@ -5,45 +5,51 @@
       <Logo />
 
       <h1 class="content-title">Hello there,</h1>
-      <section class="content-section">
-        My name is Kaiyu (you can call me Kai) and I type things to make
-        programs go. I hold a B.Sc. from the University of Toronto
-        where I studied design and cognitive psychology, but on a day to
-        day basis, I’m a Design Engineer at Cardiogram.
+      <section class="content-section intro">
+        <span class="content-line">My name is Kaiyu (you can call me Kai) and I type things to make </span>
+        <span class="content-line">programs go. I hold a B.Sc. from the University of Toronto
+        where I </span><span class="content-line">studied design and cognitive psychology, but on a day to
+        day basis, </span><span class="content-line">I’m a Design Engineer at Cardiogram.</span>
       </section>
 
-      <section class="content-section">
+      <section class="content-section cardiogram">
         <header class="content-header">
-          <h3 class="cardiogram">Cardiogram</h3>
+          <h3>Cardiogram</h3>
         </header>
-        We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /> heart disease. My time is split between building out new features, designing user-driven experiences, and debating healthcare reform.
+        <div>
+          <span class="content-line">We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /> </span><span class="content-line">heart disease. My time is split between building out new features, </span><span class="content-line">designing user-driven experiences, and debating healthcare reform.</span>
+        </div>
       </section>
 
-      <section class="content-section">
+      <section class="content-section slyce">
         <header class="content-header">
-          <h3 class="slyce">Slyce</h3>
+          <h3>Slyce</h3>
         </header>
-        Before that I was the third engineer hire at Slyce. The team grew
-        to over 100 employees and eventually went public. I led the front
-        end team there and worked on a wide variety of projects ranging
-        from <ViewButton link="http://craves.io/" title="product" />, <ViewButton link="https://dribbble.com/shots/2763799-Slyce-Developer-Portal" title="SDKs" />, internal tools, to powerful data analysis apps.
+        <div>
+          <span class="content-line">Before that I was the third engineer hire at Slyce. The team grew
+          to </span><span class="content-line">over 100 employees and eventually went public. I led the front
+          end </span><span class="content-line">team there and worked on a wide variety of projects ranging
+          from </span><span class="content-line"><ViewButton link="http://craves.io/" title="product" />, <ViewButton link="https://dribbble.com/shots/2763799-Slyce-Developer-Portal" title="SDKs" />, internal tools, to powerful data analysis apps.</span>
+        </div>
       </section>
 
-      <section class="content-section">
+      <section class="content-section other">
         <header class="content-header">
-          <h3 class="other">Once upon a time</h3>
+          <h3>Once upon a time</h3>
         </header>
-        I helped start <ViewButton link="http://kyh.io/TEDxUofT/" title="TEDxUofT" /> as their Creative Director and eventually
-        went on to join the <ViewButton link="http://www.tedxtoronto.com/" title="TEDxToronto" /> team. I also had a short lived
-        career in advertising as an Art Director for brands such as <ViewButton link="http://www.nissan.ca" title="Nissan" />
-        and <ViewButton link="https://www.bloomberg.com/news/articles/2013-11-05/scotiabank-rebrands-ing-direct-as-tangerine" title="ING Direct" />.
+        <div>
+          <span class="content-line">I helped start <ViewButton link="http://kyh.io/TEDxUofT/" title="TEDxUofT" /> as their Creative Director and eventually
+          went </span><span class="content-line">on to join the <ViewButton link="http://www.tedxtoronto.com/" title="TEDxToronto" /> team. I also had a short lived
+          career in </span><span class="content-line">advertising as an Art Director for brands such as <ViewButton link="http://www.nissan.ca" title="Nissan" />
+          and </span><span class="content-line"><ViewButton link="https://www.bloomberg.com/news/articles/2013-11-05/scotiabank-rebrands-ing-direct-as-tangerine" title="ING Direct" />.</span>
+        </div>
       </section>
 
-      <section class="content-section">
-        You'll occasionally find me dabbling in the open source world,
-        contributing to <ViewButton link="https://github.com/facebook/react" title="Facebook" /> projects, <ViewButton link="https://github.com/angular-ui/bootstrap" title="Bootstrap" />, and <ViewButton link="https://en.wikipedia.org/wiki/User:Tehkaiyu" title="Wikipedia" />.
-        I sometimes <ViewButton link="https://itunes.apple.com/US/app/id1209391711" title="draw things" /> when I’m bored, but spend most
-        of my days <ViewButton link="http://itsbananas.club/" title="procrastinating" />.
+      <section class="content-section details">
+        <span class="content-line">You'll occasionally find me dabbling in the open source world,</span>
+        <span class="content-line">contributing to <ViewButton link="https://github.com/facebook/react" title="Facebook" /> projects, <ViewButton link="https://github.com/angular-ui/bootstrap" title="Bootstrap" />, and <ViewButton link="https://en.wikipedia.org/wiki/User:Tehkaiyu" title="Wikipedia" />.
+        I </span><span class="content-line">sometimes <ViewButton link="https://itunes.apple.com/US/app/id1209391711" title="draw things" /> when I’m bored, but spend most
+        of my days </span><span class="content-line"><ViewButton link="http://itsbananas.club/" title="procrastinating" />.</span>
       </section>
 
       <section class="content-section">
@@ -72,6 +78,7 @@ import Social from './components/Social';
 import ImageLoader from './components/ImageLoader';
 import Shape from './components/Shape';
 import RevealFx from './services/reveal';
+import SentenceFx from './services/sentence-mask';
 
 function createRevealConfig(delay = 0) {
   return {
@@ -99,7 +106,11 @@ function createRevealConfig(delay = 0) {
 }
 
 function $(qs) {
-  return document.querySelector(qs);
+  const elements = document.querySelectorAll(qs);
+  if (elements.length === 1) {
+    return elements[0];
+  }
+  return elements;
 }
 
 export default {
@@ -131,20 +142,34 @@ export default {
     // Create reveal elements
     new RevealFx(
       $('.content-title'),
-      createRevealConfig(700)
+      createRevealConfig(1000)
     ).reveal();
+    new SentenceFx($('.intro .content-line'))
+      .reveal(1300);
+
     new RevealFx(
-      $('.cardiogram'),
-      createRevealConfig(1200)
+      $('.cardiogram h3'),
+      createRevealConfig(3000)
     ).reveal();
+    new SentenceFx($('.cardiogram .content-line'))
+      .reveal(3300);
+
     new RevealFx(
-      $('.slyce'),
-      createRevealConfig(1700)
+      $('.slyce h3'),
+      createRevealConfig(5000)
     ).reveal();
+    new SentenceFx($('.slyce .content-line'))
+      .reveal(5300);
+
     new RevealFx(
-      $('.other'),
-      createRevealConfig(2200)
+      $('.other h3'),
+      createRevealConfig(7000)
     ).reveal();
+    new SentenceFx($('.other .content-line'))
+      .reveal(7300);
+
+    new SentenceFx($('.details .content-line'))
+      .reveal(8300);
   },
   methods: {
     toggleView(view) {
@@ -275,9 +300,21 @@ img {
   margin-bottom: 1rem;
 }
 
-.content-section span {
+.content-line {
+  position: relative;
   display: inline-block;
   white-space: nowrap;
+}
+
+.faded__content {
+  color: #cdd2d6;
+}
+
+.reveal__content {
+  position: absolute;
+  overflow: hidden;
+  left: 0;
+  width: 0;
 }
 
 .block-revealer__element {
@@ -297,6 +334,13 @@ img {
   bottom: 0;
   left: -50px;
   right: -50px;
+}
+
+@media (max-width: 750px) {
+  .content-line {
+    display: inline;
+    white-space: normal;
+  }
 }
 
 @media (max-width: 500px) {

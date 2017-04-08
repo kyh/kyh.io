@@ -1,21 +1,5 @@
 import anime from 'animejs';
-
-// Helper vars and functions.
-function extend(a, b) {
-  for (const key in b) {
-    if (b.hasOwnProperty(key)) {
-      a[key] = b[key];
-    }
-  }
-  return a;
-}
-
-function createDOMEl(type, className, content) {
-  const el = document.createElement(type);
-  el.className = className || '';
-  el.innerHTML = content || '';
-  return el;
-}
+import { extend, createDOMEl } from './util';
 
 /**
  * RevealFx obj.
