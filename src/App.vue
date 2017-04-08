@@ -17,7 +17,7 @@
           <h3>Cardiogram</h3>
         </header>
         <div>
-          <span class="content-line">We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /> </span><span class="content-line">heart disease. My time is split between building out new features, </span><span class="content-line">designing user-driven experiences, and debating healthcare reform.</span>
+          <span class="content-line">We're an AI <ViewButton link="https://techcrunch.com/2016/10/20/cardiogram-raises-2-million-to-predict-heart-health-issues-using-wearbles/" title="startup" /> that uses heart rate data to <ViewButton link="https://blog.cardiogr.am/what-do-normal-and-abnormal-heart-rhythms-look-like-on-apple-watch-7b33b4a8ecfa" title="predict" /> and <ViewButton link="https://itunes.apple.com/us/app/cardiogram/id1000017994?ls=1&mt=8" title="prevent" /></span><span class="content-line"> heart disease. My time is split between building out new features, </span><span class="content-line">designing user-driven experiences, and debating healthcare reform.</span>
         </div>
       </section>
 
