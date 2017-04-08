@@ -13,6 +13,7 @@
   "dependencies": {
     "animejs": "2.0.1",
     "three": "0.84.0",
+    "three-orbit-controls": "^82.1.0",
     "tween.js": "16.6.0",
     "vue": "^2.2.2"
   },
