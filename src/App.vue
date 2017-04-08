@@ -56,10 +56,11 @@
     </section>
   </section>
 
-  <ImageLoader
-    class="fg"
-    url="/static/images/fg.png"
-  />
+  <footer class="footer">
+    <Shape />
+    <ImageLoader url="/static/images/fg.png" />
+  </footer>
+
 </main>
 </template>
 
@@ -69,6 +70,7 @@ import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
 import Social from './components/Social';
 import ImageLoader from './components/ImageLoader';
+import Shape from './components/Shape';
 import RevealFx from './services/reveal';
 
 function createRevealConfig(delay = 0) {
@@ -108,6 +110,7 @@ export default {
     Social,
     Logo,
     ImageLoader,
+    Shape,
     // Projects
     // Cardiogram:
     // Slyce:
@@ -255,7 +258,6 @@ img {
 
 .content {
   padding: 120px 60px 70px 100px;
-  /* box-shadow: 0 3px 10px rgba(50,50,93,.11), 0 1px 2px rgba(0,0,0,.08); */
 }
 
 .content-title {
@@ -289,7 +291,7 @@ img {
   opacity: 0;
 }
 
-.fg {
+.footer {
   pointer-events: none;
   position: absolute;
   bottom: 0;
