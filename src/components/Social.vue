@@ -37,6 +37,8 @@ export default {
   margin-right: 5px;
   padding: 7px;
   text-decoration: none;
+  position: relative;
+  z-index: 2;
 }
 
 .sm-wrapper > a path {

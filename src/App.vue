@@ -72,11 +72,13 @@
 
 <script>
 import anime from 'animejs';
+
 import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
 import Social from './components/Social';
 import ImageLoader from './components/ImageLoader';
 import Shape from './components/Shape';
+
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
 
@@ -104,6 +106,28 @@ function createRevealConfig(delay = 0) {
     },
   };
 }
+
+const animationDelays = {
+  intro: {
+    title: 1000,
+    content: 1300,
+  },
+  cardiogram: {
+    title: 3000,
+    content: 3300,
+  },
+  slyce: {
+    title: 5000,
+    content: 5300,
+  },
+  other: {
+    title: 7000,
+    content: 7300,
+  },
+  details: {
+    content: 8300,
+  },
+};
 
 function $(qs) {
   const elements = document.querySelectorAll(qs);
@@ -142,34 +166,31 @@ export default {
     // Create reveal elements
     new RevealFx(
       $('.content-title'),
-      createRevealConfig(1000)
+      createRevealConfig(animationDelays.intro.title)
     ).reveal();
-    new SentenceFx($('.intro .content-line'))
-      .reveal(1300);
-
     new RevealFx(
       $('.cardiogram h3'),
-      createRevealConfig(3000)
+      createRevealConfig(animationDelays.cardiogram.title)
     ).reveal();
-    new SentenceFx($('.cardiogram .content-line'))
-      .reveal(3300);
-
     new RevealFx(
       $('.slyce h3'),
-      createRevealConfig(5000)
+      createRevealConfig(animationDelays.slyce.title)
     ).reveal();
-    new SentenceFx($('.slyce .content-line'))
-      .reveal(5300);
-
     new RevealFx(
       $('.other h3'),
-      createRevealConfig(7000)
+      createRevealConfig(animationDelays.other.title)
     ).reveal();
-    new SentenceFx($('.other .content-line'))
-      .reveal(7300);
 
+    new SentenceFx($('.intro .content-line'))
+      .reveal(animationDelays.intro.content);
+    new SentenceFx($('.cardiogram .content-line'))
+      .reveal(animationDelays.cardiogram.content);
+    new SentenceFx($('.slyce .content-line'))
+      .reveal(animationDelays.slyce.content);
+    new SentenceFx($('.other .content-line'))
+      .reveal(animationDelays.other.content);
     new SentenceFx($('.details .content-line'))
-      .reveal(8300);
+      .reveal(animationDelays.details.content);
   },
   methods: {
     toggleView(view) {
@@ -344,6 +365,9 @@ img {
 }
 
 @media (max-width: 500px) {
+  .content-wrapper {
+    max-width: 100%;
+  }
   .scene {
     padding: 0 0 90px;
   }

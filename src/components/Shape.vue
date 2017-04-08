@@ -16,6 +16,14 @@
   top: -205px;
   pointer-events: all;
 }
+
+@media (max-width: 500px) {
+  #shape-icosahedron {
+    top: -70px;
+    width: 150px;
+    height: 150px;
+  }
+}
 </style>
 
 <script>

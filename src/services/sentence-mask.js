@@ -1,5 +1,5 @@
 import anime from 'animejs';
-import { createDOMEl } from './util';
+import { createDOMEl, isMobile } from './util';
 
 /**
  * SentenceFx obj.
@@ -33,6 +33,7 @@ SentenceFx.prototype.layout = function() {
   });
 
   this.targets = this.sentencesElement.map((sEl) => sEl.revealer);
+  this.content = this.sentencesElement.map((sEl) => sEl.contentCopy);
 };
 
 SentenceFx.prototype.reveal = function(delay) {
@@ -45,12 +46,21 @@ SentenceFx.prototype.reveal = function(delay) {
     delay,
     easing: 'linear',
   });
-  anime({
-    targets: this.targets,
-    width: '100%',
-    delay: (el, i, l) => totalDelay + (i * 300),
-    easing: 'easeInOutQuart',
-  });
+  if (!isMobile()) {
+    anime({
+      targets: this.targets,
+      width: '100%',
+      delay: (el, i, l) => totalDelay + (i * 300),
+      easing: 'easeInOutQuart',
+    });
+  } else {
+    anime({
+      targets: this.content,
+      color: '#68788c',
+      delay: (el, i, l) => totalDelay + (i * 300),
+      easing: 'easeInOutQuart',
+    });
+  }
 };
 
 export default SentenceFx;
