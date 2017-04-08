@@ -1,12 +1,13 @@
 import anime from 'animejs';
-import { createDOMEl, isMobile } from './util';
+import { createDOMEl } from './util';
 
 /**
  * SentenceFx obj.
  */
-function SentenceFx(sentencesElement) {
+function SentenceFx(sentencesElement, delay = 0) {
   this.sentencesElement = [...sentencesElement];
   this.sentencesContainer = sentencesElement[0].parentNode;
+  this.delay = delay;
   this.init();
 }
 
@@ -37,27 +38,28 @@ SentenceFx.prototype.layout = function() {
 };
 
 SentenceFx.prototype.reveal = function(delay) {
-  const totalDelay = 500 + delay;
+  const wait = delay || this.delay;
+  const totalWait = 500 + wait;
   anime({
     targets: this.sentencesContainer,
     translateX: 0,
     opacity: 1,
     duration: 500,
-    delay,
+    delay: wait,
     easing: 'linear',
   });
-  if (!isMobile()) {
+  if (window.innerWidth >= 750) {
     anime({
       targets: this.targets,
       width: '100%',
-      delay: (el, i, l) => totalDelay + (i * 300),
+      delay: (el, i, l) => totalWait + (i * 300),
       easing: 'easeInOutQuart',
     });
   } else {
     anime({
       targets: this.content,
       color: '#68788c',
-      delay: (el, i, l) => totalDelay + (i * 300),
+      delay: (el, i, l) => totalWait + (i * 300),
       easing: 'easeInOutQuart',
     });
   }

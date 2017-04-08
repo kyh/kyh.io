@@ -52,10 +52,10 @@
         of my days </span><span class="content-line"><ViewButton link="http://itsbananas.club/" title="procrastinating" />.</span>
       </section>
 
-      <section class="content-section">
-        I’d love to see your beautiful face, so feel free to reach out if you’re
-        in the Bay Area. If you're elsewhere, I'd still love to hear from you!
-        Shoot me a message on LinkedIn or just tweet at me.
+      <section class="content-section contact">
+        <span class="content-line">I’d love to see your beautiful face, so feel free to reach out if you’re
+        in </span><span class="content-line">the Bay Area. If you're elsewhere, I'd still love to hear from you!
+        Shoot </span><span class="content-line">me a message on LinkedIn or just tweet at me.</span>
       </section>
 
       <Social />
@@ -72,6 +72,7 @@
 
 <script>
 import anime from 'animejs';
+import scrollMonitor from 'scrollmonitor';
 
 import Logo from './components/Logo';
 import ViewButton from './components/ViewButton';
@@ -127,6 +128,9 @@ const animationDelays = {
   details: {
     content: 8300,
   },
+  contact: {
+    content: 9000,
+  },
 };
 
 function $(qs) {
@@ -168,29 +172,47 @@ export default {
       $('.content-title'),
       createRevealConfig(animationDelays.intro.title)
     ).reveal();
+    new SentenceFx(
+      $('.intro .content-line'),
+      animationDelays.intro.content
+    ).reveal();
+
     new RevealFx(
       $('.cardiogram h3'),
       createRevealConfig(animationDelays.cardiogram.title)
     ).reveal();
+    new SentenceFx(
+      $('.cardiogram .content-line'),
+      animationDelays.cardiogram.content
+    ).reveal();
+
     new RevealFx(
       $('.slyce h3'),
       createRevealConfig(animationDelays.slyce.title)
     ).reveal();
-    new RevealFx(
-      $('.other h3'),
-      createRevealConfig(animationDelays.other.title)
+    new SentenceFx(
+      $('.slyce .content-line'),
+      animationDelays.slyce.content
     ).reveal();
 
-    new SentenceFx($('.intro .content-line'))
-      .reveal(animationDelays.intro.content);
-    new SentenceFx($('.cardiogram .content-line'))
-      .reveal(animationDelays.cardiogram.content);
-    new SentenceFx($('.slyce .content-line'))
-      .reveal(animationDelays.slyce.content);
-    new SentenceFx($('.other .content-line'))
-      .reveal(animationDelays.other.content);
-    new SentenceFx($('.details .content-line'))
-      .reveal(animationDelays.details.content);
+    // Other section
+    let isShown = false;
+    const $otherSectionTitle = $('.other h3');
+    const otherSectionMonitor = scrollMonitor.create($otherSectionTitle);
+    const otherSectionReveal = new RevealFx(
+      $otherSectionTitle,
+      createRevealConfig()
+    );
+
+    otherSectionMonitor.enterViewport(() => {
+      if (!isShown) {
+        otherSectionReveal.reveal();
+        new SentenceFx($('.other .content-line')).reveal(300);
+        new SentenceFx($('.details .content-line')).reveal(1300);
+        new SentenceFx($('.contact .content-line')).reveal(2300);
+        isShown = true;
+      }
+    });
   },
   methods: {
     toggleView(view) {
