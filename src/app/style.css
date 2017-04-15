@@ -24,6 +24,7 @@ body {
   background: #f9f9f9;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 *, *:before, *:after {
@@ -124,6 +125,7 @@ img {
   background: #fff;
   max-width: 640px;
   overflow: hidden;
+  width: 0;
 }
 
 .content {
