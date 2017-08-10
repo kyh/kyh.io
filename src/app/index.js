@@ -1,6 +1,5 @@
 import './style.css';
 import anime from 'animejs';
-import scrollMonitor from 'scrollmonitor';
 
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
@@ -40,22 +39,18 @@ const animationDelays = {
     content: 1300,
   },
   cardiogram: {
+    title: 2000,
+    content: 2300,
+  },
+  other: {
     title: 3000,
     content: 3300,
   },
-  slyce: {
-    title: 5000,
-    content: 5300,
-  },
-  other: {
-    title: 7000,
-    content: 7300,
-  },
   details: {
-    content: 8300,
+    content: 4300,
   },
   contact: {
-    content: 9000,
+    content: 5000,
   },
 };
 
@@ -98,30 +93,18 @@ new SentenceFx(
 ).reveal();
 
 new RevealFx(
-  $('.slyce h3'),
-  createRevealConfig(animationDelays.slyce.title)
+  $('.other h3'),
+  createRevealConfig(animationDelays.other.title)
 ).reveal();
 new SentenceFx(
-  $('.slyce .content-line'),
-  animationDelays.slyce.content
+  $('.other .content-line'),
+  animationDelays.other.content
 ).reveal();
-
-// Other section
-let isShown = false;
-const $otherSectionTitle = $('.other h3');
-const otherSectionMonitor = scrollMonitor.create($otherSectionTitle);
-const otherSectionReveal = new RevealFx(
-  $otherSectionTitle,
-  createRevealConfig()
-);
-
-otherSectionMonitor.enterViewport(() => {
-  if (!isShown) {
-    otherSectionReveal.reveal();
-    new SentenceFx($('.other .content-line')).reveal(300);
-    new SentenceFx($('.details .content-line')).reveal(1300);
-    new SentenceFx($('.contact .content-line')).reveal(2300);
-    isShown = true;
-  }
-});
-
+new SentenceFx(
+  $('.details .content-line'),
+  animationDelays.details.content
+).reveal();
+new SentenceFx(
+  $('.contact .content-line'),
+  animationDelays.contact.content
+).reveal();
