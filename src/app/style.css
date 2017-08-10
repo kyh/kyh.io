@@ -147,6 +147,18 @@ img {
   margin-bottom: 1rem;
 }
 
+.content-header > h3 a {
+  color: #68788c;
+  outline: none;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.content-header > h3 a:hover,
+.content-header > h3 a:active {
+  color: #424242;
+}
+
 .content-line {
   position: relative;
   display: inline-block;
