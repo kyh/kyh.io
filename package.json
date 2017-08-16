@@ -43,6 +43,7 @@
   "dependencies": {
     "animejs": "2.0.1",
     "extract-text-webpack-plugin": "^2.1.0",
+    "intersection-observer": "^0.4.0",
     "scrollmonitor": "^1.2.3",
     "three": "^0.84.0",
     "three-orbit-controls": "^82.1.0",
