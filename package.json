@@ -14,11 +14,11 @@
     "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "NODE_ENV=production npm run clean && webpack -p",
+    "clean": "rimraf build",
     "deploy": "npm run build && npm run copy",
-    "copy": "copyfiles -f dist/* .",
-    "dev": "webpack-dev-server"
+    "copy": "copyfiles -f build/* .",
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
   },
   "devDependencies": {
     "eslint": "5.8.0",
@@ -28,6 +28,7 @@
     "eslint-plugin-jsx-a11y": "6.1.2",
     "eslint-plugin-prettier": "3.0.0",
     "eslint-plugin-react": "7.11.1",
+    "parcel-bundler": "^1.10.3",
     "prettier": "1.14.3"
   },
   "dependencies": {
