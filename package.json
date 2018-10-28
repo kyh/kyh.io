@@ -1,8 +1,18 @@
 {
   "name": "kyh.io",
-  "version": "1.0.0",
   "description": "Landing page to Kaiyu's website",
-  "main": "index.js",
+  "version": "1.1.0",
+  "main": "src/index.html",
+  "author": "Kaiyu Hsu",
+  "license": "MIT",
+  "homepage": "https://kyh.io",
+  "repository": {
+    "type": "git",
+    "url": "https://tehkaiyu@github.com/tehkaiyu/tehkaiyu.github.io.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "build": "NODE_ENV=production npm run clean && webpack -p",
@@ -10,46 +20,17 @@
     "copy": "copyfiles -f dist/* .",
     "dev": "webpack-dev-server"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://tehkaiyu@github.com/tehkaiyu/tehkaiyu.github.io.git"
-  },
-  "author": "Kaiyu Hsu",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
-  },
-  "homepage": "https://github.com/tehkaiyu/tehkaiyu.github.io",
   "devDependencies": {
-    "autoprefixer": "6.7.3",
-    "babel-core": "^6.17.0",
-    "babel-eslint": "7.1.1",
-    "babel-loader": "^6.2.0",
-    "babel-preset-env": "^1.1.4",
-    "babel-preset-react": "^6.16.0",
-    "copyfiles": "^1.2.0",
-    "css-loader": "^0.26.1",
-    "eslint": "2.13.1",
-    "eslint-config-airbnb": "9.0.1",
-    "eslint-plugin-import": "1.10.0",
-    "eslint-plugin-jsx-a11y": "1.5.5",
-    "eslint-plugin-react": "5.2.2",
-    "html-webpack-plugin": "^2.24.1",
-    "postcss-loader": "1.3.1",
-    "rimraf": "^2.5.4",
-    "style-ext-html-webpack-plugin": "^3.4.1",
-    "style-loader": "^0.13.1",
-    "webpack": "^2.2.0-rc.0",
-    "webpack-dev-middleware": "^1.9.0",
-    "webpack-dev-server": "^2.2.0-rc.0"
+    "eslint-config-airbnb": "17.1.0",
+    "eslint-config-prettier": "3.1.0",
+    "eslint-plugin-prettier": "3.0.0",
+    "prettier": "1.14.3"
   },
   "dependencies": {
-    "animejs": "2.0.1",
-    "extract-text-webpack-plugin": "^2.1.0",
-    "intersection-observer": "^0.4.0",
-    "scrollmonitor": "^1.2.3",
-    "three": "^0.84.0",
-    "three-orbit-controls": "^82.1.0",
-    "tween.js": "^16.6.0"
+    "animejs": "2.2.0",
+    "intersection-observer": "0.5.1",
+    "three": "0.97.0",
+    "three-orbit-controls": "82.1.0",
+    "tween.js": "16.6.0"
   }
 }
