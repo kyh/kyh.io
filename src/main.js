@@ -1,13 +1,10 @@
-import './style.css';
-
-require('intersection-observer');
-
 import anime from 'animejs';
-
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
 import AnimatedShape from './services/shapes';
 import { preloadImage } from './services/load-image';
+
+require('intersection-observer');
 
 const icosahedron = new AnimatedShape('shape-icosahedron', 'icosahedron', 3000);
 icosahedron.init();
@@ -80,37 +77,37 @@ anime({
 // Create reveal elements
 new RevealFx(
   $('.content-title'),
-  createRevealConfig(animationDelays.intro.title)
+  createRevealConfig(animationDelays.intro.title),
 ).reveal();
 new SentenceFx(
   $('.intro .content-line'),
-  animationDelays.intro.content
+  animationDelays.intro.content,
 ).reveal();
 
 new RevealFx(
   $('.cardiogram h3'),
-  createRevealConfig(animationDelays.cardiogram.title)
+  createRevealConfig(animationDelays.cardiogram.title),
 ).reveal();
 new SentenceFx(
   $('.cardiogram .content-line'),
-  animationDelays.cardiogram.content
+  animationDelays.cardiogram.content,
 ).reveal();
 
 new RevealFx(
   $('.other h3'),
-  createRevealConfig(animationDelays.other.title)
+  createRevealConfig(animationDelays.other.title),
 ).reveal();
 new SentenceFx(
   $('.other .content-line'),
-  animationDelays.other.content
+  animationDelays.other.content,
 ).reveal();
 new SentenceFx(
   $('.details .content-line'),
-  animationDelays.details.content
+  animationDelays.details.content,
 ).reveal();
 new SentenceFx(
   $('.contact .content-line'),
-  animationDelays.contact.content
+  animationDelays.contact.content,
 ).reveal();
 
 // Get all of the images that are marked up to lazy load
@@ -118,13 +115,13 @@ const images = document.querySelectorAll('img');
 const config = {
   // If the image gets within 50px in the Y axis, start the download.
   rootMargin: '50px 0px',
-  threshold: 0.01
+  threshold: 0.01,
 };
 
-function onIntersection(entries) {
+// The observer for the images on the page
+const observer = new IntersectionObserver((entries) => {
   // Loop through the entries
-  entries.forEach(entry => {
-    console.log(entry);
+  entries.forEach((entry) => {
     // Are we in viewport?
     if (entry.intersectionRatio > 0) {
       // Stop watching and load the image
@@ -132,11 +129,8 @@ function onIntersection(entries) {
       preloadImage(entry.target);
     }
   });
-}
+}, config);
 
-// The observer for the images on the page
-const observer = new IntersectionObserver(onIntersection, config);
-
-images.forEach(image => {
+images.forEach((image) => {
   observer.observe(image);
 });

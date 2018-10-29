@@ -20,6 +20,18 @@
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html"
   },
+  "eslintConfig": {
+    "extends": ["airbnb", "plugin:prettier/recommended"],
+    "env": {
+      "browser": true,
+      "node": true
+    }
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "arrowParens": "always"
+  },
   "devDependencies": {
     "eslint": "5.8.0",
     "eslint-config-airbnb": "17.1.0",
