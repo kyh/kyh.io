@@ -32,6 +32,7 @@ jspm_packages
 
 # Build
 build
+dist
 
 # npm package lock
 package-lock.json
@@ -39,3 +40,4 @@ yarn.lock
 
 # Others
 .DS_Store
+.cache
