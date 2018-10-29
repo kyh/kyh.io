@@ -2,9 +2,6 @@ import anime from 'animejs';
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
 import AnimatedShape from './services/shapes';
-import { preloadImage } from './services/load-image';
-
-require('intersection-observer');
 
 const icosahedron = new AnimatedShape('shape-icosahedron', 'icosahedron', 3000);
 icosahedron.init();
@@ -109,28 +106,3 @@ new SentenceFx(
   $('.contact .content-line'),
   animationDelays.contact.content,
 ).reveal();
-
-// Get all of the images that are marked up to lazy load
-const images = document.querySelectorAll('img');
-const config = {
-  // If the image gets within 50px in the Y axis, start the download.
-  rootMargin: '50px 0px',
-  threshold: 0.01,
-};
-
-// The observer for the images on the page
-const observer = new IntersectionObserver((entries) => {
-  // Loop through the entries
-  entries.forEach((entry) => {
-    // Are we in viewport?
-    if (entry.intersectionRatio > 0) {
-      // Stop watching and load the image
-      observer.unobserve(entry.target);
-      preloadImage(entry.target);
-    }
-  });
-}, config);
-
-images.forEach((image) => {
-  observer.observe(image);
-});
