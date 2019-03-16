@@ -14,8 +14,8 @@
     "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
   },
   "scripts": {
-    "clean": "rimraf build",
-    "deploy": "npm run build && npm run copy",
+    "clean": "del 'dist/**' './!(gitignore|node_modules|travis|CNAME|LICENSE|package.json|README.md|yarn.lock|src)'",
+    "deploy": "yarn clean && yarn build && yarn copy",
     "copy": "copyfiles -f dist/* .",
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html"
@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "copyfiles": "^2.1.0",
+    "del-cli": "^1.1.0",
     "eslint": "5.15.2",
     "eslint-config-airbnb": "17.1.0",
     "eslint-config-prettier": "4.1.0",
