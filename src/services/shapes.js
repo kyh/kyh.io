@@ -4,10 +4,14 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 THREE.OrbitControls = OrbitControls;
 
 const Detector = {
-  canvas: !! window.CanvasRenderingContext2D,
+  canvas: !!window.CanvasRenderingContext2D,
   webgl: (() => {
     try {
-      const canvas = document.createElement('canvas'); return !! (window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      const canvas = document.createElement('canvas');
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      );
     } catch (e) {
       return false;
     }
@@ -28,19 +32,22 @@ const Detector = {
     element.style.margin = '5em auto 0';
 
     if (!this.webgl) {
-      element.innerHTML = window.WebGLRenderingContext ? [
-        'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
-        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-      ].join('\n') : [
-        'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
-        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-      ].join('\n');
+      element.innerHTML = window.WebGLRenderingContext
+        ? [
+            'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
+            'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
+          ].join('\n')
+        : [
+            'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
+            'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
+          ].join('\n');
     }
     return element;
   },
 
   addGetWebGLMessage: (parameters = {}) => {
-    const parent = parameters.parent !== undefined ? parameters.parent : document.body;
+    const parent =
+      parameters.parent !== undefined ? parameters.parent : document.body;
     const id = parameters.id !== undefined ? parameters.id : 'oldie';
     const element = Detector.getWebGLErrorMessage();
     element.id = id;
@@ -49,8 +56,10 @@ const Detector = {
 };
 
 export default function AnimatedShape(container, shape) {
-  container = typeof container === 'string' ?
-    document.getElementById(container) : console.info('An ID container is here required');
+  container =
+    typeof container === 'string'
+      ? document.getElementById(container)
+      : console.info('An ID container is here required');
 
   let scene;
   let camera;
@@ -140,7 +149,7 @@ export default function AnimatedShape(container, shape) {
   function createLight() {
     lightGroup = [];
 
-    lightGroup[0] = new THREE.SpotLight(0xFFFFFF);
+    lightGroup[0] = new THREE.SpotLight(0xffffff);
     lightGroup[0].position.set(0, 25, 69);
     lightGroup[0].castShadow = true;
     lightGroup[0].angle = 0.2;
@@ -150,8 +159,12 @@ export default function AnimatedShape(container, shape) {
 
     camera.add(lightGroup[0]);
 
-    lightGroup[1] = new THREE.DirectionalLight(0xFFFFFF, 0.5);
-    lightGroup[1].position.set(camera.position.x, camera.position.y, camera.position.z);
+    lightGroup[1] = new THREE.DirectionalLight(0xffffff, 0.5);
+    lightGroup[1].position.set(
+      camera.position.x,
+      camera.position.y,
+      camera.position.z,
+    );
     lightGroup[1].castShadow = true;
     lightGroup[1].shadowMapDarkness = 0.9;
 
@@ -198,7 +211,6 @@ export default function AnimatedShape(container, shape) {
         geometry = getOctahedron();
         break;
     }
-
 
     mesh = new THREE.Mesh(geometry, material);
 
@@ -252,9 +264,11 @@ export default function AnimatedShape(container, shape) {
 
   function spinning(velocity, delta) {
     if (!isDragging) {
-      mesh.rotation.y = (mesh.rotation.y + delta * velocity / 2) % fullRotation;
+      mesh.rotation.y =
+        (mesh.rotation.y + (delta * velocity) / 2) % fullRotation;
       if (wait >= delta * 2) {
-        mesh.rotation.x = (mesh.rotation.x + delta * velocity / 4) % fullRotation;
+        mesh.rotation.x =
+          (mesh.rotation.x + (delta * velocity) / 4) % fullRotation;
       } else {
         wait += delta;
       }
@@ -272,16 +286,15 @@ export default function AnimatedShape(container, shape) {
   }
 
   function onMouseMove(event) {
-
     previousMousePosition = {
       x: event.offsetX,
       y: event.offsetY,
     };
 
-    return targets = {
+    return (targets = {
       targetRotationX,
       targetRotationY,
-    };
+    });
   }
 
   function onTouchStart(event) {
@@ -301,10 +314,12 @@ export default function AnimatedShape(container, shape) {
       event.preventDefault();
 
       mouseX = event.touches[0].pageX - renderHalfX;
-      targetRotationX = targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.05;
+      targetRotationX =
+        targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.05;
 
       mouseY = event.touches[0].pageY - renderHalfY;
-      targetRotationY = targetRotationOnMouseDownY + (mouseY - mouseYOnMouseDown) * 0.05;
+      targetRotationY =
+        targetRotationOnMouseDownY + (mouseY - mouseYOnMouseDown) * 0.05;
     }
   }
 
@@ -314,7 +329,6 @@ export default function AnimatedShape(container, shape) {
     document.removeEventListener('mouseup', onMouseUp, false);
     document.removeEventListener('mouseout', onMouseOut, false);
   }
-
 
   function onMouseOut(event) {
     isDragging = false;

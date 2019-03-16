@@ -30,12 +30,18 @@ RevealFx.prototype.options = {
     // percentage-based value representing how much of the area should be left covered.
     coverArea: 0,
     // Callback for when the revealer is covering the element (halfway through of the whole animation).
-    onCover: function(contentEl, revealerEl) { return false; },
+    onCover: function(contentEl, revealerEl) {
+      return false;
+    },
     // Callback for when the animation starts (animation start).
-    onStart: function(contentEl, revealerEl) { return false; },
+    onStart: function(contentEl, revealerEl) {
+      return false;
+    },
     // Callback for when the revealer has completed uncovering (animation end).
-    onComplete: function(contentEl, revealerEl) { return false; }
-  }
+    onComplete: function(contentEl, revealerEl) {
+      return false;
+    },
+  },
 };
 
 /**
@@ -50,11 +56,19 @@ RevealFx.prototype._init = function() {
  */
 RevealFx.prototype._layout = function() {
   const position = getComputedStyle(this.el).position;
-  if (position !== 'fixed' && position !== 'absolute' && position !== 'relative') {
+  if (
+    position !== 'fixed' &&
+    position !== 'absolute' &&
+    position !== 'relative'
+  ) {
     this.el.style.position = 'relative';
   }
   // Content element.
-  this.content = createDOMEl('div', 'block-revealer__content', this.el.innerHTML);
+  this.content = createDOMEl(
+    'div',
+    'block-revealer__content',
+    this.el.innerHTML,
+  );
   if (this.options.isContentHidden) {
     this.content.style.opacity = 0;
   }
@@ -121,24 +135,28 @@ RevealFx.prototype.reveal = function(revealSettings) {
   this.isAnimating = true;
 
   // Set the revealer element´s transform and transform origin.
-  const defaults = { // In case revealSettings is incomplete, its properties deafault to:
+  const defaults = {
+    // In case revealSettings is incomplete, its properties deafault to:
     duration: 500,
     easing: 'easeInOutQuint',
     delay: 0,
     bgcolor: '#f0f0f0',
     direction: 'lr',
-    coverArea: 0
+    coverArea: 0,
   };
 
   revealSettings = revealSettings || this.options.revealSettings;
   const direction = revealSettings.direction || defaults.direction;
   const transformSettings = this._getTransformSettings(direction);
 
-  this.revealer.style.WebkitTransform = this.revealer.style.transform = transformSettings.val;
-  this.revealer.style.WebkitTransformOrigin = this.revealer.style.transformOrigin = transformSettings.origin.initial;
+  this.revealer.style.WebkitTransform = this.revealer.style.transform =
+    transformSettings.val;
+  this.revealer.style.WebkitTransformOrigin = this.revealer.style.transformOrigin =
+    transformSettings.origin.initial;
 
   // Set the Revealer´s background color.
-  this.revealer.style.backgroundColor = revealSettings.bgcolor || defaults.bgcolor;
+  this.revealer.style.backgroundColor =
+    revealSettings.bgcolor || defaults.bgcolor;
 
   // Show it. By default the revealer element has opacity = 0 (CSS).
   this.revealer.style.opacity = 1;
@@ -151,23 +169,26 @@ RevealFx.prototype.reveal = function(revealSettings) {
       if (typeof revealSettings.onComplete === 'function') {
         revealSettings.onComplete(this.content, this.revealer);
       }
-    }
+    },
   };
-    // First animation step.
+  // First animation step.
   const animationSettings = {
     delay: revealSettings.delay || defaults.delay,
     complete: () => {
-      this.revealer.style.WebkitTransformOrigin = this.revealer.style.transformOrigin = transformSettings.origin.halfway;
+      this.revealer.style.WebkitTransformOrigin = this.revealer.style.transformOrigin =
+        transformSettings.origin.halfway;
       if (typeof revealSettings.onCover === 'function') {
         revealSettings.onCover(this.content, this.revealer);
       }
       anime(animationSettings_2);
-    }
+    },
   };
 
   animationSettings.targets = animationSettings_2.targets = this.revealer;
-  animationSettings.duration = animationSettings_2.duration = revealSettings.duration || defaults.duration;
-  animationSettings.easing = animationSettings_2.easing = revealSettings.easing || defaults.easing;
+  animationSettings.duration = animationSettings_2.duration =
+    revealSettings.duration || defaults.duration;
+  animationSettings.easing = animationSettings_2.easing =
+    revealSettings.easing || defaults.easing;
 
   const coverArea = revealSettings.coverArea || defaults.coverArea;
   if (direction === 'lr' || direction === 'rl') {

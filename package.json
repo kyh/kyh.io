@@ -16,12 +16,15 @@
   "scripts": {
     "clean": "rimraf build",
     "deploy": "npm run build && npm run copy",
-    "copy": "copyfiles -f build/* .",
+    "copy": "copyfiles -f dist/* .",
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html"
   },
   "eslintConfig": {
-    "extends": ["airbnb", "plugin:prettier/recommended"],
+    "extends": [
+      "airbnb",
+      "plugin:prettier/recommended"
+    ],
     "env": {
       "browser": true,
       "node": true
@@ -33,20 +36,21 @@
     "arrowParens": "always"
   },
   "devDependencies": {
-    "eslint": "5.8.0",
+    "copyfiles": "^2.1.0",
+    "eslint": "5.15.2",
     "eslint-config-airbnb": "17.1.0",
-    "eslint-config-prettier": "3.1.0",
-    "eslint-plugin-import": "2.14.0",
-    "eslint-plugin-jsx-a11y": "6.1.2",
-    "eslint-plugin-prettier": "3.0.0",
-    "eslint-plugin-react": "7.11.1",
+    "eslint-config-prettier": "4.1.0",
+    "eslint-plugin-import": "2.16.0",
+    "eslint-plugin-jsx-a11y": "6.2.1",
+    "eslint-plugin-prettier": "3.0.1",
+    "eslint-plugin-react": "7.12.4",
     "parcel-bundler": "^1.10.3",
-    "prettier": "1.14.3"
+    "prettier": "1.16.4"
   },
   "dependencies": {
-    "animejs": "2.2.0",
+    "animejs": "3.0.1",
     "intersection-observer": "0.5.1",
-    "three": "0.97.0",
+    "three": "0.102.1",
     "three-orbit-controls": "82.1.0",
     "tween.js": "16.6.0"
   }

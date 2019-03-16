@@ -276,7 +276,7 @@ img {
 
 #shape-icosahedron {
   position: absolute;
-  background: url('/assets/images/shadow.png');
+  background: url('/shadow.cc814765.png');
   background-size: auto 60%;
   background-repeat: no-repeat;
   background-position: center center;
@@ -295,3 +295,6 @@ img {
     height: 150px;
   }
 }
+
+
+/*# sourceMappingURL=/style.e308ff8e.css.map */

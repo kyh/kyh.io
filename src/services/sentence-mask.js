@@ -52,14 +52,14 @@ SentenceFx.prototype.reveal = function(delay) {
     anime({
       targets: this.targets,
       width: '100%',
-      delay: (el, i, l) => totalWait + (i * 300),
+      delay: (el, i, l) => totalWait + i * 300,
       easing: 'easeInOutQuart',
     });
   } else {
     anime({
       targets: this.content,
       color: '#68788c',
-      delay: (el, i, l) => totalWait + (i * 300),
+      delay: (el, i, l) => totalWait + i * 300,
       easing: 'easeInOutQuart',
     });
   }
