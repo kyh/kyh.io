@@ -1,22 +1,19 @@
 {
   "name": "kyh.io",
-  "description": "Landing page to Kaiyu's website",
-  "version": "1.1.0",
+  "description": "Kaiyu's personal website",
+  "version": "1.2.0",
   "main": "src/index.html",
   "author": "Kaiyu Hsu",
   "license": "MIT",
   "homepage": "https://kyh.io",
   "repository": {
     "type": "git",
-    "url": "https://tehkaiyu@github.com/tehkaiyu/tehkaiyu.github.io.git"
+    "url": "https://tehkaiyu@github.com/tehkaiyu/kyh.io.git"
   },
   "bugs": {
-    "url": "https://github.com/tehkaiyu/tehkaiyu.github.io/issues"
+    "url": "https://github.com/tehkaiyu/kyh.io/issues"
   },
   "scripts": {
-    "clean": "del 'dist/**' './!(gitignore|node_modules|travis|CNAME|LICENSE|package.json|README.md|yarn.lock|src)'",
-    "deploy": "yarn clean && yarn build && yarn copy",
-    "copy": "copyfiles -f dist/* .",
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html"
   },
@@ -35,24 +32,21 @@
     "trailingComma": "all",
     "arrowParens": "always"
   },
-  "devDependencies": {
-    "copyfiles": "^2.1.0",
-    "del-cli": "^1.1.0",
-    "eslint": "5.15.2",
-    "eslint-config-airbnb": "17.1.0",
-    "eslint-config-prettier": "4.1.0",
-    "eslint-plugin-import": "2.16.0",
-    "eslint-plugin-jsx-a11y": "6.2.1",
-    "eslint-plugin-prettier": "3.0.1",
-    "eslint-plugin-react": "7.12.4",
-    "parcel-bundler": "^1.10.3",
-    "prettier": "1.16.4"
-  },
   "dependencies": {
-    "animejs": "3.0.1",
-    "intersection-observer": "0.5.1",
-    "three": "0.102.1",
-    "three-orbit-controls": "82.1.0",
-    "tween.js": "16.6.0"
+    "animejs": "^3.1.0",
+    "intersection-observer": "^0.7.0",
+    "three": "^0.114.0",
+    "three-orbit-controls": "^82.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.18.3",
+    "parcel-bundler": "^1.10.3",
+    "prettier": "^1.19.1"
   }
 }
