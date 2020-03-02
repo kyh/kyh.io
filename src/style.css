@@ -153,12 +153,17 @@ img {
 }
 
 .content {
-  padding: 120px 60px 70px 100px;
+  padding: 100px 60px 70px 100px;
 }
 
 .content-title {
   display: inline-block;
   padding-right: 20px;
+}
+
+.content-subtitle {
+  font-size: 1.3rem;
+  color: #263238;
 }
 
 .content-section {
@@ -234,11 +239,14 @@ img {
     padding: 0 0 90px;
   }
   .content {
-    padding: 120px 40px 30px;
+    padding: 40px 40px 30px;
   }
   .fg {
     left: -20px;
     right: -20px;
+  }
+  .hidden-mobile {
+    display: none;
   }
 }
 

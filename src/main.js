@@ -34,6 +34,7 @@ function createRevealConfig(delay = 0) {
 const animationDelays = {
   intro: {
     title: 1000,
+    subtitle: 1100,
     content: 1300,
   },
   cardiogram: {
@@ -75,6 +76,10 @@ anime({
 new RevealFx(
   $('.content-title'),
   createRevealConfig(animationDelays.intro.title),
+).reveal();
+new RevealFx(
+  $('.content-subtitle'),
+  createRevealConfig(animationDelays.intro.subtitle),
 ).reveal();
 new SentenceFx(
   $('.intro .content-line'),
