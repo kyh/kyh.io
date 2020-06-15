@@ -82,6 +82,11 @@ img {
   max-width: 100%;
 }
 
+a:active,
+a:focus {
+  outline: auto 1px #6b74e6;
+}
+
 .link {
   font-weight: 500;
   outline: none;
@@ -132,6 +137,10 @@ img {
 
 .link:hover::before {
   width: 100%;
+}
+
+.link:focus {
+  outline: auto 1px #6b74e680;
 }
 
 /*
@@ -186,6 +195,10 @@ img {
 .content-header > h3 a:hover,
 .content-header > h3 a:active {
   color: #424242;
+}
+
+.content-header > h3 a:focus {
+  outline: auto 1px #42424280;
 }
 
 .content-line {
