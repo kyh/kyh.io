@@ -8,7 +8,7 @@ function RevealFx(el, options) {
   this.el = el;
   this.options = extend({}, this.options);
   extend(this.options, options);
-  this._init();
+  this.init();
 }
 
 /**
@@ -30,15 +30,15 @@ RevealFx.prototype.options = {
     // percentage-based value representing how much of the area should be left covered.
     coverArea: 0,
     // Callback for when the revealer is covering the element (halfway through of the whole animation).
-    onCover: function(contentEl, revealerEl) {
+    onCover: () => {
       return false;
     },
     // Callback for when the animation starts (animation start).
-    onStart: function(contentEl, revealerEl) {
+    onStart: () => {
       return false;
     },
     // Callback for when the revealer has completed uncovering (animation end).
-    onComplete: function(contentEl, revealerEl) {
+    onComplete: () => {
       return false;
     },
   },
@@ -47,15 +47,15 @@ RevealFx.prototype.options = {
 /**
  * Init.
  */
-RevealFx.prototype._init = function() {
-  this._layout();
+RevealFx.prototype.init = function init() {
+  this.layout();
 };
 
 /**
  * Build the necessary structure.
  */
-RevealFx.prototype._layout = function() {
-  const position = getComputedStyle(this.el).position;
+RevealFx.prototype.layout = function layout() {
+  const { position } = getComputedStyle(this.el);
   if (
     position !== 'fixed' &&
     position !== 'absolute' &&
@@ -83,36 +83,38 @@ RevealFx.prototype._layout = function() {
 /**
  * Gets the revealer element´s transform and transform origin.
  */
-RevealFx.prototype._getTransformSettings = function(direction) {
+RevealFx.prototype.getTransformSettings = function getTransformSettings(
+  direction,
+) {
   let val;
   let origin;
-  let origin_2;
+  let origin2;
 
   switch (direction) {
     case 'lr':
       val = 'scale3d(0,1,1)';
       origin = '0 50%';
-      origin_2 = '100% 50%';
+      origin2 = '100% 50%';
       break;
     case 'rl':
       val = 'scale3d(0,1,1)';
       origin = '100% 50%';
-      origin_2 = '0 50%';
+      origin2 = '0 50%';
       break;
     case 'tb':
       val = 'scale3d(1,0,1)';
       origin = '50% 0';
-      origin_2 = '50% 100%';
+      origin2 = '50% 100%';
       break;
     case 'bt':
       val = 'scale3d(1,0,1)';
       origin = '50% 100%';
-      origin_2 = '50% 0';
+      origin2 = '50% 0';
       break;
     default:
       val = 'scale3d(0,1,1)';
       origin = '0 50%';
-      origin_2 = '100% 50%';
+      origin2 = '100% 50%';
       break;
   }
 
@@ -120,14 +122,14 @@ RevealFx.prototype._getTransformSettings = function(direction) {
     // transform value.
     val,
     // initial and halfway/final transform origin.
-    origin: { initial: origin, halfway: origin_2 },
+    origin: { initial: origin, halfway: origin2 },
   };
 };
 
 /**
  * Reveal animation. If revealSettings is passed, then it will overwrite the options.revealSettings.
  */
-RevealFx.prototype.reveal = function(revealSettings) {
+RevealFx.prototype.reveal = function reveal(rs) {
   // Do nothing if currently animating.
   if (this.isAnimating) {
     return false;
@@ -145,9 +147,9 @@ RevealFx.prototype.reveal = function(revealSettings) {
     coverArea: 0,
   };
 
-  revealSettings = revealSettings || this.options.revealSettings;
+  const revealSettings = rs || this.options.revealSettings;
   const direction = revealSettings.direction || defaults.direction;
-  const transformSettings = this._getTransformSettings(direction);
+  const transformSettings = this.getTransformSettings(direction);
 
   this.revealer.style.WebkitTransform = this.revealer.style.transform =
     transformSettings.val;
@@ -163,7 +165,7 @@ RevealFx.prototype.reveal = function(revealSettings) {
 
   // Animate it.
   // Second animation step.
-  const animationSettings_2 = {
+  const animationSettings2 = {
     complete: () => {
       this.isAnimating = false;
       if (typeof revealSettings.onComplete === 'function') {
@@ -180,23 +182,23 @@ RevealFx.prototype.reveal = function(revealSettings) {
       if (typeof revealSettings.onCover === 'function') {
         revealSettings.onCover(this.content, this.revealer);
       }
-      anime(animationSettings_2);
+      anime(animationSettings2);
     },
   };
 
-  animationSettings.targets = animationSettings_2.targets = this.revealer;
-  animationSettings.duration = animationSettings_2.duration =
+  animationSettings.targets = animationSettings2.targets = this.revealer;
+  animationSettings.duration = animationSettings2.duration =
     revealSettings.duration || defaults.duration;
-  animationSettings.easing = animationSettings_2.easing =
+  animationSettings.easing = animationSettings2.easing =
     revealSettings.easing || defaults.easing;
 
   const coverArea = revealSettings.coverArea || defaults.coverArea;
   if (direction === 'lr' || direction === 'rl') {
     animationSettings.scaleX = [0, 1];
-    animationSettings_2.scaleX = [1, coverArea / 100];
+    animationSettings2.scaleX = [1, coverArea / 100];
   } else {
     animationSettings.scaleY = [0, 1];
-    animationSettings_2.scaleY = [1, coverArea / 100];
+    animationSettings2.scaleY = [1, coverArea / 100];
   }
 
   if (typeof revealSettings.onStart === 'function') {

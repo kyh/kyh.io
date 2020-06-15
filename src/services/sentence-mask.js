@@ -14,7 +14,7 @@ function SentenceFx(sentencesElement, delay = 0) {
 /**
  * Init.
  */
-SentenceFx.prototype.init = function() {
+SentenceFx.prototype.init = function init() {
   this.sentencesContainer.style.opacity = 0;
   this.sentencesContainer.style.transform = 'translateX(-30px)';
   this.layout();
@@ -23,7 +23,7 @@ SentenceFx.prototype.init = function() {
 /**
  * Build the necessary structure.
  */
-SentenceFx.prototype.layout = function() {
+SentenceFx.prototype.layout = function layout() {
   this.sentencesElement = this.sentencesElement.map((sEl) => {
     const revealer = createDOMEl('span', 'reveal__content', sEl.innerHTML);
     const contentCopy = createDOMEl('span', 'faded__content', sEl.innerHTML);
@@ -37,7 +37,7 @@ SentenceFx.prototype.layout = function() {
   this.content = this.sentencesElement.map((sEl) => sEl.contentCopy);
 };
 
-SentenceFx.prototype.reveal = function(delay) {
+SentenceFx.prototype.reveal = function reveal(delay) {
   const wait = delay || this.delay;
   const totalWait = 500 + wait;
   anime({
@@ -52,14 +52,14 @@ SentenceFx.prototype.reveal = function(delay) {
     anime({
       targets: this.targets,
       width: '100%',
-      delay: (el, i, l) => totalWait + i * 300,
+      delay: (el, i) => totalWait + i * 300,
       easing: 'easeInOutQuart',
     });
   } else {
     anime({
       targets: this.content,
       color: '#68788c',
-      delay: (el, i, l) => totalWait + i * 300,
+      delay: (el, i) => totalWait + i * 300,
       easing: 'easeInOutQuart',
     });
   }

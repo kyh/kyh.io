@@ -2,10 +2,6 @@ import 'lazysizes';
 import anime from 'animejs';
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
-import AnimatedShape from './services/shapes';
-
-const icosahedron = new AnimatedShape('shape-icosahedron', 'icosahedron', 3000);
-icosahedron.init();
 
 function createRevealConfig(delay = 0) {
   return {

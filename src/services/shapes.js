@@ -99,8 +99,7 @@ export default function AnimatedShape(container, shape) {
   function createScene() {
     scene = new THREE.Scene();
 
-    const HEIGHT = sizes.HEIGHT;
-    const WIDTH = sizes.WIDTH;
+    const { HEIGHT, WIDTH } = sizes;
 
     camera = new THREE.PerspectiveCamera(100, WIDTH / HEIGHT, 1, 100);
     camera.position.z = 30;
