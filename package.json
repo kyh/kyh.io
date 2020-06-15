@@ -1,7 +1,7 @@
 {
   "name": "kyh.io",
   "description": "Kaiyu's personal website",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "main": "src/index.html",
   "author": "Kaiyu Hsu",
   "license": "MIT",
@@ -33,20 +33,20 @@
     "arrowParens": "always"
   },
   "dependencies": {
-    "animejs": "^3.1.0",
-    "intersection-observer": "^0.7.0",
-    "three": "^0.114.0",
+    "animejs": "^3.2.0",
+    "intersection-observer": "^0.10.0",
+    "three": "^0.117.1",
     "three-orbit-controls": "^82.1.0"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-config-prettier": "^6.10.0",
-    "eslint-plugin-import": "^2.20.0",
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.21.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-prettier": "^3.1.2",
-    "eslint-plugin-react": "^7.18.3",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.20.0",
     "parcel-bundler": "^1.10.3",
-    "prettier": "^1.19.1"
+    "prettier": "^2.0.5"
   }
 }
