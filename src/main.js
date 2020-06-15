@@ -1,3 +1,4 @@
+import 'lazysizes';
 import anime from 'animejs';
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
@@ -106,8 +107,4 @@ new SentenceFx(
 new SentenceFx(
   $('.details .content-line'),
   animationDelays.details.content,
-).reveal();
-new SentenceFx(
-  $('.contact .content-line'),
-  animationDelays.contact.content,
 ).reveal();
