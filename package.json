@@ -15,7 +15,9 @@
   },
   "scripts": {
     "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "build": "parcel build src/index.html",
+    "clean": "rimraf dist",
+    "deploy": "npm run clean && npm run build"
   },
   "eslintConfig": {
     "extends": [
@@ -37,8 +39,7 @@
     "animejs": "^3.2.0",
     "intersection-observer": "^0.10.0",
     "lazysizes": "^5.2.2",
-    "three": "^0.117.1",
-    "three-orbit-controls": "^82.1.0"
+    "three": "^0.117.1"
   },
   "devDependencies": {
     "eslint": "^7.2.0",
@@ -50,6 +51,7 @@
     "eslint-plugin-react": "^7.20.0",
     "parcel-bundler": "^1.10.3",
     "parcel-plugin-asset-copier": "^1.1.0",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "rimraf": "^3.0.2"
   }
 }

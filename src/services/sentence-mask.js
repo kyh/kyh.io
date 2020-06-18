@@ -54,6 +54,7 @@ SentenceFx.prototype.reveal = function reveal(delay) {
       width: '100%',
       delay: (el, i) => totalWait + i * 300,
       easing: 'easeInOutQuart',
+      complete: this.onAnimationEnd.bind(this),
     });
   } else {
     anime({
@@ -61,8 +62,13 @@ SentenceFx.prototype.reveal = function reveal(delay) {
       color: '#68788c',
       delay: (el, i) => totalWait + i * 300,
       easing: 'easeInOutQuart',
+      complete: this.onAnimationEnd.bind(this),
     });
   }
+};
+
+SentenceFx.prototype.onAnimationEnd = function onAnimationEnd() {
+  this.content.forEach((el) => (el.style.visibility = 'hidden'));
 };
 
 export default SentenceFx;

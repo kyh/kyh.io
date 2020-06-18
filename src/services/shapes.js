@@ -1,7 +1,17 @@
-const THREE = require('three');
-const OrbitControls = require('three-orbit-controls')(THREE);
-
-THREE.OrbitControls = OrbitControls;
+import {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  CanvasRenderer,
+  PCFSoftShadowMap,
+  SpotLight,
+  DirectionalLight,
+  IcosahedronGeometry,
+  MeshPhongMaterial,
+  FlatShading,
+  Mesh,
+} from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const Detector = {
   canvas: !!window.CanvasRenderingContext2D,
@@ -55,7 +65,7 @@ const Detector = {
   },
 };
 
-export default function AnimatedShape(container, shape) {
+export default function AnimatedShape(container) {
   container =
     typeof container === 'string'
       ? document.getElementById(container)
@@ -65,15 +75,12 @@ export default function AnimatedShape(container, shape) {
   let camera;
   let renderer;
   let mesh;
-  let delta;
   let controls;
   let lightGroup;
-  let time;
   let mouseX;
   let mouseY;
   let renderHalfX;
   let renderHalfY;
-  let Controls;
 
   let targetRotationX = 0;
   let targetRotationY = 0;
@@ -81,8 +88,6 @@ export default function AnimatedShape(container, shape) {
   let targetRotationOnMouseDownY = 0;
   let mouseXOnMouseDown = 0;
   let mouseYOnMouseDown = 0;
-  const dragConst = 0.15;
-
   const sizes = {
     HEIGHT: container.offsetHeight,
     WIDTH: container.offsetWidth,
@@ -97,21 +102,21 @@ export default function AnimatedShape(container, shape) {
   let targets;
 
   function createScene() {
-    scene = new THREE.Scene();
+    scene = new Scene();
 
     const { HEIGHT, WIDTH } = sizes;
 
-    camera = new THREE.PerspectiveCamera(100, WIDTH / HEIGHT, 1, 100);
+    camera = new PerspectiveCamera(100, WIDTH / HEIGHT, 1, 100);
     camera.position.z = 30;
     camera.position.y = 0;
 
     if (Detector.webgl) {
-      renderer = new THREE.WebGLRenderer({
+      renderer = new WebGLRenderer({
         alpha: true,
         antialias: false,
       });
     } else {
-      renderer = new THREE.CanvasRenderer();
+      renderer = new CanvasRenderer();
     }
 
     renderHalfX = container.clientWidth / 2;
@@ -125,20 +130,20 @@ export default function AnimatedShape(container, shape) {
     renderer.shadowCameraNear = 3;
     renderer.shadowCameraFar = camera.far;
     renderer.shadowCameraFov = 75;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = PCFSoftShadowMap;
 
     renderer.shadowMapBias = 0.0039;
     renderer.shadowMapDarkness = 0.5;
     renderer.shadowMapWidth = 1024;
     renderer.shadowMapHeight = 1024;
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enableZoom = false;
-    controls.rotateSpeed = 0.05;
+    controls.rotateSpeed = 0.5;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.2;
+    controls.autoRotateSpeed = 2;
 
     container.appendChild(renderer.domElement);
 
@@ -148,7 +153,7 @@ export default function AnimatedShape(container, shape) {
   function createLight() {
     lightGroup = [];
 
-    lightGroup[0] = new THREE.SpotLight(0xffffff);
+    lightGroup[0] = new SpotLight(0xffffff);
     lightGroup[0].position.set(0, 25, 69);
     lightGroup[0].castShadow = true;
     lightGroup[0].angle = 0.2;
@@ -158,7 +163,7 @@ export default function AnimatedShape(container, shape) {
 
     camera.add(lightGroup[0]);
 
-    lightGroup[1] = new THREE.DirectionalLight(0xffffff, 0.5);
+    lightGroup[1] = new DirectionalLight(0xffffff, 0.5);
     lightGroup[1].position.set(
       camera.position.x,
       camera.position.y,
@@ -171,107 +176,28 @@ export default function AnimatedShape(container, shape) {
   }
 
   function getIcosahedron() {
-    return new THREE.IcosahedronGeometry(15);
-  }
-
-  function getCube() {
-    return new THREE.BoxGeometry(15, 15, 15);
-  }
-
-  function getTetrahedron() {
-    return new THREE.TetrahedronGeometry(15);
-  }
-
-  function getOctahedron() {
-    return new THREE.OctahedronGeometry(15);
+    return new IcosahedronGeometry(15);
   }
 
   function createShape() {
     let geometry;
 
-    const material = new THREE.MeshPhongMaterial({
+    const material = new MeshPhongMaterial({
       color: 0x949494,
       emissive: 0xa8a8a8,
-      shading: THREE.FlatShading,
+      shading: FlatShading,
       shininess: 75,
     });
 
-    switch (shape) {
-      case 'icosahedron':
-        geometry = getIcosahedron();
-        break;
-      case 'cube':
-        geometry = getCube();
-        break;
-      case 'tetrahedron':
-        geometry = getTetrahedron();
-        break;
-      case 'octahedron':
-        geometry = getOctahedron();
-        break;
-    }
+    geometry = getIcosahedron();
 
-    mesh = new THREE.Mesh(geometry, material);
+    mesh = new Mesh(geometry, material);
 
     mesh.position.y = 0;
     mesh.position.z = 0;
     mesh.castShadow = true;
 
     scene.add(mesh);
-  }
-
-  function getAmountAway() {
-    return fullRotation - mesh.rotation.y;
-  }
-
-  function getAmountPossible() {
-    return time * velocity;
-  }
-
-  function toRadians(angle) {
-    return angle * (Math.PI / 180);
-  }
-
-  function toDegrees(angle) {
-    return angle * (180 / Math.PI);
-  }
-
-  function move(delta) {
-    if (typeof delta === 'boolean') {
-      return velocity;
-    } else {
-      if (velocity < 0 && mesh.rotation.y == 0) {
-        return false;
-      }
-
-      mesh.rotation.y = (mesh.rotation.y + delta * velocity) % fullRotation;
-      time -= delta;
-
-      if (endVelocity) {
-        velocity = endVelocity * (getAmountAway() / endRotation);
-      } else if (getAmountAway() >= getAmountPossible()) {
-        endVelocity = velocity;
-        endRotation = getAmountAway();
-      } else {
-        velocity = parseFloat(speedUp * time);
-      }
-    }
-  }
-
-  let realVelocity;
-  let wait = 0;
-
-  function spinning(velocity, delta) {
-    if (!isDragging) {
-      mesh.rotation.y =
-        (mesh.rotation.y + (delta * velocity) / 2) % fullRotation;
-      if (wait >= delta * 2) {
-        mesh.rotation.x =
-          (mesh.rotation.x + (delta * velocity) / 4) % fullRotation;
-      } else {
-        wait += delta;
-      }
-    }
   }
 
   function onMouseDown(event) {
@@ -341,7 +267,6 @@ export default function AnimatedShape(container, shape) {
       loop.lastTime = time;
     }
 
-    const delta = time - loop.lastTime;
     loop.lastTime = time;
 
     requestAnimationFrame(loop);

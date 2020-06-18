@@ -309,6 +309,10 @@ a:focus {
   pointer-events: all;
 }
 
+#shape-icosahedron > canvas:focus {
+  outline: none;
+}
+
 @media (max-width: 500px) {
   #shape-icosahedron {
     top: -70px;
