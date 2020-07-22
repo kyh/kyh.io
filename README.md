@@ -16,4 +16,4 @@ npm run dev
 
 ## Deployment
 
-By pushing to master we will autodeploy on Netlify
+Pushing to master will autodeploy through Netlify
