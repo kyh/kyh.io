@@ -201,18 +201,18 @@ a:focus {
   white-space: nowrap;
 }
 
-.faded__content {
+.faded-content {
   color: var(--main-body-faded);
 }
 
-.reveal__content {
+.reveal-content {
   position: absolute;
   overflow: hidden;
   left: 0;
   width: 0;
 }
 
-.block-revealer__element {
+.block-revealer-element {
   position: absolute;
   top: 0;
   left: 0;
@@ -233,6 +233,10 @@ a:focus {
 
 .opacity-0 {
   opacity: 0;
+}
+
+.visibility-hidden {
+  visibility: hidden;
 }
 
 @media (max-width: 750px) {
