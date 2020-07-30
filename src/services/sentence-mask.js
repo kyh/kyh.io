@@ -6,11 +6,19 @@ function onAnimationEnd(elements) {
 }
 
 class SentenceFx {
-  constructor(sentencesElement, delay = 0) {
+  constructor(sentencesElement, parentClassName, delay = 0) {
     this.sentencesElement = [...sentencesElement];
-    this.sentencesContainer = sentencesElement[0].parentNode;
+    this.sentencesContainer = this.findParent(
+      parentClassName,
+      sentencesElement[0].parentNode
+    );
     this.delay = delay;
     this.init();
+  }
+
+  findParent(className, $el) {
+    if (!$el || $el.classList.contains(className)) return $el;
+    return this.findParent(className, $el.parentNode);
   }
 
   init() {

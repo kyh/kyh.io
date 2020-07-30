@@ -7,6 +7,14 @@ import { $, createRevealConfig } from "./services/util";
 const $content = $(".content-wrapper");
 $content.style.width = 0;
 
+const $links = $(".link");
+
+$links.forEach(($link) => {
+  $link.setAttribute("rel", "noreferrer noopener");
+  $link.setAttribute("target", "_blank");
+  $link.setAttribute("data-letters", $link.textContent);
+});
+
 // Animate content in
 anime({
   targets: $content,
@@ -28,11 +36,14 @@ const animationDelays = {
     title: 2000,
     content: 2300,
   },
-  ".before": {
+  ".highlights": {
     content: 3000,
   },
-  ".details": {
+  ".before": {
     content: 3700,
+  },
+  ".details": {
+    content: 4400,
   },
 };
 
@@ -50,7 +61,7 @@ Object.keys(animationDelays).forEach((animationKey) => {
     }
     if (content) {
       const $el = $(`${animationKey} ${contentClass}`);
-      new SentenceFx($el, content).reveal();
+      new SentenceFx($el, "content-section", content).reveal();
     }
   }
 });
