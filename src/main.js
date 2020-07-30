@@ -43,13 +43,14 @@ Object.keys(animationDelays).forEach((animationKey) => {
     const $el = $(animationKey);
     new RevealFx($el, createRevealConfig(animationDelay)).reveal();
   } else {
-    if (animationDelay.title) {
+    const { title, content } = animationDelay;
+    if (title) {
       const $el = $(`${animationKey} ${titleClass}`);
-      new RevealFx($el, createRevealConfig(animationDelay.title)).reveal();
+      new RevealFx($el, createRevealConfig(title)).reveal();
     }
-    if (animationDelay.content) {
+    if (content) {
       const $el = $(`${animationKey} ${contentClass}`);
-      new SentenceFx($el, animationDelay.content).reveal();
+      new SentenceFx($el, content).reveal();
     }
   }
 });
