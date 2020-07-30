@@ -2,61 +2,7 @@ import 'lazysizes';
 import anime from 'animejs';
 import RevealFx from './services/reveal';
 import SentenceFx from './services/sentence-mask';
-
-function createRevealConfig(delay = 0) {
-  return {
-    revealSettings: {
-      bgcolor: '#a1aeb7',
-      easing: 'easeOutExpo',
-      direction: 'lr',
-      delay,
-      onStart(contentEl) {
-        anime.remove(contentEl);
-        contentEl.style.opacity = 0;
-      },
-      onCover(contentEl) {
-        anime({
-          targets: contentEl,
-          duration: 800,
-          delay: 80,
-          easing: 'easeOutExpo',
-          translateX: [-40, 0],
-          opacity: [0, 1],
-        });
-      },
-    },
-  };
-}
-
-const animationDelays = {
-  intro: {
-    title: 1000,
-    subtitle: 1100,
-    content: 1300,
-  },
-  cardiogram: {
-    title: 2000,
-    content: 2300,
-  },
-  other: {
-    title: 3000,
-    content: 3300,
-  },
-  details: {
-    content: 4300,
-  },
-  contact: {
-    content: 5000,
-  },
-};
-
-function $(qs) {
-  const elements = document.querySelectorAll(qs);
-  if (elements.length === 1) {
-    return elements[0];
-  }
-  return elements;
-}
+import { $, createRevealConfig } from './services/util';
 
 const $content = $('.content-wrapper');
 $content.style.width = 0;
@@ -69,38 +15,41 @@ anime({
   easing: 'easeInOutQuart',
 });
 
+const titleClass = 'h3';
+const contentClass = '.content-line';
+
+const animationDelays = {
+  '.content-title': 1000,
+  '.content-subtitle': 1100,
+  '.intro': {
+    content: 1300,
+  },
+  '.history': {
+    title: 2000,
+    content: 2300,
+  },
+  '.before': {
+    content: 3000,
+  },
+  '.details': {
+    content: 3700,
+  },
+};
+
 // Create reveal elements
-new RevealFx(
-  $('.content-title'),
-  createRevealConfig(animationDelays.intro.title),
-).reveal();
-new RevealFx(
-  $('.content-subtitle'),
-  createRevealConfig(animationDelays.intro.subtitle),
-).reveal();
-new SentenceFx(
-  $('.intro .content-line'),
-  animationDelays.intro.content,
-).reveal();
-
-new RevealFx(
-  $('.cardiogram h3'),
-  createRevealConfig(animationDelays.cardiogram.title),
-).reveal();
-new SentenceFx(
-  $('.cardiogram .content-line'),
-  animationDelays.cardiogram.content,
-).reveal();
-
-new RevealFx(
-  $('.other h3'),
-  createRevealConfig(animationDelays.other.title),
-).reveal();
-new SentenceFx(
-  $('.other .content-line'),
-  animationDelays.other.content,
-).reveal();
-new SentenceFx(
-  $('.details .content-line'),
-  animationDelays.details.content,
-).reveal();
+Object.keys(animationDelays).forEach((animationKey) => {
+  const animationDelay = animationDelays[animationKey];
+  if (typeof animationDelay === 'number') {
+    const $el = $(animationKey);
+    new RevealFx($el, createRevealConfig(animationDelay)).reveal();
+  } else {
+    if (animationDelay.title) {
+      const $el = $(`${animationKey} ${titleClass}`);
+      new RevealFx($el, createRevealConfig(animationDelay.title)).reveal();
+    }
+    if (animationDelay.content) {
+      const $el = $(`${animationKey} ${contentClass}`);
+      new SentenceFx($el, animationDelay.content).reveal();
+    }
+  }
+});
