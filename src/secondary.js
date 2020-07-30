@@ -1,4 +1,4 @@
-import AnimatedShape from './services/shapes';
+import AnimatedShape from "./services/shapes";
 
-const icosahedron = new AnimatedShape('shape-icosahedron');
+const icosahedron = new AnimatedShape("shape-icosahedron");
 icosahedron.init();

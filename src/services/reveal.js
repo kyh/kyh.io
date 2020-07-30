@@ -1,6 +1,5 @@
-/* eslint-disable no-multi-assign */
-import anime from 'animejs';
-import { createDOMEl } from './util';
+import anime from "animejs";
+import { createDOMEl } from "./util";
 
 /**
  * Gets the revealer element´s transform and transform origin.
@@ -11,30 +10,30 @@ function getTransformSettings(direction) {
   let origin2;
 
   switch (direction) {
-    case 'lr':
-      val = 'scale3d(0,1,1)';
-      origin = '0 50%';
-      origin2 = '100% 50%';
+    case "lr":
+      val = "scale3d(0,1,1)";
+      origin = "0 50%";
+      origin2 = "100% 50%";
       break;
-    case 'rl':
-      val = 'scale3d(0,1,1)';
-      origin = '100% 50%';
-      origin2 = '0 50%';
+    case "rl":
+      val = "scale3d(0,1,1)";
+      origin = "100% 50%";
+      origin2 = "0 50%";
       break;
-    case 'tb':
-      val = 'scale3d(1,0,1)';
-      origin = '50% 0';
-      origin2 = '50% 100%';
+    case "tb":
+      val = "scale3d(1,0,1)";
+      origin = "50% 0";
+      origin2 = "50% 100%";
       break;
-    case 'bt':
-      val = 'scale3d(1,0,1)';
-      origin = '50% 100%';
-      origin2 = '50% 0';
+    case "bt":
+      val = "scale3d(1,0,1)";
+      origin = "50% 100%";
+      origin2 = "50% 0";
       break;
     default:
-      val = 'scale3d(0,1,1)';
-      origin = '0 50%';
-      origin2 = '100% 50%';
+      val = "scale3d(0,1,1)";
+      origin = "0 50%";
+      origin2 = "100% 50%";
       break;
   }
 
@@ -52,13 +51,13 @@ const BASE_OPTIONS = {
   // The animation/reveal settings. This can be set initially or passed when calling the reveal method.
   revealSettings: {
     // Animation direction: left right (lr) || right left (rl) || top bottom (tb) || bottom top (bt).
-    direction: 'lr',
+    direction: "lr",
     // Revealer´s background color.
-    bgcolor: '#f0f0f0',
+    bgcolor: "#f0f0f0",
     // Animation speed. This is the speed to "cover" and also "uncover" the element (seperately, not the total time).
     duration: 500,
     // Animation easing. This is the easing to "cover" and also "uncover" the element.
-    easing: 'easeInOutQuint',
+    easing: "easeInOutQuint",
     // percentage-based value representing how much of the area should be left covered.
     coverArea: 0,
     // Callback for when the revealer is covering the element (halfway through of the whole animation).
@@ -93,25 +92,25 @@ class RevealFx {
   layout() {
     const { position } = getComputedStyle(this.el);
     if (
-      position !== 'fixed' &&
-      position !== 'absolute' &&
-      position !== 'relative'
+      position !== "fixed" &&
+      position !== "absolute" &&
+      position !== "relative"
     ) {
-      this.el.style.position = 'relative';
+      this.el.style.position = "relative";
     }
     // Content element.
     this.content = createDOMEl(
-      'div',
-      'block-revealer-content',
-      this.el.innerHTML,
+      "div",
+      "block-revealer-content",
+      this.el.innerHTML
     );
     if (this.options.isContentHidden) {
       this.content.style.opacity = 0;
     }
     // Revealer element (the one that animates)
-    this.revealer = createDOMEl('div', 'block-revealer-element');
-    this.el.classList.add('block-revealer');
-    this.el.innerHTML = '';
+    this.revealer = createDOMEl("div", "block-revealer-element");
+    this.el.classList.add("block-revealer");
+    this.el.innerHTML = "";
     this.el.appendChild(this.content);
     this.el.appendChild(this.revealer);
   }
@@ -130,10 +129,10 @@ class RevealFx {
     const defaults = {
       // In case revealSettings is incomplete, its properties deafault to:
       duration: 500,
-      easing: 'easeInOutQuint',
+      easing: "easeInOutQuint",
       delay: 0,
-      bgcolor: '#f0f0f0',
-      direction: 'lr',
+      bgcolor: "#f0f0f0",
+      direction: "lr",
       coverArea: 0,
     };
 
@@ -158,7 +157,7 @@ class RevealFx {
     const animationSettings2 = {
       complete: () => {
         this.isAnimating = false;
-        if (typeof revealSettings.onComplete === 'function') {
+        if (typeof revealSettings.onComplete === "function") {
           revealSettings.onComplete(this.content, this.revealer);
         }
       },
@@ -169,7 +168,7 @@ class RevealFx {
       complete: () => {
         this.revealer.style.WebkitTransformOrigin = this.revealer.style.transformOrigin =
           transformSettings.origin.halfway;
-        if (typeof revealSettings.onCover === 'function') {
+        if (typeof revealSettings.onCover === "function") {
           revealSettings.onCover(this.content, this.revealer);
         }
         anime(animationSettings2);
@@ -183,7 +182,7 @@ class RevealFx {
       revealSettings.easing || defaults.easing;
 
     const coverArea = revealSettings.coverArea || defaults.coverArea;
-    if (direction === 'lr' || direction === 'rl') {
+    if (direction === "lr" || direction === "rl") {
       animationSettings.scaleX = [0, 1];
       animationSettings2.scaleX = [1, coverArea / 100];
     } else {
@@ -191,7 +190,7 @@ class RevealFx {
       animationSettings2.scaleY = [1, coverArea / 100];
     }
 
-    if (typeof revealSettings.onStart === 'function') {
+    if (typeof revealSettings.onStart === "function") {
       revealSettings.onStart(this.content, this.revealer);
     }
     anime(animationSettings);

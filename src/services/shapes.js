@@ -10,17 +10,17 @@ import {
   MeshPhongMaterial,
   FlatShading,
   Mesh,
-} from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+} from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const Detector = {
   canvas: !!window.CanvasRenderingContext2D,
   webgl: (() => {
     try {
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       return !!(
         window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+        (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
       );
     } catch (e) {
       return false;
@@ -29,28 +29,28 @@ const Detector = {
   workers: !!window.Worker,
   fileapi: window.File && window.FileReader && window.FileList && window.Blob,
   getWebGLErrorMessage: () => {
-    const element = document.createElement('div');
-    element.id = 'webgl-error-message';
-    element.style.fontFamily = 'monospace';
-    element.style.fontSize = '13px';
-    element.style.fontWeight = 'normal';
-    element.style.textAlign = 'center';
-    element.style.background = '#fff';
-    element.style.color = '#000';
-    element.style.padding = '1.5em';
-    element.style.width = '400px';
-    element.style.margin = '5em auto 0';
+    const element = document.createElement("div");
+    element.id = "webgl-error-message";
+    element.style.fontFamily = "monospace";
+    element.style.fontSize = "13px";
+    element.style.fontWeight = "normal";
+    element.style.textAlign = "center";
+    element.style.background = "#fff";
+    element.style.color = "#000";
+    element.style.padding = "1.5em";
+    element.style.width = "400px";
+    element.style.margin = "5em auto 0";
 
     if (!this.webgl) {
       element.innerHTML = window.WebGLRenderingContext
         ? [
             'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
             'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-          ].join('\n')
+          ].join("\n")
         : [
             'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
             'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-          ].join('\n');
+          ].join("\n");
     }
     return element;
   },
@@ -58,7 +58,7 @@ const Detector = {
   addGetWebGLMessage: (parameters = {}) => {
     const parent =
       parameters.parent !== undefined ? parameters.parent : document.body;
-    const id = parameters.id !== undefined ? parameters.id : 'oldie';
+    const id = parameters.id !== undefined ? parameters.id : "oldie";
     const element = Detector.getWebGLErrorMessage();
     element.id = id;
     parent.appendChild(element);
@@ -67,9 +67,9 @@ const Detector = {
 
 export default function AnimatedShape(container) {
   container =
-    typeof container === 'string'
+    typeof container === "string"
       ? document.getElementById(container)
-      : console.info('An ID container is here required');
+      : console.info("An ID container is here required");
 
   let scene;
   let camera;
@@ -167,7 +167,7 @@ export default function AnimatedShape(container) {
     lightGroup[1].position.set(
       camera.position.x,
       camera.position.y,
-      camera.position.z,
+      camera.position.z
     );
     lightGroup[1].castShadow = true;
     lightGroup[1].shadowMapDarkness = 0.9;
@@ -203,9 +203,9 @@ export default function AnimatedShape(container) {
   function onMouseDown(event) {
     event.preventDefault();
 
-    document.addEventListener('mousemove', onMouseMove, false);
-    document.addEventListener('mouseup', onMouseUp, false);
-    document.addEventListener('mouseout', onMouseOut, false);
+    document.addEventListener("mousemove", onMouseMove, false);
+    document.addEventListener("mouseup", onMouseUp, false);
+    document.addEventListener("mouseout", onMouseOut, false);
 
     isDragging = true;
   }
@@ -250,16 +250,16 @@ export default function AnimatedShape(container) {
 
   function onMouseUp(event) {
     isDragging = false;
-    document.removeEventListener('mousemove', onMouseMove, false);
-    document.removeEventListener('mouseup', onMouseUp, false);
-    document.removeEventListener('mouseout', onMouseOut, false);
+    document.removeEventListener("mousemove", onMouseMove, false);
+    document.removeEventListener("mouseup", onMouseUp, false);
+    document.removeEventListener("mouseout", onMouseOut, false);
   }
 
   function onMouseOut(event) {
     isDragging = false;
-    document.removeEventListener('mousemove', onMouseMove, false);
-    document.removeEventListener('mouseup', onMouseUp, false);
-    document.removeEventListener('mouseout', onMouseOut, false);
+    document.removeEventListener("mousemove", onMouseMove, false);
+    document.removeEventListener("mouseup", onMouseUp, false);
+    document.removeEventListener("mouseout", onMouseOut, false);
   }
 
   function loop(time) {
@@ -296,11 +296,11 @@ export default function AnimatedShape(container) {
       createShape();
       loop();
 
-      window.addEventListener('resize', onWindowResize, false);
+      window.addEventListener("resize", onWindowResize, false);
 
-      container.addEventListener('mousedown', onMouseDown, false);
-      container.addEventListener('touchstart', onTouchStart, false);
-      container.addEventListener('touchmove', onTouchMove, false);
+      container.addEventListener("mousedown", onMouseDown, false);
+      container.addEventListener("touchstart", onTouchStart, false);
+      container.addEventListener("touchmove", onTouchMove, false);
     },
   };
 }

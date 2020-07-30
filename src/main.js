@@ -1,10 +1,10 @@
-import 'lazysizes';
-import anime from 'animejs';
-import RevealFx from './services/reveal';
-import SentenceFx from './services/sentence-mask';
-import { $, createRevealConfig } from './services/util';
+import "lazysizes";
+import anime from "animejs";
+import RevealFx from "./services/reveal";
+import SentenceFx from "./services/sentence-mask";
+import { $, createRevealConfig } from "./services/util";
 
-const $content = $('.content-wrapper');
+const $content = $(".content-wrapper");
 $content.style.width = 0;
 
 // Animate content in
@@ -12,26 +12,26 @@ anime({
   targets: $content,
   width: 640,
   duration: 1300,
-  easing: 'easeInOutQuart',
+  easing: "easeInOutQuart",
 });
 
-const titleClass = 'h3';
-const contentClass = '.content-line';
+const titleClass = "h3";
+const contentClass = ".content-line";
 
 const animationDelays = {
-  '.content-title': 1000,
-  '.content-subtitle': 1100,
-  '.intro': {
+  ".content-title": 1000,
+  ".content-subtitle": 1100,
+  ".intro": {
     content: 1300,
   },
-  '.history': {
+  ".history": {
     title: 2000,
     content: 2300,
   },
-  '.before': {
+  ".before": {
     content: 3000,
   },
-  '.details': {
+  ".details": {
     content: 3700,
   },
 };
@@ -39,7 +39,7 @@ const animationDelays = {
 // Create reveal elements
 Object.keys(animationDelays).forEach((animationKey) => {
   const animationDelay = animationDelays[animationKey];
-  if (typeof animationDelay === 'number') {
+  if (typeof animationDelay === "number") {
     const $el = $(animationKey);
     new RevealFx($el, createRevealConfig(animationDelay)).reveal();
   } else {

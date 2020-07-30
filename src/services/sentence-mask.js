@@ -1,8 +1,8 @@
-import anime from 'animejs';
-import { createDOMEl } from './util';
+import anime from "animejs";
+import { createDOMEl } from "./util";
 
 function onAnimationEnd(elements) {
-  elements.forEach((el) => el.classList.add('visibility-hidden'));
+  elements.forEach((el) => el.classList.add("visibility-hidden"));
 }
 
 class SentenceFx {
@@ -15,7 +15,7 @@ class SentenceFx {
 
   init() {
     this.sentencesContainer.style.opacity = 0;
-    this.sentencesContainer.style.transform = 'translateX(-30px)';
+    this.sentencesContainer.style.transform = "translateX(-30px)";
     this.layout();
   }
 
@@ -24,10 +24,9 @@ class SentenceFx {
    */
   layout() {
     this.sentencesElement = this.sentencesElement.map((sEl) => {
-      const revealer = createDOMEl('span', 'reveal-content', sEl.innerHTML);
-      const contentCopy = createDOMEl('span', 'faded-content', sEl.innerHTML);
-      // eslint-disable-next-line no-param-reassign
-      sEl.innerHTML = '';
+      const revealer = createDOMEl("span", "reveal-content", sEl.innerHTML);
+      const contentCopy = createDOMEl("span", "faded-content", sEl.innerHTML);
+      sEl.innerHTML = "";
       sEl.appendChild(contentCopy);
       sEl.appendChild(revealer);
       return { container: sEl, revealer, contentCopy };
@@ -46,22 +45,22 @@ class SentenceFx {
       opacity: 1,
       duration: 500,
       delay: wait,
-      easing: 'linear',
+      easing: "linear",
     });
     if (window.innerWidth >= 750) {
       anime({
         targets: this.targets,
-        width: '100%',
+        width: "100%",
         delay: (el, i) => totalWait + i * 300,
-        easing: 'easeInOutQuart',
+        easing: "easeInOutQuart",
         complete: onAnimationEnd.bind(this, this.content),
       });
     } else {
       anime({
         targets: this.content,
-        color: '#68788c',
+        color: "#68788c",
         delay: (el, i) => totalWait + i * 300,
-        easing: 'easeInOutQuart',
+        easing: "easeInOutQuart",
         complete: onAnimationEnd.bind(this, this.targets),
       });
     }
