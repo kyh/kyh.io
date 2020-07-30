@@ -1,9 +1,12 @@
-/*
-  BASE
-  ========
-  html is set to 62.5% so that all the REM measurements are based on 10px sizing.
-  So basically 1.5rem = 15px :)
-*/
+:root {
+  --main-bg-color: #f9fafb;
+  --main-body-faded: #cdd2d6;
+  --main-body-color: #596677;
+  --main-highlight: #263238;
+  --brand-purple: #6b74e6;
+  --brand-purple-opaque: #6b74e680;
+}
+
 html {
   font-size: 62.5%;
   box-sizing: border-box;
@@ -18,11 +21,11 @@ body {
 }
 
 body {
-  color: #596677;
+  color: var(--main-body-color);
   font-family: 'Gilroy', 'Helvetica', sans-serif;
   font-size: 1.5rem;
   line-height: 1.6;
-  background: #f9fafb;
+  background: var(--main-bg-color);
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
@@ -89,7 +92,7 @@ img {
 
 a:active,
 a:focus {
-  outline: auto 1px #6b74e6;
+  outline: auto 1px var(--brand-purple);
 }
 
 .link {
@@ -101,14 +104,14 @@ a:focus {
   display: inline-flex;
   overflow: hidden;
   line-height: 1;
-  border-bottom: 1px dotted #6b74e6;
-  color: #6b74e6;
+  border-bottom: 1px dotted var(--brand-purple);
+  color: var(--brand-purple);
   transition: border-color 0.4s ease;
 }
 
 .link:hover {
-  color: #6b74e6;
-  border-color: #424242;
+  color: var(--brand-purple);
+  border-color: var(--main-highlight);
 }
 
 .link::after {
@@ -119,7 +122,7 @@ a:focus {
   top: 50%;
   margin-top: -1px;
   right: 0;
-  background: #f9f9f9;
+  background: white;
   transform: translate3d(-100%, 0, 0);
   transition: transform 0.4s;
   transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
@@ -134,7 +137,7 @@ a:focus {
   position: absolute;
   z-index: 2;
   overflow: hidden;
-  color: #424242;
+  color: var(--main-highlight);
   white-space: nowrap;
   width: 0%;
   transition: width 0.4s 0.3s;
@@ -145,7 +148,7 @@ a:focus {
 }
 
 .link:focus {
-  outline: auto 1px #6b74e680;
+  outline: auto 1px var(--brand-purple-opaque);
 }
 
 /*
@@ -160,7 +163,7 @@ a:focus {
 
 .content-wrapper {
   position: relative;
-  background: #fff;
+  background: white;
   max-width: 640px;
   overflow: hidden;
   width: 0;
@@ -179,7 +182,7 @@ a:focus {
 
 .content-subtitle {
   font-size: 1.3rem;
-  color: #263238;
+  color: var(--main-highlight);
 }
 
 .content-section {
@@ -192,22 +195,6 @@ a:focus {
   margin-bottom: 1rem;
 }
 
-.content-header > h3 a {
-  color: #68788c;
-  outline: none;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.content-header > h3 a:hover,
-.content-header > h3 a:active {
-  color: #424242;
-}
-
-.content-header > h3 a:focus {
-  outline: auto 1px #42424280;
-}
-
 .content-line {
   position: relative;
   display: inline-block;
@@ -215,7 +202,7 @@ a:focus {
 }
 
 .faded__content {
-  color: #cdd2d6;
+  color: var(--main-body-faded);
 }
 
 .reveal__content {
@@ -231,7 +218,7 @@ a:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000;
+  background: white;
   pointer-events: none;
   opacity: 0;
 }
@@ -242,6 +229,10 @@ a:focus {
   bottom: 0;
   left: -50px;
   right: -50px;
+}
+
+.opacity-0 {
+  opacity: 0;
 }
 
 @media (max-width: 750px) {
