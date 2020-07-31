@@ -4,9 +4,6 @@ import RevealFx from "./services/reveal";
 import SentenceFx from "./services/sentence-mask";
 import { $, createRevealConfig } from "./services/util";
 
-const $content = $(".content-wrapper");
-$content.style.width = 0;
-
 const $links = $(".link");
 
 $links.forEach(($link) => {
@@ -14,6 +11,9 @@ $links.forEach(($link) => {
   $link.setAttribute("target", "_blank");
   $link.setAttribute("data-letters", $link.textContent);
 });
+
+const $content = $(".content-wrapper");
+$content.style.width = 0;
 
 // Animate content in
 anime({
