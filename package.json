@@ -1,7 +1,7 @@
 {
   "name": "kyh.io",
   "description": "Kaiyu's personal website",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "main": "src/index.html",
   "author": "Kaiyu Hsu",
   "license": "MIT",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "parcel-bundler": "^1.10.3",
     "parcel-plugin-asset-copier": "^1.1.0",
-    "prettier": "^2.1.1",
+    "prettier": "^2.1.2",
     "rimraf": "^3.0.2"
   }
 }
