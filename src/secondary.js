@@ -2,10 +2,10 @@ import tippy from "tippy.js";
 import AnimatedShape from "./services/shapes";
 
 import amazonImage from "./assets/screenshots/amazon.png";
-// import slyceImage from "./assets/screenshots/slyce.png";
-// import tinyrxImage from "./assets/screenshots/tinyrx.png";
-// import cardiogramImage from "./assets/screenshots/cardiogram.png";
-// import atriumImage from "./assets/screenshots/atrium.png";
+import slyceImage from "./assets/screenshots/slyce.png";
+import tinyrxImage from "./assets/screenshots/tinyrx.png";
+import cardiogramImage from "./assets/screenshots/cardiogram.png";
+import atriumImage from "./assets/screenshots/atrium.png";
 import tedxuoftImage from "./assets/screenshots/tedxuoft.png";
 import tedxtorontoImage from "./assets/screenshots/tedxtoronto.png";
 import vwImage from "./assets/screenshots/vw.png";
@@ -19,10 +19,10 @@ import playhouseImage from "./assets/screenshots/playhouse.png";
 
 const tooltipMap = {
   amazon: `<img src=${amazonImage} width="320" height="240"/>`,
-  // slyce: `<img src=${slyceImage} width="320" height="240"/>`,
-  // tinyrx: `<img src=${tinyrxImage} width="320" height="240"/>`,
-  // cardiogram: `<img src=${cardiogramImage} width="320" height="240"/>`,
-  // atrium: `<img src=${atriumImage} width="320" height="240"/>`,
+  slyce: `<img src=${slyceImage} width="320" height="240"/>`,
+  tinyrx: `<img src=${tinyrxImage} width="320" height="240"/>`,
+  cardiogram: `<img src=${cardiogramImage} width="320" height="240"/>`,
+  atrium: `<img src=${atriumImage} width="320" height="240"/>`,
   tedxuoft: `<img src=${tedxuoftImage} width="320" height="240"/>`,
   tedxtoronto: `<img src=${tedxtorontoImage} width="320" height="240"/>`,
   vw: `<img src=${vwImage} width="320" height="240"/>`,
