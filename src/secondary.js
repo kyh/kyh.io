@@ -2,12 +2,12 @@ import tippy from "tippy.js";
 import AnimatedShape from "./services/shapes";
 
 import amazonImage from "./assets/screenshots/amazon.png";
-// import slyceImage from "./assets/screenshots/amazon.png";
-// import tinyrxImage from "./assets/screenshots/amazon.png";
-// import cardiogramImage from "./assets/screenshots/amazon.png";
-// import atriumImage from "./assets/screenshots/amazon.png";
-// import tedxuoftImage from "./assets/screenshots/amazon.png";
-// import tedxtorontoImage from "./assets/screenshots/amazon.png";
+// import slyceImage from "./assets/screenshots/slyce.png";
+// import tinyrxImage from "./assets/screenshots/tinyrx.png";
+// import cardiogramImage from "./assets/screenshots/cardiogram.png";
+// import atriumImage from "./assets/screenshots/atrium.png";
+import tedxuoftImage from "./assets/screenshots/tedxuoft.png";
+import tedxtorontoImage from "./assets/screenshots/tedxtoronto.png";
 import vwImage from "./assets/screenshots/vw.png";
 import ingImage from "./assets/screenshots/ing.png";
 import fbImage from "./assets/screenshots/fb.png";
@@ -23,8 +23,8 @@ const tooltipMap = {
   // tinyrx: `<img src=${tinyrxImage} width="320" height="240"/>`,
   // cardiogram: `<img src=${cardiogramImage} width="320" height="240"/>`,
   // atrium: `<img src=${atriumImage} width="320" height="240"/>`,
-  // tedxuoft: `<img src=${tedxuoftImage} width="320" height="240"/>`,
-  // tedxtoronto: `<img src=${tedxtorontoImage} width="320" height="240"/>`,
+  tedxuoft: `<img src=${tedxuoftImage} width="320" height="240"/>`,
+  tedxtoronto: `<img src=${tedxtorontoImage} width="320" height="240"/>`,
   vw: `<img src=${vwImage} width="320" height="240"/>`,
   ing: `<img src=${ingImage} width="320" height="240"/>`,
   fb: `<img src=${fbImage} width="320" height="240"/>`,
