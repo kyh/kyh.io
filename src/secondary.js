@@ -8,8 +8,10 @@ import amazonImage from "./assets/screenshots/amazon.png";
 // import atriumImage from "./assets/screenshots/amazon.png";
 // import tedxuoftImage from "./assets/screenshots/amazon.png";
 // import tedxtorontoImage from "./assets/screenshots/amazon.png";
-// import nissanImage from "./assets/screenshots/amazon.png";
-// import ingImage from "./assets/screenshots/amazon.png";
+import vwImage from "./assets/screenshots/vw.png";
+import ingImage from "./assets/screenshots/ing.png";
+import fbImage from "./assets/screenshots/fb.png";
+import bootstrapImage from "./assets/screenshots/bootstrap.png";
 import keikoImage from "./assets/screenshots/keiko.png";
 import ysImage from "./assets/screenshots/ys.png";
 import covid19Image from "./assets/screenshots/covid19.png";
@@ -23,8 +25,10 @@ const tooltipMap = {
   // atrium: `<img src=${atriumImage} width="320" height="240"/>`,
   // tedxuoft: `<img src=${tedxuoftImage} width="320" height="240"/>`,
   // tedxtoronto: `<img src=${tedxtorontoImage} width="320" height="240"/>`,
-  // nissan: `<img src=${nissanImage} width="320" height="240"/>`,
-  // ing: `<img src=${ingImage} width="320" height="240"/>`,
+  vw: `<img src=${vwImage} width="320" height="240"/>`,
+  ing: `<img src=${ingImage} width="320" height="240"/>`,
+  fb: `<img src=${fbImage} width="320" height="240"/>`,
+  bootstrap: `<img src=${bootstrapImage} width="320" height="240"/>`,
   keiko: `<img src=${keikoImage} width="320" height="240"/>`,
   ys: `<img src=${ysImage} width="320" height="240"/>`,
   covid19: `<img src=${covid19Image} width="320" height="240"/>`,
