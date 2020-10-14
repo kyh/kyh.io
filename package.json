@@ -1,25 +1,24 @@
 {
   "name": "kyh.io",
-  "description": "Kaiyu's personal website",
   "version": "1.4.1",
-  "main": "src/index.html",
-  "author": "Kaiyu Hsu",
-  "license": "MIT",
+  "description": "Kaiyu's personal website",
   "homepage": "https://kyh.io",
+  "bugs": {
+    "url": "https://github.com/tehkaiyu/kyh.io/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://tehkaiyu@github.com/tehkaiyu/kyh.io.git"
   },
-  "bugs": {
-    "url": "https://github.com/tehkaiyu/kyh.io/issues"
-  },
+  "license": "MIT",
+  "author": "Kaiyu Hsu",
+  "main": "src/index.html",
   "scripts": {
-    "dev": "parcel src/index.html",
     "build": "parcel build src/index.html",
     "clean": "rimraf dist",
+    "dev": "parcel src/index.html",
     "format": "prettier --write src"
   },
-  "assetsPath": "src/assets",
   "dependencies": {
     "animejs": "^3.2.1",
     "lazysizes": "^5.2.2",
@@ -31,5 +30,6 @@
     "parcel-plugin-asset-copier": "^1.1.0",
     "prettier": "^2.1.2",
     "rimraf": "^3.0.2"
-  }
+  },
+  "assetsPath": "src/assets"
 }
