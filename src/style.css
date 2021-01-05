@@ -90,7 +90,7 @@ h5,
 h6 {
   font-weight: 500;
   margin-top: 0;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2.2rem;
   white-space: nowrap;
 }
 
@@ -266,7 +266,9 @@ a:focus {
 }
 
 .content-subtitle {
+  display: inline-block;
   font-size: 1.3rem;
+  line-height: 2;
   color: var(--main-highlight);
   transition: color 0.23s ease;
 }
@@ -300,7 +302,7 @@ a:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: white;
+  background: var(--main-content-bg-color);
   pointer-events: none;
   opacity: 0;
 }

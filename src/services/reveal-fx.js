@@ -11,12 +11,12 @@ function getTransformSettings(direction) {
 
   switch (direction) {
     case "lr":
-      val = "scale3d(0,1,1)";
+      val = "scaleY(1)";
       origin = "0 50%";
       origin2 = "100% 50%";
       break;
     case "rl":
-      val = "scale3d(0,1,1)";
+      val = "scaleY(1)";
       origin = "100% 50%";
       origin2 = "0 50%";
       break;
