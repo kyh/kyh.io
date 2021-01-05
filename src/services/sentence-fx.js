@@ -1,5 +1,5 @@
 import anime from "animejs";
-import { createDOMEl, isLargeScreen } from "./util";
+import { createDOMEl, isLargeScreen, isDarkMode } from "./util";
 
 function hideElements(elements) {
   elements.forEach((el) => {
@@ -69,7 +69,7 @@ class SentenceFx {
     } else {
       anime({
         targets: this.content,
-        color: window.isDarkMode() ? "#d1d5db" : "#596677", // Why cant we use css variables here?
+        color: isDarkMode() ? "#d1d5db" : "#596677", // Why cant we use css variables here?
         delay: (el, i) => totalWait + i * 300,
         easing: "easeInOutQuart",
         complete: () => hideElements(this.targets),

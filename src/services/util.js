@@ -49,3 +49,11 @@ export function getFadedContent() {
 export function isLargeScreen() {
   return window.innerWidth >= 750;
 }
+
+export function isDarkMode() {
+  return (
+    localStorage.getItem("color-mode") === "dark" ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches &&
+      !localStorage.getItem("color-mode"))
+  );
+}
