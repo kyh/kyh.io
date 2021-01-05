@@ -1,10 +1,42 @@
-:root {
+html {
   --main-bg-color: #f9fafb;
-  --main-body-faded: #cdd2d6;
   --main-body-color: #596677;
   --main-highlight: #263238;
+  --main-content-bg-color: #ffffff;
+
   --brand-purple: #6b74e6;
   --brand-purple-opaque: #6b74e680;
+
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23263238' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+
+  --tippy-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.15),
+    0 4px 80px -8px rgba(36, 40, 47, 0.25),
+    0 4px 4px -2px rgba(91, 94, 105, 0.15);
+
+  --logo-gh: #333333;
+  --logo-tw: #55acee;
+  --logo-in: #4875b4;
+  --logo-dr: #ea4c89;
+}
+
+html.dark {
+  --main-bg-color: #111827;
+  --main-body-color: #d1d5db;
+  --main-highlight: #f3f4f6;
+  --main-content-bg-color: #1f2937;
+  --brand-purple: #6b74e6;
+  --brand-purple-opaque: #ddd6fe;
+
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23F3F4F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+
+  --tippy-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.05),
+    0 4px 80px -8px rgba(36, 40, 47, 0.15),
+    0 4px 4px -2px rgba(91, 94, 105, 0.05);
+
+  --logo-gh: #ffffff;
+  --logo-tw: #55acee;
+  --logo-in: #4875b4;
+  --logo-dr: #ea4c89;
 }
 
 html {
@@ -98,7 +130,7 @@ ul {
 
 li {
   padding-left: 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23263238' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: var(--arrow);
   background-repeat: no-repeat;
   background-position-y: 6px;
   margin-bottom: 4px;
@@ -177,7 +209,7 @@ a:focus {
 
 .content-wrapper {
   position: relative;
-  background: white;
+  background: var(--main-content-bg-color);
   max-width: 640px;
   overflow: hidden;
   width: 0;
@@ -213,10 +245,6 @@ a:focus {
   position: relative;
   display: inline-block;
   white-space: nowrap;
-}
-
-.faded-content {
-  color: var(--main-body-faded);
 }
 
 .reveal-content {
@@ -281,7 +309,7 @@ a:focus {
 
 .sm-wrapper {
   padding: 12px;
-  background: white;
+  background: var(--main-content-bg-color);
   border-radius: 4px;
   margin-left: -12px;
 }
@@ -298,16 +326,16 @@ a:focus {
 }
 
 .sm-wrapper > a.git:hover path {
-  fill: #333;
+  fill: var(--logo-gh);
 }
 .sm-wrapper > a.twitter:hover path {
-  fill: #55acee;
+  fill: var(--logo-tw);
 }
 .sm-wrapper > a.linkedin:hover path {
-  fill: #4875b4;
+  fill: var(--logo-in);
 }
 .sm-wrapper > a.dribbble:hover path {
-  fill: #ea4c89;
+  fill: var(--logo-dr);
 }
 
 .logo {
@@ -350,9 +378,7 @@ a:focus {
 .tippy-box {
   position: relative;
   color: var(--main-highlight);
-  box-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.15),
-    0 4px 80px -8px rgba(36, 40, 47, 0.25),
-    0 4px 4px -2px rgba(91, 94, 105, 0.15);
+  box-shadow: var(--tippy-shadow);
   background-color: var(--main-bg-color);
   border-radius: 4px;
   font-size: 14px;
