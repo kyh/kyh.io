@@ -4,6 +4,27 @@ import RevealFx from "./services/reveal";
 import SentenceFx from "./services/sentence-mask";
 import { $, createRevealConfig } from "./services/util";
 
+if (window.CSS && CSS.supports("color", "var(--brand-purple)")) {
+  const toggleColorMode = (e) => {
+    if (e.currentTarget.classList.contains("light-hidden")) {
+      document.documentElement.setAttribute("color-mode", "light");
+      localStorage.setItem("color-mode", "light");
+      return;
+    }
+    document.documentElement.setAttribute("color-mode", "dark");
+    localStorage.setItem("color-mode", "dark");
+  };
+
+  const $toggleColorButtons = $(".color-mode-button");
+
+  $toggleColorButtons.forEach(($button) => {
+    $button.addEventListener("click", toggleColorMode);
+  });
+} else {
+  const $toggleColorButtonsContainer = $(".color-mode-header");
+  $toggleColorButtonsContainer.style.display = "none";
+}
+
 const $links = $(".link");
 
 $links.forEach(($link) => {

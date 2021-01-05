@@ -1,4 +1,11 @@
-html {
+:root {
+  --logo-gh: #333333;
+  --logo-tw: #55acee;
+  --logo-in: #4875b4;
+  --logo-dr: #ea4c89;
+}
+
+:root[color-mode="light"] {
   --main-bg-color: #f9fafb;
   --main-body-color: #596677;
   --main-highlight: #263238;
@@ -12,14 +19,9 @@ html {
   --tippy-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.15),
     0 4px 80px -8px rgba(36, 40, 47, 0.25),
     0 4px 4px -2px rgba(91, 94, 105, 0.15);
-
-  --logo-gh: #333333;
-  --logo-tw: #55acee;
-  --logo-in: #4875b4;
-  --logo-dr: #ea4c89;
 }
 
-html.dark {
+:root[color-mode="dark"] {
   --main-bg-color: #111827;
   --main-body-color: #d1d5db;
   --main-highlight: #f3f4f6;
@@ -34,9 +36,14 @@ html.dark {
     0 4px 4px -2px rgba(91, 94, 105, 0.05);
 
   --logo-gh: #ffffff;
-  --logo-tw: #55acee;
-  --logo-in: #4875b4;
-  --logo-dr: #ea4c89;
+}
+
+:root[color-mode="light"] .light-hidden {
+  display: none;
+}
+
+:root[color-mode="dark"] .dark-hidden {
+  display: none;
 }
 
 html {
@@ -123,6 +130,23 @@ img {
   max-width: 100%;
 }
 
+button {
+  text-align: inherit;
+  border: none;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: normal;
+  -webkit-font-smoothing: inherit;
+  -moz-osx-font-smoothing: inherit;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
 ul {
   padding: 0;
   margin: 3rem 0;
@@ -140,6 +164,13 @@ li {
 a:active,
 a:focus {
   outline: auto 1px var(--brand-purple);
+}
+
+.color-mode-header {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
 }
 
 .link {
@@ -170,13 +201,13 @@ a:focus {
   margin-top: -1px;
   right: 0;
   background: white;
-  transform: translate3d(-100%, 0, 0);
+  transform: translate3d(-101%, 0, 0);
   transition: transform 0.4s;
   transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
 }
 
 .link:hover::after {
-  transform: translate3d(100%, 0, 0);
+  transform: translate3d(101%, 0, 0);
 }
 
 .link::before {
@@ -326,7 +357,7 @@ a:focus {
 }
 
 .sm-wrapper > a path {
-  transition: fill 300ms ease-in-out;
+  transition: fill 0.3s ease-in-out;
 }
 
 .sm-wrapper > a.git:hover path {
