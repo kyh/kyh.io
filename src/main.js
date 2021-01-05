@@ -1,7 +1,7 @@
 import "lazysizes";
 import anime from "animejs";
-import RevealFx from "./services/reveal";
-import SentenceFx from "./services/sentence-mask";
+import RevealFx from "./services/reveal-fx";
+import SentenceFx from "./services/sentence-fx";
 import {
   $,
   createRevealConfig,
@@ -10,7 +10,7 @@ import {
 } from "./services/util";
 
 if (window.CSS && CSS.supports("color", "var(--brand-purple)")) {
-  const toggleColorMode = (e) => {
+  function toggleColorMode(e) {
     if (e.currentTarget.classList.contains("light-hidden")) {
       document.documentElement.setAttribute("color-mode", "light");
       localStorage.setItem("color-mode", "light");
@@ -26,7 +26,7 @@ if (window.CSS && CSS.supports("color", "var(--brand-purple)")) {
       const $fc = getFadedContent();
       $fc.forEach(($c) => $c.style.removeProperty("color"));
     }
-  };
+  }
 
   const $toggleColorButtons = $(".color-mode-button");
 
