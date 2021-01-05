@@ -7,12 +7,6 @@ export function createDOMEl(type, className, content) {
   return el;
 }
 
-export function $(qs) {
-  const elements = document.querySelectorAll(qs);
-  if (elements.length === 1) return elements[0];
-  return elements;
-}
-
 export function createRevealConfig(delay = 0) {
   return {
     revealSettings: {
@@ -36,4 +30,22 @@ export function createRevealConfig(delay = 0) {
       },
     },
   };
+}
+
+export function $(qs) {
+  const elements = document.querySelectorAll(qs);
+  if (elements.length === 1) return elements[0];
+  return elements;
+}
+
+let fadedContent = null;
+export function getFadedContent() {
+  if (!fadedContent) {
+    fadedContent = $(".faded-content");
+  }
+  return fadedContent;
+}
+
+export function isLargeScreen() {
+  return window.innerWidth >= 750;
 }

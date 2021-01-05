@@ -7,6 +7,7 @@
 
 :root[color-mode="light"] {
   --main-bg-color: #f9fafb;
+  --main-body-faded: #cdd2d6;
   --main-body-color: #596677;
   --main-highlight: #263238;
   --main-content-bg-color: #ffffff;
@@ -23,6 +24,7 @@
 
 :root[color-mode="dark"] {
   --main-bg-color: #111827;
+  --main-body-faded: #596677;
   --main-body-color: #d1d5db;
   --main-highlight: #f3f4f6;
   --main-content-bg-color: #1f2937;
@@ -44,6 +46,10 @@
 
 :root[color-mode="dark"] .dark-hidden {
   display: none;
+}
+
+.faded-content {
+  color: var(--main-body-faded);
 }
 
 html {
@@ -170,7 +176,7 @@ a:focus {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 1;
+  z-index: 3;
 }
 
 .link {
@@ -201,13 +207,13 @@ a:focus {
   margin-top: -1px;
   right: 0;
   background: white;
-  transform: translate3d(-101%, 0, 0);
+  transform: translate3d(-102%, 0, 0);
   transition: transform 0.4s;
   transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
 }
 
 .link:hover::after {
-  transform: translate3d(101%, 0, 0);
+  transform: translate3d(102%, 0, 0);
 }
 
 .link::before {
@@ -309,10 +315,6 @@ a:focus {
 
 .opacity-0 {
   opacity: 0;
-}
-
-.visibility-hidden {
-  visibility: hidden;
 }
 
 @media (max-width: 750px) {

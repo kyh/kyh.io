@@ -1,8 +1,11 @@
 import anime from "animejs";
-import { createDOMEl } from "./util";
+import { createDOMEl, isLargeScreen } from "./util";
 
-function onAnimationEnd(elements) {
-  elements.forEach((el) => el.classList.add("visibility-hidden"));
+function hideElements(elements) {
+  elements.forEach((el) => {
+    el.style.visibility = "hidden";
+    el.setAttribute("aria-hidden", "true");
+  });
 }
 
 class SentenceFx {
@@ -55,21 +58,21 @@ class SentenceFx {
       delay: wait,
       easing: "linear",
     });
-    if (window.innerWidth >= 750) {
+    if (isLargeScreen()) {
       anime({
         targets: this.targets,
         width: "100%",
         delay: (el, i) => totalWait + i * 300,
         easing: "easeInOutQuart",
-        complete: onAnimationEnd.bind(this, this.content),
+        complete: () => hideElements(this.content),
       });
     } else {
       anime({
         targets: this.content,
-        color: "#68788c",
+        color: window.isDarkMode() ? "#d1d5db" : "#596677", // Why cant we use css variables here?
         delay: (el, i) => totalWait + i * 300,
         easing: "easeInOutQuart",
-        complete: onAnimationEnd.bind(this, this.targets),
+        complete: () => hideElements(this.targets),
       });
     }
   }

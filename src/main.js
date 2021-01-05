@@ -2,17 +2,30 @@ import "lazysizes";
 import anime from "animejs";
 import RevealFx from "./services/reveal";
 import SentenceFx from "./services/sentence-mask";
-import { $, createRevealConfig } from "./services/util";
+import {
+  $,
+  createRevealConfig,
+  getFadedContent,
+  isLargeScreen,
+} from "./services/util";
 
 if (window.CSS && CSS.supports("color", "var(--brand-purple)")) {
   const toggleColorMode = (e) => {
     if (e.currentTarget.classList.contains("light-hidden")) {
       document.documentElement.setAttribute("color-mode", "light");
       localStorage.setItem("color-mode", "light");
-      return;
+    } else {
+      document.documentElement.setAttribute("color-mode", "dark");
+      localStorage.setItem("color-mode", "dark");
     }
-    document.documentElement.setAttribute("color-mode", "dark");
-    localStorage.setItem("color-mode", "dark");
+    if (!isLargeScreen()) {
+      const b = getComputedStyle(document.documentElement).getPropertyValue(
+        "--main-body-color"
+      );
+      document.documentElement.style.setProperty("--main-body-faded", b);
+      const $fc = getFadedContent();
+      $fc.forEach(($c) => $c.style.removeProperty("color"));
+    }
   };
 
   const $toggleColorButtons = $(".color-mode-button");
