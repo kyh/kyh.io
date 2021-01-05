@@ -53,13 +53,14 @@ body {
 }
 
 body {
-  color: var(--main-body-color);
   font-family: "Gilroy", "Helvetica", sans-serif;
   font-size: 1.5rem;
   line-height: 1.6;
-  background: var(--main-bg-color);
+  color: var(--main-body-color);
+  background-color: var(--main-bg-color);
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  transition: background-color 0.23s ease, color 0.23s ease;
 }
 
 *,
@@ -209,10 +210,11 @@ a:focus {
 
 .content-wrapper {
   position: relative;
-  background: var(--main-content-bg-color);
+  background-color: var(--main-content-bg-color);
   max-width: 640px;
   overflow: hidden;
   width: 0;
+  transition: background-color 0.23s ease;
 }
 
 .content {
@@ -229,6 +231,7 @@ a:focus {
 .content-subtitle {
   font-size: 1.3rem;
   color: var(--main-highlight);
+  transition: color 0.23s ease;
 }
 
 .content-section {
@@ -309,9 +312,10 @@ a:focus {
 
 .sm-wrapper {
   padding: 12px;
-  background: var(--main-content-bg-color);
+  background-color: var(--main-content-bg-color);
   border-radius: 4px;
   margin-left: -12px;
+  transition: background-color 0.23s ease;
 }
 
 .sm-wrapper > a {
