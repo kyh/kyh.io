@@ -11,7 +11,7 @@ import {
   FlatShading,
   Mesh,
 } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const Detector = {
   canvas: !!window.CanvasRenderingContext2D,
@@ -26,50 +26,14 @@ const Detector = {
       return false;
     }
   })(),
-  workers: !!window.Worker,
-  fileapi: window.File && window.FileReader && window.FileList && window.Blob,
-  getWebGLErrorMessage: () => {
-    const element = document.createElement("div");
-    element.id = "webgl-error-message";
-    element.style.fontFamily = "monospace";
-    element.style.fontSize = "13px";
-    element.style.fontWeight = "normal";
-    element.style.textAlign = "center";
-    element.style.background = "#fff";
-    element.style.color = "#000";
-    element.style.padding = "1.5em";
-    element.style.width = "400px";
-    element.style.margin = "5em auto 0";
-
-    if (!this.webgl) {
-      element.innerHTML = window.WebGLRenderingContext
-        ? [
-            'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
-            'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-          ].join("\n")
-        : [
-            'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
-            'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.',
-          ].join("\n");
-    }
-    return element;
-  },
-
-  addGetWebGLMessage: (parameters = {}) => {
-    const parent =
-      parameters.parent !== undefined ? parameters.parent : document.body;
-    const id = parameters.id !== undefined ? parameters.id : "oldie";
-    const element = Detector.getWebGLErrorMessage();
-    element.id = id;
-    parent.appendChild(element);
-  },
 };
 
-export default function AnimatedShape(container) {
-  container =
-    typeof container === "string"
-      ? document.getElementById(container)
-      : console.info("An ID container is here required");
+export default function AnimatedShape(id) {
+  const container = document.getElementById(id);
+  const sizes = {
+    HEIGHT: container.offsetHeight,
+    WIDTH: container.offsetWidth,
+  };
 
   let scene;
   let camera;
@@ -77,29 +41,6 @@ export default function AnimatedShape(container) {
   let mesh;
   let controls;
   let lightGroup;
-  let mouseX;
-  let mouseY;
-  let renderHalfX;
-  let renderHalfY;
-
-  let targetRotationX = 0;
-  let targetRotationY = 0;
-  let targetRotationOnMouseDownX = 0;
-  let targetRotationOnMouseDownY = 0;
-  let mouseXOnMouseDown = 0;
-  let mouseYOnMouseDown = 0;
-  const sizes = {
-    HEIGHT: container.offsetHeight,
-    WIDTH: container.offsetWidth,
-  };
-
-  let isDragging = false;
-  let previousMousePosition = {
-    x: 0,
-    y: 0,
-  };
-
-  let targets;
 
   function createScene() {
     scene = new Scene();
@@ -108,7 +49,7 @@ export default function AnimatedShape(container) {
 
     camera = new PerspectiveCamera(100, WIDTH / HEIGHT, 1, 100);
     camera.position.z = 30;
-    camera.position.y = 0;
+    camera.position.y = 5;
 
     if (Detector.webgl) {
       renderer = new WebGLRenderer({
@@ -118,9 +59,6 @@ export default function AnimatedShape(container) {
     } else {
       renderer = new CanvasRenderer();
     }
-
-    renderHalfX = container.clientWidth / 2;
-    renderHalfY = container.clientHeight / 2;
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(WIDTH, HEIGHT);
@@ -200,68 +138,6 @@ export default function AnimatedShape(container) {
     scene.add(mesh);
   }
 
-  function onMouseDown(event) {
-    event.preventDefault();
-
-    document.addEventListener("mousemove", onMouseMove, false);
-    document.addEventListener("mouseup", onMouseUp, false);
-    document.addEventListener("mouseout", onMouseOut, false);
-
-    isDragging = true;
-  }
-
-  function onMouseMove(event) {
-    previousMousePosition = {
-      x: event.offsetX,
-      y: event.offsetY,
-    };
-
-    return (targets = {
-      targetRotationX,
-      targetRotationY,
-    });
-  }
-
-  function onTouchStart(event) {
-    if (event.touches.length === 1) {
-      event.preventDefault();
-
-      mouseXOnMouseDown = event.touches[0].pageX - renderHalfX;
-      targetRotationOnMouseDownX = targetRotationX;
-
-      mouseYOnMouseDown = event.touches[0].pageY - renderHalfY;
-      targetRotationOnMouseDownY = targetRotationY;
-    }
-  }
-
-  function onTouchMove(event) {
-    if (event.touches.length == 1) {
-      event.preventDefault();
-
-      mouseX = event.touches[0].pageX - renderHalfX;
-      targetRotationX =
-        targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.05;
-
-      mouseY = event.touches[0].pageY - renderHalfY;
-      targetRotationY =
-        targetRotationOnMouseDownY + (mouseY - mouseYOnMouseDown) * 0.05;
-    }
-  }
-
-  function onMouseUp(event) {
-    isDragging = false;
-    document.removeEventListener("mousemove", onMouseMove, false);
-    document.removeEventListener("mouseup", onMouseUp, false);
-    document.removeEventListener("mouseout", onMouseOut, false);
-  }
-
-  function onMouseOut(event) {
-    isDragging = false;
-    document.removeEventListener("mousemove", onMouseMove, false);
-    document.removeEventListener("mouseup", onMouseUp, false);
-    document.removeEventListener("mouseout", onMouseOut, false);
-  }
-
   function loop(time) {
     if (!loop.lastTime) {
       loop.lastTime = time;
@@ -297,10 +173,6 @@ export default function AnimatedShape(container) {
       loop();
 
       window.addEventListener("resize", onWindowResize, false);
-
-      container.addEventListener("mousedown", onMouseDown, false);
-      container.addEventListener("touchstart", onTouchStart, false);
-      container.addEventListener("touchmove", onTouchMove, false);
     },
   };
 }
