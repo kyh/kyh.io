@@ -4,11 +4,11 @@
   "description": "Kaiyu's personal website",
   "homepage": "https://kyh.io",
   "bugs": {
-    "url": "https://github.com/tehkaiyu/kyh.io/issues"
+    "url": "https://github.com/kyh/kyh.io/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://tehkaiyu@github.com/tehkaiyu/kyh.io.git"
+    "url": "https://kyh@github.com/kyh/kyh.io.git"
   },
   "license": "MIT",
   "author": "Kaiyu Hsu",
