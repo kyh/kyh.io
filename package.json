@@ -22,7 +22,7 @@
   "dependencies": {
     "animejs": "^3.2.1",
     "lazysizes": "^5.3.0",
-    "three": "^0.124.0",
+    "three": "^0.125.2",
     "tippy.js": "^6.2.7"
   },
   "devDependencies": {

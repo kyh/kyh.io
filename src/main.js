@@ -41,9 +41,17 @@ if (window.CSS && CSS.supports("color", "var(--brand-purple)")) {
 const $links = $(".link");
 
 $links.forEach(($link) => {
-  $link.setAttribute("rel", "noreferrer noopener");
-  $link.setAttribute("target", "_blank");
+  if ($link.href.slice(-1) !== "#") {
+    $link.setAttribute("rel", "noreferrer noopener");
+    $link.setAttribute("target", "_blank");
+  }
   $link.setAttribute("data-letters", $link.textContent);
+});
+
+document.body.addEventListener("click", (event) => {
+  if (event.target.href.slice(-1) === "#") {
+    event.preventDefault();
+  }
 });
 
 const $content = $(".content-wrapper");

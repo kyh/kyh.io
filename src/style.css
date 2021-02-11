@@ -136,6 +136,10 @@ img {
   max-width: 100%;
 }
 
+picture {
+  display: block;
+}
+
 button {
   text-align: inherit;
   border: none;
@@ -408,6 +412,23 @@ a:focus {
     width: 150px;
     height: 150px;
   }
+}
+
+.tooltip-apps {
+  display: grid;
+  grid-template: auto auto / auto auto;
+}
+
+.tooltip-apps a {
+  transition: filter 0.4s ease;
+}
+
+.tooltip-apps:hover a {
+  filter: grayscale(100%);
+}
+
+.tooltip-apps:hover a:hover {
+  filter: grayscale(0);
 }
 
 /* Tippy Styles */

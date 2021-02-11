@@ -1,6 +1,6 @@
 import tippy from "tippy.js";
 import AnimatedShape from "./services/shapes";
-
+import { isLargeScreen } from "./services/util";
 import amazonImage from "./assets/screenshots/amazon.png";
 import amazonImageW from "./assets/screenshots/amazon.webp";
 import slyceImage from "./assets/screenshots/slyce.png";
@@ -45,21 +45,26 @@ const tooltipMap = {
   fb: `<picture><source srcset="${fbImageW}" type="image/webp"><source srcset="${fbImage}" type="image/png"><img src="${fbImage}" alt="React" width="320" height="240"></picture>`,
   bootstrap: `<picture><source srcset="${bootstrapImageW}" type="image/webp"><source srcset="${bootstrapImage}" type="image/png"><img src="${bootstrapImage}" alt="Bootstrap" width="320" height="240"></picture>`,
   keiko: `<picture><source srcset="${keikoImageW}" type="image/webp"><source srcset="${keikoImage}" type="image/png"><img src="${keikoImage}" alt="Keiko and Friends" width="320" height="240"></picture>`,
-  ys: `<picture><source srcset="${ysImageW}" type="image/webp"><source srcset="${ysImage}" type="image/png"><img src="${ysImage}" alt="Yours Sincerely" width="320" height="240"></picture>`,
-  covid19: `<picture><source srcset="${covid19ImageW}" type="image/webp"><source srcset="${covid19Image}" type="image/png"><img src="${covid19Image}" alt="Covid-19 Dashboard" width="320" height="240"></picture>`,
+  apps: `<div class="tooltip-apps"><a href="https://yourssincerely.org"><picture><source srcset="${ysImageW}" type="image/webp"><source srcset="${ysImage}" type="image/png"><img src="${ysImage}" alt="Yours Sincerely" width="320" height="240"></picture></a><a href="https://covid-19.kyh.io"><picture><source srcset="${covid19ImageW}" type="image/webp"><source srcset="${covid19Image}" type="image/png"><img src="${covid19Image}" alt="Covid-19 Dashboard" width="320" height="240"></picture></a></div>`,
   playhouse: `<picture><source srcset="${playhouseImageW}" type="image/webp"><source srcset="${playhouseImage}" type="image/png"><img src="${playhouseImage}" alt="Playhouse" width="320" height="240"></picture>`,
 };
 
-tippy("[data-tooltip]", {
-  content: (reference) => {
-    const content = reference.getAttribute("data-tooltip");
-    return tooltipMap[content] || "";
-  },
-  allowHTML: true,
-  animation: "shift-away-subtle",
-  arrow: false,
-  delay: 200,
-});
+setTimeout(() => {
+  const target = isLargeScreen() ? ".reveal-content" : ".faded-content";
+  tippy(`${target} [data-tooltip]`, {
+    appendTo: () => document.body,
+    content: (reference) => {
+      const content = reference.getAttribute("data-tooltip");
+      return tooltipMap[content] || "";
+    },
+    animation: "shift-away-subtle",
+    maxWidth: "none",
+    allowHTML: true,
+    arrow: false,
+    interactive: true,
+    delay: 200,
+  });
+}, 50);
 
 const icosahedron = new AnimatedShape("shape-icosahedron");
 icosahedron.init();
