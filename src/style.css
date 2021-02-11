@@ -414,20 +414,20 @@ a:focus {
   }
 }
 
-.tooltip-apps {
+.tooltip-multi {
   display: grid;
   grid-template: auto auto / auto auto;
 }
 
-.tooltip-apps a {
+.tooltip-multi a {
   transition: filter 0.4s ease;
 }
 
-.tooltip-apps:hover a {
+.tooltip-multi:hover a {
   filter: grayscale(100%);
 }
 
-.tooltip-apps:hover a:hover {
+.tooltip-multi:hover a:hover {
   filter: grayscale(0);
 }
 
