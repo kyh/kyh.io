@@ -137,7 +137,7 @@ img {
 }
 
 picture {
-  display: block;
+  display: flex;
 }
 
 button {
@@ -416,7 +416,7 @@ a:focus {
 
 .tooltip-multi {
   display: grid;
-  grid-template: auto auto / auto auto;
+  grid-template-columns: auto auto;
 }
 
 .tooltip-multi a {
@@ -451,7 +451,7 @@ a:focus {
 }
 .tippy-content {
   position: relative;
-  padding: 8px 8px 4px;
+  padding: 8px;
   z-index: 1;
 }
 .tippy-content img {

@@ -1,101 +1,81 @@
 import tippy from "tippy.js";
 import AnimatedShape from "./services/shapes";
 import { isLargeScreen } from "./services/util";
-import amazonImage from "./assets/screenshots/amazon.png";
-import amazonImageW from "./assets/screenshots/amazon.webp";
-import slyceImage from "./assets/screenshots/slyce.png";
-import slyceImageW from "./assets/screenshots/slyce.webp";
-import tinyrxImage from "./assets/screenshots/tinyrx.png";
-import tinyrxImageW from "./assets/screenshots/tinyrx.webp";
-import cardiogramImage from "./assets/screenshots/cardiogram.png";
-import cardiogramImageW from "./assets/screenshots/cardiogram.webp";
-import atriumImage from "./assets/screenshots/atrium.png";
-import atriumImageW from "./assets/screenshots/atrium.webp";
-import tedxuoftImage from "./assets/screenshots/tedxuoft.png";
-import tedxuoftImageW from "./assets/screenshots/tedxuoft.webp";
-import tedxtorontoImage from "./assets/screenshots/tedxtoronto.png";
-import tedxtorontoImageW from "./assets/screenshots/tedxtoronto.webp";
-import vwImage from "./assets/screenshots/vw.png";
-import vwImageW from "./assets/screenshots/vw.webp";
-import ingImage from "./assets/screenshots/ing.png";
-import ingImageW from "./assets/screenshots/ing.webp";
-import fbImage from "./assets/screenshots/fb.png";
-import fbImageW from "./assets/screenshots/fb.webp";
-import bootstrapImage from "./assets/screenshots/bootstrap.png";
-import bootstrapImageW from "./assets/screenshots/bootstrap.webp";
-import keikoImage from "./assets/screenshots/keiko.png";
-import keikoImageW from "./assets/screenshots/keiko.webp";
-import ysImage from "./assets/screenshots/ys.png";
-import ysImageW from "./assets/screenshots/ys.webp";
-import covid19Image from "./assets/screenshots/covid19.png";
-import covid19ImageW from "./assets/screenshots/covid19.webp";
-import playhouseImage from "./assets/screenshots/playhouse.png";
-import playhouseImageW from "./assets/screenshots/playhouse.webp";
 
 const tooltipImageMap = {
   amazon: {
-    image: amazonImage,
-    imageW: amazonImageW,
+    image: require("./assets/screenshots/amazon.png"),
+    imageW: require("./assets/screenshots/amazon.webp"),
   },
   slyce: {
-    image: slyceImage,
-    imageW: slyceImageW,
+    image: require("./assets/screenshots/slyce.png"),
+    imageW: require("./assets/screenshots/slyce.webp"),
   },
   tinyrx: {
-    image: tinyrxImage,
-    imageW: tinyrxImageW,
+    image: require("./assets/screenshots/tinyrx.png"),
+    imageW: require("./assets/screenshots/tinyrx.webp"),
   },
   cardiogram: {
-    image: cardiogramImage,
-    imageW: cardiogramImageW,
+    image: require("./assets/screenshots/cardiogram.png"),
+    imageW: require("./assets/screenshots/cardiogram.webp"),
   },
   atrium: {
-    image: atriumImage,
-    imageW: atriumImageW,
+    image: require("./assets/screenshots/atrium.png"),
+    imageW: require("./assets/screenshots/atrium.webp"),
   },
   tedxuoft: {
-    image: tedxuoftImage,
-    imageW: tedxuoftImageW,
+    image: require("./assets/screenshots/tedxuoft.png"),
+    imageW: require("./assets/screenshots/tedxuoft.webp"),
   },
   tedxtoronto: {
-    image: tedxtorontoImage,
-    imageW: tedxtorontoImageW,
+    image: require("./assets/screenshots/tedxtoronto.png"),
+    imageW: require("./assets/screenshots/tedxtoronto.webp"),
   },
   vw: {
-    image: vwImage,
-    imageW: vwImageW,
+    image: require("./assets/screenshots/vw.png"),
+    imageW: require("./assets/screenshots/vw.webp"),
   },
   ing: {
-    image: ingImage,
-    imageW: ingImageW,
+    image: require("./assets/screenshots/ing.png"),
+    imageW: require("./assets/screenshots/ing.webp"),
   },
   fb: {
-    image: fbImage,
-    imageW: fbImageW,
+    image: require("./assets/screenshots/fb.png"),
+    imageW: require("./assets/screenshots/fb.webp"),
   },
   bootstrap: {
-    image: bootstrapImage,
-    imageW: bootstrapImageW,
+    image: require("./assets/screenshots/bootstrap.png"),
+    imageW: require("./assets/screenshots/bootstrap.webp"),
   },
   keiko: {
-    image: keikoImage,
-    imageW: keikoImageW,
+    image: require("./assets/screenshots/keiko.png"),
+    imageW: require("./assets/screenshots/keiko.webp"),
   },
   apps: {
-    ys: {
+    uicapsule: {
+      href: "https://uicapsule.com",
+      image: require("./assets/screenshots/uicapsule.png"),
+      imageW: require("./assets/screenshots/uicapsule.webp"),
+    },
+    yourssincerely: {
       href: "https://yourssincerely.org",
-      image: ysImage,
-      imageW: ysImageW,
+      image: require("./assets/screenshots/ys.png"),
+      imageW: require("./assets/screenshots/ys.webp"),
     },
     covid19: {
       href: "https://covid-19.kyh.io",
-      image: covid19Image,
-      imageW: covid19ImageW,
+      image: require("./assets/screenshots/covid19.png"),
+      imageW: require("./assets/screenshots/covid19.webp"),
+    },
+    stonks: {
+      href: "https://stonks.shop",
+      image: require("./assets/screenshots/stonks.png"),
+      imageW: require("./assets/screenshots/stonks.webp"),
     },
   },
   playhouse: {
-    image: playhouseImage,
-    imageW: playhouseImageW,
+    image: require("./assets/screenshots/playhouse.png"),
+    imageW: require("./assets/screenshots/playhouse.webp"),
   },
 };
 
