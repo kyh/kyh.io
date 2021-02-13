@@ -347,6 +347,9 @@ a:focus {
   .hidden-mobile {
     display: none;
   }
+  .tooltip-multi img {
+    max-height: 150px;
+  }
 }
 
 .sm-wrapper {
