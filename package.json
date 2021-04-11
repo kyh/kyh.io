@@ -14,11 +14,23 @@
   "author": "Kaiyu Hsu",
   "main": "src/index.html",
   "scripts": {
-    "build": "parcel build src/index.html --dist-dir dist",
+    "build": "npm run clean && parcel build src/index.html",
     "clean": "rimraf dist",
-    "dev": "parcel serve src/index.html",
+    "dev": "parcel serve src/index.html --open",
     "format": "prettier --write src",
     "postinstall": "husky install"
+  },
+  "browser": "dist/index.html",
+  "targets": {
+    "browser": {
+      "engines": {
+        "browsers": [
+          "last 2 versions",
+          "not edge < 76",
+          "not firefox < 67"
+        ]
+      }
+    }
   },
   "dependencies": {
     "animejs": "^3.2.1",
