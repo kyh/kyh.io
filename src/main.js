@@ -1,4 +1,3 @@
-import "lazysizes";
 import anime from "animejs";
 import RevealFx from "./services/reveal-fx";
 import SentenceFx from "./services/sentence-fx";
@@ -49,7 +48,7 @@ $links.forEach(($link) => {
 });
 
 document.body.addEventListener("click", (event) => {
-  if (event.target.href.slice(-1) === "#") {
+  if (event.target.href && event.target.href.slice(-1) === "#") {
     event.preventDefault();
   }
 });
