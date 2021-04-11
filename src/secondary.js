@@ -4,78 +4,78 @@ import { isLargeScreen } from "./services/util";
 
 const tooltipImageMap = {
   amazon: {
-    image: require("./assets/screenshots/amazon.png"),
-    imageW: require("./assets/screenshots/amazon.webp"),
+    image: require("url:./assets/screenshots/amazon.png"),
+    imageW: require("url:./assets/screenshots/amazon.webp"),
   },
   slyce: {
-    image: require("./assets/screenshots/slyce.png"),
-    imageW: require("./assets/screenshots/slyce.webp"),
+    image: require("url:./assets/screenshots/slyce.png"),
+    imageW: require("url:./assets/screenshots/slyce.webp"),
   },
   tinyrx: {
-    image: require("./assets/screenshots/tinyrx.png"),
-    imageW: require("./assets/screenshots/tinyrx.webp"),
+    image: require("url:./assets/screenshots/tinyrx.png"),
+    imageW: require("url:./assets/screenshots/tinyrx.webp"),
   },
   cardiogram: {
-    image: require("./assets/screenshots/cardiogram.png"),
-    imageW: require("./assets/screenshots/cardiogram.webp"),
+    image: require("url:./assets/screenshots/cardiogram.png"),
+    imageW: require("url:./assets/screenshots/cardiogram.webp"),
   },
   atrium: {
-    image: require("./assets/screenshots/atrium.png"),
-    imageW: require("./assets/screenshots/atrium.webp"),
+    image: require("url:./assets/screenshots/atrium.png"),
+    imageW: require("url:./assets/screenshots/atrium.webp"),
   },
   tedxuoft: {
-    image: require("./assets/screenshots/tedxuoft.png"),
-    imageW: require("./assets/screenshots/tedxuoft.webp"),
+    image: require("url:./assets/screenshots/tedxuoft.png"),
+    imageW: require("url:./assets/screenshots/tedxuoft.webp"),
   },
   tedxtoronto: {
-    image: require("./assets/screenshots/tedxtoronto.png"),
-    imageW: require("./assets/screenshots/tedxtoronto.webp"),
+    image: require("url:./assets/screenshots/tedxtoronto.png"),
+    imageW: require("url:./assets/screenshots/tedxtoronto.webp"),
   },
   vw: {
-    image: require("./assets/screenshots/vw.png"),
-    imageW: require("./assets/screenshots/vw.webp"),
+    image: require("url:./assets/screenshots/vw.png"),
+    imageW: require("url:./assets/screenshots/vw.webp"),
   },
   ing: {
-    image: require("./assets/screenshots/ing.png"),
-    imageW: require("./assets/screenshots/ing.webp"),
+    image: require("url:./assets/screenshots/ing.png"),
+    imageW: require("url:./assets/screenshots/ing.webp"),
   },
   fb: {
-    image: require("./assets/screenshots/fb.png"),
-    imageW: require("./assets/screenshots/fb.webp"),
+    image: require("url:./assets/screenshots/fb.png"),
+    imageW: require("url:./assets/screenshots/fb.webp"),
   },
   bootstrap: {
-    image: require("./assets/screenshots/bootstrap.png"),
-    imageW: require("./assets/screenshots/bootstrap.webp"),
+    image: require("url:./assets/screenshots/bootstrap.png"),
+    imageW: require("url:./assets/screenshots/bootstrap.webp"),
   },
   keiko: {
-    image: require("./assets/screenshots/keiko.png"),
-    imageW: require("./assets/screenshots/keiko.webp"),
+    image: require("url:./assets/screenshots/keiko.png"),
+    imageW: require("url:./assets/screenshots/keiko.webp"),
   },
   apps: {
     uicapsule: {
       href: "https://uicapsule.com",
-      image: require("./assets/screenshots/uicapsule.png"),
-      imageW: require("./assets/screenshots/uicapsule.webp"),
+      image: require("url:./assets/screenshots/uicapsule.png"),
+      imageW: require("url:./assets/screenshots/uicapsule.webp"),
     },
     yourssincerely: {
       href: "https://yourssincerely.org",
-      image: require("./assets/screenshots/ys.png"),
-      imageW: require("./assets/screenshots/ys.webp"),
+      image: require("url:./assets/screenshots/ys.png"),
+      imageW: require("url:./assets/screenshots/ys.webp"),
     },
     covid19: {
       href: "https://covid-19.kyh.io",
-      image: require("./assets/screenshots/covid19.png"),
-      imageW: require("./assets/screenshots/covid19.webp"),
+      image: require("url:./assets/screenshots/covid19.png"),
+      imageW: require("url:./assets/screenshots/covid19.webp"),
     },
     stonks: {
       href: "https://stonks.shop",
-      image: require("./assets/screenshots/stonks.png"),
-      imageW: require("./assets/screenshots/stonks.webp"),
+      image: require("url:./assets/screenshots/stonks.png"),
+      imageW: require("url:./assets/screenshots/stonks.webp"),
     },
   },
   playhouse: {
-    image: require("./assets/screenshots/playhouse.png"),
-    imageW: require("./assets/screenshots/playhouse.webp"),
+    image: require("url:./assets/screenshots/playhouse.png"),
+    imageW: require("url:./assets/screenshots/playhouse.webp"),
   },
 };
 
