@@ -1,7 +1,5 @@
 # kyh.io
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/60201776-86fd-483c-bd4b-4c2ae84bb908/deploy-status)](https://app.netlify.com/sites/kaiyu/deploys)
-
 Made with great frustration, and some JavaScript.
 
 ## Development Setup
@@ -16,4 +14,4 @@ npm run dev
 
 ## Deployment
 
-Pushing to master will autodeploy through Netlify
+Pushing to `main` will autodeploy through Cloudflare Pages
