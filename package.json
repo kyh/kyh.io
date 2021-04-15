@@ -12,7 +12,6 @@
   },
   "license": "MIT",
   "author": "Kaiyu Hsu",
-  "main": "src/index.html",
   "scripts": {
     "build": "npm run clean && parcel build src/index.html",
     "clean": "rimraf dist",
