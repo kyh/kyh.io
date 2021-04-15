@@ -83,7 +83,20 @@ function createTooltip(name, href, { image, imageW }) {
   return `<a href="${href}" target="_blank" rel="noreferrer noopener"><picture><source srcset="${imageW}" type="image/webp"><source srcset="${image}" type="image/png"><img src="${image}" alt="${name}" width="320" height="240"></picture></a>`;
 }
 
-setTimeout(() => {
+function ready(fn) {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    setTimeout(fn, 1);
+  } else {
+    document.addEventListener("DOMContentLoaded", fn);
+  }
+}
+
+const icosahedron = new AnimatedShape("shape-icosahedron");
+
+ready(() => {
   const target = isLargeScreen() ? ".reveal-content" : ".faded-content";
   tippy(`${target} [data-tooltip]`, {
     appendTo: () => document.body,
@@ -109,7 +122,6 @@ setTimeout(() => {
     interactive: true,
     delay: 200,
   });
-}, 50);
 
-const icosahedron = new AnimatedShape("shape-icosahedron");
-icosahedron.init();
+  icosahedron.init();
+});
