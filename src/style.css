@@ -317,12 +317,11 @@ a:focus {
   bottom: 0;
   left: -50px;
   right: -50px;
-  height: 300px;
+  height: 21vw;
   background: url("url:./assets/images/fg.webp"),
     url("url:./assets/images/fg.png");
   background-size: 100%;
   background-repeat: no-repeat;
-  background-position: bottom;
 }
 
 .opacity-0 {
@@ -453,7 +452,7 @@ a:focus {
   box-shadow: var(--tippy-shadow);
   background-color: var(--main-bg-color);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 1.4rem;
   line-height: 1.4;
   outline: 0;
   transition-property: transform, visibility, opacity;
