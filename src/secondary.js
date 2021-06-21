@@ -67,10 +67,10 @@ const tooltipImageMap = {
       image: require("url:./assets/screenshots/covid19.png"),
       imageW: require("url:./assets/screenshots/covid19.webp"),
     },
-    stonks: {
-      href: "https://stonks.shop",
-      image: require("url:./assets/screenshots/stonks.png"),
-      imageW: require("url:./assets/screenshots/stonks.webp"),
+    art: {
+      href: "https://artnotart.art",
+      image: require("url:./assets/screenshots/art.png"),
+      imageW: require("url:./assets/screenshots/art.webp"),
     },
   },
   playhouse: {
