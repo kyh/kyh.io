@@ -318,8 +318,7 @@ a:focus {
   left: -50px;
   right: -50px;
   height: 21vw;
-  background: url("url:./assets/images/fg.webp"),
-    url("url:./assets/images/fg.png");
+  background: url("url:assets/images/fg.webp"), url("url:assets/images/fg.png");
   background-size: 100%;
   background-repeat: no-repeat;
 }
