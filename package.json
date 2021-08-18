@@ -13,12 +13,13 @@
   "license": "MIT",
   "author": "Kaiyu Hsu",
   "scripts": {
-    "build": "npm run clean && parcel build src/index.html",
-    "dev": "parcel serve src/index.html --open",
+    "build": "parcel build",
+    "dev": "parcel --open",
     "clean": "rimraf dist",
     "postinstall": "husky install"
   },
-  "browserslist": "> 0.2%",
+  "source": "src/index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "dependencies": {
     "animejs": "^3.2.1",
     "three": "^0.131.3",
