@@ -191,7 +191,6 @@ a:focus {
   line-height: 1;
   display: inline-flex;
   overflow: hidden;
-  line-height: 1;
   border-bottom: 1px dotted var(--brand-purple);
   color: var(--brand-purple);
   transition: border-color 0.4s ease;
