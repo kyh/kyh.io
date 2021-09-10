@@ -3,9 +3,7 @@
   --logo-tw: #55acee;
   --logo-in: #4875b4;
   --logo-dr: #ea4c89;
-}
 
-:root[color-mode="light"] {
   --main-bg-color: #f9fafb;
   --main-body-faded: #cdd2d6;
   --main-body-color: #596677;
@@ -28,14 +26,11 @@
   --main-body-color: #d1d5db;
   --main-highlight: #f3f4f6;
   --main-content-bg-color: #1f2937;
+
   --brand-purple: #6b74e6;
   --brand-purple-opaque: #ddd6fe;
 
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23F3F4F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
-
-  --tippy-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.05),
-    0 4px 80px -8px rgba(36, 40, 47, 0.15),
-    0 4px 4px -2px rgba(91, 94, 105, 0.05);
 
   --logo-gh: #ffffff;
 }
