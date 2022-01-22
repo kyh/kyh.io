@@ -22,7 +22,7 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "dependencies": {
     "animejs": "^3.2.1",
-    "three": "^0.135.0",
+    "three": "^0.136.0",
     "tippy.js": "^6.2.7"
   },
   "devDependencies": {
