@@ -11,17 +11,24 @@ import {
   Bodies,
   World,
 } from "matter-js";
+import { useTheme } from "next-themes";
 import styles from "@components/Scene.module.css";
 
 export const Scene = () => {
+  const { theme } = useTheme();
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());
+  const runnerRef = useRef(Runner.create());
+
+  const floorRef = useRef<Composite | null>(null);
+  const stacksRef = useRef<Composite | null>(null);
 
   useEffect(() => {
     const cw = document.body.clientWidth;
     const ch = document.body.clientHeight;
 
     const engine = engineRef.current;
+    const runner = runnerRef.current;
     const world = engine.world;
 
     const render = Render.create({
@@ -30,15 +37,12 @@ export const Scene = () => {
       options: {
         width: cw,
         height: ch,
-        wireframes: true,
-        wireframeBackground: "transparent",
+        wireframes: false,
         background: "transparent",
       },
     });
 
     Render.run(render);
-
-    const runner = Runner.create();
     Runner.run(runner, engine);
 
     const stack = Composites.stack(
@@ -50,6 +54,12 @@ export const Scene = () => {
       0,
       (x: number, y: number) => {
         const sides = Math.round(Common.random(1, 8));
+
+        const render = {
+          fillStyle: "transparent",
+          strokeStyle: "white",
+          lineWidth: 2,
+        };
 
         let chamfer;
         if (sides > 2 && Common.random() > 0.7) {
@@ -66,7 +76,7 @@ export const Scene = () => {
                 y,
                 Common.random(25, 50),
                 Common.random(25, 50),
-                { chamfer: chamfer }
+                { chamfer, render }
               );
             } else {
               return Bodies.rectangle(
@@ -74,21 +84,29 @@ export const Scene = () => {
                 y,
                 Common.random(80, 120),
                 Common.random(25, 30),
-                { chamfer: chamfer }
+                { chamfer, render }
               );
             }
           case 1:
             return Bodies.polygon(x, y, sides, Common.random(25, 50), {
-              chamfer: chamfer,
+              chamfer,
+              render,
             });
         }
       }
     );
 
     Composite.add(world, stack);
-    Composite.add(world, [
-      Bodies.rectangle(cw / 4, ch - 150, cw / 2, 2, { isStatic: true }),
-    ]);
+    stacksRef.current = stack;
+
+    const floor = Bodies.rectangle(cw / 4, ch - 150, cw / 2, 2, {
+      isStatic: true,
+      render: {
+        fillStyle: "white",
+      },
+    });
+
+    floorRef.current = Composite.add(world, floor);
 
     const mouse = Mouse.create(render.canvas),
       mouseConstraint = MouseConstraint.create(engine, {
@@ -117,6 +135,23 @@ export const Scene = () => {
       render.canvas.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const isLight = theme === "light";
+
+    const toggleColors = () => {
+      floorRef.current &&
+        floorRef.current.bodies.map((b) => {
+          b.render.fillStyle = isLight ? "black" : "white";
+        });
+      stacksRef.current &&
+        stacksRef.current.bodies.map((b) => {
+          b.render.strokeStyle = isLight ? "black" : "white";
+        });
+    };
+
+    toggleColors();
+  }, [theme]);
 
   return <div className={styles.container} ref={sceneRef} />;
 };
