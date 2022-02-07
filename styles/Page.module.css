@@ -1,0 +1,30 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  min-height: 100vh;
+  padding-left: 1.6rem;
+  padding-right: 1.6rem;
+  padding-top: 9rem;
+  padding-bottom: 9rem;
+  margin: 0 auto;
+}
+
+.container-full {
+  max-width: auto;
+}
+
+.header {
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-top: 1.2rem;
+}

@@ -1,0 +1,161 @@
+:root {
+  --logo-gh: #333333;
+  --logo-tw: #55acee;
+  --logo-in: #4875b4;
+  --logo-dr: #ea4c89;
+
+  --colors-gray0: #ffffff;
+  --colors-gray50: #f8fafc;
+  --colors-gray100: #f1f5f9;
+  --colors-gray200: #e2e8f0;
+  --colors-gray300: #cbd5e1;
+  --colors-gray400: #94a3b8;
+  --colors-gray500: #64748b;
+  --colors-gray600: #475569;
+  --colors-gray700: #334155;
+  --colors-gray800: #1e293b;
+  --colors-gray900: #0f172a;
+  --colors-gray950: #101010;
+  --colors-gray1000: #000;
+
+  --bg-color: var(--colors-gray300);
+  --bg-contrast: var(--colors-gray0);
+  --border-color: var(--colors-gray200);
+  --body-color: var(--colors-gray900);
+
+  --brand-primary: #6b74e6;
+  --brand-primary-highlight: #6b74e680;
+}
+
+[data-theme="dark"] {
+  --logo-gh: #ffffff;
+
+  --bg-color: var(--colors-gray900);
+  --bg-contrast: var(--colors-gray1000);
+  --border-color: var(--colors-gray800);
+  --body-color: var(--colors-gray100);
+
+  --brand-primary: #6b74e6;
+  --brand-primary-highlight: #ddd6fe;
+}
+
+@font-face {
+  font-family: gilroy;
+  src: url(/fonts/Gilroy-Medium.woff2) format("woff2"),
+    url(/fonts/Gilroy-Medium.woff) format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: gilroy;
+  src: url(/fonts/Gilroy-Regular.woff2) format("woff2"),
+    url(/fonts/Gilroy-Regular.woff) format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body {
+  font-size: 62.5%;
+  height: 100%;
+}
+
+body {
+  font-family: "Gilroy", "Helvetica", sans-serif;
+  line-height: 1.6;
+  color: var(--body-color);
+  background-color: var(--bg-contrast);
+  background-image: radial-gradient(
+    150% 150% at 0% 20%,
+    var(--bg-contrast) 20%,
+    var(--bg-color)
+  );
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+#root,
+#__next {
+  height: 100%;
+  isolation: isolate;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+  border: none;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

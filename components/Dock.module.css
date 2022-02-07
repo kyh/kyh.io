@@ -1,0 +1,62 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70px;
+  position: fixed;
+  bottom: 4vh;
+  left: 0;
+  right: 0;
+}
+
+.list {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  gap: 0.8rem;
+  padding: 1rem;
+  box-shadow: rgba(15, 23, 42, 0.12) 0px 30px 60px 0px;
+  border-radius: 2rem;
+  backdrop-filter: blur(25px);
+  background: var(--bg-contrast);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .item {
+  --gradient-from: var(--colors-gray950);
+  --gradient-to: var(--colors-gray900);
+  --gradient-stops: var(--gradient-from), var(--gradient-to, hsla(0, 0%, 6%, 0));
+  --shadow: inset 0 1px 0 0 #ffffff0d;
+  --ring-offset-shadow: 0 0 #0000;
+  --ring-shadow: 0 0 #0000;
+}
+
+.item {
+  --gradient-from: var(--colors-gray50);
+  --gradient-to: var(--colors-gray100);
+  --gradient-stops: var(--gradient-from),
+    var(--gradient-to, hsla(0, 0%, 94%, 0));
+  --shadow: inset 0 1px 0 0 #ffffff0d;
+  --ring-offset-shadow: 0 0 #fff;
+  --ring-shadow: 0 0 #fff;
+
+  border-radius: 25%;
+  background: var(--gradient-to);
+  background-image: linear-gradient(to top, var(--gradient-stops));
+  box-shadow: var(--ring-offset-shadow, 0 0 #0000),
+    var(--ring-shadow, 0 0 #0000), var(--shadow);
+}
+
+.item > * {
+  color: var(--body-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.item > * > svg {
+  width: 50%;
+  height: 50%;
+}
