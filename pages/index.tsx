@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
+import { Scene } from "@components/Scene";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -12,7 +13,7 @@ const Page: NextPage = () => {
           UX Engineer / Software Engineer / Designer / Manager / Ring Bearer
         </p>
       </header>
-      <p></p>
+      <Scene />
     </main>
   );
 };
