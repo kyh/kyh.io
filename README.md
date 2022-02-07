@@ -8,7 +8,7 @@ Made with great frustration, and some JavaScript.
 # install dependencies
 npm i
 
-# serve with hot reload at localhost:8080
+# serve with hot reload at localhost:3000
 npm run dev
 ```
 
