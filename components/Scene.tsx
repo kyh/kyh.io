@@ -11,6 +11,7 @@ import {
   Bodies,
   World,
 } from "matter-js";
+import styles from "@components/Scene.module.css";
 
 export const Scene = () => {
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -50,7 +51,6 @@ export const Scene = () => {
       (x: number, y: number) => {
         const sides = Math.round(Common.random(1, 8));
 
-        // round the edges of some bodies
         let chamfer;
         if (sides > 2 && Common.random() > 0.7) {
           chamfer = {
@@ -86,16 +86,10 @@ export const Scene = () => {
     );
 
     Composite.add(world, stack);
-
     Composite.add(world, [
-      // walls
-      // Bodies.rectangle(400, 0, 800, 50, { isStatic: true }),
-      Bodies.rectangle(400, 600, 800, 50, { isStatic: true }),
-      // Bodies.rectangle(800, 300, 50, 600, { isStatic: true }),
-      // Bodies.rectangle(0, 300, 50, 600, { isStatic: true }),
+      Bodies.rectangle(cw / 4, ch - 150, cw / 2, 2, { isStatic: true }),
     ]);
 
-    // add mouse control
     const mouse = Mouse.create(render.canvas),
       mouseConstraint = MouseConstraint.create(engine, {
         mouse: mouse,
@@ -109,13 +103,11 @@ export const Scene = () => {
 
     Composite.add(world, mouseConstraint);
 
-    // keep the mouse in sync with rendering
     render.mouse = mouse;
 
-    // fit the render viewport to the scene
     Render.lookAt(render, {
       min: { x: 0, y: 0 },
-      max: { x: 800, y: 600 },
+      max: { x: cw / 2, y: ch },
     });
 
     return () => {
@@ -126,5 +118,5 @@ export const Scene = () => {
     };
   }, []);
 
-  return <div ref={sceneRef} style={{ width: "100%", height: "100%" }} />;
+  return <div className={styles.container} ref={sceneRef} />;
 };
