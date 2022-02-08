@@ -14,6 +14,14 @@ import {
 import { useTheme } from "next-themes";
 import styles from "@components/Scene.module.css";
 
+const percentX = (percent: number) => {
+  return Math.round((percent / 100) * window.innerWidth);
+};
+
+const percentY = (percent: number) => {
+  return Math.round((percent / 100) * window.innerHeight);
+};
+
 export const Scene = () => {
   const { theme } = useTheme();
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -24,9 +32,6 @@ export const Scene = () => {
   const stacksRef = useRef<Composite | null>(null);
 
   useEffect(() => {
-    const cw = document.body.clientWidth;
-    const ch = document.body.clientHeight;
-
     const engine = engineRef.current;
     const runner = runnerRef.current;
     const world = engine.world;
@@ -35,18 +40,15 @@ export const Scene = () => {
       element: sceneRef.current!,
       engine: engine,
       options: {
-        width: cw,
-        height: ch,
+        width: percentX(100),
+        height: percentY(100),
         wireframes: false,
         background: "transparent",
       },
     });
 
-    Render.run(render);
-    Runner.run(runner, engine);
-
     const stack = Composites.stack(
-      0,
+      percentX(50) / 2,
       20,
       10,
       5,
@@ -99,12 +101,18 @@ export const Scene = () => {
     Composite.add(world, stack);
     stacksRef.current = stack;
 
-    const floor = Bodies.rectangle(cw / 4, ch - 150, cw / 2, 2, {
-      isStatic: true,
-      render: {
-        fillStyle: "white",
-      },
-    });
+    const floor = Bodies.rectangle(
+      percentX(50),
+      percentY(80),
+      percentX(60),
+      2,
+      {
+        isStatic: true,
+        render: {
+          fillStyle: "white",
+        },
+      }
+    );
 
     floorRef.current = Composite.add(world, floor);
 
@@ -126,8 +134,11 @@ export const Scene = () => {
 
     Render.lookAt(render, {
       min: { x: 0, y: 0 },
-      max: { x: cw / 2, y: ch },
+      max: { x: percentX(100), y: percentY(100) },
     });
+
+    Render.run(render);
+    Runner.run(runner, engine);
 
     return () => {
       Render.stop(render);

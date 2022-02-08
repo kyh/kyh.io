@@ -23,11 +23,11 @@ export const RoleNav = () => {
   const matches = useMediaQuery("only screen and (max-width: 640px)");
 
   return (
-    <nav className={styles.links}>
+    <ul className={styles.links}>
       {roles.map(({ href, label }, index) => {
         if (matches && index > 2) return null;
         return (
-          <div className={styles.linkContainer} key={href}>
+          <li className={styles.linkContainer} key={href}>
             <Link href={href}>
               <a>{label}</a>
             </Link>
@@ -39,9 +39,9 @@ export const RoleNav = () => {
                 transition={spring}
               />
             )}
-          </div>
+          </li>
         );
       })}
-    </nav>
+    </ul>
   );
 };
