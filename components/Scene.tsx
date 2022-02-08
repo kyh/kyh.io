@@ -46,7 +46,7 @@ export const Scene = () => {
     Runner.run(runner, engine);
 
     const stack = Composites.stack(
-      20,
+      0,
       20,
       10,
       5,
@@ -111,6 +111,7 @@ export const Scene = () => {
     const mouse = Mouse.create(render.canvas),
       mouseConstraint = MouseConstraint.create(engine, {
         mouse: mouse,
+        // @ts-expect-error
         constraint: {
           stiffness: 0.2,
           render: {
@@ -130,6 +131,7 @@ export const Scene = () => {
 
     return () => {
       Render.stop(render);
+      Runner.stop(runner);
       World.clear(world, false);
       Engine.clear(engine);
       render.canvas.remove();

@@ -1,0 +1,40 @@
+.links {
+  display: flex;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.linkContainer a {
+  color: var(--body-color);
+  text-decoration: none;
+}
+
+.linkContainer a::after {
+  content: "/";
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+
+.linkContainer:first-child {
+  padding-left: 0;
+}
+
+.linkContainer:last-child a::after {
+  display: none;
+}
+
+.underline {
+  width: 0.4rem;
+  height: 0.4rem;
+  background-color: var(--body-color);
+  border-radius: 50%;
+  box-shadow: 0 0 0.6rem 0.1rem var(--body-color);
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}

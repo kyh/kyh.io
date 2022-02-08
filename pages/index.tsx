@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
+import { RoleNav } from "@components/RoleNav";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -8,9 +9,7 @@ const Page: NextPage = () => {
       <SEO />
       <header className={styles.header}>
         <h1 className={styles.title}>Kaiyu Hsu</h1>
-        <p className={styles.subtitle}>
-          UX Engineer / Software Engineer / Designer / Manager / Ring Bearer
-        </p>
+        <RoleNav />
       </header>
     </main>
   );
