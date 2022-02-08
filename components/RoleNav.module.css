@@ -34,7 +34,5 @@
   height: 0.4rem;
   background-color: var(--body-color);
   border-radius: 50%;
-  box-shadow: 0 0 0.6rem 0.1rem var(--body-color);
-  opacity: 0.5;
-  transition: opacity 0.2s ease-in-out;
+  box-shadow: 0 0 0.6rem 0.1rem var(--body-color-faded);
 }

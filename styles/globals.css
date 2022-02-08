@@ -22,6 +22,7 @@
   --bg-contrast: var(--colors-gray0);
   --border-color: var(--colors-gray200);
   --body-color: var(--colors-gray900);
+  --body-color-faded: var(--colors-gray600);
 
   --brand-primary: #6b74e6;
   --brand-primary-highlight: #6b74e680;
@@ -34,6 +35,7 @@
   --bg-contrast: var(--colors-gray1000);
   --border-color: var(--colors-gray800);
   --body-color: var(--colors-gray100);
+  --body-color-faded: var(--colors-gray300);
 
   --brand-primary: #6b74e6;
   --brand-primary-highlight: #ddd6fe;
