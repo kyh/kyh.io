@@ -17,8 +17,6 @@
   );
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: --l 0.5s linear;
-  animation: animateText 0.5s linear forwards;
 }
 
 .text::after {
@@ -31,8 +29,23 @@
   top: 4px;
   left: var(--l);
   transform: skew(-20deg);
+}
+
+.entered,
+.entered::after {
+  --l: 102%;
+}
+
+.entering,
+.entering::after {
   transition: --l 0.5s linear;
   animation: animateText 0.5s linear forwards;
+}
+
+.rotate,
+.rotate::after {
+  transition: --l 0.5s linear 5s;
+  animation: rotateText 0.5s linear infinite;
 }
 
 @keyframes animateText {
@@ -40,6 +53,18 @@
     --l: 0%;
   }
   to {
+    --l: 102%;
+  }
+}
+
+@keyframes rotateText {
+  0% {
+    --l: 102%;
+  }
+  50% {
+    --l: 55%;
+  }
+  100% {
     --l: 102%;
   }
 }

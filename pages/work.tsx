@@ -8,7 +8,12 @@ const Page: NextPage = () => {
     <main className={styles.container}>
       <SEO />
       <header className={styles.header}>
-        <AnimateText className={styles.title}>Pushing code</AnimateText>
+        <AnimateText
+          className={styles.title}
+          rotate={["code", "pixels", "limits"]}
+        >
+          Pushing
+        </AnimateText>
       </header>
     </main>
   );
