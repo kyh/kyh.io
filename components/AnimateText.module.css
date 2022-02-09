@@ -1,9 +1,3 @@
-@property --l {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 0%;
-}
-
 .text {
   --l: 0%;
   position: relative;
