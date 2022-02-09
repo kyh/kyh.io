@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/router";
 import {
   Engine,
   Render,
@@ -24,6 +25,8 @@ const percentY = (percent: number) => {
 
 export const Scene = () => {
   const { theme } = useTheme();
+  const router = useRouter();
+
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());
   const runnerRef = useRef(Runner.create());
@@ -47,9 +50,46 @@ export const Scene = () => {
       },
     });
 
+    const mouse = Mouse.create(render.canvas),
+      mouseConstraint = MouseConstraint.create(engine, {
+        mouse: mouse,
+        // @ts-expect-error
+        constraint: {
+          stiffness: 0.2,
+          render: {
+            visible: false,
+          },
+        },
+      });
+
+    Composite.add(world, mouseConstraint);
+
+    render.mouse = mouse;
+
+    Render.lookAt(render, {
+      min: { x: 0, y: 0 },
+      max: { x: percentX(100), y: percentY(100) },
+    });
+
+    Render.run(render);
+    Runner.run(runner, engine);
+
+    return () => {
+      Render.stop(render);
+      Runner.stop(runner);
+      World.clear(world, false);
+      Engine.clear(engine);
+      render.canvas.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const engine = engineRef.current;
+    const world = engine.world;
+
     const stack = Composites.stack(
       percentX(50) / 2,
-      20,
+      -500,
       10,
       5,
       0,
@@ -101,6 +141,7 @@ export const Scene = () => {
     Composite.add(world, stack);
     stacksRef.current = stack;
 
+    if (floorRef.current) return;
     const floor = Bodies.rectangle(
       percentX(50),
       percentY(80),
@@ -115,55 +156,20 @@ export const Scene = () => {
     );
 
     floorRef.current = Composite.add(world, floor);
-
-    const mouse = Mouse.create(render.canvas),
-      mouseConstraint = MouseConstraint.create(engine, {
-        mouse: mouse,
-        // @ts-expect-error
-        constraint: {
-          stiffness: 0.2,
-          render: {
-            visible: false,
-          },
-        },
-      });
-
-    Composite.add(world, mouseConstraint);
-
-    render.mouse = mouse;
-
-    Render.lookAt(render, {
-      min: { x: 0, y: 0 },
-      max: { x: percentX(100), y: percentY(100) },
-    });
-
-    Render.run(render);
-    Runner.run(runner, engine);
-
-    return () => {
-      Render.stop(render);
-      Runner.stop(runner);
-      World.clear(world, false);
-      Engine.clear(engine);
-      render.canvas.remove();
-    };
-  }, []);
+  }, [router.asPath]);
 
   useEffect(() => {
     const isLight = theme === "light";
 
-    const toggleColors = () => {
-      floorRef.current &&
-        floorRef.current.bodies.map((b) => {
-          b.render.fillStyle = isLight ? "black" : "white";
-        });
-      stacksRef.current &&
-        stacksRef.current.bodies.map((b) => {
-          b.render.strokeStyle = isLight ? "black" : "white";
-        });
-    };
+    floorRef.current &&
+      floorRef.current.bodies.map((b) => {
+        b.render.fillStyle = isLight ? "black" : "white";
+      });
 
-    toggleColors();
+    stacksRef.current &&
+      stacksRef.current.bodies.map((b) => {
+        b.render.strokeStyle = isLight ? "black" : "white";
+      });
   }, [theme]);
 
   return <div className={styles.container} ref={sceneRef} />;
