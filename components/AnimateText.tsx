@@ -44,7 +44,7 @@ export const AnimateText = ({
       ref={ref}
       className={`${styles.text} ${className} ${
         !initialized ? styles.entering : styles.entered
-      } ${animate ? styles.rotate : ""}`}
+      } ${animate ? styles.reveal : ""}`}
     >
       {children} {currentWord && currentWord}
     </h1>

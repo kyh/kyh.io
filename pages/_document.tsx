@@ -1,6 +1,26 @@
 import NextDocument, { Html, Head, Main, NextScript } from "next/document";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
 
+const criticalStyles = `
+@font-face {
+  font-family: gilroy;
+  src: url(/fonts/Gilroy-Medium.woff2) format("woff2"),
+    url(/fonts/Gilroy-Medium.woff) format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: gilroy;
+  src: url(/fonts/Gilroy-Regular.woff2) format("woff2"),
+    url(/fonts/Gilroy-Regular.woff) format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+}
+`;
+
 export default class Document extends NextDocument {
   render() {
     return (
@@ -40,6 +60,7 @@ export default class Document extends NextDocument {
             content="/favicon/browserconfig.xml"
           />
           <meta name="theme-color" content="#111827" />
+          <style dangerouslySetInnerHTML={{ __html: criticalStyles }} />
         </Head>
         <body>
           <Main />
