@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
+import { AnimateText } from "@components/AnimateText";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -7,7 +8,7 @@ const Page: NextPage = () => {
     <main className={styles.container}>
       <SEO />
       <header className={styles.header}>
-        <h1 className={styles.title}>Typing things, pushing pixels</h1>
+        <AnimateText className={styles.title}>Pushing code</AnimateText>
       </header>
     </main>
   );

@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useMediaQuery } from "@react-hook/media-query";
-import styles from "@components/RoleNav.module.css";
+import styles from "./RoleNav.module.css";
 
 const roles = [
   { href: "/", label: "UX Engineer" },

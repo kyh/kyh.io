@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
 import { Scene } from "@components/Scene";
+import { AnimateText } from "@components/AnimateText";
 import { RoleNav } from "@components/RoleNav";
 import styles from "styles/Page.module.css";
 
@@ -10,7 +11,7 @@ const Page: NextPage = () => {
       <SEO />
       <Scene />
       <header className={styles.header}>
-        <h1 className={styles.title}>Kaiyu Hsu</h1>
+        <AnimateText className={styles.title}>Kaiyu Hsu</AnimateText>
         <RoleNav />
       </header>
     </main>

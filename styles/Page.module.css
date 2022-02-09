@@ -22,7 +22,7 @@
 .title {
   font-size: 4rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 @media screen and (max-width: 600px) {

@@ -12,7 +12,7 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
-import styles from "@components/Scene.module.css";
+import styles from "./Scene.module.css";
 
 const percentX = (percent: number) => {
   return Math.round((percent / 100) * window.innerWidth);

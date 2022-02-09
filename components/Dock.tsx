@@ -3,8 +3,8 @@ import React, { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import useRaf from "@rooks/use-raf";
-import styles from "@components/Dock.module.css";
 import { ThemeToggle } from "@components/ThemeToggle";
+import styles from "./Dock.module.css";
 
 const iconAttrs = {
   xmlns: "http://www.w3.org/2000/svg",
