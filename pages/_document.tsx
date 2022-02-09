@@ -19,12 +19,6 @@ const criticalStyles = `
   font-style: normal;
   font-display: fallback;
 }
-
-@property --l {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 0%;
-}
 `;
 
 export default class Document extends NextDocument {

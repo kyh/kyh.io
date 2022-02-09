@@ -1,65 +1,51 @@
 .text {
-  --l: 0%;
   position: relative;
-  background-color: var(--bg-contrast);
-  background-image: linear-gradient(
-    110deg,
-    var(--body-color) 0,
-    var(--body-color) var(--l),
-    var(--bg-contrast) var(--l),
-    var(--bg-contrast)
-  );
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  overflow: hidden;
+  padding: 0 2rem;
+  margin: 0 -2rem;
 }
 
 .text::after {
-  --l: 0%;
   content: "";
-  background-color: var(--body-color);
-  width: 0.4rem;
-  height: 32px;
+  background-color: var(--bg-contrast);
+  width: 100%;
+  height: 100%;
+  border-left: 4px solid var(--body-color);
   position: absolute;
-  top: 4px;
-  will-change: left;
-  left: var(--l);
-  transform: skew(-20deg);
+  top: 0;
+  left: 0;
+  transform: skew(-20deg) translateX(5%);
 }
 
-.entering,
 .entering::after {
-  transition: --l 0.5s linear;
   animation: animateTextIn 0.5s linear forwards;
 }
 
-.entered,
 .entered::after {
-  --l: 102%;
+  transform: skew(-20deg) translateX(95%);
 }
 
-.reveal,
 .reveal::after {
-  transition: --l 0.5s linear 5s;
   animation: animateTextReveal 0.5s linear infinite;
 }
 
 @keyframes animateTextIn {
   from {
-    --l: 0%;
+    transform: skew(-20deg) translateX(5%);
   }
   to {
-    --l: 102%;
+    transform: skew(-20deg) translateX(95%);
   }
 }
 
 @keyframes animateTextReveal {
   0% {
-    --l: 102%;
+    transform: skew(-20deg) translateX(95%);
   }
   50% {
-    --l: 55%;
+    transform: skew(-20deg) translateX(55%);
   }
   100% {
-    --l: 102%;
+    transform: skew(-20deg) translateX(95%);
   }
 }

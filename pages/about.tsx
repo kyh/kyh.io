@@ -8,7 +8,7 @@ const Page: NextPage = () => {
     <main className={styles.container}>
       <SEO />
       <header className={styles.header}>
-        <AnimateText className={styles.title}>Once upon a time</AnimateText>
+        <AnimateText className={styles.title}>A long time ago</AnimateText>
       </header>
     </main>
   );
