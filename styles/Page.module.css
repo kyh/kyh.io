@@ -32,7 +32,7 @@
   padding-left: 24px;
 }
 
-.listLarge > li {
+.projectList > li {
   font-size: 2rem;
   background-position-y: 8px;
   margin-bottom: 8px;
