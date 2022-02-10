@@ -4,7 +4,6 @@ import { SEO } from "@components/SEO";
 import { AnimateText } from "@components/AnimateText";
 import { TippyLink } from "@components/TippyLink";
 import styles from "styles/Page.module.css";
-import aboutStyles from "styles/About.module.css";
 
 const Page: NextPage = () => {
   return (
@@ -18,9 +17,9 @@ const Page: NextPage = () => {
         building things. By day, I get to do that by typing the things that make
         Amazon go.
       </p>
-      <section className={aboutStyles.section}>
+      <section className={styles.section}>
         <h2>Career Highlights</h2>
-        <ul className={aboutStyles.list}>
+        <ul className={styles.list}>
           <li>Oversaw product growth from dozens to millions of users</li>
           <li>
             Published research on{" "}
@@ -89,7 +88,7 @@ const Page: NextPage = () => {
         </ul>
       </section>
       <h2>Employment Badges</h2>
-      <section className={aboutStyles.logos}>
+      <section className={styles.logos}>
         <Image
           className="google"
           width="150"
@@ -140,7 +139,7 @@ const Page: NextPage = () => {
           alt="EA"
         />
       </section>
-      <section className={aboutStyles.section}>
+      <section className={styles.section}>
         <h2>Other Activities</h2>
         <p>
           You’ll occasionally find me dabbling in the open source world,
@@ -202,9 +201,9 @@ const Page: NextPage = () => {
           . But honestly, I spend most of my days procrastinating.
         </p>
       </section>
-      <section className={aboutStyles.socials}>
+      <section className={styles.socials}>
         <a
-          className={aboutStyles.git}
+          className={styles.git}
           href="https://github.com/kyh"
           aria-label="GitHub"
           target="_blank"
@@ -218,7 +217,7 @@ const Page: NextPage = () => {
           </svg>
         </a>
         <a
-          className={aboutStyles.dribbble}
+          className={styles.dribbble}
           href="https://dribbble.com/kaiyuhsu"
           aria-label="Dribbble"
           target="_blank"
@@ -232,7 +231,7 @@ const Page: NextPage = () => {
           </svg>
         </a>
         <a
-          className={aboutStyles.twitter}
+          className={styles.twitter}
           href="https://twitter.com/kaiyuhsu"
           aria-label="Twitter"
           target="_blank"
@@ -246,7 +245,7 @@ const Page: NextPage = () => {
           </svg>
         </a>
         <a
-          className={aboutStyles.linkedin}
+          className={styles.linkedin}
           href="http://ca.linkedin.com/in/kaiyuhsu"
           aria-label="LinkedIn"
           target="_blank"
