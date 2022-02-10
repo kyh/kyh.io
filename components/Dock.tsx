@@ -1,5 +1,5 @@
 import Link from "next/link";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import useRaf from "@rooks/use-raf";
@@ -16,6 +16,7 @@ const iconAttrs = {
   strokeWidth: "2",
   strokeLinecap: "round" as "round",
   strokeLinejoin: "round" as "round",
+  ["aria-hidden"]: true,
 };
 
 const links = [
@@ -63,9 +64,11 @@ export const Dock = () => {
         onMouseLeave={() => mouseX.set(null)}
       >
         {links.map(({ href, label, icon }) => (
-          <DockItem mouseX={mouseX} key={href}>
+          <DockItem key={href} mouseX={mouseX}>
             <Link href={href}>
-              <a className={styles.link}>{icon}</a>
+              <a className={styles.link} aria-label={label}>
+                {icon}
+              </a>
             </Link>
           </DockItem>
         ))}
