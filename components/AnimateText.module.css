@@ -18,7 +18,7 @@
 }
 
 .entering::after {
-  animation: animateTextIn 0.5s linear forwards;
+  animation: animateTextIn 0.5s ease-in forwards;
 }
 
 .entered::after {
@@ -26,7 +26,7 @@
 }
 
 .reveal::after {
-  animation: animateTextReveal 0.5s linear infinite;
+  animation: animateTextReveal 0.5s ease-in infinite;
 }
 
 @keyframes animateTextIn {

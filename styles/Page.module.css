@@ -1,9 +1,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  max-width: 720px;
-  padding: 9rem 2rem 0;
+  max-width: 768px;
+  padding: 9rem 2rem 14rem;
   margin: 0 auto;
+  gap: 3.6rem;
 }
 
 .header {
@@ -17,14 +18,8 @@
   isolation: isolate;
 }
 
-.title {
-  font-size: 4rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
 @media screen and (max-width: 600px) {
   .container {
-    padding: 6rem 3rem 0;
+    padding: 6rem 3rem 14rem;
   }
 }
