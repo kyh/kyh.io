@@ -9,6 +9,18 @@ type Props = {
 };
 
 export const TippyLink = ({ text, href, src, alt, srcs }: Props) => {
+  const link = (
+    <a
+      className="link"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-text={text}
+    >
+      {text}
+    </a>
+  );
+
   let content = null;
 
   if (src) {
@@ -39,22 +51,18 @@ export const TippyLink = ({ text, href, src, alt, srcs }: Props) => {
     );
   }
 
-  return (
-    <Tippy
-      interactive
-      maxWidth="none"
-      animation="shift-away-subtle"
-      content={content}
-    >
-      <a
-        className="link"
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        data-text={text}
+  if (content) {
+    return (
+      <Tippy
+        interactive
+        maxWidth="none"
+        animation="shift-away-subtle"
+        content={content}
       >
-        {text}
-      </a>
-    </Tippy>
-  );
+        {link}
+      </Tippy>
+    );
+  }
+
+  return link;
 };

@@ -21,105 +21,70 @@ const Page: NextPage = () => {
       <section className={aboutStyles.section}>
         <h2>Career Highlights</h2>
         <ul className={aboutStyles.list}>
-          <li>
-            Oversaw product growth from{" "}
-            <a
-              className="link"
-              href="https://blog.cardiogr.am/cardiogram-3-0-is-now-cross-platform-c591f1d374ee"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="dozens to millions"
-            >
-              dozens to millions
-            </a>{" "}
-            of users
-          </li>
+          <li>Oversaw product growth from dozens to millions of users</li>
           <li>
             Published research on{" "}
-            <a
-              className="link"
+            <TippyLink
               href="https://www.ahajournals.org/doi/10.1161/circ.136.suppl_1.21029"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="growth and retention"
-            >
-              growth and retention
-            </a>
+              text="growth and retention"
+              src="/screenshots/research.webp"
+            />
           </li>
           <li>
-            Led development of software used by some{" "}
-            <a
-              className="link"
-              href="https://slyce.it/case-studies/"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="really"
-            >
-              really
-            </a>{" "}
-            <a
-              className="link"
+            Led development of software used by some really{" "}
+            <TippyLink
               href="https://amazon.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="big"
-            >
-              big
-            </a>{" "}
-            <a
-              className="link"
+              text="big"
+              src="/screenshots/amazon.webp"
+            />{" "}
+            <TippyLink
               href="https://grow.google/"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="companies"
-            >
-              companies
-            </a>
+              text="companies"
+              src="/screenshots/google.webp"
+            />
+          </li>
+          <li>
+            Helped build the frontend framework for the{" "}
+            <TippyLink
+              href="https://techcrunch.com/2020/09/01/amazons-big-redesign-on-ios-to-reach-all-u-s-users-by-month-end/"
+              text="worlds largest retailer"
+              src="/screenshots/amazon-redesign.webp"
+            />
           </li>
           <li>
             Contributing member of{" "}
-            <a
-              className="link"
+            <TippyLink
               href="https://github.com/orgs/usdigitalresponse"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="USDR"
-            >
-              USDR
-            </a>{" "}
+              text="USDR"
+              src="/screenshots/usdr.webp"
+            />{" "}
             and the{" "}
-            <a
-              className="link"
+            <TippyLink
               href="https://github.com/orgs/nodejs"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="Node.js"
-            >
-              Node.js
-            </a>{" "}
+              text="Node.js"
+              src="/screenshots/nodejs.webp"
+            />{" "}
             Foundation
           </li>
           <li>
-            Took startups through acquisitions,{" "}
-            <a
-              className="link"
+            Took startups through{" "}
+            <TippyLink
+              href="https://www.crunchbase.com/organization/cardiogram"
+              text="acquisitions"
+              src="/screenshots/cardiogram.webp"
+            />
+            ,{" "}
+            <TippyLink
               href="https://retailtouchpoints.com/features/news-briefs/slyce-to-go-public-following-merger"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="IPOs"
-            >
-              IPOs
-            </a>
+              text="IPOs"
+              src="/screenshots/slyce.webp"
+            />
             , and several{" "}
-            <a
-              className="link"
+            <TippyLink
               href="https://techcrunch.com/2020/03/03/atrium-shuts-down/"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-text="failures"
-            >
-              failures
-            </a>
+              text="failures"
+              src="/screenshots/atrium.webp"
+            />
           </li>
         </ul>
       </section>
@@ -138,6 +103,13 @@ const Page: NextPage = () => {
           height="75"
           src="/logos/amazon.svg"
           alt="Amazon"
+        />
+        <Image
+          className="atrium"
+          width="150"
+          height="75"
+          src="/logos/atrium.svg"
+          alt="Atrium"
         />
         <Image
           className="cardiogram"
