@@ -105,6 +105,7 @@ export const Scene = () => {
   const engineRef = useRef(Engine.create());
   const runnerRef = useRef(Runner.create());
 
+  const boundariesRef = useRef<Matter.Body[]>([]);
   const floorRef = useRef<Matter.Body[]>([]);
   const bodiesRef = useRef<Matter.Body[]>([]);
 
@@ -173,6 +174,19 @@ export const Scene = () => {
 
     Composite.add(world, [floor, floorBase]);
     floorRef.current.push(floor);
+
+    const boundaries = Composite.add(world, [
+      Bodies.rectangle(percentX(50), percentY(100), percentX(100), 50, {
+        isStatic: true,
+      }),
+      Bodies.rectangle(percentX(100), percentY(50), 50, percentY(100), {
+        isStatic: true,
+      }),
+      Bodies.rectangle(0, percentY(50), 50, percentY(100), {
+        isStatic: true,
+      }),
+    ]);
+    // boundariesRef
 
     return () => {
       Render.stop(render);
