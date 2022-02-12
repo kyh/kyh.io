@@ -23,13 +23,16 @@ const percentY = (percent: number) => {
   return Math.round((percent / 100) * window.innerHeight);
 };
 
-const render = {
-  fillStyle: "transparent",
-  strokeStyle: "white",
-  lineWidth: 3,
+const getRenderProps = (isLight: boolean) => {
+  return {
+    fillStyle: "transparent",
+    strokeStyle: isLight ? "black" : "white",
+    lineWidth: 2,
+  };
 };
 
-const createMulti = () => {
+const createMulti = (isLight: boolean) => {
+  const render = getRenderProps(isLight);
   const y = -30;
   const x = Common.random(percentX(30), percentX(70));
   const sides = Math.round(Common.random(1, 8));
@@ -68,7 +71,8 @@ const createMulti = () => {
   }
 };
 
-const createSquare = () => {
+const createSquare = (isLight: boolean) => {
+  const render = getRenderProps(isLight);
   return Bodies.rectangle(
     Common.random(percentX(30), percentX(70)),
     -30,
@@ -80,7 +84,8 @@ const createSquare = () => {
 
 const createCircle = () => {};
 
-const createTriangle = () => {
+const createTriangle = (isLight: boolean) => {
+  const render = getRenderProps(isLight);
   return Bodies.rectangle(
     Common.random(percentX(30), percentX(70)),
     -30,
@@ -160,9 +165,9 @@ export const Scene = () => {
 
     const floor = Bodies.rectangle(
       percentX(50),
-      percentY(80) - 10,
+      percentY(80) - 9,
       percentX(60),
-      3,
+      1,
       { isStatic: true }
     );
 
@@ -179,13 +184,14 @@ export const Scene = () => {
   }, []);
 
   useEffect(() => {
+    const isLight = theme === "light";
     const engine = engineRef.current;
     const world = engine.world;
 
     clearInterval(spawnInterval.current!);
 
     spawnInterval.current = setInterval(() => {
-      const body = createMulti();
+      const body = createMulti(isLight);
       Composite.add(world, body);
       bodiesRef.current.push(body);
 
@@ -197,8 +203,11 @@ export const Scene = () => {
 
   useEffect(() => {
     const isLight = theme === "light";
+
     floorRef.current.forEach((b) => {
-      b.render.fillStyle = isLight ? "black" : "white";
+      if (b.render.fillStyle !== "transparent") {
+        b.render.fillStyle = isLight ? "black" : "white";
+      }
     });
 
     bodiesRef.current.forEach((b) => {
