@@ -7,6 +7,10 @@
   gap: 3.6rem;
 }
 
+.relative {
+  position: relative;
+}
+
 .header {
   display: inline-flex;
   flex-direction: column;

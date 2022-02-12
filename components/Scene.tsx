@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import {
+  Events,
   Engine,
   Render,
   Runner,
@@ -8,7 +9,6 @@ import {
   Mouse,
   MouseConstraint,
   Composite,
-  Composites,
   Bodies,
   World,
 } from "matter-js";
@@ -23,6 +23,75 @@ const percentY = (percent: number) => {
   return Math.round((percent / 100) * window.innerHeight);
 };
 
+const render = {
+  fillStyle: "transparent",
+  strokeStyle: "white",
+  lineWidth: 3,
+};
+
+const createMulti = () => {
+  const y = -30;
+  const x = Common.random(percentX(30), percentX(70));
+  const sides = Math.round(Common.random(1, 8));
+
+  let chamfer;
+  if (sides > 2 && Common.random() > 0.7) {
+    chamfer = {
+      radius: 10,
+    };
+  }
+
+  switch (Math.round(Common.random(0, 1))) {
+    case 0:
+      if (Common.random() < 0.8) {
+        return Bodies.rectangle(
+          x,
+          y,
+          Common.random(25, 50),
+          Common.random(25, 50),
+          { chamfer, render }
+        );
+      } else {
+        return Bodies.rectangle(
+          x,
+          y,
+          Common.random(80, 120),
+          Common.random(25, 30),
+          { chamfer, render }
+        );
+      }
+    default:
+      return Bodies.polygon(x, y, sides, Common.random(25, 50), {
+        chamfer,
+        render,
+      });
+  }
+};
+
+const createSquare = () => {
+  return Bodies.rectangle(
+    Common.random(percentX(30), percentX(70)),
+    -30,
+    25,
+    25,
+    { render }
+  );
+};
+
+const createCircle = () => {};
+
+const createTriangle = () => {
+  return Bodies.rectangle(
+    Common.random(percentX(30), percentX(70)),
+    -30,
+    25,
+    25,
+    { render }
+  );
+};
+
+const createRing = () => {};
+
 export const Scene = () => {
   const { theme } = useTheme();
   const router = useRouter();
@@ -31,8 +100,10 @@ export const Scene = () => {
   const engineRef = useRef(Engine.create());
   const runnerRef = useRef(Runner.create());
 
-  const floorRef = useRef<Composite | null>(null);
-  const stacksRef = useRef<Composite | null>(null);
+  const floorRef = useRef<Matter.Body[]>([]);
+  const bodiesRef = useRef<Matter.Body[]>([]);
+
+  const spawnInterval = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -74,6 +145,30 @@ export const Scene = () => {
     Render.run(render);
     Runner.run(runner, engine);
 
+    const floorBase = Bodies.rectangle(
+      percentX(50),
+      percentY(80),
+      percentX(60),
+      20,
+      {
+        isStatic: true,
+        render: {
+          fillStyle: "transparent",
+        },
+      }
+    );
+
+    const floor = Bodies.rectangle(
+      percentX(50),
+      percentY(80) - 10,
+      percentX(60),
+      3,
+      { isStatic: true }
+    );
+
+    Composite.add(world, [floor, floorBase]);
+    floorRef.current.push(floor);
+
     return () => {
       Render.stop(render);
       Runner.stop(runner);
@@ -87,89 +182,28 @@ export const Scene = () => {
     const engine = engineRef.current;
     const world = engine.world;
 
-    const stack = Composites.stack(
-      percentX(50) / 2,
-      -500,
-      10,
-      5,
-      0,
-      0,
-      (x: number, y: number) => {
-        const sides = Math.round(Common.random(1, 8));
+    clearInterval(spawnInterval.current!);
 
-        const render = {
-          fillStyle: "transparent",
-          strokeStyle: "white",
-          lineWidth: 2,
-        };
+    spawnInterval.current = setInterval(() => {
+      const body = createMulti();
+      Composite.add(world, body);
+      bodiesRef.current.push(body);
 
-        let chamfer;
-        if (sides > 2 && Common.random() > 0.7) {
-          chamfer = {
-            radius: 10,
-          };
-        }
-
-        switch (Math.round(Common.random(0, 1))) {
-          case 0:
-            if (Common.random() < 0.8) {
-              return Bodies.rectangle(
-                x,
-                y,
-                Common.random(25, 50),
-                Common.random(25, 50),
-                { chamfer, render }
-              );
-            } else {
-              return Bodies.rectangle(
-                x,
-                y,
-                Common.random(80, 120),
-                Common.random(25, 30),
-                { chamfer, render }
-              );
-            }
-          case 1:
-            return Bodies.polygon(x, y, sides, Common.random(25, 50), {
-              chamfer,
-              render,
-            });
-        }
+      if (bodiesRef.current.length > 30) {
+        clearInterval(spawnInterval.current!);
       }
-    );
-
-    Composite.add(world, stack);
-    stacksRef.current = stack;
-
-    if (floorRef.current) return;
-    const floor = Bodies.rectangle(
-      percentX(50),
-      percentY(80),
-      percentX(60),
-      2,
-      {
-        isStatic: true,
-        render: {
-          fillStyle: "white",
-        },
-      }
-    );
-
-    floorRef.current = Composite.add(world, floor);
+    }, 200);
   }, [router.asPath]);
 
   useEffect(() => {
     const isLight = theme === "light";
+    floorRef.current.forEach((b) => {
+      b.render.fillStyle = isLight ? "black" : "white";
+    });
 
-    floorRef.current &&
-      floorRef.current.bodies.map((b) => {
-        b.render.fillStyle = isLight ? "black" : "white";
-      });
-
-    stacksRef.current &&
-      stacksRef.current.bodies.map((b) => {
-        b.render.strokeStyle = isLight ? "black" : "white";
-      });
+    bodiesRef.current.forEach((b) => {
+      b.render.strokeStyle = isLight ? "black" : "white";
+    });
   }, [theme]);
 
   return <div className={styles.container} ref={sceneRef} />;

@@ -60,7 +60,7 @@ const Page: NextPage = () => {
             and the{" "}
             <TippyLink
               href="https://github.com/orgs/nodejs"
-              text="Node.js"
+              text="OpenJS"
               src="/screenshots/nodejs.webp"
             />{" "}
             Foundation
