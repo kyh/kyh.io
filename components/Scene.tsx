@@ -14,6 +14,7 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 import { data } from "@lib/role";
+import { useWindowWidth } from "@lib/useWindowWidth";
 import styles from "./Scene.module.css";
 
 const percentX = (percent: number) => {
@@ -116,26 +117,18 @@ const statIdToCreate = {
 };
 
 const createPlatform = () => {
-  const platformBase = Bodies.rectangle(
-    percentX(50),
-    percentY(80),
-    percentX(60),
-    20,
-    {
-      isStatic: true,
-      render: {
-        fillStyle: "transparent",
-      },
-    }
-  );
+  const x = percentX(50);
+  const y = percentY(80);
+  const width = window.innerWidth < 768 ? percentX(90) : percentX(60);
 
-  const platform = Bodies.rectangle(
-    percentX(50),
-    percentY(80) - 9,
-    percentX(60),
-    1,
-    { isStatic: true }
-  );
+  const platformBase = Bodies.rectangle(x, y, width, 20, {
+    isStatic: true,
+    render: {
+      fillStyle: "transparent",
+    },
+  });
+
+  const platform = Bodies.rectangle(x, y - 9, width, 1, { isStatic: true });
 
   return { platform, platformBase };
 };
@@ -178,6 +171,7 @@ const createBoundaries = () => {
 export const Scene = () => {
   const { theme } = useTheme();
   const router = useRouter();
+  const width = useWindowWidth();
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());
@@ -256,8 +250,10 @@ export const Scene = () => {
       World.clear(world, false);
       Engine.clear(engine);
       render.canvas.remove();
+      platformRef.current = {};
+      bodiesRef.current = {};
     };
-  }, []);
+  }, [width]);
 
   useEffect(() => {
     const isLight = theme === "light";
@@ -280,7 +276,7 @@ export const Scene = () => {
         spawnCount.current = 0;
       }
     }, 100);
-  }, [router.asPath]);
+  }, [router.asPath, width]);
 
   useEffect(() => {
     const isLight = theme === "light";

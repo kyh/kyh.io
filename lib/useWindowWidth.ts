@@ -9,7 +9,9 @@ const debounce = (fn: Function, ms = 500) => {
 };
 
 export const useWindowWidth = (delay = 500) => {
-  const [width, setWidth] = useState(window.innerWidth);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
