@@ -97,6 +97,60 @@ const createTriangle = (isLight: boolean) => {
 
 const createRing = () => {};
 
+const createPlatform = () => {
+  const platformBase = Bodies.rectangle(
+    percentX(50),
+    percentY(80),
+    percentX(60),
+    20,
+    {
+      isStatic: true,
+      render: {
+        fillStyle: "transparent",
+      },
+    }
+  );
+
+  const platform = Bodies.rectangle(
+    percentX(50),
+    percentY(80) - 9,
+    percentX(60),
+    1,
+    { isStatic: true }
+  );
+
+  return { platform, platformBase };
+};
+
+const createBoundaries = () => {
+  const bottomBoundary = Bodies.rectangle(
+    percentX(50),
+    percentY(100),
+    percentX(100),
+    50,
+    {
+      isSensor: true,
+      isStatic: true,
+    }
+  );
+
+  const leftBoundary = Bodies.rectangle(0, percentY(50), 50, percentY(100), {
+    isStatic: true,
+  });
+
+  const rightBoundary = Bodies.rectangle(
+    percentX(100),
+    percentY(50),
+    50,
+    percentY(100),
+    {
+      isStatic: true,
+    }
+  );
+
+  return { bottomBoundary, leftBoundary, rightBoundary };
+};
+
 export const Scene = () => {
   const { theme } = useTheme();
   const router = useRouter();
@@ -105,9 +159,8 @@ export const Scene = () => {
   const engineRef = useRef(Engine.create());
   const runnerRef = useRef(Runner.create());
 
-  const boundariesRef = useRef<Matter.Body[]>([]);
-  const floorRef = useRef<Matter.Body[]>([]);
-  const bodiesRef = useRef<Matter.Body[]>([]);
+  const platformRef = useRef<{ [key: number]: Matter.Body }>({});
+  const bodiesRef = useRef<{ [key: number]: Matter.Body }>({});
 
   const spawnInterval = useRef<ReturnType<typeof setInterval>>();
 
@@ -151,42 +204,26 @@ export const Scene = () => {
     Render.run(render);
     Runner.run(runner, engine);
 
-    const floorBase = Bodies.rectangle(
-      percentX(50),
-      percentY(80),
-      percentX(60),
-      20,
-      {
-        isStatic: true,
-        render: {
-          fillStyle: "transparent",
-        },
-      }
-    );
+    const { platform, platformBase } = createPlatform();
+    Composite.add(world, [platform, platformBase]);
+    platformRef.current = { ...platformRef.current, [platform.id]: platform };
 
-    const floor = Bodies.rectangle(
-      percentX(50),
-      percentY(80) - 9,
-      percentX(60),
-      1,
-      { isStatic: true }
-    );
+    const { bottomBoundary, leftBoundary, rightBoundary } = createBoundaries();
+    Composite.add(world, [bottomBoundary, leftBoundary, rightBoundary]);
 
-    Composite.add(world, [floor, floorBase]);
-    floorRef.current.push(floor);
+    Events.on(engine, "collisionStart", ({ pairs }) => {
+      pairs.forEach(({ bodyA, bodyB }) => {
+        if (bodyA === bottomBoundary) {
+          World.remove(world, bodyB);
+          delete bodiesRef.current[bodyB.id];
+        }
 
-    const boundaries = Composite.add(world, [
-      Bodies.rectangle(percentX(50), percentY(100), percentX(100), 50, {
-        isStatic: true,
-      }),
-      Bodies.rectangle(percentX(100), percentY(50), 50, percentY(100), {
-        isStatic: true,
-      }),
-      Bodies.rectangle(0, percentY(50), 50, percentY(100), {
-        isStatic: true,
-      }),
-    ]);
-    // boundariesRef
+        if (bodyB === bottomBoundary) {
+          World.remove(world, bodyA);
+          delete bodiesRef.current[bodyA.id];
+        }
+      });
+    });
 
     return () => {
       Render.stop(render);
@@ -207,24 +244,24 @@ export const Scene = () => {
     spawnInterval.current = setInterval(() => {
       const body = createMulti(isLight);
       Composite.add(world, body);
-      bodiesRef.current.push(body);
+      bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
 
-      if (bodiesRef.current.length > 30) {
+      if (Object.keys(bodiesRef.current).length > 30) {
         clearInterval(spawnInterval.current!);
       }
-    }, 200);
+    }, 100);
   }, [router.asPath]);
 
   useEffect(() => {
     const isLight = theme === "light";
 
-    floorRef.current.forEach((b) => {
+    Object.values(platformRef.current).forEach((b) => {
       if (b.render.fillStyle !== "transparent") {
         b.render.fillStyle = isLight ? "black" : "white";
       }
     });
 
-    bodiesRef.current.forEach((b) => {
+    Object.values(bodiesRef.current).forEach((b) => {
       b.render.strokeStyle = isLight ? "black" : "white";
     });
   }, [theme]);
