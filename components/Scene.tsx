@@ -125,7 +125,7 @@ const createPlatform = () => {
 const createBoundaries = () => {
   const bottomBoundary = Bodies.rectangle(
     percentX(50),
-    percentY(100),
+    percentY(130),
     percentX(100),
     50,
     {
@@ -134,12 +134,18 @@ const createBoundaries = () => {
     }
   );
 
-  const leftBoundary = Bodies.rectangle(0, percentY(50), 50, percentY(100), {
-    isStatic: true,
-  });
+  const leftBoundary = Bodies.rectangle(
+    percentX(-30),
+    percentY(50),
+    50,
+    percentY(100),
+    {
+      isStatic: true,
+    }
+  );
 
   const rightBoundary = Bodies.rectangle(
-    percentX(100),
+    percentX(130),
     percentY(50),
     50,
     percentY(100),
