@@ -1,23 +1,32 @@
 import Tippy from "@tippyjs/react";
+import styles from "./Link.module.css";
 
 type Props = {
-  text: string;
   href: string;
+  children: React.ReactNode;
+  noStyles?: boolean;
   alt?: string;
   src?: string;
   srcs?: { href: string; src: string; alt: string }[];
 };
 
-export const TippyLink = ({ text, href, src, alt, srcs }: Props) => {
+export const Link = ({
+  children,
+  href,
+  src,
+  alt,
+  srcs,
+  noStyles = false,
+}: Props) => {
   const link = (
     <a
-      className="link"
+      className={noStyles ? "" : styles.link}
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      data-text={text}
+      data-text={children}
     >
-      {text}
+      {children}
     </a>
   );
 

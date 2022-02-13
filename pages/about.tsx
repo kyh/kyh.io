@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { SEO } from "@components/SEO";
 import { AnimateText } from "@components/AnimateText";
-import { TippyLink } from "@components/TippyLink";
+import { Link } from "@components/Link";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -23,151 +23,179 @@ const Page: NextPage = () => {
           <li>Oversaw product growth from dozens to millions of users</li>
           <li>
             Published research on{" "}
-            <TippyLink
+            <Link
               href="https://www.ahajournals.org/doi/10.1161/circ.136.suppl_1.21029"
-              text="growth and retention"
               src="/screenshots/research.webp"
-            />
+            >
+              growth and retention
+            </Link>
           </li>
           <li>
             Led development of software used by some really{" "}
-            <TippyLink
-              href="https://amazon.com"
-              text="big"
-              src="/screenshots/amazon.webp"
-            />{" "}
-            <TippyLink
-              href="https://grow.google/"
-              text="companies"
-              src="/screenshots/google.webp"
-            />
+            <Link href="https://amazon.com" src="/screenshots/amazon.webp">
+              big
+            </Link>{" "}
+            <Link href="https://grow.google/" src="/screenshots/google.webp">
+              companies
+            </Link>
           </li>
           <li>
             Helped build the frontend framework for the{" "}
-            <TippyLink
+            <Link
               href="https://techcrunch.com/2020/09/01/amazons-big-redesign-on-ios-to-reach-all-u-s-users-by-month-end/"
-              text="worlds largest retailer"
               src="/screenshots/amazon-redesign.webp"
-            />
+            >
+              worlds largest retailer
+            </Link>
           </li>
           <li>
             Contributing member of{" "}
-            <TippyLink
+            <Link
               href="https://github.com/orgs/usdigitalresponse"
-              text="USDR"
               src="/screenshots/usdr.webp"
-            />{" "}
+            >
+              USDR
+            </Link>{" "}
             and the{" "}
-            <TippyLink
+            <Link
               href="https://github.com/orgs/nodejs"
-              text="OpenJS"
               src="/screenshots/nodejs.webp"
-            />{" "}
+            >
+              OpenJS
+            </Link>{" "}
             Foundation
           </li>
           <li>
             Took startups through{" "}
-            <TippyLink
+            <Link
               href="https://www.crunchbase.com/organization/cardiogram"
-              text="acquisitions"
               src="/screenshots/cardiogram.webp"
-            />
+            >
+              acquisitions
+            </Link>
             ,{" "}
-            <TippyLink
+            <Link
               href="https://retailtouchpoints.com/features/news-briefs/slyce-to-go-public-following-merger"
-              text="IPOs"
               src="/screenshots/slyce.webp"
-            />
+            >
+              IPOs
+            </Link>
             , and several{" "}
-            <TippyLink
+            <Link
               href="https://techcrunch.com/2020/03/03/atrium-shuts-down/"
-              text="failures"
               src="/screenshots/atrium.webp"
-            />
+            >
+              failures
+            </Link>
           </li>
         </ul>
       </section>
       <h2>Employment Badges</h2>
       <section className={styles.logos}>
-        <Image
-          className="google"
-          width="150"
-          height="75"
-          src="/logos/google.svg"
-          alt="Google"
-        />
-        <Image
-          className="amazon"
-          width="150"
-          height="75"
-          src="/logos/amazon.svg"
-          alt="Amazon"
-        />
-        <Image
-          className="atrium"
-          width="150"
-          height="75"
-          src="/logos/atrium.svg"
-          alt="Atrium"
-        />
-        <Image
-          className="cardiogram"
-          width="150"
-          height="75"
-          src="/logos/cardiogram.svg"
-          alt="Cardiogram"
-        />
-        <Image
-          className="slyce"
-          width="150"
-          height="75"
-          src="/logos/slyce.svg"
-          alt="Slyce"
-        />
-        <Image
-          className="tedx"
-          width="150"
-          height="75"
-          src="/logos/tedx.svg"
-          alt="TEDx"
-        />
-        <Image
-          className="ea"
-          width="150"
-          height="75"
-          src="/logos/ea.svg"
-          alt="EA"
-        />
+        <Link href="https://www.crunchbase.com/organization/google" noStyles>
+          <Image
+            className="google"
+            width="150"
+            height="75"
+            src="/logos/google.svg"
+            alt="Google"
+          />
+        </Link>
+        <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
+          <Image
+            className="amazon"
+            width="150"
+            height="75"
+            src="/logos/amazon.svg"
+            alt="Amazon"
+          />
+        </Link>
+        <Link
+          href="https://www.crunchbase.com/organization/atrium-lts"
+          noStyles
+        >
+          <Image
+            className="atrium"
+            width="150"
+            height="75"
+            src="/logos/atrium.svg"
+            alt="Atrium"
+          />
+        </Link>
+        <Link
+          href="https://www.crunchbase.com/organization/cardiogram"
+          noStyles
+        >
+          <Image
+            className="cardiogram"
+            width="150"
+            height="75"
+            src="/logos/cardiogram.svg"
+            alt="Cardiogram"
+          />
+        </Link>
+        <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
+          <Image
+            className="slyce"
+            width="150"
+            height="75"
+            src="/logos/slyce.svg"
+            alt="Slyce"
+          />
+        </Link>
+        <Link href="https://www.crunchbase.com/organization/ted" noStyles>
+          <Image
+            className="tedx"
+            width="150"
+            height="75"
+            src="/logos/tedx.svg"
+            alt="TEDx"
+          />
+        </Link>
+        <Link
+          href="https://www.crunchbase.com/organization/electronicarts"
+          noStyles
+        >
+          <Image
+            className="ea"
+            width="150"
+            height="75"
+            src="/logos/ea.svg"
+            alt="EA"
+          />
+        </Link>
       </section>
       <section className={styles.section}>
         <h2>Other Activities</h2>
         <p>
           You’ll occasionally find me dabbling in the open source world,
           contributing to{" "}
-          <TippyLink
+          <Link
             href="https://github.com/facebook/react"
             src="/screenshots/fb.webp"
             alt="Facebook"
-            text="Facebook"
-          />{" "}
+          >
+            Facebook
+          </Link>{" "}
           projects,{" "}
-          <TippyLink
+          <Link
             href="https://github.com/angular-ui/bootstrap"
             src="/screenshots/bootstrap.webp"
             alt="Bootstrap"
-            text="Bootstrap"
-          />
+          >
+            Bootstrap
+          </Link>
           , and Wikipedia. When I’m bored, I sometimes{" "}
-          <TippyLink
+          <Link
             href="https://itunes.apple.com/US/app/id1209391711"
             src="/screenshots/keiko.webp"
             alt="Keiko and Friends"
-            text="draw things"
-          />
+          >
+            draw things
+          </Link>
           ,{" "}
-          <TippyLink
+          <Link
             href="#"
-            text="build apps"
             srcs={[
               {
                 href: "https://uicapsule.com",
@@ -190,14 +218,17 @@ const Page: NextPage = () => {
                 alt: "Art Not Art",
               },
             ]}
-          />
+          >
+            build apps
+          </Link>
           , and{" "}
-          <TippyLink
+          <Link
             href="https://playhouse.gg"
             src="/screenshots/playhouse.webp"
             alt="Playhouse"
-            text="design games"
-          />
+          >
+            design games
+          </Link>
           . But honestly, I spend most of my days procrastinating.
         </p>
       </section>
