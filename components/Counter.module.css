@@ -14,14 +14,16 @@
 
 .counters {
   position: absolute;
-  right: 0;
+  left: 2rem;
+  top: 80vh;
   color: var(--body-color-faded);
   opacity: 0.8;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
 }
 
-.counter {
-  display: flex;
-  align-items: center;
-  justify-content: end;
-  gap: 0.4rem;
+.counters a {
+  color: var(--body-color-faded);
+  text-decoration: none;
 }

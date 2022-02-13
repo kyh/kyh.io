@@ -13,6 +13,7 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
+import { data } from "@lib/role";
 import styles from "./Scene.module.css";
 
 const percentX = (percent: number) => {
@@ -82,20 +83,37 @@ const createSquare = (isLight: boolean) => {
   );
 };
 
-const createCircle = () => {};
+const createCircle = (isLight: boolean) => {
+  const render = getRenderProps(isLight);
+  return Bodies.circle(Common.random(percentX(30), percentX(70)), -30, 25, {
+    render,
+  });
+};
 
 const createTriangle = (isLight: boolean) => {
   const render = getRenderProps(isLight);
-  return Bodies.rectangle(
-    Common.random(percentX(30), percentX(70)),
-    -30,
-    25,
-    25,
-    { render }
-  );
+  return Bodies.polygon(Common.random(percentX(30), percentX(70)), -30, 3, 25, {
+    render,
+  });
 };
 
-const createRing = () => {};
+const createRing = (isLight: boolean) => {
+  const render = getRenderProps(isLight);
+  return Bodies.circle(Common.random(percentX(30), percentX(70)), -30, 25, {
+    render: {
+      ...render,
+      lineWidth: 10,
+    },
+  });
+};
+
+const statIdToCreate = {
+  ux: createMulti,
+  eng: createSquare,
+  design: createCircle,
+  ppl: createTriangle,
+  ring: createRing,
+};
 
 const createPlatform = () => {
   const platformBase = Bodies.rectangle(
@@ -169,6 +187,7 @@ export const Scene = () => {
   const bodiesRef = useRef<{ [key: number]: Matter.Body }>({});
 
   const spawnInterval = useRef<ReturnType<typeof setInterval>>();
+  const spawnCount = useRef(0);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -244,16 +263,21 @@ export const Scene = () => {
     const isLight = theme === "light";
     const engine = engineRef.current;
     const world = engine.world;
+    const stats = data[router.asPath as keyof typeof data];
+    const create = statIdToCreate[stats.stat.id as keyof typeof statIdToCreate];
 
     clearInterval(spawnInterval.current!);
+    spawnCount.current = 0;
 
     spawnInterval.current = setInterval(() => {
-      const body = createMulti(isLight);
+      const body = create(isLight);
       Composite.add(world, body);
       bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
+      spawnCount.current++;
 
-      if (Object.keys(bodiesRef.current).length > 30) {
+      if (spawnCount.current >= stats.stat.spawn) {
         clearInterval(spawnInterval.current!);
+        spawnCount.current = 0;
       }
     }, 100);
   }, [router.asPath]);

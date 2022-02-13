@@ -2,15 +2,10 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useMediaQuery } from "@react-hook/media-query";
+import { data } from "@lib/role";
 import styles from "./RoleNav.module.css";
 
-const roles = [
-  { href: "/", label: "UX Engineer" },
-  { href: "/#eng", label: "Software Engineer" },
-  { href: "/#design", label: "Designer" },
-  { href: "/#ppl", label: "Manager" },
-  { href: "/#ring", label: "Ring Bearer" },
-];
+const roles = Object.values(data).map((r) => r.link);
 
 const spring = {
   type: "spring",

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { SEO } from "@components/SEO";
 import { AnimateText } from "@components/AnimateText";
 import { Link } from "@components/Link";
+import { social } from "@lib/social";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -235,7 +236,7 @@ const Page: NextPage = () => {
       <section className={styles.socials}>
         <a
           className={styles.git}
-          href="https://github.com/kyh"
+          href={social.github}
           aria-label="GitHub"
           target="_blank"
           rel="noreferrer noopener"
@@ -249,7 +250,7 @@ const Page: NextPage = () => {
         </a>
         <a
           className={styles.dribbble}
-          href="https://dribbble.com/kaiyuhsu"
+          href={social.dribbble}
           aria-label="Dribbble"
           target="_blank"
           rel="noreferrer noopener"
@@ -263,7 +264,7 @@ const Page: NextPage = () => {
         </a>
         <a
           className={styles.twitter}
-          href="https://twitter.com/kaiyuhsu"
+          href={social.twitter}
           aria-label="Twitter"
           target="_blank"
           rel="noreferrer noopener"
@@ -277,7 +278,7 @@ const Page: NextPage = () => {
         </a>
         <a
           className={styles.linkedin}
-          href="http://ca.linkedin.com/in/kaiyuhsu"
+          href={social.linkedin}
           aria-label="LinkedIn"
           target="_blank"
           rel="noreferrer noopener"

@@ -155,18 +155,10 @@ const generateTextStats = (ref: React.RefObject<HTMLDivElement>) => {
   };
 };
 
-type Props = {
-  counters: [string | number, string][];
-};
-
-export const Counters = ({ counters }: Props) => {
-  return (
-    <div className={styles.counters}>
-      {counters.map(([text, suffix]) => (
-        <div key={suffix} className={styles.counter}>
-          <Counter text={text} /> {suffix}
-        </div>
-      ))}
-    </div>
-  );
+export const CountersContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return <div className={styles.counters}>{children}</div>;
 };

@@ -1,14 +1,21 @@
 import type { NextPage } from "next";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { SEO } from "@components/SEO";
 import { Scene } from "@components/Scene";
 import { RoleNav } from "@components/RoleNav";
 import styles from "styles/Page.module.css";
-import { Counters } from "@components/Counter";
+import { Counter, CountersContainer } from "@components/Counter";
+import { data } from "@lib/role";
 
 const Page: NextPage = () => {
-  const [count, setCount] = useState(329);
-  const [count2, setCount2] = useState(329);
+  const router = useRouter();
+  const [stat, setStat] = useState({ label: "", value: 0, href: "" });
+
+  useEffect(() => {
+    const stats = data[router.asPath as keyof typeof data];
+    setStat(stats.stat);
+  }, [router.asPath]);
 
   return (
     <main className={`${styles.container} ${styles.relative}`}>
@@ -16,22 +23,18 @@ const Page: NextPage = () => {
       <Scene />
       <header className={styles.header}>
         <h1 className={styles.title}>Kaiyu Hsu</h1>
-        <Counters
-          counters={[
-            [count, "Commits"],
-            [count2, "Projects"],
-          ]}
-        />
         <RoleNav />
-        <button
-          onClick={() => {
-            setCount(Math.floor(Math.random() * 1000));
-            setCount2(Math.floor(Math.random() * 1000));
-          }}
-        >
-          Random
-        </button>
       </header>
+      <CountersContainer>
+        <Counter text={stat.value} />
+        {stat.href ? (
+          <a href={stat.href} target="_blank" rel="noopener noreferrer">
+            {stat.label}
+          </a>
+        ) : (
+          stat.label
+        )}
+      </CountersContainer>
     </main>
   );
 };
