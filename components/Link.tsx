@@ -1,4 +1,5 @@
 import Tippy from "@tippyjs/react";
+import { Image } from "./Image";
 import styles from "./Link.module.css";
 
 type Props = {
@@ -49,11 +50,7 @@ export const Link = ({
       <div className="tooltip-multi">
         {srcs.map(({ href, src, alt }) => (
           <a key={href} href={href} target="_blank" rel="noreferrer noopener">
-            <picture>
-              <source srcSet={src} type="image/webp" />
-              <source srcSet={src.replace(".webp", ".png")} type="image/png" />
-              <img src={src} alt={alt} width="320" height="240" />
-            </picture>
+            <Image src={src} alt={alt} width={320} height={240} />
           </a>
         ))}
       </div>

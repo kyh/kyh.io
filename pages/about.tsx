@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
-import Image from "next/image";
 import { SEO } from "@components/SEO";
 import { AnimateText } from "@components/AnimateText";
 import { Link } from "@components/Link";
+import { Image } from "@components/Image";
 import { social } from "@lib/social";
 import styles from "styles/Page.module.css";
 
@@ -94,76 +94,39 @@ const Page: NextPage = () => {
       <h2>Employment Badges</h2>
       <section className={styles.logos}>
         <Link href="https://www.crunchbase.com/organization/google" noStyles>
-          <Image
-            className="google"
-            width="150"
-            height="75"
-            src="/logos/google.svg"
-            alt="Google"
-          />
+          <Image width={150} height={75} src="/logos/google.svg" alt="Google" />
         </Link>
         <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
-          <Image
-            className="amazon"
-            width="150"
-            height="75"
-            src="/logos/amazon.svg"
-            alt="Amazon"
-          />
+          <Image width={150} height={75} src="/logos/amazon.svg" alt="Amazon" />
         </Link>
         <Link
           href="https://www.crunchbase.com/organization/atrium-lts"
           noStyles
         >
-          <Image
-            className="atrium"
-            width="150"
-            height="75"
-            src="/logos/atrium.svg"
-            alt="Atrium"
-          />
+          <Image width={150} height={75} src="/logos/atrium.svg" alt="Atrium" />
         </Link>
         <Link
           href="https://www.crunchbase.com/organization/cardiogram"
           noStyles
         >
           <Image
-            className="cardiogram"
-            width="150"
-            height="75"
+            width={150}
+            height={75}
             src="/logos/cardiogram.svg"
             alt="Cardiogram"
           />
         </Link>
         <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
-          <Image
-            className="slyce"
-            width="150"
-            height="75"
-            src="/logos/slyce.svg"
-            alt="Slyce"
-          />
+          <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
         </Link>
         <Link href="https://www.crunchbase.com/organization/ted" noStyles>
-          <Image
-            className="tedx"
-            width="150"
-            height="75"
-            src="/logos/tedx.svg"
-            alt="TEDx"
-          />
+          <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
         </Link>
         <Link
           href="https://www.crunchbase.com/organization/electronicarts"
           noStyles
         >
-          <Image
-            className="ea"
-            width="150"
-            height="75"
-            src="/logos/ea.svg"
-            alt="EA"
-          />
+          <Image width={150} height={75} src="/logos/ea.svg" alt="EA" />
         </Link>
       </section>
       <section className={styles.section}>
