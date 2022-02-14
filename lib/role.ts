@@ -15,7 +15,7 @@ export const data = {
     link: { href: "/#eng", label: "Software Engineer" },
     stat: {
       id: "eng",
-      value: 15000,
+      value: 15215,
       label: "+ code contributions",
       href: social.github,
       spawn: 50,
@@ -35,7 +35,7 @@ export const data = {
     link: { href: "/#ppl", label: "Manager" },
     stat: {
       id: "ppl",
-      value: 100,
+      value: 107,
       label: "+ interviews conducted",
       href: "",
       spawn: 10,
