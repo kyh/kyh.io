@@ -17,11 +17,11 @@ import { data } from "@lib/role";
 import { useWindowWidth } from "@lib/useWindowWidth";
 import styles from "./Scene.module.css";
 
-const percentX = (percent: number) => {
+export const percentX = (percent: number) => {
   return Math.round((percent / 100) * window.innerWidth);
 };
 
-const percentY = (percent: number) => {
+export const percentY = (percent: number) => {
   return Math.round((percent / 100) * window.innerHeight);
 };
 

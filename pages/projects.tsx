@@ -7,7 +7,7 @@ import styles from "styles/Page.module.css";
 const Page: NextPage = () => {
   return (
     <main className={styles.container}>
-      <SEO />
+      <SEO title="Projects" />
       <header className={styles.header}>
         <AnimateText
           className={styles.title}

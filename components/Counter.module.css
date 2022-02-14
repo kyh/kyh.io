@@ -27,10 +27,3 @@
   color: var(--body-color-faded);
   text-decoration: none;
 }
-
-@media screen and (max-width: 600px) {
-  .counters {
-    pointer-events: none;
-    top: 75vh;
-  }
-}

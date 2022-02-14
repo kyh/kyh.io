@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { percentY } from "./Scene";
 import styles from "./Counter.module.css";
 
 type VerticalProps = {
@@ -160,5 +161,14 @@ export const CountersContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
-  return <div className={styles.counters}>{children}</div>;
+  return (
+    <div
+      className={styles.counters}
+      style={{
+        top: typeof window !== "undefined" ? percentY(80) : "80vh",
+      }}
+    >
+      {children}
+    </div>
+  );
 };
