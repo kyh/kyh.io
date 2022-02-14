@@ -165,7 +165,7 @@ export const CountersContainer = ({
     <div
       className={styles.counters}
       style={{
-        top: typeof window !== "undefined" ? percentY(80) : "80vh",
+        top: typeof window !== "undefined" ? percentY(80) : "75vh",
       }}
     >
       {children}
