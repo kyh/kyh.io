@@ -5,8 +5,8 @@ export const data = {
     link: { href: "/", label: "UX Engineer" },
     stat: {
       id: "ux",
-      value: 10,
-      label: "Years of eperience",
+      value: 9,
+      label: "years of experience",
       href: social.linkedin,
       spawn: 30,
     },
@@ -15,8 +15,8 @@ export const data = {
     link: { href: "/#eng", label: "Software Engineer" },
     stat: {
       id: "eng",
-      value: 15215,
-      label: "Github contributions",
+      value: 15000,
+      label: "+ code contributions",
       href: social.github,
       spawn: 50,
     },
@@ -25,24 +25,30 @@ export const data = {
     link: { href: "/#design", label: "Designer" },
     stat: {
       id: "design",
-      value: 9,
-      label: "Dribbble shots",
+      value: 30,
+      label: "+ portfolio pieces",
       href: social.dribbble,
-      spawn: 5,
+      spawn: 10,
     },
   },
   "/#ppl": {
     link: { href: "/#ppl", label: "Manager" },
     stat: {
       id: "ppl",
-      value: 107,
-      label: "Interviews conducted",
+      value: 100,
+      label: "+ interviews conducted",
       href: "",
       spawn: 10,
     },
   },
   "/#ring": {
     link: { href: "/#ring", label: "Ring Bearer" },
-    stat: { id: "ring", value: 1, label: "Ring borne", href: "", spawn: 1 },
+    stat: {
+      id: "ring",
+      value: 1,
+      label: "ring borne",
+      href: "",
+      spawn: 1,
+    },
   },
 };

@@ -29,10 +29,14 @@ const Page: NextPage = () => {
         <Counter text={stat.value} />
         {stat.href ? (
           <a href={stat.href} target="_blank" rel="noopener noreferrer">
+            {stat.label[0] === "+" ? "" : <>&nbsp;</>}
             {stat.label}
           </a>
         ) : (
-          stat.label
+          <span>
+            {stat.label[0] === "+" ? "" : <>&nbsp;</>}
+            {stat.label}
+          </span>
         )}
       </CountersContainer>
     </main>

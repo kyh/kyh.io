@@ -119,7 +119,8 @@ const statIdToCreate = {
 const createPlatform = () => {
   const x = percentX(50);
   const y = percentY(80);
-  const width = window.innerWidth < 768 ? percentX(90) : percentX(60);
+  const width =
+    window.innerWidth < 768 ? percentX(90) : Math.min(percentX(60), 768);
 
   const platformBase = Bodies.rectangle(x, y, width, 20, {
     isStatic: true,
@@ -128,7 +129,7 @@ const createPlatform = () => {
     },
   });
 
-  const platform = Bodies.rectangle(x, y - 9, width, 1, { isStatic: true });
+  const platform = Bodies.rectangle(x, y - 10, width, 2, { isStatic: true });
 
   return { platform, platformBase };
 };

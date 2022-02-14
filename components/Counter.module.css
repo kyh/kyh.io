@@ -19,7 +19,6 @@
   color: var(--body-color-faded);
   opacity: 0.8;
   display: flex;
-  gap: 0.4rem;
   align-items: center;
 }
 
