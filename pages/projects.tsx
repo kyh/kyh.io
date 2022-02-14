@@ -44,11 +44,11 @@ const Page: NextPage = () => {
             <li>
               <Link href="https://medervahealth.com">Mederva Health</Link>
             </li>
-            <li>
+            {/* <li>
               <Link href="https://www.crunchbase.com/organization/local-kitchens">
                 Local Kitchens
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link href="https://www.crunchbase.com/organization/tinyrx">
                 TinyRx
