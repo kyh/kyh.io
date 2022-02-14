@@ -161,13 +161,14 @@ export const CountersContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const [top, setTop] = useState<string | number>("75vh");
+
+  useEffect(() => {
+    setTop(percentY(80));
+  }, []);
+
   return (
-    <div
-      className={styles.counters}
-      style={{
-        top: typeof window !== "undefined" ? percentY(80) : "75vh",
-      }}
-    >
+    <div className={styles.counters} style={{ top }}>
       {children}
     </div>
   );
