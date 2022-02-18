@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
-import { AnimateText } from "@components/AnimateText";
+import { AnimateText, AnimateSection } from "@components/AnimateText";
 import { Link } from "@components/Link";
 import styles from "styles/Page.module.css";
 
@@ -16,44 +16,45 @@ const Page: NextPage = () => {
           Pushing
         </AnimateText>
       </header>
-      <p>The ever growing list of things I’m working on.</p>
+      <AnimateSection as="p" delay={0.1}>
+        The ever growing list of things I’m working on.
+      </AnimateSection>
       <section className={styles.grid}>
         <div>
-          <h2 className={styles.caption}>Side Projects</h2>
+          <AnimateSection as="h2" className={styles.caption} delay={0.2}>
+            Side Projects
+          </AnimateSection>
           <ul className={`${styles.list} ${styles.projectList}`}>
-            <li>
+            <AnimateSection as="li" delay={0.4}>
               <Link href="https://yourssincerely.org">Yours Sincerely</Link>
-            </li>
-            <li>
+            </AnimateSection>
+            <AnimateSection as="li" delay={0.45}>
               <Link href="https://playhouse.gg">Playhouse</Link>
-            </li>
-            <li>
+            </AnimateSection>
+            <AnimateSection as="li" delay={0.5}>
               <Link href="https://uicapsule.com">UI Capsule</Link>
-            </li>
-            <li>
+            </AnimateSection>
+            <AnimateSection as="li" delay={0.55}>
               <Link href="https://inteligir.com">Inteligir</Link>
-            </li>
+            </AnimateSection>
           </ul>
         </div>
         <div>
-          <h2 className={styles.caption}>Consulting</h2>
+          <AnimateSection as="h2" className={styles.caption} delay={0.7}>
+            Consulting
+          </AnimateSection>
           <ul className={`${styles.list} ${styles.projectList}`}>
-            <li>
+            <AnimateSection as="li" delay={0.9}>
               <Link href="https://founding.so">Founding</Link>
-            </li>
-            <li>
+            </AnimateSection>
+            <AnimateSection as="li" delay={0.95}>
               <Link href="https://medervahealth.com">Mederva Health</Link>
-            </li>
-            {/* <li>
-              <Link href="https://www.crunchbase.com/organization/local-kitchens">
-                Local Kitchens
-              </Link>
-            </li> */}
-            <li>
+            </AnimateSection>
+            <AnimateSection as="li" delay={1}>
               <Link href="https://www.crunchbase.com/organization/tinyrx">
                 TinyRx
               </Link>
-            </li>
+            </AnimateSection>
           </ul>
         </div>
       </section>

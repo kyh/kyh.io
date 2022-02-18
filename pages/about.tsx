@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import { SEO } from "@components/SEO";
-import { AnimateText } from "@components/AnimateText";
+import { AnimateText, AnimateSection } from "@components/AnimateText";
 import { Link } from "@components/Link";
 import { Image } from "@components/Image";
 import { social } from "@lib/social";
@@ -13,16 +13,20 @@ const Page: NextPage = () => {
       <header className={styles.header}>
         <AnimateText className={styles.title}>Hello world</AnimateText>
       </header>
-      <p>
+      <AnimateSection as="p" delay={0.1}>
         👋 you can call me Kai since we’re pretty much friends now. I enjoy
         building things. By day, I get to do that by typing the things that make
         Amazon go.
-      </p>
+      </AnimateSection>
       <section className={styles.section}>
-        <h2>Career Highlights</h2>
+        <AnimateSection as="h2" delay={0.3}>
+          Career Highlights
+        </AnimateSection>
         <ul className={styles.list}>
-          <li>Oversaw product growth from dozens to millions of users</li>
-          <li>
+          <AnimateSection as="li" delay={0.35}>
+            Oversaw product growth from dozens to millions of users
+          </AnimateSection>
+          <AnimateSection as="li" delay={0.4}>
             Published research on{" "}
             <Link
               href="https://www.ahajournals.org/doi/10.1161/circ.136.suppl_1.21029"
@@ -30,8 +34,8 @@ const Page: NextPage = () => {
             >
               growth and retention
             </Link>
-          </li>
-          <li>
+          </AnimateSection>
+          <AnimateSection as="li" delay={0.45}>
             Led development of software used by some really{" "}
             <Link href="https://amazon.com" src="/screenshots/amazon.webp">
               big
@@ -39,8 +43,8 @@ const Page: NextPage = () => {
             <Link href="https://grow.google/" src="/screenshots/google.webp">
               companies
             </Link>
-          </li>
-          <li>
+          </AnimateSection>
+          <AnimateSection as="li" delay={0.5}>
             Helped build the frontend framework for the{" "}
             <Link
               href="https://techcrunch.com/2020/09/01/amazons-big-redesign-on-ios-to-reach-all-u-s-users-by-month-end/"
@@ -48,8 +52,8 @@ const Page: NextPage = () => {
             >
               worlds largest retailer
             </Link>
-          </li>
-          <li>
+          </AnimateSection>
+          <AnimateSection as="li" delay={0.55}>
             Contributing member of{" "}
             <Link
               href="https://github.com/orgs/usdigitalresponse"
@@ -65,8 +69,8 @@ const Page: NextPage = () => {
               OpenJS
             </Link>{" "}
             Foundation
-          </li>
-          <li>
+          </AnimateSection>
+          <AnimateSection as="li" delay={0.6}>
             Took startups through{" "}
             <Link
               href="https://www.crunchbase.com/organization/cardiogram"
@@ -88,50 +92,83 @@ const Page: NextPage = () => {
             >
               failures
             </Link>
-          </li>
+          </AnimateSection>
         </ul>
       </section>
-      <h2>Employment Badges</h2>
+      <AnimateSection as="h2" delay={0.8}>
+        Employment Badges
+      </AnimateSection>
       <section className={styles.logos}>
-        <Link href="https://www.crunchbase.com/organization/google" noStyles>
-          <Image width={150} height={75} src="/logos/google.svg" alt="Google" />
-        </Link>
-        <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
-          <Image width={150} height={75} src="/logos/amazon.svg" alt="Amazon" />
-        </Link>
-        <Link
-          href="https://www.crunchbase.com/organization/atrium-lts"
-          noStyles
-        >
-          <Image width={150} height={75} src="/logos/atrium.svg" alt="Atrium" />
-        </Link>
-        <Link
-          href="https://www.crunchbase.com/organization/cardiogram"
-          noStyles
-        >
-          <Image
-            width={150}
-            height={75}
-            src="/logos/cardiogram.svg"
-            alt="Cardiogram"
-          />
-        </Link>
-        <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
-          <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
-        </Link>
-        <Link href="https://www.crunchbase.com/organization/ted" noStyles>
-          <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
-        </Link>
-        <Link
-          href="https://www.crunchbase.com/organization/electronicarts"
-          noStyles
-        >
-          <Image width={150} height={75} src="/logos/ea.svg" alt="EA" />
-        </Link>
+        <AnimateSection delay={0.85}>
+          <Link href="https://www.crunchbase.com/organization/google" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/google.svg"
+              alt="Google"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={0.9}>
+          <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/amazon.svg"
+              alt="Amazon"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={0.95}>
+          <Link
+            href="https://www.crunchbase.com/organization/atrium-lts"
+            noStyles
+          >
+            <Image
+              width={150}
+              height={75}
+              src="/logos/atrium.svg"
+              alt="Atrium"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1}>
+          <Link
+            href="https://www.crunchbase.com/organization/cardiogram"
+            noStyles
+          >
+            <Image
+              width={150}
+              height={75}
+              src="/logos/cardiogram.svg"
+              alt="Cardiogram"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.05}>
+          <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
+            <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.1}>
+          <Link href="https://www.crunchbase.com/organization/ted" noStyles>
+            <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.15}>
+          <Link
+            href="https://www.crunchbase.com/organization/electronicarts"
+            noStyles
+          >
+            <Image width={150} height={75} src="/logos/ea.svg" alt="EA" />
+          </Link>
+        </AnimateSection>
       </section>
       <section className={styles.section}>
-        <h2>Other Activities</h2>
-        <p>
+        <AnimateSection as="h2" delay={1.3}>
+          Other Activities
+        </AnimateSection>
+        <AnimateSection as="p" delay={1.35}>
           You’ll occasionally find me dabbling in the open source world,
           contributing to{" "}
           <Link
@@ -194,9 +231,9 @@ const Page: NextPage = () => {
             design games
           </Link>
           . But honestly, I spend most of my days procrastinating.
-        </p>
+        </AnimateSection>
       </section>
-      <section className={styles.socials}>
+      <AnimateSection as="section" delay={1.5} className={styles.socials}>
         <a
           className={styles.git}
           href={social.github}
@@ -253,7 +290,7 @@ const Page: NextPage = () => {
             />
           </svg>
         </a>
-      </section>
+      </AnimateSection>
     </main>
   );
 };

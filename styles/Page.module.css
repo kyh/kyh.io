@@ -28,7 +28,7 @@
   gap: 2rem;
 }
 
-.list > li {
+.list li {
   background-image: var(--arrow);
   background-position-y: 4px;
   background-repeat: no-repeat;
@@ -36,7 +36,7 @@
   padding-left: 24px;
 }
 
-.projectList > li {
+.projectList li {
   font-size: 2rem;
   background-position-y: 8px;
   margin-bottom: 8px;

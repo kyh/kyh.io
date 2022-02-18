@@ -2,10 +2,11 @@ import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { SEO } from "@components/SEO";
+import { AnimateSection } from "@components/AnimateText";
 import { Scene } from "@components/Scene";
 import { RoleNav } from "@components/RoleNav";
-import styles from "styles/Page.module.css";
 import { Counter, CountersContainer } from "@components/Counter";
+import styles from "styles/Page.module.css";
 import { data } from "@lib/role";
 
 const Page: NextPage = () => {
@@ -22,8 +23,12 @@ const Page: NextPage = () => {
       <SEO />
       <Scene />
       <header className={styles.header}>
-        <h1 className={styles.title}>Kaiyu Hsu</h1>
-        <RoleNav />
+        <AnimateSection as="h1" className={styles.title}>
+          Kaiyu Hsu
+        </AnimateSection>
+        <AnimateSection delay={0.1}>
+          <RoleNav />
+        </AnimateSection>
       </header>
       <CountersContainer>
         <Counter text={stat.value} />

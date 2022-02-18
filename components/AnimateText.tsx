@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import styles from "./AnimateText.module.css";
 
@@ -5,6 +6,9 @@ type Props = {
   children: React.ReactNode;
   className?: string;
   rotate?: string[];
+  duration?: number;
+  delay?: number;
+  as?: keyof typeof motion;
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -30,7 +34,7 @@ export const AnimateText = ({
       setCurrentWord(nextWord);
       await sleep(250);
       setAnimate(false);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [rotate, currentWord]);
@@ -48,5 +52,31 @@ export const AnimateText = ({
     >
       {children} {currentWord && currentWord}
     </h1>
+  );
+};
+
+export const AnimateSection = ({
+  children,
+  duration,
+  delay,
+  as,
+  className = "",
+}: Props) => {
+  const Element = motion[as || "div"];
+  return (
+    <div className={styles.section}>
+      <Element
+        className={className}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          ease: "easeInOut",
+          duration: duration || 0.4,
+          delay: delay || 0,
+        }}
+      >
+        {children}
+      </Element>
+    </div>
   );
 };

@@ -49,3 +49,7 @@
     transform: skew(-20deg) translateX(95%);
   }
 }
+
+.section {
+  overflow: hidden;
+}
