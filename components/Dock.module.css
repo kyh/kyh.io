@@ -7,6 +7,20 @@
   bottom: 4vh;
   left: 0;
   right: 0;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  animation: animateIn 0.3s ease-in-out 1s forwards;
+}
+
+@keyframes animateIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .list {

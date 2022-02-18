@@ -62,18 +62,15 @@ export const AnimateSection = ({
   as,
   className = "",
 }: Props) => {
-  const Element = motion[as || "div"];
+  const Element = as || "div";
   return (
     <div className={styles.section}>
       <Element
-        className={className}
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          ease: "easeInOut",
-          duration: duration || 0.4,
-          delay: delay || 0,
+        style={{
+          animationDelay: `${delay || 0}s`,
+          animationDuration: `${duration || 0.4}s`,
         }}
+        className={className}
       >
         {children}
       </Element>

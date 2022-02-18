@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import type { MotionValue } from "framer-motion";
+import {
+  MotionValue,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import useRaf from "@rooks/use-raf";
 import { ThemeToggle } from "@components/ThemeToggle";
 import styles from "./Dock.module.css";
@@ -57,12 +62,7 @@ export const Dock = () => {
   const mouseX = useMotionValue<null | number>(null);
 
   return (
-    <motion.nav
-      className={styles.container}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-      transition={{ duration: 0.3, delay: 1 }}
-    >
+    <nav className={styles.container}>
       <ul
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
@@ -81,7 +81,7 @@ export const Dock = () => {
           <ThemeToggle />
         </DockItem>
       </ul>
-    </motion.nav>
+    </nav>
   );
 };
 

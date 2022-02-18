@@ -30,10 +30,10 @@
 }
 
 @keyframes animateTextIn {
-  from {
+  0% {
     transform: skew(-20deg) translateX(5%);
   }
-  to {
+  100% {
     transform: skew(-20deg) translateX(95%);
   }
 }
@@ -52,4 +52,23 @@
 
 .section {
   overflow: hidden;
+}
+
+.section > * {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: animateSectionIn;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes animateSectionIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
