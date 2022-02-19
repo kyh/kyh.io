@@ -64,6 +64,7 @@ export const Link = ({
         maxWidth="none"
         animation="shift-away-subtle"
         content={content}
+        appendTo={typeof document !== "undefined" ? document.body : "parent"}
       >
         {link}
       </Tippy>
