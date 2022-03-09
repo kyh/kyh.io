@@ -3,7 +3,7 @@ import Head from "next/head";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
 const APP_DESCRIPTION = process.env.NEXT_PUBLIC_APP_DESCRIPTION;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
-const OG_IMAGE_URL = `${APP_URL}/favicon/featured.png`;
+const OG_IMAGE_URL = `${APP_URL}/preview.png`;
 
 export const SEO = ({
   title = "",
