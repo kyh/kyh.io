@@ -36,7 +36,7 @@ const Page: NextPage = () => {
             </Link>
           </AnimateSection>
           <AnimateSection as="li" delay={0.45}>
-            Led development of software at some really{" "}
+            Led software development at some really{" "}
             <Link href="https://amazon.com" src="/screenshots/amazon.webp">
               big
             </Link>{" "}
