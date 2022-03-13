@@ -13,11 +13,11 @@ Router.events.on("routeChangeComplete", nprogress.done);
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
-      {/* <Script
+      <Script
         strategy="afterInteractive"
         src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon='{"token": "f8e886a706f64bfe956555aee047987a"}'
-      /> */}
+        data-cf-beacon='{"token": "0e42005637254ecab41ca2bdd010d5b9"}'
+      />
       <Component {...pageProps} />
       <Dock />
     </ThemeProvider>
