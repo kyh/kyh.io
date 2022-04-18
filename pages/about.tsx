@@ -15,8 +15,9 @@ const Page: NextPage = () => {
       </header>
       <AnimateSection as="p" delay={0.1}>
         👋 you can call me Kai since we’re pretty much friends now. I enjoy
-        building things. By day, I get to do that by typing the things that make
-        Amazon go.
+        building things for the interwebs. By day, I get to do that through
+        investing, advising, and working on products you may not have heard of
+        (yet)
       </AnimateSection>
       <section className={styles.section}>
         <AnimateSection as="h2" delay={0.3}>
