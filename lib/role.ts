@@ -26,7 +26,7 @@ export const data = {
     stat: {
       id: "design",
       value: 30,
-      label: "+ portfolio pieces",
+      label: "+ products launched",
       href: social.dribbble,
       spawn: 10,
     },

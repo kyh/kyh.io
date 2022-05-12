@@ -22,7 +22,7 @@ const Page: NextPage = () => {
       <section className={styles.grid}>
         <div>
           <AnimateSection as="h2" className={styles.caption} delay={0.2}>
-            Side Projects
+            Projects
           </AnimateSection>
           <ul className={`${styles.list} ${styles.projectList}`}>
             <AnimateSection as="li" delay={0.4}>
@@ -41,7 +41,7 @@ const Page: NextPage = () => {
         </div>
         <div>
           <AnimateSection as="h2" className={styles.caption} delay={0.7}>
-            Consulting
+            Advising
           </AnimateSection>
           <ul className={`${styles.list} ${styles.projectList}`}>
             <AnimateSection as="li" delay={0.9}>
