@@ -2,6 +2,8 @@
 
 Made with great frustration, and some JavaScript.
 
+[🚀 Live Site](https://kyh.io)
+
 ## Development Setup
 
 ```bash
