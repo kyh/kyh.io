@@ -35,7 +35,10 @@ const Page: NextPage = () => {
               <Link href="https://uicapsule.com">UI Capsule</Link>
             </AnimateSection>
             <AnimateSection as="li" delay={0.55}>
-              <Link href="https://inteligir.com">Inteligir</Link>
+              <Link href="https://tc.kyh.io">TC Calculator</Link>
+            </AnimateSection>
+            <AnimateSection as="li" delay={0.6}>
+              <Link href="https://proxy.kyh.io">API Proxy</Link>
             </AnimateSection>
           </ul>
         </div>
