@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/matter-js": "^0.17.7",
-    "@types/node": "^17.0.13",
+    "@types/node": "^18.0.0",
     "@types/nprogress": "^0.2.0",
     "@types/react": "^18.0.5",
     "eslint": "^8.7.0",
