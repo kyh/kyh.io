@@ -170,7 +170,7 @@ const createBoundaries = () => {
 };
 
 export const Scene = () => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
   const width = useWindowWidth();
 
@@ -257,7 +257,7 @@ export const Scene = () => {
   }, [width]);
 
   useEffect(() => {
-    const isLight = theme === "light";
+    const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
     const stats = data[router.asPath as keyof typeof data];
@@ -280,7 +280,7 @@ export const Scene = () => {
   }, [router.asPath, width]);
 
   useEffect(() => {
-    const isLight = theme === "light";
+    const isLight = resolvedTheme === "light";
 
     Object.values(platformRef.current).forEach((b) => {
       if (b.render.fillStyle !== "transparent") {
@@ -291,7 +291,7 @@ export const Scene = () => {
     Object.values(bodiesRef.current).forEach((b) => {
       b.render.strokeStyle = isLight ? "black" : "white";
     });
-  }, [theme]);
+  }, [resolvedTheme]);
 
   return <div className={styles.container} ref={sceneRef} />;
 };
