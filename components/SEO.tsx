@@ -10,7 +10,7 @@ export const SEO = ({
   siteTitle = APP_NAME,
   description = APP_DESCRIPTION,
 }) => {
-  const finalTitle = title ? `${siteTitle} | ${title}` : siteTitle;
+  const finalTitle = title ? `${title} | ${siteTitle}` : siteTitle;
   return (
     <Head>
       <title>{finalTitle}</title>
