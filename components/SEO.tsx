@@ -10,7 +10,7 @@ export const SEO = ({
   siteTitle = APP_NAME,
   description = APP_DESCRIPTION,
 }) => {
-  const finalTitle = title ? `${title} | ${siteTitle}` : siteTitle;
+  const finalTitle = title ? `${siteTitle} | ${title}` : siteTitle;
   return (
     <Head>
       <title>{finalTitle}</title>
@@ -18,7 +18,7 @@ export const SEO = ({
       <meta name="description" content={description} />
 
       <meta property="og:type" content="website" />
-      <meta property="og:title" content={title} />
+      <meta property="og:title" content={finalTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:site_name" content={siteTitle} />
       <meta property="og:url" content={APP_URL} />

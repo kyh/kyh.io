@@ -28,8 +28,7 @@ export default class Document extends NextDocument {
         <Head>
           <meta name="referrer" content="origin" />
           <meta name="application-name" content={APP_NAME} />
-          <meta name="robots" content="index, follow" />
-          <meta property="fb:app_id" content="{FB_ID}" />
+          <meta name="robots" content="all" />
           <link
             rel="apple-touch-icon"
             sizes="180x180"
