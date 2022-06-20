@@ -168,7 +168,7 @@ export const CountersContainer = ({
   }, []);
 
   return (
-    <div className={styles.counters} style={{ top }}>
+    <div className={styles.counters} style={{ top }} aria-hidden="true">
       {children}
     </div>
   );
