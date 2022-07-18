@@ -38,7 +38,7 @@ const Page: NextPage = () => {
               <Link href="https://tc.kyh.io">TC Calculator</Link>
             </AnimateSection>
             <AnimateSection as="li" delay={0.6}>
-              <Link href="https://proxy.kyh.io">API Proxy</Link>
+              <Link href="https://proxyuri.com">API Proxy</Link>
             </AnimateSection>
           </ul>
         </div>
