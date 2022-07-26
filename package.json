@@ -21,7 +21,7 @@
     "nprogress": "^0.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "serve": "^13.0.2"
+    "serve": "^14.0.1"
   },
   "devDependencies": {
     "@types/matter-js": "^0.17.7",
