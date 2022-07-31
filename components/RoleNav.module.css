@@ -13,6 +13,7 @@
 .linkContainer a {
   color: var(--body-color);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .linkContainer a::after {
@@ -35,4 +36,12 @@
   background-color: var(--body-color);
   border-radius: 50%;
   box-shadow: 0 0 0.6rem 0.1rem var(--body-color-faded);
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 600px) {
+  .linkContainer:nth-child(4),
+  .linkContainer:nth-child(5) {
+    display: none;
+  }
 }
