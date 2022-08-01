@@ -164,6 +164,26 @@ p {
   max-width: 55ch;
 }
 
+.blur-header {
+  top: 0;
+  user-select: none;
+  pointer-events: none;
+  position: fixed;
+  width: 100%;
+  height: 9rem;
+  z-index: 1;
+  backdrop-filter: blur(5px);
+  opacity: 0.95;
+  mask-image: linear-gradient(to bottom, #000 25%, transparent);
+}
+
+.blur-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, #000, transparent);
+}
+
 #nprogress {
   pointer-events: none;
 }
@@ -256,6 +276,10 @@ p {
 }
 
 @media screen and (max-width: 600px) {
+  .blur-header {
+    height: 6rem;
+  }
+
   .tooltip-multi img {
     max-height: 150px;
   }

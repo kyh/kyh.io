@@ -3,8 +3,8 @@ import { Image } from "./Image";
 import styles from "./Link.module.css";
 
 type Props = {
-  href: string;
   children: React.ReactNode;
+  href?: string;
   noStyles?: boolean;
   alt?: string;
   src?: string;
@@ -19,19 +19,26 @@ export const Link = ({
   srcs,
   noStyles = false,
 }: Props) => {
-  const link = (
+  let content = null;
+  let link = href ? (
     <a
       className={noStyles ? "" : styles.link}
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      data-text={children}
+      data-text={noStyles ? "" : children}
     >
       {children}
     </a>
+  ) : (
+    <button
+      type="button"
+      className={noStyles ? "" : styles.link}
+      data-text={noStyles ? "" : children}
+    >
+      {children}
+    </button>
   );
-
-  let content = null;
 
   if (src) {
     content = (

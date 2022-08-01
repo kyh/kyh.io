@@ -54,6 +54,7 @@
   transition: filter ease 0.3s;
 }
 
+.logos a:focus img,
 .logos img:hover {
   filter: var(--filter-highlight);
 }

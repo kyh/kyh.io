@@ -197,7 +197,6 @@ const Page: NextPage = () => {
           </Link>
           ,{" "}
           <Link
-            href="#"
             srcs={[
               {
                 href: "https://uicapsule.com",

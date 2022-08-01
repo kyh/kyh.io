@@ -12,6 +12,7 @@ Router.events.on("routeChangeComplete", nprogress.done);
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
+      <div className="blur-header" aria-hidden="true" />
       <Component {...pageProps} />
       <Dock />
     </ThemeProvider>
