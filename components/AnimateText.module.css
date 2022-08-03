@@ -3,6 +3,7 @@
   overflow: hidden;
   padding: 0 2rem;
   margin: 0 -2rem;
+  line-height: 1.2;
 }
 
 .text::after {
