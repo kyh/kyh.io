@@ -13,7 +13,7 @@
   "dependencies": {
     "@rooks/use-raf": "^4.11.2",
     "@tippyjs/react": "^4.2.6",
-    "framer-motion": "^6.2.3",
+    "framer-motion": "^7.1.2",
     "matter-js": "^0.18.0",
     "next": "^12.0.9",
     "next-themes": "^0.2.0",
@@ -23,7 +23,7 @@
     "serve": "^14.0.1"
   },
   "devDependencies": {
-    "@types/matter-js": "^0.17.7",
+    "@types/matter-js": "^0.18.1",
     "@types/node": "^18.0.0",
     "@types/nprogress": "^0.2.0",
     "@types/react": "^18.0.5",
