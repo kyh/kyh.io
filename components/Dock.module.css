@@ -10,6 +10,7 @@
   opacity: 0;
   transform: translateY(10px) scale(0.95);
   animation: animateIn 0.3s ease-in-out 1s forwards;
+  z-index: 1;
 }
 
 @keyframes animateIn {
