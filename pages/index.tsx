@@ -7,16 +7,10 @@ import { Scene } from "@components/Scene";
 import { RoleNav } from "@components/RoleNav";
 import { Counter, CountersContainer } from "@components/Counter";
 import styles from "styles/Page.module.css";
-import { data } from "@lib/role";
+import { useCurrentPageRole } from "@lib/role";
 
 const Page: NextPage = () => {
-  const router = useRouter();
-  const [stat, setStat] = useState({ label: "", value: 0, href: "" });
-
-  useEffect(() => {
-    const stats = data[router.asPath as keyof typeof data];
-    setStat(stats.stat);
-  }, [router.asPath]);
+  const { stat } = useCurrentPageRole();
 
   return (
     <main className={`${styles.container} ${styles.relative}`}>

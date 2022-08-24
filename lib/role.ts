@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { social } from "./social";
 
 export const data = {
@@ -51,4 +53,17 @@ export const data = {
       spawn: 1,
     },
   },
+};
+
+export const useCurrentPageRole = () => {
+  const router = useRouter();
+
+  const [role, setRole] = useState(data["/"]);
+
+  useEffect(() => {
+    const role = data[router.asPath as keyof typeof data] || data["/"];
+    setRole(role);
+  }, [router.asPath]);
+
+  return role;
 };

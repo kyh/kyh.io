@@ -13,7 +13,7 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
-import { data } from "@lib/role";
+import { useCurrentPageRole } from "@lib/role";
 import { useWindowWidth } from "@lib/useWindowWidth";
 import styles from "./Scene.module.css";
 
@@ -171,8 +171,8 @@ const createBoundaries = () => {
 
 export const Scene = () => {
   const { resolvedTheme } = useTheme();
-  const router = useRouter();
   const width = useWindowWidth();
+  const { stat } = useCurrentPageRole();
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());
@@ -260,8 +260,7 @@ export const Scene = () => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
-    const stats = data[router.asPath as keyof typeof data];
-    const create = statIdToCreate[stats.stat.id as keyof typeof statIdToCreate];
+    const create = statIdToCreate[stat.id as keyof typeof statIdToCreate];
 
     clearInterval(spawnInterval.current!);
     spawnCount.current = 0;
@@ -272,12 +271,12 @@ export const Scene = () => {
       bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
       spawnCount.current++;
 
-      if (spawnCount.current >= stats.stat.spawn) {
+      if (spawnCount.current >= stat.spawn) {
         clearInterval(spawnInterval.current!);
         spawnCount.current = 0;
       }
     }, 100);
-  }, [router.asPath, width]);
+  }, [stat.id, width]);
 
   useEffect(() => {
     const isLight = resolvedTheme === "light";

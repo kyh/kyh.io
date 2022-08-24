@@ -1,7 +1,6 @@
-import { useRouter } from "next/router";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { data } from "@lib/role";
+import { data, useCurrentPageRole } from "@lib/role";
 import styles from "./RoleNav.module.css";
 
 const roles = Object.values(data).map((r) => r.link);
@@ -13,7 +12,7 @@ const spring = {
 };
 
 export const RoleNav = () => {
-  const router = useRouter();
+  const { link } = useCurrentPageRole();
 
   return (
     <ul className={styles.links}>
@@ -23,7 +22,7 @@ export const RoleNav = () => {
             <Link href={href}>
               <a>{label}</a>
             </Link>
-            {router.asPath === href && (
+            {link.href === href && (
               <motion.div
                 layoutId="underline"
                 className={styles.underline}
