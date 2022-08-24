@@ -37,7 +37,7 @@ export const data = {
     link: { href: "/#ppl", label: "Manager" },
     stat: {
       id: "ppl",
-      value: 107,
+      value: 100,
       label: "+ interviews conducted",
       href: "",
       spawn: 10,

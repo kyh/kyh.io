@@ -10,7 +10,7 @@ export const Image = ({ src, alt, width, height }: Props) => {
     <picture>
       <source srcSet={src} type="image/webp" />
       <source srcSet={src.replace(".webp", ".png")} type="image/png" />
-      <img src={src} alt={alt} width={width} height={height} />
+      <img src={src} alt={alt} width={width} height={height} loading="lazy" />
     </picture>
   );
 };
