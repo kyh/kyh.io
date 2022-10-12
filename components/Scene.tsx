@@ -203,7 +203,6 @@ export const Scene = () => {
     const mouse = Mouse.create(render.canvas),
       mouseConstraint = MouseConstraint.create(engine, {
         mouse: mouse,
-        // @ts-expect-error
         constraint: {
           stiffness: 0.2,
           render: {
