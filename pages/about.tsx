@@ -237,9 +237,9 @@ const Page: NextPage = () => {
           </Link>
           , and{" "}
           <Link
-            href="https://playhouse.gg"
-            src="/screenshots/playhouse.webp"
-            alt="Playhouse"
+            href="https://truffles.tv"
+            src="/screenshots/truffles.webp"
+            alt="Truffles"
           >
             design games
           </Link>

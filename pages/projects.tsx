@@ -29,7 +29,7 @@ const Page: NextPage = () => {
               <Link href="https://yourssincerely.org">Yours Sincerely</Link>
             </AnimateSection>
             <AnimateSection as="li" delay={0.45}>
-              <Link href="https://playhouse.gg">Playhouse</Link>
+              <Link href="https://truffles.tv">Truffles</Link>
             </AnimateSection>
             <AnimateSection as="li" delay={0.5}>
               <Link href="https://uicapsule.com">UI Capsule</Link>
