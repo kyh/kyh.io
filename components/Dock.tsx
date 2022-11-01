@@ -70,11 +70,9 @@ export const Dock = () => {
       >
         {links.map(({ href, label, icon }) => (
           <DockItem key={href} mouseX={mouseX}>
-            <Link href={href}>
-              <a className={styles.link} title={label}>
-                <span className="sr-only">{label}</span>
-                {icon}
-              </a>
+            <Link className={styles.link} href={href} title={label}>
+              <span className="sr-only">{label}</span>
+              {icon}
             </Link>
           </DockItem>
         ))}

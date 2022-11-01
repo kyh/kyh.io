@@ -19,9 +19,7 @@ export const RoleNav = () => {
       {roles.map(({ href, label }) => {
         return (
           <li className={styles.linkContainer} key={href}>
-            <Link href={href}>
-              <a>{label}</a>
-            </Link>
+            <Link href={href}>{label}</Link>
             {link.href === href && (
               <motion.div
                 layoutId="underline"
