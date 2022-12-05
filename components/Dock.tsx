@@ -116,7 +116,8 @@ const DockItem = ({
   mouseX: MotionValue;
 }) => {
   const distance = useMotionValue(beyondTheDistanceLimit);
-  const size = useSpring(useTransform(distance, distanceInput, sizeOutput), {
+  const transform = useTransform(distance, distanceInput, sizeOutput);
+  const size = useSpring(transform, {
     damping: 25,
     stiffness: 250,
   });

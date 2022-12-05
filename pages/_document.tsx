@@ -1,8 +1,9 @@
 import NextDocument, { Html, Main, Head, NextScript } from "next/document";
+import { APP_NAME, APP_URL } from "@components/SEO";
 
 const criticalStyles = `
 @font-face {
-  font-family: gilroy;
+  font-family: "Gilroy";
   src: url(/fonts/Gilroy-Medium.woff2) format("woff2"),
     url(/fonts/Gilroy-Medium.woff) format("woff");
   font-weight: 500;
@@ -11,7 +12,7 @@ const criticalStyles = `
 }
 
 @font-face {
-  font-family: gilroy;
+  font-family: "Gilroy";
   src: url(/fonts/Gilroy-Regular.woff2) format("woff2"),
     url(/fonts/Gilroy-Regular.woff) format("woff");
   font-weight: 400;
@@ -19,9 +20,6 @@ const criticalStyles = `
   font-display: fallback;
 }
 `;
-
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 export const RootSEO = () => {
   return (

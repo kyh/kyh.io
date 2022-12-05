@@ -13,7 +13,7 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 import { useCurrentPageRole } from "@lib/role";
-import { useWindowWidth } from "@lib/useWindowWidth";
+import { useWindowSize } from "@lib/useWindowSize";
 import styles from "./Scene.module.css";
 
 export const percentX = (percent: number) => {
@@ -170,7 +170,7 @@ const createBoundaries = () => {
 
 export const Scene = () => {
   const { resolvedTheme } = useTheme();
-  const width = useWindowWidth();
+  const size = useWindowSize();
   const { stat } = useCurrentPageRole();
 
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -252,7 +252,7 @@ export const Scene = () => {
       platformRef.current = {};
       bodiesRef.current = {};
     };
-  }, [width]);
+  }, [size.width, size.height]);
 
   useEffect(() => {
     const isLight = resolvedTheme === "light";
@@ -274,7 +274,7 @@ export const Scene = () => {
         spawnCount.current = 0;
       }
     }, 100);
-  }, [stat.id, width]);
+  }, [stat.id, size.width, size.height]);
 
   useEffect(() => {
     const isLight = resolvedTheme === "light";

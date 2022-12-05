@@ -8,13 +8,16 @@ const debounce = (fn: Function, ms = 500) => {
   };
 };
 
-export const useWindowWidth = (delay = 500) => {
-  const [width, setWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 0
+export const useWindowSize = (delay = 500) => {
+  const [size, setSize] = useState(
+    typeof window !== "undefined"
+      ? { width: window.innerWidth, height: window.innerHeight }
+      : { width: 0, height: 0 }
   );
 
   useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
+    const handleResize = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
     const debouncedHandleResize = debounce(handleResize, delay);
     window.addEventListener("resize", debouncedHandleResize);
     return () => {
@@ -22,5 +25,5 @@ export const useWindowWidth = (delay = 500) => {
     };
   }, [delay]);
 
-  return width;
+  return size;
 };
