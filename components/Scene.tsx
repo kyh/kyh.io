@@ -12,8 +12,8 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
-import { useCurrentPageRole } from "@lib/role";
-import { useWindowSize } from "@lib/useWindowSize";
+import { useCurrentPageRole } from "~/lib/role";
+import { useWindowSize } from "~/lib/useWindowSize";
 import styles from "./Scene.module.css";
 
 export const percentX = (percent: number) => {

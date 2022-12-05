@@ -1,5 +1,5 @@
 import NextDocument, { Html, Main, Head, NextScript } from "next/document";
-import { APP_NAME, APP_URL } from "@components/SEO";
+import { APP_NAME, APP_URL } from "~/components/SEO";
 
 const criticalStyles = `
 @font-face {

@@ -1,13 +1,15 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { SEO } from "@components/SEO";
-import { AnimateSection } from "@components/AnimateText";
-import { Scene } from "@components/Scene";
-import { RoleNav } from "@components/RoleNav";
-import { Counter, CountersContainer } from "@components/Counter";
+import dynamic from "next/dynamic";
+import { SEO } from "~/components/SEO";
+import { AnimateSection } from "~/components/AnimateText";
+import { RoleNav } from "~/components/RoleNav";
+import { Counter, CountersContainer } from "~/components/Counter";
 import styles from "styles/Page.module.css";
-import { useCurrentPageRole } from "@lib/role";
+import { useCurrentPageRole } from "~/lib/role";
+
+const Scene = dynamic(() =>
+  import("~/components/Scene").then((mod) => mod.Scene)
+);
 
 const Page: NextPage = () => {
   const { stat } = useCurrentPageRole();

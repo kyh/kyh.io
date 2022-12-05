@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
-import { SEO } from "@components/SEO";
-import { AnimateText, AnimateSection } from "@components/AnimateText";
-import { Link } from "@components/Link";
+import { SEO } from "~/components/SEO";
+import { AnimateText, AnimateSection } from "~/components/AnimateText";
+import { Link } from "~/components/Link";
 import styles from "styles/Page.module.css";
 
 const Page: NextPage = () => {
@@ -38,7 +38,7 @@ const Page: NextPage = () => {
               <Link href="https://tc.kyh.io">TC Calculator</Link>
             </AnimateSection>
             <AnimateSection as="li" delay={0.6}>
-              <Link href="https://proxyuri.com">API Proxy</Link>
+              <Link href="https://putcache.com">API Cache</Link>
             </AnimateSection>
           </ul>
         </div>

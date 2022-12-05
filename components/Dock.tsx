@@ -8,7 +8,7 @@ import {
   useTransform,
 } from "framer-motion";
 import useRaf from "@rooks/use-raf";
-import { ThemeToggle } from "@components/ThemeToggle";
+import { ThemeToggle } from "~/components/ThemeToggle";
 import styles from "./Dock.module.css";
 
 const iconAttrs = {

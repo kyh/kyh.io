@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWindowSize } from "~/lib/useWindowSize";
 import { percentY } from "./Scene";
 import styles from "./Counter.module.css";
 
@@ -161,11 +162,12 @@ export const CountersContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const size = useWindowSize();
   const [top, setTop] = useState<string | number>("75vh");
 
   useEffect(() => {
     setTop(percentY(80));
-  }, []);
+  }, [size.height]);
 
   return (
     <div className={styles.counters} style={{ top }} aria-hidden="true">

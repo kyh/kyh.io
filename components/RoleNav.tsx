@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { data, useCurrentPageRole } from "@lib/role";
+import { data, useCurrentPageRole } from "~/lib/role";
 import styles from "./RoleNav.module.css";
 
 const roles = Object.values(data).map((r) => r.link);

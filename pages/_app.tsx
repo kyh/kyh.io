@@ -2,7 +2,7 @@ import type { AppProps } from "next/app";
 import Router from "next/router";
 import nprogress from "nprogress";
 import { ThemeProvider } from "next-themes";
-import { Dock } from "@components/Dock";
+import { Dock } from "~/components/Dock";
 import "styles/globals.css";
 
 Router.events.on("routeChangeStart", nprogress.start);
