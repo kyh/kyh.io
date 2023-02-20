@@ -1,6 +1,6 @@
 # kyh.io
 
-Made with great frustration, and some JavaScript.
+Made with 💻.
 
 [🚀 Live Site](https://kyh.io)
 
@@ -16,4 +16,4 @@ npm run dev
 
 ## Deployment
 
-Pushing to `main` will autodeploy through Cloudflare Pages
+Pushing to `main` will autodeploy through Vercel
