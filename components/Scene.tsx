@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 import {
   Events,
@@ -12,9 +14,9 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
-import { useCurrentPageRole } from "~/lib/role";
-import { useWindowSize } from "~/lib/useWindowSize";
-import styles from "./Scene.module.css";
+import type { Stat } from "~/lib/role";
+import { useWindowSize } from "~/lib/use-window-size";
+import styles from "./scene.module.css";
 
 export const percentX = (percent: number) => {
   return Math.round((percent / 100) * window.innerWidth);
@@ -168,10 +170,13 @@ const createBoundaries = () => {
   return { bottomBoundary, leftBoundary, rightBoundary };
 };
 
-export const Scene = () => {
+type SceneProps = {
+  currentStat: Stat;
+};
+
+export const Scene = ({ currentStat }: SceneProps) => {
   const { resolvedTheme } = useTheme();
   const size = useWindowSize();
-  const { stat } = useCurrentPageRole();
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());
@@ -258,7 +263,8 @@ export const Scene = () => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
-    const create = statIdToCreate[stat.id as keyof typeof statIdToCreate];
+    const create =
+      statIdToCreate[currentStat.id as keyof typeof statIdToCreate];
 
     clearInterval(spawnInterval.current!);
     spawnCount.current = 0;
@@ -269,12 +275,12 @@ export const Scene = () => {
       bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
       spawnCount.current++;
 
-      if (spawnCount.current >= stat.spawn) {
+      if (spawnCount.current >= currentStat.spawn) {
         clearInterval(spawnInterval.current!);
         spawnCount.current = 0;
       }
     }, 100);
-  }, [stat.id, size.width, size.height]);
+  }, [currentStat.id, size.width, size.height]);
 
   useEffect(() => {
     const isLight = resolvedTheme === "light";

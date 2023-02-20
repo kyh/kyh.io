@@ -1,0 +1,205 @@
+:root {
+  --logo-gh: #333333;
+  --logo-tw: #55acee;
+  --logo-in: #4875b4;
+  --logo-dr: #ea4c89;
+
+  --colors-gray0: #ffffff;
+  --colors-gray50: #f8fafc;
+  --colors-gray100: #f1f5f9;
+  --colors-gray200: #e2e8f0;
+  --colors-gray300: #cbd5e1;
+  --colors-gray400: #94a3b8;
+  --colors-gray500: #64748b;
+  --colors-gray600: #475569;
+  --colors-gray700: #334155;
+  --colors-gray800: #1e293b;
+  --colors-gray900: #0f172a;
+  --colors-gray950: #101010;
+  --colors-gray1000: #000;
+
+  --bg-color: var(--colors-gray300);
+  --bg-contrast: var(--colors-gray0);
+  --border-color: var(--colors-gray200);
+  --body-color: var(--colors-gray900);
+  --body-color-faded: var(--colors-gray600);
+
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23263238' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+
+  --filter-faded: brightness(1.3);
+  --filter-highlight: brightness(0);
+
+  --link-color: var(--colors-gray900);
+  --link-color-hover: var(--colors-gray1000);
+
+  --tippy-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.15),
+    0 4px 80px -8px rgba(36, 40, 47, 0.25),
+    0 4px 4px -2px rgba(91, 94, 105, 0.15);
+}
+
+[data-theme="dark"] {
+  --logo-gh: #ffffff;
+
+  --bg-color: var(--colors-gray900);
+  --bg-contrast: var(--colors-gray1000);
+  --border-color: var(--colors-gray800);
+  --body-color: var(--colors-gray100);
+  --body-color-faded: var(--colors-gray300);
+
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23F3F4F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+
+  --filter-faded: brightness(0.5);
+  --filter-highlight: brightness(10);
+
+  --link-color: var(--colors-gray100);
+  --link-color-hover: var(--colors-gray0);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body {
+  font-size: 62.5%;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-primary), "Helvetica", sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.7;
+  color: var(--body-color);
+  background-color: var(--bg-contrast);
+  background-image: radial-gradient(
+    150% 150% at 0% 20%,
+    var(--bg-contrast) 20%,
+    var(--bg-color)
+  );
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  object-fit: cover;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+  font-weight: 500;
+  line-height: 1;
+}
+
+#__next {
+  min-height: 100%;
+  isolation: isolate;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+  border: none;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  max-width: 55ch;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: var(--body-color);
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--body-color), 0 0 5px var(--body-color);
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}

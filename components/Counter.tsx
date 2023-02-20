@@ -1,8 +1,10 @@
+"use client";
+
 import { Fragment, useMemo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWindowSize } from "~/lib/useWindowSize";
-import { percentY } from "./Scene";
-import styles from "./Counter.module.css";
+import { useWindowSize } from "~/lib/use-window-size";
+import { percentY } from "./scene";
+import styles from "./counter.module.css";
 
 type VerticalProps = {
   letter: string;
@@ -49,35 +51,13 @@ type CounterProps = {
 const transition = { ease: "easeOut" };
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
-  const [isLoaded, set] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const getTextStats = useMemo(() => generateTextStats(ref), [ref]);
-
-  useEffect(() => {
-    if (
-      typeof document !== "undefined" &&
-      typeof document.fonts.ready === "object"
-    ) {
-      document.fonts.ready.finally(() => set(true));
-    } else {
-      set(true);
-    }
-  }, []);
 
   const baseStyles = {
     height,
     lineHeight: typeof height === "string" ? height : `${height}px`,
   };
-
-  if (!isLoaded) {
-    // it's opacity 0 since we only really want to get the ref
-    // to calculate the font height
-    return (
-      <div style={{ ...baseStyles, opacity: 0 }}>
-        <span ref={ref}>{text}</span>
-      </div>
-    );
-  }
 
   const textArray = String(text).split("");
   const stats = textArray.map(getTextStats);
@@ -163,14 +143,26 @@ export const CountersContainer = ({
   children: React.ReactNode;
 }) => {
   const size = useWindowSize();
+  const [isLoaded, setIsLoaded] = useState(false);
   const [top, setTop] = useState<string | number>("75vh");
 
   useEffect(() => {
     setTop(percentY(80));
   }, [size.height]);
 
+  useEffect(() => {
+    if (
+      typeof document !== "undefined" &&
+      typeof document.fonts.ready === "object"
+    ) {
+      document.fonts.ready.finally(() => setIsLoaded(true));
+    } else {
+      setIsLoaded(true);
+    }
+  }, []);
+
   return (
-    <div className={styles.counters} style={{ top }} aria-hidden="true">
+    <div className={styles.counters} style={{ opacity: isLoaded ? 1 : 0, top }}>
       {children}
     </div>
   );

@@ -1,9 +1,2 @@
-# *
 User-agent: *
-Allow: /
-
-# Host
-Host: https://kyh.io
-
-# Sitemaps
 Sitemap: https://kyh.io/sitemap.xml

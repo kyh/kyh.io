@@ -1,6 +1,8 @@
-import Tippy from "@tippyjs/react";
-import { Image } from "./Image";
-import styles from "./Link.module.css";
+"use client";
+
+import Image from "next/image";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import styles from "./link.module.css";
 
 type Props = {
   children: React.ReactNode;
@@ -19,8 +21,9 @@ export const Link = ({
   srcs,
   noStyles = false,
 }: Props) => {
-  let content = null;
-  let link = href ? (
+  let content: React.ReactNode = null;
+
+  let action = href ? (
     <a
       className={noStyles ? "" : styles.link}
       href={href}
@@ -43,40 +46,33 @@ export const Link = ({
   if (src) {
     content = (
       <a href={href} target="_blank" rel="noreferrer noopener">
-        <picture>
-          <source srcSet={src} type="image/webp" />
-          <source srcSet={src.replace(".webp", ".png")} type="image/png" />
-          <img src={src} alt={alt} width="320" height="240" />
-        </picture>
+        <Image src={src} alt={alt || "image"} width={320} height={240} />
       </a>
     );
   }
 
   if (srcs) {
     content = (
-      <div className="tooltip-multi">
+      <span className={styles.multiTooltip}>
         {srcs.map(({ href, src, alt }) => (
           <a key={href} href={href} target="_blank" rel="noreferrer noopener">
             <Image src={src} alt={alt} width={320} height={240} />
           </a>
         ))}
-      </div>
+      </span>
     );
   }
 
-  if (content) {
-    return (
-      <Tippy
-        interactive
-        maxWidth="none"
-        animation="shift-away-subtle"
-        content={content}
-        appendTo={typeof document !== "undefined" ? document.body : "parent"}
-      >
-        {link}
-      </Tippy>
-    );
+  if (!content) {
+    return action;
   }
 
-  return link;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{action}</TooltipTrigger>
+      <TooltipContent side="top" align="center">
+        {content}
+      </TooltipContent>
+    </Tooltip>
+  );
 };

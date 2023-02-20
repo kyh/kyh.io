@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useRef } from "react";
 import {
@@ -8,8 +10,8 @@ import {
   useTransform,
 } from "framer-motion";
 import useRaf from "@rooks/use-raf";
-import { ThemeToggle } from "~/components/ThemeToggle";
-import styles from "./Dock.module.css";
+import { ThemeToggle } from "~/components/theme-toggle";
+import styles from "./dock.module.css";
 
 const iconAttrs = {
   xmlns: "http://www.w3.org/2000/svg",

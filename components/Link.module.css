@@ -46,3 +46,15 @@
 .link:hover::after {
   transform: translate3d(102%, 0, 0);
 }
+
+.multiTooltip {
+  display: grid;
+  grid-template-columns: auto auto;
+}
+
+@media screen and (max-width: 600px) {
+  .multiTooltip img {
+    max-height: 150px;
+    width: auto;
+  }
+}
