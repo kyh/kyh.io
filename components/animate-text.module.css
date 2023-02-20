@@ -1,8 +1,8 @@
 .text {
   position: relative;
   overflow: hidden;
-  padding: 0 2rem;
-  margin: 0 -2rem;
+  padding: 0 20px;
+  margin: 0 -20px;
   line-height: 1.2;
 }
 

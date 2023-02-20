@@ -1,6 +1,6 @@
 .links {
   display: flex;
-  font-size: 1.3rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
@@ -19,8 +19,8 @@
 
 .linkContainer a::after {
   content: "/";
-  padding-left: 0.4rem;
-  padding-right: 0.4rem;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .linkContainer:first-child {
@@ -32,11 +32,11 @@
 }
 
 .underline {
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 4px;
+  height: 4px;
   background-color: var(--body-color);
   border-radius: 50%;
-  box-shadow: 0 0 0.6rem 0.1rem var(--body-color-faded);
+  box-shadow: 0 0 6px 1px var(--body-color-faded);
   margin: 0 auto;
 }
 

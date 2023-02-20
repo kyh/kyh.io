@@ -28,10 +28,10 @@
   display: flex;
   align-items: flex-end;
   height: 100%;
-  gap: 0.8rem;
-  padding: 1rem;
+  gap: 8px;
+  padding: 12px;
   box-shadow: rgba(15, 23, 42, 0.12) 0px 30px 60px 0px;
-  border-radius: 2rem;
+  border-radius: 20px;
   backdrop-filter: blur(25px);
   background: var(--bg-contrast);
   border: 1px solid var(--border-color);

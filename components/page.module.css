@@ -4,7 +4,7 @@
   pointer-events: none;
   position: fixed;
   width: 100%;
-  height: 9rem;
+  height: 90px;
   z-index: 1;
   backdrop-filter: blur(5px);
   opacity: 0.95;
@@ -20,7 +20,7 @@
 
 @media screen and (max-width: 600px) {
   .blurHeader {
-    height: 6rem;
+    height: 60px;
   }
 }
 
@@ -28,9 +28,9 @@
   display: flex;
   flex-direction: column;
   max-width: 768px;
-  padding: 9rem 2rem 14rem;
+  padding: 90px 20px 140px;
   margin: 0 auto;
-  gap: 3.6rem;
+  gap: 36px;
 }
 
 .relative {
@@ -41,7 +41,7 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1.2rem;
+  gap: 12px;
 }
 
 .header > * {
@@ -51,7 +51,7 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 20px;
 }
 
 .list li {
@@ -63,7 +63,7 @@
 }
 
 .projectList li {
-  font-size: 2rem;
+  font-size: 20px;
   background-position-y: 8px;
   margin-bottom: 8px;
 }
@@ -71,7 +71,7 @@
 .logos {
   display: grid;
   grid-template-columns: repeat(4, 150px);
-  grid-gap: 2rem;
+  grid-gap: 20px;
 }
 
 .logos img {
@@ -119,8 +119,8 @@
 }
 
 .caption {
-  margin-bottom: 1.6rem;
-  font-size: 12px;
+  margin-bottom: 16px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -129,12 +129,12 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2rem;
+  gap: 20px;
 }
 
 @media screen and (max-width: 600px) {
   .container {
-    padding: 6rem 3rem 14rem;
+    padding: 60px 28px 140px;
   }
 
   .logos {
@@ -142,6 +142,6 @@
   }
 
   .grid {
-    gap: 3.6rem;
+    gap: 36px;
   }
 }

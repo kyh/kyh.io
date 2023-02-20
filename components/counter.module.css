@@ -14,7 +14,7 @@
 
 .counters {
   position: absolute;
-  left: 2rem;
+  left: 20px;
   top: 80vh;
   color: var(--body-color-faded);
   opacity: 0.8;
