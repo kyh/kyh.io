@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "format": "prettier --write .",
+    "clean": "rm -rf .next && rm -rf out && rm -rf .vercel && rm -rf .contentlayer"
   },
   "dependencies": {
     "@next/font": "^13.1.6",
