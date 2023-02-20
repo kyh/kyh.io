@@ -1,0 +1,28 @@
+.prefix {
+  color: transparent;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.letter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.counters {
+  position: absolute;
+  left: 2rem;
+  top: 80vh;
+  color: var(--body-color-faded);
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+}
+
+.counters a {
+  color: var(--body-color-faded);
+  text-decoration: none;
+}
