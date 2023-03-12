@@ -120,8 +120,9 @@ const DockItem = ({
   const distance = useMotionValue(beyondTheDistanceLimit);
   const transform = useTransform(distance, distanceInput, sizeOutput);
   const size = useSpring(transform, {
-    damping: 25,
+    damping: 15,
     stiffness: 250,
+    mass: 0.1,
   });
 
   const ref = useRef<HTMLLIElement>(null);

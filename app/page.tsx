@@ -1,13 +1,9 @@
-import dynamic from "next/dynamic";
 import { AnimateSection } from "~/components/animate-text";
 import { RoleNav } from "~/components/role-nav";
 import { Counter, CountersContainer } from "~/components/counter";
 import { getCurrentPageRole } from "~/lib/role";
+import { Scene } from "~/components/scene";
 import styles from "~/components/page.module.css";
-
-const Scene = dynamic(() =>
-  import("~/components/scene").then((mod) => mod.Scene)
-);
 
 export default function HomePage({
   searchParams,
