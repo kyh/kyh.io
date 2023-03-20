@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
 import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
@@ -70,6 +71,7 @@ export default function RootLayout({
           <Dock />
           {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
