@@ -1,4 +1,4 @@
-import localFont from "@next/font/local";
+import localFont from "next/font/local";
 import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
 import styles from "~/components/page.module.css";
