@@ -14,7 +14,7 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
-import type { Stat } from "~/lib/role";
+import type { Stat } from "~/lib/stat";
 import { useWindowSize } from "~/lib/use-window-size";
 import styles from "./scene.module.css";
 
@@ -99,22 +99,19 @@ const createTriangle = (isLight: boolean) => {
   });
 };
 
-const createRing = (isLight: boolean) => {
+const createHexagon = (isLight: boolean) => {
   const render = getRenderProps(isLight);
-  return Bodies.circle(Common.random(percentX(30), percentX(70)), -30, 25, {
-    render: {
-      ...render,
-      lineWidth: 10,
-    },
+  return Bodies.polygon(Common.random(percentX(30), percentX(70)), -30, 6, 25, {
+    render,
   });
 };
 
-const statIdToCreate = {
-  ux: createMulti,
-  eng: createSquare,
-  design: createCircle,
-  ppl: createTriangle,
-  ring: createRing,
+const statIdToCreate: Record<Stat["id"], (isLight: boolean) => Matter.Body> = {
+  home: createMulti,
+  build: createSquare,
+  invest: createHexagon,
+  advise: createTriangle,
+  product: createCircle,
 };
 
 const createPlatform = () => {
@@ -263,20 +260,24 @@ export const Scene = ({ currentStat }: SceneProps) => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
-    const create =
-      statIdToCreate[currentStat.id as keyof typeof statIdToCreate];
+    const create = statIdToCreate[currentStat.id];
 
-    clearInterval(spawnInterval.current!);
+    clearInterval(spawnInterval.current);
     spawnCount.current = 0;
 
     spawnInterval.current = setInterval(() => {
+      if (!create) {
+        clearInterval(spawnInterval.current);
+        return;
+      }
+
       const body = create(isLight);
       Composite.add(world, body);
       bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
       spawnCount.current++;
 
       if (spawnCount.current >= currentStat.spawn) {
-        clearInterval(spawnInterval.current!);
+        clearInterval(spawnInterval.current);
         spawnCount.current = 0;
       }
     }, 100);

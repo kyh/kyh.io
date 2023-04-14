@@ -8,7 +8,7 @@
 
 .text::after {
   content: "";
-  background-color: var(--bg-contrast);
+  background-color: var(--bg-highlighted);
   width: 100%;
   height: 100%;
   border-left: 4px solid var(--body-color);

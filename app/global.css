@@ -18,11 +18,15 @@
   --colors-gray950: #101010;
   --colors-gray1000: #000;
 
+  --bg-faded: var(--colors-gray100);
   --bg-color: var(--colors-gray300);
-  --bg-contrast: var(--colors-gray0);
-  --border-color: var(--colors-gray200);
-  --body-color: var(--colors-gray900);
+  --bg-highlighted: var(--colors-gray0);
+  
   --body-color-faded: var(--colors-gray600);
+  --body-color: var(--colors-gray900);
+  --body-color-highlighted: var(--colors-gray1000);
+
+  --border-color: var(--colors-gray200);
 
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23263238' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
 
@@ -40,11 +44,15 @@
 [data-theme="dark"] {
   --logo-gh: #ffffff;
 
+  --bg-faded: var(--colors-gray950);
   --bg-color: var(--colors-gray900);
-  --bg-contrast: var(--colors-gray1000);
-  --border-color: var(--colors-gray800);
-  --body-color: var(--colors-gray100);
+  --bg-highlighted: var(--colors-gray1000);
+
   --body-color-faded: var(--colors-gray300);
+  --body-color: var(--colors-gray100);
+  --body-color-highlighted: var(--colors-gray0);
+
+  --border-color: var(--colors-gray800);
 
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23F3F4F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
 
@@ -67,7 +75,7 @@
 
 html,
 body {
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
@@ -75,12 +83,13 @@ body {
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--body-color);
-  background-color: var(--bg-contrast);
+  background-color: var(--bg-highlighted);
   background-image: radial-gradient(
     150% 150% at 0% 20%,
-    var(--bg-contrast) 20%,
+    var(--bg-highlighted) 20%,
     var(--bg-color)
   );
+  background-attachment: fixed;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -149,6 +158,11 @@ button,
   border: none;
 }
 
+a, a:hover, a:focus, a:active {
+  text-decoration: none;
+  color: inherit;
+}
+
 button,
 [role="button"] {
   cursor: pointer;
@@ -201,4 +215,78 @@ p {
   box-shadow: 0 0 10px var(--body-color), 0 0 5px var(--body-color);
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
+}
+
+.blurHeader {
+  top: 0;
+  user-select: none;
+  pointer-events: none;
+  position: fixed;
+  width: 100%;
+  height: 90px;
+  z-index: 1;
+  backdrop-filter: blur(5px);
+  opacity: 0.95;
+  mask-image: linear-gradient(
+    to bottom,
+    var(--bg-highlighted) 25%,
+    transparent
+  );
+}
+
+.blurHeader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--bg-highlighted), transparent);
+}
+
+@media screen and (max-width: 600px) {
+  .blurHeader {
+    height: 60px;
+  }
+}
+
+@keyframes slideDownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }

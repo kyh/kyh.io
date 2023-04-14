@@ -8,14 +8,18 @@ export default function AboutPage() {
   return (
     <main className={styles.container}>
       <header className={styles.header}>
-        <AnimateText className={styles.title}>Hello world</AnimateText>
+        <AnimateText className={styles.title}>About me</AnimateText>
       </header>
-      <AnimateSection as="p" delay={0.1}>
-        👋 you can call me Kai since we’re pretty much friends now. I enjoy
-        building things for the interwebs. By day, I get to do that through
-        investing, advising, and working on products you may not have heard of
-        (yet)
-      </AnimateSection>
+      <section className={styles.section}>
+        <AnimateSection as="p" delay={0.1}>
+          Throughout my career, I have held job titles that have encompassed
+          both design and engineering; working at seed, growth, and public
+          organizations. This privilege has allowed me to gain experience in all
+          aspects of company building, from growing up with a small 3 person
+          team, to learning how to develop and expand products on a global
+          scale.
+        </AnimateSection>
+      </section>
       <section className={styles.section}>
         <AnimateSection as="h2" delay={0.3}>
           Career Highlights
@@ -180,8 +184,9 @@ export default function AboutPage() {
           Other Activities
         </AnimateSection>
         <AnimateSection as="p" delay={1.35}>
-          You’ll occasionally find me dabbling in the open source world,
-          contributing to{" "}
+          Beyond work, I love to learn about economics, psychology, strategy,
+          technology, and startups. You’ll occasionally find me dabbling in the
+          open source world, contributing to{" "}
           <Link
             href="https://github.com/facebook/react"
             src="/screenshots/fb.webp"

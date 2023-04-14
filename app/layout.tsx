@@ -2,7 +2,6 @@ import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
 import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
-import styles from "~/components/page.module.css";
 
 import "./global.css";
 
@@ -67,7 +66,7 @@ export default function RootLayout({
     <html lang="en" className={gilroy.variable}>
       <body>
         <Providers>
-          <div className={styles.blurHeader} aria-hidden="true" />
+          <div className="blurHeader" aria-hidden="true" />
           <Dock />
           {children}
         </Providers>

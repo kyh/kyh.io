@@ -64,7 +64,16 @@ export const Dock = () => {
   const mouseX = useMotionValue<null | number>(null);
 
   return (
-    <nav className={styles.container}>
+    <motion.nav
+      className={styles.container}
+      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.3,
+        delay: 1,
+        ease: "easeOut",
+      }}
+    >
       <ul
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
@@ -82,7 +91,7 @@ export const Dock = () => {
           <ThemeToggle />
         </DockItem>
       </ul>
-    </nav>
+    </motion.nav>
   );
 };
 

@@ -7,33 +7,21 @@
   bottom: 4vh;
   left: 0;
   right: 0;
-  opacity: 0;
-  transform: translateY(10px) scale(0.95);
-  animation: animateIn 0.3s ease-in-out 1s forwards;
-  z-index: 1;
-}
-
-@keyframes animateIn {
-  0% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  z-index: 10;
 }
 
 .list {
+  --dock-bg: rgba(15, 23, 42, 0.12);
+
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   height: 100%;
   gap: 8px;
   padding: 12px;
   box-shadow: rgba(15, 23, 42, 0.12) 0px 30px 60px 0px;
   border-radius: 20px;
-  backdrop-filter: blur(25px);
-  background: var(--bg-contrast);
+  backdrop-filter: blur(10px);
+  background: var(--dock-bg);
   border: 1px solid var(--border-color);
 }
 
