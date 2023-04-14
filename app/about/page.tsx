@@ -17,7 +17,7 @@ export default function AboutPage() {
           organizations. This privilege has allowed me to gain experience across
           all aspects of company building, from growing up with a small 3 person
           team, to learning how to develop and expand products on a global
-          scale, and to the challenges of building an enduring company.
+          scale, and the challenges of creating an enduring company.
         </AnimateSection>
       </section>
       <section className={styles.section}>
