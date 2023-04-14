@@ -12,12 +12,12 @@ export default function AboutPage() {
       </header>
       <section className={styles.section}>
         <AnimateSection as="p" delay={0.1}>
-          Throughout my career, I have held job titles that have encompassed
-          both design and engineering; working at seed, growth, and public
-          organizations. This privilege has allowed me to gain experience in all
-          aspects of company building, from growing up with a small 3 person
+          Throughout my career, I've held job titles that have encompassed both
+          design and engineering; working in seed, growth, and public
+          organizations. This privilege has allowed me to gain experience across
+          all aspects of company building, from growing up with a small 3 person
           team, to learning how to develop and expand products on a global
-          scale.
+          scale, and to the challenges of building an enduring company.
         </AnimateSection>
       </section>
       <section className={styles.section}>

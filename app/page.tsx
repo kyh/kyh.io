@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimateSection, AnimateText } from "~/components/animate-text";
+import { ConditionalContainer } from "~/components/conditional-container";
 import { Counter, CountersContainer } from "~/components/counter";
-import { statMap, type Stat } from "~/lib/stat";
 import { Scene } from "~/components/scene";
+import { statMap, type Stat } from "~/lib/stat";
+import { StatSpan } from "~/components/stat-span";
+import { useEffect, useState } from "react";
 import styles from "~/components/page.module.css";
-import { useEffect, useRef, useState } from "react";
 
 export default function HomePage() {
   const [time, setTime] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function HomePage() {
       </AnimateSection>
       <AnimateSection as="p" delay={0.1}>
         Hello world. You can call me Kai since we’re pretty much friends now. I
-        enjoy
+        enjoy{" "}
         <StatSpan stat={statMap.build} onMouseEnter={handleMouseEnter}>
           building things
         </StatSpan>{" "}
@@ -87,55 +89,6 @@ export default function HomePage() {
     </main>
   );
 }
-
-const StatSpan = ({
-  stat,
-  children,
-  onMouseEnter,
-  onMouseLeave,
-}: {
-  stat: Stat;
-  onMouseEnter?: (s: Stat) => void;
-  onMouseLeave?: (s: Stat) => void;
-  children: React.ReactNode;
-}) => {
-  const handleMouseEnter = () => {
-    onMouseEnter && onMouseEnter(stat);
-  };
-
-  const handleMouseLeave = () => {
-    onMouseLeave && onMouseLeave(stat);
-  };
-
-  return (
-    <span
-      className={styles.statSpan}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <ConditionalContainer
-        condition={!!stat.href}
-        container={(children) => (
-          <a href={stat.href} target="_blank" rel="noopener noreferrer">
-            {children}
-          </a>
-        )}
-      >
-        {children}
-      </ConditionalContainer>
-    </span>
-  );
-};
-
-const ConditionalContainer = ({
-  condition,
-  container,
-  children,
-}: {
-  condition: boolean;
-  container: (children: React.ReactNode) => React.ReactNode;
-  children: React.ReactNode;
-}) => <>{condition ? container(children) : children}</>;
 
 const getPstTime = () => {
   return new Date().toLocaleString("en-US", {
