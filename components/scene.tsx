@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, MutableRefObject } from "react";
 import {
   Events,
   Engine,
@@ -167,11 +167,16 @@ const createBoundaries = () => {
   return { bottomBoundary, leftBoundary, rightBoundary };
 };
 
-type SceneProps = {
-  currentStat: Stat;
+export type SceneRef = {
+  trigger: () => void;
 };
 
-export const Scene = ({ currentStat }: SceneProps) => {
+type SceneProps = {
+  currentStat: Stat;
+  sceneRef?: MutableRefObject<SceneRef | undefined>;
+};
+
+export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
   const { resolvedTheme } = useTheme();
   const size = useWindowSize();
 
@@ -256,7 +261,7 @@ export const Scene = ({ currentStat }: SceneProps) => {
     };
   }, [size.width, size.height]);
 
-  useEffect(() => {
+  const trigger = () => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
@@ -281,6 +286,10 @@ export const Scene = ({ currentStat }: SceneProps) => {
         spawnCount.current = 0;
       }
     }, 100);
+  };
+
+  useEffect(() => {
+    trigger();
   }, [currentStat.id, size.width, size.height]);
 
   useEffect(() => {
@@ -296,6 +305,13 @@ export const Scene = ({ currentStat }: SceneProps) => {
       b.render.strokeStyle = isLight ? "black" : "white";
     });
   }, [resolvedTheme]);
+
+  useEffect(() => {
+    if (!parentRef) return;
+    parentRef.current = {
+      trigger,
+    };
+  }, []);
 
   return <div className={styles.container} ref={sceneRef} />;
 };

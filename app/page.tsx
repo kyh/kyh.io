@@ -3,14 +3,15 @@
 import { AnimateSection, AnimateText } from "~/components/animate-text";
 import { ConditionalContainer } from "~/components/conditional-container";
 import { Counter, CountersContainer } from "~/components/counter";
-import { Scene } from "~/components/scene";
+import { Scene, type SceneRef } from "~/components/scene";
 import { statMap, type Stat } from "~/lib/stat";
 import { StatSpan } from "~/components/stat-span";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "~/components/page.module.css";
 
 export default function HomePage() {
-  const [time, setTime] = useState<string | null>(null);
+  const sceneRef = useRef<SceneRef>();
+  const [time, setTime] = useState("");
   const [stat, setStat] = useState(statMap.home);
 
   useEffect(() => {
@@ -22,6 +23,12 @@ export default function HomePage() {
       clearInterval(interval);
     };
   }, []);
+
+  const handleTrigger = () => {
+    if (sceneRef.current) {
+      sceneRef.current.trigger();
+    }
+  };
 
   const handleMouseEnter = (stat: Stat) => {
     setStat(stat);
@@ -59,10 +66,16 @@ export default function HomePage() {
 
   return (
     <main className={`${styles.container} ${styles.relative}`}>
-      <Scene currentStat={stat} />
+      <Scene currentStat={stat} sceneRef={sceneRef} />
       <AnimateSection as="header" className={styles.header}>
         <AnimateText className={styles.title}>
-          <span onMouseEnter={() => setStat(statMap.home)}>Kaiyu Hsu</span>
+          <button
+            type="button"
+            onMouseEnter={() => handleMouseEnter(statMap.home)}
+            onClick={handleTrigger}
+          >
+            Kaiyu Hsu
+          </button>
         </AnimateText>
       </AnimateSection>
       <AnimateSection as="p" delay={0.1}>
