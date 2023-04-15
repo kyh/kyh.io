@@ -1,5 +1,7 @@
-import Link from "next/link";
 import { allBlogs } from "~/contentlayer/generated";
+import styles from "~/components/page.module.css";
+import { AnimateText } from "~/components/animate-text";
+import { Link } from "~/components/link";
 
 export const metadata = {
   title: "Blog",
@@ -8,26 +10,23 @@ export const metadata = {
 
 export default async function BlogPage() {
   return (
-    <section>
-      <h1 className="font-bold text-3xl font-serif mb-5">Blog</h1>
-      {allBlogs
-        .sort((a, b) => {
-          if (new Date(a.publishedAt) > new Date(b.publishedAt)) {
-            return -1;
-          }
-          return 1;
-        })
-        .map((post) => (
-          <Link
-            key={post.slug}
-            className="flex flex-col space-y-1 mb-4"
-            href={`/blog/${post.slug}`}
-          >
-            <div className="w-full flex flex-col">
-              <p>{post.title}</p>
+    <main className={styles.container}>
+      <header className={styles.header}>
+        <AnimateText className={styles.title}>Blog</AnimateText>
+      </header>
+      <section className={styles.grid}>
+        {allBlogs
+          .sort((a, b) =>
+            new Date(a.publishedAt) > new Date(b.publishedAt) ? -1 : 1
+          )
+          .map((post) => (
+            <div>
+              <Link key={post.slug} href={`/blog/${post.slug}`}>
+                {post.title}
+              </Link>
             </div>
-          </Link>
-        ))}
-    </section>
+          ))}
+      </section>
+    </main>
   );
 }

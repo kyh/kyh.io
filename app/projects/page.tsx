@@ -2,6 +2,11 @@ import { AnimateText, AnimateSection } from "~/components/animate-text";
 import { Link } from "~/components/link";
 import styles from "~/components/page.module.css";
 
+export const metadata = {
+  title: "Projects",
+  description: "The ever growing list of things I'm working on.",
+};
+
 export default function ProjectsPage() {
   return (
     <main className={styles.container}>
@@ -14,7 +19,7 @@ export default function ProjectsPage() {
         </AnimateText>
       </header>
       <AnimateSection as="p" delay={0.1}>
-        The ever growing list of things I’m working on.
+        The ever growing list of things I'm working on.
       </AnimateSection>
       <section className={styles.grid}>
         <div>
