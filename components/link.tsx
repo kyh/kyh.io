@@ -26,14 +26,16 @@ export const Link = ({
 }: Props) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
+  const actionClassName = noStyles ? "" : styles.link;
+  const actionDataText = noStyles ? "" : children;
 
   if (href) {
     if (href.startsWith("/")) {
       action = (
         <NextLink
-          className={noStyles ? "" : styles.link}
+          className={actionClassName}
           href={href}
-          data-text={noStyles ? "" : children}
+          data-text={actionDataText}
         >
           {children}
         </NextLink>
@@ -41,11 +43,11 @@ export const Link = ({
     } else {
       action = (
         <a
-          className={noStyles ? "" : styles.link}
+          className={actionClassName}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          data-text={noStyles ? "" : children}
+          data-text={actionDataText}
         >
           {children}
         </a>
@@ -54,10 +56,7 @@ export const Link = ({
   } else {
     if (noAction) {
       action = (
-        <span
-          className={noStyles ? "" : styles.link}
-          data-text={noStyles ? "" : children}
-        >
+        <span className={actionClassName} data-text={actionDataText}>
           {children}
         </span>
       );
@@ -65,8 +64,8 @@ export const Link = ({
       action = (
         <button
           type="button"
-          className={noStyles ? "" : styles.link}
-          data-text={noStyles ? "" : children}
+          className={actionClassName}
+          data-text={actionDataText}
         >
           {children}
         </button>

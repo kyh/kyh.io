@@ -1,4 +1,6 @@
-.link {
+a.link,
+span.link,
+button.link {
   text-decoration: none;
   position: relative;
   line-height: 1;
