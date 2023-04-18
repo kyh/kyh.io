@@ -24,6 +24,7 @@
     "framer-motion": "^10.12.2",
     "lodash": "^4.17.21",
     "matter-js": "^0.19.0",
+    "nanoid": "^4.0.2",
     "next": "^13.3.0",
     "next-contentlayer": "^0.3.1",
     "next-themes": "^0.2.1",
@@ -43,11 +44,11 @@
     "@types/matter-js": "^0.18.2",
     "@types/node": "^18.15.11",
     "@types/nprogress": "^0.2.0",
-    "@types/react": "^18.0.35",
+    "@types/react": "^18.0.37",
     "@types/react-dom": "^18.0.11",
     "env-cmd": "^10.1.0",
     "prettier": "^2.8.7",
-    "supabase": "^1.50.4",
+    "supabase": "^1.50.8",
     "typescript": "^5.0.4"
   }
 }
