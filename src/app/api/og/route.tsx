@@ -5,7 +5,7 @@ export const config = {
 };
 
 const font = fetch(
-  new URL("../../../public/fonts/gilroy-medium.woff2", import.meta.url)
+  new URL("../../../../public/fonts/gilroy-medium.woff2", import.meta.url)
 ).then((res) => res.arrayBuffer());
 
 export async function GET(req: NextRequest) {
