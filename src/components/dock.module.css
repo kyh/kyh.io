@@ -11,8 +11,6 @@
 }
 
 .list {
-  --dock-bg: rgba(15, 23, 42, 0.12);
-
   display: flex;
   align-items: center;
   height: 100%;

@@ -1,8 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import type { User } from "~/lib/use-user-channel";
 import styles from "./avatar-group.module.css";
+import { useState } from "react";
 
 type AvatarGroupProps = {
   currentUserId: string;
@@ -17,7 +19,7 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
     <ul className={`${styles.container} ${onlyMe ? styles.faded : ""}`}>
       <AnimatePresence mode="popLayout">
         {usersArr.map(([userId, userData], index) => {
-          let label = userId === currentUserId ? "You" : `User ${userId}`;
+          let label = userId === currentUserId ? "You" : `Visitor: ${userId}`;
 
           if (onlyMe) {
             label = "You're the only one here 🥺";
@@ -26,7 +28,6 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
           return (
             <motion.li
               key={userId}
-              title={label}
               className={styles.avatar}
               style={{
                 zIndex: usersArr.length - index,
@@ -38,7 +39,17 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
               transition={{ type: "spring" }}
               layout
             >
-              <span className="sr-only">{label}</span>
+              <Tooltip>
+                <TooltipTrigger className={styles.avatarContent} />
+                <TooltipContent
+                  className={styles.avatarTooltipContent}
+                  side="bottom"
+                  align="end"
+                  alignOffset={-16}
+                >
+                  {label}
+                </TooltipContent>
+              </Tooltip>
             </motion.li>
           );
         })}
