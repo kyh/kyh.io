@@ -110,20 +110,20 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
     userChannel.on(
       "broadcast",
       { event: "mouse" },
-      (payload: RealtimePayload<{ user_id: string } & Coordinates>) => {
+      (data: RealtimePayload<{ user_id: string } & Coordinates>) => {
         setUsers((users) => {
-          const userId = payload!.payload!.user_id;
+          const userId = data.payload!.user_id;
           const existingUser = users[userId];
 
           if (existingUser) {
             const x =
-              (payload?.payload?.x ?? 0) - X_THRESHOLD > window.innerWidth
+              (data.payload?.x ?? 0) - X_THRESHOLD > window.innerWidth
                 ? window.innerWidth - X_THRESHOLD
-                : payload?.payload?.x;
+                : data.payload?.x;
             const y =
-              (payload?.payload?.y ?? 0 - Y_THRESHOLD) > window.innerHeight
+              (data.payload?.y ?? 0 - Y_THRESHOLD) > window.innerHeight
                 ? window.innerHeight - Y_THRESHOLD
-                : payload?.payload?.y;
+                : data.payload?.y;
 
             users[userId] = { ...existingUser, ...{ x, y } };
             users = structuredClone(users);
@@ -148,5 +148,5 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
     };
   }, [roomId, isInitialStateSynced]);
 
-  return { users, userChannelRef };
+  return { userId, users, userChannelRef };
 };

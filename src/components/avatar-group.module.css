@@ -1,36 +1,13 @@
 .container {
-  position: relative;
+  display: flex;
+  margin-right: 8px;
 }
 
 .avatar {
-  display: flex;
-  position: absolute;
-  right: 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  transition-property: all;
-  justify-content: center;
-  align-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.avatarContent {
+  margin-right: -8px;
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }

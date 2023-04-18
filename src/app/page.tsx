@@ -15,7 +15,7 @@ import styles from "~/components/page.module.css";
 export default function HomePage() {
   const sceneRef = useRef<SceneRef>();
   const [stat, setStat] = useState(statMap.home);
-  const { users } = useUserChannel({ roomId: "home" });
+  const { userId, users } = useUserChannel({ roomId: "home" });
 
   const handleTrigger = () => {
     if (sceneRef.current) {
@@ -36,7 +36,7 @@ export default function HomePage() {
   return (
     <>
       <div className={styles.avatarsContainer}>
-        <AvatarGroup users={users} />
+        <AvatarGroup currentUserId={userId} users={users} />
       </div>
       <main className={`${styles.container} ${styles.relative}`}>
         <Scene currentStat={stat} sceneRef={sceneRef} />

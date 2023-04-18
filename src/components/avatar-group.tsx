@@ -1,35 +1,46 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
 import type { User } from "~/lib/use-user-channel";
 import styles from "./avatar-group.module.css";
 
 type AvatarGroupProps = {
+  currentUserId: string;
   users: Record<string, User>;
 };
 
-export const AvatarGroup = ({ users }: AvatarGroupProps) => {
+export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
+  const usersArr = Object.entries(users);
+
+  if (usersArr.length < 2) {
+    return null;
+  }
+
   return (
-    <div className={styles.container}>
-      {Object.entries(users).map(([userId, userData], idx) => {
-        return (
-          <div key={userId} className={styles.container}>
-            <div
+    <ul className={styles.container}>
+      <AnimatePresence mode="popLayout">
+        {usersArr.map(([userId, userData], index) => {
+          const label = userId === currentUserId ? "You" : `User ${userId}`;
+          return (
+            <motion.li
               key={userId}
+              title={label}
               className={styles.avatar}
               style={{
-                border: `1px solid ${userData.hue}`,
-                background: userData.color,
-                transform: `translateX(${
-                  Math.abs(idx - (Object.keys(users).length - 1)) * -20
-                }px)`,
+                zIndex: usersArr.length - index,
+                background: `linear-gradient(${userData.hue}, ${userData.color})`,
               }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring" }}
+              layout
             >
-              <div
-                style={{ background: userData.color }}
-                className={styles.avatarContent}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
+              <span className="sr-only">{label}</span>
+            </motion.li>
+          );
+        })}
+      </AnimatePresence>
+    </ul>
   );
 };
