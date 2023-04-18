@@ -7,8 +7,8 @@ import "./global.css";
 
 const gilroy = localFont({
   src: [
-    { path: "../public/fonts/gilroy-regular.woff2", weight: "400" },
-    { path: "../public/fonts/gilroy-medium.woff2", weight: "500" },
+    { path: "../../public/fonts/gilroy-regular.woff2", weight: "400" },
+    { path: "../../public/fonts/gilroy-medium.woff2", weight: "500" },
   ],
   variable: "--font-primary",
   display: "swap",

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Mdx } from "components/mdx";
+import { Mdx } from "~/components/mdx";
 import { allBlogs } from "~/contentlayer/generated";
 import { AnimateText } from "~/components/animate-text";
 import styles from "~/components/page.module.css";

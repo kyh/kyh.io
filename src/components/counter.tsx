@@ -167,3 +167,38 @@ export const CountersContainer = ({
     </div>
   );
 };
+
+let liveTime = "";
+
+export const TimerCounter = () => {
+  const [time, setTime] = useState(liveTime);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTime = getPstTime();
+      setTime(newTime);
+      liveTime = newTime;
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <>
+      <Counter text={time} />
+      <span>&nbsp;&#183;&nbsp;San Francisco, CA</span>
+    </>
+  );
+};
+
+const getPstTime = () => {
+  return new Date().toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour12: true,
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
+};
