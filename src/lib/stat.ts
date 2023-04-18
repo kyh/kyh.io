@@ -24,9 +24,9 @@ export const statMap: StatMap = {
   },
   invest: {
     id: "invest",
-    value: "20",
-    label: "+ held investments",
-    spawn: 20,
+    value: "10",
+    label: "+ private equities",
+    spawn: 10,
   },
   advise: {
     id: "advise",
