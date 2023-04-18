@@ -11,16 +11,18 @@ type AvatarGroupProps = {
 
 export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
   const usersArr = Object.entries(users);
-
-  if (usersArr.length < 2) {
-    return null;
-  }
+  const onlyMe = usersArr.length < 2;
 
   return (
-    <ul className={styles.container}>
+    <ul className={`${styles.container} ${onlyMe ? styles.faded : ""}`}>
       <AnimatePresence mode="popLayout">
         {usersArr.map(([userId, userData], index) => {
-          const label = userId === currentUserId ? "You" : `User ${userId}`;
+          let label = userId === currentUserId ? "You" : `User ${userId}`;
+
+          if (onlyMe) {
+            label = "You're the only one here 🥺";
+          }
+
           return (
             <motion.li
               key={userId}

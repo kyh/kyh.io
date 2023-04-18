@@ -2,6 +2,7 @@
   position: absolute;
   right: 24px;
   top: 24px;
+  z-index: 1;
 }
 
 .container {
