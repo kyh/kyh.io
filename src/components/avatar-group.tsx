@@ -1,10 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import type { User } from "~/lib/use-user-channel";
 import styles from "./avatar-group.module.css";
-import { useState } from "react";
 
 type AvatarGroupProps = {
   currentUserId: string;
@@ -39,17 +38,17 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
               transition={{ type: "spring" }}
               layout
             >
-              <Tooltip>
-                <TooltipTrigger className={styles.avatarContent} />
-                <TooltipContent
-                  className={styles.avatarTooltipContent}
+              <Popover>
+                <PopoverTrigger className={styles.avatarContent} />
+                <PopoverContent
+                  className={styles.avatarPopoverContent}
                   side="bottom"
                   align="end"
                   alignOffset={-16}
                 >
                   {label}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             </motion.li>
           );
         })}

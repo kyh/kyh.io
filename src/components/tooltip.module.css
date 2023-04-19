@@ -1,12 +1,14 @@
 .tooltip {
-  box-shadow: var(--tippy-shadow);
-  background-color: var(--bg-highlighted);
+  background-color: var(--colors-panel);
+  box-shadow: var(--colors-shadowLight) 0px 10px 38px -10px,
+    var(--colors-shadowDark) 0px 10px 20px -15px;
   border-radius: 4px;
-  padding: 8px;
+  padding: 4px 8px;
   animation-duration: 0.6s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.tooltip[data-state="open"][data-side="top"] :global,
 .tooltip[data-state="delayed-open"][data-side="top"] :global {
   animation-name: slideUpIn;
 }
@@ -15,6 +17,7 @@
   animation-name: slideUpOut;
 }
 
+.tooltip[data-state="open"][data-side="bottom"] :global,
 .tooltip[data-state="delayed-open"][data-side="bottom"] :global {
   animation-name: slideDownIn;
 }

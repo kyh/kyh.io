@@ -13,6 +13,7 @@
     "supabase-db-push": "env-cmd supabase db push"
   },
   "dependencies": {
+    "@radix-ui/react-popover": "^1.0.5",
     "@radix-ui/react-tooltip": "^1.0.5",
     "@rooks/use-raf": "^4.11.2",
     "@supabase/auth-helpers-nextjs": "^0.6.0",

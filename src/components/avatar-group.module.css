@@ -21,6 +21,6 @@
   display: flex;
 }
 
-.avatarTooltipContent {
+.avatarPopoverContent {
   font-size: 0.75rem;
 }
