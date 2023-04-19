@@ -7,7 +7,7 @@ import { Scene, type SceneRef } from "~/components/scene";
 import { statMap, type Stat } from "~/lib/stat";
 import { StatSpan } from "~/components/stat-span";
 import { useEffect, useRef, useState } from "react";
-import { useUserChannel, type User } from "~/lib/use-user-channel";
+import { useUserChannel } from "~/lib/use-user-channel";
 import { Cursor } from "~/components/cursor";
 import { AvatarGroup } from "~/components/avatar-group";
 import styles from "~/components/page.module.css";

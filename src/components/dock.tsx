@@ -38,16 +38,6 @@ const links = [
     ),
   },
   {
-    href: "/about",
-    label: "About",
-    icon: (
-      <svg {...iconAttrs}>
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      </svg>
-    ),
-  },
-  {
     href: "/projects",
     label: "Projects",
     icon: (
@@ -55,6 +45,16 @@ const links = [
         <polygon points="12 2 2 7 12 12 22 7 12 2" />
         <polyline points="2 17 12 22 22 17" />
         <polyline points="2 12 12 17 22 12" />
+      </svg>
+    ),
+  },
+  {
+    href: "/about",
+    label: "About",
+    icon: (
+      <svg {...iconAttrs}>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       </svg>
     ),
   },

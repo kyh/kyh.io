@@ -1,10 +1,4 @@
-.avatarsContainer {
-  position: absolute;
-  right: 24px;
-  top: 24px;
-  z-index: 1;
-}
-
+/* Shared */
 .container {
   display: flex;
   flex-direction: column;
@@ -35,18 +29,21 @@
   gap: 20px;
 }
 
+/* Home Page */
+.avatarsContainer {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  z-index: 1;
+}
+
+/* About Page */
 .list li {
   background-image: var(--arrow);
   background-position-y: 4px;
   background-repeat: no-repeat;
   margin-bottom: 4px;
   padding-left: 24px;
-}
-
-.projectList li {
-  font-size: 20px;
-  background-position-y: 8px;
-  margin-bottom: 8px;
 }
 
 .logos {
@@ -98,6 +95,13 @@
 
 .dribbble:hover path {
   fill: var(--logo-dr);
+}
+
+/* Projects Page */
+.projectList li {
+  font-size: 20px;
+  background-position-y: 8px;
+  margin-bottom: 8px;
 }
 
 .caption {

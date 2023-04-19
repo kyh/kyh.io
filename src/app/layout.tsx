@@ -3,7 +3,8 @@ import localFont from "next/font/local";
 import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
 
-import "./global.css";
+import "~/components/variables.css";
+import "~/components/global.css";
 
 const gilroy = localFont({
   src: [
