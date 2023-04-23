@@ -20,9 +20,9 @@ export default function AboutPage() {
           Throughout my career, I've held positions in both design and
           engineering; working across seed, growth, and public organizations.
           This privilege has allowed me to gain experience in various aspects of
-          company building, from growing up with a small 3 person team, to
-          learning how to develop and expand products on a global scale, through
-          to the challenges of building an enduring company.
+          company building; from growing up with a 3 person team, learning how
+          to develop and expand products on a global scale, through to the
+          challenges of building an enduring company.
         </AnimateSection>
       </section>
       <section className={styles.section}>
