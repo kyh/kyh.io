@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { nanoid } from "nanoid";
 import { useSupabase, type RealtimePayload } from "./use-supabase";
 import { getRandomColors, getRandomUniqueColor } from "./random-color";
-import { type RealtimeChannel } from "@supabase/supabase-js";
+import {
+  RealtimePresenceState,
+  type RealtimeChannel,
+} from "@supabase/supabase-js";
 
 const X_THRESHOLD = 25;
-const Y_THRESHOLD = 35;
 
 export type User = {
   color: string;
@@ -15,8 +18,9 @@ export type User = {
 } & Coordinates;
 
 type Coordinates = {
-  x: number | undefined;
-  y: number | undefined;
+  path?: string;
+  x?: number;
+  y?: number;
 };
 
 type UseUserChannelProps = {
@@ -28,61 +32,65 @@ const userId = nanoid();
 export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
   const supabase = useSupabase();
   const userChannelRef = useRef<RealtimeChannel>();
+  const pathname = usePathname();
   const [users, setUsers] = useState<{ [key: string]: User }>({});
   const [isInitialStateSynced, setIsInitialStateSynced] = useState(false);
+  const [isChannelSubscribed, setIsChannelSubscribed] = useState(false);
 
   useEffect(() => {
+    const handleInitialSync = (state: RealtimePresenceState) => {
+      const _users = state[roomId];
+
+      if (!_users) return;
+
+      // Deconflict duplicate colors at the beginning of the browser session
+      const colors =
+        Object.keys(users).length === 0 ? getRandomColors(_users.length) : [];
+
+      setUsers((existingUsers) => {
+        const updatedUsers = _users.reduce(
+          (
+            acc: { [key: string]: User },
+            { user_id: userId, path }: any,
+            index: number
+          ) => {
+            const userColors = Object.values(users).map(
+              (user: any) => user.color
+            );
+            // Deconflict duplicate colors for incoming clients during the browser session
+            const color =
+              colors.length > 0
+                ? colors[index]
+                : getRandomUniqueColor(userColors);
+
+            acc[userId] = existingUsers[userId] || {
+              path,
+              x: 0,
+              y: 0,
+              color: color.bg,
+              hue: color.hue,
+            };
+            return acc;
+          },
+          {}
+        );
+        return updatedUsers;
+      });
+
+      setIsInitialStateSynced(true);
+    };
+
     const roomChannel = supabase.channel("rooms", {
       config: { presence: { key: roomId } },
     });
 
     roomChannel.on("presence", { event: "sync" }, () => {
-      const state = roomChannel.presenceState();
-      const _users = state[roomId];
-
-      if (!_users) return;
-
-      // Deconflict duplicate colours at the beginning of the browser session
-      const colors =
-        Object.keys(users).length === 0 ? getRandomColors(_users.length) : [];
-
-      if (_users) {
-        setUsers((existingUsers) => {
-          const updatedUsers = _users.reduce(
-            (
-              acc: { [key: string]: User },
-              { user_id: userId }: any,
-              index: number
-            ) => {
-              const userColors = Object.values(users).map(
-                (user: any) => user.color
-              );
-              // Deconflict duplicate colors for incoming clients during the browser session
-              const color =
-                colors.length > 0
-                  ? colors[index]
-                  : getRandomUniqueColor(userColors);
-
-              acc[userId] = existingUsers[userId] || {
-                x: 0,
-                y: 0,
-                color: color.bg,
-                hue: color.hue,
-              };
-              return acc;
-            },
-            {}
-          );
-          return updatedUsers;
-        });
-      }
-
-      setIsInitialStateSynced(true);
+      handleInitialSync(roomChannel.presenceState());
     });
 
     roomChannel.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
-        await roomChannel.track({ user_id: userId });
+        await roomChannel.track({ user_id: userId, path: pathname });
       }
     });
 
@@ -91,52 +99,49 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
     };
   }, [roomId]);
 
+  // Event listeners
   useEffect(() => {
-    if (!roomId || !isInitialStateSynced) return;
+    if (!isInitialStateSynced) return;
 
-    const userChannel = supabase.channel(`users:${roomId}`);
+    const handleBroadcastEvents = (
+      data: RealtimePayload<{ user_id: string } & Coordinates>
+    ) => {
+      setUsers((users) => {
+        const userId = data.payload!.user_id;
+        const existingUser = users[userId];
 
-    const onMouseEvent = (e: MouseEvent) => {
-      const [x, y] = [e.clientX, e.clientY];
-      userChannel
-        .send({
-          type: "broadcast",
-          event: "mouse",
-          payload: { user_id: userId, x, y },
-        })
-        .catch(() => {});
+        if (!existingUser) return users;
+
+        if (data.event.includes("mouse")) {
+          const x =
+            (data.payload?.x ?? 0) - X_THRESHOLD > window.innerWidth
+              ? window.innerWidth - X_THRESHOLD
+              : data.payload?.x;
+          const y = data.payload?.y;
+
+          users[userId] = { ...existingUser, x, y };
+        }
+
+        if (data.event.includes("path")) {
+          users[userId] = { ...existingUser, path: data.payload?.path };
+        }
+
+        return structuredClone(users);
+      });
     };
+
+    const userChannel = supabase.channel(`${roomId}:users`);
 
     userChannel.on(
       "broadcast",
-      { event: "mouse" },
-      (data: RealtimePayload<{ user_id: string } & Coordinates>) => {
-        setUsers((users) => {
-          const userId = data.payload!.user_id;
-          const existingUser = users[userId];
-
-          if (existingUser) {
-            const x =
-              (data.payload?.x ?? 0) - X_THRESHOLD > window.innerWidth
-                ? window.innerWidth - X_THRESHOLD
-                : data.payload?.x;
-            const y =
-              (data.payload?.y ?? 0 - Y_THRESHOLD) > window.innerHeight
-                ? window.innerHeight - Y_THRESHOLD
-                : data.payload?.y;
-
-            users[userId] = { ...existingUser, ...{ x, y } };
-            users = structuredClone(users);
-          }
-
-          return users;
-        });
-      }
+      { event: `${pathname}:mouse` },
+      handleBroadcastEvents
     );
+    userChannel.on("broadcast", { event: "path" }, handleBroadcastEvents);
 
     userChannel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        window.addEventListener("mousemove", onMouseEvent);
+        setIsChannelSubscribed(true);
       }
     });
 
@@ -144,9 +149,50 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
 
     return () => {
       supabase.removeChannel(userChannel);
+    };
+  }, [isInitialStateSynced, pathname]);
+
+  // Event emitters
+
+  // on route change, resubscribe to the new channel
+  useEffect(() => {
+    if (!isChannelSubscribed) return;
+
+    const onMouseEvent = ({ clientX, clientY }: MouseEvent) => {
+      userChannelRef.current?.send({
+        type: "broadcast",
+        event: `${pathname}:mouse`,
+        payload: { user_id: userId, x: clientX, y: window.scrollY + clientY },
+      });
+    };
+
+    window.addEventListener("mousemove", onMouseEvent);
+
+    return () => {
       window.removeEventListener("mousemove", onMouseEvent);
     };
-  }, [roomId, isInitialStateSynced]);
+  }, [isChannelSubscribed, pathname]);
 
-  return { userId, users, userChannelRef };
+  // on route change, broadcast the new path
+  useEffect(() => {
+    if (!isChannelSubscribed) return;
+
+    userChannelRef.current?.send({
+      type: "broadcast",
+      event: "path",
+      payload: { path: pathname, user_id: userId },
+    });
+
+    setUsers((users) => {
+      users[userId] = { ...users[userId], path: pathname };
+      return structuredClone(users);
+    });
+  }, [isChannelSubscribed, pathname]);
+
+  const values = useMemo(
+    () => ({ userId, users, userChannelRef }),
+    [userId, users, userChannelRef]
+  );
+
+  return values;
 };

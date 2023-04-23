@@ -7,15 +7,11 @@ import { Scene, type SceneRef } from "~/components/scene";
 import { statMap, type Stat } from "~/lib/stat";
 import { StatSpan } from "~/components/stat-span";
 import { useEffect, useRef, useState } from "react";
-import { useUserChannel } from "~/lib/use-user-channel";
-import { Cursor } from "~/components/cursor";
-import { AvatarGroup } from "~/components/avatar-group";
 import styles from "~/components/page.module.css";
 
 export default function HomePage() {
   const sceneRef = useRef<SceneRef>();
   const [stat, setStat] = useState(statMap.home);
-  const { userId, users } = useUserChannel({ roomId: "home" });
 
   const handleTrigger = () => {
     if (sceneRef.current) {
@@ -27,54 +23,42 @@ export default function HomePage() {
     setStat(stat);
   };
 
-  const cursors = Object.entries(users)
-    .filter(([_, { x, y }]) => !!x && !!y)
-    .map(([userId, { x, y, color, hue }]) => (
-      <Cursor key={userId} x={x} y={y} color={color} hue={hue} />
-    ));
-
   return (
-    <>
-      <div className={styles.avatarsContainer}>
-        <AvatarGroup currentUserId={userId} users={users} />
-      </div>
-      <main className={`${styles.container} ${styles.relative}`}>
-        <Scene currentStat={stat} sceneRef={sceneRef} />
-        <AnimateSection as="header" className={styles.header}>
-          <AnimateText className={styles.title}>
-            <button
-              type="button"
-              onMouseEnter={() => handleMouseEnter(statMap.home)}
-              onClick={handleTrigger}
-            >
-              Kaiyu Hsu
-            </button>
-          </AnimateText>
-        </AnimateSection>
-        <AnimateSection as="p" delay={0.1}>
-          Hello world. You can call me Kai since we’re pretty much friends now.
-          I enjoy{" "}
-          <StatSpan stat={statMap.build} onMouseEnter={handleMouseEnter}>
-            building things
-          </StatSpan>{" "}
-          for the internet. By day, I get to do that through{" "}
-          <StatSpan stat={statMap.invest} onMouseEnter={handleMouseEnter}>
-            investing
-          </StatSpan>
-          ,{" "}
-          <StatSpan stat={statMap.advise} onMouseEnter={handleMouseEnter}>
-            advising
-          </StatSpan>
-          , and{" "}
-          <StatSpan stat={statMap.product} onMouseEnter={handleMouseEnter}>
-            working on products
-          </StatSpan>{" "}
-          you may not have heard of, yet. Welcome to my corner of the internet.
-        </AnimateSection>
-        <Counters stat={stat} />
-        {cursors}
-      </main>
-    </>
+    <main className={`${styles.container} ${styles.relative}`}>
+      <Scene currentStat={stat} sceneRef={sceneRef} />
+      <AnimateSection as="header" className={styles.header}>
+        <AnimateText className={styles.title}>
+          <button
+            type="button"
+            onMouseEnter={() => handleMouseEnter(statMap.home)}
+            onClick={handleTrigger}
+          >
+            Kaiyu Hsu
+          </button>
+        </AnimateText>
+      </AnimateSection>
+      <AnimateSection as="p" delay={0.1}>
+        Hello world. You can call me Kai since we're pretty much friends now. I
+        enjoy{" "}
+        <StatSpan stat={statMap.build} onMouseEnter={handleMouseEnter}>
+          building things
+        </StatSpan>{" "}
+        for the internet. By day, I get to do that through{" "}
+        <StatSpan stat={statMap.invest} onMouseEnter={handleMouseEnter}>
+          investing
+        </StatSpan>
+        ,{" "}
+        <StatSpan stat={statMap.advise} onMouseEnter={handleMouseEnter}>
+          advising
+        </StatSpan>
+        , and{" "}
+        <StatSpan stat={statMap.product} onMouseEnter={handleMouseEnter}>
+          working on products
+        </StatSpan>{" "}
+        you may not have heard of, yet. Welcome to my corner of the internet.
+      </AnimateSection>
+      <Counters stat={stat} />
+    </main>
   );
 }
 

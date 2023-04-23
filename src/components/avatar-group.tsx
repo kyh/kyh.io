@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import type { User } from "~/lib/use-user-channel";
@@ -11,17 +12,24 @@ type AvatarGroupProps = {
 };
 
 export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
-  const usersArr = Object.entries(users);
+  const pathname = usePathname();
+  const usersArr = Object.entries(users)
+    .sort(([, userData]) => (userData.path === pathname ? -1 : 1))
+    .sort(([userId]) => (userId === currentUserId ? -1 : 1));
   const onlyMe = usersArr.length < 2;
 
   return (
-    <ul className={`${styles.container} ${onlyMe ? styles.faded : ""}`}>
+    <ul className={styles.container}>
       <AnimatePresence mode="popLayout">
         {usersArr.map(([userId, userData], index) => {
-          let label = userId === currentUserId ? "You" : `Visitor: ${userId}`;
+          const isMe = userId === currentUserId;
+          const anotherPage = userData.path && userData.path !== pathname;
 
+          let label = isMe ? "You" : "Visitor";
           if (onlyMe) {
             label = "You're the only one here 🥺";
+          } else if (!isMe && anotherPage) {
+            label += " (on another page)";
           }
 
           return (
@@ -33,9 +41,9 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
                 background: `linear-gradient(${userData.hue}, ${userData.color})`,
               }}
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ scale: 1, opacity: anotherPage || onlyMe ? 0.2 : 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring" }}
+              transition={{ ease: "easeOut", duration: 0.2 }}
               layout
             >
               <Popover>

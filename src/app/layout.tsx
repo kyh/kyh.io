@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/react";
 import localFont from "next/font/local";
 import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
+import { Multiplayer } from "~/components/multiplayer";
 
 import "~/components/variables.css";
 import "~/components/global.css";
@@ -68,6 +69,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <div className="blurHeader" aria-hidden="true" />
+          <Multiplayer roomId="kyh" />
           <Dock />
           {children}
         </Providers>
