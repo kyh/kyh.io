@@ -11,6 +11,7 @@ export const InfiniteScroll = ({ children }: InfiniteScrollProps) => {
   useEffect(() => {
     const lenis = new Lenis({
       infinite: true,
+      smoothTouch: true,
     });
 
     const raf = (time: number) => {
@@ -19,6 +20,11 @@ export const InfiniteScroll = ({ children }: InfiniteScrollProps) => {
     };
 
     requestAnimationFrame(raf);
+
+    return () => {
+      lenis.stop();
+      lenis.destroy();
+    };
   }, []);
 
   return <>{children}</>;

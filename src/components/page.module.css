@@ -165,8 +165,4 @@
   .scrollArrowContainer {
     bottom: 4px;
   }
-
-  .projectsHeaderSection[aria-hidden] {
-    display: none;
-  }
 }
