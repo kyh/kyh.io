@@ -57,7 +57,18 @@ const Header = (props: React.HTMLProps<HTMLDivElement>) => {
       <AnimateSection as="p" className={styles.projectsComingSoon} delay={0.4}>
         Showreel coming soon.
       </AnimateSection>
+      <ScrollArrow />
     </header>
+  );
+};
+
+const ScrollArrow = () => {
+  return (
+    <div className={styles.scrollArrowContainer}>
+      <div className={styles.scrollArrow} />
+      <div className={styles.scrollArrow} />
+      <div className={styles.scrollArrow} />
+    </div>
   );
 };
 
