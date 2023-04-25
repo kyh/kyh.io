@@ -124,8 +124,8 @@
   width: var(--arrow-size);
   height: var(--arrow-size);
   transform: rotate(45deg);
-  border-right: 2px solid white;
-  border-bottom: 2px solid white;
+  border-right: 2px solid var(--body-color-highlighted);
+  border-bottom: 2px solid var(--body-color-highlighted);
   animation: arrowWave 1s infinite;
   animation-direction: alternate;
 }

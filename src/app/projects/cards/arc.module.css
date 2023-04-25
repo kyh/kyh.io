@@ -1,0 +1,38 @@
+.card {
+  --card-background-color: #007354;
+
+  --card-gradient-start: rgba(12, 160, 113, 1);
+  --card-gradient-end: rgba(12, 160, 113, 0.7);
+
+  --shine-angle: 200deg;
+  --shine-opacity: 0.5;
+  --shine-background-color: var(--colors-gray300);
+}
+
+[data-theme="dark"] .card {
+  --card-background-color: #001d15;
+
+  --card-gradient-start: rgba(12, 160, 113, 0.5);
+  --card-gradient-end: rgba(12, 160, 113, 0.2);
+
+  --shine-angle: 200deg;
+}
+
+.card .text {
+  width: 200px;
+  position: absolute;
+  top: 32px;
+  left: 32px;
+}
+
+.card .background {
+  margin-top: auto;
+  transform: translateX(30%);
+}
+
+@media screen and (max-width: 600px) {
+  .card .text {
+    top: 20px;
+    left: 20px;
+  }
+}

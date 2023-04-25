@@ -2,9 +2,14 @@
 
 import styles from "./card.module.css";
 
-export const Card = ({ children }: { children: React.ReactNode }) => {
+type CardProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+export const Card = ({ children, className = "" }: CardProps) => {
   return (
-    <article className={styles.cardContainer}>
+    <article className={`${styles.cardContainer} ${className}`}>
       <div className={styles.card}>{children}</div>
     </article>
   );

@@ -1,7 +1,23 @@
 import { InfiniteScroll } from "~/components/infinite-scroll";
-import { Card, CardGrid } from "~/components/card";
-import styles from "~/components/page.module.css";
+import { CardGrid } from "~/components/card";
 import { AnimateSection, AnimateText } from "~/components/animate-text";
+
+import { ArcCard } from "./cards/arc";
+import { AmazonCard } from "./cards/amazon";
+import { GoogleCard } from "./cards/google";
+import { YoursSincerelyCard } from "./cards/yourssincerely";
+import { InteligirCard } from "./cards/inteligir";
+import { AtriumCard } from "./cards/atrium";
+import { CardiogramCard } from "./cards/cardiogram";
+import { FoundingCard } from "./cards/founding";
+import { TrufflesCard } from "./cards/truffles";
+import { TCCard } from "./cards/tc";
+import { KeikoCard } from "./cards/keiko";
+import { UICapsuleCard } from "./cards/uicapsule";
+import { SlyceCard } from "./cards/slyce";
+import { Covid19Card } from "./cards/covid-19";
+
+import styles from "~/components/page.module.css";
 
 export const metadata = {
   title: "Projects",
@@ -14,26 +30,20 @@ export default function ProjectsPage() {
       <main>
         <Header />
         <CardGrid>
-          <Card>1</Card>
-          <Card>2</Card>
-          <Card>3</Card>
-          <Card>4</Card>
-          <Card>5</Card>
-          <Card>6</Card>
-          <Card>7</Card>
-          <Card>8</Card>
-          <Card>9</Card>
-          <Card>10</Card>
-          <Card>11</Card>
-          <Card>12</Card>
-          <Card>13</Card>
-          <Card>14</Card>
-          <Card>15</Card>
-          <Card>16</Card>
-          <Card>17</Card>
-          <Card>18</Card>
-          <Card>19</Card>
-          <Card>20</Card>
+          <ArcCard />
+          <GoogleCard />
+          <AmazonCard />
+          <YoursSincerelyCard />
+          <InteligirCard />
+          <AtriumCard />
+          <CardiogramCard />
+          <FoundingCard />
+          <TrufflesCard />
+          <TCCard />
+          <KeikoCard />
+          <UICapsuleCard />
+          <SlyceCard />
+          <Covid19Card />
         </CardGrid>
         <Header aria-hidden />
       </main>
@@ -52,7 +62,7 @@ const Header = (props: React.HTMLProps<HTMLDivElement>) => {
       </AnimateText>
       <AnimateSection as="p" className={styles.projectsDescription} delay={0.2}>
         A collection of my projects, past and present. Some built for today,
-        some for tomorrow, but most for sitting in the incomplete pile.
+        some for tomorrow, and most for sitting in the incomplete pile.
       </AnimateSection>
       <AnimateSection as="p" className={styles.projectsComingSoon} delay={0.4}>
         Showreel coming soon.
@@ -71,59 +81,3 @@ const ScrollArrow = () => {
     </div>
   );
 };
-
-/* <main className={styles.container}>
-<header className={styles.header}>
-  <AnimateText
-    className={styles.title}
-    rotate={["code", "pixels", "limits"]}
-  >
-    Pushing
-  </AnimateText>
-</header>
-<AnimateSection as="p" delay={0.1}>
-  The ever growing list of things I'm working on.
-</AnimateSection>
-<section className={styles.grid}>
-  <div>
-    <AnimateSection as="h2" className={styles.caption} delay={0.2}>
-      Projects
-    </AnimateSection>
-    <ul className={`${styles.list} ${styles.projectList}`}>
-      <AnimateSection as="li" delay={0.4}>
-        <Link href="https://yourssincerely.org">Yours Sincerely</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={0.45}>
-        <Link href="https://truffles.tv">Truffles</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={0.5}>
-        <Link href="https://uicapsule.com">UI Capsule</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={0.55}>
-        <Link href="https://tc.kyh.io">TC Calculator</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={0.6}>
-        <Link href="https://putcache.com">API Cache</Link>
-      </AnimateSection>
-    </ul>
-  </div>
-  <div>
-    <AnimateSection as="h2" className={styles.caption} delay={0.7}>
-      Advising
-    </AnimateSection>
-    <ul className={`${styles.list} ${styles.projectList}`}>
-      <AnimateSection as="li" delay={0.9}>
-        <Link href="https://founding.so">Founding</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={0.95}>
-        <Link href="https://medervahealth.com">Mederva Health</Link>
-      </AnimateSection>
-      <AnimateSection as="li" delay={1}>
-        <Link href="https://www.crunchbase.com/organization/tinyrx">
-          TinyRx
-        </Link>
-      </AnimateSection>
-    </ul>
-  </div>
-</section>
-</main> */
