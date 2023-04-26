@@ -15,7 +15,7 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 import type { Stat } from "~/lib/stat";
-import { useWindowSize } from "~/lib/use-window-size";
+import { useScreenSize } from "~/components/screen";
 import styles from "./scene.module.css";
 
 export const percentX = (percent: number) => {
@@ -178,7 +178,7 @@ type SceneProps = {
 
 export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
   const { resolvedTheme } = useTheme();
-  const size = useWindowSize();
+  const size = useScreenSize();
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef(Engine.create());

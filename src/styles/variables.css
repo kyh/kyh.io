@@ -18,6 +18,8 @@
   --colors-gray950: #020617;
   --colors-gray1000: #000;
 
+  --h-screen: 100vh;
+
   --bg-faded: var(--colors-gray100);
   --bg-color: var(--colors-gray300);
   --bg-highlighted: var(--colors-gray0);

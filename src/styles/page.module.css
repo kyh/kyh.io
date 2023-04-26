@@ -93,7 +93,7 @@
 
 /* Projects Page */
 .projectsHeaderSection {
-  height: 100vh;
+  height: var(--h-screen);
   display: flex;
   justify-content: center;
   align-items: center;
