@@ -5,11 +5,11 @@ import styles from "./card.module.css";
 type CardProps = {
   children: React.ReactNode;
   className?: string;
-};
+} & React.HTMLProps<HTMLDivElement>;
 
-export const Card = ({ children, className = "" }: CardProps) => {
+export const Card = ({ children, className = "", ...props }: CardProps) => {
   return (
-    <article className={`${styles.cardContainer} ${className}`}>
+    <article className={`${styles.cardContainer} ${className}`} {...props}>
       <div className={styles.card}>{children}</div>
     </article>
   );

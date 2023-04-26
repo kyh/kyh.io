@@ -234,9 +234,9 @@ export default function AboutPage() {
                 alt: "Covid19",
               },
               {
-                href: "https://artnotart.art",
-                src: "/screenshots/art.webp",
-                alt: "Art Not Art",
+                href: "https://tc.kyh.io",
+                src: "/screenshots/tc.webp",
+                alt: "Total Compensation Calculator",
               },
             ]}
           >

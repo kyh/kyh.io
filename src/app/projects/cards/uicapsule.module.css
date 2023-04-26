@@ -1,6 +1,8 @@
-.card > * {
-  padding: 20px;
+.card {
+  --shine-angle: 110deg;
 }
 
-[data-theme="dark"] .card {
+.card img {
+  width: 100%;
+  height: 100%;
 }

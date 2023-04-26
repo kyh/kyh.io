@@ -2,14 +2,7 @@
   --shine-angle: 150deg;
 }
 
-.dark {
-  display: none;
-}
-
-[data-theme="dark"] .dark {
-  display: block;
-}
-
-[data-theme="dark"] .light {
-  display: none;
+.card img {
+  width: 100%;
+  height: 100%;
 }
