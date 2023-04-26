@@ -4,7 +4,11 @@ import styles from "./slyce.module.css";
 
 export const SlyceCard = () => {
   return (
-    <a href="https://slyce.it" target="_blank" rel="noopener noreferrer">
+    <a
+      href="https://www.retailtouchpoints.com/features/news-briefs/slyce-to-go-public-following-merger"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       <Card className={styles.card}>Slyce</Card>
     </a>
   );

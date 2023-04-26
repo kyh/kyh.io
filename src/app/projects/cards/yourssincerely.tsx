@@ -11,13 +11,15 @@ export const YoursSincerelyCard = () => {
     >
       <Card className={styles.card}>
         <Image
+          data-full-size
           data-light-only="true"
-          src="/projects/ys.png"
+          src="/projects/ys-light.png"
           alt="Yours Sincerely"
           width="600"
           height="300"
         />
         <Image
+          data-full-size
           data-dark-only="true"
           src="/projects/ys-dark.png"
           alt="Yours Sincerely"

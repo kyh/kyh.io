@@ -9,7 +9,15 @@ export const AtriumCard = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Card className={styles.card}>Atrium</Card>
+      <Card className={styles.card}>
+        <Image
+          data-full-size
+          src="/projects/atrium.png"
+          alt="Atrium"
+          width="600"
+          height="300"
+        />
+      </Card>
     </a>
   );
 };

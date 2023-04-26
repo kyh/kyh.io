@@ -9,7 +9,24 @@ export const CardiogramCard = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Card className={styles.card}>Cardiogram Care</Card>
+      <Card className={styles.card}>
+        <Image
+          data-full-size
+          data-light-only="true"
+          src="/projects/cardiogram-light.png"
+          alt="Cardiogram"
+          width="600"
+          height="300"
+        />
+        <Image
+          data-full-size
+          data-dark-only="true"
+          src="/projects/cardiogram-dark.png"
+          alt="Cardiogram"
+          width="600"
+          height="300"
+        />
+      </Card>
     </a>
   );
 };

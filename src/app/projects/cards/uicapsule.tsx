@@ -7,6 +7,7 @@ export const UICapsuleCard = () => {
     <a href="https://uicapsule.com" target="_blank" rel="noopener noreferrer">
       <Card className={styles.card}>
         <Image
+          data-full-size
           data-light-only="true"
           src="/projects/uicapsule-light.png"
           alt="UICapsule"
@@ -14,6 +15,7 @@ export const UICapsuleCard = () => {
           height="300"
         />
         <Image
+          data-full-size
           data-dark-only="true"
           src="/projects/uicapsule-dark.png"
           alt="UICapsule"

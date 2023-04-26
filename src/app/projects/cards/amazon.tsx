@@ -8,14 +8,14 @@ export const AmazonCard = () => {
       <Card className={styles.card}>
         <Image
           className={styles.light}
-          src="/projects/amazon-rio.png"
+          src="/projects/amazon-light.png"
           alt="Amazon Rio Design System"
           width="600"
           height="300"
         />
         <Image
           className={styles.dark}
-          src="/projects/amazon-rio-dark.png"
+          src="/projects/amazon-dark.png"
           alt="Amazon Rio Design System"
           width="600"
           height="300"
