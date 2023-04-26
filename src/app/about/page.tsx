@@ -2,7 +2,7 @@ import Image from "next/image";
 import { AnimateText, AnimateSection } from "~/components/animate-text";
 import { Link } from "~/components/link";
 import { social } from "~/lib/social";
-import styles from "~/components/page.module.css";
+import styles from "~/styles/page.module.css";
 
 export const metadata = {
   title: "About",

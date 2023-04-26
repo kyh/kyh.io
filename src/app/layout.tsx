@@ -4,8 +4,8 @@ import { Providers } from "~/components/providers";
 import { Dock } from "~/components/dock";
 import { Multiplayer } from "~/components/multiplayer";
 
-import "~/components/variables.css";
-import "~/components/global.css";
+import "~/styles/variables.css";
+import "~/styles/global.css";
 
 const gilroy = localFont({
   src: [

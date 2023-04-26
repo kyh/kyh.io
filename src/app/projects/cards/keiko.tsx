@@ -9,7 +9,7 @@ export const KeikoCard = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Card className={styles.card}>Keiko and Friends (coming soon)</Card>
+      <Card className={styles.card}>Keiko and Friends</Card>
     </a>
   );
 };

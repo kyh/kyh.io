@@ -1,5 +1,5 @@
 import { allBlogs } from "~/contentlayer/generated";
-import styles from "~/components/page.module.css";
+import styles from "~/styles/page.module.css";
 import { AnimateText } from "~/components/animate-text";
 import { Link } from "~/components/link";
 

@@ -17,7 +17,7 @@ import { UICapsuleCard } from "./cards/uicapsule";
 import { SlyceCard } from "./cards/slyce";
 import { Covid19Card } from "./cards/covid-19";
 
-import styles from "~/components/page.module.css";
+import styles from "~/styles/page.module.css";
 
 export const metadata = {
   title: "Projects",

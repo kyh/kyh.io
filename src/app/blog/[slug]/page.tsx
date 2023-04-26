@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Mdx } from "~/components/mdx";
 import { allBlogs } from "~/contentlayer/generated";
 import { AnimateText } from "~/components/animate-text";
-import styles from "~/components/page.module.css";
+import styles from "~/styles/page.module.css";
 
 export async function generateStaticParams() {
   return allBlogs.map((post) => ({

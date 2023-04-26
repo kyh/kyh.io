@@ -5,9 +5,7 @@ import styles from "./tc.module.css";
 export const TCCard = () => {
   return (
     <a href="https://tc.kyh.io/" target="_blank" rel="noopener noreferrer">
-      <Card className={styles.card}>
-        Total Compensation Calculator (coming soon)
-      </Card>
+      <Card className={styles.card}>Total Compensation Calculator</Card>
     </a>
   );
 };

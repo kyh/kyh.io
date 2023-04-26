@@ -9,7 +9,7 @@ export const CardiogramCard = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Card className={styles.card}>Cardiogram Care (coming soon)</Card>
+      <Card className={styles.card}>Cardiogram Care</Card>
     </a>
   );
 };

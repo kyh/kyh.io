@@ -9,7 +9,7 @@ export const AtriumCard = () => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <Card className={styles.card}>Atrium (coming soon)</Card>
+      <Card className={styles.card}>Atrium</Card>
     </a>
   );
 };

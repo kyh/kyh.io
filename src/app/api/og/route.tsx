@@ -1,8 +1,6 @@
 import { NextRequest, ImageResponse } from "next/server";
 
-export const config = {
-  runtime: "edge",
-};
+export const runtime = "edge";
 
 const font = fetch(
   new URL("../../../../public/fonts/gilroy-medium.woff2", import.meta.url)

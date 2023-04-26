@@ -7,7 +7,7 @@ import { Scene, type SceneRef } from "~/components/scene";
 import { statMap, type Stat } from "~/lib/stat";
 import { StatSpan } from "~/components/stat-span";
 import { useEffect, useRef, useState } from "react";
-import styles from "~/components/page.module.css";
+import styles from "~/styles/page.module.css";
 
 export default function HomePage() {
   const sceneRef = useRef<SceneRef>();
