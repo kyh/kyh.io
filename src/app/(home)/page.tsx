@@ -2,10 +2,10 @@
 
 import { AnimateSection, AnimateText } from "~/components/animate-text";
 import { ConditionalContainer } from "~/components/conditional-container";
-import { Counter, CountersContainer } from "~/components/counter";
-import { Scene, type SceneRef } from "~/components/scene";
+import { Counter, CountersContainer } from "./components/counter";
+import { Scene, type SceneRef } from "./components/scene";
+import { StatSpan } from "./components/stat-span";
 import { statMap, type Stat } from "~/lib/stat";
-import { StatSpan } from "~/components/stat-span";
 import { useEffect, useRef, useState } from "react";
 import styles from "~/styles/page.module.css";
 

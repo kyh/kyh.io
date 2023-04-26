@@ -1,21 +1,22 @@
-import { InfiniteScroll } from "~/components/infinite-scroll";
 import { CardGrid } from "~/components/card";
 import { AnimateSection, AnimateText } from "~/components/animate-text";
 
-import { ArcCard } from "./cards/arc";
-import { AmazonCard } from "./cards/amazon";
-import { GoogleCard } from "./cards/google";
-import { YoursSincerelyCard } from "./cards/yourssincerely";
-import { InteligirCard } from "./cards/inteligir";
-import { AtriumCard } from "./cards/atrium";
-import { CardiogramCard } from "./cards/cardiogram";
-import { FoundingCard } from "./cards/founding";
-import { TrufflesCard } from "./cards/truffles";
-import { TCCard } from "./cards/tc";
-import { KeikoCard } from "./cards/keiko";
-import { UICapsuleCard } from "./cards/uicapsule";
-import { SlyceCard } from "./cards/slyce";
-import { Covid19Card } from "./cards/covid-19";
+import { InfiniteScroll } from "./components/infinite-scroll";
+
+import { ArcCard } from "./components/cards/arc";
+import { AmazonCard } from "./components/cards/amazon";
+import { GoogleCard } from "./components/cards/google";
+import { YoursSincerelyCard } from "./components/cards/yourssincerely";
+import { InteligirCard } from "./components/cards/inteligir";
+import { AtriumCard } from "./components/cards/atrium";
+import { CardiogramCard } from "./components/cards/cardiogram";
+import { FoundingCard } from "./components/cards/founding";
+import { TrufflesCard } from "./components/cards/truffles";
+import { TCCard } from "./components/cards/tc";
+import { KeikoCard } from "./components/cards/keiko";
+import { UICapsuleCard } from "./components/cards/uicapsule";
+import { SlyceCard } from "./components/cards/slyce";
+import { Covid19Card } from "./components/cards/covid-19";
 
 import styles from "~/styles/page.module.css";
 

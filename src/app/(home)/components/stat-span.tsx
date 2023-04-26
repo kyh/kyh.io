@@ -1,5 +1,5 @@
 import { type Stat } from "~/lib/stat";
-import { ConditionalContainer } from "./conditional-container";
+import { ConditionalContainer } from "~/components/conditional-container";
 import styles from "./stat-span.module.css";
 
 export const StatSpan = ({

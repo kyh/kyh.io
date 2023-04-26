@@ -32,8 +32,10 @@ export const ScreenProvider = ({ children }: ScreenProviderProps) => {
 
       setSize({ width: windowWidth, height: windowHeight });
     };
+
     const debouncedHandleResize = debounce(handleResize);
 
+    handleResize();
     window.addEventListener("resize", debouncedHandleResize);
 
     return () => {
