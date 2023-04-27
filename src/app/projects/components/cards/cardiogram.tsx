@@ -10,9 +10,14 @@ export const CardiogramCard = () => {
       rel="noopener noreferrer"
     >
       <Card className={styles.card}>
+        <h2>
+          Detect abnormal heart rhythms
+          <br />
+          using smartwatches
+        </h2>
         <Image
           data-full-size
-          data-light-only="true"
+          data-light-only
           src="/projects/cardiogram-light.png"
           alt="Cardiogram"
           width="600"
@@ -20,7 +25,7 @@ export const CardiogramCard = () => {
         />
         <Image
           data-full-size
-          data-dark-only="true"
+          data-dark-only
           src="/projects/cardiogram-dark.png"
           alt="Cardiogram"
           width="600"

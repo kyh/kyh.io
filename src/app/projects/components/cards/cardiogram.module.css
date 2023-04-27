@@ -1,0 +1,28 @@
+.card {
+  --shine-angle: 20deg;
+}
+
+.card h2 {
+  margin-top: auto;
+  color: #000;
+  padding: 20px;
+}
+
+.card > *::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  height: 25%;
+  background: linear-gradient(to top, #fff 40%, transparent);
+  width: 100%;
+}
+
+@media screen and (max-width: 600px) {
+  .card h2 {
+    padding: 16px;
+  }
+
+  .card > *::after {
+    height: 40%;
+  }
+}

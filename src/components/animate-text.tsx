@@ -4,13 +4,11 @@ import { motion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import styles from "./animate-text.module.css";
 
-type Props = {
+type AnimateTextProps = {
   children: React.ReactNode;
   className?: string;
   rotate?: string[];
-  duration?: number;
-  delay?: number;
-  as?: keyof typeof motion;
+  gradientFade?: boolean;
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -19,7 +17,8 @@ export const AnimateText = ({
   children,
   className = "",
   rotate = [],
-}: Props) => {
+  gradientFade,
+}: AnimateTextProps) => {
   const [currentWord, setCurrentWord] = useState(rotate[0]);
   const [animate, setAnimate] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -46,13 +45,23 @@ export const AnimateText = ({
 
   return (
     <h1
-      className={`${styles.text} ${className} ${
-        !initialized ? styles.entering : styles.entered
-      } ${animate ? styles.reveal : ""}`}
+      className={`${styles.text} ${
+        gradientFade ? styles.gradientFade : ""
+      } ${className} ${!initialized ? styles.entering : styles.entered} ${
+        animate ? styles.reveal : ""
+      }`}
     >
       {children} {currentWord && currentWord}
     </h1>
   );
+};
+
+type AnimateSectionProps = {
+  children: React.ReactNode;
+  className?: string;
+  duration?: number;
+  delay?: number;
+  as?: keyof typeof motion;
 };
 
 export const AnimateSection = ({
@@ -61,7 +70,7 @@ export const AnimateSection = ({
   delay,
   as,
   className = "",
-}: Props) => {
+}: AnimateSectionProps) => {
   const Element = as || "div";
   return (
     <div className={styles.section}>

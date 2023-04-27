@@ -3,6 +3,7 @@ import { AnimateSection, AnimateText } from "~/components/animate-text";
 
 import { InfiniteScroll } from "./components/infinite-scroll";
 
+import { PlaygroundCard } from "./components/cards/playground";
 import { ArcCard } from "./components/cards/arc";
 import { AmazonCard } from "./components/cards/amazon";
 import { GoogleCard } from "./components/cards/google";
@@ -15,7 +16,6 @@ import { TrufflesCard } from "./components/cards/truffles";
 import { TCCard } from "./components/cards/tc";
 import { KeikoCard } from "./components/cards/keiko";
 import { UICapsuleCard } from "./components/cards/uicapsule";
-import { SlyceCard } from "./components/cards/slyce";
 import { Covid19Card } from "./components/cards/covid-19";
 
 import styles from "~/styles/page.module.css";
@@ -31,19 +31,19 @@ export default function ProjectsPage() {
       <main>
         <Header />
         <CardGrid>
-          <ArcCard />
+          <PlaygroundCard />
           <GoogleCard />
           <AmazonCard />
           <YoursSincerelyCard />
-          <InteligirCard />
+          <ArcCard />
           <AtriumCard />
           <CardiogramCard />
           <FoundingCard />
           <TrufflesCard />
           <TCCard />
-          <KeikoCard />
+          <InteligirCard />
           <UICapsuleCard />
-          <SlyceCard />
+          <KeikoCard />
           <Covid19Card />
         </CardGrid>
         <Header aria-hidden />
@@ -58,6 +58,7 @@ const Header = (props: React.HTMLProps<HTMLDivElement>) => {
       <AnimateText
         className={styles.title}
         rotate={["code", "pixels", "limits"]}
+        gradientFade
       >
         Pushing
       </AnimateText>

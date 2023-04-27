@@ -1,6 +1,14 @@
-.card > * {
-  padding: 20px;
+.card .logo {
+  margin: auto;
+  box-shadow: var(--colors-shadowDark) 0px 4px 10px 3px;
 }
 
-[data-theme="dark"] .card {
+.card video {
+  transform: scale(1.5);
+}
+
+[data-theme="dark"] .card video {
+  filter: invert(1);
+  mix-blend-mode: luminosity;
+  border-radius: 8px;
 }

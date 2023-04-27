@@ -7,14 +7,16 @@ export const AmazonCard = () => {
     <a href="https://amazon.com/" target="_blank" rel="noopener noreferrer">
       <Card className={styles.card}>
         <Image
-          className={styles.light}
+          data-full-size
+          data-light-only
           src="/projects/amazon-light.png"
           alt="Amazon Rio Design System"
           width="600"
           height="300"
         />
         <Image
-          className={styles.dark}
+          data-full-size
+          data-dark-only
           src="/projects/amazon-dark.png"
           alt="Amazon Rio Design System"
           width="600"

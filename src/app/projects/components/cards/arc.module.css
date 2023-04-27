@@ -18,11 +18,12 @@
   --shine-angle: 200deg;
 }
 
-.card .text {
-  width: 200px;
+.card.card h2 {
   position: absolute;
-  top: 32px;
-  left: 32px;
+  color: #fff;
+  padding: 26px 32px;
+  font-size: 1.8rem;
+  font-weight: 400;
 }
 
 .card .background {
@@ -31,8 +32,8 @@
 }
 
 @media screen and (max-width: 600px) {
-  .card .text {
-    top: 20px;
-    left: 20px;
+  .card.card h2 {
+    font-size: 1.5em;
+    padding: 20px;
   }
 }

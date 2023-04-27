@@ -12,7 +12,7 @@ export const YoursSincerelyCard = () => {
       <Card className={styles.card}>
         <Image
           data-full-size
-          data-light-only="true"
+          data-light-only
           src="/projects/ys-light.png"
           alt="Yours Sincerely"
           width="600"
@@ -20,7 +20,7 @@ export const YoursSincerelyCard = () => {
         />
         <Image
           data-full-size
-          data-dark-only="true"
+          data-dark-only
           src="/projects/ys-dark.png"
           alt="Yours Sincerely"
           width="600"

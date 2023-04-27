@@ -1,15 +1,11 @@
 .card {
   --shine-angle: 290deg;
+
+  --shine-opacity: 0.7;
 }
 
-.dark {
-  display: none;
-}
+[data-theme="dark"] .card {
+  --shine-angle: 290deg;
 
-[data-theme="dark"] .dark {
-  display: block;
-}
-
-[data-theme="dark"] .light {
-  display: none;
+  --shine-background-color: var(--colors-gray100);
 }

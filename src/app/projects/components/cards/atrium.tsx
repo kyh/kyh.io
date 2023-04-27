@@ -10,6 +10,9 @@ export const AtriumCard = () => {
       rel="noopener noreferrer"
     >
       <Card className={styles.card}>
+        <h2>
+          Legal services <br /> delivered differently.
+        </h2>
         <Image
           data-full-size
           src="/projects/atrium.png"

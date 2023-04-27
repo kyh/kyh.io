@@ -6,11 +6,12 @@ export const GoogleCard = () => {
   return (
     <a href="https://grow.google/" target="_blank" rel="noopener noreferrer">
       <Card className={styles.card}>
-        <video autoPlay muted loop>
+        <video autoPlay muted loop data-full-size>
           <source src="/projects/google-grow.webm#t=0,54" type="video/webm" />
           Unsupported.
         </video>
         <Image
+          className={styles.logo}
           src="/projects/google-grow-logo.png"
           alt="Grow with Google"
           width="250"

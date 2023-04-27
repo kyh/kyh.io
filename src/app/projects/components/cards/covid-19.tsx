@@ -5,7 +5,7 @@ import styles from "./covid-19.module.css";
 export const Covid19Card = () => {
   return (
     <a href="https://covid-19.kyh.io" target="_blank" rel="noopener noreferrer">
-      <Card className={styles.card}>
+      <Card className={styles.card} effect="none">
         <Image
           data-full-size
           src="/projects/covid19.png"

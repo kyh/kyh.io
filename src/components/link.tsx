@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import styles from "./link.module.css";
 
-type Props = {
+type LinkProps = {
   children: React.ReactNode;
   href?: string;
   noStyles?: boolean;
@@ -23,7 +23,7 @@ export const Link = ({
   srcs,
   noStyles = false,
   noAction = false,
-}: Props) => {
+}: LinkProps) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
   const actionClassName = noStyles ? "" : styles.link;

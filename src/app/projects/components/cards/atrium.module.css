@@ -5,3 +5,8 @@
 .card img {
   object-position: left top;
 }
+
+.card h2 {
+  color: #fff;
+  padding: 12px;
+}

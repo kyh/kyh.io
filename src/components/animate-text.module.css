@@ -18,8 +18,24 @@
   transform: skew(-20deg) translateX(5%);
 }
 
+.text.gradientFade::after {
+  --fade-from: #f6f7f9;
+  --fade-to: #f2f4f7;
+
+  background-image: radial-gradient(
+    150% 150% at 0% 20%,
+    var(--fade-from) 20%,
+    var(--fade-to)
+  );
+}
+
+[data-theme="dark"] .text.gradientFade::after {
+  --fade-from: #030408;
+  --fade-to: #05060b;
+}
+
 .entering::after {
-  animation: animateTextIn 0.5s ease-in forwards;
+  animation: animateTextIn 0.5s ease-out forwards;
 }
 
 .entered::after {
@@ -27,7 +43,7 @@
 }
 
 .reveal::after {
-  animation: animateTextReveal 0.5s ease-in infinite;
+  animation: animateTextReveal 0.5s ease-out infinite;
 }
 
 @keyframes animateTextIn {
@@ -60,7 +76,7 @@
   transform: translateY(30px);
   animation: animateSectionIn;
   animation-fill-mode: forwards;
-  animation-timing-function: ease-in-out;
+  animation-timing-function: ease-out-out;
 }
 
 @keyframes animateSectionIn {

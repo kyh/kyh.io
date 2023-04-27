@@ -8,7 +8,7 @@ export const UICapsuleCard = () => {
       <Card className={styles.card}>
         <Image
           data-full-size
-          data-light-only="true"
+          data-light-only
           src="/projects/uicapsule-light.png"
           alt="UICapsule"
           width="600"
@@ -16,7 +16,7 @@ export const UICapsuleCard = () => {
         />
         <Image
           data-full-size
-          data-dark-only="true"
+          data-dark-only
           src="/projects/uicapsule-dark.png"
           alt="UICapsule"
           width="600"
