@@ -12,10 +12,19 @@ export const FoundingCard = () => {
         </video>
         <Image
           className={styles.logo}
-          src="/projects/founding-logo.png"
+          data-light-only
+          src="/projects/founding-logo-light.svg"
           alt="Founding"
-          width="75"
-          height="75"
+          width="50"
+          height="50"
+        />
+        <Image
+          className={styles.logo}
+          data-dark-only
+          src="/projects/founding-logo-dark.svg"
+          alt="Founding"
+          width="50"
+          height="50"
         />
       </Card>
     </a>

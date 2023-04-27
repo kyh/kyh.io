@@ -1,6 +1,5 @@
 .card .logo {
   margin: auto;
-  box-shadow: var(--colors-shadowDark) 0px 4px 10px 3px;
 }
 
 .card video {

@@ -8,6 +8,7 @@
   position: absolute;
   bottom: 32px;
   left: 32px;
+  object-fit: contain;
 }
 
 [data-theme="dark"] .card video {
