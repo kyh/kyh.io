@@ -1,6 +1,7 @@
 .cardContainer {
   --card-radius: 8px;
-  --card-background-color: var(--colors-gray50);
+  --card-background-color-start: var(--colors-gray50);
+  --card-background-color-end: var(--colors-gray0);
 
   --card-gradient-start: rgba(78, 110, 182, 0.2);
   --card-gradient-end: rgba(78, 110, 182, 0.05);
@@ -26,7 +27,8 @@
 }
 
 [data-theme="dark"] .cardContainer {
-  --card-background-color: var(--colors-gray950);
+  --card-background-color-start: var(--colors-gray950);
+  --card-background-color-end: var(--colors-gray1000);
 
   --card-gradient-start: rgba(78, 110, 182, 0.2);
   --card-gradient-end: rgba(78, 110, 182, 0.05);
@@ -91,7 +93,11 @@
 
 .card {
   overflow: hidden;
-  background-color: var(--card-background-color);
+  background: linear-gradient(
+    to bottom,
+    var(--card-background-color-start),
+    var(--card-background-color-end)
+  );
   border-radius: var(--card-radius);
   display: flex;
   flex-direction: column;

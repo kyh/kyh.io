@@ -1,5 +1,6 @@
 .card {
-  --card-background-color: #007354;
+  --card-background-color-start: #007354b0;
+  --card-background-color-end: #007354;
 
   --card-gradient-start: rgba(12, 160, 113, 1);
   --card-gradient-end: rgba(12, 160, 113, 0.7);
@@ -10,7 +11,8 @@
 }
 
 [data-theme="dark"] .card {
-  --card-background-color: #001d15;
+  --card-background-color-start: #001d15b0;
+  --card-background-color-end: #001d15;
 
   --card-gradient-start: rgba(12, 160, 113, 0.5);
   --card-gradient-end: rgba(12, 160, 113, 0.2);
