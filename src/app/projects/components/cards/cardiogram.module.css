@@ -4,7 +4,7 @@
 
 .card h2 {
   margin-top: auto;
-  color: #000;
+  color: var(--body-color);
   padding: 20px;
 }
 
@@ -13,7 +13,7 @@
   position: absolute;
   bottom: 0;
   height: 25%;
-  background: linear-gradient(to top, #fff 40%, transparent);
+  background: linear-gradient(to top, var(--bg-color) 40%, transparent);
   width: 100%;
 }
 

@@ -26,6 +26,10 @@ export const FoundingCard = () => {
           width="50"
           height="50"
         />
+        <div className={styles.gradient} aria-hidden="true">
+          <div />
+          <div />
+        </div>
       </Card>
     </a>
   );

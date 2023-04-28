@@ -4,6 +4,10 @@
   --shine-angle: 230deg;
 }
 
+.card video {
+  border-radius: 8px;
+}
+
 .card .logo {
   position: absolute;
   bottom: 32px;
@@ -14,5 +18,4 @@
 [data-theme="dark"] .card video {
   filter: invert(1);
   mix-blend-mode: luminosity;
-  border-radius: 8px;
 }

@@ -26,11 +26,6 @@
   font-weight: 400;
 }
 
-.card .background {
-  margin-top: auto;
-  transform: translateX(30%);
-}
-
 @media screen and (max-width: 600px) {
   .card.card h2 {
     font-size: 1.5em;

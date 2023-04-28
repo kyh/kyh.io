@@ -1,5 +1,6 @@
 import { Card } from "~/components/card";
 import styles from "./playground.module.css";
+import { Particles } from "~/components/particles";
 
 export const PlaygroundCard = () => {
   return (
@@ -10,6 +11,7 @@ export const PlaygroundCard = () => {
     >
       <Card className={styles.card}>
         <h2>Playground</h2>
+        <Particles className={styles.particles} />
       </Card>
     </a>
   );

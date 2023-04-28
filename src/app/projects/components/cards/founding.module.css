@@ -1,13 +1,54 @@
 .card .logo {
   margin: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .card video {
   transform: scale(1.5);
+  border-radius: 8px;
+}
+
+.card .gradient {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  pointer-events: none;
+  aspect-ratio: 1;
+  mix-blend-mode: plus-lighter;
+}
+
+[data-theme="dark"] .card .gradient {
+  mix-blend-mode: normal;
+}
+
+.card .gradient > div:nth-child(1) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #8b5cf6;
+  border-radius: 9999px;
+  opacity: 0.7;
+  filter: blur(120px);
+}
+
+.card .gradient > div:nth-child(2) {
+  position: absolute;
+  background-color: #a78bfa;
+  width: 25%;
+  height: 25%;
+  border-radius: 9999px;
+  filter: blur(40px);
 }
 
 [data-theme="dark"] .card video {
   filter: invert(1);
   mix-blend-mode: luminosity;
-  border-radius: 8px;
 }
