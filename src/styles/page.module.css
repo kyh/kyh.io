@@ -162,6 +162,10 @@
     padding: 0 20px;
   }
 
+  .projectsHeaderSection[aria-hidden] {
+    display: none;
+  }
+
   .scrollArrowContainer {
     bottom: 4px;
   }

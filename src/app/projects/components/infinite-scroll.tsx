@@ -11,7 +11,6 @@ export const InfiniteScroll = ({ children }: InfiniteScrollProps) => {
   useEffect(() => {
     const lenis = new Lenis({
       infinite: true,
-      smoothTouch: true,
     });
 
     const raf = (time: number) => {
