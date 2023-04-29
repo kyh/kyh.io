@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useScreenSize } from "~/components/screen";
+import { useViewport } from "~/components/viewport";
 import { percentY } from "./scene";
 import styles from "./counter.module.css";
 
@@ -142,7 +142,7 @@ export const CountersContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const size = useScreenSize();
+  const size = useViewport();
   const [isLoaded, setIsLoaded] = useState(false);
   const [top, setTop] = useState<string | number>("75vh");
 

@@ -2,22 +2,27 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-type ScreenContextType = {
+type ViewportContextType = {
   width: number;
   height: number;
+  isMobile: boolean;
 };
 
-const ScreenContext = createContext<ScreenContextType | null>(null);
+const ViewportContext = createContext<ViewportContextType | null>(null);
 
-type ScreenProviderProps = {
+type ViewportProviderProps = {
   children: React.ReactNode;
 };
 
-export const ScreenProvider = ({ children }: ScreenProviderProps) => {
+export const ViewportProvider = ({ children }: ViewportProviderProps) => {
   const [size, setSize] = useState(
     typeof window !== "undefined"
-      ? { width: window.innerWidth, height: window.innerHeight }
-      : { width: 0, height: 0 }
+      ? {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          isMobile: isMobile(),
+        }
+      : { width: 0, height: 0, isMobile: true }
   );
 
   useEffect(() => {
@@ -30,7 +35,11 @@ export const ScreenProvider = ({ children }: ScreenProviderProps) => {
         `${windowHeight}px`
       );
 
-      setSize({ width: windowWidth, height: windowHeight });
+      setSize((state) => ({
+        ...state,
+        width: windowWidth,
+        height: windowHeight,
+      }));
     };
 
     const debouncedHandleResize = debounce(handleResize);
@@ -44,20 +53,20 @@ export const ScreenProvider = ({ children }: ScreenProviderProps) => {
   }, []);
 
   return (
-    <ScreenContext.Provider value={size}>{children}</ScreenContext.Provider>
+    <ViewportContext.Provider value={size}>{children}</ViewportContext.Provider>
   );
 };
 
-export const useScreenSize = () => {
-  const screenContext = useContext(ScreenContext);
+export const useViewport = () => {
+  const viewportContext = useContext(ViewportContext);
 
-  if (!screenContext) {
+  if (!viewportContext) {
     throw new Error(
-      "screenContext has to be used within <ScreenContext.Provider>"
+      "viewportContext has to be used within <ViewportContext.Provider>"
     );
   }
 
-  return screenContext;
+  return viewportContext;
 };
 
 const debounce = (fn: Function, ms = 500) => {
@@ -67,3 +76,8 @@ const debounce = (fn: Function, ms = 500) => {
     timeoutId = setTimeout(() => fn.apply(this, args), ms);
   };
 };
+
+const isMobile = () =>
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
