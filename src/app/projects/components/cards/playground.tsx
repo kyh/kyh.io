@@ -5,7 +5,7 @@ import { Particles } from "~/components/particles";
 export const PlaygroundCard = () => {
   return (
     <a
-      href="https://codepen.io/tehkaiyu"
+      href="https://codepen.io/kyhio"
       target="_blank"
       rel="noopener noreferrer"
     >
