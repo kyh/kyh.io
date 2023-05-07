@@ -36,6 +36,8 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
   const [users, setUsers] = useState<{ [key: string]: User }>({});
   const [isInitialStateSynced, setIsInitialStateSynced] = useState(false);
   const [isChannelSubscribed, setIsChannelSubscribed] = useState(false);
+  const mouseEvent = `${pathname}:mouse`;
+  const pathEvent = "path";
 
   useEffect(() => {
     const handleInitialSync = (state: RealtimePresenceState) => {
@@ -132,12 +134,8 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
 
     const userChannel = supabase.channel(`${roomId}:users`);
 
-    userChannel.on(
-      "broadcast",
-      { event: `${pathname}:mouse` },
-      handleBroadcastEvents
-    );
-    userChannel.on("broadcast", { event: "path" }, handleBroadcastEvents);
+    userChannel.on("broadcast", { event: mouseEvent }, handleBroadcastEvents);
+    userChannel.on("broadcast", { event: pathEvent }, handleBroadcastEvents);
 
     userChannel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
@@ -156,12 +154,13 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
 
   // on route change, resubscribe to the new channel
   useEffect(() => {
-    if (!isChannelSubscribed) return;
+    if (!isChannelSubscribed || !userChannelRef.current) return;
+    const userChannel = userChannelRef.current;
 
     const onMouseEvent = ({ clientX, clientY }: MouseEvent) => {
-      userChannelRef.current?.send({
+      userChannel.send({
         type: "broadcast",
-        event: `${pathname}:mouse`,
+        event: mouseEvent,
         payload: { user_id: userId, x: clientX, y: window.scrollY + clientY },
       });
     };
@@ -175,11 +174,12 @@ export const useUserChannel = ({ roomId }: UseUserChannelProps) => {
 
   // on route change, broadcast the new path
   useEffect(() => {
-    if (!isChannelSubscribed) return;
+    if (!isChannelSubscribed || !userChannelRef.current) return;
+    const userChannel = userChannelRef.current;
 
-    userChannelRef.current?.send({
+    userChannel.send({
       type: "broadcast",
-      event: "path",
+      event: pathEvent,
       payload: { path: pathname, user_id: userId },
     });
 
