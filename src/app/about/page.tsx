@@ -207,50 +207,9 @@ export default function AboutPage() {
           >
             Bootstrap
           </Link>
-          , and Wikipedia. When I'm bored, I sometimes{" "}
-          <Link
-            href="https://itunes.apple.com/US/app/id1209391711"
-            src="/screenshots/keiko.webp"
-            alt="Keiko and Friends"
-          >
-            draw things
-          </Link>
-          ,{" "}
-          <Link
-            srcs={[
-              {
-                href: "https://uicapsule.com",
-                src: "/screenshots/uicapsule.webp",
-                alt: "UI Capsule",
-              },
-              {
-                href: "https://yourssincerely.org",
-                src: "/screenshots/ys.webp",
-                alt: "Yours Sincerely",
-              },
-              {
-                href: "https://covid-19.kyh.io",
-                src: "/screenshots/covid19.webp",
-                alt: "Covid19",
-              },
-              {
-                href: "https://tc.kyh.io",
-                src: "/screenshots/tc.webp",
-                alt: "Total Compensation Calculator",
-              },
-            ]}
-          >
-            build apps
-          </Link>
-          , and{" "}
-          <Link
-            href="https://truffles.tv"
-            src="/screenshots/truffles.webp"
-            alt="Truffles"
-          >
-            design games
-          </Link>
-          . But honestly, I spend most of my days procrastinating.
+          , and Wikipedia. When I'm bored, I sometimes draw things, build apps,
+          and design games. But honestly, I spend most of my days
+          procrastinating.
         </AnimateSection>
       </section>
       <AnimateSection as="section" delay={1.5} className={styles.socials}>

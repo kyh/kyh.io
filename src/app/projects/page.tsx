@@ -14,7 +14,7 @@ import { CardiogramCard } from "./components/cards/cardiogram";
 import { FoundingCard } from "./components/cards/founding";
 import { TrufflesCard } from "./components/cards/truffles";
 import { TCCard } from "./components/cards/tc";
-import { KeikoCard } from "./components/cards/keiko";
+import { StokevilleCard } from "./components/cards/stonksville";
 import { UICapsuleCard } from "./components/cards/uicapsule";
 import { Covid19Card } from "./components/cards/covid-19";
 
@@ -43,7 +43,7 @@ export default function ProjectsPage() {
           <TCCard />
           <InteligirCard />
           <UICapsuleCard />
-          <KeikoCard />
+          <StokevilleCard />
           <Covid19Card />
         </CardGrid>
         <Header aria-hidden />
