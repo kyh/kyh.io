@@ -1,6 +1,6 @@
 # kyh.io
 
-Made with 💻.
+Made with 💻
 
 [🚀 Live Site](https://kyh.io)
 
@@ -8,10 +8,10 @@ Made with 💻.
 
 ```bash
 # install dependencies
-npm i
+pnpm i
 
 # serve with hot reload at localhost:3000
-npm run dev
+pnpm dev
 ```
 
 ## Deployment
