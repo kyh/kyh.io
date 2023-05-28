@@ -120,6 +120,16 @@ export default function AboutPage() {
           </Link>
         </AnimateSection>
         <AnimateSection delay={0.9}>
+          <Link href="https://www.crunchbase.com/organization/vercel" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/vercel.svg"
+              alt="Vercel"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={0.95}>
           <Link href="https://www.crunchbase.com/organization/google" noStyles>
             <Image
               width={150}
@@ -129,7 +139,7 @@ export default function AboutPage() {
             />
           </Link>
         </AnimateSection>
-        <AnimateSection delay={0.95}>
+        <AnimateSection delay={1}>
           <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
             <Image
               width={150}
@@ -139,7 +149,7 @@ export default function AboutPage() {
             />
           </Link>
         </AnimateSection>
-        <AnimateSection delay={1}>
+        <AnimateSection delay={1.05}>
           <Link
             href="https://www.crunchbase.com/organization/atrium-lts"
             noStyles
@@ -152,7 +162,7 @@ export default function AboutPage() {
             />
           </Link>
         </AnimateSection>
-        <AnimateSection delay={1.05}>
+        <AnimateSection delay={1.1}>
           <Link
             href="https://www.crunchbase.com/organization/cardiogram"
             noStyles
@@ -165,22 +175,14 @@ export default function AboutPage() {
             />
           </Link>
         </AnimateSection>
-        <AnimateSection delay={1.1}>
+        <AnimateSection delay={1.15}>
           <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
             <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
           </Link>
         </AnimateSection>
-        <AnimateSection delay={1.15}>
+        <AnimateSection delay={1.2}>
           <Link href="https://www.crunchbase.com/organization/ted" noStyles>
             <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
-          </Link>
-        </AnimateSection>
-        <AnimateSection delay={1.2}>
-          <Link
-            href="https://www.crunchbase.com/organization/electronicarts"
-            noStyles
-          >
-            <Image width={150} height={75} src="/logos/ea.svg" alt="EA" />
           </Link>
         </AnimateSection>
       </section>
