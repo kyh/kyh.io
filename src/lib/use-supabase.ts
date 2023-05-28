@@ -1,13 +1,10 @@
 import { useMemo } from "react";
-import {
-  createBrowserSupabaseClient,
-  SupabaseClient,
-} from "@supabase/auth-helpers-nextjs";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import invariant from "tiny-invariant";
 
 let client: SupabaseClient;
 
-export const getSupabaseBrowserClient = () => {
+export const getSupabaseClient = () => {
   if (client) return client;
 
   const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,23 +17,23 @@ export const getSupabaseBrowserClient = () => {
     `Supabase Anon key was not provided`
   );
 
-  client = createBrowserSupabaseClient({
-    supabaseUrl: NEXT_PUBLIC_SUPABASE_URL,
-    supabaseKey: NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    options: {
+  client = createClient(
+    NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
       realtime: {
         params: {
           eventsPerSecond: 10,
         },
       },
-    },
-  });
+    }
+  );
 
   return client;
 };
 
 export const useSupabase = () => {
-  return useMemo(getSupabaseBrowserClient, []);
+  return useMemo(getSupabaseClient, []);
 };
 
 export type RealtimePayload<T> = {

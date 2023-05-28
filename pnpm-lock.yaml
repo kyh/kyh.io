@@ -13,9 +13,6 @@ dependencies:
   '@studio-freight/lenis':
     specifier: ^1.0.13
     version: 1.0.13
-  '@supabase/auth-helpers-nextjs':
-    specifier: ^0.7.0
-    version: 0.7.0(@supabase/supabase-js@2.23.0)
   '@supabase/supabase-js':
     specifier: ^2.23.0
     version: 2.23.0
@@ -1426,25 +1423,6 @@ packages:
     resolution: {integrity: sha512-958JVgeCjaK1+28c9uK51xiVFw1E/fxW+w58SQFWPtPsUjlaH9ruKidmjET6FwqOKB0qpG4Z1euU3Mr/4dZb5A==}
     dev: false
 
-  /@supabase/auth-helpers-nextjs@0.7.0(@supabase/supabase-js@2.23.0):
-    resolution: {integrity: sha512-FvQflNstWjBXEr0oBux1xqalrpZatCAmnWXROs5HJyCGP7hb+iSWqlwBQtyAllvw2baUufHkXyP+vr1PI3myKA==}
-    peerDependencies:
-      '@supabase/supabase-js': ^2.19.0
-    dependencies:
-      '@supabase/auth-helpers-shared': 0.4.0(@supabase/supabase-js@2.23.0)
-      '@supabase/supabase-js': 2.23.0
-      set-cookie-parser: 2.6.0
-    dev: false
-
-  /@supabase/auth-helpers-shared@0.4.0(@supabase/supabase-js@2.23.0):
-    resolution: {integrity: sha512-5wlCGb4HZ46W2fg8tdi22ZU1GAIOe3YxXrTgvAjWVapNFN+PiH5cFIbz51ZgZRK1TokRZ01pB1GEFy4e+NZE+A==}
-    peerDependencies:
-      '@supabase/supabase-js': ^2.19.0
-    dependencies:
-      '@supabase/supabase-js': 2.23.0
-      jose: 4.14.4
-    dev: false
-
   /@supabase/functions-js@2.1.1:
     resolution: {integrity: sha512-bIR1Puae6W+1/MzPfYBWOG/SCWGo4B5CB7c0ZZksvliNEAzhxNBJ0UFKYINcGdGtxG8ZC+1xr3utWpNZNwnoRw==}
     dependencies:
@@ -2539,10 +2517,6 @@ packages:
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
-
-  /jose@4.14.4:
-    resolution: {integrity: sha512-j8GhLiKmUAh+dsFXlX1aJCbt5KMibuKb+d7j1JaOJG6s2UjX1PQlW+OKB/sD4a/5ZYF4RcmYmLSndOoU3Lt/3g==}
-    dev: false
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -3807,10 +3781,6 @@ packages:
 
   /server-only@0.0.1:
     resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
-    dev: false
-
-  /set-cookie-parser@2.6.0:
-    resolution: {integrity: sha512-RVnVQxTXuerk653XfuliOxBP81Sf0+qfQE73LIYKcyMYHG94AuH0kgrQpRDuTZnSmjpysHmzxJXKNfa6PjFhyQ==}
     dev: false
 
   /shebang-command@2.0.0:
