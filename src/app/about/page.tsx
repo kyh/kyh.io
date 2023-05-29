@@ -191,27 +191,10 @@ export default function AboutPage() {
           Other Activities
         </AnimateSection>
         <AnimateSection as="p" delay={1.35}>
-          Beyond work, I love to learn about economics, psychology, product
-          strategy, technology, and startups. You'll occasionally find me
-          dabbling in the open source world, contributing to{" "}
-          <Link
-            href="https://github.com/facebook/react"
-            src="/screenshots/fb.webp"
-            alt="Facebook"
-          >
-            Facebook
-          </Link>{" "}
-          projects,{" "}
-          <Link
-            href="https://github.com/angular-ui/bootstrap"
-            src="/screenshots/bootstrap.webp"
-            alt="Bootstrap"
-          >
-            Bootstrap
-          </Link>
-          , and Wikipedia. When I'm bored, I sometimes draw things, build apps,
-          and design games. But honestly, I spend most of my days
-          procrastinating.
+          Beyond work, I love to learn about economics, psychology, and
+          business. You'll occasionally find me dabbling in the open source
+          world, drawing things, building apps, and designing games. But
+          honestly, I spend most of my days procrastinating.
         </AnimateSection>
       </section>
       <AnimateSection as="section" delay={1.5} className={styles.socials}>
