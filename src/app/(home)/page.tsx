@@ -1,16 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { AnimateSection, AnimateText } from "~/components/animate-text";
 import { ConditionalContainer } from "~/components/conditional-container";
 import { Counter, CountersContainer } from "./components/counter";
-import { Scene, type SceneRef } from "./components/scene";
+import { type SceneRef } from "./components/scene";
 import { StatSpan } from "./components/stat-span";
 import { statMap, type Stat } from "~/lib/stat";
 import { useEffect, useRef, useState } from "react";
 import styles from "~/styles/page.module.css";
 
+const DynamicScene = dynamic(() =>
+  import("./components/scene").then((mod) => mod.Scene)
+);
+
 export default function HomePage() {
   const sceneRef = useRef<SceneRef>();
+  const timeoutRef = useRef<NodeJS.Timeout>();
   const [stat, setStat] = useState(statMap.home);
 
   const handleTrigger = () => {
@@ -21,11 +27,18 @@ export default function HomePage() {
 
   const handleMouseEnter = (stat: Stat) => {
     setStat(stat);
+
+    if (stat.id === statMap.home.id) return;
+
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setStat(statMap.home);
+    }, 5000);
   };
 
   return (
     <main className={`${styles.container} ${styles.relative}`}>
-      <Scene currentStat={stat} sceneRef={sceneRef} />
+      <DynamicScene currentStat={stat} sceneRef={sceneRef} />
       <AnimateSection as="header" className={styles.header}>
         <AnimateText className={styles.title}>
           <button
