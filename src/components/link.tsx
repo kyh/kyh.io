@@ -100,9 +100,7 @@ export const Link = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>{action}</TooltipTrigger>
-      <TooltipContent side="top" align="center">
-        {content}
-      </TooltipContent>
+      <TooltipContent showLines>{content}</TooltipContent>
     </Tooltip>
   );
 };

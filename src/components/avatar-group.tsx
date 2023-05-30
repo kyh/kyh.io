@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import type { User } from "~/lib/use-user-channel";
 import styles from "./avatar-group.module.css";
 
@@ -46,17 +46,14 @@ export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
               transition={{ ease: "easeOut", duration: 0.2 }}
               layout
             >
-              <Popover>
-                <PopoverTrigger className={styles.avatarContent} />
-                <PopoverContent
-                  className={styles.avatarPopoverContent}
-                  side="bottom"
-                  align="end"
-                  alignOffset={-16}
-                >
+              <Tooltip placement="bottom-end">
+                <TooltipTrigger className={styles.avatarContent}>
+                  <span />
+                </TooltipTrigger>
+                <TooltipContent className={styles.avatarTooltipContent}>
                   {label}
-                </PopoverContent>
-              </Popover>
+                </TooltipContent>
+              </Tooltip>
             </motion.li>
           );
         })}
