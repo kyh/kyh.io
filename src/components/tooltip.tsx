@@ -145,7 +145,7 @@ export const TooltipTrigger = React.forwardRef<
 export const TooltipContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLProps<HTMLDivElement> & { showLines?: boolean }
->(function TooltipContent({ className, ...props }, propRef) {
+>(function TooltipContent({ className, showLines, ...props }, propRef) {
   const context = useTooltipContext();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
   const { isMounted, status } = useTransitionStatus(context.context, {
@@ -163,7 +163,7 @@ export const TooltipContent = React.forwardRef<
           {...context.getFloatingProps(props)}
         />
       )}
-      {props.showLines && (
+      {showLines && (
         <AnimatePresence>
           {context.open && <TooltipLines context={context} />}
         </AnimatePresence>

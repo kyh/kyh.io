@@ -23,17 +23,69 @@
 }
 
 .line {
-  background: var(--border-color);
+  --mask-background: #ffffff;
+  --fade-stop: 90%;
+  --border-color: var(--colors-gray400);
+
   position: absolute;
   pointer-events: none;
   top: 0;
 }
 
+[data-theme="dark"] .line {
+  --border-color: var(--colors-gray700);
+}
+
 .lineV {
   width: 1px;
+  height: 100%;
+
+  background: linear-gradient(
+    to bottom,
+    var(--border-color),
+    var(--border-color) 50%,
+    transparent 0,
+    transparent
+  );
+  background-size: 1px 5px;
+
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(
+      to top,
+      var(--mask-background) var(--fade-stop),
+      transparent
+    ),
+    linear-gradient(
+      to bottom,
+      var(--mask-background) var(--fade-stop),
+      transparent
+    ),
+    linear-gradient(black, black);
 }
 
 .lineH {
   width: 100%;
   height: 1px;
+
+  background: linear-gradient(
+    to right,
+    var(--border-color),
+    var(--border-color) 50%,
+    transparent 0,
+    transparent
+  );
+  background-size: 5px 1px;
+
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(
+      to left,
+      var(--mask-background) var(--fade-stop),
+      transparent
+    ),
+    linear-gradient(
+      to right,
+      var(--mask-background) var(--fade-stop),
+      transparent
+    ),
+    linear-gradient(black, black);
 }
