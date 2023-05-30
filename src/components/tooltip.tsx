@@ -179,7 +179,7 @@ const easeInOutQuint = (x: number) => {
 const TooltipLines = ({ context }: { context: ContextType }) => {
   const floatingEl = context?.elements.floating;
 
-  if (!context || !floatingEl) return null;
+  if (!floatingEl || !context || !context.x || !context.y) return null;
 
   return (
     <>

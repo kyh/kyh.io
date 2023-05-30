@@ -13,6 +13,7 @@ type LinkProps = {
   alt?: string;
   src?: string;
   srcs?: { href: string; src: string; alt: string }[];
+  open?: boolean;
 };
 
 export const Link = ({
@@ -21,6 +22,7 @@ export const Link = ({
   src,
   alt,
   srcs,
+  open,
   noStyles = false,
   noAction = false,
 }: LinkProps) => {
@@ -98,7 +100,7 @@ export const Link = ({
   }
 
   return (
-    <Tooltip>
+    <Tooltip open={open}>
       <TooltipTrigger asChild>{action}</TooltipTrigger>
       <TooltipContent showLines>{content}</TooltipContent>
     </Tooltip>

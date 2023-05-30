@@ -8,13 +8,13 @@
 }
 
 .tooltip[data-status="open"] {
-  transition-delay: 500ms;
-  transition-duration: 250ms;
+  transition-delay: 0.5s;
+  transition-duration: 0.23s;
 }
 
 .tooltip[data-status="close"] {
-  transition-delay: 100ms;
-  transition-duration: 250ms;
+  transition-delay: 0.1s;
+  transition-duration: 0.23s;
 }
 
 .tooltip[data-status="initial"],
@@ -30,6 +30,7 @@
   position: absolute;
   pointer-events: none;
   top: 0;
+  mask-composite: exclude;
 }
 
 [data-theme="dark"] .line {
@@ -49,7 +50,6 @@
   );
   background-size: 1px 5px;
 
-  mask-composite: exclude;
   -webkit-mask: linear-gradient(
       to top,
       var(--mask-background) var(--fade-stop),
@@ -76,7 +76,6 @@
   );
   background-size: 5px 1px;
 
-  mask-composite: exclude;
   -webkit-mask: linear-gradient(
       to left,
       var(--mask-background) var(--fade-stop),
