@@ -10,18 +10,18 @@
   "dependencies": {
     "@floating-ui/react": "^0.24.2",
     "@rooks/use-raf": "^4.11.2",
-    "@studio-freight/lenis": "^1.0.13",
+    "@studio-freight/lenis": "^1.0.14",
     "@supabase/supabase-js": "^2.24.0",
     "@vercel/analytics": "^1.0.1",
-    "@vercel/edge-config": "^0.2.0",
+    "@vercel/edge-config": "^0.2.1",
     "@vercel/og": "^0.5.6",
-    "contentlayer": "^0.3.2",
+    "contentlayer": "^0.3.3",
     "framer-motion": "^10.12.16",
     "lodash": "^4.17.21",
     "matter-js": "^0.19.0",
     "nanoid": "^4.0.2",
     "next": "^13.4.4",
-    "next-contentlayer": "^0.3.2",
+    "next-contentlayer": "^0.3.3",
     "next-themes": "^0.2.1",
     "nprogress": "^0.2.0",
     "react": "^18.2.0",
@@ -38,12 +38,12 @@
     "@types/matter-js": "^0.18.5",
     "@types/node": "^20.2.5",
     "@types/nprogress": "^0.2.0",
-    "@types/react": "^18.2.7",
+    "@types/react": "^18.2.8",
     "@types/react-dom": "^18.2.4",
     "encoding": "^0.1.13",
     "env-cmd": "^10.1.0",
     "prettier": "^2.8.8",
     "supabase": "^1.64.8",
-    "typescript": "^5.0.4"
+    "typescript": "^5.1.3"
   }
 }
