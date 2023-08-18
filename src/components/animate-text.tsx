@@ -121,8 +121,8 @@ export const TextScramble = ({
   pauseTime = 1500,
 }: TextScrambleProps) => {
   const [currentText, setCurrentText] = useState<string>(texts[0]);
-  const bakeLetterIntervalRef = useRef<NodeJS.Timer>();
-  const bakeTextIntervalRef = useRef<NodeJS.Timer>();
+  const bakeLetterIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const bakeTextIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const initSymbols: string[] = Array(currentText.length)
     .fill(0)
