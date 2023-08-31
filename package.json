@@ -8,19 +8,19 @@
     "clean": "rm -rf .next && rm -rf out && rm -rf .vercel && rm -rf .contentlayer"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.25.1",
+    "@floating-ui/react": "^0.25.2",
     "@rooks/use-raf": "^4.11.2",
     "@studio-freight/lenis": "^1.0.19",
-    "@supabase/supabase-js": "^2.32.0",
+    "@supabase/supabase-js": "^2.33.1",
     "@vercel/analytics": "^1.0.2",
     "@vercel/edge-config": "^0.2.1",
     "@vercel/og": "^0.5.11",
     "contentlayer": "^0.3.4",
-    "framer-motion": "^10.16.0",
+    "framer-motion": "^10.16.2",
     "lodash": "^4.17.21",
     "matter-js": "^0.19.0",
     "nanoid": "^4.0.2",
-    "next": "^13.4.18",
+    "next": "^13.4.19",
     "next-contentlayer": "^0.3.4",
     "next-themes": "^0.2.1",
     "nprogress": "^0.2.0",
@@ -36,14 +36,14 @@
   "devDependencies": {
     "@types/lodash": "^4.14.197",
     "@types/matter-js": "^0.19.0",
-    "@types/node": "^20.5.0",
+    "@types/node": "^20.5.7",
     "@types/nprogress": "^0.2.0",
-    "@types/react": "^18.2.20",
+    "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "encoding": "^0.1.13",
     "env-cmd": "^10.1.0",
-    "prettier": "^3.0.2",
-    "supabase": "^1.86.2",
-    "typescript": "^5.1.6"
+    "prettier": "^3.0.3",
+    "supabase": "^1.88.0",
+    "typescript": "^5.2.2"
   }
 }
