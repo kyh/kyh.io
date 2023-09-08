@@ -6,7 +6,6 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
-    // Twitter Profile Picture
     remotePatterns: [
       {
         protocol: "https",
@@ -14,9 +13,6 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
-  },
-  experimental: {
-    appDir: true,
   },
   redirects() {
     try {
@@ -37,11 +33,11 @@ const nextConfig = {
 
 // https://nextjs.org/docs/advanced-features/security-headers
 const ContentSecurityPolicy = `
-    style-src 'self' 'unsafe-inline';
-    img-src * blob: data:;
-    media-src 'self';
-    connect-src *;
-    font-src 'self';
+  style-src 'self' 'unsafe-inline';
+  img-src * blob: data:;
+  media-src 'self';
+  connect-src *;
+  font-src 'self';
 `;
 
 const securityHeaders = [
