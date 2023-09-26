@@ -1,27 +1,39 @@
 "use client";
 
-import { useUserChannel } from "~/lib/use-user-channel";
 import { Cursor } from "~/components/cursor";
 import { AvatarGroup } from "~/components/avatar-group";
 import styles from "./multiplayer.module.css";
+import { useRealtime } from "~/lib/use-realtime";
+import { useTrackWindow } from "~/lib/use-track-window";
+import { usePathname } from "next/navigation";
 
-type MultiplayerProps = {
-  roomId: string;
-};
+export const Multiplayer = () => {
+  const pathname = usePathname();
+  const { others } = useRealtime({
+    host: "https://kyh-party.kaiyu.partykit.dev",
+    room: "kyh",
+  });
+  const windowDimensions = useTrackWindow();
 
-export const Multiplayer = ({ roomId }: MultiplayerProps) => {
-  const { userId, users } = useUserChannel({ roomId });
-
-  const cursors = Object.entries(users)
-    .filter(([_, { x, y }]) => !!x && !!y)
-    .map(([userId, { x, y, color, hue }]) => (
-      <Cursor key={userId} x={x} y={y} color={color} hue={hue} />
+  const cursors = Object.entries(others)
+    .filter(
+      ([_, cursor]) => !!cursor.x && !!cursor.y && cursor.pathname === pathname
+    )
+    .map(([id, cursor]) => (
+      <Cursor
+        key={id}
+        x={cursor.x}
+        y={cursor.y}
+        color={cursor.color}
+        hue={cursor.hue}
+        windowDimensions={windowDimensions}
+      />
     ));
 
   return (
     <>
       <div className={styles.avatarsContainer}>
-        <AvatarGroup currentUserId={userId} users={users} />
+        <AvatarGroup others={others} />
       </div>
       {cursors}
     </>

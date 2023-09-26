@@ -2,46 +2,66 @@
 
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { getRandomColor } from "~/lib/color";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
-import type { User } from "~/lib/use-user-channel";
+import type { Cursor } from "~/lib/cursor";
 import styles from "./avatar-group.module.css";
 
 type AvatarGroupProps = {
-  currentUserId: string;
-  users: Record<string, User>;
+  others: Record<string, Cursor>;
 };
 
-export const AvatarGroup = ({ currentUserId, users }: AvatarGroupProps) => {
+const color = getRandomColor();
+
+export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
-  const usersArr = Object.entries(users)
-    .sort(([, userData]) => (userData.path === pathname ? -1 : 1))
-    .sort(([userId]) => (userId === currentUserId ? -1 : 1));
-  const onlyMe = usersArr.length < 2;
+  const cursors = Object.entries(others).sort(([, c]) =>
+    c.pathname === pathname ? -1 : 1
+  );
+  const onlyMe = cursors.length < 1;
 
   return (
     <ul className={styles.container}>
       <AnimatePresence mode="popLayout">
-        {usersArr.map(([userId, userData], index) => {
-          const isMe = userId === currentUserId;
-          const anotherPage = userData.path && userData.path !== pathname;
+        <motion.li
+          className={styles.avatar}
+          style={{
+            zIndex: cursors.length,
+            background: `linear-gradient(${color.hue}, ${color.color})`,
+          }}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: onlyMe ? 0.2 : 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          transition={{ ease: "easeOut", duration: 0.2 }}
+          layout
+        >
+          <Tooltip placement="bottom-end">
+            <TooltipTrigger className={styles.avatarContent}>
+              <span />
+            </TooltipTrigger>
+            <TooltipContent className={styles.avatarTooltipContent}>
+              {onlyMe ? "You're the only one here 🥺" : "You"}
+            </TooltipContent>
+          </Tooltip>
+        </motion.li>
+        {cursors.map(([id, cursor], index) => {
+          const anotherPage = cursor.pathname && cursor.pathname !== pathname;
 
-          let label = isMe ? "You" : "Visitor";
-          if (onlyMe) {
-            label = "You're the only one here 🥺";
-          } else if (!isMe && anotherPage) {
+          let label = "Visitor";
+          if (anotherPage) {
             label += " (on another page)";
           }
 
           return (
             <motion.li
-              key={userId}
+              key={id}
               className={styles.avatar}
               style={{
-                zIndex: usersArr.length - index,
-                background: `linear-gradient(${userData.hue}, ${userData.color})`,
+                zIndex: cursors.length - index,
+                background: `linear-gradient(${cursor.hue}, ${cursor.color})`,
               }}
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: anotherPage || onlyMe ? 0.2 : 1 }}
+              animate={{ scale: 1, opacity: anotherPage ? 0.2 : 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ ease: "easeOut", duration: 0.2 }}
               layout

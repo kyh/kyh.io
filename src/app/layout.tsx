@@ -69,7 +69,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <div className="blurHeader" aria-hidden="true" />
-          <Multiplayer roomId="kyh" />
+          <Multiplayer />
           <Dock />
           {children}
         </Providers>
