@@ -3,7 +3,7 @@ import { NextRequest, ImageResponse } from "next/server";
 export const runtime = "edge";
 
 const font = fetch(
-  new URL("../../../../public/fonts/gilroy-medium.woff2", import.meta.url)
+  new URL("../../../public/fonts/gilroy-medium.woff2", import.meta.url)
 ).then((res) => res.arrayBuffer());
 
 export async function GET(req: NextRequest) {

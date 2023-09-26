@@ -1,4 +1,4 @@
 {
   "name": "kyh-party",
-  "main": "src/party/server.ts"
+  "main": "partykit/server.ts"
 }
