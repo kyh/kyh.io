@@ -12,7 +12,7 @@ import { InteligirCard } from "./components/cards/inteligir";
 import { AtriumCard } from "./components/cards/atrium";
 import { CardiogramCard } from "./components/cards/cardiogram";
 import { FoundingCard } from "./components/cards/founding";
-import { TrufflesCard } from "./components/cards/truffles";
+import { TwoUpCard } from "./components/cards/twoup";
 import { TCCard } from "./components/cards/tc";
 import { StokevilleCard } from "./components/cards/stonksville";
 import { UICapsuleCard } from "./components/cards/uicapsule";
@@ -39,7 +39,7 @@ export default function ProjectsPage() {
           <AtriumCard />
           <CardiogramCard />
           <FoundingCard />
-          <TrufflesCard />
+          <TwoUpCard />
           <TCCard />
           <InteligirCard />
           <UICapsuleCard />
@@ -67,7 +67,7 @@ const Header = (props: React.HTMLProps<HTMLDivElement>) => {
         some for tomorrow, and most for sitting in the incomplete pile.
       </AnimateSection>
       <AnimateSection as="p" className={styles.projectsComingSoon} delay={0.4}>
-        Showreel coming soon.
+        Site in progress.
       </AnimateSection>
       <ScrollArrow />
     </header>

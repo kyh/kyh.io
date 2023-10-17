@@ -1,4 +1,5 @@
 {
   "name": "kyh",
-  "main": "party/server.ts"
+  "main": "party/server.ts",
+  "compatibilityDate": "2023-10-16"
 }
