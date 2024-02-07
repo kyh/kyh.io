@@ -1,8 +1,7 @@
-const { get } = require("@vercel/edge-config");
-const { withContentlayer } = require("next-contentlayer");
+import { get } from "@vercel/edge-config";
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const config = {
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
@@ -78,4 +77,4 @@ const securityHeaders = [
   },
 ];
 
-module.exports = withContentlayer(nextConfig);
+export default config;
