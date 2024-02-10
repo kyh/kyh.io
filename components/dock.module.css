@@ -8,6 +8,7 @@
   left: 0;
   right: 0;
   z-index: 10;
+  pointer-events: none;
 }
 
 .list {
@@ -23,6 +24,7 @@
   backdrop-filter: blur(10px);
   background: var(--dock-bg);
   border: 1px solid var(--dock-border-color);
+  pointer-events: auto;
 }
 
 [data-theme="dark"] .list {

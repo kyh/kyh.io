@@ -93,7 +93,8 @@
 
 /* Projects Page */
 .projectsContainer {
-  padding: 100px 60px;
+  width: 100dvw;
+  height: 100dvh;
 }
 
 /* Responsive - mobile */
@@ -104,9 +105,5 @@
 
   .logos {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  }
-
-  .projectsContainer {
-    padding: 100px 0;
   }
 }

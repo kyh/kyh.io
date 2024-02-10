@@ -18,13 +18,11 @@
   --colors-gray950: #020617;
   --colors-gray1000: #000;
 
-  --h-screen: 100vh;
-
   --bg-faded: var(--colors-gray100);
   --bg-color: var(--colors-gray300);
   --bg-highlighted: var(--colors-gray0);
 
-  --body-color-faded: var(--colors-gray600);
+  --body-color-faded: var(--colors-gray500);
   --body-color: var(--colors-gray900);
   --body-color-highlighted: var(--colors-gray1000);
 
@@ -170,7 +168,7 @@
   --bg-color: var(--colors-gray900);
   --bg-highlighted: var(--colors-gray1000);
 
-  --body-color-faded: var(--colors-gray300);
+  --body-color-faded: var(--colors-gray700);
   --body-color: var(--colors-gray100);
   --body-color-highlighted: var(--colors-gray0);
 

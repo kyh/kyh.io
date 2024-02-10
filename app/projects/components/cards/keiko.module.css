@@ -1,7 +1,0 @@
-.card {
-  --shine-angle: 290deg;
-}
-
-[data-theme="dark"] .card {
-  --shine-angle: 290deg;
-}
