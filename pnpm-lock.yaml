@@ -71,8 +71,8 @@ devDependencies:
     specifier: ^18.2.19
     version: 18.2.19
   partykit:
-    specifier: ^0.0.84
-    version: 0.0.84
+    specifier: ^0.0.87
+    version: 0.0.87
   prettier:
     specifier: ^3.2.5
     version: 3.2.5
@@ -127,8 +127,8 @@ packages:
     dev: true
     optional: true
 
-  /@cloudflare/workers-types@4.20240129.0:
-    resolution: {integrity: sha512-VyHbih/bqh/RN2FRxnXznG0bpBIg9RfSP1ldbAVnCXFinjOdv0zm2P/RWqOVN9+FgU5sanRltwwT7jGngxZy8w==}
+  /@cloudflare/workers-types@4.20240208.0:
+    resolution: {integrity: sha512-MVGTTjZpJu4kJONvai5SdJzWIhOJbuweVZ3goI7FNyG+JdoQH41OoB+nMhLsX626vPLZVWGPIWsiSo/WZHzgQw==}
     dev: true
 
   /@cspotcode/source-map-support@0.8.1:
@@ -1268,8 +1268,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /miniflare@3.20240129.0:
-    resolution: {integrity: sha512-27pDhlP2G/4gXmvnSt6LjMQ8KrkmbJElIQmn+BLjdiyIx+zXY4E8MSPJmi9flgf0dn3wtjuHO2ASenuopqqxrw==}
+  /miniflare@3.20240129.1:
+    resolution: {integrity: sha512-GfqclPxbTnam4S8GKHRkFyr+s+szELK/ORtQ3ZFUiGBO4HNJsaeA6RhBMKBH7iHqn5ng035cyPsLZvH35lwtsA==}
     engines: {node: '>=16.13'}
     hasBin: true
     dependencies:
@@ -1386,14 +1386,14 @@ packages:
       hex-rgb: 4.3.0
     dev: false
 
-  /partykit@0.0.84:
-    resolution: {integrity: sha512-qY9WfnEsOPVIYMmPuFye4H0V9JqKt3/Ylu2IBlJNEGTI4OQ9MJp/D24mznE5/KorfaL35MQSGmSuYbrOHa4Jwg==}
+  /partykit@0.0.87:
+    resolution: {integrity: sha512-3+8Oa8//VhN7B2WRlm1tJZFrsTSH2DWcNxGzgnuvUvxjBi/2ePfUVqOu3aOTGVQu91j8U7qSvCkEhILkkEqaAA==}
     hasBin: true
     dependencies:
-      '@cloudflare/workers-types': 4.20240129.0
+      '@cloudflare/workers-types': 4.20240208.0
       clipboardy: 4.0.0
       esbuild: 0.20.0
-      miniflare: 3.20240129.0
+      miniflare: 3.20240129.1
       yoga-wasm-web: 0.3.3
     optionalDependencies:
       fsevents: 2.3.3
