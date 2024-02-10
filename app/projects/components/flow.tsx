@@ -58,6 +58,7 @@ export const Flow = () => {
       onInit={setRfInstance}
       nodesConnectable={false}
       defaultViewport={isMobile ? mobileViewport : desktopViewport}
+      nodesDraggable={!isMobile}
     >
       <Controls>
         {process.env.NODE_ENV === "development" && (
