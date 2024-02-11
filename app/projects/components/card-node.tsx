@@ -8,6 +8,7 @@ export type CardNodeData = {
   link?: { url: string; text?: string };
   title?: string;
   backgroundImage?: string;
+  backgroundBlurData?: string;
   backgroundVideo?: string;
 };
 
@@ -50,6 +51,8 @@ export const CardNode = memo(({ data }: NodeProps<CardNodeData>) => {
             className={styles.bgImage}
             src={data.backgroundImage}
             alt={data.title || "Card Image"}
+            blurDataURL={data.backgroundBlurData}
+            placeholder="blur"
             width="400"
             height="300"
           />

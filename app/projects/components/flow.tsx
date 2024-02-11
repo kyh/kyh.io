@@ -59,6 +59,7 @@ export const Flow = () => {
       nodesConnectable={false}
       defaultViewport={isMobile ? mobileViewport : desktopViewport}
       nodesDraggable={!isMobile}
+      panOnScroll
     >
       <Controls>
         {process.env.NODE_ENV === "development" && (
@@ -88,7 +89,6 @@ export const Flow = () => {
         zoomable
       />
       <Background />
-      <button onClick={onSave}>save</button>
     </ReactFlow>
   );
 };

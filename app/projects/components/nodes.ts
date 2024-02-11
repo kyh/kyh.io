@@ -6,6 +6,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
   {
     id: "title",
     type: "text",
+    draggable: false,
     position: {
       x: 871.5525456287683,
       y: 390.69596873013745,
@@ -29,6 +30,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://amazon.com/",
       },
       backgroundImage: "/screenshots/amazon-ds.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
     },
   },
   {
@@ -63,6 +66,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://www.ycombinator.com/companies/atrium",
       },
       backgroundImage: "/screenshots/atrium.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoQAAwAAUAmJaQAAuafBgmYAAD+9fljiQX0uQIXlcAKRTrP/H++I3FnboNY2MVVCDSkZJ/yTu+kEwJ9ADg17RGQAAA=",
     },
   },
   {
@@ -80,6 +85,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://www.theverge.com/2017/5/15/15640942/apple-watch-cardiogram-heart-health-artificial-intelligence-monitoring",
       },
       backgroundImage: "/screenshots/cardiogram.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
     },
     selected: true,
     dragging: false,
@@ -99,6 +106,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://covid-19.kyh.io",
       },
       backgroundImage: "/screenshots/covid19.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
     },
   },
   {
@@ -167,6 +176,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://apps.apple.com/us/app/id1209391711/",
       },
       backgroundImage: "/screenshots/keiko.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
     },
   },
   {
@@ -201,6 +212,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://www.crunchbase.com/organization/slyce",
       },
       backgroundImage: "/screenshots/slyce.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAwAAUAmJZwAAudljfFYAAD+/pmxYSp4yOONaQeF5/fWRam8ThOk9MqRSC7AHjEfrm4h9atrfO8kfY4GxG9TlyLNd6rv9NZD392rAAA=",
     },
   },
   {
@@ -218,6 +231,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://stonksville.com/",
       },
       backgroundImage: "/screenshots/stonks.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
     },
   },
   {
@@ -235,6 +250,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://tc.kyh.io/",
       },
       backgroundImage: "/screenshots/tc.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
     },
   },
   {
@@ -252,6 +269,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://2uphq.com/",
       },
       backgroundImage: "/screenshots/truffles.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAACwAQCdASoQAAwAAUAmJaQAAuQXRR4AAP7+7XQ2ry8a0MfqHJH0uHS/5LOWen07Pkad4dWCZkLtS+UKAAA=",
     },
   },
   {
@@ -269,6 +288,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://uicapsule.com/",
       },
       backgroundImage: "/screenshots/uicapsule.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
     },
   },
   {
@@ -286,6 +307,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         url: "https://yourssincerely.org/",
       },
       backgroundImage: "/screenshots/ys.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
     },
   },
 ];
