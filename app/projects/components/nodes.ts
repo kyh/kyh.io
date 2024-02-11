@@ -63,7 +63,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       link: {
-        url: "https://www.ycombinator.com/companies/atrium",
+        url: "https://www.crunchbase.com/organization/atrium-lts",
       },
       backgroundImage: "/screenshots/atrium.webp",
       backgroundBlurData:
@@ -88,8 +88,6 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       backgroundBlurData:
         "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
     },
-    selected: true,
-    dragging: false,
   },
   {
     width: 400,
