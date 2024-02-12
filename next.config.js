@@ -1,14 +1,5 @@
-import { get } from "@vercel/edge-config";
-
 /** @type {import('next').NextConfig} */
 const config = {
-  redirects() {
-    try {
-      return get("redirects");
-    } catch {
-      return [];
-    }
-  },
   headers() {
     return [
       {
@@ -17,6 +8,7 @@ const config = {
       },
     ];
   },
+  eslint: { ignoreDuringBuilds: true },
 };
 
 const ContentSecurityPolicy = `

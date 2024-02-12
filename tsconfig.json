@@ -1,29 +1,12 @@
 {
+  "extends": "@kyh/tsconfig/base.json",
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "@/*": ["./src/*"]
     },
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "strictNullChecks": true
+    "plugins": [{ "name": "next" }],
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json"
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

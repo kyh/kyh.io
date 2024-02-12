@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type * as Party from "partykit/server";
-import { getColorById } from "../lib/color";
-import type { Cursor } from "../lib/cursor";
+
+import type { Cursor } from "../src/lib/cursor";
+import { getColorById } from "../src/lib/color";
 
 type ConnectionWithCursor = Party.Connection & { cursor?: Cursor };
 
@@ -24,10 +27,10 @@ export default class CursorServer implements Party.Server {
 
     // On connect, send a "sync" message to the new connection
     // Pull the cursor from all websocket attachments
-    let cursors: { [id: string]: Cursor } = {};
+    const cursors: Record<string, Cursor> = {};
     for (const ws of this.party.getConnections() as ConnectionWithCursor[]) {
       const id = ws.id;
-      let cursor = ws.cursor ?? ws.deserializeAttachment();
+      const cursor = ws.cursor ?? ws.deserializeAttachment();
       if (
         id !== websocket.id &&
         cursor !== null &&
@@ -42,13 +45,13 @@ export default class CursorServer implements Party.Server {
       JSON.stringify({
         type: "sync",
         cursors: cursors,
-      })
+      }),
     );
   }
 
   onMessage(
     message: string,
-    websocket: Party.Connection
+    websocket: Party.Connection,
   ): void | Promise<void> {
     const position = JSON.parse(message);
     const prevCursor = this.getCursor(websocket);
@@ -72,7 +75,7 @@ export default class CursorServer implements Party.Server {
           type: "update",
           ...cursor,
         }),
-        [websocket.id]
+        [websocket.id],
       );
     } else {
       this.party.broadcast(
@@ -80,7 +83,7 @@ export default class CursorServer implements Party.Server {
           type: "remove",
           id: websocket.id,
         }),
-        [websocket.id]
+        [websocket.id],
       );
     }
   }
@@ -90,7 +93,7 @@ export default class CursorServer implements Party.Server {
       "[disconnect]",
       this.party.id,
       websocket.id,
-      websocket.readyState
+      websocket.readyState,
     );
 
     this.party.broadcast(
@@ -98,7 +101,7 @@ export default class CursorServer implements Party.Server {
         type: "remove",
         id: websocket.id,
       }),
-      []
+      [],
     );
   }
 
@@ -111,7 +114,7 @@ export default class CursorServer implements Party.Server {
   }
 
   setCursor(connection: ConnectionWithCursor, cursor: Cursor) {
-    let prevCursor = connection.cursor;
+    const prevCursor = connection.cursor;
     connection.cursor = cursor;
 
     // throttle writing to attachment to once every 50ms

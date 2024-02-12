@@ -6,15 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "lint": "next lint",
     "format": "prettier --write src",
     "deploy-partykit": "partykit deploy",
-    "clean": "rm -rf .next && rm -rf out && rm -rf .vercel && rm -rf .contentlayer"
+    "clean": "rm -rf .next && rm -rf out && rm -rf .vercel"
   },
   "dependencies": {
     "@floating-ui/react": "^0.26.9",
     "@rooks/use-raf": "^4.11.2",
     "@vercel/analytics": "^1.1.3",
-    "@vercel/edge-config": "^0.4.1",
     "@vercel/og": "^0.6.2",
     "framer-motion": "^11.0.3",
     "lodash": "^4.17.21",
@@ -25,18 +25,32 @@
     "partysocket": "^0.0.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "reactflow": "^11.10.3"
+    "reactflow": "^11.10.3",
+    "vaul": "^0.9.0"
   },
   "devDependencies": {
+    "@kyh/eslint-config": "^0.1.6",
+    "@kyh/prettier-config": "^0.1.6",
+    "@kyh/tsconfig": "^0.1.6",
     "@types/lodash": "^4.14.202",
     "@types/matter-js": "^0.19.6",
     "@types/node": "^20.11.17",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "partykit": "^0.0.87",
-    "prettier": "^3.2.5",
+    "partykit": "^0.0.88",
     "sharp": "^0.33.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
     "typescript": "^5.3.3"
-  }
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@kyh/eslint-config/base",
+      "@kyh/eslint-config/nextjs",
+      "@kyh/eslint-config/react"
+    ]
+  },
+  "prettier": "@kyh/prettier-config"
 }
