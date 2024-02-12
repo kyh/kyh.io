@@ -1,3 +1,0 @@
-.statSpan {
-  composes: link from "~/components/link.module.css";
-}

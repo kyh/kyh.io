@@ -1,0 +1,97 @@
+.header {
+  padding: 20px;
+}
+
+.handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 8px 4px;
+}
+
+.bgImage,
+.bgVideo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--dock-bg);
+  backdrop-filter: blur(10px);
+  z-index: 9;
+}
+
+.drawerContent {
+  background-color: var(--bg-highlighted);
+  border-radius: 0 0 10px 10px;
+  height: 90%;
+  margin-top: 24px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  z-index: 10;
+}
+
+.drawerBar {
+  margin: 0 auto 40px;
+  width: 48px;
+  height: 3px;
+  background-color: var(--colors-gray400);
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+
+.drawerBody {
+  margin: 0 auto;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.drawerBody p {
+  white-space: pre-wrap;
+}
+
+.drawerLinksContainer {
+  display: flex;
+  gap: 20px;
+}
+
+.drawerLink {
+  font-size: 0.8rem;
+  padding: 4px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.drawerLink:hover {
+  background-color: var(--bg-faded);
+}
+
+.drawerLink svg {
+  transform: translateY(-1px);
+}
+
+.drawerAssetsContainer {
+  display: flex;
+  gap: 20px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.drawerAssetsContainer li {
+  flex-shrink: 0;
+}
