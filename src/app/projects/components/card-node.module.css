@@ -60,7 +60,8 @@
 
 .drawerLinksContainer {
   display: flex;
-  gap: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .drawerLink {
