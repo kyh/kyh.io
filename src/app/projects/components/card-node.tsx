@@ -88,8 +88,10 @@ export const CardNode = memo(({ id, data }: NodeProps<CardNodeData>) => {
           <Drawer.Content className={styles.drawerContent}>
             <div className={styles.drawerBar} />
             <div className={styles.drawerBody}>
-              <Drawer.Title>{data.title}</Drawer.Title>
-              <Drawer.Description>{data.description}</Drawer.Description>
+              {data.title && <Drawer.Title>{data.title}</Drawer.Title>}
+              {data.description && (
+                <Drawer.Description>{data.description}</Drawer.Description>
+              )}
               {data.links && (
                 <div className={styles.drawerLinksContainer}>
                   {data.links.map((link) => (

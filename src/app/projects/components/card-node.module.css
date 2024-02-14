@@ -65,7 +65,7 @@
 
 .drawerLink {
   font-size: 0.8rem;
-  padding: 4px 16px;
+  padding: 5px 16px 2px;
   border-radius: 9999px;
   border: 1px solid var(--border-color);
   display: flex;

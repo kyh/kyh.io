@@ -27,44 +27,17 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 0,
     },
     data: {
-      title: "Amazon",
+      title: "Amazon UI",
       description:
-        "As part of the Amazon UI team, we are responsible for the global Amazon shopping experience.",
+        "The Amazon UI team designs and builds the global shopping experience. My work involved Rio (our design system), Mix (the frontend framework, think React), and Kata (the templating language, think JSX)",
       links: [
         {
           text: "Amazon Design Portal",
-          url: "https://design.amazon.com/",
+          url: "https://design.amazon.com",
         },
         {
           text: "Explore Opportunities",
           url: "https://amazon.design",
-        },
-      ],
-      assets: [
-        {
-          type: "img",
-          url: "/screenshots/amazon-ds.webp",
-          alt: "Amazon Design Portal",
-        },
-        {
-          type: "img",
-          url: "/screenshots/amazon-redesign.webp",
-          alt: "Amazon Redesign",
-        },
-        {
-          type: "img",
-          url: "/screenshots/amazon.webp",
-          alt: "Amazon",
-        },
-        {
-          type: "img",
-          url: "/screenshots/art.webp",
-          alt: "Amazon Design Portal",
-        },
-        {
-          type: "img",
-          url: "/screenshots/atrium.webp",
-          alt: "Amazon Design Portal",
         },
       ],
       backgroundImage: "/screenshots/amazon-ds.webp",
@@ -84,11 +57,19 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Sequoia",
-      description: "We help the daring build legendary companies",
+      description: "Helping the daring build legendary companies",
       links: [
         {
           text: "Visit Site",
-          url: "https://arc.sequoiacap.com/",
+          url: "https://sequoiacap.com",
+        },
+        {
+          text: "Founder Portal",
+          url: "https://ampersand.sequoiacap.com",
+        },
+        {
+          text: "Accelerator Program",
+          url: "https://arc.sequoiacap.com",
         },
       ],
       backgroundVideo: "/screenshots/arc.webm",
@@ -105,6 +86,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 456,
     },
     data: {
+      title: "Atrium",
+      description:
+        "Atrium is a legal technology company that provides fast, transparent, and price-predictable legal services to startups.",
       links: [
         {
           text: "About Atrium",
@@ -127,10 +111,17 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 562,
     },
     data: {
+      title: "Cardiogram",
+      description:
+        "Cardiogram is a digital health company that uses consumer wearables like Apple Watch to detect conditions like diabetes, hypertension, sleep apnea, and atrial fibrillation using deep learning.",
       links: [
         {
-          text: "Press Article",
-          url: "https://www.theverge.com/2017/5/15/15640942/apple-watch-cardiogram-heart-health-artificial-intelligence-monitoring",
+          text: "App Store",
+          url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
+        },
+        {
+          text: "Press",
+          url: "https://techcrunch.com/tag/cardiogram",
         },
       ],
       backgroundImage: "/screenshots/cardiogram.webp",
@@ -149,6 +140,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 797,
     },
     data: {
+      title: "COVID-19 Dashboard",
       links: [
         {
           text: "Visit Site",
@@ -171,13 +163,18 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 1235,
     },
     data: {
+      title: "Founding",
+      description:
+        "I helped co-found Founding where we help startups initialize their product and scale their technical team",
       links: [
         {
           text: "Visit Site",
           url: "https://founding.so",
         },
       ],
-      backgroundVideo: "/screenshots/founding.webm",
+      backgroundImage: "/screenshots/founding.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
     },
   },
   {
@@ -191,6 +188,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 413,
     },
     data: {
+      title: "Google Grow",
+      description:
+        "Grow with Google offers free training and tools to help you grow your skills, career, or business.",
       links: [
         {
           text: "Visit Site",
@@ -211,13 +211,14 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 755,
     },
     data: {
+      title: "Inteligir",
       links: [
         {
           text: "Visit Site",
           url: "https://inteligir.com",
         },
       ],
-      title: "Inteligir",
+      backgroundVideo: "/screenshots/inteligir.mp4",
     },
   },
   {
@@ -231,10 +232,12 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 1025,
     },
     data: {
+      title: "Keiko and Friends",
+      description: "I drew my friends",
       links: [
         {
           text: "App Store",
-          url: "https://apps.apple.com/us/app/id1209391711/",
+          url: "https://apps.apple.com/us/app/id1209391711",
         },
       ],
       backgroundImage: "/screenshots/keiko.webp",
@@ -253,13 +256,15 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 843,
     },
     data: {
+      title: "Playground",
+      description: "Random experiments and ideas",
       links: [
         {
           text: "Visit Site",
           url: "https://codepen.io/kyhio",
         },
       ],
-      title: "Codepen",
+      backgroundVideo: "/screenshots/codepen.mp4",
     },
   },
   {
@@ -273,6 +278,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 1151,
     },
     data: {
+      title: "Slyce",
+      description:
+        "Slyce is a visual search company that uses image recognition to identify and find products",
       links: [
         {
           text: "About Slyce",
@@ -295,6 +303,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 829,
     },
     data: {
+      title: "Stonksville",
       links: [
         {
           text: "Visit Site",
@@ -317,6 +326,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: -13,
     },
     data: {
+      title: "Total Compensation Calculator",
+      description:
+        "A simple tool to help you navigate tech startup compensation",
       links: [
         {
           text: "Visit Site",
@@ -339,6 +351,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: -225,
     },
     data: {
+      title: "2UP",
+      description: "A platform for real-time multiplayer party games",
       links: [
         {
           text: "Visit Site",
@@ -361,6 +375,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 193,
     },
     data: {
+      title: "UI Capsule",
+      description:
+        "A collection of UI components and patterns for web development",
       links: [
         {
           text: "Visit Site",
@@ -383,6 +400,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
       y: 357,
     },
     data: {
+      title: "Yours Sincerely",
+      description:
+        "An ephemeral anonymous blog to send each other tiny beautiful letters",
       links: [
         {
           text: "Visit Site",
