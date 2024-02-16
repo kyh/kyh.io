@@ -37,8 +37,17 @@
   z-index: 10;
 }
 
+.drawerContentScroll {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  height: 100%;
+  padding: 0 16px 40px;
+}
+
 .drawerBar {
-  margin: 0 auto 40px;
+  margin: 0 auto;
   width: 48px;
   height: 3px;
   background-color: var(--colors-gray400);
@@ -51,7 +60,7 @@
   max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 40px;
 }
 
 .drawerBody p {

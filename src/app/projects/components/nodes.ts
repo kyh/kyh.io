@@ -28,8 +28,9 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Amazon UI",
-      description:
-        "The Amazon UI team designs and builds the global shopping experience. My work involved Rio (our design system), Mix (the frontend framework, think React), and Kata (the templating language, think JSX)",
+      description: `The Amazon UI team designs and builds the global shopping experience.
+
+My work involved Rio (our design system), Mix (the frontend framework, think React), and Kata (the templating language, think JSX)`,
       links: [
         {
           text: "Amazon Design Portal",
@@ -57,7 +58,25 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Sequoia",
-      description: "Helping the daring build legendary companies",
+      description: `The creative spirits. The underdogs. The resolute. The determined. The indefatigable. The outsiders. The defiant. The independent thinkers. The fighters and the true believers.
+
+These are the founders with whom we partner. They’re extremely rare. And we’re ecstatic when we find them.
+
+We partner early—sometimes when a company is no more than an idea. We know these crucial first decisions can have an exponential influence on the curve of success.
+
+Our style is not for everyone. We push when we see potential. We are direct. Some don’t like our approach. Most who know us do.
+
+Our team mirrors the founders with whom we partner: hungry overachievers with a deep-rooted need to win. Many come from humble backgrounds. Many are immigrants. Many formed or built companies of their own before joining Sequoia. Each shares the mindset of an entrepreneur, and knows what it means to walk that path.
+
+We value teamwork over showmanship. Our contribution to a company always comes from several of us working together. We’re skittish about the first person singular, and don’t care to see our names in the press.
+
+Our team is small. We prefer a few people with diverse strengths focused on a small number of companies, and we are always mindful of lessons learned — some painfully — that are eternal truths. Our network is strong. Our advantage comes from five decades of legendary founders helping each other.
+
+Long ago we made nonprofits the backbone of our limited partner base. Working for these charities brings intense meaning to what we do. It gives us a heightened sense of responsibility.
+
+We’re serious about our work, and carefully choose the words to describe it. Terms like “deal” or “exit” are forbidden. And while we’re sometimes called investors, that is not our frame of mind. We consider ourselves partners for the long term.
+
+We help the daring build legendary companies, from idea to IPO and beyond.`,
       links: [
         {
           text: "Visit Site",
@@ -87,8 +106,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Atrium",
-      description:
-        "Atrium is a legal technology company that provides fast, transparent, and price-predictable legal services to startups.",
+      description: `Atrium helps accelerate the growth of startups by advising them in the areas where they most need help, such as legal, fundraising, HR & culture, and hiring.`,
       links: [
         {
           text: "About Atrium",
@@ -112,8 +130,13 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Cardiogram",
-      description:
-        "Cardiogram is a digital health company that uses consumer wearables like Apple Watch to detect conditions like diabetes, hypertension, sleep apnea, and atrial fibrillation using deep learning.",
+      description: `Cardiogram was one of the first startups to detect heart conditions—such as atrial fibrillation, hypertension, diabetes, sleep apnea—using deep neural networks and the optical heart rate sensor on consumer wearables like Apple Watch, Google's WearOS, and Fitbit.
+
+5+ million people used the Cardiogram app, and we published research on deep learning for health sensor timeseries in JAMA Cardiology, AAAI-2018, and the American Heart Association's Scientific Sessions.
+
+I was the first employee hire. Helped build out the brand, product, and technical foundations of the company.
+
+Acquired in 2020.`,
       links: [
         {
           text: "App Store",
@@ -141,6 +164,8 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "COVID-19 Dashboard",
+      description:
+        "A dashboard to track the spread of COVID-19 in the United States.",
       links: [
         {
           text: "Visit Site",
@@ -165,7 +190,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     data: {
       title: "Founding",
       description:
-        "I helped co-found Founding where we help startups initialize their product and scale their technical team",
+        "I helped co-found Founding where we help startups initialize their product and scale their technical team.",
       links: [
         {
           text: "Visit Site",
@@ -212,6 +237,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Inteligir",
+      description: "IN PROGRESS",
       links: [
         {
           text: "Visit Site",
@@ -233,7 +259,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Keiko and Friends",
-      description: "I drew my friends",
+      description: "I drew my friends. I hope you like them. Wanna be friends?",
       links: [
         {
           text: "App Store",
@@ -257,7 +283,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "Playground",
-      description: "Random experiments and ideas",
+      description: "Random experiments and ideas.",
       links: [
         {
           text: "Visit Site",
@@ -280,7 +306,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     data: {
       title: "Slyce",
       description:
-        "Slyce is a visual search company that uses image recognition to identify and find products",
+        "Slyce is a visual search company that uses image recognition to identify and find products.",
       links: [
         {
           text: "About Slyce",
@@ -292,29 +318,29 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
         "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAwAAUAmJZwAAudljfFYAAD+/pmxYSp4yOONaQeF5/fWRam8ThOk9MqRSC7AHjEfrm4h9atrfO8kfY4GxG9TlyLNd6rv9NZD392rAAA=",
     },
   },
-  {
-    width: 400,
-    height: 300,
-    id: "stonksville",
-    type: "card",
-    dragHandle: ".handle",
-    position: {
-      x: 1872.0000000000014,
-      y: 829,
-    },
-    data: {
-      title: "Stonksville",
-      links: [
-        {
-          text: "Visit Site",
-          url: "https://stonksville.com",
-        },
-      ],
-      backgroundImage: "/screenshots/stonks.webp",
-      backgroundBlurData:
-        "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-    },
-  },
+  // {
+  //   width: 400,
+  //   height: 300,
+  //   id: "stonksville",
+  //   type: "card",
+  //   dragHandle: ".handle",
+  //   position: {
+  //     x: 1872.0000000000014,
+  //     y: 829,
+  //   },
+  //   data: {
+  //     title: "Stonksville",
+  //     links: [
+  //       {
+  //         text: "Visit Site",
+  //         url: "https://stonksville.com",
+  //       },
+  //     ],
+  //     backgroundImage: "/screenshots/stonks.webp",
+  //     backgroundBlurData:
+  //       "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
+  //   },
+  // },
   {
     width: 400,
     height: 300,
@@ -328,7 +354,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     data: {
       title: "Total Compensation Calculator",
       description:
-        "A simple tool to help you navigate tech startup compensation",
+        "A simple tool to help you navigate tech startup compensation.",
       links: [
         {
           text: "Visit Site",
@@ -352,7 +378,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     },
     data: {
       title: "2UP",
-      description: "A platform for real-time multiplayer party games",
+      description: "A platform for real-time multiplayer party games.",
       links: [
         {
           text: "Visit Site",
@@ -377,7 +403,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     data: {
       title: "UI Capsule",
       description:
-        "A collection of UI components and patterns for web development",
+        "A museum of your favorite UI pieces. Devoted to showcasing the visual history of popular websites, games, apps, and operating systems that have shaped our lives.",
       links: [
         {
           text: "Visit Site",
@@ -402,7 +428,7 @@ export const initialNodes: Node<CardNodeData | TextNodeData>[] = [
     data: {
       title: "Yours Sincerely",
       description:
-        "An ephemeral anonymous blog to send each other tiny beautiful letters",
+        "An ephemeral anonymous blog to send each other tiny beautiful letters.",
       links: [
         {
           text: "Visit Site",

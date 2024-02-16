@@ -86,66 +86,68 @@ export const CardNode = memo(({ id, data }: NodeProps<CardNodeData>) => {
         <Drawer.Portal>
           <Drawer.Overlay className={styles.drawerOverlay} />
           <Drawer.Content className={styles.drawerContent}>
-            <div className={styles.drawerBar} />
-            <div className={styles.drawerBody}>
-              {data.title && <Drawer.Title>{data.title}</Drawer.Title>}
-              {data.description && (
-                <Drawer.Description>{data.description}</Drawer.Description>
-              )}
-              {data.links && (
-                <div className={styles.drawerLinksContainer}>
-                  {data.links.map((link) => (
-                    <a
-                      key={link.url}
-                      href={link.url}
-                      className={styles.drawerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {link.text}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+            <div className={styles.drawerContentScroll}>
+              <div className={styles.drawerBar} />
+              <div className={styles.drawerBody}>
+                {data.title && <Drawer.Title>{data.title}</Drawer.Title>}
+                {data.description && (
+                  <Drawer.Description>{data.description}</Drawer.Description>
+                )}
+                {data.links && (
+                  <div className={styles.drawerLinksContainer}>
+                    {data.links.map((link) => (
+                      <a
+                        key={link.url}
+                        href={link.url}
+                        className={styles.drawerLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
-                        <path d="m21 3-9 9" />
-                        <path d="M15 3h6v6" />
-                      </svg>
-                    </a>
-                  ))}
-                </div>
-              )}
-              {data.assets && (
-                <ul className={styles.drawerAssetsContainer}>
-                  {data.assets.map((asset) =>
-                    asset.type === "img" ? (
-                      <li key={asset.url}>
-                        <Image
-                          className={styles.drawerAsset}
-                          src={asset.url}
-                          alt={asset.alt}
-                          width="400"
-                          height="300"
-                        />
-                      </li>
-                    ) : (
-                      <li key={asset.url}>
-                        <video className={styles.drawerAsset}>
-                          <source src={asset.url} type="video/webm" />
-                          Unsupported.
-                        </video>
-                      </li>
-                    ),
-                  )}
-                </ul>
-              )}
+                        {link.text}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
+                          <path d="m21 3-9 9" />
+                          <path d="M15 3h6v6" />
+                        </svg>
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {data.assets && (
+                  <ul className={styles.drawerAssetsContainer}>
+                    {data.assets.map((asset) =>
+                      asset.type === "img" ? (
+                        <li key={asset.url}>
+                          <Image
+                            className={styles.drawerAsset}
+                            src={asset.url}
+                            alt={asset.alt}
+                            width="400"
+                            height="300"
+                          />
+                        </li>
+                      ) : (
+                        <li key={asset.url}>
+                          <video className={styles.drawerAsset}>
+                            <source src={asset.url} type="video/webm" />
+                            Unsupported.
+                          </video>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
           </Drawer.Content>
         </Drawer.Portal>
