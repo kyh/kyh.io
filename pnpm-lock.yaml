@@ -12,8 +12,8 @@ dependencies:
     specifier: ^4.11.2
     version: 4.11.2
   '@vercel/analytics':
-    specifier: ^1.1.4
-    version: 1.1.4
+    specifier: ^1.2.0
+    version: 1.2.0(next@14.1.0)(react@18.2.0)
   '@vercel/og':
     specifier: ^0.6.2
     version: 0.6.2
@@ -83,8 +83,8 @@ devDependencies:
     specifier: ^8.56.0
     version: 8.56.0
   partykit:
-    specifier: ^0.0.90
-    version: 0.0.90
+    specifier: ^0.0.91
+    version: 0.0.91
   prettier:
     specifier: ^3.2.5
     version: 3.2.5
@@ -1875,9 +1875,19 @@ packages:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
     dev: true
 
-  /@vercel/analytics@1.1.4:
-    resolution: {integrity: sha512-CVzw3SLcPSc31tRDLLqDGqWQCv6/ylpEZnW7AYMvtvRsO2Q8hmjBVOqvo2Ok6MZnYf262O8c86LB2K9vK1/ZbQ==}
+  /@vercel/analytics@1.2.0(next@14.1.0)(react@18.2.0):
+    resolution: {integrity: sha512-Q9hduY6+i73Is1m57Y3OlawleeYVi4cvuh/0j6IwmSndMOE4+BKkMwjnwz+7xnqfZCanipIG6+q+zHalH9X0Zg==}
+    peerDependencies:
+      next: '>= 13'
+      react: ^18 || ^19
+    peerDependenciesMeta:
+      next:
+        optional: true
+      react:
+        optional: true
     dependencies:
+      next: 14.1.0(@babel/core@7.23.9)(react-dom@18.2.0)(react@18.2.0)
+      react: 18.2.0
       server-only: 0.0.1
     dev: false
 
@@ -3861,8 +3871,8 @@ packages:
       hex-rgb: 4.3.0
     dev: false
 
-  /partykit@0.0.90:
-    resolution: {integrity: sha512-wB/aoSmPJuG8TGIVXV1a3mSNYHb73RFUk0OdfbO/R1ErRuuMJElKX37a3IXFaK5h/kjS5Ch/M1Xq4JDl0iPtsg==}
+  /partykit@0.0.91:
+    resolution: {integrity: sha512-J+ZTvD+OC0HlTs6kPAbvIxfSpHrfvBDkRhf9Y5ByiyybziAIl5uB/aARLaLU0pU0z9okNiyDpUfX++MAkUbigg==}
     hasBin: true
     dependencies:
       '@cloudflare/workers-types': 4.20240208.0

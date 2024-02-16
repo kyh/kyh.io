@@ -344,6 +344,31 @@ Acquired in 2020.`,
   {
     width: 400,
     height: 300,
+    id: "init",
+    type: "card",
+    dragHandle: ".handle",
+    position: {
+      x: 1872.0000000000014,
+      y: 829,
+    },
+    data: {
+      title: "Init",
+      description:
+        "A comprehensive boilerplate to build, launch, and scale your next project",
+      links: [
+        {
+          text: "Visit Site",
+          url: "https://init.kyh.io",
+        },
+      ],
+      backgroundImage: "/screenshots/init.webp",
+      backgroundBlurData:
+        "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
+    },
+  },
+  {
+    width: 400,
+    height: 300,
     id: "tc",
     type: "card",
     dragHandle: ".handle",
