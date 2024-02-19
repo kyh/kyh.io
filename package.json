@@ -36,7 +36,7 @@
     "@types/matter-js": "^0.19.6",
     "@types/node": "^20.11.19",
     "@types/nprogress": "^0.2.3",
-    "@types/react": "^18.2.55",
+    "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
     "eslint": "^8.56.0",
     "partykit": "^0.0.91",

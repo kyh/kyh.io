@@ -58,25 +58,13 @@ My work involved Rio (our design system), Mix (the frontend framework, think Rea
     },
     data: {
       title: "Sequoia",
-      description: `The creative spirits. The underdogs. The resolute. The determined. The indefatigable. The outsiders. The defiant. The independent thinkers. The fighters and the true believers.
+      description: `Sequoia helps daring founders build legendary companies from idea to IPO and beyond.
 
-These are the founders with whom we partner. They’re extremely rare. And we’re ecstatic when we find them.
+We aim to be the first true believers in tomorrow’s most valuable and enduring businesses. We partner with a few outliers each year and go all-in, providing them with the hands-on help required at every stage of the company building journey.
 
-We partner early—sometimes when a company is no more than an idea. We know these crucial first decisions can have an exponential influence on the curve of success.
+Our expertise comes from 50 years of working with legendary founders like Steve Jobs, Larry Page, Jan Koum, Adi Tatarko, Brian Chesky, Jensen Huang, Anne Wojcicki, Eric Yuan, Patrick Collison, Julia Hartz, and Sebastian Siemiatkowski.
 
-Our style is not for everyone. We push when we see potential. We are direct. Some don’t like our approach. Most who know us do.
-
-Our team mirrors the founders with whom we partner: hungry overachievers with a deep-rooted need to win. Many come from humble backgrounds. Many are immigrants. Many formed or built companies of their own before joining Sequoia. Each shares the mindset of an entrepreneur, and knows what it means to walk that path.
-
-We value teamwork over showmanship. Our contribution to a company always comes from several of us working together. We’re skittish about the first person singular, and don’t care to see our names in the press.
-
-Our team is small. We prefer a few people with diverse strengths focused on a small number of companies, and we are always mindful of lessons learned — some painfully — that are eternal truths. Our network is strong. Our advantage comes from five decades of legendary founders helping each other.
-
-Long ago we made nonprofits the backbone of our limited partner base. Working for these charities brings intense meaning to what we do. It gives us a heightened sense of responsibility.
-
-We’re serious about our work, and carefully choose the words to describe it. Terms like “deal” or “exit” are forbidden. And while we’re sometimes called investors, that is not our frame of mind. We consider ourselves partners for the long term.
-
-We help the daring build legendary companies, from idea to IPO and beyond.`,
+In aggregate, Sequoia-backed companies account for more than 25% of NASDAQ's total value.`,
       links: [
         {
           text: "Visit Site",
@@ -130,7 +118,7 @@ We help the daring build legendary companies, from idea to IPO and beyond.`,
     },
     data: {
       title: "Cardiogram",
-      description: `Cardiogram was one of the first startups to detect heart conditions—such as atrial fibrillation, hypertension, diabetes, sleep apnea—using deep neural networks and the optical heart rate sensor on consumer wearables like Apple Watch, Google's WearOS, and Fitbit.
+      description: `Cardiogram was one of the first startups to detect heart conditions — such as atrial fibrillation, hypertension — using deep neural networks and the optical heart rate sensor on consumer wearables like Apple Watch, Google's WearOS, and Fitbit.
 
 5+ million people used the Cardiogram app, and we published research on deep learning for health sensor timeseries in JAMA Cardiology, AAAI-2018, and the American Heart Association's Scientific Sessions.
 
