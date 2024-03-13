@@ -17,12 +17,11 @@ const AboutPage = () => (
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>
-        Throughout my career, I&apos;ve held positions in both design and
-        engineering; working across seed, growth, and public organizations. This
+        I&apos;ve held positions in product, design, and engineering throughout
+        my career; working across seed, growth, and public organizations. This
         privilege has allowed me to gain experience in various aspects of
-        company building; from growing up with a 3 person team, learning how to
-        develop and expand products on a global scale, through to the challenges
-        of building an enduring company.
+        company building. From growing up with a startup team of 3, through to
+        the challenges of building a global enduring company.
       </AnimateSection>
     </section>
     <section className={styles.section}>
