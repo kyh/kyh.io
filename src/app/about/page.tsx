@@ -17,8 +17,8 @@ const AboutPage = () => (
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>
-        I&apos;ve held positions in product, design, and engineering throughout
-        my career; working across seed, growth, and public organizations. This
+        Throughout my career, I&apos;ve held positions in product, design, and
+        engineering; working across seed, growth, and public organizations. This
         privilege has allowed me to gain experience in various aspects of
         company building. From growing up with a startup team of 3, through to
         the challenges of building a global enduring company.
@@ -42,12 +42,12 @@ const AboutPage = () => (
           </Link>
         </AnimateSection>
         <AnimateSection as="li" delay={0.45}>
-          Led software development at some really{" "}
+          Led software development at various{" "}
           <Link href="https://amazon.com" src="/screenshots/amazon.webp">
-            big
+            large
           </Link>{" "}
           <Link href="https://grow.google/" src="/screenshots/google.webp">
-            companies
+            organizations
           </Link>
         </AnimateSection>
         <AnimateSection as="li" delay={0.5}>
