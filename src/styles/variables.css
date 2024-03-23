@@ -169,7 +169,7 @@
   --bg-highlighted: var(--colors-gray1000);
 
   --body-color-faded: var(--colors-gray700);
-  --body-color: var(--colors-gray100);
+  --body-color: var(--colors-gray300);
   --body-color-highlighted: var(--colors-gray0);
 
   --border-color: var(--colors-gray800);
@@ -179,7 +179,7 @@
   --filter-faded: brightness(0.5);
   --filter-highlight: brightness(10);
 
-  --link-color: var(--colors-gray100);
+  --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
 
   --colors-panel: var(--colors-gray950);

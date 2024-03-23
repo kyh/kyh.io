@@ -17,11 +17,11 @@ const AboutPage = () => (
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>
-        Throughout my career, I&apos;ve held positions in product, design, and
-        engineering; working across seed, growth, and public organizations. This
-        privilege has allowed me to gain experience in various aspects of
-        company building. From growing up with a startup team of 3, through to
-        the challenges of building a global enduring company.
+        Builder/Operator/Designer/Engineer. Throughout my career, I&apos;ve held
+        positions various product roles; working across seed, growth, and public
+        organizations. This privilege has allowed me to gain experience in
+        various aspects of company building. From growing up with a startup team
+        of 3, through to the challenges of building a global enduring company.
       </AnimateSection>
     </section>
     <section className={styles.section}>
@@ -101,69 +101,91 @@ const AboutPage = () => (
         </AnimateSection>
       </ul>
     </section>
-    <AnimateSection as="h2" delay={0.8}>
-      Employment Badges
-    </AnimateSection>
-    <section className={styles.logos}>
-      <AnimateSection delay={0.85}>
-        <Link
-          href="https://www.crunchbase.com/organization/sequoia-capital"
-          noStyles
-        >
-          <Image
-            width={150}
-            height={75}
-            src="/logos/sequoia.svg"
-            alt="Sequoia Capital"
-          />
-        </Link>
+    <section className={styles.section}>
+      <AnimateSection as="h2" delay={0.8}>
+        Employment Badges
       </AnimateSection>
-      <AnimateSection delay={0.9}>
-        <Link href="https://www.crunchbase.com/organization/vercel" noStyles>
-          <Image width={150} height={75} src="/logos/vercel.svg" alt="Vercel" />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={0.95}>
-        <Link href="https://www.crunchbase.com/organization/google" noStyles>
-          <Image width={150} height={75} src="/logos/google.svg" alt="Google" />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={1}>
-        <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
-          <Image width={150} height={75} src="/logos/amazon.svg" alt="Amazon" />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={1.05}>
-        <Link
-          href="https://www.crunchbase.com/organization/atrium-lts"
-          noStyles
-        >
-          <Image width={150} height={75} src="/logos/atrium.svg" alt="Atrium" />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={1.1}>
-        <Link
-          href="https://www.crunchbase.com/organization/cardiogram"
-          noStyles
-        >
-          <Image
-            width={150}
-            height={75}
-            src="/logos/cardiogram.svg"
-            alt="Cardiogram"
-          />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={1.15}>
-        <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
-          <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
-        </Link>
-      </AnimateSection>
-      <AnimateSection delay={1.2}>
-        <Link href="https://www.crunchbase.com/organization/ted" noStyles>
-          <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
-        </Link>
-      </AnimateSection>
+      <section className={styles.logos}>
+        <AnimateSection delay={0.85}>
+          <Link
+            href="https://www.crunchbase.com/organization/sequoia-capital"
+            noStyles
+          >
+            <Image
+              width={150}
+              height={75}
+              src="/logos/sequoia.svg"
+              alt="Sequoia Capital"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={0.9}>
+          <Link href="https://www.crunchbase.com/organization/vercel" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/vercel.svg"
+              alt="Vercel"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={0.95}>
+          <Link href="https://www.crunchbase.com/organization/google" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/google.svg"
+              alt="Google"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1}>
+          <Link href="https://www.crunchbase.com/organization/amazon" noStyles>
+            <Image
+              width={150}
+              height={75}
+              src="/logos/amazon.svg"
+              alt="Amazon"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.05}>
+          <Link
+            href="https://www.crunchbase.com/organization/atrium-lts"
+            noStyles
+          >
+            <Image
+              width={150}
+              height={75}
+              src="/logos/atrium.svg"
+              alt="Atrium"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.1}>
+          <Link
+            href="https://www.crunchbase.com/organization/cardiogram"
+            noStyles
+          >
+            <Image
+              width={150}
+              height={75}
+              src="/logos/cardiogram.svg"
+              alt="Cardiogram"
+            />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.15}>
+          <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
+            <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
+          </Link>
+        </AnimateSection>
+        <AnimateSection delay={1.2}>
+          <Link href="https://www.crunchbase.com/organization/ted" noStyles>
+            <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
+          </Link>
+        </AnimateSection>
+      </section>
     </section>
     <section className={styles.section}>
       <AnimateSection as="h2" delay={1.3}>

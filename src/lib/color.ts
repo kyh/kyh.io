@@ -1,5 +1,3 @@
-import sampleSize from "lodash/sampleSize";
-
 const colors = {
   tomato: {
     color: "var(--colors-tomato9)",
@@ -69,6 +67,22 @@ export const getColorById = (
   hue: string;
 } => {
   return colorValues[hashCode(id, colorValues.length)]!;
+};
+
+const sampleSize = <T>(array: T[], size: number): T[] => {
+  const shuffled = array.slice(0);
+  let index = -1;
+  const length = array.length;
+  const lastIndex = length - 1;
+
+  size = Math.min(size, length);
+  while (++index < size) {
+    const rand = index + Math.floor(Math.random() * (lastIndex - index + 1));
+    const value = shuffled[rand]!;
+    shuffled[rand] = shuffled[index]!;
+    shuffled[index] = value;
+  }
+  return shuffled.slice(0, size);
 };
 
 const hashCode = (string?: string, mod?: number) => {

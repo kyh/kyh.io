@@ -49,7 +49,7 @@
   pointer-events: none;
   position: absolute;
   top: 0;
-  transition: opacity 0.5s;
+  transition: opacity 0.5s ease-in-out;
   width: 100%;
 }
 

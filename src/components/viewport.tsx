@@ -30,11 +30,6 @@ export const ViewportProvider = ({ children }: ViewportProviderProps) => {
       const windowWidth = document.documentElement.clientWidth;
       const windowHeight = document.documentElement.clientHeight;
 
-      document.documentElement.style.setProperty(
-        "--h-screen",
-        `${windowHeight}px`,
-      );
-
       setSize((state) => ({
         ...state,
         width: windowWidth,

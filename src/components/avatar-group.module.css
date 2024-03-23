@@ -1,13 +1,14 @@
 .container {
   display: flex;
   margin-right: 8px;
-  transition: opacity 0.2s ease-out;
+  transition: opacity 0.2s ease-in-out;
 }
 
 .avatar {
   margin-right: -8px;
   border-radius: 9999px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 

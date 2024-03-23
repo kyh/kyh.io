@@ -131,7 +131,7 @@ const generateTextStats = (ref: React.RefObject<HTMLDivElement>) => {
         context.font = getComputedStyle(ref.current ?? document.body).font;
         hasCalculatedFont = true;
       }
-      cache.set(letter, context.measureText(letter)?.width ?? 0);
+      cache.set(letter, (context.measureText(letter)?.width ?? 0) - 0.2);
     }
 
     return cache.get(letter) ?? 0;

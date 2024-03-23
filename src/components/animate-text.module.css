@@ -9,12 +9,13 @@
   display: inline-block;
   inset: 0;
   color: canvasText;
-  animation: flash calc(var(--speed, 0.25) * 1s) calc(var(--index, 0) * 0.05s)
-    steps(1, end);
+  animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
 }
 
 @keyframes flash {
-  0%,
+  0% {
+    content: "_";
+  }
   20% {
     content: "_";
   }
@@ -38,7 +39,7 @@
   transform: translateY(30px);
   animation: animateSectionIn;
   animation-fill-mode: forwards;
-  animation-timing-function: ease-out-out;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes animateSectionIn {

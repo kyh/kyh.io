@@ -28,6 +28,7 @@ export const StatSpan = ({
       className={styles.statSpan}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      data-text={children?.toString()}
     >
       <ConditionalContainer
         condition={shouldWrap}

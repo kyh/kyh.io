@@ -1,5 +1,5 @@
-import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
+import { GeistSans } from "geist/font/sans";
 
 import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer";
@@ -7,15 +7,6 @@ import { Providers } from "@/components/providers";
 
 import "@/styles/variables.css";
 import "@/styles/global.css";
-
-const gilroy = localFont({
-  src: [
-    { path: "../../public/fonts/gilroy-regular.woff2", weight: "400" },
-    { path: "../../public/fonts/gilroy-medium.woff2", weight: "500" },
-  ],
-  variable: "--font-primary",
-  display: "swap",
-});
 
 export const metadata = {
   title: {
@@ -61,7 +52,7 @@ export const metadata = {
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
-  <html lang="en" className={gilroy.variable}>
+  <html lang="en" className={GeistSans.className}>
     <body>
       <Providers>
         <div className="blurHeader" aria-hidden="true" />

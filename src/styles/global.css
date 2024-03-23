@@ -14,10 +14,10 @@ body {
 }
 
 body {
-  font-family: var(--font-primary), "Helvetica", sans-serif;
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.8;
   color: var(--body-color);
+  font-weight: 300;
   background-color: var(--bg-highlighted) !important;
   background-image: radial-gradient(
     150% 150% at 0% 20%,
@@ -57,7 +57,7 @@ h4,
 h5,
 h6 {
   overflow-wrap: break-word;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
 }
 

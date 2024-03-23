@@ -8,7 +8,7 @@ button.link {
   overflow: hidden;
   border-bottom: 1px dotted var(--link-color);
   color: var(--link-color);
-  transition: border-color 0.4s ease;
+  transition: border-color 0.4s ease-in-out;
 }
 
 .link:hover {
@@ -25,6 +25,8 @@ button.link {
   white-space: nowrap;
   width: 0%;
   transition: width 0.4s 0.3s;
+  transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
+  pointer-events: none;
 }
 
 .link:hover::before {
@@ -43,6 +45,7 @@ button.link {
   transform: translate3d(-102%, 0, 0);
   transition: transform 0.4s;
   transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
+  pointer-events: none;
 }
 
 .link:hover::after {
