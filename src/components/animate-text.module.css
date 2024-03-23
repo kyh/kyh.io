@@ -1,69 +1,31 @@
-.text {
+.scramble > span {
   position: relative;
-  overflow: hidden;
-  padding: 0 20px;
-  margin: 0 -20px;
-  line-height: 1.2;
+  color: transparent;
 }
 
-.text::after {
-  content: "";
-  background-color: var(--bg-highlighted);
-  width: 100%;
-  height: 100%;
-  border-left: 4px solid var(--body-color);
+.scramble > span::after {
+  content: attr(data-char);
   position: absolute;
-  top: 0;
-  left: 0;
-  transform: skew(-20deg) translateX(5%);
+  display: inline-block;
+  inset: 0;
+  color: canvasText;
+  animation: flash calc(var(--speed, 0.25) * 1s) calc(var(--index, 0) * 0.05s)
+    steps(1, end);
 }
 
-.text.gradientFade::after {
-  --fade-from: #f6f7f9;
-  --fade-to: #f2f4f7;
-
-  background-image: radial-gradient(
-    150% 150% at 0% 20%,
-    var(--fade-from) 20%,
-    var(--fade-to)
-  );
-}
-
-[data-theme="dark"] .text.gradientFade::after {
-  --fade-from: #030408;
-  --fade-to: #05060b;
-}
-
-.entering::after {
-  animation: animateTextIn 0.5s ease-out forwards;
-}
-
-.entered::after {
-  transform: skew(-20deg) translateX(95%);
-}
-
-.reveal::after {
-  animation: animateTextReveal 0.5s ease-out infinite;
-}
-
-@keyframes animateTextIn {
-  0% {
-    transform: skew(-20deg) translateX(5%);
+@keyframes flash {
+  0%,
+  20% {
+    content: "_";
   }
-  100% {
-    transform: skew(-20deg) translateX(95%);
+  40% {
+    content: var(--char-1);
   }
-}
-
-@keyframes animateTextReveal {
-  0% {
-    transform: skew(-20deg) translateX(95%);
+  60% {
+    content: var(--char-2);
   }
-  50% {
-    transform: skew(-20deg) translateX(55%);
-  }
-  100% {
-    transform: skew(-20deg) translateX(95%);
+  80% {
+    content: var(--char-3);
   }
 }
 

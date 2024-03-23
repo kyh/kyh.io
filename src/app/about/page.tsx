@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { AnimateSection, AnimateText } from "@/components/animate-text";
+import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Link } from "@/components/link";
 import { social } from "@/lib/social";
 import styles from "@/styles/page.module.css";
@@ -13,7 +13,7 @@ export const metadata = {
 const AboutPage = () => (
   <main className={styles.container}>
     <header className={styles.header}>
-      <AnimateText className={styles.title}>About me</AnimateText>
+      <ScrambleText className={styles.title}>About me</ScrambleText>
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>

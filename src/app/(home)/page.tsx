@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 
 import type { SceneRef } from "./components/scene";
 import type { Stat } from "@/lib/stat";
-import { AnimateSection, AnimateText } from "@/components/animate-text";
+import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { ConditionalContainer } from "@/components/conditional-container";
 import { statMap } from "@/lib/stat";
 import styles from "@/styles/page.module.css";
@@ -42,15 +42,12 @@ const HomePage = () => {
     <main className={`${styles.container} ${styles.relative}`}>
       <DynamicScene currentStat={stat} sceneRef={sceneRef} />
       <AnimateSection as="header" className={styles.header}>
-        <AnimateText className={styles.title}>
-          <button
-            type="button"
-            onMouseEnter={() => handleMouseEnter(statMap.home!)}
-            onClick={handleTrigger}
-          >
-            Kaiyu Hsu
-          </button>
-        </AnimateText>
+        <ScrambleText
+          onMouseEnter={() => handleMouseEnter(statMap.home!)}
+          onClick={handleTrigger}
+        >
+          Kaiyu Hsu
+        </ScrambleText>
       </AnimateSection>
       <AnimateSection as="p" delay={0.1}>
         Hello world. You can call me Kai since we're pretty much friends now. I
