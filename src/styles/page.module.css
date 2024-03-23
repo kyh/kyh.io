@@ -54,7 +54,7 @@
   transition: filter ease 0.3s;
 }
 
-.logos a:focus img,
+.logos a:focus-visible img,
 .logos img:hover {
   filter: var(--filter-highlight);
 }
@@ -77,19 +77,23 @@
   transition: fill 0.3s ease-in-out;
 }
 
-.git:hover path {
+.git:hover path,
+.git:focus-visible path {
   fill: var(--logo-gh);
 }
 
-.twitter:hover path {
+.twitter:hover path,
+.twitter:focus-visible path {
   fill: var(--logo-tw);
 }
 
-.linkedin:hover path {
+.linkedin:hover path,
+.linkedin:focus-visible path {
   fill: var(--logo-in);
 }
 
-.dribbble:hover path {
+.dribbble:hover path,
+.dribbble:focus-visible path {
   fill: var(--logo-dr);
 }
 

@@ -5,6 +5,7 @@ import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Drawer } from "vaul";
 
+import { ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
 import styles from "./card-node.module.css";
 
@@ -89,7 +90,11 @@ export const CardNode = memo(({ id, data }: NodeProps<CardNodeData>) => {
             <div className={styles.drawerContentScroll}>
               <div className={styles.drawerBar} />
               <div className={styles.drawerBody}>
-                {data.title && <Drawer.Title>{data.title}</Drawer.Title>}
+                {data.title && (
+                  <Drawer.Title asChild>
+                    <ScrambleText>{data.title}</ScrambleText>
+                  </Drawer.Title>
+                )}
                 {data.description && (
                   <Drawer.Description>{data.description}</Drawer.Description>
                 )}

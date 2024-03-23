@@ -17,8 +17,8 @@ const AboutPage = () => (
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>
-        Builder/Operator/Designer/Engineer. Throughout my career, I&apos;ve held
-        positions various product roles; working across seed, growth, and public
+        Engineering/Product/Design. Throughout my career, I&apos;ve held various
+        operator positions working across seed, growth, and public
         organizations. This privilege has allowed me to gain experience in
         various aspects of company building. From growing up with a startup team
         of 3, through to the challenges of building a global enduring company.
