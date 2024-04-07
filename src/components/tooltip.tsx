@@ -264,7 +264,7 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
 
 const cols = 11;
 const rows = 8;
-const duration = 0.1;
+const duration = 0.07;
 const baseDelay = duration / 2;
 const blocks = Array.from({ length: cols * rows }, (_, i) => i);
 
