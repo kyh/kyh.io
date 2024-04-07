@@ -103,7 +103,7 @@ export const Link = ({
   return (
     <Tooltip open={open}>
       <TooltipTrigger asChild>{action}</TooltipTrigger>
-      <TooltipContent showLines>{content}</TooltipContent>
+      <TooltipContent type="block">{content}</TooltipContent>
     </Tooltip>
   );
 };

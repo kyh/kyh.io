@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -14,7 +18,6 @@ import {
   useInteractions,
   useMergeRefs,
   useRole,
-  useTransitionStatus,
 } from "@floating-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -97,8 +100,6 @@ export const Tooltip = ({
   children,
   ...options
 }: { children: React.ReactNode } & TooltipOptions) => {
-  // This can accept any props as options, e.g. `placement`,
-  // or other positioning options.
   const tooltip = useTooltip(options);
 
   return (
@@ -147,26 +148,53 @@ TooltipTrigger.displayName = "TooltipTrigger";
 
 export const TooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.HTMLProps<HTMLDivElement> & { showLines?: boolean }
->(({ className, showLines, ...props }, propRef) => {
+  React.HTMLProps<HTMLDivElement> & {
+    type?: "default" | "block";
+  }
+>(({ className, type = "default", ...props }, propRef) => {
   const context = useTooltipContext();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
-  const { isMounted, status } = useTransitionStatus(context.context, {
-    duration: 750,
-  });
+  const { children: floatingPropsChildren, ...floatingProps } =
+    context.getFloatingProps(props);
+  const children = floatingPropsChildren as React.ReactNode;
+  const blockType = type === "block";
+
+  const tooltipMotionProps = blockType
+    ? {}
+    : {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.23 },
+      };
+
+  const contentMotionProps = blockType
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1, transition: { delay: totalDelay * 2 } },
+        exit: { opacity: 0 },
+      }
+    : {};
 
   return (
     <FloatingPortal>
-      {isMounted && (
-        <div
-          className={`${styles.tooltip} ${className ?? ""}`}
-          ref={ref}
-          style={context.floatingStyles}
-          data-status={status}
-          {...context.getFloatingProps(props)}
-        />
-      )}
-      {showLines && (
+      <AnimatePresence>
+        {context.open && (
+          <motion.div
+            className={`${styles.tooltip} ${blockType ? styles.block : ""} ${className ?? ""}`}
+            ref={ref}
+            style={context.floatingStyles}
+            {...tooltipMotionProps}
+            {...floatingProps}
+          >
+            {blockType && <TooltipBlocks context={context} />}
+            <motion.div className={styles.content} {...contentMotionProps}>
+              {children}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {blockType && (
         <AnimatePresence>
           {context.open && <TooltipLines context={context} />}
         </AnimatePresence>
@@ -231,5 +259,41 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
         }}
       />
     </>
+  );
+};
+
+const cols = 11;
+const rows = 8;
+const duration = 0.1;
+const baseDelay = duration / 2;
+const blocks = Array.from({ length: cols * rows }, (_, i) => i);
+
+const calculateDelay = (n: number) =>
+  baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
+
+const totalDelay = calculateDelay(cols * rows);
+
+const TooltipBlocks = ({ context }: { context: ContextType }) => {
+  if (!context?.x || !context.y) return null;
+
+  return (
+    <div
+      className={styles.blocksContainer}
+      style={{ "--cols": cols, "--rows": rows } as React.CSSProperties}
+    >
+      {blocks.map((i) => (
+        <motion.div
+          key={i}
+          className={styles.block}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{
+            duration,
+            delay: calculateDelay(i),
+          }}
+        />
+      ))}
+    </div>
   );
 };
