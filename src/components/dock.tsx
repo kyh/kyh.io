@@ -1,7 +1,7 @@
 "use client";
 
 import type { MotionValue } from "framer-motion";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import Link from "next/link";
 import useRaf from "@rooks/use-raf";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -59,6 +59,8 @@ const links = [
 export const Dock = () => {
   const mouseX = useMotionValue<null | number>(null);
 
+  const resetMouseX = useCallback(() => mouseX.set(null), [mouseX]);
+
   return (
     <motion.nav
       className={styles.container}
@@ -73,11 +75,16 @@ export const Dock = () => {
       <ul
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
-        onMouseLeave={() => mouseX.set(null)}
+        onMouseLeave={resetMouseX}
       >
         {links.map(({ href, label, icon }) => (
           <DockItem key={href} mouseX={mouseX}>
-            <Link className={styles.link} href={href} title={label}>
+            <Link
+              className={styles.link}
+              href={href}
+              title={label}
+              onClick={resetMouseX}
+            >
               <span className="sr-only">{label}</span>
               {icon}
             </Link>
