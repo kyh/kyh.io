@@ -3,6 +3,7 @@
 import type { MotionValue } from "framer-motion";
 import { useCallback, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import useRaf from "@rooks/use-raf";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
@@ -58,7 +59,7 @@ const links = [
 
 export const Dock = () => {
   const mouseX = useMotionValue<null | number>(null);
-
+  const pathname = usePathname();
   const resetMouseX = useCallback(() => mouseX.set(null), [mouseX]);
 
   return (
@@ -88,6 +89,7 @@ export const Dock = () => {
               <span className="sr-only">{label}</span>
               {icon}
             </Link>
+            {href === pathname && <div className={styles.activeDot} />}
           </DockItem>
         ))}
         <DockItem mouseX={mouseX}>
