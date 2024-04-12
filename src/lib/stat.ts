@@ -8,9 +8,7 @@ export type Stat = {
   href?: string;
 };
 
-export type StatMap = Record<Stat["id"], Stat>;
-
-export const statMap: StatMap = {
+export const statMap = {
   home: {
     id: "home",
     spawn: 25,
@@ -42,4 +40,4 @@ export const statMap: StatMap = {
     href: social.dribbble,
     spawn: 15,
   },
-};
+} as const;

@@ -19,7 +19,7 @@ const DynamicScene = dynamic(() =>
 const HomePage = () => {
   const sceneRef = useRef<SceneRef>();
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const [stat, setStat] = useState<Stat>(statMap.home!);
+  const [stat, setStat] = useState<Stat>(statMap.home);
 
   const handleTrigger = () => {
     if (sceneRef.current) {
@@ -30,11 +30,11 @@ const HomePage = () => {
   const handleMouseEnter = (stat: Stat) => {
     setStat(stat);
 
-    if (stat.id === statMap.home?.id) return;
+    if (stat.id === statMap.home.id) return;
 
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      setStat(statMap.home!);
+      setStat(statMap.home);
     }, 5000);
   };
 
@@ -43,28 +43,28 @@ const HomePage = () => {
       <DynamicScene currentStat={stat} sceneRef={sceneRef} />
       <AnimateSection as="header" className={styles.header}>
         <ScrambleText
-          onMouseEnter={() => handleMouseEnter(statMap.home!)}
+          onMouseEnter={() => handleMouseEnter(statMap.home)}
           onClick={handleTrigger}
         >
           Kaiyu Hsu
         </ScrambleText>
       </AnimateSection>
       <AnimateSection as="p" delay={0.1}>
-        Hello world. You can call me Kai since we're pretty much friends now. I
-        enjoy{" "}
-        <StatSpan stat={statMap.build!} onMouseEnter={handleMouseEnter}>
+        Hello world. You can call me Kai since we&apos;re pretty much friends
+        now. I enjoy{" "}
+        <StatSpan stat={statMap.build} onMouseEnter={handleMouseEnter}>
           building things
         </StatSpan>{" "}
         for the internet. By day, I get to do that through{" "}
-        <StatSpan stat={statMap.invest!} onMouseEnter={handleMouseEnter}>
+        <StatSpan stat={statMap.invest} onMouseEnter={handleMouseEnter}>
           investing
         </StatSpan>
         ,{" "}
-        <StatSpan stat={statMap.advise!} onMouseEnter={handleMouseEnter}>
+        <StatSpan stat={statMap.advise} onMouseEnter={handleMouseEnter}>
           advising
         </StatSpan>
         , and{" "}
-        <StatSpan stat={statMap.product!} onMouseEnter={handleMouseEnter}>
+        <StatSpan stat={statMap.product} onMouseEnter={handleMouseEnter}>
           working on products
         </StatSpan>{" "}
         you may not have heard of, yet. Welcome to my corner of the internet.
@@ -89,7 +89,7 @@ const Counters = ({ stat }: { stat: Stat }) => {
     };
   }, []);
 
-  if (stat.id === statMap.home?.id && time) {
+  if (stat.id === statMap.home.id && time) {
     counter = (
       <>
         <Counter text={time} />
@@ -111,7 +111,7 @@ const Counters = ({ stat }: { stat: Stat }) => {
           )}
         >
           <span>
-            {stat.label && stat.label.startsWith("+") ? "" : <>&nbsp;</>}
+            {stat.label?.startsWith("+") ? "" : <>&nbsp;</>}
             {stat.label}
           </span>
         </ConditionalContainer>

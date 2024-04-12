@@ -126,7 +126,7 @@ export const TooltipTrigger = React.forwardRef<
         ...props,
         ...children.props,
         "data-state": context.open ? "open" : "closed",
-        "data-side": context.placement?.split("-")[0],
+        "data-side": context.placement.split("-")[0],
       }),
     );
   }
@@ -136,7 +136,7 @@ export const TooltipTrigger = React.forwardRef<
       ref={ref}
       // The user can style the trigger based on the state
       data-state={context.open ? "open" : "closed"}
-      data-side={context.placement?.split("-")[0]}
+      data-side={context.placement.split("-")[0]}
       {...context.getReferenceProps(props)}
     >
       {children}
@@ -212,7 +212,7 @@ const easeInOutQuint = (x: number) => {
 const TooltipLines = ({ context }: { context: ContextType }) => {
   const floatingEl = context?.elements.floating;
 
-  if (!floatingEl || !context?.x || !context.y) return null;
+  if (!floatingEl || !context.x || !context.y) return null;
 
   return (
     <>
