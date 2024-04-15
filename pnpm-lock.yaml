@@ -53,14 +53,14 @@ dependencies:
 
 devDependencies:
   '@kyh/eslint-config':
-    specifier: ^0.1.7
-    version: 0.1.7(eslint@8.57.0)(typescript@5.4.5)
+    specifier: ^0.1.8
+    version: 0.1.8(eslint@8.57.0)(typescript@5.4.5)
   '@kyh/prettier-config':
-    specifier: ^0.1.7
-    version: 0.1.7
+    specifier: ^0.1.8
+    version: 0.1.8
   '@kyh/tsconfig':
-    specifier: ^0.1.7
-    version: 0.1.7
+    specifier: ^0.1.8
+    version: 0.1.8
   '@types/lodash':
     specifier: ^4.17.0
     version: 4.17.0
@@ -912,8 +912,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@kyh/eslint-config@0.1.7(eslint@8.57.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-SvirI+ESjLHv1xE8igF/WbRNm/g9xOGSRs9XmpvxiJhwD7kbW3Et6vin6NWsFeXiQG1PiKegFl8Bkt5uaMjMpA==}
+  /@kyh/eslint-config@0.1.8(eslint@8.57.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-PHPB/w0+WwuJ/ocOrixI47Q8M2Lllk33zk1z+SERgQKFQNjG00rSUywUMGtjc6t4mcGA1/ug5NrsMxTDpQu7hQ==}
     dependencies:
       '@next/eslint-plugin-next': 14.2.1
       '@typescript-eslint/eslint-plugin': 7.6.0(@typescript-eslint/parser@7.6.0)(eslint@8.57.0)(typescript@5.4.5)
@@ -932,8 +932,8 @@ packages:
       - typescript
     dev: true
 
-  /@kyh/prettier-config@0.1.7:
-    resolution: {integrity: sha512-G3F0Q4Flar+sxD9tBvxyvNyOO9V+mTRMrverfXyjT/md4oPzRDykiYtyJDRxzs+iIWDl4DcGGuoGAn9OkYBwSQ==}
+  /@kyh/prettier-config@0.1.8:
+    resolution: {integrity: sha512-E4bmaG4Ns4jdfhYbr+DW6CLGrlfSchwWtEe77JECdOmwevHXcfipHAAG6e7yCmSLWLnb0UGiIeSR616R/1O9+w==}
     dependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.2.1(prettier@3.2.5)
       prettier: 3.2.5
@@ -957,8 +957,8 @@ packages:
       - supports-color
     dev: true
 
-  /@kyh/tsconfig@0.1.7:
-    resolution: {integrity: sha512-8ZIjEiqxciJttHifnAq8qWdQhkHcSB2+NNUwJNORQqZK/e54eh83lRkva1gb7Y6iTHyTSq19k310/Fy6hBbsNg==}
+  /@kyh/tsconfig@0.1.8:
+    resolution: {integrity: sha512-EJ3ydS4OI8NmD72rFM0Fwqubql1SZlRZ83rHgEQwy3P7DEWscpg9Fv2Y8i54CXZusXetsVjb9Yhy4YCcNqeHdg==}
     dev: true
 
   /@next/env@14.2.1:
@@ -2126,7 +2126,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001609
+      caniuse-lite: 1.0.30001610
       electron-to-chromium: 1.4.736
       node-releases: 2.0.14
       update-browserslist-db: 1.0.13(browserslist@4.23.0)
@@ -2158,8 +2158,8 @@ packages:
     resolution: {integrity: sha512-dU+Tx2fsypxTgtLoE36npi3UqcjSSMNYfkqgmoEhtZrraP5VWq0K7FkWVTYa8eMPtnU/G2txVsfdCJTn9uzpuQ==}
     dev: false
 
-  /caniuse-lite@1.0.30001609:
-    resolution: {integrity: sha512-JFPQs34lHKx1B5t1EpQpWH4c+29zIyn/haGsbpfq3suuV9v56enjFt23zqijxGTMwy1p/4H2tjnQMY+p1WoAyA==}
+  /caniuse-lite@1.0.30001610:
+    resolution: {integrity: sha512-QFutAY4NgaelojVMjY63o6XlZyORPaLfyMnsl3HgnWdJUcX6K0oaJymHjH8PT5Gk7sTm8rvC/c5COUQKXqmOMA==}
 
   /capnp-ts@0.7.0:
     resolution: {integrity: sha512-XKxXAC3HVPv7r674zP0VC3RTXz+/JKhfyw94ljvF80yynK6VkTnqE3jMuN8b3dUVmmc43TjyxjW4KTsmB3c86g==}
@@ -3762,7 +3762,7 @@ packages:
       '@next/env': 14.2.1
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001609
+      caniuse-lite: 1.0.30001610
       graceful-fs: 4.2.11
       postcss: 8.4.31
       react: 18.2.0

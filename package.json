@@ -29,9 +29,9 @@
     "vaul": "^0.9.0"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "^0.1.7",
-    "@kyh/prettier-config": "^0.1.7",
-    "@kyh/tsconfig": "^0.1.7",
+    "@kyh/eslint-config": "^0.1.8",
+    "@kyh/prettier-config": "^0.1.8",
+    "@kyh/tsconfig": "^0.1.8",
     "@types/lodash": "^4.17.0",
     "@types/matter-js": "^0.19.6",
     "@types/node": "^20.12.7",
