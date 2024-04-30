@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { GeistSans } from "geist/font/sans";
 
@@ -8,7 +9,7 @@ import { Providers } from "@/components/providers";
 import "@/styles/variables.css";
 import "@/styles/global.css";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: {
     default: "Kaiyu Hsu",
     template: "%s | Kaiyu Hsu",
@@ -23,7 +24,7 @@ export const metadata = {
     siteName: "Kaiyu Hsu",
     images: [
       {
-        url: "https://kyh.io/og.jpg",
+        url: "https://kyh.io/og.jpeg",
         width: 1920,
         height: 1080,
       },
@@ -46,9 +47,21 @@ export const metadata = {
     title: "Kaiyu Hsu",
     card: "summary_large_image",
   },
-  icons: {
-    shortcut: "/favicon.ico",
-  },
+  icons: [
+    {
+      rel: "apple-touch-icon",
+      sizes: "180x180",
+      url: "/favicon/apple-touch-icon.png",
+    },
+    { rel: "icon", sizes: "32x32", url: "/favicon/favicon-32x32.png" },
+    { rel: "icon", sizes: "16x16", url: "/favicon/favicon-16x16.png" },
+    { rel: "manifest", url: "/favicon/site.webmanifest" },
+    {
+      rel: "mask-icon",
+      color: "#000000",
+      url: "/favicon/safari-pinned-tab.svg",
+    },
+  ],
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
