@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GeistSans } from "geist/font/sans";
 
 import { Dock } from "@/components/dock";
@@ -74,6 +75,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
         {children}
       </Providers>
       <Analytics />
+      <SpeedInsights />
     </body>
   </html>
 );
