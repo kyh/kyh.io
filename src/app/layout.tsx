@@ -6,61 +6,66 @@ import { GeistSans } from "geist/font/sans";
 import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer";
 import { Providers } from "@/components/providers";
+import { siteConfig } from "@/lib/config";
 
 import "@/styles/variables.css";
 import "@/styles/global.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Kaiyu Hsu",
-    template: "%s | Kaiyu Hsu",
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
+  description: siteConfig.description,
   openGraph: {
-    title: "Kaiyu Hsu",
-    description:
-      "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
-    url: "https://kyh.io",
-    siteName: "Kaiyu Hsu",
+    locale: "en-US",
+    type: "website",
+    url: siteConfig.url,
+    title: siteConfig.name,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
     images: [
       {
-        url: "https://kyh.io/og.jpeg",
+        url: `${siteConfig.url}/og.jpg`,
         width: 1920,
         height: 1080,
       },
     ],
-    locale: "en-US",
-    type: "website",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
   twitter: {
-    title: "Kaiyu Hsu",
     card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [
+      {
+        url: `${siteConfig.url}/og.jpg`,
+        width: 1920,
+        height: 1080,
+      },
+    ],
+    creator: siteConfig.twitter,
   },
   icons: [
     {
       rel: "apple-touch-icon",
       sizes: "180x180",
-      url: "/favicon/apple-touch-icon.png",
+      url: `${siteConfig.url}/favicon/apple-touch-icon.png`,
     },
-    { rel: "icon", sizes: "32x32", url: "/favicon/favicon-32x32.png" },
-    { rel: "icon", sizes: "16x16", url: "/favicon/favicon-16x16.png" },
-    { rel: "manifest", url: "/favicon/site.webmanifest" },
+    {
+      rel: "icon",
+      sizes: "32x32",
+      url: `${siteConfig.url}/favicon/favicon-32x32.png" `,
+    },
+    {
+      rel: "icon",
+      sizes: "16x16",
+      url: `${siteConfig.url}/favicon/favicon-16x16.png" `,
+    },
     {
       rel: "mask-icon",
       color: "#000000",
-      url: "/favicon/safari-pinned-tab.svg",
+      url: `${siteConfig.url}/favicon/safari-pinned-tab.svg`,
     },
   ],
 };
