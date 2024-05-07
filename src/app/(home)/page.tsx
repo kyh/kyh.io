@@ -53,7 +53,7 @@ const HomePage = () => {
         Hello world. You can call me Kai since we&apos;re pretty much friends
         now. I enjoy{" "}
         <StatSpan stat={statMap.build} onMouseEnter={handleMouseEnter}>
-          building things
+          creating things
         </StatSpan>{" "}
         for the internet. By day, I get to do that through{" "}
         <StatSpan stat={statMap.invest} onMouseEnter={handleMouseEnter}>
@@ -65,7 +65,7 @@ const HomePage = () => {
         </StatSpan>
         , and{" "}
         <StatSpan stat={statMap.product} onMouseEnter={handleMouseEnter}>
-          working on products
+          building products
         </StatSpan>{" "}
         you may not have heard of, yet. Welcome to my corner of the internet.
       </AnimateSection>
