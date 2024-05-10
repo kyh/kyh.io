@@ -35,7 +35,7 @@
     "@kyh/tsconfig": "^0.1.8",
     "@types/lodash": "^4.17.1",
     "@types/matter-js": "^0.19.6",
-    "@types/node": "^20.12.10",
+    "@types/node": "^20.12.11",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
