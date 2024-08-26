@@ -9,7 +9,6 @@ export const metadata = {
 };
 
 const ProjectsPage = () => (
-  // eslint-disable-next-line react/no-unknown-property
   <main className={styles.projectsContainer} vaul-drawer-wrapper="">
     <Flow />
   </main>
