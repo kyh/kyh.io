@@ -39,33 +39,75 @@ type Velocity = {
 };
 
 type DragHandlers = {
+  moving: boolean;
   dragging: boolean;
+  draggedFromInitial: boolean;
   handleStart: (e: React.MouseEvent | React.TouchEvent) => void;
   handleMove: (e: React.MouseEvent | React.TouchEvent) => void;
   handleEnd: () => void;
   handleWheel: (e: React.WheelEvent) => void;
 };
 
+const DRAG_THRESHOLD = 5;
+
 const useDrag = (
   onDrag: (deltaX: number, deltaY: number) => void,
 ): DragHandlers => {
   const [dragging, setDragging] = useState<boolean>(false);
-  const [lastPosition, setLastPosition] = useState<Position>({ x: 0, y: 0 });
-  const [velocity, setVelocity] = useState<Velocity>({ x: 0, y: 0 });
+  const [draggedFromInitial, setDraggedFromInitial] = useState<boolean>(false);
+  const [moving, setMoving] = useState<boolean>(false);
+  const initialPositionRef = useRef<Position>({ x: 0, y: 0 });
+  const lastPositionRef = useRef<Position>({ x: 0, y: 0 });
+  const velocityRef = useRef<Velocity>({ x: 0, y: 0 });
+  const animationRef = useRef<number>();
 
   const updateVelocity = useCallback((xDelta: number, yDelta: number) => {
-    const velocityMagnitude = Math.abs(xDelta * yDelta);
-    if (velocityMagnitude > 50) {
-      setVelocity({ x: xDelta * 0.5, y: yDelta * 0.5 });
+    const velocityMagnitude = Math.sqrt(xDelta * xDelta + yDelta * yDelta);
+    if (velocityMagnitude > 0.1) {
+      velocityRef.current = { x: xDelta * 0.2, y: yDelta * 0.2 };
+      setMoving(true);
+    } else {
+      velocityRef.current = { x: 0, y: 0 };
+      setMoving(false);
     }
   }, []);
+
+  const checkDraggedFromInitial = useCallback((currentPosition: Position) => {
+    const dx = currentPosition.x - initialPositionRef.current.x;
+    const dy = currentPosition.y - initialPositionRef.current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance >= DRAG_THRESHOLD) {
+      setDraggedFromInitial(true);
+    }
+  }, []);
+
+  const animate = useCallback(() => {
+    const { x, y } = velocityRef.current;
+    if (Math.abs(x) > 0.1 || Math.abs(y) > 0.1) {
+      onDrag(x, y);
+      velocityRef.current = { x: x * 0.95, y: y * 0.95 };
+      setMoving(true);
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      setMoving(false);
+      velocityRef.current = { x: 0, y: 0 };
+      animationRef.current = undefined;
+    }
+  }, [onDrag]);
 
   const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const event = "touches" in e ? e.touches[0] : e;
     if (!event) return;
     const { clientX, clientY } = event;
-    setLastPosition({ x: clientX, y: clientY });
+    initialPositionRef.current = { x: clientX, y: clientY };
+    lastPositionRef.current = { x: clientX, y: clientY };
+    velocityRef.current = { x: 0, y: 0 };
     setDragging(true);
+    setDraggedFromInitial(false);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = undefined;
+    }
   }, []);
 
   const handleMove = useCallback(
@@ -74,18 +116,27 @@ const useDrag = (
       const event = "touches" in e ? e.touches[0] : e;
       if (!event) return;
       const { clientX, clientY } = event;
-      const xDelta = clientX - lastPosition.x;
-      const yDelta = clientY - lastPosition.y;
+      const xDelta = clientX - lastPositionRef.current.x;
+      const yDelta = clientY - lastPositionRef.current.y;
       updateVelocity(xDelta, yDelta);
+      checkDraggedFromInitial({ x: clientX, y: clientY });
       onDrag(xDelta, yDelta);
-      setLastPosition({ x: clientX, y: clientY });
+      lastPositionRef.current = { x: clientX, y: clientY };
     },
-    [dragging, lastPosition, onDrag, updateVelocity],
+    [dragging, onDrag, updateVelocity, checkDraggedFromInitial],
   );
 
   const handleEnd = useCallback(() => {
     setDragging(false);
-  }, []);
+    setDraggedFromInitial(false);
+    if (velocityRef.current.x !== 0 || velocityRef.current.y !== 0) {
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    } else {
+      setMoving(false);
+    }
+  }, [animate]);
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
@@ -93,30 +144,25 @@ const useDrag = (
       const yDelta = e.deltaY * 0.5;
       updateVelocity(xDelta, yDelta);
       onDrag(xDelta, yDelta);
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
     },
-    [onDrag, updateVelocity],
+    [onDrag, updateVelocity, animate],
   );
 
   useEffect(() => {
-    let animationId: number;
-    const animate = () => {
-      onDrag(velocity.x, velocity.y);
-      setVelocity((prev) => ({
-        x: prev.x * 0.95,
-        y: prev.y * 0.95,
-      }));
-      if (Math.abs(velocity.x) > 0.5 || Math.abs(velocity.y) > 0.5) {
-        animationId = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
     };
-    if (velocity.x !== 0 || velocity.y !== 0) {
-      animationId = requestAnimationFrame(animate);
-    }
-    return () => cancelAnimationFrame(animationId);
-  }, [velocity, onDrag]);
+  }, []);
 
   return {
+    moving,
     dragging,
+    draggedFromInitial,
     handleStart,
     handleMove,
     handleEnd,
@@ -130,10 +176,10 @@ type CardProps = {
   y: number;
   width: number;
   height: number;
-  dragging?: boolean;
+  disabled?: boolean;
 };
 
-const Card = ({ node, x, y, width, height, dragging }: CardProps) => {
+const Card = ({ node, x, y, width, height, disabled }: CardProps) => {
   return (
     <a
       className={styles.card}
@@ -141,15 +187,12 @@ const Card = ({ node, x, y, width, height, dragging }: CardProps) => {
         width,
         height,
         transform: `translate3d(${x}px, ${y}px, 0)`,
+        pointerEvents: disabled ? "none" : undefined,
       }}
       href={node.url}
       target="_blank"
       rel="noopener noreferrer"
       draggable={false}
-      onClick={(e) => {
-        console.log("mouse up", dragging);
-        e.preventDefault();
-      }}
     >
       {node.type === "image" && (
         <Image
@@ -259,8 +302,14 @@ export const InfiniteGrid = ({
     setViewportY((prev) => prev - deltaY);
   }, []);
 
-  const { dragging, handleStart, handleMove, handleEnd, handleWheel } =
-    useDrag(onDrag);
+  const {
+    moving,
+    draggedFromInitial,
+    handleStart,
+    handleMove,
+    handleEnd,
+    handleWheel,
+  } = useDrag(onDrag);
 
   useEffect(() => {
     updateViewColRows();
@@ -297,7 +346,7 @@ export const InfiniteGrid = ({
             y={y}
             width={nodeWidth}
             height={nodeHeight}
-            dragging={dragging}
+            disabled={moving || draggedFromInitial}
           />,
         );
       }

@@ -71,7 +71,7 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <motion.nav
+    <motion.div
       className={styles.container}
       initial={{ opacity: 0, y: 10, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -81,16 +81,20 @@ export const Dock = () => {
         ease: "easeOut",
       }}
     >
-      <div
+      <nav
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={resetMouseX}
       >
         {links.map(({ href, label, icon }) => (
-          <Link href={href} onClick={resetMouseX}>
-            <DockItem key={href} label={label} mouseX={mouseX}>
+          <Link key={href} href={href} onClick={resetMouseX}>
+            <DockItem
+              key={href}
+              label={label}
+              mouseX={mouseX}
+              active={href === pathname}
+            >
               {icon}
-              {href === pathname && <div className={styles.activeDot} />}
             </DockItem>
           </Link>
         ))}
@@ -99,8 +103,8 @@ export const Dock = () => {
             <ThemeToggleIcon isLight={isLight} />
           </DockItem>
         </button>
-      </div>
-    </motion.nav>
+      </nav>
+    </motion.div>
   );
 };
 
@@ -113,10 +117,12 @@ const DockItem = ({
   children,
   label,
   mouseX,
+  active,
 }: {
   children: React.ReactNode;
   label: string;
   mouseX: MotionValue;
+  active?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -179,8 +185,8 @@ const DockItem = ({
       onMouseLeave={() => setHovered(false)}
       className={styles.item}
     >
-      {hovered && (
-        <AnimatePresence>
+      <AnimatePresence>
+        {hovered && (
           <motion.div
             initial={{ opacity: 0, y: 10, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
@@ -189,14 +195,15 @@ const DockItem = ({
           >
             {label}
           </motion.div>
-        </AnimatePresence>
-      )}
+        )}
+      </AnimatePresence>
       <motion.div
         style={{ width: widthIcon, height: heightIcon }}
         className={styles.iconContainer}
       >
         {children}
       </motion.div>
+      {active && <div className={styles.activeDot} />}
     </motion.div>
   );
 };

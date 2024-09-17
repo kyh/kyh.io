@@ -17,11 +17,12 @@ const AboutPage = () => (
     </header>
     <section className={styles.section}>
       <AnimateSection as="p" delay={0.1}>
-        Engineering/Product/Design. Throughout my career, I&apos;ve held various
-        operator positions working across seed, growth, and public
-        organizations. This privilege has allowed me to gain experience in
-        various aspects of company building. From growing up with a startup team
-        of 3, through to the challenges of building a global enduring company.
+        My career as an operator spans engineering, product, and design roles
+        across organizations of all stages. This diverse journey has given me
+        unique insights into company building at every scale. From being part of
+        a three-person startup to contributing to global enterprises, I've
+        experienced the full spectrum of organizational growth and its
+        challenges.
       </AnimateSection>
     </section>
     <section className={styles.section}>
