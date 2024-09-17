@@ -1,0 +1,23 @@
+.grid {
+  user-select: none;
+  inset: 0;
+  position: fixed;
+}
+
+.grid:has(.card:hover) .card {
+  filter: grayscale(100%) blur(3px);
+}
+
+.grid:has(.card:hover) .card:hover {
+  filter: grayscale(0%) blur(0px);
+}
+
+.card {
+  transition: filter 0.3s;
+  overflow: hidden;
+  position: absolute;
+}
+
+.card * {
+  pointer-events: none;
+}

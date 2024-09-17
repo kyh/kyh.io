@@ -143,7 +143,7 @@ const DockItem = ({
   useRaf(() => {
     const el = ref.current;
     const mouseXVal = mouseX.get();
-    if (el && mouseXVal !== null) {
+    if (el && mouseXVal) {
       const rect = el.getBoundingClientRect();
 
       // get the x coordinate of the img DOMElement's center
