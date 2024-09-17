@@ -1,19 +1,23 @@
 "use client";
 
 import type { MotionValue } from "framer-motion";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import useRaf from "@rooks/use-raf";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { useTheme } from "next-themes";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggleIcon } from "@/components/theme-toggle";
 import styles from "./dock.module.css";
 
 const iconAttrs = {
   xmlns: "http://www.w3.org/2000/svg",
-  width: "24",
-  height: "24",
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
@@ -58,9 +62,13 @@ const links = [
 ];
 
 export const Dock = () => {
-  const mouseX = useMotionValue<null | number>(null);
   const pathname = usePathname();
-  const resetMouseX = useCallback(() => mouseX.set(null), [mouseX]);
+  const { theme, setTheme } = useTheme();
+  const mouseX = useMotionValue(Infinity);
+  const resetMouseX = useCallback(() => mouseX.set(Infinity), [mouseX]);
+
+  const isLight = theme === "light";
+  const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
     <motion.nav
@@ -73,100 +81,122 @@ export const Dock = () => {
         ease: "easeOut",
       }}
     >
-      <ul
+      <div
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={resetMouseX}
       >
         {links.map(({ href, label, icon }) => (
-          <DockItem key={href} mouseX={mouseX}>
-            <Link
-              className={styles.link}
-              href={href}
-              title={label}
-              onClick={resetMouseX}
-            >
-              <span className="sr-only">{label}</span>
+          <Link href={href} onClick={resetMouseX}>
+            <DockItem key={href} label={label} mouseX={mouseX}>
               {icon}
-            </Link>
-            {href === pathname && <div className={styles.activeDot} />}
-          </DockItem>
+              {href === pathname && <div className={styles.activeDot} />}
+            </DockItem>
+          </Link>
         ))}
-        <DockItem mouseX={mouseX}>
-          <ThemeToggle />
-        </DockItem>
-      </ul>
+        <button onClick={() => setTheme(isLight ? "dark" : "light")}>
+          <DockItem label={themeLabel} mouseX={mouseX}>
+            <ThemeToggleIcon isLight={isLight} />
+          </DockItem>
+        </button>
+      </div>
     </motion.nav>
   );
 };
 
-const baseWidth = 48;
-const distanceLimit = baseWidth * 2;
-const beyondTheDistanceLimit = distanceLimit + 1;
-
-const distanceInput = [
-  -distanceLimit,
-  -distanceLimit / 1.25,
-  -distanceLimit / 2,
-  0,
-  distanceLimit / 2,
-  distanceLimit / 1.25,
-  distanceLimit,
-];
-
-const sizeOutput = [
-  baseWidth,
-  baseWidth * 1.1,
-  baseWidth * 1.3,
-  baseWidth * 1.5,
-  baseWidth * 1.3,
-  baseWidth * 1.1,
-  baseWidth,
-];
+const itemWidth = 48;
+const itemWidthMax = itemWidth * 1.5;
+const iconWidth = itemWidth / 2;
+const iconWidthMax = iconWidth * 1.5;
 
 const DockItem = ({
   children,
+  label,
   mouseX,
 }: {
   children: React.ReactNode;
-  mouseX: MotionValue<number | null>;
+  label: string;
+  mouseX: MotionValue;
 }) => {
-  const distance = useMotionValue(beyondTheDistanceLimit);
-  const transform = useTransform(distance, distanceInput, sizeOutput);
-  const size = useSpring(transform, {
-    damping: 25,
-    stiffness: 250,
+  const ref = useRef<HTMLDivElement>(null);
+
+  const distance = useTransform(mouseX, (val) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return (val ?? 0) - bounds.x - bounds.width / 2;
   });
 
-  const ref = useRef<HTMLLIElement>(null);
+  const widthTransform = useTransform(
+    distance,
+    [-150, 0, 150],
+    [itemWidth, itemWidthMax, itemWidth],
+  );
+  const heightTransform = useTransform(
+    distance,
+    [-150, 0, 150],
+    [itemWidth, itemWidthMax, itemWidth],
+  );
 
-  useRaf(() => {
-    const el = ref.current;
-    const mouseXVal = mouseX.get();
-    if (el && mouseXVal) {
-      const rect = el.getBoundingClientRect();
+  const widthTransformIcon = useTransform(
+    distance,
+    [-150, 0, 150],
+    [iconWidth, iconWidthMax, iconWidth],
+  );
+  const heightTransformIcon = useTransform(
+    distance,
+    [-150, 0, 150],
+    [iconWidth, iconWidthMax, iconWidth],
+  );
 
-      // get the x coordinate of the img DOMElement's center
-      // the left x coordinate plus the half of the width
-      const imgCenterX = rect.left + rect.width / 2;
+  const width = useSpring(widthTransform, {
+    mass: 0.1,
+    stiffness: 150,
+    damping: 12,
+  });
+  const height = useSpring(heightTransform, {
+    mass: 0.1,
+    stiffness: 150,
+    damping: 12,
+  });
 
-      // difference between the x coordinate value of the mouse pointer
-      // and the img center x coordinate value
-      const distanceDelta = mouseXVal - imgCenterX;
-      distance.set(distanceDelta);
-      return;
-    }
+  const widthIcon = useSpring(widthTransformIcon, {
+    mass: 0.1,
+    stiffness: 150,
+    damping: 12,
+  });
+  const heightIcon = useSpring(heightTransformIcon, {
+    mass: 0.1,
+    stiffness: 150,
+    damping: 12,
+  });
 
-    distance.set(beyondTheDistanceLimit);
-  }, true);
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <motion.li
+    <motion.div
       ref={ref}
+      style={{ width, height }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={styles.item}
-      style={{ width: size, height: size }}
     >
-      {children}
-    </motion.li>
+      {hovered && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 10, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 2, x: "-50%" }}
+            className={styles.tooltip}
+          >
+            {label}
+          </motion.div>
+        </AnimatePresence>
+      )}
+      <motion.div
+        style={{ width: widthIcon, height: heightIcon }}
+        className={styles.iconContainer}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
   );
 };

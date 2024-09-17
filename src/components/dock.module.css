@@ -40,12 +40,37 @@
   --ring-offset-shadow: 0 0 #fff;
   --ring-shadow: 0 0 #fff;
 
+  color: var(--body-color);
   position: relative;
+  display: flex;
+  aspect-ratio: 1 / 1;
+  align-items: center;
+  justify-content: center;
   border-radius: 25%;
   background: var(--gradient-to);
   background-image: linear-gradient(to top, var(--gradient-stops));
   box-shadow: var(--ring-offset-shadow, 0 0 #0000),
     var(--ring-shadow, 0 0 #0000), var(--shadow);
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  width: -moz-fit-content;
+  white-space: pre;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--colors-panel);
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--body-color);
 }
 
 [data-theme="dark"] .item {
@@ -57,7 +82,7 @@
   --ring-shadow: 0 0 #0000;
 }
 
-.item > * {
+/* .item > * {
   color: var(--body-color);
   display: flex;
   align-items: center;
@@ -69,7 +94,7 @@
 .item > * > svg {
   width: 50%;
   height: 50%;
-}
+} */
 
 .activeDot {
   --width: 32px;
