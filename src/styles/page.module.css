@@ -35,7 +35,7 @@
 /* About Page */
 .list li {
   background-image: var(--arrow);
-  background-position-y: 4px;
+  background-position-y: 5px;
   background-repeat: no-repeat;
   margin-bottom: 4px;
   padding-left: 24px;
