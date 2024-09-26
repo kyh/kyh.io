@@ -97,12 +97,6 @@
   fill: var(--logo-dr);
 }
 
-/* Projects Page */
-.projectsContainer {
-  width: 100dvw;
-  height: 100dvh;
-}
-
 /* Responsive - mobile */
 @media screen and (max-width: 600px) {
   .container {

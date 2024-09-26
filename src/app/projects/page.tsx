@@ -1,4 +1,3 @@
-import styles from "@/styles/page.module.css";
 import { gallery } from "./components/data";
 import { InfiniteGrid } from "./components/infinite-grid";
 
@@ -8,7 +7,7 @@ export const metadata = {
 };
 
 const ProjectsPage = () => (
-  <main className={styles.projectsContainer} vaul-drawer-wrapper="">
+  <main>
     <InfiniteGrid nodes={gallery} />
   </main>
 );
