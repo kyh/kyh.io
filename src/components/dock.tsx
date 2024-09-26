@@ -1,7 +1,7 @@
 "use client";
 
 import type { MotionValue } from "framer-motion";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -65,7 +65,7 @@ export const Dock = () => {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const mouseX = useMotionValue(Infinity);
-  const resetMouseX = useCallback(() => mouseX.set(Infinity), [mouseX]);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   const isLight = theme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
@@ -84,22 +84,40 @@ export const Dock = () => {
       <nav
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
-        onMouseLeave={resetMouseX}
+        onMouseLeave={() => mouseX.set(Infinity)}
       >
         {links.map(({ href, label, icon }) => (
-          <Link key={href} href={href} onClick={resetMouseX}>
+          <Link
+            key={href}
+            href={href}
+            onClick={() => {
+              mouseX.set(Infinity);
+              setHovered(null);
+            }}
+            onMouseEnter={() => setHovered(href)}
+            onMouseLeave={() => setHovered(null)}
+          >
             <DockItem
               key={href}
               label={label}
               mouseX={mouseX}
-              active={href === pathname}
+              active={pathname === href}
+              hovered={hovered === href}
             >
               {icon}
             </DockItem>
           </Link>
         ))}
-        <button onClick={() => setTheme(isLight ? "dark" : "light")}>
-          <DockItem label={themeLabel} mouseX={mouseX}>
+        <button
+          onClick={() => setTheme(isLight ? "dark" : "light")}
+          onMouseEnter={() => setHovered("theme")}
+          onMouseLeave={() => setHovered(null)}
+        >
+          <DockItem
+            label={themeLabel}
+            mouseX={mouseX}
+            hovered={hovered === "theme"}
+          >
             <ThemeToggleIcon isLight={isLight} />
           </DockItem>
         </button>
@@ -118,11 +136,13 @@ const DockItem = ({
   label,
   mouseX,
   active,
+  hovered,
 }: {
   children: React.ReactNode;
   label: string;
   mouseX: MotionValue;
   active?: boolean;
+  hovered?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -175,16 +195,8 @@ const DockItem = ({
     damping: 12,
   });
 
-  const [hovered, setHovered] = useState(false);
-
   return (
-    <motion.div
-      ref={ref}
-      style={{ width, height }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={styles.item}
-    >
+    <motion.div ref={ref} style={{ width, height }} className={styles.item}>
       <AnimatePresence>
         {hovered && (
           <motion.div
