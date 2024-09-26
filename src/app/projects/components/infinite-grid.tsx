@@ -242,10 +242,10 @@ export const InfiniteGrid = ({
   cols = 3,
   gap = 20,
 }: InfiniteGridProps) => {
-  const [viewportX, setViewportX] = useState<number>(-gap);
-  const [viewportY, setViewportY] = useState<number>(-gap);
-  const [viewCols, setViewCols] = useState<number>(0);
-  const [viewRows, setViewRows] = useState<number>(0);
+  const [viewportX, setViewportX] = useState(-gap);
+  const [viewportY, setViewportY] = useState(-gap);
+  const [viewCols, setViewCols] = useState(0);
+  const [viewRows, setViewRows] = useState(0);
   const [picks, setPicks] = useState<Record<string, Node>>({});
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -313,8 +313,16 @@ export const InfiniteGrid = ({
 
   useEffect(() => {
     updateViewColRows();
+
     window.addEventListener("resize", updateViewColRows);
-    return () => window.removeEventListener("resize", updateViewColRows);
+    document.documentElement.style.overscrollBehavior = "none";
+    document.body.style.overscrollBehavior = "none";
+
+    return () => {
+      window.removeEventListener("resize", updateViewColRows);
+      document.documentElement.style.overscrollBehavior = "";
+      document.body.style.overscrollBehavior = "";
+    };
   }, [updateViewColRows]);
 
   const renderCards = () => {
