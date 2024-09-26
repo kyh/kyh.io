@@ -101,6 +101,7 @@
 .projectsContainer {
   width: 100dvw;
   height: 100dvh;
+  overscroll-behavior: none;
 }
 
 /* Responsive - mobile */
