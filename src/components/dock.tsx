@@ -71,16 +71,7 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <motion.div
-      className={styles.container}
-      initial={{ opacity: 0, y: 10, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        duration: 0.3,
-        delay: 1,
-        ease: "easeOut",
-      }}
-    >
+    <div className={styles.container}>
       <nav
         className={styles.list}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
@@ -122,7 +113,7 @@ export const Dock = () => {
           </DockItem>
         </button>
       </nav>
-    </motion.div>
+    </div>
   );
 };
 

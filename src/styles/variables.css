@@ -37,6 +37,8 @@
   --link-color-hover: var(--colors-gray1000);
 
   --dock-bg: rgba(15, 23, 42, 0.12);
+  --dock-border-color: #e2e8f030;
+
   --colors-panel: white;
   --colors-transparentPanel: hsl(0 0% 0% / 97%);
 
@@ -181,6 +183,8 @@
 
   --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
+
+  --dock-border-color: #1e293b80;
 
   --colors-panel: var(--colors-gray950);
   --colors-transparentPanel: hsl(0 100% 100% / 97%);

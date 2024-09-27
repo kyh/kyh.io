@@ -12,6 +12,7 @@ export type Node =
       src: string;
       url: string;
       description?: string;
+      tags?: string[];
     }
   | {
       id: number;
@@ -20,12 +21,7 @@ export type Node =
       url: string;
       dataBlur?: string;
       description?: string;
-    }
-  | {
-      id: number;
-      type: "react";
-      url: string;
-      src: React.ReactNode;
+      tags?: string[];
     };
 
 type Position = {
