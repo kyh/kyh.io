@@ -8,7 +8,7 @@ export const gallery: Node[] = [
     dataBlur:
       "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
     url: "https://amazon.design",
-    tag: "career",
+    tag: "work",
   },
   {
     id: 1,
@@ -17,7 +17,7 @@ export const gallery: Node[] = [
     dataBlur:
       "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoQAAwAAUAmJaQAAuafBgmYAAD+9fljiQX0uQIXlcAKRTrP/H++I3FnboNY2MVVCDSkZJ/yTu+kEwJ9ADg17RGQAAA=",
     url: "https://www.crunchbase.com/organization/atrium-lts",
-    tag: "career",
+    tag: "work",
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ export const gallery: Node[] = [
     dataBlur:
       "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
     url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
-    tag: "career",
+    tag: "work",
   },
   {
     id: 3,
@@ -62,7 +62,7 @@ export const gallery: Node[] = [
     dataBlur:
       "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAwAAUAmJZwAAudljfFYAAD+/pmxYSp4yOONaQeF5/fWRam8ThOk9MqRSC7AHjEfrm4h9atrfO8kfY4GxG9TlyLNd6rv9NZD392rAAA=",
     url: "https://www.crunchbase.com/organization/slyce",
-    tag: "career",
+    tag: "work",
   },
   {
     id: 7,
@@ -130,6 +130,6 @@ export const gallery: Node[] = [
     type: "video",
     src: "/screenshots/arc.webm",
     url: "https://sequoiacap.com",
-    tag: "career",
+    tag: "work",
   },
 ];

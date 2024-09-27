@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import styles from "./infinite-grid.module.css";
 
-export type Tag = "experiment" | "project" | "career" | "venture";
+export type Tag = "experiment" | "project" | "work" | "venture";
 
 export type Node =
   | {
