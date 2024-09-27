@@ -9,5 +9,5 @@ export const siteConfig = {
       : "https://kyh.io",
   links: { github: "https://github.com/kyh" },
   twitter: "@kaiyuhsu",
-  routes: ["", "/about", "/projects"],
+  routes: ["", "/about", "/showcase"],
 };

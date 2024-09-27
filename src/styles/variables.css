@@ -40,7 +40,6 @@
   --dock-border-color: #e2e8f030;
 
   --colors-panel: white;
-  --colors-transparentPanel: hsl(0 0% 0% / 97%);
 
   --colors-shadowLight: hsl(206 22% 7% / 35%);
   --colors-shadowDark: hsl(206 22% 7% / 20%);
@@ -187,7 +186,6 @@
   --dock-border-color: #1e293b80;
 
   --colors-panel: var(--colors-gray950);
-  --colors-transparentPanel: hsl(0 100% 100% / 97%);
 
   --colors-shadowLight: hsl(206 22% 7% / 35%);
   --colors-shadowDark: hsl(206 22% 7% / 20%);

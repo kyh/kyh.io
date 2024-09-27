@@ -49,8 +49,8 @@ const links = [
     ),
   },
   {
-    href: "/projects",
-    label: "Projects",
+    href: "/showcase",
+    label: "Showcase",
     icon: (
       <svg {...iconAttrs}>
         <polygon points="12 2 2 7 12 12 22 7 12 2" />

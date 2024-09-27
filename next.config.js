@@ -8,6 +8,15 @@ const config = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/projects",
+        destination: "/showcase",
+        permanent: true,
+      },
+    ];
+  },
   eslint: { ignoreDuringBuilds: true },
 };
 
