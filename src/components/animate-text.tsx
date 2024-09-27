@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 
 import styles from "./animate-text.module.css";
 
-type AnimateSectionProps<C> = {
+export type AnimateSectionProps<C> = {
   children: React.ReactNode;
   className?: string;
   duration?: number;

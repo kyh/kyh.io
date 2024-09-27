@@ -1,11 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { useViewport } from "@/components/viewport";
 import styles from "./counter.module.css";
-import { percentY } from "./scene";
 
 type VerticalProps = {
   letter: string;
@@ -136,70 +134,4 @@ const generateTextStats = (ref: React.RefObject<HTMLDivElement>) => {
 
     return cache.get(letter) ?? 0;
   };
-};
-
-export const CountersContainer = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const size = useViewport();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [top, setTop] = useState<string | number>("75vh");
-
-  useEffect(() => {
-    setTop(percentY(80));
-  }, [size.height]);
-
-  useEffect(() => {
-    if (
-      typeof document !== "undefined" &&
-      typeof document.fonts.ready === "object"
-    ) {
-      void document.fonts.ready.finally(() => setIsLoaded(true));
-    } else {
-      setIsLoaded(true);
-    }
-  }, []);
-
-  return (
-    <div className={styles.counters} style={{ opacity: isLoaded ? 1 : 0, top }}>
-      {children}
-    </div>
-  );
-};
-
-let liveTime = "";
-
-export const TimerCounter = () => {
-  const [time, setTime] = useState(liveTime);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newTime = getPstTime();
-      setTime(newTime);
-      liveTime = newTime;
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  return (
-    <>
-      <Counter text={time} />
-      <span>&nbsp;&#183;&nbsp;San Francisco, CA</span>
-    </>
-  );
-};
-
-const getPstTime = () => {
-  return new Date().toLocaleString("en-US", {
-    timeZone: "America/Los_Angeles",
-    hour12: true,
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-  });
 };

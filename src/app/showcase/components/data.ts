@@ -43,7 +43,7 @@ export const gallery: Node[] = [
     src: "/screenshots/founding.webp",
     dataBlur:
       "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
-    url: "https://founding.so",
+    url: "https://founding.kyh.io",
     tag: "venture",
   },
   {

@@ -16,7 +16,6 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 
-import type { Stat } from "@/lib/stat";
 import { useViewport } from "@/components/viewport";
 import styles from "./scene.module.css";
 
@@ -108,7 +107,7 @@ const createHexagon = (isLight: boolean) => {
   });
 };
 
-const statIdToCreate: Record<Stat["id"], (isLight: boolean) => Matter.Body> = {
+const statIdToCreate: Record<string, (isLight: boolean) => Matter.Body> = {
   home: createMulti,
   build: createSquare,
   invest: createHexagon,
@@ -174,11 +173,12 @@ export type SceneRef = {
 };
 
 type SceneProps = {
-  currentStat: Stat;
   sceneRef?: MutableRefObject<SceneRef | undefined>;
 };
 
-export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
+const SPAWN = 30;
+
+export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
   const { resolvedTheme } = useTheme();
   const size = useViewport();
 
@@ -267,7 +267,7 @@ export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
-    const create = statIdToCreate[currentStat.id];
+    const create = statIdToCreate.home;
 
     clearInterval(spawnInterval.current);
     spawnCount.current = 0;
@@ -283,7 +283,7 @@ export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
       bodiesRef.current = { ...bodiesRef.current, [body.id]: body };
       spawnCount.current++;
 
-      if (spawnCount.current >= currentStat.spawn) {
+      if (spawnCount.current >= SPAWN) {
         clearInterval(spawnInterval.current);
         spawnCount.current = 0;
       }
@@ -292,7 +292,7 @@ export const Scene = ({ currentStat, sceneRef: parentRef }: SceneProps) => {
 
   useEffect(() => {
     trigger();
-  }, [currentStat.id, size.width, size.height]);
+  }, [size.width, size.height]);
 
   useEffect(() => {
     const isLight = resolvedTheme === "light";

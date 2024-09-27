@@ -59,44 +59,6 @@
   filter: var(--filter-highlight);
 }
 
-.socials {
-  padding: 12px;
-  border-radius: 4px;
-  margin-left: -12px;
-}
-
-.socials > a {
-  display: inline-flex;
-  margin-right: 5px;
-  padding: 7px;
-  text-decoration: none;
-}
-
-.socials > a path {
-  fill: var(--colors-gray400);
-  transition: fill 0.3s ease-in-out;
-}
-
-.git:hover path,
-.git:focus-visible path {
-  fill: var(--logo-gh);
-}
-
-.twitter:hover path,
-.twitter:focus-visible path {
-  fill: var(--logo-tw);
-}
-
-.linkedin:hover path,
-.linkedin:focus-visible path {
-  fill: var(--logo-in);
-}
-
-.dribbble:hover path,
-.dribbble:focus-visible path {
-  fill: var(--logo-dr);
-}
-
 /* Responsive - mobile */
 @media screen and (max-width: 600px) {
   .container {
