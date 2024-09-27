@@ -16,9 +16,9 @@
   align-items: center;
 }
 
-.socials {
+div.socials {
+  margin: 0;
   padding: 0;
-  transform: scale(0.75);
   animation-duration: 0.6s;
   animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   animation-name: slideUpIn;
@@ -27,10 +27,10 @@
 @keyframes slideUpIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.75);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(0.75);
+    transform: translateY(0);
   }
 }

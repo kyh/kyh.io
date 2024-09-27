@@ -1,13 +1,11 @@
 .socials {
-  padding: 12px;
-  border-radius: 4px;
-  margin-left: -12px;
+  display: flex;
+  gap: 4px;
 }
 
 .socials > a {
   display: inline-flex;
-  margin-right: 5px;
-  padding: 7px;
+  padding: 6px;
   text-decoration: none;
 }
 
