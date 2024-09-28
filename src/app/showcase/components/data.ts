@@ -122,7 +122,7 @@ export const gallery: Node[] = [
     id: 13,
     type: "video",
     src: "/screenshots/globe.mp4",
-    url: "https://codepen.io/kyhio/pen/ExdXaKQ",
+    url: "https://codepen.io/kyhio/full/ExdXaKQ",
     tag: "experiment",
   },
   {
@@ -131,5 +131,26 @@ export const gallery: Node[] = [
     src: "/screenshots/arc.webm",
     url: "https://sequoiacap.com",
     tag: "work",
+  },
+  {
+    id: 15,
+    type: "video",
+    src: "/screenshots/inteligir.mp4",
+    url: "https://inteligir.com",
+    tag: "project",
+  },
+  {
+    id: 16,
+    type: "video",
+    src: "/screenshots/parallax.mp4",
+    url: "https://codepen.io/kyhio/full/OJwxrZy",
+    tag: "experiment",
+  },
+  {
+    id: 16,
+    type: "video",
+    src: "/screenshots/infinite-grid.mp4",
+    url: "https://codepen.io/kyhio/full/vYqbLzE",
+    tag: "experiment",
   },
 ];

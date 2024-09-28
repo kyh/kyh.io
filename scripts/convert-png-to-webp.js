@@ -11,7 +11,7 @@ const convertToWebp = async (src) => {
 const directoryPath = resolve(`${process.cwd()}/public/screenshots/`);
 
 const main = async () => {
-  console.log("Creating dynamic blur data for images in...", directoryPath);
+  console.log("Converting png images in...", directoryPath);
   const files = await readdir(directoryPath);
 
   for (const file of files) {
