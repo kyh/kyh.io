@@ -22,8 +22,13 @@ export const Footer = () => {
       setTime(getPstTime());
     }, 1000);
 
+    const timeout = setTimeout(() => {
+      setTime(getPstTime());
+    }, 500);
+
     return () => {
       clearInterval(interval);
+      clearTimeout(timeout);
     };
   }, []);
 

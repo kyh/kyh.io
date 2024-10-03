@@ -21,16 +21,16 @@ div.socials {
   padding: 0;
   animation-duration: 0.6s;
   animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
-  animation-name: slideUpIn;
+  animation-name: animateIn;
 }
 
-@keyframes slideUpIn {
+@keyframes animateIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
