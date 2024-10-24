@@ -7,12 +7,10 @@ import type { SceneRef } from "./scene";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import styles from "@/styles/page.module.css";
 
-const DynamicScene = dynamic(() => import("./scene").then((mod) => ({
-  default: mod.Scene
-})));
+const DynamicScene = dynamic(() => import("./scene").then((mod) => mod.Scene));
 
 export const Header = () => {
-  const sceneRef = useRef<SceneRef>(undefined);
+  const sceneRef = useRef<SceneRef>();
 
   const handleTrigger = () => {
     if (sceneRef.current) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type JSX } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import styles from "./infinite-grid.module.css";
@@ -57,7 +57,7 @@ const useDrag = (
   const initialPositionRef = useRef<Position>({ x: 0, y: 0 });
   const lastPositionRef = useRef<Position>({ x: 0, y: 0 });
   const velocityRef = useRef<Velocity>({ x: 0, y: 0 });
-  const animationRef = useRef<number>(undefined);
+  const animationRef = useRef<number>();
 
   const updateVelocity = useCallback((xDelta: number, yDelta: number) => {
     const velocityMagnitude = Math.sqrt(xDelta * xDelta + yDelta * yDelta);

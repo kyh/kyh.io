@@ -109,7 +109,7 @@ const count = (acc: number, curr: number) => {
   return acc + curr;
 };
 
-const generateTextStats = (ref: React.RefObject<HTMLDivElement | null>) => {
+const generateTextStats = (ref: React.RefObject<HTMLDivElement>) => {
   const cache = new Map<string, number>();
 
   // safety for nodejs/ssr
