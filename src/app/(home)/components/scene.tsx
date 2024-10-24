@@ -189,7 +189,7 @@ export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
   const platformRef = useRef<Record<number, Matter.Body>>({});
   const bodiesRef = useRef<Record<number, Matter.Body>>({});
 
-  const spawnInterval = useRef<ReturnType<typeof setInterval>>();
+  const spawnInterval = useRef<ReturnType<typeof setInterval>>(undefined);
   const spawnCount = useRef(0);
 
   useEffect(() => {
