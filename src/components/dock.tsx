@@ -25,6 +25,8 @@ const iconAttrs = {
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   ["aria-hidden"]: true,
+  width: "100%",
+  height: "100%",
 };
 
 const links = [
