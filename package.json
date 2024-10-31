@@ -28,9 +28,9 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "^1.0.9",
-    "@kyh/prettier-config": "^1.0.9",
-    "@kyh/tsconfig": "^1.0.9",
+    "@kyh/eslint-config": "^1.0.10",
+    "@kyh/prettier-config": "^1.0.10",
+    "@kyh/tsconfig": "^1.0.10",
     "@types/matter-js": "^0.19.7",
     "@types/node": "^22.8.6",
     "@types/nprogress": "^0.2.3",
