@@ -13,7 +13,7 @@ const HomePage = () => {
         Hello world. You can call me Kai since we&apos;re pretty much friends
         now. I enjoy <Link href="/showcase">creating things</Link> for the
         internet. By day, I get to do that through <Link>investing</Link>,{" "}
-        <Link href="https://founding.kyh.io">advising</Link>, and{" "}
+        <Link href="https://agency.kyh.io">advising</Link>, and{" "}
         <Link href={social.github}>building products</Link> you may not have
         heard of, yet. Welcome to my corner of the web.
       </AnimateSection>
