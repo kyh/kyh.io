@@ -122,7 +122,7 @@ export const gallery: Node[] = [
     id: 13,
     type: "video",
     src: "/screenshots/globe.mp4",
-    url: "https://codepen.io/kyhio/full/ExdXaKQ",
+    url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
     tag: "experiment",
   },
   {
@@ -143,14 +143,14 @@ export const gallery: Node[] = [
     id: 16,
     type: "video",
     src: "/screenshots/parallax.mp4",
-    url: "https://codepen.io/kyhio/full/OJwxrZy",
+    url: "https://codesandbox.io/embed/hlhqrc?view=preview",
     tag: "experiment",
   },
   {
     id: 16,
     type: "video",
     src: "/screenshots/infinite-grid.mp4",
-    url: "https://codepen.io/kyhio/full/vYqbLzE",
+    url: "https://codesandbox.io/embed/p2fgqp?view=preview",
     tag: "experiment",
   },
 ];
