@@ -2,7 +2,6 @@ import type { Node } from "./infinite-grid";
 
 export const gallery: Node[] = [
   {
-    id: 0,
     type: "image",
     src: "/screenshots/amazon-ds.webp",
     dataBlur:
@@ -11,7 +10,6 @@ export const gallery: Node[] = [
     tag: "work",
   },
   {
-    id: 1,
     type: "image",
     src: "/screenshots/atrium.webp",
     dataBlur:
@@ -20,7 +18,6 @@ export const gallery: Node[] = [
     tag: "work",
   },
   {
-    id: 2,
     type: "image",
     src: "/screenshots/cardiogram.webp",
     dataBlur:
@@ -29,7 +26,6 @@ export const gallery: Node[] = [
     tag: "work",
   },
   {
-    id: 3,
     type: "image",
     src: "/screenshots/covid19.webp",
     dataBlur:
@@ -38,7 +34,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 4,
     type: "image",
     src: "/screenshots/founding.webp",
     dataBlur:
@@ -47,7 +42,6 @@ export const gallery: Node[] = [
     tag: "venture",
   },
   {
-    id: 5,
     type: "image",
     src: "/screenshots/keiko.webp",
     dataBlur:
@@ -56,7 +50,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 6,
     type: "image",
     src: "/screenshots/slyce.webp",
     dataBlur:
@@ -65,7 +58,6 @@ export const gallery: Node[] = [
     tag: "work",
   },
   {
-    id: 7,
     type: "image",
     src: "/screenshots/stonks.webp",
     dataBlur:
@@ -74,7 +66,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 8,
     type: "image",
     src: "/screenshots/init.webp",
     dataBlur:
@@ -83,7 +74,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 9,
     type: "image",
     src: "/screenshots/tc.webp",
     dataBlur:
@@ -92,7 +82,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 10,
     type: "image",
     src: "/screenshots/2up.webp",
     dataBlur:
@@ -101,7 +90,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 11,
     type: "image",
     src: "/screenshots/uicapsule.webp",
     dataBlur:
@@ -110,7 +98,6 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 12,
     type: "image",
     src: "/screenshots/ys.webp",
     dataBlur:
@@ -119,38 +106,81 @@ export const gallery: Node[] = [
     tag: "project",
   },
   {
-    id: 13,
     type: "video",
     src: "/screenshots/globe.mp4",
     url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
     tag: "experiment",
   },
   {
-    id: 14,
     type: "video",
     src: "/screenshots/arc.webm",
     url: "https://sequoiacap.com",
     tag: "work",
   },
   {
-    id: 15,
     type: "video",
     src: "/screenshots/inteligir.mp4",
     url: "https://inteligir.com",
     tag: "project",
   },
   {
-    id: 16,
     type: "video",
     src: "/screenshots/parallax.mp4",
     url: "https://codesandbox.io/embed/hlhqrc?view=preview",
     tag: "experiment",
   },
   {
-    id: 16,
     type: "video",
     src: "/screenshots/infinite-grid.mp4",
     url: "https://codesandbox.io/embed/p2fgqp?view=preview",
     tag: "experiment",
   },
-];
+  {
+    type: "video",
+    src: "/screenshots/astroids.mp4",
+    url: "https://codesandbox.io/embed/astroids-8pyh9w?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/ascii.mp4",
+    url: "https://codesandbox.io/embed/ascii-renderer-p741e2?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/tag-selector.mp4",
+    url: "https://codesandbox.io/embed/sports-selection-29jhmp?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/ios-app-zoom.mp4",
+    url: "https://codesandbox.io/embed/app-store-zoom-hqgp6r?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/ios-volume.mp4",
+    url: "https://codesandbox.io/embed/iphone-volume-mx67y6?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/ios-header-menu.mp4",
+    url: "https://codesandbox.io/embed/iphone-header-menu-y7lm5n?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/reading-progress.mp4",
+    url: "https://codesandbox.io/embed/reading-progress-vwfsgl?view=preview",
+    tag: "experiment",
+  },
+  {
+    type: "video",
+    src: "/screenshots/radial-slider.mp4",
+    url: "https://codesandbox.io/embed/radial-slider-r9whs7?view=preview",
+    tag: "experiment",
+  },
+].map((node, index) => ({ ...node, id: index }) as Node);
