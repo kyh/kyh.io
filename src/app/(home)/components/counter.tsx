@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 
 import styles from "./counter.module.css";
 

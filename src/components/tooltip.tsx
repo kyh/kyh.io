@@ -19,7 +19,7 @@ import {
   useMergeRefs,
   useRole,
 } from "@floating-ui/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 
 import type { Placement } from "@floating-ui/react";
 import styles from "./tooltip.module.css";

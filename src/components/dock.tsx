@@ -1,6 +1,6 @@
 "use client";
 
-import type { MotionValue } from "framer-motion";
+import type { MotionValue } from "motion/react";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,7 +10,7 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
-} from "framer-motion";
+} from "motion/react";
 import { useTheme } from "next-themes";
 
 import { ThemeToggleIcon } from "@/components/theme-toggle";
