@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@floating-ui/react':
-        specifier: ^0.26.28
-        version: 0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.27.0
+        version: 0.27.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@rooks/use-raf':
         specifier: ^4.11.2
         version: 4.11.2
@@ -52,14 +52,14 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@kyh/eslint-config':
-        specifier: ^1.1.1
-        version: 1.1.1(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)
+        specifier: ^1.1.2
+        version: 1.1.2(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)
       '@kyh/prettier-config':
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^1.1.2
+        version: 1.1.2
       '@kyh/tsconfig':
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^1.1.2
+        version: 1.1.2
       '@types/matter-js':
         specifier: ^0.19.8
         version: 0.19.8
@@ -366,11 +366,11 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
-  '@floating-ui/react@0.26.28':
-    resolution: {integrity: sha512-yORQuuAtVpiRjpMhdc0wJj06b9JFjrYF4qp96j++v2NBpbi6SEGF7donUJ3TMieerQ6qVkAv1tgr7L4r5roTqw==}
+  '@floating-ui/react@0.27.0':
+    resolution: {integrity: sha512-WLEksq7fJapXSJbmfiyq9pAW0a7ZFMEJToFE4oTDESxGjoa+nZu3YMjmZE2KvoUtQhqOK2yMMfWQFZyeWD0wGQ==}
     peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
+      react: '>=17.0.0'
+      react-dom: '>=17.0.0'
 
   '@floating-ui/utils@0.2.8':
     resolution: {integrity: sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig==}
@@ -530,14 +530,14 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@kyh/eslint-config@1.1.1':
-    resolution: {integrity: sha512-z+S+XDkmEP75X9pKE0S/nSLdTRls997DHbLS0Vq4yRpvkWiEuC2S/tvQTDSUdWNMkwutXWni6snblAvR0MXnPg==}
+  '@kyh/eslint-config@1.1.2':
+    resolution: {integrity: sha512-uvMi2mP5FXwjOBruhJosXLUAMr8cHylPa21q9b7Snqgc4MOBDJsvOnM0hihxLV8pQavBgicsku1nHc/+nBCP0Q==}
 
-  '@kyh/prettier-config@1.1.1':
-    resolution: {integrity: sha512-zOYjeUUnsxtwoaRYPE7aciJREeXOJz2iqk7m5fbCUyKsX6cy2l5Cd+KbRTj/x0o1Ycue/xYsre/AUF5S2QqANg==}
+  '@kyh/prettier-config@1.1.2':
+    resolution: {integrity: sha512-edRtc2zzf8niy7nkWFxMhrOIzXi4MQaJ1p46dzQolBsEyy0V26d0zRj8mhjPZnyYiyNVrrYkM+nCFeez6IuNcQ==}
 
-  '@kyh/tsconfig@1.1.1':
-    resolution: {integrity: sha512-YNAV7tjBvPHBmHQQ/T1X7fZUgsveOJb3EftiWmdFcAZ46UaYyF3r2zXYAMRZc+Df1kn57p8CZcC09G4NOqw7uA==}
+  '@kyh/tsconfig@1.1.2':
+    resolution: {integrity: sha512-pxZSXnJDJncfvhAJ9jcN923Uqt/n9Vy5n+A/n7jdk/xkYm1cYwhMiUyDToPynrBaNm8kXvRzAiLp+9mvuzhkyw==}
 
   '@next/env@15.0.4':
     resolution: {integrity: sha512-WNRvtgnRVDD4oM8gbUcRc27IAhaL4eXQ/2ovGbgLnPGUvdyDr8UdXP4Q/IBDdAdojnD2eScryIDirv0YUCjUVw==}
@@ -2318,7 +2318,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@floating-ui/react@0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@floating-ui/react@0.27.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@floating-ui/react-dom': 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@floating-ui/utils': 0.2.8
@@ -2449,7 +2449,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@kyh/eslint-config@1.1.1(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)':
+  '@kyh/eslint-config@1.1.2(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
       '@eslint/compat': 1.2.4(eslint@9.16.0)
       '@next/eslint-plugin-next': 15.0.4
@@ -2467,7 +2467,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@kyh/prettier-config@1.1.1':
+  '@kyh/prettier-config@1.1.2':
     dependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.4.0(prettier@3.4.2)
       prettier: 3.4.2
@@ -2491,7 +2491,7 @@ snapshots:
       - prettier-plugin-svelte
       - supports-color
 
-  '@kyh/tsconfig@1.1.1': {}
+  '@kyh/tsconfig@1.1.2': {}
 
   '@next/env@15.0.4': {}
 

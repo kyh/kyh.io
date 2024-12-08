@@ -12,7 +12,7 @@
     "clean": "rm -rf .next && rm -rf out && rm -rf .vercel"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.26.28",
+    "@floating-ui/react": "^0.27.0",
     "@rooks/use-raf": "^4.11.2",
     "@vercel/analytics": "^1.4.1",
     "@vercel/og": "^0.6.4",
@@ -28,9 +28,9 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "^1.1.1",
-    "@kyh/prettier-config": "^1.1.1",
-    "@kyh/tsconfig": "^1.1.1",
+    "@kyh/eslint-config": "^1.1.2",
+    "@kyh/prettier-config": "^1.1.2",
+    "@kyh/tsconfig": "^1.1.2",
     "@types/matter-js": "^0.19.8",
     "@types/node": "^22.10.1",
     "@types/nprogress": "^0.2.3",
