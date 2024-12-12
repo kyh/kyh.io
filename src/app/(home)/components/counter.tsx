@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import { Fragment, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -50,7 +51,7 @@ type CounterProps = {
 const transition = { ease: "easeOut" };
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const getTextStats = useMemo(() => generateTextStats(ref), [ref]);
 
   const baseStyles = {
@@ -109,7 +110,7 @@ const count = (acc: number, curr: number) => {
   return acc + curr;
 };
 
-const generateTextStats = (ref: React.RefObject<HTMLDivElement>) => {
+const generateTextStats = (ref: RefObject<HTMLSpanElement | null>) => {
   const cache = new Map<string, number>();
 
   // safety for nodejs/ssr

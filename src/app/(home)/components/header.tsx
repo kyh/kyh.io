@@ -10,7 +10,7 @@ import styles from "@/styles/page.module.css";
 const DynamicScene = dynamic(() => import("./scene").then((mod) => mod.Scene));
 
 export const Header = () => {
-  const sceneRef = useRef<SceneRef>();
+  const sceneRef = useRef<SceneRef>(undefined);
 
   const handleTrigger = () => {
     if (sceneRef.current) {

@@ -57,7 +57,7 @@ const useDrag = (
   const initialPositionRef = useRef<Position>({ x: 0, y: 0 });
   const lastPositionRef = useRef<Position>({ x: 0, y: 0 });
   const velocityRef = useRef<Velocity>({ x: 0, y: 0 });
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(undefined);
 
   const updateVelocity = useCallback((xDelta: number, yDelta: number) => {
     const velocityMagnitude = Math.sqrt(xDelta * xDelta + yDelta * yDelta);
@@ -325,7 +325,7 @@ export const InfiniteGrid = ({
   }, [updateViewColRows]);
 
   const renderCards = () => {
-    const cards: JSX.Element[] = [];
+    const cards: React.ReactNode[] = [];
     const startCol = Math.floor(viewportX / (nodeWidth + gap));
     const startRow = Math.floor(viewportY / (nodeHeight + gap));
 

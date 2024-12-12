@@ -1,6 +1,6 @@
 "use client";
 
-import type { MutableRefObject } from "react";
+import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
 import {
   Bodies,
@@ -173,7 +173,7 @@ export type SceneRef = {
 };
 
 type SceneProps = {
-  sceneRef?: MutableRefObject<SceneRef | undefined>;
+  sceneRef?: RefObject<SceneRef | undefined>;
 };
 
 const SPAWN = 30;
@@ -189,7 +189,7 @@ export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
   const platformRef = useRef<Record<number, Matter.Body>>({});
   const bodiesRef = useRef<Record<number, Matter.Body>>({});
 
-  const spawnInterval = useRef<ReturnType<typeof setInterval>>();
+  const spawnInterval = useRef<ReturnType<typeof setInterval>>(undefined);
   const spawnCount = useRef(0);
 
   useEffect(() => {

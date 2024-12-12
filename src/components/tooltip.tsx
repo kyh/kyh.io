@@ -124,7 +124,8 @@ export const TooltipTrigger = React.forwardRef<
       context.getReferenceProps({
         ref,
         ...props,
-        ...children.props,
+        ...(children.props as object),
+        // @ts-expect-error data-state and data-side are valid props
         "data-state": context.open ? "open" : "closed",
         "data-side": context.placement.split("-")[0],
       }),
