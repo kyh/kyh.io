@@ -183,4 +183,10 @@ export const gallery: Node[] = [
     url: "https://codesandbox.io/embed/radial-slider-r9whs7?view=preview",
     tag: "experiment",
   },
+  {
+    type: "video",
+    src: "/screenshots/add-to-cart.mp4",
+    url: "https://codesandbox.io/embed/9s5z9q?view=preview",
+    tag: "experiment",
+  },
 ].map((node, index) => ({ ...node, id: index }) as Node);
