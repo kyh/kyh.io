@@ -1,47 +1,41 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type * as Party from "partykit/server";
+import { routePartykitRequest, Server } from "partyserver";
 
+import type { Connection } from "partyserver";
 import type { Cursor } from "../src/lib/cursor";
 import { getColorById } from "../src/lib/color";
 
-type ConnectionWithCursor = Party.Connection & { cursor?: Cursor };
+type Env = {
+  KyhServer: DurableObjectNamespace<KyhServer>;
+};
 
-// server.ts
-export default class CursorServer implements Party.Server {
-  constructor(public party: Party.Party) {}
-  options: Party.ServerOptions = {
-    hibernate: true,
-  };
+export class KyhServer extends Server {
+  onConnect(connection: Connection<Cursor>) {
+    const color = getColorById(connection.id);
 
-  onConnect(websocket: Party.Connection): void | Promise<void> {
-    const color = getColorById(websocket.id);
+    console.log("[connect]", connection.id);
 
-    websocket.serializeAttachment({
-      ...websocket.deserializeAttachment(),
+    connection.setState({
+      id: connection.id,
       color: color.color,
       hue: color.hue,
     });
 
-    console.log("[connect]", this.party.id, websocket.id);
-
     // On connect, send a "sync" message to the new connection
-    // Pull the cursor from all websocket attachments
+    // Pull the cursor from all connection attachments
     const cursors: Record<string, Cursor> = {};
-    for (const ws of this.party.getConnections() as ConnectionWithCursor[]) {
+    for (const ws of this.getConnections<Cursor>()) {
       const id = ws.id;
-      const cursor = ws.cursor ?? ws.deserializeAttachment();
+      const cursor = ws.state;
       if (
-        id !== websocket.id &&
-        cursor !== null &&
-        cursor.x !== undefined &&
+        id !== connection.id &&
+        cursor?.x !== undefined &&
         cursor.y !== undefined
       ) {
         cursors[id] = cursor;
       }
     }
 
-    websocket.send(
+    connection.send(
       JSON.stringify({
         type: "sync",
         cursors: cursors,
@@ -50,85 +44,84 @@ export default class CursorServer implements Party.Server {
   }
 
   onMessage(
-    message: string,
-    websocket: Party.Connection,
+    sender: Connection<Cursor>,
+    message: string
   ): void | Promise<void> {
-    const position = JSON.parse(message);
-    const prevCursor = this.getCursor(websocket);
-
-    const cursor: Cursor = {
-      id: websocket.id,
-      lastUpdate: Date.now(),
-      x: position.x,
-      y: position.y,
-      pointer: position.pointer,
-      pathname: position.pathname ?? prevCursor?.pathname,
-      color: prevCursor?.color,
-      hue: prevCursor?.hue,
-    };
-
-    this.setCursor(websocket, cursor);
-
-    if (position.x && position.y) {
-      this.party.broadcast(
-        JSON.stringify({
-          type: "update",
-          ...cursor,
-        }),
-        [websocket.id],
+      const cursor = JSON.parse(message) as Cursor;
+      const prevCursor = this.getCursor(sender);
+  
+      const newCursor: Cursor = {
+        id: sender.id,
+        lastUpdate: Date.now(),
+        x: cursor.x,
+        y: cursor.y,
+        pointer: cursor.pointer,
+        pathname: cursor.pathname ?? prevCursor?.pathname,
+        color: prevCursor?.color,
+        hue: prevCursor?.hue,
+      };
+  
+      this.setCursor(sender, newCursor);
+  
+      if (newCursor.x !== undefined && newCursor.y !== undefined) { 
+        this.broadcast(
+          JSON.stringify({
+            type: "update",
+            ...newCursor,
+          }),
+          [sender.id],
+        );
+      } else {
+        this.broadcast(
+          JSON.stringify({
+            type: "remove",
+            id: sender.id,
+          }),
+          [sender.id],
+        );
+      }
+    }
+  
+    onClose(connection: Connection<Cursor>) {
+      console.log(
+        "[disconnect]",
+        connection.id,
+        connection.readyState,
       );
-    } else {
-      this.party.broadcast(
+  
+      this.broadcast(
         JSON.stringify({
           type: "remove",
-          id: websocket.id,
+          id: connection.id,
         }),
-        [websocket.id],
+        [],
       );
     }
-  }
-
-  onClose(websocket: Party.Connection) {
-    console.log(
-      "[disconnect]",
-      this.party.id,
-      websocket.id,
-      websocket.readyState,
-    );
-
-    this.party.broadcast(
-      JSON.stringify({
-        type: "remove",
-        id: websocket.id,
-      }),
-      [],
-    );
-  }
-
-  getCursor(connection: ConnectionWithCursor) {
-    if (!connection.cursor) {
-      connection.cursor = connection.deserializeAttachment();
+  
+    getCursor(connection: Connection<Cursor>) {  
+      return connection.state;
     }
-
-    return connection.cursor;
-  }
-
-  setCursor(connection: ConnectionWithCursor, cursor: Cursor) {
-    const prevCursor = connection.cursor;
-    connection.cursor = cursor;
-
-    // throttle writing to attachment to once every 50ms
-    if (
-      !prevCursor ||
-      !prevCursor.lastUpdate ||
-      (cursor.lastUpdate && cursor.lastUpdate - prevCursor.lastUpdate > 50)
-    ) {
-      // Stash the cursor in the websocket attachment
-      connection.serializeAttachment({
-        ...cursor,
-      });
+  
+    setCursor(connection: Connection<Cursor>, cursor: Cursor) {
+      const prevCursor = connection.state;
+  
+      // throttle writing to attachment to once every 50ms
+      if (
+        !prevCursor?.lastUpdate ||
+        (cursor.lastUpdate && cursor.lastUpdate - prevCursor.lastUpdate > 50)
+      ) {
+        connection.setState({
+          ...cursor,
+        });
+      }
     }
-  }
 }
 
-CursorServer satisfies Party.Worker;
+export default {
+  async fetch(request: Request, env: Env) {
+    return (
+      (await routePartykitRequest(request, env)) ||
+      new Response("Not Found", { status: 404 })
+    );
+  }
+} satisfies ExportedHandler<Env>;

@@ -1,0 +1,11 @@
+name = "kyh-partyserver"
+main = 'party/server.ts'
+compatibility_date = "2024-07-25"
+
+[[durable_objects.bindings]]
+name = "KyhServer"
+class_name = "KyhServer"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["KyhServer"]
