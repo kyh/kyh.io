@@ -9,11 +9,12 @@ type OtherCursorsMap = Record<string, Cursor>;
 
 type useRealtimeProps = {
   host: string;
+  party: string;
   room: string;
 };
 
-export const useRealtime = ({ host, room }: useRealtimeProps) => {
-  const socket = usePartySocket({ host, room });
+export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
+  const socket = usePartySocket({ host, party, room });
   const pathname = usePathname();
   const [others, setOthers] = useState<OtherCursorsMap>({});
   const windowDimensions = useTrackWindow();

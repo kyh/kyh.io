@@ -8,14 +8,16 @@ import { useRealtime } from "@/lib/use-realtime";
 import { useTrackWindow } from "@/lib/use-track-window";
 import styles from "./multiplayer.module.css";
 
-const PARTYKIT_HOST = "https://kyh.kaiyu.partykit.dev";
-const PARTYKIT_ROOM = "kyh";
+const HOST = "https://kyh-partyserver.kyh.workers.dev";
+const PARTY = "kyh-server";
+const ROOM = "kyh";
 
 export const Multiplayer = () => {
   const pathname = usePathname();
   const { others } = useRealtime({
-    host: PARTYKIT_HOST,
-    room: PARTYKIT_ROOM,
+    host: HOST,
+    party: PARTY,
+    room: ROOM,
   });
   const windowDimensions = useTrackWindow();
 
