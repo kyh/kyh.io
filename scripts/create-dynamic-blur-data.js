@@ -1,6 +1,6 @@
-import sharp from "sharp";
 import { readdir } from "node:fs/promises";
-import { resolve, extname } from "node:path";
+import { extname, resolve } from "node:path";
+import sharp from "sharp";
 
 const getBase64 = async (src, size) => {
   const { data } = await sharp(src).resize(size).blur().toBuffer({

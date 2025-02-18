@@ -1,7 +1,14 @@
+import type { Connection } from "partyserver";
 import { routePartykitRequest, Server } from "partyserver";
 
-import type { Connection } from "partyserver";
-import type { Cursor } from "../src/lib/cursor";
+import type {
+  Player,
+  PlayerMap,
+  PositionMessage,
+  RemoveMessage,
+  SyncMessage,
+  UpdateMessage,
+} from "../src/lib/player";
 import { getColorById } from "../src/lib/color";
 
 type Env = {
@@ -9,7 +16,7 @@ type Env = {
 };
 
 export class KyhServer extends Server {
-  onConnect(connection: Connection<Cursor>) {
+  onConnect(connection: Connection<Player>) {
     const color = getColorById(connection.id);
 
     console.log("[connect]", connection.id);
@@ -20,101 +27,91 @@ export class KyhServer extends Server {
       hue: color.hue,
     });
 
-    // On connect, send a "sync" message to the new connection
-    // Pull the cursor from all connection attachments
-    const cursors: Record<string, Cursor> = {};
-    for (const ws of this.getConnections<Cursor>()) {
+    const players: PlayerMap = {};
+    for (const ws of this.getConnections<Player>()) {
       const id = ws.id;
-      const cursor = ws.state;
-      if (
-        id !== connection.id &&
-        cursor?.x !== undefined &&
-        cursor.y !== undefined
-      ) {
-        cursors[id] = cursor;
+      const player = ws.state;
+      if (id !== connection.id && player?.position?.x && player.position.y) {
+        players[id] = player;
       }
     }
 
-    connection.send(
-      JSON.stringify({
-        type: "sync",
-        cursors: cursors,
-      }),
-    );
+    const message: SyncMessage = {
+      type: "sync",
+      data: players,
+    };
+    connection.send(JSON.stringify(message));
   }
 
-  onMessage(
-    sender: Connection<Cursor>,
-    message: string
-  ): void | Promise<void> {
-      const cursor = JSON.parse(message) as Cursor;
-      const prevCursor = this.getCursor(sender);
-  
-      const newCursor: Cursor = {
-        id: sender.id,
-        lastUpdate: Date.now(),
-        x: cursor.x,
-        y: cursor.y,
-        pointer: cursor.pointer,
-        pathname: cursor.pathname ?? prevCursor?.pathname,
-        color: prevCursor?.color,
-        hue: prevCursor?.hue,
+  onMessage(sender: Connection<Player>, message: string): void | Promise<void> {
+    const positionMessage = JSON.parse(message) as PositionMessage;
+    const prevPlayer = this.getPlayer(sender);
+
+    const newPlayer: Player = {
+      id: sender.id,
+      color: prevPlayer?.color,
+      hue: prevPlayer?.hue,
+      lastUpdate: Date.now(),
+      position: {
+        x: positionMessage.data.x ?? prevPlayer?.position?.x,
+        y: positionMessage.data.y ?? prevPlayer?.position?.y,
+        pointer: positionMessage.data.pointer ?? prevPlayer?.position?.pointer,
+        pathname:
+          positionMessage.data.pathname ?? prevPlayer?.position?.pathname,
+      },
+    };
+
+    this.setPlayer(sender, newPlayer);
+
+    if (
+      newPlayer.position?.x !== undefined &&
+      newPlayer.position.y !== undefined
+    ) {
+      const message: UpdateMessage = {
+        type: "update",
+        data: newPlayer,
       };
-  
-      this.setCursor(sender, newCursor);
-  
-      if (newCursor.x !== undefined && newCursor.y !== undefined) { 
-        this.broadcast(
-          JSON.stringify({
-            type: "update",
-            ...newCursor,
-          }),
-          [sender.id],
-        );
-      } else {
-        this.broadcast(
-          JSON.stringify({
-            type: "remove",
-            id: sender.id,
-          }),
-          [sender.id],
-        );
-      }
+      this.broadcast(JSON.stringify(message), [sender.id]);
+    } else {
+      const message: RemoveMessage = {
+        type: "remove",
+        data: {
+          id: sender.id,
+        },
+      };
+      this.broadcast(JSON.stringify(message), [sender.id]);
     }
-  
-    onClose(connection: Connection<Cursor>) {
-      console.log(
-        "[disconnect]",
-        connection.id,
-        connection.readyState,
-      );
-  
-      this.broadcast(
-        JSON.stringify({
-          type: "remove",
-          id: connection.id,
-        }),
-        [],
-      );
+  }
+
+  onClose(connection: Connection<Player>) {
+    console.log("[disconnect]", connection.id, connection.readyState);
+
+    const message: RemoveMessage = {
+      type: "remove",
+      data: {
+        id: connection.id,
+      },
+    };
+    this.broadcast(JSON.stringify(message), []);
+  }
+
+  getPlayer(connection: Connection<Player>) {
+    return connection.state;
+  }
+
+  setPlayer(connection: Connection<Player>, player: Player) {
+    const prevPlayer = connection.state;
+
+    // throttle writing to attachment to once every 50ms
+    if (
+      !prevPlayer?.lastUpdate ||
+      (player.lastUpdate && player.lastUpdate - prevPlayer.lastUpdate > 50)
+    ) {
+      connection.setState({
+        ...player,
+      });
     }
-  
-    getCursor(connection: Connection<Cursor>) {  
-      return connection.state;
-    }
-  
-    setCursor(connection: Connection<Cursor>, cursor: Cursor) {
-      const prevCursor = connection.state;
-  
-      // throttle writing to attachment to once every 50ms
-      if (
-        !prevCursor?.lastUpdate ||
-        (cursor.lastUpdate && cursor.lastUpdate - prevCursor.lastUpdate > 50)
-      ) {
-        connection.setState({
-          ...cursor,
-        });
-      }
-    }
+  }
 }
 
 export default {
@@ -123,5 +120,5 @@ export default {
       (await routePartykitRequest(request, env)) ||
       new Response("Not Found", { status: 404 })
     );
-  }
+  },
 } satisfies ExportedHandler<Env>;

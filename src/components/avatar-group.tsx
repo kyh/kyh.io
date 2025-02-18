@@ -3,23 +3,23 @@
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
-import type { Cursor } from "@/lib/cursor";
+import type { PlayerMap } from "@/lib/player";
 import { getRandomColor } from "@/lib/color";
 import styles from "./avatar-group.module.css";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 type AvatarGroupProps = {
-  others: Record<string, Cursor>;
+  others: PlayerMap;
 };
 
 const color = getRandomColor();
 
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
-  const cursors = Object.entries(others).sort(([, c]) =>
-    c.pathname === pathname ? -1 : 1,
+  const players = Object.entries(others).sort(([, p]) =>
+    p.position?.pathname === pathname ? -1 : 1,
   );
-  const onlyMe = cursors.length < 1;
+  const onlyMe = players.length < 1;
 
   return (
     <ul className={styles.container}>
@@ -27,7 +27,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
         <motion.li
           className={styles.avatar}
           style={{
-            zIndex: cursors.length,
+            zIndex: players.length,
             background: `linear-gradient(${color?.hue}, ${color?.color})`,
           }}
           initial={{ scale: 0.8, opacity: 0 }}
@@ -45,8 +45,9 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
             </TooltipContent>
           </Tooltip>
         </motion.li>
-        {cursors.map(([id, cursor], index) => {
-          const anotherPage = cursor.pathname && cursor.pathname !== pathname;
+        {players.map(([id, player], index) => {
+          const anotherPage =
+            player.position?.pathname && player.position.pathname !== pathname;
 
           let label = "Visitor";
           if (anotherPage) {
@@ -58,8 +59,8 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               key={id}
               className={styles.avatar}
               style={{
-                zIndex: cursors.length - index,
-                background: `linear-gradient(${cursor.hue}, ${cursor.color})`,
+                zIndex: players.length - index,
+                background: `linear-gradient(${player.hue}, ${player.color})`,
               }}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: anotherPage ? 0.2 : 1 }}

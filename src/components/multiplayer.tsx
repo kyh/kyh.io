@@ -5,33 +5,36 @@ import { usePathname } from "next/navigation";
 import { AvatarGroup } from "@/components/avatar-group";
 import { Cursor } from "@/components/cursor";
 import { useRealtime } from "@/lib/use-realtime";
-import { useTrackWindow } from "@/lib/use-track-window";
 import styles from "./multiplayer.module.css";
 
+// const HOST = "http://localhost:8787";
 const HOST = "https://kyh-partyserver.kyh.workers.dev";
 const PARTY = "kyh-server";
 const ROOM = "kyh";
 
 export const Multiplayer = () => {
   const pathname = usePathname();
-  const { others } = useRealtime({
+  const { players, windowDimensions } = useRealtime({
     host: HOST,
     party: PARTY,
     room: ROOM,
   });
-  const windowDimensions = useTrackWindow();
 
-  const cursors = Object.entries(others)
-    .filter(
-      ([_, cursor]) => !!cursor.x && !!cursor.y && cursor.pathname === pathname,
-    )
-    .map(([id, cursor]) => (
+  const cursors = Object.entries(players)
+    .filter(([_, player]) => {
+      return (
+        !!player.position?.x &&
+        !!player.position.y &&
+        player.position.pathname === pathname
+      );
+    })
+    .map(([id, player]) => (
       <Cursor
         key={id}
-        x={cursor.x}
-        y={cursor.y}
-        color={cursor.color}
-        hue={cursor.hue}
+        x={player.position?.x}
+        y={player.position?.y}
+        color={player.color}
+        hue={player.hue}
         windowDimensions={windowDimensions}
       />
     ));
@@ -39,7 +42,7 @@ export const Multiplayer = () => {
   return (
     <>
       <div className={styles.avatarsContainer}>
-        <AvatarGroup others={others} />
+        <AvatarGroup others={players} />
       </div>
       {cursors}
     </>
