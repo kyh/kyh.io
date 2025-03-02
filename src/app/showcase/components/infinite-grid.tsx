@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Image from "next/image";
 
 import styles from "./infinite-grid.module.css";
@@ -177,52 +184,52 @@ type CardProps = {
   disabled?: boolean;
 };
 
-const Card = ({ node, x, y, width, height, disabled }: CardProps) => {
-  return (
-    <a
-      className={styles.card}
-      style={{
-        width,
-        height,
-        transform: `translate3d(${x}px, ${y}px, 0)`,
-        pointerEvents: disabled ? "none" : undefined,
-      }}
-      href={node.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      draggable={false}
-    >
-      {node.type === "image" && (
-        <Image
-          src={node.src}
-          alt={node.description ?? ""}
-          width={width}
-          height={height}
-          blurDataURL={node.dataBlur}
-          placeholder="blur"
-        />
-      )}
-      {node.type === "video" && (
-        <video autoPlay muted loop>
-          <source src={node.src} type="video/webm" />
-          Unsupported.
-        </video>
-      )}
-      {node.tag && <span className={styles.tag}>{node.tag}</span>}
-    </a>
-  );
-};
-
-const NEIGHBOURS = [
-  [0, -1],
-  [0, 1],
-  [1, 0],
-  [-1, 0],
-  [1, 1],
-  [-1, 1],
-  [-1, -1],
-  [1, -1],
-] as const;
+const Card = memo(
+  ({ node, x, y, width, height, disabled }: CardProps) => {
+    return (
+      <a
+        className={styles.card}
+        style={{
+          width,
+          height,
+          transform: `translate3d(${x}px, ${y}px, 0)`,
+          pointerEvents: disabled ? "none" : undefined,
+        }}
+        href={node.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        draggable={false}
+      >
+        {node.type === "image" && (
+          <Image
+            src={node.src}
+            alt={node.description ?? ""}
+            width={width}
+            height={height}
+            blurDataURL={node.dataBlur}
+            placeholder="blur"
+            loading="lazy"
+          />
+        )}
+        {node.type === "video" && (
+          <video autoPlay muted loop>
+            <source src={node.src} type="video/webm" />
+            Unsupported.
+          </video>
+        )}
+        {node.tag && <span className={styles.tag}>{node.tag}</span>}
+      </a>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.x === nextProps.x &&
+      prevProps.y === nextProps.y &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.node.id === nextProps.node.id
+    );
+  },
+);
 
 type InfiniteGridProps = {
   nodes: Node[];
@@ -241,6 +248,7 @@ export const InfiniteGrid = ({
   cols = 3,
   gap = 20,
 }: InfiniteGridProps) => {
+  const [, startTransition] = useTransition();
   const [viewportX, setViewportX] = useState(-gap);
   const [viewportY, setViewportY] = useState(-gap);
   const [viewCols, setViewCols] = useState(0);
@@ -264,41 +272,25 @@ export const InfiniteGrid = ({
     [nodes],
   );
 
-  const getRandomSafe = useCallback(
-    (col: number, row: number): Node => {
-      let pick: Node | undefined;
-      let tries = 0;
-      while (pick === undefined && tries < 20) {
-        const rnd = Math.floor(Math.random() * 10000);
-        const item = getGalleryNode(rnd);
-        if (
-          NEIGHBOURS.every(
-            ([dx, dy]) => picks[`${col + dx}:${row + dy}`] !== item,
-          )
-        ) {
-          pick = item;
-        }
-        tries++;
-      }
-      return pick ?? getGalleryNode(Math.floor(Math.random() * nodes.length));
-    },
-    [getGalleryNode, picks],
-  );
-
   const getRandomNode = useCallback(
     (col: number, row: number): Node => {
       const key = `${col}:${row}`;
       if (!picks[key]) {
-        setPicks((prev) => ({ ...prev, [key]: getRandomSafe(col, row) }));
+        setPicks((prev) => ({
+          ...prev,
+          [key]: getGalleryNode(Math.floor(Math.random() * 10000)),
+        }));
       }
       return picks[key]!;
     },
-    [getRandomSafe, picks],
+    [getGalleryNode, picks],
   );
 
   const onDrag = useCallback((deltaX: number, deltaY: number) => {
-    setViewportX((prev) => prev - deltaX);
-    setViewportY((prev) => prev - deltaY);
+    startTransition(() => {
+      setViewportX((prev) => prev - deltaX);
+      setViewportY((prev) => prev - deltaY);
+    });
   }, []);
 
   const {

@@ -20,6 +20,8 @@
   border-radius: calc(var(--radius) + var(--padding));
   border: 1px solid var(--dock-border-color);
   backdrop-filter: blur(10px);
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .card * {
