@@ -107,12 +107,12 @@ const createHexagon = (isLight: boolean) => {
   });
 };
 
-const statIdToCreate: Record<string, (isLight: boolean) => Matter.Body> = {
-  home: createMulti,
-  build: createSquare,
-  invest: createHexagon,
-  advise: createTriangle,
-  product: createCircle,
+const shapeToCreate = {
+  multi: createMulti,
+  square: createSquare,
+  hexagon: createHexagon,
+  triangle: createTriangle,
+  circle: createCircle,
 };
 
 const createPlatform = () => {
@@ -169,7 +169,7 @@ const createBoundaries = () => {
 };
 
 export type SceneRef = {
-  trigger: () => void;
+  trigger: (shape?: keyof typeof shapeToCreate) => void;
 };
 
 type SceneProps = {
@@ -263,11 +263,11 @@ export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
     };
   }, [size.width, size.height]);
 
-  const trigger = () => {
+  const trigger = (shape?: keyof typeof shapeToCreate) => {
     const isLight = resolvedTheme === "light";
     const engine = engineRef.current;
     const world = engine.world;
-    const create = statIdToCreate.home;
+    const create = shape ? shapeToCreate[shape] : shapeToCreate.multi;
 
     clearInterval(spawnInterval.current);
     spawnCount.current = 0;

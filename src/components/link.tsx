@@ -15,6 +15,8 @@ type LinkProps = {
   src?: string;
   srcs?: { href: string; src: string; alt: string }[];
   open?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 };
 
 export const Link = ({
@@ -26,6 +28,8 @@ export const Link = ({
   open,
   noStyles = false,
   noAction = false,
+  onMouseEnter,
+  onMouseLeave,
 }: LinkProps) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
@@ -39,6 +43,8 @@ export const Link = ({
           className={actionClassName}
           href={href}
           data-text={actionDataText}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           {children}
         </NextLink>
@@ -51,6 +57,8 @@ export const Link = ({
           target="_blank"
           rel="noopener noreferrer"
           data-text={actionDataText}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           {children}
         </a>
@@ -69,6 +77,8 @@ export const Link = ({
           type="button"
           className={actionClassName}
           data-text={actionDataText}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           {children}
         </button>
