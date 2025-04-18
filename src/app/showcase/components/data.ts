@@ -2,6 +2,12 @@ import type { Node } from "./infinite-grid";
 
 export const gallery: Node[] = [
   {
+    type: "video",
+    src: "/screenshots/vibedgames.mp4",
+    url: "https://vibedgames.com",
+    tag: "project",
+  },
+  {
     type: "image",
     src: "/screenshots/amazon-ds.webp",
     dataBlur:
@@ -83,14 +89,6 @@ export const gallery: Node[] = [
   },
   {
     type: "image",
-    src: "/screenshots/2up.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAACwAQCdASoQAAwAAUAmJaQAAuQXRR4AAP7+7XQ2ry8a0MfqHJH0uHS/5LOWen07Pkad4dWCZkLtS+UKAAA=",
-    url: "https://2uphq.com",
-    tag: "project",
-  },
-  {
-    type: "image",
     src: "/screenshots/uicapsule.webp",
     dataBlur:
       "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
@@ -145,12 +143,6 @@ export const gallery: Node[] = [
     type: "video",
     src: "/screenshots/ascii.mp4",
     url: "https://codesandbox.io/embed/ascii-renderer-p741e2?view=preview",
-    tag: "experiment",
-  },
-  {
-    type: "video",
-    src: "/screenshots/tag-selector.mp4",
-    url: "https://codesandbox.io/embed/sports-selection-29jhmp?view=preview",
     tag: "experiment",
   },
   {
