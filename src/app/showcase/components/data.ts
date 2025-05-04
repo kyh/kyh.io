@@ -44,7 +44,7 @@ export const gallery: Node[] = [
     src: "/screenshots/founding.webp",
     dataBlur:
       "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
-    url: "https://agency.kyh.io",
+    url: "https://founding.so",
     tag: "venture",
   },
   {
@@ -105,12 +105,6 @@ export const gallery: Node[] = [
   },
   {
     type: "video",
-    src: "/screenshots/globe.mp4",
-    url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
-    tag: "experiment",
-  },
-  {
-    type: "video",
     src: "/screenshots/arc.webm",
     url: "https://sequoiacap.com",
     tag: "work",
@@ -120,6 +114,12 @@ export const gallery: Node[] = [
     src: "/screenshots/inteligir.mp4",
     url: "https://inteligir.com",
     tag: "project",
+  },
+  {
+    type: "video",
+    src: "/screenshots/globe.mp4",
+    url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
+    tag: "experiment",
   },
   {
     type: "video",
