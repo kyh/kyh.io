@@ -55,14 +55,14 @@ importers:
         specifier: ^4.20250510.0
         version: 4.20250510.0
       '@kyh/eslint-config':
-        specifier: ^1.1.4
-        version: 1.1.4(@typescript-eslint/parser@8.32.0(eslint@9.26.0)(typescript@5.8.3))(eslint@9.26.0)(turbo@2.4.0)(typescript@5.8.3)
+        specifier: ^1.1.5
+        version: 1.1.5(@typescript-eslint/parser@8.32.0(eslint@9.26.0)(typescript@5.8.3))(eslint@9.26.0)(turbo@2.4.0)(typescript@5.8.3)
       '@kyh/prettier-config':
-        specifier: ^1.1.4
-        version: 1.1.4
+        specifier: ^1.1.5
+        version: 1.1.5
       '@kyh/tsconfig':
-        specifier: ^1.1.4
-        version: 1.1.4
+        specifier: ^1.1.5
+        version: 1.1.5
       '@types/matter-js':
         specifier: ^0.19.8
         version: 0.19.8
@@ -675,14 +675,14 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@kyh/eslint-config@1.1.4':
-    resolution: {integrity: sha512-3ntABZgEiGeuUpSYC35KPOLuPrusrWEwk6bV3K4WkvAtSmf5BqcS1r9wvTVBLaK3TvU7ngDzgVv7TGpnQ+7pyA==}
+  '@kyh/eslint-config@1.1.5':
+    resolution: {integrity: sha512-KPcWDyt3ZgXO6y3DJDzcDygWSxrJi3uT1W3Rt/SZ/rF2igJpROpZ8HDyXzv7csJ8YNG6r2L0nhmUQD7M1c78zg==}
 
-  '@kyh/prettier-config@1.1.4':
-    resolution: {integrity: sha512-jEC1jJktk9H+RCx3kwU4GK/IcReq/tRbUchK9pvq//OXC/KHztmxb0e5WDC0cs6qEBIFZJOWjW8gBcPfuGCRdA==}
+  '@kyh/prettier-config@1.1.5':
+    resolution: {integrity: sha512-hpvO5NaJhjG+E26x0AWN/8ld4PT3DUip3J7dCvBrxPWRO+QGGdiREnY20/gXSNdb14tVxLOLo7xR3kb9wZwBpg==}
 
-  '@kyh/tsconfig@1.1.4':
-    resolution: {integrity: sha512-vLIswujpkDs1lre7xc1LnUZXM9mSVVu2tnFp2TRSxpJrz70RVDmelz8YNMAp1egwiFQYRypqVZIuY2ullDUjjg==}
+  '@kyh/tsconfig@1.1.5':
+    resolution: {integrity: sha512-xWRS2q2ixy8k2c560qu/vUf3vuKnNkiwb6swwa5A5mx2Eqs+HJAdh7bnFsaGghZxE4T87h5EuQ4IjKssiJnMwQ==}
 
   '@modelcontextprotocol/sdk@1.11.1':
     resolution: {integrity: sha512-9LfmxKTb1v+vUS1/emSk1f5ePmTLkb9Le9AxOB5T0XM59EUumwcS45z05h7aiZx3GI0Bl7mjb3FMEglYj+acuQ==}
@@ -2947,7 +2947,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@kyh/eslint-config@1.1.4(@typescript-eslint/parser@8.32.0(eslint@9.26.0)(typescript@5.8.3))(eslint@9.26.0)(turbo@2.4.0)(typescript@5.8.3)':
+  '@kyh/eslint-config@1.1.5(@typescript-eslint/parser@8.32.0(eslint@9.26.0)(typescript@5.8.3))(eslint@9.26.0)(turbo@2.4.0)(typescript@5.8.3)':
     dependencies:
       '@eslint/compat': 1.2.9(eslint@9.26.0)
       '@next/eslint-plugin-next': 15.3.2
@@ -2966,7 +2966,7 @@ snapshots:
       - turbo
       - typescript
 
-  '@kyh/prettier-config@1.1.4':
+  '@kyh/prettier-config@1.1.5':
     dependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.4.1(prettier@3.5.3)
       prettier: 3.5.3
@@ -2990,7 +2990,7 @@ snapshots:
       - prettier-plugin-svelte
       - supports-color
 
-  '@kyh/tsconfig@1.1.4': {}
+  '@kyh/tsconfig@1.1.5': {}
 
   '@modelcontextprotocol/sdk@1.11.1':
     dependencies:

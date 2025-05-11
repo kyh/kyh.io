@@ -31,9 +31,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250510.0",
-    "@kyh/eslint-config": "^1.1.4",
-    "@kyh/prettier-config": "^1.1.4",
-    "@kyh/tsconfig": "^1.1.4",
+    "@kyh/eslint-config": "^1.1.5",
+    "@kyh/prettier-config": "^1.1.5",
+    "@kyh/tsconfig": "^1.1.5",
     "@types/matter-js": "^0.19.8",
     "@types/node": "^22.15.17",
     "@types/nprogress": "^0.2.3",
