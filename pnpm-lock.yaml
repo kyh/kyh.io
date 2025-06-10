@@ -52,7 +52,7 @@ importers:
         version: 19.1.0(react@19.1.0)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^4.20250607.0
+        specifier: ^4.20250610.0
         version: 4.20250610.0
       '@kyh/eslint-config':
         specifier: ^1.1.5
@@ -67,17 +67,17 @@ importers:
         specifier: ^0.19.8
         version: 0.19.8
       '@types/node':
-        specifier: ^22.15.30
+        specifier: ^22.15.31
         version: 22.15.31
       '@types/nprogress':
         specifier: ^0.2.3
         version: 0.2.3
       '@types/react':
-        specifier: ^19.1.6
-        version: 19.1.6
+        specifier: ^19.1.7
+        version: 19.1.7
       '@types/react-dom':
         specifier: ^19.1.6
-        version: 19.1.6(@types/react@19.1.6)
+        version: 19.1.6(@types/react@19.1.7)
       eslint:
         specifier: ^9.28.0
         version: 9.28.0
@@ -800,8 +800,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.0.0
 
-  '@types/react@19.1.6':
-    resolution: {integrity: sha512-JeG0rEWak0N6Itr6QUx+X60uQmN+5t3j9r/OVDtWzFXKaj6kD1BwJzOksD0FF6iWxZlbE1kB0q9vtnU2ekqa1Q==}
+  '@types/react@19.1.7':
+    resolution: {integrity: sha512-BnsPLV43ddr05N71gaGzyZ5hzkCmGwhMvYc8zmvI8Ci1bRkkDSzDDVfAXfN2tk748OwI7ediiPX6PfT9p0QGVg==}
 
   '@typescript-eslint/eslint-plugin@8.32.1':
     resolution: {integrity: sha512-6u6Plg9nP/J1GRpe/vcjjabo6Uc5YQPAMxsgQyGC/I0RuukiG1wIe3+Vtg3IrSCVJDmqK3j8adrtzXSENRtFgg==}
@@ -2879,11 +2879,11 @@ snapshots:
 
   '@types/nprogress@0.2.3': {}
 
-  '@types/react-dom@19.1.6(@types/react@19.1.6)':
+  '@types/react-dom@19.1.6(@types/react@19.1.7)':
     dependencies:
-      '@types/react': 19.1.6
+      '@types/react': 19.1.7
 
-  '@types/react@19.1.6':
+  '@types/react@19.1.7':
     dependencies:
       csstype: 3.1.3
 
