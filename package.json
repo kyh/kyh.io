@@ -30,12 +30,12 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250605.0",
+    "@cloudflare/workers-types": "^4.20250607.0",
     "@kyh/eslint-config": "^1.1.5",
     "@kyh/prettier-config": "^1.1.5",
     "@kyh/tsconfig": "^1.1.5",
     "@types/matter-js": "^0.19.8",
-    "@types/node": "^22.15.29",
+    "@types/node": "^22.15.30",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
@@ -53,5 +53,5 @@
       "@vercel/speed-insights"
     ]
   },
-  "packageManager": "pnpm@10.11.1"
+  "packageManager": "pnpm@10.12.1"
 }
