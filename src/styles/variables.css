@@ -52,7 +52,7 @@
   --bg-color: var(--colors-gray900);
   --bg-highlighted: var(--colors-gray1000);
 
-  --body-color-faded: var(--colors-gray700);
+  --body-color-faded: var(--colors-gray500);
   --body-color: var(--colors-gray300);
   --body-color-highlighted: var(--colors-gray0);
 

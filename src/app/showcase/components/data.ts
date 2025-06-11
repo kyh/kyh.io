@@ -1,184 +1,261 @@
-import type { Node } from "./infinite-grid";
+type Project = {
+  title: string;
+  description: string;
+  url: string;
+  projectAssets: ProjectAsset[];
+  type: "project" | "work";
+};
 
-export const gallery: Node[] = [
+type ProjectAsset = {
+  src: string;
+  type: "image" | "video";
+  description?: string;
+  dataBlur?: string;
+};
+
+export const gallery: Project[] = [
+  // Projects
   {
-    type: "video",
-    src: "/screenshots/vibedgames.mp4",
+    title: "Vibed Games",
+    description: "Generate games with AI",
     url: "https://vibedgames.com",
-    tag: "project",
+    type: "project",
+    projectAssets: [
+      {
+        type: "video",
+        src: "/screenshots/vibedgames.mp4",
+      },
+    ],
   },
   {
-    type: "image",
-    src: "/screenshots/amazon-ds.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
-    url: "https://amazon.design",
-    tag: "work",
+    title: "Yours Sincerely",
+    description: "Anonymous love letters 💌 written in disappearing ink.",
+    url: "https://yoursincerely.org",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/ys.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
+      },
+    ],
   },
   {
-    type: "image",
-    src: "/screenshots/atrium.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAQCdASoQAAwAAUAmJaQAAuafBgmYAAD+9fljiQX0uQIXlcAKRTrP/H++I3FnboNY2MVVCDSkZJ/yTu+kEwJ9ADg17RGQAAA=",
-    url: "https://www.crunchbase.com/organization/atrium-lts",
-    tag: "work",
-  },
-  {
-    type: "image",
-    src: "/screenshots/cardiogram.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
-    url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
-    tag: "work",
-  },
-  {
-    type: "image",
-    src: "/screenshots/covid19.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
-    url: "https://covid-19.kyh.io",
-    tag: "project",
-  },
-  {
-    type: "image",
-    src: "/screenshots/founding.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
-    url: "https://founding.so",
-    tag: "venture",
-  },
-  {
-    type: "image",
-    src: "/screenshots/keiko.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
-    url: "https://apps.apple.com/us/app/id1209391711",
-    tag: "project",
-  },
-  {
-    type: "image",
-    src: "/screenshots/slyce.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAQCdASoQAAwAAUAmJZwAAudljfFYAAD+/pmxYSp4yOONaQeF5/fWRam8ThOk9MqRSC7AHjEfrm4h9atrfO8kfY4GxG9TlyLNd6rv9NZD392rAAA=",
-    url: "https://www.crunchbase.com/organization/slyce",
-    tag: "work",
-  },
-  {
-    type: "image",
-    src: "/screenshots/stonks.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-    url: "https://stonksville.com",
-    tag: "project",
-  },
-  {
-    type: "image",
-    src: "/screenshots/init.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-    url: "https://init.kyh.io",
-    tag: "project",
-  },
-  {
-    type: "image",
-    src: "/screenshots/tc.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
-    url: "https://tc.kyh.io",
-    tag: "project",
-  },
-  {
-    type: "image",
-    src: "/screenshots/uicapsule.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
+    title: "UICapsule",
+    description:
+      "A curated collection of components for builders who care about the details.",
     url: "https://uicapsule.com",
-    tag: "project",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/uicapsule.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
+      },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/globe.mp4",
+      //   url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/parallax.mp4",
+      //   url: "https://codesandbox.io/embed/hlhqrc?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/infinite-grid.mp4",
+      //   url: "https://codesandbox.io/embed/p2fgqp?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/astroids.mp4",
+      //   url: "https://codesandbox.io/embed/astroids-8pyh9w?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/ascii.mp4",
+      //   url: "https://codesandbox.io/embed/ascii-renderer-p741e2?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/ios-app-zoom.mp4",
+      //   url: "https://codesandbox.io/embed/app-store-zoom-hqgp6r?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/ios-volume.mp4",
+      //   url: "https://codesandbox.io/embed/iphone-volume-mx67y6?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/ios-header-menu.mp4",
+      //   url: "https://codesandbox.io/embed/iphone-header-menu-y7lm5n?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/reading-progress.mp4",
+      //   url: "https://codesandbox.io/embed/reading-progress-vwfsgl?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/radial-slider.mp4",
+      //   url: "https://codesandbox.io/embed/radial-slider-r9whs7?view=preview",
+      //   tag: "experiment",
+      // },
+      // {
+      //   type: "video",
+      //   src: "/screenshots/add-to-cart.mp4",
+      //   url: "https://codesandbox.io/embed/9s5z9q?view=preview",
+      //   tag: "experiment",
+      // },
+    ],
   },
   {
-    type: "image",
-    src: "/screenshots/ys.webp",
-    dataBlur:
-      "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
-    url: "https://yourssincerely.org",
-    tag: "project",
-  },
-  {
-    type: "video",
-    src: "/screenshots/arc.webm",
-    url: "https://sequoiacap.com",
-    tag: "work",
-  },
-  {
-    type: "video",
-    src: "/screenshots/inteligir.mp4",
+    title: "Inteligir",
+    description: "",
     url: "https://inteligir.com",
-    tag: "project",
+    type: "project",
+    projectAssets: [
+      {
+        type: "video",
+        src: "/screenshots/inteligir.mp4",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/globe.mp4",
-    url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
-    tag: "experiment",
+    title: "Covid-19 Dashboard",
+    description: "",
+    url: "https://covid-19.kyh.io",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/covid19.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/parallax.mp4",
-    url: "https://codesandbox.io/embed/hlhqrc?view=preview",
-    tag: "experiment",
+    title: "Keiko and Friends",
+    description: "",
+    url: "https://apps.apple.com/us/app/id1209391711",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/keiko.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/infinite-grid.mp4",
-    url: "https://codesandbox.io/embed/p2fgqp?view=preview",
-    tag: "experiment",
+    title: "Founding",
+    description: "",
+    url: "https://founding.so",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/founding.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/astroids.mp4",
-    url: "https://codesandbox.io/embed/astroids-8pyh9w?view=preview",
-    tag: "experiment",
+    title: "Total Compensation Calculator",
+    description: "",
+    url: "https://tc.kyh.io",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/tc.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/ascii.mp4",
-    url: "https://codesandbox.io/embed/ascii-renderer-p741e2?view=preview",
-    tag: "experiment",
+    title: "Init",
+    description: "",
+    url: "https://init.kyh.io",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/init.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
+      },
+    ],
+  },
+
+  // Work
+  {
+    title: "Sequoia Capital",
+    description: "",
+    url: "https://sequoiacap.com",
+    type: "work",
+    projectAssets: [
+      {
+        type: "video",
+        src: "/screenshots/arc.webm",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/ios-app-zoom.mp4",
-    url: "https://codesandbox.io/embed/app-store-zoom-hqgp6r?view=preview",
-    tag: "experiment",
+    title: "Google Grow",
+    description: "",
+    url: "https://grow.google",
+    type: "work",
+    projectAssets: [
+      {
+        type: "video",
+        src: "/screenshots/google-grow.webm",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/ios-volume.mp4",
-    url: "https://codesandbox.io/embed/iphone-volume-mx67y6?view=preview",
-    tag: "experiment",
+    title: "Amazon Design System",
+    description: "",
+    url: "https://amazon.design",
+    type: "work",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/amazon-ds.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
+      },
+    ],
   },
   {
-    type: "video",
-    src: "/screenshots/ios-header-menu.mp4",
-    url: "https://codesandbox.io/embed/iphone-header-menu-y7lm5n?view=preview",
-    tag: "experiment",
+    title: "Cardiogram",
+    description: "",
+    url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
+    type: "work",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/cardiogram.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
+      },
+    ],
   },
-  {
-    type: "video",
-    src: "/screenshots/reading-progress.mp4",
-    url: "https://codesandbox.io/embed/reading-progress-vwfsgl?view=preview",
-    tag: "experiment",
-  },
-  {
-    type: "video",
-    src: "/screenshots/radial-slider.mp4",
-    url: "https://codesandbox.io/embed/radial-slider-r9whs7?view=preview",
-    tag: "experiment",
-  },
-  {
-    type: "video",
-    src: "/screenshots/add-to-cart.mp4",
-    url: "https://codesandbox.io/embed/9s5z9q?view=preview",
-    tag: "experiment",
-  },
-].map((node, index) => ({ ...node, id: index }) as Node);
+];

@@ -7,10 +7,10 @@ import styles from "@/styles/page.module.css";
 
 export const metadata = {
   title: "About",
-  description: "Who is this kid?",
+  description: "Who is Kaiyu Hsu?",
 };
 
-const AboutPage = () => (
+const Page = () => (
   <main className={styles.container}>
     <header className={styles.header}>
       <ScrambleText className={styles.title}>About me</ScrambleText>
@@ -202,4 +202,4 @@ const AboutPage = () => (
   </main>
 );
 
-export default AboutPage;
+export default Page;

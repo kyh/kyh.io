@@ -16,6 +16,7 @@ export const AnimateSection = <C extends React.ElementType>({
   delay,
   as,
   className = "",
+  ...props
 }: AnimateSectionProps<C>) => {
   const Element = as ?? "div";
   return (
@@ -26,6 +27,7 @@ export const AnimateSection = <C extends React.ElementType>({
           animationDuration: `${duration ?? 0.4}s`,
         }}
         className={className}
+        {...props}
       >
         {children}
       </Element>

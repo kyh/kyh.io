@@ -14,7 +14,7 @@ const DynamicScene = dynamic(() =>
   import("./components/scene").then((mod) => mod.Scene),
 );
 
-const HomePage = () => {
+const Page = () => {
   const sceneRef = useRef<SceneRef>(undefined);
 
   return (
@@ -62,4 +62,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default Page;

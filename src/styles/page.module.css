@@ -69,3 +69,50 @@
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
 }
+
+/* Showcase Page */
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: fixed;
+  left: 0;
+  padding-left: 48px;
+  top: 30%;
+  width: 264px;
+}
+
+.aside::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 32px;
+  height: 1px;
+  background-color: var(--colors-gray400);
+}
+
+[data-theme="dark"] .aside::before {
+  background-color: var(--colors-gray700);
+}
+
+.asideDescription {
+  color: var(--body-color-faded);
+}
+
+.timeline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.timelinePath {
+  stroke: var(--colors-gray400);
+}
+
+[data-theme="dark"] .timelinePath {
+  stroke: var(--colors-gray700);
+}
