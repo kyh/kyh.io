@@ -66,6 +66,7 @@
   --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
 
+  --dock-bg: rgba(71, 85, 105, 0.12);
   --dock-border-color: #1e293b80;
 
   --colors-panel: var(--colors-gray950);
