@@ -13,8 +13,7 @@ type ProjectAsset = {
   dataBlur?: string;
 };
 
-export const gallery: Project[] = [
-  // Projects
+export const featured: Project[] = [
   {
     title: "Vibed Games",
     description: "Generate games with AI",
@@ -54,72 +53,50 @@ export const gallery: Project[] = [
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
       },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/globe.mp4",
-      //   url: "https://codesandbox.io/embed/globe-0xjvdb?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/parallax.mp4",
-      //   url: "https://codesandbox.io/embed/hlhqrc?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/infinite-grid.mp4",
-      //   url: "https://codesandbox.io/embed/p2fgqp?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/astroids.mp4",
-      //   url: "https://codesandbox.io/embed/astroids-8pyh9w?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/ascii.mp4",
-      //   url: "https://codesandbox.io/embed/ascii-renderer-p741e2?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/ios-app-zoom.mp4",
-      //   url: "https://codesandbox.io/embed/app-store-zoom-hqgp6r?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/ios-volume.mp4",
-      //   url: "https://codesandbox.io/embed/iphone-volume-mx67y6?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/ios-header-menu.mp4",
-      //   url: "https://codesandbox.io/embed/iphone-header-menu-y7lm5n?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/reading-progress.mp4",
-      //   url: "https://codesandbox.io/embed/reading-progress-vwfsgl?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/radial-slider.mp4",
-      //   url: "https://codesandbox.io/embed/radial-slider-r9whs7?view=preview",
-      //   tag: "experiment",
-      // },
-      // {
-      //   type: "video",
-      //   src: "/screenshots/add-to-cart.mp4",
-      //   url: "https://codesandbox.io/embed/9s5z9q?view=preview",
-      //   tag: "experiment",
-      // },
+      {
+        type: "video",
+        src: "/screenshots/globe.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/parallax.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/infinite-grid.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/astroids.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/ascii.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/ios-app-zoom.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/ios-volume.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/ios-header-menu.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/reading-progress.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/radial-slider.mp4",
+      },
+      {
+        type: "video",
+        src: "/screenshots/add-to-cart.mp4",
+      },
     ],
   },
   {
@@ -131,6 +108,37 @@ export const gallery: Project[] = [
       {
         type: "video",
         src: "/screenshots/inteligir.mp4",
+      },
+    ],
+  },
+];
+
+export const others: Project[] = [
+  {
+    title: "Founding",
+    description: "",
+    url: "https://founding.so",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/founding.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
+      },
+    ],
+  },
+  {
+    title: "Total Compensation Calculator",
+    description: "",
+    url: "https://tc.kyh.io",
+    type: "project",
+    projectAssets: [
+      {
+        type: "image",
+        src: "/screenshots/tc.webp",
+        dataBlur:
+          "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
       },
     ],
   },
@@ -163,34 +171,6 @@ export const gallery: Project[] = [
     ],
   },
   {
-    title: "Founding",
-    description: "",
-    url: "https://founding.so",
-    type: "project",
-    projectAssets: [
-      {
-        type: "image",
-        src: "/screenshots/founding.webp",
-        dataBlur:
-          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
-      },
-    ],
-  },
-  {
-    title: "Total Compensation Calculator",
-    description: "",
-    url: "https://tc.kyh.io",
-    type: "project",
-    projectAssets: [
-      {
-        type: "image",
-        src: "/screenshots/tc.webp",
-        dataBlur:
-          "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
-      },
-    ],
-  },
-  {
     title: "Init",
     description: "",
     url: "https://init.kyh.io",
@@ -219,7 +199,7 @@ export const gallery: Project[] = [
     ],
   },
   {
-    title: "Google Grow",
+    title: "Google",
     description: "",
     url: "https://grow.google",
     type: "work",
@@ -231,7 +211,7 @@ export const gallery: Project[] = [
     ],
   },
   {
-    title: "Amazon Design System",
+    title: "Amazon",
     description: "",
     url: "https://amazon.design",
     type: "work",

@@ -1,7 +1,7 @@
 .container {
   display: flex;
   margin-right: 8px;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.23s ease-out;
 }
 
 .avatar {

@@ -218,7 +218,7 @@ const GlassFilter = () => {
   return (
     <>
       <div className={styles.glassFilterEffect} />
-      <svg style={{ display: "none" }}>
+      <svg style={{ display: "none", width: 0, height: 0 }}>
         <filter
           id="glass-distortion"
           x="0%"
