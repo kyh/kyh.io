@@ -36,16 +36,16 @@
 
 .section > * {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(20px);
   animation: animateSectionIn;
   animation-fill-mode: forwards;
-  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  animation-timing-function: ease-out;
 }
 
 @keyframes animateSectionIn {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;

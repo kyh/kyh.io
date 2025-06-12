@@ -1,4 +1,4 @@
-type Project = {
+export type Project = {
   title: string;
   description: string;
   url: string;
@@ -111,7 +111,7 @@ export const featured: Project[] = [
       },
     ],
   },
-];
+] as const;
 
 export const others: Project[] = [
   {
@@ -238,4 +238,4 @@ export const others: Project[] = [
       },
     ],
   },
-];
+] as const;
