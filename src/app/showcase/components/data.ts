@@ -16,10 +16,15 @@ type ProjectAsset = {
 export const featured: Project[] = [
   {
     title: "Vibed Games",
-    description: "Generate games with AI",
+    description:
+      "Design, publish, and play personalized multiplayer minigames with your crew.",
     url: "https://vibedgames.com",
     type: "project",
     projectAssets: [
+      {
+        type: "video",
+        src: "/screenshots/vibedgames.mp4",
+      },
       {
         type: "video",
         src: "/screenshots/vibedgames.mp4",

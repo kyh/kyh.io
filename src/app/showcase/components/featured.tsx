@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useInView } from "motion/react";
 
 import type { Project } from "./data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
@@ -12,7 +11,50 @@ import { featured } from "./data";
 import styles from "./featured.module.css";
 
 export const Featured = () => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [activeProject, setActiveProject] = useState<Project>(featured[0]!);
+  const projectRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    const checkActiveProject = throttle(() => {
+      if (window.innerWidth < 900) return;
+
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      let foundIndex: number | null = null;
+
+      for (let i = 0; i < projectRefs.current.length; i++) {
+        const projectEl = projectRefs.current[i];
+        if (projectEl) {
+          const rect = projectEl.getBoundingClientRect();
+          if (
+            rect.top <= centerY &&
+            rect.bottom >= centerY &&
+            rect.left <= centerX &&
+            rect.right >= centerX
+          ) {
+            foundIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (foundIndex !== null) {
+        setActiveProject(featured[foundIndex]!);
+      }
+    }, 100);
+
+    checkActiveProject();
+
+    window.addEventListener("scroll", checkActiveProject, { passive: true });
+    window.addEventListener("resize", checkActiveProject);
+
+    return () => {
+      window.removeEventListener("scroll", checkActiveProject);
+      window.removeEventListener("resize", checkActiveProject);
+    };
+  }, []);
 
   return (
     <section className={styles.container}>
@@ -35,7 +77,7 @@ export const Featured = () => {
             key={project.url}
             project={project}
             projectIndex={projectIndex}
-            setActiveProject={setActiveProject}
+            ref={(el) => (projectRefs.current[projectIndex] = el)}
           />
         ))}
       </section>
@@ -46,23 +88,14 @@ export const Featured = () => {
 const Project = ({
   project,
   projectIndex,
-  setActiveProject,
+  ref,
 }: {
   project: Project;
   projectIndex: number;
-  setActiveProject: (project: Project) => void;
+  ref: (el: HTMLElement | null) => void;
 }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref);
-
-  useEffect(() => {
-    if (isInView) {
-      setActiveProject(project);
-    }
-  }, [setActiveProject, isInView, project]);
-
   return (
-    <a ref={ref} className={styles.project} href={project.url} target="_blank">
+    <a className={styles.project} href={project.url} target="_blank" ref={ref}>
       {project.projectAssets.map((asset, assetIndex) => (
         <AnimateSection
           key={`${project.url}-${asset.src}`}
@@ -91,4 +124,19 @@ const Project = ({
       ))}
     </a>
   );
+};
+
+// Throttle function to limit how often a function can be called
+const throttle = <T extends (...args: unknown[]) => unknown>(
+  func: T,
+  delay: number,
+): ((...args: Parameters<T>) => void) => {
+  let lastCall = 0;
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      func(...args);
+    }
+  };
 };
