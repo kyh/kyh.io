@@ -104,10 +104,6 @@ export const featured: Project[] = [
         type: "video",
         src: `${supabaseUrl}/radial-slider.mp4`,
       },
-      {
-        type: "video",
-        src: `${supabaseUrl}/add-to-cart.mp4`,
-      },
     ],
   },
   {
