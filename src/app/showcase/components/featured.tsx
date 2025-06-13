@@ -101,7 +101,11 @@ const Project = ({
           key={`${project.url}-${asset.src}`}
           delay={0.2 + 0.2 * (projectIndex + assetIndex)}
         >
-          <Card>
+          <Card
+            className={
+              asset.aspectRatio === "16:9" ? styles.ratio169 : styles.ratio43
+            }
+          >
             {asset.type === "image" && (
               <Image
                 src={asset.src}

@@ -9,6 +9,7 @@ export type Project = {
 type ProjectAsset = {
   src: string;
   type: "image" | "video";
+  aspectRatio?: "16:9" | "4:3";
   description?: string;
   dataBlur?: string;
 };
@@ -30,10 +31,12 @@ export const featured: Project[] = [
       {
         type: "video",
         src: `${supabaseUrl}/pacman.mp4`,
+        aspectRatio: "16:9",
       },
       {
         type: "video",
         src: `${supabaseUrl}/flappy.mp4`,
+        aspectRatio: "16:9",
       },
     ],
   },
