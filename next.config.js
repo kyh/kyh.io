@@ -1,12 +1,38 @@
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+const getRemotePatterns = () => {
+  /** @type {import('next').NextConfig['remotePatterns']} */
+  const remotePatterns = [];
+
+  if (SUPABASE_URL) {
+    const hostname = new URL(SUPABASE_URL).hostname;
+
+    remotePatterns.push({
+      protocol: "https",
+      hostname,
+    });
+  }
+
+  if (!IS_PRODUCTION) {
+    remotePatterns.push({
+      protocol: "http",
+      hostname: "127.0.0.1",
+    });
+
+    remotePatterns.push({
+      protocol: "http",
+      hostname: "localhost",
+    });
+  }
+
+  return remotePatterns;
+};
+
 /** @type {import('next').NextConfig} */
 const config = {
-  headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: securityHeaders,
-      },
-    ];
+  images: {
+    remotePatterns: getRemotePatterns(),
   },
   async redirects() {
     return [
@@ -17,48 +43,9 @@ const config = {
       },
     ];
   },
+  /** We already do linting and typechecking as separate tasks in CI */
   eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
-
-const ContentSecurityPolicy = `
-  default-src 'self' vercel.live;
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' cdn.vercel-insights.com vercel.live va.vercel-scripts.com;
-  style-src 'self' 'unsafe-inline';
-  img-src * blob: data:;
-  connect-src *;
-  font-src 'self' data:;
-  frame-src 'self' *.codesandbox.io vercel.live;
-`;
-
-const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: ContentSecurityPolicy.replace(/\n/g, ""),
-  },
-  {
-    key: "Referrer-Policy",
-    value: "origin-when-cross-origin",
-  },
-  {
-    key: "X-Frame-Options",
-    value: "DENY",
-  },
-  {
-    key: "X-Content-Type-Options",
-    value: "nosniff",
-  },
-  {
-    key: "X-DNS-Prefetch-Control",
-    value: "on",
-  },
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=31536000; includeSubDomains; preload",
-  },
-  {
-    key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
-  },
-];
 
 export default config;

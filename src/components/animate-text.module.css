@@ -10,6 +10,7 @@
   inset: 0;
   color: canvasText;
   animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
+  pointer-events: none;
 }
 
 @keyframes flash {

@@ -25,7 +25,7 @@ export const Other = () => {
                         width={80}
                         height={60}
                         blurDataURL={asset.dataBlur}
-                        placeholder="blur"
+                        placeholder={asset.dataBlur ? "blur" : "empty"}
                         loading="lazy"
                       />
                     )}

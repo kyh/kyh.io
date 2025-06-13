@@ -114,7 +114,7 @@ const Project = ({
               />
             )}
             {asset.type === "video" && (
-              <video autoPlay muted loop>
+              <video autoPlay loop muted>
                 <source src={asset.src} type="video/webm" />
                 Unsupported.
               </video>

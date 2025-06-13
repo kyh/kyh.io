@@ -13,21 +13,27 @@ type ProjectAsset = {
   dataBlur?: string;
 };
 
+const supabaseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/projects/`;
+
 export const featured: Project[] = [
   {
     title: "Vibed Games",
     description:
-      "Design, publish, and play personalized multiplayer minigames with your crew.",
+      "Design, publish, and play personalized multiplayer minigames with your friends.",
     url: "https://vibedgames.com",
     type: "project",
     projectAssets: [
       {
         type: "video",
-        src: "/screenshots/vibedgames.mp4",
+        src: `${supabaseUrl}/vibedgames.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/vibedgames.mp4",
+        src: `${supabaseUrl}/pacman.mp4`,
+      },
+      {
+        type: "video",
+        src: `${supabaseUrl}/flappy.mp4`,
       },
     ],
   },
@@ -39,7 +45,7 @@ export const featured: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/ys.webp",
+        src: `${supabaseUrl}/ys.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
       },
@@ -54,65 +60,66 @@ export const featured: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/uicapsule.webp",
+        src: `${supabaseUrl}/uicapsule.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
       },
       {
         type: "video",
-        src: "/screenshots/globe.mp4",
+        src: `${supabaseUrl}/globe.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/parallax.mp4",
+        src: `${supabaseUrl}/parallax.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/infinite-grid.mp4",
+        src: `${supabaseUrl}/infinite-grid.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/astroids.mp4",
+        src: `${supabaseUrl}/astroids.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/ascii.mp4",
+        src: `${supabaseUrl}/ascii.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/ios-app-zoom.mp4",
+        src: `${supabaseUrl}/ios-app-zoom.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/ios-volume.mp4",
+        src: `${supabaseUrl}/ios-volume.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/ios-header-menu.mp4",
+        src: `${supabaseUrl}/ios-header-menu.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/reading-progress.mp4",
+        src: `${supabaseUrl}/reading-progress.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/radial-slider.mp4",
+        src: `${supabaseUrl}/radial-slider.mp4`,
       },
       {
         type: "video",
-        src: "/screenshots/add-to-cart.mp4",
+        src: `${supabaseUrl}/add-to-cart.mp4`,
       },
     ],
   },
   {
     title: "Inteligir",
-    description: "",
+    description:
+      "Your database copilot. Chat, visualize, and create reports from your data.",
     url: "https://inteligir.com",
     type: "project",
     projectAssets: [
       {
         type: "video",
-        src: "/screenshots/inteligir.mp4",
+        src: `${supabaseUrl}/inteligir.mp4`,
       },
     ],
   },
@@ -127,9 +134,13 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/founding.webp",
+        src: `${supabaseUrl}/founding.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
+      },
+      {
+        type: "image",
+        src: `${supabaseUrl}/founding-1.webp`,
       },
     ],
   },
@@ -141,7 +152,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/tc.webp",
+        src: `${supabaseUrl}/tc.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
       },
@@ -155,7 +166,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/covid19.webp",
+        src: `${supabaseUrl}/covid19.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
       },
@@ -169,7 +180,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/keiko.webp",
+        src: `${supabaseUrl}/keiko.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
       },
@@ -183,7 +194,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/init.webp",
+        src: `${supabaseUrl}/init.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
       },
@@ -199,7 +210,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "video",
-        src: "/screenshots/arc.webm",
+        src: `${supabaseUrl}/arc.webm`,
       },
     ],
   },
@@ -211,7 +222,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "video",
-        src: "/screenshots/google-grow.webm",
+        src: `${supabaseUrl}/google-grow.webm`,
       },
     ],
   },
@@ -223,7 +234,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/amazon-ds.webp",
+        src: `${supabaseUrl}/amazon-ds.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
       },
@@ -237,7 +248,7 @@ export const others: Project[] = [
     projectAssets: [
       {
         type: "image",
-        src: "/screenshots/cardiogram.webp",
+        src: `${supabaseUrl}/cardiogram.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
       },
