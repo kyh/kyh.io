@@ -43,7 +43,7 @@ export const featured: Project[] = [
   {
     title: "Yours Sincerely",
     description: "Anonymous love letters 💌 written in disappearing ink.",
-    url: "https://yoursincerely.org",
+    url: "https://yourssincerely.org",
     type: "project",
     projectAssets: [
       {
