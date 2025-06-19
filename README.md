@@ -10,7 +10,7 @@ Made with 💻
 # install dependencies
 pnpm i
 
-# serve with hot reload at localhost:3000
+# served at localhost:3000
 pnpm dev
 ```
 
