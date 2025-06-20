@@ -52,6 +52,16 @@ export const featured: Project[] = [
         dataBlur:
           "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
       },
+      {
+        type: "video",
+        src: `${supabaseUrl}/ys.mp4`,
+        aspectRatio: "16:9",
+      },
+      {
+        type: "video",
+        src: `${supabaseUrl}/ys-2.mp4`,
+        aspectRatio: "16:9",
+      },
     ],
   },
   {
