@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     },
   ],
   other: {
-    "apple-mobile-web-app-title": "VibedGames",
+    "apple-mobile-web-app-title": siteConfig.shortName,
   },
 };
 
