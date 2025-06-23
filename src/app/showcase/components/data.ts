@@ -38,6 +38,11 @@ export const featured: Project[] = [
         src: `${supabaseUrl}/flappy.mp4`,
         aspectRatio: "16:9",
       },
+      {
+        type: "video",
+        src: `${supabaseUrl}/pong.mp4`,
+        aspectRatio: "16:9",
+      },
     ],
   },
   {
