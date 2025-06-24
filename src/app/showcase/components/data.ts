@@ -127,15 +127,10 @@ export const featured: Project[] = [
   {
     title: "Inteligir",
     description:
-      "Your database copilot. Chat, visualize, and create reports from your data.",
+      "Never stop learning. Weekly deep dives to stay on top of everything that is happening in the world",
     url: "https://inteligir.com",
     type: "project",
-    projectAssets: [
-      {
-        type: "video",
-        src: `${supabaseUrl}/inteligir.mp4`,
-      },
-    ],
+    projectAssets: [],
   },
 ] as const;
 
@@ -211,6 +206,19 @@ export const others: Project[] = [
         src: `${supabaseUrl}/init.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
+      },
+    ],
+  },
+  {
+    title: "Dataembed",
+    description:
+      "Your database copilot. Chat, visualize, and create reports from your data.",
+    url: "https://dataembed.com",
+    type: "project",
+    projectAssets: [
+      {
+        type: "video",
+        src: `${supabaseUrl}/dataembed.mp4`,
       },
     ],
   },
