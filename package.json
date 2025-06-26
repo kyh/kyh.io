@@ -39,7 +39,7 @@
     "@types/react-dom": "^19.1.6",
     "eslint": "^9.29.0",
     "partyserver": "^0.0.72",
-    "prettier": "^3.6.0",
+    "prettier": "^3.6.1",
     "sharp": "^0.34.2",
     "typescript": "^5.8.3",
     "wrangler": "^4.21.2"
