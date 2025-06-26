@@ -13,7 +13,13 @@ type LinkProps = {
   noAction?: boolean;
   alt?: string;
   src?: string;
-  srcs?: { href: string; src: string; alt: string }[];
+  srcs?: {
+    src: string;
+    type?: "image" | "video";
+    href?: string;
+    alt?: string;
+  }[];
+  aspectRatio?: "16:9" | "4:3";
   open?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -28,6 +34,7 @@ export const Link = ({
   open,
   noStyles = false,
   noAction = false,
+  aspectRatio = "4:3",
   onMouseEnter,
   onMouseLeave,
 }: LinkProps) => {
@@ -96,10 +103,19 @@ export const Link = ({
 
   if (srcs) {
     content = (
-      <span className={styles.multiTooltip}>
-        {srcs.map(({ href, src, alt }) => (
+      <span
+        className={`${styles.multiTooltip} ${aspectRatio === "16:9" ? styles.aspectRatio169 : ""}`}
+      >
+        {srcs.map(({ type, href, src, alt }) => (
           <a key={href} href={href} target="_blank" rel="noreferrer noopener">
-            <Image src={src} alt={alt} width={320} height={240} />
+            {type === "video" ? (
+              <video autoPlay muted loop>
+                <source src={src} type="video/webm" />
+                Unsupported.
+              </video>
+            ) : (
+              <Image src={src} alt={alt ?? "image"} width={320} height={240} />
+            )}
           </a>
         ))}
       </span>

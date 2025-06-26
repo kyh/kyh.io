@@ -229,9 +229,9 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
       />
       <motion.div
         className={`${styles.line} ${styles.lineH}`}
-        initial={{ opacity: 0, top: "100vh" }}
+        initial={{ opacity: 0, top: "100dvh" }}
         animate={{ opacity: 1, top: context.y + floatingEl.offsetHeight }}
-        exit={{ opacity: 0, top: "100vh" }}
+        exit={{ opacity: 0, top: "100dvh" }}
         transition={{
           ease: easeInOutQuint,
           duration: 1,
@@ -251,9 +251,9 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
       <motion.div
         className={`${styles.line} ${styles.lineV}`}
         style={{ height: document.documentElement.scrollHeight }}
-        initial={{ opacity: 0, left: "100vw" }}
+        initial={{ opacity: 0, left: "100dvw" }}
         animate={{ opacity: 1, left: context.x + floatingEl.offsetWidth }}
-        exit={{ opacity: 0, left: "100vw" }}
+        exit={{ opacity: 0, left: "100dvw" }}
         transition={{
           ease: easeInOutQuint,
           duration: 1,

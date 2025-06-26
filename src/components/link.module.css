@@ -58,10 +58,25 @@ button.link {
 .multiTooltip {
   display: grid;
   grid-template-columns: auto auto;
+
+  img,
+  video {
+    width: 320px;
+    height: 240px;
+  }
+
+  &.aspectRatio169 {
+    img,
+    video {
+      width: 320px;
+      height: 180px;
+    }
+  }
 }
 
 @media screen and (max-width: 600px) {
-  .multiTooltip img {
+  .multiTooltip img,
+  .multiTooltip video {
     max-height: 150px;
     width: auto;
   }

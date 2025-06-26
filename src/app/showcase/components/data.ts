@@ -104,10 +104,6 @@ export const featured: Project[] = [
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ios-app-zoom.mp4`,
-      },
-      {
-        type: "video",
         src: `${supabaseUrl}/ios-volume.mp4`,
       },
       {
@@ -136,8 +132,24 @@ export const featured: Project[] = [
 
 export const others: Project[] = [
   {
+    title: "Dataembed",
+    description: "Data Analyst Copilot. Scheduled deep dives on your data.",
+    url: "https://dataembed.com",
+    type: "project",
+    projectAssets: [
+      {
+        type: "video",
+        src: `${supabaseUrl}/dataembed.mp4`,
+      },
+      {
+        type: "image",
+        src: `${supabaseUrl}/dataembed-1.webp`,
+      },
+    ],
+  },
+  {
     title: "Founding",
-    description: "",
+    description: "Your proxy founding team.",
     url: "https://founding.so",
     type: "project",
     projectAssets: [
@@ -179,6 +191,10 @@ export const others: Project[] = [
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
       },
+      {
+        type: "image",
+        src: `${supabaseUrl}/covid19-1.webp`,
+      },
     ],
   },
   {
@@ -206,19 +222,6 @@ export const others: Project[] = [
         src: `${supabaseUrl}/init.webp`,
         dataBlur:
           "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-      },
-    ],
-  },
-  {
-    title: "Dataembed",
-    description:
-      "Your database copilot. Chat, visualize, and create reports from your data.",
-    url: "https://dataembed.com",
-    type: "project",
-    projectAssets: [
-      {
-        type: "video",
-        src: `${supabaseUrl}/dataembed.mp4`,
       },
     ],
   },

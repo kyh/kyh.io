@@ -1,6 +1,4 @@
-import { Fragment } from "react";
-import Image from "next/image";
-
+import { Link } from "@/components/link";
 import { others } from "./data";
 import styles from "./other.module.css";
 
@@ -13,32 +11,24 @@ export const Other = () => {
       <ul className={styles.list}>
         {others.map((project, projectIndex) => (
           <li key={projectIndex}>
-            <a href={project.url} target="_blank">
-              <div>{project.title}</div>
-              <div className={styles.assets}>
-                {project.projectAssets.map((asset, assetIndex) => (
-                  <div key={`${projectIndex}-${assetIndex}`}>
-                    {asset.type === "image" && (
-                      <Image
-                        src={asset.src}
-                        alt={asset.description ?? ""}
-                        width={80}
-                        height={60}
-                        blurDataURL={asset.dataBlur}
-                        placeholder={asset.dataBlur ? "blur" : "empty"}
-                        loading="lazy"
-                      />
-                    )}
-                    {asset.type === "video" && (
-                      <video autoPlay muted loop>
-                        <source src={asset.src} type="video/webm" />
-                        Unsupported.
-                      </video>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </a>
+            <Link
+              href={project.url}
+              srcs={project.projectAssets.map((asset) => ({
+                type: asset.type,
+                href: project.url,
+                src: asset.src,
+                alt: project.title,
+              }))}
+              aspectRatio={
+                project.projectAssets.filter(
+                  (asset) => asset.aspectRatio === "16:9",
+                ).length > 0
+                  ? "16:9"
+                  : "4:3"
+              }
+            >
+              {project.title}
+            </Link>
           </li>
         ))}
       </ul>
