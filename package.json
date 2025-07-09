@@ -15,9 +15,7 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.13",
-    "@rooks/use-raf": "^4.11.2",
     "@vercel/analytics": "^1.5.0",
-    "@vercel/og": "^0.6.8",
     "@vercel/speed-insights": "^1.2.0",
     "geist": "^1.4.2",
     "matter-js": "^0.20.0",

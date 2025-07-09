@@ -107,7 +107,12 @@ export const Link = ({
         className={`${styles.multiTooltip} ${aspectRatio === "16:9" ? styles.aspectRatio169 : ""}`}
       >
         {srcs.map(({ type, href, src, alt }) => (
-          <a key={href} href={href} target="_blank" rel="noreferrer noopener">
+          <a
+            key={`${href}-${src}`}
+            href={href}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             {type === "video" ? (
               <video autoPlay muted loop>
                 <source src={src} type="video/webm" />
