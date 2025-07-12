@@ -28,9 +28,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250712.0",
-    "@kyh/eslint-config": "^1.1.6",
-    "@kyh/prettier-config": "^1.1.6",
-    "@kyh/tsconfig": "^1.1.6",
+    "@kyh/eslint-config": "^1.1.7",
+    "@kyh/prettier-config": "^1.1.7",
+    "@kyh/tsconfig": "^1.1.7",
     "@types/matter-js": "^0.19.8",
     "@types/node": "^24.0.13",
     "@types/react": "^19.1.8",
