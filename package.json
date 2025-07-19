@@ -20,19 +20,19 @@
     "geist": "^1.4.2",
     "matter-js": "^0.20.0",
     "motion": "^12.23.6",
-    "next": "^15.4.1",
+    "next": "^15.4.2",
     "next-themes": "^0.4.6",
     "partysocket": "^1.1.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250715.0",
+    "@cloudflare/workers-types": "^4.20250719.0",
     "@kyh/eslint-config": "^1.1.7",
     "@kyh/prettier-config": "^1.1.7",
     "@kyh/tsconfig": "^1.1.7",
     "@types/matter-js": "^0.19.8",
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.0.15",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "eslint": "^9.31.0",
@@ -40,7 +40,7 @@
     "prettier": "^3.6.2",
     "sharp": "^0.34.3",
     "typescript": "^5.8.3",
-    "wrangler": "^4.24.3"
+    "wrangler": "^4.25.0"
   },
   "prettier": "@kyh/prettier-config",
   "pnpm": {
