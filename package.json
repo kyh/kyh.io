@@ -14,7 +14,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.27.13",
+    "@floating-ui/react": "^0.27.14",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "geist": "^1.4.2",
