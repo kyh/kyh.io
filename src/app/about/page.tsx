@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
@@ -5,7 +6,7 @@ import { Link } from "@/components/link";
 import { SocialLinks } from "@/components/social";
 import styles from "@/styles/page.module.css";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "About",
   description: "Who is Kaiyu Hsu?",
 };

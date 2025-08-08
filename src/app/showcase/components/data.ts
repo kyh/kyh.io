@@ -280,3 +280,5 @@ export const others: Project[] = [
     ],
   },
 ] as const;
+
+export const all = [...featured, ...others] as const;

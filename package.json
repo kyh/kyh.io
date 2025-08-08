@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.15",
+    "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "geist": "^1.4.2",

@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
+
 import styles from "@/styles/page.module.css";
 import { Featured } from "./components/featured";
 import { Other } from "./components/other";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Showcase",
   description: "The ever growing list of things I'm working on.",
 };

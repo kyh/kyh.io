@@ -1,0 +1,133 @@
+.line {
+  background-image: linear-gradient(
+    to right,
+    hsl(0 0% 90.9%) 50%,
+    hsl(0 0% 78%) 50%
+  );
+  height: 1px;
+  position: absolute;
+  transform-origin: 0px 0px;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 0;
+
+    [data-slot="meta"] {
+      opacity: 1 !important;
+      outline: 2px solid #ff4d00;
+      outline-offset: 4px;
+      border-radius: 6px;
+    }
+  }
+
+  &[data-variant="large"],
+  &[data-variant="medium"] {
+    background: hsl(0 0% 9%);
+    cursor: pointer;
+
+    &:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      padding: 8px;
+      border-radius: 8px;
+    }
+  }
+
+  &[data-hovered="true"],
+  &:focus-visible {
+    background: #ff4d00;
+    color: #ff4d00;
+  }
+}
+
+.item {
+  color: hsl(0 0% 9%);
+  font-size: 15px;
+  max-width: 580px;
+  margin: 0 auto;
+  line-height: 28px;
+}
+
+/* Fixed positioned container */
+.fixedContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+}
+
+/* Absolute positioned container */
+.absoluteContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transform-origin: 50% 7vh;
+  --highlight-color: #ff4d00;
+}
+
+/* Full size container */
+.fullSize {
+  height: 100%;
+  width: 100%;
+}
+
+/* Meta container */
+.meta {
+  display: flex;
+  transform: translateY(-50%);
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Sheet container */
+.sheet {
+  position: relative;
+  top: 0;
+  margin: 0 auto;
+  margin-top: 50vh;
+  display: flex;
+  max-width: 700px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 100px;
+}
+
+.sheet[data-active="false"] {
+  pointer-events: none;
+}
+
+/* Content container */
+.content {
+  color: hsl(0 0% 9%);
+  font-size: 15px;
+  line-height: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content > p {
+  line-height: 32px;
+  font-size: 16px;
+}
+
+/* Image styles */
+.image {
+  pointer-events: none;
+  width: 100%;
+  user-select: none;
+  object-fit: cover;
+}
+
+/* Title styles */
+.title {
+  font-size: 24px;
+}
