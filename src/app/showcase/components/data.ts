@@ -130,7 +130,7 @@ export const projects: ProjectType[] = [
   },
   {
     title: "Dataembed",
-    description: "Automate your day, your way",
+    description: "The easiest way to build apps on company data",
     url: "https://dataembed.com",
     type: "project",
     projectAssets: [
