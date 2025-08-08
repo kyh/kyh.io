@@ -17,13 +17,11 @@ import {
 } from "motion/react";
 
 import type { Item, Lines, LineType } from "./data";
-import img2 from "./5.png";
-import { DATA, loremIpsum } from "./data";
+import { DATA } from "./data";
 import styles from "./radial-timeline.module.css";
 import {
   areIntersecting,
   clamp,
-  getRandomItem,
   useEvent,
   useIsHydrated,
   useShortcuts,
@@ -31,7 +29,6 @@ import {
 
 export const SCALE_ZOOM = 6;
 export const SCALE_DEFAULT = 1;
-export const LINE_COUNT = 180;
 export const SCALE_ZOOM_FACTOR = 0.02;
 export const SCROLL_SNAP = 250;
 
@@ -354,7 +351,7 @@ export const Line = ({
     >
       {/* Forces Safari to render with GPU */}
       <div aria-hidden style={{ transform: "translateZ(0)" }} />
-      {currentItem?.name && currentItem?.year && (
+      {currentItem?.name && (
         <Meta
           currentItem={currentItem}
           hoveredItem={hoveredItem || null}
@@ -414,8 +411,7 @@ export const Meta = ({
         ...transition,
       }}
     >
-      <i data-slot="label">{currentItem.name}</i>
-      <i data-slot="year">{currentItem.year}</i>
+      <span data-slot="label">{currentItem.name}</span>
     </motion.div>
   );
 };
@@ -430,8 +426,6 @@ export const Sheet = ({
   children?: React.ReactNode;
 }) => {
   const { zoom, activeIndex } = useTimeline();
-  const [p1, setP1] = React.useState(loremIpsum[0]);
-  const [p2, setP2] = React.useState(loremIpsum[1]);
   const [item, setItem] = React.useState<Item | null>(null);
 
   React.useEffect(() => {
@@ -439,11 +433,6 @@ export const Sheet = ({
     const item = DATA[activeIndex];
     if (item) {
       setItem(item);
-      const randomP1 = getRandomItem(loremIpsum);
-      const randomP2 = getRandomItem(loremIpsum);
-
-      setP1(randomP1 + getRandomItem(loremIpsum) + getRandomItem(loremIpsum));
-      setP2(randomP2 + getRandomItem(loremIpsum));
     }
   }, [activeIndex]);
 
@@ -473,15 +462,10 @@ export const Sheet = ({
     >
       {children ?? (
         <div className={styles.content}>
-          <Image alt="" src={img2} height="360" className={styles.image} />
           <i className={styles.title}>{item?.title}</i>
-          <p>{p1}</p>
-          <p>{p2}</p>
-          <p>{p2}</p>
-          <p>{p2}</p>
-          <p>{p2}</p>
-          <p>{p2}</p>
-          <p>{p2}</p>
+          {item?.description && (
+            <p className={styles.description}>{item.description}</p>
+          )}
         </div>
       )}
     </motion.div>
@@ -494,26 +478,59 @@ export function getLines(rootScale: number): [Lines, Constants] {
   const LINE_WIDTH_LARGE = 72 * rootScale;
   const LABEL_FONT_SIZE = 16 * rootScale;
   const LABEL_MARGIN = 80 * rootScale;
-  const ANGLE_INCREMENT = 360 / LINE_COUNT;
   const RADIUS = 280 * rootScale;
   const SIZE = RADIUS * 2 + LINE_WIDTH_LARGE * 2;
 
-  const lines = Array.from({ length: LINE_COUNT }, (_, index) => {
-    const rotation = (index - LINE_COUNT / 4) * ANGLE_INCREMENT;
-    const angleRad = (rotation * Math.PI) / 180;
-    const offsetX = RADIUS * Math.cos(angleRad);
-    const offsetY = RADIUS * Math.sin(angleRad);
+  // Calculate total lines: projects + asset lines
+  const PROJECT_COUNT = DATA.length;
+  const totalAssetLines = DATA.reduce(
+    (sum, item) => sum + item.projectAssets.length,
+    0,
+  );
+  const TOTAL_LINES = PROJECT_COUNT + totalAssetLines;
+  const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
-    const item = DATA.find((i) => i.degree === index);
-    const dataIndex = item ? DATA.indexOf(item) : null;
+  const lines: Lines = [];
+  let lineIndex = 0;
 
-    return {
-      rotation,
-      offsetX,
-      offsetY,
-      dataIndex,
-      variant: item?.variant,
-    };
+  DATA.forEach((item, projectIndex) => {
+    // Add the project line
+    const projectRotation = lineIndex * ANGLE_INCREMENT;
+    const projectAngleRad = (projectRotation * Math.PI) / 180;
+    const projectOffsetX = RADIUS * Math.cos(projectAngleRad);
+    const projectOffsetY = RADIUS * Math.sin(projectAngleRad);
+
+    lines.push({
+      rotation: projectRotation,
+      offsetX: projectOffsetX,
+      offsetY: projectOffsetY,
+      dataIndex: projectIndex,
+      variant: item.variant,
+    });
+
+    lineIndex++;
+
+    // Add asset lines after this project
+    for (
+      let assetIndex = 0;
+      assetIndex < item.projectAssets.length;
+      assetIndex++
+    ) {
+      const assetRotation = lineIndex * ANGLE_INCREMENT;
+      const assetAngleRad = (assetRotation * Math.PI) / 180;
+      const assetOffsetX = RADIUS * Math.cos(assetAngleRad);
+      const assetOffsetY = RADIUS * Math.sin(assetAngleRad);
+
+      lines.push({
+        rotation: assetRotation,
+        offsetX: assetOffsetX,
+        offsetY: assetOffsetY,
+        dataIndex: null, // Asset lines don't have a data index
+        variant: "small" as const,
+      });
+
+      lineIndex++;
+    }
   });
 
   return [
@@ -554,38 +571,68 @@ export function getRotateForIndex(index: number, rotate: number) {
   const item = DATA[index];
   if (!item) return rotate;
 
-  const { degree } = item;
-
-  if (degree === null) {
-    return rotate;
+  // Calculate the position of this project in the line array
+  let projectLineIndex = 0;
+  for (let i = 0; i < index; i++) {
+    const project = DATA[i];
+    if (project) {
+      projectLineIndex += 1 + project.projectAssets.length; // Project line + asset lines
+    }
   }
 
-  const v1 = degree * 2 * -1;
-  const v2 = (degree - LINE_COUNT) * 2 * -1;
+  const totalAssetLines = DATA.reduce(
+    (sum, item) => sum + item.projectAssets.length,
+    0,
+  );
+  const TOTAL_LINES = DATA.length + totalAssetLines;
+  const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
-  const delta1 = rotate - v1;
-  const delta2 = rotate - v2;
+  // Calculate the target rotation for this project
+  const targetRotation = projectLineIndex * ANGLE_INCREMENT;
 
-  if (Math.abs(delta1) < Math.abs(delta2)) {
-    return rotate - delta1;
-  } else {
-    return rotate - delta2;
-  }
+  // To center the project at the top (12 o'clock), we need to rotate the circle
+  // so that the project's angle becomes -90 degrees (since 0 is at 3 o'clock)
+  const newRotate = -targetRotation - 90;
+
+  return newRotate;
 }
 
 export function getIndexForRotate(rotate: number) {
-  const sortedByDelta = DATA.map((i) => {
-    const v1 = i.degree * 2 * -1;
-    const v2 = (i.degree - LINE_COUNT) * 2 * -1;
+  const totalAssetLines = DATA.reduce(
+    (sum, item) => sum + item.projectAssets.length,
+    0,
+  );
+  const TOTAL_LINES = DATA.length + totalAssetLines;
+  const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
-    const delta1 = v1 - rotate;
-    const delta2 = v2 - rotate;
+  // Find which project is closest to the center (top) based on current rotation
+  const sortedByDelta = DATA.map((item, index) => {
+    // Calculate the position of this project in the line array
+    let projectLineIndex = 0;
+    for (let i = 0; i < index; i++) {
+      const project = DATA[i];
+      if (project) {
+        projectLineIndex += 1 + project.projectAssets.length; // Project line + asset lines
+      }
+    }
+
+    const targetRotation = projectLineIndex * ANGLE_INCREMENT;
+    const projectAngle = targetRotation + rotate; // Current angle of the project
+    const normalizedAngle = ((projectAngle % 360) + 360) % 360; // Normalize to 0-360
+
+    // Calculate distance from top center (-90 degrees in this coordinate system)
+    const topCenterAngle = 270; // -90 degrees normalized to 0-360
+    const delta = Math.min(
+      Math.abs(normalizedAngle - topCenterAngle),
+      Math.abs(normalizedAngle - topCenterAngle + 360),
+      Math.abs(normalizedAngle - topCenterAngle - 360),
+    );
 
     return {
-      ...i,
-      delta: Math.abs(delta1) < Math.abs(delta2) ? delta1 : delta2,
+      index,
+      delta,
     };
-  }).sort((a, b) => Math.abs(a.delta) - Math.abs(b.delta));
+  }).sort((a, b) => a.delta - b.delta);
 
   const closest = sortedByDelta[0];
 
@@ -593,7 +640,7 @@ export function getIndexForRotate(rotate: number) {
     return null;
   }
 
-  return DATA.findIndex((i) => i.degree === closest.degree);
+  return closest.index;
 }
 
 export const transition: ValueAnimationTransition<number> = {

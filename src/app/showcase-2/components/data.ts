@@ -2,9 +2,8 @@ import { all } from "../../showcase/components/data";
 
 export type Item = {
   name: string;
-  year: number;
   degree: number;
-  variant?: "medium" | "large";
+  variant?: "small" | "medium" | "large";
   title: string;
   description: string;
   url: string;
@@ -23,11 +22,10 @@ export type LineType = {
 export type Lines = LineType[];
 export type Data = Item[];
 
-// Transform showcase projects into timeline data
+// Transform showcase projects into radial data
 export const RAW_DATA: Data = all.map((project, index) => ({
   name: project.title,
-  year: 2020 + index, // Assign years sequentially starting from 2020
-  degree: 0, // Will be calculated by transformData
+  degree: index, // Simple sequential indexing
   variant: "large" as const, // All projects are "large" variant
   title: project.title,
   description: project.description,
@@ -36,30 +34,7 @@ export const RAW_DATA: Data = all.map((project, index) => ({
   type: project.type,
 }));
 
-let previousIndex = 0;
-
-export function transformData(data: Data, minGap = 5) {
-  return data.map((item, index) => {
-    if (index !== 0) {
-      const previousYear = data[index - 1]?.year ?? 0;
-      const currentYear = item.year;
-
-      const yearDifference = currentYear - previousYear;
-      if (yearDifference >= minGap) {
-        item.degree = previousIndex + yearDifference;
-      } else {
-        item.degree = previousIndex + minGap + yearDifference;
-      }
-    } else {
-      item.degree = 0;
-    }
-
-    previousIndex = item.degree;
-    return item;
-  });
-}
-
-export const DATA = transformData(RAW_DATA);
+export const DATA = RAW_DATA;
 
 export const loremIpsum = [
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In scelerisque mollis mauris, eu condimentum massa tincidunt id. Vestibulum et consequat libero, at malesuada odio.",

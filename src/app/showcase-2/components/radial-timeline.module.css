@@ -22,7 +22,6 @@
 
   &[data-variant="large"],
   &[data-variant="medium"] {
-    background: hsl(0 0% 9%);
     cursor: pointer;
 
     &:after {
@@ -46,14 +45,6 @@
   }
 }
 
-.item {
-  color: hsl(0 0% 9%);
-  font-size: 15px;
-  max-width: 580px;
-  margin: 0 auto;
-  line-height: 28px;
-}
-
 /* Fixed positioned container */
 .fixedContainer {
   position: fixed;
@@ -69,7 +60,6 @@
   left: 50%;
   translate: -50% -50%;
   transform-origin: 50% 7vh;
-  --highlight-color: #ff4d00;
 }
 
 /* Full size container */
@@ -106,7 +96,6 @@
 
 /* Content container */
 .content {
-  color: hsl(0 0% 9%);
   font-size: 15px;
   line-height: 28px;
   display: flex;
@@ -114,20 +103,8 @@
   gap: 1.5rem;
 }
 
-.content > p {
-  line-height: 32px;
-  font-size: 16px;
-}
-
-/* Image styles */
-.image {
-  pointer-events: none;
-  width: 100%;
-  user-select: none;
-  object-fit: cover;
-}
-
-/* Title styles */
-.title {
-  font-size: 24px;
+@media screen and (min-width: 900px) {
+  .fixedContainer {
+    scale: 0.85;
+  }
 }
