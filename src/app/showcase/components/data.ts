@@ -123,14 +123,15 @@ export const projects: ProjectType[] = [
   {
     title: "Inteligir",
     description:
-      "Never stop learning. Weekly deep dives to stay on top of everything that is happening in the world",
+      "An intelligent block-based editor that connects with your proprietary data and helps you generate content, charts, summaries, and insights",
     url: "https://inteligir.com",
     type: "project",
     projectAssets: [],
   },
   {
     title: "Dataembed",
-    description: "The easiest way to build apps on company data",
+    description:
+      "Self‑serve software development on your organization data. Everyone on your team should be able to build software to automate their own day to day workflows",
     url: "https://dataembed.com",
     type: "project",
     projectAssets: [
