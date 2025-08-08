@@ -1,13 +1,15 @@
 .line {
   background-image: linear-gradient(
     to right,
-    hsl(0 0% 90.9%) 50%,
-    hsl(0 0% 78%) 50%
+    var(--body-color-faded) 50%,
+    var(--body-color) 50%
   );
   height: 1px;
   position: absolute;
   transform-origin: 0px 0px;
   user-select: none;
+  display: flex;
+  align-items: center;
 
   &:focus-visible {
     outline: 0;
@@ -20,8 +22,12 @@
     }
   }
 
-  &[data-variant="large"],
-  &[data-variant="medium"] {
+  &[data-variant="large"] {
+    background-image: linear-gradient(
+      to right,
+      var(--body-color) 50%,
+      var(--body-color) 50%
+    );
     cursor: pointer;
 
     &:after {
