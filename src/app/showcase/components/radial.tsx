@@ -5,9 +5,17 @@ import type {
   MotionValue,
   ValueAnimationTransition,
 } from "motion/react";
-import * as React from "react";
+import type { Dispatch, ReactNode, Ref, SetStateAction } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
-import { useScroll, useWheel } from "@use-gesture/react";
+import { useScroll } from "@use-gesture/react";
 import {
   animate,
   motion,
@@ -16,9 +24,11 @@ import {
   useTransform,
 } from "motion/react";
 
-import type { Item, Lines, LineType } from "./data";
-import { DATA } from "./data";
-import styles from "./radial-timeline.module.css";
+import type { LineType, LineTypes, ProjectType, RadialDataType } from "./data";
+import { AnimateSection, ScrambleText } from "@/components/animate-text";
+import { Card } from "@/components/card";
+import { radialData } from "./data";
+import styles from "./radial.module.css";
 import {
   areIntersecting,
   clamp,
@@ -27,10 +37,10 @@ import {
   useShortcuts,
 } from "./utils";
 
-export const SCALE_ZOOM = 6;
-export const SCALE_DEFAULT = 1;
-export const SCALE_ZOOM_FACTOR = 0.02;
-export const SCROLL_SNAP = 250;
+const SCALE_ZOOM = 6;
+const SCALE_DEFAULT = 1;
+const SCALE_ZOOM_FACTOR = 0.02;
+const SCROLL_SNAP = 250;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -48,17 +58,17 @@ export type TimelineContext = {
   zoom: boolean;
   rotate: MotionValue<number>;
   rotateToIndex: (index: number) => void;
-  setHoveredIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  setHoveredIndex: Dispatch<SetStateAction<number | null>>;
   hoveredIndex: number | null;
   activeIndex: number | null;
 } & Constants;
 
-const TimelineContext = React.createContext({} as TimelineContext);
-export const useTimeline = () => React.useContext(TimelineContext);
+const TimelineContext = createContext({} as TimelineContext);
+const useTimeline = () => useContext(TimelineContext);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const RadialTimeline = () => {
+export const Radial = () => {
   useShortcuts({
     Escape: () => {
       if (!zoom) rotate.set(0);
@@ -72,15 +82,15 @@ export const RadialTimeline = () => {
     ArrowRight: arrow(1),
   });
 
-  const ref = React.useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   const scrollY = useMotionValue(0);
-  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
-  const [zoom, setZoom] = React.useState(false);
-  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-  const activeNode = React.useRef<HTMLElement>(null);
+  const [zoom, setZoom] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const activeNode = useRef<HTMLElement>(null);
 
   const intersectingAtY = useMotionValue(0);
   const rotate = useSpring(0, { stiffness: 150, damping: 42, mass: 1.1 });
@@ -101,15 +111,14 @@ export const RadialTimeline = () => {
   function arrow(dir: 1 | -1) {
     return () => {
       if (activeIndex !== null) {
-        const newIndex = activeIndex + dir;
-        if (newIndex >= 0 && newIndex < DATA.length) {
-          rotateToIndex(newIndex);
-        }
+        const len = radialData.length;
+        const newIndex = (activeIndex + dir + len) % len;
+        rotateToIndex(newIndex);
       }
     };
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     function wheel(e: WheelEvent) {
       // Prevent back swipe on horizontal wheel
       if (Math.abs(e.deltaX) > 0) {
@@ -123,22 +132,6 @@ export const RadialTimeline = () => {
       window.removeEventListener("wheel", wheel);
     };
   }, []);
-
-  useWheel(
-    ({ delta: [dx, dy], last }) => {
-      if (Math.abs(dy) > 0) return;
-      if (!zoom) return;
-      const newRotate = rotate.get() + dx * -1 * 0.5;
-      rotate.set(newRotate);
-      const newIndex = getIndexForRotate(newRotate);
-      if (last && newIndex !== activeIndex) {
-        rotateToIndex(newIndex);
-      }
-    },
-    {
-      target: typeof window !== "undefined" ? window : undefined,
-    },
-  );
 
   useScroll(
     ({ delta: [_, dy], offset: [__, oy] }) => {
@@ -185,12 +178,12 @@ export const RadialTimeline = () => {
     },
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.history.scrollRestoration = "manual";
     document.documentElement.scrollTo(0, 0);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const activeElement = document.querySelector("[data-active=true]");
     if (activeElement) {
       activeNode.current = activeElement as HTMLElement;
@@ -237,7 +230,7 @@ export const RadialTimeline = () => {
             filter: useTransform(scrollY, (y) => {
               if (intersectingAtY.get() === 0) return "blur(0px)";
               const offsetY = Math.abs(y) - intersectingAtY.get();
-              const blur = clamp(offsetY * 0.005, [0, 4]);
+              const blur = clamp(offsetY * 0.005, [1, 4]);
               return `blur(${blur}px)`;
             }),
           }}
@@ -264,12 +257,12 @@ export const RadialTimeline = () => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const Provider = ({
+const Provider = ({
   value,
   children,
 }: {
   value: TimelineContext;
-  children: React.ReactNode;
+  children: ReactNode;
 }) => {
   return (
     <TimelineContext.Provider value={value}>
@@ -280,13 +273,7 @@ export const Provider = ({
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const Line = ({
-  dataIndex,
-  variant,
-  rotation,
-  offsetX,
-  offsetY,
-}: LineType) => {
+const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
   const {
     zoom,
     hoveredIndex,
@@ -302,8 +289,8 @@ export const Line = ({
   } = useTimeline();
 
   const isInteractive = dataIndex !== null;
-  const currentItem = isInteractive ? DATA[dataIndex] : null;
-  const hoveredItem = hoveredIndex ? DATA[hoveredIndex] : null;
+  const currentItem = isInteractive ? radialData[dataIndex] : null;
+  const hoveredItem = hoveredIndex ? radialData[hoveredIndex] : null;
 
   const hovered = dataIndex === hoveredIndex && dataIndex !== null;
   const active = activeIndex === dataIndex && dataIndex !== null;
@@ -351,7 +338,7 @@ export const Line = ({
     >
       {/* Forces Safari to render with GPU */}
       <div aria-hidden style={{ transform: "translateZ(0)" }} />
-      {currentItem?.name && (
+      {currentItem?.project.title && (
         <Meta
           currentItem={currentItem}
           hoveredItem={hoveredItem || null}
@@ -370,7 +357,7 @@ export const Line = ({
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const Meta = ({
+const Meta = ({
   currentItem,
   hoveredItem,
   hovered,
@@ -378,8 +365,8 @@ export const Meta = ({
   style,
   rotation,
 }: {
-  currentItem: Item;
-  hoveredItem: Item | null;
+  currentItem: RadialDataType;
+  hoveredItem: RadialDataType | null;
   hovered?: boolean;
   zoom?: boolean;
   style: MotionStyle;
@@ -411,26 +398,20 @@ export const Meta = ({
         ...transition,
       }}
     >
-      <span data-slot="label">{currentItem.name}</span>
+      <span data-slot="label">{currentItem.project.title}</span>
     </motion.div>
   );
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const Sheet = ({
-  children,
-  ref,
-}: {
-  ref: React.Ref<HTMLDivElement>;
-  children?: React.ReactNode;
-}) => {
+const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   const { zoom, activeIndex } = useTimeline();
-  const [item, setItem] = React.useState<Item | null>(null);
+  const [item, setItem] = useState<RadialDataType | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeIndex === null) return;
-    const item = DATA[activeIndex];
+    const item = radialData[activeIndex];
     if (item) {
       setItem(item);
     }
@@ -460,19 +441,39 @@ export const Sheet = ({
         }
       }}
     >
-      {children ?? (
-        <div className={styles.content}>
-          <i className={styles.title}>{item?.title}</i>
-          {item?.description && (
-            <p className={styles.description}>{item.description}</p>
-          )}
-        </div>
-      )}
+      <button
+        className={styles.backButton}
+        onClick={() => {
+          const evt = new KeyboardEvent("keydown", { key: "Escape" });
+          window.dispatchEvent(evt);
+        }}
+      >
+        Back
+      </button>
+      {item && <Project key={item.project.title} project={item.project} />}
+      <footer className={styles.footer}>
+        <button
+          onClick={() => {
+            const evt = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+            window.dispatchEvent(evt);
+          }}
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => {
+            const evt = new KeyboardEvent("keydown", { key: "ArrowRight" });
+            window.dispatchEvent(evt);
+          }}
+        >
+          Next
+        </button>
+      </footer>
     </motion.div>
   );
 };
 
-export function getLines(rootScale: number): [Lines, Constants] {
+function getLines(rootScale: number): [LineTypes, Constants] {
   const LINE_WIDTH_SMALL = 40 * rootScale;
   const LINE_WIDTH_MEDIUM = 45 * rootScale;
   const LINE_WIDTH_LARGE = 72 * rootScale;
@@ -482,18 +483,18 @@ export function getLines(rootScale: number): [Lines, Constants] {
   const SIZE = RADIUS * 2 + LINE_WIDTH_LARGE * 2;
 
   // Calculate total lines: projects + asset lines
-  const PROJECT_COUNT = DATA.length;
-  const totalAssetLines = DATA.reduce(
-    (sum, item) => sum + item.projectAssets.length,
+  const PROJECT_COUNT = radialData.length;
+  const totalAssetLines = radialData.reduce(
+    (sum, item) => sum + item.project.projectAssets.length,
     0,
   );
   const TOTAL_LINES = PROJECT_COUNT + totalAssetLines;
   const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
-  const lines: Lines = [];
+  const lines: LineTypes = [];
   let lineIndex = 0;
 
-  DATA.forEach((item, projectIndex) => {
+  radialData.forEach((item, projectIndex) => {
     // Add the project line
     const projectRotation = lineIndex * ANGLE_INCREMENT;
     const projectAngleRad = (projectRotation * Math.PI) / 180;
@@ -511,11 +512,7 @@ export function getLines(rootScale: number): [Lines, Constants] {
     lineIndex++;
 
     // Add asset lines after this project
-    for (
-      let assetIndex = 0;
-      assetIndex < item.projectAssets.length;
-      assetIndex++
-    ) {
+    item.project.projectAssets.forEach((asset, assetIndex) => {
       const assetRotation = lineIndex * ANGLE_INCREMENT;
       const assetAngleRad = (assetRotation * Math.PI) / 180;
       const assetOffsetX = RADIUS * Math.cos(assetAngleRad);
@@ -530,7 +527,7 @@ export function getLines(rootScale: number): [Lines, Constants] {
       });
 
       lineIndex++;
-    }
+    });
   });
 
   return [
@@ -547,8 +544,8 @@ export function getLines(rootScale: number): [Lines, Constants] {
   ];
 }
 
-export function useLines(): [Lines, Constants] {
-  const [rootScale, setRootScale] = React.useState(1);
+function useLines(): [LineTypes, Constants] {
+  const [rootScale, setRootScale] = useState(1);
 
   useEvent("resize", () => {
     const widthScale = window.innerWidth / 960;
@@ -557,34 +554,31 @@ export function useLines(): [Lines, Constants] {
     setRootScale(newScale);
   });
 
-  const [lines, constants] = React.useMemo(
-    () => getLines(rootScale),
-    [rootScale],
-  );
+  const [lines, constants] = useMemo(() => getLines(rootScale), [rootScale]);
 
   return [lines, constants];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function getRotateForIndex(index: number, rotate: number) {
-  const item = DATA[index];
+function getRotateForIndex(index: number, rotate: number) {
+  const item = radialData[index];
   if (!item) return rotate;
 
   // Calculate the position of this project in the line array
   let projectLineIndex = 0;
   for (let i = 0; i < index; i++) {
-    const project = DATA[i];
+    const project = radialData[i];
     if (project) {
-      projectLineIndex += 1 + project.projectAssets.length; // Project line + asset lines
+      projectLineIndex += 1 + project.project.projectAssets.length; // Project line + asset lines
     }
   }
 
-  const totalAssetLines = DATA.reduce(
-    (sum, item) => sum + item.projectAssets.length,
+  const totalAssetLines = radialData.reduce(
+    (sum, item) => sum + item.project.projectAssets.length,
     0,
   );
-  const TOTAL_LINES = DATA.length + totalAssetLines;
+  const TOTAL_LINES = radialData.length + totalAssetLines;
   const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
   // Calculate the target rotation for this project
@@ -597,42 +591,44 @@ export function getRotateForIndex(index: number, rotate: number) {
   return newRotate;
 }
 
-export function getIndexForRotate(rotate: number) {
-  const totalAssetLines = DATA.reduce(
-    (sum, item) => sum + item.projectAssets.length,
+function getIndexForRotate(rotate: number) {
+  const totalAssetLines = radialData.reduce(
+    (sum, item) => sum + item.project.projectAssets.length,
     0,
   );
-  const TOTAL_LINES = DATA.length + totalAssetLines;
+  const TOTAL_LINES = radialData.length + totalAssetLines;
   const ANGLE_INCREMENT = 360 / TOTAL_LINES;
 
   // Find which project is closest to the center (top) based on current rotation
-  const sortedByDelta = DATA.map((item, index) => {
-    // Calculate the position of this project in the line array
-    let projectLineIndex = 0;
-    for (let i = 0; i < index; i++) {
-      const project = DATA[i];
-      if (project) {
-        projectLineIndex += 1 + project.projectAssets.length; // Project line + asset lines
+  const sortedByDelta = radialData
+    .map((item, index) => {
+      // Calculate the position of this project in the line array
+      let projectLineIndex = 0;
+      for (let i = 0; i < index; i++) {
+        const project = radialData[i];
+        if (project) {
+          projectLineIndex += 1 + project.project.projectAssets.length; // Project line + asset lines
+        }
       }
-    }
 
-    const targetRotation = projectLineIndex * ANGLE_INCREMENT;
-    const projectAngle = targetRotation + rotate; // Current angle of the project
-    const normalizedAngle = ((projectAngle % 360) + 360) % 360; // Normalize to 0-360
+      const targetRotation = projectLineIndex * ANGLE_INCREMENT;
+      const projectAngle = targetRotation + rotate; // Current angle of the project
+      const normalizedAngle = ((projectAngle % 360) + 360) % 360; // Normalize to 0-360
 
-    // Calculate distance from top center (-90 degrees in this coordinate system)
-    const topCenterAngle = 270; // -90 degrees normalized to 0-360
-    const delta = Math.min(
-      Math.abs(normalizedAngle - topCenterAngle),
-      Math.abs(normalizedAngle - topCenterAngle + 360),
-      Math.abs(normalizedAngle - topCenterAngle - 360),
-    );
+      // Calculate distance from top center (-90 degrees in this coordinate system)
+      const topCenterAngle = 270; // -90 degrees normalized to 0-360
+      const delta = Math.min(
+        Math.abs(normalizedAngle - topCenterAngle),
+        Math.abs(normalizedAngle - topCenterAngle + 360),
+        Math.abs(normalizedAngle - topCenterAngle - 360),
+      );
 
-    return {
-      index,
-      delta,
-    };
-  }).sort((a, b) => a.delta - b.delta);
+      return {
+        index,
+        delta,
+      };
+    })
+    .sort((a, b) => a.delta - b.delta);
 
   const closest = sortedByDelta[0];
 
@@ -643,9 +639,52 @@ export function getIndexForRotate(rotate: number) {
   return closest.index;
 }
 
-export const transition: ValueAnimationTransition<number> = {
+const transition: ValueAnimationTransition<number> = {
   type: "spring",
   stiffness: 100,
   damping: 22,
   mass: 1.3,
+};
+
+const Project = ({ project }: { project: ProjectType }) => {
+  return (
+    <a className={styles.content} href={project.url} target="_blank">
+      <header className={styles.header}>
+        <ScrambleText>{project.title}</ScrambleText>
+        {project.description && (
+          <p className={styles.description}>{project.description}</p>
+        )}
+      </header>
+      {project.projectAssets.map((asset, assetIndex) => (
+        <AnimateSection
+          key={`${project.url}-${asset.src}`}
+          delay={0.2 + 0.2 * assetIndex}
+        >
+          <Card
+            className={
+              asset.aspectRatio === "16:9" ? styles.ratio169 : styles.ratio43
+            }
+          >
+            {asset.type === "image" && (
+              <Image
+                src={asset.src}
+                alt={asset.description ?? ""}
+                width={400}
+                height={300}
+                blurDataURL={asset.dataBlur}
+                placeholder={asset.dataBlur ? "blur" : "empty"}
+                loading="lazy"
+              />
+            )}
+            {asset.type === "video" && (
+              <video autoPlay loop muted>
+                <source src={asset.src} type="video/webm" />
+                Unsupported.
+              </video>
+            )}
+          </Card>
+        </AnimateSection>
+      ))}
+    </a>
+  );
 };

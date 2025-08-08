@@ -1,12 +1,12 @@
-export type Project = {
+export type ProjectType = {
   title: string;
   description: string;
   url: string;
-  projectAssets: ProjectAsset[];
+  projectAssets: ProjectAssetType[];
   type: "project" | "work";
 };
 
-type ProjectAsset = {
+type ProjectAssetType = {
   src: string;
   type: "image" | "video";
   aspectRatio?: "16:9" | "4:3";
@@ -16,9 +16,9 @@ type ProjectAsset = {
 
 const supabaseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/projects/`;
 
-export const featured: Project[] = [
+export const projects: ProjectType[] = [
   {
-    title: "Vibed Games",
+    title: "Vibedgames",
     description:
       "Design, publish, and play personalized multiplayer minigames with your friends.",
     url: "https://vibedgames.com",
@@ -128,12 +128,9 @@ export const featured: Project[] = [
     type: "project",
     projectAssets: [],
   },
-] as const;
-
-export const others: Project[] = [
   {
     title: "Dataembed",
-    description: "Data Analyst Copilot. Scheduled deep dives on your data.",
+    description: "Automate your day, your way",
     url: "https://dataembed.com",
     type: "project",
     projectAssets: [
@@ -281,4 +278,25 @@ export const others: Project[] = [
   },
 ] as const;
 
-export const all = [...featured, ...others] as const;
+export type RadialDataType = {
+  project: ProjectType;
+  degree: number;
+  variant?: "small" | "medium" | "large";
+};
+
+export type LineType = {
+  variant: RadialDataType["variant"];
+  rotation: number;
+  offsetX: number;
+  offsetY: number;
+  dataIndex: number | null;
+};
+
+export type LineTypes = LineType[];
+export type RadialDataTypes = RadialDataType[];
+
+export const radialData: RadialDataTypes = projects.map((project, index) => ({
+  degree: index,
+  variant: "large" as const,
+  project,
+}));
