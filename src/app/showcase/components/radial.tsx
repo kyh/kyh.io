@@ -42,8 +42,6 @@ const SCALE_DEFAULT = 1;
 const SCALE_ZOOM_FACTOR = 0.02;
 const SCROLL_SNAP = 250;
 
-////////////////////////////////////////////////////////////////////////////////
-
 type Constants = {
   LINE_WIDTH_SMALL: number;
   LINE_WIDTH_MEDIUM: number;
@@ -66,22 +64,7 @@ export type TimelineContext = {
 const TimelineContext = createContext({} as TimelineContext);
 const useTimeline = () => useContext(TimelineContext);
 
-////////////////////////////////////////////////////////////////////////////////
-
 export const Radial = () => {
-  useShortcuts({
-    Escape: () => {
-      if (!zoom) rotate.set(0);
-      setZoom(false);
-      activeNode.current?.blur();
-      animate(scrollY, 0, transition);
-      scale.set(SCALE_DEFAULT);
-      setActiveIndex(null);
-    },
-    ArrowLeft: arrow(-1),
-    ArrowRight: arrow(1),
-  });
-
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   const scrollY = useMotionValue(0);
@@ -108,30 +91,29 @@ export const Radial = () => {
     rotate,
   };
 
-  function arrow(dir: 1 | -1) {
-    return () => {
+  useShortcuts({
+    Escape: () => {
+      if (!zoom) rotate.set(0);
+      activeNode.current?.blur();
+      animate(scrollY, 0, transition);
+      scale.set(SCALE_DEFAULT);
+      rotateToIndex(null);
+    },
+    ArrowLeft: () => {
       if (activeIndex !== null) {
         const len = radialData.length;
-        const newIndex = (activeIndex + dir + len) % len;
+        const newIndex = (activeIndex + -1 + len) % len;
         rotateToIndex(newIndex);
       }
-    };
-  }
-
-  useEffect(() => {
-    function wheel(e: WheelEvent) {
-      // Prevent back swipe on horizontal wheel
-      if (Math.abs(e.deltaX) > 0) {
-        e.preventDefault();
+    },
+    ArrowRight: () => {
+      if (activeIndex !== null) {
+        const len = radialData.length;
+        const newIndex = (activeIndex + 1 + len) % len;
+        rotateToIndex(newIndex);
       }
-    }
-
-    window.addEventListener("wheel", wheel, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", wheel);
-    };
-  }, []);
+    },
+  });
 
   useScroll(
     ({ delta: [_, dy], offset: [__, oy] }) => {
@@ -151,10 +133,8 @@ export const Radial = () => {
       if (oy <= 0) {
         // Zoom out
         scale.set(SCALE_DEFAULT);
-        setZoom(false);
         intersectingAtY.set(0);
-        setActiveIndex(null);
-        setHoveredIndex(null);
+        rotateToIndex(null);
         return;
       }
 
@@ -181,6 +161,19 @@ export const Radial = () => {
   useEffect(() => {
     window.history.scrollRestoration = "manual";
     document.documentElement.scrollTo(0, 0);
+
+    // Prevent back swipe on horizontal wheel
+    function wheel(e: WheelEvent) {
+      if (Math.abs(e.deltaX) > 0) {
+        e.preventDefault();
+      }
+    }
+
+    window.addEventListener("wheel", wheel, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", wheel);
+    };
   }, []);
 
   useEffect(() => {
@@ -195,7 +188,13 @@ export const Radial = () => {
   });
 
   function rotateToIndex(targetIndex: number | null) {
-    if (targetIndex === null) return;
+    if (targetIndex === null) {
+      setZoom(false);
+      setActiveIndex(null);
+      setHoveredIndex(null);
+      return;
+    }
+
     setZoom(true);
     setActiveIndex(targetIndex);
 
@@ -210,11 +209,7 @@ export const Radial = () => {
     }
 
     const newRotate = getRotateForIndex(targetIndex, rotate.get());
-
-    if (newRotate === rotate.get()) {
-      return;
-    }
-
+    if (newRotate === rotate.get()) return;
     rotate.set(newRotate);
   }
 
@@ -255,8 +250,6 @@ export const Radial = () => {
   );
 };
 
-////////////////////////////////////////////////////////////////////////////////
-
 const Provider = ({
   value,
   children,
@@ -270,8 +263,6 @@ const Provider = ({
     </TimelineContext.Provider>
   );
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
   const {
@@ -355,8 +346,6 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
   );
 };
 
-////////////////////////////////////////////////////////////////////////////////
-
 const Meta = ({
   currentItem,
   hoveredItem,
@@ -402,8 +391,6 @@ const Meta = ({
     </motion.div>
   );
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   const { zoom, activeIndex } = useTimeline();
@@ -560,8 +547,6 @@ function useLines(): [LineTypes, Constants] {
 
   return [lines, constants];
 }
-
-////////////////////////////////////////////////////////////////////////////////
 
 function getRotateForIndex(index: number, rotate: number) {
   const item = radialData[index];

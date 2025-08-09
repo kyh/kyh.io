@@ -1,4 +1,5 @@
 export type ProjectType = {
+  slug: string;
   title: string;
   description: string;
   url: string;
@@ -18,6 +19,7 @@ const supabaseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/p
 
 export const projects: ProjectType[] = [
   {
+    slug: "vibedgames",
     title: "Vibedgames",
     description:
       "Design, publish, and play personalized multiplayer minigames with your friends.",
@@ -46,6 +48,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "yourssincerely",
     title: "Yours Sincerely",
     description: "Anonymous love letters 💌 written in disappearing ink.",
     url: "https://yourssincerely.org",
@@ -70,6 +73,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "uicapsule",
     title: "UICapsule",
     description: "A curated collection of components that spark joy.",
     url: "https://uicapsule.com",
@@ -120,6 +124,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "inteligir",
     title: "Inteligir",
     description:
       "The next gen of docs. An adaptive and intelligent block-based editor that connects with your proprietary data and helps you generate content, visualizations, and custom interfaces.",
@@ -128,6 +133,7 @@ export const projects: ProjectType[] = [
     projectAssets: [],
   },
   {
+    slug: "dataembed",
     title: "Dataembed",
     description:
       "Build software products on your organization data. Everyone on your team should be building software to automate their personal day to day workflows",
@@ -145,6 +151,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "founding",
     title: "Founding",
     description: "Your proxy founding team.",
     url: "https://founding.so",
@@ -163,8 +170,10 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "total-compensation-calculator",
     title: "Total Compensation Calculator",
-    description: "",
+    description:
+      "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank.",
     url: "https://tc.kyh.io",
     type: "project",
     projectAssets: [
@@ -177,8 +186,10 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "covid-19-dashboard",
     title: "Covid-19 Dashboard",
-    description: "",
+    description:
+      "A real-time dashboard visualizing global Covid-19 data and trends.",
     url: "https://covid-19.kyh.io",
     type: "project",
     projectAssets: [
@@ -195,8 +206,9 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "keiko-and-friends",
     title: "Keiko and Friends",
-    description: "",
+    description: "Cute sticker pack.",
     url: "https://apps.apple.com/us/app/id1209391711",
     type: "project",
     projectAssets: [
@@ -209,8 +221,10 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "init",
     title: "Init",
-    description: "",
+    description:
+      "An AI native starter kit to build, launch, and scale your next project.",
     url: "https://init.kyh.io",
     type: "project",
     projectAssets: [
@@ -225,7 +239,8 @@ export const projects: ProjectType[] = [
 
   // Work
   {
-    title: "Sequoia Capital",
+    slug: "sequoia",
+    title: "Sequoia",
     description: "",
     url: "https://sequoiacap.com",
     type: "work",
@@ -237,6 +252,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "google",
     title: "Google",
     description: "",
     url: "https://grow.google",
@@ -249,6 +265,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "amazon",
     title: "Amazon",
     description: "",
     url: "https://amazon.design",
@@ -263,6 +280,7 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "cardiogram",
     title: "Cardiogram",
     description: "",
     url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
