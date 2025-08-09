@@ -1,5 +1,11 @@
-import * as React from "react";
-import { useEffect } from "react";
+import type { DependencyList } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useIsomorphicLayoutEffect } from "motion/react";
 
 import type { KeyBindingMap, Options } from "./tinykeys";
@@ -32,10 +38,10 @@ export function getRandomItem<T>(items: T[]): T {
 export function useEvent(
   event: string,
   callback: (e: Event) => void,
-  deps: React.DependencyList = [],
+  deps: DependencyList = [],
   options: AddEventListenerOptions = {},
 ) {
-  React.useEffect(() => {
+  useEffect(() => {
     if (event === "resize") {
       callback({} as Event);
     }
@@ -47,10 +53,8 @@ export function useEvent(
 }
 
 let globalIsHydrated = false;
-
-/** Returns whether the app has been hydrated. */
 export function useIsHydrated() {
-  const [isHydrated, setIsHydrated] = React.useState(globalIsHydrated);
+  const [isHydrated, setIsHydrated] = useState(globalIsHydrated);
 
   useIsomorphicLayoutEffect(() => {
     setIsHydrated(true);
@@ -64,4 +68,57 @@ export function useShortcuts(keyBindingMap: KeyBindingMap, options?: Options) {
   useEffect(() => {
     return tinykeys(window, keyBindingMap, options);
   }, [keyBindingMap, options]);
+}
+
+export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    window.addEventListener("hashchange", onStoreChange);
+    return () => window.removeEventListener("hashchange", onStoreChange);
+  }, []);
+
+  const getSnapshot = useCallback((): T => {
+    const hash =
+      typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    if (initialValue !== undefined && typeof initialValue !== "string") {
+      try {
+        return hash
+          ? (JSON.parse(decodeURIComponent(hash)) as T)
+          : initialValue;
+      } catch {
+        return initialValue;
+      }
+    }
+    return (hash as unknown as T) || (initialValue as T);
+  }, [initialValue]);
+
+  const getServerSnapshot = useCallback((): T => {
+    return initialValue as T;
+  }, [initialValue]);
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const setHashState = useCallback((val: T) => {
+    let hash: string | undefined;
+    if (val === undefined || val === null) {
+      hash = undefined;
+    } else {
+      hash =
+        typeof val === "string" ? val : encodeURIComponent(JSON.stringify(val));
+    }
+    if (typeof window !== "undefined") {
+      if (hash === undefined) {
+        if (window.location.hash) {
+          history.replaceState(
+            null,
+            document.title,
+            window.location.pathname + window.location.search,
+          );
+        }
+      } else if (window.location.hash.slice(1) !== hash) {
+        window.location.hash = hash;
+      }
+    }
+  }, []);
+
+  return [value, setHashState];
 }

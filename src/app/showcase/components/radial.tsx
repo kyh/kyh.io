@@ -33,6 +33,7 @@ import {
   areIntersecting,
   clamp,
   useEvent,
+  useHashState,
   useIsHydrated,
   useShortcuts,
 } from "./utils";
@@ -71,8 +72,8 @@ export const Radial = () => {
   const sheetRef = useRef<HTMLDivElement>(null);
 
   const [zoom, setZoom] = useState(false);
+  const [activeIndex, setActiveIndex] = useHashState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const activeNode = useRef<HTMLElement>(null);
 
   const intersectingAtY = useMotionValue(0);
@@ -161,25 +162,15 @@ export const Radial = () => {
   useEffect(() => {
     window.history.scrollRestoration = "manual";
     document.documentElement.scrollTo(0, 0);
-
-    // Prevent back swipe on horizontal wheel
-    function wheel(e: WheelEvent) {
-      if (Math.abs(e.deltaX) > 0) {
-        e.preventDefault();
-      }
-    }
-
-    window.addEventListener("wheel", wheel, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", wheel);
-    };
   }, []);
 
   useEffect(() => {
     const activeElement = document.querySelector("[data-active=true]");
     if (activeElement) {
       activeNode.current = activeElement as HTMLElement;
+    }
+    if (activeElement) {
+      rotateToIndex(activeIndex);
     }
   }, [activeIndex]);
 
