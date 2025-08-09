@@ -71,8 +71,7 @@ export const projects: ProjectType[] = [
   },
   {
     title: "UICapsule",
-    description:
-      "A curated collection of components for builders who care about the details.",
+    description: "A curated collection of components that spark joy.",
     url: "https://uicapsule.com",
     type: "project",
     projectAssets: [

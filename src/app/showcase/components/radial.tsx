@@ -341,7 +341,7 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
       {currentItem?.project.title && (
         <Meta
           currentItem={currentItem}
-          hoveredItem={hoveredItem || null}
+          hoveredItem={hoveredItem}
           hovered={hovered}
           zoom={zoom}
           rotation={rotation}
@@ -366,7 +366,7 @@ const Meta = ({
   rotation,
 }: {
   currentItem: RadialDataType;
-  hoveredItem: RadialDataType | null;
+  hoveredItem?: RadialDataType | null;
   hovered?: boolean;
   zoom?: boolean;
   style: MotionStyle;
@@ -496,7 +496,8 @@ function getLines(rootScale: number): [LineTypes, Constants] {
 
   radialData.forEach((item, projectIndex) => {
     // Add the project line
-    const projectRotation = lineIndex * ANGLE_INCREMENT;
+    // Start at -90 degrees (12 o'clock) instead of 0 degrees (3 o'clock)
+    const projectRotation = lineIndex * ANGLE_INCREMENT - 90;
     const projectAngleRad = (projectRotation * Math.PI) / 180;
     const projectOffsetX = RADIUS * Math.cos(projectAngleRad);
     const projectOffsetY = RADIUS * Math.sin(projectAngleRad);
@@ -512,8 +513,9 @@ function getLines(rootScale: number): [LineTypes, Constants] {
     lineIndex++;
 
     // Add asset lines after this project
-    item.project.projectAssets.forEach((asset, assetIndex) => {
-      const assetRotation = lineIndex * ANGLE_INCREMENT;
+    item.project.projectAssets.forEach(() => {
+      // Start at -90 degrees (12 o'clock) instead of 0 degrees (3 o'clock)
+      const assetRotation = lineIndex * ANGLE_INCREMENT - 90;
       const assetAngleRad = (assetRotation * Math.PI) / 180;
       const assetOffsetX = RADIUS * Math.cos(assetAngleRad);
       const assetOffsetY = RADIUS * Math.sin(assetAngleRad);
@@ -586,7 +588,7 @@ function getRotateForIndex(index: number, rotate: number) {
 
   // To center the project at the top (12 o'clock), we need to rotate the circle
   // so that the project's angle becomes -90 degrees (since 0 is at 3 o'clock)
-  const newRotate = -targetRotation - 90;
+  const newRotate = -targetRotation;
 
   return newRotate;
 }
@@ -612,7 +614,9 @@ function getIndexForRotate(rotate: number) {
       }
 
       const targetRotation = projectLineIndex * ANGLE_INCREMENT;
-      const projectAngle = targetRotation + rotate; // Current angle of the project
+      // When a project is centered using rotate = -targetRotation, its final angle is 0
+      // But we want it to be at -90 degrees (12 o'clock), so we need to add -90
+      const projectAngle = targetRotation + rotate - 90; // Current angle of the project
       const normalizedAngle = ((projectAngle % 360) + 360) % 360; // Normalize to 0-360
 
       // Calculate distance from top center (-90 degrees in this coordinate system)
