@@ -1,11 +1,5 @@
 import type { DependencyList } from "react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useIsomorphicLayoutEffect } from "motion/react";
 
 import type { KeyBindingMap, Options } from "./tinykeys";
@@ -71,14 +65,9 @@ export function useShortcuts(keyBindingMap: KeyBindingMap, options?: Options) {
 }
 
 export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
-  const subscribe = useCallback((onStoreChange: () => void) => {
-    window.addEventListener("hashchange", onStoreChange);
-    return () => window.removeEventListener("hashchange", onStoreChange);
-  }, []);
-
-  const getSnapshot = useCallback((): T => {
-    const hash =
-      typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+  const [internalValue, setInternalValue] = useState<T>(() => {
+    if (typeof window === "undefined") return initialValue as T;
+    const hash = window.location.hash.slice(1);
     if (initialValue !== undefined && typeof initialValue !== "string") {
       try {
         return hash
@@ -89,13 +78,28 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
       }
     }
     return (hash as unknown as T) || (initialValue as T);
-  }, [initialValue]);
+  });
 
-  const getServerSnapshot = useCallback((): T => {
-    return initialValue as T;
-  }, [initialValue]);
-
-  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEvent(
+    "hashchange",
+    () => {
+      const hash = window.location.hash.slice(1);
+      if (initialValue !== undefined && typeof initialValue !== "string") {
+        try {
+          setInternalValue(
+            hash
+              ? (JSON.parse(decodeURIComponent(hash)) as T)
+              : (initialValue as T),
+          );
+        } catch {
+          setInternalValue(initialValue as T);
+        }
+      } else {
+        setInternalValue((hash as unknown as T) || (initialValue as T));
+      }
+    },
+    [initialValue],
+  );
 
   const setHashState = useCallback((val: T) => {
     let hash: string | undefined;
@@ -118,7 +122,8 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
         window.location.hash = hash;
       }
     }
+    setInternalValue(val);
   }, []);
 
-  return [value, setHashState];
+  return [internalValue, setHashState];
 }

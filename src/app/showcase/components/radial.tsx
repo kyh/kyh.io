@@ -56,10 +56,10 @@ type Constants = {
 export type TimelineContext = {
   zoom: boolean;
   rotate: MotionValue<number>;
-  rotateToIndex: (index: number) => void;
-  setHoveredIndex: Dispatch<SetStateAction<number | null>>;
   hoveredIndex: number | null;
+  setHoveredIndex: Dispatch<SetStateAction<number | null>>;
   activeIndex: number | null;
+  setActiveIndex: (index: number | null) => void;
 } & Constants;
 
 const TimelineContext = createContext({} as TimelineContext);
@@ -82,36 +82,26 @@ export const Radial = () => {
 
   const [lines, constants] = useLines();
 
-  const context = {
-    ...constants,
-    rotateToIndex,
-    setHoveredIndex,
-    hoveredIndex,
-    activeIndex,
-    zoom,
-    rotate,
-  };
-
   useShortcuts({
     Escape: () => {
       if (!zoom) rotate.set(0);
       activeNode.current?.blur();
       animate(scrollY, 0, transition);
       scale.set(SCALE_DEFAULT);
-      rotateToIndex(null);
+      setActiveIndex(null);
     },
     ArrowLeft: () => {
       if (activeIndex !== null) {
         const len = radialData.length;
         const newIndex = (activeIndex + -1 + len) % len;
-        rotateToIndex(newIndex);
+        setActiveIndex(newIndex);
       }
     },
     ArrowRight: () => {
       if (activeIndex !== null) {
         const len = radialData.length;
         const newIndex = (activeIndex + 1 + len) % len;
-        rotateToIndex(newIndex);
+        setActiveIndex(newIndex);
       }
     },
   });
@@ -135,7 +125,7 @@ export const Radial = () => {
         // Zoom out
         scale.set(SCALE_DEFAULT);
         intersectingAtY.set(0);
-        rotateToIndex(null);
+        setActiveIndex(null);
         return;
       }
 
@@ -144,7 +134,7 @@ export const Radial = () => {
         scale.set(SCALE_ZOOM);
         if (activeIndex === null) {
           const index = getIndexForRotate(rotate.get());
-          rotateToIndex(index);
+          setActiveIndex(index);
         }
         setZoom(true);
         return;
@@ -165,47 +155,55 @@ export const Radial = () => {
   }, []);
 
   useEffect(() => {
+    function rotateToIndex(targetIndex: number | null) {
+      if (targetIndex === null) {
+        setZoom(false);
+        setActiveIndex(null);
+        setHoveredIndex(null);
+        return;
+      }
+
+      setZoom(true);
+      setActiveIndex(targetIndex);
+
+      if (zoom) {
+        document.documentElement.scrollTo({
+          top: SCROLL_SNAP,
+          left: 0,
+          behavior: "smooth",
+        });
+      } else {
+        document.documentElement.scrollTop = SCROLL_SNAP;
+      }
+
+      const newRotate = getRotateForIndex(targetIndex, rotate.get());
+      if (newRotate === rotate.get()) return;
+      rotate.set(newRotate);
+    }
+
     const activeElement = document.querySelector("[data-active=true]");
     if (activeElement) {
       activeNode.current = activeElement as HTMLElement;
     }
-    if (activeElement) {
-      rotateToIndex(activeIndex);
-    }
-  }, [activeIndex]);
+    rotateToIndex(activeIndex);
+  }, [activeIndex, rotate, zoom, setActiveIndex]);
 
   useEvent("resize", () => {
     intersectingAtY.set(0);
   });
 
-  function rotateToIndex(targetIndex: number | null) {
-    if (targetIndex === null) {
-      setZoom(false);
-      setActiveIndex(null);
-      setHoveredIndex(null);
-      return;
-    }
-
-    setZoom(true);
-    setActiveIndex(targetIndex);
-
-    if (zoom) {
-      document.documentElement.scrollTo({
-        top: SCROLL_SNAP,
-        left: 0,
-        behavior: "smooth",
-      });
-    } else {
-      document.documentElement.scrollTop = SCROLL_SNAP;
-    }
-
-    const newRotate = getRotateForIndex(targetIndex, rotate.get());
-    if (newRotate === rotate.get()) return;
-    rotate.set(newRotate);
-  }
-
   return (
-    <Provider value={context}>
+    <Provider
+      value={{
+        ...constants,
+        hoveredIndex,
+        setHoveredIndex,
+        activeIndex,
+        setActiveIndex,
+        zoom,
+        rotate,
+      }}
+    >
       <div className={styles.fixedContainer}>
         <motion.div
           className={styles.absoluteContainer}
@@ -260,7 +258,7 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
     zoom,
     hoveredIndex,
     activeIndex,
-    rotateToIndex,
+    setActiveIndex,
     setHoveredIndex,
     LINE_WIDTH_LARGE,
     LINE_WIDTH_SMALL,
@@ -283,7 +281,7 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
 
   const props = {
     ...(isInteractive && {
-      onClick: () => rotateToIndex(dataIndex),
+      onClick: () => setActiveIndex(dataIndex),
       onMouseEnter: () => setHoveredIndex(dataIndex),
       onMouseLeave: () => setHoveredIndex(null),
     }),
