@@ -23,6 +23,7 @@ type LinkProps = {
   open?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  active?: boolean;
 };
 
 export const Link = ({
@@ -37,10 +38,13 @@ export const Link = ({
   aspectRatio = "4:3",
   onMouseEnter,
   onMouseLeave,
+  active,
 }: LinkProps) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
-  const actionClassName = noStyles ? "" : styles.link;
+  const actionClassName = noStyles
+    ? ""
+    : `${styles.link} ${active ? styles.active : ""}`;
   const actionDataText = noStyles ? "" : children;
 
   if (href) {

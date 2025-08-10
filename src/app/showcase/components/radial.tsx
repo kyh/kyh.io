@@ -27,6 +27,7 @@ import {
 import type { LineType, LineTypes, ProjectType, RadialDataType } from "./data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
+import { Link } from "@/components/link";
 import { radialData } from "./data";
 import styles from "./radial.module.css";
 import {
@@ -376,7 +377,9 @@ const Meta = ({
         ...transition,
       }}
     >
-      <span data-slot="label">{currentItem.project.title}</span>
+      <Link data-slot="label" active={hovered}>
+        {currentItem.project.title}
+      </Link>
     </motion.div>
   );
 };

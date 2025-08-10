@@ -9,50 +9,49 @@ button.link {
   border-bottom: 1px dotted var(--link-color);
   color: var(--link-color);
   transition: border-color 0.4s ease-in-out;
-}
 
-.link:hover,
-.link:focus-visible {
-  color: var(--link-color);
-  border-color: var(--link-color-hover);
-}
+  &::before {
+    content: attr(data-text);
+    position: absolute;
+    z-index: 2;
+    overflow: hidden;
+    color: var(--link-color-hover);
+    white-space: nowrap;
+    width: 0%;
+    transition: width 0.4s 0.3s;
+    transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
+    pointer-events: none;
+  }
 
-.link::before {
-  content: attr(data-text);
-  position: absolute;
-  z-index: 2;
-  overflow: hidden;
-  color: var(--link-color-hover);
-  white-space: nowrap;
-  width: 0%;
-  transition: width 0.4s 0.3s;
-  transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
-  pointer-events: none;
-}
+  &::after {
+    content: "";
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    top: 50%;
+    margin-top: -1px;
+    right: 0;
+    background: white;
+    transform: translate3d(-102%, 0, 0);
+    transition: transform 0.4s;
+    transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
+    pointer-events: none;
+  }
 
-.link:hover::before,
-.link:focus-visible::before {
-  width: 100%;
-}
+  &:hover,
+  &:focus-visible,
+  &.active {
+    color: var(--link-color);
+    border-color: var(--link-color-hover);
 
-.link::after {
-  content: "";
-  position: absolute;
-  height: 3px;
-  width: 100%;
-  top: 50%;
-  margin-top: -1px;
-  right: 0;
-  background: white;
-  transform: translate3d(-102%, 0, 0);
-  transition: transform 0.4s;
-  transition-timing-function: cubic-bezier(0.7, 0, 0.3, 1);
-  pointer-events: none;
-}
+    &::before {
+      width: 100%;
+    }
 
-.link:hover::after,
-.link:focus-visible::after {
-  transform: translate3d(102%, 0, 0);
+    &::after {
+      transform: translate3d(102%, 0, 0);
+    }
+  }
 }
 
 .multiTooltip {
