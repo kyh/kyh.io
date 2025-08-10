@@ -136,7 +136,7 @@ export const projects: ProjectType[] = [
     slug: "dataembed",
     title: "Dataembed",
     description:
-      "Generate software products using your organization data. Everyone on your team should be building software to automate their personal day to day workflows",
+      "Generate software products on your organization data. Everyone on your team should be building software to automate their personal day to day workflows.",
     url: "https://dataembed.com",
     type: "project",
     projectAssets: [
