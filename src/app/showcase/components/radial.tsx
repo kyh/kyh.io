@@ -377,7 +377,7 @@ const Meta = ({
         ...transition,
       }}
     >
-      <Link data-slot="label" active={hovered}>
+      <Link data-slot="label" active={hovered} noAction>
         {currentItem.project.title}
       </Link>
     </motion.div>
