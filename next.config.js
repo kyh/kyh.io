@@ -33,7 +33,7 @@ const getLocalPatterns = () => {
   /** @type {import('next').NextConfig['localPatterns']} */
   const localPatterns = [
     {
-      pathname: "/logos/**",
+      pathname: "/assets/**",
     },
   ];
 
