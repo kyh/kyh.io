@@ -6,7 +6,7 @@
     "dev": "pnpm run dev:nextjs",
     "dev:nextjs": "next dev --turbopack",
     "dev:partyserver": "wrangler dev",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "deploy:partyserver": "wrangler deploy",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
