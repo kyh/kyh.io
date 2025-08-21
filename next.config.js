@@ -29,10 +29,22 @@ const getRemotePatterns = () => {
   return remotePatterns;
 };
 
+const getLocalPatterns = () => {
+  /** @type {import('next').NextConfig['localPatterns']} */
+  const localPatterns = [
+    {
+      pathname: "/logos/**",
+    },
+  ];
+
+  return localPatterns;
+};
+
 /** @type {import('next').NextConfig} */
 const config = {
   images: {
     remotePatterns: getRemotePatterns(),
+    localPatterns: getLocalPatterns(),
   },
   async redirects() {
     return [
