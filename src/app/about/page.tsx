@@ -113,7 +113,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/sequoia.svg"
+              src="/assets/sequoia.svg"
               alt="Sequoia Capital"
             />
           </Link>
@@ -123,7 +123,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/vercel.svg"
+              src="/assets/vercel.svg"
               alt="Vercel"
             />
           </Link>
@@ -133,7 +133,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/google.svg"
+              src="/assets/google.svg"
               alt="Google"
             />
           </Link>
@@ -143,7 +143,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/amazon.svg"
+              src="/assets/amazon.svg"
               alt="Amazon"
             />
           </Link>
@@ -156,7 +156,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/atrium.svg"
+              src="/assets/atrium.svg"
               alt="Atrium"
             />
           </Link>
@@ -169,19 +169,24 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/logos/cardiogram.svg"
+              src="/assets/cardiogram.svg"
               alt="Cardiogram"
             />
           </Link>
         </AnimateSection>
         <AnimateSection delay={1.15}>
           <Link href="https://www.crunchbase.com/organization/slyce" noStyles>
-            <Image width={150} height={75} src="/logos/slyce.svg" alt="Slyce" />
+            <Image
+              width={150}
+              height={75}
+              src="/assets/slyce.svg"
+              alt="Slyce"
+            />
           </Link>
         </AnimateSection>
         <AnimateSection delay={1.2}>
           <Link href="https://www.crunchbase.com/organization/ted" noStyles>
-            <Image width={150} height={75} src="/logos/tedx.svg" alt="TEDx" />
+            <Image width={150} height={75} src="/assets/tedx.svg" alt="TEDx" />
           </Link>
         </AnimateSection>
       </section>
