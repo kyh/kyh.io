@@ -6,7 +6,7 @@ export const siteConfig = {
   url:
     process.env.NODE_ENV === "development"
       ? "http://localhost:3000"
-      : "https://kyh.io",
+      : "https://www.kyh.io",
   links: { github: "https://github.com/kyh" },
   twitter: "@kaiyuhsu",
   routes: ["", "/about", "/showcase"],
