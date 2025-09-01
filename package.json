@@ -28,7 +28,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250829.0",
+    "@cloudflare/workers-types": "^4.20250831.0",
     "@kyh/eslint-config": "^1.1.7",
     "@kyh/prettier-config": "^1.1.7",
     "@kyh/tsconfig": "^1.1.7",
