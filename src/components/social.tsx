@@ -4,7 +4,7 @@ export const social = {
   github: "https://github.com/kyh",
   linkedin: "https://www.linkedin.com/in/kyh",
   dribbble: "https://dribbble.com/kaiyuhsu",
-  twitter: "https://twitter.com/kaiyuhsu",
+  twitter: "https://x.com/kaiyuhsu",
 };
 
 export const GithubLink = () => (

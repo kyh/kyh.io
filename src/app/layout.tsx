@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         height: 1080,
       },
     ],
-    creator: siteConfig.twitter,
+    creator: siteConfig.creator,
   },
   icons: [
     {
