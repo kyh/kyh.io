@@ -28,12 +28,12 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250831.0",
+    "@cloudflare/workers-types": "^4.20250904.0",
     "@kyh/eslint-config": "^1.1.7",
     "@kyh/prettier-config": "^1.1.7",
     "@kyh/tsconfig": "^1.1.7",
     "@types/matter-js": "^0.20.0",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.3.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "eslint": "^9.34.0",
@@ -41,7 +41,7 @@
     "prettier": "^3.6.2",
     "sharp": "^0.34.3",
     "typescript": "^5.9.2",
-    "wrangler": "^4.33.1"
+    "wrangler": "^4.33.2"
   },
   "prettier": "@kyh/prettier-config",
   "pnpm": {
@@ -49,5 +49,5 @@
       "@vercel/speed-insights"
     ]
   },
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@10.15.1"
 }
