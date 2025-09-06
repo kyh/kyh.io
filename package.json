@@ -18,7 +18,7 @@
     "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
-    "geist": "^1.4.2",
+    "geist": "^1.5.1",
     "matter-js": "^0.20.0",
     "motion": "^12.23.12",
     "next": "^15.5.2",
@@ -28,7 +28,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250904.0",
+    "@cloudflare/workers-types": "^4.20250906.0",
     "@kyh/eslint-config": "^1.1.7",
     "@kyh/prettier-config": "^1.1.7",
     "@kyh/tsconfig": "^1.1.7",
@@ -36,12 +36,12 @@
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "eslint": "^9.34.0",
+    "eslint": "^9.35.0",
     "partyserver": "^0.0.73",
     "prettier": "^3.6.2",
     "sharp": "^0.34.3",
     "typescript": "^5.9.2",
-    "wrangler": "^4.33.2"
+    "wrangler": "^4.34.0"
   },
   "prettier": "@kyh/prettier-config",
   "pnpm": {
