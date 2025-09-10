@@ -127,7 +127,7 @@ export const projects: ProjectType[] = [
     slug: "inteligir",
     title: "Inteligir",
     description:
-      "The next gen of docs. An adaptive and intelligent block-based editor that connects with your proprietary data and helps you generate content, visualizations, and custom interfaces.",
+      "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone.",
     url: "https://inteligir.com",
     type: "project",
     projectAssets: [],
@@ -136,7 +136,7 @@ export const projects: ProjectType[] = [
     slug: "dataembed",
     title: "Dataembed",
     description:
-      "Generate software products on your organization data. Everyone on your team should be building software to automate their personal day to day workflows.",
+      "Search the web like a database. Query and transform scattered web information into structured datasets",
     url: "https://dataembed.com",
     type: "project",
     projectAssets: [
