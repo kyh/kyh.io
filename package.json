@@ -28,7 +28,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250906.0",
+    "@cloudflare/workers-types": "^4.20250910.0",
     "@kyh/eslint-config": "^1.1.7",
     "@kyh/prettier-config": "^1.1.7",
     "@kyh/tsconfig": "^1.1.7",
@@ -41,7 +41,7 @@
     "prettier": "^3.6.2",
     "sharp": "^0.34.3",
     "typescript": "^5.9.2",
-    "wrangler": "^4.34.0"
+    "wrangler": "^4.35.0"
   },
   "prettier": "@kyh/prettier-config",
   "pnpm": {
