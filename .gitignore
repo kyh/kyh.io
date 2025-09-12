@@ -1,25 +1,34 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.js
-.wrangler
 
 # testing
-/coverage
+coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+next-env.d.ts
+
+# nitro
+.nitro/
+.output/
+
+# expo
+.expo/
+dist/
+expo-env.d.ts
+apps/expo/.gitignore
 
 # production
-/build
+build
 
 # misc
 .DS_Store
 *.pem
-.vscode
 
 # debug
 npm-debug.log*
@@ -30,14 +39,17 @@ yarn-error.log*
 # local env files
 .env
 .env*.local
-.env.production
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+.cache
 
-# contentlayer
-.contentlayer
+# turbo
+.turbo
+
+# Supabase
+.branches
+.temp

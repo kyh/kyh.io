@@ -1,0 +1,26 @@
+{
+  "name": "@kyh/prettier-config",
+  "version": "1.1.7",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./base.js"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .nitro .output .turbo .vercel node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "prettier": "catalog:",
+    "prettier-plugin-tailwindcss": "^0.6.14"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "typescript": "catalog:"
+  },
+  "prettier": "@kyh/prettier-config"
+}

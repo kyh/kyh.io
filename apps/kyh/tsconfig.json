@@ -8,9 +8,8 @@
       "@/*": ["./src/*"]
     },
     "plugins": [{ "name": "next" }],
-    "module": "esnext",
-    "types": ["@cloudflare/workers-types/2023-07-01"]
+    "module": "esnext"
   },
-  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", ".next/types/**/*.ts"],
+  "include": [".", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
