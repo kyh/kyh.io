@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "clean": "rm -rf .turbo node_modules",
+    "clean": "rm -rf .turbo node_modules .cache .wrangler",
     "deploy": "wrangler deploy",
     "dev": "pnpm with-env wrangler dev",
     "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
