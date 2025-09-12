@@ -4,6 +4,7 @@
 node_modules
 .pnp
 .pnp.js
+.wrangler
 
 # testing
 coverage
@@ -22,9 +23,6 @@ next-env.d.ts
 dist/
 expo-env.d.ts
 apps/expo/.gitignore
-
-# production
-build
 
 # misc
 .DS_Store
