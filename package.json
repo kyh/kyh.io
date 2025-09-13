@@ -1,7 +1,7 @@
 {
   "name": "kyh",
   "private": true,
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@10.16.0",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -19,6 +19,7 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@kyh/prettier-config": "workspace:^",
     "dotenv-cli": "^10.0.0",
     "prettier": "catalog:",
