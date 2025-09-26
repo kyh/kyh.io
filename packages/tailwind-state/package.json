@@ -1,0 +1,40 @@
+{
+  "name": "@kyh/tailwind-state",
+  "version": "0.1.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "git clean -xdf .cache dist node_modules",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "tsx tests/state-variants.test.ts",
+    "typecheck": "pnpm run test && tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "devDependencies": {
+    "@kyh/eslint-config": "workspace:^",
+    "@kyh/prettier-config": "workspace:^",
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@kyh/prettier-config"
+}
