@@ -43,7 +43,7 @@ const Page = () => {
         </Link>
         ,{" "}
         <Link
-          href="https://agency.kyh.io"
+          href="https://founding.so"
           onMouseEnter={() => sceneRef.current?.trigger("triangle")}
         >
           advising
