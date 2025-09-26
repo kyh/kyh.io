@@ -8,10 +8,10 @@ export const SELECTIONS = {
 
 export const DataFilter = ({ selected, onSelectFilter }) => {
   return (
-    <span className="relative z-0 inline-flex shadow-sm rounded-md">
+    <span className="relative z-0 inline-flex rounded-md shadow-sm">
       <button
         type="button"
-        className={`relative inline-flex items-center px-3 py-1 rounded-l-md border border-gray-400 text-xs font-medium focus:outline-none hover:bg-gray-800 transition ease-in-out duration-150 whitespace-no-wrap ${
+        className={`whitespace-no-wrap relative inline-flex items-center rounded-l-md border border-gray-400 px-3 py-2 text-xs font-medium transition duration-150 ease-in-out hover:bg-gray-800 focus:outline-none ${
           selected === SELECTIONS.time ? "bg-gray-800" : "bg-gray-900"
         }`}
         onClick={() => onSelectFilter(SELECTIONS.time)}
@@ -19,7 +19,7 @@ export const DataFilter = ({ selected, onSelectFilter }) => {
         Cases over time
       </button>
       <select
-        className={`-ml-px block form-select px-3 py-1 rounded-l-none rounded-r-md border border-gray-400 text-xs font-medium focus:outline-none hover:bg-gray-800 transition ease-in-out duration-150 whitespace-no-wrap ${
+        className={`form-select whitespace-no-wrap -ml-px block rounded-l-none rounded-r-md border border-gray-400 px-3 py-2 text-xs font-medium transition duration-150 ease-in-out hover:bg-gray-800 focus:outline-none ${
           selected !== SELECTIONS.time ? "bg-gray-800" : "bg-gray-900"
         }`}
         value={selected}
