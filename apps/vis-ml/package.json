@@ -1,0 +1,24 @@
+{
+  "name": "@repo/vis-ml",
+  "description": "A visual introduction to machine learning topics",
+  "version": "0.3.0",
+  "author": "Kaiyu Hsu",
+  "scripts": {
+    "build": "vite build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "dev": "vite",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "lodash": "^4.17.21",
+    "scrollama": "^3.2.0",
+    "stickyfilljs": "^2.1.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "vite": "^7.1.7"
+  }
+}

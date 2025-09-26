@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>vis-ml | Linear Regression</title>
+    <meta
+      name="viewport"
+      content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes"
+    />
+    <meta name="referrer" content="origin" />
+  </head>
+  <body>
+    <main>
+      <section class="intro">
+        <h1 class="intro-header">Linear Regression</h1>
+        <p class="intro-description">
+          A visual introduction to linear regression and the perceptron
+        </p>
+      </section>
+      <section id="scrolly">
+        <article>
+          <div class="step" data-step="1">
+            <p>
+              I'm currently looking for a new job and after interviewing at a
+              few places I finally got my first offer! Yay!
+            </p>
+            <p>
+              But after looking at the salary, my first thought was
+              <span class="italics">"Is this considered a good offer?"</span>
+            </p>
+          </div>
+          <div class="step" data-step="2">
+            <p>
+              It’s not easy to tell without a frame of reference. So I ask my
+              friends who are in the same field and ended up with a few data
+              points:
+            </p>
+          </div>
+          <div class="step" data-step="3">
+            <p>
+              We can see that there's a correlation between years of experience
+              and how much a person is getting paid.
+            </p>
+            <p>
+              One way to figure out whether the offer was good is to see if it's
+              above or below the average for my years of experience
+            </p>
+          </div>
+          <div class="step" data-step="4">
+            <p>
+              How about we create a formula which looks at the average salary
+              per year of experience?
+            </p>
+          </div>
+          <div class="step" data-step="5">
+            <p>Here's what our formula can look like:</p>
+            <p>
+              This is a simple predictive model that takes an
+              <strong>input (years of experience)</strong>, does a
+              <strong>calculation</strong> (multiplies it by the average salary
+              per year of experience), and gives an
+              <strong>output (predicted salary)</strong>
+            </p>
+          </div>
+          <div class="step" data-step="6">
+            <p>
+              Calculating the prediction is simple multiplication. But before
+              that, we needed to think about the
+              <strong class="highlight-weight">weight</strong> we’ll be
+              multiplying by
+            </p>
+            <p>
+              Here we started with an average, later we’ll look at better
+              algorithms that can scale as we get more inputs and more
+              complicated models
+            </p>
+            <p>
+              Finding the <strong class="highlight-weight">weight</strong> is
+              the “training” stage. So whenever you hear of someone “training”,
+              it just means finding the weights we use to calculate the
+              prediction
+            </p>
+          </div>
+          <div class="step" data-step="7">
+            <p>
+              Now, lets go back to our salary and see what we think we shouldve
+              gotten paid. Let's say I have 4 years of experience, we can put
+              this into our formula to check
+            </p>
+          </div>
+          <div class="step" data-step="8">
+            <p>
+              Hmm does that look right? Now I'm curious, is average really the
+              best number to look at here? Let's plot out our data to find out
+            </p>
+          </div>
+          <div class="step" data-step="9">
+            <p>And plot the prediction line</p>
+          </div>
+          <div class="step" data-step="10">
+            <p>
+              This line doesn't look very accurate. But what does accuracy mean?
+              One way of checking the how good of a job our model does is by
+              measuring how "off" the predicted value is from true values
+            </p>
+          </div>
+          <div class="step" data-step="11">
+            <p>
+              Here we can see the actual price value, the predicted price value,
+              and the difference between them
+            </p>
+            <p>
+              We call this our <strong class="highlight-error">"Error"</strong>.
+            </p>
+          </div>
+          <div class="step" data-step="12">
+            <p>
+              Now that we defined our measuring stick for what makes a better
+              model, let’s experiment with a couple more weight values and
+              compare them with our average pick:
+            </p>
+          </div>
+          <div class="step" data-step="13">
+            <p>
+              Oh there's one thing we never realized! When you start your first
+              job, your salary actually goes from 0 (when you're in school) to
+              the tens of thousands
+            </p>
+            <p>Let's add this into our model as well:</p>
+          </div>
+          <div class="step" data-step="14">
+            <p>
+              In this context, we call it a
+              <strong class="highlight-bias">“bias”</strong>
+            </p>
+          </div>
+          <div class="step" data-step="14">
+            <p>
+              Let's try manually “training” our regression model, minimize the
+              error by tweaking the weight and bias dials:
+            </p>
+          </div>
+          <div class="step" data-step="15">
+            <p>
+              Congratulations on manually training your first regression model!
+            </p>
+            <p>
+              Next we can learn how machines do it with an algorithm called
+              "Gradient Descent"
+            </p>
+          </div>
+        </article>
+
+        <figure>
+          <div class="offer hidden">
+            <h1>Offer Letter</h1>
+            <h4>$xxx,xxx</h4>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+          </div>
+          <div class="table-container hidden">
+            <div class="me-line hidden"></div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Years of experience</th>
+                  <th>Salary</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="plus-line">
+              <div class="line-container">
+                <div class="experience-line hidden">
+                  <span class="total-value"></span>
+                  average years of experience
+                </div>
+                <div class="salary-line hidden">
+                  <span class="total-value"></span>
+                  average salary
+                </div>
+              </div>
+              <div class="total hidden">
+                On average, you would get paid
+                <span class="total-value"></span>
+                per year of experience
+              </div>
+            </div>
+          </div>
+          <div class="formula-container hidden">
+            <div class="input">
+              <div class="visual">x</div>
+              <div class="visual-description">(number of years)</div>
+            </div>
+            <div class="weight">
+              <div class="visual">w</div>
+              <div class="visual-description"></div>
+            </div>
+            <div class="bias hidden">
+              <div class="visual">b</div>
+              <div class="visual-description">0</div>
+            </div>
+            <div class="output">
+              <div class="visual">y</div>
+              <div class="visual-description">(predicted salary)</div>
+            </div>
+            <div class="test hidden">4 years</div>
+          </div>
+          <div class="chart-container hidden">
+            <svg class="chart" width="600" height="400"></svg>
+            <footer class="chart-controls">
+              <div>
+                <div class="chart-weight hidden">
+                  <input
+                    type="range"
+                    id="weight"
+                    name="weight"
+                    min="0"
+                    max="15000"
+                    step="100"
+                    value="0"
+                  />
+                  <label for="weight"
+                    >Weight: <span class="weight-text"></span
+                  ></label>
+                </div>
+                <div class="chart-bias hidden">
+                  <input
+                    type="range"
+                    id="bias"
+                    name="bias"
+                    min="0"
+                    max="80000"
+                    step="100"
+                    value="0"
+                  />
+                  <label for="bias"
+                    >Bias: <span class="bias-text"></span
+                  ></label>
+                </div>
+              </div>
+              <div class="chart-error highlight-error hidden">
+                Error: <span class="error-text"></span>
+              </div>
+            </footer>
+          </div>
+        </figure>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "d115e51e4d3848a6942934c18c77e51a"}'
+    ></script>
+  </body>
+</html>

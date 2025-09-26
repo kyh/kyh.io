@@ -1,0 +1,415 @@
+/*
+  BASE
+  ========
+  html is set to 62.5% so that all the REM measurements are based on 10px sizing.
+  So basically 1.5rem = 15px :)
+*/
+html {
+  font-size: 62.5%;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  background: #f9fafb;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  min-height: 1280px;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 2.5rem;
+  white-space: nowrap;
+}
+
+p {
+  margin: 0;
+  padding-bottom: 12px;
+}
+
+.italics {
+  font-style: italic;
+}
+
+.bold {
+  font-weight: 600;
+}
+
+.grey {
+  color: #718096;
+}
+
+.intro {
+  max-width: 1000px;
+  margin: 3rem auto 1rem;
+}
+
+.intro-header {
+  font-size: 2em;
+  margin: 0 auto;
+}
+
+.intro-description {
+  color: #718096;
+}
+
+#scrolly {
+  position: relative;
+  display: flex;
+  max-width: 1000px;
+  margin: 0 auto 200px;
+}
+
+#scrolly > * {
+  flex: 1;
+}
+
+article {
+  position: relative;
+  padding-right: 5rem;
+}
+
+figure {
+  position: sticky;
+  width: 100%;
+  margin: 0;
+  transform: translate3d(0, 0, 0);
+  z-index: 0;
+}
+
+.step {
+  margin: 0 auto 2rem auto;
+  opacity: 0.3;
+  transition: opacity 0.23s ease;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.step:last-child {
+  margin-bottom: 0;
+}
+
+.step.is-active {
+  opacity: 1;
+}
+
+.step p {
+  font-size: 1.5rem;
+  line-height: 1.6;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.highlight {
+  background: #fefcbf;
+}
+
+.highlight-weight {
+  color: #48bb78;
+}
+
+.highlight-weight .visual {
+  border-width: 2px;
+}
+
+.highlight-bias {
+  color: #4299e1;
+}
+
+.highlight-bias .visual {
+  border-width: 2px;
+}
+
+.highlight-error {
+  color: #f56565;
+}
+
+.offer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250px;
+  font-size: 18px;
+  padding: 30px;
+  box-shadow: -5px 18px 40px -12px rgba(0, 0, 0, 0.4);
+  transform: perspective(800px) rotateY(20deg) rotateX(10deg) scaleX(0.95)
+    translate(-50%, -55%);
+  backface-visibility: hidden;
+  transition: opacity 0.23s ease;
+}
+
+.offer h1 {
+  margin: 0 0 1rem;
+  line-height: 1;
+}
+
+.offer h4 {
+  margin: 0 0 1rem;
+}
+
+.line {
+  width: 100%;
+  height: 20px;
+  background-color: #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.table-container {
+  position: absolute;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  text-align: left;
+  transition: opacity 0.23s ease;
+  border-collapse: collapse;
+}
+
+.me-line {
+  width: 110%;
+  left: -40px;
+  border-top: 1px dashed #2d3748;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.me-line::before {
+  content: "Me";
+  position: absolute;
+  top: -15px;
+  background: #f9fafb;
+  padding-right: 10px;
+}
+
+.plus-line {
+  position: absolute;
+  bottom: -85px;
+  right: 0;
+  left: 0;
+}
+
+.line-container {
+  display: flex;
+  margin-bottom: 1.5rem;
+}
+
+.experience-line {
+  margin-left: 100px;
+  border-top: 1px solid #2d3748;
+  transition: opacity 0.23s ease;
+}
+
+.salary-line {
+  margin-left: 150px;
+  border-top: 1px solid #2d3748;
+  transition: opacity 0.23s ease;
+}
+
+.total {
+  text-align: right;
+  transition: opacity 0.23s ease;
+}
+
+.total-value {
+  font-weight: 600;
+}
+
+.table tbody tr {
+  transition: transform 0.23s ease;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #e2e8f0;
+}
+
+.table tbody tr td {
+  padding: 0.5rem;
+}
+
+.table tbody tr td:last-child::before {
+  content: "$";
+}
+
+.formula-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+  text-align: center;
+  align-items: center;
+  transition: opacity 0.23s ease;
+  background: #f9fafbb5;
+  background-image: url("./arrow.svg");
+  background-repeat: no-repeat;
+  background-position: 50% 25px;
+}
+
+.visual {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid;
+  border-radius: 100%;
+  line-height: 1;
+  background: #f9fafb;
+  position: relative;
+  z-index: 1;
+}
+
+.visual-description {
+  color: #718096;
+}
+
+.weight,
+.bias {
+  padding: 1rem;
+  transition: all 0.23s ease;
+}
+
+.bias {
+  transform: translateX(-30px);
+}
+
+.test {
+  position: absolute;
+  left: -10px;
+  top: 20px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid;
+  background: #f9fafb;
+  transition: opacity 0.23s ease;
+}
+
+.chart-container,
+.chart-error,
+.chart-weight,
+.chart-bias {
+  transition: opacity 0.23s ease;
+}
+
+.chart {
+  margin-bottom: 20px;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chart .xAxis path,
+line {
+  stroke: #a0aec0;
+}
+
+.chart .yAxis path,
+line {
+  stroke: #a0aec0;
+}
+
+.chart circle {
+  fill: #a0aec0;
+}
+
+.chart path.regression-line {
+  stroke: #48bb78;
+  fill: none;
+  stroke-width: 1.2;
+}
+
+.chart line.error-line {
+  stroke: #f56565;
+  fill: none;
+  stroke-width: 1;
+}
+
+.tooltip {
+  color: white;
+  position: absolute;
+  text-align: center;
+  width: 60px;
+  padding: 5px;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 600px) {
+  main {
+    padding: 0 12px;
+  }
+
+  article {
+    padding: 0;
+  }
+
+  figure {
+    position: fixed;
+  }
+
+  .step p {
+    padding-left: 12px;
+    padding-right: 12px;
+    background: #fff;
+    border-radius: 4px;
+  }
+
+  .step p:first-child {
+    padding-top: 12px;
+  }
+
+  .step p:last-child {
+    padding-bottom: 12px;
+  }
+
+  .step.is-active {
+    position: relative;
+    z-index: 1;
+  }
+
+  #scrolly {
+    flex-direction: column;
+  }
+
+  .total {
+    text-align: left;
+  }
+}
