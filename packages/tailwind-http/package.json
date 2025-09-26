@@ -1,0 +1,37 @@
+{
+  "name": "@kyh/tailwind-http",
+  "version": "0.0.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./plugin": "./dist/plugin.js",
+    "./runtime": "./dist/runtime.js"
+  },
+  "scripts": {
+    "build": "tsup src/plugin.ts src/runtime.ts --format esm --dts --out-dir dist --clean",
+    "clean": "git clean -xdf .cache dist node_modules",
+    "format": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@kyh/eslint-config": "workspace:^",
+    "@kyh/prettier-config": "workspace:^",
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "jsdom": "^25.0.1",
+    "prettier": "catalog:",
+    "tailwindcss": "^3.4.17",
+    "tsup": "^8.3.5",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8"
+  },
+  "prettier": "@kyh/prettier-config"
+}
