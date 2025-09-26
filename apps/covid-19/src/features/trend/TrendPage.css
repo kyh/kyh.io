@@ -1,0 +1,15 @@
+:root {
+  --trend-page-height: calc(100vh - 150px);
+}
+
+@media (min-width: 640px) {
+  .sidebar {
+    height: var(--trend-page-height);
+    overflow: auto;
+  }
+
+  .featured-content {
+    height: var(--trend-page-height);
+    overflow: hidden;
+  }
+}

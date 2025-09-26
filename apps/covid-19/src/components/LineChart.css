@@ -1,0 +1,28 @@
+.chart .domain {
+  display: none;
+}
+
+.chart .x-axis .domain,
+.chart .x-axis line {
+  stroke: none;
+  fill: none;
+}
+
+.chart .y-axis line {
+  stroke: #374151;
+  stroke-dasharray: 2, 2;
+}
+
+.chart .growth-line {
+  stroke: #0694a2;
+}
+
+.chart .cursor-line {
+  stroke: #4b5563;
+  stroke-dasharray: 2, 2;
+}
+
+.chart .cursor-point {
+  fill: #4b5563;
+  stroke: #d2d6dc;
+}
