@@ -30,15 +30,15 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
     "@vitejs/plugin-react": "^5.0.4",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.1.14",
     "typescript": "catalog:",
-    "vite": "^7.1.7"
+    "vite": "^7.1.9"
   }
 }
