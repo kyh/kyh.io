@@ -1,5 +1,11 @@
 # @kyh/eslint-config
 
+## 1.1.9
+
+### Patch Changes
+
+- update packages
+
 ## 1.1.8
 
 ### Patch Changes
