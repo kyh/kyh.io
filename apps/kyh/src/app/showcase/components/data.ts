@@ -1,3 +1,5 @@
+import { getPublicAssetUrl } from "@/lib/public-assets";
+
 export type ProjectType = {
   slug: string;
   title: string;
@@ -15,8 +17,6 @@ type ProjectAssetType = {
   dataBlur?: string;
 };
 
-const supabaseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/projects/`;
-
 export const projects: ProjectType[] = [
   {
     slug: "vibedgames",
@@ -28,21 +28,21 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "video",
-        src: `${supabaseUrl}/vibedgames.mp4`,
+        src: getPublicAssetUrl("vibedgames.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/pacman.mp4`,
+        src: getPublicAssetUrl("pacman.mp4"),
         aspectRatio: "16:9",
       },
       {
         type: "video",
-        src: `${supabaseUrl}/flappy.mp4`,
+        src: getPublicAssetUrl("flappy.mp4"),
         aspectRatio: "16:9",
       },
       {
         type: "video",
-        src: `${supabaseUrl}/pong.mp4`,
+        src: getPublicAssetUrl("pong.mp4"),
         aspectRatio: "16:9",
       },
     ],
@@ -56,18 +56,18 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/ys.webp`,
+        src: getPublicAssetUrl("ys.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ys.mp4`,
+        src: getPublicAssetUrl("ys.mp4"),
         aspectRatio: "16:9",
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ys-2.mp4`,
+        src: getPublicAssetUrl("ys-2.mp4"),
         aspectRatio: "16:9",
       },
     ],
@@ -81,45 +81,45 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/uicapsule.webp`,
+        src: getPublicAssetUrl("uicapsule.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
       },
       {
         type: "video",
-        src: `${supabaseUrl}/globe.mp4`,
+        src: getPublicAssetUrl("globe.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/parallax.mp4`,
+        src: getPublicAssetUrl("parallax.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/infinite-grid.mp4`,
+        src: getPublicAssetUrl("infinite-grid.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/astroids.mp4`,
+        src: getPublicAssetUrl("astroids.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ascii.mp4`,
+        src: getPublicAssetUrl("ascii.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ios-volume.mp4`,
+        src: getPublicAssetUrl("ios-volume.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/ios-header-menu.mp4`,
+        src: getPublicAssetUrl("ios-header-menu.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/reading-progress.mp4`,
+        src: getPublicAssetUrl("reading-progress.mp4"),
       },
       {
         type: "video",
-        src: `${supabaseUrl}/radial-slider.mp4`,
+        src: getPublicAssetUrl("radial-slider.mp4"),
       },
     ],
   },
@@ -142,11 +142,11 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "video",
-        src: `${supabaseUrl}/dataembed.mp4`,
+        src: getPublicAssetUrl("dataembed.mp4"),
       },
       {
         type: "image",
-        src: `${supabaseUrl}/dataembed-1.webp`,
+        src: getPublicAssetUrl("dataembed-1.webp"),
       },
     ],
   },
@@ -159,13 +159,13 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/founding.webp`,
+        src: getPublicAssetUrl("founding.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
       },
       {
         type: "image",
-        src: `${supabaseUrl}/founding-1.webp`,
+        src: getPublicAssetUrl("founding-1.webp"),
       },
     ],
   },
@@ -179,7 +179,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/tc.webp`,
+        src: getPublicAssetUrl("tc.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
       },
@@ -195,13 +195,13 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/covid19.webp`,
+        src: getPublicAssetUrl("covid19.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
       },
       {
         type: "image",
-        src: `${supabaseUrl}/covid19-1.webp`,
+        src: getPublicAssetUrl("covid19-1.webp"),
       },
     ],
   },
@@ -214,7 +214,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/keiko.webp`,
+        src: getPublicAssetUrl("keiko.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
       },
@@ -230,7 +230,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/init.webp`,
+        src: getPublicAssetUrl("init.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
       },
@@ -247,7 +247,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "video",
-        src: `${supabaseUrl}/arc.webm`,
+        src: getPublicAssetUrl("arc.webm"),
       },
     ],
   },
@@ -260,7 +260,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "video",
-        src: `${supabaseUrl}/google-grow.webm`,
+        src: getPublicAssetUrl("google-grow.webm"),
       },
     ],
   },
@@ -273,7 +273,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/amazon-ds.webp`,
+        src: getPublicAssetUrl("amazon-ds.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
       },
@@ -288,7 +288,7 @@ export const projects: ProjectType[] = [
     projectAssets: [
       {
         type: "image",
-        src: `${supabaseUrl}/cardiogram.webp`,
+        src: getPublicAssetUrl("cardiogram.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
       },

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Link } from "@/components/link";
 import { SocialLinks } from "@/components/social";
+import { getPublicAssetUrl } from "@/lib/public-assets";
 import styles from "@/styles/page.module.css";
 
 export const metadata: Metadata = {
@@ -35,17 +36,23 @@ const Page = () => (
           Published research on{" "}
           <Link
             href="https://www.ahajournals.org/doi/10.1161/circ.136.suppl_1.21029"
-            src="/screenshots/research.webp"
+            src={getPublicAssetUrl("research.webp")}
           >
             growth and retention
           </Link>
         </AnimateSection>
         <AnimateSection as="li" delay={0.45}>
           Led software development at various{" "}
-          <Link href="https://amazon.com" src="/screenshots/amazon.webp">
+          <Link
+            href="https://amazon.com"
+            src={getPublicAssetUrl("amazon.webp")}
+          >
             large
           </Link>{" "}
-          <Link href="https://grow.google/" src="/screenshots/google.webp">
+          <Link
+            href="https://grow.google/"
+            src={getPublicAssetUrl("google.webp")}
+          >
             organizations
           </Link>
         </AnimateSection>
@@ -53,7 +60,7 @@ const Page = () => (
           Helped build the frontend framework for the{" "}
           <Link
             href="https://techcrunch.com/2020/09/01/amazons-big-redesign-on-ios-to-reach-all-u-s-users-by-month-end/"
-            src="/screenshots/amazon-redesign.webp"
+            src={getPublicAssetUrl("amazon-redesign.webp")}
           >
             worlds largest retailer
           </Link>
@@ -62,14 +69,14 @@ const Page = () => (
           Contributing member of{" "}
           <Link
             href="https://github.com/orgs/usdigitalresponse"
-            src="/screenshots/usdr.webp"
+            src={getPublicAssetUrl("usdr.webp")}
           >
             USDR
           </Link>{" "}
           and the{" "}
           <Link
             href="https://github.com/orgs/nodejs"
-            src="/screenshots/nodejs.webp"
+            src={getPublicAssetUrl("nodejs.webp")}
           >
             OpenJS
           </Link>{" "}
@@ -79,21 +86,21 @@ const Page = () => (
           Took startups through{" "}
           <Link
             href="https://www.crunchbase.com/organization/cardiogram"
-            src="/screenshots/cardiogram.webp"
+            src={getPublicAssetUrl("cardiogram.webp")}
           >
             acquisitions
           </Link>
           ,{" "}
           <Link
             href="https://retailtouchpoints.com/features/news-briefs/slyce-to-go-public-following-merger"
-            src="/screenshots/slyce.webp"
+            src={getPublicAssetUrl("slyce.webp")}
           >
             IPOs
           </Link>
           , and several{" "}
           <Link
             href="https://techcrunch.com/2020/03/03/atrium-shuts-down/"
-            src="/screenshots/atrium.webp"
+            src={getPublicAssetUrl("atrium.webp")}
           >
             failures
           </Link>
@@ -113,7 +120,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/sequoia.svg"
+              src={getPublicAssetUrl("sequoia.svg")}
               alt="Sequoia Capital"
             />
           </Link>
@@ -123,7 +130,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/vercel.svg"
+              src={getPublicAssetUrl("vercel.svg")}
               alt="Vercel"
             />
           </Link>
@@ -133,7 +140,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/google.svg"
+              src={getPublicAssetUrl("google.svg")}
               alt="Google"
             />
           </Link>
@@ -143,7 +150,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/amazon.svg"
+              src={getPublicAssetUrl("amazon.svg")}
               alt="Amazon"
             />
           </Link>
@@ -156,7 +163,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/atrium.svg"
+              src={getPublicAssetUrl("atrium.svg")}
               alt="Atrium"
             />
           </Link>
@@ -169,7 +176,7 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/cardiogram.svg"
+              src={getPublicAssetUrl("cardiogram.svg")}
               alt="Cardiogram"
             />
           </Link>
@@ -179,14 +186,19 @@ const Page = () => (
             <Image
               width={150}
               height={75}
-              src="/assets/slyce.svg"
+              src={getPublicAssetUrl("slyce.svg")}
               alt="Slyce"
             />
           </Link>
         </AnimateSection>
         <AnimateSection delay={1.2}>
           <Link href="https://www.crunchbase.com/organization/ted" noStyles>
-            <Image width={150} height={75} src="/assets/tedx.svg" alt="TEDx" />
+            <Image
+              width={150}
+              height={75}
+              src={getPublicAssetUrl("tedx.svg")}
+              alt="TEDx"
+            />
           </Link>
         </AnimateSection>
       </section>
