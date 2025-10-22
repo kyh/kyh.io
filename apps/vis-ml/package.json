@@ -1,6 +1,7 @@
 {
   "name": "@repo/vis-ml",
   "description": "A visual introduction to machine learning topics",
+  "private": true,
   "version": "0.3.0",
   "author": "Kaiyu Hsu",
   "scripts": {
