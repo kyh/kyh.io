@@ -3,9 +3,9 @@ packages:
   - packages/*
 
 catalog:
-  "@types/node": ^24.9.1
-  "@types/react": ^19.2.2
-  "@types/react-dom": ^19.2.2
+  '@types/node': ^24.9.1
+  '@types/react': ^19.2.2
+  '@types/react-dom': ^19.2.2
   eslint: ^9.38.0
   next: ^16.0.0
   prettier: ^3.6.2
@@ -18,7 +18,8 @@ linkWorkspacePackages: true
 nodeLinker: hoisted
 
 onlyBuiltDependencies:
-  - "@vercel/speed-insights"
+  - '@vercel/speed-insights'
+  - cbor-extract
   - esbuild
   - sharp
   - workerd

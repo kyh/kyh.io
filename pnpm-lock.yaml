@@ -129,6 +129,9 @@ importers:
       '@rivetkit/next-js':
         specifier: ^2.0.21
         version: 2.0.21(@standard-schema/spec@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(ws@8.18.3)
+      '@rivetkit/react':
+        specifier: ^2.0.21
+        version: 2.0.21(@standard-schema/spec@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(ws@8.18.3)
       '@use-gesture/react':
         specifier: ^10.3.1
         version: 10.3.1(react@19.2.0)
