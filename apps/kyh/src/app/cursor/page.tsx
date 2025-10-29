@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/next-js/client";
 
 import type { CursorPosition, registry, TextLabel } from "@/lib/rivet-registry";
 
@@ -52,6 +52,8 @@ const Page = () => {
   const [scale, setScale] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  console.log("cursors", cursors);
 
   const cursorRoom = useActor({
     name: "cursorRoom",
