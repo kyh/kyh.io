@@ -16,6 +16,7 @@
   "prettier": "@kyh/prettier-config",
   "dependencies": {
     "@floating-ui/react": "^0.27.16",
+    "@rivetkit/next-js": "^2.0.21",
     "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
@@ -26,7 +27,8 @@
     "next-themes": "^0.4.6",
     "partysocket": "^1.1.6",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "rivetkit": "^2.0.21"
   },
   "devDependencies": {
     "@kyh/eslint-config": "workspace:^",
