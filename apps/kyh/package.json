@@ -38,7 +38,7 @@
     "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "sharp": "^0.34.4",
+    "sharp": "^0.34.5",
     "typescript": "catalog:"
   }
 }
