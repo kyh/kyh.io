@@ -7,8 +7,8 @@ catalog:
   "@types/react": ^19.2.7
   "@types/react-dom": ^19.2.3
   eslint: ^9.39.1
-  next: ^16.0.4
-  prettier: ^3.6.2
+  next: ^16.0.5
+  prettier: ^3.7.1
   react: ^19.2.0
   react-dom: ^19.2.0
   typescript: ^5.9.3
