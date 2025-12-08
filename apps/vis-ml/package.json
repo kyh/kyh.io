@@ -18,8 +18,8 @@
     "stickyfilljs": "^2.1.0"
   },
   "devDependencies": {
-    "prettier": "^3.7.3",
+    "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
-    "vite": "^7.2.6"
+    "vite": "^7.2.7"
   }
 }
