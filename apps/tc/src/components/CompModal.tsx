@@ -1,16 +1,17 @@
-import type { Props as ModalProps } from "~/components/Modal";
-import type { CompHooksType } from "~/lib/comp";
 import type { InputActionMeta, MultiValue, OptionProps } from "react-select";
 import { useState } from "react";
-import { FormField } from "~/components/FormField";
-import { Modal } from "~/components/Modal";
-import {
-  currencyTextFormatProps,
-  staticTextFormatProps,
-} from "~/lib/formProps";
 import { NumericFormat } from "react-number-format";
 import Select, { components } from "react-select";
 import { useDebouncedCallback } from "use-debounce";
+
+import type { Props as ModalProps } from "@/components/Modal";
+import type { CompHooksType } from "@/lib/comp";
+import { FormField } from "@/components/FormField";
+import { Modal } from "@/components/Modal";
+import {
+  currencyTextFormatProps,
+  staticTextFormatProps,
+} from "@/lib/formProps";
 
 type Props = { setShouldUpdate: (t: boolean) => void } & CompHooksType &
   Omit<ModalProps, "title" | "children">;

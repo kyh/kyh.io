@@ -1,14 +1,15 @@
-import type { CompHooksType } from "~/lib/comp";
 import { useEffect, useState } from "react";
 import { Listbox, RadioGroup } from "@headlessui/react";
-import { CompModal } from "~/components/CompModal";
-import { FormField } from "~/components/FormField";
-import { useModal } from "~/components/Modal";
+import { NumericFormat } from "react-number-format";
+
+import type { CompHooksType } from "@/lib/comp";
+import { CompModal } from "@/components/CompModal";
+import { FormField } from "@/components/FormField";
+import { useModal } from "@/components/Modal";
 import {
   currencyInputFormatProps,
   staticInputFormatProps,
-} from "~/lib/formProps";
-import { NumericFormat } from "react-number-format";
+} from "@/lib/formProps";
 
 type Props = {
   comp: CompHooksType;

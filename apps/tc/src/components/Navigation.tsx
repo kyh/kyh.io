@@ -1,12 +1,12 @@
-import { Logo } from "~/components/Logo";
-import { About, useAbout } from "~/components/About";
+import { About, useAbout } from "@/components/About";
+import { Logo } from "@/components/Logo";
 
 export const Navigation = () => {
   const aboutProps = useAbout();
 
   return (
-    <nav className="relative max-w-7xl mx-auto flex justify-between mb-10">
-      <a href="/" className="inline-flex py-5 px-3">
+    <nav className="relative mx-auto mb-10 flex max-w-7xl justify-between">
+      <a href="/" className="inline-flex px-3 py-5">
         <span className="sr-only">Logo</span>
         <Logo />
       </a>

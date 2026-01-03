@@ -1,0 +1,30 @@
+{
+  "name": "kyh",
+  "version": "0.0.1",
+  "description": "Personal CLI tool",
+  "type": "module",
+  "bin": {
+    "kyh": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun build src/index.tsx --outdir dist --target bun && echo '#!/usr/bin/env bun' | cat - dist/index.js > dist/temp && mv dist/temp dist/index.js",
+    "dev": "bun run --watch src/index.tsx",
+    "clean": "rm -rf dist node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.67",
+    "@opentui/react": "^0.1.67",
+    "react": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "catalog:"
+  }
+}

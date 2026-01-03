@@ -1,6 +1,7 @@
-import type { BaseDataType } from "~/lib/comp";
-import { currencyTextFormatProps } from "~/lib/formProps";
 import { NumericFormat } from "react-number-format";
+
+import type { BaseDataType } from "@/lib/comp";
+import { currencyTextFormatProps } from "@/lib/formProps";
 
 type Props = {
   data: BaseDataType;

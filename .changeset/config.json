@@ -2,7 +2,10 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@kyh/eslint-config", "@kyh/prettier-config", "@kyh/tsconfig"]],
+  "fixed": [
+    ["@kyh/eslint-config", "@kyh/prettier-config", "@kyh/tsconfig"],
+    ["kyh"]
+  ],
   "linked": [],
   "access": "restricted",
   "baseBranch": "main",

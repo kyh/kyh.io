@@ -1,11 +1,12 @@
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
-import Chart from "~/components/Chart";
-import { CompForm } from "~/components/CompForm";
-import { CompTable } from "~/components/CompTable";
-import { Navigation } from "~/components/Navigation";
-import { useCompHooks } from "~/lib/comp";
-import { currencyTextFormatProps } from "~/lib/formProps";
 import { NumericFormat } from "react-number-format";
+
+import Chart from "@/components/Chart";
+import { CompForm } from "@/components/CompForm";
+import { CompTable } from "@/components/CompTable";
+import { Navigation } from "@/components/Navigation";
+import { useCompHooks } from "@/lib/comp";
+import { currencyTextFormatProps } from "@/lib/formProps";
 
 export default function Index() {
   const comp = useCompHooks();
