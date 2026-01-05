@@ -52,12 +52,3 @@ export const nav = {
   arrowDown: "↓",
 } as const;
 
-// ASCII art for name
-export const nameArt = `
-██╗  ██╗██╗   ██╗██╗  ██╗
-██║ ██╔╝╚██╗ ██╔╝██║  ██║
-█████╔╝  ╚████╔╝ ███████║
-██╔═██╗   ╚██╔╝  ██╔══██║
-██║  ██╗   ██║   ██║  ██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
-`.trim();
