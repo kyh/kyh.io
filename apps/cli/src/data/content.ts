@@ -6,6 +6,14 @@ export type Project = {
 
 export const name = "Kaiyu Hsu";
 
+export const contact = {
+  website: "kyh.io",
+  github: "github.com/kyh",
+  x: "x.com/kaiyuhsu",
+  linkedin: "linkedin.com/in/kyh",
+  email: "hello@kyh.io",
+};
+
 export const heroText = `Hello world. You can call me Kai since we're pretty much friends now. I enjoy creating things for the internet. By day, I get to do that through investing, advising, and building products you may not have heard of, yet. Welcome to my corner of the web.`;
 
 export const projects: Project[] = [

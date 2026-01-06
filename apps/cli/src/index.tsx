@@ -1,13 +1,14 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard } from "@opentui/react";
 import { useState } from "react";
-import { name, heroText, projects } from "./data/content";
+import { name, heroText, projects, contact } from "./data/content";
 import { openUrl, wrapText } from "./lib/utils";
 
 const TITLE_WIDTH = 32;
 const PREFIX_WIDTH = 2;
 const DESC_INDENT = PREFIX_WIDTH + TITLE_WIDTH;
 const DIM = "#666666";
+const HIGHLIGHT = "#00FFFF";
 
 // Clear screen and hide cursor
 process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
@@ -15,11 +16,19 @@ process.on("exit", () => process.stdout.write("\x1b[?25h\x1b[2J\x1b[H"));
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showContact, setShowContact] = useState(false);
   const termWidth = process.stdout.columns || 80;
-  const contentWidth = termWidth - 4; // account for padding
+  const contentWidth = termWidth - 4;
   const descWidth = contentWidth - DESC_INDENT;
 
   useKeyboard((key) => {
+    if (showContact) {
+      if (key.name === "escape" || key.name === "c") {
+        setShowContact(false);
+      }
+      return;
+    }
+
     switch (key.name) {
       case "up":
       case "k":
@@ -32,6 +41,9 @@ function App() {
       case "return":
         openUrl(projects[selectedIndex]!.url);
         break;
+      case "c":
+        setShowContact(true);
+        break;
       case "escape":
       case "q":
         process.exit(0);
@@ -43,33 +55,59 @@ function App() {
   const divider = "─".repeat(contentWidth);
 
   return (
-    <box flexDirection="column" paddingLeft={2} paddingTop={1}>
-      <text>{name}</text>
-      <text> </text>
-      {heroLines.map((line, i) => (
-        <text key={i} fg={DIM}>{line}</text>
-      ))}
-      <text> </text>
-      {projects.map((project, index) => {
-        const isSelected = index === selectedIndex;
-        const prefix = isSelected ? "> " : "  ";
-        const title = project.title.padEnd(TITLE_WIDTH);
-        const descLines = wrapText(project.description, descWidth);
+    <box flexDirection="column" paddingLeft={2} paddingTop={1} flexGrow={1}>
+      <box flexDirection="column" flexGrow={1}>
+        <text>{name}</text>
+        <text> </text>
+        {heroLines.map((line, i) => (
+          <text key={i} fg={DIM}>{line}</text>
+        ))}
+        <text> </text>
+        {projects.map((project, index) => {
+          const isSelected = index === selectedIndex;
+          const prefix = isSelected ? "> " : "  ";
+          const title = project.title.padEnd(TITLE_WIDTH);
+          const descLines = wrapText(project.description, descWidth);
 
-        return (
-          <box key={project.title} flexDirection="column">
-            {index > 0 && <text fg={DIM}>{divider}</text>}
-            <text fg={isSelected ? undefined : DIM}>
-              {prefix}{title}{descLines[0]}
-            </text>
-            {descLines.slice(1).map((line, i) => (
-              <text key={i} fg={isSelected ? undefined : DIM}>
-                {" ".repeat(DESC_INDENT)}{line}
+          return (
+            <box key={project.title} flexDirection="column">
+              {index > 0 && <text fg={DIM}>{divider}</text>}
+              <text fg={isSelected ? undefined : DIM}>
+                {prefix}{title}{descLines[0]}
               </text>
-            ))}
-          </box>
-        );
-      })}
+              {descLines.slice(1).map((line, i) => (
+                <text key={i} fg={isSelected ? undefined : DIM}>
+                  {" ".repeat(DESC_INDENT)}{line}
+                </text>
+              ))}
+            </box>
+          );
+        })}
+      </box>
+      <text fg={DIM}>↑↓ navigate  enter open  c contact  q quit</text>
+
+      {showContact && (
+        <box
+          position="absolute"
+          flexDirection="column"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          alignItems="center"
+          justifyContent="center"
+        >
+          <text>Contact</text>
+          <text> </text>
+          <text fg={HIGHLIGHT}>  {contact.website}</text>
+          <text fg={HIGHLIGHT}>  {contact.github}</text>
+          <text fg={HIGHLIGHT}>  {contact.x}</text>
+          <text fg={HIGHLIGHT}>  {contact.linkedin}</text>
+          <text fg={HIGHLIGHT}>  {contact.email}</text>
+          <text> </text>
+          <text fg={DIM}>esc close</text>
+        </box>
+      )}
     </box>
   );
 }
