@@ -25,7 +25,7 @@ export const heroText = `Hello world. You can call me Kai since we're pretty muc
 export const projects: Project[] = [
   {
     title: "Vibedgames",
-    description: "Design, publish, and play personalized multiplayer minigames with your friends.",
+    description: "Games made with vibes 🎮",
     url: "https://vibedgames.com",
   },
   {
@@ -40,12 +40,12 @@ export const projects: Project[] = [
   },
   {
     title: "Inteligir",
-    description: "Turn your social feed into your personal university with bite-sized lessons.",
+    description: "Lifelong learning",
     url: "https://inteligir.com",
   },
   {
     title: "Dataembed",
-    description: "Search the web like a database. Query and transform scattered web information into structured datasets.",
+    description: "Search the web like a database",
     url: "https://dataembed.com",
   },
   {
@@ -55,12 +55,12 @@ export const projects: Project[] = [
   },
   {
     title: "Total Compensation Calculator",
-    description: "A simple tool to help you navigate tech startup compensation.",
+    description: "Navigate tech startup compensation",
     url: "https://tc.kyh.io",
   },
   {
     title: "Covid-19 Dashboard",
-    description: "A real-time dashboard visualizing global Covid-19 data and trends.",
+    description: "Visualize global Covid-19 data",
     url: "https://covid-19.kyh.io",
   },
   {
