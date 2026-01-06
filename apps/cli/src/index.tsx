@@ -96,57 +96,49 @@ function App() {
       </box>
       <text fg={DIM}>↑↓ navigate  enter open  c contact  q quit</text>
 
-      {showContact && (
-        <box
-          position="absolute"
-          flexDirection="column"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          justifyContent="center"
-          alignItems="center"
-        >
-          <box flexDirection="column">
-            <text>{"█".repeat(36)}</text>
-            <text>█ ┌─ Contact ──────────────────┐ █</text>
-            <text>█ │{" ".repeat(28)}│ █</text>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={HIGHLIGHT}>{"Website".padEnd(10)}</text>
-              <text>{contact.website.padEnd(16)}│ █</text>
-            </box>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={HIGHLIGHT}>{"GitHub".padEnd(10)}</text>
-              <text>{contact.github.padEnd(16)}│ █</text>
-            </box>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={HIGHLIGHT}>{"X".padEnd(10)}</text>
-              <text>{contact.x.padEnd(16)}│ █</text>
-            </box>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={HIGHLIGHT}>{"LinkedIn".padEnd(10)}</text>
-              <text>{contact.linkedin.padEnd(16)}│ █</text>
-            </box>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={HIGHLIGHT}>{"Email".padEnd(10)}</text>
-              <text>{contact.email.padEnd(16)}│ █</text>
-            </box>
-            <text>█ │{" ".repeat(28)}│ █</text>
-            <box flexDirection="row">
-              <text>█ │  </text>
-              <text fg={DIM}>{"esc close".padEnd(26)}</text>
-              <text>│ █</text>
-            </box>
-            <text>█ └────────────────────────────┘ █</text>
-            <text>{"█".repeat(36)}</text>
+      {showContact && (() => {
+        const modalWidth = 32;
+        const labelWidth = 10;
+        const valueWidth = modalWidth - labelWidth - 4;
+        const row = (label: string, value: string) => (
+          <box flexDirection="row">
+            <text>{"█".repeat(2)}</text>
+            <text fg={HIGHLIGHT}>{label.padEnd(labelWidth)}</text>
+            <text>{value.padEnd(valueWidth)}</text>
+            <text>{"█".repeat(2)}</text>
           </box>
-        </box>
-      )}
+        );
+        return (
+          <box
+            position="absolute"
+            flexDirection="column"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <box flexDirection="column">
+              <text>{"█".repeat(modalWidth)}</text>
+              <text>{"█".repeat(2)}{"Contact".padEnd(modalWidth - 4)}{"█".repeat(2)}</text>
+              <text>{"█".repeat(modalWidth)}</text>
+              {row("Website", contact.website)}
+              {row("GitHub", contact.github)}
+              {row("X", contact.x)}
+              {row("LinkedIn", contact.linkedin)}
+              {row("Email", contact.email)}
+              <text>{"█".repeat(modalWidth)}</text>
+              <box flexDirection="row">
+                <text>{"█".repeat(2)}</text>
+                <text fg={DIM}>{"esc close".padEnd(modalWidth - 4)}</text>
+                <text>{"█".repeat(2)}</text>
+              </box>
+              <text>{"█".repeat(modalWidth)}</text>
+            </box>
+          </box>
+        );
+      })()}
     </box>
   );
 }
