@@ -51,7 +51,7 @@ function App() {
         const isSelected = index === selectedIndex;
         const prefix = isSelected ? "> " : "  ";
         const title = project.title.padEnd(TITLE_WIDTH);
-        const desc = project.description.slice(0, WIDTH - TITLE_WIDTH - 2);
+        const desc = project.description;
         return (
           <box key={project.title} flexDirection="column">
             {index > 0 && <text fg={DIM}>{DIVIDER}</text>}
