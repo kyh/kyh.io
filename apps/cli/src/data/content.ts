@@ -1,28 +1,20 @@
-export type Project = {
+export type Item = {
   title: string;
   description: string;
   url: string;
 };
 
-export type Work = {
-  title: string;
-  description: string;
+export type ContactLink = {
+  label: string;
+  value: string;
   url: string;
 };
 
 export const name = "Kaiyu Hsu";
 
-export const contact = {
-  website: "kyh.io",
-  github: "github.com/kyh",
-  x: "x.com/kaiyuhsu",
-  linkedin: "linkedin.com/in/kyh",
-  email: "hello@kyh.io",
-};
-
 export const heroText = `Hello world. You can call me Kai since we're pretty much friends now. I enjoy creating things for the internet. By day, I get to do that through investing, advising, and building products you may not have heard of, yet. Welcome to my corner of the web.`;
 
-export const projects: Project[] = [
+export const projects: Item[] = [
   {
     title: "Vibedgames",
     description: "Games made with vibes",
@@ -75,7 +67,7 @@ export const projects: Project[] = [
   },
 ];
 
-export const work: Work[] = [
+export const work: Item[] = [
   {
     title: "Sequoia",
     description: "Helping the daring build legendary companies",
@@ -101,4 +93,12 @@ export const work: Work[] = [
     description: "Your personal healthcare assistant",
     url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
   },
+];
+
+export const contactLinks: ContactLink[] = [
+  { label: "Website", value: "kyh.io", url: "https://kyh.io" },
+  { label: "GitHub", value: "github.com/kyh", url: "https://github.com/kyh" },
+  { label: "X", value: "x.com/kaiyuhsu", url: "https://x.com/kaiyuhsu" },
+  { label: "LinkedIn", value: "linkedin.com/in/kyh", url: "https://linkedin.com/in/kyh" },
+  { label: "Email", value: "hello@kyh.io", url: "mailto:hello@kyh.io" },
 ];

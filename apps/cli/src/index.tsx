@@ -1,12 +1,13 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard } from "@opentui/react";
 import { useState } from "react";
-import { name, heroText, projects, work, contact } from "./data/content";
+import { name, heroText, projects, work, contactLinks } from "./data/content";
 import { openUrl, wrapText } from "./lib/utils";
 
 const TITLE_WIDTH = 32;
 const PREFIX_WIDTH = 2;
 const DESC_INDENT = PREFIX_WIDTH + TITLE_WIDTH;
+const LABEL_WIDTH = 10;
 const DIM = "#666666";
 const HIGHLIGHT = "#00FFFF";
 
@@ -15,14 +16,6 @@ const allItems = [...projects, ...work];
 // Clear screen and hide cursor
 process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
 process.on("exit", () => process.stdout.write("\x1b[?25h\x1b[2J\x1b[H"));
-
-const contactLinks = [
-  { label: "Website", value: contact.website, url: "https://kyh.io" },
-  { label: "GitHub", value: contact.github, url: "https://github.com/kyh" },
-  { label: "X", value: contact.x, url: "https://x.com/kaiyuhsu" },
-  { label: "LinkedIn", value: contact.linkedin, url: "https://linkedin.com/in/kyh" },
-  { label: "Email", value: contact.email, url: "mailto:hello@kyh.io" },
-];
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -113,7 +106,7 @@ function App() {
             return (
               <box key={link.label} flexDirection="row">
                 <text>{prefix}</text>
-                <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
+                <text fg={HIGHLIGHT}>{link.label.padEnd(LABEL_WIDTH)}</text>
                 <text fg={isSelected ? undefined : DIM}>{link.value}</text>
               </box>
             );
