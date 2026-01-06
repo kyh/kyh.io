@@ -4,9 +4,18 @@ import { useState } from "react";
 import { name, heroText, projects } from "./data/content";
 import { openUrl, wrapText } from "./lib/utils";
 
-const WIDTH = 60;
-const TITLE_WIDTH = 18;
+const WIDTH = 70;
+const TITLE_WIDTH = 32;
 const DIM = "#666666";
+
+const box = {
+  topLeft: "┌",
+  topRight: "┐",
+  bottomLeft: "└",
+  bottomRight: "┘",
+  horizontal: "─",
+  vertical: "│",
+};
 
 // Clear screen and hide cursor
 process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
@@ -36,6 +45,7 @@ function App() {
   });
 
   const heroLines = wrapText(heroText, WIDTH);
+  const innerWidth = WIDTH - 2;
 
   return (
     <box flexDirection="column" paddingLeft={2} paddingTop={1}>
@@ -45,16 +55,21 @@ function App() {
         <text key={i} fg={DIM}>{line}</text>
       ))}
       <text> </text>
+      <text>{box.topLeft}{box.horizontal.repeat(innerWidth)}{box.topRight}</text>
       {projects.map((project, index) => {
         const isSelected = index === selectedIndex;
-        const prefix = isSelected ? "> " : "  ";
+        const prefix = isSelected ? " > " : "   ";
         const title = project.title.padEnd(TITLE_WIDTH);
+        const desc = project.description.slice(0, innerWidth - TITLE_WIDTH - 5).padEnd(innerWidth - TITLE_WIDTH - 5);
         return (
-          <text key={project.title} fg={isSelected ? undefined : DIM}>
-            {prefix}{title}{project.description}
-          </text>
+          <box key={project.title} flexDirection="row">
+            <text>{box.vertical}</text>
+            <text fg={isSelected ? undefined : DIM}>{prefix}{title}{desc}</text>
+            <text> {box.vertical}</text>
+          </box>
         );
       })}
+      <text>{box.bottomLeft}{box.horizontal.repeat(innerWidth)}{box.bottomRight}</text>
     </box>
   );
 }
