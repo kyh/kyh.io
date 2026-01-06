@@ -105,7 +105,7 @@ function App() {
           right={0}
           bottom={0}
           justifyContent="center"
-          paddingLeft={2}
+          alignItems="center"
         >
           <text>┌─ Contact ────────────────────────┐</text>
           <text>│                                  │</text>
