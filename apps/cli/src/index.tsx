@@ -9,6 +9,8 @@ const PREFIX_WIDTH = 2;
 const DESC_INDENT = PREFIX_WIDTH + TITLE_WIDTH;
 const DIM = "#666666";
 const HIGHLIGHT = "#00FFFF";
+const BG = "\x1b[48;5;234m"; // Dark grey background
+const RESET = "\x1b[0m";
 
 const allItems = [...projects, ...work];
 
@@ -132,27 +134,27 @@ function App() {
           alignItems="center"
         >
           <box flexDirection="column">
-            <text>┌─ Contact ─────────────────────────┐</text>
-            <text>│{" ".repeat(35)}│</text>
+            <text>{BG}{"┌─ Contact ─────────────────────────┐"}{RESET}</text>
+            <text>{BG}│{" ".repeat(35)}│{RESET}</text>
             {contactLinks.map((link, i) => {
               const isSelected = i === contactIndex;
               const prefix = isSelected ? "> " : "  ";
               return (
                 <box key={link.label} flexDirection="row">
-                  <text>│{prefix}</text>
+                  <text>{BG}│{prefix}</text>
                   <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
                   <text fg={isSelected ? undefined : DIM}>{link.value.padEnd(23)}</text>
-                  <text>│</text>
+                  <text>│{RESET}</text>
                 </box>
               );
             })}
-            <text>│{" ".repeat(35)}│</text>
+            <text>{BG}│{" ".repeat(35)}│{RESET}</text>
             <box flexDirection="row">
-              <text>│  </text>
+              <text>{BG}│  </text>
               <text fg={DIM}>{"esc close  enter open".padEnd(33)}</text>
-              <text>│</text>
+              <text>│{RESET}</text>
             </box>
-            <text>└───────────────────────────────────┘</text>
+            <text>{BG}{"└───────────────────────────────────┘"}{RESET}</text>
           </box>
         </box>
       )}
