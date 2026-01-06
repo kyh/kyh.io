@@ -1,5 +1,12 @@
 # @kyh/prettier-config
 
+## 1.1.12
+
+### Patch Changes
+
+- f86a9cb: update packages
+- f86a9cb: update packages
+
 ## 1.1.11
 
 ### Patch Changes

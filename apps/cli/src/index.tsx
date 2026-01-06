@@ -1,5 +1,5 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useKeyboard } from "@opentui/react";
+import { createRoot, useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useState } from "react";
 import { name, heroText, projects, work, contactLinks } from "./data/content";
 import { openUrl, wrapText } from "./lib/utils";
@@ -21,7 +21,7 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [contactIndex, setContactIndex] = useState(0);
-  const termWidth = process.stdout.columns || 80;
+  const { width: termWidth } = useTerminalDimensions();
   const contentWidth = termWidth - 4;
   const descWidth = contentWidth - DESC_INDENT;
 
