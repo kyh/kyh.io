@@ -25,12 +25,12 @@ export const heroText = `Hello world. You can call me Kai since we're pretty muc
 export const projects: Project[] = [
   {
     title: "Vibedgames",
-    description: "Games made with vibes 🎮",
+    description: "Games made with vibes",
     url: "https://vibedgames.com",
   },
   {
     title: "Yours Sincerely",
-    description: "Anonymous love letters 💌 written in disappearing ink",
+    description: "Anonymous love letters written in disappearing ink",
     url: "https://yourssincerely.org",
   },
   {

@@ -139,16 +139,19 @@ function App() {
               const prefix = isSelected ? "> " : "  ";
               return (
                 <box key={link.label} flexDirection="row">
-                  <text>│</text>
-                  <text fg={isSelected ? undefined : DIM}>{prefix}</text>
+                  <text>│{prefix}</text>
                   <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
-                  <text fg={isSelected ? undefined : DIM}>{link.value.padEnd(21)}</text>
+                  <text fg={isSelected ? undefined : DIM}>{link.value.padEnd(23)}</text>
                   <text>│</text>
                 </box>
               );
             })}
             <text>│{" ".repeat(35)}│</text>
-            <text fg={DIM}>│{"  esc close  enter open".padEnd(35)}│</text>
+            <box flexDirection="row">
+              <text>│  </text>
+              <text fg={DIM}>{"esc close  enter open".padEnd(33)}</text>
+              <text>│</text>
+            </box>
             <text>└───────────────────────────────────┘</text>
           </box>
         </box>
