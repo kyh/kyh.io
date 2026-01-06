@@ -30,12 +30,12 @@ export const projects: Project[] = [
   },
   {
     title: "Yours Sincerely",
-    description: "Anonymous love letters written in disappearing ink.",
+    description: "Anonymous love letters 💌 written in disappearing ink",
     url: "https://yourssincerely.org",
   },
   {
     title: "UICapsule",
-    description: "A curated collection of components that spark joy.",
+    description: "A curated collection of components that spark joy",
     url: "https://uicapsule.com",
   },
   {
@@ -50,7 +50,7 @@ export const projects: Project[] = [
   },
   {
     title: "Founding",
-    description: "Your proxy founding team.",
+    description: "Your proxy founding team",
     url: "https://founding.so",
   },
   {
@@ -65,12 +65,12 @@ export const projects: Project[] = [
   },
   {
     title: "Keiko and Friends",
-    description: "Cute sticker pack.",
+    description: "Cute sticker pack",
     url: "https://apps.apple.com/us/app/id1209391711",
   },
   {
     title: "Init",
-    description: "An AI native starter kit to build, launch, and scale your next project.",
+    description: "An AI native starter kit to build, launch, and scale your next project",
     url: "https://init.kyh.io",
   },
 ];
@@ -78,12 +78,12 @@ export const projects: Project[] = [
 export const work: Work[] = [
   {
     title: "Sequoia",
-    description: "Helping the daring build legendary companies.",
+    description: "Helping the daring build legendary companies",
     url: "https://sequoiacap.com",
   },
   {
     title: "Vercel",
-    description: "Build and publish wonderful things.",
+    description: "Build and publish wonderful things",
     url: "https://vercel.com",
   },
   {
@@ -93,12 +93,12 @@ export const work: Work[] = [
   },
   {
     title: "Amazon",
-    description: "Earth's biggest bookstore.",
+    description: "Earth's biggest bookstore",
     url: "https://amazon.design",
   },
   {
     title: "Cardiogram",
-    description: "Your personal healthcare assistant.",
+    description: "Your personal healthcare assistant",
     url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
   },
 ];
