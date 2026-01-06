@@ -104,18 +104,43 @@ function App() {
           left={0}
           right={0}
           bottom={0}
-          alignItems="center"
           justifyContent="center"
+          paddingLeft={2}
         >
-          <text>Contact</text>
-          <text> </text>
-          <text fg={HIGHLIGHT}>  {contact.website}</text>
-          <text fg={HIGHLIGHT}>  {contact.github}</text>
-          <text fg={HIGHLIGHT}>  {contact.x}</text>
-          <text fg={HIGHLIGHT}>  {contact.linkedin}</text>
-          <text fg={HIGHLIGHT}>  {contact.email}</text>
-          <text> </text>
-          <text fg={DIM}>esc close</text>
+          <text>┌─ Contact ────────────────────────┐</text>
+          <text>│                                  │</text>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={HIGHLIGHT}>{"Website".padEnd(10)}</text>
+            <text>{contact.website.padEnd(20)}│</text>
+          </box>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={HIGHLIGHT}>{"GitHub".padEnd(10)}</text>
+            <text>{contact.github.padEnd(20)}│</text>
+          </box>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={HIGHLIGHT}>{"X".padEnd(10)}</text>
+            <text>{contact.x.padEnd(20)}│</text>
+          </box>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={HIGHLIGHT}>{"LinkedIn".padEnd(10)}</text>
+            <text>{contact.linkedin.padEnd(20)}│</text>
+          </box>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={HIGHLIGHT}>{"Email".padEnd(10)}</text>
+            <text>{contact.email.padEnd(20)}│</text>
+          </box>
+          <text>│                                  │</text>
+          <box flexDirection="row">
+            <text>│  </text>
+            <text fg={DIM}>esc close</text>
+            <text>{"".padEnd(22)}│</text>
+          </box>
+          <text>└──────────────────────────────────┘</text>
         </box>
       )}
     </box>
