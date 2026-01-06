@@ -9,8 +9,6 @@ const PREFIX_WIDTH = 2;
 const DESC_INDENT = PREFIX_WIDTH + TITLE_WIDTH;
 const DIM = "#666666";
 const HIGHLIGHT = "#00FFFF";
-const BG = "\x1b[48;5;234m"; // Dark grey background
-const RESET = "\x1b[0m";
 
 const allItems = [...projects, ...work];
 
@@ -103,6 +101,30 @@ function App() {
     );
   };
 
+  if (showContact) {
+    return (
+      <box flexDirection="column" alignItems="center" justifyContent="center" flexGrow={1}>
+        <box flexDirection="column">
+          <text>Contact</text>
+          <text> </text>
+          {contactLinks.map((link, i) => {
+            const isSelected = i === contactIndex;
+            const prefix = isSelected ? "> " : "  ";
+            return (
+              <box key={link.label} flexDirection="row">
+                <text>{prefix}</text>
+                <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
+                <text fg={isSelected ? undefined : DIM}>{link.value}</text>
+              </box>
+            );
+          })}
+          <text> </text>
+          <text fg={DIM}>↑↓ navigate  enter open  esc close</text>
+        </box>
+      </box>
+    );
+  }
+
   return (
     <box flexDirection="column" paddingLeft={2} paddingTop={1} flexGrow={1}>
       <box flexDirection="column" flexGrow={1}>
@@ -121,43 +143,6 @@ function App() {
         {work.map((item, i) => renderItem(item, projects.length + i, i === 0))}
       </box>
       <text fg={DIM}>↑↓ navigate  enter open  c contact  q quit</text>
-
-      {showContact && (
-        <box
-          position="absolute"
-          flexDirection="column"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          justifyContent="center"
-          alignItems="center"
-        >
-          <box flexDirection="column">
-            <text>{BG}{"┌─ Contact ─────────────────────────┐"}{RESET}</text>
-            <text>{BG}│{" ".repeat(35)}│{RESET}</text>
-            {contactLinks.map((link, i) => {
-              const isSelected = i === contactIndex;
-              const prefix = isSelected ? "> " : "  ";
-              return (
-                <box key={link.label} flexDirection="row">
-                  <text>{BG}│{prefix}</text>
-                  <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
-                  <text fg={isSelected ? undefined : DIM}>{link.value.padEnd(23)}</text>
-                  <text>│{RESET}</text>
-                </box>
-              );
-            })}
-            <text>{BG}│{" ".repeat(35)}│{RESET}</text>
-            <box flexDirection="row">
-              <text>{BG}│  </text>
-              <text fg={DIM}>{"esc close  enter open".padEnd(33)}</text>
-              <text>│{RESET}</text>
-            </box>
-            <text>{BG}{"└───────────────────────────────────┘"}{RESET}</text>
-          </box>
-        </box>
-      )}
     </box>
   );
 }
