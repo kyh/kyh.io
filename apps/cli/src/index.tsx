@@ -8,14 +8,7 @@ const WIDTH = 70;
 const TITLE_WIDTH = 32;
 const DIM = "#666666";
 
-const box = {
-  topLeft: "┌",
-  topRight: "┐",
-  bottomLeft: "└",
-  bottomRight: "┘",
-  horizontal: "─",
-  vertical: "│",
-};
+const DIVIDER = "─".repeat(WIDTH);
 
 // Clear screen and hide cursor
 process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
@@ -45,7 +38,6 @@ function App() {
   });
 
   const heroLines = wrapText(heroText, WIDTH);
-  const innerWidth = WIDTH - 2;
 
   return (
     <box flexDirection="column" paddingLeft={2} paddingTop={1}>
@@ -55,21 +47,18 @@ function App() {
         <text key={i} fg={DIM}>{line}</text>
       ))}
       <text> </text>
-      <text>{box.topLeft}{box.horizontal.repeat(innerWidth)}{box.topRight}</text>
       {projects.map((project, index) => {
         const isSelected = index === selectedIndex;
-        const prefix = isSelected ? " > " : "   ";
+        const prefix = isSelected ? "> " : "  ";
         const title = project.title.padEnd(TITLE_WIDTH);
-        const desc = project.description.slice(0, innerWidth - TITLE_WIDTH - 5).padEnd(innerWidth - TITLE_WIDTH - 5);
+        const desc = project.description.slice(0, WIDTH - TITLE_WIDTH - 2);
         return (
-          <box key={project.title} flexDirection="row">
-            <text>{box.vertical}</text>
+          <box key={project.title} flexDirection="column">
+            {index > 0 && <text fg={DIM}>{DIVIDER}</text>}
             <text fg={isSelected ? undefined : DIM}>{prefix}{title}{desc}</text>
-            <text> {box.vertical}</text>
           </box>
         );
       })}
-      <text>{box.bottomLeft}{box.horizontal.repeat(innerWidth)}{box.bottomRight}</text>
     </box>
   );
 }
