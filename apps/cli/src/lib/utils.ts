@@ -7,39 +7,19 @@ export function openUrl(url: string): void {
 }
 
 export function wrapText(text: string, width: number): string[] {
+  const words = text.split(" ");
   const lines: string[] = [];
-  const paragraphs = text.split("\n");
+  let currentLine = "";
 
-  for (const paragraph of paragraphs) {
-    if (paragraph.trim() === "") {
-      lines.push("");
-      continue;
+  for (const word of words) {
+    if (currentLine.length + word.length + 1 <= width) {
+      currentLine += (currentLine ? " " : "") + word;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
     }
-
-    const words = paragraph.split(" ");
-    let currentLine = "";
-
-    for (const word of words) {
-      if (currentLine.length + word.length + 1 <= width) {
-        currentLine += (currentLine ? " " : "") + word;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-    if (currentLine) lines.push(currentLine);
   }
+  if (currentLine) lines.push(currentLine);
 
   return lines;
-}
-
-export function centerText(text: string, width: number): string {
-  const padding = Math.max(0, Math.floor((width - text.length) / 2));
-  return " ".repeat(padding) + text + " ".repeat(width - padding - text.length);
-}
-
-export function wrapProjectText(text: string, width: number): string[] {
-  const lines = wrapText(text, width);
-  while (lines.length < 2) lines.push("");
-  return lines.slice(0, 3);
 }
