@@ -16,17 +16,41 @@ const allItems = [...projects, ...work];
 process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
 process.on("exit", () => process.stdout.write("\x1b[?25h\x1b[2J\x1b[H"));
 
+const contactLinks = [
+  { label: "Website", value: contact.website, url: "https://kyh.io" },
+  { label: "GitHub", value: contact.github, url: "https://github.com/kyh" },
+  { label: "X", value: contact.x, url: "https://x.com/kaiyuhsu" },
+  { label: "LinkedIn", value: contact.linkedin, url: "https://linkedin.com/in/kyh" },
+  { label: "Email", value: contact.email, url: "mailto:hello@kyh.io" },
+];
+
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showContact, setShowContact] = useState(false);
+  const [contactIndex, setContactIndex] = useState(0);
   const termWidth = process.stdout.columns || 80;
   const contentWidth = termWidth - 4;
   const descWidth = contentWidth - DESC_INDENT;
 
   useKeyboard((key) => {
     if (showContact) {
-      if (key.name === "escape" || key.name === "c") {
-        setShowContact(false);
+      switch (key.name) {
+        case "up":
+        case "k":
+          setContactIndex((i) => (i > 0 ? i - 1 : contactLinks.length - 1));
+          break;
+        case "down":
+        case "j":
+          setContactIndex((i) => (i < contactLinks.length - 1 ? i + 1 : 0));
+          break;
+        case "return":
+          openUrl(contactLinks[contactIndex]!.url);
+          break;
+        case "escape":
+        case "c":
+          setShowContact(false);
+          setContactIndex(0);
+          break;
       }
       return;
     }
@@ -108,40 +132,24 @@ function App() {
           alignItems="center"
         >
           <box flexDirection="column">
-            <text>┌─ Contact ──────────────────┐</text>
-            <text>│{" ".repeat(28)}│</text>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={HIGHLIGHT}>{"Website".padEnd(10)}</text>
-              <text>{contact.website.padEnd(16)}│</text>
-            </box>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={HIGHLIGHT}>{"GitHub".padEnd(10)}</text>
-              <text>{contact.github.padEnd(16)}│</text>
-            </box>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={HIGHLIGHT}>{"X".padEnd(10)}</text>
-              <text>{contact.x.padEnd(16)}│</text>
-            </box>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={HIGHLIGHT}>{"LinkedIn".padEnd(10)}</text>
-              <text>{contact.linkedin.padEnd(16)}│</text>
-            </box>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={HIGHLIGHT}>{"Email".padEnd(10)}</text>
-              <text>{contact.email.padEnd(16)}│</text>
-            </box>
-            <text>│{" ".repeat(28)}│</text>
-            <box flexDirection="row">
-              <text>│  </text>
-              <text fg={DIM}>{"esc close".padEnd(26)}</text>
-              <text>│</text>
-            </box>
-            <text>└────────────────────────────┘</text>
+            <text>┌─ Contact ─────────────────────────┐</text>
+            <text>│{" ".repeat(35)}│</text>
+            {contactLinks.map((link, i) => {
+              const isSelected = i === contactIndex;
+              const prefix = isSelected ? "> " : "  ";
+              return (
+                <box key={link.label} flexDirection="row">
+                  <text>│</text>
+                  <text fg={isSelected ? undefined : DIM}>{prefix}</text>
+                  <text fg={HIGHLIGHT}>{link.label.padEnd(10)}</text>
+                  <text fg={isSelected ? undefined : DIM}>{link.value.padEnd(21)}</text>
+                  <text>│</text>
+                </box>
+              );
+            })}
+            <text>│{" ".repeat(35)}│</text>
+            <text fg={DIM}>│{"  esc close  enter open".padEnd(35)}│</text>
+            <text>└───────────────────────────────────┘</text>
           </box>
         </box>
       )}
