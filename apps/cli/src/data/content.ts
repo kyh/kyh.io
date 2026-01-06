@@ -4,6 +4,12 @@ export type Project = {
   url: string;
 };
 
+export type Work = {
+  title: string;
+  description: string;
+  url: string;
+};
+
 export const name = "Kaiyu Hsu";
 
 export const contact = {
@@ -67,24 +73,32 @@ export const projects: Project[] = [
     description: "An AI native starter kit to build, launch, and scale your next project.",
     url: "https://init.kyh.io",
   },
+];
+
+export const work: Work[] = [
   {
     title: "Sequoia",
-    description: "Design engineering for the premier venture capital firm.",
+    description: "Helping the daring build legendary companies.",
     url: "https://sequoiacap.com",
   },
   {
+    title: "Vercel",
+    description: "Build and publish wonderful things.",
+    url: "https://vercel.com",
+  },
+  {
     title: "Google",
-    description: "Growth initiatives for Google Career Certificates.",
+    description: "Looking for something?",
     url: "https://grow.google",
   },
   {
     title: "Amazon",
-    description: "Design systems for Amazon's customer experience.",
+    description: "Earth's biggest bookstore.",
     url: "https://amazon.design",
   },
   {
     title: "Cardiogram",
-    description: "Heart health monitoring with Apple Watch.",
+    description: "Your personal healthcare assistant.",
     url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
   },
 ];
