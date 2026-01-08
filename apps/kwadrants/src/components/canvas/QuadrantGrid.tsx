@@ -1,5 +1,5 @@
 import { Rect, Line, Circle } from "react-konva";
-import type { QuadrantColors, GridType, LayoutType } from "@/lib/types";
+import type { QuadrantColors, GridType, LayoutType, ThemeType } from "@/lib/types";
 
 interface MatrixBounds {
   x: number;
@@ -15,11 +15,14 @@ interface QuadrantGridProps {
   colors: QuadrantColors;
   gridType: GridType;
   layoutType: LayoutType;
+  theme: ThemeType;
 }
 
 const GRID_SPACING = 40;
-const GRID_COLOR = "#e5e7eb";
-const AXIS_COLOR = "#6b7280";
+const THEME_COLORS = {
+  light: { bg: "#f9fafb", grid: "#e5e7eb", axis: "#6b7280" },
+  dark: { bg: "#111827", grid: "#374151", axis: "#9ca3af" },
+};
 
 export const QuadrantGrid = ({
   canvasWidth,
@@ -28,10 +31,12 @@ export const QuadrantGrid = ({
   colors,
   gridType,
   layoutType,
+  theme,
 }: QuadrantGridProps) => {
   const { x: bx, y: by, width, height } = bounds;
   const centerX = bx + width / 2;
   const centerY = by + height / 2;
+  const themeColors = THEME_COLORS[theme];
 
   const renderGrid = () => {
     if (gridType === "none") return null;
@@ -44,7 +49,7 @@ export const QuadrantGrid = ({
           <Line
             key={`v-${x}`}
             points={[x, by, x, by + height]}
-            stroke={GRID_COLOR}
+            stroke={themeColors.grid}
             strokeWidth={1}
           />
         );
@@ -54,7 +59,7 @@ export const QuadrantGrid = ({
           <Line
             key={`h-${y}`}
             points={[bx, y, bx + width, y]}
-            stroke={GRID_COLOR}
+            stroke={themeColors.grid}
             strokeWidth={1}
           />
         );
@@ -68,7 +73,7 @@ export const QuadrantGrid = ({
               x={x}
               y={y}
               radius={1.5}
-              fill={GRID_COLOR}
+              fill={themeColors.grid}
             />
           );
         }
@@ -81,7 +86,7 @@ export const QuadrantGrid = ({
   return (
     <>
       {/* Background */}
-      <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="#f9fafb" />
+      <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={themeColors.bg} />
 
       {/* Quadrant backgrounds */}
       <Rect x={bx} y={by} width={width / 2} height={height / 2} fill={colors.topLeft} />
@@ -96,16 +101,16 @@ export const QuadrantGrid = ({
       {layoutType === "edge" ? (
         <>
           {/* Edge layout: simple divider lines, no center axes */}
-          <Line points={[centerX, by, centerX, by + height]} stroke={AXIS_COLOR} strokeWidth={1} />
-          <Line points={[bx, centerY, bx + width, centerY]} stroke={AXIS_COLOR} strokeWidth={1} />
+          <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
+          <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
           {/* Outer border */}
-          <Rect x={bx} y={by} width={width} height={height} stroke={AXIS_COLOR} strokeWidth={1} fill="transparent" />
+          <Rect x={bx} y={by} width={width} height={height} stroke={themeColors.axis} strokeWidth={1} fill="transparent" />
         </>
       ) : (
         <>
           {/* Axis layout: lines through center */}
-          <Line points={[centerX, by, centerX, by + height]} stroke={AXIS_COLOR} strokeWidth={1} />
-          <Line points={[bx, centerY, bx + width, centerY]} stroke={AXIS_COLOR} strokeWidth={1} />
+          <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
+          <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
         </>
       )}
     </>

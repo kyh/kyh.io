@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type Konva from "konva";
 import { motion, useMotionValue, animate } from "motion/react";
-import { Plus, Palette, Download, RotateCcw, ChevronLeft, Tag, Image, Grid3X3, Layout, GripVertical } from "lucide-react";
+import { Plus, Palette, Download, RotateCcw, ChevronLeft, Tag, Image, Grid3X3, Layout, GripVertical, Sun, Moon } from "lucide-react";
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { TAG_COLORS, STORAGE_KEY } from "@/lib/constants";
 import type { QuadrantColors, GridType, LayoutType } from "@/lib/types";
@@ -38,7 +38,8 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const islandRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
-  const { addTag, addImage, state, setQuadrantColor, setGridType, setLayoutType } = useKwadrant();
+  const { addTag, addImage, state, setQuadrantColor, setGridType, setLayoutType, setTheme } = useKwadrant();
+  const isDark = state.theme === "dark";
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -167,24 +168,35 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     }
   };
 
+  const getBackTarget = (): IslandMode | null => {
+    switch (mode) {
+      case "add-menu": return "idle";
+      case "adding-tag": return "add-menu";
+      case "adding-image": return "add-menu";
+      case "colors": return "idle";
+      case "export": return "idle";
+      case "grid": return "idle";
+      case "layout": return "idle";
+      default: return null;
+    }
+  };
+
   const renderContent = () => {
     switch (mode) {
       case "add-menu":
         return (
           <div className="flex flex-col gap-1">
-            <BackButton onClick={() => setMode("idle")} />
-            <MenuButton onClick={() => setMode("adding-tag")} icon={<Tag size={18} />} label="Tag" />
+            <MenuButton onClick={() => setMode("adding-tag")} icon={<Tag size={18} />} label="Tag" isDark={isDark} />
             <MenuButton onClick={() => {
               setMode("adding-image");
               setTimeout(() => fileInputRef.current?.click(), 0);
-            }} icon={<Image size={18} />} label="Image" />
+            }} icon={<Image size={18} />} label="Image" isDark={isDark} />
           </div>
         );
 
       case "adding-tag":
         return (
           <div className="flex flex-col gap-2">
-            <BackButton onClick={() => setMode("add-menu")} />
             <input
               ref={tagInputRef}
               type="text"
@@ -193,7 +205,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
               placeholder="Tag name..."
               autoFocus
-              className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDark ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400" : "bg-white border-gray-200 text-gray-900"
+              }`}
             />
             <div className="flex flex-wrap gap-1">
               {TAG_COLORS.map((c) => (
@@ -210,7 +224,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             <button
               onClick={handleAddTag}
               disabled={!tagText.trim()}
-              className="w-full px-3 py-1.5 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className={`w-full px-3 py-1.5 text-sm rounded-md disabled:opacity-50 transition-colors ${
+                isDark ? "bg-white text-gray-900 hover:bg-gray-100" : "bg-gray-900 text-white hover:bg-gray-800"
+              }`}
             >
               Add Tag
             </button>
@@ -220,7 +236,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "adding-image":
         return (
           <div className="flex flex-col gap-2">
-            <BackButton onClick={() => setMode("add-menu")} />
             <input
               ref={fileInputRef}
               type="file"
@@ -230,7 +245,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full px-3 py-1.5 text-sm border border-dashed border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className={`w-full px-3 py-1.5 text-sm border border-dashed rounded-md transition-colors ${
+                isDark ? "border-gray-600 hover:bg-gray-700 text-gray-300" : "border-gray-300 hover:bg-gray-50 text-gray-700"
+              }`}
             >
               Choose image...
             </button>
@@ -240,7 +257,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "colors":
         return (
           <div className="flex flex-col gap-2">
-            <BackButton onClick={() => setMode("idle")} />
             {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map((q) => (
               <div key={q} className="flex items-center gap-2">
                 <input
@@ -249,7 +265,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                   onChange={(e) => setQuadrantColor(q as keyof QuadrantColors, e.target.value)}
                   className="w-6 h-6 rounded cursor-pointer border-0"
                 />
-                <span className="text-xs text-gray-600">
+                <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                   {q === "topLeft" ? "Top Left" : q === "topRight" ? "Top Right" : q === "bottomLeft" ? "Bottom Left" : "Bottom Right"}
                 </span>
               </div>
@@ -260,24 +276,22 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "export":
         return (
           <div className="flex flex-col gap-1">
-            <BackButton onClick={() => setMode("idle")} />
-            <MenuButton onClick={() => handleExport("png")} icon={<Download size={18} />} label="PNG" />
-            <MenuButton onClick={() => handleExport("jpeg")} icon={<Download size={18} />} label="JPEG" />
+            <MenuButton onClick={() => handleExport("png")} icon={<Download size={18} />} label="PNG" isDark={isDark} />
+            <MenuButton onClick={() => handleExport("jpeg")} icon={<Download size={18} />} label="JPEG" isDark={isDark} />
           </div>
         );
 
       case "grid":
         return (
           <div className="flex flex-col gap-1">
-            <BackButton onClick={() => setMode("idle")} />
             {(["none", "squares", "dots"] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setGridType(type as GridType)}
                 className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
                   state.gridType === type
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
+                    : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 {type === "none" ? "None" : type === "squares" ? "Squares" : "Dots"}
@@ -289,15 +303,14 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "layout":
         return (
           <div className="flex flex-col gap-1">
-            <BackButton onClick={() => setMode("idle")} />
             {(["axis", "edge"] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setLayoutType(type as LayoutType)}
                 className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
                   state.layoutType === type
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
+                    : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 {type === "axis" ? "Axis" : "Edge"}
@@ -309,16 +322,18 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       default:
         return (
           <div className="flex flex-col gap-1">
-            <MenuButton onClick={() => setMode("add-menu")} icon={<Plus size={18} />} label="Add" />
-            <MenuButton onClick={() => setMode("colors")} icon={<Palette size={18} />} label="Colors" />
-            <MenuButton onClick={() => setMode("grid")} icon={<Grid3X3 size={18} />} label="Grid" />
-            <MenuButton onClick={() => setMode("layout")} icon={<Layout size={18} />} label="Layout" />
-            <MenuButton onClick={() => setMode("export")} icon={<Download size={18} />} label="Export" />
-            <MenuButton onClick={handleReset} icon={<RotateCcw size={18} />} label="Reset" />
+            <MenuButton onClick={() => setMode("add-menu")} icon={<Plus size={18} />} label="Add" isDark={isDark} />
+            <MenuButton onClick={() => setMode("colors")} icon={<Palette size={18} />} label="Colors" isDark={isDark} />
+            <MenuButton onClick={() => setMode("grid")} icon={<Grid3X3 size={18} />} label="Grid" isDark={isDark} />
+            <MenuButton onClick={() => setMode("layout")} icon={<Layout size={18} />} label="Layout" isDark={isDark} />
+            <MenuButton onClick={() => setMode("export")} icon={<Download size={18} />} label="Export" isDark={isDark} />
+            <MenuButton onClick={handleReset} icon={<RotateCcw size={18} />} label="Reset" isDark={isDark} />
           </div>
         );
     }
   };
+
+  const backTarget = getBackTarget();
 
   const size = panelSizeRef.current;
   const positions: PanelPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
@@ -351,10 +366,28 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         onDragEnd={handleDragEnd}
         style={{ x, y, opacity: isReady ? 1 : 0 }}
         whileDrag={{ scale: 1.03, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)" }}
-        className="fixed top-0 left-0 bg-white rounded-xl shadow-lg border border-gray-200 p-2 z-50 min-w-[140px] cursor-grab active:cursor-grabbing"
+        className={`fixed top-0 left-0 rounded-xl shadow-lg border p-2 z-50 min-w-[140px] cursor-grab active:cursor-grabbing ${
+          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        }`}
       >
-        <div className="flex items-center justify-center py-1 mb-1 text-gray-400">
-          <GripVertical size={16} />
+        <div className={`flex items-center justify-between py-1 mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+          <div className="flex items-center gap-1">
+            <GripVertical size={16} />
+            {backTarget && (
+              <button
+                onClick={() => setMode(backTarget)}
+                className={`p-1 rounded transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className={`p-1 rounded transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
         {renderContent()}
       </motion.div>
@@ -366,26 +399,20 @@ const MenuButton = ({
   onClick,
   icon,
   label,
+  isDark,
 }: {
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
+  isDark: boolean;
 }) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-left"
+    className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
+      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+    }`}
   >
     {icon}
     {label}
-  </button>
-);
-
-const BackButton = ({ onClick }: { onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-lg transition-colors text-left mb-1"
-  >
-    <ChevronLeft size={16} />
-    Back
   </button>
 );

@@ -31,6 +31,7 @@ export interface QuadrantColors {
 
 export type GridType = "none" | "squares" | "dots";
 export type LayoutType = "axis" | "edge";
+export type ThemeType = "light" | "dark";
 
 export interface KwadrantState {
   tags: Tag[];
@@ -39,4 +40,5 @@ export interface KwadrantState {
   quadrantColors: QuadrantColors;
   gridType: GridType;
   layoutType: LayoutType;
+  theme: ThemeType;
 }

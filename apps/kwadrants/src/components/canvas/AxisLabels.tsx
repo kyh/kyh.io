@@ -1,5 +1,5 @@
 import { Text } from "react-konva";
-import type { AxisLabels as AxisLabelsType, LayoutType } from "@/lib/types";
+import type { AxisLabels as AxisLabelsType, LayoutType, ThemeType } from "@/lib/types";
 
 interface MatrixBounds {
   x: number;
@@ -12,15 +12,23 @@ interface AxisLabelsProps {
   labels: AxisLabelsType;
   bounds: MatrixBounds;
   layoutType: LayoutType;
+  theme: ThemeType;
   onLabelClick: (key: keyof AxisLabelsType) => void;
 }
+
+const THEME_TEXT_COLORS = {
+  light: "#374151",
+  dark: "#d1d5db",
+};
 
 export const AxisLabels = ({
   labels,
   bounds,
   layoutType,
+  theme,
   onLabelClick,
 }: AxisLabelsProps) => {
+  const textColor = THEME_TEXT_COLORS[theme];
   const { x: bx, y: by, width, height } = bounds;
   const centerX = bx + width / 2;
   const centerY = by + height / 2;
@@ -40,7 +48,7 @@ export const AxisLabels = ({
           fontSize={14}
           fontFamily="system-ui, sans-serif"
           fontStyle="bold"
-          fill="#374151"
+          fill={textColor}
           align="center"
           offsetX={30}
           onClick={() => onLabelClick("xNegative")}
@@ -54,7 +62,7 @@ export const AxisLabels = ({
           fontSize={14}
           fontFamily="system-ui, sans-serif"
           fontStyle="bold"
-          fill="#374151"
+          fill={textColor}
           align="center"
           offsetX={30}
           onClick={() => onLabelClick("xPositive")}
@@ -70,7 +78,7 @@ export const AxisLabels = ({
           fontSize={14}
           fontFamily="system-ui, sans-serif"
           fontStyle="bold"
-          fill="#374151"
+          fill={textColor}
           rotation={-90}
           offsetY={-7}
           onClick={() => onLabelClick("yPositive")}
@@ -84,7 +92,7 @@ export const AxisLabels = ({
           fontSize={14}
           fontFamily="system-ui, sans-serif"
           fontStyle="bold"
-          fill="#374151"
+          fill={textColor}
           rotation={-90}
           offsetY={-7}
           onClick={() => onLabelClick("yNegative")}

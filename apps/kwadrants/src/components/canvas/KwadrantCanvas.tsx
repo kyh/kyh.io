@@ -17,6 +17,7 @@ interface LabelEditorProps {
   value: string;
   position: { x: number; y: number };
   isRightEdge?: boolean;
+  isDark?: boolean;
   onSave: (value: string) => void;
   onClose: () => void;
 }
@@ -25,6 +26,7 @@ const LabelEditor = ({
   value,
   position,
   isRightEdge,
+  isDark,
   onSave,
   onClose,
 }: LabelEditorProps) => {
@@ -50,7 +52,9 @@ const LabelEditor = ({
         onClose();
       }}
       autoFocus
-      className="absolute bg-white border border-gray-300 rounded px-1 text-xs shadow-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className={`absolute rounded px-1 text-xs shadow-lg focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+        isDark ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"
+      } border`}
       style={{
         left: isRightEdge ? "auto" : position.x,
         right: isRightEdge ? 16 : "auto",
@@ -131,11 +135,13 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
               colors={state.quadrantColors}
               gridType={state.gridType}
               layoutType={state.layoutType}
+              theme={state.theme}
             />
             <AxisLabels
               labels={state.axisLabels}
               bounds={bounds}
               layoutType={state.layoutType}
+              theme={state.theme}
               onLabelClick={handleLabelClick}
             />
             {state.images.map((image) => (
@@ -162,6 +168,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
             value={state.axisLabels[editingLabel.key]}
             position={editingLabel.position}
             isRightEdge={editingLabel.key === "xPositive" && state.layoutType === "axis"}
+            isDark={state.theme === "dark"}
             onSave={(value) => updateAxisLabel(editingLabel.key, value)}
             onClose={() => setEditingLabel(null)}
           />

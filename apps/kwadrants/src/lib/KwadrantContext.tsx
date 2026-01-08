@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { Tag, CanvasImage, AxisLabels, QuadrantColors, GridType, LayoutType, KwadrantState } from "./types";
+import type { Tag, CanvasImage, AxisLabels, QuadrantColors, GridType, LayoutType, ThemeType, KwadrantState } from "./types";
 import {
   DEFAULT_AXIS_LABELS,
   DEFAULT_QUADRANT_COLORS,
@@ -27,6 +27,7 @@ interface KwadrantContextValue {
   setQuadrantColor: (quadrant: keyof QuadrantColors, color: string) => void;
   setGridType: (gridType: GridType) => void;
   setLayoutType: (layoutType: LayoutType) => void;
+  setTheme: (theme: ThemeType) => void;
 }
 
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
@@ -40,6 +41,7 @@ const getInitialState = (): KwadrantState => {
       quadrantColors: DEFAULT_QUADRANT_COLORS,
       gridType: "none",
       layoutType: "axis",
+      theme: "light",
     };
   }
 
@@ -58,6 +60,7 @@ const getInitialState = (): KwadrantState => {
         quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
         gridType: parsed.gridType || "none",
         layoutType,
+        theme: parsed.theme || "light",
       };
     }
   } catch {
@@ -71,6 +74,7 @@ const getInitialState = (): KwadrantState => {
     quadrantColors: DEFAULT_QUADRANT_COLORS,
     gridType: "none",
     layoutType: "axis",
+    theme: "light",
   };
 };
 
@@ -161,6 +165,10 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     setState((prev) => ({ ...prev, layoutType }));
   }, []);
 
+  const setTheme = useCallback((theme: ThemeType) => {
+    setState((prev) => ({ ...prev, theme }));
+  }, []);
+
   return (
     <KwadrantContext.Provider
       value={{
@@ -176,6 +184,7 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
         setQuadrantColor,
         setGridType,
         setLayoutType,
+        setTheme,
       }}
     >
       {children}
