@@ -20,8 +20,8 @@ interface QuadrantGridProps {
 
 const GRID_SPACING = 40;
 const THEME_COLORS = {
-  light: { bg: "#f9fafb", grid: "#e5e7eb", axis: "#6b7280" },
-  dark: { bg: "#111827", grid: "#374151", axis: "#9ca3af" },
+  light: { bg: "#f9fafb", grid: "#d1d5db", axis: "#9ca3af" },
+  dark: { bg: "#1f2937", grid: "#4b5563", axis: "#6b7280" },
 };
 
 export const QuadrantGrid = ({

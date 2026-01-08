@@ -1,10 +1,10 @@
 import type { AxisLabels, QuadrantColors } from "./types";
 
 export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
-  topLeft: "#ffffff",
-  topRight: "#ffffff",
-  bottomLeft: "#ffffff",
-  bottomRight: "#ffffff",
+  topLeft: "transparent",
+  topRight: "transparent",
+  bottomLeft: "transparent",
+  bottomRight: "transparent",
 };
 
 export const DEFAULT_AXIS_LABELS: AxisLabels = {

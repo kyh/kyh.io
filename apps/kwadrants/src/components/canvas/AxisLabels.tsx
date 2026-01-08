@@ -17,8 +17,8 @@ interface AxisLabelsProps {
 }
 
 const THEME_TEXT_COLORS = {
-  light: "#374151",
-  dark: "#d1d5db",
+  light: "#6b7280",
+  dark: "#9ca3af",
 };
 
 export const AxisLabels = ({
