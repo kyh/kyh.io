@@ -11,8 +11,12 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "konva": "^10.0.12",
+    "lucide-react": "^0.562.0",
+    "motion": "^12.24.7",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "react-konva": "^19.2.1"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.11",

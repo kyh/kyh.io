@@ -21,3 +21,64 @@
     border-color: var(--color-gray-200, currentcolor);
   }
 }
+
+/* Drag animations */
+@keyframes wobble-left {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(calc(-1 * var(--tilt-angle, 5deg))); }
+}
+
+@keyframes wobble-right {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(var(--tilt-angle, 5deg)); }
+}
+
+@keyframes wobble-up {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(calc(-1 * var(--tilt-angle, 5deg))); }
+}
+
+@keyframes wobble-down {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(var(--tilt-angle, 5deg)); }
+}
+
+@keyframes light-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes drop-settle {
+  0% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.animate-wobble-left {
+  animation: wobble-left 0.15s ease-in-out infinite;
+}
+
+.animate-wobble-right {
+  animation: wobble-right 0.15s ease-in-out infinite;
+}
+
+.animate-wobble-up {
+  animation: wobble-up 0.15s ease-in-out infinite;
+}
+
+.animate-wobble-down {
+  animation: wobble-down 0.15s ease-in-out infinite;
+}
+
+.animate-light-wobble {
+  animation: light-wobble 0.3s ease-in-out;
+}
+
+.animate-drop-settle {
+  animation: drop-settle 0.3s ease-out;
+}
+
+body.dragging * {
+  cursor: grabbing !important;
+}
