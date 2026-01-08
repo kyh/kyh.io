@@ -53,11 +53,18 @@ const getInitialState = (): KwadrantState => {
       let layoutType = parsed.layoutType || "axis";
       if (layoutType === "fullscreen") layoutType = "axis";
       if (layoutType === "centered") layoutType = "edge";
+      // Migrate old white quadrant colors to transparent
+      const quadrantColors = parsed.quadrantColors || DEFAULT_QUADRANT_COLORS;
+      for (const key of Object.keys(quadrantColors) as (keyof typeof quadrantColors)[]) {
+        if (quadrantColors[key] === "#ffffff") {
+          quadrantColors[key] = "transparent";
+        }
+      }
       return {
         tags: parsed.tags || [],
         images: parsed.images || [],
         axisLabels: parsed.axisLabels || DEFAULT_AXIS_LABELS,
-        quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
+        quadrantColors,
         gridType: parsed.gridType || "none",
         layoutType,
         theme: parsed.theme || "light",
