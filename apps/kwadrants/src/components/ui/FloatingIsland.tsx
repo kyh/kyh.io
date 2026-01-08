@@ -23,11 +23,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const [tagColor, setTagColor] = useState(TAG_COLORS[0]);
   const [position, setPosition] = useState<PanelPosition>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(PANEL_POSITION_KEY);
-      // Migrate old values
-      if (stored === "left") return "bottom-left";
-      if (stored === "right") return "bottom-right";
-      return (stored as PanelPosition) || "bottom-left";
+      return (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) || "bottom-left";
     }
     return "bottom-left";
   });
