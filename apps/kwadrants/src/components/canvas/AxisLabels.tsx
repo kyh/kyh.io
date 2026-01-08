@@ -21,6 +21,8 @@ const THEME_TEXT_COLORS = {
   dark: "#9ca3af",
 };
 
+const LABEL_KEYS: (keyof AxisLabelsType)[] = ["xNegative", "xPositive", "yPositive", "yNegative"];
+
 export const AxisLabels = ({
   labels,
   bounds,
@@ -28,130 +30,50 @@ export const AxisLabels = ({
   theme,
   onLabelClick,
 }: AxisLabelsProps) => {
-  const textColor = THEME_TEXT_COLORS[theme];
+  const fill = THEME_TEXT_COLORS[theme];
   const { x: bx, y: by, width, height } = bounds;
   const centerX = bx + width / 2;
   const centerY = by + height / 2;
-  const padding = 16;
 
-  if (layoutType === "edge") {
-    // Edge layout: X labels as column headers at top, Y labels as row headers on left (rotated)
-    const headerOffset = 25;
-    return (
-      <>
-        {/* X-axis labels at TOP as column headers */}
-        {/* xNegative = left column header */}
-        <Text
-          text={labels.xNegative}
-          x={bx + width / 4}
-          y={by - headerOffset}
-          fontSize={14}
-          fontFamily="system-ui, sans-serif"
-          fontStyle="bold"
-          fill={textColor}
-          align="center"
-          offsetX={30}
-          onClick={() => onLabelClick("xNegative")}
-          onTap={() => onLabelClick("xNegative")}
-        />
-        {/* xPositive = right column header */}
-        <Text
-          text={labels.xPositive}
-          x={bx + (width * 3) / 4}
-          y={by - headerOffset}
-          fontSize={14}
-          fontFamily="system-ui, sans-serif"
-          fontStyle="bold"
-          fill={textColor}
-          align="center"
-          offsetX={30}
-          onClick={() => onLabelClick("xPositive")}
-          onTap={() => onLabelClick("xPositive")}
-        />
+  const baseProps = {
+    fontSize: 14,
+    fontFamily: "system-ui, sans-serif",
+    fill,
+  };
 
-        {/* Y-axis labels on LEFT as row headers (rotated) */}
-        {/* yPositive = top row header */}
-        <Text
-          text={labels.yPositive}
-          x={bx - headerOffset}
-          y={by + height / 4}
-          fontSize={14}
-          fontFamily="system-ui, sans-serif"
-          fontStyle="bold"
-          fill={textColor}
-          rotation={-90}
-          offsetY={-7}
-          onClick={() => onLabelClick("yPositive")}
-          onTap={() => onLabelClick("yPositive")}
-        />
-        {/* yNegative = bottom row header */}
-        <Text
-          text={labels.yNegative}
-          x={bx - headerOffset}
-          y={by + (height * 3) / 4}
-          fontSize={14}
-          fontFamily="system-ui, sans-serif"
-          fontStyle="bold"
-          fill={textColor}
-          rotation={-90}
-          offsetY={-7}
-          onClick={() => onLabelClick("yNegative")}
-          onTap={() => onLabelClick("yNegative")}
-        />
-      </>
-    );
-  }
+  const getPosition = (key: keyof AxisLabelsType) => {
+    if (layoutType === "edge") {
+      const headerOffset = 25;
+      const positions = {
+        xNegative: { x: bx + width / 4, y: by - headerOffset, offsetX: 30, align: "center" as const, fontStyle: "bold" as const },
+        xPositive: { x: bx + (width * 3) / 4, y: by - headerOffset, offsetX: 30, align: "center" as const, fontStyle: "bold" as const },
+        yPositive: { x: bx - headerOffset, y: by + height / 4, rotation: -90, offsetY: -7, fontStyle: "bold" as const },
+        yNegative: { x: bx - headerOffset, y: by + (height * 3) / 4, rotation: -90, offsetY: -7, fontStyle: "bold" as const },
+      };
+      return positions[key];
+    }
+    const padding = 16;
+    const positions = {
+      xPositive: { x: bx + width - 80, y: centerY + padding },
+      xNegative: { x: bx + padding, y: centerY + padding },
+      yPositive: { x: centerX + padding, y: by + padding },
+      yNegative: { x: centerX + padding, y: by + height - padding - 14 },
+    };
+    return positions[key];
+  };
 
-  // Axis layout: labels at the ends of axes (inside the matrix area)
   return (
     <>
-      {/* X-axis positive (right side) */}
-      <Text
-        text={labels.xPositive}
-        x={bx + width - 80}
-        y={centerY + padding}
-        fontSize={14}
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        onClick={() => onLabelClick("xPositive")}
-        onTap={() => onLabelClick("xPositive")}
-      />
-
-      {/* X-axis negative (left side) */}
-      <Text
-        text={labels.xNegative}
-        x={bx + padding}
-        y={centerY + padding}
-        fontSize={14}
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        onClick={() => onLabelClick("xNegative")}
-        onTap={() => onLabelClick("xNegative")}
-      />
-
-      {/* Y-axis positive (top) */}
-      <Text
-        text={labels.yPositive}
-        x={centerX + padding}
-        y={by + padding}
-        fontSize={14}
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        onClick={() => onLabelClick("yPositive")}
-        onTap={() => onLabelClick("yPositive")}
-      />
-
-      {/* Y-axis negative (bottom) */}
-      <Text
-        text={labels.yNegative}
-        x={centerX + padding}
-        y={by + height - padding - 14}
-        fontSize={14}
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        onClick={() => onLabelClick("yNegative")}
-        onTap={() => onLabelClick("yNegative")}
-      />
+      {LABEL_KEYS.map((key) => (
+        <Text
+          key={key}
+          text={labels[key]}
+          {...baseProps}
+          {...getPosition(key)}
+          onClick={() => onLabelClick(key)}
+          onTap={() => onLabelClick(key)}
+        />
+      ))}
     </>
   );
 };

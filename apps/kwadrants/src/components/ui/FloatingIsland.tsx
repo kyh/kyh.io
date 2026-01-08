@@ -4,7 +4,7 @@ import { motion, useMotionValue, animate } from "motion/react";
 import { Plus, Palette, Download, RotateCcw, ChevronLeft, Tag, Image, Grid3X3, Layout, GripVertical, Sun, Moon } from "lucide-react";
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { TAG_COLORS, STORAGE_KEY } from "@/lib/constants";
-import type { QuadrantColors, GridType, LayoutType } from "@/lib/types";
+import type { QuadrantColors } from "@/lib/types";
 
 type IslandMode = "idle" | "add-menu" | "adding-tag" | "adding-image" | "colors" | "export" | "grid" | "layout";
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -281,17 +281,14 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-1">
             {(["none", "squares", "dots"] as const).map((type) => (
-              <button
+              <SelectButton
                 key={type}
-                onClick={() => setGridType(type as GridType)}
-                className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-                  state.gridType === type
-                    ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
-                    : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                }`}
+                selected={state.gridType === type}
+                onClick={() => setGridType(type)}
+                isDark={isDark}
               >
                 {type === "none" ? "None" : type === "squares" ? "Squares" : "Dots"}
-              </button>
+              </SelectButton>
             ))}
           </div>
         );
@@ -300,17 +297,14 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-1">
             {(["axis", "edge"] as const).map((type) => (
-              <button
+              <SelectButton
                 key={type}
-                onClick={() => setLayoutType(type as LayoutType)}
-                className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-                  state.layoutType === type
-                    ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
-                    : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                }`}
+                selected={state.layoutType === type}
+                onClick={() => setLayoutType(type)}
+                isDark={isDark}
               >
                 {type === "axis" ? "Axis" : "Edge"}
-              </button>
+              </SelectButton>
             ))}
           </div>
         );
@@ -410,5 +404,28 @@ const MenuButton = ({
   >
     {icon}
     {label}
+  </button>
+);
+
+const SelectButton = ({
+  selected,
+  onClick,
+  isDark,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  isDark: boolean;
+  children: React.ReactNode;
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
+      selected
+        ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
+        : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+    }`}
+  >
+    {children}
   </button>
 );
