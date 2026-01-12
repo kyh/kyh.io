@@ -112,52 +112,38 @@ const submitVote = createServerFn({ method: 'POST' })
     (data: { incidentId: number; type: 'angry' | 'meh' }) => data
   )
   .handler(async ({ data }) => {
-    console.log('[submitVote] Starting with data:', data)
-    try {
-      const request = getWebRequest()
-      console.log('[submitVote] Got request')
-      const session = await auth.api.getSession({ headers: request.headers })
-      console.log('[submitVote] Session:', session?.user?.id ? 'found' : 'not found')
+    const request = getWebRequest()
+    const session = await auth.api.getSession({ headers: request.headers })
 
-      if (!session?.user?.id) {
-        console.log('[submitVote] No session, returning error')
-        return { success: false, error: 'No session' }
-      }
-
-      const sessionId = session.user.id
-      console.log('[submitVote] Checking existing vote for sessionId:', sessionId)
-
-      const existing = await db.query.votes.findFirst({
-        where: (votes, { and, eq: eqOp }) =>
-          and(
-            eqOp(votes.sessionId, sessionId),
-            eqOp(votes.incidentId, data.incidentId)
-          ),
-      })
-
-      console.log('[submitVote] Existing vote:', existing ? 'yes' : 'no')
-      if (existing) return { success: false, error: 'Already voted' }
-
-      console.log('[submitVote] Inserting vote')
-      await db.insert(votes).values({
-        incidentId: data.incidentId,
-        sessionId,
-        type: data.type,
-      })
-
-      const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
-      console.log('[submitVote] Updating count field:', field)
-      await db
-        .update(incidents)
-        .set({ [field]: sql`${incidents[field]} + 1` })
-        .where(eq(incidents.id, data.incidentId))
-
-      console.log('[submitVote] Success!')
-      return { success: true }
-    } catch (error) {
-      console.error('[submitVote] Error:', error)
-      return { success: false, error: String(error) }
+    if (!session?.user?.id) {
+      return { success: false, error: 'No session' }
     }
+
+    const sessionId = session.user.id
+
+    const existing = await db.query.votes.findFirst({
+      where: (votes, { and, eq: eqOp }) =>
+        and(
+          eqOp(votes.sessionId, sessionId),
+          eqOp(votes.incidentId, data.incidentId)
+        ),
+    })
+
+    if (existing) return { success: false, error: 'Already voted' }
+
+    await db.insert(votes).values({
+      incidentId: data.incidentId,
+      sessionId,
+      type: data.type,
+    })
+
+    const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
+    await db
+      .update(incidents)
+      .set({ [field]: sql`${incidents[field]} + 1` })
+      .where(eq(incidents.id, data.incidentId))
+
+    return { success: true }
   })
 
 export const Route = createFileRoute('/')(({
@@ -250,11 +236,9 @@ function IncidentFeed() {
 
   const handleVote = useCallback(
     async (incidentId: number, type: 'angry' | 'meh') => {
-      console.log('handleVote called:', { incidentId, type, existingVote: userVotes[incidentId] })
       if (userVotes[incidentId]) return
 
       const result = await submitVote({ data: { incidentId, type } })
-      console.log('submitVote result:', result)
       if (result.success) {
         setUserVotes((prev) => ({ ...prev, [incidentId]: type }))
         setVoteCounts((prev) => ({
