@@ -237,13 +237,16 @@ function IncidentDetail() {
         </header>
 
         <article>
-          <div className="mb-3 text-sm text-neutral-500">
-            {incident.location && <>{incident.location}</>}
-            {incident.location && displayDate && <> · </>}
-            {displayDate && formatDate(displayDate)}
-          </div>
-
-          <VideoCarousel videos={incident.videos} />
+          <VideoCarousel
+            videos={incident.videos}
+            header={
+              <span>
+                {incident.location && <>{incident.location}</>}
+                {incident.location && displayDate && <> · </>}
+                {displayDate && formatDate(displayDate)}
+              </span>
+            }
+          />
 
           <div className="mt-3 flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">

@@ -15,19 +15,23 @@ interface Video {
 
 interface VideoCarouselProps {
   videos: Video[]
+  header?: React.ReactNode
+  headerRight?: React.ReactNode
 }
 
-export function VideoCarousel({ videos }: VideoCarouselProps) {
+export function VideoCarousel({ videos, header, headerRight }: VideoCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',
   })
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return
     setSelectedIndex(emblaApi.selectedScrollSnap())
+    setCanScrollPrev(emblaApi.canScrollPrev())
     setCanScrollNext(emblaApi.canScrollNext())
   }, [emblaApi])
 
@@ -44,16 +48,51 @@ export function VideoCarousel({ videos }: VideoCarouselProps) {
 
   if (videos.length === 0) return null
 
-  if (videos.length === 1) {
-    return (
-      <div>
-        <VideoEmbed url={videos[0].url} platform={videos[0].platform} />
-      </div>
-    )
-  }
+  const showNav = videos.length > 1
 
   return (
-    <div className="relative">
+    <div>
+      {(header || showNav || headerRight) && (
+        <div className="mb-3 flex items-center justify-between text-sm text-neutral-500">
+          <div className="flex items-center gap-3">
+            <div>{header}</div>
+            {showNav && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => emblaApi?.scrollPrev()}
+                  disabled={!canScrollPrev}
+                  className={`px-1 ${canScrollPrev ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
+                  aria-label="Previous"
+                >
+                  ←
+                </button>
+                {videos.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => emblaApi?.scrollTo(index)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      index === selectedIndex
+                        ? 'w-4 bg-neutral-900'
+                        : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+                <button
+                  onClick={() => emblaApi?.scrollNext()}
+                  disabled={!canScrollNext}
+                  className={`px-1 ${canScrollNext ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
+                  aria-label="Next"
+                >
+                  →
+                </button>
+              </div>
+            )}
+          </div>
+          {headerRight && <div>{headerRight}</div>}
+        </div>
+      )}
+
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-3">
           {videos.map((video) => (
@@ -63,29 +102,6 @@ export function VideoCarousel({ videos }: VideoCarouselProps) {
           ))}
         </div>
       </div>
-
-      {videos.length > 1 && (
-        <div className="mt-2 flex items-center justify-center gap-1">
-          {videos.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={`h-1.5 rounded-full transition-all ${
-                index === selectedIndex
-                  ? 'w-4 bg-neutral-900'
-                  : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {canScrollNext && (
-        <div className="pointer-events-none absolute right-0 top-0 flex h-full w-8 items-center justify-center bg-gradient-to-l from-white/80 to-transparent">
-          <span className="text-xs text-neutral-400">→</span>
-        </div>
-      )}
     </div>
   )
 }

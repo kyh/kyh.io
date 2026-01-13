@@ -512,50 +512,53 @@ function IncidentFeed() {
 
               return (
                 <article key={incident.id} className="py-6 first:pt-0">
-                  <div className="mb-3 flex items-baseline justify-between text-sm text-neutral-500">
-                    <span>
-                      {incident.location && <>{incident.location}</>}
-                      {incident.location && displayDate && <> · </>}
-                      {displayDate && formatDate(displayDate)}
-                    </span>
-                    <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
-                        className="cursor-pointer text-neutral-400 hover:text-neutral-900"
-                      >
-                        •••
-                      </button>
-                      {openMenuId === incident.id && (
-                        <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
-                          <Link
-                            to="/incident/$id"
-                            params={{ id: String(incident.id) }}
-                            className="block px-3 py-1.5 text-left hover:bg-neutral-50"
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            View
-                          </Link>
-                          <button
-                            onClick={() => {
-                              setEditingIncident(incident)
-                              setOpenMenuId(null)
-                            }}
-                            className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleReport(incident.id)}
-                            className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
-                          >
-                            Report
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <VideoCarousel videos={incident.videos} />
+                  <VideoCarousel
+                    videos={incident.videos}
+                    header={
+                      <span>
+                        {incident.location && <>{incident.location}</>}
+                        {incident.location && displayDate && <> · </>}
+                        {displayDate && formatDate(displayDate)}
+                      </span>
+                    }
+                    headerRight={
+                      <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
+                          className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                        >
+                          •••
+                        </button>
+                        {openMenuId === incident.id && (
+                          <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
+                            <Link
+                              to="/incident/$id"
+                              params={{ id: String(incident.id) }}
+                              className="block px-3 py-1.5 text-left hover:bg-neutral-50"
+                              onClick={() => setOpenMenuId(null)}
+                            >
+                              View
+                            </Link>
+                            <button
+                              onClick={() => {
+                                setEditingIncident(incident)
+                                setOpenMenuId(null)
+                              }}
+                              className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleReport(incident.id)}
+                              className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
+                            >
+                              Report
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
 
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
