@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
-import { createServerFn, getWebRequest } from '@tanstack/react-start'
+import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
 
 import { VideoEmbed } from '@/components/VideoEmbed'
@@ -14,8 +15,12 @@ const getIncident = createServerFn({ method: 'GET' })
   .handler(async ({ data: id }) => {
     const incident = await db.query.incidents.findFirst({
       with: { videos: true },
-      where: (incidents, { and, eq: eqOp }) =>
-        and(eqOp(incidents.id, id), eqOp(incidents.status, 'approved')),
+      where: (incidents, { and, eq: eqOp, isNull: isNullOp }) =>
+        and(
+          eqOp(incidents.id, id),
+          eqOp(incidents.status, 'approved'),
+          isNullOp(incidents.deletedAt)
+        ),
     })
     return incident ?? null
   })
@@ -25,7 +30,7 @@ const submitVote = createServerFn({ method: 'POST' })
     (data: { incidentId: number; type: 'angry' | 'meh' }) => data
   )
   .handler(async ({ data }) => {
-    const request = getWebRequest()
+    const request = getRequest()
     const session = await auth.api.getSession({ headers: request.headers })
 
     if (!session?.user?.id) {
@@ -42,8 +47,33 @@ const submitVote = createServerFn({ method: 'POST' })
         ),
     })
 
-    if (existing) return { success: false, error: 'Already voted' }
+    // Toggle: if same vote type, remove it
+    if (existing?.type === data.type) {
+      await db.delete(votes).where(eq(votes.id, existing.id))
+      const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
+      await db
+        .update(incidents)
+        .set({ [field]: sql`${incidents[field]} - 1` })
+        .where(eq(incidents.id, data.incidentId))
+      return { success: true, action: 'removed' as const }
+    }
 
+    // If different vote type exists, switch it
+    if (existing) {
+      const oldField = existing.type === 'angry' ? 'angryCount' : 'mehCount'
+      const newField = data.type === 'angry' ? 'angryCount' : 'mehCount'
+      await db.update(votes).set({ type: data.type }).where(eq(votes.id, existing.id))
+      await db
+        .update(incidents)
+        .set({
+          [oldField]: sql`${incidents[oldField]} - 1`,
+          [newField]: sql`${incidents[newField]} + 1`,
+        })
+        .where(eq(incidents.id, data.incidentId))
+      return { success: true, action: 'switched' as const }
+    }
+
+    // New vote
     await db.insert(votes).values({
       incidentId: data.incidentId,
       sessionId,
@@ -56,7 +86,7 @@ const submitVote = createServerFn({ method: 'POST' })
       .set({ [field]: sql`${incidents[field]} + 1` })
       .where(eq(incidents.id, data.incidentId))
 
-    return { success: true }
+    return { success: true, action: 'added' as const }
   })
 
 const getUserVote = createServerFn({ method: 'GET' })
@@ -121,18 +151,37 @@ function IncidentDetail() {
 
   const handleVote = useCallback(
     async (type: 'angry' | 'meh') => {
-      if (userVote) return
+      const prevVote = userVote
+      const prevCounts = { ...counts }
 
-      const result = await submitVote({ data: { incidentId: incident.id, type } })
-      if (result.success) {
+      // Optimistic update
+      if (prevVote === type) {
+        // Removing vote
+        setUserVote(null)
+        setCounts((prev) => ({ ...prev, [type]: prev[type] - 1 }))
+      } else if (prevVote) {
+        // Switching vote
         setUserVote(type)
         setCounts((prev) => ({
-          ...prev,
-          [type]: prev[type] + 1,
+          angry: prev.angry + (type === 'angry' ? 1 : -1),
+          meh: prev.meh + (type === 'meh' ? 1 : -1),
         }))
+      } else {
+        // New vote
+        setUserVote(type)
+        setCounts((prev) => ({ ...prev, [type]: prev[type] + 1 }))
+      }
+
+      // Server request
+      const result = await submitVote({ data: { incidentId: incident.id, type } })
+
+      // Rollback on failure
+      if (!result.success) {
+        setUserVote(prevVote)
+        setCounts(prevCounts)
       }
     },
-    [userVote, incident.id]
+    [incident.id, userVote, counts]
   )
 
   const displayDate = incident.incidentDate ?? incident.createdAt
@@ -171,15 +220,13 @@ function IncidentDetail() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => handleVote('angry')}
-                disabled={!!userVote}
-                className={userVote === 'angry' ? 'text-neutral-900' : userVote ? 'text-neutral-400' : 'cursor-pointer text-neutral-400 hover:text-neutral-900'}
+                className={`cursor-pointer ${userVote === 'angry' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
               >
                 outraged ({counts.angry})
               </button>
               <button
                 onClick={() => handleVote('meh')}
-                disabled={!!userVote}
-                className={userVote === 'meh' ? 'text-neutral-900' : userVote ? 'text-neutral-400' : 'cursor-pointer text-neutral-400 hover:text-neutral-900'}
+                className={`cursor-pointer ${userVote === 'meh' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
               >
                 meh ({counts.meh})
               </button>
@@ -191,9 +238,12 @@ function IncidentDetail() {
                   href={video.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-neutral-400 hover:text-neutral-900"
+                  className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                 >
                   open on {video.platform === 'twitter' ? 'x' : video.platform}
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </a>
               ))}
             </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
-import { createServerFn, getWebRequest } from '@tanstack/react-start'
+import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
 import { desc, eq, sql } from 'drizzle-orm'
 
 import { SubmitModal } from '@/components/SubmitModal'
@@ -17,10 +18,14 @@ const getIncidents = createServerFn({ method: 'GET' })
     const limit = data.limit ?? 10
     const results = await db.query.incidents.findMany({
       with: { videos: true },
-      where: data.cursor
-        ? (incidents, { and, lt: ltOp, eq: eqOp }) =>
-            and(eqOp(incidents.status, 'approved'), ltOp(incidents.id, data.cursor!))
-        : (incidents, { eq: eqOp }) => eqOp(incidents.status, 'approved'),
+      where: (incidents, { and: andOp, lt: ltOp, eq: eqOp, isNull: isNullOp }) =>
+        data.cursor
+          ? andOp(
+              eqOp(incidents.status, 'approved'),
+              isNullOp(incidents.deletedAt),
+              ltOp(incidents.id, data.cursor!)
+            )
+          : andOp(eqOp(incidents.status, 'approved'), isNullOp(incidents.deletedAt)),
       orderBy: [desc(incidents.createdAt)],
       limit: limit + 1,
     })
@@ -58,8 +63,6 @@ const createIncident = createServerFn({ method: 'POST' })
     (data: { location?: string; incidentDate?: string; videoUrls: string[] }) => data
   )
   .handler(async ({ data }) => {
-    const isDev = process.env.NODE_ENV === 'development'
-
     const existingVideos = await db.query.videos.findMany({
       where: (videos, { inArray }) => inArray(videos.url, data.videoUrls),
       with: { incident: true },
@@ -82,7 +85,7 @@ const createIncident = createServerFn({ method: 'POST' })
 
       return {
         incident: existingIncident,
-        autoApproved: existingIncident.status === 'approved',
+        autoApproved: true,
         merged: true,
       }
     }
@@ -92,7 +95,7 @@ const createIncident = createServerFn({ method: 'POST' })
       .values({
         location: data.location,
         incidentDate: data.incidentDate ? new Date(data.incidentDate) : null,
-        status: isDev ? 'approved' : 'pending',
+        status: 'approved',
       })
       .returning()
 
@@ -104,7 +107,7 @@ const createIncident = createServerFn({ method: 'POST' })
       }))
     )
 
-    return { incident, autoApproved: isDev, merged: false }
+    return { incident, autoApproved: true, merged: false }
   })
 
 const submitVote = createServerFn({ method: 'POST' })
@@ -112,7 +115,7 @@ const submitVote = createServerFn({ method: 'POST' })
     (data: { incidentId: number; type: 'angry' | 'meh' }) => data
   )
   .handler(async ({ data }) => {
-    const request = getWebRequest()
+    const request = getRequest()
     const session = await auth.api.getSession({ headers: request.headers })
 
     if (!session?.user?.id) {
@@ -129,8 +132,33 @@ const submitVote = createServerFn({ method: 'POST' })
         ),
     })
 
-    if (existing) return { success: false, error: 'Already voted' }
+    // Toggle: if same vote type, remove it
+    if (existing?.type === data.type) {
+      await db.delete(votes).where(eq(votes.id, existing.id))
+      const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
+      await db
+        .update(incidents)
+        .set({ [field]: sql`${incidents[field]} - 1` })
+        .where(eq(incidents.id, data.incidentId))
+      return { success: true, action: 'removed' as const }
+    }
 
+    // If different vote type exists, switch it
+    if (existing) {
+      const oldField = existing.type === 'angry' ? 'angryCount' : 'mehCount'
+      const newField = data.type === 'angry' ? 'angryCount' : 'mehCount'
+      await db.update(votes).set({ type: data.type }).where(eq(votes.id, existing.id))
+      await db
+        .update(incidents)
+        .set({
+          [oldField]: sql`${incidents[oldField]} - 1`,
+          [newField]: sql`${incidents[newField]} + 1`,
+        })
+        .where(eq(incidents.id, data.incidentId))
+      return { success: true, action: 'switched' as const }
+    }
+
+    // New vote
     await db.insert(votes).values({
       incidentId: data.incidentId,
       sessionId,
@@ -143,7 +171,7 @@ const submitVote = createServerFn({ method: 'POST' })
       .set({ [field]: sql`${incidents[field]} + 1` })
       .where(eq(incidents.id, data.incidentId))
 
-    return { success: true }
+    return { success: true, action: 'added' as const }
   })
 
 export const Route = createFileRoute('/')(({
@@ -236,10 +264,36 @@ function IncidentFeed() {
 
   const handleVote = useCallback(
     async (incidentId: number, type: 'angry' | 'meh') => {
-      if (userVotes[incidentId]) return
+      const prevVote = userVotes[incidentId]
+      const prevCounts = voteCounts[incidentId]
 
-      const result = await submitVote({ data: { incidentId, type } })
-      if (result.success) {
+      // Optimistic update
+      if (prevVote === type) {
+        // Removing vote
+        setUserVotes((prev) => {
+          const next = { ...prev }
+          delete next[incidentId]
+          return next
+        })
+        setVoteCounts((prev) => ({
+          ...prev,
+          [incidentId]: {
+            angry: (prev[incidentId]?.angry ?? 0) - (type === 'angry' ? 1 : 0),
+            meh: (prev[incidentId]?.meh ?? 0) - (type === 'meh' ? 1 : 0),
+          },
+        }))
+      } else if (prevVote) {
+        // Switching vote
+        setUserVotes((prev) => ({ ...prev, [incidentId]: type }))
+        setVoteCounts((prev) => ({
+          ...prev,
+          [incidentId]: {
+            angry: (prev[incidentId]?.angry ?? 0) + (type === 'angry' ? 1 : -1),
+            meh: (prev[incidentId]?.meh ?? 0) + (type === 'meh' ? 1 : -1),
+          },
+        }))
+      } else {
+        // New vote
         setUserVotes((prev) => ({ ...prev, [incidentId]: type }))
         setVoteCounts((prev) => ({
           ...prev,
@@ -249,8 +303,28 @@ function IncidentFeed() {
           },
         }))
       }
+
+      // Server request
+      const result = await submitVote({ data: { incidentId, type } })
+
+      // Rollback on failure
+      if (!result.success) {
+        if (prevVote) {
+          setUserVotes((prev) => ({ ...prev, [incidentId]: prevVote }))
+        } else {
+          setUserVotes((prev) => {
+            const next = { ...prev }
+            delete next[incidentId]
+            return next
+          })
+        }
+        setVoteCounts((prev) => ({
+          ...prev,
+          [incidentId]: prevCounts ?? { angry: 0, meh: 0 },
+        }))
+      }
     },
-    [userVotes]
+    [userVotes, voteCounts]
   )
 
   const getVoteCount = (incident: (typeof allIncidents)[0], type: 'angry' | 'meh') => {
@@ -332,15 +406,13 @@ function IncidentFeed() {
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleVote(incident.id, 'angry')}
-                        disabled={!!userVote}
-                        className={userVote === 'angry' ? 'text-neutral-900' : userVote ? 'text-neutral-400' : 'cursor-pointer text-neutral-400 hover:text-neutral-900'}
+                        className={`cursor-pointer ${userVote === 'angry' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
                       >
                         outraged ({angryCount})
                       </button>
                       <button
                         onClick={() => handleVote(incident.id, 'meh')}
-                        disabled={!!userVote}
-                        className={userVote === 'meh' ? 'text-neutral-900' : userVote ? 'text-neutral-400' : 'cursor-pointer text-neutral-400 hover:text-neutral-900'}
+                        className={`cursor-pointer ${userVote === 'meh' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
                       >
                         meh ({mehCount})
                       </button>
@@ -352,9 +424,12 @@ function IncidentFeed() {
                           href={video.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-neutral-400 hover:text-neutral-900"
+                          className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                         >
                           open on {video.platform === 'twitter' ? 'x' : video.platform}
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
                         </a>
                       ))}
                     </div>

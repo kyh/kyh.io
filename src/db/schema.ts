@@ -2,7 +2,7 @@ import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 
 export type VideoPlatform = 'twitter' | 'youtube' | 'tiktok' | 'facebook' | 'instagram' | 'linkedin' | 'pinterest'
-export type IncidentStatus = 'pending' | 'approved'
+export type IncidentStatus = 'approved' | 'hidden'
 export type VoteType = 'angry' | 'meh'
 
 // better-auth tables
@@ -61,10 +61,11 @@ export const incidents = sqliteTable('incidents', {
   id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
   location: text(),
   incidentDate: integer('incident_date', { mode: 'timestamp' }),
-  status: text().$type<IncidentStatus>().default('pending').notNull(),
+  status: text().$type<IncidentStatus>().default('approved').notNull(),
   angryCount: integer('angry_count').default(0).notNull(),
   mehCount: integer('meh_count').default(0).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 })
 
 export const videos = sqliteTable('videos', {
