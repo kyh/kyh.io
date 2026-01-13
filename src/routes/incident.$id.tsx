@@ -3,6 +3,7 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
+import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { IncidentCardContent } from '@/components/IncidentCardContent'
@@ -225,9 +226,10 @@ function IncidentDetail() {
           <header className="mb-12">
             <Link
               to="/"
-              className="text-sm text-neutral-400 hover:text-neutral-900"
+              className="inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-900"
             >
-              ← Back
+              <ArrowLeft className="h-4 w-4" />
+              Back
             </Link>
           </header>
 

@@ -3,6 +3,7 @@ import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { desc, eq, sql } from 'drizzle-orm'
+import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { EditModal } from '@/components/EditModal'
@@ -550,7 +551,7 @@ function IncidentFeed() {
                             }
                             className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                           >
-                            •••
+                            <MoreHorizontal className="h-4 w-4" />
                           </button>
                           {openMenuId === incident.id && (
                             <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">

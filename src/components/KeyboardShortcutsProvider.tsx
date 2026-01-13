@@ -1,16 +1,16 @@
 'use client'
 
 import {
-  
   createContext,
   useCallback,
   useContext,
   useEffect,
   useRef,
-  useState
+  useState,
 } from 'react'
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 
 interface CarouselRef {
   id: number
@@ -203,23 +203,23 @@ function KeyboardShortcutsHelp() {
   return (
     <div className="fixed bottom-4 right-4 hidden text-xs text-neutral-400 sm:block">
       <div className="flex items-center gap-3">
-        <span>
-          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">
-            ↑
+        <span className="flex items-center gap-0.5">
+          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+            <ArrowUp className="h-3 w-3" />
           </kbd>
-          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">
-            ↓
-          </kbd>{' '}
-          navigate
+          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+            <ArrowDown className="h-3 w-3" />
+          </kbd>
+          <span className="ml-1">navigate</span>
         </span>
-        <span>
-          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">
-            ←
+        <span className="flex items-center gap-0.5">
+          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+            <ArrowLeft className="h-3 w-3" />
           </kbd>
-          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">
-            →
-          </kbd>{' '}
-          videos
+          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+            <ArrowRight className="h-3 w-3" />
+          </kbd>
+          <span className="ml-1">videos</span>
         </span>
       </div>
     </div>

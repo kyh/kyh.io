@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
-
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useKeyboardShortcuts } from './KeyboardShortcutsProvider'
 import { VideoEmbed } from './VideoEmbed'
@@ -95,7 +95,7 @@ export function VideoCarousel({
                   className={`pl-1 ${canScrollPrev ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
                   aria-label="Previous"
                 >
-                  ←
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => emblaApi?.scrollNext()}
@@ -103,7 +103,7 @@ export function VideoCarousel({
                   className={`${canScrollNext ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
                   aria-label="Next"
                 >
-                  →
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             )}
