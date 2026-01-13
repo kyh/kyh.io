@@ -487,7 +487,9 @@ function IncidentFeed() {
       if (result.autoApproved) {
         router.invalidate()
       }
-      return { autoApproved: result.autoApproved, merged: result.merged }
+      toast.success(
+        result.merged ? 'Added to existing incident' : 'Added to feed',
+      )
     },
     [router],
   )

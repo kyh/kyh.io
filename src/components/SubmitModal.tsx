@@ -9,7 +9,7 @@ interface SubmitModalProps {
     location?: string
     incidentDate?: string
     videoUrls: Array<string>
-  }) => Promise<{ autoApproved: boolean; merged: boolean }>
+  }) => Promise<void>
 }
 
 export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
@@ -18,18 +18,12 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
   const [videoUrls, setVideoUrls] = useState<Array<string>>([''])
   const [errors, setErrors] = useState<Record<number, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [wasAutoApproved, setWasAutoApproved] = useState(false)
-  const [wasMerged, setWasMerged] = useState(false)
 
   const resetForm = () => {
     setLocation('')
     setIncidentDate('')
     setVideoUrls([''])
     setErrors({})
-    setSubmitted(false)
-    setWasAutoApproved(false)
-    setWasMerged(false)
   }
 
   const handleClose = () => {
@@ -79,14 +73,12 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
 
     setIsSubmitting(true)
     try {
-      const result = await onSubmit({
+      await onSubmit({
         location: location.trim() || undefined,
         incidentDate: incidentDate || undefined,
         videoUrls: validUrls,
       })
-      setWasAutoApproved(result.autoApproved)
-      setWasMerged(result.merged)
-      setSubmitted(true)
+      handleClose()
     } finally {
       setIsSubmitting(false)
     }
@@ -100,24 +92,7 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div className="w-full max-w-md bg-white p-6 shadow-lg">
-        {submitted ? (
-          <div>
-            <p className="text-sm">
-              {wasMerged
-                ? 'Added to existing incident.'
-                : wasAutoApproved
-                  ? 'Added to feed.'
-                  : 'Submitted for review.'}
-            </p>
-            <button
-              onClick={handleClose}
-              className="mt-4 cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-1 block text-sm">Video URLs</label>
               <div className="space-y-2">
@@ -196,7 +171,6 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
               </button>
             </div>
           </form>
-        )}
       </div>
     </div>
   )
