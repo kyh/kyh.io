@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-import { and, desc, eq, gte, like, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, like, lt, lte, sql } from 'drizzle-orm'
 import { MoreHorizontal, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -32,10 +32,11 @@ const getIncidents = createServerFn({ method: 'GET' })
     const offset = data.offset ?? 0
     const results = await db.query.incidents.findMany({
       with: { videos: true },
-      where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp }) =>
+      where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
         andOp(
           eqOp(incidents.status, 'approved'),
           isNullOp(incidents.deletedAt),
+          ltOp(incidents.reportCount, 3),
         ),
       // Order by incident_date desc (nulls first), then id desc for stability
       orderBy: [
@@ -64,6 +65,7 @@ const searchIncidents = createServerFn({ method: 'GET' })
     const conditions = [
       eq(incidents.status, 'approved'),
       sql`${incidents.deletedAt} IS NULL`,
+      lt(incidents.reportCount, 3),
     ]
 
     if (data.query) {

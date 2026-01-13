@@ -21,11 +21,12 @@ const getIncident = createServerFn({ method: 'GET' })
   .handler(async ({ data: id }) => {
     const incident = await db.query.incidents.findFirst({
       with: { videos: true },
-      where: (incidents, { and, eq: eqOp, isNull: isNullOp }) =>
+      where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
         and(
           eqOp(incidents.id, id),
           eqOp(incidents.status, 'approved'),
           isNullOp(incidents.deletedAt),
+          ltOp(incidents.reportCount, 3),
         ),
     })
     return incident ?? null

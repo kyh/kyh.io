@@ -9,8 +9,12 @@ const siteUrl = 'https://policingice.com'
 export const APIRoute = createAPIFileRoute('/api/sitemap.xml')({
   GET: async () => {
     const approvedIncidents = await db.query.incidents.findMany({
-      where: (incidents, { and, eq: eqOp, isNull: isNullOp }) =>
-        and(eqOp(incidents.status, 'approved'), isNullOp(incidents.deletedAt)),
+      where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
+        and(
+          eqOp(incidents.status, 'approved'),
+          isNullOp(incidents.deletedAt),
+          ltOp(incidents.reportCount, 3),
+        ),
       orderBy: [desc(incidents.createdAt)],
       columns: { id: true, createdAt: true },
     })
