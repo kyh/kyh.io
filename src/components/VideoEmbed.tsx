@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { VideoPlatform } from '@/db/schema'
 import { extractVideoId } from '@/lib/video-utils'
@@ -48,43 +48,23 @@ function FallbackLink({
 }
 
 function RedditEmbed({ url }: { url: string }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Clean URL - remove query params for the embed link
+  // Convert Reddit URL to embed URL
+  // e.g., https://www.reddit.com/r/sub/comments/id/title/
+  // becomes https://www.redditmedia.com/r/sub/comments/id/title/?ref_source=embed&embed=true
   const cleanUrl = url.split('?')[0].replace(/\/$/, '')
-
-  useEffect(() => {
-    // Load Reddit embed script if not already loaded
-    const scriptId = 'reddit-embed-script'
-    let script = document.getElementById(scriptId) as HTMLScriptElement | null
-
-    if (!script) {
-      script = document.createElement('script')
-      script.id = scriptId
-      script.src = 'https://embed.reddit.com/widgets.js'
-      script.async = true
-      script.charset = 'UTF-8'
-      document.body.appendChild(script)
-    } else {
-      // Script already exists, re-run embed detection
-      // Reddit's widget.js exposes a global function to re-process embeds
-      const win = window as typeof window & { rembeddit?: { init: () => void } }
-      if (win.rembeddit?.init) {
-        win.rembeddit.init()
-      }
-    }
-  }, [cleanUrl])
+  const embedUrl = cleanUrl.replace('www.reddit.com', 'www.redditmedia.com') +
+    '/?ref_source=embed&ref=share&embed=true&showmedia=true&showedits=false'
 
   return (
-    <div ref={containerRef}>
-      <blockquote
-        className="reddit-embed-bq"
-        data-embed-showusername="false"
-        data-embed-height="500"
-      >
-        <a href={cleanUrl}>Loading Reddit post...</a>
-      </blockquote>
-    </div>
+    <iframe
+      src={embedUrl}
+      sandbox="allow-scripts allow-same-origin allow-popups"
+      style={{ border: 'none' }}
+      height="500"
+      width="100%"
+      scrolling="no"
+      title="Reddit post"
+    />
   )
 }
 
