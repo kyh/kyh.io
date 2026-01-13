@@ -47,18 +47,46 @@ function FallbackLink({
   )
 }
 
+function RedditEmbed({ url }: { url: string }) {
+  const [height, setHeight] = useState(400)
+
+  // Normalize URL to ensure it ends properly for embed
+  const embedUrl = url.includes('?')
+    ? `${url}&ref_source=embed&embed=true`
+    : `${url}?ref_source=embed&embed=true`
+
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.origin === 'https://www.reddit.com' && e.data?.type === 'resize') {
+        setHeight(e.data.height || 400)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  return (
+    <iframe
+      src={embedUrl}
+      sandbox="allow-scripts allow-same-origin allow-popups"
+      style={{ border: 'none', width: '100%', height }}
+      scrolling="no"
+      allowFullScreen
+    />
+  )
+}
+
 export function VideoEmbed({ url, platform }: VideoEmbedProps) {
   const [Embed, setEmbed] =
     useState<React.ComponentType<EmbedComponentProps> | null>(null)
   const videoId = extractVideoId(url, platform)
 
   useEffect(() => {
-    if (!videoId) return
+    if (!videoId || platform === 'reddit') return
 
     import('react-social-media-embed').then((mod) => {
-      const embedMap: Record<
-        VideoPlatform,
-        React.ComponentType<EmbedComponentProps>
+      const embedMap: Partial<
+        Record<VideoPlatform, React.ComponentType<EmbedComponentProps>>
       > = {
         youtube: mod.YouTubeEmbed,
         twitter: mod.XEmbed,
@@ -67,11 +95,20 @@ export function VideoEmbed({ url, platform }: VideoEmbedProps) {
         instagram: mod.InstagramEmbed,
         linkedin: mod.LinkedInEmbed,
         pinterest: mod.PinterestEmbed,
-        reddit: mod.RedditEmbed,
       }
-      setEmbed(() => embedMap[platform])
+      const component = embedMap[platform]
+      if (component) setEmbed(() => component)
     })
   }, [videoId, platform])
+
+  // Reddit uses custom embed
+  if (platform === 'reddit') {
+    return (
+      <div className="w-full max-w-[550px]">
+        <RedditEmbed url={url} />
+      </div>
+    )
+  }
 
   if (!videoId) {
     return <FallbackLink url={url} platform={platform} />
