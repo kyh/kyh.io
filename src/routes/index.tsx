@@ -18,6 +18,12 @@ import { auth } from '@/lib/auth'
 import { authClient } from '@/lib/auth-client'
 import { detectPlatform } from '@/lib/video-utils'
 
+// Parse date string as local time (not UTC)
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 const getIncidents = createServerFn({ method: 'GET' })
   .inputValidator((data: { cursor?: number; limit?: number }) => data)
   .handler(async ({ data }) => {
@@ -38,7 +44,10 @@ const getIncidents = createServerFn({ method: 'GET' })
               eqOp(incidents.status, 'approved'),
               isNullOp(incidents.deletedAt),
             ),
-      orderBy: [desc(incidents.createdAt)],
+      // Order by incident_date desc, nulls first (treated as today)
+      orderBy: [
+        desc(sql`COALESCE(${incidents.incidentDate}, ${Math.floor(Date.now() / 1000)})`),
+      ],
       limit: limit + 1,
     })
     const hasMore = results.length > limit
@@ -107,7 +116,7 @@ const createIncident = createServerFn({ method: 'POST' })
       .insert(incidents)
       .values({
         location: data.location,
-        incidentDate: data.incidentDate ? new Date(data.incidentDate) : null,
+        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
         status: 'approved',
       })
       .returning()
@@ -225,7 +234,7 @@ const updateIncidentDetails = createServerFn({ method: 'POST' })
       .update(incidents)
       .set({
         location: data.location ?? null,
-        incidentDate: data.incidentDate ? new Date(data.incidentDate) : null,
+        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
       })
       .where(eq(incidents.id, data.incidentId))
     return { success: true }

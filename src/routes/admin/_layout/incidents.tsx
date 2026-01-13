@@ -9,6 +9,12 @@ import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
 import { detectPlatform } from '@/lib/video-utils'
 
+// Parse date string as local time (not UTC)
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 const getAllIncidents = createServerFn({ method: 'GET' }).handler(async () => {
   const results = await db.query.incidents.findMany({
     with: { videos: true },
@@ -32,7 +38,7 @@ const updateIncident = createServerFn({ method: 'POST' })
       .update(incidents)
       .set({
         location: data.location,
-        incidentDate: data.incidentDate ? new Date(data.incidentDate) : null,
+        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
         status: data.status,
       })
       .where(eq(incidents.id, data.id))
