@@ -18,6 +18,11 @@ const config = defineConfig({
     tanstackStart(),
     viteReact(),
   ],
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
 })
 
 export default config
