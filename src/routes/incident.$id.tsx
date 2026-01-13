@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
 import { toast } from 'sonner'
 
+import {
+  KeyboardShortcutsProvider,
+  useKeyboardShortcuts,
+} from '@/components/KeyboardShortcutsProvider'
 import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, votes } from '@/db/schema'
@@ -225,80 +229,102 @@ function IncidentDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
-      <div className="max-w-xl">
-        <header className="mb-12">
-          <Link
-            to="/"
-            className="text-sm text-neutral-400 hover:text-neutral-900"
-          >
-            ← Back
-          </Link>
-        </header>
+    <KeyboardShortcutsProvider>
+      <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
+        <div className="max-w-xl">
+          <header className="mb-12">
+            <Link
+              to="/"
+              className="text-sm text-neutral-400 hover:text-neutral-900"
+            >
+              ← Back
+            </Link>
+          </header>
 
-        <article>
-          <VideoCarousel
-            videos={incident.videos}
-            header={
-              <span>
-                {incident.location && <>{incident.location}</>}
-                {incident.location && displayDate && <> · </>}
-                {displayDate && formatDate(displayDate)}
-              </span>
-            }
-          />
+          <IncidentArticle incidentId={incident.id}>
+            <VideoCarousel
+              videos={incident.videos}
+              incidentId={incident.id}
+              header={
+                <span>
+                  {incident.location && <>{incident.location}</>}
+                  {incident.location && displayDate && <> · </>}
+                  {displayDate && formatDate(displayDate)}
+                </span>
+              }
+            />
 
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => handleVote('unjustified')}
-                className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-              >
-                unjustified ({counts.unjustified})
-              </button>
-              <button
-                onClick={() => handleVote('justified')}
-                className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-              >
-                justified ({counts.justified})
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              {incident.videos.map((video) => (
-                <a
-                  key={video.id}
-                  href={video.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => handleVote('unjustified')}
+                  className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
                 >
-                  open on {video.platform === 'twitter' ? 'x' : video.platform}
-                  <svg
-                    className="h-3 w-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+                  unjustified ({counts.unjustified})
+                </button>
+                <button
+                  onClick={() => handleVote('justified')}
+                  className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+                >
+                  justified ({counts.justified})
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                {incident.videos.map((video) => (
+                  <a
+                    key={video.id}
+                    href={video.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                </a>
-              ))}
-              <button
-                onClick={handleReport}
-                disabled={reported}
-                className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
-              >
-                {reported ? 'reported' : 'report'}
-              </button>
+                    open on {video.platform === 'twitter' ? 'x' : video.platform}
+                    <svg
+                      className="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                ))}
+                <button
+                  onClick={handleReport}
+                  disabled={reported}
+                  className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
+                >
+                  {reported ? 'reported' : 'report'}
+                </button>
+              </div>
             </div>
-          </div>
-        </article>
+          </IncidentArticle>
+        </div>
       </div>
-    </div>
+    </KeyboardShortcutsProvider>
   )
+}
+
+function IncidentArticle({
+  incidentId,
+  children,
+}: {
+  incidentId: number
+  children: React.ReactNode
+}) {
+  const ref = useRef<HTMLElement>(null)
+  const shortcuts = useKeyboardShortcuts()
+
+  useEffect(() => {
+    if (!shortcuts) return
+    shortcuts.registerIncident(incidentId, ref.current)
+    return () => shortcuts.unregisterIncident(incidentId)
+  }, [incidentId, shortcuts])
+
+  return <article ref={ref}>{children}</article>
 }

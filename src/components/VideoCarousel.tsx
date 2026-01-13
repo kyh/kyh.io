@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 
 import type { VideoPlatform } from '@/db/schema'
 
+import { useKeyboardShortcuts } from './KeyboardShortcutsProvider'
 import { VideoEmbed } from './VideoEmbed'
 
 interface Video {
@@ -17,13 +18,22 @@ interface VideoCarouselProps {
   videos: Video[]
   header?: React.ReactNode
   headerRight?: React.ReactNode
+  incidentId?: number
 }
 
-export function VideoCarousel({ videos, header, headerRight }: VideoCarouselProps) {
+export function VideoCarousel({ videos, header, headerRight, incidentId }: VideoCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',
   })
+  const shortcuts = useKeyboardShortcuts()
+
+  // Register carousel with keyboard shortcuts provider
+  useEffect(() => {
+    if (incidentId === undefined || !shortcuts) return
+    shortcuts.registerCarousel(incidentId, emblaApi ?? null)
+    return () => shortcuts.unregisterCarousel(incidentId)
+  }, [incidentId, emblaApi, shortcuts])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)

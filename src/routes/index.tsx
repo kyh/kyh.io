@@ -6,6 +6,10 @@ import { desc, eq, sql } from 'drizzle-orm'
 import { toast } from 'sonner'
 
 import { EditModal } from '@/components/EditModal'
+import {
+  KeyboardShortcutsProvider,
+  useKeyboardShortcuts,
+} from '@/components/KeyboardShortcutsProvider'
 import { SubmitModal } from '@/components/SubmitModal'
 import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
@@ -485,158 +489,184 @@ function IncidentFeed() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
-      <div className="max-w-xl">
-        <header className="mb-12">
-          <h1 className="text-base font-normal">Policing ICE</h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Documenting incidents of ICE overreach.{' '}
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="cursor-pointer text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
-            >
-              Submit
-            </button>
-          </p>
-        </header>
+    <KeyboardShortcutsProvider>
+      <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
+        <div className="max-w-xl">
+          <header className="mb-12">
+            <h1 className="text-base font-normal">Policing ICE</h1>
+            <p className="mt-1 text-sm text-neutral-500">
+              Documenting incidents of ICE overreach.{' '}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="cursor-pointer text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
+              >
+                Submit
+              </button>
+            </p>
+          </header>
 
-        {allIncidents.length === 0 ? (
-          <p className="text-sm text-neutral-500">No incidents yet.</p>
-        ) : (
-          <div className="divide-y divide-neutral-200">
-            {allIncidents.map((incident) => {
-              const displayDate = incident.incidentDate ?? incident.createdAt
-              const unjustifiedCount = getVoteCount(incident, 'unjustified')
-              const justifiedCount = getVoteCount(incident, 'justified')
-              const userVote = userVotes[incident.id]
+          {allIncidents.length === 0 ? (
+            <p className="text-sm text-neutral-500">No incidents yet.</p>
+          ) : (
+            <div className="divide-y divide-neutral-200">
+              {allIncidents.map((incident) => {
+                const displayDate = incident.incidentDate ?? incident.createdAt
+                const unjustifiedCount = getVoteCount(incident, 'unjustified')
+                const justifiedCount = getVoteCount(incident, 'justified')
+                const userVote = userVotes[incident.id]
 
-              return (
-                <article key={incident.id} className="py-6 first:pt-0">
-                  <VideoCarousel
-                    videos={incident.videos}
-                    header={
-                      <span>
-                        {incident.location && <>{incident.location}</>}
-                        {incident.location && displayDate && <> · </>}
-                        {displayDate && formatDate(displayDate)}
-                      </span>
-                    }
-                    headerRight={
-                      <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
-                        <button
-                          onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
-                          className="cursor-pointer text-neutral-400 hover:text-neutral-900"
-                        >
-                          •••
-                        </button>
-                        {openMenuId === incident.id && (
-                          <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
-                            <Link
-                              to="/incident/$id"
-                              params={{ id: String(incident.id) }}
-                              className="block px-3 py-1.5 text-left hover:bg-neutral-50"
-                              onClick={() => setOpenMenuId(null)}
-                            >
-                              View
-                            </Link>
-                            <button
-                              onClick={() => {
-                                setEditingIncident(incident)
-                                setOpenMenuId(null)
-                              }}
-                              className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleReport(incident.id)}
-                              className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
-                            >
-                              Report
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    }
-                  />
-
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleVote(incident.id, 'unjustified')}
-                        className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                      >
-                        unjustified ({unjustifiedCount})
-                      </button>
-                      <button
-                        onClick={() => handleVote(incident.id, 'justified')}
-                        className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                      >
-                        justified ({justifiedCount})
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {incident.videos.map((video) => (
-                        <a
-                          key={video.id}
-                          href={video.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
-                        >
-                          open on{' '}
-                          {video.platform === 'twitter' ? 'x' : video.platform}
-                          <svg
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
+                return (
+                  <IncidentCard key={incident.id} incidentId={incident.id}>
+                    <VideoCarousel
+                      videos={incident.videos}
+                      incidentId={incident.id}
+                      header={
+                        <span>
+                          {incident.location && <>{incident.location}</>}
+                          {incident.location && displayDate && <> · </>}
+                          {displayDate && formatDate(displayDate)}
+                        </span>
+                      }
+                      headerRight={
+                        <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
+                            className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                        </a>
-                      ))}
+                            •••
+                          </button>
+                          {openMenuId === incident.id && (
+                            <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
+                              <Link
+                                to="/incident/$id"
+                                params={{ id: String(incident.id) }}
+                                className="block px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={() => setOpenMenuId(null)}
+                              >
+                                View
+                              </Link>
+                              <button
+                                onClick={() => {
+                                  setEditingIncident(incident)
+                                  setOpenMenuId(null)
+                                }}
+                                className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleReport(incident.id)}
+                                className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
+                              >
+                                Report
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      }
+                    />
+
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handleVote(incident.id, 'unjustified')}
+                          className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+                        >
+                          unjustified ({unjustifiedCount})
+                        </button>
+                        <button
+                          onClick={() => handleVote(incident.id, 'justified')}
+                          className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+                        >
+                          justified ({justifiedCount})
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {incident.videos.map((video) => (
+                          <a
+                            key={video.id}
+                            href={video.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
+                          >
+                            open on{' '}
+                            {video.platform === 'twitter' ? 'x' : video.platform}
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          </a>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </article>
-              )
-            })}
+                  </IncidentCard>
+                )
+              })}
+            </div>
+          )}
+
+          <div ref={loadMoreRef} className="py-8">
+            {isLoading && (
+              <span className="text-sm text-neutral-400">Loading...</span>
+            )}
+            {!nextCursor && allIncidents.length > 0 && (
+              <span className="text-sm text-neutral-300">—</span>
+            )}
           </div>
-        )}
-
-        <div ref={loadMoreRef} className="py-8">
-          {isLoading && (
-            <span className="text-sm text-neutral-400">Loading...</span>
-          )}
-          {!nextCursor && allIncidents.length > 0 && (
-            <span className="text-sm text-neutral-300">—</span>
-          )}
         </div>
-      </div>
 
-      <SubmitModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
-      />
-
-      {editingIncident && (
-        <EditModal
-          isOpen={true}
-          incidentId={editingIncident.id}
-          location={editingIncident.location}
-          incidentDate={editingIncident.incidentDate}
-          videos={editingIncident.videos}
-          onClose={() => setEditingIncident(null)}
-          onAddVideo={handleAddVideo}
-          onUpdate={handleUpdateIncident}
+        <SubmitModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
         />
-      )}
-    </div>
+
+        {editingIncident && (
+          <EditModal
+            isOpen={true}
+            incidentId={editingIncident.id}
+            location={editingIncident.location}
+            incidentDate={editingIncident.incidentDate}
+            videos={editingIncident.videos}
+            onClose={() => setEditingIncident(null)}
+            onAddVideo={handleAddVideo}
+            onUpdate={handleUpdateIncident}
+          />
+        )}
+      </div>
+    </KeyboardShortcutsProvider>
+  )
+}
+
+function IncidentCard({
+  incidentId,
+  children,
+}: {
+  incidentId: number
+  children: React.ReactNode
+}) {
+  const ref = useRef<HTMLElement>(null)
+  const shortcuts = useKeyboardShortcuts()
+
+  useEffect(() => {
+    if (!shortcuts) return
+    shortcuts.registerIncident(incidentId, ref.current)
+    return () => shortcuts.unregisterIncident(incidentId)
+  }, [incidentId, shortcuts])
+
+  return (
+    <article ref={ref} className="py-6 first:pt-0">
+      {children}
+    </article>
   )
 }
