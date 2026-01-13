@@ -3,9 +3,9 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq, isNull } from 'drizzle-orm'
 
+import type { IncidentStatus } from '@/db/schema'
 import { db } from '@/db/index'
 import { incidents } from '@/db/schema'
-import type { IncidentStatus } from '@/db/schema'
 
 const getAllIncidents = createServerFn({ method: 'GET' }).handler(async () => {
   const results = await db.query.incidents.findMany({
@@ -18,8 +18,12 @@ const getAllIncidents = createServerFn({ method: 'GET' }).handler(async () => {
 
 const updateIncident = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { id: number; location?: string; incidentDate?: string; status?: IncidentStatus }) =>
-      data
+    (data: {
+      id: number
+      location?: string
+      incidentDate?: string
+      status?: IncidentStatus
+    }) => data,
   )
   .handler(async ({ data }) => {
     await db
@@ -37,14 +41,20 @@ const toggleIncidentStatus = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: number; currentStatus: IncidentStatus }) => data)
   .handler(async ({ data }) => {
     const newStatus = data.currentStatus === 'approved' ? 'hidden' : 'approved'
-    await db.update(incidents).set({ status: newStatus }).where(eq(incidents.id, data.id))
+    await db
+      .update(incidents)
+      .set({ status: newStatus })
+      .where(eq(incidents.id, data.id))
     return { success: true, newStatus }
   })
 
 const deleteIncident = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-    await db.update(incidents).set({ deletedAt: new Date() }).where(eq(incidents.id, data.id))
+    await db
+      .update(incidents)
+      .set({ deletedAt: new Date() })
+      .where(eq(incidents.id, data.id))
     return { success: true }
   })
 
@@ -90,7 +100,10 @@ function AdminIncidents() {
     router.invalidate()
   }
 
-  const handleToggleStatus = async (id: number, currentStatus: IncidentStatus) => {
+  const handleToggleStatus = async (
+    id: number,
+    currentStatus: IncidentStatus,
+  ) => {
     await toggleIncidentStatus({ data: { id, currentStatus } })
     router.invalidate()
   }
@@ -103,7 +116,9 @@ function AdminIncidents() {
 
   return (
     <div>
-      <h2 className="mb-4 text-sm font-medium">All Incidents ({allIncidents.length})</h2>
+      <h2 className="mb-4 text-sm font-medium">
+        All Incidents ({allIncidents.length})
+      </h2>
 
       {allIncidents.length === 0 ? (
         <p className="text-sm text-neutral-500">No incidents.</p>
@@ -129,7 +144,9 @@ function AdminIncidents() {
                     <input
                       type="text"
                       value={editForm.location}
-                      onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                      onChange={(e) =>
+                        setEditForm((f) => ({ ...f, location: e.target.value }))
+                      }
                       className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
                       placeholder="Location"
                     />
@@ -142,7 +159,12 @@ function AdminIncidents() {
                     <input
                       type="date"
                       value={editForm.incidentDate}
-                      onChange={(e) => setEditForm((f) => ({ ...f, incidentDate: e.target.value }))}
+                      onChange={(e) =>
+                        setEditForm((f) => ({
+                          ...f,
+                          incidentDate: e.target.value,
+                        }))
+                      }
                       className="border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
                     />
                   ) : (
@@ -151,7 +173,9 @@ function AdminIncidents() {
                 </td>
                 <td className="py-3">
                   <button
-                    onClick={() => handleToggleStatus(incident.id, incident.status)}
+                    onClick={() =>
+                      handleToggleStatus(incident.id, incident.status)
+                    }
                     className="cursor-pointer"
                   >
                     {incident.status === 'approved' ? (
@@ -163,7 +187,7 @@ function AdminIncidents() {
                 </td>
                 <td className="py-3">{incident.videos.length}</td>
                 <td className="py-3 text-neutral-400">
-                  {incident.angryCount + incident.mehCount}
+                  {incident.unjustifiedCount + incident.justifiedCount}
                 </td>
                 <td className="py-3 text-neutral-400">
                   {editingId === incident.id ? (

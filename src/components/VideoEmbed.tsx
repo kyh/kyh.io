@@ -27,7 +27,13 @@ interface EmbedComponentProps {
   placeholderDisabled?: boolean
 }
 
-function FallbackLink({ url, platform }: { url: string; platform: VideoPlatform }) {
+function FallbackLink({
+  url,
+  platform,
+}: {
+  url: string
+  platform: VideoPlatform
+}) {
   return (
     <a
       href={url}
@@ -41,14 +47,18 @@ function FallbackLink({ url, platform }: { url: string; platform: VideoPlatform 
 }
 
 export function VideoEmbed({ url, platform }: VideoEmbedProps) {
-  const [Embed, setEmbed] = useState<React.ComponentType<EmbedComponentProps> | null>(null)
+  const [Embed, setEmbed] =
+    useState<React.ComponentType<EmbedComponentProps> | null>(null)
   const videoId = extractVideoId(url, platform)
 
   useEffect(() => {
     if (!videoId) return
 
     import('react-social-media-embed').then((mod) => {
-      const embedMap: Record<VideoPlatform, React.ComponentType<EmbedComponentProps>> = {
+      const embedMap: Record<
+        VideoPlatform,
+        React.ComponentType<EmbedComponentProps>
+      > = {
         youtube: mod.YouTubeEmbed,
         twitter: mod.XEmbed,
         tiktok: mod.TikTokEmbed,

@@ -9,7 +9,9 @@ export function detectPlatform(url: string): VideoPlatform {
   if (u.includes('instagram.com')) return 'instagram'
   if (u.includes('linkedin.com')) return 'linkedin'
   if (u.includes('pinterest.com') || u.includes('pin.it')) return 'pinterest'
-  throw new Error('Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, or Pinterest links.')
+  throw new Error(
+    'Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, or Pinterest links.',
+  )
 }
 
 export function isValidVideoUrl(url: string): boolean {
@@ -22,16 +24,23 @@ export function isValidVideoUrl(url: string): boolean {
 }
 
 // Returns true if URL is valid for embedding (we just need to detect platform)
-export function extractVideoId(url: string, platform: VideoPlatform): string | null {
+export function extractVideoId(
+  url: string,
+  platform: VideoPlatform,
+): string | null {
   // For react-social-media-embed, we just need the full URL
   // Return a truthy value if the URL matches the platform
   switch (platform) {
     case 'youtube': {
-      const match = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/)
+      const match = url.match(
+        /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/,
+      )
       return match?.[1] ?? null
     }
     case 'twitter': {
-      const match = url.match(/(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(\d+)/)
+      const match = url.match(
+        /(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(\d+)/,
+      )
       return match?.[1] ?? null
     }
     case 'tiktok': {
@@ -42,7 +51,8 @@ export function extractVideoId(url: string, platform: VideoPlatform): string | n
     }
     case 'facebook': {
       // Facebook URLs vary widely, just check it's a valid FB URL
-      if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook'
+      if (url.includes('facebook.com') || url.includes('fb.watch'))
+        return 'facebook'
       return null
     }
     case 'instagram': {
@@ -54,7 +64,8 @@ export function extractVideoId(url: string, platform: VideoPlatform): string | n
       return null
     }
     case 'pinterest': {
-      if (url.includes('pinterest.com') || url.includes('pin.it')) return 'pinterest'
+      if (url.includes('pinterest.com') || url.includes('pin.it'))
+        return 'pinterest'
       return null
     }
   }

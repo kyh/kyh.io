@@ -1,4 +1,9 @@
-import { HeadContent, Link, Scripts, createRootRoute } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Link,
+  Scripts,
+  createRootRoute,
+} from '@tanstack/react-router'
 
 import appCss from '../styles.css?url'
 
@@ -48,7 +53,10 @@ function NotFound() {
       <div className="max-w-xl">
         <p className="text-sm text-neutral-500">
           Not found.{' '}
-          <Link to="/" className="underline underline-offset-2 hover:text-neutral-900">
+          <Link
+            to="/"
+            className="underline underline-offset-2 hover:text-neutral-900"
+          >
             Back
           </Link>
         </p>

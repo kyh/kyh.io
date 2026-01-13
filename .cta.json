@@ -12,10 +12,5 @@
   "git": true,
   "version": 1,
   "framework": "react-cra",
-  "chosenAddOns": [
-    "eslint",
-    "nitro",
-    "start",
-    "drizzle"
-  ]
+  "chosenAddOns": ["eslint", "nitro", "start", "drizzle"]
 }

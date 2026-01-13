@@ -8,14 +8,14 @@ interface SubmitModalProps {
   onSubmit: (data: {
     location?: string
     incidentDate?: string
-    videoUrls: string[]
+    videoUrls: Array<string>
   }) => Promise<{ autoApproved: boolean; merged: boolean }>
 }
 
 export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
   const [location, setLocation] = useState('')
   const [incidentDate, setIncidentDate] = useState('')
-  const [videoUrls, setVideoUrls] = useState<string[]>([''])
+  const [videoUrls, setVideoUrls] = useState<Array<string>>([''])
   const [errors, setErrors] = useState<Record<number, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -68,7 +68,9 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const validUrls = videoUrls.filter((url) => url.trim() && isValidVideoUrl(url))
+    const validUrls = videoUrls.filter(
+      (url) => url.trim() && isValidVideoUrl(url),
+    )
 
     if (validUrls.length === 0) {
       setErrors({ 0: 'At least one valid video URL required' })
@@ -140,7 +142,9 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
                       )}
                     </div>
                     {errors[index] && (
-                      <p className="mt-1 text-xs text-red-600">{errors[index]}</p>
+                      <p className="mt-1 text-xs text-red-600">
+                        {errors[index]}
+                      </p>
                     )}
                   </div>
                 ))}

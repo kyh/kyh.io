@@ -9,8 +9,12 @@ import { detectPlatform, isValidVideoUrl } from '@/lib/video-utils'
 
 const bulkCreateIncidents = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { urls: string[]; groupAsOne: boolean; location?: string; incidentDate?: string }) =>
-      data
+    (data: {
+      urls: Array<string>
+      groupAsOne: boolean
+      location?: string
+      incidentDate?: string
+    }) => data,
   )
   .handler(async ({ data }) => {
     const validUrls = data.urls.filter((url) => isValidVideoUrl(url))
@@ -47,7 +51,7 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
           incidentId: incident.id,
           url,
           platform: detectPlatform(url),
-        }))
+        })),
       )
 
       return { created: 1, skipped: existingUrls.size }
@@ -87,7 +91,10 @@ function AdminCreate() {
   const [location, setLocation] = useState('')
   const [incidentDate, setIncidentDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null)
+  const [result, setResult] = useState<{
+    created: number
+    skipped: number
+  } | null>(null)
 
   const urls = urlsText
     .split('\n')
@@ -130,7 +137,9 @@ function AdminCreate() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm text-neutral-500">Video URLs (one per line)</label>
+          <label className="mb-1 block text-sm text-neutral-500">
+            Video URLs (one per line)
+          </label>
           <textarea
             value={urlsText}
             onChange={(e) => setUrlsText(e.target.value)}
@@ -144,7 +153,9 @@ function AdminCreate() {
           <div className="text-sm">
             <span className="text-green-600">{validUrls.length} valid</span>
             {invalidUrls.length > 0 && (
-              <span className="ml-2 text-red-600">{invalidUrls.length} invalid</span>
+              <span className="ml-2 text-red-600">
+                {invalidUrls.length} invalid
+              </span>
             )}
           </div>
         )}
@@ -191,17 +202,23 @@ function AdminCreate() {
           disabled={isSubmitting || validUrls.length === 0}
           className="cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : `Create ${groupAsOne ? '1 incident' : `${validUrls.length} incident${validUrls.length !== 1 ? 's' : ''}`}`}
+          {isSubmitting
+            ? 'Creating...'
+            : `Create ${groupAsOne ? '1 incident' : `${validUrls.length} incident${validUrls.length !== 1 ? 's' : ''}`}`}
         </button>
       </form>
 
       {result && (
         <p className="mt-4 text-sm">
           {result.created > 0 && (
-            <span className="text-green-600">Created {result.created} incident(s). </span>
+            <span className="text-green-600">
+              Created {result.created} incident(s).{' '}
+            </span>
           )}
           {result.skipped > 0 && (
-            <span className="text-neutral-400">Skipped {result.skipped} existing URL(s).</span>
+            <span className="text-neutral-400">
+              Skipped {result.skipped} existing URL(s).
+            </span>
           )}
         </p>
       )}

@@ -7,7 +7,9 @@ const password = process.argv[3]
 const name = process.argv[4] || 'Admin'
 
 if (!email || !password) {
-  console.log('Usage: npx tsx scripts/create-admin.ts <email> <password> [name]')
+  console.log(
+    'Usage: npx tsx scripts/create-admin.ts <email> <password> [name]',
+  )
   process.exit(1)
 }
 

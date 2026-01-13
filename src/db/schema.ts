@@ -1,9 +1,16 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
-import { sql, relations } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { relations, sql } from 'drizzle-orm'
 
-export type VideoPlatform = 'twitter' | 'youtube' | 'tiktok' | 'facebook' | 'instagram' | 'linkedin' | 'pinterest'
+export type VideoPlatform =
+  | 'twitter'
+  | 'youtube'
+  | 'tiktok'
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
+  | 'pinterest'
 export type IncidentStatus = 'approved' | 'hidden'
-export type VoteType = 'angry' | 'meh'
+export type VoteType = 'unjustified' | 'justified'
 
 // better-auth tables
 export const user = sqliteTable('user', {
@@ -40,8 +47,12 @@ export const account = sqliteTable('account', {
   accessToken: text('access_token'),
   refreshToken: text('refresh_token'),
   idToken: text('id_token'),
-  accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
-  refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
+  accessTokenExpiresAt: integer('access_token_expires_at', {
+    mode: 'timestamp',
+  }),
+  refreshTokenExpiresAt: integer('refresh_token_expires_at', {
+    mode: 'timestamp',
+  }),
   scope: text(),
   password: text(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -62,9 +73,11 @@ export const incidents = sqliteTable('incidents', {
   location: text(),
   incidentDate: integer('incident_date', { mode: 'timestamp' }),
   status: text().$type<IncidentStatus>().default('approved').notNull(),
-  angryCount: integer('angry_count').default(0).notNull(),
-  mehCount: integer('meh_count').default(0).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  unjustifiedCount: integer('unjustified_count').default(0).notNull(),
+  justifiedCount: integer('justified_count').default(0).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`,
+  ),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 })
 
@@ -75,7 +88,9 @@ export const videos = sqliteTable('videos', {
     .notNull(),
   url: text().notNull(),
   platform: text().$type<VideoPlatform>().notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`,
+  ),
 })
 
 export const votes = sqliteTable('votes', {
@@ -85,7 +100,9 @@ export const votes = sqliteTable('votes', {
     .notNull(),
   sessionId: text('session_id').notNull(),
   type: text().$type<VoteType>().notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(
+    sql`(unixepoch())`,
+  ),
 })
 
 // Relations

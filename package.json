@@ -10,10 +10,8 @@
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:pull": "drizzle-kit pull",
+    "db:reset": "npx tsx scripts/db-reset.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

@@ -9,12 +9,13 @@ pnpm dev          # Dev server on port 3000
 pnpm build        # Production build
 pnpm test         # Run tests (vitest)
 pnpm check        # Format + lint fix
-pnpm db:generate  # Generate Drizzle migrations
 pnpm db:push      # Push schema to Turso
+pnpm db:reset     # Clear content tables (incidents, videos, votes)
 pnpm db:studio    # Open Drizzle Studio
 ```
 
 Create admin user:
+
 ```bash
 npx tsx scripts/create-admin.ts <email> <password> [name]
 ```
@@ -36,7 +37,9 @@ Routes use `createServerFn()` for server-side data fetching. These run on server
 ```tsx
 const getData = createServerFn({ method: 'GET' })
   .inputValidator((data) => data)
-  .handler(async ({ data }) => { /* db queries */ })
+  .handler(async ({ data }) => {
+    /* db queries */
+  })
 
 export const Route = createFileRoute('/path')({
   loader: () => getData({ data: {} }),
@@ -62,6 +65,7 @@ Core tables: `incidents` (with videos relation), `videos`, `votes`. Auth tables:
 ## Environment Variables
 
 Required in `.env.local`:
+
 - `TURSO_DATABASE_URL`
 - `TURSO_AUTH_TOKEN`
 

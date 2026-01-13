@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { desc, eq, sql } from 'drizzle-orm'
@@ -18,14 +18,20 @@ const getIncidents = createServerFn({ method: 'GET' })
     const limit = data.limit ?? 10
     const results = await db.query.incidents.findMany({
       with: { videos: true },
-      where: (incidents, { and: andOp, lt: ltOp, eq: eqOp, isNull: isNullOp }) =>
+      where: (
+        incidents,
+        { and: andOp, lt: ltOp, eq: eqOp, isNull: isNullOp },
+      ) =>
         data.cursor
           ? andOp(
               eqOp(incidents.status, 'approved'),
               isNullOp(incidents.deletedAt),
-              ltOp(incidents.id, data.cursor!)
+              ltOp(incidents.id, data.cursor),
             )
-          : andOp(eqOp(incidents.status, 'approved'), isNullOp(incidents.deletedAt)),
+          : andOp(
+              eqOp(incidents.status, 'approved'),
+              isNullOp(incidents.deletedAt),
+            ),
       orderBy: [desc(incidents.createdAt)],
       limit: limit + 1,
     })
@@ -37,7 +43,7 @@ const getIncidents = createServerFn({ method: 'GET' })
   })
 
 const getUserVotes = createServerFn({ method: 'GET' })
-  .inputValidator((data: { sessionId: string; incidentIds: number[] }) => data)
+  .inputValidator((data: { sessionId: string; incidentIds: Array<number> }) => data)
   .handler(async ({ data }) => {
     if (!data.sessionId || data.incidentIds.length === 0) return {}
 
@@ -45,7 +51,7 @@ const getUserVotes = createServerFn({ method: 'GET' })
       where: (votes, { and, eq: eqOp, inArray }) =>
         and(
           eqOp(votes.sessionId, data.sessionId),
-          inArray(votes.incidentId, data.incidentIds)
+          inArray(votes.incidentId, data.incidentIds),
         ),
     })
 
@@ -54,13 +60,14 @@ const getUserVotes = createServerFn({ method: 'GET' })
         acc[vote.incidentId] = vote.type
         return acc
       },
-      {} as Record<number, 'angry' | 'meh'>
+      {} as Record<number, 'unjustified' | 'justified'>,
     )
   })
 
 const createIncident = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { location?: string; incidentDate?: string; videoUrls: string[] }) => data
+    (data: { location?: string; incidentDate?: string; videoUrls: Array<string> }) =>
+      data,
   )
   .handler(async ({ data }) => {
     const existingVideos = await db.query.videos.findMany({
@@ -79,7 +86,7 @@ const createIncident = createServerFn({ method: 'POST' })
             incidentId: existingIncident.id,
             url,
             platform: detectPlatform(url),
-          }))
+          })),
         )
       }
 
@@ -104,7 +111,7 @@ const createIncident = createServerFn({ method: 'POST' })
         incidentId: incident.id,
         url,
         platform: detectPlatform(url),
-      }))
+      })),
     )
 
     return { incident, autoApproved: true, merged: false }
@@ -112,7 +119,7 @@ const createIncident = createServerFn({ method: 'POST' })
 
 const submitVote = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { incidentId: number; type: 'angry' | 'meh' }) => data
+    (data: { incidentId: number; type: 'unjustified' | 'justified' }) => data,
   )
   .handler(async ({ data }) => {
     const headers = getRequestHeaders()
@@ -128,14 +135,15 @@ const submitVote = createServerFn({ method: 'POST' })
       where: (votes, { and, eq: eqOp }) =>
         and(
           eqOp(votes.sessionId, sessionId),
-          eqOp(votes.incidentId, data.incidentId)
+          eqOp(votes.incidentId, data.incidentId),
         ),
     })
 
     // Toggle: if same vote type, remove it
     if (existing?.type === data.type) {
       await db.delete(votes).where(eq(votes.id, existing.id))
-      const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
+      const field =
+        data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
       await db
         .update(incidents)
         .set({ [field]: sql`${incidents[field]} - 1` })
@@ -145,9 +153,14 @@ const submitVote = createServerFn({ method: 'POST' })
 
     // If different vote type exists, switch it
     if (existing) {
-      const oldField = existing.type === 'angry' ? 'angryCount' : 'mehCount'
-      const newField = data.type === 'angry' ? 'angryCount' : 'mehCount'
-      await db.update(votes).set({ type: data.type }).where(eq(votes.id, existing.id))
+      const oldField =
+        existing.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+      const newField =
+        data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+      await db
+        .update(votes)
+        .set({ type: data.type })
+        .where(eq(votes.id, existing.id))
       await db
         .update(incidents)
         .set({
@@ -165,7 +178,8 @@ const submitVote = createServerFn({ method: 'POST' })
       type: data.type,
     })
 
-    const field = data.type === 'angry' ? 'angryCount' : 'mehCount'
+    const field =
+      data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
     await db
       .update(incidents)
       .set({ [field]: sql`${incidents[field]} + 1` })
@@ -174,22 +188,28 @@ const submitVote = createServerFn({ method: 'POST' })
     return { success: true, action: 'added' as const }
   })
 
-export const Route = createFileRoute('/')(({
+export const Route = createFileRoute('/')({
   component: IncidentFeed,
   loader: () => getIncidents({ data: {} }),
-}))
+})
 
 function IncidentFeed() {
   const router = useRouter()
   const loaderData = Route.useLoaderData()
 
-  const [extraIncidents, setExtraIncidents] = useState<typeof loaderData.incidents>([])
+  const [extraIncidents, setExtraIncidents] = useState<
+    typeof loaderData.incidents
+  >([])
   const [nextCursor, setNextCursor] = useState(loaderData.nextCursor)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [userVotes, setUserVotes] = useState<Record<number, 'angry' | 'meh'>>({})
-  const [voteCounts, setVoteCounts] = useState<Record<number, { angry: number; meh: number }>>({})
+  const [userVotes, setUserVotes] = useState<
+    Record<number, 'unjustified' | 'justified'>
+  >({})
+  const [voteCounts, setVoteCounts] = useState<
+    Record<number, { unjustified: number; justified: number }>
+  >({})
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -215,7 +235,10 @@ function IncidentFeed() {
           setSessionId(userId)
           if (allIncidents.length > 0) {
             const votes = await getUserVotes({
-              data: { sessionId: userId, incidentIds: allIncidents.map((i) => i.id) },
+              data: {
+                sessionId: userId,
+                incidentIds: allIncidents.map((i) => i.id),
+              },
             })
             setUserVotes(votes)
           }
@@ -234,7 +257,7 @@ function IncidentFeed() {
           loadMore()
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     )
 
     if (loadMoreRef.current) {
@@ -254,7 +277,9 @@ function IncidentFeed() {
 
       if (sessionId && result.incidents.length > 0) {
         const newIds = result.incidents.map((i) => i.id)
-        const newVotes = await getUserVotes({ data: { sessionId, incidentIds: newIds } })
+        const newVotes = await getUserVotes({
+          data: { sessionId, incidentIds: newIds },
+        })
         setUserVotes((prev) => ({ ...prev, ...newVotes }))
       }
     } finally {
@@ -263,7 +288,7 @@ function IncidentFeed() {
   }, [nextCursor, isLoading, sessionId])
 
   const handleVote = useCallback(
-    async (incidentId: number, type: 'angry' | 'meh') => {
+    async (incidentId: number, type: 'unjustified' | 'justified') => {
       const prevVote = userVotes[incidentId]
       const prevCounts = voteCounts[incidentId]
 
@@ -278,8 +303,12 @@ function IncidentFeed() {
         setVoteCounts((prev) => ({
           ...prev,
           [incidentId]: {
-            angry: (prev[incidentId]?.angry ?? 0) - (type === 'angry' ? 1 : 0),
-            meh: (prev[incidentId]?.meh ?? 0) - (type === 'meh' ? 1 : 0),
+            unjustified:
+              (prev[incidentId]?.unjustified ?? 0) -
+              (type === 'unjustified' ? 1 : 0),
+            justified:
+              (prev[incidentId]?.justified ?? 0) -
+              (type === 'justified' ? 1 : 0),
           },
         }))
       } else if (prevVote) {
@@ -288,8 +317,12 @@ function IncidentFeed() {
         setVoteCounts((prev) => ({
           ...prev,
           [incidentId]: {
-            angry: (prev[incidentId]?.angry ?? 0) + (type === 'angry' ? 1 : -1),
-            meh: (prev[incidentId]?.meh ?? 0) + (type === 'meh' ? 1 : -1),
+            unjustified:
+              (prev[incidentId]?.unjustified ?? 0) +
+              (type === 'unjustified' ? 1 : -1),
+            justified:
+              (prev[incidentId]?.justified ?? 0) +
+              (type === 'justified' ? 1 : -1),
           },
         }))
       } else {
@@ -298,8 +331,12 @@ function IncidentFeed() {
         setVoteCounts((prev) => ({
           ...prev,
           [incidentId]: {
-            angry: (prev[incidentId]?.angry ?? 0) + (type === 'angry' ? 1 : 0),
-            meh: (prev[incidentId]?.meh ?? 0) + (type === 'meh' ? 1 : 0),
+            unjustified:
+              (prev[incidentId]?.unjustified ?? 0) +
+              (type === 'unjustified' ? 1 : 0),
+            justified:
+              (prev[incidentId]?.justified ?? 0) +
+              (type === 'justified' ? 1 : 0),
           },
         }))
       }
@@ -320,28 +357,38 @@ function IncidentFeed() {
         }
         setVoteCounts((prev) => ({
           ...prev,
-          [incidentId]: prevCounts ?? { angry: 0, meh: 0 },
+          [incidentId]: prevCounts ?? { unjustified: 0, justified: 0 },
         }))
       }
     },
-    [userVotes, voteCounts]
+    [userVotes, voteCounts],
   )
 
-  const getVoteCount = (incident: (typeof allIncidents)[0], type: 'angry' | 'meh') => {
-    const base = type === 'angry' ? incident.angryCount : incident.mehCount
+  const getVoteCount = (
+    incident: (typeof allIncidents)[0],
+    type: 'unjustified' | 'justified',
+  ) => {
+    const base =
+      type === 'unjustified'
+        ? incident.unjustifiedCount
+        : incident.justifiedCount
     const extra = voteCounts[incident.id]?.[type] ?? 0
     return base + extra
   }
 
   const handleSubmit = useCallback(
-    async (data: { location?: string; incidentDate?: string; videoUrls: string[] }) => {
+    async (data: {
+      location?: string
+      incidentDate?: string
+      videoUrls: Array<string>
+    }) => {
       const result = await createIncident({ data })
       if (result.autoApproved) {
         router.invalidate()
       }
       return { autoApproved: result.autoApproved, merged: result.merged }
     },
-    [router]
+    [router],
   )
 
   const formatDate = (date: Date | null) => {
@@ -375,8 +422,8 @@ function IncidentFeed() {
           <div className="divide-y divide-neutral-200">
             {allIncidents.map((incident) => {
               const displayDate = incident.incidentDate ?? incident.createdAt
-              const angryCount = getVoteCount(incident, 'angry')
-              const mehCount = getVoteCount(incident, 'meh')
+              const unjustifiedCount = getVoteCount(incident, 'unjustified')
+              const justifiedCount = getVoteCount(incident, 'justified')
               const userVote = userVotes[incident.id]
 
               return (
@@ -398,23 +445,27 @@ function IncidentFeed() {
 
                   <div className="space-y-3">
                     {incident.videos.map((video) => (
-                      <VideoEmbed key={video.id} url={video.url} platform={video.platform} />
+                      <VideoEmbed
+                        key={video.id}
+                        url={video.url}
+                        platform={video.platform}
+                      />
                     ))}
                   </div>
 
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
                       <button
-                        onClick={() => handleVote(incident.id, 'angry')}
-                        className={`cursor-pointer ${userVote === 'angry' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+                        onClick={() => handleVote(incident.id, 'unjustified')}
+                        className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
                       >
-                        outraged ({angryCount})
+                        unjustified ({unjustifiedCount})
                       </button>
                       <button
-                        onClick={() => handleVote(incident.id, 'meh')}
-                        className={`cursor-pointer ${userVote === 'meh' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+                        onClick={() => handleVote(incident.id, 'justified')}
+                        className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
                       >
-                        meh ({mehCount})
+                        justified ({justifiedCount})
                       </button>
                     </div>
                     <div className="flex items-center gap-3">
@@ -426,9 +477,20 @@ function IncidentFeed() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                         >
-                          open on {video.platform === 'twitter' ? 'x' : video.platform}
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          open on{' '}
+                          {video.platform === 'twitter' ? 'x' : video.platform}
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
                           </svg>
                         </a>
                       ))}
@@ -441,7 +503,9 @@ function IncidentFeed() {
         )}
 
         <div ref={loadMoreRef} className="py-8">
-          {isLoading && <span className="text-sm text-neutral-400">Loading...</span>}
+          {isLoading && (
+            <span className="text-sm text-neutral-400">Loading...</span>
+          )}
           {!nextCursor && allIncidents.length > 0 && (
             <span className="text-sm text-neutral-300">—</span>
           )}
