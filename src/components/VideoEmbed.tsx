@@ -18,6 +18,7 @@ const platformNames: Record<VideoPlatform, string> = {
   instagram: 'instagram',
   linkedin: 'linkedin',
   pinterest: 'pinterest',
+  reddit: 'reddit',
 }
 
 interface EmbedComponentProps {
@@ -66,6 +67,7 @@ export function VideoEmbed({ url, platform }: VideoEmbedProps) {
         instagram: mod.InstagramEmbed,
         linkedin: mod.LinkedInEmbed,
         pinterest: mod.PinterestEmbed,
+        reddit: mod.RedditEmbed,
       }
       setEmbed(() => embedMap[platform])
     })

@@ -3,8 +3,9 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
+import { toast } from 'sonner'
 
-import { VideoEmbed } from '@/components/VideoEmbed'
+import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, votes } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -112,6 +113,16 @@ const getUserVote = createServerFn({ method: 'GET' })
     return vote?.type ?? null
   })
 
+const reportIncident = createServerFn({ method: 'POST' })
+  .inputValidator((data: { incidentId: number }) => data)
+  .handler(async ({ data }) => {
+    await db
+      .update(incidents)
+      .set({ reportCount: sql`${incidents.reportCount} + 1` })
+      .where(eq(incidents.id, data.incidentId))
+    return { success: true }
+  })
+
 export const Route = createFileRoute('/incident/$id')({
   component: IncidentDetail,
   loader: async ({ params }) => {
@@ -131,6 +142,7 @@ function IncidentDetail() {
     unjustified: incident.unjustifiedCount,
     justified: incident.justifiedCount,
   })
+  const [reported, setReported] = useState(false)
 
   useEffect(() => {
     const initSession = async () => {
@@ -190,10 +202,17 @@ function IncidentDetail() {
       if (!result.success) {
         setUserVote(prevVote)
         setCounts(prevCounts)
+        toast.error('Failed to vote')
       }
     },
     [incident.id, userVote, counts],
   )
+
+  const handleReport = useCallback(async () => {
+    await reportIncident({ data: { incidentId: incident.id } })
+    setReported(true)
+    toast.success('Reported')
+  }, [incident.id])
 
   const displayDate = incident.incidentDate ?? incident.createdAt
   const formatDate = (date: Date | null) => {
@@ -224,15 +243,7 @@ function IncidentDetail() {
             {displayDate && formatDate(displayDate)}
           </div>
 
-          <div className="space-y-3">
-            {incident.videos.map((video) => (
-              <VideoEmbed
-                key={video.id}
-                url={video.url}
-                platform={video.platform}
-              />
-            ))}
-          </div>
+          <VideoCarousel videos={incident.videos} />
 
           <div className="mt-3 flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
@@ -274,6 +285,13 @@ function IncidentDetail() {
                   </svg>
                 </a>
               ))}
+              <button
+                onClick={handleReport}
+                disabled={reported}
+                className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
+              >
+                {reported ? 'reported' : 'report'}
+              </button>
             </div>
           </div>
         </article>

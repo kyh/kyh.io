@@ -9,6 +9,7 @@ export type VideoPlatform =
   | 'instagram'
   | 'linkedin'
   | 'pinterest'
+  | 'reddit'
 export type IncidentStatus = 'approved' | 'hidden'
 export type VoteType = 'unjustified' | 'justified'
 
@@ -75,6 +76,7 @@ export const incidents = sqliteTable('incidents', {
   status: text().$type<IncidentStatus>().default('approved').notNull(),
   unjustifiedCount: integer('unjustified_count').default(0).notNull(),
   justifiedCount: integer('justified_count').default(0).notNull(),
+  reportCount: integer('report_count').default(0).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(
     sql`(unixepoch())`,
   ),

@@ -9,8 +9,9 @@ export function detectPlatform(url: string): VideoPlatform {
   if (u.includes('instagram.com')) return 'instagram'
   if (u.includes('linkedin.com')) return 'linkedin'
   if (u.includes('pinterest.com') || u.includes('pin.it')) return 'pinterest'
+  if (u.includes('reddit.com') || u.includes('redd.it')) return 'reddit'
   throw new Error(
-    'Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, or Pinterest links.',
+    'Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.',
   )
 }
 
@@ -66,6 +67,10 @@ export function extractVideoId(
     case 'pinterest': {
       if (url.includes('pinterest.com') || url.includes('pin.it'))
         return 'pinterest'
+      return null
+    }
+    case 'reddit': {
+      if (url.includes('reddit.com') || url.includes('redd.it')) return 'reddit'
       return null
     }
   }

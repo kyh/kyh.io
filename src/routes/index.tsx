@@ -3,9 +3,11 @@ import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { desc, eq, sql } from 'drizzle-orm'
+import { toast } from 'sonner'
 
+import { EditModal } from '@/components/EditModal'
 import { SubmitModal } from '@/components/SubmitModal'
-import { VideoEmbed } from '@/components/VideoEmbed'
+import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, videos, votes } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -188,6 +190,43 @@ const submitVote = createServerFn({ method: 'POST' })
     return { success: true, action: 'added' as const }
   })
 
+const reportIncident = createServerFn({ method: 'POST' })
+  .inputValidator((data: { incidentId: number }) => data)
+  .handler(async ({ data }) => {
+    await db
+      .update(incidents)
+      .set({ reportCount: sql`${incidents.reportCount} + 1` })
+      .where(eq(incidents.id, data.incidentId))
+    return { success: true }
+  })
+
+const addVideoToIncident = createServerFn({ method: 'POST' })
+  .inputValidator((data: { incidentId: number; url: string }) => data)
+  .handler(async ({ data }) => {
+    const platform = detectPlatform(data.url)
+    await db.insert(videos).values({
+      incidentId: data.incidentId,
+      url: data.url,
+      platform,
+    })
+    return { success: true }
+  })
+
+const updateIncidentDetails = createServerFn({ method: 'POST' })
+  .inputValidator(
+    (data: { incidentId: number; location?: string; incidentDate?: string }) => data
+  )
+  .handler(async ({ data }) => {
+    await db
+      .update(incidents)
+      .set({
+        location: data.location ?? null,
+        incidentDate: data.incidentDate ? new Date(data.incidentDate) : null,
+      })
+      .where(eq(incidents.id, data.incidentId))
+    return { success: true }
+  })
+
 export const Route = createFileRoute('/')({
   component: IncidentFeed,
   loader: () => getIncidents({ data: {} }),
@@ -210,8 +249,13 @@ function IncidentFeed() {
   const [voteCounts, setVoteCounts] = useState<
     Record<number, { unjustified: number; justified: number }>
   >({})
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+  const [editingIncident, setEditingIncident] = useState<
+    (typeof loaderData.incidents)[0] | null
+  >(null)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const allIncidents = [...loaderData.incidents, ...extraIncidents]
   const incidentIdsKey = allIncidents.map((i) => i.id).join(',')
@@ -266,6 +310,16 @@ function IncidentFeed() {
 
     return () => observer.disconnect()
   }, [nextCursor, isLoading])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || isLoading) return
@@ -359,6 +413,7 @@ function IncidentFeed() {
           ...prev,
           [incidentId]: prevCounts ?? { unjustified: 0, justified: 0 },
         }))
+        toast.error('Failed to vote')
       }
     },
     [userVotes, voteCounts],
@@ -375,6 +430,35 @@ function IncidentFeed() {
     const extra = voteCounts[incident.id]?.[type] ?? 0
     return base + extra
   }
+
+  const handleReport = useCallback(
+    async (incidentId: number) => {
+      await reportIncident({ data: { incidentId } })
+      setOpenMenuId(null)
+      toast.success('Reported')
+    },
+    [],
+  )
+
+  const handleAddVideo = useCallback(
+    async (url: string) => {
+      if (!editingIncident) return
+      await addVideoToIncident({ data: { incidentId: editingIncident.id, url } })
+      router.invalidate()
+    },
+    [editingIncident, router],
+  )
+
+  const handleUpdateIncident = useCallback(
+    async (data: { location?: string; incidentDate?: string }) => {
+      if (!editingIncident) return
+      await updateIncidentDetails({
+        data: { incidentId: editingIncident.id, ...data },
+      })
+      router.invalidate()
+    },
+    [editingIncident, router],
+  )
 
   const handleSubmit = useCallback(
     async (data: {
@@ -434,24 +518,44 @@ function IncidentFeed() {
                       {incident.location && displayDate && <> · </>}
                       {displayDate && formatDate(displayDate)}
                     </span>
-                    <Link
-                      to="/incident/$id"
-                      params={{ id: String(incident.id) }}
-                      className="text-neutral-400 hover:text-neutral-900"
-                    >
-                      #{incident.id}
-                    </Link>
+                    <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
+                        className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                      >
+                        •••
+                      </button>
+                      {openMenuId === incident.id && (
+                        <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
+                          <Link
+                            to="/incident/$id"
+                            params={{ id: String(incident.id) }}
+                            className="block px-3 py-1.5 text-left hover:bg-neutral-50"
+                            onClick={() => setOpenMenuId(null)}
+                          >
+                            View
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setEditingIncident(incident)
+                              setOpenMenuId(null)
+                            }}
+                            className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleReport(incident.id)}
+                            className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
+                          >
+                            Report
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    {incident.videos.map((video) => (
-                      <VideoEmbed
-                        key={video.id}
-                        url={video.url}
-                        platform={video.platform}
-                      />
-                    ))}
-                  </div>
+                  <VideoCarousel videos={incident.videos} />
 
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
@@ -517,6 +621,19 @@ function IncidentFeed() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
       />
+
+      {editingIncident && (
+        <EditModal
+          isOpen={true}
+          incidentId={editingIncident.id}
+          location={editingIncident.location}
+          incidentDate={editingIncident.incidentDate}
+          videos={editingIncident.videos}
+          onClose={() => setEditingIncident(null)}
+          onAddVideo={handleAddVideo}
+          onUpdate={handleUpdateIncident}
+        />
+      )}
     </div>
   )
 }
