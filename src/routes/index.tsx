@@ -118,7 +118,7 @@ const createIncident = createServerFn({ method: 'POST' })
         location: data.location,
         incidentDate: data.incidentDate
           ? parseLocalDate(data.incidentDate)
-          : null,
+          : new Date(),
         status: 'approved',
       })
       .returning()

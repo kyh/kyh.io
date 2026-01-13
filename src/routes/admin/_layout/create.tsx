@@ -33,7 +33,7 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
       return { created: 0, skipped: validUrls.length }
     }
 
-    const incidentDate = data.incidentDate ? new Date(data.incidentDate) : null
+    const incidentDate = data.incidentDate ? new Date(data.incidentDate) : new Date()
 
     if (data.groupAsOne) {
       // Create single incident with all videos
