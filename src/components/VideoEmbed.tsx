@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { VideoPlatform } from '@/db/schema'
 import { extractVideoId } from '@/lib/video-utils'
@@ -47,89 +47,44 @@ function FallbackLink({
   )
 }
 
-interface RedditPost {
-  title: string
-  subreddit: string
-  author: string
-  score: number
-  num_comments: number
-  thumbnail?: string
-  selftext?: string
-  is_video?: boolean
-  media?: { reddit_video?: { fallback_url: string } }
-}
-
 function RedditEmbed({ url }: { url: string }) {
-  const [post, setPost] = useState<RedditPost | null>(null)
-  const [error, setError] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Clean URL - remove query params for the embed link
+  const cleanUrl = url.split('?')[0].replace(/\/$/, '')
 
   useEffect(() => {
-    // Fetch post data from Reddit's JSON API
-    const cleanUrl = url.split('?')[0].replace(/\/$/, '')
-    const jsonUrl = `${cleanUrl}.json`
+    // Load Reddit embed script if not already loaded
+    const scriptId = 'reddit-embed-script'
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null
 
-    fetch(jsonUrl)
-      .then((res) => res.json())
-      .then((data) => {
-        const postData = data?.[0]?.data?.children?.[0]?.data
-        if (postData) {
-          setPost(postData)
-        } else {
-          setError(true)
-        }
-      })
-      .catch(() => setError(true))
-  }, [url])
-
-  if (error) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block border border-neutral-200 p-4 text-sm text-neutral-500 hover:border-neutral-400 hover:text-neutral-900"
-      >
-        open on reddit
-      </a>
-    )
-  }
-
-  if (!post) {
-    return (
-      <div className="border border-neutral-200 p-4">
-        <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-100" />
-      </div>
-    )
-  }
+    if (!script) {
+      script = document.createElement('script')
+      script.id = scriptId
+      script.src = 'https://embed.reddit.com/widgets.js'
+      script.async = true
+      script.charset = 'UTF-8'
+      document.body.appendChild(script)
+    } else {
+      // Script already exists, re-run embed detection
+      // Reddit's widget.js exposes a global function to re-process embeds
+      const win = window as typeof window & { rembeddit?: { init: () => void } }
+      if (win.rembeddit?.init) {
+        win.rembeddit.init()
+      }
+    }
+  }, [cleanUrl])
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block border border-neutral-200 p-4 transition-colors hover:border-neutral-400"
-    >
-      <div className="mb-2 text-xs text-neutral-400">
-        r/{post.subreddit} · u/{post.author}
-      </div>
-      <div className="mb-2 text-sm font-medium text-neutral-900">{post.title}</div>
-      {post.selftext && (
-        <div className="mb-2 line-clamp-3 text-sm text-neutral-500">
-          {post.selftext}
-        </div>
-      )}
-      {post.is_video && post.media?.reddit_video?.fallback_url && (
-        <video
-          src={post.media.reddit_video.fallback_url}
-          controls
-          className="mb-2 max-h-[400px] w-full rounded"
-          playsInline
-        />
-      )}
-      <div className="text-xs text-neutral-400">
-        {post.score} points · {post.num_comments} comments
-      </div>
-    </a>
+    <div ref={containerRef}>
+      <blockquote
+        className="reddit-embed-bq"
+        data-embed-showusername="false"
+        data-embed-height="500"
+      >
+        <a href={cleanUrl}>Loading Reddit post...</a>
+      </blockquote>
+    </div>
   )
 }
 
