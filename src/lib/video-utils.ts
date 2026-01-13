@@ -70,7 +70,7 @@ export function extractVideoId(
       return null
     }
     case 'reddit': {
-      if (url.includes('reddit.com') || url.includes('redd.it')) return 'reddit'
+      // Reddit embeds are unreliable, always use fallback link
       return null
     }
   }
