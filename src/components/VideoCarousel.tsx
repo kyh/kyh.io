@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 
-import type { VideoPlatform } from '@/db/schema'
 
 import { useKeyboardShortcuts } from './KeyboardShortcutsProvider'
 import { VideoEmbed } from './VideoEmbed'
+import type { VideoPlatform } from '@/db/schema'
 
 interface Video {
   id: number
@@ -15,14 +15,20 @@ interface Video {
 }
 
 interface VideoCarouselProps {
-  videos: Video[]
+  videos: Array<Video>
   header?: React.ReactNode
   headerRight?: React.ReactNode
   incidentId?: number
   onSlideChange?: (index: number) => void
 }
 
-export function VideoCarousel({ videos, header, headerRight, incidentId, onSlideChange }: VideoCarouselProps) {
+export function VideoCarousel({
+  videos,
+  header,
+  headerRight,
+  incidentId,
+  onSlideChange,
+}: VideoCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',

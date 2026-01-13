@@ -5,11 +5,11 @@ import { getRequestHeaders } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
 import { toast } from 'sonner'
 
+import { IncidentCardContent } from '@/components/IncidentCardContent'
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from '@/components/KeyboardShortcutsProvider'
-import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, votes } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -147,7 +147,6 @@ function IncidentDetail() {
     justified: incident.justifiedCount,
   })
   const [reported, setReported] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
     const initSession = async () => {
@@ -219,16 +218,6 @@ function IncidentDetail() {
     toast.success('Reported')
   }, [incident.id])
 
-  const displayDate = incident.incidentDate ?? incident.createdAt
-  const formatDate = (date: Date | null) => {
-    if (!date) return null
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   return (
     <KeyboardShortcutsProvider>
       <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
@@ -243,70 +232,19 @@ function IncidentDetail() {
           </header>
 
           <IncidentArticle incidentId={incident.id}>
-            <VideoCarousel
-              videos={incident.videos}
+            <IncidentCardContent
               incidentId={incident.id}
-              onSlideChange={setCurrentSlide}
-              header={
-                <span>
-                  {incident.location && <>{incident.location}</>}
-                  {incident.location && displayDate && <> · </>}
-                  {displayDate && formatDate(displayDate)}
-                </span>
-              }
+              location={incident.location}
+              incidentDate={incident.incidentDate}
+              createdAt={incident.createdAt}
+              videos={incident.videos}
+              unjustifiedCount={counts.unjustified}
+              justifiedCount={counts.justified}
+              userVote={userVote}
+              onVote={handleVote}
+              onReport={handleReport}
+              reported={reported}
             />
-
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => handleVote('unjustified')}
-                  className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                >
-                  unjustified ({counts.unjustified})
-                </button>
-                <button
-                  onClick={() => handleVote('justified')}
-                  className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                >
-                  justified ({counts.justified})
-                </button>
-              </div>
-              <div className="flex items-center gap-3">
-                {incident.videos.length > 0 && (() => {
-                  const currentVideo = incident.videos[currentSlide] ?? incident.videos[0]
-                  return (
-                    <a
-                      href={currentVideo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
-                    >
-                      open on {currentVideo.platform === 'twitter' ? 'x' : currentVideo.platform}
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  )
-                })()}
-                <button
-                  onClick={handleReport}
-                  disabled={reported}
-                  className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
-                >
-                  {reported ? 'reported' : 'report'}
-                </button>
-              </div>
-            </div>
           </IncidentArticle>
         </div>
       </div>

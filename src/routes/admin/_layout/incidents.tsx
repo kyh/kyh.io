@@ -38,7 +38,9 @@ const updateIncident = createServerFn({ method: 'POST' })
       .update(incidents)
       .set({
         location: data.location,
-        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+        incidentDate: data.incidentDate
+          ? parseLocalDate(data.incidentDate)
+          : null,
         status: data.status,
       })
       .where(eq(incidents.id, data.id))
@@ -271,7 +273,9 @@ function AdminIncidents() {
                                 [video.id]: e.target.value,
                               }))
                             }
-                            onBlur={() => handleUpdateVideo(video.id, video.url)}
+                            onBlur={() =>
+                              handleUpdateVideo(video.id, video.url)
+                            }
                             className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
                           />
                           <button

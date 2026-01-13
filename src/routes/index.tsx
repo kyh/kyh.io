@@ -6,12 +6,12 @@ import { desc, eq, sql } from 'drizzle-orm'
 import { toast } from 'sonner'
 
 import { EditModal } from '@/components/EditModal'
+import { IncidentCardContent } from '@/components/IncidentCardContent'
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from '@/components/KeyboardShortcutsProvider'
 import { SubmitModal } from '@/components/SubmitModal'
-import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, videos, votes } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -46,7 +46,9 @@ const getIncidents = createServerFn({ method: 'GET' })
             ),
       // Order by incident_date desc, nulls first (treated as today)
       orderBy: [
-        desc(sql`COALESCE(${incidents.incidentDate}, ${Math.floor(Date.now() / 1000)})`),
+        desc(
+          sql`COALESCE(${incidents.incidentDate}, ${Math.floor(Date.now() / 1000)})`,
+        ),
       ],
       limit: limit + 1,
     })
@@ -58,7 +60,9 @@ const getIncidents = createServerFn({ method: 'GET' })
   })
 
 const getUserVotes = createServerFn({ method: 'GET' })
-  .inputValidator((data: { sessionId: string; incidentIds: Array<number> }) => data)
+  .inputValidator(
+    (data: { sessionId: string; incidentIds: Array<number> }) => data,
+  )
   .handler(async ({ data }) => {
     if (!data.sessionId || data.incidentIds.length === 0) return {}
 
@@ -81,8 +85,11 @@ const getUserVotes = createServerFn({ method: 'GET' })
 
 const createIncident = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { location?: string; incidentDate?: string; videoUrls: Array<string> }) =>
-      data,
+    (data: {
+      location?: string
+      incidentDate?: string
+      videoUrls: Array<string>
+    }) => data,
   )
   .handler(async ({ data }) => {
     const existingVideos = await db.query.videos.findMany({
@@ -116,7 +123,9 @@ const createIncident = createServerFn({ method: 'POST' })
       .insert(incidents)
       .values({
         location: data.location,
-        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+        incidentDate: data.incidentDate
+          ? parseLocalDate(data.incidentDate)
+          : null,
         status: 'approved',
       })
       .returning()
@@ -227,14 +236,17 @@ const addVideoToIncident = createServerFn({ method: 'POST' })
 
 const updateIncidentDetails = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { incidentId: number; location?: string; incidentDate?: string }) => data
+    (data: { incidentId: number; location?: string; incidentDate?: string }) =>
+      data,
   )
   .handler(async ({ data }) => {
     await db
       .update(incidents)
       .set({
         location: data.location ?? null,
-        incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+        incidentDate: data.incidentDate
+          ? parseLocalDate(data.incidentDate)
+          : null,
       })
       .where(eq(incidents.id, data.incidentId))
     return { success: true }
@@ -266,7 +278,6 @@ function IncidentFeed() {
   const [editingIncident, setEditingIncident] = useState<
     (typeof loaderData.incidents)[0] | null
   >(null)
-  const [currentSlides, setCurrentSlides] = useState<Record<number, number>>({})
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -445,19 +456,18 @@ function IncidentFeed() {
     return base + extra
   }
 
-  const handleReport = useCallback(
-    async (incidentId: number) => {
-      await reportIncident({ data: { incidentId } })
-      setOpenMenuId(null)
-      toast.success('Reported')
-    },
-    [],
-  )
+  const handleReport = useCallback(async (incidentId: number) => {
+    await reportIncident({ data: { incidentId } })
+    setOpenMenuId(null)
+    toast.success('Reported')
+  }, [])
 
   const handleAddVideo = useCallback(
     async (url: string) => {
       if (!editingIncident) return
-      await addVideoToIncident({ data: { incidentId: editingIncident.id, url } })
+      await addVideoToIncident({
+        data: { incidentId: editingIncident.id, url },
+      })
       router.invalidate()
     },
     [editingIncident, router],
@@ -489,15 +499,6 @@ function IncidentFeed() {
     [router],
   )
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return null
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   return (
     <KeyboardShortcutsProvider>
       <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
@@ -520,30 +521,33 @@ function IncidentFeed() {
           ) : (
             <div className="divide-y divide-neutral-200">
               {allIncidents.map((incident) => {
-                const displayDate = incident.incidentDate ?? incident.createdAt
                 const unjustifiedCount = getVoteCount(incident, 'unjustified')
                 const justifiedCount = getVoteCount(incident, 'justified')
                 const userVote = userVotes[incident.id]
 
                 return (
                   <IncidentCard key={incident.id} incidentId={incident.id}>
-                    <VideoCarousel
-                      videos={incident.videos}
+                    <IncidentCardContent
                       incidentId={incident.id}
-                      onSlideChange={(index) =>
-                        setCurrentSlides((prev) => ({ ...prev, [incident.id]: index }))
-                      }
-                      header={
-                        <span>
-                          {incident.location && <>{incident.location}</>}
-                          {incident.location && displayDate && <> · </>}
-                          {displayDate && formatDate(displayDate)}
-                        </span>
-                      }
+                      location={incident.location}
+                      incidentDate={incident.incidentDate}
+                      createdAt={incident.createdAt}
+                      videos={incident.videos}
+                      unjustifiedCount={unjustifiedCount}
+                      justifiedCount={justifiedCount}
+                      userVote={userVote}
+                      onVote={(type) => handleVote(incident.id, type)}
                       headerRight={
-                        <div className="relative" ref={openMenuId === incident.id ? menuRef : null}>
+                        <div
+                          className="relative"
+                          ref={openMenuId === incident.id ? menuRef : null}
+                        >
                           <button
-                            onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)}
+                            onClick={() =>
+                              setOpenMenuId(
+                                openMenuId === incident.id ? null : incident.id,
+                              )
+                            }
                             className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                           >
                             •••
@@ -578,50 +582,6 @@ function IncidentFeed() {
                         </div>
                       }
                     />
-
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => handleVote(incident.id, 'unjustified')}
-                          className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                        >
-                          unjustified ({unjustifiedCount})
-                        </button>
-                        <button
-                          onClick={() => handleVote(incident.id, 'justified')}
-                          className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
-                        >
-                          justified ({justifiedCount})
-                        </button>
-                      </div>
-                      {incident.videos.length > 0 && (() => {
-                        const currentVideo = incident.videos[currentSlides[incident.id] ?? 0]
-                        return (
-                          <a
-                            href={currentVideo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
-                          >
-                            open on{' '}
-                            {currentVideo.platform === 'twitter' ? 'x' : currentVideo.platform}
-                            <svg
-                              className="h-3 w-3"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                          </a>
-                        )
-                      })()}
-                    </div>
                   </IncidentCard>
                 )
               })}

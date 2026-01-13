@@ -15,10 +15,13 @@ interface EditModalProps {
   incidentId: number
   location: string | null
   incidentDate: Date | null
-  videos: Video[]
+  videos: Array<Video>
   onClose: () => void
   onAddVideo: (url: string) => Promise<void>
-  onUpdate: (data: { location?: string; incidentDate?: string }) => Promise<void>
+  onUpdate: (data: {
+    location?: string
+    incidentDate?: string
+  }) => Promise<void>
 }
 
 export function EditModal({
@@ -33,7 +36,7 @@ export function EditModal({
 }: EditModalProps) {
   const [location, setLocation] = useState(initialLocation || '')
   const [incidentDate, setIncidentDate] = useState(
-    initialDate ? new Date(initialDate).toISOString().split('T')[0] : ''
+    initialDate ? new Date(initialDate).toISOString().split('T')[0] : '',
   )
   const [newUrl, setNewUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)

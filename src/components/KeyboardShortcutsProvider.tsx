@@ -1,14 +1,15 @@
 'use client'
 
 import {
+  
   createContext,
   useCallback,
   useContext,
   useEffect,
   useRef,
-  useState,
-  type ReactNode,
+  useState
 } from 'react'
+import type {ReactNode} from 'react';
 import type { EmblaCarouselType } from 'embla-carousel'
 
 interface CarouselRef {
@@ -24,7 +25,8 @@ interface KeyboardShortcutsContextValue {
   activeIncidentId: number | null
 }
 
-const KeyboardShortcutsContext = createContext<KeyboardShortcutsContextValue | null>(null)
+const KeyboardShortcutsContext =
+  createContext<KeyboardShortcutsContextValue | null>(null)
 
 export function useKeyboardShortcuts() {
   return useContext(KeyboardShortcutsContext)
@@ -34,38 +36,46 @@ interface KeyboardShortcutsProviderProps {
   children: ReactNode
 }
 
-export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProviderProps) {
+export function KeyboardShortcutsProvider({
+  children,
+}: KeyboardShortcutsProviderProps) {
   const carouselsRef = useRef<Map<number, EmblaCarouselType | null>>(new Map())
   const incidentsRef = useRef<Map<number, HTMLElement>>(new Map())
-  const incidentOrderRef = useRef<number[]>([])
+  const incidentOrderRef = useRef<Array<number>>([])
   const [activeIncidentId, setActiveIncidentId] = useState<number | null>(null)
 
-  const registerCarousel = useCallback((id: number, api: EmblaCarouselType | null) => {
-    carouselsRef.current.set(id, api)
-  }, [])
+  const registerCarousel = useCallback(
+    (id: number, api: EmblaCarouselType | null) => {
+      carouselsRef.current.set(id, api)
+    },
+    [],
+  )
 
   const unregisterCarousel = useCallback((id: number) => {
     carouselsRef.current.delete(id)
   }, [])
 
-  const registerIncident = useCallback((id: number, element: HTMLElement | null) => {
-    if (element) {
-      incidentsRef.current.set(id, element)
-      // Rebuild order based on DOM position
-      const entries = Array.from(incidentsRef.current.entries())
-      entries.sort((a, b) => {
-        const rectA = a[1].getBoundingClientRect()
-        const rectB = b[1].getBoundingClientRect()
-        return rectA.top - rectB.top
-      })
-      incidentOrderRef.current = entries.map(([id]) => id)
+  const registerIncident = useCallback(
+    (id: number, element: HTMLElement | null) => {
+      if (element) {
+        incidentsRef.current.set(id, element)
+        // Rebuild order based on DOM position
+        const entries = Array.from(incidentsRef.current.entries())
+        entries.sort((a, b) => {
+          const rectA = a[1].getBoundingClientRect()
+          const rectB = b[1].getBoundingClientRect()
+          return rectA.top - rectB.top
+        })
+        incidentOrderRef.current = entries.map(([id]) => id)
 
-      // Set initial active if none
-      if (activeIncidentId === null && incidentOrderRef.current.length > 0) {
-        setActiveIncidentId(incidentOrderRef.current[0])
+        // Set initial active if none
+        if (activeIncidentId === null && incidentOrderRef.current.length > 0) {
+          setActiveIncidentId(incidentOrderRef.current[0])
+        }
       }
-    }
-  }, [activeIncidentId])
+    },
+    [activeIncidentId],
+  )
 
   const unregisterIncident = useCallback((id: number) => {
     incidentsRef.current.delete(id)
@@ -114,9 +124,8 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
       }
 
       const order = incidentOrderRef.current
-      const currentIndex = activeIncidentId !== null
-        ? order.indexOf(activeIncidentId)
-        : -1
+      const currentIndex =
+        activeIncidentId !== null ? order.indexOf(activeIncidentId) : -1
 
       switch (e.key) {
         case 'ArrowDown':
@@ -195,14 +204,22 @@ function KeyboardShortcutsHelp() {
     <div className="fixed bottom-4 right-4 hidden text-xs text-neutral-400 sm:block">
       <div className="flex items-center gap-3">
         <span>
-          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">↑</kbd>
-          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">↓</kbd>
-          {' '}navigate
+          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">
+            ↑
+          </kbd>
+          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">
+            ↓
+          </kbd>{' '}
+          navigate
         </span>
         <span>
-          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">←</kbd>
-          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">→</kbd>
-          {' '}videos
+          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">
+            ←
+          </kbd>
+          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">
+            →
+          </kbd>{' '}
+          videos
         </span>
       </div>
     </div>
