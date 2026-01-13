@@ -47,32 +47,89 @@ function FallbackLink({
   )
 }
 
-function RedditEmbed({ url }: { url: string }) {
-  const [height, setHeight] = useState(400)
+interface RedditPost {
+  title: string
+  subreddit: string
+  author: string
+  score: number
+  num_comments: number
+  thumbnail?: string
+  selftext?: string
+  is_video?: boolean
+  media?: { reddit_video?: { fallback_url: string } }
+}
 
-  // Normalize URL to ensure it ends properly for embed
-  const embedUrl = url.includes('?')
-    ? `${url}&ref_source=embed&embed=true`
-    : `${url}?ref_source=embed&embed=true`
+function RedditEmbed({ url }: { url: string }) {
+  const [post, setPost] = useState<RedditPost | null>(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      if (e.origin === 'https://www.reddit.com' && e.data?.type === 'resize') {
-        setHeight(e.data.height || 400)
-      }
-    }
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [])
+    // Fetch post data from Reddit's JSON API
+    const cleanUrl = url.split('?')[0].replace(/\/$/, '')
+    const jsonUrl = `${cleanUrl}.json`
+
+    fetch(jsonUrl)
+      .then((res) => res.json())
+      .then((data) => {
+        const postData = data?.[0]?.data?.children?.[0]?.data
+        if (postData) {
+          setPost(postData)
+        } else {
+          setError(true)
+        }
+      })
+      .catch(() => setError(true))
+  }, [url])
+
+  if (error) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block border border-neutral-200 p-4 text-sm text-neutral-500 hover:border-neutral-400 hover:text-neutral-900"
+      >
+        open on reddit
+      </a>
+    )
+  }
+
+  if (!post) {
+    return (
+      <div className="border border-neutral-200 p-4">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-100" />
+      </div>
+    )
+  }
 
   return (
-    <iframe
-      src={embedUrl}
-      sandbox="allow-scripts allow-same-origin allow-popups"
-      style={{ border: 'none', width: '100%', height }}
-      scrolling="no"
-      allowFullScreen
-    />
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block border border-neutral-200 p-4 transition-colors hover:border-neutral-400"
+    >
+      <div className="mb-2 text-xs text-neutral-400">
+        r/{post.subreddit} · u/{post.author}
+      </div>
+      <div className="mb-2 text-sm font-medium text-neutral-900">{post.title}</div>
+      {post.selftext && (
+        <div className="mb-2 line-clamp-3 text-sm text-neutral-500">
+          {post.selftext}
+        </div>
+      )}
+      {post.is_video && post.media?.reddit_video?.fallback_url && (
+        <video
+          src={post.media.reddit_video.fallback_url}
+          controls
+          className="mb-2 max-h-[400px] w-full rounded"
+          playsInline
+        />
+      )}
+      <div className="text-xs text-neutral-400">
+        {post.score} points · {post.num_comments} comments
+      </div>
+    </a>
   )
 }
 
