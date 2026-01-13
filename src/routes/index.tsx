@@ -496,7 +496,10 @@ function IncidentFeed() {
 
   return (
     <KeyboardShortcutsProvider>
-      <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
+      <main
+        id="main-content"
+        className="min-h-screen bg-white px-4 py-8 sm:px-6"
+      >
         <div className="max-w-xl">
           <header className="mb-12">
             <h1 className="text-base font-normal">Policing ICE</h1>
@@ -505,6 +508,7 @@ function IncidentFeed() {
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="cursor-pointer text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
+                aria-label="Submit a new incident"
               >
                 Submit
               </button>
@@ -544,16 +548,24 @@ function IncidentFeed() {
                               )
                             }
                             className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                            aria-label="Incident actions"
+                            aria-expanded={openMenuId === incident.id}
+                            aria-haspopup="true"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </button>
                           {openMenuId === incident.id && (
-                            <div className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm">
+                            <div
+                              className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm"
+                              role="menu"
+                              aria-label="Incident actions menu"
+                            >
                               <Link
                                 to="/incident/$id"
                                 params={{ id: String(incident.id) }}
                                 className="block px-3 py-1.5 text-left hover:bg-neutral-50"
                                 onClick={() => setOpenMenuId(null)}
+                                role="menuitem"
                               >
                                 View
                               </Link>
@@ -563,12 +575,14 @@ function IncidentFeed() {
                                   setOpenMenuId(null)
                                 }}
                                 className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
+                                role="menuitem"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleReport(incident.id)}
                                 className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
+                                role="menuitem"
                               >
                                 Report
                               </button>
@@ -611,7 +625,7 @@ function IncidentFeed() {
             onUpdate={handleUpdateIncident}
           />
         )}
-      </div>
+      </main>
     </KeyboardShortcutsProvider>
   )
 }

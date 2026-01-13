@@ -90,27 +90,36 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-4 pt-[15vh]"
       onClick={(e) => e.target === e.currentTarget && handleClose()}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="submit-modal-title"
     >
       <div className="w-full max-w-md bg-white p-6 shadow-lg">
+        <h2 id="submit-modal-title" className="sr-only">
+          Submit an incident
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm">Video URLs</label>
+              <label htmlFor="video-url-0" className="mb-1 block text-sm">Video URLs</label>
               <div className="space-y-2">
                 {videoUrls.map((url, index) => (
                   <div key={index}>
                     <div className="flex gap-2">
                       <input
+                        id={`video-url-${index}`}
                         type="url"
                         value={url}
                         onChange={(e) => updateVideoUrl(index, e.target.value)}
                         placeholder="https://x.com/..."
                         className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                        aria-label={`Video URL ${index + 1}`}
                       />
                       {videoUrls.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeVideoUrl(index)}
                           className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
+                          aria-label={`Remove video URL ${index + 1}`}
                         >
                           ×
                         </button>
@@ -134,8 +143,11 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm">Location (optional)</label>
+              <label htmlFor="incident-location" className="mb-1 block text-sm">
+                Location (optional)
+              </label>
               <input
+                id="incident-location"
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -145,8 +157,11 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm">Date (optional)</label>
+              <label htmlFor="incident-date" className="mb-1 block text-sm">
+                Date (optional)
+              </label>
               <input
+                id="incident-date"
                 type="date"
                 value={incidentDate}
                 onChange={(e) => setIncidentDate(e.target.value)}

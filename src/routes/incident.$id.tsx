@@ -221,17 +221,21 @@ function IncidentDetail() {
 
   return (
     <KeyboardShortcutsProvider>
-      <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
+      <main
+        id="main-content"
+        className="min-h-screen bg-white px-4 py-8 sm:px-6"
+      >
         <div className="max-w-xl">
-          <header className="mb-12">
+          <nav className="mb-12" aria-label="Breadcrumb">
             <Link
               to="/"
               className="inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-900"
+              aria-label="Back to all incidents"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Back
             </Link>
-          </header>
+          </nav>
 
           <IncidentArticle incidentId={incident.id}>
             <IncidentCardContent
@@ -249,7 +253,7 @@ function IncidentDetail() {
             />
           </IncidentArticle>
         </div>
-      </div>
+      </main>
     </KeyboardShortcutsProvider>
   )
 }

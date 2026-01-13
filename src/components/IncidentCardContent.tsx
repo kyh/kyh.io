@@ -72,16 +72,20 @@ export function IncidentCardContent({
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
           <button
             onClick={() => onVote('unjustified')}
             className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+            aria-pressed={userVote === 'unjustified'}
+            aria-label={`Vote unjustified, ${unjustifiedCount} votes`}
           >
             unjustified ({unjustifiedCount})
           </button>
           <button
             onClick={() => onVote('justified')}
             className={`cursor-pointer ${userVote === 'justified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
+            aria-pressed={userVote === 'justified'}
+            aria-label={`Vote justified, ${justifiedCount} votes`}
           >
             justified ({justifiedCount})
           </button>
@@ -93,12 +97,13 @@ export function IncidentCardContent({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
+              aria-label={`Open video on ${currentVideo.platform === 'twitter' ? 'X' : currentVideo.platform} (opens in new tab)`}
             >
               open on{' '}
               {currentVideo.platform === 'twitter'
                 ? 'x'
                 : currentVideo.platform}
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
             </a>
           )}
           {onReport && (
@@ -106,6 +111,7 @@ export function IncidentCardContent({
               onClick={onReport}
               disabled={reported}
               className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
+              aria-label={reported ? 'This incident has been reported' : 'Report this incident'}
             >
               {reported ? 'reported' : 'report'}
             </button>
