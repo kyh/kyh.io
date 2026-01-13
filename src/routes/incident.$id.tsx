@@ -147,6 +147,7 @@ function IncidentDetail() {
     justified: incident.justifiedCount,
   })
   const [reported, setReported] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
     const initSession = async () => {
@@ -245,6 +246,7 @@ function IncidentDetail() {
             <VideoCarousel
               videos={incident.videos}
               incidentId={incident.id}
+              onSlideChange={setCurrentSlide}
               header={
                 <span>
                   {incident.location && <>{incident.location}</>}
@@ -270,30 +272,32 @@ function IncidentDetail() {
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                {incident.videos.map((video) => (
-                  <a
-                    key={video.id}
-                    href={video.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
-                  >
-                    open on {video.platform === 'twitter' ? 'x' : video.platform}
-                    <svg
-                      className="h-3 w-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
+                {incident.videos.length > 0 && (() => {
+                  const currentVideo = incident.videos[currentSlide] ?? incident.videos[0]
+                  return (
+                    <a
+                      href={currentVideo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                ))}
+                      open on {currentVideo.platform === 'twitter' ? 'x' : currentVideo.platform}
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </a>
+                  )
+                })()}
                 <button
                   onClick={handleReport}
                   disabled={reported}

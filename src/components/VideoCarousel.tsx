@@ -19,9 +19,10 @@ interface VideoCarouselProps {
   header?: React.ReactNode
   headerRight?: React.ReactNode
   incidentId?: number
+  onSlideChange?: (index: number) => void
 }
 
-export function VideoCarousel({ videos, header, headerRight, incidentId }: VideoCarouselProps) {
+export function VideoCarousel({ videos, header, headerRight, incidentId, onSlideChange }: VideoCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',
@@ -40,10 +41,12 @@ export function VideoCarousel({ videos, header, headerRight, incidentId }: Video
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return
-    setSelectedIndex(emblaApi.selectedScrollSnap())
+    const index = emblaApi.selectedScrollSnap()
+    setSelectedIndex(index)
     setCanScrollPrev(emblaApi.canScrollPrev())
     setCanScrollNext(emblaApi.canScrollNext())
-  }, [emblaApi])
+    onSlideChange?.(index)
+  }, [emblaApi, onSlideChange])
 
   useEffect(() => {
     if (!emblaApi) return

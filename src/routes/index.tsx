@@ -257,6 +257,7 @@ function IncidentFeed() {
   const [editingIncident, setEditingIncident] = useState<
     (typeof loaderData.incidents)[0] | null
   >(null)
+  const [currentSlides, setCurrentSlides] = useState<Record<number, number>>({})
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -520,6 +521,9 @@ function IncidentFeed() {
                     <VideoCarousel
                       videos={incident.videos}
                       incidentId={incident.id}
+                      onSlideChange={(index) =>
+                        setCurrentSlides((prev) => ({ ...prev, [incident.id]: index }))
+                      }
                       header={
                         <span>
                           {incident.location && <>{incident.location}</>}
@@ -581,17 +585,17 @@ function IncidentFeed() {
                           justified ({justifiedCount})
                         </button>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {incident.videos.map((video) => (
+                      {incident.videos.length > 0 && (() => {
+                        const currentVideo = incident.videos[currentSlides[incident.id] ?? 0]
+                        return (
                           <a
-                            key={video.id}
-                            href={video.url}
+                            href={currentVideo.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
                           >
                             open on{' '}
-                            {video.platform === 'twitter' ? 'x' : video.platform}
+                            {currentVideo.platform === 'twitter' ? 'x' : currentVideo.platform}
                             <svg
                               className="h-3 w-3"
                               fill="none"
@@ -606,8 +610,8 @@ function IncidentFeed() {
                               />
                             </svg>
                           </a>
-                        ))}
-                      </div>
+                        )
+                      })()}
                     </div>
                   </IncidentCard>
                 )
