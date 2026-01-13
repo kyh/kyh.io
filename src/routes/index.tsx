@@ -26,37 +26,29 @@ function parseLocalDate(dateStr: string): Date {
 }
 
 const getIncidents = createServerFn({ method: 'GET' })
-  .inputValidator((data: { cursor?: number; limit?: number }) => data)
+  .inputValidator((data: { offset?: number; limit?: number }) => data)
   .handler(async ({ data }) => {
     const limit = data.limit ?? 10
+    const offset = data.offset ?? 0
     const results = await db.query.incidents.findMany({
       with: { videos: true },
-      where: (
-        incidents,
-        { and: andOp, lt: ltOp, eq: eqOp, isNull: isNullOp },
-      ) =>
-        data.cursor
-          ? andOp(
-              eqOp(incidents.status, 'approved'),
-              isNullOp(incidents.deletedAt),
-              ltOp(incidents.id, data.cursor),
-            )
-          : andOp(
-              eqOp(incidents.status, 'approved'),
-              isNullOp(incidents.deletedAt),
-            ),
-      // Order by incident_date desc, nulls first (treated as today)
-      orderBy: [
-        desc(
-          sql`COALESCE(${incidents.incidentDate}, ${Math.floor(Date.now() / 1000)})`,
+      where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp }) =>
+        andOp(
+          eqOp(incidents.status, 'approved'),
+          isNullOp(incidents.deletedAt),
         ),
+      // Order by incident_date desc (nulls first), then id desc for stability
+      orderBy: [
+        desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
+        desc(incidents.id),
       ],
       limit: limit + 1,
+      offset,
     })
     const hasMore = results.length > limit
     return {
       incidents: results.slice(0, limit),
-      nextCursor: hasMore ? results[limit - 1].id : undefined,
+      nextOffset: hasMore ? offset + limit : undefined,
     }
   })
 
@@ -265,7 +257,7 @@ function IncidentFeed() {
   const [extraIncidents, setExtraIncidents] = useState<
     typeof loaderData.incidents
   >([])
-  const [nextCursor, setNextCursor] = useState(loaderData.nextCursor)
+  const [nextOffset, setNextOffset] = useState(loaderData.nextOffset)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -289,8 +281,8 @@ function IncidentFeed() {
   const loaderKey = loaderData.incidents.map((i) => i.id).join(',')
   useEffect(() => {
     setExtraIncidents([])
-    setNextCursor(loaderData.nextCursor)
-  }, [loaderKey, loaderData.nextCursor])
+    setNextOffset(loaderData.nextOffset)
+  }, [loaderKey, loaderData.nextOffset])
 
   useEffect(() => {
     const initAndLoadVotes = async () => {
@@ -323,7 +315,7 @@ function IncidentFeed() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && nextCursor && !isLoading) {
+        if (entries[0].isIntersecting && nextOffset && !isLoading) {
           loadMore()
         }
       },
@@ -335,7 +327,7 @@ function IncidentFeed() {
     }
 
     return () => observer.disconnect()
-  }, [nextCursor, isLoading])
+  }, [nextOffset, isLoading])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -348,12 +340,12 @@ function IncidentFeed() {
   }, [])
 
   const loadMore = useCallback(async () => {
-    if (!nextCursor || isLoading) return
+    if (!nextOffset || isLoading) return
     setIsLoading(true)
     try {
-      const result = await getIncidents({ data: { cursor: nextCursor } })
+      const result = await getIncidents({ data: { offset: nextOffset } })
       setExtraIncidents((prev) => [...prev, ...result.incidents])
-      setNextCursor(result.nextCursor)
+      setNextOffset(result.nextOffset)
 
       if (sessionId && result.incidents.length > 0) {
         const newIds = result.incidents.map((i) => i.id)
@@ -365,7 +357,7 @@ function IncidentFeed() {
     } finally {
       setIsLoading(false)
     }
-  }, [nextCursor, isLoading, sessionId])
+  }, [nextOffset, isLoading, sessionId])
 
   const handleVote = useCallback(
     async (incidentId: number, type: 'unjustified' | 'justified') => {
@@ -593,7 +585,7 @@ function IncidentFeed() {
             {isLoading && (
               <span className="text-sm text-neutral-400">Loading...</span>
             )}
-            {!nextCursor && allIncidents.length > 0 && (
+            {!nextOffset && allIncidents.length > 0 && (
               <span className="text-sm text-neutral-300">—</span>
             )}
           </div>
