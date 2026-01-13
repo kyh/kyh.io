@@ -14,11 +14,6 @@ const baseURL =
 
 export const auth = betterAuth({
   baseURL,
-  trustedOrigins: [
-    'https://www.policingice.com',
-    'https://policingice.com',
-    'http://localhost:3000',
-  ],
   database: drizzleAdapter(db, {
     provider: 'sqlite',
   }),

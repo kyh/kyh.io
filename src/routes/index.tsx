@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest } from '@tanstack/react-start/server'
+import { getRequestHeaders } from '@tanstack/react-start/server'
 import { desc, eq, sql } from 'drizzle-orm'
 
 import { SubmitModal } from '@/components/SubmitModal'
@@ -115,8 +115,8 @@ const submitVote = createServerFn({ method: 'POST' })
     (data: { incidentId: number; type: 'angry' | 'meh' }) => data
   )
   .handler(async ({ data }) => {
-    const request = getRequest()
-    const session = await auth.api.getSession({ headers: request.headers })
+    const headers = getRequestHeaders()
+    const session = await auth.api.getSession({ headers })
 
     if (!session?.user?.id) {
       return { success: false, error: 'No session' }
