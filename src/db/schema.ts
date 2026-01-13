@@ -72,6 +72,7 @@ export const verification = sqliteTable('verification', {
 export const incidents = sqliteTable('incidents', {
   id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
   location: text(),
+  description: text(),
   incidentDate: integer('incident_date', { mode: 'timestamp' }),
   status: text().$type<IncidentStatus>().default('approved').notNull(),
   unjustifiedCount: integer('unjustified_count').default(0).notNull(),

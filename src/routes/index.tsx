@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
-import { desc, eq, sql } from 'drizzle-orm'
-import { MoreHorizontal } from 'lucide-react'
+import { and, desc, eq, gte, like, lte, sql } from 'drizzle-orm'
+import { MoreHorizontal, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { EditModal } from '@/components/EditModal'
@@ -50,6 +50,51 @@ const getIncidents = createServerFn({ method: 'GET' })
       incidents: results.slice(0, limit),
       nextOffset: hasMore ? offset + limit : undefined,
     }
+  })
+
+const searchIncidents = createServerFn({ method: 'GET' })
+  .inputValidator(
+    (data: {
+      query?: string
+      startDate?: string
+      endDate?: string
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const conditions = [
+      eq(incidents.status, 'approved'),
+      sql`${incidents.deletedAt} IS NULL`,
+    ]
+
+    if (data.query) {
+      const q = `%${data.query}%`
+      conditions.push(
+        sql`(${like(incidents.location, q)} OR ${like(incidents.description, q)})`,
+      )
+    }
+
+    if (data.startDate) {
+      const start = parseLocalDate(data.startDate)
+      conditions.push(gte(incidents.incidentDate, start))
+    }
+
+    if (data.endDate) {
+      const end = parseLocalDate(data.endDate)
+      end.setDate(end.getDate() + 1)
+      conditions.push(lte(incidents.incidentDate, end))
+    }
+
+    const results = await db.query.incidents.findMany({
+      with: { videos: true },
+      where: and(...conditions),
+      orderBy: [
+        desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
+        desc(incidents.id),
+      ],
+      limit: 50,
+    })
+
+    return { incidents: results }
   })
 
 const getUserVotes = createServerFn({ method: 'GET' })
@@ -271,9 +316,18 @@ function IncidentFeed() {
   const [editingIncident, setEditingIncident] = useState<
     (typeof loaderData.incidents)[0] | null
   >(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchStartDate, setSearchStartDate] = useState('')
+  const [searchEndDate, setSearchEndDate] = useState('')
+  const [searchResults, setSearchResults] = useState<
+    typeof loaderData.incidents | null
+  >(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
 
   const allIncidents = [...loaderData.incidents, ...extraIncidents]
   const incidentIdsKey = allIncidents.map((i) => i.id).join(',')
@@ -334,9 +388,40 @@ function IncidentFeed() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null)
       }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setIsSearchOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery && !searchStartDate && !searchEndDate) {
+      setSearchResults(null)
+      return
+    }
+    setIsSearching(true)
+    try {
+      const result = await searchIncidents({
+        data: {
+          query: searchQuery || undefined,
+          startDate: searchStartDate || undefined,
+          endDate: searchEndDate || undefined,
+        },
+      })
+      setSearchResults(result.incidents)
+      setIsSearchOpen(false)
+    } finally {
+      setIsSearching(false)
+    }
+  }, [searchQuery, searchStartDate, searchEndDate])
+
+  const clearSearch = useCallback(() => {
+    setSearchQuery('')
+    setSearchStartDate('')
+    setSearchEndDate('')
+    setSearchResults(null)
   }, [])
 
   const loadMore = useCallback(async () => {
@@ -502,7 +587,69 @@ function IncidentFeed() {
       >
         <div className="max-w-xl">
           <header className="mb-12">
-            <h1 className="text-base font-normal">Policing ICE</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-base font-normal">Policing ICE</h1>
+              <div className="relative" ref={searchRef}>
+                <button
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                  aria-label="Search incidents"
+                  aria-expanded={isSearchOpen}
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+                {isSearchOpen && (
+                  <div className="absolute right-0 top-8 z-20 w-64 rounded border border-neutral-200 bg-white p-4 shadow-lg">
+                    <div className="space-y-3">
+                      <div>
+                        <label htmlFor="search-query" className="mb-1 block text-xs text-neutral-500">
+                          Location or description
+                        </label>
+                        <input
+                          id="search-query"
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Los Angeles, arrest..."
+                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-start" className="mb-1 block text-xs text-neutral-500">
+                          From date
+                        </label>
+                        <input
+                          id="search-start"
+                          type="date"
+                          value={searchStartDate}
+                          onChange={(e) => setSearchStartDate(e.target.value)}
+                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-end" className="mb-1 block text-xs text-neutral-500">
+                          To date
+                        </label>
+                        <input
+                          id="search-end"
+                          type="date"
+                          value={searchEndDate}
+                          onChange={(e) => setSearchEndDate(e.target.value)}
+                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSearch}
+                        disabled={isSearching}
+                        className="w-full cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
+                      >
+                        {isSearching ? 'Searching...' : 'Search'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <p className="mt-1 text-sm text-neutral-500">
               Documenting incidents of ICE overreach.{' '}
               <button
@@ -515,11 +662,28 @@ function IncidentFeed() {
             </p>
           </header>
 
-          {allIncidents.length === 0 ? (
-            <p className="text-sm text-neutral-500">No incidents yet.</p>
+          {searchResults !== null && (
+            <div className="mb-6 flex items-center gap-2 text-sm">
+              <span className="text-neutral-500">
+                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={clearSearch}
+                className="inline-flex cursor-pointer items-center gap-1 text-neutral-400 hover:text-neutral-900"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            </div>
+          )}
+
+          {(searchResults ?? allIncidents).length === 0 ? (
+            <p className="text-sm text-neutral-500">
+              {searchResults !== null ? 'No results found.' : 'No incidents yet.'}
+            </p>
           ) : (
             <div className="divide-y divide-neutral-200">
-              {allIncidents.map((incident) => {
+              {(searchResults ?? allIncidents).map((incident) => {
                 const unjustifiedCount = getVoteCount(incident, 'unjustified')
                 const justifiedCount = getVoteCount(incident, 'justified')
                 const userVote = userVotes[incident.id]
@@ -597,14 +761,16 @@ function IncidentFeed() {
             </div>
           )}
 
-          <div ref={loadMoreRef} className="py-8">
-            {isLoading && (
-              <span className="text-sm text-neutral-400">Loading...</span>
-            )}
-            {!nextOffset && allIncidents.length > 0 && (
-              <span className="text-sm text-neutral-300">—</span>
-            )}
-          </div>
+          {searchResults === null && (
+            <div ref={loadMoreRef} className="py-8">
+              {isLoading && (
+                <span className="text-sm text-neutral-400">Loading...</span>
+              )}
+              {!nextOffset && allIncidents.length > 0 && (
+                <span className="text-sm text-neutral-300">—</span>
+              )}
+            </div>
+          )}
         </div>
 
         <SubmitModal
