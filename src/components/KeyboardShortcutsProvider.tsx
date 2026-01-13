@@ -185,6 +185,26 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
       }}
     >
       {children}
+      <KeyboardShortcutsHelp />
     </KeyboardShortcutsContext.Provider>
+  )
+}
+
+function KeyboardShortcutsHelp() {
+  return (
+    <div className="fixed bottom-4 right-4 hidden text-xs text-neutral-400 sm:block">
+      <div className="flex items-center gap-3">
+        <span>
+          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">↑</kbd>
+          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">↓</kbd>
+          {' '}navigate
+        </span>
+        <span>
+          <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1">←</kbd>
+          <kbd className="ml-0.5 rounded border border-neutral-200 bg-neutral-50 px-1">→</kbd>
+          {' '}videos
+        </span>
+      </div>
+    </div>
   )
 }
