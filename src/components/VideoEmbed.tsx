@@ -1,15 +1,6 @@
 'use client'
 
-import {
-  FacebookEmbed,
-  InstagramEmbed,
-  LinkedInEmbed,
-  PinterestEmbed,
-  PlaceholderEmbed,
-  TikTokEmbed,
-  XEmbed,
-  YouTubeEmbed,
-} from 'react-social-media-embed'
+import { useEffect, useState } from 'react'
 
 import type { VideoPlatform } from '@/db/schema'
 import { extractVideoId } from '@/lib/video-utils'
@@ -42,39 +33,51 @@ function FallbackLink({ url, platform }: { url: string; platform: VideoPlatform 
   )
 }
 
-function LoadingPlaceholder({ url }: { url: string }) {
+function LoadingPlaceholder() {
   return (
-    <PlaceholderEmbed
-      url={url}
-      linkText="Loading..."
-      style={{ border: '1px solid #e5e5e5', padding: '1rem' }}
-    />
+    <div className="border border-neutral-200 p-4 text-sm text-neutral-400">
+      Loading...
+    </div>
   )
 }
 
 export function VideoEmbed({ url, platform }: VideoEmbedProps) {
+  const [Embed, setEmbed] = useState<React.ComponentType<{ url: string; width: string }> | null>(null)
   const videoId = extractVideoId(url, platform)
+
+  useEffect(() => {
+    if (!videoId) return
+
+    // Dynamic import only on client
+    import('react-social-media-embed').then((mod) => {
+      const embedMap: Record<VideoPlatform, React.ComponentType<{ url: string; width: string }>> = {
+        youtube: mod.YouTubeEmbed,
+        twitter: mod.XEmbed,
+        tiktok: mod.TikTokEmbed,
+        facebook: mod.FacebookEmbed,
+        instagram: mod.InstagramEmbed,
+        linkedin: mod.LinkedInEmbed,
+        pinterest: mod.PinterestEmbed,
+      }
+      setEmbed(() => embedMap[platform])
+    })
+  }, [videoId, platform])
 
   if (!videoId) {
     return <FallbackLink url={url} platform={platform} />
   }
 
-  const embedProps = {
-    url,
-    width: '100%' as const,
-    placeholderImageUrl: '',
-    placeholderSpinner: <LoadingPlaceholder url={url} />,
+  if (!Embed) {
+    return (
+      <div className="w-full max-w-[550px]">
+        <LoadingPlaceholder />
+      </div>
+    )
   }
 
   return (
     <div className="w-full max-w-[550px]">
-      {platform === 'youtube' && <YouTubeEmbed {...embedProps} />}
-      {platform === 'twitter' && <XEmbed {...embedProps} />}
-      {platform === 'tiktok' && <TikTokEmbed {...embedProps} />}
-      {platform === 'facebook' && <FacebookEmbed {...embedProps} />}
-      {platform === 'instagram' && <InstagramEmbed {...embedProps} />}
-      {platform === 'linkedin' && <LinkedInEmbed {...embedProps} />}
-      {platform === 'pinterest' && <PinterestEmbed {...embedProps} />}
+      <Embed url={url} width="100%" />
     </div>
   )
 }
