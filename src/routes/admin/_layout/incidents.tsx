@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq, isNull } from 'drizzle-orm'
+import { X } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { VideoCarousel } from '@/components/VideoCarousel'
 import type { IncidentStatus } from '@/db/schema'
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
@@ -108,6 +110,9 @@ function AdminIncidents() {
   const [editForm, setEditForm] = useState({ location: '', incidentDate: '' })
   const [videoUrls, setVideoUrls] = useState<Record<number, string>>({})
   const [newVideoUrl, setNewVideoUrl] = useState('')
+  const [previewingIncident, setPreviewingIncident] = useState<
+    (typeof allIncidents)[0] | null
+  >(null)
 
   const formatDate = (date: Date | null) => {
     if (!date) return '—'
@@ -342,6 +347,13 @@ function AdminIncidents() {
                   ) : (
                     <>
                       <button
+                        onClick={() => setPreviewingIncident(incident)}
+                        className="cursor-pointer hover:text-neutral-900"
+                      >
+                        preview
+                      </button>
+                      {' · '}
+                      <button
                         onClick={() => handleEdit(incident)}
                         className="cursor-pointer hover:text-neutral-900"
                       >
@@ -361,6 +373,32 @@ function AdminIncidents() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {previewingIncident && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setPreviewingIncident(null)}
+        >
+          <div
+            className="relative w-full max-w-xl rounded-lg bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewingIncident(null)}
+              className="absolute right-4 top-4 cursor-pointer text-neutral-400 hover:text-neutral-900"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mb-4 text-sm text-neutral-500">
+              #{previewingIncident.id}
+              {previewingIncident.location && ` · ${previewingIncident.location}`}
+              {previewingIncident.incidentDate &&
+                ` · ${formatDate(previewingIncident.incidentDate)}`}
+            </div>
+            <VideoCarousel videos={previewingIncident.videos} />
+          </div>
+        </div>
       )}
     </div>
   )
