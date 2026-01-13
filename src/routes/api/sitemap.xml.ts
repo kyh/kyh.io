@@ -1,5 +1,5 @@
 import { createAPIFileRoute } from '@tanstack/react-start/api'
-import { isNull, eq, desc } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 
 import { db } from '@/db/index'
 import { incidents } from '@/db/schema'
