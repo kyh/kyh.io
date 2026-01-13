@@ -58,14 +58,6 @@ export function VideoCarousel({ videos, header, headerRight }: VideoCarouselProp
             <div>{header}</div>
             {showNav && (
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => emblaApi?.scrollPrev()}
-                  disabled={!canScrollPrev}
-                  className={`px-1 ${canScrollPrev ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
-                  aria-label="Previous"
-                >
-                  ←
-                </button>
                 {videos.map((_, index) => (
                   <button
                     key={index}
@@ -79,9 +71,17 @@ export function VideoCarousel({ videos, header, headerRight }: VideoCarouselProp
                   />
                 ))}
                 <button
+                  onClick={() => emblaApi?.scrollPrev()}
+                  disabled={!canScrollPrev}
+                  className={`pl-1 ${canScrollPrev ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
+                  aria-label="Previous"
+                >
+                  ←
+                </button>
+                <button
                   onClick={() => emblaApi?.scrollNext()}
                   disabled={!canScrollNext}
-                  className={`px-1 ${canScrollNext ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
+                  className={`${canScrollNext ? 'text-neutral-500 hover:text-neutral-900' : 'text-neutral-300'}`}
                   aria-label="Next"
                 >
                   →
