@@ -53,10 +53,8 @@ const toggleIncidentStatus = createServerFn({ method: 'POST' })
 const deleteIncident = createServerFn({ method: 'POST' })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-    await db
-      .update(incidents)
-      .set({ deletedAt: new Date() })
-      .where(eq(incidents.id, data.id))
+    // Hard delete - cascades to videos and votes via foreign key
+    await db.delete(incidents).where(eq(incidents.id, data.id))
     return { success: true }
   })
 
