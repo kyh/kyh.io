@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Menu } from '@base-ui/react/menu'
+import { Popover } from '@base-ui/react/popover'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
@@ -100,16 +102,18 @@ const searchIncidents = createServerFn({ method: 'GET' })
   })
 
 const getUserVotes = createServerFn({ method: 'GET' })
-  .inputValidator(
-    (data: { sessionId: string; incidentIds: Array<number> }) => data,
-  )
+  .inputValidator((data: { incidentIds: Array<number> }) => data)
   .handler(async ({ data }) => {
-    if (!data.sessionId || data.incidentIds.length === 0) return {}
+    if (data.incidentIds.length === 0) return {}
+
+    const headers = getRequestHeaders()
+    const session = await auth.api.getSession({ headers })
+    if (!session?.user?.id) return {}
 
     const userVotes = await db.query.votes.findMany({
       where: (votes, { and, eq: eqOp, inArray }) =>
         and(
-          eqOp(votes.sessionId, data.sessionId),
+          eqOp(votes.sessionId, session.user.id),
           inArray(votes.incidentId, data.incidentIds),
         ),
     })
@@ -294,7 +298,13 @@ const updateIncidentDetails = createServerFn({ method: 'POST' })
 
 export const Route = createFileRoute('/')({
   component: IncidentFeed,
-  loader: () => getIncidents({ data: {} }),
+  loader: async () => {
+    const { incidents, nextOffset } = await getIncidents({ data: {} })
+    const userVotes = await getUserVotes({
+      data: { incidentIds: incidents.map((i) => i.id) },
+    })
+    return { incidents, nextOffset, userVotes }
+  },
 })
 
 function IncidentFeed() {
@@ -307,14 +317,10 @@ function IncidentFeed() {
   const [nextOffset, setNextOffset] = useState(loaderData.nextOffset)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [userVotes, setUserVotes] = useState<
-    Record<number, 'unjustified' | 'justified'>
-  >({})
+  const [userVotes, setUserVotes] = useState(loaderData.userVotes)
   const [voteCounts, setVoteCounts] = useState<
     Record<number, { unjustified: number; justified: number }>
   >({})
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [editingIncident, setEditingIncident] = useState<
     (typeof loaderData.incidents)[0] | null
   >(null)
@@ -328,47 +334,21 @@ function IncidentFeed() {
   const [isSearching, setIsSearching] = useState(false)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
-
   const allIncidents = [...loaderData.incidents, ...extraIncidents]
-  const incidentIdsKey = allIncidents.map((i) => i.id).join(',')
 
+  // Reset state when loader data changes (navigation)
   const loaderKey = loaderData.incidents.map((i) => i.id).join(',')
   useEffect(() => {
     setExtraIncidents([])
     setNextOffset(loaderData.nextOffset)
-  }, [loaderKey, loaderData.nextOffset])
+    setUserVotes(loaderData.userVotes)
+  }, [loaderKey, loaderData.nextOffset, loaderData.userVotes])
 
+  // Infinite scroll
   useEffect(() => {
-    const initAndLoadVotes = async () => {
-      try {
-        let session = await authClient.getSession()
-        if (!session.data) {
-          await authClient.signIn.anonymous()
-          session = await authClient.getSession()
-        }
-        const userId = session.data?.user?.id
-        if (userId) {
-          setSessionId(userId)
-          if (allIncidents.length > 0) {
-            const votes = await getUserVotes({
-              data: {
-                sessionId: userId,
-                incidentIds: allIncidents.map((i) => i.id),
-              },
-            })
-            setUserVotes(votes)
-          }
-        }
-      } catch (error) {
-        console.error('Auth init error:', error)
-      }
-    }
-    initAndLoadVotes()
-  }, [incidentIdsKey])
+    const ref = loadMoreRef.current
+    if (!ref) return
 
-  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && nextOffset && !isLoading) {
@@ -377,26 +357,9 @@ function IncidentFeed() {
       },
       { threshold: 0.1 },
     )
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current)
-    }
-
+    observer.observe(ref)
     return () => observer.disconnect()
   }, [nextOffset, isLoading])
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null)
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setIsSearchOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery && !searchStartDate && !searchEndDate) {
@@ -434,20 +397,25 @@ function IncidentFeed() {
       setExtraIncidents((prev) => [...prev, ...result.incidents])
       setNextOffset(result.nextOffset)
 
-      if (sessionId && result.incidents.length > 0) {
-        const newIds = result.incidents.map((i) => i.id)
+      if (result.incidents.length > 0) {
         const newVotes = await getUserVotes({
-          data: { sessionId, incidentIds: newIds },
+          data: { incidentIds: result.incidents.map((i) => i.id) },
         })
         setUserVotes((prev) => ({ ...prev, ...newVotes }))
       }
     } finally {
       setIsLoading(false)
     }
-  }, [nextOffset, isLoading, sessionId])
+  }, [nextOffset, isLoading])
 
   const handleVote = useCallback(
     async (incidentId: number, type: 'unjustified' | 'justified') => {
+      // Ensure user has session (creates anonymous if needed)
+      let session = await authClient.getSession()
+      if (!session.data) {
+        await authClient.signIn.anonymous()
+      }
+
       const prevVote = userVotes[incidentId]
       const prevCounts = voteCounts[incidentId]
 
@@ -538,7 +506,6 @@ function IncidentFeed() {
 
   const handleReport = useCallback(async (incidentId: number) => {
     await reportIncident({ data: { incidentId } })
-    setOpenMenuId(null)
     toast.success('Reported')
   }, [])
 
@@ -591,66 +558,78 @@ function IncidentFeed() {
           <header className="mb-12">
             <div className="flex items-center justify-between">
               <h1 className="text-base font-normal">Policing ICE</h1>
-              <div className="relative" ref={searchRef}>
-                <button
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+              <Popover.Root
+                open={isSearchOpen}
+                onOpenChange={setIsSearchOpen}
+              >
+                <Popover.Trigger
                   className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                   aria-label="Search incidents"
-                  aria-expanded={isSearchOpen}
                 >
                   <Search className="h-4 w-4" />
-                </button>
-                {isSearchOpen && (
-                  <div className="absolute right-0 top-8 z-20 w-64 rounded border border-neutral-200 bg-white p-4 shadow-lg">
-                    <div className="space-y-3">
-                      <div>
-                        <label htmlFor="search-query" className="mb-1 block text-xs text-neutral-500">
-                          Location or description
-                        </label>
-                        <input
-                          id="search-query"
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Los Angeles, arrest..."
-                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-                        />
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Positioner side="bottom" align="end" sideOffset={8}>
+                    <Popover.Popup className="z-20 w-64 rounded border border-neutral-200 bg-white p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            htmlFor="search-query"
+                            className="mb-1 block text-xs text-neutral-500"
+                          >
+                            Location or description
+                          </label>
+                          <input
+                            id="search-query"
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Los Angeles, arrest..."
+                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="search-start"
+                            className="mb-1 block text-xs text-neutral-500"
+                          >
+                            From date
+                          </label>
+                          <input
+                            id="search-start"
+                            type="date"
+                            value={searchStartDate}
+                            onChange={(e) => setSearchStartDate(e.target.value)}
+                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="search-end"
+                            className="mb-1 block text-xs text-neutral-500"
+                          >
+                            To date
+                          </label>
+                          <input
+                            id="search-end"
+                            type="date"
+                            value={searchEndDate}
+                            onChange={(e) => setSearchEndDate(e.target.value)}
+                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          onClick={handleSearch}
+                          disabled={isSearching}
+                          className="w-full cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
+                        >
+                          {isSearching ? 'Searching...' : 'Search'}
+                        </button>
                       </div>
-                      <div>
-                        <label htmlFor="search-start" className="mb-1 block text-xs text-neutral-500">
-                          From date
-                        </label>
-                        <input
-                          id="search-start"
-                          type="date"
-                          value={searchStartDate}
-                          onChange={(e) => setSearchStartDate(e.target.value)}
-                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="search-end" className="mb-1 block text-xs text-neutral-500">
-                          To date
-                        </label>
-                        <input
-                          id="search-end"
-                          type="date"
-                          value={searchEndDate}
-                          onChange={(e) => setSearchEndDate(e.target.value)}
-                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        onClick={handleSearch}
-                        disabled={isSearching}
-                        className="w-full cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
-                      >
-                        {isSearching ? 'Searching...' : 'Search'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                    </Popover.Popup>
+                  </Popover.Positioner>
+                </Popover.Portal>
+              </Popover.Root>
             </div>
             <p className="mt-1 text-sm text-neutral-500">
               Documenting incidents of ICE overreach.{' '}
@@ -703,58 +682,43 @@ function IncidentFeed() {
                       userVote={userVote}
                       onVote={(type) => handleVote(incident.id, type)}
                       headerRight={
-                        <div
-                          className="relative"
-                          ref={openMenuId === incident.id ? menuRef : null}
-                        >
-                          <button
-                            onClick={() =>
-                              setOpenMenuId(
-                                openMenuId === incident.id ? null : incident.id,
-                              )
-                            }
+                        <Menu.Root>
+                          <Menu.Trigger
                             className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                             aria-label="Incident actions"
-                            aria-expanded={openMenuId === incident.id}
-                            aria-haspopup="true"
                           >
                             <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                          {openMenuId === incident.id && (
-                            <div
-                              className="absolute right-0 top-6 z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 shadow-sm"
-                              role="menu"
-                              aria-label="Incident actions menu"
-                            >
-                              <Link
-                                to="/incident/$id"
-                                params={{ id: String(incident.id) }}
-                                className="block px-3 py-1.5 text-left hover:bg-neutral-50"
-                                onClick={() => setOpenMenuId(null)}
-                                role="menuitem"
-                              >
-                                View
-                              </Link>
-                              <button
-                                onClick={() => {
-                                  setEditingIncident(incident)
-                                  setOpenMenuId(null)
-                                }}
-                                className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50"
-                                role="menuitem"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleReport(incident.id)}
-                                className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50"
-                                role="menuitem"
-                              >
-                                Report
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                          </Menu.Trigger>
+                          <Menu.Portal>
+                            <Menu.Positioner side="bottom" align="end" sideOffset={6}>
+                              <Menu.Popup className="z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 text-sm">
+                                <Menu.Item
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  render={
+                                    <Link
+                                      to="/incident/$id"
+                                      params={{ id: String(incident.id) }}
+                                    />
+                                  }
+                                >
+                                  View
+                                </Menu.Item>
+                                <Menu.Item
+                                  className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  onClick={() => setEditingIncident(incident)}
+                                >
+                                  Edit
+                                </Menu.Item>
+                                <Menu.Item
+                                  className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  onClick={() => handleReport(incident.id)}
+                                >
+                                  Report
+                                </Menu.Item>
+                              </Menu.Popup>
+                            </Menu.Positioner>
+                          </Menu.Portal>
+                        </Menu.Root>
                       }
                     />
                   </IncidentCard>

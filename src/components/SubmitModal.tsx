@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Dialog } from '@base-ui/react/dialog'
 
 import { isValidVideoUrl } from '@/lib/video-utils'
 
@@ -84,23 +85,17 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
     }
   }
 
-  if (!isOpen) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-4 pt-[15vh]"
-      onClick={(e) => e.target === e.currentTarget && handleClose()}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="submit-modal-title"
-    >
-      <div className="w-full max-w-md bg-white p-6 shadow-lg">
-        <h2 id="submit-modal-title" className="sr-only">
-          Submit an incident
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
+        <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 bg-white p-6">
+          <Dialog.Title className="sr-only">Submit an incident</Dialog.Title>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="video-url-0" className="mb-1 block text-sm">Video URLs</label>
+              <label htmlFor="video-url-0" className="mb-1 block text-sm">
+                Video URLs
+              </label>
               <div className="space-y-2">
                 {videoUrls.map((url, index) => (
                   <div key={index}>
@@ -126,9 +121,7 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
                       )}
                     </div>
                     {errors[index] && (
-                      <p className="mt-1 text-xs text-red-600">
-                        {errors[index]}
-                      </p>
+                      <p className="mt-1 text-xs text-red-600">{errors[index]}</p>
                     )}
                   </div>
                 ))}
@@ -177,16 +170,13 @@ export function SubmitModal({ isOpen, onClose, onSubmit }: SubmitModalProps) {
               >
                 {isSubmitting ? 'Submitting...' : 'Submit'}
               </button>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
-              >
+              <Dialog.Close className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900">
                 Cancel
-              </button>
+              </Dialog.Close>
             </div>
           </form>
-      </div>
-    </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }

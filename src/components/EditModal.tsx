@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Dialog } from '@base-ui/react/dialog'
 import { toast } from 'sonner'
 
 import type { VideoPlatform } from '@/db/schema'
@@ -26,7 +27,6 @@ interface EditModalProps {
 
 export function EditModal({
   isOpen,
-  incidentId,
   location: initialLocation,
   incidentDate: initialDate,
   videos,
@@ -85,96 +85,92 @@ export function EditModal({
     onClose()
   }
 
-  if (!isOpen) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 p-4 pt-[15vh]"
-      onClick={(e) => e.target === e.currentTarget && handleClose()}
-    >
-      <div className="w-full max-w-md bg-white p-6 shadow-lg">
-        <div className="mb-4 space-y-3">
-          <div>
-            <label className="mb-1 block text-sm">Location</label>
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
+        <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 bg-white p-6">
+          <Dialog.Title className="sr-only">Edit incident</Dialog.Title>
+          <div className="mb-4 space-y-3">
+            <div>
+              <label className="mb-1 block text-sm">Location</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Los Angeles, CA"
+                className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm">Date</label>
+              <input
+                type="date"
+                value={incidentDate}
+                onChange={(e) => setIncidentDate(e.target.value)}
+                className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="mb-2 block text-sm text-neutral-500">
+              Videos ({videos.length})
+            </label>
+            <div className="space-y-1">
+              {videos.map((video) => (
+                <div key={video.id} className="truncate text-xs text-neutral-400">
+                  {video.platform}: {video.url}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="mb-1 block text-sm">Add Video</label>
             <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Los Angeles, CA"
+              type="url"
+              value={newUrl}
+              onChange={(e) => {
+                setNewUrl(e.target.value)
+                setError('')
+              }}
+              placeholder="https://x.com/..."
               className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddVideo()
+                }
+              }}
             />
+            {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+            {newUrl.trim() && (
+              <button
+                onClick={handleAddVideo}
+                disabled={isSubmitting}
+                className="mt-2 cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+              >
+                + Add
+              </button>
+            )}
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm">Date</label>
-            <input
-              type="date"
-              value={incidentDate}
-              onChange={(e) => setIncidentDate(e.target.value)}
-              className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="mb-2 block text-sm text-neutral-500">
-            Videos ({videos.length})
-          </label>
-          <div className="space-y-1">
-            {videos.map((video) => (
-              <div key={video.id} className="truncate text-xs text-neutral-400">
-                {video.platform}: {video.url}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="mb-1 block text-sm">Add Video</label>
-          <input
-            type="url"
-            value={newUrl}
-            onChange={(e) => {
-              setNewUrl(e.target.value)
-              setError('')
-            }}
-            placeholder="https://x.com/..."
-            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleAddVideo()
-              }
-            }}
-          />
-          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-          {newUrl.trim() && (
+          <div className="flex gap-4">
             <button
-              onClick={handleAddVideo}
+              onClick={handleSave}
               disabled={isSubmitting}
-              className="mt-2 cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+              className="cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
             >
-              + Add
+              {isSubmitting ? 'Saving...' : 'Save'}
             </button>
-          )}
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            onClick={handleSave}
-            disabled={isSubmitting}
-            className="cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            onClick={handleClose}
-            className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+            <Dialog.Close className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900">
+              Cancel
+            </Dialog.Close>
+          </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
