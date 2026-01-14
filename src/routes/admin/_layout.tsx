@@ -32,6 +32,12 @@ function AdminLayout() {
             >
               Create
             </Link>
+            <Link
+              to="/admin/reddit-feed"
+              className="text-neutral-500 hover:text-neutral-900 [&.active]:text-neutral-900"
+            >
+              Reddit
+            </Link>
             <Link to="/" className="text-neutral-400 hover:text-neutral-900">
               Exit
             </Link>

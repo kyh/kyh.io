@@ -15,6 +15,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminLayoutRouteImport } from './routes/admin/_layout'
 import { Route as AdminLayoutIndexRouteImport } from './routes/admin/_layout/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AdminLayoutRedditFeedRouteImport } from './routes/admin/_layout/reddit-feed'
 import { Route as AdminLayoutIncidentsRouteImport } from './routes/admin/_layout/incidents'
 import { Route as AdminLayoutCreateRouteImport } from './routes/admin/_layout/create'
 
@@ -48,6 +49,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLayoutRedditFeedRoute = AdminLayoutRedditFeedRouteImport.update({
+  id: '/reddit-feed',
+  path: '/reddit-feed',
+  getParentRoute: () => AdminLayoutRoute,
+} as any)
 const AdminLayoutIncidentsRoute = AdminLayoutIncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/incident/$id': typeof IncidentIdRoute
   '/admin/create': typeof AdminLayoutCreateRoute
   '/admin/incidents': typeof AdminLayoutIncidentsRoute
+  '/admin/reddit-feed': typeof AdminLayoutRedditFeedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AdminLayoutIndexRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/incident/$id': typeof IncidentIdRoute
   '/admin/create': typeof AdminLayoutCreateRoute
   '/admin/incidents': typeof AdminLayoutIncidentsRoute
+  '/admin/reddit-feed': typeof AdminLayoutRedditFeedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AdminLayoutIndexRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/incident/$id': typeof IncidentIdRoute
   '/admin/_layout/create': typeof AdminLayoutCreateRoute
   '/admin/_layout/incidents': typeof AdminLayoutIncidentsRoute
+  '/admin/_layout/reddit-feed': typeof AdminLayoutRedditFeedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/_layout/': typeof AdminLayoutIndexRoute
 }
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/incident/$id'
     | '/admin/create'
     | '/admin/incidents'
+    | '/admin/reddit-feed'
     | '/api/auth/$'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/incident/$id'
     | '/admin/create'
     | '/admin/incidents'
+    | '/admin/reddit-feed'
     | '/api/auth/$'
     | '/admin'
   id:
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/incident/$id'
     | '/admin/_layout/create'
     | '/admin/_layout/incidents'
+    | '/admin/_layout/reddit-feed'
     | '/api/auth/$'
     | '/admin/_layout/'
   fileRoutesById: FileRoutesById
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/_layout/reddit-feed': {
+      id: '/admin/_layout/reddit-feed'
+      path: '/reddit-feed'
+      fullPath: '/admin/reddit-feed'
+      preLoaderRoute: typeof AdminLayoutRedditFeedRouteImport
+      parentRoute: typeof AdminLayoutRoute
+    }
     '/admin/_layout/incidents': {
       id: '/admin/_layout/incidents'
       path: '/incidents'
@@ -193,12 +212,14 @@ declare module '@tanstack/react-router' {
 interface AdminLayoutRouteChildren {
   AdminLayoutCreateRoute: typeof AdminLayoutCreateRoute
   AdminLayoutIncidentsRoute: typeof AdminLayoutIncidentsRoute
+  AdminLayoutRedditFeedRoute: typeof AdminLayoutRedditFeedRoute
   AdminLayoutIndexRoute: typeof AdminLayoutIndexRoute
 }
 
 const AdminLayoutRouteChildren: AdminLayoutRouteChildren = {
   AdminLayoutCreateRoute: AdminLayoutCreateRoute,
   AdminLayoutIncidentsRoute: AdminLayoutIncidentsRoute,
+  AdminLayoutRedditFeedRoute: AdminLayoutRedditFeedRoute,
   AdminLayoutIndexRoute: AdminLayoutIndexRoute,
 }
 
