@@ -11,9 +11,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "konva": "^10.0.12",
+    "konva": "^10.1.0",
     "lucide-react": "^0.562.0",
-    "motion": "^12.26.1",
+    "motion": "^12.26.2",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.2.1"
