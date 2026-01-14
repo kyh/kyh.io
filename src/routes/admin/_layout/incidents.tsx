@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq, isNull } from 'drizzle-orm'
@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { VideoCarousel } from '@/components/VideoCarousel'
-import type { IncidentStatus } from '@/db/schema'
+import type { IncidentStatus, VideoPlatform } from '@/db/schema'
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
 import { detectPlatform } from '@/lib/video-utils'
@@ -31,6 +31,7 @@ const updateIncident = createServerFn({ method: 'POST' })
     (data: {
       id: number
       location?: string
+      description?: string
       incidentDate?: string
       status?: IncidentStatus
     }) => data,
@@ -40,6 +41,7 @@ const updateIncident = createServerFn({ method: 'POST' })
       .update(incidents)
       .set({
         location: data.location,
+        description: data.description,
         incidentDate: data.incidentDate
           ? parseLocalDate(data.incidentDate)
           : null,
@@ -103,45 +105,44 @@ export const Route = createFileRoute('/admin/_layout/incidents')({
   loader: () => getAllIncidents(),
 })
 
-function AdminIncidents() {
+type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0]
+
+function formatDate(date: Date | null) {
+  if (!date) return '—'
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+interface IncidentEditRowProps {
+  incident: Incident
+  onCancel: () => void
+  onSaved: () => void
+}
+
+function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) {
   const router = useRouter()
-  const allIncidents = Route.useLoaderData()
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editForm, setEditForm] = useState({ location: '', incidentDate: '' })
-  const [videoUrls, setVideoUrls] = useState<Record<number, string>>({})
-  const [newVideoUrl, setNewVideoUrl] = useState('')
-  const [previewingIncident, setPreviewingIncident] = useState<
-    (typeof allIncidents)[0] | null
-  >(null)
+  const newVideoRef = useRef<HTMLInputElement>(null)
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return '—'
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    await updateIncident({
+      data: {
+        id: incident.id,
+        location: (formData.get('location') as string)?.trim() || undefined,
+        description: (formData.get('description') as string)?.trim() || undefined,
+        incidentDate: (formData.get('incidentDate') as string) || undefined,
+      },
     })
+    router.invalidate()
+    toast.success('Saved')
+    onSaved()
   }
 
-  const handleEdit = (incident: (typeof allIncidents)[0]) => {
-    setEditingId(incident.id)
-    setEditForm({
-      location: incident.location || '',
-      incidentDate: incident.incidentDate
-        ? new Date(incident.incidentDate).toISOString().split('T')[0]
-        : '',
-    })
-    setVideoUrls(
-      incident.videos.reduce(
-        (acc, v) => ({ ...acc, [v.id]: v.url }),
-        {} as Record<number, string>,
-      ),
-    )
-    setNewVideoUrl('')
-  }
-
-  const handleUpdateVideo = async (videoId: number, originalUrl: string) => {
-    const newUrl = videoUrls[videoId]
+  const handleUpdateVideo = async (videoId: number, newUrl: string, originalUrl: string) => {
     if (newUrl && newUrl !== originalUrl) {
       await updateVideo({ data: { id: videoId, url: newUrl } })
       router.invalidate()
@@ -149,10 +150,11 @@ function AdminIncidents() {
     }
   }
 
-  const handleAddVideo = async (incidentId: number) => {
-    if (!newVideoUrl.trim()) return
-    await addVideo({ data: { incidentId, url: newVideoUrl.trim() } })
-    setNewVideoUrl('')
+  const handleAddVideo = async () => {
+    const url = newVideoRef.current?.value.trim()
+    if (!url) return
+    await addVideo({ data: { incidentId: incident.id, url } })
+    if (newVideoRef.current) newVideoRef.current.value = ''
     router.invalidate()
     toast.success('Video added')
   }
@@ -163,23 +165,146 @@ function AdminIncidents() {
     toast.success('Video deleted')
   }
 
-  const handleSave = async (id: number) => {
-    await updateIncident({
-      data: {
-        id,
-        location: editForm.location || undefined,
-        incidentDate: editForm.incidentDate || undefined,
-      },
-    })
-    setEditingId(null)
-    router.invalidate()
-    toast.success('Saved')
-  }
+  const formId = `edit-${incident.id}`
 
-  const handleToggleStatus = async (
-    id: number,
-    currentStatus: IncidentStatus,
-  ) => {
+  return (
+    <tr className="border-b border-neutral-100">
+      <td className="py-3 pr-3">#{incident.id}</td>
+      <td className="py-3 pr-3">
+        <input
+          type="text"
+          name="location"
+          form={formId}
+          defaultValue={incident.location || ''}
+          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+          placeholder="Location"
+        />
+      </td>
+      <td className="py-3 pr-3">
+        <input
+          type="text"
+          name="description"
+          form={formId}
+          defaultValue={incident.description || ''}
+          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+          placeholder="Description"
+        />
+      </td>
+      <td className="py-3 pr-3">
+        <input
+          type="date"
+          name="incidentDate"
+          form={formId}
+          defaultValue={
+            incident.incidentDate
+              ? new Date(incident.incidentDate).toISOString().split('T')[0]
+              : ''
+          }
+          className="border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+        />
+      </td>
+      <td className="py-3 pr-3">
+        <span className={incident.status === 'approved' ? 'text-green-600' : 'text-neutral-400'}>
+          {incident.status}
+        </span>
+      </td>
+      <td className="py-3 pr-3">
+        <div className="space-y-1">
+          {incident.videos.map((video) => (
+            <VideoEditInput
+              key={video.id}
+              video={video}
+              onUpdate={handleUpdateVideo}
+              onDelete={handleDeleteVideo}
+            />
+          ))}
+          <div className="flex items-center gap-1">
+            <input
+              ref={newVideoRef}
+              type="text"
+              placeholder="Add video URL"
+              className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddVideo()
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleAddVideo}
+              className="cursor-pointer text-xs text-neutral-400 hover:text-neutral-900"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </td>
+      <td className="py-3 pr-3 text-neutral-400">
+        {incident.unjustifiedCount + incident.justifiedCount}
+      </td>
+      <td className="py-3 pr-3">
+        {incident.reportCount > 0 ? (
+          <span className="text-red-500">{incident.reportCount}</span>
+        ) : (
+          <span className="text-neutral-300">0</span>
+        )}
+      </td>
+      <td className="py-3 text-neutral-400">
+        <form id={formId} onSubmit={handleSubmit} className="hidden" />
+        <button
+          type="submit"
+          form={formId}
+          className="cursor-pointer hover:text-neutral-900"
+        >
+          save
+        </button>
+        {' · '}
+        <button onClick={onCancel} className="cursor-pointer hover:text-neutral-900">
+          cancel
+        </button>
+      </td>
+    </tr>
+  )
+}
+
+interface VideoEditInputProps {
+  video: { id: number; url: string; platform: VideoPlatform }
+  onUpdate: (id: number, newUrl: string, originalUrl: string) => void
+  onDelete: (id: number) => void
+}
+
+function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        ref={inputRef}
+        type="text"
+        defaultValue={video.url}
+        onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
+        className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
+      />
+      <button
+        type="button"
+        onClick={() => onDelete(video.id)}
+        className="cursor-pointer text-xs text-red-400 hover:text-red-600"
+      >
+        ×
+      </button>
+    </div>
+  )
+}
+
+function AdminIncidents() {
+  const router = useRouter()
+  const allIncidents = Route.useLoaderData()
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(null)
+
+  const handleToggleStatus = async (id: number, currentStatus: IncidentStatus) => {
     const result = await toggleIncidentStatus({ data: { id, currentStatus } })
     router.invalidate()
     toast.success(result.newStatus === 'approved' ? 'Approved' : 'Hidden')
@@ -201,178 +326,87 @@ function AdminIncidents() {
       {allIncidents.length === 0 ? (
         <p className="text-sm text-neutral-500">No incidents.</p>
       ) : (
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
-              <th className="py-2 font-normal">ID</th>
-              <th className="py-2 font-normal">Location</th>
-              <th className="py-2 font-normal">Date</th>
-              <th className="py-2 font-normal">Status</th>
-              <th className="py-2 font-normal">Videos</th>
-              <th className="py-2 font-normal">Votes</th>
-              <th className="py-2 font-normal">Reports</th>
+              <th className="py-2 pr-3 font-normal">ID</th>
+              <th className="py-2 pr-3 font-normal">Location</th>
+              <th className="py-2 pr-3 font-normal">Description</th>
+              <th className="py-2 pr-3 font-normal">Date</th>
+              <th className="py-2 pr-3 font-normal">Status</th>
+              <th className="py-2 pr-3 font-normal">Videos</th>
+              <th className="py-2 pr-3 font-normal">Votes</th>
+              <th className="py-2 pr-3 font-normal">Reports</th>
               <th className="py-2 font-normal">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {allIncidents.map((incident) => (
-              <tr key={incident.id} className="border-b border-neutral-100">
-                <td className="py-3">#{incident.id}</td>
-                <td className="py-3">
-                  {editingId === incident.id ? (
-                    <input
-                      type="text"
-                      value={editForm.location}
-                      onChange={(e) =>
-                        setEditForm((f) => ({ ...f, location: e.target.value }))
-                      }
-                      className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
-                      placeholder="Location"
-                    />
-                  ) : (
-                    incident.location || '—'
-                  )}
-                </td>
-                <td className="py-3">
-                  {editingId === incident.id ? (
-                    <input
-                      type="date"
-                      value={editForm.incidentDate}
-                      onChange={(e) =>
-                        setEditForm((f) => ({
-                          ...f,
-                          incidentDate: e.target.value,
-                        }))
-                      }
-                      className="border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
-                    />
-                  ) : (
-                    formatDate(incident.incidentDate)
-                  )}
-                </td>
-                <td className="py-3">
-                  <button
-                    onClick={() =>
-                      handleToggleStatus(incident.id, incident.status)
-                    }
-                    className="cursor-pointer"
-                  >
-                    {incident.status === 'approved' ? (
-                      <span className="text-green-600">approved</span>
+            {allIncidents.map((incident) =>
+              editingId === incident.id ? (
+                <IncidentEditRow
+                  key={incident.id}
+                  incident={incident}
+                  onCancel={() => setEditingId(null)}
+                  onSaved={() => setEditingId(null)}
+                />
+              ) : (
+                <tr key={incident.id} className="border-b border-neutral-100">
+                  <td className="py-3 pr-3">#{incident.id}</td>
+                  <td className="py-3 pr-3">{incident.location || '—'}</td>
+                  <td className="py-3 pr-3 max-w-48 truncate" title={incident.description || ''}>{incident.description || '—'}</td>
+                  <td className="py-3 pr-3">{formatDate(incident.incidentDate)}</td>
+                  <td className="py-3 pr-3">
+                    <button
+                      onClick={() => handleToggleStatus(incident.id, incident.status)}
+                      className="cursor-pointer"
+                    >
+                      {incident.status === 'approved' ? (
+                        <span className="text-green-600">approved</span>
+                      ) : (
+                        <span className="text-neutral-400">hidden</span>
+                      )}
+                    </button>
+                  </td>
+                  <td className="py-3 pr-3">{incident.videos.length}</td>
+                  <td className="py-3 pr-3 text-neutral-400">
+                    {incident.unjustifiedCount + incident.justifiedCount}
+                  </td>
+                  <td className="py-3 pr-3">
+                    {incident.reportCount > 0 ? (
+                      <span className="text-red-500">{incident.reportCount}</span>
                     ) : (
-                      <span className="text-neutral-400">hidden</span>
+                      <span className="text-neutral-300">0</span>
                     )}
-                  </button>
-                </td>
-                <td className="py-3">
-                  {editingId === incident.id ? (
-                    <div className="space-y-1">
-                      {incident.videos.map((video) => (
-                        <div key={video.id} className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={videoUrls[video.id] ?? video.url}
-                            onChange={(e) =>
-                              setVideoUrls((prev) => ({
-                                ...prev,
-                                [video.id]: e.target.value,
-                              }))
-                            }
-                            onBlur={() =>
-                              handleUpdateVideo(video.id, video.url)
-                            }
-                            className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
-                          />
-                          <button
-                            onClick={() => handleDeleteVideo(video.id)}
-                            className="cursor-pointer text-xs text-red-400 hover:text-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={newVideoUrl}
-                          onChange={(e) => setNewVideoUrl(e.target.value)}
-                          placeholder="Add video URL"
-                          className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              handleAddVideo(incident.id)
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={() => handleAddVideo(incident.id)}
-                          className="cursor-pointer text-xs text-neutral-400 hover:text-neutral-900"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    incident.videos.length
-                  )}
-                </td>
-                <td className="py-3 text-neutral-400">
-                  {incident.unjustifiedCount + incident.justifiedCount}
-                </td>
-                <td className="py-3">
-                  {incident.reportCount > 0 ? (
-                    <span className="text-red-500">{incident.reportCount}</span>
-                  ) : (
-                    <span className="text-neutral-300">0</span>
-                  )}
-                </td>
-                <td className="py-3 text-neutral-400">
-                  {editingId === incident.id ? (
-                    <>
-                      <button
-                        onClick={() => handleSave(incident.id)}
-                        className="cursor-pointer hover:text-neutral-900"
-                      >
-                        save
-                      </button>
-                      {' · '}
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="cursor-pointer hover:text-neutral-900"
-                      >
-                        cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setPreviewingIncident(incident)}
-                        className="cursor-pointer hover:text-neutral-900"
-                      >
-                        preview
-                      </button>
-                      {' · '}
-                      <button
-                        onClick={() => handleEdit(incident)}
-                        className="cursor-pointer hover:text-neutral-900"
-                      >
-                        edit
-                      </button>
-                      {' · '}
-                      <button
-                        onClick={() => handleDelete(incident.id)}
-                        className="cursor-pointer hover:text-red-600"
-                      >
-                        delete
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="py-3 text-neutral-400">
+                    <button
+                      onClick={() => setPreviewingIncident(incident)}
+                      className="cursor-pointer hover:text-neutral-900"
+                    >
+                      preview
+                    </button>
+                    {' · '}
+                    <button
+                      onClick={() => setEditingId(incident.id)}
+                      className="cursor-pointer hover:text-neutral-900"
+                    >
+                      edit
+                    </button>
+                    {' · '}
+                    <button
+                      onClick={() => handleDelete(incident.id)}
+                      className="cursor-pointer hover:text-red-600"
+                    >
+                      delete
+                    </button>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       {previewingIncident && (

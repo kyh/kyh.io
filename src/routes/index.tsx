@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Menu } from '@base-ui/react/menu'
 import { Popover } from '@base-ui/react/popover'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { and, desc, eq, gte, like, lt, lte, sql } from 'drizzle-orm'
 import { MoreHorizontal, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 
-import { EditModal } from '@/components/EditModal'
+import { embed, gateway } from 'ai'
+
 import { IncidentCardContent } from '@/components/IncidentCardContent'
+import { IncidentModal } from '@/components/IncidentModal'
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from '@/components/KeyboardShortcutsProvider'
-import { SubmitModal } from '@/components/SubmitModal'
-import { db } from '@/db/index'
+import { client, db } from '@/db/index'
 import { incidents, videos, votes } from '@/db/schema'
+import { getAdminUser } from '@/lib/admin-auth'
 import { auth } from '@/lib/auth'
 import { authClient } from '@/lib/auth-client'
 import { detectPlatform } from '@/lib/video-utils'
@@ -64,41 +67,183 @@ const searchIncidents = createServerFn({ method: 'GET' })
     }) => data,
   )
   .handler(async ({ data }) => {
-    const conditions = [
+    const baseConditions = [
       eq(incidents.status, 'approved'),
       sql`${incidents.deletedAt} IS NULL`,
       lt(incidents.reportCount, 3),
     ]
 
-    if (data.query) {
-      const q = `%${data.query}%`
-      conditions.push(
-        sql`(${like(incidents.location, q)} OR ${like(incidents.description, q)})`,
-      )
-    }
-
     if (data.startDate) {
       const start = parseLocalDate(data.startDate)
-      conditions.push(gte(incidents.incidentDate, start))
+      baseConditions.push(gte(incidents.incidentDate, start))
     }
 
     if (data.endDate) {
       const end = parseLocalDate(data.endDate)
       end.setDate(end.getDate() + 1)
-      conditions.push(lte(incidents.incidentDate, end))
+      baseConditions.push(lte(incidents.incidentDate, end))
     }
 
-    const results = await db.query.incidents.findMany({
+    // No text query - just date filters
+    if (!data.query) {
+      const results = await db.query.incidents.findMany({
+        with: { videos: true },
+        where: and(...baseConditions),
+        orderBy: [
+          desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
+          desc(incidents.id),
+        ],
+        limit: 50,
+      })
+      return { incidents: results }
+    }
+
+    // Text query - do both keyword and vector search, combine results
+    const resultMap = new Map<
+      number,
+      Awaited<ReturnType<typeof db.query.incidents.findMany>>[0] & {
+        videos: Array<typeof videos.$inferSelect>
+        _score: number
+      }
+    >()
+
+    // 1. Keyword search (always works, even without embeddings)
+    const q = `%${data.query}%`
+    const keywordConditions = [
+      ...baseConditions,
+      sql`(${like(incidents.location, q)} OR ${like(incidents.description, q)})`,
+    ]
+
+    const keywordResults = await db.query.incidents.findMany({
       with: { videos: true },
-      where: and(...conditions),
+      where: and(...keywordConditions),
       orderBy: [
         desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
         desc(incidents.id),
       ],
-      limit: 50,
+      limit: 30,
     })
 
-    return { incidents: results }
+    // Add keyword results with score based on position
+    keywordResults.forEach((incident, idx) => {
+      resultMap.set(incident.id, { ...incident, _score: 100 - idx })
+    })
+
+    // 2. Vector search (only if we have embeddings)
+    try {
+      const { embedding } = await embed({
+        model: gateway('openai/text-embedding-3-small'),
+        value: data.query,
+      })
+      const vectorStr = `[${embedding.join(',')}]`
+
+      // Build date conditions for SQL
+      let dateConditions = ''
+      const args: (string | number)[] = [vectorStr]
+      if (data.startDate) {
+        const start = Math.floor(
+          parseLocalDate(data.startDate).getTime() / 1000,
+        )
+        dateConditions += ' AND i.incident_date >= ?'
+        args.push(start)
+      }
+      if (data.endDate) {
+        const end = parseLocalDate(data.endDate)
+        end.setDate(end.getDate() + 1)
+        dateConditions += ' AND i.incident_date <= ?'
+        args.push(Math.floor(end.getTime() / 1000))
+      }
+
+      const vectorResult = await client.execute({
+        sql: `
+          SELECT i.*, v.id as vid, v.url, v.platform, v.created_at as v_created_at,
+                 vec.distance as vec_distance
+          FROM vector_top_k('incidents_embedding_idx', vector32(?), 30) AS vec
+          JOIN incidents i ON i.rowid = vec.id
+          LEFT JOIN videos v ON v.incident_id = i.id
+          WHERE i.status = 'approved'
+            AND i.deleted_at IS NULL
+            AND i.report_count < 3
+            ${dateConditions}
+          ORDER BY vec.distance ASC
+        `,
+        args,
+      })
+
+      // Group videos and merge with existing results
+      const vectorIncidents = new Map<number, { incident: typeof incidents.$inferSelect & { videos: Array<typeof videos.$inferSelect> }; distance: number }>()
+
+      for (const row of vectorResult.rows) {
+        const id = row.id as number
+        if (!vectorIncidents.has(id)) {
+          vectorIncidents.set(id, {
+            incident: {
+              id,
+              location: row.location as string | null,
+              description: row.description as string | null,
+              embedding: row.embedding as Buffer | null,
+              incidentDate: row.incident_date
+                ? new Date((row.incident_date as number) * 1000)
+                : null,
+              status: row.status as 'approved' | 'hidden',
+              unjustifiedCount: row.unjustified_count as number,
+              justifiedCount: row.justified_count as number,
+              reportCount: row.report_count as number,
+              createdAt: row.created_at
+                ? new Date((row.created_at as number) * 1000)
+                : null,
+              deletedAt: row.deleted_at
+                ? new Date((row.deleted_at as number) * 1000)
+                : null,
+              videos: [],
+            },
+            distance: row.vec_distance as number,
+          })
+        }
+        if (row.vid) {
+          vectorIncidents.get(id)!.incident.videos.push({
+            id: row.vid as number,
+            incidentId: id,
+            url: row.url as string,
+            platform: row.platform as
+              | 'twitter'
+              | 'youtube'
+              | 'tiktok'
+              | 'facebook'
+              | 'instagram'
+              | 'linkedin'
+              | 'pinterest'
+              | 'reddit',
+            createdAt: row.v_created_at
+              ? new Date((row.v_created_at as number) * 1000)
+              : null,
+          })
+        }
+      }
+
+      // Merge vector results - boost score if also in keyword results
+      let idx = 0
+      for (const [id, { incident, distance }] of vectorIncidents) {
+        const vectorScore = 100 - idx - distance * 10 // Lower distance = higher score
+        if (resultMap.has(id)) {
+          // Boost existing keyword match
+          resultMap.get(id)!._score += vectorScore
+        } else {
+          resultMap.set(id, { ...incident, _score: vectorScore })
+        }
+        idx++
+      }
+    } catch {
+      // Vector search failed (no index, no embeddings, etc) - keyword results only
+    }
+
+    // Sort by combined score
+    const sortedResults = Array.from(resultMap.values())
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 50)
+      .map(({ _score, ...incident }) => incident)
+
+    return { incidents: sortedResults }
   })
 
 const getUserVotes = createServerFn({ method: 'GET' })
@@ -131,6 +276,7 @@ const createIncident = createServerFn({ method: 'POST' })
   .inputValidator(
     (data: {
       location?: string
+      description?: string
       incidentDate?: string
       videoUrls: Array<string>
     }) => data,
@@ -167,6 +313,7 @@ const createIncident = createServerFn({ method: 'POST' })
       .insert(incidents)
       .values({
         location: data.location,
+        description: data.description,
         incidentDate: data.incidentDate
           ? parseLocalDate(data.incidentDate)
           : new Date(),
@@ -280,14 +427,19 @@ const addVideoToIncident = createServerFn({ method: 'POST' })
 
 const updateIncidentDetails = createServerFn({ method: 'POST' })
   .inputValidator(
-    (data: { incidentId: number; location?: string; incidentDate?: string }) =>
-      data,
+    (data: {
+      incidentId: number
+      location?: string
+      description?: string
+      incidentDate?: string
+    }) => data,
   )
   .handler(async ({ data }) => {
     await db
       .update(incidents)
       .set({
         location: data.location ?? null,
+        description: data.description ?? null,
         incidentDate: data.incidentDate
           ? parseLocalDate(data.incidentDate)
           : null,
@@ -296,20 +448,55 @@ const updateIncidentDetails = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
+const hideIncident = createServerFn({ method: 'POST' })
+  .inputValidator((data: { incidentId: number }) => data)
+  .handler(async ({ data }) => {
+    const admin = await getAdminUser()
+    if (!admin) return { success: false, error: 'Unauthorized' }
+
+    await db
+      .update(incidents)
+      .set({ deletedAt: new Date() })
+      .where(eq(incidents.id, data.incidentId))
+    return { success: true }
+  })
+
+const deleteIncident = createServerFn({ method: 'POST' })
+  .inputValidator((data: { incidentId: number }) => data)
+  .handler(async ({ data }) => {
+    const admin = await getAdminUser()
+    if (!admin) return { success: false, error: 'Unauthorized' }
+
+    await db.delete(incidents).where(eq(incidents.id, data.incidentId))
+    return { success: true }
+  })
+
+const searchParamsSchema = z.object({
+  q: z.string().optional(),
+  start: z.string().optional(),
+  end: z.string().optional(),
+})
+
 export const Route = createFileRoute('/')({
   component: IncidentFeed,
+  validateSearch: searchParamsSchema,
   loader: async () => {
-    const { incidents, nextOffset } = await getIncidents({ data: {} })
+    const [{ incidents, nextOffset }, admin] = await Promise.all([
+      getIncidents({ data: {} }),
+      getAdminUser(),
+    ])
     const userVotes = await getUserVotes({
       data: { incidentIds: incidents.map((i) => i.id) },
     })
-    return { incidents, nextOffset, userVotes }
+    return { incidents, nextOffset, userVotes, isAdmin: !!admin }
   },
 })
 
 function IncidentFeed() {
   const router = useRouter()
+  const navigate = useNavigate()
   const loaderData = Route.useLoaderData()
+  const { q, start, end } = Route.useSearch()
 
   const [extraIncidents, setExtraIncidents] = useState<
     typeof loaderData.incidents
@@ -325,16 +512,15 @@ function IncidentFeed() {
     (typeof loaderData.incidents)[0] | null
   >(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchStartDate, setSearchStartDate] = useState('')
-  const [searchEndDate, setSearchEndDate] = useState('')
   const [searchResults, setSearchResults] = useState<
     typeof loaderData.incidents | null
   >(null)
   const [isSearching, setIsSearching] = useState(false)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const searchFormRef = useRef<HTMLFormElement>(null)
   const allIncidents = [...loaderData.incidents, ...extraIncidents]
+  const hasSearchParams = q || start || end
 
   // Reset state when loader data changes (navigation)
   const loaderKey = loaderData.incidents.map((i) => i.id).join(',')
@@ -343,6 +529,24 @@ function IncidentFeed() {
     setNextOffset(loaderData.nextOffset)
     setUserVotes(loaderData.userVotes)
   }, [loaderKey, loaderData.nextOffset, loaderData.userVotes])
+
+  // Search when URL params change
+  useEffect(() => {
+    if (!hasSearchParams) {
+      setSearchResults(null)
+      return
+    }
+    setIsSearching(true)
+    searchIncidents({
+      data: {
+        query: q || undefined,
+        startDate: start || undefined,
+        endDate: end || undefined,
+      },
+    })
+      .then((result) => setSearchResults(result.incidents))
+      .finally(() => setIsSearching(false))
+  }, [q, start, end, hasSearchParams])
 
   // Infinite scroll
   useEffect(() => {
@@ -361,33 +565,33 @@ function IncidentFeed() {
     return () => observer.disconnect()
   }, [nextOffset, isLoading])
 
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery && !searchStartDate && !searchEndDate) {
-      setSearchResults(null)
-      return
-    }
-    setIsSearching(true)
-    try {
-      const result = await searchIncidents({
-        data: {
-          query: searchQuery || undefined,
-          startDate: searchStartDate || undefined,
-          endDate: searchEndDate || undefined,
+  const handleSearch = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      const formData = new FormData(e.currentTarget)
+      const query = (formData.get('q') as string)?.trim()
+      const startDate = formData.get('start') as string
+      const endDate = formData.get('end') as string
+
+      if (!query && !startDate && !endDate) return
+
+      setIsSearchOpen(false)
+      navigate({
+        to: '/',
+        search: {
+          q: query || undefined,
+          start: startDate || undefined,
+          end: endDate || undefined,
         },
       })
-      setSearchResults(result.incidents)
-      setIsSearchOpen(false)
-    } finally {
-      setIsSearching(false)
-    }
-  }, [searchQuery, searchStartDate, searchEndDate])
+    },
+    [navigate],
+  )
 
   const clearSearch = useCallback(() => {
-    setSearchQuery('')
-    setSearchStartDate('')
-    setSearchEndDate('')
-    setSearchResults(null)
-  }, [])
+    searchFormRef.current?.reset()
+    navigate({ to: '/', search: {} })
+  }, [navigate])
 
   const loadMore = useCallback(async () => {
     if (!nextOffset || isLoading) return
@@ -509,6 +713,33 @@ function IncidentFeed() {
     toast.success('Reported')
   }, [])
 
+  const handleHide = useCallback(
+    async (incidentId: number) => {
+      const result = await hideIncident({ data: { incidentId } })
+      if (result.success) {
+        toast.success('Hidden')
+        router.invalidate()
+      } else {
+        toast.error('Failed to hide')
+      }
+    },
+    [router],
+  )
+
+  const handleDelete = useCallback(
+    async (incidentId: number) => {
+      if (!confirm('Delete this incident?')) return
+      const result = await deleteIncident({ data: { incidentId } })
+      if (result.success) {
+        toast.success('Deleted')
+        router.invalidate()
+      } else {
+        toast.error('Failed to delete')
+      }
+    },
+    [router],
+  )
+
   const handleAddVideo = useCallback(
     async (url: string) => {
       if (!editingIncident) return
@@ -521,7 +752,7 @@ function IncidentFeed() {
   )
 
   const handleUpdateIncident = useCallback(
-    async (data: { location?: string; incidentDate?: string }) => {
+    async (data: { location?: string; description?: string; incidentDate?: string }) => {
       if (!editingIncident) return
       await updateIncidentDetails({
         data: { incidentId: editingIncident.id, ...data },
@@ -534,6 +765,7 @@ function IncidentFeed() {
   const handleSubmit = useCallback(
     async (data: {
       location?: string
+      description?: string
       incidentDate?: string
       videoUrls: Array<string>
     }) => {
@@ -571,7 +803,11 @@ function IncidentFeed() {
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
                     <Popover.Popup className="z-20 w-64 rounded border border-neutral-200 bg-white p-4">
-                      <div className="space-y-3">
+                      <form
+                        ref={searchFormRef}
+                        onSubmit={handleSearch}
+                        className="space-y-3"
+                      >
                         <div>
                           <label
                             htmlFor="search-query"
@@ -581,10 +817,10 @@ function IncidentFeed() {
                           </label>
                           <input
                             id="search-query"
+                            name="q"
                             type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Los Angeles, arrest..."
+                            defaultValue={q || ''}
+                            placeholder="Minneapolis, arrest..."
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
                         </div>
@@ -597,9 +833,9 @@ function IncidentFeed() {
                           </label>
                           <input
                             id="search-start"
+                            name="start"
                             type="date"
-                            value={searchStartDate}
-                            onChange={(e) => setSearchStartDate(e.target.value)}
+                            defaultValue={start || ''}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
                         </div>
@@ -612,20 +848,20 @@ function IncidentFeed() {
                           </label>
                           <input
                             id="search-end"
+                            name="end"
                             type="date"
-                            value={searchEndDate}
-                            onChange={(e) => setSearchEndDate(e.target.value)}
+                            defaultValue={end || ''}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
                         </div>
                         <button
-                          onClick={handleSearch}
+                          type="submit"
                           disabled={isSearching}
                           className="w-full cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
                         >
                           {isSearching ? 'Searching...' : 'Search'}
                         </button>
-                      </div>
+                      </form>
                     </Popover.Popup>
                   </Popover.Positioner>
                 </Popover.Portal>
@@ -715,6 +951,23 @@ function IncidentFeed() {
                                 >
                                   Report
                                 </Menu.Item>
+                                {loaderData.isAdmin && (
+                                  <>
+                                    <Menu.Separator className="my-1 border-t border-neutral-200" />
+                                    <Menu.Item
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      onClick={() => handleHide(incident.id)}
+                                    >
+                                      Hide
+                                    </Menu.Item>
+                                    <Menu.Item
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      onClick={() => handleDelete(incident.id)}
+                                    >
+                                      Delete
+                                    </Menu.Item>
+                                  </>
+                                )}
                               </Menu.Popup>
                             </Menu.Positioner>
                           </Menu.Portal>
@@ -739,19 +992,23 @@ function IncidentFeed() {
           )}
         </div>
 
-        <SubmitModal
+        <IncidentModal
+          mode="create"
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
         />
 
         {editingIncident && (
-          <EditModal
+          <IncidentModal
+            mode="edit"
             isOpen={true}
-            incidentId={editingIncident.id}
-            location={editingIncident.location}
-            incidentDate={editingIncident.incidentDate}
-            videos={editingIncident.videos}
+            incident={{
+              location: editingIncident.location,
+              description: editingIncident.description,
+              incidentDate: editingIncident.incidentDate,
+              videos: editingIncident.videos,
+            }}
             onClose={() => setEditingIncident(null)}
             onAddVideo={handleAddVideo}
             onUpdate={handleUpdateIncident}

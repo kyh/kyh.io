@@ -20,8 +20,5 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [
-    anonymous(),
-    tanstackStartCookies(), // must be last
-  ],
+  plugins: [anonymous(), tanstackStartCookies()],
 })

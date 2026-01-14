@@ -1,5 +1,8 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { blob, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { relations, sql } from 'drizzle-orm'
+
+// Embedding dimensions for text-embedding-3-small
+export const EMBEDDING_DIMENSIONS = 1536
 
 export type VideoPlatform =
   | 'twitter'
@@ -73,6 +76,7 @@ export const incidents = sqliteTable('incidents', {
   id: integer({ mode: 'number' }).primaryKey({ autoIncrement: true }),
   location: text(),
   description: text(),
+  embedding: blob({ mode: 'buffer' }), // F32_BLOB for vector search
   incidentDate: integer('incident_date', { mode: 'timestamp' }),
   status: text().$type<IncidentStatus>().default('approved').notNull(),
   unjustifiedCount: integer('unjustified_count').default(0).notNull(),

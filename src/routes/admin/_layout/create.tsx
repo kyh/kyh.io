@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { inArray } from 'drizzle-orm'
+import { toast } from 'sonner'
 
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
@@ -13,6 +14,7 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
       urls: Array<string>
       groupAsOne: boolean
       location?: string
+      description?: string
       incidentDate?: string
     }) => data,
   )
@@ -41,6 +43,7 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
         .insert(incidents)
         .values({
           location: data.location || null,
+          description: data.description || null,
           incidentDate,
           status: 'approved',
         })
@@ -63,6 +66,7 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
           .insert(incidents)
           .values({
             location: data.location || null,
+            description: data.description || null,
             incidentDate,
             status: 'approved',
           })
@@ -86,15 +90,10 @@ export const Route = createFileRoute('/admin/_layout/create')({
 
 function AdminCreate() {
   const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
   const [urlsText, setUrlsText] = useState('')
-  const [groupAsOne, setGroupAsOne] = useState(false)
-  const [location, setLocation] = useState('')
-  const [incidentDate, setIncidentDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [result, setResult] = useState<{
-    created: number
-    skipped: number
-  } | null>(null)
+  const [groupAsOne, setGroupAsOne] = useState(false)
 
   const urls = urlsText
     .split('\n')
@@ -102,13 +101,18 @@ function AdminCreate() {
     .filter(Boolean)
   const validUrls = urls.filter((u) => isValidVideoUrl(u))
   const invalidUrls = urls.filter((u) => !isValidVideoUrl(u))
+  const incidentCount = groupAsOne ? 1 : validUrls.length
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (validUrls.length === 0) return
 
+    const formData = new FormData(e.currentTarget)
+    const location = (formData.get('location') as string)?.trim()
+    const description = (formData.get('description') as string)?.trim()
+    const incidentDate = formData.get('incidentDate') as string
+
     setIsSubmitting(true)
-    setResult(null)
 
     try {
       const res = await bulkCreateIncidents({
@@ -116,15 +120,18 @@ function AdminCreate() {
           urls: validUrls,
           groupAsOne,
           location: location || undefined,
+          description: description || undefined,
           incidentDate: incidentDate || undefined,
         },
       })
-      setResult(res)
       if (res.created > 0) {
+        toast.success(`Created ${res.created} incident(s)`)
         setUrlsText('')
-        setLocation('')
-        setIncidentDate('')
+        formRef.current?.reset()
         router.invalidate()
+      }
+      if (res.skipped > 0) {
+        toast(`Skipped ${res.skipped} existing URL(s)`)
       }
     } finally {
       setIsSubmitting(false)
@@ -135,7 +142,7 @@ function AdminCreate() {
     <div>
       <h2 className="mb-4 text-sm font-medium">Bulk Create Incidents</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm text-neutral-500">
             Video URLs (one per line)
@@ -184,44 +191,32 @@ function AdminCreate() {
         <div className="flex gap-4">
           <input
             type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            name="location"
             placeholder="Location (optional)"
             className="flex-1 border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
           />
           <input
             type="date"
-            value={incidentDate}
-            onChange={(e) => setIncidentDate(e.target.value)}
+            name="incidentDate"
             className="border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
           />
         </div>
+
+        <input
+          type="text"
+          name="description"
+          placeholder="Description (optional)"
+          className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+        />
 
         <button
           type="submit"
           disabled={isSubmitting || validUrls.length === 0}
           className="cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting
-            ? 'Creating...'
-            : `Create ${groupAsOne ? '1 incident' : `${validUrls.length} incident${validUrls.length !== 1 ? 's' : ''}`}`}
+          {isSubmitting ? 'Creating...' : `Create ${incidentCount} incident${incidentCount !== 1 ? 's' : ''}`}
         </button>
       </form>
-
-      {result && (
-        <p className="mt-4 text-sm">
-          {result.created > 0 && (
-            <span className="text-green-600">
-              Created {result.created} incident(s).{' '}
-            </span>
-          )}
-          {result.skipped > 0 && (
-            <span className="text-neutral-400">
-              Skipped {result.skipped} existing URL(s).
-            </span>
-          )}
-        </p>
-      )}
     </div>
   )
 }

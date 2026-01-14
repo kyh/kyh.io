@@ -16,7 +16,7 @@ export const Route = createFileRoute('/admin/_layout')({
 function AdminLayout() {
   return (
     <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
-      <div className="max-w-4xl">
+      <div className="max-w-6xl">
         <header className="mb-8 flex items-center justify-between">
           <h1 className="text-base font-normal">Admin</h1>
           <nav className="flex gap-4 text-sm">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 
 import { VideoCarousel } from './VideoCarousel'
@@ -62,11 +63,11 @@ export function IncidentCardContent({
         incidentId={incidentId}
         onSlideChange={setCurrentSlide}
         header={
-          <span>
+          <Link to="/incident/$id" params={{ id: String(incidentId) }}>
             {location && <>{location}</>}
             {location && displayDate && <> · </>}
             {displayDate && formatDate(displayDate)}
-          </span>
+          </Link>
         }
         headerRight={headerRight}
       />
