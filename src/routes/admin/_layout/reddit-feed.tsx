@@ -76,19 +76,16 @@ const getFeedPosts = createServerFn({ method: 'GET' }).handler(async () => {
   }
 
   const xml = await res.text()
-  const allPosts = parseAtomFeed(xml)
+  const posts = parseAtomFeed(xml)
 
   // Get all existing reddit video URLs
   const existingVideos = await db.query.videos.findMany({
     where: (v, { like }) => like(v.url, '%reddit.com%'),
     columns: { url: true },
   })
-  const existingNormalized = new Set(existingVideos.map((v) => normalizeUrl(v.url)))
+  const existingUrls = existingVideos.map((v) => normalizeUrl(v.url))
 
-  // Filter out posts already in database
-  const posts = allPosts.filter((p) => !existingNormalized.has(normalizeUrl(p.link)))
-
-  return { posts }
+  return { posts, existingUrls }
 })
 
 const createFromFeed = createServerFn({ method: 'POST' })
@@ -132,9 +129,10 @@ export const Route = createFileRoute('/admin/_layout/reddit-feed')({
 
 function RedditFeed() {
   const router = useRouter()
-  const { posts } = Route.useLoaderData()
+  const { posts, existingUrls } = Route.useLoaderData()
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [addingUrl, setAddingUrl] = useState<string | null>(null)
+  const existingSet = new Set(existingUrls)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -204,6 +202,7 @@ function RedditFeed() {
             <tbody>
               {posts.map((post) => {
                 const isAdding = addingUrl === post.link
+                const isAdded = existingSet.has(normalizeUrl(post.link))
 
                 return (
                   <tr key={post.id} className="border-b border-neutral-100">
@@ -224,13 +223,17 @@ function RedditFeed() {
                       {formatDate(post.published)}
                     </td>
                     <td className="py-3">
-                      <button
-                        onClick={() => handleAdd(post)}
-                        disabled={isAdding}
-                        className="cursor-pointer text-green-600 hover:text-green-700 disabled:opacity-50"
-                      >
-                        {isAdding ? 'adding...' : '+add'}
-                      </button>
+                      {isAdded ? (
+                        <span className="text-neutral-400">added</span>
+                      ) : (
+                        <button
+                          onClick={() => handleAdd(post)}
+                          disabled={isAdding}
+                          className="cursor-pointer text-green-600 hover:text-green-700 disabled:opacity-50"
+                        >
+                          {isAdding ? 'adding...' : '+add'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )
