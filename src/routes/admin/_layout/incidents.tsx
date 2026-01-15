@@ -5,9 +5,9 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq, isNull } from 'drizzle-orm'
 
+import type { IncidentStatus, VideoPlatform } from '@/db/schema'
 import { useToast } from '@/components/Toast'
 
-import type { IncidentStatus, VideoPlatform } from '@/db/schema'
 import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'

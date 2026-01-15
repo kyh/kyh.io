@@ -532,8 +532,8 @@ function IncidentFeed() {
   >(null)
   const [isSearching, setIsSearching] = useState(false)
 
-  const loadMoreRef = useRef<HTMLDivElement>(null)
   const searchFormRef = useRef<HTMLFormElement>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
   const allIncidents = [...loaderData.incidents, ...extraIncidents]
   const hasSearchParams = q || start || end
 
@@ -566,7 +566,7 @@ function IncidentFeed() {
   // Infinite scroll
   useEffect(() => {
     const ref = loadMoreRef.current
-    if (!ref) return
+    if (!ref || searchResults !== null) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -578,7 +578,7 @@ function IncidentFeed() {
     )
     observer.observe(ref)
     return () => observer.disconnect()
-  }, [nextOffset, isLoading])
+  }, [nextOffset, isLoading, searchResults])
 
   const handleSearch = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -910,7 +910,7 @@ function IncidentFeed() {
                 const userVote = userVotes[incident.id]
 
                 return (
-                  <IncidentCard key={incident.id} incidentId={incident.id}>
+                  <LazyIncidentCard key={incident.id} incidentId={incident.id}>
                     <IncidentCardContent
                       incidentId={incident.id}
                       location={incident.location}
@@ -982,7 +982,7 @@ function IncidentFeed() {
                         </Menu.Root>
                       }
                     />
-                  </IncidentCard>
+                  </LazyIncidentCard>
                 )
               })}
             </div>
@@ -998,6 +998,7 @@ function IncidentFeed() {
               )}
             </div>
           )}
+
         </div>
 
         <IncidentModal
@@ -1027,7 +1028,8 @@ function IncidentFeed() {
   )
 }
 
-function IncidentCard({
+// Lazy loads children when visible, prevents embed loading until in viewport
+function LazyIncidentCard({
   incidentId,
   children,
 }: {
@@ -1035,6 +1037,7 @@ function IncidentCard({
   children: React.ReactNode
 }) {
   const ref = useRef<HTMLElement>(null)
+  const [isVisible, setIsVisible] = useState(false)
   const shortcuts = useKeyboardShortcuts()
 
   useEffect(() => {
@@ -1043,9 +1046,31 @@ function IncidentCard({
     return () => shortcuts.unregisterIncident(incidentId)
   }, [incidentId, shortcuts])
 
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <article ref={ref} className="py-6 first:pt-0">
-      {children}
+      {isVisible ? (
+        children
+      ) : (
+        <div className="h-[300px] animate-pulse bg-neutral-50" />
+      )}
     </article>
   )
 }

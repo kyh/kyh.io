@@ -5,8 +5,8 @@ import {
   createRootRoute,
 } from '@tanstack/react-router'
 
-import { ToastProvider } from '@/components/Toast'
 import appCss from '../styles.css?url'
+import { ToastProvider } from '@/components/Toast'
 
 const siteUrl = 'https://policingice.com'
 const siteName = 'Policing ICE'

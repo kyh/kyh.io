@@ -64,7 +64,6 @@ function RedditEmbed({ url }: { url: string }) {
       height="500"
       width="100%"
       scrolling="no"
-      loading="lazy"
       title="Reddit post"
     />
   )
@@ -109,7 +108,7 @@ export function VideoEmbed({ url, platform }: VideoEmbedProps) {
   }
 
   return (
-    <div className="min-h-[400px] w-full max-w-[550px]">
+    <div className="w-full max-w-[550px]">
       {Embed && <Embed url={url} width="100%" />}
     </div>
   )

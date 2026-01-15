@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -34,6 +34,8 @@ export function VideoCarousel({
     containScroll: 'trimSnaps',
   })
   const shortcuts = useKeyboardShortcuts()
+  const slidesRef = useRef<Map<number, HTMLDivElement>>(new Map())
+  const [containerHeight, setContainerHeight] = useState<number | undefined>()
 
   // Register carousel with keyboard shortcuts provider
   useEffect(() => {
@@ -44,6 +46,26 @@ export function VideoCarousel({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
+
+  // Update container height based on current slide
+  const updateHeight = useCallback(() => {
+    const slide = slidesRef.current.get(selectedIndex)
+    if (slide) {
+      setContainerHeight(slide.offsetHeight)
+    }
+  }, [selectedIndex])
+
+  // Observe slide height changes (for when embeds load)
+  useEffect(() => {
+    const slide = slidesRef.current.get(selectedIndex)
+    if (!slide) return
+
+    updateHeight()
+
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(slide)
+    return () => observer.disconnect()
+  }, [selectedIndex, updateHeight])
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return
@@ -112,10 +134,21 @@ export function VideoCarousel({
         </div>
       )}
 
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-3">
-          {videos.map((video) => (
-            <div key={video.id} className="min-w-0 flex-[0_0_100%]">
+      <div
+        className="overflow-hidden transition-[height] duration-300"
+        ref={emblaRef}
+        style={{ height: containerHeight }}
+      >
+        <div className="flex items-start gap-3">
+          {videos.map((video, index) => (
+            <div
+              key={video.id}
+              className="min-w-0 flex-[0_0_100%]"
+              ref={(el) => {
+                if (el) slidesRef.current.set(index, el)
+                else slidesRef.current.delete(index)
+              }}
+            >
               <VideoEmbed url={video.url} platform={video.platform} />
             </div>
           ))}

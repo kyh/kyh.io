@@ -3,8 +3,8 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Field } from '@base-ui/react/field'
 import { Form } from '@base-ui/react/form'
 
-import { useToast } from '@/components/Toast'
 import type { VideoPlatform } from '@/db/schema'
+import { useToast } from '@/components/Toast'
 import { isValidVideoUrl } from '@/lib/video-utils'
 
 interface Video {
