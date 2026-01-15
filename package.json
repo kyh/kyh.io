@@ -35,7 +35,6 @@
     "react-dom": "^19.2.0",
     "react-social-media-embed": "^2.5.18",
     "scriptjs": "^2.5.9",
-    "sonner": "^2.0.7",
     "tailwindcss": "^4.0.6",
     "vite-tsconfig-paths": "^6.0.2",
     "zod": "^4.3.5"

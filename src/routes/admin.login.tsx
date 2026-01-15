@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Field } from '@base-ui/react/field'
+import { Form } from '@base-ui/react/form'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { authClient } from '@/lib/auth-client'
@@ -9,59 +11,62 @@ export const Route = createFileRoute('/admin/login')({
 
 function AdminLogin() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
-
-    try {
-      const result = await authClient.signIn.email({ email, password })
-      if (result.error) {
-        setError(result.error.message || 'Login failed')
-      } else {
-        navigate({ to: '/admin' })
-      }
-    } catch {
-      setError('Login failed')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm">
         <h1 className="mb-8 text-base font-normal">Admin Login</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
+        <Form
+          errors={errors}
+          onClearErrors={setErrors}
+          className="space-y-4"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            setErrors({})
+            setIsLoading(true)
+
+            const formData = new FormData(e.currentTarget)
+            const email = formData.get('email') as string
+            const password = formData.get('password') as string
+
+            try {
+              const result = await authClient.signIn.email({ email, password })
+              if (result.error) {
+                setErrors({ form: result.error.message || 'Login failed' })
+              } else {
+                navigate({ to: '/admin' })
+              }
+            } catch {
+              setErrors({ form: 'Login failed' })
+            } finally {
+              setIsLoading(false)
+            }
+          }}
+        >
+          <Field.Root name="email">
+            <Field.Control
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               required
               className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
             />
-          </div>
+            <Field.Error className="mt-1 text-sm text-red-600" />
+          </Field.Root>
 
-          <div>
-            <input
+          <Field.Root name="password">
+            <Field.Control
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               required
               className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
             />
-          </div>
+            <Field.Error className="mt-1 text-sm text-red-600" />
+          </Field.Root>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
 
           <button
             type="submit"
@@ -70,7 +75,7 @@ function AdminLogin() {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
-        </form>
+        </Form>
       </div>
     </div>
   )

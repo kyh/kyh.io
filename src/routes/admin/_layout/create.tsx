@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
+import { Field } from '@base-ui/react/field'
+import { Form } from '@base-ui/react/form'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { inArray } from 'drizzle-orm'
-import { toast } from 'sonner'
 
+import { useToast } from '@/components/Toast'
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
 import { detectPlatform, isValidVideoUrl } from '@/lib/video-utils'
@@ -35,7 +37,9 @@ const bulkCreateIncidents = createServerFn({ method: 'POST' })
       return { created: 0, skipped: validUrls.length }
     }
 
-    const incidentDate = data.incidentDate ? new Date(data.incidentDate) : new Date()
+    const incidentDate = data.incidentDate
+      ? new Date(data.incidentDate)
+      : new Date()
 
     if (data.groupAsOne) {
       // Create single incident with all videos
@@ -90,6 +94,7 @@ export const Route = createFileRoute('/admin/_layout/create')({
 
 function AdminCreate() {
   const router = useRouter()
+  const toast = useToast()
   const formRef = useRef<HTMLFormElement>(null)
   const [urlsText, setUrlsText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -103,58 +108,63 @@ function AdminCreate() {
   const invalidUrls = urls.filter((u) => !isValidVideoUrl(u))
   const incidentCount = groupAsOne ? 1 : validUrls.length
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (validUrls.length === 0) return
-
-    const formData = new FormData(e.currentTarget)
-    const location = (formData.get('location') as string)?.trim()
-    const description = (formData.get('description') as string)?.trim()
-    const incidentDate = formData.get('incidentDate') as string
-
-    setIsSubmitting(true)
-
-    try {
-      const res = await bulkCreateIncidents({
-        data: {
-          urls: validUrls,
-          groupAsOne,
-          location: location || undefined,
-          description: description || undefined,
-          incidentDate: incidentDate || undefined,
-        },
-      })
-      if (res.created > 0) {
-        toast.success(`Created ${res.created} incident(s)`)
-        setUrlsText('')
-        formRef.current?.reset()
-        router.invalidate()
-      }
-      if (res.skipped > 0) {
-        toast(`Skipped ${res.skipped} existing URL(s)`)
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
     <div>
       <h2 className="mb-4 text-sm font-medium">Bulk Create Incidents</h2>
 
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm text-neutral-500">
+      <Form
+        ref={formRef}
+        className="space-y-4"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (validUrls.length === 0) return
+
+          const formData = new FormData(e.currentTarget)
+          const location = (formData.get('location') as string)?.trim()
+          const description = (formData.get('description') as string)?.trim()
+          const incidentDate = formData.get('incidentDate') as string
+
+          setIsSubmitting(true)
+
+          try {
+            const res = await bulkCreateIncidents({
+              data: {
+                urls: validUrls,
+                groupAsOne,
+                location: location || undefined,
+                description: description || undefined,
+                incidentDate: incidentDate || undefined,
+              },
+            })
+            if (res.created > 0) {
+              toast.success(`Created ${res.created} incident(s)`)
+              setUrlsText('')
+              formRef.current?.reset()
+              router.invalidate()
+            }
+            if (res.skipped > 0) {
+              toast.show(`Skipped ${res.skipped} existing URL(s)`)
+            }
+          } finally {
+            setIsSubmitting(false)
+          }
+        }}
+      >
+        <Field.Root name="urls">
+          <Field.Label className="mb-1 block text-sm text-neutral-500">
             Video URLs (one per line)
-          </label>
-          <textarea
+          </Field.Label>
+          <Field.Control
+            render={<textarea />}
             value={urlsText}
-            onChange={(e) => setUrlsText(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setUrlsText(e.target.value)
+            }
             rows={8}
             className="w-full rounded border border-neutral-200 bg-transparent p-2 text-sm outline-none focus:border-neutral-400"
             placeholder="https://x.com/user/status/123&#10;https://youtube.com/watch?v=abc&#10;https://tiktok.com/@user/video/456"
           />
-        </div>
+        </Field.Root>
 
         {urls.length > 0 && (
           <div className="text-sm">
@@ -189,34 +199,39 @@ function AdminCreate() {
         </div>
 
         <div className="flex gap-4">
-          <input
-            type="text"
-            name="location"
-            placeholder="Location (optional)"
-            className="flex-1 border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
-          />
-          <input
-            type="date"
-            name="incidentDate"
-            className="border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
-          />
+          <Field.Root name="location" className="flex-1">
+            <Field.Control
+              type="text"
+              placeholder="Location (optional)"
+              className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+            />
+          </Field.Root>
+          <Field.Root name="incidentDate">
+            <Field.Control
+              type="date"
+              className="border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+            />
+          </Field.Root>
         </div>
 
-        <input
-          type="text"
-          name="description"
-          placeholder="Description (optional)"
-          className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
-        />
+        <Field.Root name="description">
+          <Field.Control
+            type="text"
+            placeholder="Description (optional)"
+            className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+          />
+        </Field.Root>
 
         <button
           type="submit"
           disabled={isSubmitting || validUrls.length === 0}
           className="cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : `Create ${incidentCount} incident${incidentCount !== 1 ? 's' : ''}`}
+          {isSubmitting
+            ? 'Creating...'
+            : `Create ${incidentCount} incident${incidentCount !== 1 ? 's' : ''}`}
         </button>
-      </form>
+      </Form>
     </div>
   )
 }

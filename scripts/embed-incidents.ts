@@ -6,7 +6,7 @@ config({ path: '.env.local' })
 
 const { client, db } = await import('../src/db/index')
 
-async function generateEmbedding(text: string): Promise<number[]> {
+async function generateEmbedding(text: string): Promise<Array<number>> {
   const { embedding } = await embed({
     model: gateway('openai/text-embedding-3-small'),
     value: text,
@@ -14,7 +14,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return embedding
 }
 
-function vectorToString(vector: number[]): string {
+function vectorToString(vector: Array<number>): string {
   return `[${vector.join(',')}]`
 }
 
@@ -52,7 +52,9 @@ async function main() {
       continue
     }
 
-    console.log(`Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`)
+    console.log(
+      `Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`,
+    )
 
     try {
       const embedding = await generateEmbedding(textToEmbed)

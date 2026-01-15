@@ -4,8 +4,8 @@ import {
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
-import { Toaster } from 'sonner'
 
+import { ToastProvider } from '@/components/Toast'
 import appCss from '../styles.css?url'
 
 const siteUrl = 'https://policingice.com'
@@ -41,9 +41,18 @@ export const Route = createRootRoute({
       { rel: 'stylesheet', href: appCss },
       { rel: 'canonical', href: siteUrl },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-      { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/favicon-96x96.png' },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '96x96',
+        href: '/favicon-96x96.png',
+      },
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+      {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: '/apple-touch-icon.png',
+      },
       { rel: 'manifest', href: '/site.webmanifest' },
     ],
   }),
@@ -58,14 +67,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white"
-        >
-          Skip to content
-        </a>
-        {children}
-        <Toaster position="bottom-center" />
+        <ToastProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white"
+          >
+            Skip to content
+          </a>
+          {children}
+        </ToastProvider>
         <Scripts />
       </body>
     </html>

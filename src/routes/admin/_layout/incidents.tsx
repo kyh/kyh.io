@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react'
+import { Dialog } from '@base-ui/react/dialog'
+import { Form } from '@base-ui/react/form'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq, isNull } from 'drizzle-orm'
-import { X } from 'lucide-react'
-import { toast } from 'sonner'
 
-import { VideoCarousel } from '@/components/VideoCarousel'
+import { useToast } from '@/components/Toast'
+
 import type { IncidentStatus, VideoPlatform } from '@/db/schema'
+import { VideoCarousel } from '@/components/VideoCarousel'
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
 import { detectPlatform } from '@/lib/video-utils'
@@ -122,8 +124,13 @@ interface IncidentEditRowProps {
   onSaved: () => void
 }
 
-function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) {
+function IncidentEditRow({
+  incident,
+  onCancel,
+  onSaved,
+}: IncidentEditRowProps) {
   const router = useRouter()
+  const toast = useToast()
   const newVideoRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -133,7 +140,8 @@ function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) 
       data: {
         id: incident.id,
         location: (formData.get('location') as string)?.trim() || undefined,
-        description: (formData.get('description') as string)?.trim() || undefined,
+        description:
+          (formData.get('description') as string)?.trim() || undefined,
         incidentDate: (formData.get('incidentDate') as string) || undefined,
       },
     })
@@ -142,7 +150,11 @@ function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) 
     onSaved()
   }
 
-  const handleUpdateVideo = async (videoId: number, newUrl: string, originalUrl: string) => {
+  const handleUpdateVideo = async (
+    videoId: number,
+    newUrl: string,
+    originalUrl: string,
+  ) => {
     if (newUrl && newUrl !== originalUrl) {
       await updateVideo({ data: { id: videoId, url: newUrl } })
       router.invalidate()
@@ -204,7 +216,13 @@ function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         />
       </td>
       <td className="py-3 pr-3">
-        <span className={incident.status === 'approved' ? 'text-green-600' : 'text-neutral-400'}>
+        <span
+          className={
+            incident.status === 'approved'
+              ? 'text-green-600'
+              : 'text-neutral-400'
+          }
+        >
           {incident.status}
         </span>
       </td>
@@ -252,7 +270,7 @@ function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         )}
       </td>
       <td className="py-3 text-neutral-400">
-        <form id={formId} onSubmit={handleSubmit} className="hidden" />
+        <Form id={formId} onSubmit={handleSubmit} className="hidden" />
         <button
           type="submit"
           form={formId}
@@ -261,7 +279,10 @@ function IncidentEditRow({ incident, onCancel, onSaved }: IncidentEditRowProps) 
           save
         </button>
         {' · '}
-        <button onClick={onCancel} className="cursor-pointer hover:text-neutral-900">
+        <button
+          onClick={onCancel}
+          className="cursor-pointer hover:text-neutral-900"
+        >
           cancel
         </button>
       </td>
@@ -300,11 +321,17 @@ function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
 
 function AdminIncidents() {
   const router = useRouter()
+  const toast = useToast()
   const allIncidents = Route.useLoaderData()
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(null)
+  const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(
+    null,
+  )
 
-  const handleToggleStatus = async (id: number, currentStatus: IncidentStatus) => {
+  const handleToggleStatus = async (
+    id: number,
+    currentStatus: IncidentStatus,
+  ) => {
     const result = await toggleIncidentStatus({ data: { id, currentStatus } })
     router.invalidate()
     toast.success(result.newStatus === 'approved' ? 'Approved' : 'Hidden')
@@ -328,112 +355,124 @@ function AdminIncidents() {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-left text-neutral-500">
-              <th className="py-2 pr-3 font-normal">ID</th>
-              <th className="py-2 pr-3 font-normal">Location</th>
-              <th className="py-2 pr-3 font-normal">Description</th>
-              <th className="py-2 pr-3 font-normal">Date</th>
-              <th className="py-2 pr-3 font-normal">Status</th>
-              <th className="py-2 pr-3 font-normal">Videos</th>
-              <th className="py-2 pr-3 font-normal">Votes</th>
-              <th className="py-2 pr-3 font-normal">Reports</th>
-              <th className="py-2 font-normal">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allIncidents.map((incident) =>
-              editingId === incident.id ? (
-                <IncidentEditRow
-                  key={incident.id}
-                  incident={incident}
-                  onCancel={() => setEditingId(null)}
-                  onSaved={() => setEditingId(null)}
-                />
-              ) : (
-                <tr key={incident.id} className="border-b border-neutral-100">
-                  <td className="py-3 pr-3">#{incident.id}</td>
-                  <td className="py-3 pr-3">{incident.location || '—'}</td>
-                  <td className="py-3 pr-3 max-w-48 truncate" title={incident.description || ''}>{incident.description || '—'}</td>
-                  <td className="py-3 pr-3">{formatDate(incident.incidentDate)}</td>
-                  <td className="py-3 pr-3">
-                    <button
-                      onClick={() => handleToggleStatus(incident.id, incident.status)}
-                      className="cursor-pointer"
+            <thead>
+              <tr className="border-b border-neutral-200 text-left text-neutral-500">
+                <th className="py-2 pr-3 font-normal">ID</th>
+                <th className="py-2 pr-3 font-normal">Location</th>
+                <th className="py-2 pr-3 font-normal">Description</th>
+                <th className="py-2 pr-3 font-normal">Date</th>
+                <th className="py-2 pr-3 font-normal">Status</th>
+                <th className="py-2 pr-3 font-normal">Videos</th>
+                <th className="py-2 pr-3 font-normal">Votes</th>
+                <th className="py-2 pr-3 font-normal">Reports</th>
+                <th className="py-2 font-normal">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allIncidents.map((incident) =>
+                editingId === incident.id ? (
+                  <IncidentEditRow
+                    key={incident.id}
+                    incident={incident}
+                    onCancel={() => setEditingId(null)}
+                    onSaved={() => setEditingId(null)}
+                  />
+                ) : (
+                  <tr key={incident.id} className="border-b border-neutral-100">
+                    <td className="py-3 pr-3">#{incident.id}</td>
+                    <td className="py-3 pr-3">{incident.location || '—'}</td>
+                    <td
+                      className="py-3 pr-3 max-w-48 truncate"
+                      title={incident.description || ''}
                     >
-                      {incident.status === 'approved' ? (
-                        <span className="text-green-600">approved</span>
+                      {incident.description || '—'}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {formatDate(incident.incidentDate)}
+                    </td>
+                    <td className="py-3 pr-3">
+                      <button
+                        onClick={() =>
+                          handleToggleStatus(incident.id, incident.status)
+                        }
+                        className="cursor-pointer"
+                      >
+                        {incident.status === 'approved' ? (
+                          <span className="text-green-600">approved</span>
+                        ) : (
+                          <span className="text-neutral-400">hidden</span>
+                        )}
+                      </button>
+                    </td>
+                    <td className="py-3 pr-3">{incident.videos.length}</td>
+                    <td className="py-3 pr-3 text-neutral-400">
+                      {incident.unjustifiedCount + incident.justifiedCount}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {incident.reportCount > 0 ? (
+                        <span className="text-red-500">
+                          {incident.reportCount}
+                        </span>
                       ) : (
-                        <span className="text-neutral-400">hidden</span>
+                        <span className="text-neutral-300">0</span>
                       )}
-                    </button>
-                  </td>
-                  <td className="py-3 pr-3">{incident.videos.length}</td>
-                  <td className="py-3 pr-3 text-neutral-400">
-                    {incident.unjustifiedCount + incident.justifiedCount}
-                  </td>
-                  <td className="py-3 pr-3">
-                    {incident.reportCount > 0 ? (
-                      <span className="text-red-500">{incident.reportCount}</span>
-                    ) : (
-                      <span className="text-neutral-300">0</span>
-                    )}
-                  </td>
-                  <td className="py-3 text-neutral-400">
-                    <button
-                      onClick={() => setPreviewingIncident(incident)}
-                      className="cursor-pointer hover:text-neutral-900"
-                    >
-                      preview
-                    </button>
-                    {' · '}
-                    <button
-                      onClick={() => setEditingId(incident.id)}
-                      className="cursor-pointer hover:text-neutral-900"
-                    >
-                      edit
-                    </button>
-                    {' · '}
-                    <button
-                      onClick={() => handleDelete(incident.id)}
-                      className="cursor-pointer hover:text-red-600"
-                    >
-                      delete
-                    </button>
-                  </td>
-                </tr>
-              ),
-            )}
-          </tbody>
+                    </td>
+                    <td className="py-3 text-neutral-400">
+                      <button
+                        onClick={() => setPreviewingIncident(incident)}
+                        className="cursor-pointer hover:text-neutral-900"
+                      >
+                        preview
+                      </button>
+                      {' · '}
+                      <button
+                        onClick={() => setEditingId(incident.id)}
+                        className="cursor-pointer hover:text-neutral-900"
+                      >
+                        edit
+                      </button>
+                      {' · '}
+                      <button
+                        onClick={() => handleDelete(incident.id)}
+                        className="cursor-pointer hover:text-red-600"
+                      >
+                        delete
+                      </button>
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
           </table>
         </div>
       )}
 
-      {previewingIncident && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setPreviewingIncident(null)}
-        >
-          <div
-            className="relative w-full max-w-xl rounded-lg bg-white p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setPreviewingIncident(null)}
-              className="absolute right-4 top-4 cursor-pointer text-neutral-400 hover:text-neutral-900"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="mb-4 text-sm text-neutral-500">
-              #{previewingIncident.id}
-              {previewingIncident.location && ` · ${previewingIncident.location}`}
-              {previewingIncident.incidentDate &&
-                ` · ${formatDate(previewingIncident.incidentDate)}`}
-            </div>
-            <VideoCarousel videos={previewingIncident.videos} />
-          </div>
-        </div>
-      )}
+      <Dialog.Root
+        open={!!previewingIncident}
+        onOpenChange={(open) => !open && setPreviewingIncident(null)}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6">
+            <Dialog.Title className="sr-only">Preview incident</Dialog.Title>
+            <Dialog.Close className="absolute right-4 top-4 cursor-pointer text-neutral-400 hover:text-neutral-900">
+              ×
+            </Dialog.Close>
+            {previewingIncident && (
+              <>
+                <div className="mb-4 text-sm text-neutral-500">
+                  #{previewingIncident.id}
+                  {previewingIncident.location &&
+                    ` · ${previewingIncident.location}`}
+                  {previewingIncident.incidentDate &&
+                    ` · ${formatDate(previewingIncident.incidentDate)}`}
+                </div>
+                <VideoCarousel videos={previewingIncident.videos} />
+              </>
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }

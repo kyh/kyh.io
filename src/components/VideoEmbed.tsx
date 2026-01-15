@@ -52,7 +52,8 @@ function RedditEmbed({ url }: { url: string }) {
   // e.g., https://www.reddit.com/r/sub/comments/id/title/
   // becomes https://www.redditmedia.com/r/sub/comments/id/title/?ref_source=embed&embed=true
   const cleanUrl = url.split('?')[0].replace(/\/$/, '')
-  const embedUrl = cleanUrl.replace('www.reddit.com', 'www.redditmedia.com') +
+  const embedUrl =
+    cleanUrl.replace('www.reddit.com', 'www.redditmedia.com') +
     '/?ref_source=embed&ref=share&embed=true&showmedia=true&showedits=false'
 
   return (
@@ -63,6 +64,7 @@ function RedditEmbed({ url }: { url: string }) {
       height="500"
       width="100%"
       scrolling="no"
+      loading="lazy"
       title="Reddit post"
     />
   )

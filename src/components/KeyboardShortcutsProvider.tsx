@@ -8,9 +8,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { EmblaCarouselType } from 'embla-carousel'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 
 interface CarouselRef {
   id: number

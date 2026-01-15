@@ -1,17 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Field } from '@base-ui/react/field'
+import { Form } from '@base-ui/react/form'
 import { Menu } from '@base-ui/react/menu'
 import { Popover } from '@base-ui/react/popover'
-import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
+import {
+  Link,
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { and, desc, eq, gte, like, lt, lte, sql } from 'drizzle-orm'
 import { MoreHorizontal, Search, X } from 'lucide-react'
-import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { embed, gateway } from 'ai'
 
 import { IncidentCardContent } from '@/components/IncidentCardContent'
+import { useToast } from '@/components/Toast'
 import { IncidentModal } from '@/components/IncidentModal'
 import {
   KeyboardShortcutsProvider,
@@ -37,7 +44,10 @@ const getIncidents = createServerFn({ method: 'GET' })
     const offset = data.offset ?? 0
     const results = await db.query.incidents.findMany({
       with: { videos: true },
-      where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
+      where: (
+        incidents,
+        { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp },
+      ) =>
         andOp(
           eqOp(incidents.status, 'approved'),
           isNullOp(incidents.deletedAt),
@@ -60,11 +70,7 @@ const getIncidents = createServerFn({ method: 'GET' })
 
 const searchIncidents = createServerFn({ method: 'GET' })
   .inputValidator(
-    (data: {
-      query?: string
-      startDate?: string
-      endDate?: string
-    }) => data,
+    (data: { query?: string; startDate?: string; endDate?: string }) => data,
   )
   .handler(async ({ data }) => {
     const baseConditions = [
@@ -139,7 +145,7 @@ const searchIncidents = createServerFn({ method: 'GET' })
 
       // Build date conditions for SQL
       let dateConditions = ''
-      const args: (string | number)[] = [vectorStr]
+      const args: Array<string | number> = [vectorStr]
       if (data.startDate) {
         const start = Math.floor(
           parseLocalDate(data.startDate).getTime() / 1000,
@@ -171,7 +177,15 @@ const searchIncidents = createServerFn({ method: 'GET' })
       })
 
       // Group videos and merge with existing results
-      const vectorIncidents = new Map<number, { incident: typeof incidents.$inferSelect & { videos: Array<typeof videos.$inferSelect> }; distance: number }>()
+      const vectorIncidents = new Map<
+        number,
+        {
+          incident: typeof incidents.$inferSelect & {
+            videos: Array<typeof videos.$inferSelect>
+          }
+          distance: number
+        }
+      >()
 
       for (const row of vectorResult.rows) {
         const id = row.id as number
@@ -495,6 +509,7 @@ export const Route = createFileRoute('/')({
 function IncidentFeed() {
   const router = useRouter()
   const navigate = useNavigate()
+  const toast = useToast()
   const loaderData = Route.useLoaderData()
   const { q, start, end } = Route.useSearch()
 
@@ -615,7 +630,7 @@ function IncidentFeed() {
   const handleVote = useCallback(
     async (incidentId: number, type: 'unjustified' | 'justified') => {
       // Ensure user has session (creates anonymous if needed)
-      let session = await authClient.getSession()
+      const session = await authClient.getSession()
       if (!session.data) {
         await authClient.signIn.anonymous()
       }
@@ -752,7 +767,11 @@ function IncidentFeed() {
   )
 
   const handleUpdateIncident = useCallback(
-    async (data: { location?: string; description?: string; incidentDate?: string }) => {
+    async (data: {
+      location?: string
+      description?: string
+      incidentDate?: string
+    }) => {
       if (!editingIncident) return
       await updateIncidentDetails({
         data: { incidentId: editingIncident.id, ...data },
@@ -790,10 +809,7 @@ function IncidentFeed() {
           <header className="mb-12">
             <div className="flex items-center justify-between">
               <h1 className="text-base font-normal">Policing ICE</h1>
-              <Popover.Root
-                open={isSearchOpen}
-                onOpenChange={setIsSearchOpen}
-              >
+              <Popover.Root open={isSearchOpen} onOpenChange={setIsSearchOpen}>
                 <Popover.Trigger
                   className="cursor-pointer text-neutral-400 hover:text-neutral-900"
                   aria-label="Search incidents"
@@ -803,57 +819,42 @@ function IncidentFeed() {
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
                     <Popover.Popup className="z-20 w-64 rounded border border-neutral-200 bg-white p-4">
-                      <form
+                      <Form
                         ref={searchFormRef}
                         onSubmit={handleSearch}
                         className="space-y-3"
                       >
-                        <div>
-                          <label
-                            htmlFor="search-query"
-                            className="mb-1 block text-xs text-neutral-500"
-                          >
+                        <Field.Root name="q">
+                          <Field.Label className="mb-1 block text-xs text-neutral-500">
                             Location or description
-                          </label>
-                          <input
-                            id="search-query"
-                            name="q"
+                          </Field.Label>
+                          <Field.Control
                             type="text"
                             defaultValue={q || ''}
                             placeholder="Minneapolis, arrest..."
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="search-start"
-                            className="mb-1 block text-xs text-neutral-500"
-                          >
+                        </Field.Root>
+                        <Field.Root name="start">
+                          <Field.Label className="mb-1 block text-xs text-neutral-500">
                             From date
-                          </label>
-                          <input
-                            id="search-start"
-                            name="start"
+                          </Field.Label>
+                          <Field.Control
                             type="date"
                             defaultValue={start || ''}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="search-end"
-                            className="mb-1 block text-xs text-neutral-500"
-                          >
+                        </Field.Root>
+                        <Field.Root name="end">
+                          <Field.Label className="mb-1 block text-xs text-neutral-500">
                             To date
-                          </label>
-                          <input
-                            id="search-end"
-                            name="end"
+                          </Field.Label>
+                          <Field.Control
                             type="date"
                             defaultValue={end || ''}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
-                        </div>
+                        </Field.Root>
                         <button
                           type="submit"
                           disabled={isSearching}
@@ -861,7 +862,7 @@ function IncidentFeed() {
                         >
                           {isSearching ? 'Searching...' : 'Search'}
                         </button>
-                      </form>
+                      </Form>
                     </Popover.Popup>
                   </Popover.Positioner>
                 </Popover.Portal>
@@ -882,7 +883,8 @@ function IncidentFeed() {
           {searchResults !== null && (
             <div className="mb-6 flex items-center gap-2 text-sm">
               <span className="text-neutral-500">
-                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                {searchResults.length} result
+                {searchResults.length !== 1 ? 's' : ''}
               </span>
               <button
                 onClick={clearSearch}
@@ -896,7 +898,9 @@ function IncidentFeed() {
 
           {(searchResults ?? allIncidents).length === 0 ? (
             <p className="text-sm text-neutral-500">
-              {searchResults !== null ? 'No results found.' : 'No incidents yet.'}
+              {searchResults !== null
+                ? 'No results found.'
+                : 'No incidents yet.'}
             </p>
           ) : (
             <div className="divide-y divide-neutral-200">
@@ -926,7 +930,11 @@ function IncidentFeed() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Menu.Trigger>
                           <Menu.Portal>
-                            <Menu.Positioner side="bottom" align="end" sideOffset={6}>
+                            <Menu.Positioner
+                              side="bottom"
+                              align="end"
+                              sideOffset={6}
+                            >
                               <Menu.Popup className="z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 text-sm">
                                 <Menu.Item
                                   className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"

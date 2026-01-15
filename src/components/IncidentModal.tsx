@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { toast } from 'sonner'
+import { Field } from '@base-ui/react/field'
+import { Form } from '@base-ui/react/form'
 
+import { useToast } from '@/components/Toast'
 import type { VideoPlatform } from '@/db/schema'
 import { isValidVideoUrl } from '@/lib/video-utils'
 
@@ -43,6 +45,7 @@ type IncidentModalProps = CreateModeProps | EditModeProps
 
 export function IncidentModal(props: IncidentModalProps) {
   const { isOpen, onClose, mode } = props
+  const toast = useToast()
 
   const formRef = useRef<HTMLFormElement>(null)
   const addVideoRef = useRef<HTMLInputElement>(null)
@@ -80,7 +83,10 @@ export function IncidentModal(props: IncidentModalProps) {
 
   const validateUrl = (key: number, value: string) => {
     if (value.trim() && !isValidVideoUrl(value)) {
-      setUrlErrors((prev) => ({ ...prev, [key]: 'Use a supported platform link' }))
+      setUrlErrors((prev) => ({
+        ...prev,
+        [key]: 'Use a supported platform link',
+      }))
     } else {
       setUrlErrors((prev) => {
         const next = { ...prev }
@@ -128,7 +134,9 @@ export function IncidentModal(props: IncidentModalProps) {
         .filter((url) => url && isValidVideoUrl(url))
 
       if (videoUrls.length === 0) {
-        setUrlErrors({ [inputKeys[0]]: 'At least one valid video URL required' })
+        setUrlErrors({
+          [inputKeys[0]]: 'At least one valid video URL required',
+        })
         return
       }
 
@@ -172,7 +180,7 @@ export function IncidentModal(props: IncidentModalProps) {
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
         <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 bg-white p-6">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             {/* Video URLs - Create mode */}
             {mode === 'create' && (
               <div>
@@ -181,13 +189,13 @@ export function IncidentModal(props: IncidentModalProps) {
                 </label>
                 <div className="space-y-2">
                   {inputKeys.map((key, index) => (
-                    <div key={key}>
+                    <Field.Root key={key} name={`video-${key}`}>
                       <div className="flex gap-2">
-                        <input
-                          id={`video-${key}`}
-                          name={`video-${key}`}
+                        <Field.Control
                           type="url"
-                          onBlur={(e) => validateUrl(key, e.target.value)}
+                          onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
+                            validateUrl(key, e.target.value)
+                          }
                           placeholder="https://x.com/..."
                           className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           aria-label={`Video URL ${index + 1}`}
@@ -204,9 +212,11 @@ export function IncidentModal(props: IncidentModalProps) {
                         )}
                       </div>
                       {urlErrors[key] && (
-                        <p className="mt-1 text-xs text-red-600">{urlErrors[key]}</p>
+                        <p className="mt-1 text-xs text-red-600">
+                          {urlErrors[key]}
+                        </p>
                       )}
-                    </div>
+                    </Field.Root>
                   ))}
                 </div>
                 <button
@@ -228,32 +238,36 @@ export function IncidentModal(props: IncidentModalProps) {
                   </label>
                   <div className="space-y-1">
                     {props.incident.videos.map((video) => (
-                      <div key={video.id} className="truncate text-xs text-neutral-400">
+                      <div
+                        key={video.id}
+                        className="truncate text-xs text-neutral-400"
+                      >
                         {video.platform}: {video.url}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="add-video" className="mb-1 block text-sm">
+                <Field.Root name="add-video">
+                  <Field.Label className="mb-1 block text-sm">
                     Add Video
-                  </label>
-                  <input
-                    id="add-video"
+                  </Field.Label>
+                  <Field.Control
                     ref={addVideoRef}
                     type="url"
                     onChange={() => setVideoError('')}
                     placeholder="https://x.com/..."
                     className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
-                    onKeyDown={(e) => {
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
                         handleAddVideo()
                       }
                     }}
                   />
-                  {videoError && <p className="mt-1 text-xs text-red-600">{videoError}</p>}
+                  {videoError && (
+                    <p className="mt-1 text-xs text-red-600">{videoError}</p>
+                  )}
                   <button
                     type="button"
                     onClick={handleAddVideo}
@@ -262,55 +276,56 @@ export function IncidentModal(props: IncidentModalProps) {
                   >
                     + Add
                   </button>
-                </div>
+                </Field.Root>
               </>
             )}
 
             {/* Shared fields */}
-            <div>
-              <label htmlFor="location" className="mb-1 block text-sm">
+            <Field.Root name="location">
+              <Field.Label className="mb-1 block text-sm">
                 Location (optional)
-              </label>
-              <input
-                id="location"
-                name="location"
+              </Field.Label>
+              <Field.Control
                 type="text"
-                defaultValue={mode === 'edit' ? props.incident.location || '' : ''}
+                defaultValue={
+                  mode === 'edit' ? props.incident.location || '' : ''
+                }
                 placeholder="Minneapolis, MN"
                 className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
               />
-            </div>
+            </Field.Root>
 
-            <div>
-              <label htmlFor="incidentDate" className="mb-1 block text-sm">
+            <Field.Root name="incidentDate">
+              <Field.Label className="mb-1 block text-sm">
                 Date (optional)
-              </label>
-              <input
-                id="incidentDate"
-                name="incidentDate"
+              </Field.Label>
+              <Field.Control
                 type="date"
                 defaultValue={
                   mode === 'edit' && props.incident.incidentDate
-                    ? new Date(props.incident.incidentDate).toISOString().split('T')[0]
+                    ? new Date(props.incident.incidentDate)
+                        .toISOString()
+                        .split('T')[0]
                     : ''
                 }
                 className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
               />
-            </div>
+            </Field.Root>
 
-            <div>
-              <label htmlFor="description" className="mb-1 block text-sm">
+            <Field.Root name="description">
+              <Field.Label className="mb-1 block text-sm">
                 Description (optional)
-              </label>
-              <textarea
-                id="description"
-                name="description"
+              </Field.Label>
+              <Field.Control
+                render={<textarea />}
                 rows={2}
-                defaultValue={mode === 'edit' ? props.incident.description || '' : ''}
+                defaultValue={
+                  mode === 'edit' ? props.incident.description || '' : ''
+                }
                 placeholder="Brief description of what happened..."
                 className="w-full resize-none border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
               />
-            </div>
+            </Field.Root>
 
             <div className="flex gap-4 pt-2">
               <button
@@ -324,7 +339,7 @@ export function IncidentModal(props: IncidentModalProps) {
                 Cancel
               </Dialog.Close>
             </div>
-          </form>
+          </Form>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { config } from 'dotenv'
-import { generateObject, gateway } from 'ai'
+import { gateway, generateObject } from 'ai'
 import { eq, isNull, or } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -37,7 +37,11 @@ function loadProcessedIds(): Set<number> {
 function saveProcessedIds(ids: Set<number>) {
   fs.writeFileSync(
     PROCESSED_FILE,
-    JSON.stringify({ processedIds: [...ids], lastRun: new Date().toISOString() }, null, 2),
+    JSON.stringify(
+      { processedIds: [...ids], lastRun: new Date().toISOString() },
+      null,
+      2,
+    ),
   )
 }
 
@@ -53,10 +57,14 @@ const MetadataSchema = z.object({
   incidentDate: z
     .string()
     .nullable()
-    .describe('Date the incident occurred in YYYY-MM-DD format. If unknown, use the post/video publish date.'),
+    .describe(
+      'Date the incident occurred in YYYY-MM-DD format. If unknown, use the post/video publish date.',
+    ),
 })
 
-function getVideoContext(videos: Array<{ url: string; platform: string }>): string {
+function getVideoContext(
+  videos: Array<{ url: string; platform: string }>,
+): string {
   return videos.map((v) => `${v.platform}: ${v.url}`).join('\n')
 }
 
@@ -75,7 +83,10 @@ async function main() {
   const incidentsToEnrich = await db.query.incidents.findMany({
     where:
       processedArray.length > 0
-        ? (t, { and: andOp, or: orOp, isNull: isNullOp, notInArray: notInOp }) =>
+        ? (
+            t,
+            { and: andOp, or: orOp, isNull: isNullOp, notInArray: notInOp },
+          ) =>
             andOp(
               orOp(
                 isNullOp(t.location),

@@ -19,9 +19,7 @@ export const APIRoute = createAPIFileRoute('/api/sitemap.xml')({
       columns: { id: true, createdAt: true },
     })
 
-    const staticPages = [
-      { url: '/', priority: '1.0', changefreq: 'daily' },
-    ]
+    const staticPages = [{ url: '/', priority: '1.0', changefreq: 'daily' }]
 
     const incidentPages = approvedIncidents.map((incident) => ({
       url: `/incident/${incident.id}`,

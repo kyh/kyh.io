@@ -7,7 +7,6 @@ import { ExternalLink } from 'lucide-react'
 import { VideoCarousel } from './VideoCarousel'
 import type { VideoPlatform } from '@/db/schema'
 
-
 interface Video {
   id: number
   url: string
@@ -73,7 +72,11 @@ export function IncidentCardContent({
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
+        <div
+          className="flex items-center gap-4"
+          role="group"
+          aria-label="Vote on this incident"
+        >
           <button
             onClick={() => onVote('unjustified')}
             className={`cursor-pointer ${userVote === 'unjustified' ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'}`}
@@ -112,7 +115,11 @@ export function IncidentCardContent({
               onClick={onReport}
               disabled={reported}
               className={`cursor-pointer ${reported ? 'text-neutral-300' : 'text-neutral-400 hover:text-red-600'}`}
-              aria-label={reported ? 'This incident has been reported' : 'Report this incident'}
+              aria-label={
+                reported
+                  ? 'This incident has been reported'
+                  : 'Report this incident'
+              }
             >
               {reported ? 'reported' : 'report'}
             </button>

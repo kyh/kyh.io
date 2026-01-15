@@ -4,9 +4,9 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { eq, sql } from 'drizzle-orm'
 import { ArrowLeft } from 'lucide-react'
-import { toast } from 'sonner'
 
 import { IncidentCardContent } from '@/components/IncidentCardContent'
+import { useToast } from '@/components/Toast'
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
@@ -140,6 +140,7 @@ export const Route = createFileRoute('/incident/$id')({
 
 function IncidentDetail() {
   const incident = Route.useLoaderData()
+  const toast = useToast()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [userVote, setUserVote] = useState<'unjustified' | 'justified' | null>(
     null,

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { RefreshCw } from 'lucide-react'
-import { toast } from 'sonner'
+
+import { useToast } from '@/components/Toast'
 
 import { db } from '@/db/index'
 import { incidents, videos } from '@/db/schema'
@@ -16,8 +17,8 @@ interface FeedPost {
   published: string
 }
 
-function parseAtomFeed(xml: string): FeedPost[] {
-  const posts: FeedPost[] = []
+function parseAtomFeed(xml: string): Array<FeedPost> {
+  const posts: Array<FeedPost> = []
   const entryRegex = /<entry>([\s\S]*?)<\/entry>/g
   let match
 
@@ -27,7 +28,8 @@ function parseAtomFeed(xml: string): FeedPost[] {
     const id = entry.match(/<id>([^<]+)<\/id>/)?.[1] || ''
     const title = entry.match(/<title>([^<]+)<\/title>/)?.[1] || ''
     const link = entry.match(/<link href="([^"]+)"/)?.[1] || ''
-    const content = entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || ''
+    const content =
+      entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || ''
     const published = entry.match(/<updated>([^<]+)<\/updated>/)?.[1] || ''
 
     if (id && link) {
@@ -129,6 +131,7 @@ export const Route = createFileRoute('/admin/_layout/reddit-feed')({
 
 function RedditFeed() {
   const router = useRouter()
+  const toast = useToast()
   const { posts, existingUrls } = Route.useLoaderData()
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [addingUrl, setAddingUrl] = useState<string | null>(null)
@@ -182,7 +185,9 @@ function RedditFeed() {
           disabled={isRefreshing}
           className="flex cursor-pointer items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+          />
           Refresh
         </button>
       </div>
