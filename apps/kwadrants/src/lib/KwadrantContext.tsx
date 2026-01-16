@@ -6,9 +6,9 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { Tag, CanvasImage, AxisLabels, QuadrantColors, GridType, LayoutType, ThemeType, KwadrantState } from "./types";
+import type { Tag, CanvasImage, QuadrantColors, GridType, LayoutType, ThemeType, KwadrantState, LayoutLabels } from "./types";
 import {
-  DEFAULT_AXIS_LABELS,
+  DEFAULT_LAYOUT_LABELS,
   DEFAULT_QUADRANT_COLORS,
   STORAGE_KEY,
 } from "./constants";
@@ -23,7 +23,7 @@ interface KwadrantContextValue {
   updateImagePosition: (id: string, x: number, y: number) => void;
   updateImageSize: (id: string, width: number, height: number) => void;
   removeImage: (id: string) => void;
-  updateAxisLabel: (key: keyof AxisLabels, value: string) => void;
+  updateLabel: (layoutId: string, key: string, value: string) => void;
   setQuadrantColor: (quadrant: keyof QuadrantColors, color: string) => void;
   setGridType: (gridType: GridType) => void;
   setLayoutType: (layoutType: LayoutType) => void;
@@ -32,27 +32,49 @@ interface KwadrantContextValue {
 
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
 
+// Migrate old localStorage format (axisLabels/edgeLabels) to new (layoutLabels)
+const migrateState = (stored: Record<string, unknown>): Partial<KwadrantState> => {
+  if (stored.layoutLabels) {
+    return stored as Partial<KwadrantState>;
+  }
+
+  // Old format detected - migrate
+  const layoutLabels: LayoutLabels = { ...DEFAULT_LAYOUT_LABELS };
+
+  if (stored.axisLabels && typeof stored.axisLabels === "object") {
+    layoutLabels.axis = { ...DEFAULT_LAYOUT_LABELS.axis, ...(stored.axisLabels as Record<string, string>) };
+  }
+  if (stored.edgeLabels && typeof stored.edgeLabels === "object") {
+    layoutLabels.edge = { ...DEFAULT_LAYOUT_LABELS.edge, ...(stored.edgeLabels as Record<string, string>) };
+  }
+
+  const { axisLabels, edgeLabels, ...rest } = stored;
+  return { ...rest, layoutLabels } as Partial<KwadrantState>;
+};
+
 const getInitialState = (): KwadrantState => {
+  const defaultState: KwadrantState = {
+    tags: [],
+    images: [],
+    layoutLabels: DEFAULT_LAYOUT_LABELS,
+    quadrantColors: DEFAULT_QUADRANT_COLORS,
+    gridType: "none",
+    layoutType: "axis",
+    theme: "light",
+  };
+
   if (typeof window === "undefined") {
-    return {
-      tags: [],
-      images: [],
-      axisLabels: DEFAULT_AXIS_LABELS,
-      quadrantColors: DEFAULT_QUADRANT_COLORS,
-      gridType: "none",
-      layoutType: "axis",
-      theme: "light",
-    };
+    return defaultState;
   }
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const parsed = JSON.parse(stored);
+      const parsed = migrateState(JSON.parse(stored));
       return {
-        tags: parsed.tags || [],
-        images: parsed.images || [],
-        axisLabels: parsed.axisLabels || DEFAULT_AXIS_LABELS,
+        tags: (parsed.tags as Tag[]) || [],
+        images: (parsed.images as CanvasImage[]) || [],
+        layoutLabels: parsed.layoutLabels || DEFAULT_LAYOUT_LABELS,
         quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
         gridType: parsed.gridType || "none",
         layoutType: parsed.layoutType || "axis",
@@ -63,15 +85,7 @@ const getInitialState = (): KwadrantState => {
     // Ignore parse errors
   }
 
-  return {
-    tags: [],
-    images: [],
-    axisLabels: DEFAULT_AXIS_LABELS,
-    quadrantColors: DEFAULT_QUADRANT_COLORS,
-    gridType: "none",
-    layoutType: "axis",
-    theme: "light",
-  };
+  return defaultState;
 };
 
 export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
@@ -133,11 +147,17 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const updateAxisLabel = useCallback(
-    (key: keyof AxisLabels, value: string) => {
+  const updateLabel = useCallback(
+    (layoutId: string, key: string, value: string) => {
       setState((prev) => ({
         ...prev,
-        axisLabels: { ...prev.axisLabels, [key]: value },
+        layoutLabels: {
+          ...prev.layoutLabels,
+          [layoutId]: {
+            ...(prev.layoutLabels[layoutId] || {}),
+            [key]: value,
+          },
+        },
       }));
     },
     []
@@ -176,7 +196,7 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
         updateImagePosition,
         updateImageSize,
         removeImage,
-        updateAxisLabel,
+        updateLabel,
         setQuadrantColor,
         setGridType,
         setLayoutType,

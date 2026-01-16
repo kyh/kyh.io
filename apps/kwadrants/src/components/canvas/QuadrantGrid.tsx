@@ -1,12 +1,6 @@
 import { Rect, Line, Circle } from "react-konva";
-import type { QuadrantColors, GridType, LayoutType, ThemeType } from "@/lib/types";
-
-interface MatrixBounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import type { QuadrantColors, GridType, ThemeType } from "@/lib/types";
+import type { MatrixBounds } from "@/lib/layouts";
 
 interface QuadrantGridProps {
   canvasWidth: number;
@@ -14,7 +8,7 @@ interface QuadrantGridProps {
   bounds: MatrixBounds;
   colors: QuadrantColors;
   gridType: GridType;
-  layoutType: LayoutType;
+  showOuterBorder: boolean;
   theme: ThemeType;
 }
 
@@ -30,7 +24,7 @@ export const QuadrantGrid = ({
   bounds,
   colors,
   gridType,
-  layoutType,
+  showOuterBorder,
   theme,
 }: QuadrantGridProps) => {
   const { x: bx, y: by, width, height } = bounds;
@@ -97,21 +91,11 @@ export const QuadrantGrid = ({
       {/* Grid pattern */}
       {renderGrid()}
 
-      {/* Divider lines between quadrants */}
-      {layoutType === "edge" ? (
-        <>
-          {/* Edge layout: simple divider lines, no center axes */}
-          <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
-          <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
-          {/* Outer border */}
-          <Rect x={bx} y={by} width={width} height={height} stroke={themeColors.axis} strokeWidth={1} fill="transparent" />
-        </>
-      ) : (
-        <>
-          {/* Axis layout: lines through center */}
-          <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
-          <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
-        </>
+      {/* Divider lines */}
+      <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
+      <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
+      {showOuterBorder && (
+        <Rect x={bx} y={by} width={width} height={height} stroke={themeColors.axis} strokeWidth={1} fill="transparent" />
       )}
     </>
   );

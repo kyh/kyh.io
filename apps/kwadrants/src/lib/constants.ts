@@ -1,4 +1,5 @@
-import type { AxisLabels, QuadrantColors } from "./types";
+import type { QuadrantColors, LayoutLabels } from "./types";
+import { getAllLayouts, getDefaultLabels } from "./layouts";
 
 export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
   topLeft: "transparent",
@@ -7,12 +8,9 @@ export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
   bottomRight: "transparent",
 };
 
-export const DEFAULT_AXIS_LABELS: AxisLabels = {
-  xPositive: "High",
-  xNegative: "Low",
-  yPositive: "High",
-  yNegative: "Low",
-};
+export const DEFAULT_LAYOUT_LABELS: LayoutLabels = Object.fromEntries(
+  getAllLayouts().map((layout) => [layout.id, getDefaultLabels(layout)])
+);
 
 export const TAG_COLORS = [
   "#3b82f6",

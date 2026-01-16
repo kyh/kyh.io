@@ -15,12 +15,8 @@ export interface CanvasImage {
   height: number;
 }
 
-export interface AxisLabels {
-  xPositive: string;
-  xNegative: string;
-  yPositive: string;
-  yNegative: string;
-}
+export type LabelValues = Record<string, string>;
+export type LayoutLabels = Record<string, LabelValues>;
 
 export interface QuadrantColors {
   topLeft: string;
@@ -36,7 +32,7 @@ export type ThemeType = "light" | "dark";
 export interface KwadrantState {
   tags: Tag[];
   images: CanvasImage[];
-  axisLabels: AxisLabels;
+  layoutLabels: LayoutLabels;
   quadrantColors: QuadrantColors;
   gridType: GridType;
   layoutType: LayoutType;

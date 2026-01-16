@@ -6,7 +6,7 @@ import { AxisLabels } from "./AxisLabels";
 import { Tag } from "./Tag";
 import { CanvasImage } from "./CanvasImage";
 import { useKwadrant } from "@/lib/KwadrantContext";
-import type { AxisLabels as AxisLabelsType } from "@/lib/types";
+import { getLayout, getDefaultLabels } from "@/lib/layouts";
 
 interface KwadrantCanvasProps {
   width: number;
@@ -74,55 +74,41 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
       removeTag,
       updateImagePosition,
       removeImage,
-      updateAxisLabel
+      updateLabel,
     } = useKwadrant();
     const [editingLabel, setEditingLabel] = useState<{
-      key: keyof AxisLabelsType;
+      key: string;
       position: { x: number; y: number };
     } | null>(null);
 
-    // Calculate matrix bounds based on layout
-    const bounds = useMemo(() => {
-      if (state.layoutType === "edge") {
-        // Edge layout: needs margin for headers on top and left
-        const topMargin = 50;
-        const leftMargin = 80;
-        const rightMargin = 20;
-        const bottomMargin = 20;
-        return {
-          x: leftMargin,
-          y: topMargin,
-          width: width - leftMargin - rightMargin,
-          height: height - topMargin - bottomMargin,
-        };
-      }
-      // Axis layout: fullscreen
-      return { x: 0, y: 0, width, height };
-    }, [width, height, state.layoutType]);
+    const layout = getLayout(state.layoutType);
+    const bounds = useMemo(() => layout.getBounds(width, height), [layout, width, height]);
 
-    const centerX = bounds.x + bounds.width / 2;
-    const centerY = bounds.y + bounds.height / 2;
-    const padding = 16;
+    // Get current labels with defaults
+    const currentLabels = useMemo(() => {
+      const stored = state.layoutLabels[state.layoutType] ?? {};
+      const defaults = getDefaultLabels(layout);
+      return { ...defaults, ...stored };
+    }, [state.layoutLabels, state.layoutType, layout]);
 
-    const labelPositions: Record<keyof AxisLabelsType, { x: number; y: number }> = state.layoutType === "edge"
-      ? {
-          // Edge layout: headers at top and left
-          xNegative: { x: bounds.x + bounds.width / 4 - 30, y: bounds.y - 35 },
-          xPositive: { x: bounds.x + (bounds.width * 3) / 4 - 30, y: bounds.y - 35 },
-          yPositive: { x: bounds.x - 70, y: bounds.y + bounds.height / 4 - 10 },
-          yNegative: { x: bounds.x - 70, y: bounds.y + (bounds.height * 3) / 4 - 10 },
-        }
-      : {
-          // Axis layout: at the ends of axes
-          xPositive: { x: width - 80, y: centerY + padding },
-          xNegative: { x: padding, y: centerY + padding },
-          yPositive: { x: centerX + padding, y: padding },
-          yNegative: { x: centerX + padding, y: height - padding - 14 },
-        };
-
-    const handleLabelClick = (key: keyof AxisLabelsType) => {
-      setEditingLabel({ key, position: labelPositions[key] });
+    // Derive editor positions from layout label definitions
+    const getEditorPosition = (key: string): { x: number; y: number } => {
+      const labelDef = layout.labels.find((l) => l.key === key);
+      if (!labelDef) return { x: 0, y: 0 };
+      const pos = labelDef.position(bounds);
+      // Adjust for editor offset
+      return {
+        x: pos.x - (labelDef.textProps?.offsetX ?? 0),
+        y: pos.y - 10,
+      };
     };
+
+    const handleLabelClick = (key: string) => {
+      setEditingLabel({ key, position: getEditorPosition(key) });
+    };
+
+    // Check if this label is on right edge (for axis layout xPositive)
+    const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
 
     return (
       <div className="relative w-full h-full">
@@ -134,13 +120,13 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
               bounds={bounds}
               colors={state.quadrantColors}
               gridType={state.gridType}
-              layoutType={state.layoutType}
+              showOuterBorder={layout.showOuterBorder}
               theme={state.theme}
             />
             <AxisLabels
-              labels={state.axisLabels}
+              layout={layout}
+              labels={currentLabels}
               bounds={bounds}
-              layoutType={state.layoutType}
               theme={state.theme}
               onLabelClick={handleLabelClick}
             />
@@ -165,11 +151,13 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
 
         {editingLabel && (
           <LabelEditor
-            value={state.axisLabels[editingLabel.key]}
+            value={currentLabels[editingLabel.key] ?? ""}
             position={editingLabel.position}
-            isRightEdge={editingLabel.key === "xPositive" && state.layoutType === "axis"}
+            isRightEdge={isRightEdgeLabel}
             isDark={state.theme === "dark"}
-            onSave={(value) => updateAxisLabel(editingLabel.key, value)}
+            onSave={(value) => {
+              updateLabel(state.layoutType, editingLabel.key, value);
+            }}
             onClose={() => setEditingLabel(null)}
           />
         )}

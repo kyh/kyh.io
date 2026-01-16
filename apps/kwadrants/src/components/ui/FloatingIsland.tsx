@@ -4,7 +4,8 @@ import { motion, useMotionValue, animate } from "motion/react";
 import { Plus, Palette, Download, RotateCcw, ChevronLeft, Tag, Image, Grid3X3, Layout, GripVertical, Sun, Moon } from "lucide-react";
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { TAG_COLORS, STORAGE_KEY } from "@/lib/constants";
-import type { QuadrantColors } from "@/lib/types";
+import { getAllLayouts } from "@/lib/layouts";
+import type { QuadrantColors, LayoutType } from "@/lib/types";
 
 type IslandMode = "idle" | "add-menu" | "adding-tag" | "adding-image" | "colors" | "export" | "grid" | "layout";
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -296,14 +297,14 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "layout":
         return (
           <div className="flex flex-col gap-1">
-            {(["axis", "edge"] as const).map((type) => (
+            {getAllLayouts().map((layout) => (
               <SelectButton
-                key={type}
-                selected={state.layoutType === type}
-                onClick={() => setLayoutType(type)}
+                key={layout.id}
+                selected={state.layoutType === layout.id}
+                onClick={() => setLayoutType(layout.id as LayoutType)}
                 isDark={isDark}
               >
-                {type === "axis" ? "Axis" : "Edge"}
+                {layout.displayName}
               </SelectButton>
             ))}
           </div>
