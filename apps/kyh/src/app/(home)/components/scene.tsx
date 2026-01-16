@@ -17,7 +17,6 @@ import {
 import { useTheme } from "next-themes";
 
 import { useViewport } from "@/components/viewport";
-import styles from "./scene.module.css";
 
 export const percentX = (percent: number) => {
   return Math.round((percent / 100) * window.innerWidth);
@@ -315,5 +314,5 @@ export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
     };
   }, []);
 
-  return <div className={styles.container} ref={sceneRef} />;
+  return <div className="fixed top-0 left-0 w-full h-full" ref={sceneRef} />;
 };

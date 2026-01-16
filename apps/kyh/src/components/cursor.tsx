@@ -1,5 +1,3 @@
-import styles from "./cursor.module.css";
-
 type CursorProps = {
   x?: number;
   y?: number;
@@ -25,7 +23,7 @@ export const Cursor = ({ x, y, color, hue, windowDimensions }: CursorProps) => {
       height="24"
       viewBox="0 0 18 24"
       fill="none"
-      className={styles.cursor}
+      className="absolute top-0 left-0 transition-all duration-150 ease-out pointer-events-none z-[1]"
       style={{ color, transform: `translateX(${left}px) translateY(${top}px)` }}
       xmlns="http://www.w3.org/2000/svg"
     >

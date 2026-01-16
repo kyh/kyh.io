@@ -1,7 +1,5 @@
 import { forwardRef } from "react";
 
-import styles from "./animate-text.module.css";
-
 export type AnimateSectionProps<C> = {
   children: React.ReactNode;
   className?: string;
@@ -20,7 +18,7 @@ export const AnimateSection = <C extends React.ElementType>({
 }: AnimateSectionProps<C>) => {
   const Element = as ?? "div";
   return (
-    <div className={styles.section}>
+    <div className="animate-section">
       <Element
         style={{
           animationDelay: `${delay ?? 0}s`,
@@ -41,11 +39,18 @@ const GLYPHS =
 export type ScrambleTextProps = React.HTMLAttributes<HTMLHeadingElement>;
 
 export const ScrambleText = forwardRef<HTMLHeadingElement, ScrambleTextProps>(
-  ({ children, className = "", ...props }, ref) => {
+  (
+    {
+      children,
+      className = "text-[2em] leading-none font-normal text-foreground-highlighted",
+      ...props
+    },
+    ref,
+  ) => {
     const text = children?.toString() ?? "";
     return (
       <h1 className={className} ref={ref} {...props}>
-        <span className={styles.scramble} aria-hidden>
+        <span className="scramble" aria-hidden>
           {text.split("").map((char, index) => (
             <span
               key={index}

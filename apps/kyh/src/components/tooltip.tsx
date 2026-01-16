@@ -22,7 +22,6 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 
 import type { Placement } from "@floating-ui/react";
-import styles from "./tooltip.module.css";
 
 type TooltipOptions = {
   initialOpen?: boolean;
@@ -182,14 +181,14 @@ export const TooltipContent = React.forwardRef<
       <AnimatePresence>
         {context.open && (
           <motion.div
-            className={`${styles.tooltip} ${blockType ? styles.block : ""} ${className ?? ""}`}
+            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""}`}
             ref={ref}
             style={context.floatingStyles}
             {...tooltipMotionProps}
             {...floatingProps}
           >
             {blockType && <TooltipBlocks context={context} />}
-            <motion.div className={styles.content} {...contentMotionProps}>
+            <motion.div className="content" {...contentMotionProps}>
               {children}
             </motion.div>
           </motion.div>
@@ -218,7 +217,7 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
   return (
     <>
       <motion.div
-        className={`${styles.line} ${styles.lineH}`}
+        className="tooltip-line tooltip-line-h"
         initial={{ opacity: 0, top: -1 }}
         animate={{ opacity: 1, top: context.y }}
         exit={{ opacity: 0, top: -1 }}
@@ -228,7 +227,7 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
         }}
       />
       <motion.div
-        className={`${styles.line} ${styles.lineH}`}
+        className="tooltip-line tooltip-line-h"
         initial={{ opacity: 0, top: "100dvh" }}
         animate={{ opacity: 1, top: context.y + floatingEl.offsetHeight }}
         exit={{ opacity: 0, top: "100dvh" }}
@@ -238,7 +237,7 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
         }}
       />
       <motion.div
-        className={`${styles.line} ${styles.lineV}`}
+        className="tooltip-line tooltip-line-v"
         style={{ height: document.documentElement.scrollHeight }}
         initial={{ opacity: 0, left: -1 }}
         animate={{ opacity: 1, left: context.x }}
@@ -249,7 +248,7 @@ const TooltipLines = ({ context }: { context: ContextType }) => {
         }}
       />
       <motion.div
-        className={`${styles.line} ${styles.lineV}`}
+        className="tooltip-line tooltip-line-v"
         style={{ height: document.documentElement.scrollHeight }}
         initial={{ opacity: 0, left: "100dvw" }}
         animate={{ opacity: 1, left: context.x + floatingEl.offsetWidth }}
@@ -279,13 +278,13 @@ const TooltipBlocks = ({ context }: { context: ContextType }) => {
 
   return (
     <div
-      className={styles.blocksContainer}
+      className="tooltip-blocks-container"
       style={{ "--cols": cols, "--rows": rows } as React.CSSProperties}
     >
       {blocks.map((i) => (
         <motion.div
           key={i}
-          className={styles.block}
+          className="tooltip-block"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

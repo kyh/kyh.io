@@ -29,7 +29,6 @@ import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
 import { Link } from "@/components/link";
 import { radialData } from "./data";
-import styles from "./radial.module.css";
 import {
   areIntersecting,
   clamp,
@@ -205,9 +204,9 @@ export const Radial = () => {
         rotate,
       }}
     >
-      <div className={styles.fixedContainer}>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[animateIn_0.2s_ease-out_forwards] opacity-0 min-[900px]:scale-[0.8]">
         <motion.div
-          className={styles.absoluteContainer}
+          className="absolute top-1/2 left-1/2 origin-[50%_7dvh] -translate-x-1/2 -translate-y-1/2"
           style={{
             width: constants.SIZE,
             height: constants.SIZE,
@@ -224,7 +223,7 @@ export const Radial = () => {
           {isHydrated && (
             <motion.div
               ref={ref}
-              className={styles.fullSize}
+              className="h-full w-full"
               style={{ rotate }}
               transition={transition}
             >
@@ -293,7 +292,7 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
   return (
     <Root
       {...props}
-      className={styles.line}
+      className="radial-line"
       data-variant={variant}
       data-active={active}
       data-hovered={hovered || active}
@@ -353,7 +352,7 @@ const Meta = ({
 }) => {
   const { rotate } = useTimeline();
   const reverseRotate = useTransform(rotate, (r) => -r - rotation);
-  const isPartiallyVisible = hoveredItem && hoveredItem.variant === "medium";
+  const isPartiallyVisible = hoveredItem?.variant === "medium";
 
   let opacity = 0;
 
@@ -367,7 +366,7 @@ const Meta = ({
 
   return (
     <motion.div
-      className={styles.meta}
+      className="flex -translate-y-1/2 flex-col items-center whitespace-nowrap"
       data-slot="meta"
       style={{ ...style, rotate: reverseRotate }}
       initial={{ opacity }}
@@ -399,7 +398,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   return (
     <motion.div
       ref={ref}
-      className={styles.sheet}
+      className="relative top-0 mx-auto mt-[50dvh] max-w-3xl px-5 pb-[140px]"
       initial={false}
       style={{
         pointerEvents: zoom ? "auto" : "none",
@@ -421,7 +420,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
       }}
     >
       <button
-        className={styles.backButton}
+        className="radial-back-button text-foreground-faded mb-3 flex items-center gap-1 transition-colors duration-200 hover:text-[var(--body-color-highlighted)] focus-visible:text-[var(--body-color-highlighted)]"
         onClick={() => {
           const evt = new KeyboardEvent("keydown", { key: "Escape" });
           window.dispatchEvent(evt);
@@ -430,7 +429,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
         Back
       </button>
       {item && <Project key={item.project.title} project={item.project} />}
-      <footer className={styles.footer}>
+      <footer className="radial-footer mt-6 flex justify-between gap-3">
         <button
           onClick={() => {
             const evt = new KeyboardEvent("keydown", { key: "ArrowLeft" });
@@ -629,11 +628,15 @@ const transition: ValueAnimationTransition<number> = {
 
 const Project = ({ project }: { project: ProjectType }) => {
   return (
-    <a className={styles.content} href={project.url} target="_blank">
-      <header className={styles.header}>
+    <a
+      className="flex w-full flex-col gap-9"
+      href={project.url}
+      target="_blank"
+    >
+      <header className="flex flex-col gap-3">
         <ScrambleText>{project.title}</ScrambleText>
         {project.description && (
-          <p className={styles.description}>{project.description}</p>
+          <p className="text-foreground-faded">{project.description}</p>
         )}
       </header>
       {project.projectAssets.map((asset, assetIndex) => (
@@ -643,7 +646,7 @@ const Project = ({ project }: { project: ProjectType }) => {
         >
           <Card
             className={
-              asset.aspectRatio === "16:9" ? styles.ratio169 : styles.ratio43
+              asset.aspectRatio === "16:9" ? "aspect-video" : "aspect-[4/3]"
             }
           >
             {asset.type === "image" && (

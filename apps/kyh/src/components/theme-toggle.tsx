@@ -1,7 +1,5 @@
 import { motion } from "motion/react";
 
-import styles from "./theme-toggle.module.css";
-
 type ThemeToggleIconProps = {
   isLight: boolean;
 };
@@ -11,7 +9,7 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
     <svg
       viewBox="0 0 18 18"
       style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
-      className={styles.icon}
+      className="overflow-visible transition-transform duration-500 ease-in-out"
     >
       <mask id="moon-mask-main-nav">
         <rect x="0" y="0" width="18" height="18" fill="#FFF" />

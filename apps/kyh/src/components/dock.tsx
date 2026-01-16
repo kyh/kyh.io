@@ -14,7 +14,6 @@ import {
 import { useTheme } from "next-themes";
 
 import { ThemeToggleIcon } from "@/components/theme-toggle";
-import styles from "./dock.module.css";
 
 const iconAttrs = {
   xmlns: "http://www.w3.org/2000/svg",
@@ -73,9 +72,9 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <div className={styles.container}>
+    <div className="flex items-center justify-center h-[70px] fixed bottom-[4vh] left-0 right-0 z-10 pointer-events-none">
       <nav
-        className={styles.list}
+        className="relative flex items-center h-full gap-2 p-3 rounded-[20px] bg-[var(--dock-bg)] shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] pointer-events-auto"
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
@@ -190,14 +189,18 @@ const DockItem = ({
   });
 
   return (
-    <motion.div ref={ref} style={{ width, height }} className={styles.item}>
+    <motion.div
+      ref={ref}
+      style={{ width, height }}
+      className="dock-item relative flex aspect-square items-center justify-center rounded-[25%] z-[1]"
+    >
       <AnimatePresence>
         {hovered && (
           <motion.div
             initial={{ opacity: 0, y: 10, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 2, x: "-50%" }}
-            className={styles.tooltip}
+            className="absolute -top-8 left-1/2 whitespace-pre rounded-md border border-[var(--border-color)] bg-panel px-2 py-0.5 text-xs text-[var(--body-color)]"
           >
             {label}
           </motion.div>
@@ -205,11 +208,11 @@ const DockItem = ({
       </AnimatePresence>
       <motion.div
         style={{ width: widthIcon, height: heightIcon }}
-        className={styles.iconContainer}
+        className="flex items-center justify-center"
       >
         {children}
       </motion.div>
-      {active && <div className={styles.activeDot} />}
+      {active && <div className="absolute w-[3px] h-[3px] rounded-full bg-foreground-faded left-1/2 -translate-x-1/2 -bottom-2 animate-[fadeInScaleX_0.6s_cubic-bezier(0.23,1,0.32,1)]" />}
     </motion.div>
   );
 };
@@ -217,7 +220,7 @@ const DockItem = ({
 const GlassFilter = () => {
   return (
     <>
-      <div className={styles.glassFilterEffect} />
+      <div className="absolute z-0 inset-0 backdrop-blur-[8px] overflow-hidden isolate rounded-[20px]" style={{ filter: 'url("#glass-distortion")' }} />
       <svg style={{ display: "none", width: 0, height: 0 }}>
         <filter
           id="glass-distortion"

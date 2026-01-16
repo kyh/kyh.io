@@ -4,8 +4,6 @@ import type { RefObject } from "react";
 import { Fragment, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
-import styles from "./counter.module.css";
-
 type VerticalProps = {
   letter: string;
 };
@@ -74,7 +72,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
         position: "relative",
       }}
     >
-      <span className={styles.prefix} ref={ref}>
+      <span className="text-transparent absolute top-0 left-0" ref={ref}>
         {text}
       </span>
 
@@ -94,7 +92,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
               initial={{ x, width, opacity: 0 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ ease: "easeOut" }}
-              className={styles.letter}
+              className="absolute top-0 left-0 pointer-events-none"
               aria-hidden="true"
             >
               <Vertical letter={letter} />

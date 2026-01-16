@@ -5,7 +5,6 @@ import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Link } from "@/components/link";
 import { SocialLinks } from "@/components/social";
 import { getPublicAssetUrl } from "@/lib/public-assets";
-import styles from "@/styles/page.module.css";
 
 export const metadata: Metadata = {
   title: "About",
@@ -13,22 +12,26 @@ export const metadata: Metadata = {
 };
 
 const Page = () => (
-  <main className={styles.container}>
-    <header className={styles.header}>
-      <ScrambleText className={styles.title}>About me</ScrambleText>
+  <main className="mx-auto flex max-w-3xl flex-col gap-9 px-5 pt-[90px] pb-[140px]">
+    <header className="inline-flex flex-col items-start gap-3">
+      <ScrambleText>About me</ScrambleText>
     </header>
-    <section className={styles.section}>
+    <section className="flex flex-col gap-5">
       <AnimateSection as="p" delay={0.1}>
         I help companies build and scale people-centric products. Historically,
         my roles have straddled the worlds of engineering, product, and design —
         solving complex problems while pursuing delight and craftmanship.
       </AnimateSection>
     </section>
-    <section className={styles.section}>
-      <AnimateSection as="h2" delay={0.3}>
+    <section className="flex flex-col gap-5">
+      <AnimateSection
+        as="h2"
+        delay={0.3}
+        className="text-foreground-highlighted text-[1.5em] leading-none font-normal"
+      >
         Career Highlights
       </AnimateSection>
-      <ul className={styles.list}>
+      <ul className="[&_li]:mb-1 [&_li]:bg-[image:var(--arrow)] [&_li]:bg-[position:0_5px] [&_li]:bg-no-repeat [&_li]:pl-6">
         <AnimateSection as="li" delay={0.35}>
           Oversaw product growth from dozens to millions of users
         </AnimateSection>
@@ -107,11 +110,15 @@ const Page = () => (
         </AnimateSection>
       </ul>
     </section>
-    <section className={styles.section}>
-      <AnimateSection as="h2" delay={0.8}>
+    <section className="flex flex-col gap-5">
+      <AnimateSection
+        as="h2"
+        delay={0.8}
+        className="text-foreground-highlighted text-[1.5em] leading-none font-normal"
+      >
         Employment Badges
       </AnimateSection>
-      <section className={styles.logos}>
+      <section className="my-4 mb-8 grid grid-cols-[repeat(4,150px)] gap-5 max-sm:grid-cols-[repeat(auto-fit,minmax(100px,1fr))] [&_a:focus-visible_img]:brightness-0 dark:[&_a:focus-visible_img]:brightness-[10] [&_img]:h-auto [&_img]:w-full [&_img]:transition-[filter] [&_img]:duration-200 [&_img]:ease-linear [&_img:hover]:brightness-0 dark:[&_img:hover]:brightness-[10]">
         <AnimateSection delay={0.85}>
           <Link
             href="https://www.crunchbase.com/organization/sequoia-capital"
@@ -203,8 +210,12 @@ const Page = () => (
         </AnimateSection>
       </section>
     </section>
-    <section className={styles.section}>
-      <AnimateSection as="h2" delay={1.3}>
+    <section className="flex flex-col gap-5">
+      <AnimateSection
+        as="h2"
+        delay={1.3}
+        className="text-foreground-highlighted text-[1.5em] leading-none font-normal"
+      >
         Other Activities
       </AnimateSection>
       <AnimateSection as="p" delay={1.35}>

@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { PlayerMap } from "@/lib/player";
 import { getRandomColor } from "@/lib/color";
-import styles from "./avatar-group.module.css";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 type AvatarGroupProps = {
@@ -22,10 +21,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const onlyMe = players.length < 1;
 
   return (
-    <ul className={styles.container}>
+    <ul className="flex mr-2 transition-opacity duration-[230ms] ease-out">
       <AnimatePresence mode="popLayout">
         <motion.li
-          className={styles.avatar}
+          className="-mr-2 rounded-full shadow-md"
           style={{
             zIndex: players.length,
             background: `linear-gradient(${color?.hue}, ${color?.color})`,
@@ -37,10 +36,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           layout
         >
           <Tooltip placement="bottom-end">
-            <TooltipTrigger className={styles.avatarContent}>
+            <TooltipTrigger className="w-7 h-7 flex">
               <span />
             </TooltipTrigger>
-            <TooltipContent className={styles.avatarTooltipContent}>
+            <TooltipContent className="text-xs px-2 py-0.5">
               {onlyMe ? "You're the only one here 🥺" : "You"}
             </TooltipContent>
           </Tooltip>
@@ -57,7 +56,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           return (
             <motion.li
               key={id}
-              className={styles.avatar}
+              className="-mr-2 rounded-full shadow-md"
               style={{
                 zIndex: players.length - index,
                 background: `linear-gradient(${player.hue}, ${player.color})`,
@@ -69,10 +68,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               layout
             >
               <Tooltip placement="bottom-end">
-                <TooltipTrigger className={styles.avatarContent}>
+                <TooltipTrigger className="w-7 h-7 flex">
                   <span />
                 </TooltipTrigger>
-                <TooltipContent className={styles.avatarTooltipContent}>
+                <TooltipContent className="text-xs px-2 py-0.5">
                   {label}
                 </TooltipContent>
               </Tooltip>

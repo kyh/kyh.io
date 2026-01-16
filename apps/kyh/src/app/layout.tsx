@@ -8,7 +8,6 @@ import { Multiplayer } from "@/components/multiplayer";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config";
 
-import "@/styles/variables.css";
 import "@/styles/global.css";
 
 export const metadata: Metadata = {
@@ -81,7 +80,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className}>
     <body>
       <Providers>
-        <div className="blurHeader" aria-hidden="true" />
+        <div className="blur-header" aria-hidden="true" />
         <Multiplayer />
         <Dock />
         {children}

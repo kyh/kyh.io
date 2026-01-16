@@ -1,5 +1,3 @@
-import styles from "./social.module.css";
-
 export const social = {
   github: "https://github.com/kyh",
   linkedin: "https://www.linkedin.com/in/kyh",
@@ -9,7 +7,7 @@ export const social = {
 
 export const GithubLink = () => (
   <a
-    className={styles.git}
+    className="inline-flex p-1.5 social-git"
     href={social.github}
     aria-label="GitHub"
     target="_blank"
@@ -23,7 +21,7 @@ export const GithubLink = () => (
 
 export const DribbbleLink = () => (
   <a
-    className={styles.dribbble}
+    className="inline-flex p-1.5 social-dribbble"
     href={social.dribbble}
     aria-label="Dribbble"
     target="_blank"
@@ -37,7 +35,7 @@ export const DribbbleLink = () => (
 
 export const TwitterLink = () => (
   <a
-    className={styles.twitter}
+    className="inline-flex p-1.5 social-twitter"
     href={social.twitter}
     aria-label="Twitter"
     target="_blank"
@@ -51,7 +49,7 @@ export const TwitterLink = () => (
 
 export const LinkedInLink = () => (
   <a
-    className={styles.linkedin}
+    className="inline-flex p-1.5 social-linkedin"
     href={social.linkedin}
     aria-label="LinkedIn"
     target="_blank"
@@ -64,7 +62,7 @@ export const LinkedInLink = () => (
 );
 
 export const SocialLinks = ({ className = "" }: { className?: string }) => (
-  <div className={`${styles.socials} ${className}`}>
+  <div className={`flex gap-1 ${className}`}>
     <GithubLink />
     <DribbbleLink />
     <TwitterLink />

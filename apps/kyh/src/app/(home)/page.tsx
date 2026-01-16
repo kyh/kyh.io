@@ -7,7 +7,6 @@ import type { SceneRef } from "./components/scene";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Link } from "@/components/link";
 import { social } from "@/components/social";
-import styles from "@/styles/page.module.css";
 import { Footer } from "./components/footer";
 
 const DynamicScene = dynamic(() =>
@@ -18,9 +17,9 @@ const Page = () => {
   const sceneRef = useRef<SceneRef>(undefined);
 
   return (
-    <main className={`${styles.container} ${styles.relative}`}>
+    <main className="relative mx-auto flex max-w-3xl flex-col gap-9 px-5 pt-[90px] pb-[140px]">
       <DynamicScene sceneRef={sceneRef} />
-      <header className={styles.header}>
+      <header className="inline-flex flex-col items-start gap-3">
         <ScrambleText
           onMouseEnter={() => sceneRef.current?.trigger("multi")}
           onClick={() => sceneRef.current?.trigger("multi")}

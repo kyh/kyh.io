@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { AvatarGroup } from "@/components/avatar-group";
 import { Cursor } from "@/components/cursor";
 import { useRealtime } from "@/lib/use-realtime";
-import styles from "./multiplayer.module.css";
 
 // const HOST = "http://localhost:8787";
 const HOST = "https://kyh-partyserver.kyh.workers.dev";
@@ -41,7 +40,7 @@ export const Multiplayer = () => {
 
   return (
     <>
-      <div className={styles.avatarsContainer}>
+      <div className="fixed right-6 top-6 z-[1]">
         <AvatarGroup others={players} />
       </div>
       {cursors}

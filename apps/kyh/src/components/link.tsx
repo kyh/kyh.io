@@ -3,7 +3,6 @@
 import Image from "next/image";
 import NextLink from "next/link";
 
-import styles from "./link.module.css";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 type LinkProps = {
@@ -42,9 +41,7 @@ export const Link = ({
 }: LinkProps) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
-  const actionClassName = noStyles
-    ? ""
-    : `${styles.link} ${active ? styles.active : ""}`;
+  const actionClassName = noStyles ? "" : `link ${active ? "active" : ""}`;
   const actionDataText = noStyles ? "" : children;
 
   if (href) {
@@ -108,7 +105,7 @@ export const Link = ({
   if (srcs) {
     content = (
       <span
-        className={`${styles.multiTooltip} ${aspectRatio === "16:9" ? styles.aspectRatio169 : ""}`}
+        className={`multi-tooltip ${aspectRatio === "16:9" ? "aspect-ratio-16-9" : ""}`}
       >
         {srcs.map(({ type, href, src, alt }) => (
           <a
