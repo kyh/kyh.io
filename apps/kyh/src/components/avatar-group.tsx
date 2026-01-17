@@ -36,8 +36,11 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           layout
         >
           <Tooltip placement="bottom-end">
-            <TooltipTrigger className="w-7 h-7 flex">
-              <span />
+            <TooltipTrigger
+              className="w-7 h-7 flex"
+              aria-label={onlyMe ? "You're the only one here" : "You"}
+            >
+              <span aria-hidden="true" />
             </TooltipTrigger>
             <TooltipContent className="text-xs px-2 py-0.5">
               {onlyMe ? "You're the only one here 🥺" : "You"}
@@ -68,8 +71,8 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               layout
             >
               <Tooltip placement="bottom-end">
-                <TooltipTrigger className="w-7 h-7 flex">
-                  <span />
+                <TooltipTrigger className="w-7 h-7 flex" aria-label={label}>
+                  <span aria-hidden="true" />
                 </TooltipTrigger>
                 <TooltipContent className="text-xs px-2 py-0.5">
                   {label}

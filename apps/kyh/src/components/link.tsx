@@ -12,13 +12,6 @@ type LinkProps = {
   noAction?: boolean;
   alt?: string;
   src?: string;
-  srcs?: {
-    src: string;
-    type?: "image" | "video";
-    href?: string;
-    alt?: string;
-  }[];
-  aspectRatio?: "16:9" | "4:3";
   open?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -30,11 +23,9 @@ export const Link = ({
   href,
   src,
   alt,
-  srcs,
   open,
   noStyles = false,
   noAction = false,
-  aspectRatio = "4:3",
   onMouseEnter,
   onMouseLeave,
   active,
@@ -53,9 +44,25 @@ export const Link = ({
           data-text={actionDataText}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          onFocus={onMouseEnter}
+          onBlur={onMouseLeave}
         >
           {children}
         </NextLink>
+      );
+    } else if (href.startsWith("#")) {
+      action = (
+        <a
+          className={actionClassName}
+          href={href}
+          data-text={actionDataText}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onFocus={onMouseEnter}
+          onBlur={onMouseLeave}
+        >
+          {children}
+        </a>
       );
     } else {
       action = (
@@ -67,6 +74,8 @@ export const Link = ({
           data-text={actionDataText}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          onFocus={onMouseEnter}
+          onBlur={onMouseLeave}
         >
           {children}
         </a>
@@ -87,6 +96,8 @@ export const Link = ({
           data-text={actionDataText}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          onFocus={onMouseEnter}
+          onBlur={onMouseLeave}
         >
           {children}
         </button>
@@ -95,36 +106,17 @@ export const Link = ({
   }
 
   if (src) {
+    const isRelativeUrl =
+      (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
     content = (
-      <a href={href} target="_blank" rel="noreferrer noopener">
+      <a
+        href={href}
+        {...(isRelativeUrl
+          ? {}
+          : { target: "_blank", rel: "noreferrer noopener" })}
+      >
         <Image src={src} alt={alt ?? "image"} width={320} height={240} />
       </a>
-    );
-  }
-
-  if (srcs) {
-    content = (
-      <span
-        className={`multi-tooltip ${aspectRatio === "16:9" ? "aspect-ratio-16-9" : ""}`}
-      >
-        {srcs.map(({ type, href, src, alt }) => (
-          <a
-            key={`${href}-${src}`}
-            href={href}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            {type === "video" ? (
-              <video autoPlay muted loop>
-                <source src={src} type="video/webm" />
-                Unsupported.
-              </video>
-            ) : (
-              <Image src={src} alt={alt ?? "image"} width={320} height={240} />
-            )}
-          </a>
-        ))}
-      </span>
     );
   }
 

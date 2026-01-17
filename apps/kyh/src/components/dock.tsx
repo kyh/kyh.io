@@ -82,6 +82,7 @@ export const Dock = () => {
           <Link
             key={href}
             href={href}
+            aria-label={label}
             onClick={() => {
               mouseX.set(Infinity);
               setHovered(null);
@@ -101,6 +102,7 @@ export const Dock = () => {
           </Link>
         ))}
         <button
+          aria-label={themeLabel}
           onClick={() => setTheme(isLight ? "dark" : "light")}
           onMouseEnter={() => setHovered("theme")}
           onMouseLeave={() => setHovered(null)}
