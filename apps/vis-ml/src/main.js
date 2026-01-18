@@ -1,10 +1,12 @@
+import { select, selectAll } from "d3";
 import scrollama from "scrollama";
 import Stickyfill from "stickyfilljs";
-import { select, selectAll } from "d3";
+
 import "./style.css";
+
 import data from "./data";
-import { calculateAverage, between, animateLine } from "./utils";
 import LinearRegressionGraph from "./graph";
+import { animateLine, between, calculateAverage } from "./utils";
 
 const main = select("main");
 const scrolly = main.select("#scrolly");
@@ -197,7 +199,7 @@ function handleStepProgress(response) {
       `transform: perspective(800px) rotateY(${
         10 + response.progress * 20
       }deg) rotateX(10deg) scaleX(0.95)
-    translate(-50%, -55%)`
+    translate(-50%, -55%)`,
     );
   }
   if (response.index === 1) {
@@ -270,7 +272,7 @@ init();
 const { total } = calculateAverage(data);
 const regressionGraph = new LinearRegressionGraph(
   chartContainer.select(".chart"),
-  data
+  data,
 );
 regressionGraph.render();
 

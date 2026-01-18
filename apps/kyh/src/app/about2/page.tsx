@@ -11,6 +11,7 @@ import { Section, SectionHeading, Separator } from "./components/section";
 import { ShapesCanvas } from "./components/shapes-canvas";
 import { SideQuests } from "./components/side-quests";
 import { TimeCounter } from "./components/time-counter";
+import { ViewAsMenu } from "./components/view-as-menu";
 import { WorkList } from "./components/work-list";
 
 const Page = () => {
@@ -25,11 +26,18 @@ const Page = () => {
           >
             <Logo />
           </NextLink>
-          <TimeCounter />
+          <div className="flex flex-col items-end gap-1.5">
+            <ViewAsMenu />
+            <TimeCounter />
+          </div>
         </header>
 
         <Section id="intro" delay={0.1}>
-          <ScrambleText className="text-foreground-highlighted mb-3 text-lg leading-none font-medium">
+          <ScrambleText
+            as="h1"
+            trigger="both"
+            className="text-foreground-highlighted mb-3 text-lg leading-none font-medium"
+          >
             Kaiyu Hsu
           </ScrambleText>
           <p className="text-foreground">
@@ -45,7 +53,7 @@ const Page = () => {
         <Separator />
 
         <Section id="highlights" delay={0.3}>
-          <SectionHeading>Highlights</SectionHeading>
+          <SectionHeading id="highlights">Highlights</SectionHeading>
           <ul className="mt-1 [&_li]:mb-1 [&_li]:bg-[image:var(--arrow)] [&_li]:bg-[position:0_5px] [&_li]:bg-no-repeat [&_li]:pl-6">
             <li>Oversaw product growth from dozens to millions of users</li>
             <li>
@@ -127,21 +135,23 @@ const Page = () => {
         <Separator />
 
         <Section id="work" delay={0.5}>
-          <SectionHeading>Work Life</SectionHeading>
+          <SectionHeading id="work">Work Life</SectionHeading>
           <WorkList />
         </Section>
 
         <Separator />
 
         <Section id="side-quests" delay={0.7}>
-          <SectionHeading>Side Quests</SectionHeading>
+          <SectionHeading id="side-quests">Side Quests</SectionHeading>
           <SideQuests />
         </Section>
 
         <Separator />
 
         <Section id="other-activities" delay={0.9}>
-          <SectionHeading>Other Activities</SectionHeading>
+          <SectionHeading id="other-activities">
+            Other Activities
+          </SectionHeading>
           <p className="text-foreground mt-1">
             Beyond work, I love to learn about economics, psychology, and
             business. You&apos;ll occasionally find me dabbling in the open
@@ -153,12 +163,12 @@ const Page = () => {
         <Separator />
 
         <Section id="connect" delay={1.1}>
-          <SectionHeading>Connect</SectionHeading>
+          <SectionHeading id="connect">Connect</SectionHeading>
           <ConnectList />
         </Section>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-0">
+      <div className="absolute right-0 bottom-0 left-0 z-0">
         <ShapesCanvas />
       </div>
     </div>

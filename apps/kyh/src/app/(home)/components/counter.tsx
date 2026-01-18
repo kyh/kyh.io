@@ -72,7 +72,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
         position: "relative",
       }}
     >
-      <span className="text-transparent absolute top-0 left-0" ref={ref}>
+      <span className="absolute top-0 left-0 text-transparent" ref={ref}>
         {text}
       </span>
 
@@ -92,7 +92,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
               initial={{ x, width, opacity: 0 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ ease: "easeOut" }}
-              className="absolute top-0 left-0 pointer-events-none"
+              className="pointer-events-none absolute top-0 left-0"
               aria-hidden="true"
             >
               <Vertical letter={letter} />

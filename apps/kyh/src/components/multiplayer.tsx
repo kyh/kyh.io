@@ -40,7 +40,7 @@ export const Multiplayer = () => {
 
   return (
     <>
-      <div className="fixed right-6 top-6 z-[1]">
+      <div className="fixed top-6 right-6 z-[1]">
         <AvatarGroup others={players} />
       </div>
       {cursors}

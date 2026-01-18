@@ -33,14 +33,16 @@ export const Footer = () => {
 
   return (
     <div
-      className="absolute left-5 right-5 text-[color:var(--body-color)] flex items-center justify-between gap-3 text-[0.8rem]"
+      className="absolute right-5 left-5 flex items-center justify-between gap-3 text-[0.8rem] text-[color:var(--body-color)]"
       style={{ top }}
     >
       <span className="flex items-center">
         <Counter text={time} />
         {time && <span>&nbsp;&#183;&nbsp;San Francisco, CA</span>}
       </span>
-      {time && <SocialLinks className="animate-[animateIn_0.6s_cubic-bezier(0.23,1,0.32,1)]" />}
+      {time && (
+        <SocialLinks className="animate-[animateIn_0.6s_cubic-bezier(0.23,1,0.32,1)]" />
+      )}
     </div>
   );
 };

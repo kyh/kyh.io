@@ -21,7 +21,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const onlyMe = players.length < 1;
 
   return (
-    <ul className="flex mr-2 transition-opacity duration-[230ms] ease-out">
+    <ul className="mr-2 flex transition-opacity duration-[230ms] ease-out">
       <AnimatePresence mode="popLayout">
         <motion.li
           className="-mr-2 rounded-full shadow-md"
@@ -37,12 +37,12 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
         >
           <Tooltip placement="bottom-end">
             <TooltipTrigger
-              className="w-7 h-7 flex"
+              className="flex h-7 w-7"
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
               <span aria-hidden="true" />
             </TooltipTrigger>
-            <TooltipContent className="text-xs px-2 py-0.5">
+            <TooltipContent className="px-2 py-0.5 text-xs">
               {onlyMe ? "You're the only one here 🥺" : "You"}
             </TooltipContent>
           </Tooltip>
@@ -71,10 +71,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               layout
             >
               <Tooltip placement="bottom-end">
-                <TooltipTrigger className="w-7 h-7 flex" aria-label={label}>
+                <TooltipTrigger className="flex h-7 w-7" aria-label={label}>
                   <span aria-hidden="true" />
                 </TooltipTrigger>
-                <TooltipContent className="text-xs px-2 py-0.5">
+                <TooltipContent className="px-2 py-0.5 text-xs">
                   {label}
                 </TooltipContent>
               </Tooltip>

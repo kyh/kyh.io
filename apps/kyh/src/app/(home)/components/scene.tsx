@@ -314,5 +314,5 @@ export const Scene = ({ sceneRef: parentRef }: SceneProps) => {
     };
   }, []);
 
-  return <div className="fixed top-0 left-0 w-full h-full" ref={sceneRef} />;
+  return <div className="fixed top-0 left-0 h-full w-full" ref={sceneRef} />;
 };

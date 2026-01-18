@@ -7,7 +7,7 @@ export const social = {
 
 export const GithubLink = () => (
   <a
-    className="inline-flex p-1.5 social-git"
+    className="social-git inline-flex p-1.5"
     href={social.github}
     aria-label="GitHub"
     target="_blank"
@@ -21,7 +21,7 @@ export const GithubLink = () => (
 
 export const DribbbleLink = () => (
   <a
-    className="inline-flex p-1.5 social-dribbble"
+    className="social-dribbble inline-flex p-1.5"
     href={social.dribbble}
     aria-label="Dribbble"
     target="_blank"
@@ -35,7 +35,7 @@ export const DribbbleLink = () => (
 
 export const TwitterLink = () => (
   <a
-    className="inline-flex p-1.5 social-twitter"
+    className="social-twitter inline-flex p-1.5"
     href={social.twitter}
     aria-label="Twitter"
     target="_blank"
@@ -49,7 +49,7 @@ export const TwitterLink = () => (
 
 export const LinkedInLink = () => (
   <a
-    className="inline-flex p-1.5 social-linkedin"
+    className="social-linkedin inline-flex p-1.5"
     href={social.linkedin}
     aria-label="LinkedIn"
     target="_blank"

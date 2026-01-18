@@ -15,11 +15,14 @@ catalog:
 
 linkWorkspacePackages: true
 
-nodeLinker: hoisted
-
 onlyBuiltDependencies:
   - "@vercel/speed-insights"
   - cbor-extract
   - esbuild
   - sharp
   - workerd
+
+publicHoistPattern:
+  - "@ianvs/prettier-plugin-sort-imports"
+  - "@radix-ui/*"
+  - prettier-plugin-tailwindcss

@@ -361,7 +361,7 @@ button.link {
 }
 
 /* Scramble text animation */
-.scramble > span {
+[data-scramble] > span {
   position: relative;
   color: transparent;
   &::after {
@@ -370,9 +370,12 @@ button.link {
     display: inline-block;
     inset: 0;
     color: canvastext;
-    animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
     pointer-events: none;
   }
+}
+
+[data-scramble].scramble > span::after {
+  animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
 }
 
 /* Animate section */
@@ -566,7 +569,9 @@ button.link {
   padding: 4px 8px;
   gap: 16px;
   border-radius: 6px;
-  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
   color: var(--body-color-faded);
 
   & svg {

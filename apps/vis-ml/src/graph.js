@@ -1,4 +1,4 @@
-import { line, select, scaleLinear, max, axisBottom, axisLeft } from "d3";
+import { axisBottom, axisLeft, line, max, scaleLinear, select } from "d3";
 
 class LinearRegressionGraph {
   constructor(
@@ -13,7 +13,7 @@ class LinearRegressionGraph {
     state = {
       bias: 0,
       weight: 0,
-    }
+    },
   ) {
     this.svg = svg;
     this.data = data;
@@ -40,7 +40,7 @@ class LinearRegressionGraph {
       g
         .attr(
           "transform",
-          `translate(0, ${this.options.height - this.options.margin.bottom})`
+          `translate(0, ${this.options.height - this.options.margin.bottom})`,
         )
         .attr("class", "xAxis")
         .call(axisBottom(this.xScale));
@@ -84,7 +84,7 @@ class LinearRegressionGraph {
       .selectAll(".error-line")
       .attr("y1", (d) => this.yScale(d.y))
       .attr("y2", (d) =>
-        this.yScale(this.state.weight * d.x + this.state.bias)
+        this.yScale(this.state.weight * d.x + this.state.bias),
       );
   }
 

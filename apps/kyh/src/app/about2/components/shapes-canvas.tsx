@@ -39,7 +39,7 @@ const createStaticShape = (isLight: boolean, x: number, y: number) => {
         y,
         Common.random(20, 35),
         Common.random(20, 35),
-        { render }
+        { render },
       );
     case 2:
       return Bodies.polygon(x, y, 3, Common.random(18, 28), { render });
@@ -164,7 +164,7 @@ export const ShapesCanvas = () => {
         isSensor: true,
         isStatic: true,
         render: { visible: false },
-      }
+      },
     );
 
     Composite.add(engine.world, [ground, bottomSensor]);
@@ -199,14 +199,16 @@ export const ShapesCanvas = () => {
 
       // Check if click is on an existing body
       const bodies = Composite.allBodies(engineRef.current.world).filter(
-        (b) => !b.isStatic
+        (b) => !b.isStatic,
       );
       const clickedBodies = Query.point(bodies, { x, y });
 
       // Only spawn if clicking empty space
       if (clickedBodies.length > 0) return;
 
-      const count = Math.floor(Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2));
+      const count = Math.floor(
+        Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2),
+      );
       for (let i = 0; i < count; i++) {
         const { body, targetScale } = createClickShape(isLight, x, y);
         bodiesRef.current.push(body);
@@ -295,7 +297,7 @@ export const ShapesCanvas = () => {
             return true;
           }
           return false;
-        }
+        },
       );
     });
 
@@ -351,7 +353,7 @@ export const ShapesCanvas = () => {
   return (
     <div
       ref={containerRef}
-      className="w-full h-[480px] touch-pan-y"
+      className="h-[480px] w-full touch-pan-y"
       style={{ touchAction: "pan-y" }}
       aria-hidden="true"
     />

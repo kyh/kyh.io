@@ -72,9 +72,9 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <div className="flex items-center justify-center h-[70px] fixed bottom-[4vh] left-0 right-0 z-10 pointer-events-none">
+    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
       <nav
-        className="relative flex items-center h-full gap-2 p-3 rounded-[20px] bg-[var(--dock-bg)] shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] pointer-events-auto"
+        className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
@@ -194,7 +194,7 @@ const DockItem = ({
     <motion.div
       ref={ref}
       style={{ width, height }}
-      className="dock-item relative flex aspect-square items-center justify-center rounded-[25%] z-[1]"
+      className="dock-item relative z-[1] flex aspect-square items-center justify-center rounded-[25%]"
     >
       <AnimatePresence>
         {hovered && (
@@ -202,7 +202,7 @@ const DockItem = ({
             initial={{ opacity: 0, y: 10, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 2, x: "-50%" }}
-            className="absolute -top-8 left-1/2 whitespace-pre rounded-md border border-[var(--border-color)] bg-panel px-2 py-0.5 text-xs text-[var(--body-color)]"
+            className="bg-panel absolute -top-8 left-1/2 rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]"
           >
             {label}
           </motion.div>
@@ -214,7 +214,9 @@ const DockItem = ({
       >
         {children}
       </motion.div>
-      {active && <div className="absolute w-[3px] h-[3px] rounded-full bg-foreground-faded left-1/2 -translate-x-1/2 -bottom-2 animate-[fadeInScaleX_0.6s_cubic-bezier(0.23,1,0.32,1)]" />}
+      {active && (
+        <div className="bg-foreground-faded absolute -bottom-2 left-1/2 h-[3px] w-[3px] -translate-x-1/2 animate-[fadeInScaleX_0.6s_cubic-bezier(0.23,1,0.32,1)] rounded-full" />
+      )}
     </motion.div>
   );
 };
@@ -222,7 +224,10 @@ const DockItem = ({
 const GlassFilter = () => {
   return (
     <>
-      <div className="absolute z-0 inset-0 backdrop-blur-[8px] overflow-hidden isolate rounded-[20px]" style={{ filter: 'url("#glass-distortion")' }} />
+      <div
+        className="absolute inset-0 isolate z-0 overflow-hidden rounded-[20px] backdrop-blur-[8px]"
+        style={{ filter: 'url("#glass-distortion")' }}
+      />
       <svg style={{ display: "none", width: 0, height: 0 }}>
         <filter
           id="glass-distortion"
