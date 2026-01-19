@@ -660,10 +660,14 @@ button.link {
   height: 60px;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 
   [data-theme="dark"] & {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -713,15 +717,17 @@ button.link {
   border-radius: 14px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 
   [data-theme="dark"] & {
     background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -738,19 +744,11 @@ button.link {
   aspect-ratio: 1;
   border-radius: 4px;
   overflow: hidden;
-}
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
 
-.mini-label {
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--body-color);
-  pointer-events: none;
-  white-space: nowrap;
+  [data-theme="dark"] & {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  }
 }
 
 .folder-name {
@@ -765,40 +763,30 @@ button.link {
   max-width: 80px;
 }
 
-.open-overlay {
+.open-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  will-change: transform;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  z-index: 9998;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
 
   [data-theme="dark"] & {
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(0, 0, 0, 0.9);
   }
 }
 
 .open-folder {
-  position: relative;
-  border-radius: 1.65rem;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 9999;
   padding: 32px;
   will-change: transform;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-
-  [data-theme="dark"] & {
-    background: rgba(30, 41, 59, 0.6);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
 }
 
 .open-title {
@@ -829,6 +817,8 @@ button.link {
   width: 60px;
   height: 60px;
   aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .open-label {
@@ -843,8 +833,7 @@ button.link {
 }
 
 .closed-root,
-.mini-grid,
-.open-overlay,
+.open-backdrop,
 .open-folder,
 .open-item {
   @media (prefers-reduced-motion: reduce) {

@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
-
-/**
- * ==============   Types   ================
- */
 
 export type ProjectAppItem = {
   key: string;
@@ -13,10 +10,6 @@ export type ProjectAppItem = {
   iconSrc: string;
   url?: string;
 };
-
-/**
- * ==============   Components   ================
- */
 
 export const ProjectApp = ({
   name,
@@ -26,40 +19,23 @@ export const ProjectApp = ({
   name: string;
   iconSrc: string;
   url: string;
-}) => {
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="project-app"
-    >
-      <div className="project-app-icon">
-        <img
-          className="h-full w-full"
-          src={iconSrc}
-          alt={name}
-          draggable={false}
-        />
-      </div>
-      <span className="project-app-label">{name}</span>
-    </a>
-  );
-};
+}) => (
+  <a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="project-app"
+  >
+    <div className="project-app-icon">
+      <img className="h-full w-full" src={iconSrc} alt={name} draggable={false} />
+    </div>
+    <span className="project-app-label">{name}</span>
+  </a>
+);
 
-const AppTile = ({ iconSrc, label }: { iconSrc: string; label: string }) => {
-  return (
-    <img
-      className="h-full w-full"
-      src={iconSrc}
-      alt={label}
-      aria-label={label}
-      draggable={false}
-    />
-  );
-};
+const spring = { type: "spring", stiffness: 200, damping: 22 } as const;
 
-const OpenGridItem = ({
+function OpenGridItem({
   item,
   idx,
   itemRefs,
@@ -71,16 +47,20 @@ const OpenGridItem = ({
   itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   itemOffsets: Record<string, { x: number; y: number }>;
   offsetsReady: boolean;
-}) => {
+}) {
   const off = itemOffsets[item.key] ?? { x: 0, y: 0 };
-
   const openDelay = offsetsReady ? idx * 0.025 : 0;
   const closeDelay = offsetsReady ? 0.05 : 0;
 
   const content = (
     <>
       <div className="open-tile-box">
-        <AppTile iconSrc={item.iconSrc} label={item.name} />
+        <img
+          className="h-full w-full"
+          src={item.iconSrc}
+          alt={item.name}
+          draggable={false}
+        />
       </div>
       <div className="open-label">{item.name}</div>
     </>
@@ -98,7 +78,9 @@ const OpenGridItem = ({
           : { opacity: 0 }
       }
       animate={
-        offsetsReady ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 0 }
+        offsetsReady
+          ? { opacity: 1, scale: 1, x: 0, y: 0 }
+          : { opacity: 0 }
       }
       exit={{
         opacity: 0,
@@ -106,17 +88,13 @@ const OpenGridItem = ({
         x: off.x,
         y: off.y,
         transition: {
-          type: "spring",
-          stiffness: 200,
-          damping: 22,
+          ...spring,
           delay: closeDelay,
           opacity: { delay: 0.05 },
         },
       }}
       transition={{
-        type: "spring",
-        stiffness: 200,
-        damping: 22,
+        ...spring,
         delay: openDelay,
       }}
     >
@@ -125,7 +103,6 @@ const OpenGridItem = ({
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
           className="contents"
         >
           {content}
@@ -135,7 +112,7 @@ const OpenGridItem = ({
       )}
     </motion.div>
   );
-};
+}
 
 export const ProjectAppGroup = ({
   title,
@@ -144,13 +121,6 @@ export const ProjectAppGroup = ({
   title: string;
   items: ProjectAppItem[];
 }) => {
-  const layoutSpring = {
-    type: "spring",
-    stiffness: 200,
-    damping: 22,
-    bounce: 0,
-  } as const;
-
   const [isOpen, setIsOpen] = useState(false);
   const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
@@ -159,7 +129,7 @@ export const ProjectAppGroup = ({
     Record<string, { x: number; y: number }>
   >({});
 
-  const openFolder = useCallback(() => {
+  const handleOpen = useCallback(() => {
     const rect = folderRef.current?.getBoundingClientRect();
     if (rect) {
       setOrigin({
@@ -170,110 +140,113 @@ export const ProjectAppGroup = ({
     setIsOpen(true);
   }, []);
 
-  const closeFolder = useCallback(() => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
   }, []);
 
+  const handleExitComplete = useCallback(() => {
+    if (!isOpen) {
+      setItemOffsets({});
+      setOrigin(null);
+    }
+  }, [isOpen]);
+
+  // Calculate offsets for stagger animation - run after a frame to ensure refs are set
   useLayoutEffect(() => {
     if (!isOpen || !origin) return;
-    const next: Record<string, { x: number; y: number }> = {};
-    for (const item of items) {
-      const el = itemRefs.current[item.key];
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      next[item.key] = { x: origin.x - cx, y: origin.y - cy };
-    }
-    setItemOffsets(next);
+
+    // Wait for next frame so refs are populated
+    const frame = requestAnimationFrame(() => {
+      const next: Record<string, { x: number; y: number }> = {};
+      for (const item of items) {
+        const el = itemRefs.current[item.key];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        next[item.key] = { x: origin.x - cx, y: origin.y - cy };
+      }
+      setItemOffsets(next);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [isOpen, origin, items]);
 
   const offsetsReady =
     isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
-    <MotionConfig transition={layoutSpring}>
-      <div className="project-app-group">
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          onExitComplete={() => {
-            if (!isOpen) {
-              setItemOffsets({});
-              setOrigin(null);
-            }
-          }}
-        >
-          {!isOpen ? (
-            <motion.button
-              key="closed"
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+      <MotionConfig transition={spring}>
+        <div className="project-app-group">
+          {/* Always render to prevent layout shift, animate opacity */}
+          <motion.div
+            initial={false}
+            animate={{ opacity: isOpen ? 0 : 1, scale: isOpen ? 0.9 : 1 }}
+            transition={spring}
+          >
+            <Dialog.Trigger
               className="closed-root"
-              onClick={openFolder}
-              aria-label={`Open ${title} folder`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 22,
-              }}
+              onClick={handleOpen}
+              style={{ pointerEvents: isOpen ? "none" : "auto" }}
             >
               <div className="folder-preview" ref={folderRef}>
                 <div className="folder-grid">
                   {items.slice(0, 4).map((item) => (
                     <div key={item.key} className="mini-cell">
-                      <AppTile iconSrc={item.iconSrc} label={item.name} />
+                      <img
+                        className="h-full w-full"
+                        src={item.iconSrc}
+                        alt={item.name}
+                        draggable={false}
+                      />
                     </div>
                   ))}
                 </div>
               </div>
-
               <div className="folder-name">{title}</div>
-            </motion.button>
-          ) : (
-            <motion.button
-              key="open"
-              className="open-overlay"
-              onClick={closeFolder}
-              aria-label={`Close ${title} folder`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { delay: 0.025 } }}
-            >
-              <motion.div className="open-folder">
+            </Dialog.Trigger>
+          </motion.div>
+        </div>
+
+        <AnimatePresence onExitComplete={handleExitComplete}>
+          {isOpen && (
+            <Dialog.Portal keepMounted>
+              <Dialog.Backdrop
+                render={
+                  <motion.div
+                    className="open-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { delay: 0.025 } }}
+                  />
+                }
+                onClick={handleClose}
+              />
+              <Dialog.Popup
+                render={
+                  <motion.div
+                    className="open-folder"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
+                }
+              >
                 <motion.div
                   className="open-title"
-                  initial={{
-                    opacity: 0,
-                    y: 30,
-                    x: 10,
-                    scale: 0.8,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    x: 0,
-                    scale: 1,
-                  }}
+                  initial={{ opacity: 0, y: 30, x: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
                   exit={{
                     opacity: 0,
                     y: 30,
                     x: 10,
                     scale: 0.8,
-                    transition: {
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 22,
-                    },
+                    transition: { ...spring, stiffness: 300 },
                   }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 19,
-                  }}
+                  transition={{ ...spring, damping: 19 }}
                 >
-                  {title}
+                  <Dialog.Title>{title}</Dialog.Title>
                 </motion.div>
 
                 <div className="open-grid">
@@ -288,11 +261,11 @@ export const ProjectAppGroup = ({
                     />
                   ))}
                 </div>
-              </motion.div>
-            </motion.button>
+              </Dialog.Popup>
+            </Dialog.Portal>
           )}
         </AnimatePresence>
-      </div>
-    </MotionConfig>
+      </MotionConfig>
+    </Dialog.Root>
   );
 };

@@ -133,7 +133,7 @@ export const projects: ProjectType[] = [
     description:
       "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone",
     url: "https://inteligir.com",
-    favicon: getPublicFaviconUrl("inteligir.png"),
+    favicon: getPublicFaviconUrl("inteligir-1.png"),
     type: "project",
     projectAssets: [],
   },
