@@ -1,36 +1,37 @@
-import type { IosAppFolderItem } from "@/components/ios-app-folder";
-import { IosAppFolder } from "@/components/ios-app-folder";
-import { getPublicAssetUrl } from "@/lib/public-assets";
+import { projects } from "@/lib/data";
+import {
+  ProjectApp,
+  ProjectAppGroup,
+  type ProjectAppItem,
+} from "@/components/project-app-group";
 
-const sideQuestItems: IosAppFolderItem[] = [
-  {
-    key: "usdr",
-    layoutId: "usdr",
-    name: "USDR",
-    iconSrc: getPublicAssetUrl("usdr.svg"),
-  },
-  {
-    key: "nodejs",
-    layoutId: "nodejs",
-    name: "OpenJS",
-    iconSrc: getPublicAssetUrl("nodejs.svg"),
-  },
-  {
-    key: "github",
-    layoutId: "github",
-    name: "GitHub",
-    iconSrc: getPublicAssetUrl("github.svg"),
-  },
-  {
-    key: "showcase",
-    layoutId: "showcase",
-    name: "Showcase",
-    iconSrc: "/favicon/favicon.svg",
-  },
-];
+const projectsAndVentures = projects.filter(
+  (p) => p.type === "project" || p.type === "venture",
+);
+
+const miniApps = projects.filter((p) => p.type === "mini-app");
+
+const templates = projects.filter((p) => p.type === "template");
+
+const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
+  key: p.slug,
+  layoutId: p.slug,
+  name: p.title,
+  iconSrc: p.favicon,
+  url: p.url,
+});
 
 export const SideQuests = () => (
-  <div className="mt-1">
-    <IosAppFolder title="Side Quests" items={sideQuestItems} />
+  <div className="side-quests-grid">
+    {projectsAndVentures.map((p) => (
+      <ProjectApp
+        key={p.slug}
+        name={p.title}
+        iconSrc={p.favicon}
+        url={p.url}
+      />
+    ))}
+    <ProjectAppGroup title="Mini Apps" items={miniApps.map(toAppItem)} />
+    <ProjectAppGroup title="Templates" items={templates.map(toAppItem)} />
   </div>
 );

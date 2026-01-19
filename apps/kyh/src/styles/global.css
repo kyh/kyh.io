@@ -621,52 +621,32 @@ button.link {
   }
 }
 
-/* iOS App Folder */
-.closed-root {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  user-select: none;
-  will-change: transform;
-}
+/* Side Quests Grid */
+.side-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  justify-items: center;
+  padding: 20px 0;
 
-.folder-preview {
-  position: relative;
-  border-radius: 26px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-
-  [data-theme="dark"] & {
-    background: rgba(15, 23, 42, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+  @media screen and (max-width: 480px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 }
 
-.folder-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 55px);
-  grid-template-rows: repeat(2, 55px);
-  gap: 10px;
-}
-
-.mini-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 25px);
-  grid-template-rows: repeat(2, 25px);
-  gap: 5px;
-  cursor: pointer;
-  transition:
-    opacity 200ms ease,
-    transform 200ms ease;
+/* Project App (individual app icon) */
+.project-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 200ms ease;
 
   @media (hover: hover) and (pointer: fine) {
     &:hover {
-      opacity: 0.85;
+      transform: scale(1.05);
     }
   }
 
@@ -675,9 +655,89 @@ button.link {
   }
 }
 
+.project-app-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  [data-theme="dark"] & {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.project-app-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--body-color);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+/* Project App Group (folder) */
+.project-app-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* iOS App Folder */
+.closed-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  will-change: transform;
+  transition: transform 200ms ease;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.folder-preview {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  [data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 4px;
+  height: 100%;
+}
+
 .mini-cell {
   position: relative;
   aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .mini-label {
@@ -694,10 +754,15 @@ button.link {
 }
 
 .folder-name {
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   line-height: 1;
   font-weight: 500;
   color: var(--body-color);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
 }
 
 .open-overlay {

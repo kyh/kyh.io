@@ -312,7 +312,6 @@ export type WorkType = {
   year: string;
   favicon: string;
   link: string;
-  description: string;
 };
 
 export const workHistory: WorkType[] = [
@@ -322,7 +321,6 @@ export const workHistory: WorkType[] = [
     year: "Now",
     favicon: getPublicFaviconUrl("sequoia.png"),
     link: "https://sequoiacap.com",
-    description: "",
   },
   {
     role: "Software Engineer",
@@ -330,7 +328,6 @@ export const workHistory: WorkType[] = [
     year: "2022",
     favicon: getPublicFaviconUrl("vercel.png"),
     link: "https://vercel.com",
-    description: "",
   },
   {
     role: "Design Engineer",
@@ -338,7 +335,6 @@ export const workHistory: WorkType[] = [
     year: "2022",
     favicon: getPublicFaviconUrl("google.png"),
     link: "https://grow.google",
-    description: "",
   },
   {
     role: "Software Engineer",
@@ -346,22 +342,19 @@ export const workHistory: WorkType[] = [
     year: "2020",
     favicon: getPublicFaviconUrl("amazon.png"),
     link: "https://amazon.design",
-    description: "",
   },
   {
     role: "Software Engineer",
     company: "Atrium",
     year: "2019",
-    favicon: getPublicFaviconUrl("atrium.png"),
-    link: "https://atrium.com",
-    description: "",
+    favicon: getPublicFaviconUrl("atrium-1.png"),
+    link: "https://www.crunchbase.com/organization/atrium-lts",
   },
   {
     role: "Design Engineer",
     company: "Cardiogram",
     year: "2015",
     favicon: getPublicFaviconUrl("cardiogram.png"),
-    link: "https://cardiogram.com",
-    description: "",
+    link: "https://www.crunchbase.com/organization/cardiogram",
   },
 ] as const;

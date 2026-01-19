@@ -7,62 +7,46 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
  * ==============   Types   ================
  */
 
-export type IosAppFolderItem = {
+export type ProjectAppItem = {
   key: string;
   layoutId?: string;
   name: string;
   iconSrc: string;
+  url?: string;
 };
-
-/**
- * ==============   Default Items   ================
- */
-
-const defaultItems: IosAppFolderItem[] = [
-  {
-    key: "1",
-    layoutId: "app-1",
-    name: "App 1",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "2",
-    layoutId: "app-2",
-    name: "App 2",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "3",
-    layoutId: "app-3",
-    name: "App 3",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "4",
-    layoutId: "app-4",
-    name: "App 4",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "5",
-    name: "App 5",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "6",
-    name: "App 6",
-    iconSrc: "/favicon/favicon.svg",
-  },
-  {
-    key: "7",
-    name: "App 7",
-    iconSrc: "/favicon/favicon.svg",
-  },
-];
 
 /**
  * ==============   Components   ================
  */
+
+export const ProjectApp = ({
+  name,
+  iconSrc,
+  url,
+}: {
+  name: string;
+  iconSrc: string;
+  url: string;
+}) => {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="project-app"
+    >
+      <div className="project-app-icon">
+        <img
+          className="h-full w-full"
+          src={iconSrc}
+          alt={name}
+          draggable={false}
+        />
+      </div>
+      <span className="project-app-label">{name}</span>
+    </a>
+  );
+};
 
 const AppTile = ({
   iconSrc,
@@ -93,9 +77,9 @@ const OpenGridItem = ({
   itemOffsets,
   offsetsReady,
 }: {
-  item: IosAppFolderItem;
+  item: ProjectAppItem;
   idx: number;
-  items: IosAppFolderItem[];
+  items: ProjectAppItem[];
   itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   itemOffsets: Record<string, { x: number; y: number }>;
   offsetsReady: boolean;
@@ -117,6 +101,26 @@ const OpenGridItem = ({
       ? 0
       : -0.095 + (nonLayoutTotal - 1 - nonLayoutIdx) * 0.025
     : 0;
+
+  const content = (
+    <>
+      <div className="open-tile-box">
+        <AppTile
+          layoutId={item.layoutId}
+          iconSrc={item.iconSrc}
+          label={item.name}
+        />
+      </div>
+
+      {hasLayout ? (
+        <motion.div layoutId={`label-${item.layoutId}`} className="open-label">
+          {item.name}
+        </motion.div>
+      ) : (
+        <div className="open-label">{item.name}</div>
+      )}
+    </>
+  );
 
   return (
     <motion.div
@@ -162,31 +166,29 @@ const OpenGridItem = ({
         delay: openDelay,
       }}
     >
-      <div className="open-tile-box">
-        <AppTile
-          layoutId={item.layoutId}
-          iconSrc={item.iconSrc}
-          label={item.name}
-        />
-      </div>
-
-      {hasLayout ? (
-        <motion.div layoutId={`label-${item.layoutId}`} className="open-label">
-          {item.name}
-        </motion.div>
+      {item.url ? (
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="contents"
+        >
+          {content}
+        </a>
       ) : (
-        <div className="open-label">{item.name}</div>
+        content
       )}
     </motion.div>
   );
 };
 
-export const IosAppFolder = ({
-  title = "Creator Studio",
-  items = defaultItems,
+export const ProjectAppGroup = ({
+  title,
+  items,
 }: {
-  title?: string;
-  items?: IosAppFolderItem[];
+  title: string;
+  items: ProjectAppItem[];
 }) => {
   const layoutSpring = {
     type: "spring",
@@ -237,7 +239,7 @@ export const IosAppFolder = ({
 
   return (
     <MotionConfig transition={layoutSpring}>
-      <div className="flex min-h-screen w-full items-center justify-center font-sans">
+      <div className="project-app-group">
         <AnimatePresence
           mode="popLayout"
           initial={false}
@@ -264,40 +266,16 @@ export const IosAppFolder = ({
               }}
             >
               <div className="folder-preview">
-                <div className="folder-grid">
-                  {items
-                    .filter((item) => !item.layoutId)
-                    .slice(0, 3)
-                    .map((item) => (
+                <div className="folder-grid" ref={miniGridRef}>
+                  {items.slice(0, 4).map((item) => (
+                    <div key={item.key} className="mini-cell">
                       <AppTile
-                        key={item.key}
+                        layoutId={item.layoutId}
                         iconSrc={item.iconSrc}
                         label={item.name}
                       />
-                    ))}
-
-                  <div className="mini-grid" ref={miniGridRef}>
-                    {items
-                      .filter((item) => item.layoutId)
-                      .slice(0, 4)
-                      .map((item) => (
-                        <div key={item.key} className="mini-cell">
-                          <AppTile
-                            layoutId={item.layoutId}
-                            iconSrc={item.iconSrc}
-                            label={item.name}
-                          />
-                          <motion.div
-                            layoutId={`label-${item.layoutId}`}
-                            className="mini-label"
-                            style={{ opacity: 0 }}
-                            aria-hidden="true"
-                          >
-                            {item.name}
-                          </motion.div>
-                        </div>
-                      ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
