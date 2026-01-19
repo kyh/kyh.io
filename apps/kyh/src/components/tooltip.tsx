@@ -25,44 +25,34 @@ type LinesPosition = {
   y: number;
   width: number;
   height: number;
-} | null;
+};
 
-const TooltipLinesContext = React.createContext<{
-  position: LinesPosition;
-  setPosition: (pos: LinesPosition) => void;
-  registerBlockTooltip: () => () => void;
-}>({
-  position: null,
-  setPosition: () => {},
-  registerBlockTooltip: () => () => {},
+type TooltipLinesContextType = {
+  updatePosition: (id: string, pos: LinesPosition | null) => void;
+};
+
+const TooltipLinesContext = React.createContext<TooltipLinesContextType>({
+  updatePosition: () => {},
 });
 
 const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
-  const [position, setPosition] = React.useState<LinesPosition>(null);
-  const openCountRef = React.useRef(0);
-  const clearTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [position, setPosition] = React.useState<LinesPosition | null>(null);
+  const positionsRef = React.useRef<Map<string, LinesPosition>>(new Map());
 
-  const registerBlockTooltip = React.useCallback(() => {
-    // Cancel any pending clear
-    if (clearTimeoutRef.current) {
-      clearTimeout(clearTimeoutRef.current);
-      clearTimeoutRef.current = null;
+  const updatePosition = React.useCallback((id: string, pos: LinesPosition | null) => {
+    if (pos) {
+      positionsRef.current.set(id, pos);
+      setPosition(pos);
+    } else {
+      positionsRef.current.delete(id);
+      // Use any remaining open tooltip's position, or null
+      const remaining = Array.from(positionsRef.current.values());
+      setPosition(remaining.length > 0 ? (remaining[remaining.length - 1] ?? null) : null);
     }
-    openCountRef.current += 1;
-
-    return () => {
-      openCountRef.current -= 1;
-      // Delay clearing to allow another tooltip to register first
-      clearTimeoutRef.current = setTimeout(() => {
-        if (openCountRef.current === 0) {
-          setPosition(null);
-        }
-      }, 50);
-    };
   }, []);
 
   return (
-    <TooltipLinesContext.Provider value={{ position, setPosition, registerBlockTooltip }}>
+    <TooltipLinesContext.Provider value={{ updatePosition }}>
       {children}
       <TooltipLines position={position} />
     </TooltipLinesContext.Provider>
@@ -197,34 +187,36 @@ const TooltipContent = React.forwardRef<
   }
 >(({ className, type = "default", ...props }, propRef) => {
   const context = useTooltipContext();
-  const { setPosition, registerBlockTooltip } = React.useContext(TooltipLinesContext);
+  const { updatePosition } = React.useContext(TooltipLinesContext);
+  const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
   const { children: floatingPropsChildren, ...floatingProps } =
     context.getFloatingProps(props);
   const children = floatingPropsChildren as React.ReactNode;
   const blockType = type === "block";
 
-  // Register/unregister this block tooltip
-  React.useEffect(() => {
-    if (!blockType || !context.open) return;
-    return registerBlockTooltip();
-  }, [blockType, context.open, registerBlockTooltip]);
+  // Update global lines position when this tooltip opens/closes/moves
+  React.useLayoutEffect(() => {
+    if (!blockType) return;
 
-  // Update global lines position when this tooltip is open
-  React.useEffect(() => {
-    if (!blockType || !context.open) return;
-    if (context.x != null && context.y != null) {
+    if (context.open && context.x != null && context.y != null) {
       const floatingEl = context.elements.floating;
       if (floatingEl) {
-        setPosition({
+        updatePosition(tooltipId, {
           x: context.x,
           y: context.y,
           width: floatingEl.offsetWidth,
           height: floatingEl.offsetHeight,
         });
       }
+    } else {
+      updatePosition(tooltipId, null);
     }
-  }, [blockType, context.open, context.x, context.y, context.elements.floating, setPosition]);
+
+    return () => {
+      updatePosition(tooltipId, null);
+    };
+  }, [blockType, context.open, context.x, context.y, context.elements.floating, updatePosition, tooltipId]);
 
   const tooltipMotionProps = blockType
     ? {}
@@ -271,7 +263,7 @@ const easeInOutQuint = (x: number) =>
   x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
 
 // Single set of lines rendered at provider level
-const TooltipLines = ({ position }: { position: LinesPosition }) => {
+const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
   const [scrollHeight, setScrollHeight] = React.useState(0);
 
   React.useEffect(() => {
