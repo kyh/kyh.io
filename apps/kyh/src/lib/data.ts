@@ -1,12 +1,13 @@
-import { getPublicAssetUrl } from "@/lib/public-assets";
+import { getPublicAssetUrl, getPublicFaviconUrl } from "@/lib/public-assets";
 
 export type ProjectType = {
   slug: string;
   title: string;
   description: string;
   url: string;
+  favicon: string;
   projectAssets: ProjectAssetType[];
-  type: "project" | "work";
+  type: "venture" | "project" | "mini-app" | "template";
 };
 
 type ProjectAssetType = {
@@ -22,8 +23,9 @@ export const projects: ProjectType[] = [
     slug: "vibedgames",
     title: "Vibedgames",
     description:
-      "Design, publish, and play personalized multiplayer minigames with your friends.",
+      "Design, publish, and play personalized multiplayer minigames with your friends",
     url: "https://vibedgames.com",
+    favicon: getPublicFaviconUrl("vibedgames.png"),
     type: "project",
     projectAssets: [
       {
@@ -50,8 +52,9 @@ export const projects: ProjectType[] = [
   {
     slug: "yourssincerely",
     title: "Yours Sincerely",
-    description: "Anonymous love letters 💌 written in disappearing ink.",
+    description: "Anonymous love letters 💌 written in disappearing ink",
     url: "https://yourssincerely.org",
+    favicon: getPublicFaviconUrl("yourssincerely.png"),
     type: "project",
     projectAssets: [
       {
@@ -75,8 +78,9 @@ export const projects: ProjectType[] = [
   {
     slug: "uicapsule",
     title: "UICapsule",
-    description: "A curated collection of components that spark joy.",
+    description: "A curated collection of components that spark joy",
     url: "https://uicapsule.com",
+    favicon: getPublicFaviconUrl("uicapsule.png"),
     type: "project",
     projectAssets: [
       {
@@ -127,8 +131,9 @@ export const projects: ProjectType[] = [
     slug: "inteligir",
     title: "Inteligir",
     description:
-      "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone.",
+      "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone",
     url: "https://inteligir.com",
+    favicon: getPublicFaviconUrl("inteligir.png"),
     type: "project",
     projectAssets: [],
   },
@@ -138,6 +143,7 @@ export const projects: ProjectType[] = [
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     url: "https://dataembed.com",
+    favicon: getPublicFaviconUrl("dataembed.png"),
     type: "project",
     projectAssets: [
       {
@@ -151,11 +157,33 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "loremllm",
+    title: "LoremLLM",
+    description:
+      "Mock responses for LLMs",
+    url: "https://loremllm.com",
+    favicon: getPublicFaviconUrl("loremllm.png"),
+    type: "project",
+    projectAssets: [],
+  },
+  // {
+  //   slug: "edgestories",
+  //   title: "Edge Stories",
+  //   description:
+  //     "",
+  //   url: "https://edgestories.com",
+  //   favicon: getPublicFaviconUrl("edgestories.png"),
+  //   type: "project",
+  //   projectAssets: [],
+  // },
+  // Ventures
+  {
     slug: "founding",
     title: "Founding",
-    description: "Your proxy founding team.",
+    description: "Your proxy founding team",
     url: "https://founding.so",
-    type: "project",
+    favicon: getPublicFaviconUrl("founding.png"),
+    type: "venture",
     projectAssets: [
       {
         type: "image",
@@ -169,13 +197,15 @@ export const projects: ProjectType[] = [
       },
     ],
   },
+  // Mini Apps
   {
     slug: "total-compensation-calculator",
     title: "Total Compensation Calculator",
     description:
-      "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank.",
+      "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank",
     url: "https://tc.kyh.io",
-    type: "project",
+    favicon: getPublicFaviconUrl("total-compensation-calculator.png"),
+    type: "mini-app",
     projectAssets: [
       {
         type: "image",
@@ -189,9 +219,10 @@ export const projects: ProjectType[] = [
     slug: "covid-19-dashboard",
     title: "Covid-19 Dashboard",
     description:
-      "A real-time dashboard visualizing global Covid-19 data and trends.",
+      "A real-time dashboard visualizing global Covid-19 data and trends",
     url: "https://covid-19.kyh.io",
-    type: "project",
+    favicon: getPublicFaviconUrl("covid-19-dashboard.png"),
+    type: "mini-app",
     projectAssets: [
       {
         type: "image",
@@ -208,9 +239,10 @@ export const projects: ProjectType[] = [
   {
     slug: "keiko-and-friends",
     title: "Keiko and Friends",
-    description: "Cute sticker pack.",
+    description: "Cute sticker pack",
     url: "https://apps.apple.com/us/app/id1209391711",
-    type: "project",
+    favicon: getPublicFaviconUrl("keiko-and-friends.png"),
+    type: "mini-app",
     projectAssets: [
       {
         type: "image",
@@ -220,13 +252,15 @@ export const projects: ProjectType[] = [
       },
     ],
   },
+  // Templates
   {
     slug: "init",
     title: "Init",
     description:
-      "An AI native starter kit to build, launch, and scale your next project.",
+      "An AI native starter kit to build, launch, and scale your next project",
     url: "https://init.kyh.io",
-    type: "project",
+    favicon: getPublicFaviconUrl("init.png"),
+    type: "template",
     projectAssets: [
       {
         type: "image",
@@ -236,85 +270,98 @@ export const projects: ProjectType[] = [
       },
     ],
   },
-
-  // Work
   {
-    slug: "sequoia",
-    title: "Sequoia",
-    description: "",
-    url: "https://sequoiacap.com",
-    type: "work",
-    projectAssets: [
-      {
-        type: "video",
-        src: getPublicAssetUrl("arc.webm"),
-      },
-    ],
-  },
-  {
-    slug: "google",
-    title: "Google",
-    description: "",
-    url: "https://grow.google",
-    type: "work",
-    projectAssets: [
-      {
-        type: "video",
-        src: getPublicAssetUrl("google-grow.webm"),
-      },
-    ],
-  },
-  {
-    slug: "amazon",
-    title: "Amazon",
-    description: "",
-    url: "https://amazon.design",
-    type: "work",
+    slug: "ai-design-canvas",
+    title: "AI Design Canvas",
+    description:
+      "A full-featured, hackable Next.js and AI sdk design canvas",
+    url: "https://init.kyh.io",
+    favicon: getPublicFaviconUrl("ai-.png"),
+    type: "template",
     projectAssets: [
       {
         type: "image",
-        src: getPublicAssetUrl("amazon-ds.webp"),
+        src: getPublicAssetUrl("init.webp"),
         dataBlur:
-          "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAADwAQCdASoQAAwAAUAmJagCdLoAAwkBvegA/v29UctAdfkdHg29PWJSqGyVt/+nGP/JS/00j6U93+LYrgyoAA==",
+          "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
       },
     ],
   },
   {
-    slug: "cardiogram",
-    title: "Cardiogram",
-    description: "",
-    url: "https://apps.apple.com/us/app/cardiogram/id1000017994",
-    type: "work",
+    slug: "ai-datagrid",
+    title: "AI Datagrid",
+    description:
+      "A full-featured, hackable Next.js AI datagrid",
+    url: "https://init.kyh.io",
+    favicon: getPublicFaviconUrl("init.png"),
+    type: "template",
     projectAssets: [
       {
         type: "image",
-        src: getPublicAssetUrl("cardiogram.webp"),
+        src: getPublicAssetUrl("init.webp"),
         dataBlur:
-          "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAAAwAgCdASoQAAwAAUAmJZwCw7D0uKmpGNtDAAD+/gJZSH6K4fTPLnMe0LDP31p+YC8Z3gV54kQfHCvUM7NKrfCnpgUeAAAA",
+          "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
       },
     ],
   },
 ] as const;
 
-export type RadialDataType = {
-  project: ProjectType;
-  degree: number;
-  variant?: "small" | "medium" | "large";
+export type WorkType = {
+  role: string;
+  company: string;
+  year: string;
+  favicon: string;
+  link: string;
+  description: string;
 };
 
-export type LineType = {
-  variant: RadialDataType["variant"];
-  rotation: number;
-  offsetX: number;
-  offsetY: number;
-  dataIndex: number | null;
-};
-
-export type LineTypes = LineType[];
-export type RadialDataTypes = RadialDataType[];
-
-export const radialData: RadialDataTypes = projects.map((project, index) => ({
-  degree: index,
-  variant: "large" as const,
-  project,
-}));
+export const workHistory: WorkType[] = [
+  {
+    role: "Technical Staff",
+    company: "Sequoia Capital",
+    year: "Now",
+    favicon: getPublicFaviconUrl("sequoia.png"),
+    link: "https://sequoiacap.com",
+    description: "",
+  },
+  {
+    role: "Software Engineer",
+    company: "Vercel",
+    year: "2022",
+    favicon: getPublicFaviconUrl("vercel.png"),
+    link: "https://vercel.com",
+    description: "",
+  },
+  {
+    role: "Design Engineer",
+    company: "Google",
+    year: "2022",
+    favicon: getPublicFaviconUrl("google.png"),
+    link: "https://grow.google",
+    description: "",
+  },
+  {
+    role: "Software Engineer",
+    company: "Amazon",
+    year: "2020",
+    favicon: getPublicFaviconUrl("amazon.png"),
+    link: "https://amazon.design",
+    description: "",
+  },
+  {
+    role: "Software Engineer",
+    company: "Atrium",
+    year: "2019",
+    favicon: getPublicFaviconUrl("atrium.png"),
+    link: "https://atrium.com",
+    description: "",
+  },
+  {
+    role: "Design Engineer",
+    company: "Cardiogram",
+    year: "2015",
+    favicon: getPublicFaviconUrl("cardiogram.png"),
+    link: "https://cardiogram.com",
+    description: "",
+  },
+] as const;

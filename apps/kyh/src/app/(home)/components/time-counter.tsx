@@ -1,8 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 import { Fragment, useMemo, useRef } from "react";
+import type { Transition } from "motion/react";
 import { AnimatePresence, motion } from "motion/react";
+
+const getPstTime = () => {
+  return new Date().toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour12: true,
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
+};
+
+export const TimeCounter = () => {
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(getPstTime());
+    }, 1000);
+
+    const timeout = setTimeout(() => {
+      setTime(getPstTime());
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  return (
+    <div className="text-foreground-faded flex items-center text-xs h-4">
+      <Counter text={time} />
+      {time && <span>&nbsp;&#183;&nbsp;SF</span>}
+    </div>
+  );
+};
+
+
 
 type VerticalProps = {
   letter: string;
@@ -46,7 +86,7 @@ type CounterProps = {
   height?: string | number;
 };
 
-const transition = { ease: "easeOut" };
+const transition = { ease: "easeOut" } as Transition;
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
   const ref = useRef<HTMLSpanElement>(null);

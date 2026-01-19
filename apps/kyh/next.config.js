@@ -51,6 +51,11 @@ const config = {
         destination: "/showcase",
         permanent: true,
       },
+      {
+        source: "/about",
+        destination: "/",
+        permanent: true,
+      },
     ];
   },
   /** We already do linting and typechecking as separate tasks in CI */

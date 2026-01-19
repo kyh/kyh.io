@@ -46,7 +46,7 @@ export const ConnectList = () => {
           href={link.href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`list-row grid-cols-[20px_72px_1fr] social-${link.social}`}
+          className={`list-row social-${link.social}`}
         >
           <link.icon />
           <span>{link.label}</span>

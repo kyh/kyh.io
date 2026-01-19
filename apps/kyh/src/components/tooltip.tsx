@@ -181,7 +181,7 @@ export const TooltipContent = React.forwardRef<
       <AnimatePresence>
         {context.open && (
           <motion.div
-            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""}`}
+            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${!blockType ? "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]" : ""}`}
             ref={ref}
             style={context.floatingStyles}
             {...tooltipMotionProps}

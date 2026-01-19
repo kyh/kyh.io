@@ -573,6 +573,8 @@ button.link {
     background-color 0.15s ease-out,
     color 0.15s ease-out;
   color: var(--body-color-faded);
+  grid-template-columns: 20px 120px 1fr auto;
+  font-size: 0.9em;
 
   & svg {
     transition: color 0.15s ease-out;
@@ -603,6 +605,19 @@ button.link {
   }
   &.social-dribbble:hover svg {
     color: var(--logo-dr);
+  }
+}
+
+/* Arrow list (highlights) */
+.arrow-list {
+  margin-top: 0.25rem;
+
+  & li {
+    margin-bottom: 0.25rem;
+    background-image: var(--arrow);
+    background-position: 0 5px;
+    background-repeat: no-repeat;
+    padding-left: 1.5rem;
   }
 }
 

@@ -24,11 +24,11 @@ import {
   useTransform,
 } from "motion/react";
 
-import type { LineType, LineTypes, ProjectType, RadialDataType } from "./data";
+import type { ProjectType } from "@/lib/data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
 import { Link } from "@/components/link";
-import { radialData } from "./data";
+import { projects } from "@/lib/data";
 import {
   areIntersecting,
   clamp,
@@ -37,6 +37,30 @@ import {
   useIsHydrated,
   useShortcuts,
 } from "./utils";
+
+
+type RadialDataType = {
+  project: ProjectType;
+  degree: number;
+  variant?: "small" | "medium" | "large";
+};
+
+type LineType = {
+  variant: RadialDataType["variant"];
+  rotation: number;
+  offsetX: number;
+  offsetY: number;
+  dataIndex: number | null;
+};
+
+type LineTypes = LineType[];
+type RadialDataTypes = RadialDataType[];
+
+const radialData: RadialDataTypes = projects.map((project, index) => ({
+  degree: index,
+  variant: "large" as const,
+  project,
+}));
 
 const SCALE_ZOOM = 6;
 const SCALE_DEFAULT = 1;
@@ -651,6 +675,7 @@ const Project = ({ project }: { project: ProjectType }) => {
           >
             {asset.type === "image" && (
               <Image
+                className="object-cover"
                 src={asset.src}
                 alt={asset.description ?? ""}
                 width={400}

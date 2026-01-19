@@ -1,3 +1,5 @@
+"use client";
+
 export type AnimateSectionProps<C> = {
   children: React.ReactNode;
   className?: string;

@@ -4,6 +4,6 @@ export const getPublicAssetUrl = (path: string) => {
   return `${supabaseUrl}/storage/v1/object/public/projects/${path}`;
 };
 
-export const getPublicFaviconUrl = (url: string) => {
-  return `${supabaseUrl}/storage/v1/object/public/favicons/${url}`;
+export const getPublicFaviconUrl = (path: string) => {
+  return `${supabaseUrl}/storage/v1/object/public/favicons/${path}`;
 };
