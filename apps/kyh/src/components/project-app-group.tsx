@@ -9,7 +9,6 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 
 export type ProjectAppItem = {
   key: string;
-  layoutId?: string;
   name: string;
   iconSrc: string;
   url?: string;
@@ -48,22 +47,13 @@ export const ProjectApp = ({
   );
 };
 
-const AppTile = ({
-  iconSrc,
-  label,
-  layoutId,
-}: {
-  iconSrc: string;
-  label: string;
-  layoutId?: string;
-}) => {
+const AppTile = ({ iconSrc, label }: { iconSrc: string; label: string }) => {
   return (
-    <motion.img
-      className="h-full w-full will-change-transform"
+    <img
+      className="h-full w-full"
       src={iconSrc}
       alt={label}
       aria-label={label}
-      layoutId={layoutId}
       draggable={false}
     />
   );
@@ -72,53 +62,27 @@ const AppTile = ({
 const OpenGridItem = ({
   item,
   idx,
-  items,
   itemRefs,
   itemOffsets,
   offsetsReady,
 }: {
   item: ProjectAppItem;
   idx: number;
-  items: ProjectAppItem[];
   itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   itemOffsets: Record<string, { x: number; y: number }>;
   offsetsReady: boolean;
 }) => {
   const off = itemOffsets[item.key] ?? { x: 0, y: 0 };
-  const hasLayout = Boolean(item.layoutId);
 
-  const nonLayoutTotal = items.filter((i) => !i.layoutId).length;
-  const nonLayoutIdx = items.slice(0, idx).filter((i) => !i.layoutId).length;
-
-  const openDelay = offsetsReady
-    ? item.layoutId
-      ? 0
-      : -0.025 + nonLayoutIdx * 0.025
-    : 0;
-
-  const closeDelay = offsetsReady
-    ? item.layoutId
-      ? 0
-      : -0.095 + (nonLayoutTotal - 1 - nonLayoutIdx) * 0.025
-    : 0;
+  const openDelay = offsetsReady ? idx * 0.025 : 0;
+  const closeDelay = offsetsReady ? 0.05 : 0;
 
   const content = (
     <>
       <div className="open-tile-box">
-        <AppTile
-          layoutId={item.layoutId}
-          iconSrc={item.iconSrc}
-          label={item.name}
-        />
+        <AppTile iconSrc={item.iconSrc} label={item.name} />
       </div>
-
-      {hasLayout ? (
-        <motion.div layoutId={`label-${item.layoutId}`} className="open-label">
-          {item.name}
-        </motion.div>
-      ) : (
-        <div className="open-label">{item.name}</div>
-      )}
+      <div className="open-label">{item.name}</div>
     </>
   );
 
@@ -129,36 +93,26 @@ const OpenGridItem = ({
         itemRefs.current[item.key] = el;
       }}
       initial={
-        hasLayout
-          ? { opacity: 1 }
-          : offsetsReady
-            ? { opacity: 0, scale: 0.2, x: off.x, y: off.y }
-            : { opacity: 0 }
+        offsetsReady
+          ? { opacity: 0, scale: 0.2, x: off.x, y: off.y }
+          : { opacity: 0 }
       }
       animate={
-        hasLayout
-          ? { opacity: 1 }
-          : offsetsReady
-            ? { opacity: 1, scale: 1, x: 0, y: 0 }
-            : { opacity: 0 }
+        offsetsReady ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 0 }
       }
-      exit={
-        hasLayout
-          ? { opacity: 1 }
-          : {
-              opacity: 0,
-              scale: 0.2,
-              x: off.x,
-              y: off.y,
-              transition: {
-                type: "spring",
-                stiffness: 200,
-                damping: 22,
-                delay: closeDelay,
-                opacity: { delay: 0.05 },
-              },
-            }
-      }
+      exit={{
+        opacity: 0,
+        scale: 0.2,
+        x: off.x,
+        y: off.y,
+        transition: {
+          type: "spring",
+          stiffness: 200,
+          damping: 22,
+          delay: closeDelay,
+          opacity: { delay: 0.05 },
+        },
+      }}
       transition={{
         type: "spring",
         stiffness: 200,
@@ -198,7 +152,7 @@ export const ProjectAppGroup = ({
   } as const;
 
   const [isOpen, setIsOpen] = useState(false);
-  const miniGridRef = useRef<HTMLDivElement>(null);
+  const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [itemOffsets, setItemOffsets] = useState<
@@ -206,7 +160,7 @@ export const ProjectAppGroup = ({
   >({});
 
   const openFolder = useCallback(() => {
-    const rect = miniGridRef.current?.getBoundingClientRect();
+    const rect = folderRef.current?.getBoundingClientRect();
     if (rect) {
       setOrigin({
         x: rect.left + rect.width / 2,
@@ -265,15 +219,11 @@ export const ProjectAppGroup = ({
                 damping: 22,
               }}
             >
-              <div className="folder-preview">
-                <div className="folder-grid" ref={miniGridRef}>
+              <div className="folder-preview" ref={folderRef}>
+                <div className="folder-grid">
                   {items.slice(0, 4).map((item) => (
                     <div key={item.key} className="mini-cell">
-                      <AppTile
-                        layoutId={item.layoutId}
-                        iconSrc={item.iconSrc}
-                        label={item.name}
-                      />
+                      <AppTile iconSrc={item.iconSrc} label={item.name} />
                     </div>
                   ))}
                 </div>
@@ -329,14 +279,9 @@ export const ProjectAppGroup = ({
                 <div className="open-grid">
                   {items.map((item, idx) => (
                     <OpenGridItem
-                      key={
-                        item.layoutId
-                          ? item.key
-                          : `${item.key}-${offsetsReady ? "ready" : "wait"}`
-                      }
+                      key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
                       item={item}
                       idx={idx}
-                      items={items}
                       itemRefs={itemRefs}
                       itemOffsets={itemOffsets}
                       offsetsReady={!!offsetsReady}

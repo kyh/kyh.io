@@ -15,7 +15,6 @@ const templates = projects.filter((p) => p.type === "template");
 
 const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
   key: p.slug,
-  layoutId: p.slug,
   name: p.title,
   iconSrc: p.favicon,
   url: p.url,

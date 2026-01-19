@@ -773,16 +773,32 @@ button.link {
   align-items: center;
   justify-content: center;
   will-change: transform;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  [data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.85);
+  }
 }
 
 .open-folder {
   position: relative;
   border-radius: 1.65rem;
-  padding: 24px;
+  padding: 32px;
   will-change: transform;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+
+  [data-theme="dark"] & {
+    background: rgba(30, 41, 59, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
 }
 
 .open-title {
