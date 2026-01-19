@@ -103,15 +103,17 @@ export const ViewAsMenu = () => {
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.2}>
-          <TooltipTrigger
-            className={iconButtonClassName}
-            aria-label="Open in ChatGPT"
-            render={
-              <a href={chatGPTUrl} target="_blank" rel="noopener noreferrer">
-                <ChatGPTIcon />
-              </a>
-            }
-          />
+          <TooltipTrigger asChild>
+            <a
+              className={iconButtonClassName}
+              aria-label="Open in ChatGPT"
+              href={chatGPTUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ChatGPTIcon />
+            </a>
+          </TooltipTrigger>
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">
           Open in ChatGPT
@@ -119,15 +121,17 @@ export const ViewAsMenu = () => {
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.25}>
-          <TooltipTrigger
-            className={iconButtonClassName}
-            aria-label="Open in Claude"
-            render={
-              <a href={claudeUrl} target="_blank" rel="noopener noreferrer">
-                <ClaudeIcon />
-              </a>
-            }
-          />
+          <TooltipTrigger asChild>
+            <a
+              className={iconButtonClassName}
+              aria-label="Open in Claude"
+              href={claudeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ClaudeIcon />
+            </a>
+          </TooltipTrigger>
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">
           Open in Claude

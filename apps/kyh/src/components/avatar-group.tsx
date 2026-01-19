@@ -35,14 +35,14 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           transition={{ ease: "easeOut", duration: 0.2 }}
           layout
         >
-          <Tooltip>
+          <Tooltip placement="bottom-end">
             <TooltipTrigger
               className="flex h-7 w-7"
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
               <span aria-hidden="true" />
             </TooltipTrigger>
-            <TooltipContent side="bottom" align="end" className="px-2 py-0.5 text-xs">
+            <TooltipContent className="px-2 py-0.5 text-xs">
               {onlyMe ? "You're the only one here 🥺" : "You"}
             </TooltipContent>
           </Tooltip>
@@ -70,11 +70,11 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               transition={{ ease: "easeOut", duration: 0.2 }}
               layout
             >
-              <Tooltip>
+              <Tooltip placement="bottom-end">
                 <TooltipTrigger className="flex h-7 w-7" aria-label={label}>
                   <span aria-hidden="true" />
                 </TooltipTrigger>
-                <TooltipContent side="bottom" align="end" className="px-2 py-0.5 text-xs">
+                <TooltipContent className="px-2 py-0.5 text-xs">
                   {label}
                 </TooltipContent>
               </Tooltip>

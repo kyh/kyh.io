@@ -1,106 +1,233 @@
 "use client";
 
 import * as React from "react";
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import {
+  autoUpdate,
+  flip,
+  FloatingPortal,
+  offset,
+  shift,
+  useDismiss,
+  useFloating,
+  useFocus,
+  useHover,
+  useInteractions,
+  useMergeRefs,
+  useRole,
+} from "@floating-ui/react";
 import { AnimatePresence, motion } from "motion/react";
 
-type Position = { x: number; y: number; width: number; height: number };
+import type { Placement } from "@floating-ui/react";
+
+// Global lines context - lines are rendered once at provider level
+type LinesPosition = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} | null;
 
 const TooltipLinesContext = React.createContext<{
-  setPosition: (position: Position | null) => void;
-}>({ setPosition: () => {} });
+  position: LinesPosition;
+  setPosition: (pos: LinesPosition) => void;
+  registerBlockTooltip: () => () => void;
+}>({
+  position: null,
+  setPosition: () => {},
+  registerBlockTooltip: () => () => {},
+});
 
-const TooltipProvider = ({
-  delay = 0,
-  closeDelay = 0,
-  children,
-  ...props
-}: TooltipPrimitive.Provider.Props) => {
-  const [position, setPosition] = React.useState<Position | null>(null);
+const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
+  const [position, setPosition] = React.useState<LinesPosition>(null);
+  const openCountRef = React.useRef(0);
+  const clearTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const registerBlockTooltip = React.useCallback(() => {
+    // Cancel any pending clear
+    if (clearTimeoutRef.current) {
+      clearTimeout(clearTimeoutRef.current);
+      clearTimeoutRef.current = null;
+    }
+    openCountRef.current += 1;
+
+    return () => {
+      openCountRef.current -= 1;
+      // Delay clearing to allow another tooltip to register first
+      clearTimeoutRef.current = setTimeout(() => {
+        if (openCountRef.current === 0) {
+          setPosition(null);
+        }
+      }, 50);
+    };
+  }, []);
 
   return (
-    <TooltipPrimitive.Provider delay={delay} closeDelay={closeDelay} {...props}>
-      <TooltipLinesContext.Provider value={{ setPosition }}>
-        {children}
-        <TooltipLines position={position} />
-      </TooltipLinesContext.Provider>
-    </TooltipPrimitive.Provider>
+    <TooltipLinesContext.Provider value={{ position, setPosition, registerBlockTooltip }}>
+      {children}
+      <TooltipLines position={position} />
+    </TooltipLinesContext.Provider>
   );
-}
+};
 
-const TooltipOpenContext = React.createContext<boolean>(false);
+type TooltipOptions = {
+  initialOpen?: boolean;
+  placement?: Placement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+const useTooltip = ({
+  initialOpen = false,
+  placement = "top",
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+}: TooltipOptions = {}) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(initialOpen);
+
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = setControlledOpen ?? setUncontrolledOpen;
+
+  const data = useFloating({
+    placement,
+    open,
+    onOpenChange: setOpen,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(5),
+      flip({
+        fallbackAxisSideDirection: "start",
+        padding: 5,
+      }),
+      shift({ padding: 5 }),
+    ],
+  });
+
+  const context = data.context;
+
+  const hover = useHover(context, {
+    move: false,
+    enabled: controlledOpen == null,
+  });
+  const focus = useFocus(context, {
+    enabled: controlledOpen == null,
+  });
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "tooltip" });
+
+  const interactions = useInteractions([hover, focus, dismiss, role]);
+
+  return React.useMemo(
+    () => ({
+      open,
+      setOpen,
+      ...interactions,
+      ...data,
+    }),
+    [open, setOpen, interactions, data],
+  );
+};
+
+type ContextType = ReturnType<typeof useTooltip> | null;
+
+const TooltipContext = React.createContext<ContextType>(null);
+
+const useTooltipContext = () => {
+  const context = React.useContext(TooltipContext);
+
+  if (context == null) {
+    throw new Error("Tooltip components must be wrapped in <Tooltip />");
+  }
+
+  return context;
+};
 
 const Tooltip = ({
-  open: controlledOpen,
-  onOpenChange,
-  defaultOpen = false,
   children,
-  ...props
-}: TooltipPrimitive.Root.Props) => {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
-  const open = controlledOpen ?? uncontrolledOpen;
-  const setOpen = onOpenChange ?? setUncontrolledOpen;
+  ...options
+}: { children: React.ReactNode } & TooltipOptions) => {
+  const tooltip = useTooltip(options);
 
   return (
-    <TooltipOpenContext.Provider value={open}>
-      <TooltipPrimitive.Root open={open} onOpenChange={setOpen} {...props}>
-        {children}
-      </TooltipPrimitive.Root>
-    </TooltipOpenContext.Provider>
+    <TooltipContext.Provider value={tooltip}>
+      {children}
+    </TooltipContext.Provider>
   );
-}
+};
 
-const TooltipTrigger = ({ ...props }: TooltipPrimitive.Trigger.Props) => {
-  return <TooltipPrimitive.Trigger {...props} />;
-}
+const TooltipTrigger = React.forwardRef<
+  HTMLElement,
+  React.HTMLProps<HTMLElement> & { asChild?: boolean }
+>(({ children, asChild = false, ...props }, propRef) => {
+  const context = useTooltipContext();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+  const childrenRef = (children as any).ref;
+  const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
-const TooltipContent = ({
-  className,
-  side = "top",
-  sideOffset = 5,
-  align = "center",
-  alignOffset = 0,
-  type = "default",
-  children,
-  ...props
-}: TooltipPrimitive.Popup.Props &
-  Pick<
-    TooltipPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
-  > & {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(
+      children,
+      context.getReferenceProps({
+        ref,
+        ...props,
+        ...(children.props as object),
+        "data-state": context.open ? "open" : "closed",
+        "data-side": context.placement.split("-")[0],
+      } as React.HTMLProps<HTMLElement>),
+    );
+  }
+
+  return (
+    <button
+      ref={ref as React.Ref<HTMLButtonElement>}
+      data-state={context.open ? "open" : "closed"}
+      data-side={context.placement.split("-")[0]}
+      {...context.getReferenceProps(props)}
+    >
+      {children}
+    </button>
+  );
+});
+
+TooltipTrigger.displayName = "TooltipTrigger";
+
+const TooltipContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLProps<HTMLDivElement> & {
     type?: "default" | "block";
-  }) => {
-  const open = React.useContext(TooltipOpenContext);
-  const { setPosition } = React.useContext(TooltipLinesContext);
+  }
+>(({ className, type = "default", ...props }, propRef) => {
+  const context = useTooltipContext();
+  const { setPosition, registerBlockTooltip } = React.useContext(TooltipLinesContext);
+  const ref = useMergeRefs([context.refs.setFloating, propRef]);
+  const { children: floatingPropsChildren, ...floatingProps } =
+    context.getFloatingProps(props);
+  const children = floatingPropsChildren as React.ReactNode;
   const blockType = type === "block";
 
-  // Clear position when tooltip closes
+  // Register/unregister this block tooltip
   React.useEffect(() => {
-    if (!open && blockType) {
-      setPosition(null);
-    }
-  }, [open, blockType, setPosition]);
+    if (!blockType || !context.open) return;
+    return registerBlockTooltip();
+  }, [blockType, context.open, registerBlockTooltip]);
 
-  // Callback ref to measure popup position when mounted
-  const popupRefCallback = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      if (!node || !blockType) return;
-      // Wait for positioning to complete
-      requestAnimationFrame(() => {
-        const rect = node.getBoundingClientRect();
+  // Update global lines position when this tooltip is open
+  React.useEffect(() => {
+    if (!blockType || !context.open) return;
+    if (context.x != null && context.y != null) {
+      const floatingEl = context.elements.floating;
+      if (floatingEl) {
         setPosition({
-          x: rect.left,
-          y: rect.top,
-          width: rect.width,
-          height: rect.height,
+          x: context.x,
+          y: context.y,
+          width: floatingEl.offsetWidth,
+          height: floatingEl.offsetHeight,
         });
-      });
-    },
-    [blockType, setPosition],
-  );
+      }
+    }
+  }, [blockType, context.open, context.x, context.y, context.elements.floating, setPosition]);
 
   const tooltipMotionProps = blockType
-    ? { animate: { opacity: 0.9999 }, exit: { opacity: 0 } }
+    ? {}
     : {
         initial: { opacity: 0 },
         animate: { opacity: 1 },
@@ -117,83 +244,71 @@ const TooltipContent = ({
     : {};
 
   return (
-    <AnimatePresence>
-      {open && (
-        <TooltipPrimitive.Portal>
-          <TooltipPrimitive.Positioner
-            side={side}
-            sideOffset={sideOffset}
-            align={align}
-            alignOffset={alignOffset}
-            collisionPadding={5}
+    <FloatingPortal>
+      <AnimatePresence>
+        {context.open && (
+          <motion.div
+            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${!blockType ? "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]" : ""}`}
+            ref={ref}
+            style={context.floatingStyles}
+            {...tooltipMotionProps}
+            {...floatingProps}
           >
-            <TooltipPrimitive.Popup
-              render={
-                <motion.div
-                  ref={popupRefCallback}
-                  className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${!blockType ? "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]" : ""}`}
-                  {...tooltipMotionProps}
-                />
-              }
-              {...props}
-            >
-              {blockType && <TooltipBlocks />}
-              <motion.div className="content" {...contentMotionProps}>
-                {children}
-              </motion.div>
-            </TooltipPrimitive.Popup>
-          </TooltipPrimitive.Positioner>
-        </TooltipPrimitive.Portal>
-      )}
-    </AnimatePresence>
+            {blockType && <TooltipBlocks context={context} />}
+            <motion.div className="content" {...contentMotionProps}>
+              {children}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </FloatingPortal>
   );
-}
+});
+
+TooltipContent.displayName = "TooltipContent";
 
 const easeInOutQuint = (x: number) =>
   x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
 
-const TooltipLines = ({ position }: { position: Position | null }) => {
-  const lastPosition = React.useRef<Position>({ x: 0, y: 0, width: 0, height: 0 });
-  if (position) lastPosition.current = position;
-  const pos = position ?? lastPosition.current;
+// Single set of lines rendered at provider level
+const TooltipLines = ({ position }: { position: LinesPosition }) => {
+  const [scrollHeight, setScrollHeight] = React.useState(0);
+
+  React.useEffect(() => {
+    setScrollHeight(document.documentElement.scrollHeight);
+  }, [position]);
 
   return (
     <AnimatePresence>
       {position && (
         <>
-          {/* Top line */}
           <motion.div
             className="tooltip-line tooltip-line-h"
-            style={{ position: "fixed", left: 0, width: "100dvw", zIndex: 9999 }}
             initial={{ opacity: 0, top: -1 }}
-            animate={{ opacity: 1, top: pos.y }}
+            animate={{ opacity: 1, top: position.y }}
             exit={{ opacity: 0, top: -1 }}
             transition={{ ease: easeInOutQuint, duration: 1 }}
           />
-          {/* Bottom line */}
           <motion.div
             className="tooltip-line tooltip-line-h"
-            style={{ position: "fixed", left: 0, width: "100dvw", zIndex: 9999 }}
             initial={{ opacity: 0, top: "100dvh" }}
-            animate={{ opacity: 1, top: pos.y + pos.height }}
+            animate={{ opacity: 1, top: position.y + position.height }}
             exit={{ opacity: 0, top: "100dvh" }}
             transition={{ ease: easeInOutQuint, duration: 1 }}
           />
-          {/* Left line */}
           <motion.div
             className="tooltip-line tooltip-line-v"
-            style={{ position: "fixed", top: 0, height: "100dvh", zIndex: 9999 }}
+            style={{ height: scrollHeight }}
             initial={{ opacity: 0, left: -1 }}
-            animate={{ opacity: 1, left: pos.x }}
+            animate={{ opacity: 1, left: position.x }}
             exit={{ opacity: 0, left: -1 }}
             transition={{ ease: easeInOutQuint, duration: 1 }}
           />
-          {/* Right line */}
           <motion.div
             className="tooltip-line tooltip-line-v"
-            style={{ position: "fixed", top: 0, height: "100dvh", zIndex: 9999 }}
+            style={{ height: scrollHeight }}
             initial={{ opacity: 0, left: "100dvw" }}
-            animate={{ opacity: 1, left: pos.x + pos.width }}
+            animate={{ opacity: 1, left: position.x + position.width }}
             exit={{ opacity: 0, left: "100dvw" }}
             transition={{ ease: easeInOutQuint, duration: 1 }}
           />
@@ -201,7 +316,7 @@ const TooltipLines = ({ position }: { position: Position | null }) => {
       )}
     </AnimatePresence>
   );
-}
+};
 
 const cols = 11;
 const rows = 8;
@@ -212,7 +327,9 @@ const calculateDelay = (n: number) =>
   baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
-const TooltipBlocks = () => {
+const TooltipBlocks = ({ context }: { context: ContextType }) => {
+  if (!context?.x || !context.y) return null;
+
   return (
     <div
       className="tooltip-blocks-container"
@@ -230,6 +347,6 @@ const TooltipBlocks = () => {
       ))}
     </div>
   );
-}
+};
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
