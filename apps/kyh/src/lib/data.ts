@@ -265,7 +265,7 @@ export const projects: ProjectType[] = [
     title: "Kwadrants",
     description: "Everything lives in a 2x2 matrix",
     url: "https://www.kwadrants.com",
-    favicon: getPublicFaviconUrl("kwadrants.png"),
+    favicon: getPublicFaviconUrl("kwadrants-1.png"),
     type: "mini-app",
     projectAssets: [],
   },
