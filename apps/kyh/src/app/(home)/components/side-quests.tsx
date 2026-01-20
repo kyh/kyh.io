@@ -1,9 +1,10 @@
 import { projects } from "@/lib/data";
 import {
   ProjectApp,
-  ProjectAppGroup,
-  type ProjectAppItem,
+  ProjectAppGroup
+  
 } from "@/components/project-app-group";
+import type {ProjectAppItem} from "@/components/project-app-group";
 
 const projectsAndVentures = projects.filter(
   (p) => p.type === "project" || p.type === "venture",

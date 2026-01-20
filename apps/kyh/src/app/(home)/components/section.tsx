@@ -12,7 +12,7 @@ export const SectionHeading = ({
     {id && (
       <a
         href={`#${id}`}
-        className="text-foreground-faded hover:text-foreground-highlighted -m-1 -translate-y-0.5 rounded-sm p-1 opacity-0 transition group-hover:opacity-100 hover:bg-[color-mix(in_srgb,var(--bg-color)_50%,transparent)]"
+        className="text-foreground-faded hover:text-foreground-highlighted -m-1 -translate-y-0.75 rounded-sm p-1 opacity-0 transition group-hover:opacity-100 hover:bg-[color-mix(in_srgb,var(--bg-color)_50%,transparent)] focus-visible:opacity-100"
         aria-label={`Link to ${children} section`}
       >
         <HashIcon />

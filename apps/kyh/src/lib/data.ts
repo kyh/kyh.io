@@ -159,8 +159,7 @@ export const projects: ProjectType[] = [
   {
     slug: "loremllm",
     title: "LoremLLM",
-    description:
-      "Mock responses for LLMs",
+    description: "Mock responses for LLMs",
     url: "https://loremllm.com",
     favicon: getPublicFaviconUrl("loremllm.png"),
     type: "project",
@@ -273,8 +272,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-design-canvas",
     title: "AI Design Canvas",
-    description:
-      "A full-featured, hackable Next.js and AI sdk design canvas",
+    description: "A full-featured, hackable Next.js and AI sdk design canvas",
     url: "https://init.kyh.io",
     favicon: getPublicFaviconUrl("ai-.png"),
     type: "template",
@@ -290,8 +288,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-datagrid",
     title: "AI Datagrid",
-    description:
-      "A full-featured, hackable Next.js AI datagrid",
+    description: "A full-featured, hackable Next.js AI datagrid",
     url: "https://init.kyh.io",
     favicon: getPublicFaviconUrl("init.png"),
     type: "template",
@@ -340,7 +337,7 @@ export const workHistory: WorkType[] = [
     role: "Software Engineer",
     company: "Amazon",
     year: "2020",
-    favicon: getPublicFaviconUrl("amazon.png"),
+    favicon: getPublicFaviconUrl("amazon.jpeg"),
     link: "https://amazon.design",
   },
   {
@@ -354,7 +351,7 @@ export const workHistory: WorkType[] = [
     role: "Design Engineer",
     company: "Cardiogram",
     year: "2015",
-    favicon: getPublicFaviconUrl("cardiogram.png"),
+    favicon: getPublicFaviconUrl("cardiogram.jpeg"),
     link: "https://www.crunchbase.com/organization/cardiogram",
   },
 ] as const;

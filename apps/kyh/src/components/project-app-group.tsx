@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+
+// Types
+type Point = { x: number; y: number };
 
 export type ProjectAppItem = {
   key: string;
@@ -11,29 +15,38 @@ export type ProjectAppItem = {
   url?: string;
 };
 
+// Motion config
+const springTransition = { type: "spring", stiffness: 200, damping: 22 } as const;
+const titleSpring = { ...springTransition, damping: 19 } as const;
+const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
+const openStaggerDelay = 0.025;
+const closeStaggerDelay = 0.05;
+
+// Shared styles
+const labelClassName = "text-xs font-medium text-foreground text-center truncate max-w-[80px]";
+const iconSize = 60;
+
 export const ProjectApp = ({
   name,
   iconSrc,
   url,
-}: {
-  name: string;
-  iconSrc: string;
-  url: string;
-}) => (
+}: Omit<ProjectAppItem, "key" | "url"> & { url: string }) => (
   <a
     href={url}
     target="_blank"
     rel="noopener noreferrer"
-    className="project-app"
+    className="flex flex-col items-center gap-2 no-underline transition-transform duration-200 ease active:scale-95"
+    data-slot="app"
   >
-    <div className="project-app-icon">
-      <img className="h-full w-full" src={iconSrc} alt={name} draggable={false} />
+    <div
+      className="relative size-[60px] rounded-[14px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
+      data-slot="app-icon"
+    >
+      <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
     </div>
-    <span className="project-app-label">{name}</span>
+    <span className={labelClassName} data-slot="app-label">{name}</span>
   </a>
 );
-
-const spring = { type: "spring", stiffness: 200, damping: 22 } as const;
 
 const OpenGridItem = ({
   item,
@@ -45,36 +58,33 @@ const OpenGridItem = ({
   item: ProjectAppItem;
   idx: number;
   itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
-  itemOffsets: Record<string, { x: number; y: number }>;
+  itemOffsets: Record<string, Point>;
   offsetsReady: boolean;
 }) => {
-  const off = itemOffsets[item.key] ?? { x: 0, y: 0 };
-  const openDelay = offsetsReady ? idx * 0.025 : 0;
-  const closeDelay = offsetsReady ? 0.05 : 0;
+  const offset = itemOffsets[item.key] ?? { x: 0, y: 0 };
+  const openDelay = offsetsReady ? idx * openStaggerDelay : 0;
+  const closeDelay = offsetsReady ? closeStaggerDelay : 0;
 
-  const content = (
-    <>
-      <div className="open-tile-box">
-        <img
-          className="h-full w-full"
-          src={item.iconSrc}
-          alt={item.name}
-          draggable={false}
-        />
-      </div>
-      <div className="open-label">{item.name}</div>
-    </>
+  const setRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      itemRefs.current[item.key] = el;
+    },
+    [itemRefs, item.key],
   );
+
+  const Wrapper = item.url ? "a" : "div";
+  const wrapperProps = item.url
+    ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
+    : {};
 
   return (
     <motion.div
-      className="open-item"
-      ref={(el) => {
-        itemRefs.current[item.key] = el;
-      }}
+      className="flex flex-col items-center gap-2"
+      data-slot="open-item"
+      ref={setRef}
       initial={
         offsetsReady
-          ? { opacity: 0, scale: 0.2, x: off.x, y: off.y }
+          ? { opacity: 0, scale: 0.2, x: offset.x, y: offset.y }
           : { opacity: 0 }
       }
       animate={
@@ -85,34 +95,39 @@ const OpenGridItem = ({
       exit={{
         opacity: 0,
         scale: 0.2,
-        x: off.x,
-        y: off.y,
+        x: offset.x,
+        y: offset.y,
         transition: {
-          ...spring,
+          ...springTransition,
           delay: closeDelay,
-          opacity: { delay: 0.05 },
+          opacity: { delay: closeStaggerDelay },
         },
       }}
       transition={{
-        ...spring,
+        ...springTransition,
         delay: openDelay,
       }}
     >
-      {item.url ? (
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="contents"
+      <Wrapper {...wrapperProps} className="flex flex-col items-center gap-2">
+        <div
+          className="size-[60px] rounded-[14px] overflow-hidden relative"
+          data-slot="open-tile"
         >
-          {content}
-        </a>
-      ) : (
-        content
-      )}
+          <Image
+            src={item.iconSrc}
+            alt={item.name}
+            fill
+            sizes={`${iconSize}px`}
+            draggable={false}
+          />
+        </div>
+        <div className={labelClassName} data-slot="open-label">
+          {item.name}
+        </div>
+      </Wrapper>
     </motion.div>
   );
-}
+};
 
 export const ProjectAppGroup = ({
   title,
@@ -123,11 +138,9 @@ export const ProjectAppGroup = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const folderRef = useRef<HTMLDivElement>(null);
-  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [origin, setOrigin] = useState<Point | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [itemOffsets, setItemOffsets] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
+  const [itemOffsets, setItemOffsets] = useState<Record<string, Point>>({});
 
   const handleOpen = useCallback(() => {
     const rect = folderRef.current?.getBoundingClientRect();
@@ -140,10 +153,6 @@ export const ProjectAppGroup = ({
     setIsOpen(true);
   }, []);
 
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
   const handleExitComplete = useCallback(() => {
     if (!isOpen) {
       setItemOffsets({});
@@ -151,13 +160,11 @@ export const ProjectAppGroup = ({
     }
   }, [isOpen]);
 
-  // Calculate offsets for stagger animation - run after a frame to ensure refs are set
   useLayoutEffect(() => {
     if (!isOpen || !origin) return;
 
-    // Wait for next frame so refs are populated
     const frame = requestAnimationFrame(() => {
-      const next: Record<string, { x: number; y: number }> = {};
+      const next: Record<string, Point> = {};
       for (const item of items) {
         const el = itemRefs.current[item.key];
         if (!el) continue;
@@ -177,34 +184,48 @@ export const ProjectAppGroup = ({
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
-      <MotionConfig transition={spring}>
-        <div className="project-app-group">
-          {/* Always render to prevent layout shift, animate opacity */}
+      <MotionConfig transition={springTransition}>
+        <div className="flex items-center justify-center" data-slot="app-group">
           <motion.div
             initial={false}
             animate={{ opacity: isOpen ? 0 : 1, scale: isOpen ? 0.9 : 1 }}
-            transition={spring}
+            transition={springTransition}
           >
             <Dialog.Trigger
-              className="closed-root"
+              className="flex flex-col items-center gap-2 select-none will-change-transform transition-transform duration-200 ease active:scale-95"
               onClick={handleOpen}
               style={{ pointerEvents: isOpen ? "none" : "auto" }}
+              data-slot="folder-trigger"
             >
-              <div className="folder-preview" ref={folderRef}>
-                <div className="folder-grid">
+              <div
+                className="relative size-[60px] rounded-[14px] p-2 bg-white/50 dark:bg-[#0f172a]/50 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
+                ref={folderRef}
+                data-slot="folder-preview"
+              >
+                <div className="grid grid-cols-2 grid-rows-2 gap-1 h-full" data-slot="folder-grid">
                   {items.slice(0, 4).map((item) => (
-                    <div key={item.key} className="mini-cell">
-                      <img
-                        className="h-full w-full"
+                    <div
+                      key={item.key}
+                      className="relative aspect-square rounded overflow-hidden ring-1 ring-black/3 dark:ring-white/15"
+                      data-slot="mini-cell"
+                    >
+                      <Image
                         src={item.iconSrc}
                         alt={item.name}
+                        fill
+                        sizes="20px"
                         draggable={false}
                       />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="folder-name">{title}</div>
+              <div
+                className={`${labelClassName} leading-none`}
+                data-slot="folder-name"
+              >
+                {title}
+              </div>
             </Dialog.Trigger>
           </motion.div>
         </div>
@@ -215,18 +236,20 @@ export const ProjectAppGroup = ({
               <Dialog.Backdrop
                 render={
                   <motion.div
-                    className="open-backdrop fixed inset-0 z-9998 bg-white/92 dark:bg-black/90 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 bg-white/92 dark:bg-black/90 backdrop-blur-sm"
+                    data-slot="backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { delay: 0.025 } }}
+                    exit={{ opacity: 0, transition: { delay: openStaggerDelay } }}
                   />
                 }
-                onClick={handleClose}
+                onClick={() => setIsOpen(false)}
               />
               <Dialog.Popup
                 render={
                   <motion.div
-                    className="open-folder"
+                    className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 p-8 flex flex-col items-center will-change-transform"
+                    data-slot="open-folder"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -234,7 +257,8 @@ export const ProjectAppGroup = ({
                 }
               >
                 <motion.div
-                  className="open-title"
+                  className="text-center w-full text-2xl font-semibold text-foreground mb-6"
+                  data-slot="open-title"
                   initial={{ opacity: 0, y: 30, x: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
                   exit={{
@@ -242,14 +266,17 @@ export const ProjectAppGroup = ({
                     y: 30,
                     x: 10,
                     scale: 0.8,
-                    transition: { ...spring, stiffness: 300 },
+                    transition: titleExitSpring,
                   }}
-                  transition={{ ...spring, damping: 19 }}
+                  transition={titleSpring}
                 >
                   <Dialog.Title>{title}</Dialog.Title>
                 </motion.div>
 
-                <div className="open-grid">
+                <div
+                  className="grid grid-cols-4 gap-5 max-w-[400px] w-full"
+                  data-slot="open-grid"
+                >
                   {items.map((item, idx) => (
                     <OpenGridItem
                       key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
