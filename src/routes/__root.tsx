@@ -4,6 +4,7 @@ import {
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
+import { Analytics } from '@vercel/analytics/react'
 
 import appCss from '../styles.css?url'
 import { ToastProvider } from '@/components/Toast'
@@ -77,6 +78,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           {children}
         </ToastProvider>
         <Scripts />
+        <Analytics />
       </body>
     </html>
   )
