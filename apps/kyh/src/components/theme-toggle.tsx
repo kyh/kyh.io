@@ -8,6 +8,8 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
   return (
     <svg
       viewBox="0 0 18 18"
+      width="100%"
+      height="100%"
       style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
       className="overflow-visible transition-transform duration-500 ease-in-out"
       aria-hidden="true"
