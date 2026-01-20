@@ -16,14 +16,19 @@ export type ProjectAppItem = {
 };
 
 // Motion config
-const springTransition = { type: "spring", stiffness: 200, damping: 22 } as const;
+const springTransition = {
+  type: "spring",
+  stiffness: 200,
+  damping: 22,
+} as const;
 const titleSpring = { ...springTransition, damping: 19 } as const;
 const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
 // Shared styles
-const labelClassName = "text-xs font-medium text-foreground text-center truncate max-w-[80px]";
+const labelClassName =
+  "text-xs font-medium text-foreground text-center truncate max-w-[80px]";
 const iconSize = 60;
 
 export const ProjectApp = ({
@@ -35,16 +40,24 @@ export const ProjectApp = ({
     href={url}
     target="_blank"
     rel="noopener noreferrer"
-    className="flex flex-col items-center gap-2 no-underline transition-transform duration-200 ease active:scale-95"
+    className="ease flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
     data-slot="app"
   >
     <div
-      className="relative size-[60px] rounded-[14px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
+      className="relative size-[60px] overflow-hidden rounded-[14px] shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
       data-slot="app-icon"
     >
-      <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
+      <Image
+        src={iconSrc}
+        alt={name}
+        fill
+        sizes={`${iconSize}px`}
+        draggable={false}
+      />
     </div>
-    <span className={labelClassName} data-slot="app-label">{name}</span>
+    <span className={labelClassName} data-slot="app-label">
+      {name}
+    </span>
   </a>
 );
 
@@ -88,9 +101,7 @@ const OpenGridItem = ({
           : { opacity: 0 }
       }
       animate={
-        offsetsReady
-          ? { opacity: 1, scale: 1, x: 0, y: 0 }
-          : { opacity: 0 }
+        offsetsReady ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 0 }
       }
       exit={{
         opacity: 0,
@@ -110,7 +121,7 @@ const OpenGridItem = ({
     >
       <Wrapper {...wrapperProps} className="flex flex-col items-center gap-2">
         <div
-          className="size-[60px] rounded-[14px] overflow-hidden relative"
+          className="relative size-[60px] overflow-hidden rounded-[14px]"
           data-slot="open-tile"
         >
           <Image
@@ -192,21 +203,24 @@ export const ProjectAppGroup = ({
             transition={springTransition}
           >
             <Dialog.Trigger
-              className="flex flex-col items-center gap-2 select-none will-change-transform transition-transform duration-200 ease active:scale-95"
+              className="ease flex flex-col items-center gap-2 transition-transform duration-200 will-change-transform select-none active:scale-95"
               onClick={handleOpen}
               style={{ pointerEvents: isOpen ? "none" : "auto" }}
               data-slot="folder-trigger"
             >
               <div
-                className="relative size-[60px] rounded-[14px] p-2 bg-white/50 dark:bg-[#0f172a]/50 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
+                className="relative size-[60px] rounded-[14px] bg-white/50 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-md dark:bg-[#0f172a]/50 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
                 ref={folderRef}
                 data-slot="folder-preview"
               >
-                <div className="grid grid-cols-2 grid-rows-2 gap-1 h-full" data-slot="folder-grid">
+                <div
+                  className="grid h-full grid-cols-2 grid-rows-2 gap-1"
+                  data-slot="folder-grid"
+                >
                   {items.slice(0, 4).map((item) => (
                     <div
                       key={item.key}
-                      className="relative aspect-square rounded overflow-hidden ring-1 ring-black/3 dark:ring-white/15"
+                      className="relative aspect-square overflow-hidden rounded ring-1 ring-black/3 dark:ring-white/15"
                       data-slot="mini-cell"
                     >
                       <Image
@@ -236,11 +250,14 @@ export const ProjectAppGroup = ({
               <Dialog.Backdrop
                 render={
                   <motion.div
-                    className="fixed inset-0 z-50 bg-white/92 dark:bg-black/90 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 bg-white/92 backdrop-blur-sm dark:bg-black/90"
                     data-slot="backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { delay: openStaggerDelay } }}
+                    exit={{
+                      opacity: 0,
+                      transition: { delay: openStaggerDelay },
+                    }}
                   />
                 }
                 onClick={() => setIsOpen(false)}
@@ -248,7 +265,7 @@ export const ProjectAppGroup = ({
               <Dialog.Popup
                 render={
                   <motion.div
-                    className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 p-8 flex flex-col items-center will-change-transform"
+                    className="fixed top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center p-8 will-change-transform"
                     data-slot="open-folder"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -257,7 +274,7 @@ export const ProjectAppGroup = ({
                 }
               >
                 <motion.div
-                  className="text-center w-full text-2xl font-semibold text-foreground mb-6"
+                  className="text-foreground mb-6 w-full text-center text-2xl font-semibold"
                   data-slot="open-title"
                   initial={{ opacity: 0, y: 30, x: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
@@ -274,7 +291,7 @@ export const ProjectAppGroup = ({
                 </motion.div>
 
                 <div
-                  className="grid grid-cols-4 gap-5 max-w-[400px] w-full"
+                  className="grid w-full max-w-[400px] grid-cols-4 gap-5"
                   data-slot="open-grid"
                 >
                   {items.map((item, idx) => (

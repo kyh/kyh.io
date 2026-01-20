@@ -64,7 +64,7 @@ export const useViewport = () => {
   return viewportContext;
 };
 
-const debounce = (fn: Function, ms = 500) => {
+const debounce = (fn: () => void, ms = 500) => {
   let timeoutId: ReturnType<typeof setTimeout>;
   return function (this: any, ...args: any[]) {
     clearTimeout(timeoutId);

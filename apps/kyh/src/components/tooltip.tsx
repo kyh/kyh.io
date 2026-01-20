@@ -39,17 +39,24 @@ const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
   const [position, setPosition] = React.useState<LinesPosition | null>(null);
   const positionsRef = React.useRef<Map<string, LinesPosition>>(new Map());
 
-  const updatePosition = React.useCallback((id: string, pos: LinesPosition | null) => {
-    if (pos) {
-      positionsRef.current.set(id, pos);
-      setPosition(pos);
-    } else {
-      positionsRef.current.delete(id);
-      // Use any remaining open tooltip's position, or null
-      const remaining = Array.from(positionsRef.current.values());
-      setPosition(remaining.length > 0 ? (remaining[remaining.length - 1] ?? null) : null);
-    }
-  }, []);
+  const updatePosition = React.useCallback(
+    (id: string, pos: LinesPosition | null) => {
+      if (pos) {
+        positionsRef.current.set(id, pos);
+        setPosition(pos);
+      } else {
+        positionsRef.current.delete(id);
+        // Use any remaining open tooltip's position, or null
+        const remaining = Array.from(positionsRef.current.values());
+        setPosition(
+          remaining.length > 0
+            ? (remaining[remaining.length - 1] ?? null)
+            : null,
+        );
+      }
+    },
+    [],
+  );
 
   return (
     <TooltipLinesContext.Provider value={{ updatePosition }}>
@@ -216,7 +223,15 @@ const TooltipContent = React.forwardRef<
     return () => {
       updatePosition(tooltipId, null);
     };
-  }, [blockType, context.open, context.x, context.y, context.elements.floating, updatePosition, tooltipId]);
+  }, [
+    blockType,
+    context.open,
+    context.x,
+    context.y,
+    context.elements.floating,
+    updatePosition,
+    tooltipId,
+  ]);
 
   const tooltipMotionProps = blockType
     ? {}

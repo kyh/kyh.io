@@ -24,7 +24,7 @@ export const projects: ProjectType[] = [
     title: "Vibedgames",
     description:
       "Design, publish, and play personalized multiplayer minigames with your friends",
-    url: "https://vibedgames.com",
+    url: "https://www.vibedgames.com",
     favicon: getPublicFaviconUrl("vibedgames.png"),
     type: "project",
     projectAssets: [
@@ -53,7 +53,7 @@ export const projects: ProjectType[] = [
     slug: "yourssincerely",
     title: "Yours Sincerely",
     description: "Anonymous love letters 💌 written in disappearing ink",
-    url: "https://yourssincerely.org",
+    url: "https://www.yourssincerely.org",
     favicon: getPublicFaviconUrl("yourssincerely.png"),
     type: "project",
     projectAssets: [
@@ -79,7 +79,7 @@ export const projects: ProjectType[] = [
     slug: "uicapsule",
     title: "UICapsule",
     description: "A curated collection of components that spark joy",
-    url: "https://uicapsule.com",
+    url: "https://www.uicapsule.com",
     favicon: getPublicFaviconUrl("uicapsule.png"),
     type: "project",
     projectAssets: [
@@ -132,7 +132,7 @@ export const projects: ProjectType[] = [
     title: "Inteligir",
     description:
       "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone",
-    url: "https://inteligir.com",
+    url: "https://www.inteligir.com",
     favicon: getPublicFaviconUrl("inteligir-1.png"),
     type: "project",
     projectAssets: [],
@@ -142,7 +142,7 @@ export const projects: ProjectType[] = [
     title: "Dataembed",
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
-    url: "https://dataembed.com",
+    url: "https://www.dataembed.com",
     favicon: getPublicFaviconUrl("dataembed.png"),
     type: "project",
     projectAssets: [
@@ -160,7 +160,7 @@ export const projects: ProjectType[] = [
     slug: "loremllm",
     title: "LoremLLM",
     description: "Mock responses for LLMs",
-    url: "https://loremllm.com",
+    url: "https://www.loremllm.com",
     favicon: getPublicFaviconUrl("loremllm.png"),
     type: "project",
     projectAssets: [],
@@ -170,7 +170,7 @@ export const projects: ProjectType[] = [
   //   title: "Edge Stories",
   //   description:
   //     "",
-  //   url: "https://edgestories.com",
+  //   url: "https://www.edgestories.com",
   //   favicon: getPublicFaviconUrl("edgestories.png"),
   //   type: "project",
   //   projectAssets: [],
@@ -180,7 +180,7 @@ export const projects: ProjectType[] = [
     slug: "founding",
     title: "Founding",
     description: "Your proxy founding team",
-    url: "https://founding.so",
+    url: "https://www.founding.so",
     favicon: getPublicFaviconUrl("founding.png"),
     type: "venture",
     projectAssets: [
@@ -246,6 +246,22 @@ export const projects: ProjectType[] = [
       {
         type: "image",
         src: getPublicAssetUrl("keiko.webp"),
+        dataBlur:
+          "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
+      },
+    ],
+  },
+  {
+    slug: "policing-ice",
+    title: "Policing Ice",
+    description: "Cute sticker pack",
+    url: "https://www.policingice.com/",
+    favicon: getPublicFaviconUrl("policing-ice.png"),
+    type: "mini-app",
+    projectAssets: [
+      {
+        type: "image",
+        src: getPublicAssetUrl("policing-ice.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
       },

@@ -1,10 +1,6 @@
+import type { ProjectAppItem } from "@/components/project-app-group";
+import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
 import { projects } from "@/lib/data";
-import {
-  ProjectApp,
-  ProjectAppGroup
-  
-} from "@/components/project-app-group";
-import type {ProjectAppItem} from "@/components/project-app-group";
 
 const projectsAndVentures = projects.filter(
   (p) => p.type === "project" || p.type === "venture",
@@ -24,12 +20,7 @@ const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
 export const SideQuests = () => (
   <div className="side-quests-grid">
     {projectsAndVentures.map((p) => (
-      <ProjectApp
-        key={p.slug}
-        name={p.title}
-        iconSrc={p.favicon}
-        url={p.url}
-      />
+      <ProjectApp key={p.slug} name={p.title} iconSrc={p.favicon} url={p.url} />
     ))}
     <ProjectAppGroup title="Mini Apps" items={miniApps.map(toAppItem)} />
     <ProjectAppGroup title="Templates" items={templates.map(toAppItem)} />
