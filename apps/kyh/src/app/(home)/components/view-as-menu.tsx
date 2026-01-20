@@ -86,15 +86,16 @@ export const ViewAsMenu = () => {
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.15}>
-          <TooltipTrigger
-            className={iconButtonClassName}
-            aria-label="View as Markdown"
-            onClick={() => {
-              // TODO: Implement view as markdown
-              console.log("View as markdown");
-            }}
-          >
-            <MarkdownIcon />
+          <TooltipTrigger asChild>
+            <a
+              className={iconButtonClassName}
+              aria-label="View as Markdown"
+              href="/markdown"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MarkdownIcon />
+            </a>
           </TooltipTrigger>
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">

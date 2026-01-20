@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Bodies,
   Body,
@@ -101,6 +101,42 @@ export const ShapesCanvas = () => {
   const runnerRef = useRef<Runner | null>(null);
   const bodiesRef = useRef<Matter.Body[]>([]);
   const animatingRef = useRef<AnimatingShape[]>([]);
+  const isVisibleRef = useRef(true);
+
+  // Pause/resume physics based on visibility
+  const pausePhysics = useCallback(() => {
+    if (runnerRef.current) {
+      Runner.stop(runnerRef.current);
+    }
+  }, []);
+
+  const resumePhysics = useCallback(() => {
+    if (runnerRef.current && engineRef.current) {
+      Runner.run(runnerRef.current, engineRef.current);
+    }
+  }, []);
+
+  // IntersectionObserver to pause when not visible
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries[0]?.isIntersecting ?? false;
+        isVisibleRef.current = isVisible;
+        if (isVisible) {
+          resumePhysics();
+        } else {
+          pausePhysics();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, [pausePhysics, resumePhysics]);
 
   useEffect(() => {
     if (!containerRef.current) return;

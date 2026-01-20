@@ -689,6 +689,7 @@ const Project = ({ project }: { project: ProjectType }) => {
       className="flex w-full flex-col gap-9"
       href={project.url}
       target="_blank"
+      rel="noopener noreferrer"
     >
       <header className="flex flex-col gap-3">
         <ScrambleText>{project.title}</ScrambleText>

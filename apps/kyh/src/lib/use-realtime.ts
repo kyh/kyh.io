@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import usePartySocket from "partysocket/react";
 
 import type { MessageType, PlayerMap, PositionMessage } from "@/lib/player";
+
+const THROTTLE_MS = 32; // ~30fps, good balance between smoothness and network
 
 type useRealtimeProps = {
   host: string;
@@ -15,6 +17,45 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   const pathname = usePathname();
   const [players, setPlayers] = useState<PlayerMap>({});
   const windowDimensions = useTrackWindow();
+  const lastSendRef = useRef(0);
+  const pendingMessageRef = useRef<PositionMessage | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  // Throttled send that batches rapid updates
+  const sendThrottled = useCallback(
+    (message: PositionMessage) => {
+      pendingMessageRef.current = message;
+
+      const now = Date.now();
+      const timeSinceLastSend = now - lastSendRef.current;
+
+      if (timeSinceLastSend >= THROTTLE_MS) {
+        socket.send(JSON.stringify(message));
+        lastSendRef.current = now;
+        pendingMessageRef.current = null;
+      } else if (!rafRef.current) {
+        // Schedule send for remaining throttle time
+        rafRef.current = window.setTimeout(() => {
+          if (pendingMessageRef.current) {
+            socket.send(JSON.stringify(pendingMessageRef.current));
+            lastSendRef.current = Date.now();
+            pendingMessageRef.current = null;
+          }
+          rafRef.current = null;
+        }, THROTTLE_MS - timeSinceLastSend) as unknown as number;
+      }
+    },
+    [socket],
+  );
+
+  // Cleanup pending timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        clearTimeout(rafRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const onMessage = (evt: WebSocketEventMap["message"]) => {
@@ -42,7 +83,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     };
   }, [socket]);
 
-  // Always track the mouse position
+  // Track mouse/touch position with throttling
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!windowDimensions.width || !windowDimensions.height) return;
@@ -54,10 +95,9 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
           pointer: "mouse",
         },
       };
-      socket.send(JSON.stringify(message));
+      sendThrottled(message);
     };
 
-    // Also listen for touch events
     const onTouchMove = (e: TouchEvent) => {
       if (!windowDimensions.width || !windowDimensions.height) return;
       if (!e.touches[0]) return;
@@ -70,10 +110,10 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
           pointer: "touch",
         },
       };
-      socket.send(JSON.stringify(message));
+      sendThrottled(message);
     };
 
-    // Catch the end of touch events
+    // touchend sends immediately (no throttle needed)
     const onTouchEnd = () => {
       const message: PositionMessage = {
         type: "position",
@@ -83,7 +123,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     };
 
     window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
 
     return () => {
@@ -91,7 +131,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [socket, windowDimensions]);
+  }, [socket, windowDimensions, sendThrottled]);
 
   useEffect(() => {
     const message: PositionMessage = {
