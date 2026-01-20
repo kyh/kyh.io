@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { projects } from "@/lib/data";
 import { Radial } from "./components/radial";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 const Page = () => (
   <main>
-    <Radial />
+    <Radial projects={projects} />
   </main>
 );
 

@@ -28,7 +28,6 @@ import type { ProjectType } from "@/lib/data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
 import { Link } from "@/components/link";
-import { projects } from "@/lib/data";
 import {
   areIntersecting,
   clamp,
@@ -37,7 +36,6 @@ import {
   useIsHydrated,
   useShortcuts,
 } from "./utils";
-
 
 type RadialDataType = {
   project: ProjectType;
@@ -56,11 +54,13 @@ type LineType = {
 type LineTypes = LineType[];
 type RadialDataTypes = RadialDataType[];
 
-const radialData: RadialDataTypes = projects.map((project, index) => ({
-  degree: index,
-  variant: "large" as const,
-  project,
-}));
+function createRadialData(projects: ProjectType[]): RadialDataTypes {
+  return projects.map((project, index) => ({
+    degree: index,
+    variant: "large" as const,
+    project,
+  }));
+}
 
 const SCALE_ZOOM = 6;
 const SCALE_DEFAULT = 1;
@@ -84,12 +84,19 @@ export type TimelineContext = {
   setHoveredIndex: Dispatch<SetStateAction<number | null>>;
   activeIndex: number | null;
   setActiveIndex: (index: number | null) => void;
+  radialData: RadialDataTypes;
 } & Constants;
 
 const TimelineContext = createContext({} as TimelineContext);
 const useTimeline = () => useContext(TimelineContext);
 
-export const Radial = () => {
+type RadialProps = {
+  projects: ProjectType[];
+};
+
+export const Radial = ({ projects }: RadialProps) => {
+  const radialData = useMemo(() => createRadialData(projects), [projects]);
+
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
   const scrollY = useMotionValue(0);
@@ -104,7 +111,7 @@ export const Radial = () => {
   const rotate = useSpring(0, { stiffness: 150, damping: 42, mass: 1.1 });
   const scale = useSpring(1, { stiffness: 300, damping: 50 });
 
-  const [lines, constants] = useLines();
+  const [lines, constants] = useLines(radialData);
 
   useShortcuts({
     Escape: () => {
@@ -116,14 +123,14 @@ export const Radial = () => {
     },
     ArrowLeft: () => {
       if (activeIndex !== null) {
-        const len = radialData.length;
+        const len = projects.length;
         const newIndex = (activeIndex + -1 + len) % len;
         setActiveIndex(newIndex);
       }
     },
     ArrowRight: () => {
       if (activeIndex !== null) {
-        const len = radialData.length;
+        const len = projects.length;
         const newIndex = (activeIndex + 1 + len) % len;
         setActiveIndex(newIndex);
       }
@@ -157,7 +164,7 @@ export const Radial = () => {
         // Zoom in
         scale.set(SCALE_ZOOM);
         if (activeIndex === null) {
-          const index = getIndexForRotate(rotate.get());
+          const index = getIndexForRotate(rotate.get(), radialData);
           setActiveIndex(index);
         }
         setZoom(true);
@@ -200,7 +207,11 @@ export const Radial = () => {
         document.documentElement.scrollTop = SCROLL_SNAP;
       }
 
-      const newRotate = getRotateForIndex(targetIndex, rotate.get());
+      const newRotate = getRotateForIndex(
+        targetIndex,
+        rotate.get(),
+        radialData,
+      );
       if (newRotate === rotate.get()) return;
       rotate.set(newRotate);
     }
@@ -226,6 +237,7 @@ export const Radial = () => {
         setActiveIndex,
         zoom,
         rotate,
+        radialData,
       }}
     >
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[animateIn_0.2s_ease-out_forwards] opacity-0 min-[900px]:scale-[0.8]">
@@ -284,6 +296,7 @@ const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
     activeIndex,
     setActiveIndex,
     setHoveredIndex,
+    radialData,
     LINE_WIDTH_LARGE,
     LINE_WIDTH_SMALL,
     LINE_WIDTH_MEDIUM,
@@ -408,7 +421,7 @@ const Meta = ({
 };
 
 const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
-  const { zoom, activeIndex } = useTimeline();
+  const { zoom, activeIndex, radialData } = useTimeline();
   const [item, setItem] = useState<RadialDataType | null>(null);
 
   useEffect(() => {
@@ -417,7 +430,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
     if (item) {
       setItem(item);
     }
-  }, [activeIndex]);
+  }, [activeIndex, radialData]);
 
   return (
     <motion.div
@@ -475,7 +488,10 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   );
 };
 
-function getLines(rootScale: number): [LineTypes, Constants] {
+function getLines(
+  rootScale: number,
+  radialData: RadialDataTypes,
+): [LineTypes, Constants] {
   const LINE_WIDTH_SMALL = 40 * rootScale;
   const LINE_WIDTH_MEDIUM = 45 * rootScale;
   const LINE_WIDTH_LARGE = 72 * rootScale;
@@ -548,7 +564,7 @@ function getLines(rootScale: number): [LineTypes, Constants] {
   ];
 }
 
-function useLines(): [LineTypes, Constants] {
+function useLines(radialData: RadialDataTypes): [LineTypes, Constants] {
   const [rootScale, setRootScale] = useState(1);
 
   useEvent("resize", () => {
@@ -558,12 +574,19 @@ function useLines(): [LineTypes, Constants] {
     setRootScale(newScale);
   });
 
-  const [lines, constants] = useMemo(() => getLines(rootScale), [rootScale]);
+  const [lines, constants] = useMemo(
+    () => getLines(rootScale, radialData),
+    [rootScale, radialData],
+  );
 
   return [lines, constants];
 }
 
-function getRotateForIndex(index: number, rotate: number) {
+function getRotateForIndex(
+  index: number,
+  rotate: number,
+  radialData: RadialDataTypes,
+) {
   const item = radialData[index];
   if (!item) return rotate;
 
@@ -593,7 +616,7 @@ function getRotateForIndex(index: number, rotate: number) {
   return newRotate;
 }
 
-function getIndexForRotate(rotate: number) {
+function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
   const totalAssetLines = radialData.reduce(
     (sum, item) => sum + item.project.projectAssets.length,
     0,
