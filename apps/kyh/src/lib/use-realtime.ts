@@ -101,7 +101,6 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     const onTouchMove = (e: TouchEvent) => {
       if (!windowDimensions.width || !windowDimensions.height) return;
       if (!e.touches[0]) return;
-      e.preventDefault();
       const message: PositionMessage = {
         type: "position",
         data: {
@@ -123,7 +122,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     };
 
     window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("touchend", onTouchEnd);
 
     return () => {
