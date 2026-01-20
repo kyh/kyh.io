@@ -8,10 +8,16 @@ export const metadata: Metadata = {
   description: "The ever growing list of things I'm working on.",
 };
 
-const Page = () => (
-  <main>
-    <Radial projects={projects} />
-  </main>
+const filteredProjects = projects.filter(
+  (p) => p.type === "project" || p.type === "venture" || p.type === "mini-app",
 );
+
+const Page = () => {
+  return (
+    <main>
+      <Radial projects={filteredProjects} />
+    </main>
+  );
+};
 
 export default Page;

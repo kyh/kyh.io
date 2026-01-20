@@ -503,7 +503,8 @@ function getLines(
   // Calculate total lines: projects + asset lines
   const PROJECT_COUNT = radialData.length;
   const totalAssetLines = radialData.reduce(
-    (sum, item) => sum + item.project.projectAssets.length,
+    (sum, item) =>
+      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = PROJECT_COUNT + totalAssetLines;
@@ -530,8 +531,12 @@ function getLines(
 
     lineIndex++;
 
-    // Add asset lines after this project
-    item.project.projectAssets.forEach(() => {
+    // Add asset lines after this project (min 1, then 1 per 2 assets)
+    const assetLineCount = Math.max(
+      1,
+      Math.ceil(item.project.projectAssets.length / 2),
+    );
+    for (let i = 0; i < assetLineCount; i++) {
       // Start at -90 degrees (12 o'clock) instead of 0 degrees (3 o'clock)
       const assetRotation = lineIndex * ANGLE_INCREMENT - 90;
       const assetAngleRad = (assetRotation * Math.PI) / 180;
@@ -547,7 +552,7 @@ function getLines(
       });
 
       lineIndex++;
-    });
+    }
   });
 
   return [
@@ -595,12 +600,14 @@ function getRotateForIndex(
   for (let i = 0; i < index; i++) {
     const project = radialData[i];
     if (project) {
-      projectLineIndex += 1 + project.project.projectAssets.length; // Project line + asset lines
+      projectLineIndex +=
+        1 + Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
     }
   }
 
   const totalAssetLines = radialData.reduce(
-    (sum, item) => sum + item.project.projectAssets.length,
+    (sum, item) =>
+      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = radialData.length + totalAssetLines;
@@ -618,7 +625,8 @@ function getRotateForIndex(
 
 function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
   const totalAssetLines = radialData.reduce(
-    (sum, item) => sum + item.project.projectAssets.length,
+    (sum, item) =>
+      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = radialData.length + totalAssetLines;
@@ -632,7 +640,9 @@ function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
       for (let i = 0; i < index; i++) {
         const project = radialData[i];
         if (project) {
-          projectLineIndex += 1 + project.project.projectAssets.length; // Project line + asset lines
+          projectLineIndex +=
+            1 +
+            Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
         }
       }
 

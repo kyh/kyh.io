@@ -70,8 +70,14 @@ export const projects: Item[] = [
   },
   {
     title: "Policing Ice",
-    description: "Track immigration enforcement activity",
+    description:
+      "Documenting incidents of ICE overreach through crowdsourced video evidence",
     url: "https://policingice.com",
+  },
+  {
+    title: "Kwadrants",
+    description: "Everything lives in a 2x2 matrix",
+    url: "https://kwadrants.com",
   },
   {
     title: "Init",

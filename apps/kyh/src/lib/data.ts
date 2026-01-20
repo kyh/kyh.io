@@ -254,7 +254,8 @@ export const projects: ProjectType[] = [
   {
     slug: "policing-ice",
     title: "Policing Ice",
-    description: "Cute sticker pack",
+    description:
+      "Documenting incidents of ICE overreach through crowdsourced video evidence",
     url: "https://www.policingice.com",
     favicon: getPublicFaviconUrl("policing-ice-1.png"),
     type: "mini-app",
