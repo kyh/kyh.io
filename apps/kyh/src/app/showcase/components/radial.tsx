@@ -457,7 +457,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
       }}
     >
       <button
-        className="radial-back-button text-foreground-faded mb-3 flex items-center gap-1 transition-colors duration-200 hover:text-[var(--body-color-highlighted)] focus-visible:text-[var(--body-color-highlighted)]"
+        className="radial-back-button text-foreground-faded mb-3 flex items-center gap-1 transition-colors duration-150 hover:text-[var(--body-color-highlighted)] focus-visible:text-[var(--body-color-highlighted)]"
         onClick={() => {
           const evt = new KeyboardEvent("keydown", { key: "Escape" });
           window.dispatchEvent(evt);

@@ -13,7 +13,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/tooltip";
 
 const iconButtonClassName =
-  "inline-flex -m-1 p-1 transition text-foreground-faded hover:text-foreground-highlighted hover:bg-[color-mix(in_srgb,var(--bg-color)_50%,transparent)] rounded-sm";
+  "inline-flex -m-1 p-1 rounded-sm text-foreground-faded transition-colors duration-150 hover:text-foreground-highlighted hover:bg-background-hover";
 
 const COMMAND = "npx kyh";
 
@@ -21,7 +21,7 @@ function getPromptUrl(baseURL: string, url: string) {
   return `${baseURL}?q=${encodeURIComponent(
     `I'm looking at the website of Kaiyu Hsu: ${url}.
 Help me understand their background, experience, and work. Be ready to answer questions about their projects, provide insights, or help with similar work.
-  `
+  `,
   )}`;
 }
 
@@ -44,7 +44,7 @@ export const ViewAsMenu = () => {
   const claudeUrl = getPromptUrl("https://claude.ai/new", "https://kyh.io");
 
   return (
-    <div className="flex items-center gap-2 h-4">
+    <div className="flex h-4 items-center gap-2">
       <Tooltip>
         <AnimateSection delay={0.1}>
           <TooltipTrigger
@@ -66,7 +66,7 @@ export const ViewAsMenu = () => {
                 transition={{ ease: "easeOut", duration: 0.13 }}
               >
                 <span>Copied:</span>
-                <code className="font-mono text-[0.7rem] px-1.5 rounded bg-[color-mix(in_srgb,var(--bg-color)_20%,transparent)] border border-[color-mix(in_srgb,var(--border-color)_50%,transparent)]">
+                <code className="rounded border border-[color-mix(in_srgb,var(--border-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--bg-color)_20%,transparent)] px-1.5 font-mono text-[0.7rem]">
                   {COMMAND}
                 </code>
               </motion.div>

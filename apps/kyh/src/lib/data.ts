@@ -25,7 +25,7 @@ export const projects: ProjectType[] = [
     description:
       "Design, publish, and play personalized multiplayer minigames with your friends",
     url: "https://www.vibedgames.com",
-    favicon: getPublicFaviconUrl("vibedgames.png"),
+    favicon: getPublicFaviconUrl("vibedgames-c.png"),
     type: "project",
     projectAssets: [
       {
@@ -54,7 +54,7 @@ export const projects: ProjectType[] = [
     title: "Yours Sincerely",
     description: "Anonymous love letters 💌 written in disappearing ink",
     url: "https://www.yourssincerely.org",
-    favicon: getPublicFaviconUrl("yourssincerely.png"),
+    favicon: getPublicFaviconUrl("yourssincerely-c.png"),
     type: "project",
     projectAssets: [
       {
@@ -80,7 +80,7 @@ export const projects: ProjectType[] = [
     title: "UICapsule",
     description: "A curated collection of components that spark joy",
     url: "https://www.uicapsule.com",
-    favicon: getPublicFaviconUrl("uicapsule.png"),
+    favicon: getPublicFaviconUrl("uicapsule-c.png"),
     type: "project",
     projectAssets: [
       {
@@ -133,7 +133,7 @@ export const projects: ProjectType[] = [
     description:
       "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone",
     url: "https://www.inteligir.com",
-    favicon: getPublicFaviconUrl("inteligir-1.png"),
+    favicon: getPublicFaviconUrl("inteligir-c.png"),
     type: "project",
     projectAssets: [],
   },
@@ -143,7 +143,7 @@ export const projects: ProjectType[] = [
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     url: "https://www.dataembed.com",
-    favicon: getPublicFaviconUrl("dataembed.png"),
+    favicon: getPublicFaviconUrl("dataembed-c.png"),
     type: "project",
     projectAssets: [
       {
@@ -161,7 +161,7 @@ export const projects: ProjectType[] = [
     title: "LoremLLM",
     description: "Mock responses for LLMs",
     url: "https://www.loremllm.com",
-    favicon: getPublicFaviconUrl("loremllm.png"),
+    favicon: getPublicFaviconUrl("loremllm-c.png"),
     type: "project",
     projectAssets: [],
   },
@@ -181,7 +181,7 @@ export const projects: ProjectType[] = [
     title: "Founding",
     description: "Your proxy founding team",
     url: "https://www.founding.so",
-    favicon: getPublicFaviconUrl("founding.png"),
+    favicon: getPublicFaviconUrl("founding-c.png"),
     type: "venture",
     projectAssets: [
       {
@@ -203,7 +203,7 @@ export const projects: ProjectType[] = [
     description:
       "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank",
     url: "https://tc.kyh.io",
-    favicon: getPublicFaviconUrl("total-compensation-calculator.png"),
+    favicon: getPublicFaviconUrl("tc-2.png"),
     type: "mini-app",
     projectAssets: [
       {
@@ -220,7 +220,7 @@ export const projects: ProjectType[] = [
     description:
       "A real-time dashboard visualizing global Covid-19 data and trends",
     url: "https://covid-19.kyh.io",
-    favicon: getPublicFaviconUrl("covid-19-dashboard.png"),
+    favicon: getPublicFaviconUrl("covid-19-1.png"),
     type: "mini-app",
     projectAssets: [
       {
@@ -240,7 +240,7 @@ export const projects: ProjectType[] = [
     title: "Keiko and Friends",
     description: "Cute sticker pack",
     url: "https://apps.apple.com/us/app/id1209391711",
-    favicon: getPublicFaviconUrl("keiko-and-friends.png"),
+    favicon: getPublicFaviconUrl("keiko.png"),
     type: "mini-app",
     projectAssets: [
       {
@@ -255,17 +255,19 @@ export const projects: ProjectType[] = [
     slug: "policing-ice",
     title: "Policing Ice",
     description: "Cute sticker pack",
-    url: "https://www.policingice.com/",
-    favicon: getPublicFaviconUrl("policing-ice.png"),
+    url: "https://www.policingice.com",
+    favicon: getPublicFaviconUrl("policing-ice-1.png"),
     type: "mini-app",
-    projectAssets: [
-      {
-        type: "image",
-        src: getPublicAssetUrl("policing-ice.webp"),
-        dataBlur:
-          "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
-      },
-    ],
+    projectAssets: [],
+  },
+  {
+    slug: "kwadrants",
+    title: "Kwadrants",
+    description: "Everything lives in a 2x2 matrix",
+    url: "https://www.kwadrants.com",
+    favicon: getPublicFaviconUrl("kwadrants.png"),
+    type: "mini-app",
+    projectAssets: [],
   },
   // Templates
   {
@@ -290,32 +292,18 @@ export const projects: ProjectType[] = [
     title: "AI Design Canvas",
     description: "A full-featured, hackable Next.js and AI sdk design canvas",
     url: "https://init.kyh.io",
-    favicon: getPublicFaviconUrl("ai-.png"),
+    favicon: getPublicFaviconUrl("ai-design-canvas.png"),
     type: "template",
-    projectAssets: [
-      {
-        type: "image",
-        src: getPublicAssetUrl("init.webp"),
-        dataBlur:
-          "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-      },
-    ],
+    projectAssets: [],
   },
   {
     slug: "ai-datagrid",
     title: "AI Datagrid",
     description: "A full-featured, hackable Next.js AI datagrid",
     url: "https://init.kyh.io",
-    favicon: getPublicFaviconUrl("init.png"),
+    favicon: getPublicFaviconUrl("ai-datagrid.png"),
     type: "template",
-    projectAssets: [
-      {
-        type: "image",
-        src: getPublicAssetUrl("init.webp"),
-        dataBlur:
-          "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
-      },
-    ],
+    projectAssets: [],
   },
 ] as const;
 

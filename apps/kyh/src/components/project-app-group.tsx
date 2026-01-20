@@ -21,45 +21,102 @@ const springTransition = {
   stiffness: 200,
   damping: 22,
 } as const;
+const labelSpring = { type: "spring", stiffness: 400, damping: 30 } as const;
 const titleSpring = { ...springTransition, damping: 19 } as const;
 const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
-// Shared styles
-const labelClassName =
-  "text-xs font-medium text-foreground text-center truncate max-w-[80px]";
 const iconSize = 60;
+const maxLabelWidth = 90;
+
+type ProjectAppProps = {
+  name: string;
+  iconSrc: string;
+  url?: string;
+  showShadow?: boolean;
+};
 
 export const ProjectApp = ({
   name,
   iconSrc,
   url,
-}: Omit<ProjectAppItem, "key" | "url"> & { url: string }) => (
-  <a
-    href={url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="ease flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
-    data-slot="app"
-  >
-    <div
-      className="relative size-[60px] overflow-hidden rounded-[14px] shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
-      data-slot="app-icon"
+  showShadow = true,
+}: ProjectAppProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const labelRef = useRef<HTMLDivElement>(null);
+
+  const isTruncated =
+    labelRef.current &&
+    labelRef.current.scrollWidth > labelRef.current.clientWidth;
+  const shouldExpand = isHovered && isTruncated;
+
+  const Wrapper = url ? motion.a : motion.div;
+  const wrapperProps = url
+    ? { href: url, target: "_blank", rel: "noopener noreferrer" }
+    : {};
+
+  return (
+    <Wrapper
+      {...wrapperProps}
+      className="ease relative flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
+      data-slot="app"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
     >
-      <Image
-        src={iconSrc}
-        alt={name}
-        fill
-        sizes={`${iconSize}px`}
-        draggable={false}
-      />
-    </div>
-    <span className={labelClassName} data-slot="app-label">
-      {name}
-    </span>
-  </a>
-);
+      <div
+        className={`relative size-[60px] overflow-hidden rounded-[14px] ${
+          showShadow
+            ? "shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
+            : ""
+        }`}
+        data-slot="app-icon"
+      >
+        <Image
+          src={iconSrc}
+          alt={name}
+          fill
+          sizes={`${iconSize}px`}
+          draggable={false}
+        />
+      </div>
+
+      {/* Visible truncated label */}
+      <motion.div
+        ref={labelRef}
+        className="text-foreground truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium"
+        style={{ maxWidth: maxLabelWidth }}
+        data-slot="app-label"
+        initial={false}
+        animate={{
+          backgroundColor: isHovered
+            ? "color-mix(in srgb, var(--bg-color) 50%, transparent)"
+            : "transparent",
+          opacity: shouldExpand ? 0 : 1,
+        }}
+        transition={labelSpring}
+      >
+        {name}
+      </motion.div>
+
+      {/* Expanded label tooltip */}
+      <AnimatePresence>
+        {shouldExpand && (
+          <motion.div
+            className="text-foreground absolute top-[68px] z-10 rounded-md bg-[color-mix(in_srgb,var(--bg-color)_70%,transparent)] px-1.5 py-0.5 text-center text-xs font-medium whitespace-nowrap backdrop-blur-md"
+            data-slot="app-label-expanded"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={labelSpring}
+          >
+            {name}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Wrapper>
+  );
+};
 
 const OpenGridItem = ({
   item,
@@ -85,15 +142,8 @@ const OpenGridItem = ({
     [itemRefs, item.key],
   );
 
-  const Wrapper = item.url ? "a" : "div";
-  const wrapperProps = item.url
-    ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
-    : {};
-
   return (
     <motion.div
-      className="flex flex-col items-center gap-2"
-      data-slot="open-item"
       ref={setRef}
       initial={
         offsetsReady
@@ -119,23 +169,12 @@ const OpenGridItem = ({
         delay: openDelay,
       }}
     >
-      <Wrapper {...wrapperProps} className="flex flex-col items-center gap-2">
-        <div
-          className="relative size-[60px] overflow-hidden rounded-[14px]"
-          data-slot="open-tile"
-        >
-          <Image
-            src={item.iconSrc}
-            alt={item.name}
-            fill
-            sizes={`${iconSize}px`}
-            draggable={false}
-          />
-        </div>
-        <div className={labelClassName} data-slot="open-label">
-          {item.name}
-        </div>
-      </Wrapper>
+      <ProjectApp
+        name={item.name}
+        iconSrc={item.iconSrc}
+        url={item.url}
+        showShadow={false}
+      />
     </motion.div>
   );
 };
@@ -203,7 +242,7 @@ export const ProjectAppGroup = ({
             transition={springTransition}
           >
             <Dialog.Trigger
-              className="ease flex flex-col items-center gap-2 transition-transform duration-200 will-change-transform select-none active:scale-95"
+              className="group ease flex flex-col items-center gap-2 transition-transform duration-200 will-change-transform select-none active:scale-95"
               onClick={handleOpen}
               style={{ pointerEvents: isOpen ? "none" : "auto" }}
               data-slot="folder-trigger"
@@ -235,7 +274,7 @@ export const ProjectAppGroup = ({
                 </div>
               </div>
               <div
-                className={`${labelClassName} leading-none`}
+                className="text-foreground group-hover:bg-background-hover max-w-[80px] truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium transition-colors duration-150"
                 data-slot="folder-name"
               >
                 {title}
@@ -265,7 +304,7 @@ export const ProjectAppGroup = ({
               <Dialog.Popup
                 render={
                   <motion.div
-                    className="fixed top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center p-8 will-change-transform"
+                    className="fixed top-1/2 left-1/2 z-50 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center p-4 will-change-transform sm:w-auto sm:p-8"
                     data-slot="open-folder"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -291,7 +330,7 @@ export const ProjectAppGroup = ({
                 </motion.div>
 
                 <div
-                  className="grid w-full max-w-[400px] grid-cols-4 gap-5"
+                  className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
                   data-slot="open-grid"
                 >
                   {items.map((item, idx) => (

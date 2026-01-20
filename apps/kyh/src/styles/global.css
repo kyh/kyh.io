@@ -65,6 +65,11 @@
   --color-foreground-highlighted: var(--body-color-highlighted);
   --color-background: var(--bg-highlighted);
   --color-background-faded: var(--bg-color);
+  --color-background-hover: color-mix(
+    in srgb,
+    var(--bg-color) 50%,
+    transparent
+  );
   --color-border: var(--border-color);
   --color-panel: var(--panel);
 }
@@ -419,8 +424,8 @@ button.link {
   display: flex;
   align-items: center;
   transition:
-    background-color 0.2s ease-out,
-    color 0.2s ease-out;
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
 
   &:focus-visible {
     outline: 0;
@@ -465,7 +470,7 @@ button.link {
     display: inline-flex;
     background-size: contain;
     opacity: 0.5;
-    transition: opacity 0.2s ease-out;
+    transition: opacity 0.15s ease-out;
     transform: rotate(180deg);
   }
 
@@ -481,7 +486,7 @@ button.link {
     color: var(--body-color-faded);
     gap: 4px;
     align-items: center;
-    transition: color 0.2s ease-out;
+    transition: color 0.15s ease-out;
 
     &::before {
       content: "";
@@ -491,7 +496,7 @@ button.link {
       display: inline-flex;
       background-size: contain;
       opacity: 0.5;
-      transition: opacity 0.2s ease-out;
+      transition: opacity 0.15s ease-out;
     }
 
     &:hover::before,
@@ -582,7 +587,7 @@ button.link {
   }
 
   &:hover {
-    background-color: color-mix(in srgb, var(--bg-color) 50%, transparent);
+    background-color: var(--color-background-hover);
     color: var(--body-color-highlighted);
 
     & img {
@@ -628,6 +633,7 @@ button.link {
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   justify-items: center;
+  align-items: start;
   padding: 20px 0;
 
   @media screen and (max-width: 480px) {
