@@ -35,7 +35,7 @@ export const ProjectApp = ({
 
 const spring = { type: "spring", stiffness: 200, damping: 22 } as const;
 
-function OpenGridItem({
+const OpenGridItem = ({
   item,
   idx,
   itemRefs,
@@ -47,7 +47,7 @@ function OpenGridItem({
   itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   itemOffsets: Record<string, { x: number; y: number }>;
   offsetsReady: boolean;
-}) {
+}) => {
   const off = itemOffsets[item.key] ?? { x: 0, y: 0 };
   const openDelay = offsetsReady ? idx * 0.025 : 0;
   const closeDelay = offsetsReady ? 0.05 : 0;
@@ -215,7 +215,7 @@ export const ProjectAppGroup = ({
               <Dialog.Backdrop
                 render={
                   <motion.div
-                    className="open-backdrop"
+                    className="open-backdrop fixed inset-0 z-9998 bg-white/92 dark:bg-black/90 backdrop-blur-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0, transition: { delay: 0.025 } }}

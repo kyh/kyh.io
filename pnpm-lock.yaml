@@ -62,9 +62,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@floating-ui/react':
-        specifier: ^0.27.16
-        version: 0.27.16(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@opentui/core':
         specifier: ^0.1.73
         version: 0.1.73(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)
