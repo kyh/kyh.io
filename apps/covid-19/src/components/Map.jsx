@@ -1,13 +1,12 @@
-import React, { useState, useMemo } from "react";
-
-import { format } from "d3-format";
-import { geoPath, geoAlbersUsa } from "d3-geo";
+import React, { useMemo, useState } from "react";
 import { max } from "d3-array";
 import { nest } from "d3-collection";
+import { format } from "d3-format";
+import { geoAlbersUsa, geoPath } from "d3-geo";
 import { scaleSqrt, scaleThreshold } from "d3-scale";
-
 import StatesWithPopulation from "data/states.json";
-import { formatNumber, formatDate, parseDate } from "utils/formatter";
+import { formatDate, formatNumber, parseDate } from "utils/formatter";
+
 import { ChoroLegend } from "./ChoroLegend";
 
 const colorSchemes = {
@@ -91,7 +90,7 @@ const getColor = {
   positive: scaleThreshold(colorLimits.positive, colorSchemes.teal),
   totalTestResults: scaleThreshold(
     colorLimits.totalTestResults,
-    colorSchemes.gray
+    colorSchemes.gray,
   ),
 };
 
@@ -118,7 +117,7 @@ export const Map = ({
         [margin.left, margin.top],
         [mapWidth - margin.right, mapHeight - margin.bottom],
       ],
-      StatesWithPopulation
+      StatesWithPopulation,
     );
     return geoPath().projection(projection);
   }, []);
@@ -128,7 +127,9 @@ export const Map = ({
     const createMapFromArray = (array, keyField, valueField = null) => {
       return Object.assign(
         {},
-        ...array.map((a) => ({ [a[keyField]]: valueField ? a[valueField] : a }))
+        ...array.map((a) => ({
+          [a[keyField]]: valueField ? a[valueField] : a,
+        })),
       );
     };
     const groupedByState = nest()
@@ -142,7 +143,7 @@ export const Map = ({
         centroidCoordinates: path.centroid(feature), // should get rid of turf and use d3 for the centroid
         dailyData: createMapFromArray(
           stateMap[feature.properties.STUSPS],
-          "date"
+          "date",
         ),
       },
     }));
@@ -159,20 +160,20 @@ export const Map = ({
         data.features
           .map((d) => Object.values(d.properties.dailyData))
           .reduce((acc, val) => acc.concat(val), [])
-          .map((d) => d.totalTestResults)
+          .map((d) => d.totalTestResults),
       ),
-    [data]
+    [data],
   );
   const r = useMemo(
     () => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]),
-    [maxValue]
+    [maxValue],
   );
 
   return (
     <div className="relative">
       <div
         className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(
-          " "
+          " ",
         )}
       >
         {useChoropleth ? (
@@ -290,7 +291,7 @@ const States = ({
 const Bubbles = ({ geoJson, r, getValue }) => {
   // filter out "states" outside of render area (should be hoisted)
   const features = geoJson.features.filter(
-    (d) => d.properties.centroidCoordinates[0]
+    (d) => d.properties.centroidCoordinates[0],
   );
 
   const createBubble = (d, i, property) => {
@@ -311,10 +312,10 @@ const Bubbles = ({ geoJson, r, getValue }) => {
     );
   };
   const testBubbles = features.map((d, i) =>
-    createBubble(d, i, "totalTestResults")
+    createBubble(d, i, "totalTestResults"),
   );
   const positiveBubbles = features.map((d, i) =>
-    createBubble(d, i, "positive")
+    createBubble(d, i, "positive"),
   );
   return (
     <>
@@ -384,15 +385,15 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
   const deathNorm = getValue(d, "death", true);
   return (
     <div
-      className="absolute pointer-events-none bg-gray-800 bg-opacity-75 rounded-md p-2 shadow-sm"
+      className="bg-opacity-75 pointer-events-none absolute rounded-md bg-gray-800 p-2 shadow-sm"
       style={{ top: y, left: x }}
     >
       <table className="table-auto text-left">
         <thead>
           <tr>
-            <th className="text-lg font-bold px-2">{d.properties.NAME}</th>
+            <th className="px-2 text-lg font-bold">{d.properties.NAME}</th>
             <th />
-            <th className="text-xs text-right align-middle px-2 font-normal">
+            <th className="px-2 text-right align-middle text-xs font-normal">
               ({formatDate(parseDate(currentDate))})
             </th>
           </tr>

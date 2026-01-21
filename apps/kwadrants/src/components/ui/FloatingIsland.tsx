@@ -1,13 +1,35 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type Konva from "konva";
-import { motion, useMotionValue, animate } from "motion/react";
-import { Plus, Palette, Download, RotateCcw, ChevronLeft, Tag, Image, Grid3X3, Layout, GripVertical, Sun, Moon } from "lucide-react";
-import { useKwadrant } from "@/lib/KwadrantContext";
-import { TAG_COLORS, STORAGE_KEY } from "@/lib/constants";
-import { getAllLayouts } from "@/lib/layouts";
-import type { QuadrantColors, LayoutType } from "@/lib/types";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  Download,
+  Grid3X3,
+  GripVertical,
+  Image,
+  Layout,
+  Moon,
+  Palette,
+  Plus,
+  RotateCcw,
+  Sun,
+  Tag,
+} from "lucide-react";
+import { animate, motion, useMotionValue } from "motion/react";
 
-type IslandMode = "idle" | "add-menu" | "adding-tag" | "adding-image" | "colors" | "export" | "grid" | "layout";
+import type { LayoutType, QuadrantColors } from "@/lib/types";
+import { DEFAULT_TAG_COLOR, STORAGE_KEY, TAG_COLORS } from "@/lib/constants";
+import { useKwadrant } from "@/lib/KwadrantContext";
+import { getAllLayouts } from "@/lib/layouts";
+
+type IslandMode =
+  | "idle"
+  | "add-menu"
+  | "adding-tag"
+  | "adding-image"
+  | "colors"
+  | "export"
+  | "grid"
+  | "layout";
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
 const PANEL_POSITION_KEY = "kwadrant-panel-position";
@@ -18,30 +40,48 @@ interface FloatingIslandProps {
   canvasSize: { width: number; height: number };
 }
 
-export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) => {
+export const FloatingIsland = ({
+  stageRef,
+  canvasSize,
+}: FloatingIslandProps) => {
   const [mode, setMode] = useState<IslandMode>("idle");
   const [tagText, setTagText] = useState("");
-  const [tagColor, setTagColor] = useState(TAG_COLORS[0]);
+  const [tagColor, setTagColor] = useState<string>(DEFAULT_TAG_COLOR);
   const [position, setPosition] = useState<PanelPosition>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) || "bottom-left";
+      return (
+        (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) ||
+        "bottom-left"
+      );
     }
     return "bottom-left";
   });
   const [isDragging, setIsDragging] = useState(false);
-  const [hoveredPosition, setHoveredPosition] = useState<PanelPosition>("bottom-left");
+  const [hoveredPosition, setHoveredPosition] =
+    useState<PanelPosition>("bottom-left");
   const [isReady, setIsReady] = useState(false);
   const panelSizeRef = useRef({ width: 140, height: 200 });
   const islandRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
-  const { addTag, addImage, state, setQuadrantColor, setGridType, setLayoutType, setTheme } = useKwadrant();
+  const {
+    addTag,
+    addImage,
+    state,
+    setQuadrantColor,
+    setGridType,
+    setLayoutType,
+    setTheme,
+  } = useKwadrant();
   const isDark = state.theme === "dark";
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const getSnapPosition = (pos: PanelPosition, size = panelSizeRef.current) => ({
+  const getSnapPosition = (
+    pos: PanelPosition,
+    size = panelSizeRef.current,
+  ) => ({
     x: pos.includes("left") ? MARGIN : window.innerWidth - MARGIN - size.width,
     y: pos.includes("top") ? MARGIN : window.innerHeight - MARGIN - size.height,
   });
@@ -93,12 +133,18 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   const handleDragStart = () => setIsDragging(true);
 
-  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }) => {
+  const handleDrag = (
+    _: unknown,
+    info: { point: { x: number; y: number } },
+  ) => {
     const newPos = getClosestPosition(info.point.x, info.point.y);
     if (newPos !== hoveredPosition) setHoveredPosition(newPos);
   };
 
-  const handleDragEnd = (_: unknown, info: { point: { x: number; y: number } }) => {
+  const handleDragEnd = (
+    _: unknown,
+    info: { point: { x: number; y: number } },
+  ) => {
     const newPosition = getClosestPosition(info.point.x, info.point.y);
     const targetPos = getSnapPosition(newPosition);
     animate(x, targetPos.x, { type: "spring", stiffness: 400, damping: 30 });
@@ -167,14 +213,22 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   const getBackTarget = (): IslandMode | null => {
     switch (mode) {
-      case "add-menu": return "idle";
-      case "adding-tag": return "add-menu";
-      case "adding-image": return "add-menu";
-      case "colors": return "idle";
-      case "export": return "idle";
-      case "grid": return "idle";
-      case "layout": return "idle";
-      default: return null;
+      case "add-menu":
+        return "idle";
+      case "adding-tag":
+        return "add-menu";
+      case "adding-image":
+        return "add-menu";
+      case "colors":
+        return "idle";
+      case "export":
+        return "idle";
+      case "grid":
+        return "idle";
+      case "layout":
+        return "idle";
+      default:
+        return null;
     }
   };
 
@@ -183,11 +237,21 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "add-menu":
         return (
           <div className="flex flex-col gap-1">
-            <MenuButton onClick={() => setMode("adding-tag")} icon={<Tag size={18} />} label="Tag" isDark={isDark} />
-            <MenuButton onClick={() => {
-              setMode("adding-image");
-              setTimeout(() => fileInputRef.current?.click(), 0);
-            }} icon={<Image size={18} />} label="Image" isDark={isDark} />
+            <MenuButton
+              onClick={() => setMode("adding-tag")}
+              icon={<Tag size={18} />}
+              label="Tag"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => {
+                setMode("adding-image");
+                setTimeout(() => fileInputRef.current?.click(), 0);
+              }}
+              icon={<Image size={18} />}
+              label="Image"
+              isDark={isDark}
+            />
           </div>
         );
 
@@ -202,8 +266,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
               placeholder="Tag name..."
               autoFocus
-              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isDark ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400" : "bg-white border-gray-200 text-gray-900"
+              className={`w-full rounded-md border px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                isDark
+                  ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+                  : "border-gray-200 bg-white text-gray-900"
               }`}
             />
             <div className="flex flex-wrap gap-1">
@@ -211,8 +277,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 <button
                   key={c}
                   onClick={() => setTagColor(c)}
-                  className={`w-5 h-5 rounded-full transition-transform ${
-                    tagColor === c ? "ring-2 ring-offset-1 ring-gray-400 scale-110" : ""
+                  className={`h-5 w-5 rounded-full transition-transform ${
+                    tagColor === c
+                      ? "scale-110 ring-2 ring-gray-400 ring-offset-1"
+                      : ""
                   }`}
                   style={{ backgroundColor: c }}
                 />
@@ -221,8 +289,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             <button
               onClick={handleAddTag}
               disabled={!tagText.trim()}
-              className={`w-full px-3 py-1.5 text-sm rounded-md disabled:opacity-50 transition-colors ${
-                isDark ? "bg-white text-gray-900 hover:bg-gray-100" : "bg-gray-900 text-white hover:bg-gray-800"
+              className={`w-full rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
+                isDark
+                  ? "bg-white text-gray-900 hover:bg-gray-100"
+                  : "bg-gray-900 text-white hover:bg-gray-800"
               }`}
             >
               Add Tag
@@ -242,8 +312,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className={`w-full px-3 py-1.5 text-sm border border-dashed rounded-md transition-colors ${
-                isDark ? "border-gray-600 hover:bg-gray-700 text-gray-300" : "border-gray-300 hover:bg-gray-50 text-gray-700"
+              className={`w-full rounded-md border border-dashed px-3 py-1.5 text-sm transition-colors ${
+                isDark
+                  ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
             >
               Choose image...
@@ -254,16 +326,28 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "colors":
         return (
           <div className="flex flex-col gap-2">
-            {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map((q) => (
+            {(
+              ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const
+            ).map((q) => (
               <div key={q} className="flex items-center gap-2">
                 <input
                   type="color"
                   value={state.quadrantColors[q]}
-                  onChange={(e) => setQuadrantColor(q as keyof QuadrantColors, e.target.value)}
-                  className="w-6 h-6 rounded cursor-pointer border-0"
+                  onChange={(e) =>
+                    setQuadrantColor(q as keyof QuadrantColors, e.target.value)
+                  }
+                  className="h-6 w-6 cursor-pointer rounded border-0"
                 />
-                <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                  {q === "topLeft" ? "Top Left" : q === "topRight" ? "Top Right" : q === "bottomLeft" ? "Bottom Left" : "Bottom Right"}
+                <span
+                  className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                >
+                  {q === "topLeft"
+                    ? "Top Left"
+                    : q === "topRight"
+                      ? "Top Right"
+                      : q === "bottomLeft"
+                        ? "Bottom Left"
+                        : "Bottom Right"}
                 </span>
               </div>
             ))}
@@ -273,8 +357,18 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "export":
         return (
           <div className="flex flex-col gap-1">
-            <MenuButton onClick={() => handleExport("png")} icon={<Download size={18} />} label="PNG" isDark={isDark} />
-            <MenuButton onClick={() => handleExport("jpeg")} icon={<Download size={18} />} label="JPEG" isDark={isDark} />
+            <MenuButton
+              onClick={() => handleExport("png")}
+              icon={<Download size={18} />}
+              label="PNG"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => handleExport("jpeg")}
+              icon={<Download size={18} />}
+              label="JPEG"
+              isDark={isDark}
+            />
           </div>
         );
 
@@ -288,7 +382,11 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 onClick={() => setGridType(type)}
                 isDark={isDark}
               >
-                {type === "none" ? "None" : type === "squares" ? "Squares" : "Dots"}
+                {type === "none"
+                  ? "None"
+                  : type === "squares"
+                    ? "Squares"
+                    : "Dots"}
               </SelectButton>
             ))}
           </div>
@@ -313,12 +411,42 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       default:
         return (
           <div className="flex flex-col gap-1">
-            <MenuButton onClick={() => setMode("add-menu")} icon={<Plus size={18} />} label="Add" isDark={isDark} />
-            <MenuButton onClick={() => setMode("colors")} icon={<Palette size={18} />} label="Colors" isDark={isDark} />
-            <MenuButton onClick={() => setMode("grid")} icon={<Grid3X3 size={18} />} label="Grid" isDark={isDark} />
-            <MenuButton onClick={() => setMode("layout")} icon={<Layout size={18} />} label="Layout" isDark={isDark} />
-            <MenuButton onClick={() => setMode("export")} icon={<Download size={18} />} label="Export" isDark={isDark} />
-            <MenuButton onClick={handleReset} icon={<RotateCcw size={18} />} label="Reset" isDark={isDark} />
+            <MenuButton
+              onClick={() => setMode("add-menu")}
+              icon={<Plus size={18} />}
+              label="Add"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => setMode("colors")}
+              icon={<Palette size={18} />}
+              label="Colors"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => setMode("grid")}
+              icon={<Grid3X3 size={18} />}
+              label="Grid"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => setMode("layout")}
+              icon={<Layout size={18} />}
+              label="Layout"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={() => setMode("export")}
+              icon={<Download size={18} />}
+              label="Export"
+              isDark={isDark}
+            />
+            <MenuButton
+              onClick={handleReset}
+              icon={<RotateCcw size={18} />}
+              label="Reset"
+              isDark={isDark}
+            />
           </div>
         );
     }
@@ -327,25 +455,39 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const backTarget = getBackTarget();
 
   const size = panelSizeRef.current;
-  const positions: PanelPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
+  const positions: PanelPosition[] = [
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right",
+  ];
 
   return (
     <>
       {/* Ghost placement indicators */}
-      {isDragging && positions.map((pos) => {
-        const snapPos = getSnapPosition(pos);
-        const isHovered = hoveredPosition === pos;
-        return (
-          <motion.div
-            key={pos}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: isHovered ? 0.5 : 0.15, scale: isHovered ? 1 : 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="fixed bg-gray-300 rounded-xl border-2 border-dashed border-gray-400 pointer-events-none z-40"
-            style={{ left: snapPos.x, top: snapPos.y, width: size.width, height: size.height }}
-          />
-        );
-      })}
+      {isDragging &&
+        positions.map((pos) => {
+          const snapPos = getSnapPosition(pos);
+          const isHovered = hoveredPosition === pos;
+          return (
+            <motion.div
+              key={pos}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{
+                opacity: isHovered ? 0.5 : 0.15,
+                scale: isHovered ? 1 : 0.95,
+              }}
+              transition={{ duration: 0.15 }}
+              className="pointer-events-none fixed z-40 rounded-xl border-2 border-dashed border-gray-400 bg-gray-300"
+              style={{
+                left: snapPos.x,
+                top: snapPos.y,
+                width: size.width,
+                height: size.height,
+              }}
+            />
+          );
+        })}
 
       {/* Main panel */}
       <motion.div
@@ -356,18 +498,23 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
         style={{ x, y, opacity: isReady ? 1 : 0 }}
-        whileDrag={{ scale: 1.03, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)" }}
-        className={`fixed top-0 left-0 rounded-xl shadow-lg border p-2 z-50 min-w-[140px] cursor-grab active:cursor-grabbing ${
-          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        whileDrag={{
+          scale: 1.03,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
+        }}
+        className={`fixed top-0 left-0 z-50 min-w-[140px] cursor-grab rounded-xl border p-2 shadow-lg active:cursor-grabbing ${
+          isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
         }`}
       >
-        <div className={`flex items-center justify-between py-1 mb-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+        <div
+          className={`mb-1 flex items-center justify-between py-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+        >
           <div className="flex items-center gap-1">
             <GripVertical size={16} />
             {backTarget && (
               <button
                 onClick={() => setMode(backTarget)}
-                className={`p-1 rounded transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -375,7 +522,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           </div>
           <button
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className={`p-1 rounded transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+            className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -399,8 +546,10 @@ const MenuButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+      isDark
+        ? "text-gray-300 hover:bg-gray-700"
+        : "text-gray-700 hover:bg-gray-100"
     }`}
   >
     {icon}
@@ -421,10 +570,14 @@ const SelectButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left ${
+    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
       selected
-        ? isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white"
-        : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+        ? isDark
+          ? "bg-white text-gray-900"
+          : "bg-gray-900 text-white"
+        : isDark
+          ? "text-gray-300 hover:bg-gray-700"
+          : "text-gray-700 hover:bg-gray-100"
     }`}
   >
     {children}

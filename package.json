@@ -11,6 +11,7 @@
     "dev-cli": "pnpm -F kyh dev",
     "dev-covid": "pnpm -F @repo/covid-19-dashboard dev",
     "dev-kwadrants": "pnpm -F @repo/kwadrants dev",
+    "dev-policingice": "pnpm -F policingice dev",
     "dev-kyh": "pnpm -F @repo/kyh dev",
     "dev-party": "pnpm -F @repo/party dev",
     "dev-tc": "pnpm -F @repo/tc dev",
@@ -24,15 +25,14 @@
     "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
-    "publish-packages": "changeset version && changeset publish",
-    "workspace-new": "turbo gen init"
+    "publish-packages": "changeset version && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@kyh/prettier-config": "workspace:^",
     "dotenv-cli": "^11.0.0",
     "prettier": "catalog:",
-    "tsx": "^4.21.0",
+    "tsx": "catalog:",
     "turbo": "^2.7.5",
     "typescript": "catalog:"
   },

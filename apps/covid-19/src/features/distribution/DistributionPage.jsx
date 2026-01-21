@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { set } from "d3-collection";
-import { sum } from "d3-array";
-import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "components/Icon";
 import { Loader } from "components/Loader";
+import { Map } from "components/Map";
 import { PageContainer } from "components/PageContainer";
 import { StatCard } from "components/StatCard";
-import { Map } from "components/Map";
-import { Icon } from "components/Icon";
+import { sum } from "d3-array";
+import { set } from "d3-collection";
+import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
 import { formatDate, formatNumber } from "utils/formatter";
 
 const US_POPULATION = 400376491;
@@ -24,7 +24,7 @@ export const DistributionPage = () => {
 
   const dates = useMemo(
     () => set(raw.map((s) => s.date).reverse()).values(),
-    [raw]
+    [raw],
   );
   // holds the date of the displayed day. calculated using the slider index
   const currentDate = useMemo(() => dates[sliderIndex], [dates, sliderIndex]);
@@ -35,26 +35,26 @@ export const DistributionPage = () => {
         ((d.properties.dailyData[currentDate] &&
           d.properties.dailyData[currentDate][field]) ||
           0) / (normalized ? d.properties.population / 1000000 : 1),
-    [currentDate]
+    [currentDate],
   );
 
   const sumTotalTestResults = useMemo(
     () =>
       joinedData &&
       sum(joinedData.features, (d) => getValue(d, "totalTestResults")),
-    [joinedData, getValue]
+    [joinedData, getValue],
   );
 
   const sumPositive = useMemo(
     () =>
       joinedData && sum(joinedData.features, (d) => getValue(d, "positive")),
-    [joinedData, getValue]
+    [joinedData, getValue],
   );
 
   const sumNegative = useMemo(
     () =>
       joinedData && sum(joinedData.features, (d) => getValue(d, "negative")),
-    [joinedData, getValue]
+    [joinedData, getValue],
   );
 
   useEffect(() => {
@@ -94,13 +94,13 @@ export const DistributionPage = () => {
 
   return (
     <PageContainer>
-      <div className="w-full max-w-4xl mx-auto mb-8 px-4">
-        <div className="sm:flex justify-between mb-3 items-center">
+      <div className="mx-auto mb-8 w-full max-w-4xl px-4">
+        <div className="mb-3 items-center justify-between sm:flex">
           <div>
-            <h4 className="text-xs uppercase text-gray-400 font-semibold">
+            <h4 className="text-xs font-semibold text-gray-400 uppercase">
               The Spread of COVID-19 in the US
             </h4>
-            <h1 className="text-2xl font-bold flex items-center">
+            <h1 className="flex items-center text-2xl font-bold">
               <button
                 className="mr-2"
                 onClick={() => togglePlaying()}
@@ -150,14 +150,14 @@ export const DistributionPage = () => {
             </div>
           </div>
         </div>
-        <div className="sm:grid grid-cols-3 gap-4 mb-4">
+        <div className="mb-4 grid-cols-3 gap-4 sm:grid">
           <StatCard
             label="Total Tests Conducted"
             pointClassname="bg-gray-500"
             pointShadeClassname="bg-gray-800"
             value={formatNumber(sumTotalTestResults)}
             suffix={`(${((sumTotalTestResults / US_POPULATION) * 100).toFixed(
-              2
+              2,
             )}% of US population)`}
             isLoading={isLoading}
           />
@@ -167,7 +167,7 @@ export const DistributionPage = () => {
             pointShadeClassname="bg-teal-800"
             value={formatNumber(sumPositive)}
             suffix={`(${((sumPositive / sumTotalTestResults) * 100).toFixed(
-              2
+              2,
             )}% of tests)`}
             isLoading={isLoading}
           />
@@ -177,7 +177,7 @@ export const DistributionPage = () => {
             pointShadeClassname="bg-green-800"
             value={formatNumber(sumNegative)}
             suffix={`(${((sumNegative / sumTotalTestResults) * 100).toFixed(
-              2
+              2,
             )}% of tests)`}
             isLoading={isLoading}
           />

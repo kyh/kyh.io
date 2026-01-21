@@ -1,10 +1,11 @@
-import { differenceInDays } from "date-fns";
 import { Card } from "components/Card";
-import { StatCard, StatRow } from "components/StatCard";
 import { LineChart } from "components/LineChart";
-import { growthRate } from "utils/stats";
-import { stateAbbrevToFullname } from "utils/map-utils";
+import { StatCard, StatRow } from "components/StatCard";
+import { differenceInDays } from "date-fns";
 import { formatNumber } from "utils/formatter";
+import { stateAbbrevToFullname } from "utils/map-utils";
+import { growthRate } from "utils/stats";
+
 import { DataFilter, SELECTIONS } from "./DataFilter";
 
 const selectionToLabels = {
@@ -78,14 +79,14 @@ export const Featured = ({
   const comparator = dailyData[dailyData.length - label.days];
 
   return (
-    <section className="featured-content flex flex-col flex-1 px-4 sm:px-0">
-      <div className="flex justify-between items-center mb-4">
+    <section className="featured-content flex flex-1 flex-col px-4 sm:px-0">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg">
           {stateAbbrevToFullname[selectedState] || "United States"}
         </h1>
         <DataFilter selected={selectedFilter} onSelectFilter={onSelectFilter} />
       </div>
-      <div className="sm:grid grid-cols-4 gap-4 mb-4">
+      <div className="mb-4 grid-cols-4 gap-4 sm:grid">
         <StatCard
           label="Total Cases"
           pointClassname="bg-teal-500"
@@ -118,7 +119,7 @@ export const Featured = ({
           isLoading={isLoading}
         />
       </div>
-      <div className="sm:grid grid-cols-2 gap-4 mb-4">
+      <div className="mb-4 grid-cols-2 gap-4 sm:grid">
         <Card>
           <StatRow
             className="mb-1"
@@ -127,7 +128,7 @@ export const Featured = ({
               today &&
               `${growthRate(
                 comparator[label.positiveKey],
-                today[label.positiveKey]
+                today[label.positiveKey],
               )}%`
             }
             isLoading={isLoading}
@@ -157,7 +158,7 @@ export const Featured = ({
               today &&
               `${growthRate(
                 comparator[label.deathKey],
-                today[label.deathKey]
+                today[label.deathKey],
               )}%`
             }
             isLoading={isLoading}

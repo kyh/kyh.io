@@ -270,6 +270,7 @@ export const ShapesCanvas = () => {
       if (e.touches.length > 1) return;
 
       const touch = e.changedTouches[0];
+      if (!touch) return;
       const rect = canvas.getBoundingClientRect();
       spawnShapesAt(touch.clientX - rect.left, touch.clientY - rect.top);
     };
@@ -327,8 +328,9 @@ export const ShapesCanvas = () => {
             Body.scale(body, scaleFactor, scaleFactor);
             // Update current scale for next iteration
             const idx = animatingRef.current.findIndex((a) => a.body === body);
-            if (idx !== -1) {
-              animatingRef.current[idx].currentScale = newScale;
+            const animating = animatingRef.current[idx];
+            if (idx !== -1 && animating) {
+              animating.currentScale = newScale;
             }
             return true;
           }

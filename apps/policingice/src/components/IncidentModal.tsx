@@ -1,178 +1,180 @@
-import { useRef, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
-import { Field } from '@base-ui/react/field'
-import { Form } from '@base-ui/react/form'
+import { useRef, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
 
-import type { VideoPlatform } from '@/db/schema'
-import { useToast } from '@/components/Toast'
-import { isValidVideoUrl } from '@/lib/video-utils'
+import type { VideoPlatform } from "@/db/schema";
+import { useToast } from "@/components/Toast";
+import { isValidVideoUrl } from "@/lib/video-utils";
 
 interface Video {
-  id: number
-  url: string
-  platform: VideoPlatform
+  id: number;
+  url: string;
+  platform: VideoPlatform;
 }
 
 interface IncidentData {
-  location?: string
-  description?: string
-  incidentDate?: string
-  videoUrls?: Array<string>
+  location?: string;
+  description?: string;
+  incidentDate?: string;
+  videoUrls?: Array<string>;
 }
 
 interface CreateModeProps {
-  mode: 'create'
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: IncidentData & { videoUrls: Array<string> }) => Promise<void>
+  mode: "create";
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (
+    data: IncidentData & { videoUrls: Array<string> },
+  ) => Promise<void>;
 }
 
 interface EditModeProps {
-  mode: 'edit'
-  isOpen: boolean
-  onClose: () => void
+  mode: "edit";
+  isOpen: boolean;
+  onClose: () => void;
   incident: {
-    location: string | null
-    description: string | null
-    incidentDate: Date | null
-    videos: Array<Video>
-  }
-  onAddVideo: (url: string) => Promise<void>
-  onUpdate: (data: IncidentData) => Promise<void>
+    location: string | null;
+    description: string | null;
+    incidentDate: Date | null;
+    videos: Array<Video>;
+  };
+  onAddVideo: (url: string) => Promise<void>;
+  onUpdate: (data: IncidentData) => Promise<void>;
 }
 
-type IncidentModalProps = CreateModeProps | EditModeProps
+type IncidentModalProps = CreateModeProps | EditModeProps;
 
 export function IncidentModal(props: IncidentModalProps) {
-  const { isOpen, onClose, mode } = props
-  const toast = useToast()
+  const { isOpen, onClose, mode } = props;
+  const toast = useToast();
 
-  const formRef = useRef<HTMLFormElement>(null)
-  const addVideoRef = useRef<HTMLInputElement>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [videoError, setVideoError] = useState('')
+  const formRef = useRef<HTMLFormElement>(null);
+  const addVideoRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [videoError, setVideoError] = useState("");
 
   // Video URL inputs for create mode
-  const [inputKeys, setInputKeys] = useState([0])
-  const [urlErrors, setUrlErrors] = useState<Record<number, string>>({})
-  const nextKeyRef = useRef(1)
+  const [inputKeys, setInputKeys] = useState([0]);
+  const [urlErrors, setUrlErrors] = useState<Record<number, string>>({});
+  const nextKeyRef = useRef(1);
 
   const handleClose = () => {
-    formRef.current?.reset()
-    setInputKeys([0])
-    nextKeyRef.current = 1
-    setUrlErrors({})
-    setVideoError('')
-    onClose()
-  }
+    formRef.current?.reset();
+    setInputKeys([0]);
+    nextKeyRef.current = 1;
+    setUrlErrors({});
+    setVideoError("");
+    onClose();
+  };
 
   // Create mode: video URL management
   const addVideoUrl = () => {
-    setInputKeys([...inputKeys, nextKeyRef.current])
-    nextKeyRef.current++
-  }
+    setInputKeys([...inputKeys, nextKeyRef.current]);
+    nextKeyRef.current++;
+  };
 
   const removeVideoUrl = (key: number) => {
-    setInputKeys(inputKeys.filter((k) => k !== key))
+    setInputKeys(inputKeys.filter((k) => k !== key));
     setUrlErrors((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-  }
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
 
   const validateUrl = (key: number, value: string) => {
     if (value.trim() && !isValidVideoUrl(value)) {
       setUrlErrors((prev) => ({
         ...prev,
-        [key]: 'Use a supported platform link',
-      }))
+        [key]: "Use a supported platform link",
+      }));
     } else {
       setUrlErrors((prev) => {
-        const next = { ...prev }
-        delete next[key]
-        return next
-      })
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     }
-  }
+  };
 
   // Edit mode: add video
   const handleAddVideo = async () => {
-    if (mode !== 'edit') return
-    const url = addVideoRef.current?.value.trim()
-    if (!url) return
+    if (mode !== "edit") return;
+    const url = addVideoRef.current?.value.trim();
+    if (!url) return;
 
     if (!isValidVideoUrl(url)) {
-      setVideoError('Use a supported platform link')
-      return
+      setVideoError("Use a supported platform link");
+      return;
     }
 
-    setIsSubmitting(true)
-    setVideoError('')
+    setIsSubmitting(true);
+    setVideoError("");
     try {
-      await props.onAddVideo(url)
-      if (addVideoRef.current) addVideoRef.current.value = ''
-      toast.success('Video added')
+      await props.onAddVideo(url);
+      if (addVideoRef.current) addVideoRef.current.value = "";
+      toast.success("Video added");
     } catch {
-      toast.error('Failed to add video')
+      toast.error("Failed to add video");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
 
-    const location = (formData.get('location') as string)?.trim()
-    const description = (formData.get('description') as string)?.trim()
-    const incidentDate = formData.get('incidentDate') as string
+    const location = (formData.get("location") as string)?.trim();
+    const description = (formData.get("description") as string)?.trim();
+    const incidentDate = formData.get("incidentDate") as string;
 
-    if (mode === 'create') {
+    if (mode === "create") {
       const videoUrls = inputKeys
         .map((key) => (formData.get(`video-${key}`) as string)?.trim())
-        .filter((url) => url && isValidVideoUrl(url))
+        .filter((url) => url && isValidVideoUrl(url));
 
       if (videoUrls.length === 0) {
         setUrlErrors({
-          [inputKeys[0]]: 'At least one valid video URL required',
-        })
-        return
+          [inputKeys[0]]: "At least one valid video URL required",
+        });
+        return;
       }
 
-      setIsSubmitting(true)
+      setIsSubmitting(true);
       try {
         await props.onSubmit({
           location: location || undefined,
           description: description || undefined,
           incidentDate: incidentDate || undefined,
           videoUrls,
-        })
-        handleClose()
+        });
+        handleClose();
       } finally {
-        setIsSubmitting(false)
+        setIsSubmitting(false);
       }
     } else {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
       try {
         await props.onUpdate({
           location: location || undefined,
           description: description || undefined,
           incidentDate: incidentDate || undefined,
-        })
-        toast.success('Saved')
-        onClose()
+        });
+        toast.success("Saved");
+        onClose();
       } catch {
-        toast.error('Failed to save')
+        toast.error("Failed to save");
       } finally {
-        setIsSubmitting(false)
+        setIsSubmitting(false);
       }
     }
-  }
+  };
 
-  const title = mode === 'create' ? 'Submit an incident' : 'Edit incident'
-  const submitText = mode === 'create' ? 'Submit' : 'Save'
-  const submittingText = mode === 'create' ? 'Submitting...' : 'Saving...'
+  const title = mode === "create" ? "Submit an incident" : "Edit incident";
+  const submitText = mode === "create" ? "Submit" : "Save";
+  const submittingText = mode === "create" ? "Submitting..." : "Saving...";
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -182,7 +184,7 @@ export function IncidentModal(props: IncidentModalProps) {
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
           <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             {/* Video URLs - Create mode */}
-            {mode === 'create' && (
+            {mode === "create" && (
               <div>
                 <label htmlFor="video-0" className="mb-1 block text-sm">
                   Video URLs
@@ -230,7 +232,7 @@ export function IncidentModal(props: IncidentModalProps) {
             )}
 
             {/* Existing videos - Edit mode */}
-            {mode === 'edit' && (
+            {mode === "edit" && (
               <>
                 <div>
                   <label className="mb-2 block text-sm text-neutral-500">
@@ -255,13 +257,13 @@ export function IncidentModal(props: IncidentModalProps) {
                   <Field.Control
                     ref={addVideoRef}
                     type="url"
-                    onChange={() => setVideoError('')}
+                    onChange={() => setVideoError("")}
                     placeholder="https://x.com/..."
                     className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddVideo()
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddVideo();
                       }
                     }}
                   />
@@ -288,7 +290,7 @@ export function IncidentModal(props: IncidentModalProps) {
               <Field.Control
                 type="text"
                 defaultValue={
-                  mode === 'edit' ? props.incident.location || '' : ''
+                  mode === "edit" ? props.incident.location || "" : ""
                 }
                 placeholder="Minneapolis, MN"
                 className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
@@ -302,11 +304,11 @@ export function IncidentModal(props: IncidentModalProps) {
               <Field.Control
                 type="date"
                 defaultValue={
-                  mode === 'edit' && props.incident.incidentDate
+                  mode === "edit" && props.incident.incidentDate
                     ? new Date(props.incident.incidentDate)
                         .toISOString()
-                        .split('T')[0]
-                    : ''
+                        .split("T")[0]
+                    : ""
                 }
                 className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
               />
@@ -317,10 +319,9 @@ export function IncidentModal(props: IncidentModalProps) {
                 Description (optional)
               </Field.Label>
               <Field.Control
-                render={<textarea />}
-                rows={2}
+                render={<textarea rows={2} />}
                 defaultValue={
-                  mode === 'edit' ? props.incident.description || '' : ''
+                  mode === "edit" ? props.incident.description || "" : ""
                 }
                 placeholder="Brief description of what happened..."
                 className="w-full resize-none border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
@@ -343,5 +344,5 @@ export function IncidentModal(props: IncidentModalProps) {
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
-  )
+  );
 }

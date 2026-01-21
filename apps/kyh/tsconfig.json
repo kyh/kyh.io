@@ -5,11 +5,11 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
     },
     "plugins": [{ "name": "next" }],
-    "module": "esnext"
+    "module": "esnext",
   },
-  "include": [".", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"],
 }

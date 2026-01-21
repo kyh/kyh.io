@@ -11,23 +11,23 @@
  * Usage:
  *   npx tsx scripts/embed-incidents.ts
  */
-import { config } from 'dotenv'
-import { embed, gateway } from 'ai'
+import { embed } from "ai";
+import { config } from "dotenv";
 
-config({ path: '.env.local' })
+config({ path: ".env.local" });
 
-const { client, db } = await import('../src/db/index')
+const { client, db } = await import("../src/db/index");
 
 async function generateEmbedding(text: string): Promise<Array<number>> {
   const { embedding } = await embed({
-    model: gateway('openai/text-embedding-3-small'),
+    model: "openai/text-embedding-3-small",
     value: text,
-  })
-  return embedding
+  });
+  return embedding;
 }
 
 function vectorToString(vector: Array<number>): string {
-  return `[${vector.join(',')}]`
+  return `[${vector.join(",")}]`;
 }
 
 async function ensureVectorIndex() {
@@ -35,54 +35,54 @@ async function ensureVectorIndex() {
     await client.execute(`
       CREATE INDEX IF NOT EXISTS incidents_embedding_idx
       ON incidents(libsql_vector_idx(embedding))
-    `)
-    console.log('Vector index ready')
+    `);
+    console.log("Vector index ready");
   } catch {
-    console.log('Note: Vector index creation skipped (may already exist)')
+    console.log("Note: Vector index creation skipped (may already exist)");
   }
 }
 
 async function main() {
-  await ensureVectorIndex()
+  await ensureVectorIndex();
 
-  console.log('Finding incidents with descriptions but no embeddings...')
+  console.log("Finding incidents with descriptions but no embeddings...");
 
   const incidents = await db.query.incidents.findMany({
     where: (t, { and: andOp, isNotNull: isNotNullOp, isNull: isNullOp }) =>
       andOp(isNotNullOp(t.description), isNullOp(t.embedding)),
-  })
+  });
 
-  console.log(`Found ${incidents.length} incidents to embed`)
+  console.log(`Found ${incidents.length} incidents to embed`);
 
   for (const incident of incidents) {
     const textToEmbed = [incident.location, incident.description]
       .filter(Boolean)
-      .join(' - ')
+      .join(" - ");
 
     if (!textToEmbed) {
-      console.log(`Incident ${incident.id}: no text to embed, skipping`)
-      continue
+      console.log(`Incident ${incident.id}: no text to embed, skipping`);
+      continue;
     }
 
     console.log(
       `Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`,
-    )
+    );
 
     try {
-      const embedding = await generateEmbedding(textToEmbed)
+      const embedding = await generateEmbedding(textToEmbed);
 
       await client.execute({
         sql: `UPDATE incidents SET embedding = vector32(?) WHERE id = ?`,
         args: [vectorToString(embedding), incident.id],
-      })
+      });
 
-      console.log(`  Done`)
+      console.log(`  Done`);
     } catch (error) {
-      console.error(`  Error:`, error)
+      console.error(`  Error:`, error);
     }
   }
 
-  console.log('\nDone!')
+  console.log("\nDone!");
 }
 
-main().catch(console.error)
+main().catch(console.error);

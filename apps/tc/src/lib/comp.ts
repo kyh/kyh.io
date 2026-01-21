@@ -50,7 +50,7 @@ const compoundInterest = (
   principle: number = 0,
   rate: number = 0,
   time: number = 1,
-  n: number = 1
+  n: number = 1,
 ) => {
   const amount = principle * Math.pow(1 + rate / n, n * time);
   const interest = amount - principle;
@@ -61,7 +61,7 @@ const calculateShareValueFromMultiple = (
   preferredSharePrice = "0",
   multiple = "0",
   calcTotal = true,
-  year = "1"
+  year = "1",
 ) => {
   const price = parseFloat(preferredSharePrice || "0");
   const rate = parseFloat(multiple || "0");
@@ -75,7 +75,7 @@ const calculateShareValueFromMultiple = (
 const calculateShareValueFromRevenue = (
   sharesOutstanding = "0",
   expectedRevenue = "0",
-  revenueMultiple = "0"
+  revenueMultiple = "0",
 ) => {
   const valuation =
     parseFloat(expectedRevenue || "0") * parseFloat(revenueMultiple || "0");
@@ -117,12 +117,12 @@ export const useCompHooks = () => {
                 preferredSharePrice,
                 expectedGrowthMultiple,
                 shareType === "iso",
-                d.year
+                d.year,
               )
             : calculateShareValueFromRevenue(
                 sharesOutstanding,
                 expectedRevenue,
-                revenueMultiple
+                revenueMultiple,
               );
 
         return {
@@ -134,7 +134,7 @@ export const useCompHooks = () => {
               ? calculateStocks(iso, strikePrice, sv)
               : calculateStocks(rsu, "0", sv),
         };
-      })
+      }),
     );
   };
 

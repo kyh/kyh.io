@@ -1,6 +1,7 @@
-import { Rect, Line, Circle } from "react-konva";
-import type { QuadrantColors, GridType, ThemeType } from "@/lib/types";
+import { Circle, Line, Rect } from "react-konva";
+
 import type { MatrixBounds } from "@/lib/layouts";
+import type { GridType, QuadrantColors, ThemeType } from "@/lib/types";
 
 interface QuadrantGridProps {
   canvasWidth: number;
@@ -45,7 +46,7 @@ export const QuadrantGrid = ({
             points={[x, by, x, by + height]}
             stroke={themeColors.grid}
             strokeWidth={1}
-          />
+          />,
         );
       }
       for (let y = by + GRID_SPACING; y < by + height; y += GRID_SPACING) {
@@ -55,7 +56,7 @@ export const QuadrantGrid = ({
             points={[bx, y, bx + width, y]}
             stroke={themeColors.grid}
             strokeWidth={1}
-          />
+          />,
         );
       }
     } else if (gridType === "dots") {
@@ -68,7 +69,7 @@ export const QuadrantGrid = ({
               y={y}
               radius={1.5}
               fill={themeColors.grid}
-            />
+            />,
           );
         }
       }
@@ -80,22 +81,68 @@ export const QuadrantGrid = ({
   return (
     <>
       {/* Background */}
-      <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={themeColors.bg} />
+      <Rect
+        x={0}
+        y={0}
+        width={canvasWidth}
+        height={canvasHeight}
+        fill={themeColors.bg}
+      />
 
       {/* Quadrant backgrounds */}
-      <Rect x={bx} y={by} width={width / 2} height={height / 2} fill={colors.topLeft} />
-      <Rect x={centerX} y={by} width={width / 2} height={height / 2} fill={colors.topRight} />
-      <Rect x={bx} y={centerY} width={width / 2} height={height / 2} fill={colors.bottomLeft} />
-      <Rect x={centerX} y={centerY} width={width / 2} height={height / 2} fill={colors.bottomRight} />
+      <Rect
+        x={bx}
+        y={by}
+        width={width / 2}
+        height={height / 2}
+        fill={colors.topLeft}
+      />
+      <Rect
+        x={centerX}
+        y={by}
+        width={width / 2}
+        height={height / 2}
+        fill={colors.topRight}
+      />
+      <Rect
+        x={bx}
+        y={centerY}
+        width={width / 2}
+        height={height / 2}
+        fill={colors.bottomLeft}
+      />
+      <Rect
+        x={centerX}
+        y={centerY}
+        width={width / 2}
+        height={height / 2}
+        fill={colors.bottomRight}
+      />
 
       {/* Grid pattern */}
       {renderGrid()}
 
       {/* Divider lines */}
-      <Line points={[centerX, by, centerX, by + height]} stroke={themeColors.axis} strokeWidth={1} />
-      <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
+      <Line
+        points={[centerX, by, centerX, by + height]}
+        stroke={themeColors.axis}
+        strokeWidth={1}
+      />
+      <Line
+        points={[bx, centerY, bx + width, centerY]}
+        stroke={themeColors.axis}
+        strokeWidth={1}
+      />
       {showOuterBorder && (
-        <Rect x={bx} y={by} width={width} height={height} stroke={themeColors.axis} strokeWidth={1} fill="transparent" />
+        <Rect
+          x={bx}
+          y={by}
+          width={width}
+          height={height}
+          stroke={themeColors.axis}
+          strokeWidth={1}
+          fill="transparent"
+        />
       )}
     </>
   );

@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Portal } from "react-portal";
 import type {
   CallBackProps,
-  Step,
   Placement,
+  Step,
   TooltipRenderProps,
 } from "react-joyride";
+import { useState } from "react";
 import Joyride, { ACTIONS, EVENTS, STATUS } from "react-joyride";
+import { Portal } from "react-portal";
 
 const defaultStepProps = {
   disableBeacon: true,
@@ -44,7 +44,7 @@ export const defaultSteps: Step[] = [
           Cash compensation is the simplest category to understand because it’s
           what gets directly deposited into your bank account.
         </p>
-        <p className="mt-4 text-xs uppercase text-slate-400">
+        <p className="mt-4 text-xs text-slate-400 uppercase">
           Types of cash compensation:
         </p>
         <ul>
@@ -72,7 +72,7 @@ export const defaultSteps: Step[] = [
           periods and it’s difficult to get the exact dollar value of your
           equity.
         </p>
-        <p className="mt-4 text-xs uppercase text-slate-400">
+        <p className="mt-4 text-xs text-slate-400 uppercase">
           Types of equity compensation:
         </p>
         <ul>
@@ -99,7 +99,7 @@ export const defaultSteps: Step[] = [
           look at value from multiple dimensions. To keep things simple, we
           offer 2 different approaches.
         </p>
-        <p className="mt-4 text-xs uppercase text-slate-400">
+        <p className="mt-4 text-xs text-slate-400 uppercase">
           Estimating equity value:
         </p>
         <ul>
@@ -180,11 +180,11 @@ const Tooltip = ({
   isLastStep,
 }: TooltipRenderProps) => (
   <div
-    className="text-slate-200 text-sm shadow-xl bg-black rounded-sm p-6 max-w-sm"
+    className="max-w-sm rounded-sm bg-black p-6 text-sm text-slate-200 shadow-xl"
     {...tooltipProps}
   >
     {step.title && (
-      <h1 className="text-2xl font-bold leading-6 text-slate-50 mb-5">
+      <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">
         {step.title}
       </h1>
     )}
@@ -194,7 +194,7 @@ const Tooltip = ({
         {defaultSteps.map((_s, i) => (
           <div
             key={i}
-            className={`w-2 h-2 rounded-full border border-slate-200 ${
+            className={`h-2 w-2 rounded-full border border-slate-200 ${
               i === index ? "bg-slate-200" : "bg-transparent"
             }`}
             aria-hidden="true"
@@ -204,7 +204,7 @@ const Tooltip = ({
       <div>
         {index > 0 && (
           <button
-            className="inline-flex items-center px-4 py-1.5 text-xs font-medium rounded-sm text-emerald-600"
+            className="inline-flex items-center rounded-sm px-4 py-1.5 text-xs font-medium text-emerald-600"
             type="button"
             {...backProps}
           >
@@ -212,7 +212,7 @@ const Tooltip = ({
           </button>
         )}
         <button
-          className="inline-flex items-center px-4 py-1.5 text-xs font-medium rounded-sm text-emerald-100 bg-emerald-900 hover:bg-emerald-700"
+          className="inline-flex items-center rounded-sm bg-emerald-900 px-4 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-700"
           type="button"
           {...primaryProps}
         >

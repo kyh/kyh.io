@@ -194,6 +194,7 @@ export function tinykeys(
       const prev = possibleMatches.get(sequence);
       const remainingExpectedPresses = prev ? prev : sequence;
       const currentExpectedPress = remainingExpectedPresses[0];
+      if (!currentExpectedPress) return;
 
       const matches = match(event, currentExpectedPress);
 

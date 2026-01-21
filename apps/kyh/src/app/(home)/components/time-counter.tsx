@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { RefObject } from "react";
-import { Fragment, useMemo, useRef } from "react";
 import type { Transition } from "motion/react";
+import type { RefObject } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 const getPstTime = () => {
@@ -35,14 +34,12 @@ export const TimeCounter = () => {
   }, []);
 
   return (
-    <div className="text-foreground-faded flex items-center text-xs h-4">
+    <div className="text-foreground-faded flex h-4 items-center text-xs">
       <Counter text={time} />
       {time && <span>&nbsp;&#183;&nbsp;SF</span>}
     </div>
   );
 };
-
-
 
 type VerticalProps = {
   letter: string;

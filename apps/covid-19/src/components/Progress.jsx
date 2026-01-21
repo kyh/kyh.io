@@ -1,6 +1,6 @@
 export const Progress = ({ value, total }) => {
   return (
-    <div className="overflow-hidden h-2 flex rounded bg-gray-700">
+    <div className="flex h-2 overflow-hidden rounded bg-gray-700">
       <div
         style={{ width: `${(value / total) * 100}%` }}
         className="bg-teal-500"

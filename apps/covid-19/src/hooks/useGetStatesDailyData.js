@@ -3,7 +3,7 @@ import { formatDaily } from "utils/formatter";
 
 export const useGetStatesDailyData = () => {
   const { data = [] } = useSWR(
-    "https://raw.githubusercontent.com/kyh/covid-19/c1f39d90340bbb966f1380bfb79a7a95564bcf30/data/states.json"
+    "https://raw.githubusercontent.com/kyh/covid-19/c1f39d90340bbb966f1380bfb79a7a95564bcf30/data/states.json",
   );
 
   let formatted = {};

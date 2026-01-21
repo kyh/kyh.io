@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
-import { eq, sql } from 'drizzle-orm'
-import { ArrowLeft } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
+import { eq, sql } from "drizzle-orm";
+import { ArrowLeft } from "lucide-react";
 
-import { IncidentCardContent } from '@/components/IncidentCardContent'
-import { useToast } from '@/components/Toast'
+import { IncidentCardContent } from "@/components/IncidentCardContent";
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
-} from '@/components/KeyboardShortcutsProvider'
-import { db } from '@/db/index'
-import { incidents, votes } from '@/db/schema'
-import { auth } from '@/lib/auth'
-import { authClient } from '@/lib/auth-client'
+} from "@/components/KeyboardShortcutsProvider";
+import { useToast } from "@/components/Toast";
+import { db } from "@/db/index";
+import { incidents, votes } from "@/db/schema";
+import { auth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 
-const getIncident = createServerFn({ method: 'GET' })
+const getIncident = createServerFn({ method: "GET" })
   .inputValidator((id: number) => id)
   .handler(async ({ data: id }) => {
     const incident = await db.query.incidents.findFirst({
@@ -24,27 +24,27 @@ const getIncident = createServerFn({ method: 'GET' })
       where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
         and(
           eqOp(incidents.id, id),
-          eqOp(incidents.status, 'approved'),
+          eqOp(incidents.status, "approved"),
           isNullOp(incidents.deletedAt),
           ltOp(incidents.reportCount, 3),
         ),
-    })
-    return incident ?? null
-  })
+    });
+    return incident ?? null;
+  });
 
-const submitVote = createServerFn({ method: 'POST' })
+const submitVote = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { incidentId: number; type: 'unjustified' | 'justified' }) => data,
+    (data: { incidentId: number; type: "unjustified" | "justified" }) => data,
   )
   .handler(async ({ data }) => {
-    const headers = getRequestHeaders()
-    const session = await auth.api.getSession({ headers })
+    const headers = getRequestHeaders();
+    const session = await auth.api.getSession({ headers });
 
     if (!session?.user?.id) {
-      return { success: false, error: 'No session' }
+      return { success: false, error: "No session" };
     }
 
-    const sessionId = session.user.id
+    const sessionId = session.user.id;
 
     const existing = await db.query.votes.findFirst({
       where: (votes, { and, eq: eqOp }) =>
@@ -52,38 +52,38 @@ const submitVote = createServerFn({ method: 'POST' })
           eqOp(votes.sessionId, sessionId),
           eqOp(votes.incidentId, data.incidentId),
         ),
-    })
+    });
 
     // Toggle: if same vote type, remove it
     if (existing?.type === data.type) {
-      await db.delete(votes).where(eq(votes.id, existing.id))
+      await db.delete(votes).where(eq(votes.id, existing.id));
       const field =
-        data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+        data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
       await db
         .update(incidents)
         .set({ [field]: sql`${incidents[field]} - 1` })
-        .where(eq(incidents.id, data.incidentId))
-      return { success: true, action: 'removed' as const }
+        .where(eq(incidents.id, data.incidentId));
+      return { success: true, action: "removed" as const };
     }
 
     // If different vote type exists, switch it
     if (existing) {
       const oldField =
-        existing.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+        existing.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
       const newField =
-        data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+        data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
       await db
         .update(votes)
         .set({ type: data.type })
-        .where(eq(votes.id, existing.id))
+        .where(eq(votes.id, existing.id));
       await db
         .update(incidents)
         .set({
           [oldField]: sql`${incidents[oldField]} - 1`,
           [newField]: sql`${incidents[newField]} + 1`,
         })
-        .where(eq(incidents.id, data.incidentId))
-      return { success: true, action: 'switched' as const }
+        .where(eq(incidents.id, data.incidentId));
+      return { success: true, action: "switched" as const };
     }
 
     // New vote
@@ -91,22 +91,22 @@ const submitVote = createServerFn({ method: 'POST' })
       incidentId: data.incidentId,
       sessionId,
       type: data.type,
-    })
+    });
 
     const field =
-      data.type === 'unjustified' ? 'unjustifiedCount' : 'justifiedCount'
+      data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
     await db
       .update(incidents)
       .set({ [field]: sql`${incidents[field]} + 1` })
-      .where(eq(incidents.id, data.incidentId))
+      .where(eq(incidents.id, data.incidentId));
 
-    return { success: true, action: 'added' as const }
-  })
+    return { success: true, action: "added" as const };
+  });
 
-const getUserVote = createServerFn({ method: 'GET' })
+const getUserVote = createServerFn({ method: "GET" })
   .inputValidator((data: { sessionId: string; incidentId: number }) => data)
   .handler(async ({ data }) => {
-    if (!data.sessionId) return null
+    if (!data.sessionId) return null;
 
     const vote = await db.query.votes.findFirst({
       where: (votes, { and, eq: eqOp }) =>
@@ -114,112 +114,112 @@ const getUserVote = createServerFn({ method: 'GET' })
           eqOp(votes.sessionId, data.sessionId),
           eqOp(votes.incidentId, data.incidentId),
         ),
-    })
+    });
 
-    return vote?.type ?? null
-  })
+    return vote?.type ?? null;
+  });
 
-const reportIncident = createServerFn({ method: 'POST' })
+const reportIncident = createServerFn({ method: "POST" })
   .inputValidator((data: { incidentId: number }) => data)
   .handler(async ({ data }) => {
     await db
       .update(incidents)
       .set({ reportCount: sql`${incidents.reportCount} + 1` })
-      .where(eq(incidents.id, data.incidentId))
-    return { success: true }
-  })
+      .where(eq(incidents.id, data.incidentId));
+    return { success: true };
+  });
 
-export const Route = createFileRoute('/incident/$id')({
+export const Route = createFileRoute("/incident/$id")({
   component: IncidentDetail,
   loader: async ({ params }) => {
-    const incident = await getIncident({ data: parseInt(params.id, 10) })
-    if (!incident) throw notFound()
-    return incident
+    const incident = await getIncident({ data: parseInt(params.id, 10) });
+    if (!incident) throw notFound();
+    return incident;
   },
-})
+});
 
 function IncidentDetail() {
-  const incident = Route.useLoaderData()
-  const toast = useToast()
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [userVote, setUserVote] = useState<'unjustified' | 'justified' | null>(
+  const incident = Route.useLoaderData();
+  const toast = useToast();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(
     null,
-  )
+  );
   const [counts, setCounts] = useState({
     unjustified: incident.unjustifiedCount,
     justified: incident.justifiedCount,
-  })
-  const [reported, setReported] = useState(false)
+  });
+  const [reported, setReported] = useState(false);
 
   useEffect(() => {
     const initSession = async () => {
-      let session = await authClient.getSession()
+      let session = await authClient.getSession();
       if (!session.data) {
-        await authClient.signIn.anonymous()
-        session = await authClient.getSession()
+        await authClient.signIn.anonymous();
+        session = await authClient.getSession();
       }
       if (session.data?.user?.id) {
-        setSessionId(session.data.user.id)
+        setSessionId(session.data.user.id);
       }
-    }
-    initSession()
-  }, [])
+    };
+    initSession();
+  }, []);
 
   useEffect(() => {
-    if (!sessionId) return
+    if (!sessionId) return;
 
     const loadVote = async () => {
       const voteType = await getUserVote({
         data: { sessionId, incidentId: incident.id },
-      })
-      setUserVote(voteType)
-    }
-    loadVote()
-  }, [sessionId, incident.id])
+      });
+      setUserVote(voteType);
+    };
+    loadVote();
+  }, [sessionId, incident.id]);
 
   const handleVote = useCallback(
-    async (type: 'unjustified' | 'justified') => {
-      const prevVote = userVote
-      const prevCounts = { ...counts }
+    async (type: "unjustified" | "justified") => {
+      const prevVote = userVote;
+      const prevCounts = { ...counts };
 
       // Optimistic update
       if (prevVote === type) {
         // Removing vote
-        setUserVote(null)
-        setCounts((prev) => ({ ...prev, [type]: prev[type] - 1 }))
+        setUserVote(null);
+        setCounts((prev) => ({ ...prev, [type]: prev[type] - 1 }));
       } else if (prevVote) {
         // Switching vote
-        setUserVote(type)
+        setUserVote(type);
         setCounts((prev) => ({
-          unjustified: prev.unjustified + (type === 'unjustified' ? 1 : -1),
-          justified: prev.justified + (type === 'justified' ? 1 : -1),
-        }))
+          unjustified: prev.unjustified + (type === "unjustified" ? 1 : -1),
+          justified: prev.justified + (type === "justified" ? 1 : -1),
+        }));
       } else {
         // New vote
-        setUserVote(type)
-        setCounts((prev) => ({ ...prev, [type]: prev[type] + 1 }))
+        setUserVote(type);
+        setCounts((prev) => ({ ...prev, [type]: prev[type] + 1 }));
       }
 
       // Server request
       const result = await submitVote({
         data: { incidentId: incident.id, type },
-      })
+      });
 
       // Rollback on failure
       if (!result.success) {
-        setUserVote(prevVote)
-        setCounts(prevCounts)
-        toast.error('Failed to vote')
+        setUserVote(prevVote);
+        setCounts(prevCounts);
+        toast.error("Failed to vote");
       }
     },
     [incident.id, userVote, counts],
-  )
+  );
 
   const handleReport = useCallback(async () => {
-    await reportIncident({ data: { incidentId: incident.id } })
-    setReported(true)
-    toast.success('Reported')
-  }, [incident.id])
+    await reportIncident({ data: { incidentId: incident.id } });
+    setReported(true);
+    toast.success("Reported");
+  }, [incident.id]);
 
   return (
     <KeyboardShortcutsProvider>
@@ -257,24 +257,24 @@ function IncidentDetail() {
         </div>
       </main>
     </KeyboardShortcutsProvider>
-  )
+  );
 }
 
 function IncidentArticle({
   incidentId,
   children,
 }: {
-  incidentId: number
-  children: React.ReactNode
+  incidentId: number;
+  children: React.ReactNode;
 }) {
-  const ref = useRef<HTMLElement>(null)
-  const shortcuts = useKeyboardShortcuts()
+  const ref = useRef<HTMLElement>(null);
+  const shortcuts = useKeyboardShortcuts();
 
   useEffect(() => {
-    if (!shortcuts) return
-    shortcuts.registerIncident(incidentId, ref.current)
-    return () => shortcuts.unregisterIncident(incidentId)
-  }, [incidentId, shortcuts])
+    if (!shortcuts) return;
+    shortcuts.registerIncident(incidentId, ref.current);
+    return () => shortcuts.unregisterIncident(incidentId);
+  }, [incidentId, shortcuts]);
 
-  return <article ref={ref}>{children}</article>
+  return <article ref={ref}>{children}</article>;
 }

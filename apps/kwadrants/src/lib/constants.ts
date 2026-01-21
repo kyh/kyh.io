@@ -1,4 +1,4 @@
-import type { QuadrantColors, LayoutLabels } from "./types";
+import type { LayoutLabels, QuadrantColors } from "./types";
 import { getAllLayouts, getDefaultLabels } from "./layouts";
 
 export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
@@ -9,7 +9,7 @@ export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
 };
 
 export const DEFAULT_LAYOUT_LABELS: LayoutLabels = Object.fromEntries(
-  getAllLayouts().map((layout) => [layout.id, getDefaultLabels(layout)])
+  getAllLayouts().map((layout) => [layout.id, getDefaultLabels(layout)]),
 );
 
 export const TAG_COLORS = [
@@ -21,6 +21,8 @@ export const TAG_COLORS = [
   "#ec4899",
   "#14b8a6",
   "#f97316",
-];
+] as const;
+
+export const DEFAULT_TAG_COLOR = TAG_COLORS[0];
 
 export const STORAGE_KEY = "kwadrants-state";

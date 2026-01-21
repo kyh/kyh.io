@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Group, Rect, Text, Circle } from "react-konva";
 import type Konva from "konva";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Circle, Group, Rect, Text } from "react-konva";
 
 // Measure text width using canvas 2D context
-const measureText = (text: string, fontSize: number, fontFamily: string): number => {
+const measureText = (
+  text: string,
+  fontSize: number,
+  fontFamily: string,
+): number => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) return text.length * fontSize * 0.6;
@@ -41,7 +45,7 @@ export const Tag = ({
 
   const textWidth = useMemo(
     () => measureText(text, 14, "system-ui, -apple-system, sans-serif"),
-    [text]
+    [text],
   );
 
   // Settle animation on mount
@@ -94,14 +98,17 @@ export const Tag = ({
     lastPosRef.current = { x: node.x(), y: node.y() };
   }, []);
 
-  const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
-    setIsDragging(false);
-    onDragEnd(id, e.target.x(), e.target.y());
-    setIsSettling(true);
-  }, [id, onDragEnd]);
+  const handleDragEnd = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      setIsDragging(false);
+      onDragEnd(id, e.target.x(), e.target.y());
+      setIsSettling(true);
+    },
+    [id, onDragEnd],
+  );
 
   const paddingX = 12; // matches px-3
-  const paddingY = 6;  // matches py-1.5
+  const paddingY = 6; // matches py-1.5
   const height = 14 + paddingY * 2; // font size + vertical padding
   const width = Math.max(textWidth + paddingX * 2, 60);
 

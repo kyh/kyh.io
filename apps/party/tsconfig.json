@@ -3,10 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
     },
-    "types": ["@cloudflare/workers-types/2023-07-01"]
+    "types": ["@cloudflare/workers-types/2023-07-01"],
   },
-  "include": ["."],
-  "exclude": ["node_modules"]
+  "include": ["src"],
+  "exclude": ["node_modules"],
 }

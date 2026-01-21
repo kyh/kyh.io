@@ -1,6 +1,7 @@
 {
   "name": "@repo/kwadrants",
   "private": true,
+  "type": "module",
   "description": "Kwadrants",
   "license": "MIT",
   "sideEffects": false,
@@ -8,27 +9,35 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --check . --ignore-path ../../.gitignore"
   },
   "dependencies": {
     "konva": "^10.2.0",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "catalog:",
     "motion": "^12.27.5",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.2.1"
   },
   "devDependencies": {
+    "@kyh/eslint-config": "workspace:^",
+    "@kyh/prettier-config": "workspace:^",
+    "@kyh/tsconfig": "workspace:^",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "catalog:",
+    "eslint": "catalog:",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "^7.3.1"
-  }
+    "vite": "catalog:"
+  },
+  "prettier": "@kyh/prettier-config"
 }

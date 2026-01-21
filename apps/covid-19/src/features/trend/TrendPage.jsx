@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { useGetUSDailyData } from "hooks/useGetUSDailyData";
-import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
 import { PageContainer } from "components/PageContainer";
 import { Sidebar } from "features/trend/Sidebar";
+import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
+import { useGetUSDailyData } from "hooks/useGetUSDailyData";
+
 import { SELECTIONS } from "./DataFilter";
 import { Featured } from "./Featured";
+
 import "./TrendPage.css";
 
 export const TrendPage = () => {
@@ -16,11 +18,11 @@ export const TrendPage = () => {
   } = useGetStatesDailyData();
 
   const [selectedState, setSelectedState] = useState(
-    localStorage.getItem("selectedState") || undefined
+    localStorage.getItem("selectedState") || undefined,
   );
 
   const [selectedFilter, setSelectedFilter] = useState(
-    localStorage.getItem("selectedFilter") || SELECTIONS.time
+    localStorage.getItem("selectedFilter") || SELECTIONS.time,
   );
 
   const onSelectState = (state) => {

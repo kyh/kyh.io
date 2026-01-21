@@ -16,15 +16,24 @@
     "build": "bun build src/index.tsx --outdir dist --target bun && echo '#!/usr/bin/env bun' | cat - dist/index.js > dist/temp && mv dist/temp dist/index.js",
     "dev": "bun run --watch src/index.tsx",
     "clean": "rm -rf dist node_modules",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "format": "prettier --check . --ignore-path ../../.gitignore"
   },
   "dependencies": {
     "@opentui/core": "^0.1.74",
     "@opentui/react": "^0.1.74",
-    "react": "^19.2.3"
+    "react": "catalog:"
   },
   "devDependencies": {
+    "@kyh/eslint-config": "workspace:^",
+    "@kyh/prettier-config": "workspace:^",
+    "@kyh/tsconfig": "workspace:^",
     "@types/bun": "latest",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
     "typescript": "catalog:"
-  }
+  },
+  "prettier": "@kyh/prettier-config"
 }

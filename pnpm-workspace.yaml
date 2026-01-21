@@ -3,15 +3,22 @@ packages:
   - packages/*
 
 catalog:
+  "@base-ui/react": ^1.1.0
   "@types/node": ^24.10.9
   "@types/react": ^19.2.9
   "@types/react-dom": ^19.2.3
+  "@vercel/analytics": ^1.6.1
+  "@vitejs/plugin-react": ^5.1.2
   eslint: ^9.39.2
+  lucide-react: ^0.562.0
   next: ^16.1.4
   prettier: ^3.8.0
   react: ^19.2.3
   react-dom: ^19.2.3
+  tailwindcss: ^4.1.18
+  tsx: ^4.21.0
   typescript: ^5.9.3
+  vite: ^7.3.1
 
 linkWorkspacePackages: true
 

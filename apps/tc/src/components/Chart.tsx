@@ -73,7 +73,10 @@ export default function Chart({
     scroll: true,
   });
 
-  const keys = Object.keys(data[0]).filter((d) => d !== "year") as CompTypes[];
+  const firstItem = data[0];
+  const keys = firstItem
+    ? (Object.keys(firstItem).filter((d) => d !== "year") as CompTypes[])
+    : ([] as CompTypes[]);
 
   const totals = data.reduce((all, current) => {
     const tc = keys.reduce((d, k) => {

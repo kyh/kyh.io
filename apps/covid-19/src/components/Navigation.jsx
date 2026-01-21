@@ -5,7 +5,7 @@ const Link = ({ to, children }) => {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none focus:text-white focus:bg-gray-800 ${
+        `rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white focus:bg-gray-800 focus:text-white focus:outline-none ${
           isActive ? "bg-gray-800 hover:bg-gray-800 focus:bg-gray-800" : ""
         }`
       }
@@ -18,9 +18,9 @@ const Link = ({ to, children }) => {
 export const Navigation = () => {
   return (
     <nav className="mb-4 sm:mb-8">
-      <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="border-b border-gray-700">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-0">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-0">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <img
@@ -35,7 +35,7 @@ export const Navigation = () => {
               </div>
             </div>
             <div className="ml-6 flex items-center text-xs text-gray-400">
-              <div className="ml-3 relative">7th March, 2021</div>
+              <div className="relative ml-3">7th March, 2021</div>
             </div>
           </div>
         </div>

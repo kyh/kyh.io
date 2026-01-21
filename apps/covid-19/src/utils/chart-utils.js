@@ -1,15 +1,15 @@
 import {
-  line,
   area,
-  scaleLinear,
-  max,
-  scaleTime,
-  timeParse,
-  extent,
   axisBottom,
   axisLeft,
   bisector,
+  extent,
+  line,
+  max,
+  scaleLinear,
+  scaleTime,
   select,
+  timeParse,
 } from "d3";
 
 export const createScales = (data, dataKey, width, height, margin = {}) => {
@@ -79,7 +79,7 @@ export const createTooltipEvents = (data, x, y) => {
           .attr("fill", "#d2d6dc")
           .attr("x", 0)
           .attr("y", (_, i) => `${i * 1.1}em`)
-          .text((d) => d)
+          .text((d) => d),
       );
 
     const { y, width: w, height: h } = text.node().getBBox();
@@ -91,7 +91,7 @@ export const createTooltipEvents = (data, x, y) => {
         h + 15
       } a3,3 0 0 1 -3,3 h-${w + 20} a3,3 0 0 1 -3,-3 v-${
         h + 15
-      } a3,3 0 0 1 3,-3 z`
+      } a3,3 0 0 1 3,-3 z`,
     );
   };
 

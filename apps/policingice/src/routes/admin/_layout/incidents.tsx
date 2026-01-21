@@ -1,41 +1,40 @@
-import { useRef, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
-import { Form } from '@base-ui/react/form'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { desc, eq, isNull } from 'drizzle-orm'
+import { useRef, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
+import { Form } from "@base-ui/react/form";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { desc, eq, isNull } from "drizzle-orm";
 
-import type { IncidentStatus, VideoPlatform } from '@/db/schema'
-import { useToast } from '@/components/Toast'
-
-import { VideoCarousel } from '@/components/VideoCarousel'
-import { db } from '@/db/index'
-import { incidents, videos } from '@/db/schema'
-import { detectPlatform } from '@/lib/video-utils'
+import type { IncidentStatus, VideoPlatform } from "@/db/schema";
+import { useToast } from "@/components/Toast";
+import { VideoCarousel } from "@/components/VideoCarousel";
+import { db } from "@/db/index";
+import { incidents, videos } from "@/db/schema";
+import { detectPlatform } from "@/lib/video-utils";
 
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day)
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
-const getAllIncidents = createServerFn({ method: 'GET' }).handler(async () => {
+const getAllIncidents = createServerFn({ method: "GET" }).handler(async () => {
   const results = await db.query.incidents.findMany({
     with: { videos: true },
     where: isNull(incidents.deletedAt),
     orderBy: [desc(incidents.createdAt)],
-  })
-  return results
-})
+  });
+  return results;
+});
 
-const updateIncident = createServerFn({ method: 'POST' })
+const updateIncident = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
-      id: number
-      location?: string
-      description?: string
-      incidentDate?: string
-      status?: IncidentStatus
+      id: number;
+      location?: string;
+      description?: string;
+      incidentDate?: string;
+      status?: IncidentStatus;
     }) => data,
   )
   .handler(async ({ data }) => {
@@ -49,79 +48,79 @@ const updateIncident = createServerFn({ method: 'POST' })
           : null,
         status: data.status,
       })
-      .where(eq(incidents.id, data.id))
-    return { success: true }
-  })
+      .where(eq(incidents.id, data.id));
+    return { success: true };
+  });
 
-const toggleIncidentStatus = createServerFn({ method: 'POST' })
+const toggleIncidentStatus = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number; currentStatus: IncidentStatus }) => data)
   .handler(async ({ data }) => {
-    const newStatus = data.currentStatus === 'approved' ? 'hidden' : 'approved'
+    const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
     await db
       .update(incidents)
       .set({ status: newStatus })
-      .where(eq(incidents.id, data.id))
-    return { success: true, newStatus }
-  })
+      .where(eq(incidents.id, data.id));
+    return { success: true, newStatus };
+  });
 
-const deleteIncident = createServerFn({ method: 'POST' })
+const deleteIncident = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
     // Hard delete - cascades to videos and votes via foreign key
-    await db.delete(incidents).where(eq(incidents.id, data.id))
-    return { success: true }
-  })
+    await db.delete(incidents).where(eq(incidents.id, data.id));
+    return { success: true };
+  });
 
-const addVideo = createServerFn({ method: 'POST' })
+const addVideo = createServerFn({ method: "POST" })
   .inputValidator((data: { incidentId: number; url: string }) => data)
   .handler(async ({ data }) => {
-    const platform = detectPlatform(data.url)
+    const platform = detectPlatform(data.url);
     await db.insert(videos).values({
       incidentId: data.incidentId,
       url: data.url,
       platform,
-    })
-    return { success: true }
-  })
+    });
+    return { success: true };
+  });
 
-const updateVideo = createServerFn({ method: 'POST' })
+const updateVideo = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number; url: string }) => data)
   .handler(async ({ data }) => {
-    const platform = detectPlatform(data.url)
+    const platform = detectPlatform(data.url);
     await db
       .update(videos)
       .set({ url: data.url, platform })
-      .where(eq(videos.id, data.id))
-    return { success: true }
-  })
+      .where(eq(videos.id, data.id));
+    return { success: true };
+  });
 
-const deleteVideo = createServerFn({ method: 'POST' })
+const deleteVideo = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
-    await db.delete(videos).where(eq(videos.id, data.id))
-    return { success: true }
-  })
+    await db.delete(videos).where(eq(videos.id, data.id));
+    return { success: true };
+  });
 
-export const Route = createFileRoute('/admin/_layout/incidents')({
+export const Route = createFileRoute("/admin/_layout/incidents")({
   component: AdminIncidents,
   loader: () => getAllIncidents(),
-})
+});
 
-type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0]
+type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
 
 function formatDate(date: Date | null) {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 interface IncidentEditRowProps {
-  incident: Incident
-  onCancel: () => void
-  onSaved: () => void
+  incident: Incident;
+  onCancel: () => void;
+  onSaved: () => void;
 }
 
 function IncidentEditRow({
@@ -129,26 +128,26 @@ function IncidentEditRow({
   onCancel,
   onSaved,
 }: IncidentEditRowProps) {
-  const router = useRouter()
-  const toast = useToast()
-  const newVideoRef = useRef<HTMLInputElement>(null)
+  const router = useRouter();
+  const toast = useToast();
+  const newVideoRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     await updateIncident({
       data: {
         id: incident.id,
-        location: (formData.get('location') as string)?.trim() || undefined,
+        location: (formData.get("location") as string)?.trim() || undefined,
         description:
-          (formData.get('description') as string)?.trim() || undefined,
-        incidentDate: (formData.get('incidentDate') as string) || undefined,
+          (formData.get("description") as string)?.trim() || undefined,
+        incidentDate: (formData.get("incidentDate") as string) || undefined,
       },
-    })
-    router.invalidate()
-    toast.success('Saved')
-    onSaved()
-  }
+    });
+    router.invalidate();
+    toast.success("Saved");
+    onSaved();
+  };
 
   const handleUpdateVideo = async (
     videoId: number,
@@ -156,28 +155,28 @@ function IncidentEditRow({
     originalUrl: string,
   ) => {
     if (newUrl && newUrl !== originalUrl) {
-      await updateVideo({ data: { id: videoId, url: newUrl } })
-      router.invalidate()
-      toast.success('Video updated')
+      await updateVideo({ data: { id: videoId, url: newUrl } });
+      router.invalidate();
+      toast.success("Video updated");
     }
-  }
+  };
 
   const handleAddVideo = async () => {
-    const url = newVideoRef.current?.value.trim()
-    if (!url) return
-    await addVideo({ data: { incidentId: incident.id, url } })
-    if (newVideoRef.current) newVideoRef.current.value = ''
-    router.invalidate()
-    toast.success('Video added')
-  }
+    const url = newVideoRef.current?.value.trim();
+    if (!url) return;
+    await addVideo({ data: { incidentId: incident.id, url } });
+    if (newVideoRef.current) newVideoRef.current.value = "";
+    router.invalidate();
+    toast.success("Video added");
+  };
 
   const handleDeleteVideo = async (videoId: number) => {
-    await deleteVideo({ data: { id: videoId } })
-    router.invalidate()
-    toast.success('Video deleted')
-  }
+    await deleteVideo({ data: { id: videoId } });
+    router.invalidate();
+    toast.success("Video deleted");
+  };
 
-  const formId = `edit-${incident.id}`
+  const formId = `edit-${incident.id}`;
 
   return (
     <tr className="border-b border-neutral-100">
@@ -187,7 +186,7 @@ function IncidentEditRow({
           type="text"
           name="location"
           form={formId}
-          defaultValue={incident.location || ''}
+          defaultValue={incident.location || ""}
           className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
           placeholder="Location"
         />
@@ -197,7 +196,7 @@ function IncidentEditRow({
           type="text"
           name="description"
           form={formId}
-          defaultValue={incident.description || ''}
+          defaultValue={incident.description || ""}
           className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
           placeholder="Description"
         />
@@ -209,8 +208,8 @@ function IncidentEditRow({
           form={formId}
           defaultValue={
             incident.incidentDate
-              ? new Date(incident.incidentDate).toISOString().split('T')[0]
-              : ''
+              ? new Date(incident.incidentDate).toISOString().split("T")[0]
+              : ""
           }
           className="border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
         />
@@ -218,9 +217,9 @@ function IncidentEditRow({
       <td className="py-3 pr-3">
         <span
           className={
-            incident.status === 'approved'
-              ? 'text-green-600'
-              : 'text-neutral-400'
+            incident.status === "approved"
+              ? "text-green-600"
+              : "text-neutral-400"
           }
         >
           {incident.status}
@@ -243,9 +242,9 @@ function IncidentEditRow({
               placeholder="Add video URL"
               className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleAddVideo()
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddVideo();
                 }
               }}
             />
@@ -278,7 +277,7 @@ function IncidentEditRow({
         >
           save
         </button>
-        {' · '}
+        {" · "}
         <button
           onClick={onCancel}
           className="cursor-pointer hover:text-neutral-900"
@@ -287,17 +286,17 @@ function IncidentEditRow({
         </button>
       </td>
     </tr>
-  )
+  );
 }
 
 interface VideoEditInputProps {
-  video: { id: number; url: string; platform: VideoPlatform }
-  onUpdate: (id: number, newUrl: string, originalUrl: string) => void
-  onDelete: (id: number) => void
+  video: { id: number; url: string; platform: VideoPlatform };
+  onUpdate: (id: number, newUrl: string, originalUrl: string) => void;
+  onDelete: (id: number) => void;
 }
 
 function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex items-center gap-1">
@@ -316,33 +315,33 @@ function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
         ×
       </button>
     </div>
-  )
+  );
 }
 
 function AdminIncidents() {
-  const router = useRouter()
-  const toast = useToast()
-  const allIncidents = Route.useLoaderData()
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const router = useRouter();
+  const toast = useToast();
+  const allIncidents = Route.useLoaderData();
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(
     null,
-  )
+  );
 
   const handleToggleStatus = async (
     id: number,
     currentStatus: IncidentStatus,
   ) => {
-    const result = await toggleIncidentStatus({ data: { id, currentStatus } })
-    router.invalidate()
-    toast.success(result.newStatus === 'approved' ? 'Approved' : 'Hidden')
-  }
+    const result = await toggleIncidentStatus({ data: { id, currentStatus } });
+    router.invalidate();
+    toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
+  };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this incident?')) return
-    await deleteIncident({ data: { id } })
-    router.invalidate()
-    toast.success('Deleted')
-  }
+    if (!confirm("Delete this incident?")) return;
+    await deleteIncident({ data: { id } });
+    router.invalidate();
+    toast.success("Deleted");
+  };
 
   return (
     <div>
@@ -380,12 +379,12 @@ function AdminIncidents() {
                 ) : (
                   <tr key={incident.id} className="border-b border-neutral-100">
                     <td className="py-3 pr-3">#{incident.id}</td>
-                    <td className="py-3 pr-3">{incident.location || '—'}</td>
+                    <td className="py-3 pr-3">{incident.location || "—"}</td>
                     <td
-                      className="py-3 pr-3 max-w-48 truncate"
-                      title={incident.description || ''}
+                      className="max-w-48 truncate py-3 pr-3"
+                      title={incident.description || ""}
                     >
-                      {incident.description || '—'}
+                      {incident.description || "—"}
                     </td>
                     <td className="py-3 pr-3">
                       {formatDate(incident.incidentDate)}
@@ -397,7 +396,7 @@ function AdminIncidents() {
                         }
                         className="cursor-pointer"
                       >
-                        {incident.status === 'approved' ? (
+                        {incident.status === "approved" ? (
                           <span className="text-green-600">approved</span>
                         ) : (
                           <span className="text-neutral-400">hidden</span>
@@ -424,14 +423,14 @@ function AdminIncidents() {
                       >
                         preview
                       </button>
-                      {' · '}
+                      {" · "}
                       <button
                         onClick={() => setEditingId(incident.id)}
                         className="cursor-pointer hover:text-neutral-900"
                       >
                         edit
                       </button>
-                      {' · '}
+                      {" · "}
                       <button
                         onClick={() => handleDelete(incident.id)}
                         className="cursor-pointer hover:text-red-600"
@@ -455,7 +454,7 @@ function AdminIncidents() {
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6">
             <Dialog.Title className="sr-only">Preview incident</Dialog.Title>
-            <Dialog.Close className="absolute right-4 top-4 cursor-pointer text-neutral-400 hover:text-neutral-900">
+            <Dialog.Close className="absolute top-4 right-4 cursor-pointer text-neutral-400 hover:text-neutral-900">
               ×
             </Dialog.Close>
             {previewingIncident && (
@@ -474,5 +473,5 @@ function AdminIncidents() {
         </Dialog.Portal>
       </Dialog.Root>
     </div>
-  )
+  );
 }

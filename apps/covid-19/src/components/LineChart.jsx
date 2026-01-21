@@ -1,16 +1,17 @@
-import React, { useEffect, createRef } from "react";
+import React, { createRef, useEffect } from "react";
+import { pointer, select } from "d3";
 import { format } from "date-fns";
-import { select, pointer } from "d3";
 import {
-  createScales,
-  createAxis,
-  createTooltipEvents,
-  createLineFn,
-  appendSvg,
   appendDefs,
+  appendSvg,
   appendTooltip,
+  createAxis,
+  createLineFn,
+  createScales,
+  createTooltipEvents,
 } from "utils/chart-utils";
 import { formatNumber } from "utils/formatter";
+
 import "./LineChart.css";
 
 const defaultOptions = {
@@ -124,7 +125,7 @@ export const LineChart = ({
               .attr("transform", `translate(${x(e.date)},${0})`)
               .call(
                 callout,
-                `${format(e.date, "MM/dd")} - ${formatNumber(e[dataKey])}`
+                `${format(e.date, "MM/dd")} - ${formatNumber(e[dataKey])}`,
               );
             cursorLine
               .style("display", null)

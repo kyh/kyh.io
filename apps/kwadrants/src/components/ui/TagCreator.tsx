@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { TAG_COLORS } from "@/lib/constants";
+
+import { DEFAULT_TAG_COLOR, TAG_COLORS } from "@/lib/constants";
 
 interface TagData {
   id: string;
@@ -19,13 +20,17 @@ interface DragState {
 }
 
 interface TagCreatorProps {
-  onTagDrop?: (tag: { text: string; color: string }, x: number, y: number) => void;
+  onTagDrop?: (
+    tag: { text: string; color: string },
+    x: number,
+    y: number,
+  ) => void;
   canvasRef?: React.RefObject<HTMLElement | null>;
 }
 
 export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
   const [text, setText] = useState("");
-  const [color, setColor] = useState(TAG_COLORS[0]);
+  const [color, setColor] = useState<string>(DEFAULT_TAG_COLOR);
   const [tags, setTags] = useState<TagData[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [isSettling, setIsSettling] = useState<string | null>(null);
@@ -45,23 +50,20 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
     if (e.key === "Enter") handleCreate();
   };
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent, tag: TagData) => {
-      e.preventDefault();
-      document.body.classList.add("dragging");
-      setDragState({
-        tag,
-        x: e.clientX,
-        y: e.clientY,
-        startX: e.clientX,
-        startY: e.clientY,
-        rotation: 0,
-        scale: 1.1,
-      });
-      lastPosRef.current = { x: e.clientX, y: e.clientY };
-    },
-    []
-  );
+  const handleMouseDown = useCallback((e: React.MouseEvent, tag: TagData) => {
+    e.preventDefault();
+    document.body.classList.add("dragging");
+    setDragState({
+      tag,
+      x: e.clientX,
+      y: e.clientY,
+      startX: e.clientX,
+      startY: e.clientY,
+      rotation: 0,
+      scale: 1.1,
+    });
+    lastPosRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
 
   useEffect(() => {
     if (!dragState) return;
@@ -71,10 +73,11 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
       const dy = e.clientY - lastPosRef.current.y;
       const speed = Math.sqrt(dx * dx + dy * dy);
       const tilt = Math.min(speed * 0.6, 10);
-      const rotation = dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
+      const rotation =
+        dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
 
       setDragState((prev) =>
-        prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null
+        prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null,
       );
       lastPosRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -94,7 +97,11 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
           // Dropped on canvas - add tag and remove from sidebar
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
-          onTagDrop?.({ text: dragState.tag.text, color: dragState.tag.color }, x, y);
+          onTagDrop?.(
+            { text: dragState.tag.text, color: dragState.tag.color },
+            x,
+            y,
+          );
           setTags((prev) => prev.filter((t) => t.id !== dragState.tag.id));
         } else {
           // Dropped outside - trigger settle animation
@@ -133,7 +140,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Tag name..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
 
           <div className="flex flex-wrap gap-1">
@@ -141,8 +148,10 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                className={`w-6 h-6 rounded-full transition-transform ${
-                  color === c ? "ring-2 ring-offset-1 ring-gray-400 scale-110" : ""
+                className={`h-6 w-6 rounded-full transition-transform ${
+                  color === c
+                    ? "scale-110 ring-2 ring-gray-400 ring-offset-1"
+                    : ""
                 }`}
                 style={{ backgroundColor: c }}
               />
@@ -152,7 +161,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
           <button
             onClick={handleCreate}
             disabled={!text.trim()}
-            className="w-full px-3 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Create Tag
           </button>
@@ -166,7 +175,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
                 <div
                   key={tag.id}
                   onMouseDown={(e) => handleMouseDown(e, tag)}
-                  className={`px-3 py-1.5 rounded text-white text-sm cursor-grab select-none shadow-sm hover:shadow-md transition-all ${
+                  className={`cursor-grab rounded px-3 py-1.5 text-sm text-white shadow-sm transition-all select-none hover:shadow-md ${
                     isSettling === tag.id ? "animate-light-wobble" : ""
                   } ${dragState?.tag.id === tag.id ? "opacity-40" : ""}`}
                   style={{ backgroundColor: tag.color }}
@@ -183,7 +192,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
       {dragState &&
         createPortal(
           <div
-            className="fixed pointer-events-none z-50 px-3 py-1.5 rounded text-white text-sm"
+            className="pointer-events-none fixed z-50 rounded px-3 py-1.5 text-sm text-white"
             style={{
               left: dragState.x,
               top: dragState.y,
@@ -194,7 +203,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
           >
             {dragState.tag.text}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

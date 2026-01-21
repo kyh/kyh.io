@@ -1,12 +1,13 @@
-import { forwardRef, useState, useMemo } from "react";
-import { Stage, Layer } from "react-konva";
 import type Konva from "konva";
-import { QuadrantGrid } from "./QuadrantGrid";
-import { AxisLabels } from "./AxisLabels";
-import { Tag } from "./Tag";
-import { CanvasImage } from "./CanvasImage";
+import { forwardRef, useMemo, useState } from "react";
+import { Layer, Stage } from "react-konva";
+
 import { useKwadrant } from "@/lib/KwadrantContext";
-import { getLayout, getDefaultLabels } from "@/lib/layouts";
+import { getDefaultLabels, getLayout } from "@/lib/layouts";
+import { AxisLabels } from "./AxisLabels";
+import { CanvasImage } from "./CanvasImage";
+import { QuadrantGrid } from "./QuadrantGrid";
+import { Tag } from "./Tag";
 
 interface KwadrantCanvasProps {
   width: number;
@@ -52,8 +53,10 @@ const LabelEditor = ({
         onClose();
       }}
       autoFocus
-      className={`absolute rounded px-1 text-xs shadow-lg focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-        isDark ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"
+      className={`absolute rounded px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none ${
+        isDark
+          ? "border-gray-600 bg-gray-800 text-white"
+          : "border-gray-300 bg-white text-gray-900"
       } border`}
       style={{
         left: isRightEdge ? "auto" : position.x,
@@ -82,7 +85,10 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
     } | null>(null);
 
     const layout = getLayout(state.layoutType);
-    const bounds = useMemo(() => layout.getBounds(width, height), [layout, width, height]);
+    const bounds = useMemo(
+      () => layout.getBounds(width, height),
+      [layout, width, height],
+    );
 
     // Get current labels with defaults
     const currentLabels = useMemo(() => {
@@ -108,10 +114,11 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
     };
 
     // Check if this label is on right edge (for axis layout xPositive)
-    const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
+    const isRightEdgeLabel =
+      editingLabel?.key === "xPositive" && state.layoutType === "axis";
 
     return (
-      <div className="relative w-full h-full">
+      <div className="relative h-full w-full">
         <Stage width={width} height={height} ref={ref}>
           <Layer>
             <QuadrantGrid
@@ -163,7 +170,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 KwadrantCanvas.displayName = "KwadrantCanvas";

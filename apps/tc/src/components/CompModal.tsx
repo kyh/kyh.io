@@ -384,7 +384,7 @@ export const CompModal = ({
                           <NumericFormat
                             displayType="text"
                             thousandSeparator
-                            isNumericString
+                            valueIsNumericString
                             value={c.sharesOutstanding}
                           />
                         </td>
@@ -398,7 +398,7 @@ export const CompModal = ({
                           <NumericFormat
                             displayType="text"
                             thousandSeparator
-                            isNumericString
+                            valueIsNumericString
                             value={c.revenuePerShare}
                           />
                         </td>

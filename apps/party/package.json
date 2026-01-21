@@ -2,12 +2,13 @@
   "name": "@repo/party",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "clean": "rm -rf .turbo node_modules .cache .wrangler",
     "deploy": "wrangler deploy",
     "dev": "pnpm with-env wrangler dev",
-    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
-    "lint": "eslint .",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },

@@ -9,7 +9,7 @@ const Point = ({
   return (
     <span
       aria-label={label}
-      className={`${pointShadeClassname} h-4 w-4 rounded-full flex items-center justify-center bg-opacity-50 mr-2`}
+      className={`${pointShadeClassname} bg-opacity-50 mr-2 flex h-4 w-4 items-center justify-center rounded-full`}
     >
       <span className={`${pointClassname} h-2 w-2 rounded-full`} />
     </span>
@@ -18,7 +18,7 @@ const Point = ({
 
 export const CardLabel = ({ label, lowercase }) => (
   <span
-    className={`font-medium text-gray-400 text-2xs ${
+    className={`text-2xs font-medium text-gray-400 ${
       lowercase ? "" : "uppercase"
     }`}
   >
@@ -45,16 +45,16 @@ export const StatCard = ({
         />
         <CardLabel label={label} />
       </div>
-      <div className="flex pl-6 items-baseline">
+      <div className="flex items-baseline pl-6">
         {isLoading ? (
           <Loader width="100%" height="21">
             <rect x="0" y="0" rx="5" ry="5" width="100%" height="100%" />
           </Loader>
         ) : (
           <>
-            <span className="text-gray-100 text-sm mr-1">{value}</span>
+            <span className="mr-1 text-sm text-gray-100">{value}</span>
             {!!suffix && (
-              <span className="text-gray-400 text-2xs">{suffix}</span>
+              <span className="text-2xs text-gray-400">{suffix}</span>
             )}
           </>
         )}
@@ -71,7 +71,7 @@ export const StatRow = ({ className, label, value, lowercase, isLoading }) => (
         <rect x="0" y="0" rx="5" ry="5" width="100%" height="100%" />
       </Loader>
     ) : (
-      <span className="text-gray-100 text-sm">{value}</span>
+      <span className="text-sm text-gray-100">{value}</span>
     )}
   </div>
 );

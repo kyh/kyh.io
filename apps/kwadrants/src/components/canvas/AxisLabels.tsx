@@ -1,6 +1,7 @@
 import { Text } from "react-konva";
-import type { ThemeType, LabelValues } from "@/lib/types";
+
 import type { LayoutConfig, MatrixBounds } from "@/lib/layouts";
+import type { LabelValues, ThemeType } from "@/lib/types";
 
 interface AxisLabelsProps {
   layout: LayoutConfig;

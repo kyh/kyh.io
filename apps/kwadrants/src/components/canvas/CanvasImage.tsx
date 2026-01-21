@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Group, Image, Circle, Text } from "react-konva";
 import type Konva from "konva";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Circle, Group, Image, Text } from "react-konva";
 
 interface CanvasImageProps {
   id: string;
@@ -74,21 +74,27 @@ export const CanvasImage = ({
     cancelAnimationFrame(frameRef.current);
   }, []);
 
-  const handleDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
-    const node = e.target;
-    const dx = node.x() - lastPosRef.current.x;
-    const speed = Math.sqrt(dx * dx);
-    const tilt = Math.min(speed * 0.5, 6);
+  const handleDragMove = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      const node = e.target;
+      const dx = node.x() - lastPosRef.current.x;
+      const speed = Math.sqrt(dx * dx);
+      const tilt = Math.min(speed * 0.5, 6);
 
-    setRotation(dx !== 0 ? tilt * Math.sign(dx) : rotation * 0.9);
-    lastPosRef.current = { x: node.x(), y: node.y() };
-  }, [rotation]);
+      setRotation(dx !== 0 ? tilt * Math.sign(dx) : rotation * 0.9);
+      lastPosRef.current = { x: node.x(), y: node.y() };
+    },
+    [rotation],
+  );
 
-  const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
-    setIsDragging(false);
-    onDragEnd(id, e.target.x(), e.target.y());
-    setIsSettling(true);
-  }, [id, onDragEnd]);
+  const handleDragEnd = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      setIsDragging(false);
+      onDragEnd(id, e.target.x(), e.target.y());
+      setIsSettling(true);
+    },
+    [id, onDragEnd],
+  );
 
   if (!image) return null;
 

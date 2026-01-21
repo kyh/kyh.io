@@ -10,7 +10,10 @@ export const axisLayout: LayoutConfig = {
     {
       key: "xPositive",
       defaultText: "High",
-      position: (b) => ({ x: b.x + b.width - 80, y: b.y + b.height / 2 + PADDING }),
+      position: (b) => ({
+        x: b.x + b.width - 80,
+        y: b.y + b.height / 2 + PADDING,
+      }),
     },
     {
       key: "xNegative",
@@ -25,7 +28,10 @@ export const axisLayout: LayoutConfig = {
     {
       key: "yNegative",
       defaultText: "Low",
-      position: (b) => ({ x: b.x + b.width / 2 + PADDING, y: b.y + b.height - PADDING - 14 }),
+      position: (b) => ({
+        x: b.x + b.width / 2 + PADDING,
+        y: b.y + b.height - PADDING - 14,
+      }),
     },
   ],
   showOuterBorder: false,

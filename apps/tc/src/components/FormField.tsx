@@ -32,11 +32,11 @@ export const FormField = ({
 
   return (
     <div
-      className={`relative border border-slate-600 rounded-md px-3 py-2 focus-within:z-10 focus-within:ring-1 focus-within:ring-emerald-600 focus-within:border-emerald-600 ${className}`}
+      className={`relative rounded-md border border-slate-600 px-3 py-2 focus-within:z-10 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 ${className}`}
     >
       <label
         htmlFor={name}
-        className="block text-sm font-medium text-slate-50 pb-1 cursor-text"
+        className="block cursor-text pb-1 text-sm font-medium text-slate-50"
       >
         {label}
       </label>

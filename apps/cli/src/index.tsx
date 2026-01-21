@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard, useTerminalDimensions } from "@opentui/react";
-import { useState } from "react";
-import { name, heroText, projects, work, contactLinks } from "./data/content";
+
+import { contactLinks, heroText, name, projects, work } from "./data/content";
 import { openUrl, wrapText } from "./lib/utils";
 
 const TITLE_WIDTH = 32;
@@ -30,11 +31,15 @@ function App() {
       switch (key.name) {
         case "up":
         case "k":
-          setContactIndex((i) => (i > 0 ? i - 1 : contactLinks.length - 1));
+          setContactIndex((i: number) =>
+            i > 0 ? i - 1 : contactLinks.length - 1,
+          );
           break;
         case "down":
         case "j":
-          setContactIndex((i) => (i < contactLinks.length - 1 ? i + 1 : 0));
+          setContactIndex((i: number) =>
+            i < contactLinks.length - 1 ? i + 1 : 0,
+          );
           break;
         case "return":
           openUrl(contactLinks[contactIndex]!.url);
@@ -51,11 +56,11 @@ function App() {
     switch (key.name) {
       case "up":
       case "k":
-        setSelectedIndex((i) => (i > 0 ? i - 1 : allItems.length - 1));
+        setSelectedIndex((i: number) => (i > 0 ? i - 1 : allItems.length - 1));
         break;
       case "down":
       case "j":
-        setSelectedIndex((i) => (i < allItems.length - 1 ? i + 1 : 0));
+        setSelectedIndex((i: number) => (i < allItems.length - 1 ? i + 1 : 0));
         break;
       case "return":
         openUrl(allItems[selectedIndex]!.url);
@@ -73,7 +78,11 @@ function App() {
   const heroLines = wrapText(heroText, contentWidth);
   const divider = "─".repeat(contentWidth);
 
-  const renderItem = (item: typeof allItems[0], index: number, isFirst: boolean) => {
+  const renderItem = (
+    item: (typeof allItems)[0],
+    index: number,
+    isFirst: boolean,
+  ) => {
     const isSelected = index === selectedIndex;
     const prefix = isSelected ? "> " : "  ";
     const title = item.title.padEnd(TITLE_WIDTH);
@@ -83,11 +92,14 @@ function App() {
       <box key={item.title} flexDirection="column">
         {!isFirst && <text fg={DIM}>{divider}</text>}
         <text fg={isSelected ? undefined : DIM}>
-          {prefix}{title}{descLines[0]}
+          {prefix}
+          {title}
+          {descLines[0]}
         </text>
         {descLines.slice(1).map((line, i) => (
           <text key={i} fg={isSelected ? undefined : DIM}>
-            {" ".repeat(DESC_INDENT)}{line}
+            {" ".repeat(DESC_INDENT)}
+            {line}
           </text>
         ))}
       </box>
@@ -96,7 +108,12 @@ function App() {
 
   if (showContact) {
     return (
-      <box flexDirection="column" alignItems="center" justifyContent="center" flexGrow={1}>
+      <box
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        flexGrow={1}
+      >
         <box flexDirection="column">
           <text>Contact</text>
           <text> </text>
@@ -112,20 +129,28 @@ function App() {
             );
           })}
           <text> </text>
-          <text fg={DIM}>↑↓ navigate  enter open  esc close</text>
+          <text fg={DIM}>↑↓ navigate enter open esc close</text>
         </box>
       </box>
     );
   }
 
   return (
-    <box flexDirection="column" paddingLeft={2} paddingTop={1} height={termHeight} width={termWidth}>
+    <box
+      flexDirection="column"
+      paddingLeft={2}
+      paddingTop={1}
+      height={termHeight}
+      width={termWidth}
+    >
       <scrollbox focused flexGrow={1}>
         <box flexDirection="column">
           <text>{name}</text>
           <text> </text>
           {heroLines.map((line, i) => (
-            <text key={i} fg={DIM}>{line}</text>
+            <text key={i} fg={DIM}>
+              {line}
+            </text>
           ))}
           <text> </text>
           <text>Projects</text>
@@ -134,10 +159,12 @@ function App() {
           <text> </text>
           <text>Work</text>
           <text> </text>
-          {work.map((item, i) => renderItem(item, projects.length + i, i === 0))}
+          {work.map((item, i) =>
+            renderItem(item, projects.length + i, i === 0),
+          )}
         </box>
       </scrollbox>
-      <text fg={DIM}>↑↓ navigate  enter open  c contact  q quit</text>
+      <text fg={DIM}>↑↓ navigate enter open c contact q quit</text>
     </box>
   );
 }

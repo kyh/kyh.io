@@ -8,212 +8,214 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as IncidentIdRouteImport } from './routes/incident.$id'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminLayoutRouteImport } from './routes/admin/_layout'
-import { Route as AdminLayoutIndexRouteImport } from './routes/admin/_layout/index'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AdminLayoutRedditFeedRouteImport } from './routes/admin/_layout/reddit-feed'
-import { Route as AdminLayoutIncidentsRouteImport } from './routes/admin/_layout/incidents'
-import { Route as AdminLayoutCreateRouteImport } from './routes/admin/_layout/create'
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as AdminLoginRouteImport } from "./routes/admin.login";
+import { Route as AdminLayoutRouteImport } from "./routes/admin/_layout";
+import { Route as AdminLayoutCreateRouteImport } from "./routes/admin/_layout/create";
+import { Route as AdminLayoutIncidentsRouteImport } from "./routes/admin/_layout/incidents";
+import { Route as AdminLayoutIndexRouteImport } from "./routes/admin/_layout/index";
+import { Route as AdminLayoutRedditFeedRouteImport } from "./routes/admin/_layout/reddit-feed";
+import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
+import { Route as IncidentIdRouteImport } from "./routes/incident.$id";
+import { Route as IndexRouteImport } from "./routes/index";
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IncidentIdRoute = IncidentIdRouteImport.update({
-  id: '/incident/$id',
-  path: '/incident/$id',
+  id: "/incident/$id",
+  path: "/incident/$id",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
+  id: "/admin/login",
+  path: "/admin/login",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AdminLayoutRoute = AdminLayoutRouteImport.update({
-  id: '/admin/_layout',
-  path: '/admin',
+  id: "/admin/_layout",
+  path: "/admin",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AdminLayoutIndexRoute = AdminLayoutIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => AdminLayoutRoute,
-} as any)
+} as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+  id: "/api/auth/$",
+  path: "/api/auth/$",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AdminLayoutRedditFeedRoute = AdminLayoutRedditFeedRouteImport.update({
-  id: '/reddit-feed',
-  path: '/reddit-feed',
+  id: "/reddit-feed",
+  path: "/reddit-feed",
   getParentRoute: () => AdminLayoutRoute,
-} as any)
+} as any);
 const AdminLayoutIncidentsRoute = AdminLayoutIncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
+  id: "/incidents",
+  path: "/incidents",
   getParentRoute: () => AdminLayoutRoute,
-} as any)
+} as any);
 const AdminLayoutCreateRoute = AdminLayoutCreateRouteImport.update({
-  id: '/create',
-  path: '/create',
+  id: "/create",
+  path: "/create",
   getParentRoute: () => AdminLayoutRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/admin': typeof AdminLayoutRouteWithChildren
-  '/admin/login': typeof AdminLoginRoute
-  '/incident/$id': typeof IncidentIdRoute
-  '/admin/create': typeof AdminLayoutCreateRoute
-  '/admin/incidents': typeof AdminLayoutIncidentsRoute
-  '/admin/reddit-feed': typeof AdminLayoutRedditFeedRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin/': typeof AdminLayoutIndexRoute
+  "/": typeof IndexRoute;
+  "/admin": typeof AdminLayoutRouteWithChildren;
+  "/admin/login": typeof AdminLoginRoute;
+  "/incident/$id": typeof IncidentIdRoute;
+  "/admin/create": typeof AdminLayoutCreateRoute;
+  "/admin/incidents": typeof AdminLayoutIncidentsRoute;
+  "/admin/reddit-feed": typeof AdminLayoutRedditFeedRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/admin/": typeof AdminLayoutIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/incident/$id': typeof IncidentIdRoute
-  '/admin/create': typeof AdminLayoutCreateRoute
-  '/admin/incidents': typeof AdminLayoutIncidentsRoute
-  '/admin/reddit-feed': typeof AdminLayoutRedditFeedRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin': typeof AdminLayoutIndexRoute
+  "/": typeof IndexRoute;
+  "/admin/login": typeof AdminLoginRoute;
+  "/incident/$id": typeof IncidentIdRoute;
+  "/admin/create": typeof AdminLayoutCreateRoute;
+  "/admin/incidents": typeof AdminLayoutIncidentsRoute;
+  "/admin/reddit-feed": typeof AdminLayoutRedditFeedRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/admin": typeof AdminLayoutIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/admin/_layout': typeof AdminLayoutRouteWithChildren
-  '/admin/login': typeof AdminLoginRoute
-  '/incident/$id': typeof IncidentIdRoute
-  '/admin/_layout/create': typeof AdminLayoutCreateRoute
-  '/admin/_layout/incidents': typeof AdminLayoutIncidentsRoute
-  '/admin/_layout/reddit-feed': typeof AdminLayoutRedditFeedRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/admin/_layout/': typeof AdminLayoutIndexRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/admin/_layout": typeof AdminLayoutRouteWithChildren;
+  "/admin/login": typeof AdminLoginRoute;
+  "/incident/$id": typeof IncidentIdRoute;
+  "/admin/_layout/create": typeof AdminLayoutCreateRoute;
+  "/admin/_layout/incidents": typeof AdminLayoutIncidentsRoute;
+  "/admin/_layout/reddit-feed": typeof AdminLayoutRedditFeedRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
+  "/admin/_layout/": typeof AdminLayoutIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/admin'
-    | '/admin/login'
-    | '/incident/$id'
-    | '/admin/create'
-    | '/admin/incidents'
-    | '/admin/reddit-feed'
-    | '/api/auth/$'
-    | '/admin/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/admin"
+    | "/admin/login"
+    | "/incident/$id"
+    | "/admin/create"
+    | "/admin/incidents"
+    | "/admin/reddit-feed"
+    | "/api/auth/$"
+    | "/admin/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/admin/login'
-    | '/incident/$id'
-    | '/admin/create'
-    | '/admin/incidents'
-    | '/admin/reddit-feed'
-    | '/api/auth/$'
-    | '/admin'
+    | "/"
+    | "/admin/login"
+    | "/incident/$id"
+    | "/admin/create"
+    | "/admin/incidents"
+    | "/admin/reddit-feed"
+    | "/api/auth/$"
+    | "/admin";
   id:
-    | '__root__'
-    | '/'
-    | '/admin/_layout'
-    | '/admin/login'
-    | '/incident/$id'
-    | '/admin/_layout/create'
-    | '/admin/_layout/incidents'
-    | '/admin/_layout/reddit-feed'
-    | '/api/auth/$'
-    | '/admin/_layout/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/admin/_layout"
+    | "/admin/login"
+    | "/incident/$id"
+    | "/admin/_layout/create"
+    | "/admin/_layout/incidents"
+    | "/admin/_layout/reddit-feed"
+    | "/api/auth/$"
+    | "/admin/_layout/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AdminLayoutRoute: typeof AdminLayoutRouteWithChildren
-  AdminLoginRoute: typeof AdminLoginRoute
-  IncidentIdRoute: typeof IncidentIdRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  IndexRoute: typeof IndexRoute;
+  AdminLayoutRoute: typeof AdminLayoutRouteWithChildren;
+  AdminLoginRoute: typeof AdminLoginRoute;
+  IncidentIdRoute: typeof IncidentIdRoute;
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/incident/$id': {
-      id: '/incident/$id'
-      path: '/incident/$id'
-      fullPath: '/incident/$id'
-      preLoaderRoute: typeof IncidentIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/_layout': {
-      id: '/admin/_layout'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/_layout/': {
-      id: '/admin/_layout/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminLayoutIndexRouteImport
-      parentRoute: typeof AdminLayoutRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/_layout/reddit-feed': {
-      id: '/admin/_layout/reddit-feed'
-      path: '/reddit-feed'
-      fullPath: '/admin/reddit-feed'
-      preLoaderRoute: typeof AdminLayoutRedditFeedRouteImport
-      parentRoute: typeof AdminLayoutRoute
-    }
-    '/admin/_layout/incidents': {
-      id: '/admin/_layout/incidents'
-      path: '/incidents'
-      fullPath: '/admin/incidents'
-      preLoaderRoute: typeof AdminLayoutIncidentsRouteImport
-      parentRoute: typeof AdminLayoutRoute
-    }
-    '/admin/_layout/create': {
-      id: '/admin/_layout/create'
-      path: '/create'
-      fullPath: '/admin/create'
-      preLoaderRoute: typeof AdminLayoutCreateRouteImport
-      parentRoute: typeof AdminLayoutRoute
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/incident/$id": {
+      id: "/incident/$id";
+      path: "/incident/$id";
+      fullPath: "/incident/$id";
+      preLoaderRoute: typeof IncidentIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/admin/login": {
+      id: "/admin/login";
+      path: "/admin/login";
+      fullPath: "/admin/login";
+      preLoaderRoute: typeof AdminLoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/admin/_layout": {
+      id: "/admin/_layout";
+      path: "/admin";
+      fullPath: "/admin";
+      preLoaderRoute: typeof AdminLayoutRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/admin/_layout/": {
+      id: "/admin/_layout/";
+      path: "/";
+      fullPath: "/admin/";
+      preLoaderRoute: typeof AdminLayoutIndexRouteImport;
+      parentRoute: typeof AdminLayoutRoute;
+    };
+    "/api/auth/$": {
+      id: "/api/auth/$";
+      path: "/api/auth/$";
+      fullPath: "/api/auth/$";
+      preLoaderRoute: typeof ApiAuthSplatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/admin/_layout/reddit-feed": {
+      id: "/admin/_layout/reddit-feed";
+      path: "/reddit-feed";
+      fullPath: "/admin/reddit-feed";
+      preLoaderRoute: typeof AdminLayoutRedditFeedRouteImport;
+      parentRoute: typeof AdminLayoutRoute;
+    };
+    "/admin/_layout/incidents": {
+      id: "/admin/_layout/incidents";
+      path: "/incidents";
+      fullPath: "/admin/incidents";
+      preLoaderRoute: typeof AdminLayoutIncidentsRouteImport;
+      parentRoute: typeof AdminLayoutRoute;
+    };
+    "/admin/_layout/create": {
+      id: "/admin/_layout/create";
+      path: "/create";
+      fullPath: "/admin/create";
+      preLoaderRoute: typeof AdminLayoutCreateRouteImport;
+      parentRoute: typeof AdminLayoutRoute;
+    };
   }
 }
 
 interface AdminLayoutRouteChildren {
-  AdminLayoutCreateRoute: typeof AdminLayoutCreateRoute
-  AdminLayoutIncidentsRoute: typeof AdminLayoutIncidentsRoute
-  AdminLayoutRedditFeedRoute: typeof AdminLayoutRedditFeedRoute
-  AdminLayoutIndexRoute: typeof AdminLayoutIndexRoute
+  AdminLayoutCreateRoute: typeof AdminLayoutCreateRoute;
+  AdminLayoutIncidentsRoute: typeof AdminLayoutIncidentsRoute;
+  AdminLayoutRedditFeedRoute: typeof AdminLayoutRedditFeedRoute;
+  AdminLayoutIndexRoute: typeof AdminLayoutIndexRoute;
 }
 
 const AdminLayoutRouteChildren: AdminLayoutRouteChildren = {
@@ -221,11 +223,11 @@ const AdminLayoutRouteChildren: AdminLayoutRouteChildren = {
   AdminLayoutIncidentsRoute: AdminLayoutIncidentsRoute,
   AdminLayoutRedditFeedRoute: AdminLayoutRedditFeedRoute,
   AdminLayoutIndexRoute: AdminLayoutIndexRoute,
-}
+};
 
 const AdminLayoutRouteWithChildren = AdminLayoutRoute._addFileChildren(
   AdminLayoutRouteChildren,
-)
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -233,16 +235,14 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   IncidentIdRoute: IncidentIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

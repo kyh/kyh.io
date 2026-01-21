@@ -2,7 +2,12 @@ import { exec } from "child_process";
 import { platform } from "os";
 
 export function openUrl(url: string): void {
-  const cmd = platform() === "win32" ? "start" : platform() === "darwin" ? "open" : "xdg-open";
+  const cmd =
+    platform() === "win32"
+      ? "start"
+      : platform() === "darwin"
+        ? "open"
+        : "xdg-open";
   exec(`${cmd} "${url}"`);
 }
 

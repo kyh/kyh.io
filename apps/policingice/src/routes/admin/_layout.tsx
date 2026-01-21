@@ -1,17 +1,22 @@
-import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+} from "@tanstack/react-router";
 
-import { getAdminUser } from '@/lib/admin-auth'
+import { getAdminUser } from "@/lib/admin-auth";
 
-export const Route = createFileRoute('/admin/_layout')({
+export const Route = createFileRoute("/admin/_layout")({
   beforeLoad: async () => {
-    const user = await getAdminUser()
+    const user = await getAdminUser();
     if (!user) {
-      throw redirect({ to: '/admin/login' })
+      throw redirect({ to: "/admin/login" });
     }
-    return { user }
+    return { user };
   },
   component: AdminLayout,
-})
+});
 
 function AdminLayout() {
   return (
@@ -46,5 +51,5 @@ function AdminLayout() {
         <Outlet />
       </div>
     </div>
-  )
+  );
 }

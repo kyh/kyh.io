@@ -35,16 +35,16 @@ npx tsx scripts/create-admin.ts <email> <password> [name]
 Routes use `createServerFn()` for server-side data fetching. These run on server during SSR and client-side after hydration:
 
 ```tsx
-const getData = createServerFn({ method: 'GET' })
+const getData = createServerFn({ method: "GET" })
   .inputValidator((data) => data)
   .handler(async ({ data }) => {
     /* db queries */
-  })
+  });
 
-export const Route = createFileRoute('/path')({
+export const Route = createFileRoute("/path")({
   loader: () => getData({ data: {} }),
   component: Component,
-})
+});
 ```
 
 ### Route Structure
