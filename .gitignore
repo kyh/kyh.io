@@ -13,4 +13,4 @@ count.txt
 todos.json
 .vercel
 .env*.local
-.enriched-incidents.json
+scripts/.*

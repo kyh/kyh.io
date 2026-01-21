@@ -1,4 +1,15 @@
 #!/usr/bin/env npx tsx
+/**
+ * Delete Admin User
+ *
+ * Deletes a user from the database by email address.
+ *
+ * Usage:
+ *   npx tsx scripts/delete-admin.ts <email>
+ *
+ * Example:
+ *   npx tsx scripts/delete-admin.ts admin@example.com
+ */
 import 'dotenv/config'
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db'

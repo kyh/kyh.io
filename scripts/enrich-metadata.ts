@@ -1,4 +1,21 @@
 #!/usr/bin/env npx tsx
+/**
+ * Enrich Incident Metadata
+ *
+ * Uses AI (xai/grok-3-fast) to extract metadata from incident videos:
+ * - location: City and state where incident occurred
+ * - description: Brief factual description of what happened
+ * - incidentDate: Date of the incident (YYYY-MM-DD)
+ *
+ * Tracks processed incidents in .enriched-incidents.json to avoid reprocessing.
+ *
+ * Requires: XAI_API_KEY in .env.local (via AI SDK gateway)
+ *
+ * Usage:
+ *   npx tsx scripts/enrich-metadata.ts        # Process unprocessed incidents
+ *   npx tsx scripts/enrich-metadata.ts -f     # Force reprocess all incidents
+ *   npx tsx scripts/enrich-metadata.ts --force
+ */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'

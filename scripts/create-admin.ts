@@ -1,4 +1,16 @@
 #!/usr/bin/env npx tsx
+/**
+ * Create Admin User
+ *
+ * Creates a new admin user with email/password authentication.
+ *
+ * Usage:
+ *   npx tsx scripts/create-admin.ts <email> <password> [name]
+ *
+ * Examples:
+ *   npx tsx scripts/create-admin.ts admin@example.com secret123
+ *   npx tsx scripts/create-admin.ts admin@example.com secret123 "John Doe"
+ */
 import 'dotenv/config'
 import { auth } from '../src/lib/auth'
 

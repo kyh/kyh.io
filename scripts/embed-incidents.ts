@@ -1,4 +1,16 @@
 #!/usr/bin/env npx tsx
+/**
+ * Embed Incidents
+ *
+ * Generates vector embeddings for incidents using OpenAI's text-embedding-3-small model.
+ * Only processes incidents that have a description but no embedding yet.
+ * Creates a vector index on the incidents table if it doesn't exist.
+ *
+ * Requires: AI_GATEWAY_API_KEY in .env.local
+ *
+ * Usage:
+ *   npx tsx scripts/embed-incidents.ts
+ */
 import { config } from 'dotenv'
 import { embed, gateway } from 'ai'
 
