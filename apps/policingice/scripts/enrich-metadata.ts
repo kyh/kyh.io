@@ -9,23 +9,17 @@
  *
  * Tracks processed incidents in .enriched-incidents.json to avoid reprocessing.
  *
- * Requires: XAI_API_KEY in .env.local (via AI SDK gateway)
- *
  * Usage:
- *   npx tsx scripts/enrich-metadata.ts        # Process unprocessed incidents
- *   npx tsx scripts/enrich-metadata.ts -f     # Force reprocess all incidents
- *   npx tsx scripts/enrich-metadata.ts --force
+ *   pnpm with-env tsx scripts/enrich-metadata.ts        # Process unprocessed incidents
+ *   pnpm with-env tsx scripts/enrich-metadata.ts -f     # Force reprocess all incidents
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { gateway, generateObject } from "ai";
-import { config } from "dotenv";
 import { eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
-
-config({ path: ".env.local" });
 
 const { db } = await import("../src/db/index");
 const schema = await import("../src/db/schema");

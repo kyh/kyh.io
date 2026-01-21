@@ -5,14 +5,12 @@
  * Creates a new admin user with email/password authentication.
  *
  * Usage:
- *   npx tsx scripts/create-admin.ts <email> <password> [name]
+ *   pnpm with-env tsx scripts/create-admin.ts <email> <password> [name]
  *
  * Examples:
- *   npx tsx scripts/create-admin.ts admin@example.com secret123
- *   npx tsx scripts/create-admin.ts admin@example.com secret123 "John Doe"
+ *   pnpm with-env tsx scripts/create-admin.ts admin@example.com secret123
+ *   pnpm with-env tsx scripts/create-admin.ts admin@example.com secret123 "John Doe"
  */
-import "dotenv/config";
-
 import { auth } from "../src/lib/auth";
 
 const email = process.argv[2];

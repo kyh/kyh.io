@@ -5,13 +5,11 @@
  * Deletes a user from the database by email address.
  *
  * Usage:
- *   npx tsx scripts/delete-admin.ts <email>
+ *   pnpm with-env tsx scripts/delete-admin.ts <email>
  *
  * Example:
- *   npx tsx scripts/delete-admin.ts admin@example.com
+ *   pnpm with-env tsx scripts/delete-admin.ts admin@example.com
  */
-import "dotenv/config";
-
 import { eq } from "drizzle-orm";
 
 import { db } from "../src/db";

@@ -6,15 +6,10 @@
  * Only processes incidents that have a description but no embedding yet.
  * Creates a vector index on the incidents table if it doesn't exist.
  *
- * Requires: AI_GATEWAY_API_KEY in .env.local
- *
  * Usage:
- *   npx tsx scripts/embed-incidents.ts
+ *   pnpm with-env tsx scripts/embed-incidents.ts
  */
 import { embed } from "ai";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
 
 const { client, db } = await import("../src/db/index");
 
