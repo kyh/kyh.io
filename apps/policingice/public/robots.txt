@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://policingice.com/api/sitemap.xml
+
+# Disallow admin routes
+Disallow: /admin
