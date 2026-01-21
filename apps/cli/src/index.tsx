@@ -21,7 +21,7 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [contactIndex, setContactIndex] = useState(0);
-  const { width: termWidth } = useTerminalDimensions();
+  const { width: termWidth, height: termHeight } = useTerminalDimensions();
   const contentWidth = termWidth - 4;
   const descWidth = contentWidth - DESC_INDENT;
 
@@ -119,22 +119,24 @@ function App() {
   }
 
   return (
-    <box flexDirection="column" paddingLeft={2} paddingTop={1} flexGrow={1}>
-      <box flexDirection="column" flexGrow={1}>
-        <text>{name}</text>
-        <text> </text>
-        {heroLines.map((line, i) => (
-          <text key={i} fg={DIM}>{line}</text>
-        ))}
-        <text> </text>
-        <text>Projects</text>
-        <text> </text>
-        {projects.map((project, i) => renderItem(project, i, i === 0))}
-        <text> </text>
-        <text>Work</text>
-        <text> </text>
-        {work.map((item, i) => renderItem(item, projects.length + i, i === 0))}
-      </box>
+    <box flexDirection="column" paddingLeft={2} paddingTop={1} height={termHeight} width={termWidth}>
+      <scrollbox focused flexGrow={1}>
+        <box flexDirection="column">
+          <text>{name}</text>
+          <text> </text>
+          {heroLines.map((line, i) => (
+            <text key={i} fg={DIM}>{line}</text>
+          ))}
+          <text> </text>
+          <text>Projects</text>
+          <text> </text>
+          {projects.map((project, i) => renderItem(project, i, i === 0))}
+          <text> </text>
+          <text>Work</text>
+          <text> </text>
+          {work.map((item, i) => renderItem(item, projects.length + i, i === 0))}
+        </box>
+      </scrollbox>
       <text fg={DIM}>↑↓ navigate  enter open  c contact  q quit</text>
     </box>
   );

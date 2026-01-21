@@ -39,8 +39,7 @@ const Page = () => {
             Hello world. You can call me Kai since we&apos;re pretty much
             friends now. I enjoy <Link href="/showcase">creating things</Link>{" "}
             for the internet. By day, I get to do that through investing,
-            advising, and <Link href="#work">building products</Link> you may
-            not have heard of, yet.
+            advising, and building products you may not have heard of, yet.
           </p>
           <p>Welcome to my corner of the web.</p>
         </Section>
