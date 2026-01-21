@@ -17,15 +17,7 @@ function ToastList() {
       toast={toast}
       className="absolute bottom-0 left-1/2 z-[calc(1000-var(--toast-index))] w-full max-w-xs -translate-x-1/2 origin-bottom rounded border border-neutral-200 bg-white p-3 shadow-lg select-none data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0 [transition:transform_0.3s,opacity_0.3s] [transform:translateX(-50%)_translateY(calc(var(--toast-index)*-0.5rem-var(--toast-index)*100%-var(--toast-swipe-movement-y)))]"
     >
-      <Toast.Title
-        className={`text-sm ${
-          toast.data?.type === 'error'
-            ? 'text-red-600'
-            : toast.data?.type === 'success'
-              ? 'text-green-600'
-              : 'text-neutral-900'
-        }`}
-      />
+      <Toast.Title className="text-sm text-neutral-900" />
     </Toast.Root>
   ))
 }
