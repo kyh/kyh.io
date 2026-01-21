@@ -6,8 +6,7 @@ import { incidents } from "@/db/schema";
 
 const siteUrl = "https://policingice.com";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const Route = (createFileRoute as any)("/api/sitemap.xml")({
+export const Route = createFileRoute("/api/sitemap")({
   server: {
     handlers: {
       GET: async () => {

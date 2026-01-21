@@ -3,17 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "build": "pnpm with-env vite build",
     "check": "prettier --write . && eslint --fix",
-    "db:push": "drizzle-kit push",
-    "db:reset": "npx tsx scripts/db-reset.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:push": "pnpm with-env drizzle-kit push",
+    "db:reset": "pnpm with-env npx tsx scripts/db-reset.ts",
+    "db:studio": "pnpm with-env drizzle-kit studio",
+    "dev": "pnpm with-env vite dev --port 3000",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "preview": "pnpm with-env vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
