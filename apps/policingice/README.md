@@ -4,7 +4,7 @@ Documenting incidents of ICE overreach through crowdsourced video evidence.
 
 ## About
 
-Policing ICE is a community-driven platform for collecting and sharing video documentation of U.S. Immigration and Customs Enforcement (ICE) activities. The site allows anyone to submit videos from social media platforms and enables the community to vote on whether incidents appear justified or unjustified.
+Policing ICE is a community-driven platform for collecting and sharing video documentation of U.S. Immigration and Customs Enforcement (ICE) activities. The site allows anyone to submit videos from social media platforms, we store these submissions so that they can be easily accessed and reviewed by the public. Each submission is categorized to be easily searchable by location, date, and description.
 
 ## Features
 
