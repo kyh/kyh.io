@@ -14,7 +14,9 @@ const offset = 10;
 export const Cursor = ({ x, y, color, hue, windowDimensions }: CursorProps) => {
   if (!x || !y) return null;
 
-  const left = x * windowDimensions.width - offset;
+  const cursorWidth = 18;
+  const maxLeft = windowDimensions.width - cursorWidth;
+  const left = Math.min(x * windowDimensions.width - offset, maxLeft);
   const top = y * windowDimensions.height - offset;
 
   return (

@@ -90,7 +90,6 @@ body {
     var(--bg-color)
   );
   background-attachment: fixed;
-  overflow-x: hidden;
 }
 
 /* Touch optimization - prevent 300ms tap delay */
