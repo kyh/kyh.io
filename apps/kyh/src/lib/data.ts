@@ -143,7 +143,7 @@ export const projects: ProjectType[] = [
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     url: "https://www.dataembed.com",
-    favicon: getPublicFaviconUrl("dataembed-c.png"),
+    favicon: getPublicFaviconUrl("dataembed-1-c.png"),
     type: "project",
     projectAssets: [
       {
@@ -171,7 +171,7 @@ export const projects: ProjectType[] = [
   //   description:
   //     "",
   //   url: "https://www.edgestories.com",
-  //   favicon: getPublicFaviconUrl("edgestories.png"),
+  //   favicon: getPublicFaviconUrl("edgestories-c.png"),
   //   type: "project",
   //   projectAssets: [],
   // },
