@@ -8,7 +8,7 @@
     "db:push": "pnpm with-env drizzle-kit push",
     "db:reset": "pnpm with-env npx tsx scripts/db-reset.ts",
     "db:studio": "pnpm with-env drizzle-kit studio",
-    "dev": "pnpm with-env vite dev --port 3000",
+    "dev": "pnpm with-env vite dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "preview": "pnpm with-env vite preview",

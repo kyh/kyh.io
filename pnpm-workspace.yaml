@@ -3,12 +3,12 @@ packages:
   - packages/*
 
 catalog:
-  "@base-ui/react": ^1.1.0
-  "@types/node": ^24.10.9
-  "@types/react": ^19.2.9
-  "@types/react-dom": ^19.2.3
-  "@vercel/analytics": ^1.6.1
-  "@vitejs/plugin-react": ^5.1.2
+  '@base-ui/react': ^1.1.0
+  '@types/node': ^24.10.9
+  '@types/react': ^19.2.9
+  '@types/react-dom': ^19.2.3
+  '@vercel/analytics': ^1.6.1
+  '@vitejs/plugin-react': ^5.1.2
   eslint: ^9.39.2
   lucide-react: ^0.562.0
   next: ^16.1.4
@@ -23,13 +23,13 @@ catalog:
 linkWorkspacePackages: true
 
 onlyBuiltDependencies:
-  - "@vercel/speed-insights"
+  - '@vercel/speed-insights'
   - cbor-extract
   - esbuild
   - sharp
   - workerd
 
 publicHoistPattern:
-  - "@ianvs/prettier-plugin-sort-imports"
-  - "@radix-ui/*"
+  - '@ianvs/prettier-plugin-sort-imports'
+  - '@radix-ui/*'
   - prettier-plugin-tailwindcss
