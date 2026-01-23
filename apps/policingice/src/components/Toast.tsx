@@ -10,7 +10,7 @@ function ToastList() {
     <Toast.Root
       key={toast.id}
       toast={toast}
-      className="absolute bottom-0 left-1/2 z-[calc(1000-var(--toast-index))] w-full max-w-xs origin-bottom -translate-x-1/2 [transform:translateX(-50%)_translateY(calc(var(--toast-index)*-0.5rem-var(--toast-index)*100%-var(--toast-swipe-movement-y)))] rounded border border-neutral-200 bg-white p-3 shadow-lg select-none [transition:transform_0.3s,opacity_0.3s] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0"
+      className="relative z-[calc(1000-var(--toast-index))] mb-2 w-full max-w-xs origin-bottom rounded border border-neutral-200 bg-white p-3 shadow-lg select-none [transition:transform_0.3s,opacity_0.3s] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0"
     >
       <Toast.Title className="text-sm text-neutral-900" />
     </Toast.Root>
@@ -49,7 +49,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <Toast.Provider timeout={3000}>
       <ToastManager>{children}</ToastManager>
       <Toast.Portal>
-        <Toast.Viewport className="fixed right-0 bottom-4 left-0 z-50 mx-auto flex w-full max-w-xs flex-col items-center">
+        <Toast.Viewport className="fixed bottom-4 left-1/2 z-50 flex w-full max-w-xs -translate-x-1/2 flex-col items-center">
           <ToastList />
         </Toast.Viewport>
       </Toast.Portal>
