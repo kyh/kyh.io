@@ -74,7 +74,7 @@ export function IncidentCardContent({
           <>
             {pinned && (
               <Pin
-                className="h-4 w-4 fill-neutral-400 text-neutral-400"
+                className="h-4 w-4 fill-yellow-500 text-yellow-500"
                 aria-label="Pinned"
               />
             )}

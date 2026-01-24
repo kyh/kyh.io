@@ -130,7 +130,9 @@ export function VideoCarousel({
               </div>
             )}
           </div>
-          {headerRight && <div>{headerRight}</div>}
+          {headerRight && (
+            <div className="flex items-center gap-2">{headerRight}</div>
+          )}
         </div>
       )}
 
