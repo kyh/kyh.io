@@ -63,6 +63,17 @@ const toggleIncidentStatus = createServerFn({ method: "POST" })
     return { success: true, newStatus };
   });
 
+const toggleIncidentPinned = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: number; currentPinned: boolean }) => data)
+  .handler(async ({ data }) => {
+    const newPinned = !data.currentPinned;
+    await db
+      .update(incidents)
+      .set({ pinned: newPinned })
+      .where(eq(incidents.id, data.id));
+    return { success: true, newPinned };
+  });
+
 const deleteIncident = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
@@ -226,6 +237,13 @@ function IncidentEditRow({
         </span>
       </td>
       <td className="py-3 pr-3">
+        {incident.pinned ? (
+          <span className="text-blue-600">pinned</span>
+        ) : (
+          <span className="text-neutral-300">—</span>
+        )}
+      </td>
+      <td className="py-3 pr-3">
         <div className="space-y-1">
           {incident.videos.map((video) => (
             <VideoEditInput
@@ -336,6 +354,12 @@ function AdminIncidents() {
     toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
   };
 
+  const handleTogglePinned = async (id: number, currentPinned: boolean) => {
+    const result = await toggleIncidentPinned({ data: { id, currentPinned } });
+    router.invalidate();
+    toast.success(result.newPinned ? "Pinned" : "Unpinned");
+  };
+
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this incident?")) return;
     await deleteIncident({ data: { id } });
@@ -361,6 +385,7 @@ function AdminIncidents() {
                 <th className="py-2 pr-3 font-normal">Description</th>
                 <th className="py-2 pr-3 font-normal">Date</th>
                 <th className="py-2 pr-3 font-normal">Status</th>
+                <th className="py-2 pr-3 font-normal">Pinned</th>
                 <th className="py-2 pr-3 font-normal">Videos</th>
                 <th className="py-2 pr-3 font-normal">Votes</th>
                 <th className="py-2 pr-3 font-normal">Reports</th>
@@ -400,6 +425,20 @@ function AdminIncidents() {
                           <span className="text-green-600">approved</span>
                         ) : (
                           <span className="text-neutral-400">hidden</span>
+                        )}
+                      </button>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <button
+                        onClick={() =>
+                          handleTogglePinned(incident.id, incident.pinned)
+                        }
+                        className="cursor-pointer"
+                      >
+                        {incident.pinned ? (
+                          <span className="text-blue-600">pinned</span>
+                        ) : (
+                          <span className="text-neutral-300">—</span>
                         )}
                       </button>
                     </td>

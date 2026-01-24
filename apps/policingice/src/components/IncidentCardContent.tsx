@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pin } from "lucide-react";
 
 import type { VideoPlatform } from "@/db/schema";
 import { VideoCarousel } from "./VideoCarousel";
@@ -25,6 +25,7 @@ interface IncidentCardContentProps {
   onVote: (type: "unjustified" | "justified") => void;
   onReport?: () => void;
   reported?: boolean;
+  pinned?: boolean;
   headerRight?: React.ReactNode;
 }
 
@@ -49,6 +50,7 @@ export function IncidentCardContent({
   onVote,
   onReport,
   reported,
+  pinned,
   headerRight,
 }: IncidentCardContentProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -68,7 +70,17 @@ export function IncidentCardContent({
             {displayDate && formatDate(displayDate)}
           </Link>
         }
-        headerRight={headerRight}
+        headerRight={
+          <>
+            {pinned && (
+              <Pin
+                className="h-4 w-4 fill-neutral-400 text-neutral-400"
+                aria-label="Pinned"
+              />
+            )}
+            {headerRight}
+          </>
+        }
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">

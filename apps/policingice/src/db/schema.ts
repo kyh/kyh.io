@@ -79,6 +79,9 @@ export const incidents = sqliteTable("incidents", {
   embedding: blob({ mode: "buffer" }), // F32_BLOB for vector search
   incidentDate: integer("incident_date", { mode: "timestamp" }),
   status: text().$type<IncidentStatus>().default("approved").notNull(),
+  pinned: integer({ mode: "boolean" })
+    .default(sql`0`)
+    .notNull(),
   unjustifiedCount: integer("unjustified_count").default(0).notNull(),
   justifiedCount: integer("justified_count").default(0).notNull(),
   reportCount: integer("report_count").default(0).notNull(),

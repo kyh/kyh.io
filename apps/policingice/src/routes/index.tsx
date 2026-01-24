@@ -52,8 +52,9 @@ const getIncidents = createServerFn({ method: "GET" })
           isNullOp(incidents.deletedAt),
           ltOp(incidents.reportCount, 3),
         ),
-      // Order by incident_date desc (nulls first), then id desc for stability
+      // Order by pinned first, then incident_date desc (nulls first), then id desc
       orderBy: [
+        desc(incidents.pinned),
         desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
         desc(incidents.id),
       ],
@@ -199,6 +200,7 @@ const searchIncidents = createServerFn({ method: "GET" })
                 ? new Date((row.incident_date as number) * 1000)
                 : null,
               status: row.status as "approved" | "hidden",
+              pinned: (row.pinned as number) === 1,
               unjustifiedCount: row.unjustified_count as number,
               justifiedCount: row.justified_count as number,
               reportCount: row.report_count as number,
@@ -484,6 +486,24 @@ const deleteIncident = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const togglePinIncident = createServerFn({ method: "POST" })
+  .inputValidator((data: { incidentId: number }) => data)
+  .handler(async ({ data }) => {
+    const admin = await getAdminUser();
+    if (!admin) return { success: false, error: "Unauthorized" };
+
+    const incident = await db.query.incidents.findFirst({
+      where: eq(incidents.id, data.incidentId),
+    });
+    if (!incident) return { success: false, error: "Not found" };
+
+    await db
+      .update(incidents)
+      .set({ pinned: !incident.pinned })
+      .where(eq(incidents.id, data.incidentId));
+    return { success: true, pinned: !incident.pinned };
+  });
+
 const searchParamsSchema = z.object({
   q: z.string().optional(),
   start: z.string().optional(),
@@ -754,6 +774,19 @@ function IncidentFeed() {
     [router],
   );
 
+  const handlePin = useCallback(
+    async (incidentId: number) => {
+      const result = await togglePinIncident({ data: { incidentId } });
+      if (result.success) {
+        toast.success(result.pinned ? "Pinned" : "Unpinned");
+        router.invalidate();
+      } else {
+        toast.error("Failed to pin");
+      }
+    },
+    [router],
+  );
+
   const handleAddVideo = useCallback(
     async (url: string) => {
       if (!editingIncident) return;
@@ -920,6 +953,7 @@ function IncidentFeed() {
                       justifiedCount={justifiedCount}
                       userVote={userVote}
                       onVote={(type) => handleVote(incident.id, type)}
+                      pinned={incident.pinned}
                       headerRight={
                         <Menu.Root>
                           <Menu.Trigger
@@ -961,6 +995,12 @@ function IncidentFeed() {
                                 {loaderData.isAdmin && (
                                   <>
                                     <Menu.Separator className="my-1 border-t border-neutral-200" />
+                                    <Menu.Item
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      onClick={() => handlePin(incident.id)}
+                                    >
+                                      {incident.pinned ? "Unpin" : "Pin"}
+                                    </Menu.Item>
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
                                       onClick={() => handleHide(incident.id)}
