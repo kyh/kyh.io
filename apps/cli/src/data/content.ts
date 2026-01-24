@@ -86,14 +86,14 @@ export const projects: Item[] = [
     url: "https://init.kyh.io",
   },
   {
-    title: "AI Design Canvas",
+    title: "AI Canvas",
     description: "A full-featured, hackable Next.js and AI sdk design canvas",
-    url: "https://init.kyh.io",
+    url: "https://canvas.kyh.io",
   },
   {
     title: "AI Datagrid",
     description: "A full-featured, hackable Next.js AI datagrid",
-    url: "https://init.kyh.io",
+    url: "https://datagrid.kyh.io",
   },
 ];
 
