@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { projects } from "@/lib/data";
-import { Radial } from "./components/radial";
+import { Radial } from "./_components/radial";
 
 export const metadata: Metadata = {
   title: "Showcase",

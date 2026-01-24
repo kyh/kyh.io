@@ -2,13 +2,13 @@ import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
 import { getPublicAssetUrl } from "@/lib/public-assets";
-import { ConnectList } from "./components/connect-list";
-import { Section, SectionHeading, Separator } from "./components/section";
-import { ShapesCanvas } from "./components/shapes-canvas";
-import { SideQuests } from "./components/side-quests";
-import { TimeCounter } from "./components/time-counter";
-import { ViewAsMenu } from "./components/view-as-menu";
-import { WorkList } from "./components/work-list";
+import { ConnectList } from "./_components/connect-list";
+import { Section, SectionHeading, Separator } from "./_components/section";
+import { ShapesCanvas } from "./_components/shapes-canvas";
+import { SideQuests } from "./_components/side-quests";
+import { TimeCounter } from "./_components/time-counter";
+import { ViewAsMenu } from "./_components/view-as-menu";
+import { WorkList } from "./_components/work-list";
 
 const Page = () => {
   return (

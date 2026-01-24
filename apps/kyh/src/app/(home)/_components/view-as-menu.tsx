@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion } from "motion/react";
 
 import { AnimateSection } from "@/components/animate-text";
 import {
+  BotIcon,
   ChatGPTIcon,
   ClaudeIcon,
   MarkdownIcon,
   TerminalIcon,
+  TextIcon,
 } from "@/components/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/tooltip";
 
@@ -47,6 +50,22 @@ export const ViewAsMenu = () => {
     <div className="flex h-4 items-center gap-2">
       <Tooltip>
         <AnimateSection delay={0.1}>
+          <TooltipTrigger asChild>
+            <a
+              className={iconButtonClassName}
+              aria-label="Speed read"
+              href="/rsvp"
+            >
+              <TextIcon />
+            </a>
+          </TooltipTrigger>
+        </AnimateSection>
+        <TooltipContent className="px-2 py-0.5 text-xs">
+          Speed read
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <AnimateSection delay={0.15}>
           <TooltipTrigger
             className={iconButtonClassName}
             aria-label="Open with CLI"
@@ -85,7 +104,7 @@ export const ViewAsMenu = () => {
         </TooltipContent>
       </Tooltip>
       <Tooltip>
-        <AnimateSection delay={0.15}>
+        <AnimateSection delay={0.2}>
           <TooltipTrigger asChild>
             <a
               className={iconButtonClassName}
@@ -102,42 +121,45 @@ export const ViewAsMenu = () => {
           View as Markdown
         </TooltipContent>
       </Tooltip>
-      <Tooltip>
-        <AnimateSection delay={0.2}>
-          <TooltipTrigger asChild>
-            <a
-              className={iconButtonClassName}
-              aria-label="Open in ChatGPT"
-              href={chatGPTUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ChatGPTIcon />
-            </a>
-          </TooltipTrigger>
-        </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">
-          Open in ChatGPT
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip>
+      <Menu.Root>
         <AnimateSection delay={0.25}>
-          <TooltipTrigger asChild>
-            <a
-              className={iconButtonClassName}
-              aria-label="Open in Claude"
-              href={claudeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ClaudeIcon />
-            </a>
-          </TooltipTrigger>
+          <Menu.Trigger className={iconButtonClassName} aria-label="Open in AI">
+            <BotIcon />
+          </Menu.Trigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">
-          Open in Claude
-        </TooltipContent>
-      </Tooltip>
+        <Menu.Portal>
+          <Menu.Positioner sideOffset={5} align="end">
+            <Menu.Popup className="bg-panel z-50 min-w-[120px] rounded-md border border-[var(--border-color)] p-1 text-xs text-[var(--body-color)]">
+              <Menu.Item
+                className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
+                render={
+                  <a
+                    href={chatGPTUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+              >
+                <ChatGPTIcon />
+                ChatGPT
+              </Menu.Item>
+              <Menu.Item
+                className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
+                render={
+                  <a
+                    href={claudeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+              >
+                <ClaudeIcon />
+                Claude
+              </Menu.Item>
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
     </div>
   );
 };
