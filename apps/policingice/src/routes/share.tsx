@@ -4,6 +4,42 @@ import { db } from "@/db/index";
 import { incidents, videos } from "@/db/schema";
 import { detectPlatform, isValidVideoUrl } from "@/lib/video-utils";
 
+// Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
+async function resolveTwitterUrl(url: string): Promise<string> {
+  // Check if it's a Twitter/X URL with /i/status/ pattern
+  const match = url.match(/^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/);
+  if (!match) {
+    return url;
+  }
+
+  try {
+    // Fetch with redirect: manual to get the Location header
+    const response = await fetch(url, {
+      method: "HEAD",
+      redirect: "manual",
+    });
+
+    const location = response.headers.get("location");
+    if (location && isValidVideoUrl(location)) {
+      return location;
+    }
+
+    // If no redirect, try following with GET
+    const getResponse = await fetch(url, {
+      redirect: "follow",
+    });
+
+    // The final URL after redirects
+    if (getResponse.url && isValidVideoUrl(getResponse.url)) {
+      return getResponse.url;
+    }
+  } catch {
+    // If fetch fails, return original URL
+  }
+
+  return url;
+}
+
 // Extract URLs from shared text content
 function extractUrls(text: string): string[] {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
@@ -46,11 +82,14 @@ export const Route = createFileRoute("/share")({
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ deps: { url, text, title } }) => {
-    const videoUrl = findVideoUrl(url, text, title);
+    let videoUrl = findVideoUrl(url, text, title);
 
     if (!videoUrl) {
       throw redirect({ to: "/" });
     }
+
+    // Resolve Twitter/X URLs to get the actual embeddable URL
+    videoUrl = await resolveTwitterUrl(videoUrl);
 
     // Check if URL already exists
     const existingVideo = await db.query.videos.findFirst({
