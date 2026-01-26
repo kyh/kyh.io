@@ -8,7 +8,11 @@ import { inArray } from "drizzle-orm";
 import { useToast } from "@/components/Toast";
 import { db } from "@/db/index";
 import { incidents, videos } from "@/db/schema";
-import { detectPlatform, isValidVideoUrl } from "@/lib/video-utils";
+import {
+  detectPlatform,
+  isValidVideoUrl,
+  resolveVideoUrl,
+} from "@/lib/video-utils";
 
 const bulkCreateIncidents = createServerFn({ method: "POST" })
   .inputValidator(
@@ -26,12 +30,15 @@ const bulkCreateIncidents = createServerFn({ method: "POST" })
       return { created: 0, skipped: 0, error: "No valid URLs" };
     }
 
+    // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
+    const resolvedUrls = await Promise.all(validUrls.map(resolveVideoUrl));
+
     // Check for existing URLs
     const existingVideos = await db.query.videos.findMany({
-      where: inArray(videos.url, validUrls),
+      where: inArray(videos.url, resolvedUrls),
     });
     const existingUrls = new Set(existingVideos.map((v) => v.url));
-    const newUrls = validUrls.filter((url) => !existingUrls.has(url));
+    const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
 
     if (newUrls.length === 0) {
       return { created: 0, skipped: validUrls.length };

@@ -24,6 +24,44 @@ export function isValidVideoUrl(url: string): boolean {
   }
 }
 
+// Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
+export async function resolveVideoUrl(url: string): Promise<string> {
+  // Check if it's a Twitter/X URL with /i/status/ pattern
+  const match = url.match(
+    /^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/,
+  );
+  if (!match) {
+    return url;
+  }
+
+  try {
+    // Fetch with redirect: manual to get the Location header
+    const response = await fetch(url, {
+      method: "HEAD",
+      redirect: "manual",
+    });
+
+    const location = response.headers.get("location");
+    if (location && isValidVideoUrl(location)) {
+      return location;
+    }
+
+    // If no redirect, try following with GET
+    const getResponse = await fetch(url, {
+      redirect: "follow",
+    });
+
+    // The final URL after redirects
+    if (getResponse.url && isValidVideoUrl(getResponse.url)) {
+      return getResponse.url;
+    }
+  } catch {
+    // If fetch fails, return original URL
+  }
+
+  return url;
+}
+
 // Returns true if URL is valid for embedding (we just need to detect platform)
 export function extractVideoId(
   url: string,
