@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import type { VideoPlatform } from "@/db/schema";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
@@ -54,61 +54,42 @@ function YouTubeEmbed({ videoId }: { videoId: string }) {
   );
 }
 
-declare global {
-  interface Window {
-    twttr?: {
-      widgets: {
-        createTweet: (
-          tweetId: string,
-          container: HTMLElement,
-          options?: { conversation?: string },
-        ) => Promise<HTMLElement | undefined>;
-      };
-    };
-  }
-}
+const LazyTweet = lazy(() =>
+  import("react-tweet").then((mod) => ({ default: mod.Tweet })),
+);
 
-function TwitterEmbed({ tweetId }: { tweetId: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const createdRef = useRef(false);
+function TwitterEmbed({ tweetId, url }: { tweetId: string; url: string }) {
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || createdRef.current) return;
+    setMounted(true);
+  }, []);
 
-    const createTweet = async () => {
-      if (window.twttr?.widgets && container && !createdRef.current) {
-        createdRef.current = true;
-        await window.twttr.widgets.createTweet(tweetId, container, {
-          conversation: "none",
-        });
-      }
-    };
+  if (!mounted) {
+    return <div className="h-[200px] animate-pulse bg-neutral-100" />;
+  }
 
-    if (!window.twttr) {
-      const existingScript = document.querySelector(
-        'script[src="https://platform.twitter.com/widgets.js"]',
-      );
-      if (!existingScript) {
-        const script = document.createElement("script");
-        script.src = "https://platform.twitter.com/widgets.js";
-        script.async = true;
-        script.onload = () => void createTweet();
-        document.body.appendChild(script);
-      } else {
-        existingScript.addEventListener("load", () => void createTweet());
-      }
-    } else {
-      void createTweet();
-    }
-  }, [tweetId]);
+  const TweetNotFound = () => (
+    <div className="border border-neutral-200 p-4 text-sm text-neutral-500">
+      <p>Tweet not found. X may have blocked embedding this video.</p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-block text-neutral-900 underline hover:text-neutral-600"
+      >
+        Open on X to view
+      </a>
+    </div>
+  );
 
   return (
-    <div className="grid [&>*]:[grid-area:1/1]">
-      <div className="flex h-[300px] items-center justify-center bg-neutral-50">
-        <span className="text-sm text-neutral-400">Loading...</span>
-      </div>
-      <div ref={containerRef} className="bg-white empty:hidden" />
+    <div className="[&_.react-tweet-theme]:!m-0" data-theme="light">
+      <Suspense
+        fallback={<div className="h-[200px] animate-pulse bg-neutral-100" />}
+      >
+        <LazyTweet id={tweetId} components={{ TweetNotFound }} />
+      </Suspense>
     </div>
   );
 }
@@ -191,7 +172,7 @@ export function VideoEmbed({ url, platform }: VideoEmbedProps) {
       case "youtube":
         return <YouTubeEmbed videoId={videoId} />;
       case "twitter":
-        return <TwitterEmbed tweetId={videoId} />;
+        return <TwitterEmbed tweetId={videoId} url={url} />;
       case "tiktok":
         return <TikTokEmbed videoId={videoId} />;
       case "facebook":

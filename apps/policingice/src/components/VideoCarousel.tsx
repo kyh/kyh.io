@@ -29,6 +29,7 @@ export function VideoCarousel({
   incidentId,
   onSlideChange,
 }: VideoCarouselProps) {
+  const [isDragging, setIsDragging] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     containScroll: "trimSnaps",
@@ -81,9 +82,17 @@ export function VideoCarousel({
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
+
+    const onDragStart = () => setIsDragging(true);
+    const onDragEnd = () => setIsDragging(false);
+    emblaApi.on("pointerDown", onDragStart);
+    emblaApi.on("pointerUp", onDragEnd);
+
     return () => {
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
+      emblaApi.off("pointerDown", onDragStart);
+      emblaApi.off("pointerUp", onDragEnd);
     };
   }, [emblaApi, onSelect]);
 
@@ -137,7 +146,7 @@ export function VideoCarousel({
       )}
 
       <div
-        className="overflow-hidden transition-[height] duration-300"
+        className="touch-pan-y overflow-hidden transition-[height] duration-300"
         ref={emblaRef}
         style={{ height: containerHeight }}
       >
@@ -145,13 +154,16 @@ export function VideoCarousel({
           {videos.map((video, index) => (
             <div
               key={video.id}
-              className="min-w-0 flex-[0_0_100%]"
+              className="relative min-w-0 flex-[0_0_100%]"
               ref={(el) => {
                 if (el) slidesRef.current.set(index, el);
                 else slidesRef.current.delete(index);
               }}
             >
               <VideoEmbed url={video.url} platform={video.platform} />
+              {isDragging && (
+                <div className="absolute inset-0 z-10" aria-hidden="true" />
+              )}
             </div>
           ))}
         </div>

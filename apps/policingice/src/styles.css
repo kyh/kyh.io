@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* react-tweet overrides to match app design */
+[data-theme="light"] .react-tweet-theme {
+  --tweet-border: 1px solid #e5e5e5;
+  --tweet-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  --tweet-bg-color: #fff;
+  --tweet-bg-color-hover: #fafafa;
+  --tweet-quoted-bg-color-hover: #fafafa;
+  --tweet-color-blue-primary: #171717;
+  --tweet-color-blue-primary-hover: #525252;
+}
+
+.react-tweet-theme {
+  border-radius: 0 !important;
+}
+
+.react-tweet-theme article {
+  border-radius: 0 !important;
+}
+
 body {
   @apply m-0;
   font-family:
