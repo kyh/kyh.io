@@ -8,6 +8,14 @@ import {
   resolveVideoUrl,
 } from "@/lib/video-utils";
 
+const MAX_INPUT_LENGTH = 2048;
+
+// Sanitize and limit input length
+function sanitizeInput(input?: string): string | undefined {
+  if (!input) return undefined;
+  return input.slice(0, MAX_INPUT_LENGTH);
+}
+
 // Extract URLs from shared text content
 function extractUrls(text: string): string[] {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
@@ -26,17 +34,13 @@ function findVideoUrl(
   }
 
   if (text) {
-    const urls = extractUrls(text);
-    for (const u of urls) {
-      if (isValidVideoUrl(u)) return u;
-    }
+    const found = extractUrls(text).find(isValidVideoUrl);
+    if (found) return found;
   }
 
   if (title) {
-    const urls = extractUrls(title);
-    for (const u of urls) {
-      if (isValidVideoUrl(u)) return u;
-    }
+    const found = extractUrls(title).find(isValidVideoUrl);
+    if (found) return found;
   }
 
   return null;
@@ -44,16 +48,19 @@ function findVideoUrl(
 
 export const Route = createFileRoute("/share")({
   validateSearch: (search: Record<string, unknown>) => ({
-    url: search.url as string | undefined,
-    text: search.text as string | undefined,
-    title: search.title as string | undefined,
+    url: sanitizeInput(search.url as string | undefined),
+    text: sanitizeInput(search.text as string | undefined),
+    title: sanitizeInput(search.title as string | undefined),
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ deps: { url, text, title } }) => {
     let videoUrl = findVideoUrl(url, text, title);
 
     if (!videoUrl) {
-      throw redirect({ to: "/" });
+      throw redirect({
+        to: "/",
+        search: { error: "invalid_url" },
+      });
     }
 
     // Resolve Twitter/X URLs to get the actual embeddable URL
