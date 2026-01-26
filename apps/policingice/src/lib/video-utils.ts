@@ -55,8 +55,8 @@ export async function resolveVideoUrl(url: string): Promise<string> {
     if (getResponse.url && isValidVideoUrl(getResponse.url)) {
       return getResponse.url;
     }
-  } catch {
-    // If fetch fails, return original URL
+  } catch (error) {
+    console.error("Failed to resolve Twitter URL:", url, error);
   }
 
   return url;

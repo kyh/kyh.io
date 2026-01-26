@@ -512,6 +512,7 @@ const searchParamsSchema = z.object({
   q: z.string().optional(),
   start: z.string().optional(),
   end: z.string().optional(),
+  error: z.string().optional(),
 });
 
 export const Route = createFileRoute("/")({
@@ -534,7 +535,17 @@ function IncidentFeed() {
   const navigate = useNavigate();
   const toast = useToast();
   const loaderData = Route.useLoaderData();
-  const { q, start, end } = Route.useSearch();
+  const { q, start, end, error } = Route.useSearch();
+
+  // Show error toast from share redirect
+  useEffect(() => {
+    if (error === "invalid_url") {
+      toast.error(
+        "No supported video URL found. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
+      );
+      navigate({ to: "/", search: { q, start, end }, replace: true });
+    }
+  }, [error, navigate, q, start, end]);
 
   const [extraIncidents, setExtraIncidents] = useState<
     typeof loaderData.incidents
