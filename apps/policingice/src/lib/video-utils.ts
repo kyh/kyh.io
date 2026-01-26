@@ -24,6 +24,81 @@ export function isValidVideoUrl(url: string): boolean {
   }
 }
 
+const FETCH_TIMEOUT_MS = 5000;
+const ALLOWED_TWITTER_HOSTS = ["twitter.com", "x.com"];
+
+// Validate URL is from allowed Twitter/X domains (SSRF protection)
+function isAllowedTwitterHost(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_TWITTER_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+// Fetch with timeout
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
+export async function resolveVideoUrl(url: string): Promise<string> {
+  // Check if it's a Twitter/X URL with /i/status/ pattern
+  const match = url.match(
+    /^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/,
+  );
+  if (!match) {
+    return url;
+  }
+
+  // SSRF protection: only allow requests to twitter.com/x.com
+  if (!isAllowedTwitterHost(url)) {
+    return url;
+  }
+
+  try {
+    // Fetch with redirect: manual to get the Location header
+    const response = await fetchWithTimeout(url, {
+      method: "HEAD",
+      redirect: "manual",
+    });
+
+    const location = response.headers.get("location");
+    // Validate redirect is also to allowed host
+    if (location && isAllowedTwitterHost(location) && isValidVideoUrl(location)) {
+      return location;
+    }
+
+    // If no redirect, try following with GET
+    const getResponse = await fetchWithTimeout(url, {
+      redirect: "follow",
+    });
+
+    // Validate final URL is to allowed host
+    if (
+      getResponse.url &&
+      isAllowedTwitterHost(getResponse.url) &&
+      isValidVideoUrl(getResponse.url)
+    ) {
+      return getResponse.url;
+    }
+  } catch (error) {
+    console.error("Failed to resolve Twitter URL:", url, error);
+  }
+
+  return url;
+}
+
 // Returns true if URL is valid for embedding (we just need to detect platform)
 export function extractVideoId(
   url: string,

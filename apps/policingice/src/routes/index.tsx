@@ -28,7 +28,7 @@ import { incidents, videos, votes } from "@/db/schema";
 import { getAdminUser } from "@/lib/admin-auth";
 import { auth } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
-import { detectPlatform } from "@/lib/video-utils";
+import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
@@ -297,15 +297,18 @@ const createIncident = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data }) => {
+    // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
+    const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
+
     const existingVideos = await db.query.videos.findMany({
-      where: (videos, { inArray }) => inArray(videos.url, data.videoUrls),
+      where: (videos, { inArray }) => inArray(videos.url, resolvedUrls),
       with: { incident: true },
     });
 
     if (existingVideos.length > 0) {
       const existingIncident = existingVideos[0].incident;
       const existingUrls = new Set(existingVideos.map((v) => v.url));
-      const newUrls = data.videoUrls.filter((url) => !existingUrls.has(url));
+      const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
 
       if (newUrls.length > 0) {
         await db.insert(videos).values(
@@ -337,7 +340,7 @@ const createIncident = createServerFn({ method: "POST" })
       .returning();
 
     await db.insert(videos).values(
-      data.videoUrls.map((url) => ({
+      resolvedUrls.map((url) => ({
         incidentId: incident.id,
         url,
         platform: detectPlatform(url),
@@ -431,10 +434,11 @@ const reportIncident = createServerFn({ method: "POST" })
 const addVideoToIncident = createServerFn({ method: "POST" })
   .inputValidator((data: { incidentId: number; url: string }) => data)
   .handler(async ({ data }) => {
-    const platform = detectPlatform(data.url);
+    const resolvedUrl = await resolveVideoUrl(data.url);
+    const platform = detectPlatform(resolvedUrl);
     await db.insert(videos).values({
       incidentId: data.incidentId,
-      url: data.url,
+      url: resolvedUrl,
       platform,
     });
     return { success: true };
@@ -508,6 +512,7 @@ const searchParamsSchema = z.object({
   q: z.string().optional(),
   start: z.string().optional(),
   end: z.string().optional(),
+  error: z.string().optional(),
 });
 
 export const Route = createFileRoute("/")({
@@ -530,7 +535,17 @@ function IncidentFeed() {
   const navigate = useNavigate();
   const toast = useToast();
   const loaderData = Route.useLoaderData();
-  const { q, start, end } = Route.useSearch();
+  const { q, start, end, error } = Route.useSearch();
+
+  // Show error toast from share redirect
+  useEffect(() => {
+    if (error === "invalid_url") {
+      toast.error(
+        "No supported video URL found. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
+      );
+      navigate({ to: "/", search: { q, start, end }, replace: true });
+    }
+  }, [error, navigate, q, start, end]);
 
   const [extraIncidents, setExtraIncidents] = useState<
     typeof loaderData.incidents
