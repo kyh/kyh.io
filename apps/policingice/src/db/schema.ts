@@ -96,7 +96,7 @@ export const videos = sqliteTable("videos", {
   incidentId: integer("incident_id")
     .references(() => incidents.id, { onDelete: "cascade" })
     .notNull(),
-  url: text().notNull(),
+  url: text().notNull().unique(),
   platform: text().$type<VideoPlatform>().notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
