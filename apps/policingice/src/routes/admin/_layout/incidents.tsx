@@ -491,7 +491,7 @@ function AdminIncidents() {
       >
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6">
+          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-6">
             <Dialog.Title className="sr-only">Preview incident</Dialog.Title>
             <Dialog.Close className="absolute top-4 right-4 cursor-pointer text-neutral-400 hover:text-neutral-900">
               ×

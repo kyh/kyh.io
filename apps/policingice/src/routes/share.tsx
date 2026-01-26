@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 
 import { db } from "@/db/index";
 import { incidents, videos } from "@/db/schema";
@@ -46,21 +47,15 @@ function findVideoUrl(
   return null;
 }
 
-export const Route = createFileRoute("/share")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    url: sanitizeInput(search.url as string | undefined),
-    text: sanitizeInput(search.text as string | undefined),
-    title: sanitizeInput(search.title as string | undefined),
-  }),
-  loaderDeps: ({ search }) => search,
-  loader: async ({ deps: { url, text, title } }) => {
-    let videoUrl = findVideoUrl(url, text, title);
+const processShareUrl = createServerFn({ method: "GET" })
+  .inputValidator(
+    (data: { url?: string; text?: string; title?: string }) => data,
+  )
+  .handler(async ({ data }) => {
+    let videoUrl = findVideoUrl(data.url, data.text, data.title);
 
     if (!videoUrl) {
-      throw redirect({
-        to: "/",
-        search: { error: "invalid_url" },
-      });
+      return { redirect: "/", search: { error: "invalid_url" } } as const;
     }
 
     // Resolve Twitter/X URLs to get the actual embeddable URL
@@ -72,10 +67,10 @@ export const Route = createFileRoute("/share")({
     });
 
     if (existingVideo) {
-      throw redirect({
-        to: "/incident/$id",
+      return {
+        redirect: "/incident/$id",
         params: { id: String(existingVideo.incidentId) },
-      });
+      } as const;
     }
 
     // Create new incident with transaction to ensure atomicity
@@ -98,9 +93,29 @@ export const Route = createFileRoute("/share")({
       return newIncident;
     });
 
-    throw redirect({
-      to: "/incident/$id",
+    return {
+      redirect: "/incident/$id",
       params: { id: String(incident.id) },
+    } as const;
+  });
+
+export const Route = createFileRoute("/share")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    url: sanitizeInput(search.url as string | undefined),
+    text: sanitizeInput(search.text as string | undefined),
+    title: sanitizeInput(search.title as string | undefined),
+  }),
+  loaderDeps: ({ search }) => search,
+  loader: async ({ deps: { url, text, title } }) => {
+    const result = await processShareUrl({ data: { url, text, title } });
+
+    if (result.redirect === "/") {
+      throw redirect({ to: "/", search: result.search });
+    }
+
+    throw redirect({
+      to: result.redirect,
+      params: result.params,
     });
   },
   component: () => (

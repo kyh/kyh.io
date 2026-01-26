@@ -75,7 +75,11 @@ export async function resolveVideoUrl(url: string): Promise<string> {
 
     const location = response.headers.get("location");
     // Validate redirect is also to allowed host
-    if (location && isAllowedTwitterHost(location) && isValidVideoUrl(location)) {
+    if (
+      location &&
+      isAllowedTwitterHost(location) &&
+      isValidVideoUrl(location)
+    ) {
       return location;
     }
 
@@ -99,13 +103,18 @@ export async function resolveVideoUrl(url: string): Promise<string> {
   return url;
 }
 
-// Returns true if URL is valid for embedding (we just need to detect platform)
+// Extract Instagram post type from URL
+export function extractInstagramType(url: string): "p" | "reel" | "tv" {
+  if (url.includes("/reel/")) return "reel";
+  if (url.includes("/tv/")) return "tv";
+  return "p";
+}
+
+// Returns video ID for embedding
 export function extractVideoId(
   url: string,
   platform: VideoPlatform,
 ): string | null {
-  // For react-social-media-embed, we just need the full URL
-  // Return a truthy value if the URL matches the platform
   switch (platform) {
     case "youtube": {
       const match = url.match(
