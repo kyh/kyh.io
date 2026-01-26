@@ -103,5 +103,12 @@ export const Route = createFileRoute("/share")({
       params: { id: String(incident.id) },
     });
   },
-  component: () => null,
+  component: () => (
+    <main className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900" />
+        <p className="text-sm text-neutral-500">Saving...</p>
+      </div>
+    </main>
+  ),
 });
