@@ -78,20 +78,24 @@ export const Route = createFileRoute("/share")({
       });
     }
 
-    // Create new incident
+    // Create new incident with transaction to ensure atomicity
     const platform = detectPlatform(videoUrl);
-    const [incident] = await db
-      .insert(incidents)
-      .values({
-        status: "approved",
-        incidentDate: new Date(),
-      })
-      .returning();
+    const incident = await db.transaction(async (tx) => {
+      const [newIncident] = await tx
+        .insert(incidents)
+        .values({
+          status: "approved",
+          incidentDate: new Date(),
+        })
+        .returning();
 
-    await db.insert(videos).values({
-      incidentId: incident.id,
-      url: videoUrl,
-      platform,
+      await tx.insert(videos).values({
+        incidentId: newIncident.id,
+        url: videoUrl,
+        platform,
+      });
+
+      return newIncident;
     });
 
     throw redirect({
