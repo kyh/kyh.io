@@ -70,7 +70,7 @@ function TwitterEmbed({ tweetId, url }: { tweetId: string; url: string }) {
   }
 
   const TweetNotFound = () => (
-    <div className="border border-neutral-200 p-4 text-sm text-neutral-500">
+    <div className="pointer-events-auto border border-neutral-200 p-4 text-sm text-neutral-500">
       <p>Tweet not found. X may have blocked embedding this video.</p>
       <a
         href={url}
