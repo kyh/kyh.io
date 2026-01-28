@@ -14,7 +14,7 @@
   },
   "prettier": "@kyh/prettier-config",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260124.0",
+    "@cloudflare/workers-types": "^4.20260128.0",
     "@kyh/eslint-config": "workspace:^",
     "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
@@ -22,6 +22,6 @@
     "partyserver": "^0.1.0",
     "prettier": "catalog:",
     "typescript": "catalog:",
-    "wrangler": "^4.60.0"
+    "wrangler": "^4.61.0"
   }
 }

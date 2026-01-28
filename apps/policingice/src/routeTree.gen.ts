@@ -13,6 +13,7 @@ import { Route as ShareRouteImport } from './routes/share'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IncidentIdRouteImport } from './routes/incident.$id'
 import { Route as ApiSitemapRouteImport } from './routes/api/sitemap'
+import { Route as ApiRssRouteImport } from './routes/api/rss'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminLayoutRouteImport } from './routes/admin/_layout'
 import { Route as AdminLayoutIndexRouteImport } from './routes/admin/_layout/index'
@@ -39,6 +40,11 @@ const IncidentIdRoute = IncidentIdRouteImport.update({
 const ApiSitemapRoute = ApiSitemapRouteImport.update({
   id: '/api/sitemap',
   path: '/api/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRssRoute = ApiRssRouteImport.update({
+  id: '/api/rss',
+  path: '/api/rss',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/share': typeof ShareRoute
   '/admin': typeof AdminLayoutRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/api/rss': typeof ApiRssRoute
   '/api/sitemap': typeof ApiSitemapRoute
   '/incident/$id': typeof IncidentIdRoute
   '/admin/create': typeof AdminLayoutCreateRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/share': typeof ShareRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/rss': typeof ApiRssRoute
   '/api/sitemap': typeof ApiSitemapRoute
   '/incident/$id': typeof IncidentIdRoute
   '/admin/create': typeof AdminLayoutCreateRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/share': typeof ShareRoute
   '/admin/_layout': typeof AdminLayoutRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/api/rss': typeof ApiRssRoute
   '/api/sitemap': typeof ApiSitemapRoute
   '/incident/$id': typeof IncidentIdRoute
   '/admin/_layout/create': typeof AdminLayoutCreateRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/share'
     | '/admin'
     | '/admin/login'
+    | '/api/rss'
     | '/api/sitemap'
     | '/incident/$id'
     | '/admin/create'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/'
     | '/share'
     | '/admin/login'
+    | '/api/rss'
     | '/api/sitemap'
     | '/incident/$id'
     | '/admin/create'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/share'
     | '/admin/_layout'
     | '/admin/login'
+    | '/api/rss'
     | '/api/sitemap'
     | '/incident/$id'
     | '/admin/_layout/create'
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   ShareRoute: typeof ShareRoute
   AdminLayoutRoute: typeof AdminLayoutRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
+  ApiRssRoute: typeof ApiRssRoute
   ApiSitemapRoute: typeof ApiSitemapRoute
   IncidentIdRoute: typeof IncidentIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/api/sitemap'
       fullPath: '/api/sitemap'
       preLoaderRoute: typeof ApiSitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/rss': {
+      id: '/api/rss'
+      path: '/api/rss'
+      fullPath: '/api/rss'
+      preLoaderRoute: typeof ApiRssRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/login': {
@@ -272,6 +292,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShareRoute: ShareRoute,
   AdminLayoutRoute: AdminLayoutRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
+  ApiRssRoute: ApiRssRoute,
   ApiSitemapRoute: ApiSitemapRoute,
   IncidentIdRoute: IncidentIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
