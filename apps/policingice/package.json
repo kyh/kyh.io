@@ -16,6 +16,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@ai-sdk/xai": "^3.0.40",
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.0",
     "@tailwindcss/vite": "^4.1.18",

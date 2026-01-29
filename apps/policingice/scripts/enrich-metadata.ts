@@ -17,8 +17,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { gateway, generateObject } from "ai";
-import { eq, isNull, or } from "drizzle-orm";
+import { xai } from "@ai-sdk/xai";
+import { generateText } from "ai";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const { db } = await import("../src/db/index");
@@ -88,31 +89,50 @@ async function main() {
     console.log(`Already processed ${processedIds.size} incidents`);
   }
 
-  console.log("Finding incidents with missing metadata...");
-
-  const processedArray = [...processedIds];
-  const incidentsToEnrich = await db.query.incidents.findMany({
-    where:
-      processedArray.length > 0
-        ? (
-            t,
-            { and: andOp, or: orOp, isNull: isNullOp, notInArray: notInOp },
-          ) =>
-            andOp(
-              orOp(
-                isNullOp(t.location),
-                isNullOp(t.description),
-                isNullOp(t.incidentDate),
-              ),
-              notInOp(t.id, processedArray),
-            )
-        : or(
-            isNull(schema.incidents.location),
-            isNull(schema.incidents.description),
-            isNull(schema.incidents.incidentDate),
-          ),
+  // Fetch ALL incidents in one query, then partition locally
+  console.log("Fetching all incidents from database...");
+  const allIncidents = await db.query.incidents.findMany({
     with: { videos: true },
   });
+  console.log(`Found ${allIncidents.length} total incidents`);
+
+  // Partition: already complete vs needs enrichment
+  const incidentsToEnrich: typeof allIncidents = [];
+  let skippedAlreadyProcessed = 0;
+  let skippedAlreadyComplete = 0;
+
+  for (const incident of allIncidents) {
+    // Skip if already in processed file (unless force mode)
+    if (processedIds.has(incident.id)) {
+      skippedAlreadyProcessed++;
+      continue;
+    }
+
+    // Check if already has all metadata in DB
+    const isComplete =
+      incident.location && incident.description && incident.incidentDate;
+
+    if (isComplete) {
+      // Already complete in DB, add to processed file and skip
+      processedIds.add(incident.id);
+      skippedAlreadyComplete++;
+      continue;
+    }
+
+    incidentsToEnrich.push(incident);
+  }
+
+  if (skippedAlreadyComplete > 0) {
+    console.log(
+      `Skipped ${skippedAlreadyComplete} incidents already complete in DB`,
+    );
+    saveProcessedIds(processedIds);
+  }
+  if (skippedAlreadyProcessed > 0) {
+    console.log(
+      `Skipped ${skippedAlreadyProcessed} incidents already in processed file`,
+    );
+  }
 
   console.log(`Found ${incidentsToEnrich.length} incidents to enrich`);
 
@@ -136,31 +156,62 @@ async function main() {
 
       // Generate metadata if missing
       if (!location || !description || !incidentDate) {
-        const { object } = await generateObject({
-          model: gateway("xai/grok-3-fast"),
-          schema: MetadataSchema,
-          prompt: `Analyze this ICE (Immigration and Customs Enforcement) incident.
+        // Extract tweet URLs for X source search
+        const tweetUrls = incident.videos
+          .filter((v) => v.platform === "twitter")
+          .map((v) => v.url);
 
-Video sources:
-${videoContext}
+        const { text, sources, toolResults } = await generateText({
+          model: xai.responses("grok-4-fast"),
+          tools: {
+            web_search: xai.tools.webSearch(),
+            x_search: xai.tools.xSearch(),
+          },
+          prompt: `You must use the x_search tool to find information about this ICE (Immigration and Customs Enforcement) incident.
 
-${location ? "" : "Extract the location (city, state) if identifiable."}
-${description ? "" : "Write a brief factual description of what happened."}
-${incidentDate ? "" : "Extract the date of the incident. If not mentioned, use the post publish date."}
+The incident is documented in these tweets:
+${tweetUrls.join("\n")}
 
-Return null for fields you cannot determine. Do not make up information.`,
+Instructions:
+1. Use x_search to search for these tweet URLs or extract the tweet content
+2. Look for: where did this happen (city, state), what happened, when did it happen
+3. If x_search doesn't find it, try web_search for news coverage of the incident
+
+After searching, return a JSON object with:
+{
+  "location": "City, ST" or null if not found,
+  "description": "Brief factual summary of what happened" or null if not found,
+  "incidentDate": "YYYY-MM-DD" or null if not found
+}
+
+${location ? "Skip location - already known." : ""}
+${description ? "Skip description - already known." : ""}
+${incidentDate ? "Skip incidentDate - already known." : ""}
+
+You MUST search first, then respond with ONLY the JSON object.`,
         });
 
-        console.log(`  LLM response:`, JSON.stringify(object));
+        console.log(`  LLM response:`, text);
+        console.log(`  Sources:`, JSON.stringify(sources));
+        console.log(`  Tool results:`, JSON.stringify(toolResults));
 
-        if (!location && object.location) {
-          location = object.location;
-        }
-        if (!description && object.description) {
-          description = object.description;
-        }
-        if (!incidentDate && object.incidentDate) {
-          incidentDate = new Date(object.incidentDate);
+        // Parse JSON from response
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = MetadataSchema.safeParse(JSON.parse(jsonMatch[0]));
+          if (parsed.success) {
+            if (!location && parsed.data.location) {
+              location = parsed.data.location;
+            }
+            if (!description && parsed.data.description) {
+              description = parsed.data.description;
+            }
+            if (!incidentDate && parsed.data.incidentDate) {
+              incidentDate = new Date(parsed.data.incidentDate);
+            }
+          } else {
+            console.log(`  Failed to parse response:`, parsed.error);
+          }
         }
       }
 

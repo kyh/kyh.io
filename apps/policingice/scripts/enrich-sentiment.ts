@@ -1,15 +1,15 @@
 #!/usr/bin/env npx tsx
 /**
- * Seed Sentiment Scores
+ * Enrich Sentiment Scores
  *
  * Analyzes public sentiment from Twitter/X threads about ICE incidents using AI.
  * Updates justifiedCount and unjustifiedCount fields based on reply sentiment analysis.
  *
- * Tracks progress in .seed-sentiment.json to allow resumption if interrupted.
+ * Tracks progress in .enriched-sentiment.json to allow resumption if interrupted.
  *
  * Usage:
- *   pnpm with-env tsx scripts/seed-sentiment.ts        # Process unprocessed incidents
- *   pnpm with-env tsx scripts/seed-sentiment.ts -f     # Force reprocess all incidents
+ *   pnpm with-env tsx scripts/enrich-sentiment.ts        # Process unprocessed incidents
+ *   pnpm with-env tsx scripts/enrich-sentiment.ts -f     # Force reprocess all incidents
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -29,7 +29,7 @@ const { values: args } = parseArgs({
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROGRESS_FILE = path.join(__dirname, ".seed-sentiment.json");
+const PROGRESS_FILE = path.join(__dirname, ".enriched-sentiment.json");
 
 type ProgressData = {
   processedIds: number[];
@@ -82,6 +82,9 @@ const SentimentSchema = z.object({
     .describe("Brief summary of the actual public sentiment in the thread"),
 });
 
+// Threshold for considering sentiment already seeded
+const SENTIMENT_THRESHOLD = 5;
+
 async function main() {
   const progress = args.force
     ? { processedIds: [], results: {}, lastRun: "" }
@@ -94,19 +97,66 @@ async function main() {
     console.log(`Already processed ${processedSet.size} incidents`);
   }
 
-  console.log("Finding incidents with videos...");
-
-  const incidents = await db.query.incidents.findMany({
+  // Fetch ALL incidents in one query, then partition locally
+  console.log("Fetching all incidents from database...");
+  const allIncidents = await db.query.incidents.findMany({
     with: { videos: true },
   });
+  console.log(`Found ${allIncidents.length} total incidents`);
 
-  const toProcess = incidents.filter(
-    (i) => !processedSet.has(i.id) && i.videos.length > 0,
-  );
+  // Partition: already complete vs needs enrichment
+  const incidentsToEnrich: typeof allIncidents = [];
+  let skippedAlreadyProcessed = 0;
+  let skippedAlreadyComplete = 0;
+  let skippedNoVideos = 0;
 
-  console.log(`Found ${toProcess.length} incidents to process`);
+  for (const incident of allIncidents) {
+    // Skip if no videos
+    if (incident.videos.length === 0) {
+      skippedNoVideos++;
+      continue;
+    }
 
-  for (const incident of toProcess) {
+    // Skip if already in processed file (unless force mode)
+    if (processedSet.has(incident.id)) {
+      skippedAlreadyProcessed++;
+      continue;
+    }
+
+    // Check if already has sentiment in DB
+    const hasExistingSentiment =
+      incident.justifiedCount > SENTIMENT_THRESHOLD ||
+      incident.unjustifiedCount > SENTIMENT_THRESHOLD;
+
+    if (hasExistingSentiment) {
+      // Already has sentiment in DB, add to processed file and skip
+      processedSet.add(incident.id);
+      skippedAlreadyComplete++;
+      continue;
+    }
+
+    incidentsToEnrich.push(incident);
+  }
+
+  if (skippedAlreadyComplete > 0) {
+    console.log(
+      `Skipped ${skippedAlreadyComplete} incidents already have sentiment in DB`,
+    );
+    progress.processedIds = [...processedSet];
+    saveProgress(progress);
+  }
+  if (skippedAlreadyProcessed > 0) {
+    console.log(
+      `Skipped ${skippedAlreadyProcessed} incidents already in processed file`,
+    );
+  }
+  if (skippedNoVideos > 0) {
+    console.log(`Skipped ${skippedNoVideos} incidents with no videos`);
+  }
+
+  console.log(`Found ${incidentsToEnrich.length} incidents to enrich`);
+
+  for (const incident of incidentsToEnrich) {
     const video = incident.videos[0];
     console.log(`\nProcessing incident ${incident.id}...`);
     console.log(`  Video: ${video.url}`);
