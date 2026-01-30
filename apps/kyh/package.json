@@ -25,7 +25,7 @@
     "motion": "^12.29.2",
     "next": "catalog:",
     "next-themes": "^0.4.6",
-    "partysocket": "^1.1.10",
+    "partysocket": "^1.1.11",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
