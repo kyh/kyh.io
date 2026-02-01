@@ -3,7 +3,11 @@
   "extends": ["//"],
   "tasks": {
     "build": {
+      "dependsOn": ["^build"],
       "outputs": [".output/**"]
+    },
+    "dev": {
+      "persistent": true
     }
   }
 }
