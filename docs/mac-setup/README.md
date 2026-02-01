@@ -1,14 +1,16 @@
 # New Mac Setup Guide
 
-## Install Homebrew first
+## Install Homebrew
+```
 /bin/bash -c "$(curl -fsSL
 https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-#### Essential formulas
-brew install git gh zsh-autosuggestions zsh-syntax-highlighting fzf zoxide bat eza duti
-brew install fnm uv
-brew install ffmpeg turso
-brew install claude-code codex gemini-cli
+### Essential formulas
+- `brew install git gh zsh-autosuggestions zsh-syntax-highlighting fzf zoxide bat eza duti`
+- `brew install fnm uv`
+- `brew install ffmpeg turso`
+- `brew install claude-code codex gemini-cli`
 
 ## Applications
 - Editors: Zed (primary), Cursor
@@ -20,14 +22,12 @@ brew install claude-code codex gemini-cli
 - Entertainment: Spotify
 
 ## Shell Setup
-- oh-my-zsh - Framework
+- [oh-my-zsh](https://ohmyz.sh/)
 
 ## Global npm packages
-- npm i -g vercel eas-cli opensrc agent-browser
+- `npm i -g vercel eas-cli opensrc agent-browser`
 
 ## Config to transfer
-- ~/.zshrc - shell config
-- ~/.gitconfig - git config
-- ~/.claude/ - Claude config
-- ~/.config/zed/ - editor config
-- ~/.config/gh/ - GitHub CLI auth
+- src/zsh/.zshrc -> ~/.zshrc
+- src/claude/* -> ~/.claude/
+- src/zed/* -> ~/.config/zed/

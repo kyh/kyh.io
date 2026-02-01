@@ -18,4 +18,4 @@ npx skills add vercel-labs/agent-skills@web-design-guidelines -g
 
 ## Custom Skills
 
-Custom skills in `skills/` are symlinked from `~/.agents/skills/`.
+Custom skills in `skills/` directory
