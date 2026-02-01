@@ -1,5 +1,7 @@
 # Claude Config
 
+Global [Claude.md](./CLAUDE.md)
+
 ## Install Skills
 
 ```bash
@@ -19,3 +21,7 @@ npx skills add vercel-labs/agent-skills@web-design-guidelines -g
 ## Custom Skills
 
 Custom skills in `skills/` directory
+
+## Custom Agents
+
+Custom agents in `agents/` directory
