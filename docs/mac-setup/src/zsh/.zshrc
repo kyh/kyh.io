@@ -1,5 +1,5 @@
 # =============================================================================
-# Zsh Configuration (simplified single file)
+# Zsh Configuration
 # =============================================================================
 
 # History
@@ -18,16 +18,16 @@ path=(
   $path
 )
 
-# Editor (change EDITOR_CMD to switch between zed/cursor)
-export EDITOR_CMD="zed"
-export EDITOR="$EDITOR_CMD --wait"
-export VISUAL="$EDITOR"
-
 # Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 plugins=(git)
 source "$ZSH/oh-my-zsh.sh"
+
+# Editor (change EDITOR_CMD to switch between zed/cursor)
+export EDITOR_CMD="zed"
+export EDITOR="$EDITOR_CMD --wait"
+export VISUAL="$EDITOR"
 
 # Completions
 autoload -Uz compinit && compinit
