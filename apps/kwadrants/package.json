@@ -16,10 +16,10 @@
   "dependencies": {
     "konva": "^10.2.0",
     "lucide-react": "catalog:",
-    "motion": "^12.29.2",
+    "motion": "^12.33.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-konva": "^19.2.1"
+    "react-konva": "^19.2.2"
   },
   "devDependencies": {
     "@kyh/eslint-config": "workspace:^",
