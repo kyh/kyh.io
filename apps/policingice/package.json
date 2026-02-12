@@ -16,7 +16,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^3.0.50",
+    "@ai-sdk/xai": "^3.0.54",
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.0",
     "@tailwindcss/vite": "^4.1.18",
@@ -27,7 +27,7 @@
     "@tanstack/react-start": "^1.159.5",
     "@tanstack/router-plugin": "^1.159.5",
     "@vercel/analytics": "catalog:",
-    "ai": "^6.0.78",
+    "ai": "^6.0.81",
     "better-auth": "^1.4.18",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
@@ -38,7 +38,7 @@
     "react-dom": "catalog:",
     "react-tweet": "^3.3.0",
     "tailwindcss": "catalog:",
-    "vite-tsconfig-paths": "^6.1.0",
+    "vite-tsconfig-paths": "^6.1.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

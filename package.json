@@ -1,7 +1,7 @@
 {
   "name": "kyh-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.29.2",
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -33,7 +33,7 @@
     "dotenv-cli": "^11.0.0",
     "prettier": "catalog:",
     "tsx": "catalog:",
-    "turbo": "^2.8.3",
+    "turbo": "^2.8.7",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
