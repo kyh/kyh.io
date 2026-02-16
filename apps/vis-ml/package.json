@@ -20,7 +20,7 @@
   "devDependencies": {
     "@kyh/prettier-config": "workspace:^",
     "prettier": "catalog:",
-    "rimraf": "^6.1.2",
+    "rimraf": "^6.1.3",
     "vite": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
