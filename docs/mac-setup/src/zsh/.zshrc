@@ -259,3 +259,6 @@ branch() {
     git checkout -b "$branch_name"
   fi
 }
+
+# OpenClaw Completion
+source "/Users/kyh/.openclaw/completions/openclaw.zsh"
