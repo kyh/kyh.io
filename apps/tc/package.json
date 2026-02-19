@@ -36,7 +36,7 @@
     "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
     "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
