@@ -27,7 +27,7 @@
     "@tanstack/react-start": "^1.161.1",
     "@tanstack/router-plugin": "^1.161.1",
     "@vercel/analytics": "catalog:",
-    "ai": "^6.0.91",
+    "ai": "^6.0.93",
     "better-auth": "^1.4.18",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
