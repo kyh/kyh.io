@@ -1,105 +1,15 @@
+"use client";
+
 import { useRef, useState } from "react";
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { inArray } from "drizzle-orm";
+import { useRouter } from "next/navigation";
 
 import { useToast } from "@/components/Toast";
-import { db } from "@/db/index";
-import { incidents, videos } from "@/db/schema";
-import {
-  detectPlatform,
-  isValidVideoUrl,
-  resolveVideoUrl,
-} from "@/lib/video-utils";
+import { isValidVideoUrl } from "@/lib/video-utils";
+import { bulkCreateIncidents } from "@/actions/admin";
 
-const bulkCreateIncidents = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      urls: Array<string>;
-      groupAsOne: boolean;
-      location?: string;
-      description?: string;
-      incidentDate?: string;
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    const validUrls = data.urls.filter((url) => isValidVideoUrl(url));
-    if (validUrls.length === 0) {
-      return { created: 0, skipped: 0, error: "No valid URLs" };
-    }
-
-    // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
-    const resolvedUrls = await Promise.all(validUrls.map(resolveVideoUrl));
-
-    // Check for existing URLs
-    const existingVideos = await db.query.videos.findMany({
-      where: inArray(videos.url, resolvedUrls),
-    });
-    const existingUrls = new Set(existingVideos.map((v) => v.url));
-    const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
-
-    if (newUrls.length === 0) {
-      return { created: 0, skipped: validUrls.length };
-    }
-
-    const incidentDate = data.incidentDate
-      ? new Date(data.incidentDate)
-      : new Date();
-
-    if (data.groupAsOne) {
-      // Create single incident with all videos
-      const [incident] = await db
-        .insert(incidents)
-        .values({
-          location: data.location || null,
-          description: data.description || null,
-          incidentDate,
-          status: "approved",
-        })
-        .returning();
-
-      await db.insert(videos).values(
-        newUrls.map((url) => ({
-          incidentId: incident.id,
-          url,
-          platform: detectPlatform(url),
-        })),
-      );
-
-      return { created: 1, skipped: existingUrls.size };
-    } else {
-      // Create one incident per URL
-      let created = 0;
-      for (const url of newUrls) {
-        const [incident] = await db
-          .insert(incidents)
-          .values({
-            location: data.location || null,
-            description: data.description || null,
-            incidentDate,
-            status: "approved",
-          })
-          .returning();
-
-        await db.insert(videos).values({
-          incidentId: incident.id,
-          url,
-          platform: detectPlatform(url),
-        });
-        created++;
-      }
-
-      return { created, skipped: existingUrls.size };
-    }
-  });
-
-export const Route = createFileRoute("/admin/_layout/create")({
-  component: AdminCreate,
-});
-
-function AdminCreate() {
+export default function AdminCreate() {
   const router = useRouter();
   const toast = useToast();
   const formRef = useRef<HTMLFormElement>(null);
@@ -135,19 +45,17 @@ function AdminCreate() {
 
           try {
             const res = await bulkCreateIncidents({
-              data: {
-                urls: validUrls,
-                groupAsOne,
-                location: location || undefined,
-                description: description || undefined,
-                incidentDate: incidentDate || undefined,
-              },
+              urls: validUrls,
+              groupAsOne,
+              location: location || undefined,
+              description: description || undefined,
+              incidentDate: incidentDate || undefined,
             });
             if (res.created > 0) {
               toast.success(`Created ${res.created} incident(s)`);
               setUrlsText("");
               formRef.current?.reset();
-              router.invalidate();
+              router.refresh();
             }
             if (res.skipped > 0) {
               toast.show(`Skipped ${res.skipped} existing URL(s)`);

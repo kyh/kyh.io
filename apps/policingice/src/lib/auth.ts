@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import { db } from "@/db/index";
 
@@ -20,5 +20,5 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [anonymous(), tanstackStartCookies()],
+  plugins: [anonymous(), nextCookies()],
 });

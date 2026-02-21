@@ -1,61 +1,14 @@
+"use client";
+
 import { useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 
 import { useToast } from "@/components/Toast";
-import { db } from "@/db/index";
-import { incidents, videos } from "@/db/schema";
-import { detectPlatform } from "@/lib/video-utils";
+import { createFromFeed } from "@/actions/admin";
 
-interface FeedPost {
-  id: string;
-  title: string;
-  link: string;
-  content: string;
-  published: string;
-}
+import type { FeedPost } from "@/actions/admin";
 
-function parseAtomFeed(xml: string): Array<FeedPost> {
-  const posts: Array<FeedPost> = [];
-  const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-  let match;
-
-  while ((match = entryRegex.exec(xml)) !== null) {
-    const entry = match[1];
-
-    const id = entry.match(/<id>([^<]+)<\/id>/)?.[1] || "";
-    const title = entry.match(/<title>([^<]+)<\/title>/)?.[1] || "";
-    const link = entry.match(/<link href="([^"]+)"/)?.[1] || "";
-    const content =
-      entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || "";
-    const published = entry.match(/<updated>([^<]+)<\/updated>/)?.[1] || "";
-
-    if (id && link) {
-      posts.push({
-        id,
-        title: decodeHTMLEntities(title),
-        link,
-        content: decodeHTMLEntities(content),
-        published,
-      });
-    }
-  }
-
-  return posts;
-}
-
-function decodeHTMLEntities(text: string): string {
-  return text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
-}
-
-// Normalize URL to just domain + path (no query string, trailing slash)
 function normalizeUrl(url: string): string {
   try {
     const u = new URL(url);
@@ -65,80 +18,24 @@ function normalizeUrl(url: string): string {
   }
 }
 
-const getFeedPosts = createServerFn({ method: "GET" }).handler(async () => {
-  const res = await fetch("https://www.reddit.com/r/ICE_Watch.rss", {
-    headers: {
-      "User-Agent": "PolicingICE/1.0",
-    },
-  });
+interface RedditFeedClientProps {
+  posts: FeedPost[];
+  existingUrls: string[];
+}
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch feed: ${res.status}`);
-  }
-
-  const xml = await res.text();
-  const posts = parseAtomFeed(xml);
-
-  // Get all existing reddit video URLs
-  const existingVideos = await db.query.videos.findMany({
-    where: (v, { like }) => like(v.url, "%reddit.com%"),
-    columns: { url: true },
-  });
-  const existingUrls = existingVideos.map((v) => normalizeUrl(v.url));
-
-  return { posts, existingUrls };
-});
-
-const createFromFeed = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { url: string; title: string; published: string }) => data,
-  )
-  .handler(async ({ data }) => {
-    // Check if already exists
-    const existing = await db.query.videos.findFirst({
-      where: (v, { eq }) => eq(v.url, data.url),
-    });
-
-    if (existing) {
-      return { success: false, error: "Already added" };
-    }
-
-    // Create incident
-    const [incident] = await db
-      .insert(incidents)
-      .values({
-        description: data.title,
-        incidentDate: data.published ? new Date(data.published) : new Date(),
-        status: "approved",
-      })
-      .returning();
-
-    // Create video
-    await db.insert(videos).values({
-      incidentId: incident.id,
-      url: data.url,
-      platform: detectPlatform(data.url),
-    });
-
-    return { success: true, incidentId: incident.id };
-  });
-
-export const Route = createFileRoute("/admin/_layout/reddit-feed")({
-  component: RedditFeed,
-  loader: () => getFeedPosts(),
-});
-
-function RedditFeed() {
+export function RedditFeedClient({
+  posts,
+  existingUrls,
+}: RedditFeedClientProps) {
   const router = useRouter();
   const toast = useToast();
-  const { posts, existingUrls } = Route.useLoaderData();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addingUrl, setAddingUrl] = useState<string | null>(null);
   const existingSet = new Set(existingUrls);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await router.invalidate();
+    router.refresh();
     setIsRefreshing(false);
   };
 
@@ -146,16 +43,14 @@ function RedditFeed() {
     setAddingUrl(post.link);
     try {
       const result = await createFromFeed({
-        data: {
-          url: post.link,
-          title: post.title,
-          published: post.published,
-        },
+        url: post.link,
+        title: post.title,
+        published: post.published,
       });
 
       if (result.success) {
         toast.success("Incident created");
-        router.invalidate(); // Refresh to remove the added post
+        router.refresh();
       } else {
         toast.error(result.error || "Failed to create");
       }

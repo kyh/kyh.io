@@ -1,16 +1,14 @@
+"use client";
+
 import { useState } from "react";
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/admin/login")({
-  component: AdminLogin,
-});
-
-function AdminLogin() {
-  const navigate = useNavigate();
+export default function AdminLogin() {
+  const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,7 +34,7 @@ function AdminLogin() {
               if (result.error) {
                 setErrors({ form: result.error.message || "Login failed" });
               } else {
-                navigate({ to: "/admin" });
+                router.push("/admin");
               }
             } catch {
               setErrors({ form: "Login failed" });

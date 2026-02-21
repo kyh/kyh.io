@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { ExternalLink, Pin } from "lucide-react";
 
 import type { VideoPlatform } from "@/db/schema";
@@ -64,7 +64,7 @@ export function IncidentCardContent({
         incidentId={incidentId}
         onSlideChange={setCurrentSlide}
         header={
-          <Link to="/incident/$id" params={{ id: String(incidentId) }}>
+          <Link href={`/incident/${incidentId}`}>
             {location && <>{location}</>}
             {location && displayDate && <> · </>}
             {displayDate && formatDate(displayDate)}

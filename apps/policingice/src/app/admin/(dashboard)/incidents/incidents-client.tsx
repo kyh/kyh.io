@@ -1,121 +1,24 @@
+"use client";
+
 import { useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Form } from "@base-ui/react/form";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { desc, eq, isNull } from "drizzle-orm";
+import { useRouter } from "next/navigation";
 
 import type { IncidentStatus, VideoPlatform } from "@/db/schema";
 import { useToast } from "@/components/Toast";
 import { VideoCarousel } from "@/components/VideoCarousel";
-import { db } from "@/db/index";
-import { incidents, videos } from "@/db/schema";
-import { detectPlatform } from "@/lib/video-utils";
+import {
+  addVideo,
+  adminDeleteIncident,
+  deleteVideo,
+  toggleIncidentPinned,
+  toggleIncidentStatus,
+  updateIncident,
+  updateVideo,
+} from "@/actions/admin";
 
-// Parse date string as local time (not UTC)
-function parseLocalDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-const getAllIncidents = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await db.query.incidents.findMany({
-    with: { videos: true },
-    where: isNull(incidents.deletedAt),
-    orderBy: [desc(incidents.createdAt)],
-  });
-  return results;
-});
-
-const updateIncident = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      id: number;
-      location?: string;
-      description?: string;
-      incidentDate?: string;
-      status?: IncidentStatus;
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    await db
-      .update(incidents)
-      .set({
-        location: data.location,
-        description: data.description,
-        incidentDate: data.incidentDate
-          ? parseLocalDate(data.incidentDate)
-          : null,
-        status: data.status,
-      })
-      .where(eq(incidents.id, data.id));
-    return { success: true };
-  });
-
-const toggleIncidentStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number; currentStatus: IncidentStatus }) => data)
-  .handler(async ({ data }) => {
-    const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
-    await db
-      .update(incidents)
-      .set({ status: newStatus })
-      .where(eq(incidents.id, data.id));
-    return { success: true, newStatus };
-  });
-
-const toggleIncidentPinned = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number; currentPinned: boolean }) => data)
-  .handler(async ({ data }) => {
-    const newPinned = !data.currentPinned;
-    await db
-      .update(incidents)
-      .set({ pinned: newPinned })
-      .where(eq(incidents.id, data.id));
-    return { success: true, newPinned };
-  });
-
-const deleteIncident = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number }) => data)
-  .handler(async ({ data }) => {
-    // Hard delete - cascades to videos and votes via foreign key
-    await db.delete(incidents).where(eq(incidents.id, data.id));
-    return { success: true };
-  });
-
-const addVideo = createServerFn({ method: "POST" })
-  .inputValidator((data: { incidentId: number; url: string }) => data)
-  .handler(async ({ data }) => {
-    const platform = detectPlatform(data.url);
-    await db.insert(videos).values({
-      incidentId: data.incidentId,
-      url: data.url,
-      platform,
-    });
-    return { success: true };
-  });
-
-const updateVideo = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number; url: string }) => data)
-  .handler(async ({ data }) => {
-    const platform = detectPlatform(data.url);
-    await db
-      .update(videos)
-      .set({ url: data.url, platform })
-      .where(eq(videos.id, data.id));
-    return { success: true };
-  });
-
-const deleteVideo = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number }) => data)
-  .handler(async ({ data }) => {
-    await db.delete(videos).where(eq(videos.id, data.id));
-    return { success: true };
-  });
-
-export const Route = createFileRoute("/admin/_layout/incidents")({
-  component: AdminIncidents,
-  loader: () => getAllIncidents(),
-});
+import type { getAllIncidents } from "@/actions/admin";
 
 type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
 
@@ -147,15 +50,13 @@ function IncidentEditRow({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     await updateIncident({
-      data: {
-        id: incident.id,
-        location: (formData.get("location") as string)?.trim() || undefined,
-        description:
-          (formData.get("description") as string)?.trim() || undefined,
-        incidentDate: (formData.get("incidentDate") as string) || undefined,
-      },
+      id: incident.id,
+      location: (formData.get("location") as string)?.trim() || undefined,
+      description:
+        (formData.get("description") as string)?.trim() || undefined,
+      incidentDate: (formData.get("incidentDate") as string) || undefined,
     });
-    router.invalidate();
+    router.refresh();
     toast.success("Saved");
     onSaved();
   };
@@ -166,8 +67,8 @@ function IncidentEditRow({
     originalUrl: string,
   ) => {
     if (newUrl && newUrl !== originalUrl) {
-      await updateVideo({ data: { id: videoId, url: newUrl } });
-      router.invalidate();
+      await updateVideo({ id: videoId, url: newUrl });
+      router.refresh();
       toast.success("Video updated");
     }
   };
@@ -175,15 +76,15 @@ function IncidentEditRow({
   const handleAddVideo = async () => {
     const url = newVideoRef.current?.value.trim();
     if (!url) return;
-    await addVideo({ data: { incidentId: incident.id, url } });
+    await addVideo({ incidentId: incident.id, url });
     if (newVideoRef.current) newVideoRef.current.value = "";
-    router.invalidate();
+    router.refresh();
     toast.success("Video added");
   };
 
   const handleDeleteVideo = async (videoId: number) => {
-    await deleteVideo({ data: { id: videoId } });
-    router.invalidate();
+    await deleteVideo({ id: videoId });
+    router.refresh();
     toast.success("Video deleted");
   };
 
@@ -314,12 +215,9 @@ interface VideoEditInputProps {
 }
 
 function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return (
     <div className="flex items-center gap-1">
       <input
-        ref={inputRef}
         type="text"
         defaultValue={video.url}
         onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
@@ -336,10 +234,15 @@ function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
   );
 }
 
-function AdminIncidents() {
+interface AdminIncidentsClientProps {
+  initialIncidents: Incident[];
+}
+
+export function AdminIncidentsClient({
+  initialIncidents,
+}: AdminIncidentsClientProps) {
   const router = useRouter();
   const toast = useToast();
-  const allIncidents = Route.useLoaderData();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(
     null,
@@ -349,31 +252,31 @@ function AdminIncidents() {
     id: number,
     currentStatus: IncidentStatus,
   ) => {
-    const result = await toggleIncidentStatus({ data: { id, currentStatus } });
-    router.invalidate();
+    const result = await toggleIncidentStatus({ id, currentStatus });
+    router.refresh();
     toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
   };
 
   const handleTogglePinned = async (id: number, currentPinned: boolean) => {
-    const result = await toggleIncidentPinned({ data: { id, currentPinned } });
-    router.invalidate();
+    const result = await toggleIncidentPinned({ id, currentPinned });
+    router.refresh();
     toast.success(result.newPinned ? "Pinned" : "Unpinned");
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this incident?")) return;
-    await deleteIncident({ data: { id } });
-    router.invalidate();
+    await adminDeleteIncident({ id });
+    router.refresh();
     toast.success("Deleted");
   };
 
   return (
     <div>
       <h2 className="mb-4 text-sm font-medium">
-        All Incidents ({allIncidents.length})
+        All Incidents ({initialIncidents.length})
       </h2>
 
-      {allIncidents.length === 0 ? (
+      {initialIncidents.length === 0 ? (
         <p className="text-sm text-neutral-500">No incidents.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -393,7 +296,7 @@ function AdminIncidents() {
               </tr>
             </thead>
             <tbody>
-              {allIncidents.map((incident) =>
+              {initialIncidents.map((incident) =>
                 editingId === incident.id ? (
                   <IncidentEditRow
                     key={incident.id}
