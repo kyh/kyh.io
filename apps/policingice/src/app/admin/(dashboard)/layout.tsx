@@ -1,14 +1,11 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 
-const AdminLayout = async ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const AdminContent = async ({ children }: { children: React.ReactNode }) => {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   if (!session?.user || session.user.isAnonymous) {
@@ -39,7 +36,10 @@ const AdminLayout = async ({
             >
               Reddit
             </Link>
-            <Link href="/" className="text-neutral-400 hover:text-neutral-900">
+            <Link
+              href="/"
+              className="text-neutral-400 hover:text-neutral-900"
+            >
               Exit
             </Link>
           </nav>
@@ -47,6 +47,20 @@ const AdminLayout = async ({
         {children}
       </div>
     </div>
+  );
+};
+
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <span className="text-sm text-neutral-400">Loading...</span>
+        </div>
+      }
+    >
+      <AdminContent>{children}</AdminContent>
+    </Suspense>
   );
 };
 

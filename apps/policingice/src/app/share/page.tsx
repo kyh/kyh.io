@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/index";
@@ -43,11 +44,11 @@ function findVideoUrl(
   return null;
 }
 
-export default async function SharePage({
+const ShareHandler = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
-}) {
+}) => {
   const params = await searchParams;
   const url = sanitizeInput(params.url);
   const text = sanitizeInput(params.text);
@@ -92,4 +93,22 @@ export default async function SharePage({
   });
 
   redirect(`/incident/${incident.id}`);
+};
+
+export default async function SharePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <span className="text-sm text-neutral-400">Redirecting...</span>
+        </div>
+      }
+    >
+      <ShareHandler searchParams={searchParams} />
+    </Suspense>
+  );
 }
