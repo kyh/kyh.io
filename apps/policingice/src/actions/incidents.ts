@@ -6,6 +6,7 @@ import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
 
 import { client, db } from "@/db/index";
 import { incidents, videos, votes } from "@/db/schema";
+import { getAdminUser } from "@/lib/admin-auth";
 import { auth } from "@/lib/auth";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 
@@ -241,17 +242,24 @@ export async function searchIncidents(data: {
   return { incidents: sortedResults };
 }
 
-export async function getUserVotes(data: { incidentIds: number[] }) {
+export async function getUserVotes(data: {
+  incidentIds: number[];
+  userId?: string;
+}) {
   if (data.incidentIds.length === 0) return {};
 
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user.id) return {};
+  let userId = data.userId;
+  if (!userId) {
+    const headersList = await headers();
+    const session = await auth.api.getSession({ headers: headersList });
+    if (!session?.user.id) return {};
+    userId = session.user.id;
+  }
 
   const userVotes = await db.query.votes.findMany({
     where: (votes, { and, eq: eqOp, inArray }) =>
       and(
-        eqOp(votes.sessionId, session.user.id),
+        eqOp(votes.sessionId, userId),
         inArray(votes.incidentId, data.incidentIds),
       ),
   });
@@ -288,6 +296,10 @@ export async function createIncident(data: {
   incidentDate?: string;
   videoUrls: string[];
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { incident: null, error: "Unauthorized" };
+
   // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
 
@@ -423,6 +435,10 @@ export async function addVideoToIncident(data: {
   incidentId: number;
   url: string;
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+
   const resolvedUrl = await resolveVideoUrl(data.url);
   const platform = detectPlatform(resolvedUrl);
   await db.insert(videos).values({
@@ -439,6 +455,10 @@ export async function updateIncidentDetails(data: {
   description?: string;
   incidentDate?: string;
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+
   await db
     .update(incidents)
     .set({
@@ -453,7 +473,6 @@ export async function updateIncidentDetails(data: {
 }
 
 export async function hideIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
   const admin = await getAdminUser();
   if (!admin) return { success: false, error: "Unauthorized" };
 
@@ -465,7 +484,6 @@ export async function hideIncident(data: { incidentId: number }) {
 }
 
 export async function deleteIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
   const admin = await getAdminUser();
   if (!admin) return { success: false, error: "Unauthorized" };
 
@@ -474,7 +492,6 @@ export async function deleteIncident(data: { incidentId: number }) {
 }
 
 export async function togglePinIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
   const admin = await getAdminUser();
   if (!admin) return { success: false, error: "Unauthorized" };
 

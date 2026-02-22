@@ -1,23 +1,30 @@
-import { getAdminUser } from "@/lib/admin-auth";
+import { headers } from "next/headers";
+
 import { getIncidents, getUserVotes } from "@/actions/incidents";
+import { auth } from "@/lib/auth";
 
 import { IncidentFeed } from "./incident-feed";
 
 const HomePage = async () => {
-  const [{ incidents, nextOffset }, admin] = await Promise.all([
+  const headersList = await headers();
+  const [{ incidents, nextOffset }, session] = await Promise.all([
     getIncidents({}),
-    getAdminUser(),
+    auth.api.getSession({ headers: headersList }),
   ]);
-  const userVotes = await getUserVotes({
-    incidentIds: incidents.map((i) => i.id),
-  });
+  const isAdmin = !!session?.user && !session.user.isAnonymous;
+  const userVotes = session?.user.id
+    ? await getUserVotes({
+        incidentIds: incidents.map((i) => i.id),
+        userId: session.user.id,
+      })
+    : {};
 
   return (
     <IncidentFeed
       initialIncidents={incidents}
       initialNextOffset={nextOffset}
       initialUserVotes={userVotes}
-      isAdmin={!!admin}
+      isAdmin={isAdmin}
     />
   );
 };
