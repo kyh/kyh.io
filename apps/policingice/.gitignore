@@ -5,12 +5,8 @@ dist-ssr
 *.local
 count.txt
 .env
-.nitro
-.tanstack
+.next
 .wrangler
-.output
-.vinxi
-todos.json
 .vercel
 .env*.local
 scripts/.*

@@ -23,7 +23,7 @@ pnpm dev
 
 ## Tech Stack
 
-- [TanStack Start](https://tanstack.com/start) - Full-stack React framework
+- [Next.js](https://nextjs.org/) - Full-stack React framework
 - [Drizzle ORM](https://orm.drizzle.team/) + [Turso](https://turso.tech/) - Database
 - [better-auth](https://www.better-auth.com/) - Authentication
 - [Tailwind CSS](https://tailwindcss.com/) - Styling

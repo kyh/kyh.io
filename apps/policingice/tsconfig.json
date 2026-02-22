@@ -11,6 +11,6 @@
     "module": "esnext",
     "noUncheckedIndexedAccess": false
   },
-  "include": ["src", ".next/types/**/*.ts", "next.config.js", "postcss.config.mjs"],
+  "include": ["src", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
