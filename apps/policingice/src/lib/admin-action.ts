@@ -6,6 +6,7 @@ import { desc, eq, inArray, isNull } from "drizzle-orm";
 import type { IncidentStatus } from "@/db/schema";
 import { db } from "@/db/index";
 import { incidents, videos } from "@/db/schema";
+import { getAdminUser } from "@/lib/admin-auth";
 import {
   detectPlatform,
   isValidVideoUrl,
@@ -13,6 +14,9 @@ import {
 } from "@/lib/video-utils";
 
 export async function getAllIncidents() {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const results = await db.query.incidents.findMany({
     with: { videos: true },
     where: isNull(incidents.deletedAt),
@@ -28,6 +32,9 @@ export async function updateIncident(data: {
   incidentDate?: string;
   status?: IncidentStatus;
 }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   function parseLocalDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -52,6 +59,9 @@ export async function toggleIncidentStatus(data: {
   id: number;
   currentStatus: IncidentStatus;
 }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
   await db
     .update(incidents)
@@ -65,6 +75,9 @@ export async function toggleIncidentPinned(data: {
   id: number;
   currentPinned: boolean;
 }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const newPinned = !data.currentPinned;
   await db
     .update(incidents)
@@ -75,12 +88,18 @@ export async function toggleIncidentPinned(data: {
 }
 
 export async function adminDeleteIncident(data: { id: number }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   await db.delete(incidents).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
 }
 
 export async function addVideo(data: { incidentId: number; url: string }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const platform = detectPlatform(data.url);
   await db.insert(videos).values({
     incidentId: data.incidentId,
@@ -92,6 +111,9 @@ export async function addVideo(data: { incidentId: number; url: string }) {
 }
 
 export async function updateVideo(data: { id: number; url: string }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const platform = detectPlatform(data.url);
   await db
     .update(videos)
@@ -102,6 +124,9 @@ export async function updateVideo(data: { id: number; url: string }) {
 }
 
 export async function deleteVideo(data: { id: number }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   await db.delete(videos).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
@@ -114,6 +139,9 @@ export async function bulkCreateIncidents(data: {
   description?: string;
   incidentDate?: string;
 }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const validUrls = data.urls.filter((url) => isValidVideoUrl(url));
   if (validUrls.length === 0) {
     return { created: 0, skipped: 0, error: "No valid URLs" };
@@ -183,6 +211,9 @@ export async function bulkCreateIncidents(data: {
 }
 
 export async function getFeedPosts() {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const res = await fetch("https://www.reddit.com/r/ICE_Watch.rss", {
     headers: {
       "User-Agent": "PolicingICE/1.0",
@@ -210,6 +241,9 @@ export async function createFromFeed(data: {
   title: string;
   published: string;
 }) {
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("Unauthorized");
+
   const existing = await db.query.videos.findFirst({
     where: (v, { eq }) => eq(v.url, data.url),
   });

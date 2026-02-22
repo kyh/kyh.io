@@ -1,15 +1,15 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidateTag } from "next/cache";
+import { headers } from "next/headers";
 import { embed } from "ai";
 import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
 
 import { client, db } from "@/db/index";
 import { incidents, videos, votes } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
+import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
@@ -18,10 +18,7 @@ function parseLocalDate(dateStr: string): Date {
 }
 
 // Server action wrapper — delegates to cached query so clients can call it
-export async function getIncidents(data: {
-  offset?: number;
-  limit?: number;
-}) {
+export async function getIncidents(data: { offset?: number; limit?: number }) {
   return getCachedIncidents(data);
 }
 
@@ -104,9 +101,7 @@ export async function searchIncidents(data: {
     let dateConditions = "";
     const args: (string | number)[] = [vectorStr];
     if (data.startDate) {
-      const start = Math.floor(
-        parseLocalDate(data.startDate).getTime() / 1000,
-      );
+      const start = Math.floor(parseLocalDate(data.startDate).getTime() / 1000);
       dateConditions += " AND i.incident_date >= ?";
       args.push(start);
     }
@@ -219,17 +214,24 @@ export async function searchIncidents(data: {
   return { incidents: sortedResults };
 }
 
-export async function getUserVotes(data: { incidentIds: number[] }) {
+export async function getUserVotes(data: {
+  incidentIds: number[];
+  userId?: string;
+}) {
   if (data.incidentIds.length === 0) return {};
 
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user.id) return {};
+  let userId = data.userId;
+  if (!userId) {
+    const headersList = await headers();
+    const session = await auth.api.getSession({ headers: headersList });
+    if (!session?.user.id) return {};
+    userId = session.user.id;
+  }
 
   const userVotes = await db.query.votes.findMany({
     where: (votes, { and, eq: eqOp, inArray }) =>
       and(
-        eqOp(votes.sessionId, session.user.id),
+        eqOp(votes.sessionId, userId),
         inArray(votes.incidentId, data.incidentIds),
       ),
   });
@@ -266,6 +268,10 @@ export async function createIncident(data: {
   incidentDate?: string;
   videoUrls: string[];
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { incident: null, error: "Unauthorized" };
+
   // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
 
@@ -407,6 +413,10 @@ export async function addVideoToIncident(data: {
   incidentId: number;
   url: string;
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+
   const resolvedUrl = await resolveVideoUrl(data.url);
   const platform = detectPlatform(resolvedUrl);
   await db.insert(videos).values({
@@ -424,6 +434,10 @@ export async function updateIncidentDetails(data: {
   description?: string;
   incidentDate?: string;
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+
   await db
     .update(incidents)
     .set({
