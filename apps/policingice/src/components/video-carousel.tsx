@@ -5,8 +5,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { VideoPlatform } from "@/db/schema";
-import { useKeyboardShortcuts } from "./KeyboardShortcutsProvider";
-import { VideoEmbed } from "./VideoEmbed";
+import { useKeyboardShortcuts } from "./keyboard-shortcuts-provider";
+import { VideoEmbed } from "./video-embed";
 
 type Video = {
   id: number;

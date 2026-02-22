@@ -1,4 +1,7 @@
+"use cache";
+
 import type { MetadataRoute } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { desc } from "drizzle-orm";
 
 import { db } from "@/db/index";
@@ -6,6 +9,9 @@ import { db } from "@/db/index";
 const siteUrl = "https://policingice.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  cacheLife("hours");
+  cacheTag("incidents");
+
   const approvedIncidents = await db.query.incidents.findMany({
     where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
       and(

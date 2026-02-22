@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 
-import { useToast } from "@/components/Toast";
+import { useToast } from "@/components/toast";
 import { createFromFeed } from "@/actions/admin";
 
 type FeedPost = {

@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { embed } from "ai";
 import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
 
@@ -8,6 +9,7 @@ import { client, db } from "@/db/index";
 import { incidents, videos, votes } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
+import { getIncidents as getCachedIncidents } from "@/queries/incidents";
 
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
@@ -15,36 +17,12 @@ function parseLocalDate(dateStr: string): Date {
   return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 
+// Server action wrapper — delegates to cached query so clients can call it
 export async function getIncidents(data: {
   offset?: number;
   limit?: number;
 }) {
-  const limit = data.limit ?? 10;
-  const offset = data.offset ?? 0;
-  const results = await db.query.incidents.findMany({
-    with: { videos: true },
-    where: (
-      incidents,
-      { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp },
-    ) =>
-      andOp(
-        eqOp(incidents.status, "approved"),
-        isNullOp(incidents.deletedAt),
-        ltOp(incidents.reportCount, 3),
-      ),
-    orderBy: [
-      desc(incidents.pinned),
-      desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
-      desc(incidents.id),
-    ],
-    limit: limit + 1,
-    offset,
-  });
-  const hasMore = results.length > limit;
-  return {
-    incidents: results.slice(0, limit),
-    nextOffset: hasMore ? offset + limit : undefined,
-  };
+  return getCachedIncidents(data);
 }
 
 export async function searchIncidents(data: {
@@ -311,6 +289,7 @@ export async function createIncident(data: {
       );
     }
 
+    revalidateTag("incidents", "max");
     return {
       incident: existingIncident,
       autoApproved: true,
@@ -338,6 +317,7 @@ export async function createIncident(data: {
     })),
   );
 
+  revalidateTag("incidents", "max");
   return { incident, autoApproved: true, merged: false };
 }
 
@@ -371,6 +351,7 @@ export async function submitVote(data: {
       .update(incidents)
       .set({ [field]: sql`${incidents[field]} - 1` })
       .where(eq(incidents.id, data.incidentId));
+    revalidateTag("incidents", "max");
     return { success: true, action: "removed" as const };
   }
 
@@ -391,6 +372,7 @@ export async function submitVote(data: {
         [newField]: sql`${incidents[newField]} + 1`,
       })
       .where(eq(incidents.id, data.incidentId));
+    revalidateTag("incidents", "max");
     return { success: true, action: "switched" as const };
   }
 
@@ -408,6 +390,7 @@ export async function submitVote(data: {
     .set({ [field]: sql`${incidents[field]} + 1` })
     .where(eq(incidents.id, data.incidentId));
 
+  revalidateTag("incidents", "max");
   return { success: true, action: "added" as const };
 }
 
@@ -416,6 +399,7 @@ export async function reportIncident(data: { incidentId: number }) {
     .update(incidents)
     .set({ reportCount: sql`${incidents.reportCount} + 1` })
     .where(eq(incidents.id, data.incidentId));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -430,6 +414,7 @@ export async function addVideoToIncident(data: {
     url: resolvedUrl,
     platform,
   });
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -449,6 +434,7 @@ export async function updateIncidentDetails(data: {
         : null,
     })
     .where(eq(incidents.id, data.incidentId));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -461,6 +447,7 @@ export async function hideIncident(data: { incidentId: number }) {
     .update(incidents)
     .set({ deletedAt: new Date() })
     .where(eq(incidents.id, data.incidentId));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -470,6 +457,7 @@ export async function deleteIncident(data: { incidentId: number }) {
   if (!admin) return { success: false, error: "Unauthorized" };
 
   await db.delete(incidents).where(eq(incidents.id, data.incidentId));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -487,5 +475,6 @@ export async function togglePinIncident(data: { incidentId: number }) {
     .update(incidents)
     .set({ pinned: !incident.pinned })
     .where(eq(incidents.id, data.incidentId));
+  revalidateTag("incidents", "max");
   return { success: true, pinned: !incident.pinned };
 }

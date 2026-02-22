@@ -13,7 +13,7 @@
     "lint": "eslint",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e .env --"
   },
   "dependencies": {
     "@ai-sdk/xai": "^3.0.57",
@@ -37,12 +37,12 @@
     "@kyh/eslint-config": "workspace:^",
     "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
-    "@tailwindcss/postcss": "^4.2.0",
+    "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "eslint": "catalog:",
-    "postcss": "^8.5.6",
+    "postcss": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

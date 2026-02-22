@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 
-import { ToastProvider } from "@/components/Toast";
+import { ToastProvider } from "@/components/toast";
 
 import "./globals.css";
 

@@ -4,7 +4,7 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 
 import type { VideoPlatform } from "@/db/schema";
-import { useToast } from "@/components/Toast";
+import { useToast } from "@/components/toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 
 type Video = {

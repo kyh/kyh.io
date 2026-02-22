@@ -211,7 +211,7 @@ const KeyboardShortcutsHelp = () => {
               <Dialog.Title className="text-base font-medium">
                 About Policing ICE
               </Dialog.Title>
-              <Dialog.Description className="mt-3 text-sm text-neutral-600">
+              <Dialog.Description render={<div />} className="mt-3 text-sm text-neutral-600">
                 <p className="mb-3">
                   Policing ICE is a community-driven platform for collecting and
                   sharing video documentation of U.S. Immigration and Customs

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { desc, eq, inArray, isNull } from "drizzle-orm";
 
 import type { IncidentStatus } from "@/db/schema";
@@ -43,6 +44,7 @@ export async function updateIncident(data: {
       status: data.status,
     })
     .where(eq(incidents.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -55,6 +57,7 @@ export async function toggleIncidentStatus(data: {
     .update(incidents)
     .set({ status: newStatus })
     .where(eq(incidents.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true, newStatus };
 }
 
@@ -67,11 +70,13 @@ export async function toggleIncidentPinned(data: {
     .update(incidents)
     .set({ pinned: newPinned })
     .where(eq(incidents.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true, newPinned };
 }
 
 export async function adminDeleteIncident(data: { id: number }) {
   await db.delete(incidents).where(eq(incidents.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -82,6 +87,7 @@ export async function addVideo(data: { incidentId: number; url: string }) {
     url: data.url,
     platform,
   });
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -91,11 +97,13 @@ export async function updateVideo(data: { id: number; url: string }) {
     .update(videos)
     .set({ url: data.url, platform })
     .where(eq(videos.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
 export async function deleteVideo(data: { id: number }) {
   await db.delete(videos).where(eq(videos.id, data.id));
+  revalidateTag("incidents", "max");
   return { success: true };
 }
 
@@ -146,6 +154,7 @@ export async function bulkCreateIncidents(data: {
       })),
     );
 
+    revalidateTag("incidents", "max");
     return { created: 1, skipped: existingUrls.size };
   } else {
     let created = 0;
@@ -168,6 +177,7 @@ export async function bulkCreateIncidents(data: {
       created++;
     }
 
+    revalidateTag("incidents", "max");
     return { created, skipped: existingUrls.size };
   }
 }
@@ -223,6 +233,7 @@ export async function createFromFeed(data: {
     platform: detectPlatform(data.url),
   });
 
+  revalidateTag("incidents", "max");
   return { success: true, incidentId: incident.id };
 }
 

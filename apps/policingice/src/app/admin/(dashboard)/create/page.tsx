@@ -5,7 +5,7 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
-import { useToast } from "@/components/Toast";
+import { useToast } from "@/components/toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 import { bulkCreateIncidents } from "@/actions/admin";
 

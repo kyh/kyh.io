@@ -9,13 +9,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Search, X } from "lucide-react";
 
-import { IncidentCardContent } from "@/components/IncidentCardContent";
-import { IncidentModal } from "@/components/IncidentModal";
+import { IncidentCardContent } from "@/components/incident-card-content";
+import { IncidentModal } from "@/components/incident-modal";
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
-} from "@/components/KeyboardShortcutsProvider";
-import { useToast } from "@/components/Toast";
+} from "@/components/keyboard-shortcuts-provider";
+import { useToast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
 import {
   addVideoToIncident,
@@ -186,7 +186,10 @@ export const IncidentFeed = ({
       }
 
       const prevVote = userVotes[incidentId];
-      const prevCounts = voteCounts[incidentId];
+      const prevCounts = voteCounts[incidentId] ?? {
+        unjustified: 0,
+        justified: 0,
+      };
 
       // Optimistic update
       if (prevVote === type) {
@@ -195,30 +198,35 @@ export const IncidentFeed = ({
           delete next[incidentId];
           return next;
         });
-        setVoteCounts((prev) => ({
-          ...prev,
-          [incidentId]: {
-            unjustified:
-              prev[incidentId].unjustified -
-              (type === "unjustified" ? 1 : 0),
-            justified:
-              prev[incidentId].justified -
-              (type === "justified" ? 1 : 0),
-          },
-        }));
+        setVoteCounts((prev) => {
+          const cur = prev[incidentId] ?? { unjustified: 0, justified: 0 };
+          return {
+            ...prev,
+            [incidentId]: {
+              unjustified:
+                cur.unjustified - (type === "unjustified" ? 1 : 0),
+              justified:
+                cur.justified - (type === "justified" ? 1 : 0),
+            },
+          };
+        });
       } else {
         setUserVotes((prev) => ({ ...prev, [incidentId]: type }));
-        setVoteCounts((prev) => ({
-          ...prev,
-          [incidentId]: {
-            unjustified:
-              prev[incidentId].unjustified +
-              (type === "unjustified" ? 1 : -1),
-            justified:
-              prev[incidentId].justified +
-              (type === "justified" ? 1 : -1),
-          },
-        }));
+        setVoteCounts((prev) => {
+          const cur = prev[incidentId] ?? { unjustified: 0, justified: 0 };
+          const switching = prevVote !== undefined;
+          return {
+            ...prev,
+            [incidentId]: {
+              unjustified:
+                cur.unjustified +
+                (type === "unjustified" ? 1 : switching ? -1 : 0),
+              justified:
+                cur.justified +
+                (type === "justified" ? 1 : switching ? -1 : 0),
+            },
+          };
+        });
       }
 
       const result = await submitVote({ incidentId, type });
@@ -243,7 +251,7 @@ export const IncidentFeed = ({
       type === "unjustified"
         ? incident.unjustifiedCount
         : incident.justifiedCount;
-    const extra = voteCounts[incident.id][type];
+    const extra = voteCounts[incident.id]?.[type] ?? 0;
     return base + extra;
   };
 

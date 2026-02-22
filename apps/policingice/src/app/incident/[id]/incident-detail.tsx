@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { IncidentCardContent } from "@/components/IncidentCardContent";
+import { IncidentCardContent } from "@/components/incident-card-content";
 import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
-} from "@/components/KeyboardShortcutsProvider";
-import { useToast } from "@/components/Toast";
+} from "@/components/keyboard-shortcuts-provider";
+import { useToast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
 import {
   getUserVote,

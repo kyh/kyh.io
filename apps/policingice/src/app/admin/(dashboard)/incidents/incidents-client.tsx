@@ -6,8 +6,8 @@ import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
 import type { IncidentStatus, VideoPlatform } from "@/db/schema";
-import { useToast } from "@/components/Toast";
-import { VideoCarousel } from "@/components/VideoCarousel";
+import { useToast } from "@/components/toast";
+import { VideoCarousel } from "@/components/video-carousel";
 import {
   addVideo,
   adminDeleteIncident,

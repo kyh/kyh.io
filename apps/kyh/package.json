@@ -11,7 +11,7 @@
     "lint": "eslint",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e .env --"
   },
   "prettier": "@kyh/prettier-config",
   "dependencies": {
@@ -33,13 +33,13 @@
     "@kyh/eslint-config": "workspace:^",
     "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
-    "@tailwindcss/postcss": "^4.2.0",
+    "@tailwindcss/postcss": "catalog:",
     "@types/matter-js": "^0.20.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "eslint": "catalog:",
-    "postcss": "^8.5.6",
+    "postcss": "catalog:",
     "prettier": "catalog:",
     "sharp": "^0.34.5",
     "tailwindcss": "catalog:",

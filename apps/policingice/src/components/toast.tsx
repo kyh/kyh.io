@@ -25,20 +25,22 @@ const ToastContext = React.createContext<{
 
 const ToastManager = ({ children }: { children: React.ReactNode }) => {
   const toastManager = Toast.useToastManager();
+  const managerRef = React.useRef(toastManager);
+  managerRef.current = toastManager;
 
   const api = React.useMemo(
     () => ({
       success: (message: string) => {
-        toastManager.add({ title: message, data: { type: "success" } });
+        managerRef.current.add({ title: message, data: { type: "success" } });
       },
       error: (message: string) => {
-        toastManager.add({ title: message, data: { type: "error" } });
+        managerRef.current.add({ title: message, data: { type: "error" } });
       },
       show: (message: string) => {
-        toastManager.add({ title: message, data: { type: "default" } });
+        managerRef.current.add({ title: message, data: { type: "default" } });
       },
     }),
-    [toastManager],
+    [],
   );
 
   return <ToastContext.Provider value={api}>{children}</ToastContext.Provider>;

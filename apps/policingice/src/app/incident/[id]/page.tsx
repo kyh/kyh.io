@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
+import { cacheLife, cacheTag } from "next/cache";
+import { desc, sql } from "drizzle-orm";
 
 import { db } from "@/db/index";
+import { incidents } from "@/db/schema";
 
 import { IncidentDetail } from "./incident-detail";
 
 async function getIncident(id: number) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("incidents", `incident-${id}`);
   const incident = await db.query.incidents.findFirst({
     with: { videos: true },
     where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
@@ -16,6 +22,18 @@ async function getIncident(id: number) {
       ),
   });
   return incident ?? null;
+}
+
+export async function generateStaticParams() {
+  const rows = await db
+    .select({ id: incidents.id })
+    .from(incidents)
+    .where(
+      sql`${incidents.status} = 'approved' AND ${incidents.deletedAt} IS NULL AND ${incidents.reportCount} < 3`,
+    )
+    .orderBy(desc(incidents.createdAt))
+    .limit(100);
+  return rows.map((row) => ({ id: String(row.id) }));
 }
 
 const IncidentPage = async ({

@@ -1,15 +1,7 @@
 /** @type {import('next').NextConfig} */
 const config = {
+  cacheComponents: true,
   serverExternalPackages: ["@libsql/client"],
-  async redirects() {
-    return [
-      {
-        source: "/sitemap.xml",
-        destination: "/api/sitemap",
-        permanent: true,
-      },
-    ];
-  },
   typescript: { ignoreBuildErrors: true },
 };
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ExternalLink, Pin } from "lucide-react";
 
 import type { VideoPlatform } from "@/db/schema";
-import { VideoCarousel } from "./VideoCarousel";
+import { VideoCarousel } from "./video-carousel";
 
 type Video = {
   id: number;
