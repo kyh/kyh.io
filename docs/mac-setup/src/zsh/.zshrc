@@ -54,7 +54,24 @@ alias pd="pnpm dev"
 alias po="pnpm outdated -r"
 alias pupi="pu && pnpm install"
 alias pup="pu && pnpm install && git commit -a -m 'chore: update packages' && git push"
-alias pupa='echo "dataembed edgestories init inteligir kyh/ai-canvas kyh/ai-datagrid kyh/kyh.io loremllm uicapsule vibedgames yours-sincerely" | tr " " "\n" | xargs -P4 -I{} sh -c "cd ~/Documents/Projects/{} && pnpm dlx taze -r -w && pnpm install && git commit -a -m \"chore: update packages\" && git push"'
+pupa() {
+  local projects=(
+    dataembed
+    edgestories
+    init
+    inteligir
+    kyh/ai-canvas
+    kyh/ai-datagrid
+    kyh/kyh.io
+    loremllm
+    stonksville
+    uicapsule
+    vibedgames
+    yours-sincerely
+  )
+  printf '%s\n' "${projects[@]}" | xargs -P4 -I{} sh -c \
+    'cd ~/Documents/Projects/{} && pnpm dlx taze -r -w && pnpm install && git commit -a -m "chore: update packages" && git push'
+}
 
 # c: open or create file/dir in editor
 c() {
