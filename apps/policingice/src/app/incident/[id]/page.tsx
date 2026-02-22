@@ -18,14 +18,16 @@ async function getIncident(id: number) {
   return incident ?? null;
 }
 
-export default async function IncidentPage({
+const IncidentPage = async ({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}) => {
   const { id } = await params;
   const incident = await getIncident(parseInt(id, 10));
   if (!incident) notFound();
 
   return <IncidentDetail incident={incident} />;
-}
+};
+
+export default IncidentPage;

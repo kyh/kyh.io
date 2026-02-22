@@ -31,17 +31,17 @@ function formatDate(date: Date | null) {
   });
 }
 
-interface IncidentEditRowProps {
+type IncidentEditRowProps = {
   incident: Incident;
   onCancel: () => void;
   onSaved: () => void;
 }
 
-function IncidentEditRow({
+const IncidentEditRow = ({
   incident,
   onCancel,
   onSaved,
-}: IncidentEditRowProps) {
+}: IncidentEditRowProps) => {
   const router = useRouter();
   const toast = useToast();
   const newVideoRef = useRef<HTMLInputElement>(null);
@@ -51,9 +51,9 @@ function IncidentEditRow({
     const formData = new FormData(e.currentTarget);
     await updateIncident({
       id: incident.id,
-      location: (formData.get("location") as string)?.trim() || undefined,
+      location: (formData.get("location") as string).trim() || undefined,
       description:
-        (formData.get("description") as string)?.trim() || undefined,
+        (formData.get("description") as string).trim() || undefined,
       incidentDate: (formData.get("incidentDate") as string) || undefined,
     });
     router.refresh();
@@ -98,7 +98,7 @@ function IncidentEditRow({
           type="text"
           name="location"
           form={formId}
-          defaultValue={incident.location || ""}
+          defaultValue={incident.location ?? ""}
           className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
           placeholder="Location"
         />
@@ -108,7 +108,7 @@ function IncidentEditRow({
           type="text"
           name="description"
           form={formId}
-          defaultValue={incident.description || ""}
+          defaultValue={incident.description ?? ""}
           className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
           placeholder="Description"
         />
@@ -163,7 +163,7 @@ function IncidentEditRow({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  handleAddVideo();
+                  void handleAddVideo();
                 }
               }}
             />
@@ -208,13 +208,13 @@ function IncidentEditRow({
   );
 }
 
-interface VideoEditInputProps {
+type VideoEditInputProps = {
   video: { id: number; url: string; platform: VideoPlatform };
   onUpdate: (id: number, newUrl: string, originalUrl: string) => void;
   onDelete: (id: number) => void;
 }
 
-function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
+const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
   return (
     <div className="flex items-center gap-1">
       <input
@@ -234,13 +234,13 @@ function VideoEditInput({ video, onUpdate, onDelete }: VideoEditInputProps) {
   );
 }
 
-interface AdminIncidentsClientProps {
+type AdminIncidentsClientProps = {
   initialIncidents: Incident[];
 }
 
-export function AdminIncidentsClient({
+export const AdminIncidentsClient = ({
   initialIncidents,
-}: AdminIncidentsClientProps) {
+}: AdminIncidentsClientProps) => {
   const router = useRouter();
   const toast = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -307,12 +307,12 @@ export function AdminIncidentsClient({
                 ) : (
                   <tr key={incident.id} className="border-b border-neutral-100">
                     <td className="py-3 pr-3">#{incident.id}</td>
-                    <td className="py-3 pr-3">{incident.location || "—"}</td>
+                    <td className="py-3 pr-3">{incident.location ?? "—"}</td>
                     <td
                       className="max-w-48 truncate py-3 pr-3"
-                      title={incident.description || ""}
+                      title={incident.description ?? ""}
                     >
-                      {incident.description || "—"}
+                      {incident.description ?? "—"}
                     </td>
                     <td className="py-3 pr-3">
                       {formatDate(incident.incidentDate)}

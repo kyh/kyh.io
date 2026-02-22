@@ -9,7 +9,7 @@ import { useToast } from "@/components/Toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 import { bulkCreateIncidents } from "@/actions/admin";
 
-export default function AdminCreate() {
+const AdminCreate = () => {
   const router = useRouter();
   const toast = useToast();
   const formRef = useRef<HTMLFormElement>(null);
@@ -37,8 +37,8 @@ export default function AdminCreate() {
           if (validUrls.length === 0) return;
 
           const formData = new FormData(e.currentTarget);
-          const location = (formData.get("location") as string)?.trim();
-          const description = (formData.get("description") as string)?.trim();
+          const location = (formData.get("location") as string).trim();
+          const description = (formData.get("description") as string).trim();
           const incidentDate = formData.get("incidentDate") as string;
 
           setIsSubmitting(true);
@@ -150,4 +150,6 @@ export default function AdminCreate() {
       </Form>
     </div>
   );
-}
+};
+
+export default AdminCreate;

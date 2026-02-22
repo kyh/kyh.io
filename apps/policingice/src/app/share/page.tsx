@@ -17,7 +17,7 @@ function sanitizeInput(input?: string): string | undefined {
 
 function extractUrls(text: string): string[] {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
-  const matches = text.match(urlRegex) || [];
+  const matches = text.match(urlRegex) ?? [];
   return matches.map((url) => url.replace(/[.,;:!?)]+$/, ""));
 }
 
@@ -82,8 +82,6 @@ export default async function SharePage({
       })
       .returning();
 
-    if (!newIncident) throw new Error("Failed to create incident");
-
     await tx.insert(videos).values({
       incidentId: newIncident.id,
       url: videoUrl,
@@ -93,5 +91,5 @@ export default async function SharePage({
     return newIncident;
   });
 
-  redirect(`/incident/${incident!.id}`);
+  redirect(`/incident/${incident.id}`);
 }

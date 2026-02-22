@@ -8,27 +8,27 @@ import type { VideoPlatform } from "@/db/schema";
 import { useKeyboardShortcuts } from "./KeyboardShortcutsProvider";
 import { VideoEmbed } from "./VideoEmbed";
 
-interface Video {
+type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
 }
 
-interface VideoCarouselProps {
-  videos: Array<Video>;
+type VideoCarouselProps = {
+  videos: Video[];
   header?: React.ReactNode;
   headerRight?: React.ReactNode;
   incidentId?: number;
   onSlideChange?: (index: number) => void;
 }
 
-export function VideoCarousel({
+export const VideoCarousel = ({
   videos,
   header,
   headerRight,
   incidentId,
   onSlideChange,
-}: VideoCarouselProps) {
+}: VideoCarouselProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
@@ -79,6 +79,7 @@ export function VideoCarousel({
 
   useEffect(() => {
     if (!emblaApi) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing state from embla API on mount
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
@@ -102,7 +103,7 @@ export function VideoCarousel({
 
   return (
     <div>
-      {(header || showNav || headerRight) && (
+      {(header != null || showNav || headerRight != null) && (
         <div className="mb-3 flex items-center justify-between text-sm text-neutral-500">
           <div className="flex items-center gap-3">
             <div>{header}</div>

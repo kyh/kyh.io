@@ -37,8 +37,10 @@ const PROCESSED_FILE = path.join(__dirname, ".enriched-incidents.json");
 function loadProcessedIds(): Set<number> {
   try {
     if (fs.existsSync(PROCESSED_FILE)) {
-      const data = JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8"));
-      return new Set(data.processedIds || []);
+      const data = JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8")) as {
+        processedIds?: number[];
+      };
+      return new Set(data.processedIds ?? []);
     }
   } catch {
     console.warn("Could not load processed IDs, starting fresh");
@@ -75,7 +77,7 @@ const MetadataSchema = z.object({
 });
 
 function getVideoContext(
-  videos: Array<{ url: string; platform: string }>,
+  videos: { url: string; platform: string }[],
 ): string {
   return videos.map((v) => `${v.platform}: ${v.url}`).join("\n");
 }
@@ -196,7 +198,7 @@ You MUST search first, then respond with ONLY the JSON object.`,
         console.log(`  Tool results:`, JSON.stringify(toolResults));
 
         // Parse JSON from response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const jsonMatch = /\{[\s\S]*\}/.exec(text);
         if (jsonMatch) {
           const parsed = MetadataSchema.safeParse(JSON.parse(jsonMatch[0]));
           if (parsed.success) {

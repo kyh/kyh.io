@@ -87,7 +87,7 @@ export async function searchIncidents(data: {
   const resultMap = new Map<
     number,
     Awaited<ReturnType<typeof db.query.incidents.findMany>>[0] & {
-      videos: Array<typeof videos.$inferSelect>;
+      videos: (typeof videos.$inferSelect)[];
       _score: number;
     }
   >();
@@ -124,7 +124,7 @@ export async function searchIncidents(data: {
 
     // Build date conditions for SQL
     let dateConditions = "";
-    const args: Array<string | number> = [vectorStr];
+    const args: (string | number)[] = [vectorStr];
     if (data.startDate) {
       const start = Math.floor(
         parseLocalDate(data.startDate).getTime() / 1000,
@@ -160,7 +160,7 @@ export async function searchIncidents(data: {
       number,
       {
         incident: typeof incidents.$inferSelect & {
-          videos: Array<typeof videos.$inferSelect>;
+          videos: (typeof videos.$inferSelect)[];
         };
         distance: number;
       }
@@ -195,6 +195,7 @@ export async function searchIncidents(data: {
         });
       }
       if (row.vid) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         vectorIncidents.get(id)!.incident.videos.push({
           id: row.vid as number,
           incidentId: id,
@@ -220,6 +221,7 @@ export async function searchIncidents(data: {
     for (const [id, { incident, distance }] of vectorIncidents) {
       const vectorScore = 100 - idx - distance * 10;
       if (resultMap.has(id)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         resultMap.get(id)!._score += vectorScore;
       } else {
         resultMap.set(id, { ...incident, _score: vectorScore });
@@ -239,12 +241,12 @@ export async function searchIncidents(data: {
   return { incidents: sortedResults };
 }
 
-export async function getUserVotes(data: { incidentIds: Array<number> }) {
+export async function getUserVotes(data: { incidentIds: number[] }) {
   if (data.incidentIds.length === 0) return {};
 
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user?.id) return {};
+  if (!session?.user.id) return {};
 
   const userVotes = await db.query.votes.findMany({
     where: (votes, { and, eq: eqOp, inArray }) =>
@@ -284,7 +286,7 @@ export async function createIncident(data: {
   location?: string;
   description?: string;
   incidentDate?: string;
-  videoUrls: Array<string>;
+  videoUrls: string[];
 }) {
   // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
@@ -296,8 +298,8 @@ export async function createIncident(data: {
 
   if (existingVideos.length > 0) {
     const existingIncident = existingVideos[0].incident;
-    const existingUrls = new Set(existingVideos.map((v) => v.url));
-    const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
+    const existingUrlSet = new Set(existingVideos.map((v) => v.url));
+    const newUrls = resolvedUrls.filter((url) => !existingUrlSet.has(url));
 
     if (newUrls.length > 0) {
       await db.insert(videos).values(
@@ -346,7 +348,7 @@ export async function submitVote(data: {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
-  if (!session?.user?.id) {
+  if (!session?.user.id) {
     return { success: false, error: "No session" };
   }
 

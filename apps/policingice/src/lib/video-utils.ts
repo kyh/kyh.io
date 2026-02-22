@@ -54,9 +54,7 @@ async function fetchWithTimeout(
 // Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
 export async function resolveVideoUrl(url: string): Promise<string> {
   // Check if it's a Twitter/X URL with /i/status/ pattern
-  const match = url.match(
-    /^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/,
-  );
+  const match = /^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/.exec(url);
   if (!match) {
     return url;
   }
@@ -117,21 +115,17 @@ export function extractVideoId(
 ): string | null {
   switch (platform) {
     case "youtube": {
-      const match = url.match(
-        /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/,
-      );
+      const match = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/.exec(url);
       return match?.[1] ?? null;
     }
     case "twitter": {
-      const match = url.match(
-        /(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(\d+)/,
-      );
+      const match = /(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(\d+)/.exec(url);
       return match?.[1] ?? null;
     }
     case "tiktok": {
-      const videoMatch = url.match(/tiktok\.com\/@[\w.]+\/video\/(\d+)/);
+      const videoMatch = /tiktok\.com\/@[\w.]+\/video\/(\d+)/.exec(url);
       if (videoMatch) return videoMatch[1];
-      const vmMatch = url.match(/vm\.tiktok\.com\/(\w+)/);
+      const vmMatch = /vm\.tiktok\.com\/(\w+)/.exec(url);
       return vmMatch?.[1] ?? null;
     }
     case "facebook": {
@@ -141,7 +135,7 @@ export function extractVideoId(
       return null;
     }
     case "instagram": {
-      const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([^/?]+)/);
+      const match = /instagram\.com\/(?:p|reel|tv)\/([^/?]+)/.exec(url);
       return match?.[1] ?? null;
     }
     case "linkedin": {

@@ -4,7 +4,9 @@ import {
 
 import { AdminIncidentsClient } from "./incidents-client";
 
-export default async function AdminIncidentsPage() {
+const AdminIncidentsPage = async () => {
   const allIncidents = await getAllIncidents();
   return <AdminIncidentsClient initialIncidents={allIncidents} />;
-}
+};
+
+export default AdminIncidentsPage;

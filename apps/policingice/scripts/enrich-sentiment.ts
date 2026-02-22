@@ -43,7 +43,7 @@ type ProgressData = {
 function loadProgress(): ProgressData {
   try {
     if (fs.existsSync(PROGRESS_FILE)) {
-      return JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8"));
+      return JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")) as ProgressData;
     }
   } catch {
     console.warn("Could not load progress, starting fresh");

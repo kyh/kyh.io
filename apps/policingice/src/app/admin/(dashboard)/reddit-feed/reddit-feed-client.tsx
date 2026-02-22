@@ -7,7 +7,13 @@ import { RefreshCw } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { createFromFeed } from "@/actions/admin";
 
-import type { FeedPost } from "@/actions/admin";
+type FeedPost = {
+  id: string;
+  title: string;
+  link: string;
+  content: string;
+  published: string;
+};
 
 function normalizeUrl(url: string): string {
   try {
@@ -18,22 +24,22 @@ function normalizeUrl(url: string): string {
   }
 }
 
-interface RedditFeedClientProps {
+type RedditFeedClientProps = {
   posts: FeedPost[];
   existingUrls: string[];
 }
 
-export function RedditFeedClient({
+export const RedditFeedClient = ({
   posts,
   existingUrls,
-}: RedditFeedClientProps) {
+}: RedditFeedClientProps) => {
   const router = useRouter();
   const toast = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addingUrl, setAddingUrl] = useState<string | null>(null);
   const existingSet = new Set(existingUrls);
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
     router.refresh();
     setIsRefreshing(false);
@@ -52,7 +58,7 @@ export function RedditFeedClient({
         toast.success("Incident created");
         router.refresh();
       } else {
-        toast.error(result.error || "Failed to create");
+        toast.error(result.error ?? "Failed to create");
       }
     } finally {
       setAddingUrl(null);

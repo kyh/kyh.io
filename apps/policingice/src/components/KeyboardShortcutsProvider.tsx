@@ -15,7 +15,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
 
 type EmblaApi = ReturnType<typeof useEmblaCarousel>[1];
 
-interface KeyboardShortcutsContextValue {
+type KeyboardShortcutsContextValue = {
   registerCarousel: (id: number, api: EmblaApi | null) => void;
   unregisterCarousel: (id: number) => void;
   registerIncident: (id: number, element: HTMLElement | null) => void;
@@ -30,16 +30,16 @@ export function useKeyboardShortcuts() {
   return useContext(KeyboardShortcutsContext);
 }
 
-interface KeyboardShortcutsProviderProps {
+type KeyboardShortcutsProviderProps = {
   children: ReactNode;
 }
 
-export function KeyboardShortcutsProvider({
+export const KeyboardShortcutsProvider = ({
   children,
-}: KeyboardShortcutsProviderProps) {
+}: KeyboardShortcutsProviderProps) => {
   const carouselsRef = useRef<Map<number, EmblaApi | null>>(new Map());
   const incidentsRef = useRef<Map<number, HTMLElement>>(new Map());
-  const incidentOrderRef = useRef<Array<number>>([]);
+  const incidentOrderRef = useRef<number[]>([]);
   const [activeIncidentId, setActiveIncidentId] = useState<number | null>(null);
 
   const registerCarousel = useCallback((id: number, api: EmblaApi | null) => {
@@ -95,6 +95,7 @@ export function KeyboardShortcutsProvider({
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- closestId is reassigned in the forEach loop
       if (closestId !== null) {
         setActiveIncidentId(closestId);
       }
@@ -194,7 +195,7 @@ export function KeyboardShortcutsProvider({
   );
 }
 
-function KeyboardShortcutsHelp() {
+const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (

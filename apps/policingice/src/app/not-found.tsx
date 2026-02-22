@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function NotFound() {
+const NotFound = () => {
   return (
     <div className="min-h-screen bg-white px-4 py-8 sm:px-6">
       <div className="max-w-xl">
@@ -16,4 +16,6 @@ export default function NotFound() {
       </div>
     </div>
   );
-}
+};
+
+export default NotFound;

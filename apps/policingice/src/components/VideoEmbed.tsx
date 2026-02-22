@@ -5,7 +5,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import type { VideoPlatform } from "@/db/schema";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
 
-interface VideoEmbedProps {
+type VideoEmbedProps = {
   url: string;
   platform: VideoPlatform;
 }
@@ -21,13 +21,13 @@ const platformNames: Record<VideoPlatform, string> = {
   reddit: "reddit",
 };
 
-function FallbackLink({
+const FallbackLink = ({
   url,
   platform,
 }: {
   url: string;
   platform: VideoPlatform;
-}) {
+}) => {
   return (
     <a
       href={url}
@@ -40,7 +40,7 @@ function FallbackLink({
   );
 }
 
-function YouTubeEmbed({ videoId }: { videoId: string }) {
+const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
   return (
     <iframe
       src={`https://www.youtube.com/embed/${videoId}`}
@@ -58,10 +58,11 @@ const LazyTweet = lazy(() =>
   import("react-tweet").then((mod) => ({ default: mod.Tweet })),
 );
 
-function TwitterEmbed({ tweetId, url }: { tweetId: string; url: string }) {
+const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mounting guard for SSR compatibility
     setMounted(true);
   }, []);
 
@@ -94,7 +95,7 @@ function TwitterEmbed({ tweetId, url }: { tweetId: string; url: string }) {
   );
 }
 
-function TikTokEmbed({ videoId }: { videoId: string }) {
+const TikTokEmbed = ({ videoId }: { videoId: string }) => {
   return (
     <iframe
       src={`https://www.tiktok.com/embed/v2/${videoId}`}
@@ -108,7 +109,7 @@ function TikTokEmbed({ videoId }: { videoId: string }) {
   );
 }
 
-function FacebookEmbed({ url }: { url: string }) {
+const FacebookEmbed = ({ url }: { url: string }) => {
   return (
     <iframe
       src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`}
@@ -122,13 +123,13 @@ function FacebookEmbed({ url }: { url: string }) {
   );
 }
 
-function InstagramEmbed({
+const InstagramEmbed = ({
   postId,
   type,
 }: {
   postId: string;
   type: "p" | "reel" | "tv";
-}) {
+}) => {
   return (
     <iframe
       src={`https://www.instagram.com/${type}/${postId}/embed`}
@@ -141,7 +142,7 @@ function InstagramEmbed({
   );
 }
 
-function RedditEmbed({ url }: { url: string }) {
+const RedditEmbed = ({ url }: { url: string }) => {
   const cleanUrl = url.split("?")[0].replace(/\/$/, "");
   const embedUrl =
     cleanUrl.replace("www.reddit.com", "www.redditmedia.com") +
@@ -160,7 +161,7 @@ function RedditEmbed({ url }: { url: string }) {
   );
 }
 
-export function VideoEmbed({ url, platform }: VideoEmbedProps) {
+export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   const videoId = extractVideoId(url, platform);
 
   if (!videoId) {

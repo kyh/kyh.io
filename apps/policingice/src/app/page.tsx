@@ -3,7 +3,7 @@ import { getIncidents, getUserVotes } from "@/actions/incidents";
 
 import { IncidentFeed } from "./incident-feed";
 
-export default async function HomePage() {
+const HomePage = async () => {
   const [{ incidents, nextOffset }, admin] = await Promise.all([
     getIncidents({}),
     getAdminUser(),
@@ -20,4 +20,6 @@ export default async function HomePage() {
       isAdmin={!!admin}
     />
   );
-}
+};
+
+export default HomePage;

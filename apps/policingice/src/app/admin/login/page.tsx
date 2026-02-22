@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
 
-export default function AdminLogin() {
+const AdminLogin = () => {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function AdminLogin() {
             try {
               const result = await authClient.signIn.email({ email, password });
               if (result.error) {
-                setErrors({ form: result.error.message || "Login failed" });
+                setErrors({ form: result.error.message ?? "Login failed" });
               } else {
                 router.push("/admin");
               }
@@ -76,4 +76,6 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-}
+};
+
+export default AdminLogin;

@@ -33,26 +33,30 @@ import {
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
-interface IncidentFeedProps {
+type IncidentFeedProps = {
   initialIncidents: Incident[];
   initialNextOffset: number | undefined;
   initialUserVotes: Record<number, "unjustified" | "justified">;
   isAdmin: boolean;
 }
 
-export function IncidentFeed({
+export const IncidentFeed = ({
   initialIncidents,
   initialNextOffset,
   initialUserVotes,
   isAdmin,
-}: IncidentFeedProps) {
+}: IncidentFeedProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
 
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const q = searchParams.get("q") || undefined;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const start = searchParams.get("start") || undefined;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const end = searchParams.get("end") || undefined;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const error = searchParams.get("error") || undefined;
 
   // Show error toast from share redirect
@@ -67,7 +71,7 @@ export function IncidentFeed({
       if (end) params.set("end", end);
       router.replace(params.toString() ? `/?${params}` : "/");
     }
-  }, [error, router, q, start, end]);
+  }, [error, router, q, start, end, toast]);
 
   const [extraIncidents, setExtraIncidents] = useState<Incident[]>([]);
   const [nextOffset, setNextOffset] = useState(initialNextOffset);
@@ -85,6 +89,7 @@ export function IncidentFeed({
   const searchFormRef = useRef<HTMLFormElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const allIncidents = [...initialIncidents, ...extraIncidents];
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- checking for any truthy search param
   const hasSearchParams = q || start || end;
 
   // Reset state when initial data changes
@@ -102,37 +107,20 @@ export function IncidentFeed({
       return;
     }
     setIsSearching(true);
-    searchIncidents({
-      query: q || undefined,
-      startDate: start || undefined,
-      endDate: end || undefined,
+    void searchIncidents({
+      query: q,
+      startDate: start,
+      endDate: end,
     })
       .then((result) => setSearchResults(result.incidents as Incident[]))
       .finally(() => setIsSearching(false));
   }, [q, start, end, hasSearchParams]);
 
-  // Infinite scroll
-  useEffect(() => {
-    const ref = loadMoreRef.current;
-    if (!ref || searchResults !== null) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && nextOffset && !isLoading) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(ref);
-    return () => observer.disconnect();
-  }, [nextOffset, isLoading, searchResults]);
-
   const handleSearch = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
-      const query = (formData.get("q") as string)?.trim();
+      const query = (formData.get("q") as string).trim();
       const startDate = formData.get("start") as string;
       const endDate = formData.get("end") as string;
 
@@ -172,6 +160,23 @@ export function IncidentFeed({
     }
   }, [nextOffset, isLoading]);
 
+  // Infinite scroll
+  useEffect(() => {
+    const ref = loadMoreRef.current;
+    if (!ref || searchResults !== null) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && nextOffset && !isLoading) {
+          void loadMore();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(ref);
+    return () => observer.disconnect();
+  }, [nextOffset, isLoading, searchResults, loadMore]);
+
   const handleVote = useCallback(
     async (incidentId: number, type: "unjustified" | "justified") => {
       // Ensure user has session (creates anonymous if needed)
@@ -194,24 +199,11 @@ export function IncidentFeed({
           ...prev,
           [incidentId]: {
             unjustified:
-              (prev[incidentId]?.unjustified ?? 0) -
+              prev[incidentId].unjustified -
               (type === "unjustified" ? 1 : 0),
             justified:
-              (prev[incidentId]?.justified ?? 0) -
+              prev[incidentId].justified -
               (type === "justified" ? 1 : 0),
-          },
-        }));
-      } else if (prevVote) {
-        setUserVotes((prev) => ({ ...prev, [incidentId]: type }));
-        setVoteCounts((prev) => ({
-          ...prev,
-          [incidentId]: {
-            unjustified:
-              (prev[incidentId]?.unjustified ?? 0) +
-              (type === "unjustified" ? 1 : -1),
-            justified:
-              (prev[incidentId]?.justified ?? 0) +
-              (type === "justified" ? 1 : -1),
           },
         }));
       } else {
@@ -220,11 +212,11 @@ export function IncidentFeed({
           ...prev,
           [incidentId]: {
             unjustified:
-              (prev[incidentId]?.unjustified ?? 0) +
-              (type === "unjustified" ? 1 : 0),
+              prev[incidentId].unjustified +
+              (type === "unjustified" ? 1 : -1),
             justified:
-              (prev[incidentId]?.justified ?? 0) +
-              (type === "justified" ? 1 : 0),
+              prev[incidentId].justified +
+              (type === "justified" ? 1 : -1),
           },
         }));
       }
@@ -232,23 +224,15 @@ export function IncidentFeed({
       const result = await submitVote({ incidentId, type });
 
       if (!result.success) {
-        if (prevVote) {
-          setUserVotes((prev) => ({ ...prev, [incidentId]: prevVote }));
-        } else {
-          setUserVotes((prev) => {
-            const next = { ...prev };
-            delete next[incidentId];
-            return next;
-          });
-        }
+        setUserVotes((prev) => ({ ...prev, [incidentId]: prevVote }));
         setVoteCounts((prev) => ({
           ...prev,
-          [incidentId]: prevCounts ?? { unjustified: 0, justified: 0 },
+          [incidentId]: prevCounts,
         }));
         toast.error("Failed to vote");
       }
     },
-    [userVotes, voteCounts],
+    [userVotes, voteCounts, toast],
   );
 
   const getVoteCount = (
@@ -259,14 +243,14 @@ export function IncidentFeed({
       type === "unjustified"
         ? incident.unjustifiedCount
         : incident.justifiedCount;
-    const extra = voteCounts[incident.id]?.[type] ?? 0;
+    const extra = voteCounts[incident.id][type];
     return base + extra;
   };
 
   const handleReport = useCallback(async (incidentId: number) => {
     await reportIncident({ incidentId });
     toast.success("Reported");
-  }, []);
+  }, [toast]);
 
   const handleHide = useCallback(
     async (incidentId: number) => {
@@ -278,7 +262,7 @@ export function IncidentFeed({
         toast.error("Failed to hide");
       }
     },
-    [router],
+    [router, toast],
   );
 
   const handleDelete = useCallback(
@@ -292,7 +276,7 @@ export function IncidentFeed({
         toast.error("Failed to delete");
       }
     },
-    [router],
+    [router, toast],
   );
 
   const handlePin = useCallback(
@@ -305,7 +289,7 @@ export function IncidentFeed({
         toast.error("Failed to pin");
       }
     },
-    [router],
+    [router, toast],
   );
 
   const handleAddVideo = useCallback(
@@ -335,7 +319,7 @@ export function IncidentFeed({
       location?: string;
       description?: string;
       incidentDate?: string;
-      videoUrls: Array<string>;
+      videoUrls: string[];
     }) => {
       const result = await createIncident(data);
       if (result.autoApproved) {
@@ -345,7 +329,7 @@ export function IncidentFeed({
         result.merged ? "Added to existing incident" : "Added to feed",
       );
     },
-    [router],
+    [router, toast],
   );
 
   return (
@@ -379,7 +363,7 @@ export function IncidentFeed({
                           </Field.Label>
                           <Field.Control
                             type="text"
-                            defaultValue={q || ""}
+                            defaultValue={q ?? ""}
                             placeholder="Minneapolis, arrest..."
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
@@ -390,7 +374,7 @@ export function IncidentFeed({
                           </Field.Label>
                           <Field.Control
                             type="date"
-                            defaultValue={start || ""}
+                            defaultValue={start ?? ""}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
                         </Field.Root>
@@ -400,7 +384,7 @@ export function IncidentFeed({
                           </Field.Label>
                           <Field.Control
                             type="date"
-                            defaultValue={end || ""}
+                            defaultValue={end ?? ""}
                             className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
                           />
                         </Field.Root>
@@ -468,7 +452,7 @@ export function IncidentFeed({
                       videos={incident.videos}
                       unjustifiedCount={unjustifiedCount}
                       justifiedCount={justifiedCount}
-                      userVote={userVote ?? null}
+                      userVote={userVote}
                       onVote={(type) => handleVote(incident.id, type)}
                       pinned={incident.pinned}
                       headerRight={
@@ -582,13 +566,13 @@ export function IncidentFeed({
   );
 }
 
-function LazyIncidentCard({
+const LazyIncidentCard = ({
   incidentId,
   children,
 }: {
   incidentId: number;
   children: React.ReactNode;
-}) {
+}) => {
   const ref = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const shortcuts = useKeyboardShortcuts();

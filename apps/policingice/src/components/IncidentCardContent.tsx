@@ -7,18 +7,18 @@ import { ExternalLink, Pin } from "lucide-react";
 import type { VideoPlatform } from "@/db/schema";
 import { VideoCarousel } from "./VideoCarousel";
 
-interface Video {
+type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
 }
 
-interface IncidentCardContentProps {
+type IncidentCardContentProps = {
   incidentId: number;
   location: string | null;
   incidentDate: Date | null;
   createdAt: Date | null;
-  videos: Array<Video>;
+  videos: Video[];
   unjustifiedCount: number;
   justifiedCount: number;
   userVote: "unjustified" | "justified" | null;
@@ -38,7 +38,7 @@ function formatDate(date: Date | null) {
   });
 }
 
-export function IncidentCardContent({
+export const IncidentCardContent = ({
   incidentId,
   location,
   incidentDate,
@@ -52,7 +52,7 @@ export function IncidentCardContent({
   reported,
   pinned,
   headerRight,
-}: IncidentCardContentProps) {
+}: IncidentCardContentProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const displayDate = incidentDate ?? createdAt;
   const currentVideo = videos[currentSlide] ?? videos[0];
@@ -107,21 +107,19 @@ export function IncidentCardContent({
           </button>
         </div>
         <div className="flex items-center gap-3">
-          {currentVideo && (
-            <a
-              href={currentVideo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
-              aria-label={`Open video on ${currentVideo.platform === "twitter" ? "X" : currentVideo.platform} (opens in new tab)`}
-            >
-              open on{" "}
-              {currentVideo.platform === "twitter"
-                ? "x"
-                : currentVideo.platform}
-              <ExternalLink className="h-3 w-3" aria-hidden="true" />
-            </a>
-          )}
+          <a
+            href={currentVideo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
+            aria-label={`Open video on ${currentVideo.platform === "twitter" ? "X" : currentVideo.platform} (opens in new tab)`}
+          >
+            open on{" "}
+            {currentVideo.platform === "twitter"
+              ? "x"
+              : currentVideo.platform}
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
           {onReport && (
             <button
               onClick={onReport}

@@ -27,7 +27,6 @@ export async function updateIncident(data: {
   incidentDate?: string;
   status?: IncidentStatus;
 }) {
-  // Parse date string as local time (not UTC)
   function parseLocalDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -101,7 +100,7 @@ export async function deleteVideo(data: { id: number }) {
 }
 
 export async function bulkCreateIncidents(data: {
-  urls: Array<string>;
+  urls: string[];
   groupAsOne: boolean;
   location?: string;
   description?: string;
@@ -112,10 +111,8 @@ export async function bulkCreateIncidents(data: {
     return { created: 0, skipped: 0, error: "No valid URLs" };
   }
 
-  // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(validUrls.map(resolveVideoUrl));
 
-  // Check for existing URLs
   const existingVideos = await db.query.videos.findMany({
     where: inArray(videos.url, resolvedUrls),
   });
@@ -134,8 +131,8 @@ export async function bulkCreateIncidents(data: {
     const [incident] = await db
       .insert(incidents)
       .values({
-        location: data.location || null,
-        description: data.description || null,
+        location: data.location ?? null,
+        description: data.description ?? null,
         incidentDate,
         status: "approved",
       })
@@ -156,8 +153,8 @@ export async function bulkCreateIncidents(data: {
       const [incident] = await db
         .insert(incidents)
         .values({
-          location: data.location || null,
-          description: data.description || null,
+          location: data.location ?? null,
+          description: data.description ?? null,
           incidentDate,
           status: "approved",
         })
@@ -189,7 +186,6 @@ export async function getFeedPosts() {
   const xml = await res.text();
   const posts = parseAtomFeed(xml);
 
-  // Get all existing reddit video URLs
   const existingVideos = await db.query.videos.findMany({
     where: (v, { like }) => like(v.url, "%reddit.com%"),
     columns: { url: true },
@@ -232,28 +228,28 @@ export async function createFromFeed(data: {
 
 // Helpers
 
-interface FeedPost {
+type FeedPost = {
   id: string;
   title: string;
   link: string;
   content: string;
   published: string;
-}
+};
 
-function parseAtomFeed(xml: string): Array<FeedPost> {
-  const posts: Array<FeedPost> = [];
+function parseAtomFeed(xml: string): FeedPost[] {
+  const posts: FeedPost[] = [];
   const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
   let match;
 
   while ((match = entryRegex.exec(xml)) !== null) {
     const entry = match[1];
 
-    const id = entry.match(/<id>([^<]+)<\/id>/)?.[1] || "";
-    const title = entry.match(/<title>([^<]+)<\/title>/)?.[1] || "";
-    const link = entry.match(/<link href="([^"]+)"/)?.[1] || "";
+    const id = /<id>([^<]+)<\/id>/.exec(entry)?.[1] ?? "";
+    const title = /<title>([^<]+)<\/title>/.exec(entry)?.[1] ?? "";
+    const link = /<link href="([^"]+)"/.exec(entry)?.[1] ?? "";
     const content =
-      entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || "";
-    const published = entry.match(/<updated>([^<]+)<\/updated>/)?.[1] || "";
+      /<content[^>]*>([\s\S]*?)<\/content>/.exec(entry)?.[1] ?? "";
+    const published = /<updated>([^<]+)<\/updated>/.exec(entry)?.[1] ?? "";
 
     if (id && link) {
       posts.push({
@@ -287,5 +283,3 @@ function normalizeUrl(url: string): string {
     return url.split("?")[0].replace(/\/$/, "");
   }
 }
-
-export type { FeedPost };

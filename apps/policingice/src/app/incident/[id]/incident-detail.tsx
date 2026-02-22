@@ -21,11 +21,11 @@ import type { getIncidents } from "@/actions/incidents";
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
-interface IncidentDetailProps {
+type IncidentDetailProps = {
   incident: Incident;
 }
 
-export function IncidentDetail({ incident }: IncidentDetailProps) {
+export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
   const toast = useToast();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(
@@ -44,11 +44,11 @@ export function IncidentDetail({ incident }: IncidentDetailProps) {
         await authClient.signIn.anonymous();
         session = await authClient.getSession();
       }
-      if (session.data?.user?.id) {
+      if (session.data?.user.id) {
         setSessionId(session.data.user.id);
       }
     };
-    initSession();
+    void initSession();
   }, []);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function IncidentDetail({ incident }: IncidentDetailProps) {
       });
       setUserVote(voteType);
     };
-    loadVote();
+    void loadVote();
   }, [sessionId, incident.id]);
 
   const handleVote = useCallback(
@@ -92,14 +92,14 @@ export function IncidentDetail({ incident }: IncidentDetailProps) {
         toast.error("Failed to vote");
       }
     },
-    [incident.id, userVote, counts],
+    [incident.id, userVote, counts, toast],
   );
 
   const handleReport = useCallback(async () => {
     await reportIncident({ incidentId: incident.id });
     setReported(true);
     toast.success("Reported");
-  }, [incident.id]);
+  }, [incident.id, toast]);
 
   return (
     <KeyboardShortcutsProvider>
@@ -140,13 +140,13 @@ export function IncidentDetail({ incident }: IncidentDetailProps) {
   );
 }
 
-function IncidentArticle({
+const IncidentArticle = ({
   incidentId,
   children,
 }: {
   incidentId: number;
   children: React.ReactNode;
-}) {
+}) => {
   const ref = useRef<HTMLElement>(null);
   const shortcuts = useKeyboardShortcuts();
 

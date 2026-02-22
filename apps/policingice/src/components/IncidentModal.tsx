@@ -7,29 +7,29 @@ import type { VideoPlatform } from "@/db/schema";
 import { useToast } from "@/components/Toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 
-interface Video {
+type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
 }
 
-interface IncidentData {
+type IncidentData = {
   location?: string;
   description?: string;
   incidentDate?: string;
-  videoUrls?: Array<string>;
+  videoUrls?: string[];
 }
 
-interface CreateModeProps {
+type CreateModeProps = {
   mode: "create";
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (
-    data: IncidentData & { videoUrls: Array<string> },
+    data: IncidentData & { videoUrls: string[] },
   ) => Promise<void>;
 }
 
-interface EditModeProps {
+type EditModeProps = {
   mode: "edit";
   isOpen: boolean;
   onClose: () => void;
@@ -37,7 +37,7 @@ interface EditModeProps {
     location: string | null;
     description: string | null;
     incidentDate: Date | null;
-    videos: Array<Video>;
+    videos: Video[];
   };
   onAddVideo: (url: string) => Promise<void>;
   onUpdate: (data: IncidentData) => Promise<void>;
@@ -45,7 +45,7 @@ interface EditModeProps {
 
 type IncidentModalProps = CreateModeProps | EditModeProps;
 
-export function IncidentModal(props: IncidentModalProps) {
+export const IncidentModal = (props: IncidentModalProps) => {
   const { isOpen, onClose, mode } = props;
   const toast = useToast();
 
@@ -126,13 +126,13 @@ export function IncidentModal(props: IncidentModalProps) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    const location = (formData.get("location") as string)?.trim();
-    const description = (formData.get("description") as string)?.trim();
+    const location = (formData.get("location") as string).trim();
+    const description = (formData.get("description") as string).trim();
     const incidentDate = formData.get("incidentDate") as string;
 
     if (mode === "create") {
       const videoUrls = inputKeys
-        .map((key) => (formData.get(`video-${key}`) as string)?.trim())
+        .map((key) => (formData.get(`video-${key}`) as string).trim())
         .filter((url) => url && isValidVideoUrl(url));
 
       if (videoUrls.length === 0) {
@@ -263,7 +263,7 @@ export function IncidentModal(props: IncidentModalProps) {
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        handleAddVideo();
+                        void handleAddVideo();
                       }
                     }}
                   />
@@ -290,7 +290,7 @@ export function IncidentModal(props: IncidentModalProps) {
               <Field.Control
                 type="text"
                 defaultValue={
-                  mode === "edit" ? props.incident.location || "" : ""
+                  mode === "edit" ? (props.incident.location ?? "") : ""
                 }
                 placeholder="Minneapolis, MN"
                 className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
@@ -321,7 +321,7 @@ export function IncidentModal(props: IncidentModalProps) {
               <Field.Control
                 render={<textarea rows={2} />}
                 defaultValue={
-                  mode === "edit" ? props.incident.description || "" : ""
+                  mode === "edit" ? (props.incident.description ?? "") : ""
                 }
                 placeholder="Brief description of what happened..."
                 className="w-full resize-none border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"

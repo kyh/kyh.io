@@ -3,11 +3,11 @@ import Link from "next/link";
 
 import { getAdminUser } from "@/lib/admin-auth";
 
-export default async function AdminLayout({
+const AdminLayout = async ({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}) => {
   const user = await getAdminUser();
   if (!user) {
     redirect("/admin/login");
@@ -46,4 +46,6 @@ export default async function AdminLayout({
       </div>
     </div>
   );
-}
+};
+
+export default AdminLayout;

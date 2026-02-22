@@ -13,7 +13,7 @@ import { embed } from "ai";
 
 const { client, db } = await import("../src/db/index");
 
-async function generateEmbedding(text: string): Promise<Array<number>> {
+async function generateEmbedding(text: string): Promise<number[]> {
   const { embedding } = await embed({
     model: "openai/text-embedding-3-small",
     value: text,
@@ -21,7 +21,7 @@ async function generateEmbedding(text: string): Promise<Array<number>> {
   return embedding;
 }
 
-function vectorToString(vector: Array<number>): string {
+function vectorToString(vector: number[]): string {
   return `[${vector.join(",")}]`;
 }
 

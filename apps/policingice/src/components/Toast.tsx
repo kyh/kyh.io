@@ -23,7 +23,7 @@ const ToastContext = React.createContext<{
   show: (message: string) => void;
 } | null>(null);
 
-function ToastManager({ children }: { children: React.ReactNode }) {
+const ToastManager = ({ children }: { children: React.ReactNode }) => {
   const toastManager = Toast.useToastManager();
 
   const api = React.useMemo(
@@ -44,7 +44,7 @@ function ToastManager({ children }: { children: React.ReactNode }) {
   return <ToastContext.Provider value={api}>{children}</ToastContext.Provider>;
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <Toast.Provider timeout={3000}>
       <ToastManager>{children}</ToastManager>
