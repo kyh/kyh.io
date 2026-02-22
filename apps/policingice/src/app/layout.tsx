@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 
+import { ThemeProvider } from "@/components/theme";
 import { ToastProvider } from "@/components/toast";
 
-import "./globals.css";
+import "./styles/globals.css";
 
 const siteUrl = "https://policingice.com";
 const siteName = "Policing ICE";
@@ -29,12 +30,12 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: [
-    { rel: "icon", type: "image/svg+xml", url: "/favicon.svg" },
-    { rel: "icon", type: "image/png", sizes: "96x96", url: "/favicon-96x96.png" },
-    { rel: "icon", type: "image/x-icon", url: "/favicon.ico" },
-    { rel: "apple-touch-icon", sizes: "180x180", url: "/apple-touch-icon.png" },
+    { rel: "icon", type: "image/svg+xml", url: "/favicon/favicon.svg" },
+    { rel: "icon", type: "image/png", sizes: "96x96", url: "/favicon/favicon-96x96.png" },
+    { rel: "icon", type: "image/x-icon", url: "/favicon/favicon.ico" },
+    { rel: "apple-touch-icon", sizes: "180x180", url: "/favicon/apple-touch-icon.png" },
   ],
-  manifest: "/site.webmanifest",
+  manifest: "/favicon/site.webmanifest",
   other: {
     "theme-color": "#ffffff",
   },
@@ -46,17 +47,19 @@ const RootLayout = ({
   children: React.ReactNode;
 }) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ToastProvider>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white"
-          >
-            Skip to content
-          </a>
-          {children}
-        </ToastProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ToastProvider>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white"
+            >
+              Skip to content
+            </a>
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

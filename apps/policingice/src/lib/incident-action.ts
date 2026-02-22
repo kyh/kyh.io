@@ -5,8 +5,8 @@ import { headers } from "next/headers";
 import { embed } from "ai";
 import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
 
-import { client, db } from "@/db/index";
-import { incidents, videos, votes } from "@/db/schema";
+import { client, db } from "@/db/drizzle-client";
+import { incidents, videos, votes } from "@/db/drizzle-schema";
 import { auth } from "@/lib/auth";
 import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";

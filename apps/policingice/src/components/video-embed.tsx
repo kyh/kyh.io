@@ -2,7 +2,7 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
 
-import type { VideoPlatform } from "@/db/schema";
+import type { VideoPlatform } from "@/db/drizzle-schema";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
 
 type VideoEmbedProps = {

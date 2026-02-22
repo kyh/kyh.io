@@ -11,7 +11,7 @@
  */
 import { embed } from "ai";
 
-const { client, db } = await import("../src/db/index");
+const { client, db } = await import("../src/db/drizzle-client");
 
 async function generateEmbedding(text: string): Promise<number[]> {
   const { embedding } = await embed({

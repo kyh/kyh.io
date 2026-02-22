@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { db } from "@/db/index";
-import { incidents, videos } from "@/db/schema";
+import { db } from "@/db/drizzle-client";
+import { incidents, videos } from "@/db/drizzle-schema";
 import {
   detectPlatform,
   isValidVideoUrl,

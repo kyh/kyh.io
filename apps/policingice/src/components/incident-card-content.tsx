@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Pin } from "lucide-react";
 
-import type { VideoPlatform } from "@/db/schema";
+import type { VideoPlatform } from "@/db/drizzle-schema";
 import { VideoCarousel } from "./video-carousel";
 
 type Video = {

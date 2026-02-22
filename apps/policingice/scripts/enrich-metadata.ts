@@ -22,8 +22,8 @@ import { generateText } from "ai";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-const { db } = await import("../src/db/index");
-const schema = await import("../src/db/schema");
+const { db } = await import("../src/db/drizzle-client");
+const schema = await import("../src/db/drizzle-schema");
 
 const { values: args } = parseArgs({
   options: {

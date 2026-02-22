@@ -4,9 +4,9 @@ import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { desc, eq, inArray, isNull } from "drizzle-orm";
 
-import type { IncidentStatus } from "@/db/schema";
-import { db } from "@/db/index";
-import { incidents, videos } from "@/db/schema";
+import type { IncidentStatus } from "@/db/drizzle-schema";
+import { db } from "@/db/drizzle-client";
+import { incidents, videos } from "@/db/drizzle-schema";
 import { auth } from "@/lib/auth";
 import {
   detectPlatform,

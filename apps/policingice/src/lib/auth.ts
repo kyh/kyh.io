@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
 
-import { db } from "@/db/index";
+import { db } from "@/db/drizzle-client";
 
 const baseURL =
   process.env.VERCEL_ENV === "production"

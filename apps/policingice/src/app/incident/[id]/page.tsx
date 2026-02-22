@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 import { desc, sql } from "drizzle-orm";
 
-import { db } from "@/db/index";
-import { incidents } from "@/db/schema";
+import { db } from "@/db/drizzle-client";
+import { incidents } from "@/db/drizzle-schema";
 
 import { IncidentDetail } from "./incident-detail";
 

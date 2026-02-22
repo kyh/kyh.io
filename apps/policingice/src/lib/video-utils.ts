@@ -1,4 +1,4 @@
-import type { VideoPlatform } from "@/db/schema";
+import type { VideoPlatform } from "@/db/drizzle-schema";
 
 export function detectPlatform(url: string): VideoPlatform {
   const u = url.toLowerCase();

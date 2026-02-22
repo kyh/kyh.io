@@ -12,8 +12,8 @@
  */
 import { eq } from "drizzle-orm";
 
-import { db } from "../src/db";
-import { user } from "../src/db/schema";
+import { db } from "../src/db/drizzle-client";
+import { user } from "../src/db/drizzle-schema";
 
 const email = process.argv[2];
 

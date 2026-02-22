@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import type { VideoPlatform } from "@/db/schema";
+import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useKeyboardShortcuts } from "./keyboard-shortcuts-provider";
 import { VideoEmbed } from "./video-embed";
 

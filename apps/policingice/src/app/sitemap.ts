@@ -4,7 +4,7 @@ import type { MetadataRoute } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import { desc } from "drizzle-orm";
 
-import { db } from "@/db/index";
+import { db } from "@/db/drizzle-client";
 
 const siteUrl = "https://policingice.com";
 

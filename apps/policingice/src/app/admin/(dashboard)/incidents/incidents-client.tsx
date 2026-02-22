@@ -5,7 +5,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
-import type { IncidentStatus, VideoPlatform } from "@/db/schema";
+import type { IncidentStatus, VideoPlatform } from "@/db/drizzle-schema";
 import { useToast } from "@/components/toast";
 import { VideoCarousel } from "@/components/video-carousel";
 import {
