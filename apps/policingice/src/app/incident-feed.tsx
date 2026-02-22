@@ -29,7 +29,7 @@ import {
   submitVote,
   togglePinIncident,
   updateIncidentDetails,
-} from "@/actions/incidents";
+} from "@/lib/incident-action";
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 

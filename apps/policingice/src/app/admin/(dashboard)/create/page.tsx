@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useToast } from "@/components/toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
-import { bulkCreateIncidents } from "@/actions/admin";
+import { bulkCreateIncidents } from "@/lib/admin-action";
 
 const AdminCreate = () => {
   const router = useRouter();

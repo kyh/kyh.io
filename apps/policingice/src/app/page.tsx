@@ -1,23 +1,27 @@
 import { Suspense } from "react";
 
-import { getAdminUser } from "@/lib/admin-auth";
-import { getUserVotes } from "@/actions/incidents";
-import { getIncidents } from "@/queries/incidents";
+import { headers } from "next/headers";
+
+import { auth } from "@/lib/auth";
+import { getUserVotes } from "@/lib/incident-action";
+import { getIncidents } from "@/lib/incident-query";
 
 import { IncidentFeed } from "./incident-feed";
 
 const IncidentFeedLoader = async () => {
   const { incidents, nextOffset } = await getIncidents({});
-  const [admin, userVotes] = await Promise.all([
-    getAdminUser(),
+  const headersList = await headers();
+  const [session, userVotes] = await Promise.all([
+    auth.api.getSession({ headers: headersList }),
     getUserVotes({ incidentIds: incidents.map((i) => i.id) }),
   ]);
+  const isAdmin = !!session?.user && !session.user.isAnonymous;
   return (
     <IncidentFeed
       initialIncidents={incidents}
       initialNextOffset={nextOffset}
       initialUserVotes={userVotes}
-      isAdmin={!!admin}
+      isAdmin={isAdmin}
     />
   );
 };

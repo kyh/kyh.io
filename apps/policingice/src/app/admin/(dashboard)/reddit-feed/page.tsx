@@ -1,4 +1,4 @@
-import { getFeedPosts } from "@/actions/admin";
+import { getFeedPosts } from "@/lib/admin-action";
 
 import { RedditFeedClient } from "./reddit-feed-client";
 

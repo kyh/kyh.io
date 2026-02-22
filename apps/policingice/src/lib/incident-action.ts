@@ -9,7 +9,7 @@ import { client, db } from "@/db/index";
 import { incidents, videos, votes } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
-import { getIncidents as getCachedIncidents } from "@/queries/incidents";
+import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
 
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
@@ -439,9 +439,10 @@ export async function updateIncidentDetails(data: {
 }
 
 export async function hideIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
-  const admin = await getAdminUser();
-  if (!admin) return { success: false, error: "Unauthorized" };
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user || session.user.isAnonymous)
+    return { success: false, error: "Unauthorized" };
 
   await db
     .update(incidents)
@@ -452,9 +453,10 @@ export async function hideIncident(data: { incidentId: number }) {
 }
 
 export async function deleteIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
-  const admin = await getAdminUser();
-  if (!admin) return { success: false, error: "Unauthorized" };
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user || session.user.isAnonymous)
+    return { success: false, error: "Unauthorized" };
 
   await db.delete(incidents).where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
@@ -462,9 +464,10 @@ export async function deleteIncident(data: { incidentId: number }) {
 }
 
 export async function togglePinIncident(data: { incidentId: number }) {
-  const { getAdminUser } = await import("@/lib/admin-auth");
-  const admin = await getAdminUser();
-  if (!admin) return { success: false, error: "Unauthorized" };
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user || session.user.isAnonymous)
+    return { success: false, error: "Unauthorized" };
 
   const incident = await db.query.incidents.findFirst({
     where: eq(incidents.id, data.incidentId),

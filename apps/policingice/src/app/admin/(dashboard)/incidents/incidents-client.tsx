@@ -16,9 +16,9 @@ import {
   toggleIncidentStatus,
   updateIncident,
   updateVideo,
-} from "@/actions/admin";
+} from "@/lib/admin-action";
 
-import type { getAllIncidents } from "@/actions/admin";
+import type { getAllIncidents } from "@/lib/admin-action";
 
 type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
 

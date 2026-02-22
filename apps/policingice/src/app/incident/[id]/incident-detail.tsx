@@ -15,9 +15,9 @@ import {
   getUserVote,
   reportIncident,
   submitVote,
-} from "@/actions/incidents";
+} from "@/lib/incident-action";
 
-import type { getIncidents } from "@/actions/incidents";
+import type { getIncidents } from "@/lib/incident-action";
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 

@@ -1,6 +1,6 @@
 import {
   getAllIncidents,
-} from "@/actions/admin";
+} from "@/lib/admin-action";
 
 import { AdminIncidentsClient } from "./incidents-client";
 

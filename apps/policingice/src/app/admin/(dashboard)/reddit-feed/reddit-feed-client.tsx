@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 
 import { useToast } from "@/components/toast";
-import { createFromFeed } from "@/actions/admin";
+import { createFromFeed } from "@/lib/admin-action";
 
 type FeedPost = {
   id: string;

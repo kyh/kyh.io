@@ -1,15 +1,17 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-import { getAdminUser } from "@/lib/admin-auth";
+import { auth } from "@/lib/auth";
 
 const AdminLayout = async ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const user = await getAdminUser();
-  if (!user) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user || session.user.isAnonymous) {
     redirect("/admin/login");
   }
 
