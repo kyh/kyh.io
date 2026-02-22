@@ -11,6 +11,19 @@ import { auth } from "@/lib/auth";
 import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 
+async function getSession() {
+  const headersList = await headers();
+  return auth.api.getSession({ headers: headersList });
+}
+
+async function requireAdmin() {
+  const session = await getSession();
+  if (!session?.user || session.user.isAnonymous) {
+    throw new Error("Unauthorized");
+  }
+  return session.user;
+}
+
 // Parse date string as local time (not UTC)
 function parseLocalDate(dateStr: string): Date {
   const parts = dateStr.split("-").map(Number);
@@ -222,8 +235,7 @@ export async function getUserVotes(data: {
 
   let userId = data.userId;
   if (!userId) {
-    const headersList = await headers();
-    const session = await auth.api.getSession({ headers: headersList });
+    const session = await getSession();
     if (!session?.user.id) return {};
     userId = session.user.id;
   }
@@ -268,8 +280,7 @@ export async function createIncident(data: {
   incidentDate?: string;
   videoUrls: string[];
 }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const session = await getSession();
   if (!session?.user.id) return { incident: null, error: "Unauthorized" };
 
   // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
@@ -331,9 +342,7 @@ export async function submitVote(data: {
   incidentId: number;
   type: "unjustified" | "justified";
 }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-
+  const session = await getSession();
   if (!session?.user.id) {
     return { success: false, error: "No session" };
   }
@@ -413,8 +422,7 @@ export async function addVideoToIncident(data: {
   incidentId: number;
   url: string;
 }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const session = await getSession();
   if (!session?.user.id) return { success: false, error: "Unauthorized" };
 
   const resolvedUrl = await resolveVideoUrl(data.url);
@@ -434,8 +442,7 @@ export async function updateIncidentDetails(data: {
   description?: string;
   incidentDate?: string;
 }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const session = await getSession();
   if (!session?.user.id) return { success: false, error: "Unauthorized" };
 
   await db
@@ -453,10 +460,7 @@ export async function updateIncidentDetails(data: {
 }
 
 export async function hideIncident(data: { incidentId: number }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user || session.user.isAnonymous)
-    return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   await db
     .update(incidents)
@@ -467,10 +471,7 @@ export async function hideIncident(data: { incidentId: number }) {
 }
 
 export async function deleteIncident(data: { incidentId: number }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user || session.user.isAnonymous)
-    return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   await db.delete(incidents).where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
@@ -478,10 +479,7 @@ export async function deleteIncident(data: { incidentId: number }) {
 }
 
 export async function togglePinIncident(data: { incidentId: number }) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
-  if (!session?.user || session.user.isAnonymous)
-    return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({
     where: eq(incidents.id, data.incidentId),

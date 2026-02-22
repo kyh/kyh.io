@@ -1,21 +1,30 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import { headers } from "next/headers";
 import { desc, eq, inArray, isNull } from "drizzle-orm";
 
 import type { IncidentStatus } from "@/db/schema";
 import { db } from "@/db/index";
 import { incidents, videos } from "@/db/schema";
-import { getAdminUser } from "@/lib/admin-auth";
+import { auth } from "@/lib/auth";
 import {
   detectPlatform,
   isValidVideoUrl,
   resolveVideoUrl,
 } from "@/lib/video-utils";
 
+async function requireAdmin() {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  if (!session?.user || session.user.isAnonymous) {
+    throw new Error("Unauthorized");
+  }
+  return session.user;
+}
+
 export async function getAllIncidents() {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const results = await db.query.incidents.findMany({
     with: { videos: true },
@@ -32,8 +41,7 @@ export async function updateIncident(data: {
   incidentDate?: string;
   status?: IncidentStatus;
 }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   function parseLocalDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split("-").map(Number);
@@ -59,8 +67,7 @@ export async function toggleIncidentStatus(data: {
   id: number;
   currentStatus: IncidentStatus;
 }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
   await db
@@ -75,8 +82,7 @@ export async function toggleIncidentPinned(data: {
   id: number;
   currentPinned: boolean;
 }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const newPinned = !data.currentPinned;
   await db
@@ -88,8 +94,7 @@ export async function toggleIncidentPinned(data: {
 }
 
 export async function adminDeleteIncident(data: { id: number }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   await db.delete(incidents).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
@@ -97,8 +102,7 @@ export async function adminDeleteIncident(data: { id: number }) {
 }
 
 export async function addVideo(data: { incidentId: number; url: string }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const platform = detectPlatform(data.url);
   await db.insert(videos).values({
@@ -111,8 +115,7 @@ export async function addVideo(data: { incidentId: number; url: string }) {
 }
 
 export async function updateVideo(data: { id: number; url: string }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const platform = detectPlatform(data.url);
   await db
@@ -124,8 +127,7 @@ export async function updateVideo(data: { id: number; url: string }) {
 }
 
 export async function deleteVideo(data: { id: number }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   await db.delete(videos).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
@@ -139,8 +141,7 @@ export async function bulkCreateIncidents(data: {
   description?: string;
   incidentDate?: string;
 }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const validUrls = data.urls.filter((url) => isValidVideoUrl(url));
   if (validUrls.length === 0) {
@@ -211,8 +212,7 @@ export async function bulkCreateIncidents(data: {
 }
 
 export async function getFeedPosts() {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const res = await fetch("https://www.reddit.com/r/ICE_Watch.rss", {
     headers: {
@@ -241,8 +241,7 @@ export async function createFromFeed(data: {
   title: string;
   published: string;
 }) {
-  const admin = await getAdminUser();
-  if (!admin) throw new Error("Unauthorized");
+  await requireAdmin();
 
   const existing = await db.query.videos.findFirst({
     where: (v, { eq }) => eq(v.url, data.url),
