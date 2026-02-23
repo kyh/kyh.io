@@ -1,3 +1,19 @@
+#!/usr/bin/env npx tsx
+/**
+ * Seed Stonksville Database
+ *
+ * Fetches company profiles and revenue segment data from Financial Modeling Prep
+ * (FMP) API, then upserts companies and creates daily puzzles.
+ *
+ * - Companies: upserted by ticker (name, sector, marketCap, employees, ipoYear)
+ * - Puzzles: one per day, deterministic date offset from BASE_DATE by ticker index
+ *   Skips tickers with <2 revenue segments.
+ *
+ * Requires FMP_API_KEY env var.
+ *
+ * Usage:
+ *   pnpm with-env tsx scripts/seed.ts
+ */
 import { eq } from "drizzle-orm";
 
 import { db } from "../src/db/drizzle-client";

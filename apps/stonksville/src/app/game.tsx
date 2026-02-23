@@ -5,6 +5,7 @@ import { useReducer, useCallback, useEffect, useRef } from "react";
 import type { GuessFeedback } from "@/db/zod-schema";
 import type { PuzzleData, GameState, GameStatus } from "@/lib/puzzle-query";
 import type { CompanyPickerItem } from "@/lib/companies-query";
+import { authClient } from "@/lib/auth-client";
 import { submitGuess } from "@/lib/puzzle-action";
 import { recordResult } from "@/lib/stats-action";
 
@@ -53,6 +54,12 @@ export const Game = ({ puzzle, companies, initialState }: GameProps) => {
       const current = stateRef.current;
       if (current.status !== "playing") return;
       if (current.guesses.some((g) => g.guessedCompanyId === companyId)) return;
+
+      // Ensure user has a session (creates anonymous if needed)
+      const session = await authClient.getSession();
+      if (!session.data) {
+        await authClient.signIn.anonymous();
+      }
 
       const result = await submitGuess(
         puzzle.id,

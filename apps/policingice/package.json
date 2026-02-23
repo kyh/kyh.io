@@ -1,12 +1,11 @@
 {
-  "name": "policingice",
+  "name": "@repo/policingice",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",
     "check": "prettier --write . && eslint --fix",
     "db:push": "pnpm with-env drizzle-kit push",
-    "db:reset": "pnpm with-env npx tsx scripts/db-reset.ts",
     "db:studio": "pnpm with-env drizzle-kit studio",
     "dev": "pnpm with-env next dev --turbopack -p 3000",
     "format": "prettier --check . --ignore-path ../../.gitignore",

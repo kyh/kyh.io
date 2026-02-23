@@ -83,7 +83,7 @@ export const RedditFeedClient = ({
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex cursor-pointer items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
           <RefreshCw
             className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -93,12 +93,12 @@ export const RedditFeedClient = ({
       </div>
 
       {posts.length === 0 ? (
-        <p className="text-sm text-neutral-500">No posts found.</p>
+        <p className="text-sm text-muted-foreground">No posts found.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 text-left text-neutral-500">
+              <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 pr-3 font-normal">Title</th>
                 <th className="py-2 pr-3 font-normal">Date</th>
                 <th className="py-2 font-normal">Actions</th>
@@ -110,7 +110,7 @@ export const RedditFeedClient = ({
                 const isAdded = existingSet.has(normalizeUrl(post.link));
 
                 return (
-                  <tr key={post.id} className="border-b border-neutral-100">
+                  <tr key={post.id} className="border-b border-border">
                     <td className="py-3 pr-3">
                       <a
                         href={post.link}
@@ -124,12 +124,12 @@ export const RedditFeedClient = ({
                           : post.title}
                       </a>
                     </td>
-                    <td className="py-3 pr-3 text-neutral-500">
+                    <td className="py-3 pr-3 text-muted-foreground">
                       {formatDate(post.published)}
                     </td>
                     <td className="py-3">
                       {isAdded ? (
-                        <span className="text-neutral-400">added</span>
+                        <span className="text-muted-foreground">added</span>
                       ) : (
                         <button
                           onClick={() => handleAdd(post)}

@@ -344,7 +344,7 @@ export const IncidentFeed = ({
     <KeyboardShortcutsProvider>
       <main
         id="main-content"
-        className="min-h-screen bg-white px-4 py-8 sm:px-6"
+        className="min-h-screen bg-background px-4 py-8 sm:px-6"
       >
         <div className="max-w-xl">
           <header className="mb-12">
@@ -352,54 +352,54 @@ export const IncidentFeed = ({
               <h1 className="text-base font-normal">Policing ICE</h1>
               <Popover.Root open={isSearchOpen} onOpenChange={setIsSearchOpen}>
                 <Popover.Trigger
-                  className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                  className="cursor-pointer text-muted-foreground hover:text-foreground"
                   aria-label="Search incidents"
                 >
                   <Search className="h-4 w-4" />
                 </Popover.Trigger>
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
-                    <Popover.Popup className="z-20 w-64 rounded border border-neutral-200 bg-white p-4">
+                    <Popover.Popup className="z-20 w-64 rounded border border-border bg-background p-4">
                       <Form
                         ref={searchFormRef}
                         onSubmit={handleSearch}
                         className="space-y-3"
                       >
                         <Field.Root name="q">
-                          <Field.Label className="mb-1 block text-xs text-neutral-500">
+                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
                             Location or description
                           </Field.Label>
                           <Field.Control
                             type="text"
                             defaultValue={q ?? ""}
                             placeholder="Minneapolis, arrest..."
-                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                           />
                         </Field.Root>
                         <Field.Root name="start">
-                          <Field.Label className="mb-1 block text-xs text-neutral-500">
+                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
                             From date
                           </Field.Label>
                           <Field.Control
                             type="date"
                             defaultValue={start ?? ""}
-                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                           />
                         </Field.Root>
                         <Field.Root name="end">
-                          <Field.Label className="mb-1 block text-xs text-neutral-500">
+                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
                             To date
                           </Field.Label>
                           <Field.Control
                             type="date"
                             defaultValue={end ?? ""}
-                            className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                           />
                         </Field.Root>
                         <button
                           type="submit"
                           disabled={isSearching}
-                          className="w-full cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
+                          className="w-full cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
                         >
                           {isSearching ? "Searching..." : "Search"}
                         </button>
@@ -409,11 +409,11 @@ export const IncidentFeed = ({
                 </Popover.Portal>
               </Popover.Root>
             </div>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Documenting incidents of ICE overreach.{" "}
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="cursor-pointer text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
+                className="cursor-pointer text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 aria-label="Submit a new incident"
               >
                 Submit
@@ -423,13 +423,13 @@ export const IncidentFeed = ({
 
           {searchResults !== null && (
             <div className="mb-6 flex items-center gap-2 text-sm">
-              <span className="text-neutral-500">
+              <span className="text-muted-foreground">
                 {searchResults.length} result
                 {searchResults.length !== 1 ? "s" : ""}
               </span>
               <button
                 onClick={clearSearch}
-                className="inline-flex cursor-pointer items-center gap-1 text-neutral-400 hover:text-neutral-900"
+                className="inline-flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
                 Clear
@@ -438,13 +438,13 @@ export const IncidentFeed = ({
           )}
 
           {(searchResults ?? allIncidents).length === 0 ? (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-muted-foreground">
               {searchResults !== null
                 ? "No results found."
                 : "No incidents yet."}
             </p>
           ) : (
-            <div className="divide-y divide-neutral-200">
+            <div className="divide-y divide-border">
               {(searchResults ?? allIncidents).map((incident) => {
                 const unjustifiedCount = getVoteCount(incident, "unjustified");
                 const justifiedCount = getVoteCount(incident, "justified");
@@ -466,7 +466,7 @@ export const IncidentFeed = ({
                       headerRight={
                         <Menu.Root>
                           <Menu.Trigger
-                            className="cursor-pointer text-neutral-400 hover:text-neutral-900"
+                            className="cursor-pointer text-muted-foreground hover:text-foreground"
                             aria-label="Incident actions"
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -477,9 +477,9 @@ export const IncidentFeed = ({
                               align="end"
                               sideOffset={6}
                             >
-                              <Menu.Popup className="z-10 min-w-32 rounded border border-neutral-200 bg-white py-1 text-sm">
+                              <Menu.Popup className="z-10 min-w-32 rounded border border-border bg-background py-1 text-sm">
                                 <Menu.Item
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
                                   render={
                                     <Link
                                       href={`/incident/${incident.id}`}
@@ -489,34 +489,34 @@ export const IncidentFeed = ({
                                   View
                                 </Menu.Item>
                                 <Menu.Item
-                                  className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
                                   onClick={() => setEditingIncident(incident)}
                                 >
                                   Edit
                                 </Menu.Item>
                                 <Menu.Item
-                                  className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                  className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
                                   onClick={() => handleReport(incident.id)}
                                 >
                                   Report
                                 </Menu.Item>
                                 {isAdmin && (
                                   <>
-                                    <Menu.Separator className="my-1 border-t border-neutral-200" />
+                                    <Menu.Separator className="my-1 border-t border-border" />
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
                                       onClick={() => handlePin(incident.id)}
                                     >
                                       {incident.pinned ? "Unpin" : "Pin"}
                                     </Menu.Item>
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
                                       onClick={() => handleHide(incident.id)}
                                     >
                                       Hide
                                     </Menu.Item>
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left text-red-600 hover:bg-neutral-50 data-[highlighted]:bg-neutral-50"
+                                      className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
                                       onClick={() => handleDelete(incident.id)}
                                     >
                                       Delete
@@ -538,10 +538,10 @@ export const IncidentFeed = ({
           {searchResults === null && (
             <div ref={loadMoreRef} className="py-8">
               {isLoading && (
-                <span className="text-sm text-neutral-400">Loading...</span>
+                <span className="text-sm text-muted-foreground">Loading...</span>
               )}
               {!nextOffset && allIncidents.length > 0 && (
-                <span className="text-sm text-neutral-300">&mdash;</span>
+                <span className="text-sm text-muted-foreground/40">&mdash;</span>
               )}
             </div>
           )}
@@ -614,7 +614,7 @@ const LazyIncidentCard = ({
       {isVisible ? (
         children
       ) : (
-        <div className="h-[300px] animate-pulse bg-neutral-50" />
+        <div className="h-[300px] animate-pulse bg-muted" />
       )}
     </article>
   );

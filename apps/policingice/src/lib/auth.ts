@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -22,3 +24,10 @@ export const auth = betterAuth({
   },
   plugins: [anonymous(), nextCookies()],
 });
+
+export type Auth = typeof auth;
+export type Session = Auth["$Infer"]["Session"];
+
+export const getSession = cache(async () =>
+  auth.api.getSession({ headers: await headers() }),
+);

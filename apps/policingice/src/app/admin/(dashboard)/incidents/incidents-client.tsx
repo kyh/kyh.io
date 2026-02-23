@@ -91,7 +91,7 @@ const IncidentEditRow = ({
   const formId = `edit-${incident.id}`;
 
   return (
-    <tr className="border-b border-neutral-100">
+    <tr className="border-b border-border">
       <td className="py-3 pr-3">#{incident.id}</td>
       <td className="py-3 pr-3">
         <input
@@ -99,7 +99,7 @@ const IncidentEditRow = ({
           name="location"
           form={formId}
           defaultValue={incident.location ?? ""}
-          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+          className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
           placeholder="Location"
         />
       </td>
@@ -109,7 +109,7 @@ const IncidentEditRow = ({
           name="description"
           form={formId}
           defaultValue={incident.description ?? ""}
-          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+          className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
           placeholder="Description"
         />
       </td>
@@ -123,7 +123,7 @@ const IncidentEditRow = ({
               ? new Date(incident.incidentDate).toISOString().split("T")[0]
               : ""
           }
-          className="border-b border-neutral-300 bg-transparent py-1 text-sm outline-none"
+          className="border-b border-input bg-transparent py-1 text-sm outline-none"
         />
       </td>
       <td className="py-3 pr-3">
@@ -131,7 +131,7 @@ const IncidentEditRow = ({
           className={
             incident.status === "approved"
               ? "text-green-600"
-              : "text-neutral-400"
+              : "text-muted-foreground"
           }
         >
           {incident.status}
@@ -141,7 +141,7 @@ const IncidentEditRow = ({
         {incident.pinned ? (
           <span className="text-blue-600">pinned</span>
         ) : (
-          <span className="text-neutral-300">—</span>
+          <span className="text-muted-foreground/40">—</span>
         )}
       </td>
       <td className="py-3 pr-3">
@@ -159,7 +159,7 @@ const IncidentEditRow = ({
               ref={newVideoRef}
               type="text"
               placeholder="Add video URL"
-              className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
+              className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -170,36 +170,36 @@ const IncidentEditRow = ({
             <button
               type="button"
               onClick={handleAddVideo}
-              className="cursor-pointer text-xs text-neutral-400 hover:text-neutral-900"
+              className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
             >
               +
             </button>
           </div>
         </div>
       </td>
-      <td className="py-3 pr-3 text-neutral-400">
+      <td className="py-3 pr-3 text-muted-foreground">
         {incident.unjustifiedCount + incident.justifiedCount}
       </td>
       <td className="py-3 pr-3">
         {incident.reportCount > 0 ? (
-          <span className="text-red-500">{incident.reportCount}</span>
+          <span className="text-destructive">{incident.reportCount}</span>
         ) : (
-          <span className="text-neutral-300">0</span>
+          <span className="text-muted-foreground/40">0</span>
         )}
       </td>
-      <td className="py-3 text-neutral-400">
+      <td className="py-3 text-muted-foreground">
         <Form id={formId} onSubmit={handleSubmit} className="hidden" />
         <button
           type="submit"
           form={formId}
-          className="cursor-pointer hover:text-neutral-900"
+          className="cursor-pointer hover:text-foreground"
         >
           save
         </button>
         {" · "}
         <button
           onClick={onCancel}
-          className="cursor-pointer hover:text-neutral-900"
+          className="cursor-pointer hover:text-foreground"
         >
           cancel
         </button>
@@ -221,12 +221,12 @@ const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
         type="text"
         defaultValue={video.url}
         onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
-        className="w-48 border-b border-neutral-300 bg-transparent py-1 text-xs outline-none"
+        className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
       />
       <button
         type="button"
         onClick={() => onDelete(video.id)}
-        className="cursor-pointer text-xs text-red-400 hover:text-red-600"
+        className="cursor-pointer text-xs text-destructive hover:text-destructive"
       >
         ×
       </button>
@@ -277,12 +277,12 @@ export const AdminIncidentsClient = ({
       </h2>
 
       {initialIncidents.length === 0 ? (
-        <p className="text-sm text-neutral-500">No incidents.</p>
+        <p className="text-sm text-muted-foreground">No incidents.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 text-left text-neutral-500">
+              <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 pr-3 font-normal">ID</th>
                 <th className="py-2 pr-3 font-normal">Location</th>
                 <th className="py-2 pr-3 font-normal">Description</th>
@@ -305,7 +305,7 @@ export const AdminIncidentsClient = ({
                     onSaved={() => setEditingId(null)}
                   />
                 ) : (
-                  <tr key={incident.id} className="border-b border-neutral-100">
+                  <tr key={incident.id} className="border-b border-border">
                     <td className="py-3 pr-3">#{incident.id}</td>
                     <td className="py-3 pr-3">{incident.location ?? "—"}</td>
                     <td
@@ -327,7 +327,7 @@ export const AdminIncidentsClient = ({
                         {incident.status === "approved" ? (
                           <span className="text-green-600">approved</span>
                         ) : (
-                          <span className="text-neutral-400">hidden</span>
+                          <span className="text-muted-foreground">hidden</span>
                         )}
                       </button>
                     </td>
@@ -341,41 +341,41 @@ export const AdminIncidentsClient = ({
                         {incident.pinned ? (
                           <span className="text-blue-600">pinned</span>
                         ) : (
-                          <span className="text-neutral-300">—</span>
+                          <span className="text-muted-foreground/40">—</span>
                         )}
                       </button>
                     </td>
                     <td className="py-3 pr-3">{incident.videos.length}</td>
-                    <td className="py-3 pr-3 text-neutral-400">
+                    <td className="py-3 pr-3 text-muted-foreground">
                       {incident.unjustifiedCount + incident.justifiedCount}
                     </td>
                     <td className="py-3 pr-3">
                       {incident.reportCount > 0 ? (
-                        <span className="text-red-500">
+                        <span className="text-destructive">
                           {incident.reportCount}
                         </span>
                       ) : (
-                        <span className="text-neutral-300">0</span>
+                        <span className="text-muted-foreground/40">0</span>
                       )}
                     </td>
-                    <td className="py-3 text-neutral-400">
+                    <td className="py-3 text-muted-foreground">
                       <button
                         onClick={() => setPreviewingIncident(incident)}
-                        className="cursor-pointer hover:text-neutral-900"
+                        className="cursor-pointer hover:text-foreground"
                       >
                         preview
                       </button>
                       {" · "}
                       <button
                         onClick={() => setEditingId(incident.id)}
-                        className="cursor-pointer hover:text-neutral-900"
+                        className="cursor-pointer hover:text-foreground"
                       >
                         edit
                       </button>
                       {" · "}
                       <button
                         onClick={() => handleDelete(incident.id)}
-                        className="cursor-pointer hover:text-red-600"
+                        className="cursor-pointer hover:text-destructive"
                       >
                         delete
                       </button>
@@ -394,14 +394,14 @@ export const AdminIncidentsClient = ({
       >
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-6">
+          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-border bg-background p-6">
             <Dialog.Title className="sr-only">Preview incident</Dialog.Title>
-            <Dialog.Close className="absolute top-4 right-4 cursor-pointer text-neutral-400 hover:text-neutral-900">
+            <Dialog.Close className="absolute top-4 right-4 cursor-pointer text-muted-foreground hover:text-foreground">
               ×
             </Dialog.Close>
             {previewingIncident && (
               <>
-                <div className="mb-4 text-sm text-neutral-500">
+                <div className="mb-4 text-sm text-muted-foreground">
                   #{previewingIncident.id}
                   {previewingIncident.location &&
                     ` · ${previewingIncident.location}`}

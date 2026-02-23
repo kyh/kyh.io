@@ -104,7 +104,7 @@ export default async function SharePage({
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <span className="text-sm text-neutral-400">Redirecting...</span>
+          <span className="text-sm text-muted-foreground">Redirecting...</span>
         </div>
       }
     >

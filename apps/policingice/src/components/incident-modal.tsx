@@ -180,7 +180,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
-        <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 bg-white p-6">
+        <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
           <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             {/* Video URLs - Create mode */}
@@ -199,14 +199,14 @@ export const IncidentModal = (props: IncidentModalProps) => {
                             validateUrl(key, e.target.value)
                           }
                           placeholder="https://x.com/..."
-                          className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                          className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                           aria-label={`Video URL ${index + 1}`}
                         />
                         {inputKeys.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeVideoUrl(key)}
-                            className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
+                            className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
                             aria-label={`Remove video URL ${index + 1}`}
                           >
                             ×
@@ -214,7 +214,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                         )}
                       </div>
                       {urlErrors[key] && (
-                        <p className="mt-1 text-xs text-red-600">
+                        <p className="mt-1 text-xs text-destructive">
                           {urlErrors[key]}
                         </p>
                       )}
@@ -224,7 +224,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                 <button
                   type="button"
                   onClick={addVideoUrl}
-                  className="mt-2 cursor-pointer text-sm text-neutral-400 hover:text-neutral-900"
+                  className="mt-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
                 >
                   + Add another
                 </button>
@@ -235,14 +235,14 @@ export const IncidentModal = (props: IncidentModalProps) => {
             {mode === "edit" && (
               <>
                 <div>
-                  <label className="mb-2 block text-sm text-neutral-500">
+                  <label className="mb-2 block text-sm text-muted-foreground">
                     Videos ({props.incident.videos.length})
                   </label>
                   <div className="space-y-1">
                     {props.incident.videos.map((video) => (
                       <div
                         key={video.id}
-                        className="truncate text-xs text-neutral-400"
+                        className="truncate text-xs text-muted-foreground"
                       >
                         {video.platform}: {video.url}
                       </div>
@@ -259,7 +259,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                     type="url"
                     onChange={() => setVideoError("")}
                     placeholder="https://x.com/..."
-                    className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                    className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -268,13 +268,13 @@ export const IncidentModal = (props: IncidentModalProps) => {
                     }}
                   />
                   {videoError && (
-                    <p className="mt-1 text-xs text-red-600">{videoError}</p>
+                    <p className="mt-1 text-xs text-destructive">{videoError}</p>
                   )}
                   <button
                     type="button"
                     onClick={handleAddVideo}
                     disabled={isSubmitting}
-                    className="mt-2 cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+                    className="mt-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
                   >
                     + Add
                   </button>
@@ -293,7 +293,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                   mode === "edit" ? (props.incident.location ?? "") : ""
                 }
                 placeholder="Minneapolis, MN"
-                className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
               />
             </Field.Root>
 
@@ -310,7 +310,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                         .split("T")[0]
                     : ""
                 }
-                className="w-full border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
               />
             </Field.Root>
 
@@ -324,7 +324,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                   mode === "edit" ? (props.incident.description ?? "") : ""
                 }
                 placeholder="Brief description of what happened..."
-                className="w-full resize-none border-b border-neutral-300 bg-transparent py-1 text-sm focus:border-neutral-900 focus:outline-none"
+                className="w-full resize-none border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
               />
             </Field.Root>
 
@@ -332,11 +332,11 @@ export const IncidentModal = (props: IncidentModalProps) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-50"
+                className="cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
               >
                 {isSubmitting ? submittingText : submitText}
               </button>
-              <Dialog.Close className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-900">
+              <Dialog.Close className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                 Cancel
               </Dialog.Close>
             </div>

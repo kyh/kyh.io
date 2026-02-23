@@ -3,6 +3,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
+import { useTheme } from "@/components/theme";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
 
 type VideoEmbedProps = {
@@ -33,7 +34,7 @@ const FallbackLink = ({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block border border-neutral-200 p-4 text-sm text-neutral-500 hover:border-neutral-400 hover:text-neutral-900"
+      className="block border border-border p-4 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground"
     >
       open on {platformNames[platform]}
     </a>
@@ -60,6 +61,7 @@ const LazyTweet = lazy(() =>
 
 const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mounting guard for SSR compatibility
@@ -67,17 +69,17 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   }, []);
 
   if (!mounted) {
-    return <div className="h-[200px] animate-pulse bg-neutral-100" />;
+    return <div className="h-[200px] animate-pulse bg-muted" />;
   }
 
   const TweetNotFound = () => (
-    <div className="pointer-events-auto border border-neutral-200 p-4 text-sm text-neutral-500">
+    <div className="pointer-events-auto border border-border p-4 text-sm text-muted-foreground">
       <p>Tweet not found. X may have blocked embedding this video.</p>
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 inline-block text-neutral-900 underline hover:text-neutral-600"
+        className="mt-2 inline-block text-foreground underline hover:text-muted-foreground"
       >
         Open on X to view
       </a>
@@ -85,9 +87,9 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   );
 
   return (
-    <div className="[&_.react-tweet-theme]:!m-0" data-theme="light">
+    <div className="[&_.react-tweet-theme]:!m-0" data-theme={resolvedTheme ?? "light"}>
       <Suspense
-        fallback={<div className="h-[200px] animate-pulse bg-neutral-100" />}
+        fallback={<div className="h-[200px] animate-pulse bg-muted" />}
       >
         <LazyTweet id={tweetId} components={{ TweetNotFound }} />
       </Suspense>

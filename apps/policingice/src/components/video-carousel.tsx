@@ -104,7 +104,7 @@ export const VideoCarousel = ({
   return (
     <div>
       {(header != null || showNav || headerRight != null) && (
-        <div className="mb-3 flex items-center justify-between text-sm text-neutral-500">
+        <div className="mb-3 flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-3">
             <div>{header}</div>
             {showNav && (
@@ -115,8 +115,8 @@ export const VideoCarousel = ({
                     onClick={() => emblaApi?.scrollTo(index)}
                     className={`h-1.5 rounded-full transition-all ${
                       index === selectedIndex
-                        ? "w-4 bg-neutral-900"
-                        : "w-1.5 bg-neutral-300 hover:bg-neutral-400"
+                        ? "w-4 bg-foreground"
+                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
@@ -124,7 +124,7 @@ export const VideoCarousel = ({
                 <button
                   onClick={() => emblaApi?.scrollPrev()}
                   disabled={!canScrollPrev}
-                  className={`pl-1 ${canScrollPrev ? "text-neutral-500 hover:text-neutral-900" : "text-neutral-300"}`}
+                  className={`pl-1 ${canScrollPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
                   aria-label="Previous"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -132,7 +132,7 @@ export const VideoCarousel = ({
                 <button
                   onClick={() => emblaApi?.scrollNext()}
                   disabled={!canScrollNext}
-                  className={`${canScrollNext ? "text-neutral-500 hover:text-neutral-900" : "text-neutral-300"}`}
+                  className={`${canScrollNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
                   aria-label="Next"
                 >
                   <ChevronRight className="h-4 w-4" />

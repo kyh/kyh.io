@@ -13,7 +13,7 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <h1 className="mb-8 text-base font-normal">Admin Login</h1>
 
@@ -48,9 +48,9 @@ const AdminLogin = () => {
               type="email"
               placeholder="Email"
               required
-              className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+              className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
             />
-            <Field.Error className="mt-1 text-sm text-red-600" />
+            <Field.Error className="mt-1 text-sm text-destructive" />
           </Field.Root>
 
           <Field.Root name="password">
@@ -58,17 +58,17 @@ const AdminLogin = () => {
               type="password"
               placeholder="Password"
               required
-              className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+              className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
             />
-            <Field.Error className="mt-1 text-sm text-red-600" />
+            <Field.Error className="mt-1 text-sm text-destructive" />
           </Field.Root>
 
-          {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+          {errors.form && <p className="text-sm text-destructive">{errors.form}</p>}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full cursor-pointer py-2 text-sm text-neutral-500 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full cursor-pointer py-2 text-sm text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? "Signing in..." : "Sign in"}
           </button>

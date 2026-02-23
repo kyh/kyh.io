@@ -63,14 +63,17 @@ const MetadataSchema = z.object({
   location: z
     .string()
     .nullable()
+    .optional()
     .describe('City and state where incident occurred, e.g. "Minneapolis, MN"'),
   description: z
     .string()
     .nullable()
+    .optional()
     .describe("Brief factual description of what happened in the incident"),
   incidentDate: z
     .string()
     .nullable()
+    .optional()
     .describe(
       "Date the incident occurred in YYYY-MM-DD format. If unknown, use the post/video publish date.",
     ),

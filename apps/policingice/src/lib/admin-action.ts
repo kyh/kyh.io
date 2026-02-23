@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { headers } from "next/headers";
 import { desc, eq, inArray, isNull } from "drizzle-orm";
 
 import type { IncidentStatus } from "@/db/drizzle-schema";
 import { db } from "@/db/drizzle-client";
 import { incidents, videos } from "@/db/drizzle-schema";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import {
   detectPlatform,
   isValidVideoUrl,
@@ -15,8 +14,7 @@ import {
 } from "@/lib/video-utils";
 
 async function requireAdmin() {
-  const headersList = await headers();
-  const session = await auth.api.getSession({ headers: headersList });
+  const session = await getSession();
   if (!session?.user || session.user.isAnonymous) {
     throw new Error("Unauthorized");
   }

@@ -66,7 +66,7 @@ const AdminCreate = () => {
         }}
       >
         <Field.Root name="urls">
-          <Field.Label className="mb-1 block text-sm text-neutral-500">
+          <Field.Label className="mb-1 block text-sm text-muted-foreground">
             Video URLs (one per line)
           </Field.Label>
           <Field.Control
@@ -77,7 +77,7 @@ const AdminCreate = () => {
                 onChange={(e) => setUrlsText(e.target.value)}
               />
             }
-            className="w-full rounded border border-neutral-200 bg-transparent p-2 text-sm outline-none focus:border-neutral-400"
+            className="w-full rounded border border-border bg-transparent p-2 text-sm outline-none focus:border-muted-foreground"
             placeholder="https://x.com/user/status/123&#10;https://youtube.com/watch?v=abc&#10;https://tiktok.com/@user/video/456"
           />
         </Field.Root>
@@ -86,7 +86,7 @@ const AdminCreate = () => {
           <div className="text-sm">
             <span className="text-green-600">{validUrls.length} valid</span>
             {invalidUrls.length > 0 && (
-              <span className="ml-2 text-red-600">
+              <span className="ml-2 text-destructive">
                 {invalidUrls.length} invalid
               </span>
             )}
@@ -119,13 +119,13 @@ const AdminCreate = () => {
             <Field.Control
               type="text"
               placeholder="Location (optional)"
-              className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+              className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
             />
           </Field.Root>
           <Field.Root name="incidentDate">
             <Field.Control
               type="date"
-              className="border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+              className="border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
             />
           </Field.Root>
         </div>
@@ -134,14 +134,14 @@ const AdminCreate = () => {
           <Field.Control
             type="text"
             placeholder="Description (optional)"
-            className="w-full border-b border-neutral-300 bg-transparent py-2 text-sm outline-none focus:border-neutral-900"
+            className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
           />
         </Field.Root>
 
         <button
           type="submit"
           disabled={isSubmitting || validUrls.length === 0}
-          className="cursor-pointer text-sm text-neutral-500 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer text-sm text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting
             ? "Creating..."

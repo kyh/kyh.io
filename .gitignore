@@ -53,3 +53,4 @@ yarn-error.log*
 .temp
 .superset
 apps/policingice/scripts/.enriched-incidents.json
+apps/policingice/scripts/.enriched-sentiment.json

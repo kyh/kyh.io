@@ -105,13 +105,13 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
     <KeyboardShortcutsProvider>
       <main
         id="main-content"
-        className="min-h-screen bg-white px-4 py-8 sm:px-6"
+        className="min-h-screen bg-background px-4 py-8 sm:px-6"
       >
         <div className="max-w-xl">
           <nav className="mb-12" aria-label="Breadcrumb">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-900"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
               aria-label="Back to all incidents"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />

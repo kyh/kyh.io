@@ -11,7 +11,9 @@ import {
   useState,
 } from "react";
 import { Dialog } from "@base-ui/react/dialog";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Moon, Sun } from "lucide-react";
+
+import { useTheme } from "@/components/theme";
 
 type EmblaApi = ReturnType<typeof useEmblaCarousel>[1];
 
@@ -197,21 +199,22 @@ export const KeyboardShortcutsProvider = ({
 
 const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
-    <div className="fixed right-4 bottom-4 hidden text-xs text-neutral-400 sm:block">
+    <div className="fixed right-4 bottom-4 hidden text-xs text-muted-foreground sm:block">
       <div className="mb-2 flex items-center justify-end gap-2">
         <Dialog.Root open={aboutOpen} onOpenChange={setAboutOpen}>
-          <Dialog.Trigger className="cursor-pointer hover:text-neutral-900">
+          <Dialog.Trigger className="cursor-pointer hover:text-foreground">
             About
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
-            <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 bg-white p-6">
+            <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
               <Dialog.Title className="text-base font-medium">
                 About Policing ICE
               </Dialog.Title>
-              <Dialog.Description render={<div />} className="mt-3 text-sm text-neutral-600">
+              <Dialog.Description render={<div />} className="mt-3 text-sm text-muted-foreground">
                 <p className="mb-3">
                   Policing ICE is a community-driven platform for collecting and
                   sharing video documentation of U.S. Immigration and Customs
@@ -238,37 +241,49 @@ const KeyboardShortcutsHelp = () => {
                   </li>
                 </ul>
               </Dialog.Description>
-              <Dialog.Close className="mt-4 cursor-pointer text-sm text-neutral-500 underline underline-offset-2 hover:text-neutral-900">
+              <Dialog.Close className="mt-4 cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground">
                 Close
               </Dialog.Close>
             </Dialog.Popup>
           </Dialog.Portal>
         </Dialog.Root>
-        <span className="text-neutral-300">·</span>
+        <span className="text-muted-foreground/40">·</span>
         <a
           href="https://github.com/kyh/kyh.io/tree/main/apps/policingice"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-neutral-900"
+          className="hover:text-foreground"
         >
           GitHub
         </a>
+        <span className="text-muted-foreground/40">·</span>
+        <button
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="cursor-pointer hover:text-foreground"
+          aria-label="Toggle theme"
+        >
+          {resolvedTheme === "dark" ? (
+            <Sun className="h-3.5 w-3.5" />
+          ) : (
+            <Moon className="h-3.5 w-3.5" />
+          )}
+        </button>
       </div>
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-0.5">
-          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+          <kbd className="inline-flex items-center justify-center rounded border border-border bg-muted p-1">
             <ArrowUp className="h-3 w-3" />
           </kbd>
-          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+          <kbd className="inline-flex items-center justify-center rounded border border-border bg-muted p-1">
             <ArrowDown className="h-3 w-3" />
           </kbd>
           <span className="ml-1">navigate</span>
         </span>
         <span className="flex items-center gap-0.5">
-          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+          <kbd className="inline-flex items-center justify-center rounded border border-border bg-muted p-1">
             <ArrowLeft className="h-3 w-3" />
           </kbd>
-          <kbd className="inline-flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-1">
+          <kbd className="inline-flex items-center justify-center rounded border border-border bg-muted p-1">
             <ArrowRight className="h-3 w-3" />
           </kbd>
           <span className="ml-1">videos</span>

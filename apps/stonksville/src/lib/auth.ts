@@ -41,13 +41,3 @@ export type Session = Auth["$Infer"]["Session"];
 export const getSession = cache(async () =>
   auth.api.getSession({ headers: await headers() }),
 );
-
-/** Returns a userId, creating an anonymous account if needed. */
-export async function ensureUserId(): Promise<string> {
-  const session = await getSession();
-  if (session?.user) return session.user.id;
-
-  const anonResult = await auth.api.signInAnonymous();
-  if (!anonResult) throw new Error("Failed to create anonymous session");
-  return anonResult.user.id;
-}

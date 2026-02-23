@@ -91,7 +91,7 @@ export const IncidentCardContent = ({
         >
           <button
             onClick={() => onVote("unjustified")}
-            className={`cursor-pointer ${userVote === "unjustified" ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-900"}`}
+            className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             aria-pressed={userVote === "unjustified"}
             aria-label={`Vote unjustified, ${unjustifiedCount} votes`}
           >
@@ -99,7 +99,7 @@ export const IncidentCardContent = ({
           </button>
           <button
             onClick={() => onVote("justified")}
-            className={`cursor-pointer ${userVote === "justified" ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-900"}`}
+            className={`cursor-pointer ${userVote === "justified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             aria-pressed={userVote === "justified"}
             aria-label={`Vote justified, ${justifiedCount} votes`}
           >
@@ -111,7 +111,7 @@ export const IncidentCardContent = ({
             href={currentVideo.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-neutral-400 hover:text-neutral-900"
+            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
             aria-label={`Open video on ${currentVideo.platform === "twitter" ? "X" : currentVideo.platform} (opens in new tab)`}
           >
             open on{" "}
@@ -124,7 +124,7 @@ export const IncidentCardContent = ({
             <button
               onClick={onReport}
               disabled={reported}
-              className={`cursor-pointer ${reported ? "text-neutral-300" : "text-neutral-400 hover:text-red-600"}`}
+              className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}
               aria-label={
                 reported
                   ? "This incident has been reported"

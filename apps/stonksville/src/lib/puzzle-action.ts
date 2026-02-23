@@ -4,7 +4,7 @@ import { eq } from "@/db";
 import { db } from "@/db/drizzle-client";
 import { puzzle, guess, company } from "@/db/drizzle-schema";
 
-import { ensureUserId } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import type { GuessFeedback, Direction } from "@/db/zod-schema";
 
 function compareDirection(guessed: number, answer: number): Direction {
@@ -58,7 +58,9 @@ export async function submitGuess(
     isCorrect,
   };
 
-  const userId = await ensureUserId();
+  const session = await getSession();
+  if (!session?.user) return { error: "Not authenticated" };
+  const userId = session.user.id;
 
   await db.insert(guess).values({
     puzzleId,

@@ -10,9 +10,9 @@ function ToastList() {
     <Toast.Root
       key={toast.id}
       toast={toast}
-      className="relative z-[calc(1000-var(--toast-index))] mb-2 w-full max-w-xs origin-bottom rounded border border-neutral-200 bg-white p-3 shadow-lg select-none [transition:transform_0.3s,opacity_0.3s] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0"
+      className="relative z-[calc(1000-var(--toast-index))] mb-2 w-full max-w-xs origin-bottom rounded border border-border bg-background p-3 shadow-lg select-none [transition:transform_0.3s,opacity_0.3s] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0"
     >
-      <Toast.Title className="text-sm text-neutral-900" />
+      <Toast.Title className="text-sm text-foreground" />
     </Toast.Root>
   ));
 }
