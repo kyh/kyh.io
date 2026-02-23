@@ -29,6 +29,11 @@
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --chart-1: hsl(221 83% 75%);
+  --chart-2: hsl(160 55% 72%);
+  --chart-3: hsl(30 90% 76%);
+  --chart-4: hsl(280 60% 78%);
+  --chart-5: hsl(350 80% 78%);
 }
 
 @theme inline {
@@ -70,6 +75,12 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -102,6 +113,11 @@
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --chart-1: hsl(221 70% 75%);
+  --chart-2: hsl(160 50% 70%);
+  --chart-3: hsl(30 80% 75%);
+  --chart-4: hsl(280 55% 77%);
+  --chart-5: hsl(350 70% 77%);
 }
 
 @layer base {
@@ -118,5 +134,17 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .dark body::before {
+    filter: invert(1);
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url("/bg.svg") center / cover no-repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: -1;
   }
 }

@@ -13,18 +13,16 @@ const TodaysGame = async () => {
 
   if (!puzzle) {
     return (
-      <section className="flex flex-1 items-center justify-center py-16">
+      <div className="flex h-dvh items-center justify-center">
         <p className="text-muted-foreground">No puzzle available today.</p>
-      </section>
+      </div>
     );
   }
 
   const initialState = await getGameState(puzzle.id);
 
   return (
-    <section className="flex flex-1 flex-col py-8">
-      <Game puzzle={puzzle} companies={companies} initialState={initialState} />
-    </section>
+    <Game puzzle={puzzle} companies={companies} initialState={initialState} />
   );
 };
 

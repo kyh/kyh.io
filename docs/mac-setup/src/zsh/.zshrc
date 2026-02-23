@@ -64,7 +64,6 @@ pupa() {
     kyh/ai-datagrid
     kyh/kyh.io
     loremllm
-    stonksville
     uicapsule
     vibedgames
     yours-sincerely
