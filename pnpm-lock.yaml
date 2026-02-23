@@ -90,11 +90,11 @@ importers:
   apps/cli:
     dependencies:
       '@opentui/core':
-        specifier: ^0.1.80
-        version: 0.1.80(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)
+        specifier: ^0.1.81
+        version: 0.1.81(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)
       '@opentui/react':
-        specifier: ^0.1.80
-        version: 0.1.80(react-devtools-core@7.0.1)(react@19.2.4)(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.19.0)
+        specifier: ^0.1.81
+        version: 0.1.81(react-devtools-core@7.0.1)(react@19.2.4)(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.19.0)
       react:
         specifier: 'catalog:'
         version: 19.2.4
@@ -294,8 +294,8 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       partysocket:
-        specifier: ^1.1.14
-        version: 1.1.14
+        specifier: ^1.1.15
+        version: 1.1.15(react@19.2.4)
       react:
         specifier: 'catalog:'
         version: 19.2.4
@@ -2408,43 +2408,43 @@ packages:
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
 
-  '@opentui/core-darwin-arm64@0.1.80':
-    resolution: {integrity: sha512-B1KXimgNzwXY9KS/fZqAnUOj1TSmMmfmm6BJKZwXM65S2hYyuHeZ/E7qN6e4Wqr3dVhzMxH06cR92qf30Qs2QA==}
+  '@opentui/core-darwin-arm64@0.1.81':
+    resolution: {integrity: sha512-I3Ry5JbkSQXs2g1me8yYr0v3CUcIIfLHzbWz9WMFla8kQDSa+HOr8IpZbqZDeIFgOVzolAXBmZhg0VJI3bZ7MA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@opentui/core-darwin-x64@0.1.80':
-    resolution: {integrity: sha512-gthbIutmy4VmeOiMacUVTVkB0N/Uc4bLU1Yy2hM23RoJBmfiMgDuf+tpCTYKaJpg4UmWHGP4Q11CNSGCNeNW4g==}
+  '@opentui/core-darwin-x64@0.1.81':
+    resolution: {integrity: sha512-CrtNKu41D6+bOQdUOmDX4Q3hTL6p+sT55wugPzbDq7cdqFZabCeguBAyOlvRl2g2aJ93kmOWW6MXG0bPPklEFg==}
     cpu: [x64]
     os: [darwin]
 
-  '@opentui/core-linux-arm64@0.1.80':
-    resolution: {integrity: sha512-tfGq8BDF144CKKAZP97kXmZYBOKCz2Q1XDTpzz6doxHUy5/4pLc0TnJEOZj/Vhzq37wBoG6TGRrCXgHvDAps1Q==}
+  '@opentui/core-linux-arm64@0.1.81':
+    resolution: {integrity: sha512-FJw9zmJop9WiMvtT07nSrfBLPLqskxL6xfV3GNft0mSYV+C3hdJ0qkiczGSHUX/6V7fmouM84RWwmY53Rb6hYQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@opentui/core-linux-x64@0.1.80':
-    resolution: {integrity: sha512-IrlHbzSUy/p6GWelToOkk/PG5qh7haLL+dr/vL83pdSGfh+eJIBHta+EjycvBGr5SxVzCVJFmXUi4QZ47S+o2w==}
+  '@opentui/core-linux-x64@0.1.81':
+    resolution: {integrity: sha512-Rj2AFIiuWI0BEMIvh/Jeuxty9Gp5ZhLuQU7ZHJJhojKo/mpBpMs9X+5kwZPZya/tyR8uVDAVyB6AOLkhdRW5lw==}
     cpu: [x64]
     os: [linux]
 
-  '@opentui/core-win32-arm64@0.1.80':
-    resolution: {integrity: sha512-ZgXAClJSc7GgaTftWcmyO5psMYsO+S8XHnxwGm0rXhs/bAz52kH46wKO8wfPAfqUsIYpe1UGgaAejv104w7yEQ==}
+  '@opentui/core-win32-arm64@0.1.81':
+    resolution: {integrity: sha512-AiZB+mZ1cVr8plAPrPT98e3kw6D0OdOSe2CQYLgJRbfRlPqq3jl26lHPzDb3ZO2OR0oVGRPJvXraus939mvoiQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@opentui/core-win32-x64@0.1.80':
-    resolution: {integrity: sha512-8qGyKHfiU/VOYhfER7YWuIQDb2XBfpiyMkUjdwXYPYIPJ0A0vcAulg9CPNrRb+hzzAthH5nmX8gnu8yPsE/n4w==}
+  '@opentui/core-win32-x64@0.1.81':
+    resolution: {integrity: sha512-l8R2Ni1CR4eHi3DTmSkEL/EjHAtOZ/sndYs3VVw+Ej2esL3Mf0W7qSO5S0YNBanz2VXZhbkmM6ERm9keH8RD3w==}
     cpu: [x64]
     os: [win32]
 
-  '@opentui/core@0.1.80':
-    resolution: {integrity: sha512-fkgk8XiO1pauTrWzh3uRL4JNYGPINegv/JoTa1POygV9Rdwu0i4KseicwtDtvwEp6q7p+OdspmNqi6/DqPYqEQ==}
+  '@opentui/core@0.1.81':
+    resolution: {integrity: sha512-ooFjkkQ80DDC4X5eLvH8dBcLAtWwGp9RTaWsaeWet3GOv4N0SDcN8mi1XGhYnUlTuxmofby5eQrPegjtWHODlA==}
     peerDependencies:
       web-tree-sitter: 0.25.10
 
-  '@opentui/react@0.1.80':
-    resolution: {integrity: sha512-l5VrdnP/l9P7TqWMxpPZsnkiHEW6f2Nblt6a7+h2m09P3+dFJq4TZ3KdMwvsecQ5dc8lN8WZqV/T4mvvzhc8yw==}
+  '@opentui/react@0.1.81':
+    resolution: {integrity: sha512-Qlgt2j081EdYxBgNpiHQEw3I/Kgw+UZLCx6IliSetF7wGw4nXWPLSgCsa5aZpVj25/vzZnHyEkTZcx8Pq8xn8Q==}
     peerDependencies:
       react: '>=19.0.0'
       react-devtools-core: ^7.0.1
@@ -5426,8 +5426,13 @@ packages:
     peerDependencies:
       '@cloudflare/workers-types': ^4.20240729.0
 
-  partysocket@1.1.14:
-    resolution: {integrity: sha512-QcmlVPfNL55BZ8jETbX0VdKgBniYKbWB9Kma0ksE0gNRgXy9Q/lNn2T8iOBR4qpZHJJvS1jleI5W7MKmg+ynzQ==}
+  partysocket@1.1.15:
+    resolution: {integrity: sha512-d8dvcNMqtWQU1k3OguLN+Vk3GV6uFD0PEhu9EZkCDZuE/xAsdeFlv8fCcsFefQWzoZyVNvTpAKTvutXc6exrEg==}
+    peerDependencies:
+      react: '>=17'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
@@ -8172,25 +8177,25 @@ snapshots:
 
   '@opentelemetry/api@1.9.0': {}
 
-  '@opentui/core-darwin-arm64@0.1.80':
+  '@opentui/core-darwin-arm64@0.1.81':
     optional: true
 
-  '@opentui/core-darwin-x64@0.1.80':
+  '@opentui/core-darwin-x64@0.1.81':
     optional: true
 
-  '@opentui/core-linux-arm64@0.1.80':
+  '@opentui/core-linux-arm64@0.1.81':
     optional: true
 
-  '@opentui/core-linux-x64@0.1.80':
+  '@opentui/core-linux-x64@0.1.81':
     optional: true
 
-  '@opentui/core-win32-arm64@0.1.80':
+  '@opentui/core-win32-arm64@0.1.81':
     optional: true
 
-  '@opentui/core-win32-x64@0.1.80':
+  '@opentui/core-win32-x64@0.1.81':
     optional: true
 
-  '@opentui/core@0.1.80(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)':
+  '@opentui/core@0.1.81(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)':
     dependencies:
       bun-ffi-structs: 0.1.2(typescript@5.9.3)
       diff: 8.0.2
@@ -8200,12 +8205,12 @@ snapshots:
       yoga-layout: 3.2.1
     optionalDependencies:
       '@dimforge/rapier2d-simd-compat': 0.17.3
-      '@opentui/core-darwin-arm64': 0.1.80
-      '@opentui/core-darwin-x64': 0.1.80
-      '@opentui/core-linux-arm64': 0.1.80
-      '@opentui/core-linux-x64': 0.1.80
-      '@opentui/core-win32-arm64': 0.1.80
-      '@opentui/core-win32-x64': 0.1.80
+      '@opentui/core-darwin-arm64': 0.1.81
+      '@opentui/core-darwin-x64': 0.1.81
+      '@opentui/core-linux-arm64': 0.1.81
+      '@opentui/core-linux-x64': 0.1.81
+      '@opentui/core-win32-arm64': 0.1.81
+      '@opentui/core-win32-x64': 0.1.81
       bun-webgpu: 0.1.5
       planck: 1.4.2(stage-js@1.0.0-alpha.17)
       three: 0.177.0
@@ -8213,9 +8218,9 @@ snapshots:
       - stage-js
       - typescript
 
-  '@opentui/react@0.1.80(react-devtools-core@7.0.1)(react@19.2.4)(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.19.0)':
+  '@opentui/react@0.1.81(react-devtools-core@7.0.1)(react@19.2.4)(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)(ws@8.19.0)':
     dependencies:
-      '@opentui/core': 0.1.80(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)
+      '@opentui/core': 0.1.81(stage-js@1.0.0-alpha.17)(typescript@5.9.3)(web-tree-sitter@0.25.10)
       react: 19.2.4
       react-devtools-core: 7.0.1
       react-reconciler: 0.32.0(react@19.2.4)
@@ -11478,9 +11483,11 @@ snapshots:
       '@cloudflare/workers-types': 4.20260228.0
       nanoid: 5.1.6
 
-  partysocket@1.1.14:
+  partysocket@1.1.15(react@19.2.4):
     dependencies:
       event-target-polyfill: 0.0.4
+    optionalDependencies:
+      react: 19.2.4
 
   path-exists@4.0.0: {}
 

@@ -21,8 +21,8 @@
     "format": "prettier --check . --ignore-path ../../.gitignore"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.80",
-    "@opentui/react": "^0.1.80",
+    "@opentui/core": "^0.1.81",
+    "@opentui/react": "^0.1.81",
     "react": "catalog:"
   },
   "devDependencies": {
