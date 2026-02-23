@@ -261,6 +261,7 @@ const KeyboardShortcutsHelp = () => {
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="cursor-pointer hover:text-foreground"
           aria-label="Toggle theme"
+          title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {resolvedTheme === "dark" ? (
             <Sun className="h-3.5 w-3.5" />
