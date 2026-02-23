@@ -1,11 +1,11 @@
 import { cache } from "react";
 import { headers } from "next/headers";
-import { db } from "@/db/drizzle-client";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, oAuthProxy } from "better-auth/plugins";
 import { anonymous } from "better-auth/plugins";
+
+import { db } from "@/db/drizzle-client";
 
 const baseUrl =
   process.env.VERCEL_ENV === "production"
@@ -19,20 +19,10 @@ export const auth = betterAuth({
     provider: "sqlite",
   }),
   baseURL: baseUrl,
-  secret: process.env.AUTH_SECRET ?? "",
-  plugins: [
-    oAuthProxy({
-      currentURL: baseUrl,
-      productionURL: `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "init.kyh.io"}`,
-    }),
-    admin(),
-    anonymous(),
-    nextCookies(),
-  ],
+  plugins: [anonymous(), nextCookies()],
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: ["expo://"],
 });
 
 export type Auth = typeof auth;

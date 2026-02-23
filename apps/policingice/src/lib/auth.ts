@@ -7,7 +7,7 @@ import { anonymous } from "better-auth/plugins";
 
 import { db } from "@/db/drizzle-client";
 
-const baseURL =
+const baseUrl =
   process.env.VERCEL_ENV === "production"
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_ENV === "preview"
@@ -15,14 +15,14 @@ const baseURL =
       : "http://localhost:3000";
 
 export const auth = betterAuth({
-  baseURL,
   database: drizzleAdapter(db, {
     provider: "sqlite",
   }),
+  baseURL: baseUrl,
+  plugins: [anonymous(), nextCookies()],
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [anonymous(), nextCookies()],
 });
 
 export type Auth = typeof auth;
