@@ -153,21 +153,44 @@ function GuessChip({ guess }: { guess: GuessFeedback }) {
 }
 
 function GuessIndicators({ guesses }: { guesses: GuessFeedback[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastGuessRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (guesses.length > 0 && lastGuessRef.current && scrollRef.current) {
+      lastGuessRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [guesses.length]);
+
   return (
-    <div className="flex items-center justify-center gap-2">
-      {guesses.map((g, i) => (
-        <GuessChip key={i} guess={g} />
-      ))}
-      {Array.from({ length: MAX_GUESSES - guesses.length }, (_, i) => (
-        <div key={`empty-${i}`} className="flex items-center gap-px">
-          {[0, 1, 2, 3].map((j) => (
-            <div
-              key={j}
-              className="size-5 rounded-sm border border-border"
-            />
-          ))}
-        </div>
-      ))}
+    <div
+      ref={scrollRef}
+      className="overflow-x-auto scrollbar-none"
+    >
+      <div className="flex w-max items-center gap-2 mx-auto">
+        {guesses.map((g, i) => (
+          <div
+            key={i}
+            ref={i === guesses.length - 1 ? lastGuessRef : undefined}
+          >
+            <GuessChip guess={g} />
+          </div>
+        ))}
+        {Array.from({ length: MAX_GUESSES - guesses.length }, (_, i) => (
+          <div key={`empty-${i}`} className="flex items-center gap-px">
+            {[0, 1, 2, 3].map((j) => (
+              <div
+                key={j}
+                className="size-5 rounded-sm border border-border"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
