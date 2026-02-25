@@ -65,9 +65,40 @@ export async function getPuzzleByDate(
   } satisfies PuzzleData;
 }
 
+export async function getLatestAvailablePuzzle(): Promise<PuzzleData | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("puzzle", "puzzle-latest");
+
+  const today = new Date().toISOString().slice(0, 10);
+  const row = await db.query.puzzle.findFirst({
+    where: sql`${puzzle.date} <= ${today}`,
+    orderBy: sql`${puzzle.date} desc`,
+  });
+
+  if (!row) return null;
+
+  const parsed = puzzleDataSchema.parse(JSON.parse(row.puzzleData));
+
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(puzzle)
+    .where(sql`${puzzle.date} <= ${row.date}`);
+
+  const puzzleNumber = countResult[0]?.count ?? 1;
+
+  return {
+    id: row.id,
+    date: row.date,
+    type: parsed.type,
+    puzzleNumber,
+    puzzleData: parsed,
+  } satisfies PuzzleData;
+}
+
 export async function getTodaysPuzzle(): Promise<PuzzleData | null> {
   const today = await getTodayDateString();
-  return getPuzzleByDate(today);
+  return (await getPuzzleByDate(today)) ?? (await getLatestAvailablePuzzle());
 }
 
 const MAX_GUESSES = 6;
