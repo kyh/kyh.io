@@ -4,7 +4,7 @@ import { GuessRow } from "./guess-row";
 
 const MAX_GUESSES = 6;
 
-export function GuessList({ guesses }: { guesses: GuessFeedback[] }) {
+export const GuessList = ({ guesses }: { guesses: GuessFeedback[] }) => {
   const emptySlots = MAX_GUESSES - guesses.length;
 
   return (

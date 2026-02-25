@@ -42,7 +42,7 @@ type ContentProps = {
   realValue: number;
 };
 
-function CustomContent({
+const CustomContent = ({
   x,
   y,
   width,
@@ -51,7 +51,7 @@ function CustomContent({
   name,
   total,
   realValue,
-}: ContentProps) {
+}: ContentProps) => {
   const pct = ((realValue / total) * 100).toFixed(0);
   const color = COLORS[index % COLORS.length];
 
@@ -127,7 +127,7 @@ function CustomContent({
   );
 }
 
-export function Treemap({ segments }: TreemapProps) {
+export const Treemap = ({ segments }: TreemapProps) => {
   const total = useMemo(
     () => segments.reduce((sum, s) => sum + s.value, 0),
     [segments],

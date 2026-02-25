@@ -18,7 +18,7 @@ type ResultModalProps = {
   puzzleNumber: number;
 };
 
-function ResultContent({ state, puzzleNumber }: ResultModalProps) {
+const ResultContent = ({ state, puzzleNumber }: ResultModalProps) => {
   const won = state.status === "won";
   const toast = useToast();
 
@@ -56,7 +56,7 @@ function ResultContent({ state, puzzleNumber }: ResultModalProps) {
   );
 }
 
-export function ResultModal(props: ResultModalProps) {
+export const ResultModal = (props: ResultModalProps) => {
   const [open, setOpen] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 640px)");
 

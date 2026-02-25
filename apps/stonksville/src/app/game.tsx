@@ -1,22 +1,21 @@
 "use client";
 
-import { useReducer, useCallback, useEffect, useRef } from "react";
-import { ArrowUp, ArrowDown, Check, X, Sun, Moon } from "lucide-react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Tooltip } from "@base-ui/react/tooltip";
-import { useTheme } from "@/components/theme";
+import { ArrowDown, ArrowUp, Check, Moon, Sun, X } from "lucide-react";
 
-import { cn } from "@/components/utils";
-import type { GuessFeedback, Direction } from "@/db/zod-schema";
-import type { PuzzleData, GameState, GameStatus } from "@/lib/puzzle-query";
+import type { Direction, GuessFeedback } from "@/db/zod-schema";
 import type { CompanyPickerItem } from "@/lib/companies-query";
+import type { GameState, GameStatus, PuzzleData } from "@/lib/puzzle-query";
+import { useTheme } from "@/components/theme";
+import { cn } from "@/components/utils";
 import { authClient } from "@/lib/auth-client";
 import { submitGuess } from "@/lib/puzzle-action";
 import { recordResult } from "@/lib/stats-action";
-
-import { Treemap } from "./treemap";
 import { GuessInput } from "./guess-input";
-import { ResultModal } from "./result-modal";
 import { HelpDialog } from "./help-dialog";
+import { ResultModal } from "./result-modal";
+import { Treemap } from "./treemap";
 
 const MAX_GUESSES = 6;
 
@@ -30,17 +29,24 @@ const reducer = (state: GameState, action: Action): GameState => {
   return { ...state, guesses, status };
 };
 
-function ThemeToggle() {
+const ThemeToggle = () => {
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <button
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       className="hover:bg-accent hover:text-accent-foreground inline-flex size-9 cursor-pointer items-center justify-center rounded-md"
     >
-      {resolvedTheme === "dark" ? (
-        <Sun className="size-5" />
+      {mounted ? (
+        resolvedTheme === "dark" ? (
+          <Sun className="size-5" />
+        ) : (
+          <Moon className="size-5" />
+        )
       ) : (
-        <Moon className="size-5" />
+        <span className="size-5" />
       )}
     </button>
   );
@@ -59,19 +65,16 @@ function directionLabel(direction: Direction): string {
   return "Lower";
 }
 
-function IndicatorCell({
+const IndicatorCell = ({
   label,
   children,
 }: {
   label: string;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <Tooltip.Root>
-      <Tooltip.Trigger
-        className="cursor-default"
-        render={<span />}
-      >
+      <Tooltip.Trigger className="cursor-default" render={<span />}>
         {children}
       </Tooltip.Trigger>
       <Tooltip.Portal>
@@ -83,7 +86,7 @@ function IndicatorCell({
   );
 }
 
-function DirectionIndicator({
+const DirectionIndicator = ({
   guessName,
   label,
   direction,
@@ -91,9 +94,11 @@ function DirectionIndicator({
   guessName: string;
   label: string;
   direction: Direction;
-}) {
+}) => {
   return (
-    <IndicatorCell label={`${guessName} · ${label}: ${directionLabel(direction)}`}>
+    <IndicatorCell
+      label={`${guessName} · ${label}: ${directionLabel(direction)}`}
+    >
       <div
         className={cn(
           "flex size-5 items-center justify-center rounded-sm",
@@ -114,9 +119,17 @@ function DirectionIndicator({
   );
 }
 
-function SectorIndicator({ guessName, match }: { guessName: string; match: boolean }) {
+const SectorIndicator = ({
+  guessName,
+  match,
+}: {
+  guessName: string;
+  match: boolean;
+}) => {
   return (
-    <IndicatorCell label={`${guessName} · Sector: ${match ? "Match" : "No match"}`}>
+    <IndicatorCell
+      label={`${guessName} · Sector: ${match ? "Match" : "No match"}`}
+    >
       <div
         className={cn(
           "flex size-5 items-center justify-center rounded-sm",
@@ -135,24 +148,35 @@ function SectorIndicator({ guessName, match }: { guessName: string; match: boole
   );
 }
 
-function GuessChip({ guess }: { guess: GuessFeedback }) {
+const GuessChip = ({ guess }: { guess: GuessFeedback }) => {
   return (
     <Tooltip.Provider delay={0} closeDelay={0}>
       <div className="flex items-center gap-px">
-        <SectorIndicator guessName={guess.guessedName} match={guess.sectorMatch} />
+        <SectorIndicator
+          guessName={guess.guessedName}
+          match={guess.sectorMatch}
+        />
         <DirectionIndicator
           guessName={guess.guessedName}
           label="Mkt Cap"
           direction={guess.marketCapDirection}
         />
-        <DirectionIndicator guessName={guess.guessedName} label="Emp" direction={guess.employeeDirection} />
-        <DirectionIndicator guessName={guess.guessedName} label="IPO" direction={guess.ipoYearDirection} />
+        <DirectionIndicator
+          guessName={guess.guessedName}
+          label="Emp"
+          direction={guess.employeeDirection}
+        />
+        <DirectionIndicator
+          guessName={guess.guessedName}
+          label="IPO"
+          direction={guess.ipoYearDirection}
+        />
       </div>
     </Tooltip.Provider>
   );
 }
 
-function GuessIndicators({ guesses }: { guesses: GuessFeedback[] }) {
+const GuessIndicators = ({ guesses }: { guesses: GuessFeedback[] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastGuessRef = useRef<HTMLDivElement>(null);
 
@@ -167,11 +191,8 @@ function GuessIndicators({ guesses }: { guesses: GuessFeedback[] }) {
   }, [guesses.length]);
 
   return (
-    <div
-      ref={scrollRef}
-      className="overflow-x-auto scrollbar-none"
-    >
-      <div className="flex w-max items-center gap-2 mx-auto">
+    <div ref={scrollRef} className="scrollbar-none overflow-x-auto">
+      <div className="mx-auto flex w-max items-center gap-2">
         {guesses.map((g, i) => (
           <div
             key={i}
@@ -183,10 +204,7 @@ function GuessIndicators({ guesses }: { guesses: GuessFeedback[] }) {
         {Array.from({ length: MAX_GUESSES - guesses.length }, (_, i) => (
           <div key={`empty-${i}`} className="flex items-center gap-px">
             {[0, 1, 2, 3].map((j) => (
-              <div
-                key={j}
-                className="size-5 rounded-sm border border-border"
-              />
+              <div key={j} className="border-border size-5 rounded-sm border" />
             ))}
           </div>
         ))}
@@ -269,7 +287,7 @@ export const Game = ({ puzzle, companies, initialState }: GameProps) => {
       </div>
 
       {/* Guess indicators + Search input */}
-      <div className="space-y-2 bg-background px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="mt-auto max-w-dvw space-y-2 px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-lg space-y-2">
           <GuessIndicators guesses={state.guesses} />
           <GuessInput

@@ -279,7 +279,7 @@ async function main() {
   let puzzlesSkipped = 0;
 
   for (let i = 0; i < SEED_TICKERS.length; i++) {
-    const ticker = SEED_TICKERS[i]!;
+    const ticker = SEED_TICKERS[i];
     const companyId = tickerToCompanyId.get(ticker);
     if (!companyId) continue;
 

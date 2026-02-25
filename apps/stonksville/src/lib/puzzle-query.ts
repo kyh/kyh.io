@@ -5,10 +5,11 @@ import { db } from "@/db/drizzle-client";
 import { guess, puzzle } from "@/db/drizzle-schema";
 import {
   puzzleDataSchema,
-  guessFeedbackSchema,
-  type GuessFeedback,
-  type PuzzleDataPayload,
+  guessFeedbackSchema
+  
+  
 } from "@/db/zod-schema";
+import type {GuessFeedback, PuzzleDataPayload} from "@/db/zod-schema";
 
 import { getSession } from "@/lib/auth";
 

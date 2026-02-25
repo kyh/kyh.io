@@ -3,7 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { HelpCircle, ArrowUp, ArrowDown, Check } from "lucide-react";
 
-export function HelpDialog() {
+export const HelpDialog = () => {
   return (
     <Dialog.Root>
       <Dialog.Trigger className="hover:bg-accent hover:text-accent-foreground inline-flex size-9 cursor-pointer items-center justify-center rounded-md">

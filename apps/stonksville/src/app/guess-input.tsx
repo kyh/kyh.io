@@ -12,7 +12,7 @@ type GuessInputProps = {
   disabled?: boolean;
 };
 
-export function GuessInput({ companies, onSelect, disabled }: GuessInputProps) {
+export const GuessInput = ({ companies, onSelect, disabled }: GuessInputProps) => {
   const [inputValue, setInputValue] = useState("");
   const [value, setValue] = useState<CompanyPickerItem | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -71,15 +71,17 @@ export function GuessInput({ companies, onSelect, disabled }: GuessInputProps) {
                 <Combobox.Item
                   key={company.id}
                   value={company}
-                  className="data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  className="data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground grid cursor-default grid-cols-[3.5rem_1fr_auto] items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 >
-                  {company.ticker && (
-                    <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 items-center rounded-md border border-transparent px-2 py-0.5 font-mono text-xs font-medium">
+                  {company.ticker ? (
+                    <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 items-center justify-center rounded-md border border-transparent px-1 py-0.5 font-mono text-xs font-medium">
                       {company.ticker}
                     </span>
+                  ) : (
+                    <span />
                   )}
                   <span className="truncate">{company.name}</span>
-                  <span className="text-muted-foreground ml-auto text-xs">
+                  <span className="text-muted-foreground text-xs">
                     {company.sector}
                   </span>
                 </Combobox.Item>

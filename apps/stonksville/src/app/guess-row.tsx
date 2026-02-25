@@ -3,7 +3,7 @@ import { cn } from "@/components/utils";
 
 import type { GuessFeedback, Direction } from "@/db/zod-schema";
 
-function DirectionIcon({ direction }: { direction: Direction }) {
+const DirectionIcon = ({ direction }: { direction: Direction }) => {
   if (direction === "correct")
     return <Check className="size-4 text-green-500" />;
   if (direction === "higher")
@@ -11,13 +11,13 @@ function DirectionIcon({ direction }: { direction: Direction }) {
   return <ArrowDown className="size-4 text-yellow-500" />;
 }
 
-function DirectionCell({
+const DirectionCell = ({
   label,
   direction,
 }: {
   label: string;
   direction: Direction;
-}) {
+}) => {
   return (
     <div
       className={cn(
@@ -33,7 +33,7 @@ function DirectionCell({
   );
 }
 
-export function GuessRow({ guess }: { guess: GuessFeedback }) {
+export const GuessRow = ({ guess }: { guess: GuessFeedback }) => {
   return (
     <div className="flex items-center gap-2 py-1.5">
       <div className="flex min-w-0 flex-1 items-center gap-2">

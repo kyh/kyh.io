@@ -29,7 +29,7 @@ function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-export function Countdown() {
+export const Countdown = () => {
   const [time, setTime] = useState(getTimeUntilMidnightUTC);
 
   useEffect(() => {
