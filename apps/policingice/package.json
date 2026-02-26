@@ -15,12 +15,12 @@
     "with-env": "dotenv -e .env --"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^3.0.57",
+    "@ai-sdk/xai": "^3.0.59",
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.0",
     "@vercel/analytics": "catalog:",
-    "ai": "^6.0.97",
-    "better-auth": "^1.4.18",
+    "ai": "^6.0.101",
+    "better-auth": "^1.4.19",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
