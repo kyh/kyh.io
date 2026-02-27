@@ -17,7 +17,7 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.0",
-    "ai": "^6.0.101",
+    "ai": "^6.0.103",
     "better-auth": "^1.4.19",
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.9",

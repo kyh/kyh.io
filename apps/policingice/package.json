@@ -19,7 +19,7 @@
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.0",
     "@vercel/analytics": "catalog:",
-    "ai": "^6.0.101",
+    "ai": "^6.0.103",
     "better-auth": "^1.4.19",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
