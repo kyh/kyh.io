@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "TURSO_DATABASE_URL",
+        "TURSO_AUTH_TOKEN",
+        "VERCEL_PROJECT_PRODUCTION_URL"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+    },
+    "dev": {
+      "persistent": true
+    }
+  }
+}
