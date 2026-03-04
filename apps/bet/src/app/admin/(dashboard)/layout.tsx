@@ -23,6 +23,12 @@ const AdminContent = async ({ children }: { children: React.ReactNode }) => {
               Predictions
             </Link>
             <Link
+              href="/admin/import"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Import
+            </Link>
+            <Link
               href="/"
               className="text-muted-foreground hover:text-foreground"
             >
