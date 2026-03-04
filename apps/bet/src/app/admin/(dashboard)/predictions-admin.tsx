@@ -16,58 +16,43 @@ type Prediction = {
   id: number;
   text: string;
   status: PredictionStatus;
+  source: string | null;
   madeAt: Date | null;
-  predictor: { id: number; name: string };
-  group: { id: number; name: string };
+  user: { id: string; name: string };
 };
 
-type Group = {
-  id: number;
+type User = {
+  id: string;
   name: string;
-  members: { id: number; name: string }[];
-};
-
-type Member = {
-  id: number;
-  name: string;
-  groupId: number;
-  groupName: string;
 };
 
 export const PredictionsAdmin = ({
   predictions,
-  groups,
-  members,
+  users,
 }: {
   predictions: Prediction[];
-  groups: Group[];
-  members: Member[];
+  users: User[];
 }) => {
   const toast = useToast();
-  const [selectedGroup, setSelectedGroup] = useState<string>(
-    groups[0] ? String(groups[0].id) : "",
-  );
   const [text, setText] = useState("");
-  const [predictorId, setPredictorId] = useState<string>("");
+  const [userId, setUserId] = useState<string>(users[0]?.id ?? "");
+  const [source, setSource] = useState("");
   const [madeAt, setMadeAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const groupMembers = members.filter(
-    (m) => String(m.groupId) === selectedGroup,
-  );
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || !predictorId || !selectedGroup) return;
+    if (!text.trim() || !userId) return;
     setIsSubmitting(true);
     try {
       await createPrediction({
         text: text.trim(),
-        predictorId: Number(predictorId),
-        groupId: Number(selectedGroup),
+        userId,
+        source: source.trim() || undefined,
         madeAt: madeAt || undefined,
       });
       setText("");
+      setSource("");
       setMadeAt("");
       toast.success("Prediction added");
     } catch {
@@ -108,42 +93,25 @@ export const PredictionsAdmin = ({
     <div>
       <h2 className="mb-4 text-sm font-medium">Add prediction</h2>
 
-      {groups.length === 0 ? (
+      {users.length === 0 ? (
         <p className="mb-8 text-sm text-muted-foreground">
-          Create a group first before adding predictions.
+          No users yet. Users must sign up before predictions can be added.
         </p>
       ) : (
         <form onSubmit={handleCreate} className="mb-8 space-y-3">
-          <div className="flex gap-2">
-            <select
-              value={selectedGroup}
-              onChange={(e) => {
-                setSelectedGroup(e.target.value);
-                setPredictorId("");
-              }}
-              className="border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={predictorId}
-              onChange={(e) => setPredictorId(e.target.value)}
-              className="border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
-              required
-            >
-              <option value="">Who said it?</option>
-              {groupMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            className="border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
+            required
+          >
+            <option value="">Who said it?</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
 
           <input
             type="text"
@@ -151,6 +119,14 @@ export const PredictionsAdmin = ({
             onChange={(e) => setText(e.target.value)}
             placeholder="The prediction..."
             required
+            className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
+          />
+
+          <input
+            type="text"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            placeholder="Source (e.g. messenger:123:456)"
             className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
           />
 
@@ -182,7 +158,8 @@ export const PredictionsAdmin = ({
             <div className="min-w-0 flex-1">
               <p className="text-sm">{p.text}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {p.predictor.name} &middot; {p.group.name}
+                {p.user.name}
+                {p.source && ` · ${p.source}`}
                 {p.madeAt &&
                   ` · ${new Date(p.madeAt).toLocaleDateString()}`}
                 {p.status !== "pending" && (

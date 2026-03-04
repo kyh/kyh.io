@@ -23,18 +23,6 @@ const AdminContent = async ({ children }: { children: React.ReactNode }) => {
               Predictions
             </Link>
             <Link
-              href="/admin/groups"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Groups
-            </Link>
-            <Link
-              href="/admin/members"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Members
-            </Link>
-            <Link
               href="/"
               className="text-muted-foreground hover:text-foreground"
             >

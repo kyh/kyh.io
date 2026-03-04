@@ -1,26 +1,16 @@
-import { getAllPredictions, getGroups } from "@/lib/prediction-query";
+import { getAllPredictions, getUsers } from "@/lib/prediction-query";
 
 import { PredictionsAdmin } from "./predictions-admin";
 
 export const dynamic = "force-dynamic";
 
 const AdminPage = async () => {
-  const [predictions, groups] = await Promise.all([
+  const [predictions, users] = await Promise.all([
     getAllPredictions(),
-    getGroups(),
+    getUsers(),
   ]);
 
-  const membersMap = groups.flatMap((g) =>
-    g.members.map((m) => ({ ...m, groupName: g.name })),
-  );
-
-  return (
-    <PredictionsAdmin
-      predictions={predictions}
-      groups={groups}
-      members={membersMap}
-    />
-  );
+  return <PredictionsAdmin predictions={predictions} users={users} />;
 };
 
 export default AdminPage;

@@ -60,35 +60,13 @@ export const verification = sqliteTable("verification", {
 
 // App tables
 
-export const groups = sqliteTable("groups", {
-  id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  name: text().notNull(),
-  description: text(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(unixepoch())`,
-  ),
-});
-
-export const members = sqliteTable("members", {
-  id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  name: text().notNull(),
-  groupId: integer("group_id")
-    .references(() => groups.id, { onDelete: "cascade" })
-    .notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(unixepoch())`,
-  ),
-});
-
 export const predictions = sqliteTable("predictions", {
   id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   text: text().notNull(),
-  predictorId: integer("predictor_id")
-    .references(() => members.id, { onDelete: "cascade" })
+  userId: text("user_id")
+    .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
-  groupId: integer("group_id")
-    .references(() => groups.id, { onDelete: "cascade" })
-    .notNull(),
+  source: text(),
   status: text().$type<PredictionStatus>().default("pending").notNull(),
   madeAt: integer("made_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
@@ -100,26 +78,13 @@ export const predictions = sqliteTable("predictions", {
 });
 
 // Relations
-export const groupsRelations = relations(groups, ({ many }) => ({
-  members: many(members),
-  predictions: many(predictions),
-}));
-
-export const membersRelations = relations(members, ({ one, many }) => ({
-  group: one(groups, {
-    fields: [members.groupId],
-    references: [groups.id],
-  }),
+export const userRelations = relations(user, ({ many }) => ({
   predictions: many(predictions),
 }));
 
 export const predictionsRelations = relations(predictions, ({ one }) => ({
-  predictor: one(members, {
-    fields: [predictions.predictorId],
-    references: [members.id],
-  }),
-  group: one(groups, {
-    fields: [predictions.groupId],
-    references: [groups.id],
+  user: one(user, {
+    fields: [predictions.userId],
+    references: [user.id],
   }),
 }));

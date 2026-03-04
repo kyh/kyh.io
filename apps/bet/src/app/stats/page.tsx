@@ -27,7 +27,7 @@ const StatsContent = async () => {
   return (
     <div className="divide-y divide-border">
       {sorted.map((person) => (
-        <div key={person.memberId} className="py-4">
+        <div key={person.userId} className="py-4">
           <div className="flex items-baseline justify-between">
             <h3 className="text-sm font-medium">{person.name}</h3>
             {person.accuracy !== null ? (
@@ -52,19 +52,6 @@ const StatsContent = async () => {
             <span className="text-destructive">{person.wrong} wrong</span>
             <span>{person.pending} pending</span>
           </div>
-          {person.groups.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {person.groups.map((group) => (
-                <span
-                  key={group}
-                  className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                >
-                  {group}
-                </span>
-              ))}
-            </div>
-          )}
-
           {person.correct + person.wrong > 0 && (
             <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
               <div

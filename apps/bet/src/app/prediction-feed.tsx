@@ -9,10 +9,10 @@ type Prediction = {
   id: number;
   text: string;
   status: PredictionStatus;
+  source: string | null;
   madeAt: Date | null;
   resolvedAt: Date | null;
-  predictor: { id: number; name: string };
-  group: { id: number; name: string };
+  user: { id: string; name: string };
 };
 
 const statusConfig = {
@@ -38,16 +38,9 @@ export const PredictionFeed = ({
   predictions: Prediction[];
 }) => {
   const [filter, setFilter] = useState<FilterStatus>("all");
-  const [groupFilter, setGroupFilter] = useState<string>("all");
-
-  const groups = Array.from(
-    new Map(predictions.map((p) => [p.group.id, p.group.name])),
-  );
 
   const filtered = predictions.filter((p) => {
     if (filter !== "all" && p.status !== filter) return false;
-    if (groupFilter !== "all" && String(p.group.id) !== groupFilter)
-      return false;
     return true;
   });
 
@@ -85,34 +78,6 @@ export const PredictionFeed = ({
         ))}
       </div>
 
-      {groups.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => setGroupFilter("all")}
-            className={`cursor-pointer rounded-full px-3 py-1 text-xs transition-colors ${
-              groupFilter === "all"
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            All groups
-          </button>
-          {groups.map(([id, name]) => (
-            <button
-              key={id}
-              onClick={() => setGroupFilter(String(id))}
-              className={`cursor-pointer rounded-full px-3 py-1 text-xs transition-colors ${
-                groupFilter === String(id)
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="divide-y divide-border">
         {filtered.map((prediction) => {
           const config = statusConfig[prediction.status];
@@ -124,8 +89,10 @@ export const PredictionFeed = ({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm">{prediction.text}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>{prediction.predictor.name}</span>
-                    <span>{prediction.group.name}</span>
+                    <span>{prediction.user.name}</span>
+                    {prediction.source && (
+                      <span>{prediction.source}</span>
+                    )}
                     {prediction.madeAt && (
                       <span>{formatDate(prediction.madeAt)}</span>
                     )}
