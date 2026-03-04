@@ -18,7 +18,9 @@ async function requireAdmin() {
 // Predictions
 
 export async function createPrediction(data: {
-  text: string;
+  quote: string;
+  description?: string;
+  background?: string;
   userId: string;
   source?: string;
   madeAt?: string;
@@ -28,7 +30,9 @@ export async function createPrediction(data: {
   const [prediction] = await db
     .insert(predictions)
     .values({
-      text: data.text,
+      quote: data.quote,
+      description: data.description ?? null,
+      background: data.background ?? null,
       userId: data.userId,
       source: data.source ?? null,
       madeAt: data.madeAt ? new Date(data.madeAt) : new Date(),

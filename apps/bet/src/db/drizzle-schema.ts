@@ -7,6 +7,7 @@ export type PredictionStatus = "pending" | "correct" | "wrong";
 export const user = sqliteTable("user", {
   id: text().primaryKey(),
   name: text().notNull(),
+  slug: text().unique(),
   email: text().notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull(),
   image: text(),
@@ -62,7 +63,9 @@ export const verification = sqliteTable("verification", {
 
 export const predictions = sqliteTable("predictions", {
   id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  text: text().notNull(),
+  quote: text().notNull(),
+  description: text(),
+  background: text(),
   userId: text("user_id")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),

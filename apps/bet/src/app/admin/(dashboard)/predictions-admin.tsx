@@ -14,7 +14,9 @@ import { useToast } from "@/components/toast";
 
 type Prediction = {
   id: number;
-  text: string;
+  quote: string;
+  description: string | null;
+  background: string | null;
   status: PredictionStatus;
   source: string | null;
   madeAt: Date | null;
@@ -34,7 +36,9 @@ export const PredictionsAdmin = ({
   users: User[];
 }) => {
   const toast = useToast();
-  const [text, setText] = useState("");
+  const [quote, setQuote] = useState("");
+  const [description, setDescription] = useState("");
+  const [background, setBackground] = useState("");
   const [userId, setUserId] = useState<string>(users[0]?.id ?? "");
   const [source, setSource] = useState("");
   const [madeAt, setMadeAt] = useState("");
@@ -42,16 +46,20 @@ export const PredictionsAdmin = ({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || !userId) return;
+    if (!quote.trim() || !userId) return;
     setIsSubmitting(true);
     try {
       await createPrediction({
-        text: text.trim(),
+        quote: quote.trim(),
+        description: description.trim() || undefined,
+        background: background.trim() || undefined,
         userId,
         source: source.trim() || undefined,
         madeAt: madeAt || undefined,
       });
-      setText("");
+      setQuote("");
+      setDescription("");
+      setBackground("");
       setSource("");
       setMadeAt("");
       toast.success("Prediction added");
@@ -115,10 +123,26 @@ export const PredictionsAdmin = ({
 
           <input
             type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="The prediction..."
+            value={quote}
+            onChange={(e) => setQuote(e.target.value)}
+            placeholder="Exact quote..."
             required
+            className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
+          />
+
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description (general outline)"
+            className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
+          />
+
+          <input
+            type="text"
+            value={background}
+            onChange={(e) => setBackground(e.target.value)}
+            placeholder="Background context"
             className="w-full border-b border-input bg-transparent py-2 text-sm outline-none focus:border-foreground"
           />
 
@@ -156,7 +180,12 @@ export const PredictionsAdmin = ({
         {predictions.map((p) => (
           <div key={p.id} className="flex items-center gap-2 py-3">
             <div className="min-w-0 flex-1">
-              <p className="text-sm">{p.text}</p>
+              <p className="text-sm italic">&ldquo;{p.quote}&rdquo;</p>
+              {p.description && (
+                <p className="text-xs text-muted-foreground">
+                  {p.description}
+                </p>
+              )}
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {p.user.name}
                 {p.source && ` · ${p.source}`}

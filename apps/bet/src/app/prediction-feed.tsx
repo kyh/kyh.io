@@ -7,7 +7,9 @@ import type { PredictionStatus } from "@/db/drizzle-schema";
 
 type Prediction = {
   id: number;
-  text: string;
+  quote: string;
+  description: string | null;
+  background: string | null;
   status: PredictionStatus;
   source: string | null;
   madeAt: Date | null;
@@ -87,7 +89,12 @@ export const PredictionFeed = ({
               <div className="flex items-start gap-2">
                 <Icon className={`mt-0.5 size-4 shrink-0 ${config.className}`} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm">{prediction.text}</p>
+                  <p className="text-sm italic">&ldquo;{prediction.quote}&rdquo;</p>
+                  {prediction.description && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {prediction.description}
+                    </p>
+                  )}
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{prediction.user.name}</span>
                     {prediction.source && (
