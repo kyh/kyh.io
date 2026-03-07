@@ -30,12 +30,12 @@
     "publish-packages": "changeset version && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
+    "@changesets/cli": "^2.30.0",
     "@kyh/prettier-config": "workspace:^",
     "dotenv-cli": "^11.0.0",
     "prettier": "catalog:",
     "tsx": "catalog:",
-    "turbo": "^2.8.11",
+    "turbo": "^2.8.14",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
