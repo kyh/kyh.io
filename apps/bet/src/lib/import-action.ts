@@ -136,26 +136,32 @@ export async function savePredictions(data: {
     targetUser = created;
   }
 
-  const inserted = [];
-  for (const p of data.predictions) {
-    const source = p.tweetId
+  const rows = data.predictions.map((p) => ({
+    quote: p.quote,
+    description: p.description,
+    background: p.background,
+    userId: targetUser.id,
+    source: p.tweetId
       ? `x:${cleanHandle}:${p.tweetId}`
-      : `x:${cleanHandle}`;
+      : `x:${cleanHandle}`,
+    madeAt: p.madeAt ? new Date(p.madeAt) : new Date(),
+  }));
 
-    const [row] = await db
-      .insert(predictions)
-      .values({
-        quote: p.quote,
-        description: p.description,
-        background: p.background,
-        userId: targetUser.id,
-        source,
-        madeAt: p.madeAt ? new Date(p.madeAt) : new Date(),
-      })
-      .returning();
+  // Filter out predictions with sources that already exist
+  const sources = rows.map((r) => r.source);
+  const existing = await db.query.predictions.findMany({
+    where: (p, { inArray: inArr }) => inArr(p.source, sources),
+    columns: { source: true },
+  });
+  const existingSources = new Set(existing.map((e) => e.source));
+  const newRows = rows.filter((r) => !existingSources.has(r.source));
 
-    inserted.push(row);
+  if (newRows.length === 0) {
+    revalidatePath("/");
+    return { count: 0 };
   }
+
+  const inserted = await db.insert(predictions).values(newRows).returning();
 
   revalidatePath("/");
   return { count: inserted.length };

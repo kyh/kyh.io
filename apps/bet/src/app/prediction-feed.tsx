@@ -41,10 +41,9 @@ export const PredictionFeed = ({
 }) => {
   const [filter, setFilter] = useState<FilterStatus>("all");
 
-  const filtered = predictions.filter((p) => {
-    if (filter !== "all" && p.status !== filter) return false;
-    return true;
-  });
+  const filtered = predictions.filter(
+    (p) => filter === "all" || p.status === filter,
+  );
 
   const counts = {
     all: predictions.length,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Trash2, Undo2, X } from "lucide-react";
 
 import type { PredictionStatus } from "@/db/drizzle-schema";
@@ -35,6 +36,7 @@ export const PredictionsAdmin = ({
   predictions: Prediction[];
   users: User[];
 }) => {
+  const router = useRouter();
   const toast = useToast();
   const [quote, setQuote] = useState("");
   const [description, setDescription] = useState("");
@@ -62,6 +64,7 @@ export const PredictionsAdmin = ({
       setBackground("");
       setSource("");
       setMadeAt("");
+      router.refresh();
       toast.success("Prediction added");
     } catch {
       toast.error("Failed to add prediction");
@@ -73,6 +76,7 @@ export const PredictionsAdmin = ({
   const handleResolve = async (id: number, status: "correct" | "wrong") => {
     try {
       await resolvePrediction({ id, status });
+      router.refresh();
       toast.success(`Marked as ${status}`);
     } catch {
       toast.error("Failed to resolve");
@@ -82,6 +86,7 @@ export const PredictionsAdmin = ({
   const handleUnresolve = async (id: number) => {
     try {
       await unresolve({ id });
+      router.refresh();
       toast.success("Reset to pending");
     } catch {
       toast.error("Failed to reset");
@@ -89,8 +94,10 @@ export const PredictionsAdmin = ({
   };
 
   const handleDelete = async (id: number) => {
+    if (!confirm("Delete this prediction?")) return;
     try {
       await deletePrediction({ id });
+      router.refresh();
       toast.success("Deleted");
     } catch {
       toast.error("Failed to delete");

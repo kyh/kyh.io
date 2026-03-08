@@ -1,6 +1,7 @@
-import { desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
+import { predictions, user } from "@/db/drizzle-schema";
 
 export async function getUsers() {
   return db.query.user.findMany({
@@ -16,44 +17,29 @@ export async function getAllPredictions() {
 }
 
 export async function getPredictionStats() {
-  const predictions = await db.query.predictions.findMany({
-    with: { user: true },
-  });
+  const rows = await db
+    .select({
+      userId: predictions.userId,
+      name: user.name,
+      total: sql<number>`count(*)`.as("total"),
+      correct: sql<number>`sum(case when ${predictions.status} = 'correct' then 1 else 0 end)`.as("correct"),
+      wrong: sql<number>`sum(case when ${predictions.status} = 'wrong' then 1 else 0 end)`.as("wrong"),
+      pending: sql<number>`sum(case when ${predictions.status} = 'pending' then 1 else 0 end)`.as("pending"),
+    })
+    .from(predictions)
+    .innerJoin(user, eq(predictions.userId, user.id))
+    .groupBy(predictions.userId, user.name);
 
-  const byUser = new Map<
-    string,
-    {
-      name: string;
-      total: number;
-      correct: number;
-      wrong: number;
-      pending: number;
-    }
-  >();
-
-  for (const p of predictions) {
-    const existing = byUser.get(p.userId) ?? {
-      name: p.user.name,
-      total: 0,
-      correct: 0,
-      wrong: 0,
-      pending: 0,
-    };
-    existing.total++;
-    existing[p.status]++;
-    byUser.set(p.userId, existing);
-  }
-
-  return Array.from(byUser.entries()).map(([id, stats]) => ({
-    userId: id,
-    name: stats.name,
-    total: stats.total,
-    correct: stats.correct,
-    wrong: stats.wrong,
-    pending: stats.pending,
+  return rows.map((r) => ({
+    userId: r.userId,
+    name: r.name,
+    total: r.total,
+    correct: r.correct,
+    wrong: r.wrong,
+    pending: r.pending,
     accuracy:
-      stats.correct + stats.wrong > 0
-        ? Math.round((stats.correct / (stats.correct + stats.wrong)) * 100)
+      r.correct + r.wrong > 0
+        ? Math.round((r.correct / (r.correct + r.wrong)) * 100)
         : null,
   }));
 }
