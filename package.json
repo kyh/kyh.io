@@ -18,8 +18,6 @@
     "dev-vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy-party": "pnpm -F @repo/party deploy",
     "lint": "oxlint --report-unused-disable-directives",
-    "lint-ws": "pnpm dlx sherif@latest",
-    "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "publish-packages": "changeset version && changeset publish",
