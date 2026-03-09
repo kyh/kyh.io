@@ -23,7 +23,9 @@
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "publish-packages": "changeset version && changeset publish",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "lint-fix": "oxlint --fix",
+    "format-fix": "oxfmt --write"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
