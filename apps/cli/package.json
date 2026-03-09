@@ -19,8 +19,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.86",
-    "@opentui/react": "^0.1.86",
+    "@opentui/core": "^0.1.87",
+    "@opentui/react": "^0.1.87",
     "react": "catalog:"
   },
   "devDependencies": {
