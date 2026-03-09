@@ -1,11 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 import type {
   CanvasImage,
@@ -17,11 +11,7 @@ import type {
   Tag,
   ThemeType,
 } from "./types";
-import {
-  DEFAULT_LAYOUT_LABELS,
-  DEFAULT_QUADRANT_COLORS,
-  STORAGE_KEY,
-} from "./constants";
+import { DEFAULT_LAYOUT_LABELS, DEFAULT_QUADRANT_COLORS, STORAGE_KEY } from "./constants";
 import { generateId } from "./utils";
 
 interface KwadrantContextValue {
@@ -43,9 +33,7 @@ interface KwadrantContextValue {
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
 
 // Migrate old localStorage format (axisLabels/edgeLabels) to new (layoutLabels)
-const migrateState = (
-  stored: Record<string, unknown>,
-): Partial<KwadrantState> => {
+const migrateState = (stored: Record<string, unknown>): Partial<KwadrantState> => {
   if (stored.layoutLabels) {
     return stored as Partial<KwadrantState>;
   }
@@ -144,29 +132,19 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const updateImagePosition = useCallback(
-    (id: string, x: number, y: number) => {
-      setState((prev) => ({
-        ...prev,
-        images: prev.images.map((img) =>
-          img.id === id ? { ...img, x, y } : img,
-        ),
-      }));
-    },
-    [],
-  );
+  const updateImagePosition = useCallback((id: string, x: number, y: number) => {
+    setState((prev) => ({
+      ...prev,
+      images: prev.images.map((img) => (img.id === id ? { ...img, x, y } : img)),
+    }));
+  }, []);
 
-  const updateImageSize = useCallback(
-    (id: string, width: number, height: number) => {
-      setState((prev) => ({
-        ...prev,
-        images: prev.images.map((img) =>
-          img.id === id ? { ...img, width, height } : img,
-        ),
-      }));
-    },
-    [],
-  );
+  const updateImageSize = useCallback((id: string, width: number, height: number) => {
+    setState((prev) => ({
+      ...prev,
+      images: prev.images.map((img) => (img.id === id ? { ...img, width, height } : img)),
+    }));
+  }, []);
 
   const removeImage = useCallback((id: string) => {
     setState((prev) => ({
@@ -175,31 +153,25 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const updateLabel = useCallback(
-    (layoutId: string, key: string, value: string) => {
-      setState((prev) => ({
-        ...prev,
-        layoutLabels: {
-          ...prev.layoutLabels,
-          [layoutId]: {
-            ...(prev.layoutLabels[layoutId] || {}),
-            [key]: value,
-          },
+  const updateLabel = useCallback((layoutId: string, key: string, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      layoutLabels: {
+        ...prev.layoutLabels,
+        [layoutId]: {
+          ...prev.layoutLabels[layoutId],
+          [key]: value,
         },
-      }));
-    },
-    [],
-  );
+      },
+    }));
+  }, []);
 
-  const setQuadrantColor = useCallback(
-    (quadrant: keyof QuadrantColors, color: string) => {
-      setState((prev) => ({
-        ...prev,
-        quadrantColors: { ...prev.quadrantColors, [quadrant]: color },
-      }));
-    },
-    [],
-  );
+  const setQuadrantColor = useCallback((quadrant: keyof QuadrantColors, color: string) => {
+    setState((prev) => ({
+      ...prev,
+      quadrantColors: { ...prev.quadrantColors, [quadrant]: color },
+    }));
+  }, []);
 
   const setGridType = useCallback((gridType: GridType) => {
     setState((prev) => ({ ...prev, gridType }));

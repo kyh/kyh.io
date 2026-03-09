@@ -8,10 +8,7 @@ import type { Props as ModalProps } from "@/components/Modal";
 import type { CompHooksType } from "@/lib/comp";
 import { FormField } from "@/components/FormField";
 import { Modal } from "@/components/Modal";
-import {
-  currencyTextFormatProps,
-  staticTextFormatProps,
-} from "@/lib/formProps";
+import { currencyTextFormatProps, staticTextFormatProps } from "@/lib/formProps";
 
 type Props = { setShouldUpdate: (t: boolean) => void } & CompHooksType &
   Omit<ModalProps, "title" | "children">;
@@ -116,9 +113,7 @@ export const CompModal = ({
       closeModal={handleClose}
       title={
         <div className="flex items-end justify-between">
-          <h1>
-            {view === "estimate" ? "Estimate Equity Value" : "Terminology"}
-          </h1>
+          <h1>{view === "estimate" ? "Estimate Equity Value" : "Terminology"}</h1>
           <span className="relative z-0 inline-flex rounded-md shadow-xs">
             <button
               type="button"
@@ -180,9 +175,8 @@ export const CompModal = ({
             <div>
               <h2 className="font-bold text-slate-50">Preferred Stock Price</h2>
               <p className="mt-1">
-                The preferred stock price is the price at which investors
-                currently pay for shares of the company. You can ask your
-                recruiter what the current price is.
+                The preferred stock price is the price at which investors currently pay for shares
+                of the company. You can ask your recruiter what the current price is.
               </p>
             </div>
           )}
@@ -190,8 +184,7 @@ export const CompModal = ({
             <div className="mt-3">
               <h2 className="font-bold text-slate-50">Current Market Price</h2>
               <p className="mt-1">
-                This is the stock price at which the company is currently
-                trading
+                This is the stock price at which the company is currently trading
               </p>
             </div>
           )}
@@ -199,52 +192,42 @@ export const CompModal = ({
             <div className="mt-3">
               <h2 className="font-bold text-slate-50">Shares Outstanding</h2>
               <p className="mt-1">
-                The shares outstanding is the number of shares that the company
-                has available in the market.
+                The shares outstanding is the number of shares that the company has available in the
+                market.
               </p>
             </div>
           )}
           <div className="mt-3">
             {isoCurrent && (
               <>
-                <h2 className="font-bold text-slate-50">
-                  Expected Growth over 4 years
-                </h2>
+                <h2 className="font-bold text-slate-50">Expected Growth over 4 years</h2>
                 <p className="mt-1">
-                  Depending on the stage of the company expected growth can
-                  vary. Investors typically expect a 10x return on what they put
-                  in.
+                  Depending on the stage of the company expected growth can vary. Investors
+                  typically expect a 10x return on what they put in.
                 </p>
               </>
             )}
             {rsuCurrent && (
               <>
-                <h2 className="font-bold text-slate-50">
-                  Expected Market Growth
-                </h2>
+                <h2 className="font-bold text-slate-50">Expected Market Growth</h2>
                 <p className="mt-1">
-                  How much do you expect the stock price to change every year?
-                  Anualized growth over the last 4 years is a good estimate.
+                  How much do you expect the stock price to change every year? Anualized growth over
+                  the last 4 years is a good estimate.
                 </p>
               </>
             )}
             {(isoRevenue || rsuRevenue) && (
               <>
-                <h2 className="font-bold text-slate-50">
-                  Expected Company Revenue
-                </h2>
+                <h2 className="font-bold text-slate-50">Expected Company Revenue</h2>
                 <p className="mt-1">
-                  How much do you expect the company to make every year? Divide
-                  this number by the number of shares outstanding to get the
-                  revenue multiple.
+                  How much do you expect the company to make every year? Divide this number by the
+                  number of shares outstanding to get the revenue multiple.
                 </p>
-                <h2 className="mt-3 font-bold text-slate-50">
-                  Revenue Multiple
-                </h2>
+                <h2 className="mt-3 font-bold text-slate-50">Revenue Multiple</h2>
                 <p className="mt-1">
-                  The revenue multiple is the ratio of the company’s revenue
-                  relative to its stock price. You can use your competitors
-                  revenue multiple to estimate what your share value would be.
+                  The revenue multiple is the ratio of the company’s revenue relative to its stock
+                  price. You can use your competitors revenue multiple to estimate what your share
+                  value would be.
                 </p>
               </>
             )}
@@ -254,10 +237,7 @@ export const CompModal = ({
       {view === "estimate" && (
         <div className="flex min-h-[360px] flex-col gap-3">
           <div className="mt-3">
-            <p>
-              Estimate reasonable numbers for your equity value by looking at
-              competitors:
-            </p>
+            <p>Estimate reasonable numbers for your equity value by looking at competitors:</p>
             <div className="mt-3">
               <FormField
                 className="rounded"
@@ -279,9 +259,7 @@ export const CompModal = ({
                     return value;
                   }}
                   options={searchResults}
-                  onChange={(selected) =>
-                    loadCompaniesData((selected ?? []) as MultiValue<any>)
-                  }
+                  onChange={(selected) => loadCompaniesData((selected ?? []) as MultiValue<any>)}
                   isSearchable={companiesData.length < 3}
                   openMenuOnFocus={false}
                   openMenuOnClick={false}
@@ -307,38 +285,23 @@ export const CompModal = ({
                   )}
                   {rsuCurrent && (
                     <>
-                      <th
-                        scope="col"
-                        className="table-cell px-3 py-3.5 text-left"
-                      >
+                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
                         Current Market Value
                       </th>
-                      <th
-                        scope="col"
-                        className="table-cell px-3 py-3.5 text-left"
-                      >
+                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
                         Average Growth per year
                       </th>
                     </>
                   )}
                   {(isoRevenue || rsuRevenue) && (
                     <>
-                      <th
-                        scope="col"
-                        className="table-cell px-3 py-3.5 text-left"
-                      >
+                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
                         Shares Outstanding
                       </th>
-                      <th
-                        scope="col"
-                        className="table-cell px-3 py-3.5 text-left"
-                      >
+                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
                         Revenue
                       </th>
-                      <th
-                        scope="col"
-                        className="table-cell px-3 py-3.5 text-left"
-                      >
+                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
                         Revenue Multiple
                       </th>
                     </>
@@ -363,10 +326,7 @@ export const CompModal = ({
                     {rsuCurrent && (
                       <>
                         <td className="table-cell px-3 py-3.5">
-                          <NumericFormat
-                            {...currencyTextFormatProps}
-                            value={c.day200MovingAvg}
-                          />
+                          <NumericFormat {...currencyTextFormatProps} value={c.day200MovingAvg} />
                         </td>
                         <td className="table-cell px-3 py-3.5">
                           <NumericFormat
@@ -389,10 +349,7 @@ export const CompModal = ({
                           />
                         </td>
                         <td className="table-cell px-3 py-3.5">
-                          <NumericFormat
-                            {...currencyTextFormatProps}
-                            value={c.revenue}
-                          />
+                          <NumericFormat {...currencyTextFormatProps} value={c.revenue} />
                         </td>
                         <td className="table-cell px-3 py-3.5">
                           <NumericFormat

@@ -65,11 +65,7 @@
   --color-foreground-highlighted: var(--body-color-highlighted);
   --color-background: var(--bg-highlighted);
   --color-background-faded: var(--bg-color);
-  --color-background-hover: color-mix(
-    in srgb,
-    var(--bg-color) 50%,
-    transparent
-  );
+  --color-background-hover: color-mix(in srgb, var(--bg-color) 50%, transparent);
   --color-border: var(--border-color);
   --color-panel: var(--panel);
 }
@@ -120,11 +116,7 @@ h6 {
   z-index: 1;
   backdrop-filter: blur(5px);
   opacity: 0.95;
-  mask-image: linear-gradient(
-    to bottom,
-    var(--bg-highlighted) 25%,
-    transparent
-  );
+  mask-image: linear-gradient(to bottom, var(--bg-highlighted) 25%, transparent);
 
   &::after {
     content: "";
@@ -144,11 +136,7 @@ h6 {
   --gradient-to: var(--colors-gray100);
   color: var(--body-color);
   background: var(--gradient-to);
-  background-image: linear-gradient(
-    to top,
-    var(--gradient-from),
-    var(--gradient-to)
-  );
+  background-image: linear-gradient(to top, var(--gradient-from), var(--gradient-to));
   box-shadow: inset 0 1px 0 0 #ffffff0d;
 
   [data-theme="dark"] & {
@@ -252,16 +240,8 @@ button.link {
   );
   background-size: 1px 5px;
   -webkit-mask:
-    linear-gradient(
-      to top,
-      var(--mask-background) var(--fade-stop),
-      transparent
-    ),
-    linear-gradient(
-      to bottom,
-      var(--mask-background) var(--fade-stop),
-      transparent
-    ),
+    linear-gradient(to top, var(--mask-background) var(--fade-stop), transparent),
+    linear-gradient(to bottom, var(--mask-background) var(--fade-stop), transparent),
     linear-gradient(black, black);
 }
 
@@ -277,16 +257,8 @@ button.link {
   );
   background-size: 5px 1px;
   -webkit-mask:
-    linear-gradient(
-      to left,
-      var(--mask-background) var(--fade-stop),
-      transparent
-    ),
-    linear-gradient(
-      to right,
-      var(--mask-background) var(--fade-stop),
-      transparent
-    ),
+    linear-gradient(to left, var(--mask-background) var(--fade-stop), transparent),
+    linear-gradient(to right, var(--mask-background) var(--fade-stop), transparent),
     linear-gradient(black, black);
 }
 

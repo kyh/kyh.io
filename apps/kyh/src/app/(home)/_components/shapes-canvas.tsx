@@ -34,13 +34,7 @@ const createStaticShape = (isLight: boolean, x: number, y: number) => {
     case 0:
       return Bodies.circle(x, y, Common.random(15, 25), { render });
     case 1:
-      return Bodies.rectangle(
-        x,
-        y,
-        Common.random(20, 35),
-        Common.random(20, 35),
-        { render },
-      );
+      return Bodies.rectangle(x, y, Common.random(20, 35), Common.random(20, 35), { render });
     case 2:
       return Bodies.polygon(x, y, 3, Common.random(18, 28), { render });
     default:
@@ -191,17 +185,11 @@ export const ShapesCanvas = () => {
       isStatic: true,
       render: { visible: false },
     });
-    const bottomSensor = Bodies.rectangle(
-      width / 2,
-      height + 100,
-      width * 3,
-      50,
-      {
-        isSensor: true,
-        isStatic: true,
-        render: { visible: false },
-      },
-    );
+    const bottomSensor = Bodies.rectangle(width / 2, height + 100, width * 3, 50, {
+      isSensor: true,
+      isStatic: true,
+      render: { visible: false },
+    });
 
     Composite.add(engine.world, [ground, bottomSensor]);
 
@@ -234,17 +222,13 @@ export const ShapesCanvas = () => {
       if (!engineRef.current) return;
 
       // Check if click is on an existing body
-      const bodies = Composite.allBodies(engineRef.current.world).filter(
-        (b) => !b.isStatic,
-      );
+      const bodies = Composite.allBodies(engineRef.current.world).filter((b) => !b.isStatic);
       const clickedBodies = Query.point(bodies, { x, y });
 
       // Only spawn if clicking empty space
       if (clickedBodies.length > 0) return;
 
-      const count = Math.floor(
-        Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2),
-      );
+      const count = Math.floor(Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2));
       for (let i = 0; i < count; i++) {
         const { body, targetScale } = createClickShape(isLight, x, y);
         bodiesRef.current.push(body);

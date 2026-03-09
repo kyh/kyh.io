@@ -1,28 +1,11 @@
 "use client";
 
-import type {
-  MotionStyle,
-  MotionValue,
-  ValueAnimationTransition,
-} from "motion/react";
+import type { MotionStyle, MotionValue, ValueAnimationTransition } from "motion/react";
 import type { Dispatch, ReactNode, Ref, SetStateAction } from "react";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useScroll } from "@use-gesture/react";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "motion/react";
+import { animate, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
 import type { ProjectType } from "@/lib/data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
@@ -143,10 +126,7 @@ export const Radial = ({ projects }: RadialProps) => {
       scrollY.set(-oy);
 
       if (sheetRef.current && activeNode.current) {
-        const intersecting = areIntersecting(
-          sheetRef.current,
-          activeNode.current,
-        );
+        const intersecting = areIntersecting(sheetRef.current, activeNode.current);
         if (intersecting && intersectingAtY.get() === 0) {
           intersectingAtY.set(oy);
         }
@@ -207,11 +187,7 @@ export const Radial = ({ projects }: RadialProps) => {
         document.documentElement.scrollTop = SCROLL_SNAP;
       }
 
-      const newRotate = getRotateForIndex(
-        targetIndex,
-        rotate.get(),
-        radialData,
-      );
+      const newRotate = getRotateForIndex(targetIndex, rotate.get(), radialData);
       if (newRotate === rotate.get()) return;
       rotate.set(newRotate);
     }
@@ -275,18 +251,8 @@ export const Radial = ({ projects }: RadialProps) => {
   );
 };
 
-const Provider = ({
-  value,
-  children,
-}: {
-  value: TimelineContext;
-  children: ReactNode;
-}) => {
-  return (
-    <TimelineContext.Provider value={value}>
-      {children}
-    </TimelineContext.Provider>
-  );
+const Provider = ({ value, children }: { value: TimelineContext; children: ReactNode }) => {
+  return <TimelineContext.Provider value={value}>{children}</TimelineContext.Provider>;
 };
 
 const Line = ({ dataIndex, variant, rotation, offsetX, offsetY }: LineType) => {
@@ -488,10 +454,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   );
 };
 
-function getLines(
-  rootScale: number,
-  radialData: RadialDataTypes,
-): [LineTypes, Constants] {
+function getLines(rootScale: number, radialData: RadialDataTypes): [LineTypes, Constants] {
   const LINE_WIDTH_SMALL = 40 * rootScale;
   const LINE_WIDTH_MEDIUM = 45 * rootScale;
   const LINE_WIDTH_LARGE = 72 * rootScale;
@@ -503,8 +466,7 @@ function getLines(
   // Calculate total lines: projects + asset lines
   const PROJECT_COUNT = radialData.length;
   const totalAssetLines = radialData.reduce(
-    (sum, item) =>
-      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
+    (sum, item) => sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = PROJECT_COUNT + totalAssetLines;
@@ -532,10 +494,7 @@ function getLines(
     lineIndex++;
 
     // Add asset lines after this project (min 1, then 1 per 2 assets)
-    const assetLineCount = Math.max(
-      1,
-      Math.ceil(item.project.projectAssets.length / 2),
-    );
+    const assetLineCount = Math.max(1, Math.ceil(item.project.projectAssets.length / 2));
     for (let i = 0; i < assetLineCount; i++) {
       // Start at -90 degrees (12 o'clock) instead of 0 degrees (3 o'clock)
       const assetRotation = lineIndex * ANGLE_INCREMENT - 90;
@@ -587,11 +546,7 @@ function useLines(radialData: RadialDataTypes): [LineTypes, Constants] {
   return [lines, constants];
 }
 
-function getRotateForIndex(
-  index: number,
-  rotate: number,
-  radialData: RadialDataTypes,
-) {
+function getRotateForIndex(index: number, rotate: number, radialData: RadialDataTypes) {
   const item = radialData[index];
   if (!item) return rotate;
 
@@ -600,14 +555,12 @@ function getRotateForIndex(
   for (let i = 0; i < index; i++) {
     const project = radialData[i];
     if (project) {
-      projectLineIndex +=
-        1 + Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
+      projectLineIndex += 1 + Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
     }
   }
 
   const totalAssetLines = radialData.reduce(
-    (sum, item) =>
-      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
+    (sum, item) => sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = radialData.length + totalAssetLines;
@@ -625,8 +578,7 @@ function getRotateForIndex(
 
 function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
   const totalAssetLines = radialData.reduce(
-    (sum, item) =>
-      sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
+    (sum, item) => sum + Math.max(1, Math.ceil(item.project.projectAssets.length / 2)),
     0,
   );
   const TOTAL_LINES = radialData.length + totalAssetLines;
@@ -640,9 +592,7 @@ function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
       for (let i = 0; i < index; i++) {
         const project = radialData[i];
         if (project) {
-          projectLineIndex +=
-            1 +
-            Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
+          projectLineIndex += 1 + Math.max(1, Math.ceil(project.project.projectAssets.length / 2)); // Project line + asset lines
         }
       }
 
@@ -665,7 +615,7 @@ function getIndexForRotate(rotate: number, radialData: RadialDataTypes) {
         delta,
       };
     })
-    .sort((a, b) => a.delta - b.delta);
+    .toSorted((a, b) => a.delta - b.delta);
 
   const closest = sortedByDelta[0];
 
@@ -693,20 +643,11 @@ const Project = ({ project }: { project: ProjectType }) => {
     >
       <header className="flex flex-col gap-3">
         <ScrambleText>{project.title}</ScrambleText>
-        {project.description && (
-          <p className="text-foreground-faded">{project.description}</p>
-        )}
+        {project.description && <p className="text-foreground-faded">{project.description}</p>}
       </header>
       {project.projectAssets.map((asset, assetIndex) => (
-        <AnimateSection
-          key={`${project.url}-${asset.src}`}
-          delay={0.2 + 0.2 * assetIndex}
-        >
-          <Card
-            className={
-              asset.aspectRatio === "16:9" ? "aspect-video" : "aspect-[4/3]"
-            }
-          >
+        <AnimateSection key={`${project.url}-${asset.src}`} delay={0.2 + 0.2 * assetIndex}>
+          <Card className={asset.aspectRatio === "16:9" ? "aspect-video" : "aspect-[4/3]"}>
             {asset.type === "image" && (
               <Image
                 className="object-cover"

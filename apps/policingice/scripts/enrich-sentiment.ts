@@ -33,10 +33,7 @@ const PROGRESS_FILE = path.join(__dirname, ".enriched-sentiment.json");
 
 type ProgressData = {
   processedIds: number[];
-  results: Record<
-    number,
-    { justified: number; unjustified: number; reasoning: string }
-  >;
+  results: Record<number, { justified: number; unjustified: number; reasoning: string }>;
   lastRun: string;
 };
 
@@ -77,18 +74,14 @@ const SentimentSchema = z.object({
     .describe(
       "Score 1-100 based on actual public replies/comments viewing the ICE action as unjustified.",
     ),
-  reasoning: z
-    .string()
-    .describe("Brief summary of the actual public sentiment in the thread"),
+  reasoning: z.string().describe("Brief summary of the actual public sentiment in the thread"),
 });
 
 // Threshold for considering sentiment already seeded
 const SENTIMENT_THRESHOLD = 5;
 
 async function main() {
-  const progress = args.force
-    ? { processedIds: [], results: {}, lastRun: "" }
-    : loadProgress();
+  const progress = args.force ? { processedIds: [], results: {}, lastRun: "" } : loadProgress();
   const processedSet = new Set(progress.processedIds);
 
   if (args.force) {
@@ -139,16 +132,12 @@ async function main() {
   }
 
   if (skippedAlreadyComplete > 0) {
-    console.log(
-      `Skipped ${skippedAlreadyComplete} incidents already have sentiment in DB`,
-    );
+    console.log(`Skipped ${skippedAlreadyComplete} incidents already have sentiment in DB`);
     progress.processedIds = [...processedSet];
     saveProgress(progress);
   }
   if (skippedAlreadyProcessed > 0) {
-    console.log(
-      `Skipped ${skippedAlreadyProcessed} incidents already in processed file`,
-    );
+    console.log(`Skipped ${skippedAlreadyProcessed} incidents already in processed file`);
   }
   if (skippedNoVideos > 0) {
     console.log(`Skipped ${skippedNoVideos} incidents with no videos`);
@@ -190,9 +179,7 @@ Analyze the real public discourse in the thread, not a prediction.`,
       console.log(
         `  Raw: justified=${object.justifiedScore}, unjustified=${object.unjustifiedScore}`,
       );
-      console.log(
-        `  Jittered: justified=${justified}, unjustified=${unjustified}`,
-      );
+      console.log(`  Jittered: justified=${justified}, unjustified=${unjustified}`);
       console.log(`  Reasoning: ${object.reasoning}`);
 
       // Add sentiment scores to existing counts

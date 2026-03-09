@@ -11,11 +11,7 @@ export const Navigation = () => {
         <Logo />
       </a>
       <div className="flex items-center gap-5 pr-2 md:gap-6">
-        <button
-          type="button"
-          className="hover:underline"
-          onClick={() => aboutProps.setRun(true)}
-        >
+        <button type="button" className="hover:underline" onClick={() => aboutProps.setRun(true)}>
           About
         </button>
         <a

@@ -1,5 +1,5 @@
 export const staticInputFormatProps = {
-  displayType: "input" as "input",
+  displayType: "input" as const,
   thousandSeparator: true,
   isNumericString: true,
   allowNegative: false,
@@ -7,7 +7,7 @@ export const staticInputFormatProps = {
 
 export const staticTextFormatProps = {
   decimalSeparator: ".",
-  displayType: "text" as "text",
+  displayType: "text" as const,
   thousandSeparator: true,
   isNumericString: true,
   allowNegative: false,
@@ -18,7 +18,7 @@ export const staticTextFormatProps = {
 export const currencyInputFormatProps = {
   prefix: "$",
   decimalSeparator: ".",
-  displayType: "input" as "input",
+  displayType: "input" as const,
   thousandSeparator: true,
   isNumericString: true,
   allowNegative: false,
@@ -27,7 +27,7 @@ export const currencyInputFormatProps = {
 export const currencyTextFormatProps = {
   prefix: "$",
   decimalSeparator: ".",
-  displayType: "text" as "text",
+  displayType: "text" as const,
   thousandSeparator: true,
   isNumericString: true,
   allowNegative: false,

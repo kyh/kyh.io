@@ -26,8 +26,7 @@ const getORPIndex = (word: string): number => {
 };
 
 const getWordDuration = (word: string): number => {
-  const { baseTime, timePerChar, punctuationMultiplier, commaMultiplier } =
-    RSVP_SETTINGS;
+  const { baseTime, timePerChar, punctuationMultiplier, commaMultiplier } = RSVP_SETTINGS;
   const duration = baseTime + word.length * timePerChar;
   const lastChar = word.slice(-1);
   if (/[.!?]/.test(lastChar)) return duration * punctuationMultiplier;
@@ -36,34 +35,22 @@ const getWordDuration = (word: string): number => {
 };
 
 const getCurrentIndex = (state: RSVPState, totalWords: number): number => {
-  if (state.status === "playing" || state.status === "paused")
-    return state.wordIndex;
+  if (state.status === "playing" || state.status === "paused") return state.wordIndex;
   if (state.status === "finished") return totalWords - 1;
   return 0;
 };
 
 // Word display component
-const WordDisplay = ({
-  word,
-  orpIndex,
-}: {
-  word: string;
-  orpIndex: number;
-}) => {
+const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => {
   const letters = word.split("");
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
 
   return (
-    <div
-      className="flex items-center"
-      style={{ transform: `translateX(${-offset}em)` }}
-    >
+    <div className="flex items-center" style={{ transform: `translateX(${-offset}em)` }}>
       {letters.map((letter, i) => (
         <span
           key={i}
-          className={`inline-block w-[0.6em] text-center ${
-            i === orpIndex ? "text-red-500" : ""
-          }`}
+          className={`inline-block w-[0.6em] text-center ${i === orpIndex ? "text-red-500" : ""}`}
         >
           {letter}
         </span>
@@ -73,10 +60,7 @@ const WordDisplay = ({
 };
 
 export const RSVPReader = () => {
-  const words = useMemo(
-    () => RSVP_CONTENT.trim().split(/\s+/).filter(Boolean),
-    [],
-  );
+  const words = useMemo(() => RSVP_CONTENT.trim().split(/\s+/).filter(Boolean), []);
   const [state, setState] = useState<RSVPState>({
     status: "countdown",
     count: 3,
@@ -89,9 +73,7 @@ export const RSVPReader = () => {
 
   const isPlaying = state.status === "playing" || state.status === "countdown";
   const showWord =
-    state.status === "playing" ||
-    state.status === "paused" ||
-    state.status === "finished";
+    state.status === "playing" || state.status === "paused" || state.status === "finished";
 
   // Unified timer effect for countdown and word progression
   useEffect(() => {
@@ -170,10 +152,7 @@ export const RSVPReader = () => {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
       const handler = handlers[e.code];
@@ -193,9 +172,7 @@ export const RSVPReader = () => {
 
       <div className="relative flex h-32 w-full max-w-2xl items-center justify-center">
         <div className="font-mono text-5xl font-normal tracking-tight md:text-6xl">
-          {showWord && currentWord && (
-            <WordDisplay word={currentWord} orpIndex={orpIndex} />
-          )}
+          {showWord && currentWord && <WordDisplay word={currentWord} orpIndex={orpIndex} />}
         </div>
       </div>
 

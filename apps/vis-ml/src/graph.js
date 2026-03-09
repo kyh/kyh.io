@@ -38,10 +38,7 @@ class LinearRegressionGraph {
   createAxis() {
     const xAxis = (g) =>
       g
-        .attr(
-          "transform",
-          `translate(0, ${this.options.height - this.options.margin.bottom})`,
-        )
+        .attr("transform", `translate(0, ${this.options.height - this.options.margin.bottom})`)
         .attr("class", "xAxis")
         .call(axisBottom(this.xScale));
 
@@ -83,9 +80,7 @@ class LinearRegressionGraph {
     this.svg
       .selectAll(".error-line")
       .attr("y1", (d) => this.yScale(d.y))
-      .attr("y2", (d) =>
-        this.yScale(this.state.weight * d.x + this.state.bias),
-      );
+      .attr("y2", (d) => this.yScale(this.state.weight * d.x + this.state.bias));
   }
 
   updateErrorText() {
@@ -114,10 +109,7 @@ class LinearRegressionGraph {
     const target = this.svg;
     const { data } = this;
 
-    const div = select("body")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("opacity", 0);
+    const div = select("body").append("div").attr("class", "tooltip").style("opacity", 0);
 
     const g = target.selectAll("g").data(data).join("g");
 

@@ -50,18 +50,14 @@ async function main() {
   console.log(`Found ${incidents.length} incidents to embed`);
 
   for (const incident of incidents) {
-    const textToEmbed = [incident.location, incident.description]
-      .filter(Boolean)
-      .join(" - ");
+    const textToEmbed = [incident.location, incident.description].filter(Boolean).join(" - ");
 
     if (!textToEmbed) {
       console.log(`Incident ${incident.id}: no text to embed, skipping`);
       continue;
     }
 
-    console.log(
-      `Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`,
-    );
+    console.log(`Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`);
 
     try {
       const embedding = await generateEmbedding(textToEmbed);

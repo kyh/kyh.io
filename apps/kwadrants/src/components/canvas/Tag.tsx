@@ -3,11 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Circle, Group, Rect, Text } from "react-konva";
 
 // Measure text width using canvas 2D context
-const measureText = (
-  text: string,
-  fontSize: number,
-  fontFamily: string,
-): number => {
+const measureText = (text: string, fontSize: number, fontFamily: string): number => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) return text.length * fontSize * 0.6;
@@ -25,15 +21,7 @@ interface TagProps {
   onRemove: (id: string) => void;
 }
 
-export const Tag = ({
-  id,
-  text,
-  x,
-  y,
-  color,
-  onDragEnd,
-  onRemove,
-}: TagProps) => {
+export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);

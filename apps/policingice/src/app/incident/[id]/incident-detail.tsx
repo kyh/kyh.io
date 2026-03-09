@@ -11,11 +11,7 @@ import {
 } from "@/components/keyboard-shortcuts-provider";
 import { useToast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
-import {
-  getUserVote,
-  reportIncident,
-  submitVote,
-} from "@/lib/incident-action";
+import { getUserVote, reportIncident, submitVote } from "@/lib/incident-action";
 
 import type { getIncidents } from "@/lib/incident-action";
 
@@ -23,14 +19,12 @@ type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
 type IncidentDetailProps = {
   incident: Incident;
-}
+};
 
 export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
   const toast = useToast();
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(
-    null,
-  );
+  const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(null);
   const [counts, setCounts] = useState({
     unjustified: incident.unjustifiedCount,
     justified: incident.justifiedCount,
@@ -103,10 +97,7 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
 
   return (
     <KeyboardShortcutsProvider>
-      <main
-        id="main-content"
-        className="min-h-screen bg-background px-4 py-8 sm:px-6"
-      >
+      <main id="main-content" className="min-h-screen bg-background px-4 py-8 sm:px-6">
         <div className="max-w-xl">
           <nav className="mb-12" aria-label="Breadcrumb">
             <Link
@@ -138,7 +129,7 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
       </main>
     </KeyboardShortcutsProvider>
   );
-}
+};
 
 const IncidentArticle = ({
   incidentId,
@@ -157,4 +148,4 @@ const IncidentArticle = ({
   }, [incidentId, shortcuts]);
 
   return <article ref={ref}>{children}</article>;
-}
+};

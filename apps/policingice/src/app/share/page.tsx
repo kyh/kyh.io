@@ -3,11 +3,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db/drizzle-client";
 import { incidents, videos } from "@/db/drizzle-schema";
-import {
-  detectPlatform,
-  isValidVideoUrl,
-  resolveVideoUrl,
-} from "@/lib/video-utils";
+import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
 
 const MAX_INPUT_LENGTH = 2048;
 
@@ -22,11 +18,7 @@ function extractUrls(text: string): string[] {
   return matches.map((url) => url.replace(/[.,;:!?)]+$/, ""));
 }
 
-function findVideoUrl(
-  url?: string,
-  text?: string,
-  title?: string,
-): string | null {
+function findVideoUrl(url?: string, text?: string, title?: string): string | null {
   if (url && isValidVideoUrl(url)) {
     return url;
   }

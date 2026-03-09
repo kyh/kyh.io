@@ -51,20 +51,9 @@ const tooltipStyles = {
 
 let tooltipTimeout: number;
 
-export default function Chart({
-  data,
-  width,
-  height,
-  margin = defaultMargin,
-}: BarStackProps) {
-  const {
-    tooltipOpen,
-    tooltipLeft,
-    tooltipTop,
-    tooltipData,
-    hideTooltip,
-    showTooltip,
-  } = useTooltip<TooltipData>();
+export default function Chart({ data, width, height, margin = defaultMargin }: BarStackProps) {
+  const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } =
+    useTooltip<TooltipData>();
 
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     // TooltipInPortal is rendered in a separate child of <body /> and positioned
@@ -176,17 +165,9 @@ export default function Chart({
         />
       </svg>
       {tooltipOpen && tooltipData && (
-        <TooltipInPortal
-          top={tooltipTop}
-          left={tooltipLeft}
-          style={tooltipStyles}
-        >
-          <p className="text-xs text-slate-400">
-            Year {tooltipData.bar.data["year"]}
-          </p>
-          <p className="mt-1 text-xs text-slate-50 capitalize">
-            {tooltipData.key} compensation
-          </p>
+        <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
+          <p className="text-xs text-slate-400">Year {tooltipData.bar.data["year"]}</p>
+          <p className="mt-1 text-xs text-slate-50 capitalize">{tooltipData.key} compensation</p>
           <NumericFormat
             style={{ color: colorScale(tooltipData.key) }}
             className="mt-1 text-xl"

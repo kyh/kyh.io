@@ -35,13 +35,9 @@ type IncidentEditRowProps = {
   incident: Incident;
   onCancel: () => void;
   onSaved: () => void;
-}
+};
 
-const IncidentEditRow = ({
-  incident,
-  onCancel,
-  onSaved,
-}: IncidentEditRowProps) => {
+const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) => {
   const router = useRouter();
   const toast = useToast();
   const newVideoRef = useRef<HTMLInputElement>(null);
@@ -52,8 +48,7 @@ const IncidentEditRow = ({
     await updateIncident({
       id: incident.id,
       location: (formData.get("location") as string).trim() || undefined,
-      description:
-        (formData.get("description") as string).trim() || undefined,
+      description: (formData.get("description") as string).trim() || undefined,
       incidentDate: (formData.get("incidentDate") as string) || undefined,
     });
     router.refresh();
@@ -61,11 +56,7 @@ const IncidentEditRow = ({
     onSaved();
   };
 
-  const handleUpdateVideo = async (
-    videoId: number,
-    newUrl: string,
-    originalUrl: string,
-  ) => {
+  const handleUpdateVideo = async (videoId: number, newUrl: string, originalUrl: string) => {
     if (newUrl && newUrl !== originalUrl) {
       await updateVideo({ id: videoId, url: newUrl });
       router.refresh();
@@ -119,20 +110,14 @@ const IncidentEditRow = ({
           name="incidentDate"
           form={formId}
           defaultValue={
-            incident.incidentDate
-              ? new Date(incident.incidentDate).toISOString().split("T")[0]
-              : ""
+            incident.incidentDate ? new Date(incident.incidentDate).toISOString().split("T")[0] : ""
           }
           className="border-b border-input bg-transparent py-1 text-sm outline-none"
         />
       </td>
       <td className="py-3 pr-3">
         <span
-          className={
-            incident.status === "approved"
-              ? "text-green-600"
-              : "text-muted-foreground"
-          }
+          className={incident.status === "approved" ? "text-green-600" : "text-muted-foreground"}
         >
           {incident.status}
         </span>
@@ -189,30 +174,23 @@ const IncidentEditRow = ({
       </td>
       <td className="py-3 text-muted-foreground">
         <Form id={formId} onSubmit={handleSubmit} className="hidden" />
-        <button
-          type="submit"
-          form={formId}
-          className="cursor-pointer hover:text-foreground"
-        >
+        <button type="submit" form={formId} className="cursor-pointer hover:text-foreground">
           save
         </button>
         {" · "}
-        <button
-          onClick={onCancel}
-          className="cursor-pointer hover:text-foreground"
-        >
+        <button onClick={onCancel} className="cursor-pointer hover:text-foreground">
           cancel
         </button>
       </td>
     </tr>
   );
-}
+};
 
 type VideoEditInputProps = {
   video: { id: number; url: string; platform: VideoPlatform };
   onUpdate: (id: number, newUrl: string, originalUrl: string) => void;
   onDelete: (id: number) => void;
-}
+};
 
 const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
   return (
@@ -232,26 +210,19 @@ const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
       </button>
     </div>
   );
-}
+};
 
 type AdminIncidentsClientProps = {
   initialIncidents: Incident[];
-}
+};
 
-export const AdminIncidentsClient = ({
-  initialIncidents,
-}: AdminIncidentsClientProps) => {
+export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientProps) => {
   const router = useRouter();
   const toast = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(
-    null,
-  );
+  const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(null);
 
-  const handleToggleStatus = async (
-    id: number,
-    currentStatus: IncidentStatus,
-  ) => {
+  const handleToggleStatus = async (id: number, currentStatus: IncidentStatus) => {
     const result = await toggleIncidentStatus({ id, currentStatus });
     router.refresh();
     toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
@@ -272,9 +243,7 @@ export const AdminIncidentsClient = ({
 
   return (
     <div>
-      <h2 className="mb-4 text-sm font-medium">
-        All Incidents ({initialIncidents.length})
-      </h2>
+      <h2 className="mb-4 text-sm font-medium">All Incidents ({initialIncidents.length})</h2>
 
       {initialIncidents.length === 0 ? (
         <p className="text-sm text-muted-foreground">No incidents.</p>
@@ -308,20 +277,13 @@ export const AdminIncidentsClient = ({
                   <tr key={incident.id} className="border-b border-border">
                     <td className="py-3 pr-3">#{incident.id}</td>
                     <td className="py-3 pr-3">{incident.location ?? "—"}</td>
-                    <td
-                      className="max-w-48 truncate py-3 pr-3"
-                      title={incident.description ?? ""}
-                    >
+                    <td className="max-w-48 truncate py-3 pr-3" title={incident.description ?? ""}>
                       {incident.description ?? "—"}
                     </td>
-                    <td className="py-3 pr-3">
-                      {formatDate(incident.incidentDate)}
-                    </td>
+                    <td className="py-3 pr-3">{formatDate(incident.incidentDate)}</td>
                     <td className="py-3 pr-3">
                       <button
-                        onClick={() =>
-                          handleToggleStatus(incident.id, incident.status)
-                        }
+                        onClick={() => handleToggleStatus(incident.id, incident.status)}
                         className="cursor-pointer"
                       >
                         {incident.status === "approved" ? (
@@ -333,9 +295,7 @@ export const AdminIncidentsClient = ({
                     </td>
                     <td className="py-3 pr-3">
                       <button
-                        onClick={() =>
-                          handleTogglePinned(incident.id, incident.pinned)
-                        }
+                        onClick={() => handleTogglePinned(incident.id, incident.pinned)}
                         className="cursor-pointer"
                       >
                         {incident.pinned ? (
@@ -351,9 +311,7 @@ export const AdminIncidentsClient = ({
                     </td>
                     <td className="py-3 pr-3">
                       {incident.reportCount > 0 ? (
-                        <span className="text-destructive">
-                          {incident.reportCount}
-                        </span>
+                        <span className="text-destructive">{incident.reportCount}</span>
                       ) : (
                         <span className="text-muted-foreground/40">0</span>
                       )}
@@ -403,8 +361,7 @@ export const AdminIncidentsClient = ({
               <>
                 <div className="mb-4 text-sm text-muted-foreground">
                   #{previewingIncident.id}
-                  {previewingIncident.location &&
-                    ` · ${previewingIncident.location}`}
+                  {previewingIncident.location && ` · ${previewingIncident.location}`}
                   {previewingIncident.incidentDate &&
                     ` · ${formatDate(previewingIncident.incidentDate)}`}
                 </div>
@@ -416,4 +373,4 @@ export const AdminIncidentsClient = ({
       </Dialog.Root>
     </div>
   );
-}
+};

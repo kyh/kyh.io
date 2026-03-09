@@ -2,13 +2,13 @@
   "name": "kyh",
   "version": "0.1.2",
   "description": "Personal CLI tool",
-  "type": "module",
   "bin": {
     "kyh": "./dist/index.js"
   },
   "files": [
     "dist"
   ],
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },

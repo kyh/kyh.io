@@ -25,23 +25,20 @@ export function isValidVideoUrl(url: string): boolean {
 }
 
 const FETCH_TIMEOUT_MS = 5000;
-const ALLOWED_TWITTER_HOSTS = ["twitter.com", "x.com"];
+const ALLOWED_TWITTER_HOSTS = new Set(["twitter.com", "x.com"]);
 
 // Validate URL is from allowed Twitter/X domains (SSRF protection)
 function isAllowedTwitterHost(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return ALLOWED_TWITTER_HOSTS.includes(parsed.hostname);
+    return ALLOWED_TWITTER_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
 }
 
 // Fetch with timeout
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -73,11 +70,7 @@ export async function resolveVideoUrl(url: string): Promise<string> {
 
     const location = response.headers.get("location");
     // Validate redirect is also to allowed host
-    if (
-      location &&
-      isAllowedTwitterHost(location) &&
-      isValidVideoUrl(location)
-    ) {
+    if (location && isAllowedTwitterHost(location) && isValidVideoUrl(location)) {
       return location;
     }
 
@@ -109,10 +102,7 @@ export function extractInstagramType(url: string): "p" | "reel" | "tv" {
 }
 
 // Returns video ID for embedding
-export function extractVideoId(
-  url: string,
-  platform: VideoPlatform,
-): string | null {
+export function extractVideoId(url: string, platform: VideoPlatform): string | null {
   switch (platform) {
     case "youtube": {
       const match = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/.exec(url);
@@ -130,8 +120,7 @@ export function extractVideoId(
     }
     case "facebook": {
       // Facebook URLs vary widely, just check it's a valid FB URL
-      if (url.includes("facebook.com") || url.includes("fb.watch"))
-        return "facebook";
+      if (url.includes("facebook.com") || url.includes("fb.watch")) return "facebook";
       return null;
     }
     case "instagram": {
@@ -143,13 +132,11 @@ export function extractVideoId(
       return null;
     }
     case "pinterest": {
-      if (url.includes("pinterest.com") || url.includes("pin.it"))
-        return "pinterest";
+      if (url.includes("pinterest.com") || url.includes("pin.it")) return "pinterest";
       return null;
     }
     case "reddit": {
-      if (url.includes("reddit.com") || url.includes("redd.it"))
-        return "reddit";
+      if (url.includes("reddit.com") || url.includes("redd.it")) return "reddit";
       return null;
     }
   }

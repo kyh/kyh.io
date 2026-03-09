@@ -20,11 +20,7 @@ interface DragState {
 }
 
 interface TagCreatorProps {
-  onTagDrop?: (
-    tag: { text: string; color: string },
-    x: number,
-    y: number,
-  ) => void;
+  onTagDrop?: (tag: { text: string; color: string }, x: number, y: number) => void;
   canvasRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -39,10 +35,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
 
   const handleCreate = () => {
     if (!text.trim()) return;
-    setTags((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), text: text.trim(), color },
-    ]);
+    setTags((prev) => [...prev, { id: crypto.randomUUID(), text: text.trim(), color }]);
     setText("");
   };
 
@@ -73,12 +66,9 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
       const dy = e.clientY - lastPosRef.current.y;
       const speed = Math.sqrt(dx * dx + dy * dy);
       const tilt = Math.min(speed * 0.6, 10);
-      const rotation =
-        dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
+      const rotation = dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
 
-      setDragState((prev) =>
-        prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null,
-      );
+      setDragState((prev) => (prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null));
       lastPosRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -97,11 +87,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
           // Dropped on canvas - add tag and remove from sidebar
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
-          onTagDrop?.(
-            { text: dragState.tag.text, color: dragState.tag.color },
-            x,
-            y,
-          );
+          onTagDrop?.({ text: dragState.tag.text, color: dragState.tag.color }, x, y);
           setTags((prev) => prev.filter((t) => t.id !== dragState.tag.id));
         } else {
           // Dropped outside - trigger settle animation
@@ -149,9 +135,7 @@ export const TagCreator = ({ onTagDrop, canvasRef }: TagCreatorProps) => {
                 key={c}
                 onClick={() => setColor(c)}
                 className={`h-6 w-6 rounded-full transition-transform ${
-                  color === c
-                    ? "scale-110 ring-2 ring-gray-400 ring-offset-1"
-                    : ""
+                  color === c ? "scale-110 ring-2 ring-gray-400 ring-offset-1" : ""
                 }`}
                 style={{ backgroundColor: c }}
               />

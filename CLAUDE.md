@@ -14,11 +14,13 @@ pnpm typecheck     # typecheck all
 ## Apps
 
 ### kwadrants (`apps/kwadrants`)
+
 2x2 matrix canvas editor using react-konva.
 
 **Stack**: React, Vite, Konva, Tailwind v4, motion
 
 **Features**:
+
 - Draggable tags + images on canvas
 - Editable axis labels (click to edit)
 - Quadrant color customization
@@ -29,20 +31,25 @@ pnpm typecheck     # typecheck all
 - State persisted to localStorage
 
 **Key files**:
+
 - `src/lib/KwadrantContext.tsx` - state management
 - `src/components/canvas/` - Konva canvas components
 - `src/components/ui/FloatingIsland.tsx` - draggable toolbar
 
 ### cli (`apps/cli`)
+
 Personal CLI tool.
 
 ### kyh (`apps/kyh`)
+
 Main website.
 
 ### party (`apps/party`)
+
 PartyKit app.
 
 ### tc, covid-19, vis-ml
+
 Other project apps.
 
 ## Packages

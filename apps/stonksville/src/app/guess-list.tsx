@@ -24,4 +24,4 @@ export const GuessList = ({ guesses }: { guesses: GuessFeedback[] }) => {
       ))}
     </div>
   );
-}
+};

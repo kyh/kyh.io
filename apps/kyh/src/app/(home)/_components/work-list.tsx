@@ -5,25 +5,13 @@ import { workHistory } from "@/lib/data";
 
 const Work = ({ work }: { work: WorkType }) => {
   return (
-    <a
-      href={work.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="list-row"
-    >
+    <a href={work.link} target="_blank" rel="noopener noreferrer" className="list-row">
       <span className="flex h-5 w-5 items-center justify-center">
-        <Image
-          alt={`${work.company} icon`}
-          width={20}
-          height={20}
-          src={work.favicon}
-        />
+        <Image alt={`${work.company} icon`} width={20} height={20} src={work.favicon} />
       </span>
       <span>{work.role}</span>
       <span>{work.company}</span>
-      <span className="text-right font-mono text-xs tracking-tight">
-        {work.year}
-      </span>
+      <span className="text-right font-mono text-xs tracking-tight">{work.year}</span>
     </a>
   );
 };

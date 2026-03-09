@@ -13,8 +13,8 @@ The file should be named `0000-your-change.md`. Decide yourself whether to make 
 The format of the file should be:
 
 ---
-"evalite": patch
----
+
+## "evalite": patch
 
 Description of the change.
 
@@ -40,6 +40,7 @@ The description of the change should be user-facing, describing which features w
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
 
 ### **ENTROPY REMINDER**
+
 This codebase will outlive you. Every shortcut you take becomes
 someone else's burden. Every hack compounds into technical debt
 that slows the whole team down.
@@ -53,7 +54,9 @@ you cut will be cut again.
 ## Specialized Subagents
 
 ### Oracle
+
 Invoke for: code review, architecture decisions, debugging analysis, refactor planning, second opinion.
 
 ### Librarian
+
 Invoke for: understanding 3rd party libraries/packages, exploring remote repositories, discovering open source patterns.

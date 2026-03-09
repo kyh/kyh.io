@@ -13,14 +13,11 @@ export const HelpDialog = () => {
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
         <Dialog.Popup className="bg-background fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg">
           <div className="flex flex-col gap-2 text-center sm:text-left">
-            <Dialog.Title className="text-lg font-semibold leading-none">
-              How to Play
-            </Dialog.Title>
+            <Dialog.Title className="text-lg font-semibold leading-none">How to Play</Dialog.Title>
           </div>
           <div className="space-y-4 text-sm">
             <p>
-              Guess the public company from its{" "}
-              <strong>revenue breakdown</strong>. You have{" "}
+              Guess the public company from its <strong>revenue breakdown</strong>. You have{" "}
               <strong>6 guesses</strong>.
             </p>
 
@@ -32,9 +29,7 @@ export const HelpDialog = () => {
                   <span className="inline-flex shrink-0 items-center rounded-md border border-green-500/30 bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-500">
                     Sector
                   </span>
-                  <span className="text-muted-foreground">
-                    Green = same sector
-                  </span>
+                  <span className="text-muted-foreground">Green = same sector</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -46,9 +41,7 @@ export const HelpDialog = () => {
 
                 <div className="flex items-center gap-2">
                   <ArrowDown className="size-4 text-yellow-500" />
-                  <span className="text-muted-foreground">
-                    Answer is lower
-                  </span>
+                  <span className="text-muted-foreground">Answer is lower</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -83,4 +76,4 @@ export const HelpDialog = () => {
       </Dialog.Portal>
     </Dialog.Root>
   );
-}
+};

@@ -9,10 +9,7 @@ import { guessDistributionSchema } from "@/db/zod-schema";
 import { getSession } from "@/lib/auth";
 import { getTodayDateString } from "@/lib/puzzle-query";
 
-export async function recordResult(
-  won: boolean,
-  guessCount: number,
-): Promise<void> {
+export async function recordResult(won: boolean, guessCount: number): Promise<void> {
   const session = await getSession();
   if (!session?.user) return;
 
@@ -45,9 +42,7 @@ export async function recordResult(
   // Don't double-count same day
   if (existing.lastPlayedDate === today) return;
 
-  const dist = guessDistributionSchema.parse(
-    JSON.parse(existing.guessDistribution),
-  );
+  const dist = guessDistributionSchema.parse(JSON.parse(existing.guessDistribution));
 
   if (won) {
     const key = String(guessCount) as keyof typeof dist;

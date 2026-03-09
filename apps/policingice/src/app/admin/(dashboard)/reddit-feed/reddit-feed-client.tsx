@@ -27,12 +27,9 @@ function normalizeUrl(url: string): string {
 type RedditFeedClientProps = {
   posts: FeedPost[];
   existingUrls: string[];
-}
+};
 
-export const RedditFeedClient = ({
-  posts,
-  existingUrls,
-}: RedditFeedClientProps) => {
+export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps) => {
   const router = useRouter();
   const toast = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -77,17 +74,13 @@ export const RedditFeedClient = ({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">
-          Reddit Feed ({posts.length} posts)
-        </h2>
+        <h2 className="text-sm font-medium">Reddit Feed ({posts.length} posts)</h2>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-          />
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
@@ -119,9 +112,7 @@ export const RedditFeedClient = ({
                         className="hover:underline"
                         title={post.title}
                       >
-                        {post.title.length > 80
-                          ? `${post.title.slice(0, 80)}...`
-                          : post.title}
+                        {post.title.length > 80 ? `${post.title.slice(0, 80)}...` : post.title}
                       </a>
                     </td>
                     <td className="py-3 pr-3 text-muted-foreground">
@@ -149,4 +140,4 @@ export const RedditFeedClient = ({
       )}
     </div>
   );
-}
+};

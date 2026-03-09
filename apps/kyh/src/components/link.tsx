@@ -106,15 +106,9 @@ export const Link = ({
   }
 
   if (src) {
-    const isRelativeUrl =
-      (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
+    const isRelativeUrl = (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
     content = (
-      <a
-        href={href}
-        {...(isRelativeUrl
-          ? {}
-          : { target: "_blank", rel: "noreferrer noopener" })}
-      >
+      <a href={href} {...(isRelativeUrl ? {} : { target: "_blank", rel: "noreferrer noopener" })}>
         <Image src={src} alt={alt ?? "image"} width={320} height={240} />
       </a>
     );

@@ -12,7 +12,7 @@ type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
-}
+};
 
 type VideoCarouselProps = {
   videos: Video[];
@@ -20,7 +20,7 @@ type VideoCarouselProps = {
   headerRight?: React.ReactNode;
   incidentId?: number;
   onSlideChange?: (index: number) => void;
-}
+};
 
 export const VideoCarousel = ({
   videos,
@@ -140,9 +140,7 @@ export const VideoCarousel = ({
               </div>
             )}
           </div>
-          {headerRight && (
-            <div className="flex items-center gap-2">{headerRight}</div>
-          )}
+          {headerRight && <div className="flex items-center gap-2">{headerRight}</div>}
         </div>
       )}
 
@@ -162,13 +160,11 @@ export const VideoCarousel = ({
               }}
             >
               <VideoEmbed url={video.url} platform={video.platform} />
-              {isDragging && (
-                <div className="absolute inset-0 z-10" aria-hidden="true" />
-              )}
+              {isDragging && <div className="absolute inset-0 z-10" aria-hidden="true" />}
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-}
+};

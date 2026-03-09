@@ -87,9 +87,7 @@ const inputs = ["select", "textarea", "input"];
  * <mods>     = `<mod>+<mod>+...`
  */
 function parse(str: string): KeyBindingPress[] {
-  const MOD = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
-    ? "Meta"
-    : "Control";
+  const MOD = /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? "Meta" : "Control";
 
   return str
     .trim()

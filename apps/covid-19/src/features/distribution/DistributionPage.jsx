@@ -22,38 +22,30 @@ export const DistributionPage = () => {
   // the centroid of each state
   const [joinedData, setJoinedData] = useState(null);
 
-  const dates = useMemo(
-    () => set(raw.map((s) => s.date).reverse()).values(),
-    [raw],
-  );
+  const dates = useMemo(() => set(raw.map((s) => s.date).toReversed()).values(), [raw]);
   // holds the date of the displayed day. calculated using the slider index
   const currentDate = useMemo(() => dates[sliderIndex], [dates, sliderIndex]);
 
   const getValue = useMemo(
     () =>
       (d, field, normalized = false) =>
-        ((d.properties.dailyData[currentDate] &&
-          d.properties.dailyData[currentDate][field]) ||
-          0) / (normalized ? d.properties.population / 1000000 : 1),
+        ((d.properties.dailyData[currentDate] && d.properties.dailyData[currentDate][field]) || 0) /
+        (normalized ? d.properties.population / 1000000 : 1),
     [currentDate],
   );
 
   const sumTotalTestResults = useMemo(
-    () =>
-      joinedData &&
-      sum(joinedData.features, (d) => getValue(d, "totalTestResults")),
+    () => joinedData && sum(joinedData.features, (d) => getValue(d, "totalTestResults")),
     [joinedData, getValue],
   );
 
   const sumPositive = useMemo(
-    () =>
-      joinedData && sum(joinedData.features, (d) => getValue(d, "positive")),
+    () => joinedData && sum(joinedData.features, (d) => getValue(d, "positive")),
     [joinedData, getValue],
   );
 
   const sumNegative = useMemo(
-    () =>
-      joinedData && sum(joinedData.features, (d) => getValue(d, "negative")),
+    () => joinedData && sum(joinedData.features, (d) => getValue(d, "negative")),
     [joinedData, getValue],
   );
 
@@ -125,9 +117,7 @@ export const DistributionPage = () => {
             <div>
               <input
                 className="w-64"
-                onChange={(event) =>
-                  setSliderIndex(parseInt(event.target.value, 10))
-                }
+                onChange={(event) => setSliderIndex(parseInt(event.target.value, 10))}
                 min={0}
                 max={dates.length - 1}
                 value={sliderIndex}
@@ -142,9 +132,7 @@ export const DistributionPage = () => {
               ) : (
                 <>
                   <span className="text-xs">{formatDate(dates[0])}</span>
-                  <span className="text-xs">
-                    {formatDate(dates[dates.length - 1])}
-                  </span>
+                  <span className="text-xs">{formatDate(dates[dates.length - 1])}</span>
                 </>
               )}
             </div>
@@ -166,9 +154,7 @@ export const DistributionPage = () => {
             pointClassname="bg-teal-500"
             pointShadeClassname="bg-teal-800"
             value={formatNumber(sumPositive)}
-            suffix={`(${((sumPositive / sumTotalTestResults) * 100).toFixed(
-              2,
-            )}% of tests)`}
+            suffix={`(${((sumPositive / sumTotalTestResults) * 100).toFixed(2)}% of tests)`}
             isLoading={isLoading}
           />
           <StatCard
@@ -176,9 +162,7 @@ export const DistributionPage = () => {
             pointClassname="bg-green-500"
             pointShadeClassname="bg-green-800"
             value={formatNumber(sumNegative)}
-            suffix={`(${((sumNegative / sumTotalTestResults) * 100).toFixed(
-              2,
-            )}% of tests)`}
+            suffix={`(${((sumNegative / sumTotalTestResults) * 100).toFixed(2)}% of tests)`}
             isLoading={isLoading}
           />
         </div>

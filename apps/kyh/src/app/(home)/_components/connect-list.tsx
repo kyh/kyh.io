@@ -1,9 +1,4 @@
-import {
-  DribbbleIcon,
-  GitHubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-} from "@/components/icons";
+import { DribbbleIcon, GitHubIcon, LinkedInIcon, TwitterIcon } from "@/components/icons";
 import { social } from "@/components/social";
 
 const connectLinks = [

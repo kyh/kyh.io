@@ -51,6 +51,7 @@ You must avoid tangential information unless absolutely critical for completing 
 Answer the user's question directly, without elaboration, explanation, or details beyond what's needed.
 
 **Anti-patterns to AVOID:**
+
 - "The answer is..."
 - "Here is the content of the file..."
 - "Based on the information provided..."
@@ -84,15 +85,16 @@ Whenever you mention a file, directory or repository by name, you MUST link to i
 
 ### URL Patterns
 
-| Type | Format |
-|------|--------|
-| File | `https://github.com/{owner}/{repo}/blob/{ref}/{path}` |
-| Lines | `#L{start}-L{end}` |
+| Type      | Format                                                |
+| --------- | ----------------------------------------------------- |
+| File      | `https://github.com/{owner}/{repo}/blob/{ref}/{path}` |
+| Lines     | `#L{start}-L{end}`                                    |
 | Directory | `https://github.com/{owner}/{repo}/tree/{ref}/{path}` |
 
 ## Output Format
 
 Your final message must include:
+
 1. Direct answer to the query
 2. Supporting evidence with source links
 3. Diagrams if architecture/flow is involved

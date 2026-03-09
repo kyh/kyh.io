@@ -9,16 +9,16 @@ A comprehensive guide for building polished, accessible web interfaces based on 
 
 ## Quick Reference
 
-| Category | When to Use |
-| --- | --- |
-| [Stack Constraints](stack-constraints.md) | Tooling, libraries, Tailwind conventions |
-| [Animations](animations.md) | Enter/exit transitions, easing, springs, performance |
-| [UI Polish](ui-polish.md) | Typography, visual design, layout, colors |
-| [Forms & Controls](forms-controls.md) | Inputs, buttons, form submission |
-| [Touch & Accessibility](touch-accessibility.md) | Mobile, touch devices, keyboard nav, a11y |
-| [Component Design](component-design.md) | Compound components, composition, props API |
-| [Marketing](marketing.md) | Landing pages, blogs, docs sites |
-| [Performance](performance.md) | Virtualization, preloading, optimization |
+| Category                                        | When to Use                                          |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| [Stack Constraints](stack-constraints.md)       | Tooling, libraries, Tailwind conventions             |
+| [Animations](animations.md)                     | Enter/exit transitions, easing, springs, performance |
+| [UI Polish](ui-polish.md)                       | Typography, visual design, layout, colors            |
+| [Forms & Controls](forms-controls.md)           | Inputs, buttons, form submission                     |
+| [Touch & Accessibility](touch-accessibility.md) | Mobile, touch devices, keyboard nav, a11y            |
+| [Component Design](component-design.md)         | Compound components, composition, props API          |
+| [Marketing](marketing.md)                       | Landing pages, blogs, docs sites                     |
+| [Performance](performance.md)                   | Virtualization, preloading, optimization             |
 
 ## Core Principles
 
@@ -71,15 +71,15 @@ Is the element entering or exiting?
 
 ## Common Mistakes
 
-| Mistake | Fix |
-| --- | --- |
-| `transition: all` | Specify exact properties |
-| Hover effects on touch | Use `@media (hover: hover)` |
-| Font weight change on hover | Use consistent weights |
-| Animating `height`/`width` | Use `transform` and `opacity` only |
-| No reduced motion support | Add `prefers-reduced-motion` query |
-| z-index: 9999 | Use fixed scale or `isolation: isolate` |
-| Custom page scrollbars | Only customize scrollbars in small elements |
+| Mistake                     | Fix                                         |
+| --------------------------- | ------------------------------------------- |
+| `transition: all`           | Specify exact properties                    |
+| Hover effects on touch      | Use `@media (hover: hover)`                 |
+| Font weight change on hover | Use consistent weights                      |
+| Animating `height`/`width`  | Use `transform` and `opacity` only          |
+| No reduced motion support   | Add `prefers-reduced-motion` query          |
+| z-index: 9999               | Use fixed scale or `isolation: isolate`     |
+| Custom page scrollbars      | Only customize scrollbars in small elements |
 
 ## Review Checklist
 

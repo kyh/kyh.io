@@ -6,10 +6,7 @@ const NotFound = () => {
       <div className="max-w-xl">
         <p className="text-sm text-muted-foreground">
           Not found.{" "}
-          <Link
-            href="/"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
+          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
             Back
           </Link>
         </p>

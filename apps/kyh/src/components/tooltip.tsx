@@ -39,24 +39,17 @@ const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
   const [position, setPosition] = React.useState<LinesPosition | null>(null);
   const positionsRef = React.useRef<Map<string, LinesPosition>>(new Map());
 
-  const updatePosition = React.useCallback(
-    (id: string, pos: LinesPosition | null) => {
-      if (pos) {
-        positionsRef.current.set(id, pos);
-        setPosition(pos);
-      } else {
-        positionsRef.current.delete(id);
-        // Use any remaining open tooltip's position, or null
-        const remaining = Array.from(positionsRef.current.values());
-        setPosition(
-          remaining.length > 0
-            ? (remaining[remaining.length - 1] ?? null)
-            : null,
-        );
-      }
-    },
-    [],
-  );
+  const updatePosition = React.useCallback((id: string, pos: LinesPosition | null) => {
+    if (pos) {
+      positionsRef.current.set(id, pos);
+      setPosition(pos);
+    } else {
+      positionsRef.current.delete(id);
+      // Use any remaining open tooltip's position, or null
+      const remaining = Array.from(positionsRef.current.values());
+      setPosition(remaining.length > 0 ? (remaining[remaining.length - 1] ?? null) : null);
+    }
+  }, []);
 
   return (
     <TooltipLinesContext.Provider value={{ updatePosition }}>
@@ -138,17 +131,10 @@ const useTooltipContext = () => {
   return context;
 };
 
-const Tooltip = ({
-  children,
-  ...options
-}: { children: React.ReactNode } & TooltipOptions) => {
+const Tooltip = ({ children, ...options }: { children: React.ReactNode } & TooltipOptions) => {
   const tooltip = useTooltip(options);
 
-  return (
-    <TooltipContext.Provider value={tooltip}>
-      {children}
-    </TooltipContext.Provider>
-  );
+  return <TooltipContext.Provider value={tooltip}>{children}</TooltipContext.Provider>;
 };
 
 const TooltipTrigger = React.forwardRef<
@@ -197,8 +183,7 @@ const TooltipContent = React.forwardRef<
   const { updatePosition } = React.useContext(TooltipLinesContext);
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
-  const { children: floatingPropsChildren, ...floatingProps } =
-    context.getFloatingProps(props);
+  const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
   const children = floatingPropsChildren as React.ReactNode;
   const blockType = type === "block";
 
@@ -330,8 +315,7 @@ const rows = 8;
 const duration = 0.07;
 const baseDelay = duration / 2;
 const blocks = Array.from({ length: cols * rows }, (_, i) => i);
-const calculateDelay = (n: number) =>
-  baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
+const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
 const TooltipBlocks = ({ context }: { context: ContextType }) => {

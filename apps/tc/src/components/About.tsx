@@ -1,9 +1,4 @@
-import type {
-  CallBackProps,
-  Placement,
-  Step,
-  TooltipRenderProps,
-} from "react-joyride";
+import type { CallBackProps, Placement, Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
 import Joyride, { ACTIONS, EVENTS, STATUS } from "react-joyride";
 import { Portal } from "react-portal";
@@ -23,14 +18,12 @@ export const defaultSteps: Step[] = [
     content: (
       <>
         <p>
-          The term <strong>Total Compensation</strong> captures all the
-          different ways you are financially compensated by your employer: base
-          salary, bonus, equity, benefits, etc.
+          The term <strong>Total Compensation</strong> captures all the different ways you are
+          financially compensated by your employer: base salary, bonus, equity, benefits, etc.
         </p>
         <p className="mt-2 font-bold text-emerald-500">
-          This calculator normalizes all these different forms of compensation
-          into dollar values (from private or public companies) so you can
-          estimate the final amount you are paid.
+          This calculator normalizes all these different forms of compensation into dollar values
+          (from private or public companies) so you can estimate the final amount you are paid.
         </p>
       </>
     ),
@@ -41,22 +34,18 @@ export const defaultSteps: Step[] = [
     content: (
       <>
         <p>
-          Cash compensation is the simplest category to understand because it’s
-          what gets directly deposited into your bank account.
+          Cash compensation is the simplest category to understand because it’s what gets directly
+          deposited into your bank account.
         </p>
-        <p className="mt-4 text-xs text-slate-400 uppercase">
-          Types of cash compensation:
-        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Types of cash compensation:</p>
         <ul>
           <li className="mt-2">
-            <strong>Base Salary</strong> - amount of money you receive just for
-            being employed (regardless of the performance of the company or your
-            performance)
+            <strong>Base Salary</strong> - amount of money you receive just for being employed
+            (regardless of the performance of the company or your performance)
           </li>
           <li className="mt-2">
-            <strong>Bonuses</strong> - a single lump sum of cash (sometimes it’s
-            a yearly bonus, other times it could be a one time bonus at certain
-            milestones)
+            <strong>Bonuses</strong> - a single lump sum of cash (sometimes it’s a yearly bonus,
+            other times it could be a one time bonus at certain milestones)
           </li>
         </ul>
       </>
@@ -68,22 +57,18 @@ export const defaultSteps: Step[] = [
     content: (
       <>
         <p>
-          Equity compensation is more complex, you only recieve during certain
-          periods and it’s difficult to get the exact dollar value of your
-          equity.
+          Equity compensation is more complex, you only recieve during certain periods and it’s
+          difficult to get the exact dollar value of your equity.
         </p>
-        <p className="mt-4 text-xs text-slate-400 uppercase">
-          Types of equity compensation:
-        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Types of equity compensation:</p>
         <ul>
           <li className="mt-2">
-            <strong>ISO</strong> - your typical startup equity package consists
-            of stock options which translate to stocks once you buy them for a
-            certain strike price
+            <strong>ISO</strong> - your typical startup equity package consists of stock options
+            which translate to stocks once you buy them for a certain strike price
           </li>
           <li className="mt-2">
-            <strong>RSU</strong> - these are just like any other shares of
-            company stock once they are vested
+            <strong>RSU</strong> - these are just like any other shares of company stock once they
+            are vested
           </li>
         </ul>
       </>
@@ -95,23 +80,20 @@ export const defaultSteps: Step[] = [
     content: (
       <>
         <p>
-          Estimating the value of your equity is the hard part. Investors often
-          look at value from multiple dimensions. To keep things simple, we
-          offer 2 different approaches.
+          Estimating the value of your equity is the hard part. Investors often look at value from
+          multiple dimensions. To keep things simple, we offer 2 different approaches.
         </p>
-        <p className="mt-4 text-xs text-slate-400 uppercase">
-          Estimating equity value:
-        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Estimating equity value:</p>
         <ul>
           <li className="mt-2">
-            <strong>Growth based</strong> - At high-growth startup companies it
-            may be easier to think of your stock value as an N multiple after 4
-            years. Often, VCs expect a 10x return on their investment
+            <strong>Growth based</strong> - At high-growth startup companies it may be easier to
+            think of your stock value as an N multiple after 4 years. Often, VCs expect a 10x return
+            on their investment
           </li>
           <li className="mt-2">
-            <strong>Revenue based</strong> - If you know the revenue of your
-            company, you can estimate the value of your equity by comparing it
-            against the revenue multiple of an equivalent public company
+            <strong>Revenue based</strong> - If you know the revenue of your company, you can
+            estimate the value of your equity by comparing it against the revenue multiple of an
+            equivalent public company
           </li>
         </ul>
       </>
@@ -123,8 +105,8 @@ export const defaultSteps: Step[] = [
     content: (
       <>
         <p>
-          If you don’t know what numbers to use, we can offer reasonable
-          defaults for you by looking at competitors.
+          If you don’t know what numbers to use, we can offer reasonable defaults for you by looking
+          at competitors.
         </p>
       </>
     ),
@@ -136,12 +118,7 @@ export const useAbout = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [steps] = useState(defaultSteps);
 
-  const handleJoyrideCallback = ({
-    action,
-    index,
-    type,
-    status,
-  }: CallBackProps) => {
+  const handleJoyrideCallback = ({ action, index, type, status }: CallBackProps) => {
     if (
       action === ACTIONS.CLOSE ||
       ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
@@ -153,9 +130,7 @@ export const useAbout = () => {
         left: 0,
         behavior: "smooth",
       });
-    } else if (
-      ([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND] as string[]).includes(type)
-    ) {
+    } else if (([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND] as string[]).includes(type)) {
       const stepIndex = index + (action === ACTIONS.PREV ? -1 : 1);
       setStepIndex(stepIndex);
     }
@@ -184,9 +159,7 @@ const Tooltip = ({
     {...tooltipProps}
   >
     {step.title && (
-      <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">
-        {step.title}
-      </h1>
+      <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">{step.title}</h1>
     )}
     {step.content}
     <footer className="mt-5 flex items-center justify-between">
@@ -225,12 +198,7 @@ const Tooltip = ({
 
 type Props = ReturnType<typeof useAbout>;
 
-export const About = ({
-  run,
-  stepIndex,
-  steps,
-  handleJoyrideCallback,
-}: Props) => (
+export const About = ({ run, stepIndex, steps, handleJoyrideCallback }: Props) => (
   <Portal>
     <Joyride
       continuous

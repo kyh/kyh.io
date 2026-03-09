@@ -4,20 +4,12 @@ import { cn } from "@/components/utils";
 import type { GuessFeedback, Direction } from "@/db/zod-schema";
 
 const DirectionIcon = ({ direction }: { direction: Direction }) => {
-  if (direction === "correct")
-    return <Check className="size-4 text-green-500" />;
-  if (direction === "higher")
-    return <ArrowUp className="size-4 text-yellow-500" />;
+  if (direction === "correct") return <Check className="size-4 text-green-500" />;
+  if (direction === "higher") return <ArrowUp className="size-4 text-yellow-500" />;
   return <ArrowDown className="size-4 text-yellow-500" />;
-}
+};
 
-const DirectionCell = ({
-  label,
-  direction,
-}: {
-  label: string;
-  direction: Direction;
-}) => {
+const DirectionCell = ({ label, direction }: { label: string; direction: Direction }) => {
   return (
     <div
       className={cn(
@@ -31,20 +23,16 @@ const DirectionCell = ({
       <DirectionIcon direction={direction} />
     </div>
   );
-}
+};
 
 export const GuessRow = ({ guess }: { guess: GuessFeedback }) => {
   return (
     <div className="flex items-center gap-2 py-1.5">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {guess.guessedTicker && (
-          <span className="font-mono text-sm font-semibold">
-            {guess.guessedTicker}
-          </span>
+          <span className="font-mono text-sm font-semibold">{guess.guessedTicker}</span>
         )}
-        <span className="text-muted-foreground min-w-0 truncate text-sm">
-          {guess.guessedName}
-        </span>
+        <span className="text-muted-foreground min-w-0 truncate text-sm">{guess.guessedName}</span>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         <span
@@ -63,4 +51,4 @@ export const GuessRow = ({ guess }: { guess: GuessFeedback }) => {
       </div>
     </div>
   );
-}
+};

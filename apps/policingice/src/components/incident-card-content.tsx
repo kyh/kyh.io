@@ -11,7 +11,7 @@ type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
-}
+};
 
 type IncidentCardContentProps = {
   incidentId: number;
@@ -27,7 +27,7 @@ type IncidentCardContentProps = {
   reported?: boolean;
   pinned?: boolean;
   headerRight?: React.ReactNode;
-}
+};
 
 function formatDate(date: Date | null) {
   if (!date) return null;
@@ -73,10 +73,7 @@ export const IncidentCardContent = ({
         headerRight={
           <>
             {pinned && (
-              <Pin
-                className="h-4 w-4 fill-yellow-500 text-yellow-500"
-                aria-label="Pinned"
-              />
+              <Pin className="h-4 w-4 fill-yellow-500 text-yellow-500" aria-label="Pinned" />
             )}
             {headerRight}
           </>
@@ -84,11 +81,7 @@ export const IncidentCardContent = ({
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">
-        <div
-          className="flex items-center gap-4"
-          role="group"
-          aria-label="Vote on this incident"
-        >
+        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
           <button
             onClick={() => onVote("unjustified")}
             className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
@@ -114,10 +107,7 @@ export const IncidentCardContent = ({
             className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
             aria-label={`Open video on ${currentVideo.platform === "twitter" ? "X" : currentVideo.platform} (opens in new tab)`}
           >
-            open on{" "}
-            {currentVideo.platform === "twitter"
-              ? "x"
-              : currentVideo.platform}
+            open on {currentVideo.platform === "twitter" ? "x" : currentVideo.platform}
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
           {onReport && (
@@ -125,11 +115,7 @@ export const IncidentCardContent = ({
               onClick={onReport}
               disabled={reported}
               className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}
-              aria-label={
-                reported
-                  ? "This incident has been reported"
-                  : "Report this incident"
-              }
+              aria-label={reported ? "This incident has been reported" : "Report this incident"}
             >
               {reported ? "reported" : "report"}
             </button>
@@ -138,4 +124,4 @@ export const IncidentCardContent = ({
       </div>
     </>
   );
-}
+};

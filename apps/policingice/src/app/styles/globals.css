@@ -125,8 +125,8 @@
 [data-theme="light"] .react-tweet-theme {
   --tweet-border: 1px solid #e5e5e5;
   --tweet-font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   --tweet-bg-color: #fff;
   --tweet-bg-color-hover: #fafafa;
   --tweet-quoted-bg-color-hover: #fafafa;
@@ -145,8 +145,8 @@
 .dark .react-tweet-theme {
   --tweet-border: 1px solid hsl(240 3.7% 15.9%);
   --tweet-font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   --tweet-bg-color: hsl(240 10% 3.9%);
   --tweet-bg-color-hover: hsl(240 3.7% 15.9%);
   --tweet-quoted-bg-color-hover: hsl(240 3.7% 15.9%);

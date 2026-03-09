@@ -54,9 +54,7 @@ const LabelEditor = ({
       }}
       autoFocus
       className={`absolute rounded px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-        isDark
-          ? "border-gray-600 bg-gray-800 text-white"
-          : "border-gray-300 bg-white text-gray-900"
+        isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"
       } border`}
       style={{
         left: isRightEdge ? "auto" : position.x,
@@ -71,24 +69,15 @@ const LabelEditor = ({
 
 export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
   ({ width, height }, ref) => {
-    const {
-      state,
-      updateTagPosition,
-      removeTag,
-      updateImagePosition,
-      removeImage,
-      updateLabel,
-    } = useKwadrant();
+    const { state, updateTagPosition, removeTag, updateImagePosition, removeImage, updateLabel } =
+      useKwadrant();
     const [editingLabel, setEditingLabel] = useState<{
       key: string;
       position: { x: number; y: number };
     } | null>(null);
 
     const layout = getLayout(state.layoutType);
-    const bounds = useMemo(
-      () => layout.getBounds(width, height),
-      [layout, width, height],
-    );
+    const bounds = useMemo(() => layout.getBounds(width, height), [layout, width, height]);
 
     // Get current labels with defaults
     const currentLabels = useMemo(() => {
@@ -114,8 +103,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
     };
 
     // Check if this label is on right edge (for axis layout xPositive)
-    const isRightEdgeLabel =
-      editingLabel?.key === "xPositive" && state.layoutType === "axis";
+    const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
 
     return (
       <div className="relative h-full w-full">
@@ -146,12 +134,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
               />
             ))}
             {state.tags.map((tag) => (
-              <Tag
-                key={tag.id}
-                {...tag}
-                onDragEnd={updateTagPosition}
-                onRemove={removeTag}
-              />
+              <Tag key={tag.id} {...tag} onDragEnd={updateTagPosition} onRemove={removeTag} />
             ))}
           </Layer>
         </Stage>

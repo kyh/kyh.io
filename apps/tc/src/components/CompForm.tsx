@@ -6,10 +6,7 @@ import type { CompHooksType } from "@/lib/comp";
 import { CompModal } from "@/components/CompModal";
 import { FormField } from "@/components/FormField";
 import { useModal } from "@/components/Modal";
-import {
-  currencyInputFormatProps,
-  staticInputFormatProps,
-} from "@/lib/formProps";
+import { currencyInputFormatProps, staticInputFormatProps } from "@/lib/formProps";
 
 type Props = {
   comp: CompHooksType;
@@ -91,9 +88,7 @@ export const CompForm = ({ comp }: Props) => {
               <RadioGroup.Option value="iso">
                 {({ checked }) => (
                   <span
-                    className={`cursor-pointer transition ${
-                      checked ? "text-emerald-600" : ""
-                    }`}
+                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
                   >
                     ISO
                   </span>
@@ -102,9 +97,7 @@ export const CompForm = ({ comp }: Props) => {
               <RadioGroup.Option value="rsu">
                 {({ checked }) => (
                   <span
-                    className={`cursor-pointer transition ${
-                      checked ? "text-emerald-600" : ""
-                    }`}
+                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
                   >
                     RSU
                   </span>
@@ -144,11 +137,7 @@ export const CompForm = ({ comp }: Props) => {
           )}
           {comp.shareType === "rsu" && (
             <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
-              <FormField
-                label="Shares per year"
-                name="shares"
-                placeholder="1,000"
-              >
+              <FormField label="Shares per year" name="shares" placeholder="1,000">
                 <NumericFormat
                   {...staticInputFormatProps}
                   value={comp.rsu}
@@ -233,20 +222,14 @@ export const CompForm = ({ comp }: Props) => {
             <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
               <FormField
                 className="rounded-b-none"
-                label={
-                  comp.shareType === "rsu"
-                    ? "Current Market Value"
-                    : "Preffered Stock Price"
-                }
+                label={comp.shareType === "rsu" ? "Current Market Value" : "Preffered Stock Price"}
                 name="preferredSharePrice"
                 placeholder="$10.00"
               >
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.preferredSharePrice}
-                  onValueChange={({ value }) =>
-                    comp.setPreferredSharePrice(value)
-                  }
+                  onValueChange={({ value }) => comp.setPreferredSharePrice(value)}
                   onBlur={() => setShouldUpdate(true)}
                 />
               </FormField>
@@ -265,9 +248,7 @@ export const CompForm = ({ comp }: Props) => {
                   allowNegative
                   suffix={comp.shareType === "rsu" ? "%" : "x"}
                   value={comp.expectedGrowthMultiple}
-                  onValueChange={({ value }) =>
-                    comp.setExpectedGrowthMultiple(value)
-                  }
+                  onValueChange={({ value }) => comp.setExpectedGrowthMultiple(value)}
                   onBlur={() => setShouldUpdate(true)}
                 />
               </FormField>
@@ -284,9 +265,7 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...staticInputFormatProps}
                   value={comp.sharesOutstanding}
-                  onValueChange={({ value }) =>
-                    comp.setSharesOutstanding(value)
-                  }
+                  onValueChange={({ value }) => comp.setSharesOutstanding(value)}
                   onBlur={() => setShouldUpdate(true)}
                 />
               </FormField>

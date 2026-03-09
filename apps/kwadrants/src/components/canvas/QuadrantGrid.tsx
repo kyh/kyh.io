@@ -63,13 +63,7 @@ export const QuadrantGrid = ({
       for (let x = bx + GRID_SPACING; x < bx + width; x += GRID_SPACING) {
         for (let y = by + GRID_SPACING; y < by + height; y += GRID_SPACING) {
           elements.push(
-            <Circle
-              key={`d-${x}-${y}`}
-              x={x}
-              y={y}
-              radius={1.5}
-              fill={themeColors.grid}
-            />,
+            <Circle key={`d-${x}-${y}`} x={x} y={y} radius={1.5} fill={themeColors.grid} />,
           );
         }
       }
@@ -81,36 +75,12 @@ export const QuadrantGrid = ({
   return (
     <>
       {/* Background */}
-      <Rect
-        x={0}
-        y={0}
-        width={canvasWidth}
-        height={canvasHeight}
-        fill={themeColors.bg}
-      />
+      <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={themeColors.bg} />
 
       {/* Quadrant backgrounds */}
-      <Rect
-        x={bx}
-        y={by}
-        width={width / 2}
-        height={height / 2}
-        fill={colors.topLeft}
-      />
-      <Rect
-        x={centerX}
-        y={by}
-        width={width / 2}
-        height={height / 2}
-        fill={colors.topRight}
-      />
-      <Rect
-        x={bx}
-        y={centerY}
-        width={width / 2}
-        height={height / 2}
-        fill={colors.bottomLeft}
-      />
+      <Rect x={bx} y={by} width={width / 2} height={height / 2} fill={colors.topLeft} />
+      <Rect x={centerX} y={by} width={width / 2} height={height / 2} fill={colors.topRight} />
+      <Rect x={bx} y={centerY} width={width / 2} height={height / 2} fill={colors.bottomLeft} />
       <Rect
         x={centerX}
         y={centerY}
@@ -128,11 +98,7 @@ export const QuadrantGrid = ({
         stroke={themeColors.axis}
         strokeWidth={1}
       />
-      <Line
-        points={[bx, centerY, bx + width, centerY]}
-        stroke={themeColors.axis}
-        strokeWidth={1}
-      />
+      <Line points={[bx, centerY, bx + width, centerY]} stroke={themeColors.axis} strokeWidth={1} />
       {showOuterBorder && (
         <Rect
           x={bx}

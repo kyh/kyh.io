@@ -47,18 +47,14 @@ export const ViewportProvider = ({ children }: ViewportProviderProps) => {
     };
   }, []);
 
-  return (
-    <ViewportContext.Provider value={size}>{children}</ViewportContext.Provider>
-  );
+  return <ViewportContext.Provider value={size}>{children}</ViewportContext.Provider>;
 };
 
 export const useViewport = () => {
   const viewportContext = useContext(ViewportContext);
 
   if (!viewportContext) {
-    throw new Error(
-      "viewportContext has to be used within <ViewportContext.Provider>",
-    );
+    throw new Error("viewportContext has to be used within <ViewportContext.Provider>");
   }
 
   return viewportContext;
@@ -73,6 +69,4 @@ const debounce = (fn: () => void, ms = 500) => {
 };
 
 const isMobile = () =>
-  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent,
-  );
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);

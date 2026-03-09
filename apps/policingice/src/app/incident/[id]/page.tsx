@@ -36,11 +36,7 @@ export async function generateStaticParams() {
   return rows.map((row) => ({ id: String(row.id) }));
 }
 
-const IncidentPage = async ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) => {
+const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const incident = await getIncident(parseInt(id, 10));
   if (!incident) notFound();

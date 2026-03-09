@@ -88,10 +88,7 @@ const strokeWhite = colorSchemes.gray[3];
 const getColor = {
   death: scaleThreshold(colorLimits.death, colorSchemes.pink),
   positive: scaleThreshold(colorLimits.positive, colorSchemes.teal),
-  totalTestResults: scaleThreshold(
-    colorLimits.totalTestResults,
-    colorSchemes.gray,
-  ),
+  totalTestResults: scaleThreshold(colorLimits.totalTestResults, colorSchemes.gray),
 };
 
 const getStrokeColor = {
@@ -141,10 +138,7 @@ export const Map = ({
       properties: {
         ...feature.properties,
         centroidCoordinates: path.centroid(feature), // should get rid of turf and use d3 for the centroid
-        dailyData: createMapFromArray(
-          stateMap[feature.properties.STUSPS],
-          "date",
-        ),
+        dailyData: createMapFromArray(stateMap[feature.properties.STUSPS], "date"),
       },
     }));
     const tempData = { ...StatesWithPopulation, features: joinedFeatures };
@@ -164,18 +158,11 @@ export const Map = ({
       ),
     [data],
   );
-  const r = useMemo(
-    () => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]),
-    [maxValue],
-  );
+  const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
 
   return (
     <div className="relative">
-      <div
-        className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(
-          " ",
-        )}
-      >
+      <div className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(" ")}>
         {useChoropleth ? (
           <ChoroLegend
             color={getColor[currentField]}
@@ -186,13 +173,7 @@ export const Map = ({
             spaceBetween={2}
           />
         ) : (
-          <BubbleLegend
-            data={data}
-            r={r}
-            maxValue={maxValue}
-            height={150}
-            width={150}
-          />
+          <BubbleLegend data={data} r={r} maxValue={maxValue} height={150} width={150} />
         )}
       </div>
 
@@ -207,9 +188,7 @@ export const Map = ({
           }}
         >
           <>
-            {!useChoropleth && (
-              <Bubbles geoJson={data} getValue={getValue} r={r} />
-            )}
+            {!useChoropleth && <Bubbles geoJson={data} getValue={getValue} r={r} />}
             <States
               geoJson={data}
               useChoropleth={useChoropleth}
@@ -222,11 +201,7 @@ export const Map = ({
           </>
         </svg>
         {!!hoveredState && (
-          <Tooltip
-            hoveredState={hoveredState}
-            getValue={getValue}
-            currentDate={currentDate}
-          />
+          <Tooltip hoveredState={hoveredState} getValue={getValue} currentDate={currentDate} />
         )}
       </div>
       <span className="text-xs text-gray-500">* Per one million people</span>
@@ -248,8 +223,7 @@ const States = ({
     if (!useChoropleth) return "transparent";
     const value = getValue(d) ? getValue(d) : 0; // account for undefined values
     const normalizationPopulation = 1000000; // 1 million;
-    const normalizedValue =
-      value / (d.properties.population / normalizationPopulation);
+    const normalizedValue = value / (d.properties.population / normalizationPopulation);
     return getColor[currentField](normalizedValue);
   };
   const strokeColor = useChoropleth ? getStrokeColor[currentField] : strokeGrey;
@@ -263,10 +237,7 @@ const States = ({
       pointerEvents="all"
       onMouseEnter={() => {
         setHoveredState({
-          coordinates: [
-            d.properties.centroidCoordinates[0],
-            d.properties.centroidCoordinates[1],
-          ],
+          coordinates: [d.properties.centroidCoordinates[0], d.properties.centroidCoordinates[1]],
           state: d,
         });
       }}
@@ -290,9 +261,7 @@ const States = ({
 
 const Bubbles = ({ geoJson, r, getValue }) => {
   // filter out "states" outside of render area (should be hoisted)
-  const features = geoJson.features.filter(
-    (d) => d.properties.centroidCoordinates[0],
-  );
+  const features = geoJson.features.filter((d) => d.properties.centroidCoordinates[0]);
 
   const createBubble = (d, i, property) => {
     const props = {
@@ -303,20 +272,14 @@ const Bubbles = ({ geoJson, r, getValue }) => {
     return (
       <circle
         key={property + i}
-        fill={
-          property === "positive" ? colorSchemes.teal[5] : colorSchemes.gray[5]
-        }
+        fill={property === "positive" ? colorSchemes.teal[5] : colorSchemes.gray[5]}
         {...props}
         fillOpacity={property === "positive" ? 0.8 : 0.2}
       />
     );
   };
-  const testBubbles = features.map((d, i) =>
-    createBubble(d, i, "totalTestResults"),
-  );
-  const positiveBubbles = features.map((d, i) =>
-    createBubble(d, i, "positive"),
-  );
+  const testBubbles = features.map((d, i) => createBubble(d, i, "totalTestResults"));
+  const positiveBubbles = features.map((d, i) => createBubble(d, i, "positive"));
   return (
     <>
       <g className="test-bubbles">{testBubbles}</g>

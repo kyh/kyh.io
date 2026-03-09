@@ -1,11 +1,7 @@
 import { Card } from "components/Card";
 import { Loader } from "components/Loader";
 
-const Point = ({
-  label = "",
-  pointClassname = "",
-  pointShadeClassname = "",
-}) => {
+const Point = ({ label = "", pointClassname = "", pointShadeClassname = "" }) => {
   return (
     <span
       aria-label={label}
@@ -17,11 +13,7 @@ const Point = ({
 };
 
 export const CardLabel = ({ label, lowercase }) => (
-  <span
-    className={`text-2xs font-medium text-gray-400 ${
-      lowercase ? "" : "uppercase"
-    }`}
-  >
+  <span className={`text-2xs font-medium text-gray-400 ${lowercase ? "" : "uppercase"}`}>
     {label}
   </span>
 );
@@ -53,9 +45,7 @@ export const StatCard = ({
         ) : (
           <>
             <span className="mr-1 text-sm text-gray-100">{value}</span>
-            {!!suffix && (
-              <span className="text-2xs text-gray-400">{suffix}</span>
-            )}
+            {!!suffix && <span className="text-2xs text-gray-400">{suffix}</span>}
           </>
         )}
       </div>

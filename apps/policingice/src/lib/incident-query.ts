@@ -4,10 +4,7 @@ import { desc, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle-client";
 import { incidents } from "@/db/drizzle-schema";
 
-export async function getIncidents(data: {
-  offset?: number;
-  limit?: number;
-}) {
+export async function getIncidents(data: { offset?: number; limit?: number }) {
   "use cache";
   cacheLife("minutes");
   cacheTag("incidents");
@@ -15,10 +12,7 @@ export async function getIncidents(data: {
   const offset = data.offset ?? 0;
   const results = await db.query.incidents.findMany({
     with: { videos: true },
-    where: (
-      incidents,
-      { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp },
-    ) =>
+    where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
       andOp(
         eqOp(incidents.status, "approved"),
         isNullOp(incidents.deletedAt),

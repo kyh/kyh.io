@@ -2,14 +2,7 @@
 
 import type useEmblaCarousel from "embla-carousel-react";
 import type { ReactNode } from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Moon, Sun } from "lucide-react";
 
@@ -23,10 +16,9 @@ type KeyboardShortcutsContextValue = {
   registerIncident: (id: number, element: HTMLElement | null) => void;
   unregisterIncident: (id: number) => void;
   activeIncidentId: number | null;
-}
+};
 
-const KeyboardShortcutsContext =
-  createContext<KeyboardShortcutsContextValue | null>(null);
+const KeyboardShortcutsContext = createContext<KeyboardShortcutsContextValue | null>(null);
 
 export function useKeyboardShortcuts() {
   return useContext(KeyboardShortcutsContext);
@@ -34,11 +26,9 @@ export function useKeyboardShortcuts() {
 
 type KeyboardShortcutsProviderProps = {
   children: ReactNode;
-}
+};
 
-export const KeyboardShortcutsProvider = ({
-  children,
-}: KeyboardShortcutsProviderProps) => {
+export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProviderProps) => {
   const carouselsRef = useRef<Map<number, EmblaApi | null>>(new Map());
   const incidentsRef = useRef<Map<number, HTMLElement>>(new Map());
   const incidentOrderRef = useRef<number[]>([]);
@@ -122,8 +112,7 @@ export const KeyboardShortcutsProvider = ({
       }
 
       const order = incidentOrderRef.current;
-      const currentIndex =
-        activeIncidentId !== null ? order.indexOf(activeIncidentId) : -1;
+      const currentIndex = activeIncidentId !== null ? order.indexOf(activeIncidentId) : -1;
 
       switch (e.key) {
         case "ArrowDown":
@@ -195,7 +184,7 @@ export const KeyboardShortcutsProvider = ({
       <KeyboardShortcutsHelp />
     </KeyboardShortcutsContext.Provider>
   );
-}
+};
 
 const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -205,40 +194,32 @@ const KeyboardShortcutsHelp = () => {
     <div className="fixed right-4 bottom-4 hidden text-xs text-muted-foreground sm:block">
       <div className="mb-2 flex items-center justify-end gap-2">
         <Dialog.Root open={aboutOpen} onOpenChange={setAboutOpen}>
-          <Dialog.Trigger className="cursor-pointer hover:text-foreground">
-            About
-          </Dialog.Trigger>
+          <Dialog.Trigger className="cursor-pointer hover:text-foreground">About</Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
             <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
-              <Dialog.Title className="text-base font-medium">
-                About Policing ICE
-              </Dialog.Title>
+              <Dialog.Title className="text-base font-medium">About Policing ICE</Dialog.Title>
               <Dialog.Description render={<div />} className="mt-3 text-sm text-muted-foreground">
                 <p className="mb-3">
-                  Policing ICE is a community-driven platform for collecting and
-                  sharing video documentation of U.S. Immigration and Customs
-                  Enforcement (ICE) activities.
+                  Policing ICE is a community-driven platform for collecting and sharing video
+                  documentation of U.S. Immigration and Customs Enforcement (ICE) activities.
                 </p>
                 <p className="mb-3">
-                  Anyone can submit videos from social media platforms. Each
-                  submission is categorized to be easily searchable by location,
-                  date, and description.
+                  Anyone can submit videos from social media platforms. Each submission is
+                  categorized to be easily searchable by location, date, and description.
                 </p>
                 <p className="mb-3">
                   <strong>Features:</strong>
                 </p>
                 <ul className="mb-3 list-disc space-y-1 pl-5">
                   <li>
-                    Video submissions from Twitter/X, YouTube, TikTok,
-                    Instagram, Facebook, Reddit, LinkedIn, and Pinterest
+                    Video submissions from Twitter/X, YouTube, TikTok, Instagram, Facebook, Reddit,
+                    LinkedIn, and Pinterest
                   </li>
                   <li>Community voting on incidents</li>
                   <li>Search by location, description, or date range</li>
                   <li>Anonymous participation - no account required</li>
-                  <li>
-                    Community moderation - incidents with 3+ reports are hidden
-                  </li>
+                  <li>Community moderation - incidents with 3+ reports are hidden</li>
                 </ul>
               </Dialog.Description>
               <Dialog.Close className="mt-4 cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground">
@@ -292,4 +273,4 @@ const KeyboardShortcutsHelp = () => {
       </div>
     </div>
   );
-}
+};

@@ -1,6 +1,4 @@
-import {
-  getAllIncidents,
-} from "@/lib/admin-action";
+import { getAllIncidents } from "@/lib/admin-action";
 
 import { AdminIncidentsClient } from "./incidents-client";
 

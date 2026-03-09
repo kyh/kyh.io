@@ -3,13 +3,8 @@ import { connection } from "next/server";
 import { and, asc, eq, sql } from "@/db";
 import { db } from "@/db/drizzle-client";
 import { guess, puzzle } from "@/db/drizzle-schema";
-import {
-  puzzleDataSchema,
-  guessFeedbackSchema
-  
-  
-} from "@/db/zod-schema";
-import type {GuessFeedback, PuzzleDataPayload} from "@/db/zod-schema";
+import { puzzleDataSchema, guessFeedbackSchema } from "@/db/zod-schema";
+import type { GuessFeedback, PuzzleDataPayload } from "@/db/zod-schema";
 
 import { getSession } from "@/lib/auth";
 
@@ -35,9 +30,7 @@ export async function getTodayDateString(): Promise<string> {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function getPuzzleByDate(
-  date: string,
-): Promise<PuzzleData | null> {
+export async function getPuzzleByDate(date: string): Promise<PuzzleData | null> {
   "use cache";
   cacheLife("hours");
   cacheTag("puzzle", `puzzle-${date}`);
@@ -104,9 +97,7 @@ export async function getTodaysPuzzle(): Promise<PuzzleData | null> {
 
 const MAX_GUESSES = 6;
 
-export async function getGameState(
-  puzzleId: string,
-): Promise<GameState | null> {
+export async function getGameState(puzzleId: string): Promise<GameState | null> {
   await connection();
 
   const session = await getSession();

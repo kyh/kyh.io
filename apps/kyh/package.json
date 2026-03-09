@@ -11,7 +11,6 @@
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },
-  "prettier": "@kyh/prettier-config",
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@floating-ui/react": "^0.27.19",
@@ -38,5 +37,6 @@
     "sharp": "^0.34.5",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
-  }
+  },
+  "prettier": "@kyh/prettier-config"
 }

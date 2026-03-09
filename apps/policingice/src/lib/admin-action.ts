@@ -7,11 +7,7 @@ import type { IncidentStatus } from "@/db/drizzle-schema";
 import { db } from "@/db/drizzle-client";
 import { incidents, videos } from "@/db/drizzle-schema";
 import { getSession } from "@/lib/auth";
-import {
-  detectPlatform,
-  isValidVideoUrl,
-  resolveVideoUrl,
-} from "@/lib/video-utils";
+import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -51,9 +47,7 @@ export async function updateIncident(data: {
     .set({
       location: data.location,
       description: data.description,
-      incidentDate: data.incidentDate
-        ? parseLocalDate(data.incidentDate)
-        : null,
+      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
       status: data.status,
     })
     .where(eq(incidents.id, data.id));
@@ -61,32 +55,20 @@ export async function updateIncident(data: {
   return { success: true };
 }
 
-export async function toggleIncidentStatus(data: {
-  id: number;
-  currentStatus: IncidentStatus;
-}) {
+export async function toggleIncidentStatus(data: { id: number; currentStatus: IncidentStatus }) {
   await requireAdmin();
 
   const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
-  await db
-    .update(incidents)
-    .set({ status: newStatus })
-    .where(eq(incidents.id, data.id));
+  await db.update(incidents).set({ status: newStatus }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true, newStatus };
 }
 
-export async function toggleIncidentPinned(data: {
-  id: number;
-  currentPinned: boolean;
-}) {
+export async function toggleIncidentPinned(data: { id: number; currentPinned: boolean }) {
   await requireAdmin();
 
   const newPinned = !data.currentPinned;
-  await db
-    .update(incidents)
-    .set({ pinned: newPinned })
-    .where(eq(incidents.id, data.id));
+  await db.update(incidents).set({ pinned: newPinned }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true, newPinned };
 }
@@ -116,10 +98,7 @@ export async function updateVideo(data: { id: number; url: string }) {
   await requireAdmin();
 
   const platform = detectPlatform(data.url);
-  await db
-    .update(videos)
-    .set({ url: data.url, platform })
-    .where(eq(videos.id, data.id));
+  await db.update(videos).set({ url: data.url, platform }).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
 }
@@ -158,9 +137,7 @@ export async function bulkCreateIncidents(data: {
     return { created: 0, skipped: validUrls.length };
   }
 
-  const incidentDate = data.incidentDate
-    ? new Date(data.incidentDate)
-    : new Date();
+  const incidentDate = data.incidentDate ? new Date(data.incidentDate) : new Date();
 
   if (data.groupAsOne) {
     const [incident] = await db
@@ -234,11 +211,7 @@ export async function getFeedPosts() {
   return { posts, existingUrls };
 }
 
-export async function createFromFeed(data: {
-  url: string;
-  title: string;
-  published: string;
-}) {
+export async function createFromFeed(data: { url: string; title: string; published: string }) {
   await requireAdmin();
 
   const existing = await db.query.videos.findFirst({
@@ -289,8 +262,7 @@ function parseAtomFeed(xml: string): FeedPost[] {
     const id = /<id>([^<]+)<\/id>/.exec(entry)?.[1] ?? "";
     const title = /<title>([^<]+)<\/title>/.exec(entry)?.[1] ?? "";
     const link = /<link href="([^"]+)"/.exec(entry)?.[1] ?? "";
-    const content =
-      /<content[^>]*>([\s\S]*?)<\/content>/.exec(entry)?.[1] ?? "";
+    const content = /<content[^>]*>([\s\S]*?)<\/content>/.exec(entry)?.[1] ?? "";
     const published = /<updated>([^<]+)<\/updated>/.exec(entry)?.[1] ?? "";
 
     if (id && link) {

@@ -10,12 +10,12 @@
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },
-  "prettier": "@kyh/prettier-config",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260307.1",
     "@kyh/tsconfig": "workspace:^",
     "partyserver": "^0.1.5",
     "typescript": "catalog:",
     "wrangler": "^4.71.0"
-  }
+  },
+  "prettier": "@kyh/prettier-config"
 }

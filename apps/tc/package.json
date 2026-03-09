@@ -1,9 +1,9 @@
 {
   "name": "@repo/tc",
   "private": true,
-  "type": "module",
   "description": "A laymans total compensation calculator",
   "license": "MIT",
+  "type": "module",
   "sideEffects": false,
   "scripts": {
     "dev": "vite",

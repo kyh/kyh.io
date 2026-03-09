@@ -31,16 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const incidentPages: MetadataRoute.Sitemap = approvedIncidents.map(
-    (incident) => ({
-      url: `${siteUrl}/incident/${incident.id}`,
-      lastModified: incident.createdAt
-        ? new Date(incident.createdAt)
-        : undefined,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }),
-  );
+  const incidentPages: MetadataRoute.Sitemap = approvedIncidents.map((incident) => ({
+    url: `${siteUrl}/incident/${incident.id}`,
+    lastModified: incident.createdAt ? new Date(incident.createdAt) : undefined,
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
   return [...staticPages, ...incidentPages];
 }

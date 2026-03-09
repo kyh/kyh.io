@@ -15,9 +15,7 @@ export type UserStatsData = {
   lastPlayedDate: string | null;
 };
 
-export async function getUserStats(
-  userId: string,
-): Promise<UserStatsData | null> {
+export async function getUserStats(userId: string): Promise<UserStatsData | null> {
   "use cache";
   cacheTag("stats", `stats-${userId}`);
 
@@ -27,9 +25,7 @@ export async function getUserStats(
 
   if (!row) return null;
 
-  const distribution = guessDistributionSchema.parse(
-    JSON.parse(row.guessDistribution),
-  );
+  const distribution = guessDistributionSchema.parse(JSON.parse(row.guessDistribution));
 
   return {
     gamesPlayed: row.gamesPlayed,

@@ -59,10 +59,7 @@ export default tseslint.config(
         "warn",
         { prefer: "type-imports", fixStyle: "separate-type-imports" },
       ],
-      "@typescript-eslint/no-misused-promises": [
-        2,
-        { checksVoidReturn: { attributes: false } },
-      ],
+      "@typescript-eslint/no-misused-promises": [2, { checksVoidReturn: { attributes: false } }],
       "@typescript-eslint/no-unnecessary-condition": [
         "error",
         {

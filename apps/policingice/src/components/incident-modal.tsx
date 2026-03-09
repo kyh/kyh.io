@@ -11,23 +11,21 @@ type Video = {
   id: number;
   url: string;
   platform: VideoPlatform;
-}
+};
 
 type IncidentData = {
   location?: string;
   description?: string;
   incidentDate?: string;
   videoUrls?: string[];
-}
+};
 
 type CreateModeProps = {
   mode: "create";
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    data: IncidentData & { videoUrls: string[] },
-  ) => Promise<void>;
-}
+  onSubmit: (data: IncidentData & { videoUrls: string[] }) => Promise<void>;
+};
 
 type EditModeProps = {
   mode: "edit";
@@ -41,7 +39,7 @@ type EditModeProps = {
   };
   onAddVideo: (url: string) => Promise<void>;
   onUpdate: (data: IncidentData) => Promise<void>;
-}
+};
 
 type IncidentModalProps = CreateModeProps | EditModeProps;
 
@@ -214,9 +212,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                         )}
                       </div>
                       {urlErrors[key] && (
-                        <p className="mt-1 text-xs text-destructive">
-                          {urlErrors[key]}
-                        </p>
+                        <p className="mt-1 text-xs text-destructive">{urlErrors[key]}</p>
                       )}
                     </Field.Root>
                   ))}
@@ -240,10 +236,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                   </label>
                   <div className="space-y-1">
                     {props.incident.videos.map((video) => (
-                      <div
-                        key={video.id}
-                        className="truncate text-xs text-muted-foreground"
-                      >
+                      <div key={video.id} className="truncate text-xs text-muted-foreground">
                         {video.platform}: {video.url}
                       </div>
                     ))}
@@ -251,9 +244,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                 </div>
 
                 <Field.Root name="add-video">
-                  <Field.Label className="mb-1 block text-sm">
-                    Add Video
-                  </Field.Label>
+                  <Field.Label className="mb-1 block text-sm">Add Video</Field.Label>
                   <Field.Control
                     ref={addVideoRef}
                     type="url"
@@ -267,9 +258,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                       }
                     }}
                   />
-                  {videoError && (
-                    <p className="mt-1 text-xs text-destructive">{videoError}</p>
-                  )}
+                  {videoError && <p className="mt-1 text-xs text-destructive">{videoError}</p>}
                   <button
                     type="button"
                     onClick={handleAddVideo}
@@ -284,30 +273,22 @@ export const IncidentModal = (props: IncidentModalProps) => {
 
             {/* Shared fields */}
             <Field.Root name="location">
-              <Field.Label className="mb-1 block text-sm">
-                Location (optional)
-              </Field.Label>
+              <Field.Label className="mb-1 block text-sm">Location (optional)</Field.Label>
               <Field.Control
                 type="text"
-                defaultValue={
-                  mode === "edit" ? (props.incident.location ?? "") : ""
-                }
+                defaultValue={mode === "edit" ? (props.incident.location ?? "") : ""}
                 placeholder="Minneapolis, MN"
                 className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
               />
             </Field.Root>
 
             <Field.Root name="incidentDate">
-              <Field.Label className="mb-1 block text-sm">
-                Date (optional)
-              </Field.Label>
+              <Field.Label className="mb-1 block text-sm">Date (optional)</Field.Label>
               <Field.Control
                 type="date"
                 defaultValue={
                   mode === "edit" && props.incident.incidentDate
-                    ? new Date(props.incident.incidentDate)
-                        .toISOString()
-                        .split("T")[0]
+                    ? new Date(props.incident.incidentDate).toISOString().split("T")[0]
                     : ""
                 }
                 className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
@@ -315,14 +296,10 @@ export const IncidentModal = (props: IncidentModalProps) => {
             </Field.Root>
 
             <Field.Root name="description">
-              <Field.Label className="mb-1 block text-sm">
-                Description (optional)
-              </Field.Label>
+              <Field.Label className="mb-1 block text-sm">Description (optional)</Field.Label>
               <Field.Control
                 render={<textarea rows={2} />}
-                defaultValue={
-                  mode === "edit" ? (props.incident.description ?? "") : ""
-                }
+                defaultValue={mode === "edit" ? (props.incident.description ?? "") : ""}
                 placeholder="Brief description of what happened..."
                 className="w-full resize-none border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
               />
@@ -345,4 +322,4 @@ export const IncidentModal = (props: IncidentModalProps) => {
       </Dialog.Portal>
     </Dialog.Root>
   );
-}
+};

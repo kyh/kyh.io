@@ -81,9 +81,7 @@ export const Featured = ({
   return (
     <section className="featured-content flex flex-1 flex-col px-4 sm:px-0">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg">
-          {stateAbbrevToFullname[selectedState] || "United States"}
-        </h1>
+        <h1 className="text-lg">{stateAbbrevToFullname[selectedState] || "United States"}</h1>
         <DataFilter selected={selectedFilter} onSelectFilter={onSelectFilter} />
       </div>
       <div className="mb-4 grid-cols-4 gap-4 sm:grid">
@@ -106,9 +104,7 @@ export const Featured = ({
           label="Recovered"
           pointClassname="bg-purple-500"
           pointShadeClassname="bg-purple-800"
-          value={
-            today && today.recovered ? formatNumber(today.recovered) : "Unknown"
-          }
+          value={today && today.recovered ? formatNumber(today.recovered) : "Unknown"}
           isLoading={isLoading}
         />
         <StatCard
@@ -125,11 +121,7 @@ export const Featured = ({
             className="mb-1"
             label={label.positiveChange}
             value={
-              today &&
-              `${growthRate(
-                comparator[label.positiveKey],
-                today[label.positiveKey],
-              )}%`
+              today && `${growthRate(comparator[label.positiveKey], today[label.positiveKey])}%`
             }
             isLoading={isLoading}
             lowercase
@@ -143,9 +135,7 @@ export const Featured = ({
           />
           <StatRow
             label={label.positiveTotalComparator}
-            value={
-              comparator ? formatNumber(comparator[label.positiveKey]) : "N/A"
-            }
+            value={comparator ? formatNumber(comparator[label.positiveKey]) : "N/A"}
             isLoading={isLoading}
             lowercase
           />
@@ -154,13 +144,7 @@ export const Featured = ({
           <StatRow
             className="mb-1"
             label={label.deathChange}
-            value={
-              today &&
-              `${growthRate(
-                comparator[label.deathKey],
-                today[label.deathKey],
-              )}%`
-            }
+            value={today && `${growthRate(comparator[label.deathKey], today[label.deathKey])}%`}
             isLoading={isLoading}
             lowercase
           />
@@ -173,9 +157,7 @@ export const Featured = ({
           />
           <StatRow
             label={label.deathTotalComparator}
-            value={
-              comparator ? formatNumber(comparator[label.deathKey]) : "N/A"
-            }
+            value={comparator ? formatNumber(comparator[label.deathKey]) : "N/A"}
             isLoading={isLoading}
             lowercase
           />

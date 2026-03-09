@@ -29,7 +29,7 @@ async function fetchRevenueSegments(
 
   const entries = Object.entries(latest.data)
     .filter(([, v]) => v > 0)
-    .sort(([, a], [, b]) => b - a);
+    .toSorted(([, a], [, b]) => b - a);
 
   if (entries.length < 2) return null;
 
@@ -79,16 +79,11 @@ export async function GET(request: Request) {
 
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "Missing FMP_API_KEY" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Missing FMP_API_KEY" }, { status: 500 });
   }
 
   // Get all companies with tickers from DB
-  const allCompanies = await db
-    .select({ id: company.id, ticker: company.ticker })
-    .from(company);
+  const allCompanies = await db.select({ id: company.id, ticker: company.ticker }).from(company);
 
   const withTickers = allCompanies.filter(
     (c): c is typeof c & { ticker: string } => c.ticker !== null,
@@ -116,7 +111,7 @@ export async function GET(request: Request) {
   }
 
   // Shuffle and try to fill dates
-  const shuffled = [...withTickers].sort(() => Math.random() - 0.5);
+  const shuffled = [...withTickers].toSorted(() => Math.random() - 0.5);
   const results: string[] = [];
 
   for (const date of datesToFill) {

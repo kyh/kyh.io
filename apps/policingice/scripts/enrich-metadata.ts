@@ -51,11 +51,7 @@ function loadProcessedIds(): Set<number> {
 function saveProcessedIds(ids: Set<number>) {
   fs.writeFileSync(
     PROCESSED_FILE,
-    JSON.stringify(
-      { processedIds: [...ids], lastRun: new Date().toISOString() },
-      null,
-      2,
-    ),
+    JSON.stringify({ processedIds: [...ids], lastRun: new Date().toISOString() }, null, 2),
   );
 }
 
@@ -79,9 +75,7 @@ const MetadataSchema = z.object({
     ),
 });
 
-function getVideoContext(
-  videos: { url: string; platform: string }[],
-): string {
+function getVideoContext(videos: { url: string; platform: string }[]): string {
   return videos.map((v) => `${v.platform}: ${v.url}`).join("\n");
 }
 
@@ -114,8 +108,7 @@ async function main() {
     }
 
     // Check if already has all metadata in DB
-    const isComplete =
-      incident.location && incident.description && incident.incidentDate;
+    const isComplete = incident.location && incident.description && incident.incidentDate;
 
     if (isComplete) {
       // Already complete in DB, add to processed file and skip
@@ -128,15 +121,11 @@ async function main() {
   }
 
   if (skippedAlreadyComplete > 0) {
-    console.log(
-      `Skipped ${skippedAlreadyComplete} incidents already complete in DB`,
-    );
+    console.log(`Skipped ${skippedAlreadyComplete} incidents already complete in DB`);
     saveProcessedIds(processedIds);
   }
   if (skippedAlreadyProcessed > 0) {
-    console.log(
-      `Skipped ${skippedAlreadyProcessed} incidents already in processed file`,
-    );
+    console.log(`Skipped ${skippedAlreadyProcessed} incidents already in processed file`);
   }
 
   console.log(`Found ${incidentsToEnrich.length} incidents to enrich`);
@@ -162,9 +151,7 @@ async function main() {
       // Generate metadata if missing
       if (!location || !description || !incidentDate) {
         // Extract tweet URLs for X source search
-        const tweetUrls = incident.videos
-          .filter((v) => v.platform === "twitter")
-          .map((v) => v.url);
+        const tweetUrls = incident.videos.filter((v) => v.platform === "twitter").map((v) => v.url);
 
         const { text, sources, toolResults } = await generateText({
           model: xai.responses("grok-4-fast"),

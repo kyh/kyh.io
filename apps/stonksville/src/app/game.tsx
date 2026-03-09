@@ -50,7 +50,7 @@ const ThemeToggle = () => {
       )}
     </button>
   );
-}
+};
 
 const createInitialState = (puzzleId: string): GameState => {
   return { puzzleId, guesses: [], status: "playing" };
@@ -65,13 +65,7 @@ function directionLabel(direction: Direction): string {
   return "Lower";
 }
 
-const IndicatorCell = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => {
+const IndicatorCell = ({ label, children }: { label: string; children: React.ReactNode }) => {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger className="cursor-default" render={<span />}>
@@ -84,7 +78,7 @@ const IndicatorCell = ({
       </Tooltip.Portal>
     </Tooltip.Root>
   );
-}
+};
 
 const DirectionIndicator = ({
   guessName,
@@ -96,15 +90,11 @@ const DirectionIndicator = ({
   direction: Direction;
 }) => {
   return (
-    <IndicatorCell
-      label={`${guessName} · ${label}: ${directionLabel(direction)}`}
-    >
+    <IndicatorCell label={`${guessName} · ${label}: ${directionLabel(direction)}`}>
       <div
         className={cn(
           "flex size-5 items-center justify-center rounded-sm",
-          direction === "correct"
-            ? "bg-green-900 text-green-400"
-            : "bg-amber-900 text-amber-400",
+          direction === "correct" ? "bg-green-900 text-green-400" : "bg-amber-900 text-amber-400",
         )}
       >
         {direction === "correct" ? (
@@ -117,25 +107,15 @@ const DirectionIndicator = ({
       </div>
     </IndicatorCell>
   );
-}
+};
 
-const SectorIndicator = ({
-  guessName,
-  match,
-}: {
-  guessName: string;
-  match: boolean;
-}) => {
+const SectorIndicator = ({ guessName, match }: { guessName: string; match: boolean }) => {
   return (
-    <IndicatorCell
-      label={`${guessName} · Sector: ${match ? "Match" : "No match"}`}
-    >
+    <IndicatorCell label={`${guessName} · Sector: ${match ? "Match" : "No match"}`}>
       <div
         className={cn(
           "flex size-5 items-center justify-center rounded-sm",
-          match
-            ? "bg-green-900 text-green-400"
-            : "bg-muted text-muted-foreground",
+          match ? "bg-green-900 text-green-400" : "bg-muted text-muted-foreground",
         )}
       >
         {match ? (
@@ -146,16 +126,13 @@ const SectorIndicator = ({
       </div>
     </IndicatorCell>
   );
-}
+};
 
 const GuessChip = ({ guess }: { guess: GuessFeedback }) => {
   return (
     <Tooltip.Provider delay={0} closeDelay={0}>
       <div className="flex items-center gap-px">
-        <SectorIndicator
-          guessName={guess.guessedName}
-          match={guess.sectorMatch}
-        />
+        <SectorIndicator guessName={guess.guessedName} match={guess.sectorMatch} />
         <DirectionIndicator
           guessName={guess.guessedName}
           label="Mkt Cap"
@@ -174,7 +151,7 @@ const GuessChip = ({ guess }: { guess: GuessFeedback }) => {
       </div>
     </Tooltip.Provider>
   );
-}
+};
 
 const GuessIndicators = ({ guesses }: { guesses: GuessFeedback[] }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -194,10 +171,7 @@ const GuessIndicators = ({ guesses }: { guesses: GuessFeedback[] }) => {
     <div ref={scrollRef} className="scrollbar-none overflow-x-auto">
       <div className="mx-auto flex w-max items-center gap-2">
         {guesses.map((g, i) => (
-          <div
-            key={i}
-            ref={i === guesses.length - 1 ? lastGuessRef : undefined}
-          >
+          <div key={i} ref={i === guesses.length - 1 ? lastGuessRef : undefined}>
             <GuessChip guess={g} />
           </div>
         ))}
@@ -211,7 +185,7 @@ const GuessIndicators = ({ guesses }: { guesses: GuessFeedback[] }) => {
       </div>
     </div>
   );
-}
+};
 
 type GameProps = {
   puzzle: PuzzleData;
@@ -220,10 +194,7 @@ type GameProps = {
 };
 
 export const Game = ({ puzzle, companies, initialState }: GameProps) => {
-  const [state, dispatch] = useReducer(
-    reducer,
-    initialState ?? createInitialState(puzzle.id),
-  );
+  const [state, dispatch] = useReducer(reducer, initialState ?? createInitialState(puzzle.id));
 
   const stateRef = useRef(state);
   useEffect(() => {
@@ -243,11 +214,7 @@ export const Game = ({ puzzle, companies, initialState }: GameProps) => {
         await authClient.signIn.anonymous();
       }
 
-      const result = await submitGuess(
-        puzzle.id,
-        companyId,
-        current.guesses.length + 1,
-      );
+      const result = await submitGuess(puzzle.id, companyId, current.guesses.length + 1);
 
       if ("error" in result) return;
 
@@ -290,17 +257,11 @@ export const Game = ({ puzzle, companies, initialState }: GameProps) => {
       <div className="mt-auto max-w-dvw space-y-2 px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-lg space-y-2">
           <GuessIndicators guesses={state.guesses} />
-          <GuessInput
-            companies={companies}
-            onSelect={handleSelect}
-            disabled={gameOver}
-          />
+          <GuessInput companies={companies} onSelect={handleSelect} disabled={gameOver} />
         </div>
       </div>
 
-      {gameOver ? (
-        <ResultModal state={state} puzzleNumber={puzzle.puzzleNumber} />
-      ) : null}
+      {gameOver ? <ResultModal state={state} puzzleNumber={puzzle.puzzleNumber} /> : null}
     </div>
   );
 };

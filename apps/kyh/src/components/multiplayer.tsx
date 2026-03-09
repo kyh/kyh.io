@@ -21,11 +21,7 @@ export const Multiplayer = () => {
 
   const cursors = Object.entries(players)
     .filter(([_, player]) => {
-      return (
-        !!player.position?.x &&
-        !!player.position.y &&
-        player.position.pathname === pathname
-      );
+      return !!player.position?.x && !!player.position.y && player.position.pathname === pathname;
     })
     .map(([id, player]) => (
       <Cursor

@@ -33,9 +33,7 @@ const ResultContent = ({ state, puzzleNumber }: ResultModalProps) => {
   return (
     <div className="flex flex-col items-center gap-4 py-2">
       <div className="text-center">
-        <p className="text-lg font-semibold">
-          {won ? "You got it!" : "Better luck tomorrow"}
-        </p>
+        <p className="text-lg font-semibold">{won ? "You got it!" : "Better luck tomorrow"}</p>
         <p className="text-muted-foreground text-sm">
           {won
             ? `Solved in ${state.guesses.length}/6 guesses`
@@ -54,7 +52,7 @@ const ResultContent = ({ state, puzzleNumber }: ResultModalProps) => {
       <Countdown />
     </div>
   );
-}
+};
 
 export const ResultModal = (props: ResultModalProps) => {
   const [open, setOpen] = useState(true);
@@ -96,4 +94,4 @@ export const ResultModal = (props: ResultModalProps) => {
       </DrawerPrimitive.Portal>
     </DrawerPrimitive.Root>
   );
-}
+};

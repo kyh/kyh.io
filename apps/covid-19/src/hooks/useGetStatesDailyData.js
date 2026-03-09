@@ -10,7 +10,7 @@ export const useGetStatesDailyData = () => {
   if (Array.isArray(data)) {
     formatted = data
       .map((d) => formatDaily(d))
-      .sort((a, b) => a.date - b.date)
+      .toSorted((a, b) => a.date - b.date)
       .reduce((acc, state) => {
         if (!acc[state.state]) {
           acc[state.state] = [state];
@@ -25,6 +25,6 @@ export const useGetStatesDailyData = () => {
     isLoading: !data.length,
     data: formatted,
     raw: data,
-    states: Object.keys(formatted).sort(),
+    states: Object.keys(formatted).toSorted(),
   };
 };

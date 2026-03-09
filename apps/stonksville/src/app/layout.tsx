@@ -85,9 +85,7 @@ const RootLayout = (props: LayoutProps) => {
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <ToastProvider>
-            {props.children}
-          </ToastProvider>
+          <ToastProvider>{props.children}</ToastProvider>
         </ThemeProvider>
       </body>
     </html>

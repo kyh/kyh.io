@@ -3,10 +3,9 @@
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
 
-const RechartsTreemap = dynamic(
-  () => import("recharts").then((mod) => mod.Treemap),
-  { ssr: false },
-);
+const RechartsTreemap = dynamic(() => import("recharts").then((mod) => mod.Treemap), {
+  ssr: false,
+});
 const ResponsiveContainer = dynamic(
   () => import("recharts").then((mod) => mod.ResponsiveContainer),
   { ssr: false },
@@ -42,16 +41,7 @@ type ContentProps = {
   realValue: number;
 };
 
-const CustomContent = ({
-  x,
-  y,
-  width,
-  height,
-  index,
-  name,
-  total,
-  realValue,
-}: ContentProps) => {
+const CustomContent = ({ x, y, width, height, index, name, total, realValue }: ContentProps) => {
   const pct = ((realValue / total) * 100).toFixed(0);
   const color = COLORS[index % COLORS.length];
 
@@ -125,13 +115,10 @@ const CustomContent = ({
       ) : null}
     </g>
   );
-}
+};
 
 export const Treemap = ({ segments }: TreemapProps) => {
-  const total = useMemo(
-    () => segments.reduce((sum, s) => sum + s.value, 0),
-    [segments],
-  );
+  const total = useMemo(() => segments.reduce((sum, s) => sum + s.value, 0), [segments]);
 
   // Enforce a minimum visual size so tiny segments are still readable.
   // The real percentage is computed from `total` in CustomContent.
@@ -173,4 +160,4 @@ export const Treemap = ({ segments }: TreemapProps) => {
       </ResponsiveContainer>
     </div>
   );
-}
+};

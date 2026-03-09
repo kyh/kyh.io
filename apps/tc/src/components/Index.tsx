@@ -26,8 +26,7 @@ export default function Index() {
               A layman's Total Compensation Calculator
             </h1>
             <p className="mt-3 text-slate-300">
-              Understand your total compensation under current market
-              conditions.
+              Understand your total compensation under current market conditions.
             </p>
           </div>
           <div className="mt-10">
@@ -39,9 +38,7 @@ export default function Index() {
             avgTc ? "opacity-100" : "pointer-events-none opacity-30"
           }`}
         >
-          <p className="px-3 text-sm text-slate-400 md:px-0">
-            Estimated Total Compensation
-          </p>
+          <p className="px-3 text-sm text-slate-400 md:px-0">Estimated Total Compensation</p>
           <div className="mt-1 flex items-center justify-between px-3 md:px-0">
             <div>
               <NumericFormat
@@ -49,18 +46,11 @@ export default function Index() {
                 value={avgTc}
                 {...currencyTextFormatProps}
               />
-              {!!avgTc && (
-                <span className="ml-1 text-xs text-slate-400">(per year)</span>
-              )}
+              {!!avgTc && <span className="ml-1 text-xs text-slate-400">(per year)</span>}
             </div>
           </div>
-          <ParentSize
-            className="mt-10"
-            parentSizeStyles={{ height: "auto", width: "100%" }}
-          >
-            {({ width }) => (
-              <Chart width={width} height={400} data={comp.data} />
-            )}
+          <ParentSize className="mt-10" parentSizeStyles={{ height: "auto", width: "100%" }}>
+            {({ width }) => <Chart width={width} height={400} data={comp.data} />}
           </ParentSize>
           <div className="relative -mt-8 w-full overflow-x-auto">
             <CompTable data={comp.data} />

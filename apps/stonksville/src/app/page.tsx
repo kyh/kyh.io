@@ -6,10 +6,7 @@ import { getAllCompanies } from "@/lib/companies-query";
 import { Game } from "./game";
 
 const TodaysGame = async () => {
-  const [puzzle, companies] = await Promise.all([
-    getTodaysPuzzle(),
-    getAllCompanies(),
-  ]);
+  const [puzzle, companies] = await Promise.all([getTodaysPuzzle(), getAllCompanies()]);
 
   if (!puzzle) {
     return (
@@ -21,9 +18,7 @@ const TodaysGame = async () => {
 
   const initialState = await getGameState(puzzle.id);
 
-  return (
-    <Game puzzle={puzzle} companies={companies} initialState={initialState} />
-  );
+  return <Game puzzle={puzzle} companies={companies} initialState={initialState} />;
 };
 
 const Page = () => {

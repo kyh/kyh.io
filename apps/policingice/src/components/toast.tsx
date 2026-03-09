@@ -44,7 +44,7 @@ const ToastManager = ({ children }: { children: React.ReactNode }) => {
   );
 
   return <ToastContext.Provider value={api}>{children}</ToastContext.Provider>;
-}
+};
 
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -57,7 +57,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       </Toast.Portal>
     </Toast.Provider>
   );
-}
+};
 
 export function useToast() {
   const context = React.useContext(ToastContext);

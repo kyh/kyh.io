@@ -16,28 +16,16 @@ const AdminContent = async ({ children }: { children: React.ReactNode }) => {
         <header className="mb-8 flex items-center justify-between">
           <h1 className="text-base font-normal">Admin</h1>
           <nav className="flex gap-4 text-sm">
-            <Link
-              href="/admin/incidents"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/admin/incidents" className="text-muted-foreground hover:text-foreground">
               Incidents
             </Link>
-            <Link
-              href="/admin/create"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/admin/create" className="text-muted-foreground hover:text-foreground">
               Create
             </Link>
-            <Link
-              href="/admin/reddit-feed"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/admin/reddit-feed" className="text-muted-foreground hover:text-foreground">
               Reddit
             </Link>
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/" className="text-muted-foreground hover:text-foreground">
               Exit
             </Link>
           </nav>

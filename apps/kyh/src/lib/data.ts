@@ -22,8 +22,7 @@ export const projects: ProjectType[] = [
   {
     slug: "vibedgames",
     title: "Vibedgames",
-    description:
-      "Design, publish, and play personalized multiplayer minigames with your friends",
+    description: "Design, publish, and play personalized multiplayer minigames with your friends",
     url: "https://www.vibedgames.com",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     type: "project",
@@ -217,8 +216,7 @@ export const projects: ProjectType[] = [
   {
     slug: "covid-19-dashboard",
     title: "Covid-19 Dashboard",
-    description:
-      "A real-time dashboard visualizing global Covid-19 data and trends",
+    description: "A real-time dashboard visualizing global Covid-19 data and trends",
     url: "https://covid-19.kyh.io",
     favicon: getPublicFaviconUrl("covid-19-1.png"),
     type: "mini-app",
@@ -254,8 +252,7 @@ export const projects: ProjectType[] = [
   {
     slug: "policing-ice",
     title: "Policing Ice",
-    description:
-      "Documenting incidents of ICE overreach through crowdsourced video evidence",
+    description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
     url: "https://www.policingice.com",
     favicon: getPublicFaviconUrl("policing-ice-1.png"),
     type: "mini-app",
@@ -274,8 +271,7 @@ export const projects: ProjectType[] = [
   {
     slug: "init",
     title: "Init",
-    description:
-      "An AI native starter kit to build, launch, and scale your next project",
+    description: "An AI native starter kit to build, launch, and scale your next project",
     url: "https://init.kyh.io",
     favicon: getPublicFaviconUrl("init.png"),
     type: "template",

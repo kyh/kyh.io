@@ -1,13 +1,7 @@
 import { ScrambleText } from "@/components/animate-text";
 import { HashIcon } from "@/components/icons";
 
-export const SectionHeading = ({
-  children,
-  id,
-}: {
-  children: string;
-  id?: string;
-}) => (
+export const SectionHeading = ({ children, id }: { children: string; id?: string }) => (
   <div className="group -ml-5 flex items-center gap-2">
     {id && (
       <a
@@ -36,36 +30,19 @@ type SectionProps = {
   delay?: number;
 };
 
-export const Section = ({
-  children,
-  className,
-  id,
-  delay = 0,
-}: SectionProps) => {
-  const scrollMarginClasses = id
-    ? "scroll-mt-[120px] sm:scroll-mt-[100px]"
-    : "";
-  const combinedClasses = [
-    "flex flex-col gap-4",
-    scrollMarginClasses,
-    className,
-  ]
+export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
+  const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
+  const combinedClasses = ["flex flex-col gap-4", scrollMarginClasses, className]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div className="animate-section">
-      <section
-        id={id}
-        className={combinedClasses}
-        style={{ animationDelay: `${delay}s` }}
-      >
+      <section id={id} className={combinedClasses} style={{ animationDelay: `${delay}s` }}>
         {children}
       </section>
     </div>
   );
 };
 
-export const Separator = () => (
-  <div role="separator" className="bg-border h-px" />
-);
+export const Separator = () => <div role="separator" className="bg-border h-px" />;

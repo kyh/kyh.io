@@ -56,10 +56,7 @@ export async function searchIncidents(data: {
     const results = await db.query.incidents.findMany({
       with: { videos: true },
       where: and(...baseConditions),
-      orderBy: [
-        desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
-        desc(incidents.id),
-      ],
+      orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
       limit: 50,
     });
     return { incidents: results };
@@ -84,10 +81,7 @@ export async function searchIncidents(data: {
   const keywordResults = await db.query.incidents.findMany({
     with: { videos: true },
     where: and(...keywordConditions),
-    orderBy: [
-      desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
-      desc(incidents.id),
-    ],
+    orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
     limit: 30,
   });
 
@@ -155,20 +149,14 @@ export async function searchIncidents(data: {
             location: row.location as string | null,
             description: row.description as string | null,
             embedding: row.embedding as Buffer | null,
-            incidentDate: row.incident_date
-              ? new Date((row.incident_date as number) * 1000)
-              : null,
+            incidentDate: row.incident_date ? new Date((row.incident_date as number) * 1000) : null,
             status: row.status as "approved" | "hidden",
             pinned: (row.pinned as number) === 1,
             unjustifiedCount: row.unjustified_count as number,
             justifiedCount: row.justified_count as number,
             reportCount: row.report_count as number,
-            createdAt: row.created_at
-              ? new Date((row.created_at as number) * 1000)
-              : null,
-            deletedAt: row.deleted_at
-              ? new Date((row.deleted_at as number) * 1000)
-              : null,
+            createdAt: row.created_at ? new Date((row.created_at as number) * 1000) : null,
+            deletedAt: row.deleted_at ? new Date((row.deleted_at as number) * 1000) : null,
             videos: [],
           },
           distance: row.vec_distance as number,
@@ -189,9 +177,7 @@ export async function searchIncidents(data: {
             | "linkedin"
             | "pinterest"
             | "reddit",
-          createdAt: row.v_created_at
-            ? new Date((row.v_created_at as number) * 1000)
-            : null,
+          createdAt: row.v_created_at ? new Date((row.v_created_at as number) * 1000) : null,
         });
       }
     }
@@ -214,17 +200,14 @@ export async function searchIncidents(data: {
 
   // Sort by combined score
   const sortedResults = Array.from(resultMap.values())
-    .sort((a, b) => b._score - a._score)
+    .toSorted((a, b) => b._score - a._score)
     .slice(0, 50)
     .map(({ _score, ...incident }) => incident);
 
   return { incidents: sortedResults };
 }
 
-export async function getUserVotes(data: {
-  incidentIds: number[];
-  userId?: string;
-}) {
+export async function getUserVotes(data: { incidentIds: number[]; userId?: string }) {
   if (data.incidentIds.length === 0) return {};
 
   let userId = data.userId;
@@ -236,10 +219,7 @@ export async function getUserVotes(data: {
 
   const userVotes = await db.query.votes.findMany({
     where: (votes, { and, eq: eqOp, inArray }) =>
-      and(
-        eqOp(votes.sessionId, userId),
-        inArray(votes.incidentId, data.incidentIds),
-      ),
+      and(eqOp(votes.sessionId, userId), inArray(votes.incidentId, data.incidentIds)),
   });
 
   return userVotes.reduce(
@@ -251,18 +231,12 @@ export async function getUserVotes(data: {
   );
 }
 
-export async function getUserVote(data: {
-  sessionId: string;
-  incidentId: number;
-}) {
+export async function getUserVote(data: { sessionId: string; incidentId: number }) {
   if (!data.sessionId) return null;
 
   const vote = await db.query.votes.findFirst({
     where: (votes, { and, eq: eqOp }) =>
-      and(
-        eqOp(votes.sessionId, data.sessionId),
-        eqOp(votes.incidentId, data.incidentId),
-      ),
+      and(eqOp(votes.sessionId, data.sessionId), eqOp(votes.incidentId, data.incidentId)),
   });
 
   return vote?.type ?? null;
@@ -313,9 +287,7 @@ export async function createIncident(data: {
     .values({
       location: data.location,
       description: data.description,
-      incidentDate: data.incidentDate
-        ? parseLocalDate(data.incidentDate)
-        : new Date(),
+      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : new Date(),
       status: "approved",
     })
     .returning();
@@ -332,10 +304,7 @@ export async function createIncident(data: {
   return { incident, autoApproved: true, merged: false };
 }
 
-export async function submitVote(data: {
-  incidentId: number;
-  type: "unjustified" | "justified";
-}) {
+export async function submitVote(data: { incidentId: number; type: "unjustified" | "justified" }) {
   const session = await getSession();
   if (!session?.user.id) {
     return { success: false, error: "No session" };
@@ -345,17 +314,13 @@ export async function submitVote(data: {
 
   const existing = await db.query.votes.findFirst({
     where: (votes, { and, eq: eqOp }) =>
-      and(
-        eqOp(votes.sessionId, sessionId),
-        eqOp(votes.incidentId, data.incidentId),
-      ),
+      and(eqOp(votes.sessionId, sessionId), eqOp(votes.incidentId, data.incidentId)),
   });
 
   // Toggle: if same vote type, remove it
   if (existing?.type === data.type) {
     await db.delete(votes).where(eq(votes.id, existing.id));
-    const field =
-      data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
+    const field = data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
     await db
       .update(incidents)
       .set({ [field]: sql`${incidents[field]} - 1` })
@@ -366,14 +331,9 @@ export async function submitVote(data: {
 
   // If different vote type exists, switch it
   if (existing) {
-    const oldField =
-      existing.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
-    const newField =
-      data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
-    await db
-      .update(votes)
-      .set({ type: data.type })
-      .where(eq(votes.id, existing.id));
+    const oldField = existing.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
+    const newField = data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
+    await db.update(votes).set({ type: data.type }).where(eq(votes.id, existing.id));
     await db
       .update(incidents)
       .set({
@@ -392,8 +352,7 @@ export async function submitVote(data: {
     type: data.type,
   });
 
-  const field =
-    data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
+  const field = data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
   await db
     .update(incidents)
     .set({ [field]: sql`${incidents[field]} + 1` })
@@ -412,10 +371,7 @@ export async function reportIncident(data: { incidentId: number }) {
   return { success: true };
 }
 
-export async function addVideoToIncident(data: {
-  incidentId: number;
-  url: string;
-}) {
+export async function addVideoToIncident(data: { incidentId: number; url: string }) {
   const session = await getSession();
   if (!session?.user.id) return { success: false, error: "Unauthorized" };
 
@@ -444,9 +400,7 @@ export async function updateIncidentDetails(data: {
     .set({
       location: data.location ?? null,
       description: data.description ?? null,
-      incidentDate: data.incidentDate
-        ? parseLocalDate(data.incidentDate)
-        : null,
+      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
     })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");

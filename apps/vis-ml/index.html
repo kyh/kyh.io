@@ -21,8 +21,8 @@
         <article>
           <div class="step" data-step="1">
             <p>
-              I'm currently looking for a new job and after interviewing at a
-              few places I finally got my first offer! Yay!
+              I'm currently looking for a new job and after interviewing at a few places I finally
+              got my first offer! Yay!
             </p>
             <p>
               But after looking at the salary, my first thought was
@@ -31,25 +31,24 @@
           </div>
           <div class="step" data-step="2">
             <p>
-              It’s not easy to tell without a frame of reference. So I ask my
-              friends who are in the same field and ended up with a few data
-              points:
+              It’s not easy to tell without a frame of reference. So I ask my friends who are in the
+              same field and ended up with a few data points:
             </p>
           </div>
           <div class="step" data-step="3">
             <p>
-              We can see that there's a correlation between years of experience
-              and how much a person is getting paid.
+              We can see that there's a correlation between years of experience and how much a
+              person is getting paid.
             </p>
             <p>
-              One way to figure out whether the offer was good is to see if it's
-              above or below the average for my years of experience
+              One way to figure out whether the offer was good is to see if it's above or below the
+              average for my years of experience
             </p>
           </div>
           <div class="step" data-step="4">
             <p>
-              How about we create a formula which looks at the average salary
-              per year of experience?
+              How about we create a formula which looks at the average salary per year of
+              experience?
             </p>
           </div>
           <div class="step" data-step="5">
@@ -57,41 +56,37 @@
             <p>
               This is a simple predictive model that takes an
               <strong>input (years of experience)</strong>, does a
-              <strong>calculation</strong> (multiplies it by the average salary
-              per year of experience), and gives an
+              <strong>calculation</strong> (multiplies it by the average salary per year of
+              experience), and gives an
               <strong>output (predicted salary)</strong>
             </p>
           </div>
           <div class="step" data-step="6">
             <p>
-              Calculating the prediction is simple multiplication. But before
-              that, we needed to think about the
-              <strong class="highlight-weight">weight</strong> we’ll be
-              multiplying by
+              Calculating the prediction is simple multiplication. But before that, we needed to
+              think about the
+              <strong class="highlight-weight">weight</strong> we’ll be multiplying by
             </p>
             <p>
-              Here we started with an average, later we’ll look at better
-              algorithms that can scale as we get more inputs and more
-              complicated models
+              Here we started with an average, later we’ll look at better algorithms that can scale
+              as we get more inputs and more complicated models
             </p>
             <p>
-              Finding the <strong class="highlight-weight">weight</strong> is
-              the “training” stage. So whenever you hear of someone “training”,
-              it just means finding the weights we use to calculate the
-              prediction
+              Finding the <strong class="highlight-weight">weight</strong> is the “training” stage.
+              So whenever you hear of someone “training”, it just means finding the weights we use
+              to calculate the prediction
             </p>
           </div>
           <div class="step" data-step="7">
             <p>
-              Now, lets go back to our salary and see what we think we shouldve
-              gotten paid. Let's say I have 4 years of experience, we can put
-              this into our formula to check
+              Now, lets go back to our salary and see what we think we shouldve gotten paid. Let's
+              say I have 4 years of experience, we can put this into our formula to check
             </p>
           </div>
           <div class="step" data-step="8">
             <p>
-              Hmm does that look right? Now I'm curious, is average really the
-              best number to look at here? Let's plot out our data to find out
+              Hmm does that look right? Now I'm curious, is average really the best number to look
+              at here? Let's plot out our data to find out
             </p>
           </div>
           <div class="step" data-step="9">
@@ -99,32 +94,28 @@
           </div>
           <div class="step" data-step="10">
             <p>
-              This line doesn't look very accurate. But what does accuracy mean?
-              One way of checking the how good of a job our model does is by
-              measuring how "off" the predicted value is from true values
+              This line doesn't look very accurate. But what does accuracy mean? One way of checking
+              the how good of a job our model does is by measuring how "off" the predicted value is
+              from true values
             </p>
           </div>
           <div class="step" data-step="11">
             <p>
-              Here we can see the actual price value, the predicted price value,
-              and the difference between them
+              Here we can see the actual price value, the predicted price value, and the difference
+              between them
             </p>
-            <p>
-              We call this our <strong class="highlight-error">"Error"</strong>.
-            </p>
+            <p>We call this our <strong class="highlight-error">"Error"</strong>.</p>
           </div>
           <div class="step" data-step="12">
             <p>
-              Now that we defined our measuring stick for what makes a better
-              model, let’s experiment with a couple more weight values and
-              compare them with our average pick:
+              Now that we defined our measuring stick for what makes a better model, let’s
+              experiment with a couple more weight values and compare them with our average pick:
             </p>
           </div>
           <div class="step" data-step="13">
             <p>
-              Oh there's one thing we never realized! When you start your first
-              job, your salary actually goes from 0 (when you're in school) to
-              the tens of thousands
+              Oh there's one thing we never realized! When you start your first job, your salary
+              actually goes from 0 (when you're in school) to the tens of thousands
             </p>
             <p>Let's add this into our model as well:</p>
           </div>
@@ -136,18 +127,13 @@
           </div>
           <div class="step" data-step="14">
             <p>
-              Let's try manually “training” our regression model, minimize the
-              error by tweaking the weight and bias dials:
+              Let's try manually “training” our regression model, minimize the error by tweaking the
+              weight and bias dials:
             </p>
           </div>
           <div class="step" data-step="15">
-            <p>
-              Congratulations on manually training your first regression model!
-            </p>
-            <p>
-              Next we can learn how machines do it with an algorithm called
-              "Gradient Descent"
-            </p>
+            <p>Congratulations on manually training your first regression model!</p>
+            <p>Next we can learn how machines do it with an algorithm called "Gradient Descent"</p>
           </div>
         </article>
 
@@ -224,9 +210,7 @@
                     step="100"
                     value="0"
                   />
-                  <label for="weight"
-                    >Weight: <span class="weight-text"></span
-                  ></label>
+                  <label for="weight">Weight: <span class="weight-text"></span></label>
                 </div>
                 <div class="chart-bias hidden">
                   <input
@@ -238,9 +222,7 @@
                     step="100"
                     value="0"
                   />
-                  <label for="bias"
-                    >Bias: <span class="bias-text"></span
-                  ></label>
+                  <label for="bias">Bias: <span class="bias-text"></span></label>
                 </div>
               </div>
               <div class="chart-error highlight-error hidden">

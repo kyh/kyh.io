@@ -71,11 +71,7 @@ const AdminCreate = () => {
           </Field.Label>
           <Field.Control
             render={
-              <textarea
-                rows={8}
-                value={urlsText}
-                onChange={(e) => setUrlsText(e.target.value)}
-              />
+              <textarea rows={8} value={urlsText} onChange={(e) => setUrlsText(e.target.value)} />
             }
             className="w-full rounded border border-border bg-transparent p-2 text-sm outline-none focus:border-muted-foreground"
             placeholder="https://x.com/user/status/123&#10;https://youtube.com/watch?v=abc&#10;https://tiktok.com/@user/video/456"
@@ -86,9 +82,7 @@ const AdminCreate = () => {
           <div className="text-sm">
             <span className="text-green-600">{validUrls.length} valid</span>
             {invalidUrls.length > 0 && (
-              <span className="ml-2 text-destructive">
-                {invalidUrls.length} invalid
-              </span>
+              <span className="ml-2 text-destructive">{invalidUrls.length} invalid</span>
             )}
           </div>
         )}

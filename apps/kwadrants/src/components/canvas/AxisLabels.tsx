@@ -16,13 +16,7 @@ const THEME_TEXT_COLORS = {
   dark: "#9ca3af",
 };
 
-export const AxisLabels = ({
-  layout,
-  labels,
-  bounds,
-  theme,
-  onLabelClick,
-}: AxisLabelsProps) => {
+export const AxisLabels = ({ layout, labels, bounds, theme, onLabelClick }: AxisLabelsProps) => {
   const fill = THEME_TEXT_COLORS[theme];
 
   const baseProps = {

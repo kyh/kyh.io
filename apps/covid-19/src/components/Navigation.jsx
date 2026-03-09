@@ -23,11 +23,7 @@ export const Navigation = () => {
           <div className="flex h-16 items-center justify-between px-4 sm:px-0">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <img
-                  className="h-8 w-8"
-                  src="/logo.svg"
-                  alt="Covid-19 Dashboard"
-                />
+                <img className="h-8 w-8" src="/logo.svg" alt="Covid-19 Dashboard" />
               </div>
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link to="/">Trend</Link>

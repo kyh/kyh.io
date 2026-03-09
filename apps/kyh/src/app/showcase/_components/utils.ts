@@ -5,11 +5,7 @@ import { useIsomorphicLayoutEffect } from "motion/react";
 import type { KeyBindingMap, Options } from "./tinykeys";
 import { tinykeys } from "./tinykeys";
 
-export function areIntersecting(
-  el1: HTMLElement,
-  el2: HTMLElement,
-  padding = 0,
-) {
+export function areIntersecting(el1: HTMLElement, el2: HTMLElement, padding = 0) {
   const rect1 = el1.getBoundingClientRect();
   const rect2 = el2.getBoundingClientRect();
 
@@ -70,9 +66,7 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
     const hash = window.location.hash.slice(1);
     if (initialValue !== undefined && typeof initialValue !== "string") {
       try {
-        return hash
-          ? (JSON.parse(decodeURIComponent(hash)) as T)
-          : initialValue;
+        return hash ? (JSON.parse(decodeURIComponent(hash)) as T) : initialValue;
       } catch {
         return initialValue;
       }
@@ -87,9 +81,7 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
       if (initialValue !== undefined && typeof initialValue !== "string") {
         try {
           setInternalValue(
-            hash
-              ? (JSON.parse(decodeURIComponent(hash)) as T)
-              : (initialValue as T),
+            hash ? (JSON.parse(decodeURIComponent(hash)) as T) : (initialValue as T),
           );
         } catch {
           setInternalValue(initialValue as T);
@@ -106,8 +98,7 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
     if (val === undefined || val === null) {
       hash = undefined;
     } else {
-      hash =
-        typeof val === "string" ? val : encodeURIComponent(JSON.stringify(val));
+      hash = typeof val === "string" ? val : encodeURIComponent(JSON.stringify(val));
     }
     if (typeof window !== "undefined") {
       if (hash === undefined) {

@@ -25,10 +25,7 @@ interface ImageUploaderProps {
   canvasRef?: React.RefObject<HTMLElement | null>;
 }
 
-export const ImageUploader = ({
-  onImageDrop,
-  canvasRef,
-}: ImageUploaderProps) => {
+export const ImageUploader = ({ onImageDrop, canvasRef }: ImageUploaderProps) => {
   const [images, setImages] = useState<ImageData[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [isSettling, setIsSettling] = useState<string | null>(null);
@@ -68,21 +65,18 @@ export const ImageUploader = ({
     e.target.value = "";
   };
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent, image: ImageData) => {
-      e.preventDefault();
-      document.body.classList.add("dragging");
-      setDragState({
-        image,
-        x: e.clientX,
-        y: e.clientY,
-        rotation: 0,
-        scale: 1.05,
-      });
-      lastPosRef.current = { x: e.clientX, y: e.clientY };
-    },
-    [],
-  );
+  const handleMouseDown = useCallback((e: React.MouseEvent, image: ImageData) => {
+    e.preventDefault();
+    document.body.classList.add("dragging");
+    setDragState({
+      image,
+      x: e.clientX,
+      y: e.clientY,
+      rotation: 0,
+      scale: 1.05,
+    });
+    lastPosRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
 
   useEffect(() => {
     if (!dragState) return;
@@ -91,12 +85,9 @@ export const ImageUploader = ({
       const dx = e.clientX - lastPosRef.current.x;
       const speed = Math.abs(dx);
       const tilt = Math.min(speed * 0.4, 8);
-      const rotation =
-        dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
+      const rotation = dx !== 0 ? tilt * Math.sign(dx) : dragState.rotation * 0.9;
 
-      setDragState((prev) =>
-        prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null,
-      );
+      setDragState((prev) => (prev ? { ...prev, x: e.clientX, y: e.clientY, rotation } : null));
       lastPosRef.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -122,9 +113,7 @@ export const ImageUploader = ({
             x,
             y,
           );
-          setImages((prev) =>
-            prev.filter((img) => img.id !== dragState.image.id),
-          );
+          setImages((prev) => prev.filter((img) => img.id !== dragState.image.id));
         } else {
           setIsSettling(dragState.image.id);
           setTimeout(() => setIsSettling(null), 300);

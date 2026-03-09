@@ -31,15 +31,11 @@ function App() {
       switch (key.name) {
         case "up":
         case "k":
-          setContactIndex((i: number) =>
-            i > 0 ? i - 1 : contactLinks.length - 1,
-          );
+          setContactIndex((i: number) => (i > 0 ? i - 1 : contactLinks.length - 1));
           break;
         case "down":
         case "j":
-          setContactIndex((i: number) =>
-            i < contactLinks.length - 1 ? i + 1 : 0,
-          );
+          setContactIndex((i: number) => (i < contactLinks.length - 1 ? i + 1 : 0));
           break;
         case "return":
           openUrl(contactLinks[contactIndex]!.url);
@@ -78,11 +74,7 @@ function App() {
   const heroLines = wrapText(heroText, contentWidth);
   const divider = "─".repeat(contentWidth);
 
-  const renderItem = (
-    item: (typeof allItems)[0],
-    index: number,
-    isFirst: boolean,
-  ) => {
+  const renderItem = (item: (typeof allItems)[0], index: number, isFirst: boolean) => {
     const isSelected = index === selectedIndex;
     const prefix = isSelected ? "> " : "  ";
     const title = item.title.padEnd(TITLE_WIDTH);
@@ -108,12 +100,7 @@ function App() {
 
   if (showContact) {
     return (
-      <box
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        flexGrow={1}
-      >
+      <box flexDirection="column" alignItems="center" justifyContent="center" flexGrow={1}>
         <box flexDirection="column">
           <text>Contact</text>
           <text> </text>
@@ -159,9 +146,7 @@ function App() {
           <text> </text>
           <text>Work</text>
           <text> </text>
-          {work.map((item, i) =>
-            renderItem(item, projects.length + i, i === 0),
-          )}
+          {work.map((item, i) => renderItem(item, projects.length + i, i === 0))}
         </box>
       </scrollbox>
       <text fg={DIM}>↑↓ navigate enter open c contact q quit</text>

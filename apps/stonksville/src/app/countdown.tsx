@@ -9,14 +9,7 @@ function getTimeUntilMidnightUTC(): {
 } {
   const now = new Date();
   const tomorrow = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0,
-      0,
-      0,
-    ),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0),
   );
   const diff = tomorrow.getTime() - now.getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -47,4 +40,4 @@ export const Countdown = () => {
       </p>
     </div>
   );
-}
+};

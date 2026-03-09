@@ -98,12 +98,10 @@ async function fetchRevenueSegments(
 
   const entries = Object.entries(latest.data)
     .filter(([, v]) => v > 0)
-    .sort(([, a], [, b]) => b - a);
+    .toSorted(([, a], [, b]) => b - a);
 
   if (entries.length < 2) {
-    console.warn(
-      `  Only ${entries.length} segment(s) for ${ticker}, skipping puzzle`,
-    );
+    console.warn(`  Only ${entries.length} segment(s) for ${ticker}, skipping puzzle`);
     return null;
   }
 
@@ -269,9 +267,7 @@ async function main() {
     }
   }
 
-  console.log(
-    `\nCompanies: ${companiesCreated} created, ${companiesUpdated} updated\n`,
-  );
+  console.log(`\nCompanies: ${companiesCreated} created, ${companiesUpdated} updated\n`);
 
   // 2. Seed puzzles — deterministic date per ticker index, skip existing
   console.log("=== Seeding puzzles ===\n");
@@ -326,9 +322,7 @@ async function main() {
     console.log(`  ${dateStr}: ${ticker} (${segments.length} segments)`);
   }
 
-  console.log(
-    `\nPuzzles: ${puzzlesCreated} created, ${puzzlesSkipped} skipped`,
-  );
+  console.log(`\nPuzzles: ${puzzlesCreated} created, ${puzzlesSkipped} skipped`);
   process.exit(0);
 }
 

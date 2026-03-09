@@ -15,7 +15,7 @@ const color = getRandomColor();
 
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
-  const players = Object.entries(others).sort(([, p]) =>
+  const players = Object.entries(others).toSorted(([, p]) =>
     p.position?.pathname === pathname ? -1 : 1,
   );
   const onlyMe = players.length < 1;
@@ -48,8 +48,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           </Tooltip>
         </motion.li>
         {players.map(([id, player], index) => {
-          const anotherPage =
-            player.position?.pathname && player.position.pathname !== pathname;
+          const anotherPage = player.position?.pathname && player.position.pathname !== pathname;
 
           let label = "Visitor";
           if (anotherPage) {
@@ -74,9 +73,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
                 <TooltipTrigger className="flex h-7 w-7" aria-label={label}>
                   <span aria-hidden="true" />
                 </TooltipTrigger>
-                <TooltipContent className="px-2 py-0.5 text-xs">
-                  {label}
-                </TooltipContent>
+                <TooltipContent className="px-2 py-0.5 text-xs">{label}</TooltipContent>
               </Tooltip>
             </motion.li>
           );

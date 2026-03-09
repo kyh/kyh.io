@@ -90,17 +90,13 @@ export class KyhServer extends Server {
         x: positionMessage.data.x ?? prevPlayer?.position?.x,
         y: positionMessage.data.y ?? prevPlayer?.position?.y,
         pointer: positionMessage.data.pointer ?? prevPlayer?.position?.pointer,
-        pathname:
-          positionMessage.data.pathname ?? prevPlayer?.position?.pathname,
+        pathname: positionMessage.data.pathname ?? prevPlayer?.position?.pathname,
       },
     };
 
     this.setPlayer(sender, newPlayer);
 
-    if (
-      newPlayer.position?.x !== undefined &&
-      newPlayer.position.y !== undefined
-    ) {
+    if (newPlayer.position?.x !== undefined && newPlayer.position.y !== undefined) {
       const message: UpdateMessage = {
         type: "update",
         data: newPlayer,
@@ -150,9 +146,6 @@ export class KyhServer extends Server {
 
 export default {
   async fetch(request: Request, env: Env) {
-    return (
-      (await routePartykitRequest(request, env)) ||
-      new Response("Not Found", { status: 404 })
-    );
+    return (await routePartykitRequest(request, env)) || new Response("Not Found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;

@@ -8,9 +8,7 @@ import { FloatingIsland } from "./ui/FloatingIsland";
 const KwadrantApp = () => {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const { state } = useKwadrant();
   const isDark = state.theme === "dark";
 
@@ -39,11 +37,7 @@ const KwadrantApp = () => {
     >
       {size && (
         <>
-          <KwadrantCanvas
-            ref={stageRef}
-            width={size.width}
-            height={size.height}
-          />
+          <KwadrantCanvas ref={stageRef} width={size.width} height={size.height} />
           <FloatingIsland stageRef={stageRef} canvasSize={size} />
         </>
       )}

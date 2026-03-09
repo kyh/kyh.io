@@ -49,10 +49,7 @@ export const Modal = ({ isOpen, closeModal, title, children }: Props) => {
             >
               <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl bg-black p-6 text-left text-sm text-slate-300 shadow-xl transition-all">
                 {title && (
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg leading-6 font-medium text-slate-50"
-                  >
+                  <Dialog.Title as="h3" className="text-lg leading-6 font-medium text-slate-50">
                     {title}
                   </Dialog.Title>
                 )}

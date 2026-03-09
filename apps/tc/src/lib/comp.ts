@@ -34,8 +34,7 @@ const calculateBase = (base = "0") => {
 };
 
 const calculateBonus = (year = "1", signOnBonus = "0", targetBonus = "0") => {
-  if (year === "1")
-    return parseFloat(signOnBonus || "0") + parseFloat(targetBonus || "0");
+  if (year === "1") return parseFloat(signOnBonus || "0") + parseFloat(targetBonus || "0");
   return parseFloat(targetBonus || "0");
 };
 
@@ -77,8 +76,7 @@ const calculateShareValueFromRevenue = (
   expectedRevenue = "0",
   revenueMultiple = "0",
 ) => {
-  const valuation =
-    parseFloat(expectedRevenue || "0") * parseFloat(revenueMultiple || "0");
+  const valuation = parseFloat(expectedRevenue || "0") * parseFloat(revenueMultiple || "0");
   const shareValue = valuation / parseInt(sharesOutstanding || "1");
 
   return shareValue.toFixed(2);
@@ -119,11 +117,7 @@ export const useCompHooks = () => {
                 shareType === "iso",
                 d.year,
               )
-            : calculateShareValueFromRevenue(
-                sharesOutstanding,
-                expectedRevenue,
-                revenueMultiple,
-              );
+            : calculateShareValueFromRevenue(sharesOutstanding, expectedRevenue, revenueMultiple);
 
         return {
           ...d,

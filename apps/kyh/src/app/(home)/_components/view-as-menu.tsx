@@ -51,18 +51,12 @@ export const ViewAsMenu = () => {
       <Tooltip>
         <AnimateSection delay={0.1}>
           <TooltipTrigger asChild>
-            <a
-              className={iconButtonClassName}
-              aria-label="Speed read"
-              href="/rsvp"
-            >
+            <a className={iconButtonClassName} aria-label="Speed read" href="/rsvp">
               <TextIcon />
             </a>
           </TooltipTrigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">
-          Speed read
-        </TooltipContent>
+        <TooltipContent className="px-2 py-0.5 text-xs">Speed read</TooltipContent>
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.15}>
@@ -117,9 +111,7 @@ export const ViewAsMenu = () => {
             </a>
           </TooltipTrigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">
-          View as Markdown
-        </TooltipContent>
+        <TooltipContent className="px-2 py-0.5 text-xs">View as Markdown</TooltipContent>
       </Tooltip>
       <Menu.Root>
         <AnimateSection delay={0.25}>
@@ -132,26 +124,14 @@ export const ViewAsMenu = () => {
             <Menu.Popup className="bg-panel z-50 min-w-[120px] rounded-md border border-[var(--border-color)] p-1 text-xs text-[var(--body-color)]">
               <Menu.Item
                 className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
-                render={
-                  <a
-                    href={chatGPTUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                }
+                render={<a href={chatGPTUrl} target="_blank" rel="noopener noreferrer" />}
               >
                 <ChatGPTIcon />
                 ChatGPT
               </Menu.Item>
               <Menu.Item
                 className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
-                render={
-                  <a
-                    href={claudeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                }
+                render={<a href={claudeUrl} target="_blank" rel="noopener noreferrer" />}
               >
                 <ClaudeIcon />
                 Claude

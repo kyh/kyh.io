@@ -37,24 +37,16 @@ type ProjectAppProps = {
   showShadow?: boolean;
 };
 
-export const ProjectApp = ({
-  name,
-  iconSrc,
-  url,
-  showShadow = true,
-}: ProjectAppProps) => {
+export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectAppProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const labelRef = useRef<HTMLDivElement>(null);
 
   const isTruncated =
-    labelRef.current &&
-    labelRef.current.scrollWidth > labelRef.current.clientWidth;
+    labelRef.current && labelRef.current.scrollWidth > labelRef.current.clientWidth;
   const shouldExpand = isHovered && isTruncated;
 
   const Wrapper = url ? motion.a : motion.div;
-  const wrapperProps = url
-    ? { href: url, target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const wrapperProps = url ? { href: url, target: "_blank", rel: "noopener noreferrer" } : {};
 
   return (
     <Wrapper
@@ -72,13 +64,7 @@ export const ProjectApp = ({
         }`}
         data-slot="app-icon"
       >
-        <Image
-          src={iconSrc}
-          alt={name}
-          fill
-          sizes={`${iconSize}px`}
-          draggable={false}
-        />
+        <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
       </div>
 
       {/* Visible truncated label */}
@@ -145,14 +131,8 @@ const OpenGridItem = ({
   return (
     <motion.div
       ref={setRef}
-      initial={
-        offsetsReady
-          ? { opacity: 0, scale: 0.2, x: offset.x, y: offset.y }
-          : { opacity: 0 }
-      }
-      animate={
-        offsetsReady ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 0 }
-      }
+      initial={offsetsReady ? { opacity: 0, scale: 0.2, x: offset.x, y: offset.y } : { opacity: 0 }}
+      animate={offsetsReady ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 0 }}
       exit={{
         opacity: 0,
         scale: 0.2,
@@ -169,23 +149,12 @@ const OpenGridItem = ({
         delay: openDelay,
       }}
     >
-      <ProjectApp
-        name={item.name}
-        iconSrc={item.iconSrc}
-        url={item.url}
-        showShadow={false}
-      />
+      <ProjectApp name={item.name} iconSrc={item.iconSrc} url={item.url} showShadow={false} />
     </motion.div>
   );
 };
 
-export const ProjectAppGroup = ({
-  title,
-  items,
-}: {
-  title: string;
-  items: ProjectAppItem[];
-}) => {
+export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<Point | null>(null);
@@ -229,8 +198,7 @@ export const ProjectAppGroup = ({
     return () => cancelAnimationFrame(frame);
   }, [isOpen, origin, items]);
 
-  const offsetsReady =
-    isOpen && origin && Object.keys(itemOffsets).length === items.length;
+  const offsetsReady = isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -252,10 +220,7 @@ export const ProjectAppGroup = ({
                 ref={folderRef}
                 data-slot="folder-preview"
               >
-                <div
-                  className="grid h-full grid-cols-2 grid-rows-2 gap-1"
-                  data-slot="folder-grid"
-                >
+                <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" data-slot="folder-grid">
                   {items.slice(0, 4).map((item) => (
                     <div
                       key={item.key}

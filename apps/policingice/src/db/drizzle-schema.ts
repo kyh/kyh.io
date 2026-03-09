@@ -85,9 +85,7 @@ export const incidents = sqliteTable("incidents", {
   unjustifiedCount: integer("unjustified_count").default(0).notNull(),
   justifiedCount: integer("justified_count").default(0).notNull(),
   reportCount: integer("report_count").default(0).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(unixepoch())`,
-  ),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
@@ -98,9 +96,7 @@ export const videos = sqliteTable("videos", {
     .notNull(),
   url: text().notNull(),
   platform: text().$type<VideoPlatform>().notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(unixepoch())`,
-  ),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
 export const votes = sqliteTable("votes", {
@@ -110,9 +106,7 @@ export const votes = sqliteTable("votes", {
     .notNull(),
   sessionId: text("session_id").notNull(),
   type: text().$type<VoteType>().notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(unixepoch())`,
-  ),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
 // Relations

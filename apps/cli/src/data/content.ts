@@ -17,8 +17,7 @@ export const heroText = `Hello world. You can call me Kai since we're pretty muc
 export const projects: Item[] = [
   {
     title: "Vibedgames",
-    description:
-      "Design, publish, and play personalized multiplayer minigames with your friends",
+    description: "Design, publish, and play personalized multiplayer minigames with your friends",
     url: "https://vibedgames.com",
   },
   {
@@ -33,14 +32,12 @@ export const projects: Item[] = [
   },
   {
     title: "Inteligir",
-    description:
-      "Turn your social feed into your personal university with bite-sized lessons",
+    description: "Turn your social feed into your personal university with bite-sized lessons",
     url: "https://inteligir.com",
   },
   {
     title: "Dataembed",
-    description:
-      "Search the web like a database. Query and transform scattered web information",
+    description: "Search the web like a database. Query and transform scattered web information",
     url: "https://dataembed.com",
   },
   {
@@ -70,8 +67,7 @@ export const projects: Item[] = [
   },
   {
     title: "Policing Ice",
-    description:
-      "Documenting incidents of ICE overreach through crowdsourced video evidence",
+    description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
     url: "https://policingice.com",
   },
   {
@@ -81,8 +77,7 @@ export const projects: Item[] = [
   },
   {
     title: "Init",
-    description:
-      "An AI native starter kit to build, launch, and scale your next project",
+    description: "An AI native starter kit to build, launch, and scale your next project",
     url: "https://init.kyh.io",
   },
   {

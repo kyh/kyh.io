@@ -36,8 +36,7 @@ export const AnimateSection = <C extends React.ElementType>({
 const GLYPHS =
   "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ0123456789±!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-const getRandomGlyph = () =>
-  GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
+const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
 
 const generateChars = (text: string) =>
   text.split("").map(() => ({
@@ -65,8 +64,7 @@ export const ScrambleText = ({
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     if (trigger === "load") return;
-    const span =
-      e.currentTarget.querySelector<HTMLSpanElement>("[data-scramble]");
+    const span = e.currentTarget.querySelector<HTMLSpanElement>("[data-scramble]");
     if (!span) return;
 
     // Update CSS vars with new random chars
@@ -84,11 +82,7 @@ export const ScrambleText = ({
 
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span
-        data-scramble
-        className={trigger !== "hover" ? "scramble" : ""}
-        aria-hidden
-      >
+      <span data-scramble className={trigger !== "hover" ? "scramble" : ""} aria-hidden>
         {text.split("").map((char, index) => (
           <span
             key={index}

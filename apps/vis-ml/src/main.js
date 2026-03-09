@@ -32,9 +32,7 @@ function handleResize() {
   const figureHeight = window.innerHeight / 1.5;
   const figureMarginTop = (window.innerHeight - figureHeight) / 2;
 
-  figure
-    .style("height", `${figureHeight}px`)
-    .style("top", `${figureMarginTop}px`);
+  figure.style("height", `${figureHeight}px`).style("top", `${figureMarginTop}px`);
 
   // 3. tell scrollama to update new element dimensions
   scroller.resize();
@@ -55,12 +53,8 @@ function handleStepEnter(response) {
   }
   if (response.index === 3) {
     const { total, averageSalary, averageYears } = calculateAverage(data);
-    plusLine
-      .select(".experience-line .total-value")
-      .text(`${averageYears.toFixed(0)}`);
-    plusLine
-      .select(".salary-line .total-value")
-      .text(`$${averageSalary.toFixed(0)}`);
+    plusLine.select(".experience-line .total-value").text(`${averageYears.toFixed(0)}`);
+    plusLine.select(".salary-line .total-value").text(`$${averageSalary.toFixed(0)}`);
     plusLine.select(".total .total-value").text(`$${total.toFixed(2)}`);
   }
   if (response.index === 4 || response.index === 6) {
@@ -73,10 +67,7 @@ function handleStepEnter(response) {
   }
   if (response.index === 6) {
     const { total } = calculateAverage(data);
-    const test = formula
-      .select(".test")
-      .classed("hidden", false)
-      .text("4 years");
+    const test = formula.select(".test").classed("hidden", false).text("4 years");
     let changed = false;
     test
       .style("transform", "translateX(0)")
@@ -108,17 +99,13 @@ function handleStepEnter(response) {
     }
   }
   if (response.index === 8) {
-    const line = chartContainer
-      .select(".regression-line")
-      .classed("hidden", false);
+    const line = chartContainer.select(".regression-line").classed("hidden", false);
     if (response.direction === "down") {
       animateLine(line);
     }
   }
   if (response.index === 9) {
-    const line = chartContainer
-      .selectAll(".error-line")
-      .classed("hidden", false);
+    const line = chartContainer.selectAll(".error-line").classed("hidden", false);
     if (response.direction === "down") {
       animateLine(line, 2000, (_d, i) => i * 500);
     }
@@ -131,10 +118,7 @@ function handleStepEnter(response) {
   }
   if (response.index === 12 || response.index === 13) {
     formula.classed("hidden", false);
-    formula
-      .select(".bias")
-      .classed("hidden", false)
-      .classed("highlight-bias", true);
+    formula.select(".bias").classed("hidden", false).classed("highlight-bias", true);
   }
   if (response.index > 12) {
     chartContainer.select(".chart-bias").classed("hidden", false);
@@ -215,12 +199,8 @@ function handleStepProgress(response) {
       .attr("style", "transform: translateY(165px)");
   }
   if (response.index === 3) {
-    const t1 = table
-      .selectAll("tbody tr td:nth-child(2)")
-      .classed("highlight", false);
-    const t2 = table
-      .selectAll("tbody tr td:nth-child(3)")
-      .classed("highlight", false);
+    const t1 = table.selectAll("tbody tr td:nth-child(2)").classed("highlight", false);
+    const t2 = table.selectAll("tbody tr td:nth-child(3)").classed("highlight", false);
 
     if (between(response.progress, 0, 0.5)) {
       t1.classed("highlight", true);
@@ -270,10 +250,7 @@ function init() {
 init();
 
 const { total } = calculateAverage(data);
-const regressionGraph = new LinearRegressionGraph(
-  chartContainer.select(".chart"),
-  data,
-);
+const regressionGraph = new LinearRegressionGraph(chartContainer.select(".chart"), data);
 regressionGraph.render();
 
 regressionGraph.updateState({

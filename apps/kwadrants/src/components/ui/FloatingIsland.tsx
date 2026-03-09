@@ -40,48 +40,31 @@ interface FloatingIslandProps {
   canvasSize: { width: number; height: number };
 }
 
-export const FloatingIsland = ({
-  stageRef,
-  canvasSize,
-}: FloatingIslandProps) => {
+export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) => {
   const [mode, setMode] = useState<IslandMode>("idle");
   const [tagText, setTagText] = useState("");
   const [tagColor, setTagColor] = useState<string>(DEFAULT_TAG_COLOR);
   const [position, setPosition] = useState<PanelPosition>(() => {
     if (typeof window !== "undefined") {
-      return (
-        (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) ||
-        "bottom-left"
-      );
+      return (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) || "bottom-left";
     }
     return "bottom-left";
   });
   const [isDragging, setIsDragging] = useState(false);
-  const [hoveredPosition, setHoveredPosition] =
-    useState<PanelPosition>("bottom-left");
+  const [hoveredPosition, setHoveredPosition] = useState<PanelPosition>("bottom-left");
   const [isReady, setIsReady] = useState(false);
   const panelSizeRef = useRef({ width: 140, height: 200 });
   const islandRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
-  const {
-    addTag,
-    addImage,
-    state,
-    setQuadrantColor,
-    setGridType,
-    setLayoutType,
-    setTheme,
-  } = useKwadrant();
+  const { addTag, addImage, state, setQuadrantColor, setGridType, setLayoutType, setTheme } =
+    useKwadrant();
   const isDark = state.theme === "dark";
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const getSnapPosition = (
-    pos: PanelPosition,
-    size = panelSizeRef.current,
-  ) => ({
+  const getSnapPosition = (pos: PanelPosition, size = panelSizeRef.current) => ({
     x: pos.includes("left") ? MARGIN : window.innerWidth - MARGIN - size.width,
     y: pos.includes("top") ? MARGIN : window.innerHeight - MARGIN - size.height,
   });
@@ -133,18 +116,12 @@ export const FloatingIsland = ({
 
   const handleDragStart = () => setIsDragging(true);
 
-  const handleDrag = (
-    _: unknown,
-    info: { point: { x: number; y: number } },
-  ) => {
+  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }) => {
     const newPos = getClosestPosition(info.point.x, info.point.y);
     if (newPos !== hoveredPosition) setHoveredPosition(newPos);
   };
 
-  const handleDragEnd = (
-    _: unknown,
-    info: { point: { x: number; y: number } },
-  ) => {
+  const handleDragEnd = (_: unknown, info: { point: { x: number; y: number } }) => {
     const newPosition = getClosestPosition(info.point.x, info.point.y);
     const targetPos = getSnapPosition(newPosition);
     animate(x, targetPos.x, { type: "spring", stiffness: 400, damping: 30 });
@@ -278,9 +255,7 @@ export const FloatingIsland = ({
                   key={c}
                   onClick={() => setTagColor(c)}
                   className={`h-5 w-5 rounded-full transition-transform ${
-                    tagColor === c
-                      ? "scale-110 ring-2 ring-gray-400 ring-offset-1"
-                      : ""
+                    tagColor === c ? "scale-110 ring-2 ring-gray-400 ring-offset-1" : ""
                   }`}
                   style={{ backgroundColor: c }}
                 />
@@ -326,21 +301,15 @@ export const FloatingIsland = ({
       case "colors":
         return (
           <div className="flex flex-col gap-2">
-            {(
-              ["topLeft", "topRight", "bottomLeft", "bottomRight"] as const
-            ).map((q) => (
+            {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map((q) => (
               <div key={q} className="flex items-center gap-2">
                 <input
                   type="color"
                   value={state.quadrantColors[q]}
-                  onChange={(e) =>
-                    setQuadrantColor(q as keyof QuadrantColors, e.target.value)
-                  }
+                  onChange={(e) => setQuadrantColor(q as keyof QuadrantColors, e.target.value)}
                   className="h-6 w-6 cursor-pointer rounded border-0"
                 />
-                <span
-                  className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                >
+                <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                   {q === "topLeft"
                     ? "Top Left"
                     : q === "topRight"
@@ -382,11 +351,7 @@ export const FloatingIsland = ({
                 onClick={() => setGridType(type)}
                 isDark={isDark}
               >
-                {type === "none"
-                  ? "None"
-                  : type === "squares"
-                    ? "Squares"
-                    : "Dots"}
+                {type === "none" ? "None" : type === "squares" ? "Squares" : "Dots"}
               </SelectButton>
             ))}
           </div>
@@ -455,12 +420,7 @@ export const FloatingIsland = ({
   const backTarget = getBackTarget();
 
   const size = panelSizeRef.current;
-  const positions: PanelPosition[] = [
-    "top-left",
-    "top-right",
-    "bottom-left",
-    "bottom-right",
-  ];
+  const positions: PanelPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
   return (
     <>
@@ -547,9 +507,7 @@ const MenuButton = ({
   <button
     onClick={onClick}
     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-      isDark
-        ? "text-gray-300 hover:bg-gray-700"
-        : "text-gray-700 hover:bg-gray-100"
+      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
     }`}
   >
     {icon}

@@ -9,7 +9,7 @@ import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
 type VideoEmbedProps = {
   url: string;
   platform: VideoPlatform;
-}
+};
 
 const platformNames: Record<VideoPlatform, string> = {
   twitter: "x",
@@ -22,13 +22,7 @@ const platformNames: Record<VideoPlatform, string> = {
   reddit: "reddit",
 };
 
-const FallbackLink = ({
-  url,
-  platform,
-}: {
-  url: string;
-  platform: VideoPlatform;
-}) => {
+const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform }) => {
   return (
     <a
       href={url}
@@ -39,7 +33,7 @@ const FallbackLink = ({
       open on {platformNames[platform]}
     </a>
   );
-}
+};
 
 const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
   return (
@@ -53,11 +47,9 @@ const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
       title="YouTube video"
     />
   );
-}
+};
 
-const LazyTweet = lazy(() =>
-  import("react-tweet").then((mod) => ({ default: mod.Tweet })),
-);
+const LazyTweet = lazy(() => import("react-tweet").then((mod) => ({ default: mod.Tweet })));
 
 const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const [mounted, setMounted] = useState(false);
@@ -88,14 +80,12 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
 
   return (
     <div className="[&_.react-tweet-theme]:!m-0" data-theme={resolvedTheme ?? "light"}>
-      <Suspense
-        fallback={<div className="h-[200px] animate-pulse bg-muted" />}
-      >
+      <Suspense fallback={<div className="h-[200px] animate-pulse bg-muted" />}>
         <LazyTweet id={tweetId} components={{ TweetNotFound }} />
       </Suspense>
     </div>
   );
-}
+};
 
 const TikTokEmbed = ({ videoId }: { videoId: string }) => {
   return (
@@ -109,7 +99,7 @@ const TikTokEmbed = ({ videoId }: { videoId: string }) => {
       title="TikTok video"
     />
   );
-}
+};
 
 const FacebookEmbed = ({ url }: { url: string }) => {
   return (
@@ -123,15 +113,9 @@ const FacebookEmbed = ({ url }: { url: string }) => {
       title="Facebook video"
     />
   );
-}
+};
 
-const InstagramEmbed = ({
-  postId,
-  type,
-}: {
-  postId: string;
-  type: "p" | "reel" | "tv";
-}) => {
+const InstagramEmbed = ({ postId, type }: { postId: string; type: "p" | "reel" | "tv" }) => {
   return (
     <iframe
       src={`https://www.instagram.com/${type}/${postId}/embed`}
@@ -142,7 +126,7 @@ const InstagramEmbed = ({
       title="Instagram post"
     />
   );
-}
+};
 
 const RedditEmbed = ({ url }: { url: string }) => {
   const cleanUrl = url.split("?")[0].replace(/\/$/, "");
@@ -161,7 +145,7 @@ const RedditEmbed = ({ url }: { url: string }) => {
       title="Reddit post"
     />
   );
-}
+};
 
 export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   const videoId = extractVideoId(url, platform);
@@ -193,4 +177,4 @@ export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   };
 
   return <div className="w-full max-w-[550px]">{renderEmbed()}</div>;
-}
+};

@@ -38,7 +38,7 @@ type IncidentFeedProps = {
   initialNextOffset: number | undefined;
   initialUserVotes: Record<number, "unjustified" | "justified">;
   isAdmin: boolean;
-}
+};
 
 export const IncidentFeed = ({
   initialIncidents,
@@ -203,10 +203,8 @@ export const IncidentFeed = ({
           return {
             ...prev,
             [incidentId]: {
-              unjustified:
-                cur.unjustified - (type === "unjustified" ? 1 : 0),
-              justified:
-                cur.justified - (type === "justified" ? 1 : 0),
+              unjustified: cur.unjustified - (type === "unjustified" ? 1 : 0),
+              justified: cur.justified - (type === "justified" ? 1 : 0),
             },
           };
         });
@@ -218,12 +216,8 @@ export const IncidentFeed = ({
           return {
             ...prev,
             [incidentId]: {
-              unjustified:
-                cur.unjustified +
-                (type === "unjustified" ? 1 : switching ? -1 : 0),
-              justified:
-                cur.justified +
-                (type === "justified" ? 1 : switching ? -1 : 0),
+              unjustified: cur.unjustified + (type === "unjustified" ? 1 : switching ? -1 : 0),
+              justified: cur.justified + (type === "justified" ? 1 : switching ? -1 : 0),
             },
           };
         });
@@ -243,22 +237,19 @@ export const IncidentFeed = ({
     [userVotes, voteCounts, toast],
   );
 
-  const getVoteCount = (
-    incident: Incident,
-    type: "unjustified" | "justified",
-  ) => {
-    const base =
-      type === "unjustified"
-        ? incident.unjustifiedCount
-        : incident.justifiedCount;
+  const getVoteCount = (incident: Incident, type: "unjustified" | "justified") => {
+    const base = type === "unjustified" ? incident.unjustifiedCount : incident.justifiedCount;
     const extra = voteCounts[incident.id]?.[type] ?? 0;
     return base + extra;
   };
 
-  const handleReport = useCallback(async (incidentId: number) => {
-    await reportIncident({ incidentId });
-    toast.success("Reported");
-  }, [toast]);
+  const handleReport = useCallback(
+    async (incidentId: number) => {
+      await reportIncident({ incidentId });
+      toast.success("Reported");
+    },
+    [toast],
+  );
 
   const handleHide = useCallback(
     async (incidentId: number) => {
@@ -310,11 +301,7 @@ export const IncidentFeed = ({
   );
 
   const handleUpdateIncident = useCallback(
-    async (data: {
-      location?: string;
-      description?: string;
-      incidentDate?: string;
-    }) => {
+    async (data: { location?: string; description?: string; incidentDate?: string }) => {
       if (!editingIncident) return;
       await updateIncidentDetails({ incidentId: editingIncident.id, ...data });
       router.refresh();
@@ -333,19 +320,14 @@ export const IncidentFeed = ({
       if (result.autoApproved) {
         router.refresh();
       }
-      toast.success(
-        result.merged ? "Added to existing incident" : "Added to feed",
-      );
+      toast.success(result.merged ? "Added to existing incident" : "Added to feed");
     },
     [router, toast],
   );
 
   return (
     <KeyboardShortcutsProvider>
-      <main
-        id="main-content"
-        className="min-h-screen bg-background px-4 py-8 sm:px-6"
-      >
+      <main id="main-content" className="min-h-screen bg-background px-4 py-8 sm:px-6">
         <div className="max-w-xl">
           <header className="mb-12">
             <div className="flex items-center justify-between">
@@ -360,11 +342,7 @@ export const IncidentFeed = ({
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
                     <Popover.Popup className="z-20 w-64 rounded border border-border bg-background p-4">
-                      <Form
-                        ref={searchFormRef}
-                        onSubmit={handleSearch}
-                        className="space-y-3"
-                      >
+                      <Form ref={searchFormRef} onSubmit={handleSearch} className="space-y-3">
                         <Field.Root name="q">
                           <Field.Label className="mb-1 block text-xs text-muted-foreground">
                             Location or description
@@ -439,9 +417,7 @@ export const IncidentFeed = ({
 
           {(searchResults ?? allIncidents).length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {searchResults !== null
-                ? "No results found."
-                : "No incidents yet."}
+              {searchResults !== null ? "No results found." : "No incidents yet."}
             </p>
           ) : (
             <div className="divide-y divide-border">
@@ -472,19 +448,11 @@ export const IncidentFeed = ({
                             <MoreHorizontal className="h-4 w-4" />
                           </Menu.Trigger>
                           <Menu.Portal>
-                            <Menu.Positioner
-                              side="bottom"
-                              align="end"
-                              sideOffset={6}
-                            >
+                            <Menu.Positioner side="bottom" align="end" sideOffset={6}>
                               <Menu.Popup className="z-10 min-w-32 rounded border border-border bg-background py-1 text-sm">
                                 <Menu.Item
                                   className="block w-full px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                  render={
-                                    <Link
-                                      href={`/incident/${incident.id}`}
-                                    />
-                                  }
+                                  render={<Link href={`/incident/${incident.id}`} />}
                                 >
                                   View
                                 </Menu.Item>
@@ -537,9 +505,7 @@ export const IncidentFeed = ({
 
           {searchResults === null && (
             <div ref={loadMoreRef} className="py-8">
-              {isLoading && (
-                <span className="text-sm text-muted-foreground">Loading...</span>
-              )}
+              {isLoading && <span className="text-sm text-muted-foreground">Loading...</span>}
               {!nextOffset && allIncidents.length > 0 && (
                 <span className="text-sm text-muted-foreground/40">&mdash;</span>
               )}
@@ -572,7 +538,7 @@ export const IncidentFeed = ({
       </main>
     </KeyboardShortcutsProvider>
   );
-}
+};
 
 const LazyIncidentCard = ({
   incidentId,
@@ -611,11 +577,7 @@ const LazyIncidentCard = ({
 
   return (
     <article ref={ref} className="py-6 first:pt-0">
-      {isVisible ? (
-        children
-      ) : (
-        <div className="h-[300px] animate-pulse bg-muted" />
-      )}
+      {isVisible ? children : <div className="h-[300px] animate-pulse bg-muted" />}
     </article>
   );
-}
+};

@@ -2,9 +2,7 @@ import type { ProjectAppItem } from "@/components/project-app-group";
 import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
 import { projects } from "@/lib/data";
 
-const projectsAndVentures = projects.filter(
-  (p) => p.type === "project" || p.type === "venture",
-);
+const projectsAndVentures = projects.filter((p) => p.type === "project" || p.type === "venture");
 
 const miniApps = projects.filter((p) => p.type === "mini-app");
 

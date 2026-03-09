@@ -26,11 +26,7 @@ const defaultOptions = {
   yAxis: true,
 };
 
-export const LineChart = ({
-  data = [],
-  dataKey = "positive",
-  options = defaultOptions,
-}) => {
+export const LineChart = ({ data = [], dataKey = "positive", options = defaultOptions }) => {
   const container = createRef();
 
   useEffect(() => {
@@ -40,8 +36,7 @@ export const LineChart = ({
       ...mergedOptions.margin,
     };
     const width = mergedOptions.width || container.current.offsetWidth || 300;
-    const height =
-      mergedOptions.height || container.current.offsetHeight || 300;
+    const height = mergedOptions.height || container.current.offsetHeight || 300;
 
     if (data.length) {
       const { x, y } = createScales(data, dataKey, width, height, margin);
@@ -123,20 +118,14 @@ export const LineChart = ({
           if (e.date && e[dataKey]) {
             tooltip
               .attr("transform", `translate(${x(e.date)},${0})`)
-              .call(
-                callout,
-                `${format(e.date, "MM/dd")} - ${formatNumber(e[dataKey])}`,
-              );
+              .call(callout, `${format(e.date, "MM/dd")} - ${formatNumber(e[dataKey])}`);
             cursorLine
               .style("display", null)
               .attr("y1", 0)
               .attr("x1", x(e.date))
               .attr("y2", height - margin.bottom)
               .attr("x2", x(e.date));
-            point
-              .style("display", null)
-              .attr("cx", x(e.date))
-              .attr("cy", y(e[dataKey]));
+            point.style("display", null).attr("cx", x(e.date)).attr("cy", y(e[dataKey]));
           }
         });
 

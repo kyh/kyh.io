@@ -7,7 +7,7 @@ export const useGetUSDailyData = () => {
   );
   let formatted = [];
   if (Array.isArray(data)) {
-    formatted = data.map((d) => formatDaily(d)).sort((a, b) => a.date - b.date);
+    formatted = data.map((d) => formatDaily(d)).toSorted((a, b) => a.date - b.date);
   }
 
   return { isLoading: !data.length, data: formatted };

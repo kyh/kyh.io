@@ -42,10 +42,7 @@ export const CompTable = ({ data }: Props) => (
             <NumericFormat value={c.stock} {...currencyTextFormatProps} />
           </td>
           <td className="table-cell px-3 py-3.5 text-right text-white">
-            <NumericFormat
-              value={c.base + c.bonus + c.stock}
-              {...currencyTextFormatProps}
-            />
+            <NumericFormat value={c.base + c.bonus + c.stock} {...currencyTextFormatProps} />
           </td>
         </tr>
       ))}

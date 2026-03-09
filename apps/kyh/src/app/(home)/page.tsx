@@ -15,10 +15,7 @@ const Page = () => {
     <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
       <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
         <header className="flex items-center justify-between gap-2 py-4">
-          <div
-            className="text-foreground-highlighted flex items-center"
-            aria-label="Home"
-          >
+          <div className="text-foreground-highlighted flex items-center" aria-label="Home">
             <Logo />
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -36,10 +33,9 @@ const Page = () => {
             Kaiyu Hsu
           </ScrambleText>
           <p className="text-foreground">
-            Hello world. You can call me Kai since we&apos;re pretty much
-            friends now. I enjoy <Link href="/showcase">creating things</Link>{" "}
-            for the internet. By day, I get to do that through investing,
-            advising, and building products you may not have heard of, yet.
+            Hello world. You can call me Kai since we&apos;re pretty much friends now. I enjoy{" "}
+            <Link href="/showcase">creating things</Link> for the internet. By day, I get to do that
+            through investing, advising, and building products you may not have heard of, yet.
           </p>
           <p>Welcome to my corner of the web.</p>
         </Section>
@@ -61,16 +57,10 @@ const Page = () => {
             </li>
             <li>
               Led software development at various{" "}
-              <Link
-                href="https://amazon.com"
-                src={getPublicAssetUrl("amazon.webp")}
-              >
+              <Link href="https://amazon.com" src={getPublicAssetUrl("amazon.webp")}>
                 large
               </Link>{" "}
-              <Link
-                href="https://grow.google/"
-                src={getPublicAssetUrl("google.webp")}
-              >
+              <Link href="https://grow.google/" src={getPublicAssetUrl("google.webp")}>
                 organizations
               </Link>
             </li>
@@ -92,10 +82,7 @@ const Page = () => {
                 USDR
               </Link>{" "}
               and the{" "}
-              <Link
-                href="https://github.com/orgs/nodejs"
-                src={getPublicAssetUrl("nodejs.webp")}
-              >
+              <Link href="https://github.com/orgs/nodejs" src={getPublicAssetUrl("nodejs.webp")}>
                 OpenJS
               </Link>{" "}
               Foundation
@@ -143,14 +130,11 @@ const Page = () => {
         <Separator />
 
         <Section id="other-activities" delay={0.9}>
-          <SectionHeading id="other-activities">
-            Other Activities
-          </SectionHeading>
+          <SectionHeading id="other-activities">Other Activities</SectionHeading>
           <p className="text-foreground mt-1">
-            Beyond work, I love to learn about economics, psychology, and
-            business. You&apos;ll occasionally find me dabbling in the open
-            source world, drawing things, building apps, and designing games.
-            But honestly, I spend most of my days procrastinating.
+            Beyond work, I love to learn about economics, psychology, and business. You&apos;ll
+            occasionally find me dabbling in the open source world, drawing things, building apps,
+            and designing games. But honestly, I spend most of my days procrastinating.
           </p>
         </Section>
 

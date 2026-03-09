@@ -17,16 +17,13 @@ export const GuessInput = ({ companies, onSelect, disabled }: GuessInputProps) =
   const [value, setValue] = useState<CompanyPickerItem | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const filter = useCallback(
-    (item: CompanyPickerItem, query: string) => {
-      const lower = query.toLowerCase();
-      return (
-        item.name.toLowerCase().includes(lower) ||
-        (item.ticker?.toLowerCase().includes(lower) ?? false)
-      );
-    },
-    [],
-  );
+  const filter = useCallback((item: CompanyPickerItem, query: string) => {
+    const lower = query.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(lower) ||
+      (item.ticker?.toLowerCase().includes(lower) ?? false)
+    );
+  }, []);
 
   return (
     <Combobox.Root
@@ -81,9 +78,7 @@ export const GuessInput = ({ companies, onSelect, disabled }: GuessInputProps) =
                     <span />
                   )}
                   <span className="truncate">{company.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {company.sector}
-                  </span>
+                  <span className="text-muted-foreground text-xs">{company.sector}</span>
                 </Combobox.Item>
               )}
             </Combobox.List>
@@ -92,4 +87,4 @@ export const GuessInput = ({ companies, onSelect, disabled }: GuessInputProps) =
       </Combobox.Portal>
     </Combobox.Root>
   );
-}
+};

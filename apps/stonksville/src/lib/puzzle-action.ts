@@ -43,18 +43,9 @@ export async function submitGuess(
     guessedTicker: guessedCompany.ticker,
     guessedName: guessedCompany.name,
     sectorMatch: guessedCompany.sector === answerCompany.sector,
-    marketCapDirection: compareDirection(
-      guessedCompany.marketCap,
-      answerCompany.marketCap,
-    ),
-    employeeDirection: compareDirection(
-      guessedCompany.employees,
-      answerCompany.employees,
-    ),
-    ipoYearDirection: compareDirection(
-      guessedCompany.ipoYear,
-      answerCompany.ipoYear,
-    ),
+    marketCapDirection: compareDirection(guessedCompany.marketCap, answerCompany.marketCap),
+    employeeDirection: compareDirection(guessedCompany.employees, answerCompany.employees),
+    ipoYearDirection: compareDirection(guessedCompany.ipoYear, answerCompany.ipoYear),
     isCorrect,
   };
 

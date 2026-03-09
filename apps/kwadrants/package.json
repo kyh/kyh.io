@@ -1,9 +1,9 @@
 {
   "name": "@repo/kwadrants",
   "private": true,
-  "type": "module",
   "description": "Kwadrants",
   "license": "MIT",
+  "type": "module",
   "sideEffects": false,
   "scripts": {
     "dev": "vite",

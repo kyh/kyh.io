@@ -118,8 +118,8 @@
   --color-pink-900: #751a3d;
 
   --font-sans:
-    Inter var, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    Inter var, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
 
   --text-2xs: 0.65rem;
   --text-xs: 0.75rem;

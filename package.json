@@ -1,7 +1,6 @@
 {
   "name": "kyh-monorepo",
   "private": true,
-  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -34,5 +33,6 @@
     "tsx": "catalog:",
     "turbo": "^2.8.14",
     "typescript": "catalog:"
-  }
+  },
+  "packageManager": "pnpm@10.30.3"
 }

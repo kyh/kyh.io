@@ -4,13 +4,7 @@ import type { MotionValue } from "motion/react";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 
 import { ThemeToggleIcon } from "@/components/theme-toggle";
@@ -97,11 +91,7 @@ export const Dock = () => {
           onMouseEnter={() => setHovered("theme")}
           onMouseLeave={() => setHovered(null)}
         >
-          <DockItem
-            label={themeLabel}
-            mouseX={mouseX}
-            hovered={hovered === "theme"}
-          >
+          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
             <ThemeToggleIcon isLight={isLight} />
           </DockItem>
         </button>

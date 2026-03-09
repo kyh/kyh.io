@@ -11,11 +11,7 @@ import "./TrendPage.css";
 
 export const TrendPage = () => {
   const { isLoading: isLoadingDaily, data: usDailyData } = useGetUSDailyData();
-  const {
-    isLoading: isLoadingStates,
-    data: statesDailyData,
-    states,
-  } = useGetStatesDailyData();
+  const { isLoading: isLoadingStates, data: statesDailyData, states } = useGetStatesDailyData();
 
   const [selectedState, setSelectedState] = useState(
     localStorage.getItem("selectedState") || undefined,

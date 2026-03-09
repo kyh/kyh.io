@@ -36,8 +36,7 @@ export const createAxis = (width, x, y) => {
   return { xAxis, yAxis };
 };
 
-const isDefined = (d, dataKey) =>
-  d[dataKey] && d.date && !isNaN(d[dataKey]) && !isNaN(d.date);
+const isDefined = (d, dataKey) => d[dataKey] && d.date && !isNaN(d[dataKey]) && !isNaN(d.date);
 
 export const createLineFn = (dataKey, x, y) => {
   const d3Line = line()
@@ -56,9 +55,7 @@ export const createLineFn = (dataKey, x, y) => {
 
 export const createTooltipEvents = (data, x, y) => {
   const callout = (g, value) => {
-    g.style("display", null)
-      .style("pointer-events", "none")
-      .style("font-size", "10px");
+    g.style("display", null).style("pointer-events", "none").style("font-size", "10px");
 
     const path = g
       .selectAll("path")
@@ -89,9 +86,7 @@ export const createTooltipEvents = (data, x, y) => {
       "d",
       `M${-w / 2 - 10},5H${w / 2 + 10} a3,3 0 0 1 3,3 v${
         h + 15
-      } a3,3 0 0 1 -3,3 h-${w + 20} a3,3 0 0 1 -3,-3 v-${
-        h + 15
-      } a3,3 0 0 1 3,-3 z`,
+      } a3,3 0 0 1 -3,3 h-${w + 20} a3,3 0 0 1 -3,-3 v-${h + 15} a3,3 0 0 1 3,-3 z`,
     );
   };
 
