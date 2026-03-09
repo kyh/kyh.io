@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
-    "@types/bun": "latest",
     "@types/react": "catalog:",
     "typescript": "catalog:"
   },
