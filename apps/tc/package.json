@@ -9,9 +9,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --check . --ignore-path ../../.gitignore"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -32,8 +30,6 @@
     "use-debounce": "^10.1.0"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "workspace:^",
-    "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "catalog:",
@@ -42,9 +38,7 @@
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
     "@vitejs/plugin-react": "catalog:",
-    "eslint": "catalog:",
     "postcss": "catalog:",
-    "prettier": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"

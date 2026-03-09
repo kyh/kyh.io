@@ -18,24 +18,21 @@
     "dev-tc": "pnpm -F @repo/tc dev",
     "dev-vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy-party": "pnpm -F @repo/party deploy",
-    "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
-    "format-fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
-    "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
-    "lint-fix": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "lint": "oxlint --report-unused-disable-directives",
     "lint-ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
-    "publish-packages": "changeset version && changeset publish"
+    "publish-packages": "changeset version && changeset publish",
+    "format": "oxfmt"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
-    "@kyh/prettier-config": "workspace:^",
     "dotenv-cli": "^11.0.0",
-    "prettier": "catalog:",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
     "tsx": "catalog:",
     "turbo": "^2.8.14",
     "typescript": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

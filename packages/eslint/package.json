@@ -12,25 +12,10 @@
   },
   "scripts": {
     "clean": "git clean -xdf .cache .nitro .output .turbo .vercel node_modules",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@eslint/compat": "^2.0.3",
-    "@eslint/js": "^9.39.4",
-    "@next/eslint-plugin-next": "^16.1.6",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-turbo": "^2.8.14",
-    "typescript-eslint": "^8.56.1"
-  },
   "devDependencies": {
-    "@kyh/prettier-config": "workspace:*",
     "@kyh/tsconfig": "workspace:*",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"

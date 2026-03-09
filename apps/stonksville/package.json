@@ -8,8 +8,6 @@
     "db:push": "pnpm with-env drizzle-kit push",
     "db:studio": "pnpm with-env drizzle-kit studio",
     "dev": "pnpm with-env next dev --turbopack -p 3000",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
@@ -35,16 +33,12 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "workspace:^",
-    "@kyh/prettier-config": "workspace:^",
     "@kyh/tsconfig": "workspace:^",
     "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "eslint": "catalog:",
     "postcss": "catalog:",
-    "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
   },
