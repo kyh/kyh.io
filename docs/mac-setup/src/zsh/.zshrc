@@ -82,6 +82,9 @@ c() {
 # cc: claude with skip permissions
 cc() { claude --dangerously-skip-permissions "$@"; }
 
+# ccw: claude in new workspace
+ccw() { claude --dangerously-skip-permissions --worktree "$@"; }
+
 # =============================================================================
 # Git AI Helpers
 # =============================================================================
