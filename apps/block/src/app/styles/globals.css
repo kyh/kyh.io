@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: hsl(280 20% 5%);
+  --foreground: hsl(0 0% 98%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  html,
+  body,
+  #__next {
+    height: 100%;
+  }
+}

@@ -8,6 +8,7 @@
     "db-supabase": "pnpm -F db supabase",
     "dev": "turbo watch dev --continue",
     "dev-cli": "pnpm -F kyh dev",
+    "dev-block": "pnpm -F @repo/block dev",
     "dev-covid": "pnpm -F @repo/covid-19-dashboard dev",
     "dev-kwadrants": "pnpm -F @repo/kwadrants dev",
     "dev-policingice": "pnpm -F @repo/policingice dev",
