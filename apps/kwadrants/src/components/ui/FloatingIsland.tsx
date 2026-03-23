@@ -1,3 +1,5 @@
+"use client";
+
 import type Konva from "konva";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {

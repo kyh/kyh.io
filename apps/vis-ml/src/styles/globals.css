@@ -1,3 +1,7 @@
+@import "tailwindcss";
+
+/* Original vis-ml styles below */
+
 /*
   BASE
   ========
@@ -274,7 +278,7 @@ figure {
   align-items: center;
   transition: opacity 0.23s ease;
   background: #f9fafbb5;
-  background-image: url("./arrow.svg");
+  background-image: url("/arrow.svg");
   background-repeat: no-repeat;
   background-position: 50% 25px;
 }

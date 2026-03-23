@@ -1,3 +1,5 @@
+"use client";
+
 import type { CallBackProps, Placement, Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
 import Joyride, { ACTIONS, EVENTS, STATUS } from "react-joyride";

@@ -2,12 +2,14 @@
   "extends": "@kyh/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "dom", "dom.iterable"],
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "plugins": [{ "name": "next" }],
+    "module": "esnext"
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import type Konva from "konva";
 import { forwardRef, useMemo, useState } from "react";
 import { Layer, Stage } from "react-konva";

@@ -1,3 +1,5 @@
+"use client";
+
 import { About, useAbout } from "@/components/About";
 import { Logo } from "@/components/Logo";
 

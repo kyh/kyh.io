@@ -1,11 +1,13 @@
+"use client";
+
 import React, { useMemo, useState } from "react";
 import { max } from "d3-array";
 import { nest } from "d3-collection";
 import { format } from "d3-format";
 import { geoAlbersUsa, geoPath } from "d3-geo";
 import { scaleSqrt, scaleThreshold } from "d3-scale";
-import StatesWithPopulation from "data/states.json";
-import { formatDate, formatNumber, parseDate } from "utils/formatter";
+import StatesWithPopulation from "@/data/states.json";
+import { formatDate, formatNumber, parseDate } from "@/utils/formatter";
 
 import { ChoroLegend } from "./ChoroLegend";
 

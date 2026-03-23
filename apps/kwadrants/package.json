@@ -6,15 +6,16 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "konva": "^10.2.0",
     "lucide-react": "catalog:",
     "motion": "^12.36.0",
+    "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.2.3"
@@ -27,11 +28,9 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
-    "@vitejs/plugin-react": "catalog:",
     "postcss": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
 }

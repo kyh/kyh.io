@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Listbox, RadioGroup } from "@headlessui/react";
 import { NumericFormat } from "react-number-format";

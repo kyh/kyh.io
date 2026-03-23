@@ -1,13 +1,15 @@
+"use client";
+
 import React, { useEffect, useMemo, useState } from "react";
-import { Icon } from "components/Icon";
-import { Loader } from "components/Loader";
-import { Map } from "components/Map";
-import { PageContainer } from "components/PageContainer";
-import { StatCard } from "components/StatCard";
+import { Icon } from "@/components/Icon";
+import { Loader } from "@/components/Loader";
+import { Map } from "@/components/Map";
+import { PageContainer } from "@/components/PageContainer";
+import { StatCard } from "@/components/StatCard";
 import { sum } from "d3-array";
 import { set } from "d3-collection";
-import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
-import { formatDate, formatNumber } from "utils/formatter";
+import { useGetStatesDailyData } from "@/hooks/useGetStatesDailyData";
+import { formatDate, formatNumber } from "@/utils/formatter";
 
 const US_POPULATION = 400376491;
 

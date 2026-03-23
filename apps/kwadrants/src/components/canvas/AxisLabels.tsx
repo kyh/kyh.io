@@ -1,3 +1,5 @@
+"use client";
+
 import { Text } from "react-konva";
 
 import type { LayoutConfig, MatrixBounds } from "@/lib/layouts";

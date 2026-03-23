@@ -1,3 +1,5 @@
+"use client";
+
 import type { InputActionMeta, MultiValue, OptionProps } from "react-select";
 import { useState } from "react";
 import { NumericFormat } from "react-number-format";

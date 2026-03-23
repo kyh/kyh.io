@@ -1,3 +1,5 @@
+"use client";
+
 import type { QuadrantColors } from "@/lib/types";
 import { useKwadrant } from "@/lib/KwadrantContext";
 

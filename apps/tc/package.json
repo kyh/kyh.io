@@ -6,9 +6,9 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
     "@visx/scale": "^3.12.0",
     "@visx/shape": "^3.12.0",
     "@visx/tooltip": "^3.12.0",
+    "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-joyride": "^2.9.3",
@@ -37,11 +38,9 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
-    "@vitejs/plugin-react": "catalog:",
     "postcss": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
 }

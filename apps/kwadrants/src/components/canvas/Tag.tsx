@@ -1,3 +1,5 @@
+"use client";
+
 import type Konva from "konva";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Circle, Group, Rect, Text } from "react-konva";

@@ -1,3 +1,5 @@
+"use client";
+
 import type Konva from "konva";
 import type { RefObject } from "react";
 

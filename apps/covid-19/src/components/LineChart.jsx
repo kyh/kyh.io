@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createRef, useEffect } from "react";
 import { pointer, select } from "d3";
 import { format } from "date-fns";
@@ -9,8 +11,8 @@ import {
   createLineFn,
   createScales,
   createTooltipEvents,
-} from "utils/chart-utils";
-import { formatNumber } from "utils/formatter";
+} from "@/utils/chart-utils";
+import { formatNumber } from "@/utils/formatter";
 
 import "./LineChart.css";
 

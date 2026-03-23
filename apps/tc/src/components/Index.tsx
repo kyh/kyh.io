@@ -1,3 +1,5 @@
+"use client";
+
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import { NumericFormat } from "react-number-format";
 

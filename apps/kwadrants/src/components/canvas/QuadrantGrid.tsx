@@ -1,3 +1,5 @@
+"use client";
+
 import { Circle, Line, Rect } from "react-konva";
 
 import type { MatrixBounds } from "@/lib/layouts";

@@ -1,10 +1,12 @@
-import { Card } from "components/Card";
-import { LineChart } from "components/LineChart";
-import { StatCard, StatRow } from "components/StatCard";
+"use client";
+
+import { Card } from "@/components/Card";
+import { LineChart } from "@/components/LineChart";
+import { StatCard, StatRow } from "@/components/StatCard";
 import { differenceInDays } from "date-fns";
-import { formatNumber } from "utils/formatter";
-import { stateAbbrevToFullname } from "utils/map-utils";
-import { growthRate } from "utils/stats";
+import { formatNumber } from "@/utils/formatter";
+import { stateAbbrevToFullname } from "@/utils/map-utils";
+import { growthRate } from "@/utils/stats";
 
 import { DataFilter, SELECTIONS } from "./DataFilter";
 

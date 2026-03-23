@@ -1,7 +1,9 @@
-import { Loader } from "components/Loader";
-import { Progress } from "components/Progress";
-import { formatNumber } from "utils/formatter";
-import { stateAbbrevToFullname } from "utils/map-utils";
+"use client";
+
+import { Loader } from "@/components/Loader";
+import { Progress } from "@/components/Progress";
+import { formatNumber } from "@/utils/formatter";
+import { stateAbbrevToFullname } from "@/utils/map-utils";
 
 export const Sidebar = ({
   states,

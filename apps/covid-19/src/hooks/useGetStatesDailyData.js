@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { formatDaily } from "utils/formatter";
+import { formatDaily } from "@/utils/formatter";
 
 export const useGetStatesDailyData = () => {
   const { data = [] } = useSWR(

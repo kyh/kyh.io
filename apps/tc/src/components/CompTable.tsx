@@ -1,3 +1,5 @@
+"use client";
+
 import { NumericFormat } from "react-number-format";
 
 import type { BaseDataType } from "@/lib/comp";

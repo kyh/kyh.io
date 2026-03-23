@@ -1,3 +1,5 @@
+"use client";
+
 import { AxisBottom } from "@visx/axis";
 import { localPoint } from "@visx/event";
 import { Grid } from "@visx/grid";
