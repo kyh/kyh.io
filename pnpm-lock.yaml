@@ -86,6 +86,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      liveline:
+        specifier: ^0.0.7
+        version: 0.0.7(react@19.2.4)
       lucide-react:
         specifier: 'catalog:'
         version: 0.562.0(react@19.2.4)
@@ -4898,6 +4901,12 @@ packages:
 
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
+
+  liveline@0.0.7:
+    resolution: {integrity: sha512-S1Weo1kmefiOCNaW/WFXErqJXlV8A/ldIkIthaOeT57I2ZhqhKLKQDJ1wfabtMSK9vJeU8PeMNHd8Sr8TLByWQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
 
   locate-path@5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
@@ -10423,6 +10432,10 @@ snapshots:
     optional: true
 
   lines-and-columns@1.2.4: {}
+
+  liveline@0.0.7(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   locate-path@5.0.0:
     dependencies:

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "liveline": "^0.0.7",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
