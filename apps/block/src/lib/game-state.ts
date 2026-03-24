@@ -46,8 +46,6 @@ export function createInitialState(): GameState {
   };
 }
 
-let nextId = 0;
-
 /**
  * Calculate multiplier based on distance from current price.
  * Further from current price = higher multiplier.
@@ -90,7 +88,7 @@ export function placeBlock(
   const halfHeight = BLOCK_PRICE_HEIGHT / 2;
 
   const block: Block = {
-    id: `block-${nextId++}`,
+    id: crypto.randomUUID(),
     priceLevel,
     priceTop: priceLevel + halfHeight,
     priceBottom: priceLevel - halfHeight,
@@ -163,11 +161,7 @@ export function updateBlocks(
     blocks: filteredBlocks,
     totalWins: state.totalWins + wins,
     totalLosses: state.totalLosses + losses,
-    totalProfit:
-      state.totalProfit +
-      balanceChange -
-      losses * DEFAULT_BET +
-      (balanceChange > 0 ? 0 : 0),
+    totalProfit: state.totalProfit + balanceChange,
   };
 }
 

@@ -32,12 +32,9 @@ export class PriceEngine {
   private history: PricePoint[] = [];
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private listeners: Set<(point: PricePoint) => void> = new Set();
-  private startTime: number;
-
   constructor(config: Partial<PriceEngineConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.currentPrice = this.config.startPrice;
-    this.startTime = Date.now();
   }
 
   /** Subscribe to price updates */
@@ -118,7 +115,4 @@ export class PriceEngine {
     return this.currentPrice;
   }
 
-  getStartTime(): number {
-    return this.startTime;
-  }
 }
