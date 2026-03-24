@@ -28,18 +28,13 @@ const PRICE_PAD_RATIO = 0.15;
 type OverlayDims = {
   width: number;
   height: number;
-  /** Left edge of chart area */
   left: number;
-  /** Right edge of chart area (where Liveline data ends = "now") */
   nowX: number;
-  /** Right edge of future zone */
   right: number;
   top: number;
   bottom: number;
-  /** Time range */
   timeStart: number;
   timeEnd: number;
-  /** Price range */
   priceMin: number;
   priceMax: number;
 };
@@ -76,16 +71,12 @@ function snapToGrid(
 }
 
 function computeDims(
-  container: HTMLElement,
+  width: number,
+  height: number,
   now: number,
   priceMin: number,
   priceMax: number,
 ): OverlayDims {
-  const rect = container.getBoundingClientRect();
-  const width = rect.width;
-  const height = rect.height;
-
-  // Match Liveline's internal padding (approximation)
   const padTop = 8;
   const padBottom = 28;
   const padLeft = 2;
@@ -95,9 +86,6 @@ function computeDims(
   const timePerPx = CHART_WINDOW / chartWidth;
   const futureSeconds = padRight * timePerPx;
 
-  const timeStart = now - CHART_WINDOW * 1000;
-  const timeEnd = now + futureSeconds * 1000;
-
   return {
     width,
     height,
@@ -106,8 +94,8 @@ function computeDims(
     right: width - 2,
     top: padTop,
     bottom: height - padBottom,
-    timeStart,
-    timeEnd,
+    timeStart: now - CHART_WINDOW * 1000,
+    timeEnd: now + futureSeconds * 1000,
     priceMin,
     priceMax,
   };
@@ -121,14 +109,13 @@ function drawOverlay(
   currentPrice: number,
   balance: number,
 ) {
-  const { width, height } = dims;
-  ctx.clearRect(0, 0, width, height);
+  ctx.clearRect(0, 0, dims.width, dims.height);
 
-  // --- Future zone shading ---
+  // Future zone shading
   ctx.fillStyle = "rgba(236, 72, 153, 0.04)";
   ctx.fillRect(dims.nowX, dims.top, dims.right - dims.nowX, dims.bottom - dims.top);
 
-  // --- "Now" dashed line ---
+  // "Now" dashed line
   ctx.strokeStyle = "rgba(236, 72, 153, 0.4)";
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 4]);
@@ -138,8 +125,7 @@ function drawOverlay(
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // --- Grid lines in future zone ---
-  const now = (dims.timeStart + dims.timeEnd) / 2; // approximate
+  // Grid lines in future zone
   const cellMs = GRID_CELL_SECONDS * 1000;
   const firstGridTime = Math.ceil(dims.timeStart / cellMs) * cellMs;
 
@@ -169,12 +155,12 @@ function drawOverlay(
     ctx.stroke();
   }
 
-  // --- Blocks ---
+  // Blocks
   for (const block of blocks) {
     drawBlock(ctx, dims, block);
   }
 
-  // --- Hover preview ---
+  // Hover preview
   if (hover) {
     const hPrice = yToPrice(hover.y, dims);
     const hTime = xToTime(hover.x, dims);
@@ -288,6 +274,8 @@ export function TradingChart() {
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const priceRangeRef = useRef({ min: 5192, max: 5208 });
   const animRef = useRef<number>(0);
+  const sizeRef = useRef({ width: 0, height: 0 });
+  const liveValueRef = useRef(5200);
 
   const [chartData, setChartData] = useState<LivelinePoint[]>([]);
   const [liveValue, setLiveValue] = useState(5200);
@@ -295,23 +283,40 @@ export function TradingChart() {
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
 
+  // Track container size via ResizeObserver
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        sizeRef.current = {
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        };
+      }
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   // Initialize price engine
   useEffect(() => {
     const engine = new PriceEngine();
     engineRef.current = engine;
 
     engine.subscribe((point) => {
+      liveValueRef.current = point.price;
       setLiveValue(point.price);
 
-      // Convert history to Liveline format
       const history = engine.getHistory();
       const llData: LivelinePoint[] = history.map((p) => ({
-        time: p.time / 1000, // Liveline uses unix seconds
+        time: p.time / 1000,
         value: p.price,
       }));
       setChartData(llData);
 
-      // Track visible price range for overlay coordinate mapping
       const visibleStart = Date.now() - CHART_WINDOW * 1000;
       const visible = history.filter((p) => p.time >= visibleStart);
       if (visible.length > 0) {
@@ -331,34 +336,40 @@ export function TradingChart() {
     return () => engine.stop();
   }, []);
 
-  // Overlay render loop
+  // Overlay render loop — no state deps, reads from refs only
   useEffect(() => {
     const render = () => {
       const canvas = overlayRef.current;
-      const container = containerRef.current;
-      if (!canvas || !container) {
+      const { width, height } = sizeRef.current;
+
+      if (!canvas || width === 0) {
         animRef.current = requestAnimationFrame(render);
         return;
       }
 
       const dpr = window.devicePixelRatio || 1;
-      const rect = container.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      const needsResize =
+        canvas.width !== Math.round(width * dpr) ||
+        canvas.height !== Math.round(height * dpr);
+
+      if (needsResize) {
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+      }
+
       const ctx = canvas.getContext("2d")!;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const now = Date.now();
-      const price = engineRef.current?.getCurrentPrice() ?? liveValue;
+      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
       const { min, max } = priceRangeRef.current;
 
-      // Update game state
       stateRef.current = updateBlocks(stateRef.current, price, now);
       setBalance(stateRef.current.balance);
       setWins(stateRef.current.totalWins);
       setLosses(stateRef.current.totalLosses);
 
-      const dims = computeDims(container, now, min, max);
+      const dims = computeDims(width, height, now, min, max);
 
       drawOverlay(
         ctx,
@@ -374,7 +385,14 @@ export function TradingChart() {
 
     animRef.current = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animRef.current);
-  }, [liveValue]);
+  }, []);
+
+  const getClickDims = useCallback(() => {
+    const { width, height } = sizeRef.current;
+    const now = Date.now();
+    const { min, max } = priceRangeRef.current;
+    return computeDims(width, height, now, min, max);
+  }, []);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -383,23 +401,13 @@ export function TradingChart() {
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const now = Date.now();
-      const { min, max } = priceRangeRef.current;
-      const dims = computeDims(container, now, min, max);
-      const price = engineRef.current?.getCurrentPrice() ?? liveValue;
+      const dims = getClickDims();
+      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
 
-      const clickPrice = yToPrice(y, dims);
-      const clickTime = xToTime(x, dims);
-      const snapped = snapToGrid(clickPrice, clickTime);
-
-      stateRef.current = placeBlock(
-        stateRef.current,
-        price,
-        snapped.price,
-        snapped.time,
-      );
+      const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
+      stateRef.current = placeBlock(stateRef.current, price, snapped.price, snapped.time);
     },
-    [liveValue],
+    [getClickDims],
   );
 
   const handleMouseMove = useCallback(
@@ -429,36 +437,36 @@ export function TradingChart() {
 
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
-      const now = Date.now();
-      const { min, max } = priceRangeRef.current;
-      const dims = computeDims(container, now, min, max);
-      const price = engineRef.current?.getCurrentPrice() ?? liveValue;
+      const dims = getClickDims();
+      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
 
-      const clickPrice = yToPrice(y, dims);
-      const clickTime = xToTime(x, dims);
-      const snapped = snapToGrid(clickPrice, clickTime);
-
-      stateRef.current = placeBlock(
-        stateRef.current,
-        price,
-        snapped.price,
-        snapped.time,
-      );
+      const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
+      stateRef.current = placeBlock(stateRef.current, price, snapped.price, snapped.time);
     },
-    [liveValue],
+    [getClickDims],
   );
 
-  // Compute right padding for Liveline to leave space for future zone
+  const handleReset = useCallback(() => {
+    stateRef.current = createInitialState();
+  }, []);
+
+  // Compute right padding for Liveline's future zone
   const [rightPad, setRightPad] = useState(200);
   useEffect(() => {
     const update = () => {
-      const el = containerRef.current;
-      if (el) setRightPad(Math.round(el.getBoundingClientRect().width * FUTURE_RATIO));
+      setRightPad(Math.round(sizeRef.current.width * FUTURE_RATIO) || 200);
     };
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
     update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    return () => observer.disconnect();
   }, []);
+
+  const isBusted = balance < DEFAULT_BET && stateRef.current.blocks.length === 0;
 
   return (
     <div className="flex h-full flex-col">
@@ -482,7 +490,6 @@ export function TradingChart() {
 
       {/* Chart */}
       <div ref={containerRef} className="relative flex-1 min-h-0">
-        {/* Liveline background chart */}
         <div className="absolute inset-0">
           <Liveline
             data={chartData}
@@ -503,7 +510,6 @@ export function TradingChart() {
           />
         </div>
 
-        {/* Overlay canvas for blocks, grid, interactions */}
         <canvas
           ref={overlayRef}
           className="absolute inset-0 z-10 h-full w-full cursor-crosshair"
@@ -512,6 +518,21 @@ export function TradingChart() {
           onMouseLeave={handleMouseLeave}
           onTouchStart={handleTouchStart}
         />
+
+        {/* Reset overlay */}
+        {isBusted && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+            <div className="text-center">
+              <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
+              <button
+                onClick={handleReset}
+                className="rounded bg-pink-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-pink-400"
+              >
+                Play Again ($1,000)
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

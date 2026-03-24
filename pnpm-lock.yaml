@@ -89,9 +89,6 @@ importers:
       liveline:
         specifier: ^0.0.7
         version: 0.0.7(react@19.2.4)
-      lucide-react:
-        specifier: 'catalog:'
-        version: 0.562.0(react@19.2.4)
       next:
         specifier: 'catalog:'
         version: 16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
