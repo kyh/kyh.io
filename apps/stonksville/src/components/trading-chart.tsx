@@ -96,11 +96,12 @@ function computeDims(
   now: number,
   priceMin: number,
   priceMax: number,
+  futureRatio: number,
 ): OverlayDims {
   const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
-  const padRight = width * getFutureRatio();
+  const padRight = width * futureRatio;
 
   const chartWidth = width - padLeft - padRight;
   const timePerPx = CHART_WINDOW / chartWidth;
@@ -444,7 +445,7 @@ export function TradingChart() {
         setBlockCount(next.blocks.length);
       }
 
-      const dims = computeDims(width, height, now, min, max);
+      const dims = computeDims(width, height, now, min, max, getFutureRatio());
 
       const hover = hoverRef.current;
       drawOverlay(
@@ -479,6 +480,7 @@ export function TradingChart() {
         Date.now(),
         center - PRICE_RANGE_HALF,
         center + PRICE_RANGE_HALF,
+        getFutureRatio(),
       );
 
       for (const b of next.blocks) {
@@ -519,7 +521,7 @@ export function TradingChart() {
     const { width, height } = sizeRef.current;
     const now = Date.now();
     const center = rangeCenterRef.current;
-    return computeDims(width, height, now, center - PRICE_RANGE_HALF, center + PRICE_RANGE_HALF);
+    return computeDims(width, height, now, center - PRICE_RANGE_HALF, center + PRICE_RANGE_HALF, getFutureRatio());
   }, []);
 
   const tryPlaceAt = useCallback(
@@ -546,6 +548,8 @@ export function TradingChart() {
     [getClickDims],
   );
 
+  // setPointerCapture retargets subsequent events to this element;
+  // offsetX/offsetY remain relative to the capture target's padding box.
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
       e.currentTarget.setPointerCapture(e.pointerId);
