@@ -1,11 +1,12 @@
-import { LandscapeLock } from "@/components/landscape-lock";
+import { LandscapeShell } from "@/components/landscape-lock";
 import { TradingChart } from "@/components/trading-chart";
 
 const Page = () => {
   return (
     <main className="h-dvh w-full overflow-hidden">
-      <LandscapeLock />
-      <TradingChart />
+      <LandscapeShell>
+        <TradingChart />
+      </LandscapeShell>
     </main>
   );
 };
