@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { LivelinePoint } from "liveline";
-import { Liveline } from "liveline";
+import type { LivelinePoint } from "@/lib/liveline/types";
+import { Liveline } from "@/lib/liveline/Liveline";
 
 import { textBalloons } from "balloons-js";
 
@@ -25,8 +25,10 @@ import {
 const CHART_WINDOW = 60;
 /** Future zone as fraction of total width */
 const FUTURE_RATIO = 0.35;
-/** Price padding above/below data range */
-const PRICE_PAD_RATIO = 0.15;
+/** Half a grid cell in ms */
+const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
+/** Fixed price range (half above + half below current price) */
+const PRICE_RANGE_HALF = 200;
 
 type OverlayDims = {
   width: number;
@@ -142,7 +144,6 @@ function drawOverlay(
   }
 
   // Horizontal grid — offset by half so lines sit at block edges
-  // Extend beyond priceMin/priceMax so lines cover the full canvas height
   const halfPH = BLOCK_PRICE_HEIGHT / 2;
   const pxPerPrice = (dims.bottom - dims.top) / (dims.priceMax - dims.priceMin);
   const extraPrice = pxPerPrice > 0 ? (dims.height - dims.bottom) / pxPerPrice : 0;
@@ -180,7 +181,7 @@ function drawOverlay(
     const isValid = isInFuture && hasBalance;
 
     const halfH = BLOCK_PRICE_HEIGHT / 2;
-    const halfW = (GRID_CELL_SECONDS * 1000) / 2;
+    const halfW = HALF_CELL_MS;
 
     const x1 = timeToX(snapped.time - halfW, dims);
     const x2 = timeToX(snapped.time + halfW, dims);
@@ -219,12 +220,11 @@ function drawBlock(
   dims: OverlayDims,
   block: Block,
 ) {
-  const halfW = (GRID_CELL_SECONDS * 1000) / 2;
-
-  const x1 = timeToX(block.targetTime - halfW, dims);
-  const x2 = timeToX(block.targetTime + halfW, dims);
-  const y1 = priceToY(block.priceTop, dims);
-  const y2 = priceToY(block.priceBottom, dims);
+  const halfH = BLOCK_PRICE_HEIGHT / 2;
+  const x1 = timeToX(block.targetTime - HALF_CELL_MS, dims);
+  const x2 = timeToX(block.targetTime + HALF_CELL_MS, dims);
+  const y1 = priceToY(block.priceLevel + halfH, dims);
+  const y2 = priceToY(block.priceLevel - halfH, dims);
   const w = x2 - x1;
   const h = y2 - y1;
 
@@ -291,7 +291,8 @@ export function TradingChart() {
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef(false);
   const lastPlacedCellRef = useRef<string | null>(null);
-  const priceRangeRef = useRef({ min: 5185, max: 5215 });
+  const rangeCenterRef = useRef(5200);
+  const targetCenterRef = useRef(5200);
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ width: 0, height: 0 });
   const liveValueRef = useRef(5200);
@@ -304,8 +305,9 @@ export function TradingChart() {
   const [losses, setLosses] = useState(0);
   const [blockCount, setBlockCount] = useState(0);
   const [rightPad, setRightPad] = useState(200);
+  const [priceRange, setPriceRange] = useState({ min: 5000, max: 5400 });
 
-  // Single ResizeObserver for both sizeRef and rightPad
+  // ResizeObserver for sizeRef and rightPad
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -331,6 +333,10 @@ export function TradingChart() {
       liveValueRef.current = point.price;
       setLiveValue(point.price);
 
+      // Set target center snapped to grid — render loop lerps toward it
+      targetCenterRef.current =
+        Math.round(point.price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
+
       const history = engine.getHistoryRaw();
       const llData: LivelinePoint[] = [];
       for (let i = 0; i < history.length; i++) {
@@ -338,21 +344,6 @@ export function TradingChart() {
         llData.push({ time: p.time / 1000, value: p.price });
       }
       setChartData(llData);
-
-      const visibleStart = Date.now() - CHART_WINDOW * 1000;
-      let min = Infinity,
-        max = -Infinity;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const p = history[i]!;
-        if (p.time < visibleStart) break;
-        if (p.price < min) min = p.price;
-        if (p.price > max) max = p.price;
-      }
-      if (min !== Infinity) {
-        const range = max - min || 1;
-        const pad = range * PRICE_PAD_RATIO;
-        priceRangeRef.current = { min: min - pad, max: max + pad };
-      }
     });
 
     engine.start();
@@ -379,15 +370,35 @@ export function TradingChart() {
         canvas.height = targetH;
       }
 
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        animRef.current = requestAnimationFrame(render);
+        return;
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const now = Date.now();
       const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
-      const { min, max } = priceRangeRef.current;
+
+      // Lerp range center toward target for smooth grid movement
+      const lerpSpeed = 0.04;
+      const current = rangeCenterRef.current;
+      const target = targetCenterRef.current;
+      const diff = target - current;
+      if (Math.abs(diff) > 0.01) {
+        rangeCenterRef.current = current + diff * lerpSpeed;
+      } else {
+        rangeCenterRef.current = target;
+      }
+      const min = rangeCenterRef.current - PRICE_RANGE_HALF;
+      const max = rangeCenterRef.current + PRICE_RANGE_HALF;
+      setPriceRange((prev) =>
+        prev.min === min && prev.max === max ? prev : { min, max },
+      );
 
       const prev = stateRef.current;
-      stateRef.current = updateBlocks(prev, price, now);
+      const history = engineRef.current?.getHistoryRaw();
+      stateRef.current = updateBlocks(prev, price, now, history);
       const next = stateRef.current;
 
       // Only push to React state when values changed
@@ -412,10 +423,11 @@ export function TradingChart() {
       const dims = computeDims(width, height, now, min, max);
 
       // Fire balloons + emoji confetti when a block gets touched
+      const prevById = new Map(prev.blocks.map((b) => [b.id, b]));
       const container = containerRef.current;
-      for (let i = 0; i < next.blocks.length; i++) {
-        const b = next.blocks[i]!;
-        if (b.touched && !prev.blocks[i]?.touched) {
+      const rect = container?.getBoundingClientRect();
+      for (const b of next.blocks) {
+        if (b.touched && !prevById.get(b.id)?.touched) {
           const count = 3 + Math.floor(Math.random() * 5);
           textBalloons([
             {
@@ -424,8 +436,7 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
-          if (container) {
-            const rect = container.getBoundingClientRect();
+          if (rect) {
             const bx = rect.left + timeToX(b.targetTime, dims);
             const by = rect.top + priceToY(b.priceLevel, dims);
             fireConfetti(bx, by, {
@@ -460,8 +471,8 @@ export function TradingChart() {
   const getClickDims = useCallback(() => {
     const { width, height } = sizeRef.current;
     const now = Date.now();
-    const { min, max } = priceRangeRef.current;
-    return computeDims(width, height, now, min, max);
+    const center = rangeCenterRef.current;
+    return computeDims(width, height, now, center - PRICE_RANGE_HALF, center + PRICE_RANGE_HALF);
   }, []);
 
   const tryPlaceAt = useCallback(
@@ -489,7 +500,7 @@ export function TradingChart() {
   );
 
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       const container = containerRef.current;
       if (!container) return;
       draggingRef.current = true;
@@ -501,7 +512,7 @@ export function TradingChart() {
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       const container = containerRef.current;
       if (!container) return;
       const rect = container.getBoundingClientRect();
@@ -527,7 +538,7 @@ export function TradingChart() {
   }, []);
 
   const handleTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLCanvasElement>) => {
+    (e: React.TouchEvent<HTMLElement>) => {
       const container = containerRef.current;
       if (!container) return;
       const touch = e.touches[0];
@@ -541,7 +552,7 @@ export function TradingChart() {
   );
 
   const handleTouchMove = useCallback(
-    (e: React.TouchEvent<HTMLCanvasElement>) => {
+    (e: React.TouchEvent<HTMLElement>) => {
       const container = containerRef.current;
       if (!container) return;
       const touch = e.touches[0];
@@ -574,9 +585,18 @@ export function TradingChart() {
 
   const isBusted = balance < DEFAULT_BET && blockCount === 0;
 
+  const { min: rangeMin, max: rangeMax } = priceRange;
+
   return (
     <div ref={containerRef} className="relative h-full w-full">
-      <div className="absolute inset-0">
+      {/* Grid + blocks canvas (behind chart line) */}
+      <canvas
+        ref={overlayRef}
+        className="absolute inset-0 h-full w-full"
+      />
+
+      {/* Chart line */}
+      <div className="absolute inset-0 z-10">
         <Liveline
           data={chartData}
           value={liveValue}
@@ -591,14 +611,16 @@ export function TradingChart() {
           momentum={true}
           pulse={true}
           lineWidth={2}
+          minValue={rangeMin}
+          maxValue={rangeMax}
           formatValue={(v: number) => v.toFixed(2)}
           padding={{ top: 0, right: rightPad, bottom: 28, left: 2 }}
         />
       </div>
 
-      <canvas
-        ref={overlayRef}
-        className="absolute inset-0 z-10 h-full w-full cursor-crosshair"
+      {/* Click capture (on top) */}
+      <div
+        className="absolute inset-0 z-20 cursor-crosshair"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

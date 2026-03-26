@@ -4,9 +4,6 @@ export type Block = {
   id: string;
   /** Price level (center of block) */
   priceLevel: number;
-  /** Price range the block covers */
-  priceTop: number;
-  priceBottom: number;
   /** Time column this block targets */
   targetTime: number;
   /** Bet amount in dollars */
@@ -95,13 +92,10 @@ export function placeBlock(
   if (occupied) return state;
 
   const multiplier = calculateMultiplier(currentPrice, priceLevel);
-  const halfHeight = BLOCK_PRICE_HEIGHT / 2;
 
   const block: Block = {
     id: crypto.randomUUID(),
     priceLevel,
-    priceTop: priceLevel + halfHeight,
-    priceBottom: priceLevel - halfHeight,
     targetTime,
     amount: DEFAULT_BET,
     multiplier,
@@ -119,12 +113,13 @@ export function placeBlock(
 }
 
 /**
- * Update block statuses based on current time and price.
+ * Update block statuses based on current time and price history.
  */
 export function updateBlocks(
   state: GameState,
   currentPrice: number,
   currentTime: number,
+  priceHistory?: readonly { time: number; price: number }[],
 ): GameState {
   if (state.blocks.length === 0) return state;
 
@@ -134,17 +129,29 @@ export function updateBlocks(
   let changed = false;
 
   const halfColumnMs = (GRID_CELL_SECONDS * 1000) / 2;
+  const halfH = BLOCK_PRICE_HEIGHT / 2;
 
   const updatedBlocks = state.blocks.map((block) => {
     if (block.status === "won" || block.status === "lost") return block;
 
-    // Check if price is inside block during its time window
-    const inTimeWindow =
-      currentTime >= block.targetTime - halfColumnMs &&
-      currentTime <= block.targetTime + halfColumnMs;
-    const inPriceRange =
-      currentPrice >= block.priceBottom && currentPrice <= block.priceTop;
-    const nowTouched = block.touched || (inTimeWindow && inPriceRange);
+    const priceTop = block.priceLevel + halfH;
+    const priceBottom = block.priceLevel - halfH;
+
+    // Check if any price point crossed through the block during its time window
+    let nowTouched = block.touched;
+    if (!nowTouched && priceHistory) {
+      const windowStart = block.targetTime - halfColumnMs;
+      const windowEnd = block.targetTime + halfColumnMs;
+      for (let i = priceHistory.length - 1; i >= 0; i--) {
+        const p = priceHistory[i]!;
+        if (p.time < windowStart) break;
+        if (p.time > windowEnd) continue;
+        if (p.price >= priceBottom && p.price <= priceTop) {
+          nowTouched = true;
+          break;
+        }
+      }
+    }
 
     // Lock blocks that are close to resolution
     if (

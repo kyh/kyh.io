@@ -16,9 +16,9 @@ export type PriceEngineConfig = {
 
 const DEFAULT_CONFIG: PriceEngineConfig = {
   startPrice: 5200,
-  volatility: 0.008,
-  drift: 0.001,
-  tickInterval: 200,
+  volatility: 0.004,
+  drift: 0.0005,
+  tickInterval: 100,
 };
 
 /**
@@ -49,7 +49,7 @@ export class PriceEngine {
 
     // Generate initial history (60 seconds of data)
     const now = Date.now();
-    const historyPoints = 300; // 60s / 200ms
+    const historyPoints = 600; // 60s / 100ms
     for (let i = historyPoints; i > 0; i--) {
       const time = now - i * this.config.tickInterval;
       this.tick(time, false);
@@ -105,10 +105,6 @@ export class PriceEngine {
     while (u === 0) u = Math.random();
     while (v === 0) v = Math.random();
     return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  }
-
-  getHistory(): PricePoint[] {
-    return [...this.history];
   }
 
   /** Returns the internal array directly — do not mutate. */
