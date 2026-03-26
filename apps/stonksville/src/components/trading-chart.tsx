@@ -74,30 +74,6 @@ function yToPrice(y: number, dims: OverlayDims): number {
   return dims.priceMax + frac * (dims.priceMin - dims.priceMax);
 }
 
-/** Convert element-local coordinates to screen coordinates, accounting for CSS transforms. */
-function localToScreen(
-  el: HTMLElement,
-  lx: number,
-  ly: number,
-): { x: number; y: number } {
-  const rect = el.getBoundingClientRect();
-  const computed = getComputedStyle(document.body).transform;
-
-  // Detect the 90deg CW landscape rotation hack via the resolved matrix.
-  // rotate(90deg) computes to matrix(0, 1, -1, 0, ...).
-  if (computed && /matrix\(0,\s*1/.test(computed)) {
-    // Local x maps to screen y, local y maps to inverted screen x.
-    const ow = el.offsetWidth;
-    const oh = el.offsetHeight;
-    return {
-      x: rect.right - (ly / oh) * rect.width,
-      y: rect.top + (lx / ow) * rect.height,
-    };
-  }
-
-  return { x: rect.left + lx, y: rect.top + ly };
-}
-
 function snapToGrid(
   price: number,
   time: number,
@@ -481,23 +457,6 @@ export function TradingChart() {
 
   // Track previous block states for touch detection (balloon/confetti effects)
   const prevBlocksRef = useRef<Block[]>([]);
-
-  // textBalloons appends to document.body which is rotated on mobile;
-  // observe and move new <text-balloons> elements to <html> so position:fixed works
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        for (const node of m.addedNodes) {
-          if (node instanceof HTMLElement && node.tagName === "TEXT-BALLOONS") {
-            document.documentElement.appendChild(node);
-          }
-        }
-      }
-    });
-    observer.observe(document.body, { childList: true });
-    return () => observer.disconnect();
-  }, []);
-
   useEffect(() => {
     const interval = setInterval(() => {
       const next = stateRef.current;
@@ -506,6 +465,7 @@ export function TradingChart() {
 
       const prevById = new Map(prev.map((b) => [b.id, b]));
       const container = containerRef.current;
+      const rect = container?.getBoundingClientRect();
       const { width, height } = sizeRef.current;
       const center = rangeCenterRef.current;
       const dims = computeDims(
@@ -526,11 +486,10 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
-          if (container) {
-            const localX = timeToX(b.targetTime, dims);
-            const localY = priceToY(b.priceLevel, dims);
-            const screen = localToScreen(container, localX, localY);
-            fireConfetti(screen.x, screen.y, {
+          if (rect) {
+            const bx = rect.left + timeToX(b.targetTime, dims);
+            const by = rect.top + priceToY(b.priceLevel, dims);
+            fireConfetti(bx, by, {
               particleCount: 12,
               startVelocity: 8,
               spread: 360,
@@ -568,10 +527,10 @@ export function TradingChart() {
       if (stateRef.current !== prev) {
         const container = containerRef.current;
         if (container) {
-          const localX = timeToX(snapped.time, dims);
-          const localY = priceToY(snapped.price, dims);
-          const screen = localToScreen(container, localX, localY);
-          fireConfetti(screen.x, screen.y, { particleCount: 20, size: 0.6 });
+          const rect = container.getBoundingClientRect();
+          const screenX = rect.left + timeToX(snapped.time, dims);
+          const screenY = rect.top + priceToY(snapped.price, dims);
+          fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
         }
       }
     },

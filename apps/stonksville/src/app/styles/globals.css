@@ -25,17 +25,3 @@
     height: 100%;
   }
 }
-
-/* Force landscape orientation on mobile portrait screens */
-@media (max-width: 768px) and (orientation: portrait) {
-  body {
-    width: 100dvh;
-    height: 100dvw;
-    overflow: hidden;
-    transform: rotate(90deg);
-    transform-origin: top left;
-    position: absolute;
-    top: 0;
-    left: 100dvw;
-  }
-}
