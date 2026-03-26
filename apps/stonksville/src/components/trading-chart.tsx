@@ -83,18 +83,19 @@ function localToScreen(
   const rect = el.getBoundingClientRect();
   const bodyTransform = getComputedStyle(document.body).transform;
 
-  if (!bodyTransform || bodyTransform === "none") {
-    return { x: rect.left + lx, y: rect.top + ly };
+  // Only apply rotation mapping for the 90deg landscape hack.
+  // Any other transform (or none) falls through to the simple offset path.
+  if (bodyTransform && /rotate\(90deg\)/.test(document.body.style.transform)) {
+    // Local x maps to screen y, local y maps to inverted screen x.
+    const ow = el.offsetWidth;
+    const oh = el.offsetHeight;
+    return {
+      x: rect.right - (ly / oh) * rect.width,
+      y: rect.top + (lx / ow) * rect.height,
+    };
   }
 
-  // Body has the rotate(90deg) landscape hack.
-  // Local x maps to screen y, local y maps to inverted screen x.
-  const ow = el.offsetWidth;
-  const oh = el.offsetHeight;
-  return {
-    x: rect.right - (ly / oh) * rect.width,
-    y: rect.top + (lx / ow) * rect.height,
-  };
+  return { x: rect.left + lx, y: rect.top + ly };
 }
 
 function snapToGrid(
@@ -480,6 +481,23 @@ export function TradingChart() {
 
   // Track previous block states for touch detection (balloon/confetti effects)
   const prevBlocksRef = useRef<Block[]>([]);
+
+  // textBalloons appends to document.body which is rotated on mobile;
+  // observe and move new <text-balloons> elements to <html> so position:fixed works
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node instanceof HTMLElement && node.tagName === "TEXT-BALLOONS") {
+            document.documentElement.appendChild(node);
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       const next = stateRef.current;
@@ -508,12 +526,6 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
-          // textBalloons appends to document.body which is rotated on mobile;
-          // move the container to <html> so position:fixed works correctly
-          const balloonEl = document.body.querySelector("text-balloons");
-          if (balloonEl) {
-            document.documentElement.appendChild(balloonEl);
-          }
           if (container) {
             const localX = timeToX(b.targetTime, dims);
             const localY = priceToY(b.priceLevel, dims);
@@ -588,11 +600,14 @@ export function TradingChart() {
     [tryPlaceAt],
   );
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    draggingRef.current = false;
-    lastPlacedCellRef.current = null;
-  }, []);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      draggingRef.current = false;
+      lastPlacedCellRef.current = null;
+    },
+    [],
+  );
 
   const resetPointerState = useCallback(() => {
     hoverRef.current = null;
@@ -600,10 +615,13 @@ export function TradingChart() {
     lastPlacedCellRef.current = null;
   }, []);
 
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    resetPointerState();
-  }, [resetPointerState]);
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      resetPointerState();
+    },
+    [resetPointerState],
+  );
 
   const handleReset = useCallback(() => {
     stateRef.current = createInitialState();
