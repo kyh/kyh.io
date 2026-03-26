@@ -80,12 +80,21 @@ function localToScreen(
   lx: number,
   ly: number,
 ): { x: number; y: number } {
-  const temp = document.createElement("div");
-  temp.style.cssText = `position:absolute;left:${lx}px;top:${ly}px;width:0;height:0;pointer-events:none;visibility:hidden`;
-  el.appendChild(temp);
-  const r = temp.getBoundingClientRect();
-  el.removeChild(temp);
-  return { x: r.left, y: r.top };
+  const rect = el.getBoundingClientRect();
+  const bodyTransform = getComputedStyle(document.body).transform;
+
+  if (!bodyTransform || bodyTransform === "none") {
+    return { x: rect.left + lx, y: rect.top + ly };
+  }
+
+  // Body has the rotate(90deg) landscape hack.
+  // Local x maps to screen y, local y maps to inverted screen x.
+  const ow = el.offsetWidth;
+  const oh = el.offsetHeight;
+  return {
+    x: rect.right - (ly / oh) * rect.width,
+    y: rect.top + (lx / ow) * rect.height,
+  };
 }
 
 function snapToGrid(
@@ -585,18 +594,16 @@ export function TradingChart() {
     lastPlacedCellRef.current = null;
   }, []);
 
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
+  const resetPointerState = useCallback(() => {
     hoverRef.current = null;
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
   }, []);
 
-  const handlePointerLeave = useCallback(() => {
-    hoverRef.current = null;
-    draggingRef.current = false;
-    lastPlacedCellRef.current = null;
-  }, []);
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    resetPointerState();
+  }, [resetPointerState]);
 
   const handleReset = useCallback(() => {
     stateRef.current = createInitialState();
@@ -655,7 +662,7 @@ export function TradingChart() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        onPointerLeave={handlePointerLeave}
+        onPointerLeave={resetPointerState}
       />
 
       {/* HUD */}
