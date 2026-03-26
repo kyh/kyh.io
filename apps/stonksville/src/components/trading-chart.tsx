@@ -77,7 +77,7 @@ function computeDims(
   priceMin: number,
   priceMax: number,
 ): OverlayDims {
-  const padTop = 8;
+  const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
   const padRight = width * FUTURE_RATIO;
@@ -112,12 +112,12 @@ function drawOverlay(
   ctx.clearRect(0, 0, dims.width, dims.height);
 
   // "Now" dashed line
-  ctx.strokeStyle = "rgba(236, 72, 153, 0.4)";
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.4)";
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
   ctx.moveTo(dims.nowX, dims.top);
-  ctx.lineTo(dims.nowX, dims.bottom);
+  ctx.lineTo(dims.nowX, dims.height);
   ctx.stroke();
   ctx.setLineDash([]);
 
@@ -127,28 +127,33 @@ function drawOverlay(
   const firstGridTime =
     Math.ceil((dims.timeStart - halfCellMs) / cellMs) * cellMs + halfCellMs;
 
-  ctx.strokeStyle = "rgba(236, 72, 153, 0.2)";
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
   ctx.lineWidth = 1;
   for (let t = firstGridTime; t <= dims.timeEnd; t += cellMs) {
     const x = timeToX(t, dims);
     if (x < dims.nowX - 2 || x > dims.right) continue;
     ctx.beginPath();
     ctx.moveTo(x, dims.top);
-    ctx.lineTo(x, dims.bottom);
+    ctx.lineTo(x, dims.height);
     ctx.stroke();
   }
 
   // Horizontal grid — offset by half so lines sit at block edges
+  // Extend beyond priceMin/priceMax so lines cover the full canvas height
   const halfPH = BLOCK_PRICE_HEIGHT / 2;
+  const pxPerPrice = (dims.bottom - dims.top) / (dims.priceMax - dims.priceMin);
+  const extraPrice = pxPerPrice > 0 ? (dims.height - dims.bottom) / pxPerPrice : 0;
+  const gridPriceMin = dims.priceMin - extraPrice;
+
   const firstGridPrice =
-    Math.ceil((dims.priceMin - halfPH) / BLOCK_PRICE_HEIGHT) *
+    Math.ceil((gridPriceMin - halfPH) / BLOCK_PRICE_HEIGHT) *
       BLOCK_PRICE_HEIGHT +
     halfPH;
 
-  ctx.strokeStyle = "rgba(236, 72, 153, 0.2)";
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
   for (let p = firstGridPrice; p <= dims.priceMax; p += BLOCK_PRICE_HEIGHT) {
     const y = priceToY(p, dims);
-    if (y < dims.top || y > dims.bottom) continue;
+    if (y < dims.top || y > dims.height) continue;
     const startX = Math.max(dims.nowX - 2, dims.left);
     ctx.beginPath();
     ctx.moveTo(startX, y);
@@ -268,6 +273,8 @@ export function TradingChart() {
   const engineRef = useRef<PriceEngine | null>(null);
   const stateRef = useRef(createInitialState());
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
+  const draggingRef = useRef(false);
+  const lastPlacedCellRef = useRef<string | null>(null);
   const priceRangeRef = useRef({ min: 5185, max: 5215 });
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ width: 0, height: 0 });
@@ -411,20 +418,29 @@ export function TradingChart() {
     return computeDims(width, height, now, min, max);
   }, []);
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+  const tryPlaceAt = useCallback(
+    (x: number, y: number) => {
       const dims = getClickDims();
       const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
-
       const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
+      const cellKey = `${snapped.price}:${snapped.time}`;
+      if (cellKey === lastPlacedCellRef.current) return;
+      lastPlacedCellRef.current = cellKey;
       stateRef.current = placeBlock(stateRef.current, price, snapped.price, snapped.time);
     },
     [getClickDims],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const container = containerRef.current;
+      if (!container) return;
+      draggingRef.current = true;
+      lastPlacedCellRef.current = null;
+      const rect = container.getBoundingClientRect();
+      tryPlaceAt(e.clientX - rect.left, e.clientY - rect.top);
+    },
+    [tryPlaceAt],
   );
 
   const handleMouseMove = useCallback(
@@ -432,36 +448,63 @@ export function TradingChart() {
       const container = containerRef.current;
       if (!container) return;
       const rect = container.getBoundingClientRect();
-      hoverRef.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      hoverRef.current = { x, y };
+      if (draggingRef.current) {
+        tryPlaceAt(x, y);
+      }
     },
-    [],
+    [tryPlaceAt],
   );
+
+  const handleMouseUp = useCallback(() => {
+    draggingRef.current = false;
+    lastPlacedCellRef.current = null;
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     hoverRef.current = null;
+    draggingRef.current = false;
+    lastPlacedCellRef.current = null;
   }, []);
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent<HTMLCanvasElement>) => {
       const container = containerRef.current;
       if (!container) return;
-      const rect = container.getBoundingClientRect();
       const touch = e.touches[0];
       if (!touch) return;
+      draggingRef.current = true;
+      lastPlacedCellRef.current = null;
+      const rect = container.getBoundingClientRect();
+      tryPlaceAt(touch.clientX - rect.left, touch.clientY - rect.top);
+    },
+    [tryPlaceAt],
+  );
 
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const rect = container.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
-      const dims = getClickDims();
-      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
-
-      const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
-      stateRef.current = placeBlock(stateRef.current, price, snapped.price, snapped.time);
+      hoverRef.current = { x, y };
+      if (draggingRef.current) {
+        tryPlaceAt(x, y);
+      }
     },
-    [getClickDims],
+    [tryPlaceAt],
   );
+
+  const handleTouchEnd = useCallback(() => {
+    hoverRef.current = null;
+    draggingRef.current = false;
+    lastPlacedCellRef.current = null;
+  }, []);
 
   const handleReset = useCallback(() => {
     stateRef.current = createInitialState();
@@ -475,85 +518,60 @@ export function TradingChart() {
   const isBusted = balance < DEFAULT_BET && blockCount === 0;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-pink-400">
-            stonksville
-          </h1>
-          <p className="text-xs text-white/40">S&P 500 SIM</p>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="text-right">
-            <div className="text-xs text-white/40">PRICE</div>
-            <div className="font-mono font-bold tabular-nums">
-              {liveValue.toFixed(2)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div ref={containerRef} className="relative flex-1 min-h-0">
-        <div className="absolute inset-0">
-          <Liveline
-            data={chartData}
-            value={liveValue}
-            window={CHART_WINDOW}
-            theme="dark"
-            color="#ec4899"
-            grid={true}
-            badge={false}
-            scrub={false}
-            showValue={false}
-            fill={true}
-            momentum={true}
-            pulse={true}
-            lineWidth={2}
-            formatValue={(v: number) => v.toFixed(2)}
-            padding={{ top: 8, right: rightPad, bottom: 28, left: 2 }}
-          />
-        </div>
-
-        <canvas
-          ref={overlayRef}
-          className="absolute inset-0 z-10 h-full w-full cursor-crosshair"
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
+    <div ref={containerRef} className="relative h-full w-full">
+      <div className="absolute inset-0">
+        <Liveline
+          data={chartData}
+          value={liveValue}
+          window={CHART_WINDOW}
+          theme="dark"
+          color="#34d399"
+          grid={true}
+          badge={false}
+          scrub={false}
+          showValue={false}
+          fill={true}
+          momentum={true}
+          pulse={true}
+          lineWidth={2}
+          formatValue={(v: number) => v.toFixed(2)}
+          padding={{ top: 0, right: rightPad, bottom: 28, left: 2 }}
         />
-
-        {isBusted && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
-            <div className="text-center">
-              <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
-              <button
-                onClick={handleReset}
-                className="rounded bg-pink-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-pink-400"
-              >
-                Play Again ($1,000)
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-pink-500/20 px-4 py-3">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_6px_rgba(250,240,50,0.6)]" />
-          <span className="text-xs text-white/40">${DEFAULT_BET}/block</span>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-xs text-green-400">{wins}W</span>
-          <span className="text-xs text-red-400">{losses}L</span>
-          <div className="font-mono font-bold text-lg tabular-nums">
-            ${balance.toFixed(2)}
+      <canvas
+        ref={overlayRef}
+        className="absolute inset-0 z-10 h-full w-full cursor-crosshair"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      />
+
+      {/* HUD */}
+      <div className="pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-3 font-mono text-sm">
+        <span className="text-emerald-400/60">{liveValue.toFixed(2)}</span>
+        <span className="text-emerald-300/50">{wins}W</span>
+        <span className="text-red-400/50">{losses}L</span>
+        <span className="font-bold tabular-nums">${balance.toFixed(0)}</span>
+      </div>
+
+      {isBusted && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+          <div className="text-center">
+            <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
+            <button
+              onClick={handleReset}
+              className="pointer-events-auto rounded bg-emerald-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-400"
+            >
+              Play Again ($1,000)
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -87,6 +87,10 @@ export function placeBlock(
   // Validate
   if (state.balance < DEFAULT_BET) return state;
   if (targetTime - now < MIN_FUTURE_SECONDS * 1000) return state;
+  const occupied = state.blocks.some(
+    (b) => b.priceLevel === priceLevel && b.targetTime === targetTime,
+  );
+  if (occupied) return state;
 
   const multiplier = calculateMultiplier(currentPrice, priceLevel);
   const halfHeight = BLOCK_PRICE_HEIGHT / 2;
