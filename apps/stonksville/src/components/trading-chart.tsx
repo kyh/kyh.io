@@ -81,11 +81,11 @@ function localToScreen(
   ly: number,
 ): { x: number; y: number } {
   const rect = el.getBoundingClientRect();
-  const bodyTransform = getComputedStyle(document.body).transform;
+  const computed = getComputedStyle(document.body).transform;
 
-  // Only apply rotation mapping for the 90deg landscape hack.
-  // Any other transform (or none) falls through to the simple offset path.
-  if (bodyTransform && /rotate\(90deg\)/.test(document.body.style.transform)) {
+  // Detect the 90deg CW landscape rotation hack via the resolved matrix.
+  // rotate(90deg) computes to matrix(0, 1, -1, 0, ...).
+  if (computed && /matrix\(0,\s*1/.test(computed)) {
     // Local x maps to screen y, local y maps to inverted screen x.
     const ow = el.offsetWidth;
     const oh = el.offsetHeight;
