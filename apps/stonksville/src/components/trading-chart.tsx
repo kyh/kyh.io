@@ -26,7 +26,13 @@ import {
 /** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
 /** Future zone as fraction of total width */
-const FUTURE_RATIO = 0.5;
+const FUTURE_RATIO_MOBILE = 0.5;
+const FUTURE_RATIO_DESKTOP = 0.35;
+const MOBILE_BREAKPOINT = 768;
+
+function getFutureRatio(width: number): number {
+  return width <= MOBILE_BREAKPOINT ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
+}
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
 /** Fixed price range (half above + half below current price) */
@@ -89,7 +95,7 @@ function computeDims(
   const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
-  const padRight = width * FUTURE_RATIO;
+  const padRight = width * getFutureRatio(width);
 
   const chartWidth = width - padLeft - padRight;
   const timePerPx = CHART_WINDOW / chartWidth;
@@ -324,7 +330,7 @@ export function TradingChart() {
       if (entry) {
         const { width, height } = entry.contentRect;
         sizeRef.current = { width, height };
-        setRightPad(Math.round(width * FUTURE_RATIO) || 200);
+        setRightPad(Math.round(width * getFutureRatio(width)) || 200);
       }
     });
     observer.observe(container);
