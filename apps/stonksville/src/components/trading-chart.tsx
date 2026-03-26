@@ -26,7 +26,7 @@ import {
 /** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
 /** Future zone as fraction of total width */
-const FUTURE_RATIO = 0.35;
+const FUTURE_RATIO = 0.5;
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
 /** Fixed price range (half above + half below current price) */
@@ -509,7 +509,7 @@ export function TradingChart() {
   }, []);
 
   const tryPlaceAt = useCallback(
-    (x: number, y: number) => {
+    (x: number, y: number, screenX?: number, screenY?: number) => {
       const dims = getClickDims();
       const price = engineRef.current?.getCurrentPrice() ?? 5200;
       const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
@@ -518,89 +518,44 @@ export function TradingChart() {
       lastPlacedCellRef.current = cellKey;
       const prev = stateRef.current;
       stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
-      if (stateRef.current !== prev) {
-        const container = containerRef.current;
-        if (container) {
-          const rect = container.getBoundingClientRect();
-          const screenX = rect.left + timeToX(snapped.time, dims);
-          const screenY = rect.top + priceToY(snapped.price, dims);
-          fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
-        }
+      if (stateRef.current !== prev && screenX != null && screenY != null) {
+        fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
       }
     },
     [getClickDims],
   );
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      const container = containerRef.current;
-      if (!container) return;
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId);
       draggingRef.current = true;
       lastPlacedCellRef.current = null;
-      const rect = container.getBoundingClientRect();
-      tryPlaceAt(e.clientX - rect.left, e.clientY - rect.top);
+      const x = e.nativeEvent.offsetX;
+      const y = e.nativeEvent.offsetY;
+      tryPlaceAt(x, y, e.clientX, e.clientY);
     },
     [tryPlaceAt],
   );
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      const x = e.nativeEvent.offsetX;
+      const y = e.nativeEvent.offsetY;
       hoverRef.current = { x, y };
       if (draggingRef.current) {
-        tryPlaceAt(x, y);
+        tryPlaceAt(x, y, e.clientX, e.clientY);
       }
     },
     [tryPlaceAt],
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    hoverRef.current = null;
-    draggingRef.current = false;
-    lastPlacedCellRef.current = null;
-  }, []);
-
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLElement>) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const touch = e.touches[0];
-      if (!touch) return;
-      draggingRef.current = true;
-      lastPlacedCellRef.current = null;
-      const rect = container.getBoundingClientRect();
-      tryPlaceAt(touch.clientX - rect.left, touch.clientY - rect.top);
-    },
-    [tryPlaceAt],
-  );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent<HTMLElement>) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const touch = e.touches[0];
-      if (!touch) return;
-      const rect = container.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      hoverRef.current = { x, y };
-      if (draggingRef.current) {
-        tryPlaceAt(x, y);
-      }
-    },
-    [tryPlaceAt],
-  );
-
-  const handleTouchEnd = useCallback(() => {
+  const handlePointerLeave = useCallback(() => {
     hoverRef.current = null;
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
@@ -658,13 +613,11 @@ export function TradingChart() {
       {/* Click capture (on top) */}
       <div
         className="absolute inset-0 z-20 cursor-crosshair"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
       />
 
       {/* HUD */}
