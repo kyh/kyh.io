@@ -480,7 +480,7 @@ export function TradingChart() {
       <div className="flex items-center justify-between px-4 py-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-pink-400">
-            block
+            stonksville
           </h1>
           <p className="text-xs text-white/40">S&P 500 SIM</p>
         </div>
