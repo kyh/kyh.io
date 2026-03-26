@@ -30,13 +30,13 @@ const FUTURE_RATIO_MOBILE = 0.5;
 const FUTURE_RATIO_DESKTOP = 0.35;
 const MOBILE_BREAKPOINT = 768;
 
-function isMobile(): boolean {
-  return typeof window !== "undefined" &&
-    window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
-}
+const mobileQuery =
+  typeof window !== "undefined"
+    ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+    : null;
 
 function getFutureRatio(): number {
-  return isMobile() ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
+  return mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 }
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
@@ -573,6 +573,7 @@ export function TradingChart() {
       e.currentTarget.releasePointerCapture(e.pointerId);
       draggingRef.current = false;
       lastPlacedCellRef.current = null;
+      if (e.pointerType !== "mouse") hoverRef.current = null;
     },
     [],
   );
