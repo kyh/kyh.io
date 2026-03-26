@@ -499,6 +499,12 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
+          // textBalloons appends to document.body which is rotated on mobile;
+          // move the container to <html> so position:fixed works correctly
+          const balloonEl = document.body.querySelector("text-balloons");
+          if (balloonEl) {
+            document.documentElement.appendChild(balloonEl);
+          }
           if (container) {
             const localX = timeToX(b.targetTime, dims);
             const localY = priceToY(b.priceLevel, dims);
@@ -529,7 +535,7 @@ export function TradingChart() {
   }, []);
 
   const tryPlaceAt = useCallback(
-    (x: number, y: number, screenX?: number, screenY?: number) => {
+    (x: number, y: number) => {
       const dims = getClickDims();
       const price = engineRef.current?.getCurrentPrice() ?? 5200;
       const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
@@ -538,8 +544,14 @@ export function TradingChart() {
       lastPlacedCellRef.current = cellKey;
       const prev = stateRef.current;
       stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
-      if (stateRef.current !== prev && screenX != null && screenY != null) {
-        fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
+      if (stateRef.current !== prev) {
+        const container = containerRef.current;
+        if (container) {
+          const localX = timeToX(snapped.time, dims);
+          const localY = priceToY(snapped.price, dims);
+          const screen = localToScreen(container, localX, localY);
+          fireConfetti(screen.x, screen.y, { particleCount: 20, size: 0.6 });
+        }
       }
     },
     [getClickDims],
@@ -550,9 +562,7 @@ export function TradingChart() {
       e.currentTarget.setPointerCapture(e.pointerId);
       draggingRef.current = true;
       lastPlacedCellRef.current = null;
-      const x = e.nativeEvent.offsetX;
-      const y = e.nativeEvent.offsetY;
-      tryPlaceAt(x, y, e.clientX, e.clientY);
+      tryPlaceAt(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     },
     [tryPlaceAt],
   );
@@ -563,7 +573,7 @@ export function TradingChart() {
       const y = e.nativeEvent.offsetY;
       hoverRef.current = { x, y };
       if (draggingRef.current) {
-        tryPlaceAt(x, y, e.clientX, e.clientY);
+        tryPlaceAt(x, y);
       }
     },
     [tryPlaceAt],
@@ -571,6 +581,13 @@ export function TradingChart() {
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLElement>) => {
     e.currentTarget.releasePointerCapture(e.pointerId);
+    draggingRef.current = false;
+    lastPlacedCellRef.current = null;
+  }, []);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    hoverRef.current = null;
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
   }, []);
@@ -637,6 +654,7 @@ export function TradingChart() {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         onPointerLeave={handlePointerLeave}
       />
 
