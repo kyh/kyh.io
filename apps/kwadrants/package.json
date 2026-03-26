@@ -12,9 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "konva": "^10.2.0",
+    "konva": "^10.2.3",
     "lucide-react": "catalog:",
-    "motion": "^12.36.0",
+    "motion": "^12.38.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.2.3"

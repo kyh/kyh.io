@@ -24,7 +24,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-joyride": "^2.9.3",
-    "react-number-format": "^5.4.4",
+    "react-number-format": "^5.4.5",
     "react-portal": "^4.3.0",
     "react-select": "^5.10.2",
     "use-debounce": "^10.1.0"
