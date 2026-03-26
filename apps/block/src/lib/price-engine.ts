@@ -111,6 +111,11 @@ export class PriceEngine {
     return [...this.history];
   }
 
+  /** Returns the internal array directly — do not mutate. */
+  getHistoryRaw(): readonly PricePoint[] {
+    return this.history;
+  }
+
   getCurrentPrice(): number {
     return this.currentPrice;
   }
