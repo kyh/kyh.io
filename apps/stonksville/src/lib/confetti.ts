@@ -101,7 +101,10 @@ function computeKeyframes(params: {
 }
 
 /**
- * Fire confetti from a specific screen position.
+ * Fire confetti from a specific position.
+ * When `parent` is provided, confetti renders inside that element using
+ * position:absolute (coordinates are parent-local). Otherwise falls back
+ * to a viewport-fixed overlay on document.body.
  */
 export function fireConfetti(
   originX: number,
@@ -117,6 +120,7 @@ export function fireConfetti(
     size?: number;
     colors?: string[];
     emojis?: string[];
+    parent?: HTMLElement;
   } = {},
 ) {
   const {
@@ -130,12 +134,19 @@ export function fireConfetti(
     size = 1,
     colors = COLORS,
     emojis,
+    parent,
   } = opts;
 
   const container = document.createElement("div");
-  container.style.cssText =
-    "position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;overflow:hidden";
-  document.body.appendChild(container);
+  if (parent) {
+    container.style.cssText =
+      "position:absolute;inset:0;pointer-events:none;z-index:99999;overflow:hidden";
+    parent.appendChild(container);
+  } else {
+    container.style.cssText =
+      "position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;overflow:hidden";
+    document.body.appendChild(container);
+  }
 
   const ticks = Math.round(duration * 60);
 

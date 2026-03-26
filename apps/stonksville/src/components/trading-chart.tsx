@@ -30,8 +30,13 @@ const FUTURE_RATIO_MOBILE = 0.5;
 const FUTURE_RATIO_DESKTOP = 0.35;
 const MOBILE_BREAKPOINT = 768;
 
-function getFutureRatio(width: number): number {
-  return width <= MOBILE_BREAKPOINT ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
+function isMobile(): boolean {
+  return typeof window !== "undefined" &&
+    window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+}
+
+function getFutureRatio(): number {
+  return isMobile() ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 }
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
@@ -95,7 +100,7 @@ function computeDims(
   const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
-  const padRight = width * getFutureRatio(width);
+  const padRight = width * getFutureRatio();
 
   const chartWidth = width - padLeft - padRight;
   const timePerPx = CHART_WINDOW / chartWidth;
@@ -294,6 +299,7 @@ function drawBlock(
 
 export function TradingChart() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const confettiLayerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<PriceEngine | null>(null);
   const stateRef = useRef(createInitialState());
@@ -330,7 +336,7 @@ export function TradingChart() {
       if (entry) {
         const { width, height } = entry.contentRect;
         sizeRef.current = { width, height };
-        setRightPad(Math.round(width * getFutureRatio(width)) || 200);
+        setRightPad(Math.round(width * getFutureRatio()) || 200);
       }
     });
     observer.observe(container);
@@ -464,8 +470,7 @@ export function TradingChart() {
       if (next.blocks === prev) return;
 
       const prevById = new Map(prev.map((b) => [b.id, b]));
-      const container = containerRef.current;
-      const rect = container?.getBoundingClientRect();
+      const confettiLayer = confettiLayerRef.current;
       const { width, height } = sizeRef.current;
       const center = rangeCenterRef.current;
       const dims = computeDims(
@@ -486,18 +491,21 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
-          if (rect) {
-            const bx = rect.left + timeToX(b.targetTime, dims);
-            const by = rect.top + priceToY(b.priceLevel, dims);
-            fireConfetti(bx, by, {
-              particleCount: 12,
-              startVelocity: 8,
-              spread: 360,
-              decay: 0.94,
-              gravity: 0.4,
-              size: 0.7,
-              emojis: ["💰"],
-            });
+          if (confettiLayer) {
+            fireConfetti(
+              timeToX(b.targetTime, dims),
+              priceToY(b.priceLevel, dims),
+              {
+                particleCount: 12,
+                startVelocity: 8,
+                spread: 360,
+                decay: 0.94,
+                gravity: 0.4,
+                size: 0.7,
+                emojis: ["💰"],
+                parent: confettiLayer,
+              },
+            );
           }
         }
       }
@@ -525,12 +533,13 @@ export function TradingChart() {
       const prev = stateRef.current;
       stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
       if (stateRef.current !== prev) {
-        const container = containerRef.current;
-        if (container) {
-          const rect = container.getBoundingClientRect();
-          const screenX = rect.left + timeToX(snapped.time, dims);
-          const screenY = rect.top + priceToY(snapped.price, dims);
-          fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
+        const confettiLayer = confettiLayerRef.current;
+        if (confettiLayer) {
+          fireConfetti(
+            timeToX(snapped.time, dims),
+            priceToY(snapped.price, dims),
+            { particleCount: 20, size: 0.6, parent: confettiLayer },
+          );
         }
       }
     },
@@ -640,6 +649,12 @@ export function TradingChart() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         onPointerLeave={resetPointerState}
+      />
+
+      {/* Confetti layer — inside the container so coordinates are chart-local */}
+      <div
+        ref={confettiLayerRef}
+        className="pointer-events-none absolute inset-0 z-25 overflow-hidden"
       />
 
       {/* HUD */}
