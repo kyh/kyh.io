@@ -135,7 +135,7 @@ export function fireConfetti(
   const container = document.createElement("div");
   container.style.cssText =
     "position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;overflow:hidden";
-  document.documentElement.appendChild(container);
+  document.body.appendChild(container);
 
   const ticks = Math.round(duration * 60);
 
