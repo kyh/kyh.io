@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LivelinePoint } from "@/lib/liveline/types";
 import { Liveline } from "@/lib/liveline/Liveline";
+import { getDpr } from "@/lib/liveline/canvas/dpr";
+import { lerp } from "@/lib/liveline/math/lerp";
 
 import { textBalloons } from "balloons-js";
 
@@ -29,6 +31,8 @@ const FUTURE_RATIO = 0.35;
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
 /** Fixed price range (half above + half below current price) */
 const PRICE_RANGE_HALF = 200;
+/** Half block height in price units */
+const HALF_BLOCK_H = BLOCK_PRICE_HEIGHT / 2;
 
 type OverlayDims = {
   width: number;
@@ -106,13 +110,18 @@ function computeDims(
   };
 }
 
+type HoverState = {
+  x: number;
+  y: number;
+  currentPrice: number;
+  balance: number;
+};
+
 function drawOverlay(
   ctx: CanvasRenderingContext2D,
   dims: OverlayDims,
   blocks: Block[],
-  hover: { x: number; y: number } | null,
-  currentPrice: number,
-  balance: number,
+  hover: HoverState | null,
 ) {
   ctx.clearRect(0, 0, dims.width, dims.height);
 
@@ -128,9 +137,8 @@ function drawOverlay(
 
   // Grid lines in future zone — offset by half-cell so lines sit at block edges
   const cellMs = GRID_CELL_SECONDS * 1000;
-  const halfCellMs = cellMs / 2;
   const firstGridTime =
-    Math.ceil((dims.timeStart - halfCellMs) / cellMs) * cellMs + halfCellMs;
+    Math.ceil((dims.timeStart - HALF_CELL_MS) / cellMs) * cellMs + HALF_CELL_MS;
 
   ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
   ctx.lineWidth = 1;
@@ -144,15 +152,14 @@ function drawOverlay(
   }
 
   // Horizontal grid — offset by half so lines sit at block edges
-  const halfPH = BLOCK_PRICE_HEIGHT / 2;
   const pxPerPrice = (dims.bottom - dims.top) / (dims.priceMax - dims.priceMin);
   const extraPrice = pxPerPrice > 0 ? (dims.height - dims.bottom) / pxPerPrice : 0;
   const gridPriceMin = dims.priceMin - extraPrice;
 
   const firstGridPrice =
-    Math.ceil((gridPriceMin - halfPH) / BLOCK_PRICE_HEIGHT) *
+    Math.ceil((gridPriceMin - HALF_BLOCK_H) / BLOCK_PRICE_HEIGHT) *
       BLOCK_PRICE_HEIGHT +
-    halfPH;
+    HALF_BLOCK_H;
 
   ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
   for (let p = firstGridPrice; p <= dims.priceMax; p += BLOCK_PRICE_HEIGHT) {
@@ -172,21 +179,18 @@ function drawOverlay(
 
   // Hover preview
   if (hover) {
-    const hPrice = yToPrice(hover.y, dims);
-    const hTime = xToTime(hover.x, dims);
-    const snapped = snapToGrid(hPrice, hTime);
+    const snapped = snapToGrid(
+      yToPrice(hover.y, dims),
+      xToTime(hover.x, dims),
+    );
 
     const isInFuture = snapped.time > Date.now() + MIN_FUTURE_SECONDS * 1000;
-    const hasBalance = balance >= DEFAULT_BET;
-    const isValid = isInFuture && hasBalance;
+    const isValid = isInFuture && hover.balance >= DEFAULT_BET;
 
-    const halfH = BLOCK_PRICE_HEIGHT / 2;
-    const halfW = HALF_CELL_MS;
-
-    const x1 = timeToX(snapped.time - halfW, dims);
-    const x2 = timeToX(snapped.time + halfW, dims);
-    const y1 = priceToY(snapped.price + halfH, dims);
-    const y2 = priceToY(snapped.price - halfH, dims);
+    const x1 = timeToX(snapped.time - HALF_CELL_MS, dims);
+    const x2 = timeToX(snapped.time + HALF_CELL_MS, dims);
+    const y1 = priceToY(snapped.price + HALF_BLOCK_H, dims);
+    const y2 = priceToY(snapped.price - HALF_BLOCK_H, dims);
 
     ctx.fillStyle = isValid
       ? "rgba(250, 240, 50, 0.2)"
@@ -201,7 +205,7 @@ function drawOverlay(
     ctx.setLineDash([]);
 
     if (isValid) {
-      const mult = calculateMultiplier(currentPrice, snapped.price);
+      const mult = calculateMultiplier(hover.currentPrice, snapped.price);
       ctx.fillStyle = "rgba(250, 240, 50, 0.9)";
       ctx.font = "bold 11px monospace";
       ctx.textAlign = "center";
@@ -220,17 +224,16 @@ function drawBlock(
   dims: OverlayDims,
   block: Block,
 ) {
-  const halfH = BLOCK_PRICE_HEIGHT / 2;
   const x1 = timeToX(block.targetTime - HALF_CELL_MS, dims);
   const x2 = timeToX(block.targetTime + HALF_CELL_MS, dims);
-  const y1 = priceToY(block.priceLevel + halfH, dims);
-  const y2 = priceToY(block.priceLevel - halfH, dims);
+  const y1 = priceToY(block.priceLevel + HALF_BLOCK_H, dims);
+  const y2 = priceToY(block.priceLevel - HALF_BLOCK_H, dims);
   const w = x2 - x1;
   const h = y2 - y1;
 
   if (x2 < dims.left || x1 > dims.right) return;
 
-  // Fade out resolved blocks over 1.5s
+  // Fade out resolved blocks over 1s
   let alpha = 1;
   if (block.resolvedAt !== null) {
     const elapsed = Date.now() - block.resolvedAt;
@@ -295,12 +298,16 @@ export function TradingChart() {
   const targetCenterRef = useRef(5200);
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ width: 0, height: 0 });
-  const liveValueRef = useRef(5200);
-  const prevUIRef = useRef({ balance: 1000, wins: 0, losses: 0, blockCount: 0 });
+  const prevUIRef = useRef({
+    balance: INITIAL_BALANCE,
+    totalWins: 0,
+    totalLosses: 0,
+    blockCount: 0,
+  });
 
   const [chartData, setChartData] = useState<LivelinePoint[]>([]);
   const [liveValue, setLiveValue] = useState(5200);
-  const [balance, setBalance] = useState(1000);
+  const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
   const [blockCount, setBlockCount] = useState(0);
@@ -324,20 +331,26 @@ export function TradingChart() {
     return () => observer.disconnect();
   }, []);
 
-  // Initialize price engine
+  // Initialize price engine — subscribe updates state + refs
   useEffect(() => {
     const engine = new PriceEngine();
     engineRef.current = engine;
 
     engine.subscribe((point) => {
-      liveValueRef.current = point.price;
       setLiveValue(point.price);
 
-      // Set target center snapped to grid — render loop lerps toward it
       targetCenterRef.current =
         Math.round(point.price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
 
+      // Update game state on each tick (10/sec) instead of every rAF frame (60/sec)
       const history = engine.getHistoryRaw();
+      stateRef.current = updateBlocks(
+        stateRef.current,
+        point.price,
+        Date.now(),
+        history,
+      );
+
       const llData: LivelinePoint[] = [];
       for (let i = 0; i < history.length; i++) {
         const p = history[i]!;
@@ -350,9 +363,11 @@ export function TradingChart() {
     return () => engine.stop();
   }, []);
 
-  // Overlay render loop — reads from refs only, no state deps
+  // Overlay render loop — drawing only, no state mutation
   useEffect(() => {
-    const render = () => {
+    let lastTime = 0;
+
+    const render = (timestamp: number) => {
       const canvas = overlayRef.current;
       const { width, height } = sizeRef.current;
 
@@ -361,7 +376,10 @@ export function TradingChart() {
         return;
       }
 
-      const dpr = window.devicePixelRatio || 1;
+      const dt = lastTime > 0 ? timestamp - lastTime : 16.67;
+      lastTime = timestamp;
+
+      const dpr = getDpr();
       const targetW = Math.round(width * dpr);
       const targetH = Math.round(height * dpr);
 
@@ -378,41 +396,35 @@ export function TradingChart() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const now = Date.now();
-      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
+      const price = engineRef.current?.getCurrentPrice() ?? 5200;
 
-      // Lerp range center toward target for smooth grid movement
-      const lerpSpeed = 0.04;
-      const current = rangeCenterRef.current;
-      const target = targetCenterRef.current;
-      const diff = target - current;
-      if (Math.abs(diff) > 0.01) {
-        rangeCenterRef.current = current + diff * lerpSpeed;
-      } else {
-        rangeCenterRef.current = target;
-      }
+      // Frame-rate-independent lerp for smooth grid panning
+      rangeCenterRef.current = lerp(
+        rangeCenterRef.current,
+        targetCenterRef.current,
+        0.04,
+        dt,
+      );
       const min = rangeCenterRef.current - PRICE_RANGE_HALF;
       const max = rangeCenterRef.current + PRICE_RANGE_HALF;
       setPriceRange((prev) =>
         prev.min === min && prev.max === max ? prev : { min, max },
       );
 
-      const prev = stateRef.current;
-      const history = engineRef.current?.getHistoryRaw();
-      stateRef.current = updateBlocks(prev, price, now, history);
       const next = stateRef.current;
 
-      // Only push to React state when values changed
+      // Sync UI state from ref when changed
       const ui = prevUIRef.current;
       if (next.balance !== ui.balance) {
         ui.balance = next.balance;
         setBalance(next.balance);
       }
-      if (next.totalWins !== ui.wins) {
-        ui.wins = next.totalWins;
+      if (next.totalWins !== ui.totalWins) {
+        ui.totalWins = next.totalWins;
         setWins(next.totalWins);
       }
-      if (next.totalLosses !== ui.losses) {
-        ui.losses = next.totalLosses;
+      if (next.totalLosses !== ui.totalLosses) {
+        ui.totalLosses = next.totalLosses;
         setLosses(next.totalLosses);
       }
       if (next.blocks.length !== ui.blockCount) {
@@ -422,10 +434,42 @@ export function TradingChart() {
 
       const dims = computeDims(width, height, now, min, max);
 
-      // Fire balloons + emoji confetti when a block gets touched
-      const prevById = new Map(prev.blocks.map((b) => [b.id, b]));
+      const hover = hoverRef.current;
+      drawOverlay(
+        ctx,
+        dims,
+        next.blocks,
+        hover ? { ...hover, currentPrice: price, balance: next.balance } : null,
+      );
+
+      animRef.current = requestAnimationFrame(render);
+    };
+
+    animRef.current = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animRef.current);
+  }, []);
+
+  // Track previous block states for touch detection (balloon/confetti effects)
+  const prevBlocksRef = useRef<Block[]>([]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const next = stateRef.current;
+      const prev = prevBlocksRef.current;
+      if (next.blocks === prev) return;
+
+      const prevById = new Map(prev.map((b) => [b.id, b]));
       const container = containerRef.current;
       const rect = container?.getBoundingClientRect();
+      const { width, height } = sizeRef.current;
+      const center = rangeCenterRef.current;
+      const dims = computeDims(
+        width,
+        height,
+        Date.now(),
+        center - PRICE_RANGE_HALF,
+        center + PRICE_RANGE_HALF,
+      );
+
       for (const b of next.blocks) {
         if (b.touched && !prevById.get(b.id)?.touched) {
           const count = 3 + Math.floor(Math.random() * 5);
@@ -452,20 +496,9 @@ export function TradingChart() {
         }
       }
 
-      drawOverlay(
-        ctx,
-        dims,
-        next.blocks,
-        hoverRef.current,
-        price,
-        next.balance,
-      );
-
-      animRef.current = requestAnimationFrame(render);
-    };
-
-    animRef.current = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animRef.current);
+      prevBlocksRef.current = next.blocks;
+    }, 100);
+    return () => clearInterval(interval);
   }, []);
 
   const getClickDims = useCallback(() => {
@@ -478,14 +511,13 @@ export function TradingChart() {
   const tryPlaceAt = useCallback(
     (x: number, y: number) => {
       const dims = getClickDims();
-      const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
+      const price = engineRef.current?.getCurrentPrice() ?? 5200;
       const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
       const cellKey = `${snapped.price}:${snapped.time}`;
       if (cellKey === lastPlacedCellRef.current) return;
       lastPlacedCellRef.current = cellKey;
       const prev = stateRef.current;
       stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
-      // Fire confetti if a block was actually placed
       if (stateRef.current !== prev) {
         const container = containerRef.current;
         if (container) {
@@ -576,7 +608,12 @@ export function TradingChart() {
 
   const handleReset = useCallback(() => {
     stateRef.current = createInitialState();
-    prevUIRef.current = { balance: INITIAL_BALANCE, wins: 0, losses: 0, blockCount: 0 };
+    prevUIRef.current = {
+      balance: INITIAL_BALANCE,
+      totalWins: 0,
+      totalLosses: 0,
+      blockCount: 0,
+    };
     setBalance(INITIAL_BALANCE);
     setWins(0);
     setLosses(0);
@@ -631,7 +668,7 @@ export function TradingChart() {
       />
 
       {/* HUD */}
-      <div className="pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-3 font-mono text-sm">
+      <div className="pointer-events-none absolute top-3 right-3 z-30 flex items-center gap-3 font-mono text-sm">
         <span className="text-emerald-400/60">{liveValue.toFixed(2)}</span>
         <span className="text-emerald-300/50">{wins}W</span>
         <span className="text-red-400/50">{losses}L</span>
@@ -639,7 +676,7 @@ export function TradingChart() {
       </div>
 
       {isBusted && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60">
           <div className="text-center">
             <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
             <button

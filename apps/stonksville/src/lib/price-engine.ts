@@ -85,10 +85,19 @@ export class PriceEngine {
     const point: PricePoint = { time, price: this.currentPrice };
     this.history.push(point);
 
-    // Keep last 5 minutes of data
+    // Keep last 5 minutes — bulk splice instead of O(n) per-shift
     const cutoff = time - 5 * 60 * 1000;
-    while (this.history.length > 0 && this.history[0]!.time < cutoff) {
-      this.history.shift();
+    if (this.history.length > 0 && this.history[0]!.time < cutoff) {
+      let trimCount = 0;
+      while (
+        trimCount < this.history.length &&
+        this.history[trimCount]!.time < cutoff
+      ) {
+        trimCount++;
+      }
+      if (trimCount > 0) {
+        this.history.splice(0, trimCount);
+      }
     }
 
     if (notify) {
