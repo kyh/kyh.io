@@ -17,6 +17,8 @@ export type Block = {
   status: BlockStatus;
   /** Timestamp when block was placed */
   placedAt: number;
+  /** Whether the price line touched this block during its time window */
+  touched: boolean;
 };
 
 export type GameState = {
@@ -30,7 +32,9 @@ export type GameState = {
 export const INITIAL_BALANCE = 1000;
 export const DEFAULT_BET = 10;
 /** Price height of each block in price units */
-export const BLOCK_PRICE_HEIGHT = 2;
+export const BLOCK_PRICE_HEIGHT = 20;
+/** Grid cell width in seconds — must match chart grid */
+export const GRID_CELL_SECONDS = 5;
 /** How many seconds before target time a block locks */
 export const LOCK_SECONDS = 10;
 /** Minimum time into the future a block can be placed (seconds) */
@@ -59,13 +63,13 @@ export function calculateMultiplier(
 
   // Base multiplier starts at 1.2x for close bets, scales up
   // Max around 20x for very distant predictions
-  if (percentDistance < 0.01) return 1.2;
-  if (percentDistance < 0.02) return 1.5;
-  if (percentDistance < 0.05) return 2.0;
-  if (percentDistance < 0.1) return 3.5;
-  if (percentDistance < 0.15) return 5.0;
-  if (percentDistance < 0.2) return 8.0;
-  if (percentDistance < 0.3) return 12.0;
+  if (percentDistance < 0.2) return 1.2;
+  if (percentDistance < 0.4) return 1.5;
+  if (percentDistance < 0.8) return 2.0;
+  if (percentDistance < 1.2) return 3.5;
+  if (percentDistance < 2.0) return 5.0;
+  if (percentDistance < 3.0) return 8.0;
+  if (percentDistance < 5.0) return 12.0;
   return 18.0;
 }
 
@@ -97,6 +101,7 @@ export function placeBlock(
     multiplier,
     status: "active",
     placedAt: now,
+    touched: false,
   };
 
   return {
@@ -121,8 +126,18 @@ export function updateBlocks(
   let losses = 0;
   let changed = false;
 
+  const halfColumnMs = (GRID_CELL_SECONDS * 1000) / 2;
+
   const updatedBlocks = state.blocks.map((block) => {
     if (block.status === "won" || block.status === "lost") return block;
+
+    // Check if price is inside block during its time window
+    const inTimeWindow =
+      currentTime >= block.targetTime - halfColumnMs &&
+      currentTime <= block.targetTime + halfColumnMs;
+    const inPriceRange =
+      currentPrice >= block.priceBottom && currentPrice <= block.priceTop;
+    const nowTouched = block.touched || (inTimeWindow && inPriceRange);
 
     // Lock blocks that are close to resolution
     if (
@@ -130,24 +145,28 @@ export function updateBlocks(
       block.targetTime - currentTime < LOCK_SECONDS * 1000
     ) {
       changed = true;
-      return { ...block, status: "locked" as const };
+      return { ...block, status: "locked" as const, touched: nowTouched };
     }
 
-    // Resolve blocks whose time has passed
-    if (currentTime >= block.targetTime) {
+    // Resolve blocks after their time column has fully passed
+    if (currentTime >= block.targetTime + halfColumnMs) {
       changed = true;
-      const hit =
-        currentPrice >= block.priceBottom && currentPrice <= block.priceTop;
 
-      if (hit) {
+      if (nowTouched) {
         const payout = block.amount * block.multiplier;
         balanceChange += payout;
         wins++;
-        return { ...block, status: "won" as const };
+        return { ...block, status: "won" as const, touched: true };
       } else {
         losses++;
-        return { ...block, status: "lost" as const };
+        return { ...block, status: "lost" as const, touched: false };
       }
+    }
+
+    // Update touched flag if changed
+    if (nowTouched !== block.touched) {
+      changed = true;
+      return { ...block, touched: nowTouched };
     }
 
     return block;

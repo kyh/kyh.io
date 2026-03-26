@@ -8,7 +8,9 @@ import { PriceEngine } from "@/lib/price-engine";
 import {
   BLOCK_PRICE_HEIGHT,
   DEFAULT_BET,
+  GRID_CELL_SECONDS,
   INITIAL_BALANCE,
+  MIN_FUTURE_SECONDS,
   type Block,
   calculateMultiplier,
   createInitialState,
@@ -20,8 +22,6 @@ import {
 const CHART_WINDOW = 60;
 /** Future zone as fraction of total width */
 const FUTURE_RATIO = 0.35;
-/** Grid cell width in seconds */
-const GRID_CELL_SECONDS = 5;
 /** Price padding above/below data range */
 const PRICE_PAD_RATIO = 0.15;
 
@@ -111,10 +111,6 @@ function drawOverlay(
 ) {
   ctx.clearRect(0, 0, dims.width, dims.height);
 
-  // Future zone shading
-  ctx.fillStyle = "rgba(236, 72, 153, 0.04)";
-  ctx.fillRect(dims.nowX, dims.top, dims.right - dims.nowX, dims.bottom - dims.top);
-
   // "Now" dashed line
   ctx.strokeStyle = "rgba(236, 72, 153, 0.4)";
   ctx.lineWidth = 1;
@@ -125,11 +121,13 @@ function drawOverlay(
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Grid lines in future zone
+  // Grid lines in future zone — offset by half-cell so lines sit at block edges
   const cellMs = GRID_CELL_SECONDS * 1000;
-  const firstGridTime = Math.ceil(dims.timeStart / cellMs) * cellMs;
+  const halfCellMs = cellMs / 2;
+  const firstGridTime =
+    Math.ceil((dims.timeStart - halfCellMs) / cellMs) * cellMs + halfCellMs;
 
-  ctx.strokeStyle = "rgba(236, 72, 153, 0.1)";
+  ctx.strokeStyle = "rgba(236, 72, 153, 0.2)";
   ctx.lineWidth = 1;
   for (let t = firstGridTime; t <= dims.timeEnd; t += cellMs) {
     const x = timeToX(t, dims);
@@ -140,12 +138,15 @@ function drawOverlay(
     ctx.stroke();
   }
 
-  // Horizontal grid
-  for (
-    let p = Math.ceil(dims.priceMin / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
-    p <= dims.priceMax;
-    p += BLOCK_PRICE_HEIGHT
-  ) {
+  // Horizontal grid — offset by half so lines sit at block edges
+  const halfPH = BLOCK_PRICE_HEIGHT / 2;
+  const firstGridPrice =
+    Math.ceil((dims.priceMin - halfPH) / BLOCK_PRICE_HEIGHT) *
+      BLOCK_PRICE_HEIGHT +
+    halfPH;
+
+  ctx.strokeStyle = "rgba(236, 72, 153, 0.2)";
+  for (let p = firstGridPrice; p <= dims.priceMax; p += BLOCK_PRICE_HEIGHT) {
     const y = priceToY(p, dims);
     if (y < dims.top || y > dims.bottom) continue;
     const startX = Math.max(dims.nowX - 2, dims.left);
@@ -166,7 +167,7 @@ function drawOverlay(
     const hTime = xToTime(hover.x, dims);
     const snapped = snapToGrid(hPrice, hTime);
 
-    const isInFuture = snapped.time > Date.now() + 10000;
+    const isInFuture = snapped.time > Date.now() + MIN_FUTURE_SECONDS * 1000;
     const hasBalance = balance >= DEFAULT_BET;
     const isValid = isInFuture && hasBalance;
 
@@ -222,27 +223,22 @@ function drawBlock(
   if (x2 < dims.left || x1 > dims.right) return;
 
   let fill: string, border: string, glow: string;
-  switch (block.status) {
-    case "active":
-      fill = "rgba(250, 240, 50, 0.85)";
-      border = "rgba(250, 240, 50, 1)";
-      glow = "rgba(250, 240, 50, 0.4)";
-      break;
-    case "locked":
-      fill = "rgba(250, 200, 50, 0.9)";
-      border = "rgba(255, 180, 0, 1)";
-      glow = "rgba(255, 180, 0, 0.5)";
-      break;
-    case "won":
-      fill = "rgba(74, 222, 128, 0.9)";
-      border = "rgba(74, 222, 128, 1)";
-      glow = "rgba(74, 222, 128, 0.5)";
-      break;
-    case "lost":
-      fill = "rgba(248, 113, 113, 0.6)";
-      border = "rgba(248, 113, 113, 0.8)";
-      glow = "rgba(248, 113, 113, 0.3)";
-      break;
+  if (block.touched || block.status === "won") {
+    fill = "rgba(74, 222, 128, 0.9)";
+    border = "rgba(74, 222, 128, 1)";
+    glow = "rgba(74, 222, 128, 0.5)";
+  } else if (block.status === "lost") {
+    fill = "rgba(248, 113, 113, 0.6)";
+    border = "rgba(248, 113, 113, 0.8)";
+    glow = "rgba(248, 113, 113, 0.3)";
+  } else if (block.status === "locked") {
+    fill = "rgba(250, 200, 50, 0.9)";
+    border = "rgba(255, 180, 0, 1)";
+    glow = "rgba(255, 180, 0, 0.5)";
+  } else {
+    fill = "rgba(250, 240, 50, 0.85)";
+    border = "rgba(250, 240, 50, 1)";
+    glow = "rgba(250, 240, 50, 0.4)";
   }
 
   ctx.shadowColor = glow;
@@ -272,7 +268,7 @@ export function TradingChart() {
   const engineRef = useRef<PriceEngine | null>(null);
   const stateRef = useRef(createInitialState());
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
-  const priceRangeRef = useRef({ min: 5192, max: 5208 });
+  const priceRangeRef = useRef({ min: 5185, max: 5215 });
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ width: 0, height: 0 });
   const liveValueRef = useRef(5200);

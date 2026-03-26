@@ -16,8 +16,8 @@ export type PriceEngineConfig = {
 
 const DEFAULT_CONFIG: PriceEngineConfig = {
   startPrice: 5200,
-  volatility: 0.3,
-  drift: 0.02,
+  volatility: 0.008,
+  drift: 0.001,
   tickInterval: 200,
 };
 
@@ -78,7 +78,7 @@ export class PriceEngine {
 
     // Add some occasional jumps for excitement
     if (Math.random() < 0.005) {
-      const jumpSize = this.currentPrice * (Math.random() - 0.5) * 0.003;
+      const jumpSize = this.currentPrice * (Math.random() - 0.5) * 0.001;
       this.currentPrice += jumpSize;
     }
 
