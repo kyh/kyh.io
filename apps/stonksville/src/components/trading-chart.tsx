@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LivelinePoint } from "liveline";
 import { Liveline } from "liveline";
 
+import { textBalloons } from "balloons-js";
+
+import { fireConfetti } from "@/lib/confetti";
 import { PriceEngine } from "@/lib/price-engine";
 import {
   BLOCK_PRICE_HEIGHT,
@@ -227,6 +230,17 @@ function drawBlock(
 
   if (x2 < dims.left || x1 > dims.right) return;
 
+  // Fade out resolved blocks over 1.5s
+  let alpha = 1;
+  if (block.resolvedAt !== null) {
+    const elapsed = Date.now() - block.resolvedAt;
+    alpha = Math.max(0, 1 - elapsed / 1000);
+    if (alpha <= 0) return;
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
   let fill: string, border: string, glow: string;
   if (block.touched || block.status === "won") {
     fill = "rgba(74, 222, 128, 0.9)";
@@ -265,6 +279,8 @@ function drawBlock(
   ctx.fillText(`$${block.amount}`, cx, cy - 7);
   ctx.font = "10px monospace";
   ctx.fillText(`${block.multiplier.toFixed(1)}x`, cx, cy + 7);
+
+  ctx.restore();
 }
 
 export function TradingChart() {
@@ -395,6 +411,36 @@ export function TradingChart() {
 
       const dims = computeDims(width, height, now, min, max);
 
+      // Fire balloons + emoji confetti when a block gets touched
+      const container = containerRef.current;
+      for (let i = 0; i < next.blocks.length; i++) {
+        const b = next.blocks[i]!;
+        if (b.touched && !prev.blocks[i]?.touched) {
+          const count = 3 + Math.floor(Math.random() * 5);
+          textBalloons([
+            {
+              text: "💸".repeat(count),
+              fontSize: 80 + Math.floor(Math.random() * 60),
+              color: "#000000",
+            },
+          ]);
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const bx = rect.left + timeToX(b.targetTime, dims);
+            const by = rect.top + priceToY(b.priceLevel, dims);
+            fireConfetti(bx, by, {
+              particleCount: 12,
+              startVelocity: 8,
+              spread: 360,
+              decay: 0.94,
+              gravity: 0.4,
+              size: 0.7,
+              emojis: ["💰"],
+            });
+          }
+        }
+      }
+
       drawOverlay(
         ctx,
         dims,
@@ -426,7 +472,18 @@ export function TradingChart() {
       const cellKey = `${snapped.price}:${snapped.time}`;
       if (cellKey === lastPlacedCellRef.current) return;
       lastPlacedCellRef.current = cellKey;
-      stateRef.current = placeBlock(stateRef.current, price, snapped.price, snapped.time);
+      const prev = stateRef.current;
+      stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
+      // Fire confetti if a block was actually placed
+      if (stateRef.current !== prev) {
+        const container = containerRef.current;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const screenX = rect.left + timeToX(snapped.time, dims);
+          const screenY = rect.top + priceToY(snapped.price, dims);
+          fireConfetti(screenX, screenY, { particleCount: 20, size: 0.6 });
+        }
+      }
     },
     [getClickDims],
   );

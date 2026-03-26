@@ -19,6 +19,8 @@ export type Block = {
   placedAt: number;
   /** Whether the price line touched this block during its time window */
   touched: boolean;
+  /** Timestamp when block was resolved (won/lost) */
+  resolvedAt: number | null;
 };
 
 export type GameState = {
@@ -106,6 +108,7 @@ export function placeBlock(
     status: "active",
     placedAt: now,
     touched: false,
+    resolvedAt: null,
   };
 
   return {
@@ -160,10 +163,10 @@ export function updateBlocks(
         const payout = block.amount * block.multiplier;
         balanceChange += payout;
         wins++;
-        return { ...block, status: "won" as const, touched: true };
+        return { ...block, status: "won" as const, touched: true, resolvedAt: block.resolvedAt ?? currentTime };
       } else {
         losses++;
-        return { ...block, status: "lost" as const, touched: false };
+        return { ...block, status: "lost" as const, touched: false, resolvedAt: block.resolvedAt ?? currentTime };
       }
     }
 
@@ -176,10 +179,10 @@ export function updateBlocks(
     return block;
   });
 
-  // Remove resolved blocks after 5 seconds
+  // Remove resolved blocks after fade completes
   const filteredBlocks = updatedBlocks.filter((block) => {
     if (block.status !== "won" && block.status !== "lost") return true;
-    const keep = currentTime - block.targetTime < 5000;
+    const keep = block.resolvedAt === null || currentTime - block.resolvedAt < 1000;
     if (!keep) changed = true;
     return keep;
   });
