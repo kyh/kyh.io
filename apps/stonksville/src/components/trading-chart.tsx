@@ -74,6 +74,20 @@ function yToPrice(y: number, dims: OverlayDims): number {
   return dims.priceMax + frac * (dims.priceMin - dims.priceMax);
 }
 
+/** Convert element-local coordinates to screen coordinates, accounting for CSS transforms. */
+function localToScreen(
+  el: HTMLElement,
+  lx: number,
+  ly: number,
+): { x: number; y: number } {
+  const temp = document.createElement("div");
+  temp.style.cssText = `position:absolute;left:${lx}px;top:${ly}px;width:0;height:0;pointer-events:none;visibility:hidden`;
+  el.appendChild(temp);
+  const r = temp.getBoundingClientRect();
+  el.removeChild(temp);
+  return { x: r.left, y: r.top };
+}
+
 function snapToGrid(
   price: number,
   time: number,
@@ -465,7 +479,6 @@ export function TradingChart() {
 
       const prevById = new Map(prev.map((b) => [b.id, b]));
       const container = containerRef.current;
-      const rect = container?.getBoundingClientRect();
       const { width, height } = sizeRef.current;
       const center = rangeCenterRef.current;
       const dims = computeDims(
@@ -486,10 +499,11 @@ export function TradingChart() {
               color: "#000000",
             },
           ]);
-          if (rect) {
-            const bx = rect.left + timeToX(b.targetTime, dims);
-            const by = rect.top + priceToY(b.priceLevel, dims);
-            fireConfetti(bx, by, {
+          if (container) {
+            const localX = timeToX(b.targetTime, dims);
+            const localY = priceToY(b.priceLevel, dims);
+            const screen = localToScreen(container, localX, localY);
+            fireConfetti(screen.x, screen.y, {
               particleCount: 12,
               startVelocity: 8,
               spread: 360,
