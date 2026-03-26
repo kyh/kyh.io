@@ -21,8 +21,7 @@
     user-select: none;
   }
   html,
-  body,
-  #__next {
+  body {
     height: 100%;
   }
 }

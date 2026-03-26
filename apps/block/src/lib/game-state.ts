@@ -27,14 +27,14 @@ export type GameState = {
   totalProfit: number;
 };
 
-const INITIAL_BALANCE = 1000;
-const DEFAULT_BET = 10;
+export const INITIAL_BALANCE = 1000;
+export const DEFAULT_BET = 10;
 /** Price height of each block in price units */
-const BLOCK_PRICE_HEIGHT = 2;
+export const BLOCK_PRICE_HEIGHT = 2;
 /** How many seconds before target time a block locks */
-const LOCK_SECONDS = 10;
+export const LOCK_SECONDS = 10;
 /** Minimum time into the future a block can be placed (seconds) */
-const MIN_FUTURE_SECONDS = 15;
+export const MIN_FUTURE_SECONDS = 15;
 
 export function createInitialState(): GameState {
   return {
@@ -114,9 +114,12 @@ export function updateBlocks(
   currentPrice: number,
   currentTime: number,
 ): GameState {
+  if (state.blocks.length === 0) return state;
+
   let balanceChange = 0;
   let wins = 0;
   let losses = 0;
+  let changed = false;
 
   const updatedBlocks = state.blocks.map((block) => {
     if (block.status === "won" || block.status === "lost") return block;
@@ -126,12 +129,13 @@ export function updateBlocks(
       block.status === "active" &&
       block.targetTime - currentTime < LOCK_SECONDS * 1000
     ) {
+      changed = true;
       return { ...block, status: "locked" as const };
     }
 
     // Resolve blocks whose time has passed
     if (currentTime >= block.targetTime) {
-      // Check if price is within the block's range
+      changed = true;
       const hit =
         currentPrice >= block.priceBottom && currentPrice <= block.priceTop;
 
@@ -152,8 +156,12 @@ export function updateBlocks(
   // Remove resolved blocks after 5 seconds
   const filteredBlocks = updatedBlocks.filter((block) => {
     if (block.status !== "won" && block.status !== "lost") return true;
-    return currentTime - block.targetTime < 5000;
+    const keep = currentTime - block.targetTime < 5000;
+    if (!keep) changed = true;
+    return keep;
   });
+
+  if (!changed) return state;
 
   return {
     ...state,
@@ -164,5 +172,3 @@ export function updateBlocks(
     totalProfit: state.totalProfit + balanceChange,
   };
 }
-
-export { DEFAULT_BET, BLOCK_PRICE_HEIGHT, LOCK_SECONDS, MIN_FUTURE_SECONDS };

@@ -8,8 +8,8 @@ import { PriceEngine } from "@/lib/price-engine";
 import {
   BLOCK_PRICE_HEIGHT,
   DEFAULT_BET,
+  INITIAL_BALANCE,
   type Block,
-  type GameState,
   calculateMultiplier,
   createInitialState,
   placeBlock,
@@ -270,20 +270,23 @@ export function TradingChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<PriceEngine | null>(null);
-  const stateRef = useRef<GameState>(createInitialState());
+  const stateRef = useRef(createInitialState());
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const priceRangeRef = useRef({ min: 5192, max: 5208 });
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ width: 0, height: 0 });
   const liveValueRef = useRef(5200);
+  const prevUIRef = useRef({ balance: 1000, wins: 0, losses: 0, blockCount: 0 });
 
   const [chartData, setChartData] = useState<LivelinePoint[]>([]);
   const [liveValue, setLiveValue] = useState(5200);
   const [balance, setBalance] = useState(1000);
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
+  const [blockCount, setBlockCount] = useState(0);
+  const [rightPad, setRightPad] = useState(200);
 
-  // Track container size via ResizeObserver
+  // Single ResizeObserver for both sizeRef and rightPad
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -291,10 +294,9 @@ export function TradingChart() {
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        sizeRef.current = {
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        };
+        const { width, height } = entry.contentRect;
+        sizeRef.current = { width, height };
+        setRightPad(Math.round(width * FUTURE_RATIO) || 200);
       }
     });
     observer.observe(container);
@@ -310,22 +312,24 @@ export function TradingChart() {
       liveValueRef.current = point.price;
       setLiveValue(point.price);
 
-      const history = engine.getHistory();
-      const llData: LivelinePoint[] = history.map((p) => ({
-        time: p.time / 1000,
-        value: p.price,
-      }));
+      const history = engine.getHistoryRaw();
+      const llData: LivelinePoint[] = [];
+      for (let i = 0; i < history.length; i++) {
+        const p = history[i]!;
+        llData.push({ time: p.time / 1000, value: p.price });
+      }
       setChartData(llData);
 
       const visibleStart = Date.now() - CHART_WINDOW * 1000;
-      const visible = history.filter((p) => p.time >= visibleStart);
-      if (visible.length > 0) {
-        let min = Infinity,
-          max = -Infinity;
-        for (const p of visible) {
-          if (p.price < min) min = p.price;
-          if (p.price > max) max = p.price;
-        }
+      let min = Infinity,
+        max = -Infinity;
+      for (let i = history.length - 1; i >= 0; i--) {
+        const p = history[i]!;
+        if (p.time < visibleStart) break;
+        if (p.price < min) min = p.price;
+        if (p.price > max) max = p.price;
+      }
+      if (min !== Infinity) {
         const range = max - min || 1;
         const pad = range * PRICE_PAD_RATIO;
         priceRangeRef.current = { min: min - pad, max: max + pad };
@@ -336,7 +340,7 @@ export function TradingChart() {
     return () => engine.stop();
   }, []);
 
-  // Overlay render loop — no state deps, reads from refs only
+  // Overlay render loop — reads from refs only, no state deps
   useEffect(() => {
     const render = () => {
       const canvas = overlayRef.current;
@@ -348,13 +352,12 @@ export function TradingChart() {
       }
 
       const dpr = window.devicePixelRatio || 1;
-      const needsResize =
-        canvas.width !== Math.round(width * dpr) ||
-        canvas.height !== Math.round(height * dpr);
+      const targetW = Math.round(width * dpr);
+      const targetH = Math.round(height * dpr);
 
-      if (needsResize) {
-        canvas.width = Math.round(width * dpr);
-        canvas.height = Math.round(height * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
 
       const ctx = canvas.getContext("2d")!;
@@ -364,20 +367,38 @@ export function TradingChart() {
       const price = engineRef.current?.getCurrentPrice() ?? liveValueRef.current;
       const { min, max } = priceRangeRef.current;
 
-      stateRef.current = updateBlocks(stateRef.current, price, now);
-      setBalance(stateRef.current.balance);
-      setWins(stateRef.current.totalWins);
-      setLosses(stateRef.current.totalLosses);
+      const prev = stateRef.current;
+      stateRef.current = updateBlocks(prev, price, now);
+      const next = stateRef.current;
+
+      // Only push to React state when values changed
+      const ui = prevUIRef.current;
+      if (next.balance !== ui.balance) {
+        ui.balance = next.balance;
+        setBalance(next.balance);
+      }
+      if (next.totalWins !== ui.wins) {
+        ui.wins = next.totalWins;
+        setWins(next.totalWins);
+      }
+      if (next.totalLosses !== ui.losses) {
+        ui.losses = next.totalLosses;
+        setLosses(next.totalLosses);
+      }
+      if (next.blocks.length !== ui.blockCount) {
+        ui.blockCount = next.blocks.length;
+        setBlockCount(next.blocks.length);
+      }
 
       const dims = computeDims(width, height, now, min, max);
 
       drawOverlay(
         ctx,
         dims,
-        stateRef.current.blocks,
+        next.blocks,
         hoverRef.current,
         price,
-        stateRef.current.balance,
+        next.balance,
       );
 
       animRef.current = requestAnimationFrame(render);
@@ -448,25 +469,14 @@ export function TradingChart() {
 
   const handleReset = useCallback(() => {
     stateRef.current = createInitialState();
+    prevUIRef.current = { balance: INITIAL_BALANCE, wins: 0, losses: 0, blockCount: 0 };
+    setBalance(INITIAL_BALANCE);
+    setWins(0);
+    setLosses(0);
+    setBlockCount(0);
   }, []);
 
-  // Compute right padding for Liveline's future zone
-  const [rightPad, setRightPad] = useState(200);
-  useEffect(() => {
-    const update = () => {
-      setRightPad(Math.round(sizeRef.current.width * FUTURE_RATIO) || 200);
-    };
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    update();
-    return () => observer.disconnect();
-  }, []);
-
-  const isBusted = balance < DEFAULT_BET && stateRef.current.blocks.length === 0;
+  const isBusted = balance < DEFAULT_BET && blockCount === 0;
 
   return (
     <div className="flex h-full flex-col">
@@ -519,7 +529,6 @@ export function TradingChart() {
           onTouchStart={handleTouchStart}
         />
 
-        {/* Reset overlay */}
         {isBusted && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
             <div className="text-center">
