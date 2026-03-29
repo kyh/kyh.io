@@ -11,9 +11,9 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260317.1",
+    "@cloudflare/workers-types": "^4.20260329.1",
     "@kyh/tsconfig": "workspace:^",
-    "partyserver": "^0.3.3",
+    "partyserver": "^0.4.1",
     "typescript": "catalog:",
     "wrangler": "^4.78.0"
   },

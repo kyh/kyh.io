@@ -1,6 +1,6 @@
-import type { CallBackProps, Placement, Step, TooltipRenderProps } from "react-joyride";
+import type { Placement, Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
-import Joyride, { ACTIONS, EVENTS, STATUS } from "react-joyride";
+import { Joyride, ACTIONS, EVENTS, STATUS } from "react-joyride";
 import { Portal } from "react-portal";
 
 const defaultStepProps = {
@@ -118,7 +118,7 @@ export const useAbout = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [steps] = useState(defaultSteps);
 
-  const handleJoyrideCallback = ({ action, index, type, status }: CallBackProps) => {
+  const handleJoyrideCallback: import("react-joyride").EventHandler = ({ action, index, type, status }) => {
     if (
       action === ACTIONS.CLOSE ||
       ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
@@ -203,13 +203,13 @@ export const About = ({ run, stepIndex, steps, handleJoyrideCallback }: Props) =
     <Joyride
       continuous
       tooltipComponent={Tooltip}
-      callback={handleJoyrideCallback}
+      onEvent={handleJoyrideCallback}
       run={run}
       stepIndex={stepIndex}
       steps={steps}
       styles={{
-        options: {
-          arrowColor: "transparent",
+        arrow: {
+          color: "transparent",
         },
       }}
     />
