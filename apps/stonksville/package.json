@@ -26,6 +26,5 @@
     "@types/react-dom": "catalog:",
     "postcss": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

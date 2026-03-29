@@ -27,6 +27,5 @@
     "@kyh/tsconfig": "workspace:^",
     "@types/react": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

@@ -40,6 +40,5 @@
     "postcss": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

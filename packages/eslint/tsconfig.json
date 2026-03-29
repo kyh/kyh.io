@@ -1,5 +1,0 @@
-{
-  "extends": "@kyh/tsconfig/base.json",
-  "include": ["types.d.ts"],
-  "exclude": ["node_modules"]
-}

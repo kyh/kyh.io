@@ -16,6 +16,5 @@
     "partyserver": "^0.4.1",
     "typescript": "catalog:",
     "wrangler": "^4.78.0"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

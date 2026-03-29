@@ -29,6 +29,5 @@
     "postcss": "catalog:",
     "tailwindcss": "catalog:",
     "vite": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

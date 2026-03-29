@@ -32,6 +32,5 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }
