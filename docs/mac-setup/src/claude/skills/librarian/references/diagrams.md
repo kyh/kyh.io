@@ -1,7 +1,6 @@
 # Mermaid Diagram Patterns
 
 Create diagrams for:
-
 - Architecture (component relationships)
 - Data flow (request → response)
 - Dependencies (import graph)
@@ -36,13 +35,13 @@ sequenceDiagram
 
 ## When to Use
 
-| Type              | Use For                                   |
-| ----------------- | ----------------------------------------- |
-| `graph TD`        | Component hierarchy, dependencies         |
-| `flowchart LR`    | Data transformation, pipelines            |
+| Type | Use For |
+|------|---------|
+| `graph TD` | Component hierarchy, dependencies |
+| `flowchart LR` | Data transformation, pipelines |
 | `sequenceDiagram` | Request/response, multi-party interaction |
-| `classDiagram`    | Type relationships, inheritance           |
-| `stateDiagram`    | State machines, lifecycle                 |
+| `classDiagram` | Type relationships, inheritance |
+| `stateDiagram` | State machines, lifecycle |
 
 ## Tips
 
