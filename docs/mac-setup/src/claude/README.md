@@ -49,5 +49,5 @@ npx skills add anthropics/skills@write-a-prd -g
 |---|---|
 | `frontend` | Frontend dev agent with consolidated best practices (React, Next.js, design engineering, a11y). Uses browser automation to verify visual changes. |
 | `librarian` | Explore remote repos, find code patterns, understand library internals |
-| `oracle` | Deep technical analysis with extended thinking. Read-only. |
+| `architect` | Deep technical analysis with extended thinking. Read-only. |
 | `review` | Code review agent |

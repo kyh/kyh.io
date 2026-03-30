@@ -57,7 +57,7 @@ you cut will be cut again.
 
 Invoke for: any frontend task — building components/pages, fixing UI bugs, reviewing frontend code, improving performance. Uses browser automation to verify visual changes.
 
-### Oracle
+### Architect
 
 Invoke for: code review, architecture decisions, debugging analysis, refactor planning, second opinion.
 
