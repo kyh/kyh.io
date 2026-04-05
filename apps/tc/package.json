@@ -23,11 +23,11 @@
     "@visx/tooltip": "^3.12.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-joyride": "^3.0.0",
+    "react-joyride": "^3.0.2",
     "react-number-format": "^5.4.5",
     "react-portal": "^4.3.0",
     "react-select": "^5.10.2",
-    "use-debounce": "^10.1.0"
+    "use-debounce": "^10.1.1"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",

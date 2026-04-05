@@ -22,7 +22,8 @@ export const projects: ProjectType[] = [
   {
     slug: "vibedgames",
     title: "Vibedgames",
-    description: "Design, publish, and play personalized multiplayer minigames with your friends",
+    description:
+      "Design, publish, and play personalized multiplayer minigames with your friends",
     url: "https://www.vibedgames.com",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     type: "project",
@@ -127,10 +128,30 @@ export const projects: ProjectType[] = [
     ],
   },
   {
+    slug: "founding",
+    title: "Founding",
+    description: "Your proxy founding team",
+    url: "https://www.founding.so",
+    favicon: getPublicFaviconUrl("founding-c.png"),
+    type: "venture",
+    projectAssets: [
+      {
+        type: "image",
+        src: getPublicAssetUrl("founding.webp"),
+        dataBlur:
+          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
+      },
+      {
+        type: "image",
+        src: getPublicAssetUrl("founding-1.webp"),
+      },
+    ],
+  },
+  {
     slug: "inteligir",
     title: "Inteligir",
     description:
-      "Make lifelong learning as natural as checking your phone. Turn your social feed into your personal university. Inteligir transforms trending topics from your world into engaging, bite-sized lessons delivered right to your phone",
+      "An artificially intelligent operating system. Tailored for you.",
     url: "https://www.inteligir.com",
     favicon: getPublicFaviconUrl("inteligir-c.png"),
     type: "project",
@@ -156,44 +177,13 @@ export const projects: ProjectType[] = [
     ],
   },
   {
-    slug: "loremllm",
-    title: "LoremLLM",
-    description: "Mock responses for LLMs",
-    url: "https://www.loremllm.com",
-    favicon: getPublicFaviconUrl("loremllm-c.png"),
+    slug: "edgestories",
+    title: "Edgestories",
+    description: "The stories between people",
+    url: "https://www.edgestories.com",
+    favicon: getPublicFaviconUrl("edgestories-1-c.png"),
     type: "project",
     projectAssets: [],
-  },
-  // {
-  //   slug: "edgestories",
-  //   title: "Edge Stories",
-  //   description:
-  //     "",
-  //   url: "https://www.edgestories.com",
-  //   favicon: getPublicFaviconUrl("edgestories-c.png"),
-  //   type: "project",
-  //   projectAssets: [],
-  // },
-  // Ventures
-  {
-    slug: "founding",
-    title: "Founding",
-    description: "Your proxy founding team",
-    url: "https://www.founding.so",
-    favicon: getPublicFaviconUrl("founding-c.png"),
-    type: "venture",
-    projectAssets: [
-      {
-        type: "image",
-        src: getPublicAssetUrl("founding.webp"),
-        dataBlur:
-          "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
-      },
-      {
-        type: "image",
-        src: getPublicAssetUrl("founding-1.webp"),
-      },
-    ],
   },
   // Mini Apps
   {
@@ -216,7 +206,8 @@ export const projects: ProjectType[] = [
   {
     slug: "covid-19-dashboard",
     title: "Covid-19 Dashboard",
-    description: "A real-time dashboard visualizing global Covid-19 data and trends",
+    description:
+      "A real-time dashboard visualizing global Covid-19 data and trends",
     url: "https://covid-19.kyh.io",
     favicon: getPublicFaviconUrl("covid-19-1.png"),
     type: "mini-app",
@@ -252,9 +243,29 @@ export const projects: ProjectType[] = [
   {
     slug: "policing-ice",
     title: "Policing Ice",
-    description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
+    description:
+      "Documenting incidents of ICE overreach through crowdsourced video evidence",
     url: "https://www.policingice.com",
     favicon: getPublicFaviconUrl("policing-ice-1.png"),
+    type: "mini-app",
+    projectAssets: [],
+  },
+  {
+    slug: "loremllm",
+    title: "LoremLLM",
+    description: "Mock responses for LLMs",
+    url: "https://www.loremllm.com",
+    favicon: getPublicFaviconUrl("loremllm.png"),
+    type: "mini-app",
+    projectAssets: [],
+  },
+  {
+    slug: "stonksville",
+    title: "Stonksville",
+    description:
+      "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
+    url: "https://www.stonksville.com",
+    favicon: getPublicFaviconUrl("stonksville.png"),
     type: "mini-app",
     projectAssets: [],
   },
@@ -271,7 +282,8 @@ export const projects: ProjectType[] = [
   {
     slug: "init",
     title: "Init",
-    description: "An AI native starter kit to build, launch, and scale your next project",
+    description:
+      "An AI native starter kit to build, launch, and scale your next project",
     url: "https://init.kyh.io",
     favicon: getPublicFaviconUrl("init.png"),
     type: "template",
