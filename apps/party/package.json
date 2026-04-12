@@ -2,10 +2,10 @@
   "name": "@repo/party",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "clean": "rm -rf .turbo node_modules .cache .wrangler",
-    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "clean": "rm -rf .turbo node_modules .cache .wrangler dist",
+    "deploy": "wrangler deploy --name kyh-partyserver",
     "dev": "pnpm with-env wrangler dev",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"

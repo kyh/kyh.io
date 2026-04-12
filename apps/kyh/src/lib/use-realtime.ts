@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import usePartySocket from "partysocket/react";
 
-import type { MessageType, PlayerMap, PositionMessage } from "@/lib/player";
+import type { ClientMessage, PlayerMap, ServerMessage } from "@/lib/player";
 
 const THROTTLE_MS = 32; // ~30fps, good balance between smoothness and network
 
@@ -18,12 +18,12 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   const [players, setPlayers] = useState<PlayerMap>({});
   const windowDimensions = useTrackWindow();
   const lastSendRef = useRef(0);
-  const pendingMessageRef = useRef<PositionMessage | null>(null);
+  const pendingMessageRef = useRef<ClientMessage | null>(null);
   const rafRef = useRef<number | null>(null);
 
   // Throttled send that batches rapid updates
   const sendThrottled = useCallback(
-    (message: PositionMessage) => {
+    (message: ClientMessage) => {
       pendingMessageRef.current = message;
 
       const now = Date.now();
@@ -59,19 +59,29 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
 
   useEffect(() => {
     const onMessage = (evt: WebSocketEventMap["message"]) => {
-      const msg = JSON.parse(evt.data as string) as MessageType;
+      const msg = JSON.parse(evt.data as string) as ServerMessage;
       switch (msg.type) {
         case "sync":
-          setPlayers({ ...msg.data });
+          setPlayers({ ...msg.data.players });
           break;
-        case "update":
-          setPlayers((others) => ({ ...others, [msg.data.id]: msg.data }));
+        case "player_joined":
+          setPlayers((prev) => ({ ...prev, [msg.data.id]: msg.data }));
           break;
-        case "remove":
-          setPlayers((others) => {
-            const newOthers = { ...others };
-            delete newOthers[msg.data.id];
-            return newOthers;
+        case "player_state":
+          setPlayers((prev) => {
+            const player = prev[msg.data.id];
+            if (!player) return prev;
+            return {
+              ...prev,
+              [msg.data.id]: { ...player, state: { ...player.state, ...msg.data.state } },
+            };
+          });
+          break;
+        case "player_left":
+          setPlayers((prev) => {
+            const next = { ...prev };
+            delete next[msg.data.id];
+            return next;
           });
           break;
       }
@@ -87,8 +97,8 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!windowDimensions.width || !windowDimensions.height) return;
-      const message: PositionMessage = {
-        type: "position",
+      const message: ClientMessage = {
+        type: "player_state_patch",
         data: {
           x: e.clientX / windowDimensions.width,
           y: e.clientY / windowDimensions.height,
@@ -101,8 +111,8 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     const onTouchMove = (e: TouchEvent) => {
       if (!windowDimensions.width || !windowDimensions.height) return;
       if (!e.touches[0]) return;
-      const message: PositionMessage = {
-        type: "position",
+      const message: ClientMessage = {
+        type: "player_state_patch",
         data: {
           x: e.touches[0].clientX / windowDimensions.width,
           y: e.touches[0].clientY / windowDimensions.height,
@@ -114,9 +124,9 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
 
     // touchend sends immediately (no throttle needed)
     const onTouchEnd = () => {
-      const message: PositionMessage = {
-        type: "position",
-        data: {},
+      const message: ClientMessage = {
+        type: "player_state_patch",
+        data: { x: undefined, y: undefined },
       };
       socket.send(JSON.stringify(message));
     };
@@ -133,8 +143,8 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   }, [socket, windowDimensions, sendThrottled]);
 
   useEffect(() => {
-    const message: PositionMessage = {
-      type: "position",
+    const message: ClientMessage = {
+      type: "player_state_patch",
       data: {
         x: 1,
         y: 1,

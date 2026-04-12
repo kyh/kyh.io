@@ -21,13 +21,13 @@ export const Multiplayer = () => {
 
   const cursors = Object.entries(players)
     .filter(([_, player]) => {
-      return !!player.position?.x && !!player.position.y && player.position.pathname === pathname;
+      return !!player.state.x && !!player.state.y && player.state.pathname === pathname;
     })
     .map(([id, player]) => (
       <Cursor
         key={id}
-        x={player.position?.x}
-        y={player.position?.y}
+        x={player.state.x as number | undefined}
+        y={player.state.y as number | undefined}
         color={player.color}
         hue={player.hue}
         windowDimensions={windowDimensions}
