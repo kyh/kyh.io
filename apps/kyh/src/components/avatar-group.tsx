@@ -16,7 +16,7 @@ const color = getRandomColor();
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
   const players = Object.entries(others).toSorted(([, p]) =>
-    p.position?.pathname === pathname ? -1 : 1,
+    p.state.pathname === pathname ? -1 : 1,
   );
   const onlyMe = players.length < 1;
 
@@ -48,7 +48,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           </Tooltip>
         </motion.li>
         {players.map(([id, player], index) => {
-          const anotherPage = player.position?.pathname && player.position.pathname !== pathname;
+          const anotherPage = player.state.pathname && player.state.pathname !== pathname;
 
           let label = "Visitor";
           if (anotherPage) {
