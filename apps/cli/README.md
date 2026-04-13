@@ -1,15 +1,15 @@
-# react
+# CLI
 
-To install dependencies:
+Personal CLI tool built with [OpenTUI](https://git.new/create-tui).
+
+## Stack
+
+- UI - [OpenTUI](https://git.new/create-tui) + [React](https://react.dev/)
+- Build - [esbuild](https://esbuild.github.io/)
+
+## Development
 
 ```bash
-bun install
+pnpm install
+pnpm dev-cli
 ```
-
-To run:
-
-```bash
-bun dev
-```
-
-This project was created using `bun create tui`. [create-tui](https://git.new/create-tui) is the easiest way to get started with OpenTUI.

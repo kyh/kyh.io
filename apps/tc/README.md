@@ -21,9 +21,7 @@ This project uses the following libraries and services:
 
 ## Development
 
-```sh
+```bash
 pnpm install
-pnpm run dev
+pnpm dev-tc
 ```
-
-Open up [http://localhost:3000](http://localhost:3000) and you should be ready to go!

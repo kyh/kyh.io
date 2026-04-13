@@ -18,20 +18,16 @@
 └── /public                      # Static assets served as-is by Vite
 ```
 
-## Setting up
+## Stack
+
+- Framework - [Vite](https://vitejs.dev/) + [React](https://react.dev/)
+- Visualization - [D3](https://d3js.org/)
+- Data - [The COVID Tracking Project](https://covidtracking.com/)
+- Hosting - [Cloudflare Pages](https://pages.cloudflare.com/)
+
+## Development
 
 ```bash
-npm i
-# Run in dev mode
-npm run dev
-# Create a production build
-npm run build
+pnpm install
+pnpm dev-covid
 ```
-
-This project is built with [Vite](https://vitejs.dev/) and [React](https://react.dev/).
-
-API data comes from [The COVID Tracking Project](https://covidtracking.com/)
-
-## Deployment
-
-The site will autodeploy with Cloudflare Pages whenever merged to `main`

@@ -13,8 +13,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun build src/index.tsx --outdir dist --target bun && echo '#!/usr/bin/env bun' | cat - dist/index.js > dist/temp && mv dist/temp dist/index.js",
-    "dev": "bun run --watch src/index.tsx",
+    "build": "esbuild src/index.tsx --bundle --platform=node --format=esm --outfile=dist/index.js --banner:js='#!/usr/bin/env node' --packages=external",
+    "dev": "tsx --watch src/index.tsx",
     "clean": "rm -rf dist node_modules",
     "typecheck": "tsc --noEmit"
   },
@@ -26,6 +26,8 @@
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
     "@types/react": "catalog:",
+    "esbuild": "^0.28.0",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

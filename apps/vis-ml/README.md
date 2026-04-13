@@ -1,13 +1,22 @@
-# Interactive Visualizations of ML topics
+# Visual ML
 
-- What is Machine Learning? (planned)
+> A visual introduction to machine learning topics.
+
+Scroll-driven interactive visualizations powered by D3.
+
 - Linear Regression
 - Gradient Descent (planned)
 - Deep Learning (planned)
 
-### Development
+## Stack
 
-```
-npm i
-npm run dev
+- Visualization - [D3](https://d3js.org/)
+- Scroll - [Scrollama](https://github.com/russellsamora/scrollama)
+- Build Tool - [Vite](https://vitejs.dev/)
+
+## Development
+
+```bash
+pnpm install
+pnpm dev-vis-ml
 ```
