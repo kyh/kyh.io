@@ -7,7 +7,7 @@ import { Cursor } from "@/components/cursor";
 import { useRealtime } from "@/lib/use-realtime";
 
 // const HOST = "http://localhost:8787";
-const HOST = "https://kyh-partyserver.kyh.workers.dev";
+const HOST = "https://kyh-party.kyh.workers.dev";
 const PARTY = "kyh-server";
 const ROOM = "kyh";
 
