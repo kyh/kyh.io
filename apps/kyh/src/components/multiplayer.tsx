@@ -8,7 +8,7 @@ import { useRealtime } from "@/lib/use-realtime";
 
 // const HOST = "http://localhost:8787";
 const HOST = "https://kyh-party.kyh.workers.dev";
-const PARTY = "kyh-server";
+const PARTY = "KyhServer";
 const ROOM = "kyh";
 
 export const Multiplayer = () => {
