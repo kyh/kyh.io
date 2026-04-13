@@ -116,8 +116,7 @@ Use 0.5px borders on retina displays for crisp, subtle dividers. Define a CSS va
 :root {
   --border-hairline: 1px;
 
-  @media only screen and (min-device-pixel-ratio: 2),
-    only screen and (min-resolution: 192dpi) {
+  @media only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi) {
     --border-hairline: 0.5px;
   }
 }

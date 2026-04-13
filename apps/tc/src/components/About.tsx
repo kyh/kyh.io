@@ -118,7 +118,12 @@ export const useAbout = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [steps] = useState(defaultSteps);
 
-  const handleJoyrideCallback: import("react-joyride").EventHandler = ({ action, index, type, status }) => {
+  const handleJoyrideCallback: import("react-joyride").EventHandler = ({
+    action,
+    index,
+    type,
+    status,
+  }) => {
     if (
       action === ACTIONS.CLOSE ||
       ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)

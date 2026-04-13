@@ -12,7 +12,7 @@ Publish a shared package and update all downstream consumers.
 
 - Current directory: !pwd
 - Git status: !git status --short
-- Projects list: !grep -A20 'pupa()' ~/.zshrc | grep -oP '(?<=    )[\w/\-]+'
+- Projects list: !grep -A20 'pupa()' ~/.zshrc | grep -oP '(?<= )[\w/\-]+'
 - Projects root: ~/Documents/Projects
 
 ## Arguments
@@ -38,6 +38,7 @@ The user should specify which package to publish. If not specified, infer from t
 ### Phase 3: Find Consumers
 
 Search all projects from pupa() for references to the package:
+
 - `pnpm-workspace.yaml` catalog entries
 - `package.json` dependencies/devDependencies
 - Skip `node_modules`

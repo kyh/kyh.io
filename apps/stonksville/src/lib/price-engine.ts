@@ -89,10 +89,7 @@ export class PriceEngine {
     const cutoff = time - 5 * 60 * 1000;
     if (this.history.length > 0 && this.history[0]!.time < cutoff) {
       let trimCount = 0;
-      while (
-        trimCount < this.history.length &&
-        this.history[trimCount]!.time < cutoff
-      ) {
+      while (trimCount < this.history.length && this.history[trimCount]!.time < cutoff) {
         trimCount++;
       }
       if (trimCount > 0) {
@@ -124,5 +121,4 @@ export class PriceEngine {
   getCurrentPrice(): number {
     return this.currentPrice;
   }
-
 }

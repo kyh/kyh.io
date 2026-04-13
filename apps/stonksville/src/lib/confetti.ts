@@ -1,13 +1,6 @@
 import { animate } from "motion";
 
-const COLORS = [
-  "#34d399",
-  "#6ee7b7",
-  "#a7f3d0",
-  "#fbbf24",
-  "#fcd34d",
-  "#ffffff",
-];
+const COLORS = ["#34d399", "#6ee7b7", "#a7f3d0", "#fbbf24", "#fcd34d", "#ffffff"];
 
 const SHAPES = ["circle", "rect", "rect", "strip", "strip"] as const;
 type Shape = (typeof SHAPES)[number];
@@ -72,9 +65,7 @@ function computeKeyframes(params: {
     if (t < SCALE_DURATION_FRACTION * 0.6) {
       scale = (t / (SCALE_DURATION_FRACTION * 0.6)) * 1.15;
     } else if (t < SCALE_DURATION_FRACTION) {
-      const st =
-        (t - SCALE_DURATION_FRACTION * 0.6) /
-        (SCALE_DURATION_FRACTION * 0.4);
+      const st = (t - SCALE_DURATION_FRACTION * 0.6) / (SCALE_DURATION_FRACTION * 0.4);
       scale = 1.15 - st * 0.15;
     } else {
       scale = 1;
@@ -152,8 +143,7 @@ export function fireConfetti(
 
   for (let i = 0; i < particleCount; i++) {
     const radSpread = spread * (Math.PI / 180);
-    const angle =
-      -Math.PI / 2 + (0.5 * radSpread - Math.random() * radSpread);
+    const angle = -Math.PI / 2 + (0.5 * radSpread - Math.random() * radSpread);
     const velocity = startVelocity * 0.5 + Math.random() * startVelocity;
     const wobbleSpeed = Math.min(0.11, Math.random() * 0.1 + 0.05);
     const wobbleOffset = Math.random() * 10;
@@ -185,14 +175,9 @@ export function fireConfetti(
       const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)]!;
       const color = colors[Math.floor(Math.random() * colors.length)]!;
       const w =
-        shape === "strip"
-          ? pieceSize * 0.3
-          : shape === "rect"
-            ? pieceSize * 0.7
-            : pieceSize;
+        shape === "strip" ? pieceSize * 0.3 : shape === "rect" ? pieceSize * 0.7 : pieceSize;
       const h = shape === "strip" ? pieceSize * 2 : pieceSize;
-      const br =
-        shape === "circle" ? "50%" : shape === "strip" ? `${pieceSize * 0.12}px` : "2px";
+      const br = shape === "circle" ? "50%" : shape === "strip" ? `${pieceSize * 0.12}px` : "2px";
       el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;width:${w}px;height:${h}px;border-radius:${br};background:${color};pointer-events:none;will-change:transform,opacity`;
     }
 

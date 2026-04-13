@@ -8,14 +8,13 @@
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
   "edit_predictions": {
-    "provider": "copilot"
+    "provider": "zed"
   },
   "agent_servers": {
-    "claude": {
+    "claude-acp": {
+      "type": "registry",
       "default_model": "opus",
-      "favorite_models": ["opus"],
-      "default_config_options": {},
-      "favorite_config_option_values": {}
+      "favorite_models": ["opus"]
     }
   },
   "project_panel": {

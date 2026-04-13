@@ -37,11 +37,7 @@ Use appropriate `type` attributes:
 Disable `spellcheck` and `autocomplete` most of the time for cleaner UX:
 
 ```html
-<input
-  type="text"
-  spellcheck="false"
-  autocomplete="off"
-/>
+<input type="text" spellcheck="false" autocomplete="off" />
 ```
 
 ### 1Password Integration
@@ -55,6 +51,7 @@ Disable 1Password autocomplete when not needed:
 ### Input Decorations
 
 Prefix and suffix decorations (icons, labels) should be:
+
 - Absolutely positioned on top of the text input with padding
 - Not placed next to the input as siblings
 - Should trigger focus on the input when clicked
@@ -80,10 +77,7 @@ Prefix and suffix decorations (icons, labels) should be:
 For clickable icons (like clear button):
 
 ```jsx
-<button
-  className="input-icon-button"
-  onClick={() => inputRef.current?.focus()}
->
+<button className="input-icon-button" onClick={() => inputRef.current?.focus()}>
   <SearchIcon />
 </button>
 ```
@@ -93,7 +87,9 @@ For clickable icons (like clear button):
 Ensure input font size is at least 16px to prevent zooming on iOS:
 
 ```css
-input, textarea, select {
+input,
+textarea,
+select {
   font-size: 16px;
 }
 ```
@@ -107,9 +103,9 @@ Inputs smaller than 16px cause iOS Safari to zoom in on focus.
 
 ```jsx
 // Check for touch device before autofocus
-const isTouchDevice = 'ontouchstart' in window;
+const isTouchDevice = "ontouchstart" in window;
 
-<input autoFocus={!isTouchDevice} />
+<input autoFocus={!isTouchDevice} />;
 ```
 
 ## Forms
@@ -119,7 +115,7 @@ const isTouchDevice = 'ontouchstart' in window;
 Inputs should be wrapped with a `<form>` to submit by pressing Enter:
 
 ```html
-<form onSubmit={handleSubmit}>
+<form onSubmit="{handleSubmit}">
   <input type="text" />
   <button type="submit">Submit</button>
 </form>
@@ -131,7 +127,7 @@ Ensure `Cmd+Enter` (Mac) / `Ctrl+Enter` (Windows) submits the form, especially f
 
 ```jsx
 function handleKeyDown(e) {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     handleSubmit();
   }
 }
@@ -143,6 +139,7 @@ function handleKeyDown(e) {
 - When linking to a form, prefill content based on the request context
 
 Example: If a user clicks "Change username", prefill with:
+
 > "I'd like to change my username to:"
 
 If you can prefill any user data based on the logged-in user, do that.
@@ -155,11 +152,11 @@ A button should always be a `<button>`. Don't add click events on elements that 
 
 ```html
 <!-- Good -->
-<button onClick={handleClick}>Click me</button>
+<button onClick="{handleClick}">Click me</button>
 
 <!-- Bad -->
-<div onClick={handleClick}>Click me</div>
-<span onClick={handleClick}>Click me</span>
+<div onClick="{handleClick}">Click me</div>
+<span onClick="{handleClick}">Click me</span>
 ```
 
 ### Disabled After Submission
@@ -177,8 +174,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     setIsSubmitting(false);
   }}
 >
-  {isSubmitting ? 'Submitting...' : 'Submit'}
-</button>
+  {isSubmitting ? "Submitting..." : "Submit"}
+</button>;
 ```
 
 ### Button Shortcuts
@@ -237,7 +234,7 @@ Ensure destructive actions require confirmation:
 
 ```jsx
 function handleDelete() {
-  if (confirm('Are you sure you want to delete this?')) {
+  if (confirm("Are you sure you want to delete this?")) {
     deleteItem();
   }
 }

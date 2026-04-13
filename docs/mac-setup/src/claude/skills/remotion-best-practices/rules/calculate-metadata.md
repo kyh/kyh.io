@@ -30,9 +30,7 @@ Use the [`getVideoDuration`](./get-video-duration.md) and [`getVideoDimensions`]
 import { CalculateMetadataFunction } from "remotion";
 import { getVideoDuration } from "./get-video-duration";
 
-const calculateMetadata: CalculateMetadataFunction<Props> = async ({
-  props,
-}) => {
+const calculateMetadata: CalculateMetadataFunction<Props> = async ({ props }) => {
   const durationInSeconds = await getVideoDuration(props.videoSrc);
 
   return {
@@ -50,9 +48,7 @@ import { CalculateMetadataFunction } from "remotion";
 import { getVideoDuration } from "./get-video-duration";
 import { getVideoDimensions } from "./get-video-dimensions";
 
-const calculateMetadata: CalculateMetadataFunction<Props> = async ({
-  props,
-}) => {
+const calculateMetadata: CalculateMetadataFunction<Props> = async ({ props }) => {
   const dimensions = await getVideoDimensions(props.videoSrc);
 
   return {
@@ -65,18 +61,11 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async ({
 ## Setting duration based on multiple videos
 
 ```tsx
-const calculateMetadata: CalculateMetadataFunction<Props> = async ({
-  props,
-}) => {
-  const metadataPromises = props.videos.map((video) =>
-    getVideoDuration(video.src),
-  );
+const calculateMetadata: CalculateMetadataFunction<Props> = async ({ props }) => {
+  const metadataPromises = props.videos.map((video) => getVideoDuration(video.src));
   const allMetadata = await Promise.all(metadataPromises);
 
-  const totalDuration = allMetadata.reduce(
-    (sum, durationInSeconds) => sum + durationInSeconds,
-    0,
-  );
+  const totalDuration = allMetadata.reduce((sum, durationInSeconds) => sum + durationInSeconds, 0);
 
   return {
     durationInFrames: Math.ceil(totalDuration * 30),
@@ -89,9 +78,7 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async ({
 Set the default output filename based on props:
 
 ```tsx
-const calculateMetadata: CalculateMetadataFunction<Props> = async ({
-  props,
-}) => {
+const calculateMetadata: CalculateMetadataFunction<Props> = async ({ props }) => {
   return {
     defaultOutName: `video-${props.id}.mp4`,
   };
@@ -103,10 +90,7 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async ({
 Fetch data or transform props before rendering:
 
 ```tsx
-const calculateMetadata: CalculateMetadataFunction<Props> = async ({
-  props,
-  abortSignal,
-}) => {
+const calculateMetadata: CalculateMetadataFunction<Props> = async ({ props, abortSignal }) => {
   const response = await fetch(props.dataUrl, { signal: abortSignal });
   const data = await response.json();
 

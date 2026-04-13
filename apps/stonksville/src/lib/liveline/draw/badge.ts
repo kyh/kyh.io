@@ -11,9 +11,9 @@ export function badgeSvgPath(
   tailLen: number,
   tailSpread: number,
 ): string {
-  const r = pillH / 2
-  const cx = tailLen + pillW - r   // right semicircle center X
-  const tl = tailLen + r           // top-left junction X
+  const r = pillH / 2;
+  const cx = tailLen + pillW - r; // right semicircle center X
+  const tl = tailLen + r; // top-left junction X
 
   return [
     `M${tl},0`,
@@ -22,28 +22,28 @@ export function badgeSvgPath(
     `L${tl},${pillH}`,
     `C${tailLen + 2},${pillH},${3},${r + tailSpread},0,${r}`,
     `C${3},${r - tailSpread},${tailLen + 2},0,${tl},0`,
-    'Z',
-  ].join(' ')
+    "Z",
+  ].join(" ");
 }
 
 /**
  * Simple pill (no tail) — a rounded rect.
  */
 export function badgePillOnly(pillW: number, pillH: number): string {
-  const r = pillH / 2
+  const r = pillH / 2;
   return [
     `M${r},0`,
     `L${pillW - r},0`,
     `A${r},${r},0,0,1,${pillW - r},${pillH}`,
     `L${r},${pillH}`,
     `A${r},${r},0,0,1,${r},0`,
-    'Z',
-  ].join(' ')
+    "Z",
+  ].join(" ");
 }
 
 /** Badge geometry constants */
-export const BADGE_PAD_X = 10
-export const BADGE_PAD_Y = 3
-export const BADGE_TAIL_LEN = 5
-export const BADGE_TAIL_SPREAD = 2.5
-export const BADGE_LINE_H = 16
+export const BADGE_PAD_X = 10;
+export const BADGE_PAD_Y = 3;
+export const BADGE_TAIL_LEN = 5;
+export const BADGE_TAIL_SPREAD = 2.5;
+export const BADGE_LINE_H = 16;

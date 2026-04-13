@@ -1,7 +1,7 @@
-export { Liveline } from './Liveline'
-export { LivelineTransition } from './LivelineTransition'
-export type { CandlePoint } from './types'
-export type { LivelineTransitionProps } from './LivelineTransition'
+export { Liveline } from "./Liveline";
+export { LivelineTransition } from "./LivelineTransition";
+export type { CandlePoint } from "./types";
+export type { LivelineTransitionProps } from "./LivelineTransition";
 export type {
   LivelineProps,
   LivelinePoint,
@@ -16,4 +16,4 @@ export type {
   DegenOptions,
   WindowStyle,
   BadgeVariant,
-} from './types'
+} from "./types";

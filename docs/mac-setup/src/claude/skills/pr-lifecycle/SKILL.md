@@ -57,11 +57,13 @@ The cron prompt should instruct Claude to:
    - Stage the changed file
 
 6. **After addressing all comments**: Create a single commit with message format:
+
    ```
    fix: address bot review feedback
 
    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
    ```
+
    Then push to the PR branch.
 
 7. **After pushing**: Log what was fixed and wait for the next cycle to verify the bots are satisfied.

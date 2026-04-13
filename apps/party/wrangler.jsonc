@@ -8,14 +8,14 @@
     "bindings": [
       {
         "name": "KyhServer",
-        "class_name": "KyhServer"
-      }
-    ]
+        "class_name": "KyhServer",
+      },
+    ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["KyhServer"]
-    }
-  ]
+      "new_classes": ["KyhServer"],
+    },
+  ],
 }

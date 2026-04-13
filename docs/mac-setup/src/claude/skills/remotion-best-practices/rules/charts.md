@@ -98,11 +98,7 @@ const { strokeDasharray, strokeDashoffset } = evolvePath(progress, path);
 ### Follow path with marker/arrow
 
 ```tsx
-import {
-  getLength,
-  getPointAtLength,
-  getTangentAtLength,
-} from "@remotion/paths";
+import { getLength, getPointAtLength, getTangentAtLength } from "@remotion/paths";
 
 const pathLength = getLength(path);
 const point = getPointAtLength(path, progress * pathLength);

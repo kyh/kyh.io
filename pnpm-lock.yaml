@@ -566,15 +566,6 @@ importers:
         specifier: 'catalog:'
         version: 6.0.2
 
-  packages/prettier:
-    devDependencies:
-      '@kyh/tsconfig':
-        specifier: workspace:^
-        version: link:../typescript
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.2
-
   packages/typescript: {}
 
 packages:

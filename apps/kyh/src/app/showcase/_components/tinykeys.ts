@@ -105,28 +105,24 @@ function parse(str: string): KeyBindingPress[] {
  * partially or exactly.
  */
 function match(event: KeyboardEvent, press: KeyBindingPress): boolean {
-  // prettier-ignore
   return !(
-		// Allow either the `event.key` or the `event.code`
-		// MDN event.key: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
-		// MDN event.code: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
-		(
-			press[1].toUpperCase() !== event.key.toUpperCase() &&
-			press[1] !== event.code
-		) ||
-
-		// Ensure all the modifiers in the keybinding are pressed.
-		press[0].find(mod => {
-			return !event.getModifierState(mod)
-		}) ||
-
-		// KEYBINDING_MODIFIER_KEYS (Shift/Control/etc) change the meaning of a
-		// keybinding. So if they are pressed but aren't part of this keybinding,
-		// then we don't have a match.
-		KEYBINDING_MODIFIER_KEYS.find(mod => {
-			return !press[0].includes(mod) && event.getModifierState(mod)
-		})
-	)
+    // Allow either the `event.key` or the `event.code`
+    // MDN event.key: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
+    // MDN event.code: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
+    (
+      (press[1].toUpperCase() !== event.key.toUpperCase() && press[1] !== event.code) ||
+      // Ensure all the modifiers in the keybinding are pressed.
+      press[0].find((mod) => {
+        return !event.getModifierState(mod);
+      }) ||
+      // KEYBINDING_MODIFIER_KEYS (Shift/Control/etc) change the meaning of a
+      // keybinding. So if they are pressed but aren't part of this keybinding,
+      // then we don't have a match.
+      KEYBINDING_MODIFIER_KEYS.find((mod) => {
+        return !press[0].includes(mod) && event.getModifierState(mod);
+      })
+    )
+  );
 }
 
 /**

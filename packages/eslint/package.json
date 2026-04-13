@@ -17,6 +17,5 @@
   "devDependencies": {
     "@kyh/tsconfig": "workspace:*",
     "typescript": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }

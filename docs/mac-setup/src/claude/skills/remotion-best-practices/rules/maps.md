@@ -233,23 +233,16 @@ useEffect(() => {
 
   const routeDistance = turf.length(turf.lineString(lineCoordinates));
 
-  const progress = interpolate(
-    frame / fps,
-    [0.00001, animationDuration],
-    [0, 1],
-    {
-      easing: Easing.inOut(Easing.sin),
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
+  const progress = interpolate(frame / fps, [0.00001, animationDuration], [0, 1], {
+    easing: Easing.inOut(Easing.sin),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   const camera = map.getFreeCameraOptions();
 
-  const alongRoute = turf.along(
-    turf.lineString(lineCoordinates),
-    routeDistance * progress,
-  ).geometry.coordinates;
+  const alongRoute = turf.along(turf.lineString(lineCoordinates), routeDistance * progress).geometry
+    .coordinates;
 
   camera.lookAtPoint({
     lng: alongRoute[0],

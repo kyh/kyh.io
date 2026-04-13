@@ -53,10 +53,7 @@ export function createInitialState(): GameState {
  * Calculate multiplier based on distance from current price.
  * Further from current price = higher multiplier.
  */
-export function calculateMultiplier(
-  currentPrice: number,
-  targetPrice: number,
-): number {
+export function calculateMultiplier(currentPrice: number, targetPrice: number): number {
   const distance = Math.abs(targetPrice - currentPrice);
   const percentDistance = (distance / currentPrice) * 100;
 
@@ -154,10 +151,7 @@ export function updateBlocks(
     }
 
     // Lock blocks that are close to resolution
-    if (
-      block.status === "active" &&
-      block.targetTime - currentTime < LOCK_SECONDS * 1000
-    ) {
+    if (block.status === "active" && block.targetTime - currentTime < LOCK_SECONDS * 1000) {
       changed = true;
       return { ...block, status: "locked" as const, touched: nowTouched };
     }
@@ -170,10 +164,20 @@ export function updateBlocks(
         const payout = block.amount * block.multiplier;
         balanceChange += payout;
         wins++;
-        return { ...block, status: "won" as const, touched: true, resolvedAt: block.resolvedAt ?? currentTime };
+        return {
+          ...block,
+          status: "won" as const,
+          touched: true,
+          resolvedAt: block.resolvedAt ?? currentTime,
+        };
       } else {
         losses++;
-        return { ...block, status: "lost" as const, touched: false, resolvedAt: block.resolvedAt ?? currentTime };
+        return {
+          ...block,
+          status: "lost" as const,
+          touched: false,
+          resolvedAt: block.resolvedAt ?? currentTime,
+        };
       }
     }
 
