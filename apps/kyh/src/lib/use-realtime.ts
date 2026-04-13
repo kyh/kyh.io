@@ -126,7 +126,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     const onTouchEnd = () => {
       const message: ClientMessage = {
         type: "player_state_patch",
-        data: { x: undefined, y: undefined },
+        data: { x: null, y: null },
       };
       socket.send(JSON.stringify(message));
     };

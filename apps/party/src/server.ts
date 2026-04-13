@@ -55,7 +55,6 @@ export class KyhServer extends Server {
       state: {},
     };
 
-    this.room.players[connection.id] = player;
     if (!this.room.hostId) {
       this.room.hostId = connection.id;
     }
@@ -69,6 +68,8 @@ export class KyhServer extends Server {
       },
     };
     connection.send(JSON.stringify(syncMessage));
+
+    this.room.players[connection.id] = player;
 
     const joinedMessage: ServerMessage = {
       type: "player_joined",
@@ -91,7 +92,7 @@ export class KyhServer extends Server {
             type: "state_patch",
             data: message.data,
           };
-          this.broadcast(JSON.stringify(broadcastMessage), []);
+          this.broadcast(JSON.stringify(broadcastMessage), [sender.id]);
           break;
         }
         case "player_state_patch": {
