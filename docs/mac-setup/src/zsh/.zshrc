@@ -51,6 +51,7 @@ alias s='source ~/.zshrc'
 alias pu="pnpm dlx taze -r -w"
 alias pi="pnpm install"
 alias pd="pnpm dev"
+alias pdw="pnpm dev:web"
 alias po="pnpm outdated -r"
 alias pupi="pu && pnpm install"
 alias pup="pu && pnpm install && git commit -a -m 'chore: update packages' && git push"
