@@ -60,8 +60,11 @@ pupa() {
     edgestories
     init
     inteligir
+    kyh/ai-calendar
     kyh/ai-canvas
+    kyh/ai-coms
     kyh/ai-datagrid
+    kyh/ai-notes
     kyh/kyh.io
     loremllm
     uicapsule

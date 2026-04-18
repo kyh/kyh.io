@@ -20,7 +20,7 @@
     "react": "catalog:",
     "react-content-loader": "^7.1.2",
     "react-dom": "catalog:",
-    "react-router-dom": "^7.14.0",
+    "react-router-dom": "^7.14.1",
     "swr": "^2.4.1"
   },
   "devDependencies": {
