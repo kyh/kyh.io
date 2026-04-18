@@ -54,3 +54,6 @@ yarn-error.log*
 .superset
 apps/policingice/scripts/.enriched-incidents.json
 apps/policingice/scripts/.enriched-sentiment.json
+
+# claude
+.claude/scheduled_tasks.lock
