@@ -3,14 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "pnpm env next build",
     "check": "oxfmt --write . && oxlint --fix",
-    "db:push": "pnpm with-env drizzle-kit push",
-    "db:studio": "pnpm with-env drizzle-kit studio",
-    "dev": "pnpm with-env next dev --turbopack -p 3000",
-    "start": "pnpm with-env next start",
+    "db:push": "pnpm env drizzle-kit push",
+    "db:studio": "pnpm env drizzle-kit studio",
+    "dev": "pnpm env next dev --turbopack -p 3000",
+    "start": "pnpm env next start",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e .env --"
+    "env": "dotenv -e .env --"
   },
   "dependencies": {
     "@ai-sdk/xai": "^3.0.83",

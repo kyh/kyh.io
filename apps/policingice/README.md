@@ -18,7 +18,7 @@ Policing ICE is a community-driven platform for collecting and sharing video doc
 
 ```bash
 pnpm install
-pnpm dev-policingice
+pnpm dev:policingice
 ```
 
 ## Tech Stack

@@ -16,5 +16,5 @@
 
 ```bash
 pnpm install
-pnpm dev-kyh
+pnpm dev:kyh
 ```

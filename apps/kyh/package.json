@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "pnpm env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev",
-    "start": "pnpm with-env next start",
+    "dev": "pnpm env next dev",
+    "start": "pnpm env next start",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e .env --"
+    "env": "dotenv -e .env --"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",

@@ -29,5 +29,5 @@
 
 ```bash
 pnpm install
-pnpm dev-covid
+pnpm dev:covid
 ```

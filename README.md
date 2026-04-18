@@ -29,7 +29,7 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 
 ```bash
 pnpm i            # install dependencies
-pnpm dev-<app>    # dev server for specific app (e.g. pnpm dev-kyh)
+pnpm dev:<app>    # dev server for specific app (e.g. pnpm dev:kyh)
 pnpm build        # build all
 pnpm lint         # lint all
 pnpm typecheck    # typecheck all

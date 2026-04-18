@@ -15,5 +15,5 @@ Interactive canvas app for creating quadrant diagrams with draggable tags, image
 
 ```bash
 pnpm install
-pnpm dev-kwadrants
+pnpm dev:kwadrants
 ```

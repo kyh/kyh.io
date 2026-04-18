@@ -11,5 +11,5 @@ Personal CLI tool built with [OpenTUI](https://git.new/create-tui).
 
 ```bash
 pnpm install
-pnpm dev-cli
+pnpm dev:cli
 ```

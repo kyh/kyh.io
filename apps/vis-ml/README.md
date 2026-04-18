@@ -18,5 +18,5 @@ Scroll-driven interactive visualizations powered by D3.
 
 ```bash
 pnpm install
-pnpm dev-vis-ml
+pnpm dev:vis-ml
 ```

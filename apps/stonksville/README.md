@@ -14,5 +14,5 @@ Canvas-based live trading chart visualization with candlestick rendering, order 
 
 ```bash
 pnpm install
-pnpm dev-stonksville
+pnpm dev:stonksville
 ```

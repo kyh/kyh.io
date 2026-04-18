@@ -5,7 +5,7 @@ Personal monorepo. Uses pnpm workspaces + turborepo.
 ## Commands
 
 ```bash
-pnpm dev-<app>     # dev server for specific app
+pnpm dev:<app>     # dev server for specific app
 pnpm build         # build all
 pnpm lint          # lint all
 pnpm typecheck     # typecheck all

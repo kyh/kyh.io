@@ -35,9 +35,9 @@ Run each check across ALL projects from the pupa() list (resolve paths as `~/Doc
 Root `package.json` scripts should include:
 
 - `"lint"`: should use `oxlint`
-- `"lint-fix"`: should use `oxlint --fix`
+- `"lint:fix"`: should use `oxlint --fix`
 - `"format"`: should use `oxfmt`
-- `"format-fix"`: should use `oxfmt --write`
+- `"format:fix"`: should use `oxfmt --write`
 
 ### 4. TypeScript Config Health
 

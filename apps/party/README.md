@@ -11,11 +11,11 @@ Real-time multiplayer server powering kyh.io interactions.
 
 ```bash
 pnpm install
-pnpm dev-party
+pnpm dev:party
 ```
 
 ## Deployment
 
 ```bash
-pnpm deploy-party
+pnpm deploy:party
 ```

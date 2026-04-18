@@ -23,5 +23,5 @@ This project uses the following libraries and services:
 
 ```bash
 pnpm install
-pnpm dev-tc
+pnpm dev:tc
 ```
