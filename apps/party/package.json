@@ -6,9 +6,9 @@
     "build": "wrangler deploy --dry-run --outdir=dist",
     "clean": "rm -rf .turbo node_modules .cache .wrangler dist",
     "deploy": "wrangler deploy --name kyh-party",
-    "dev": "pnpm env wrangler dev",
+    "dev": "pnpm with-env wrangler dev",
     "typecheck": "tsc --noEmit",
-    "env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260418.1",
