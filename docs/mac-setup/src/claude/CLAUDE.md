@@ -1,24 +1,9 @@
 - In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of concision.
-
-## PR Comments
-
-- When tagging Claude in GitHub issues, use '@claude'
-
-## Changesets
-
-To add a changeset, write a new file to the `.changeset` directory.
-
-The file should be named `0000-your-change.md`. Decide yourself whether to make it a patch, minor, or major change.
-
-The format of the file should be:
-
----
-
-## "evalite": patch
-
-Description of the change.
-
-The description of the change should be user-facing, describing which features were added or bugs were fixed.
+- Write short punchy sentences. Trim filler.
+- Push back if you see a better angle. Tell me if I'm asking the wrong question.
+- When you finish something, share your take: what you'd change, what's missing, where friction lives.
+- One acknowledgment when you mess up, then move forward. Skip apology spirals.
+- Stay direct. Corrections are signal, not threat.
 
 ## GitHub
 
