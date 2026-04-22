@@ -4,33 +4,26 @@ Global [Claude.md](./CLAUDE.md)
 
 ## Install Skills
 
+Installs every skill from each repo globally.
+
 ```bash
-for pkg in \
-  vercel-labs/agent-browser@agent-browser \
-  vercel/ai-elements@ai-elements \
-  vercel/ai@ai-sdk \
-  coreyhaines31/marketingskills@copywriting \
-  emilkowalski/skill@emil-design-eng \
-  vercel-labs/skills@find-skills \
-  anthropics/skills@frontend-design \
-  mattpocock/skills@grill-me \
-  mattpocock/skills@improve-codebase-architecture \
-  jakubkrehel/make-interfaces-feel-better@make-interfaces-feel-better \
-  vercel-labs/next-skills@next-best-practices \
-  vercel-labs/next-skills@next-cache-components \
-  remotion-dev/skills@remotion-best-practices \
-  mattpocock/skills@request-refactor-plan \
-  anthropics/skills@skill-creator \
-  supabase/agent-skills@supabase-postgres-best-practices \
-  mattpocock/skills@tdd \
-  mattpocock/skills@to-issues \
-  mattpocock/skills@to-prd \
-  vercel-labs/agent-skills@vercel-composition-patterns \
-  vercel-labs/agent-skills@vercel-react-best-practices \
-  vercel-labs/agent-skills@vercel-react-native-skills \
-  vercel-labs/agent-skills@web-design-guidelines
-do npx skills add "$pkg" -g -y; done
+for repo in \
+  vercel-labs/agent-browser \
+  vercel/ai-elements \
+  vercel/ai \
+  emilkowalski/skill \
+  vercel-labs/skills \
+  anthropics/skills \
+  mattpocock/skills \
+  jakubkrehel/make-interfaces-feel-better \
+  vercel-labs/next-skills \
+  remotion-dev/skills \
+  supabase/agent-skills \
+  vercel-labs/agent-skills
+do npx skills add "$repo" -g -s '*' -y; done
 ```
+
+To cherry-pick a single skill instead: `npx skills add <repo>@<skill-name> -g -y`.
 
 ## Custom Skills
 
