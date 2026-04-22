@@ -57,3 +57,5 @@ apps/policingice/scripts/.enriched-sentiment.json
 
 # claude
 .claude/scheduled_tasks.lock
+.claude/worktrees
+.playwright-mcp
