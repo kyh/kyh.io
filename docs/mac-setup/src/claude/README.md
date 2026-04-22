@@ -18,18 +18,17 @@ for pkg in \
   jakubkrehel/make-interfaces-feel-better@make-interfaces-feel-better \
   vercel-labs/next-skills@next-best-practices \
   vercel-labs/next-skills@next-cache-components \
-  mattpocock/skills@prd-to-issues \
-  mattpocock/skills@prd-to-plan \
   remotion-dev/skills@remotion-best-practices \
   mattpocock/skills@request-refactor-plan \
   anthropics/skills@skill-creator \
   supabase/agent-skills@supabase-postgres-best-practices \
   mattpocock/skills@tdd \
+  mattpocock/skills@to-issues \
+  mattpocock/skills@to-prd \
   vercel-labs/agent-skills@vercel-composition-patterns \
   vercel-labs/agent-skills@vercel-react-best-practices \
   vercel-labs/agent-skills@vercel-react-native-skills \
-  vercel-labs/agent-skills@web-design-guidelines \
-  mattpocock/skills@write-a-prd
+  vercel-labs/agent-skills@web-design-guidelines
 do npx skills add "$pkg" -g -y; done
 ```
 
