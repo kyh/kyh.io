@@ -4,8 +4,8 @@
 
 Use the **opensrc MCP server** via single tool:
 
-| Tool              | Purpose                                                 |
-| ----------------- | ------------------------------------------------------- |
+| Tool | Purpose |
+|------|---------|
 | `opensrc_execute` | All operations (fetch, read, grep, files, remove, etc.) |
 
 Takes a `code` parameter: JavaScript async arrow function executed server-side. Source trees stay on server, only results return.
@@ -66,7 +66,7 @@ opensrc.clean(options?: CleanOptions): Promise<RemoveResult>
 ```typescript
 interface Source {
   type: "npm" | "pypi" | "crates" | "repo";
-  name: string; // Use this for all subsequent calls
+  name: string;           // Use this for all subsequent calls
   version?: string;
   ref?: string;
   path: string;
@@ -79,7 +79,7 @@ interface Source {
 
 ```typescript
 interface FetchedSource {
-  source: Source; // IMPORTANT: use source.name for subsequent calls
+  source: Source;         // IMPORTANT: use source.name for subsequent calls
   alreadyExists: boolean;
 }
 ```
@@ -88,9 +88,9 @@ interface FetchedSource {
 
 ```typescript
 interface GrepOptions {
-  sources?: string[]; // Filter to specific sources
-  include?: string; // File glob pattern (e.g., "*.ts")
-  maxResults?: number; // Limit results (default: 100)
+  sources?: string[];     // Filter to specific sources
+  include?: string;       // File glob pattern (e.g., "*.ts")
+  maxResults?: number;    // Limit results (default: 100)
 }
 ```
 
@@ -109,9 +109,9 @@ interface GrepResult {
 
 ```typescript
 interface AstGrepOptions {
-  glob?: string; // File glob pattern (e.g., "**/*.ts")
+  glob?: string;            // File glob pattern (e.g., "**/*.ts")
   lang?: string | string[]; // Language(s): "js", "ts", "tsx", "html", "css"
-  limit?: number; // Max results (default: 1000)
+  limit?: number;           // Max results (default: 1000)
 }
 ```
 
@@ -124,19 +124,19 @@ interface AstGrepMatch {
   column: number;
   endLine: number;
   endColumn: number;
-  text: string; // Matched code text
-  metavars: Record<string, string>; // Captured $VAR → text
+  text: string;                       // Matched code text
+  metavars: Record<string, string>;   // Captured $VAR → text
 }
 ```
 
 #### AST Pattern Syntax
 
-| Pattern   | Matches                                 |
-| --------- | --------------------------------------- |
-| `$NAME`   | Single node, captures to metavars       |
+| Pattern | Matches |
+|---------|---------|
+| `$NAME` | Single node, captures to metavars |
 | `$$$ARGS` | Zero or more nodes (variadic), captures |
-| `$_`      | Single node, no capture                 |
-| `$$$`     | Zero or more nodes, no capture          |
+| `$_` | Single node, no capture |
+| `$$$` | Zero or more nodes, no capture |
 
 ### FileEntry
 
@@ -154,7 +154,7 @@ interface FileEntry {
 interface TreeNode {
   name: string;
   type: "file" | "dir";
-  children?: TreeNode[]; // only for dirs
+  children?: TreeNode[];  // only for dirs
 }
 ```
 
@@ -191,7 +191,7 @@ async () => {
   } catch (e) {
     return { error: e.message };
   }
-};
+}
 ```
 
 `readMany` returns errors as string values prefixed with `[Error:`:
@@ -201,20 +201,21 @@ const files = await opensrc.readMany("zod", ["exists.ts", "missing.ts"]);
 // { "exists.ts": "content...", "missing.ts": "[Error: ENOENT...]" }
 
 // Filter successful reads
-const successful = Object.entries(files).filter(([_, content]) => !content.startsWith("[Error:"));
+const successful = Object.entries(files)
+  .filter(([_, content]) => !content.startsWith("[Error:"));
 ```
 
 ## Package Spec Formats
 
-| Format              | Example              | Source Name After Fetch  |
-| ------------------- | -------------------- | ------------------------ |
-| `<name>`            | `"zod"`              | `"zod"`                  |
-| `<name>@<version>`  | `"zod@3.22.0"`       | `"zod"`                  |
-| `pypi:<name>`       | `"pypi:requests"`    | `"requests"`             |
-| `crates:<name>`     | `"crates:serde"`     | `"serde"`                |
-| `owner/repo`        | `"vercel/ai"`        | `"github.com/vercel/ai"` |
-| `owner/repo@ref`    | `"vercel/ai@v1.0.0"` | `"github.com/vercel/ai"` |
-| `gitlab:owner/repo` | `"gitlab:org/repo"`  | `"gitlab.com/org/repo"`  |
+| Format | Example | Source Name After Fetch |
+|--------|---------|------------------------|
+| `<name>` | `"zod"` | `"zod"` |
+| `<name>@<version>` | `"zod@3.22.0"` | `"zod"` |
+| `pypi:<name>` | `"pypi:requests"` | `"requests"` |
+| `crates:<name>` | `"crates:serde"` | `"serde"` |
+| `owner/repo` | `"vercel/ai"` | `"github.com/vercel/ai"` |
+| `owner/repo@ref` | `"vercel/ai@v1.0.0"` | `"github.com/vercel/ai"` |
+| `gitlab:owner/repo` | `"gitlab:org/repo"` | `"gitlab.com/org/repo"` |
 
 ## Critical Pattern
 
@@ -223,12 +224,12 @@ const successful = Object.entries(files).filter(([_, content]) => !content.start
 ```javascript
 async () => {
   const [{ source }] = await opensrc.fetch("vercel/ai");
-
+  
   // GitHub repos: "vercel/ai" → "github.com/vercel/ai"
   const sourceName = source.name;
-
+  
   // Use sourceName for ALL subsequent calls
   const files = await opensrc.files(sourceName, "src/**/*.ts");
   return files;
-};
+}
 ```

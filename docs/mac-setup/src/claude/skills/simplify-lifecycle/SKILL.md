@@ -21,7 +21,6 @@ Sweep the entire app architecture for simplification opportunities, fix them, an
 ### Phase 1: Explore
 
 Use the Explore agent to build a full picture of the codebase. Map out:
-
 - Directory structure and module boundaries
 - Key abstractions and how they connect
 - Data flow patterns
@@ -41,7 +40,6 @@ Find simplification opportunities across these categories, ordered by impact:
 ### Phase 3: Propose
 
 Present findings as a numbered list, grouped by category. For each item:
-
 - **What**: The specific file(s) and code
 - **Why**: Why it's unnecessary or overly complex
 - **Fix**: The concrete simplification (delete, inline, merge, replace)
@@ -54,7 +52,6 @@ Ask: "Fix all? Or pick specific items?"
 ### Phase 4: Fix
 
 Apply each fix:
-
 1. Make the change
 2. Verify the build still passes (`pnpm build` or equivalent)
 3. If build breaks, revert and skip that item
@@ -69,7 +66,6 @@ Go back to Phase 2. Explore again — previous simplifications often unlock new 
 Keep looping until Phase 2 finds **zero actionable items**.
 
 When converged, output a final summary:
-
 ```
 Deep Clean Complete
 -------------------

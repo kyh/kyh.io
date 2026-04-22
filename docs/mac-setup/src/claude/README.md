@@ -5,36 +5,40 @@ Global [Claude.md](./CLAUDE.md)
 ## Install Skills
 
 ```bash
-npx skills add vercel-labs/agent-browser@agent-browser -g
-npx skills add vercel/ai@ai-sdk -g
-npx skills add coreyhaines31/marketingskills@copywriting -g
-npx skills add emilkowalski/design-engineering-skill@design-engineering -g
-npx skills add vercel-labs/skills@find-skills -g
-npx skills add anthropics/skills@frontend-design -g
-npx skills add anthropics/skills@grill-me -g
-npx skills add anthropics/skills@improve-codebase-architecture -g
-npx skills add vercel-labs/next-skills@next-best-practices -g
-npx skills add vercel-labs/next-skills@next-cache-components -g
-npx skills add anthropics/skills@prd-to-issues -g
-npx skills add anthropics/skills@prd-to-plan -g
-npx skills add remotion-dev/remotion@remotion-best-practices -g
-npx skills add anthropics/skills@request-refactor-plan -g
-npx skills add anthropics/skills@skill-creator -g
-npx skills add supabase/agent-skills@supabase-postgres-best-practices -g
-npx skills add anthropics/skills@tdd -g
-npx skills add vercel-labs/agent-skills@vercel-composition-patterns -g
-npx skills add vercel-labs/agent-skills@vercel-react-best-practices -g
-npx skills add vercel-labs/agent-skills@vercel-react-native-skills -g
-npx skills add vercel-labs/agent-skills@web-design-guidelines -g
-npx skills add anthropics/skills@write-a-prd -g
+for pkg in \
+  vercel-labs/agent-browser@agent-browser \
+  vercel/ai-elements@ai-elements \
+  vercel/ai@ai-sdk \
+  coreyhaines31/marketingskills@copywriting \
+  emilkowalski/skill@emil-design-eng \
+  vercel-labs/skills@find-skills \
+  anthropics/skills@frontend-design \
+  mattpocock/skills@grill-me \
+  mattpocock/skills@improve-codebase-architecture \
+  jakubkrehel/make-interfaces-feel-better@make-interfaces-feel-better \
+  vercel-labs/next-skills@next-best-practices \
+  vercel-labs/next-skills@next-cache-components \
+  mattpocock/skills@prd-to-issues \
+  mattpocock/skills@prd-to-plan \
+  remotion-dev/skills@remotion-best-practices \
+  mattpocock/skills@request-refactor-plan \
+  anthropics/skills@skill-creator \
+  supabase/agent-skills@supabase-postgres-best-practices \
+  mattpocock/skills@tdd \
+  vercel-labs/agent-skills@vercel-composition-patterns \
+  vercel-labs/agent-skills@vercel-react-best-practices \
+  vercel-labs/agent-skills@vercel-react-native-skills \
+  vercel-labs/agent-skills@web-design-guidelines \
+  mattpocock/skills@write-a-prd
+do npx skills add "$pkg" -g -y; done
 ```
 
 ## Custom Skills
 
 | Skill                       | What it does                                                          |
 | --------------------------- | --------------------------------------------------------------------- |
+| `architect`                 | Deep technical analysis, architecture decisions, code review          |
 | `librarian`                 | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
-| `oracle`                    | Senior engineering advisor, code review, architecture decisions       |
 | `package-updater`           | Update deps using taze                                                |
 | `pr-lifecycle`              | Monitor PR for bot reviews, address feedback, push fixes              |
 | `publish-and-sync-packages` | Bump + publish shared package, update all downstream consumers        |

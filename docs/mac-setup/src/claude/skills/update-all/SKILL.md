@@ -10,7 +10,7 @@ Update all dependencies to their latest versions across every project, fix break
 
 ## Context
 
-- Projects list: !grep -A20 'pupa()' ~/.zshrc | grep -oP '(?<= )[\w/\-]+'
+- Projects list: !grep -A20 'pupa()' ~/.zshrc | grep -oP '(?<=    )[\w/\-]+'
 - Projects root: ~/Documents/Projects
 
 ## Process

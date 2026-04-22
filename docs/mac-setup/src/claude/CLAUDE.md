@@ -25,7 +25,6 @@
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
 
 ### **ENTROPY REMINDER**
-
 This codebase will outlive you. Every shortcut you take becomes
 someone else's burden. Every hack compounds into technical debt
 that slows the whole team down.
@@ -39,13 +38,10 @@ you cut will be cut again.
 ## Specialized Subagents
 
 ### Frontend
-
 Invoke for: any frontend task — building components/pages, fixing UI bugs, reviewing frontend code, improving performance. Uses browser automation to verify visual changes.
 
 ### Architect
-
 Invoke for: code review, architecture decisions, debugging analysis, refactor planning, second opinion.
 
 ### Librarian
-
 Invoke for: understanding 3rd party libraries/packages, exploring remote repositories, discovering open source patterns.

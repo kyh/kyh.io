@@ -20,12 +20,10 @@ Commit and push changes. Behavior depends on current branch.
 Based on the above changes:
 
 ### If on main:
-
 1. Create a single commit with an appropriate message
 2. Push directly to main
 
 ### If on a branch:
-
 1. Create a single commit with an appropriate message
 2. Push the branch to origin
 3. Create a pull request using gh pr create
