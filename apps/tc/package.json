@@ -23,7 +23,7 @@
     "@visx/tooltip": "^3.12.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-joyride": "^3.0.2",
+    "react-joyride": "^3.1.0",
     "react-number-format": "^5.4.5",
     "react-portal": "^4.3.0",
     "react-select": "^5.10.2",

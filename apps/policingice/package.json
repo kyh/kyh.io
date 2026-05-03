@@ -13,12 +13,12 @@
     "with-env": "dotenv -e .env --"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^3.0.83",
+    "@ai-sdk/xai": "^3.0.87",
     "@base-ui/react": "catalog:",
-    "@libsql/client": "^0.17.2",
+    "@libsql/client": "^0.17.3",
     "@vercel/analytics": "catalog:",
-    "ai": "^6.0.168",
-    "better-auth": "^1.6.5",
+    "ai": "^6.0.174",
+    "better-auth": "^1.6.9",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
@@ -29,7 +29,7 @@
     "react-dom": "catalog:",
     "react-tweet": "^3.3.0",
     "tailwindcss": "catalog:",
-    "zod": "^4.3.6"
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
