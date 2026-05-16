@@ -31,7 +31,6 @@ To cherry-pick a single skill instead: `npx skills add <repo>@<skill-name> -g -y
 | --------------------------- | --------------------------------------------------------------------- |
 | `architect`                 | Deep technical analysis, architecture decisions, code review          |
 | `librarian`                 | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
-| `package-updater`           | Update deps using taze                                                |
 | `pr-lifecycle`              | Monitor PR for bot reviews, address feedback, push fixes              |
 | `publish-and-sync-packages` | Bump + publish shared package, update all downstream consumers        |
 | `push`                      | Commit and push; creates PR if on branch                              |
