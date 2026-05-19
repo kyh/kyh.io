@@ -9,7 +9,7 @@ import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from "@/components/keyboard-shortcuts-provider";
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
 import { getUserVote, reportIncident, submitVote } from "@/lib/incident-action";
 
@@ -22,7 +22,6 @@ type IncidentDetailProps = {
 };
 
 export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
-  const toast = useToast();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(null);
   const [counts, setCounts] = useState({

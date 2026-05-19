@@ -6,7 +6,7 @@ import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
 import type { IncidentStatus, VideoPlatform } from "@/db/drizzle-schema";
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { VideoCarousel } from "@/components/video-carousel";
 import {
   addVideo,
@@ -39,7 +39,6 @@ type IncidentEditRowProps = {
 
 const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) => {
   const router = useRouter();
-  const toast = useToast();
   const newVideoRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -218,7 +217,6 @@ type AdminIncidentsClientProps = {
 
 export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientProps) => {
   const router = useRouter();
-  const toast = useToast();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(null);
 

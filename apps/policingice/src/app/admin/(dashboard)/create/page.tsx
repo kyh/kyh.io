@@ -5,13 +5,12 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 import { bulkCreateIncidents } from "@/lib/admin-action";
 
 const AdminCreate = () => {
   const router = useRouter();
-  const toast = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const [urlsText, setUrlsText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +57,7 @@ const AdminCreate = () => {
               router.refresh();
             }
             if (res.skipped > 0) {
-              toast.show(`Skipped ${res.skipped} existing URL(s)`);
+              toast(`Skipped ${res.skipped} existing URL(s)`);
             }
           } finally {
             setIsSubmitting(false);

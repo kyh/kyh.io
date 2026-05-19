@@ -4,7 +4,7 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { isValidVideoUrl } from "@/lib/video-utils";
 
 type Video = {
@@ -45,7 +45,6 @@ type IncidentModalProps = CreateModeProps | EditModeProps;
 
 export const IncidentModal = (props: IncidentModalProps) => {
   const { isOpen, onClose, mode } = props;
-  const toast = useToast();
 
   const formRef = useRef<HTMLFormElement>(null);
   const addVideoRef = useRef<HTMLInputElement>(null);

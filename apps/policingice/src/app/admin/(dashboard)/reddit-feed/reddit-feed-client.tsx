@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { createFromFeed } from "@/lib/admin-action";
 
 type FeedPost = {
@@ -31,7 +31,6 @@ type RedditFeedClientProps = {
 
 export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps) => {
   const router = useRouter();
-  const toast = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addingUrl, setAddingUrl] = useState<string | null>(null);
   const existingSet = new Set(existingUrls);

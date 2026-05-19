@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Toaster as Sonner, toast as sonnerToast, type ToasterProps } from "sonner";
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner";
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -32,24 +32,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNames: {
+          toast: "cn-toast",
+        },
+      }}
       {...props}
     />
   );
 };
 
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => (
-  <>
-    {children}
-    <Toaster />
-  </>
-);
-
-export function useToast() {
-  return {
-    success: (message: string) => sonnerToast.success(message),
-    error: (message: string) => sonnerToast.error(message),
-    show: (message: string) => sonnerToast(message),
-  };
-}
-
-export { sonnerToast as toast };
+export { Toaster, toast };

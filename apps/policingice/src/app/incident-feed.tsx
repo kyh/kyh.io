@@ -15,7 +15,7 @@ import {
   KeyboardShortcutsProvider,
   useKeyboardShortcuts,
 } from "@/components/keyboard-shortcuts-provider";
-import { useToast } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
 import {
   addVideoToIncident,
@@ -48,7 +48,6 @@ export const IncidentFeed = ({
 }: IncidentFeedProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const toast = useToast();
 
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const q = searchParams.get("q") || undefined;
