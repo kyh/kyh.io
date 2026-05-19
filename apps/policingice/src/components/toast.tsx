@@ -1,68 +1,55 @@
 "use client";
 
-import * as React from "react";
-import { Toast } from "@base-ui/react/toast";
+import { useTheme } from "next-themes";
+import { Toaster as Sonner, toast as sonnerToast, type ToasterProps } from "sonner";
+import {
+  CircleCheckIcon,
+  InfoIcon,
+  TriangleAlertIcon,
+  OctagonXIcon,
+  Loader2Icon,
+} from "lucide-react";
 
-function ToastList() {
-  const { toasts } = Toast.useToastManager();
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme();
 
-  return toasts.map((toast) => (
-    <Toast.Root
-      key={toast.id}
-      toast={toast}
-      className="relative z-[calc(1000-var(--toast-index))] mb-2 w-full max-w-xs origin-bottom rounded border border-border bg-background p-3 shadow-lg select-none [transition:transform_0.3s,opacity_0.3s] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-full data-[starting-style]:opacity-0"
-    >
-      <Toast.Title className="text-sm text-foreground" />
-    </Toast.Root>
-  ));
-}
-
-const ToastContext = React.createContext<{
-  success: (message: string) => void;
-  error: (message: string) => void;
-  show: (message: string) => void;
-} | null>(null);
-
-const ToastManager = ({ children }: { children: React.ReactNode }) => {
-  const toastManager = Toast.useToastManager();
-  const managerRef = React.useRef(toastManager);
-  managerRef.current = toastManager;
-
-  const api = React.useMemo(
-    () => ({
-      success: (message: string) => {
-        managerRef.current.add({ title: message, data: { type: "success" } });
-      },
-      error: (message: string) => {
-        managerRef.current.add({ title: message, data: { type: "error" } });
-      },
-      show: (message: string) => {
-        managerRef.current.add({ title: message, data: { type: "default" } });
-      },
-    }),
-    [],
-  );
-
-  return <ToastContext.Provider value={api}>{children}</ToastContext.Provider>;
-};
-
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Toast.Provider timeout={3000}>
-      <ToastManager>{children}</ToastManager>
-      <Toast.Portal>
-        <Toast.Viewport className="fixed bottom-4 left-1/2 z-50 flex w-full max-w-xs -translate-x-1/2 flex-col items-center">
-          <ToastList />
-        </Toast.Viewport>
-      </Toast.Portal>
-    </Toast.Provider>
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      icons={{
+        success: <CircleCheckIcon className="size-4" />,
+        info: <InfoIcon className="size-4" />,
+        warning: <TriangleAlertIcon className="size-4" />,
+        error: <OctagonXIcon className="size-4" />,
+        loading: <Loader2Icon className="size-4 animate-spin" />,
+      }}
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
+      {...props}
+    />
   );
 };
+
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => (
+  <>
+    {children}
+    <Toaster />
+  </>
+);
 
 export function useToast() {
-  const context = React.useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within ToastProvider");
-  }
-  return context;
+  return {
+    success: (message: string) => sonnerToast.success(message),
+    error: (message: string) => sonnerToast.error(message),
+    show: (message: string) => sonnerToast(message),
+  };
 }
+
+export { sonnerToast as toast };

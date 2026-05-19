@@ -28,6 +28,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-tweet": "^3.3.0",
+    "sonner": "^2.0.7",
     "tailwindcss": "catalog:",
     "zod": "^4.4.3"
   },
