@@ -11,7 +11,7 @@
   "dependencies": {
     "balloons-js": "^0.0.3",
     "clsx": "^2.1.1",
-    "motion": "^12.38.0",
+    "motion": "^12.40.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
