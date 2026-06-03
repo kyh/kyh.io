@@ -15,9 +15,10 @@
 // never deleted), falls back to copying when symlinks aren't permitted, and never
 // throws — a failed link must not break `npm install`.
 //
-// Auto-skips local dependency installs (use `npm i -g`, or KYH_SKILLS_FORCE=1 to
-// link a working copy) and CI. Skip entirely with KYH_SKILLS_NO_LINK=1. Preview
-// with --dry-run (or KYH_SKILLS_DRY_RUN=1).
+// During postinstall, only links for a global install (`npm i -g`); local/hoisted
+// dependency installs are skipped. Run by hand or set KYH_SKILLS_FORCE=1 to link a
+// working copy (also needed for yarn/pnpm global). Always skipped in CI; skip
+// entirely with KYH_SKILLS_NO_LINK=1. Preview with --dry-run (KYH_SKILLS_DRY_RUN=1).
 
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -40,19 +41,20 @@ const warn = (...a) => console.warn(TAG, ...a);
 async function main() {
   if (process.env.KYH_SKILLS_NO_LINK) return log("KYH_SKILLS_NO_LINK set — skipping.");
   if (process.env.CI) return log("CI detected — skipping link.");
-  // A local dependency install would point the canonical symlinks at a project's
-  // node_modules, which breaks when that tree is removed. INIT_CWD is the dir the
-  // install was invoked from — the consuming project for a local dep, unrelated to
-  // the global prefix for a global install. (process.cwd() during postinstall is
-  // the package dir itself, so it can't tell the two apart.) npm sets
-  // npm_config_global for `-g`, which is authoritative; only fall back to the
-  // INIT_CWD heuristic when it's absent. Run by hand or set KYH_SKILLS_FORCE to
-  // link anyway.
-  const isGlobal = process.env.npm_config_global === "true";
-  const initCwd = process.env.INIT_CWD;
-  const looksLocal = !isGlobal && !!initCwd && PKG_ROOT.startsWith(initCwd + path.sep);
-  if (process.env.npm_lifecycle_event === "postinstall" && looksLocal && !FORCE)
-    return log("local dependency install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
+  // A local or hoisted dependency install would aim the global symlinks at a
+  // project's node_modules (which breaks when that tree moves or is cleared), so
+  // during postinstall only link for an explicit global install. There's no
+  // reliable cross-package-manager way to detect "global" from a path, and a
+  // false link is worse than a false skip — so trust npm's npm_config_global and
+  // bias to skipping. Running the script by hand (not a postinstall) or setting
+  // KYH_SKILLS_FORCE=1 always links — use that for yarn/pnpm global installs,
+  // which may not set npm_config_global.
+  if (
+    process.env.npm_lifecycle_event === "postinstall" &&
+    process.env.npm_config_global !== "true" &&
+    !FORCE
+  )
+    return log("not a global install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
   if (process.platform === "win32")
     warn("Windows symlinks may need admin/developer mode; will fall back to copying.");
   if (DRY) log("dry run — no changes will be written.");
