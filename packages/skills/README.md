@@ -26,24 +26,23 @@ node "$(npm root -g)/@kyh/skills/scripts/link.mjs"
 | --- | --- | --- |
 | `skills/<name>/` | `~/.claude/skills/<name>` | symlink |
 | `agents/<name>.md` | `~/.claude/agents/<name>.md` | symlink |
+| `agents/<name>.md` | `~/.codex/agents/<name>.md` | symlink |
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | symlink |
-| `agents/<name>.md` | `~/.codex/agents/<name>.toml` | generated (Codex needs TOML) |
 | `mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
 
-Symlinks mean edits to the installed source show up everywhere immediately.
-Codex agents are **generated** (Codex agents are TOML, not markdown) and MCP
-servers are **merged** (they live under a key inside `~/.claude.json`) — neither
-can be a symlink.
+Symlinks mean edits to the installed source show up everywhere immediately. MCP
+servers are **merged** rather than symlinked (they live under a key inside
+`~/.claude.json`).
 
 Existing real files are never deleted: a clashing `~/.claude/CLAUDE.md` (or
-skill/agent) is renamed to `*.bak` before linking. Hand-written Codex agent
-TOMLs are left untouched.
+skill/agent) is renamed to `*.bak` before linking.
 
 ### Flags / env
 
 - `--dry-run` (or `KYH_SKILLS_DRY_RUN=1`) — print what would change, write nothing.
 - `KYH_SKILLS_NO_LINK=1` — skip linking entirely.
-- Linking is auto-skipped when `CI` is set.
+- `KYH_SKILLS_FORCE=1` — link even for a non-global install (e.g. a working copy).
+- Linking is auto-skipped for non-global installs and when `CI` is set.
 
 ## Adding skills from other repos
 
