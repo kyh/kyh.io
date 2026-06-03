@@ -1,7 +1,7 @@
 {
   "name": "@kyh/skills",
   "version": "0.0.0",
-  "description": "Personal Claude Code + Codex skills, agents, MCP servers, and global instructions. Symlinks into ~/.claude and ~/.codex on install.",
+  "description": "Personal Claude Code + Codex skills, agents, MCP servers, and global instructions. Symlinks into a canonical ~/.agents store (and ~/.claude) on install.",
   "license": "MIT",
   "files": [
     "scripts",
