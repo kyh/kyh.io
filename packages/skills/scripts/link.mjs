@@ -153,10 +153,11 @@ function installExternalSkills() {
 
   let repos;
   try {
-    repos = JSON.parse(fs.readFileSync(file, "utf8")).repos || [];
+    repos = JSON.parse(fs.readFileSync(file, "utf8")).repos;
   } catch (e) {
     return warn(`could not parse external-skills.json: ${e.message}`);
   }
+  if (!Array.isArray(repos)) return warn("external-skills.json: `repos` must be an array.");
   if (repos.length === 0) return;
 
   if (DRY) return log(`would install external skills from: ${repos.join(", ")}`);
