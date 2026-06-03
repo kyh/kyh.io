@@ -1,0 +1,17 @@
+{
+  "$comment": "External skill repos installed on postinstall via `npx skills add <repo> -g -s '*' -y`. Edit this list to curate. Set KYH_SKILLS_NO_EXTERNAL=1 to skip the whole step.",
+  "repos": [
+    "vercel-labs/agent-browser",
+    "vercel/ai-elements",
+    "vercel/ai",
+    "emilkowalski/skill",
+    "vercel-labs/skills",
+    "anthropics/skills",
+    "mattpocock/skills",
+    "jakubkrehel/make-interfaces-feel-better",
+    "vercel-labs/next-skills",
+    "remotion-dev/skills",
+    "supabase/agent-skills",
+    "vercel-labs/agent-skills"
+  ]
+}

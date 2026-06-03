@@ -8,7 +8,8 @@
     "skills",
     "agents",
     "CLAUDE.md",
-    "mcp.json"
+    "mcp.json",
+    "external-skills.json"
   ],
   "type": "module",
   "publishConfig": {

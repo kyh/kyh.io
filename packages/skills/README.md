@@ -53,28 +53,18 @@ before linking.
 - `KYH_SKILLS_FORCE=1` — link even for a local dependency install (e.g. a working copy).
 - Linking is auto-skipped for local dependency installs and when `CI` is set.
 
-## Adding skills from other repos
+## External skills
 
-Pulls every skill from each repo into the global space via the `skills` CLI:
+On install, the postinstall also pulls every skill from a curated list of repos
+into the global space via the `skills` CLI (`npx skills add <repo> -g -s '*' -y`).
+The list lives in [`external-skills.json`](./external-skills.json) — edit it to
+curate.
 
-```bash
-for repo in \
-  vercel-labs/agent-browser \
-  vercel/ai-elements \
-  vercel/ai \
-  emilkowalski/skill \
-  vercel-labs/skills \
-  anthropics/skills \
-  mattpocock/skills \
-  jakubkrehel/make-interfaces-feel-better \
-  vercel-labs/next-skills \
-  remotion-dev/skills \
-  supabase/agent-skills \
-  vercel-labs/agent-skills
-do npx skills add "$repo" -g -s '*' -y; done
-```
+- Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.
+- These install into the same canonical `~/.agents/skills`, so universal agents
+  pick them up directly and Claude gets symlinks.
 
-Cherry-pick a single skill: `npx skills add <repo>@<skill-name> -g -y`.
+Cherry-pick a single skill manually: `npx skills add <repo>@<skill-name> -g -y`.
 
 ## Custom skills
 

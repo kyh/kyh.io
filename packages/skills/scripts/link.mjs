@@ -7,6 +7,8 @@
 //   2. Non-universal agents (claude) get their own dirs symlinked to the canonical
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
 //   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
+//   4. External skill repos in external-skills.json are installed globally via
+//      `npx skills add` (skip with KYH_SKILLS_NO_EXTERNAL=1).
 //
 // Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
 // never deleted), falls back to copying when symlinks aren't permitted, and never
@@ -16,6 +18,7 @@
 // link a working copy) and CI. Skip entirely with KYH_SKILLS_NO_LINK=1. Preview
 // with --dry-run (or KYH_SKILLS_DRY_RUN=1).
 
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -63,6 +66,7 @@ function main() {
   step(linkClaude); // ~/.agents -> ~/.claude
   step(linkClaudeMd);
   step(mergeMcp);
+  step(installExternalSkills); // npx skills add <repo> ...
 
   log("done. Universal agents (codex, amp, opencode, goose, kimi) read ~/.agents directly.");
 }
@@ -129,6 +133,38 @@ function mergeMcp() {
   if (DRY) return log(`would merge mcpServers into ~/.claude.json: ${names.join(", ")}`);
   fs.writeFileSync(dest, JSON.stringify(config, null, 2) + "\n");
   log(`merged mcpServers into ~/.claude.json: ${names.join(", ")}`);
+}
+
+// --- external skills: `npx skills add <repo> -g -s '*' -y` ---------------------
+
+function installExternalSkills() {
+  if (process.env.KYH_SKILLS_NO_EXTERNAL)
+    return log("KYH_SKILLS_NO_EXTERNAL set — skipping external skills.");
+
+  const file = path.join(PKG_ROOT, "external-skills.json");
+  if (!fs.existsSync(file)) return;
+
+  let repos;
+  try {
+    repos = JSON.parse(fs.readFileSync(file, "utf8")).repos || [];
+  } catch (e) {
+    return warn(`could not parse external-skills.json: ${e.message}`);
+  }
+  if (repos.length === 0) return;
+
+  if (DRY) return log(`would install external skills from: ${repos.join(", ")}`);
+
+  log(`installing external skills from ${repos.length} repos via \`npx skills\`…`);
+  for (const repo of repos) {
+    // Installs globally into the same ~/.agents canonical store.
+    const res = spawnSync("npx", ["-y", "skills", "add", repo, "-g", "-s", "*", "-y"], {
+      stdio: "inherit",
+      shell: process.platform === "win32",
+    });
+    if (res.error || res.status !== 0)
+      warn(`skills add ${repo} failed${res.error ? `: ${res.error.message}` : ` (exit ${res.status})`}`);
+    else log(`added skills from ${repo}`);
+  }
 }
 
 // --- helpers -------------------------------------------------------------------
