@@ -50,8 +50,8 @@ before linking.
 
 - `--dry-run` (or `KYH_SKILLS_DRY_RUN=1`) — print what would change, write nothing.
 - `KYH_SKILLS_NO_LINK=1` — skip linking entirely.
-- `KYH_SKILLS_FORCE=1` — link even for a local dependency install (e.g. a working copy).
-- Linking is auto-skipped for local dependency installs and when `CI` is set.
+- `KYH_SKILLS_FORCE=1` — link even when it's not a global install (a working copy, or yarn/pnpm global).
+- During postinstall, linking only runs for a global install (`npm i -g`); local/hoisted deps and CI are skipped.
 
 ## External skills
 
