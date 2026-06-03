@@ -40,10 +40,13 @@ function main() {
   // node_modules, which breaks when that tree is removed. INIT_CWD is the dir the
   // install was invoked from — the consuming project for a local dep, unrelated to
   // the global prefix for a global install. (process.cwd() during postinstall is
-  // the package dir itself, so it can't tell the two apart.) Run by hand or set
-  // KYH_SKILLS_FORCE to link anyway.
+  // the package dir itself, so it can't tell the two apart.) npm sets
+  // npm_config_global for `-g`, which is authoritative; only fall back to the
+  // INIT_CWD heuristic when it's absent. Run by hand or set KYH_SKILLS_FORCE to
+  // link anyway.
+  const isGlobal = process.env.npm_config_global === "true";
   const initCwd = process.env.INIT_CWD;
-  const looksLocal = !!initCwd && PKG_ROOT.startsWith(initCwd + path.sep);
+  const looksLocal = !isGlobal && !!initCwd && PKG_ROOT.startsWith(initCwd + path.sep);
   if (process.env.npm_lifecycle_event === "postinstall" && looksLocal && !FORCE)
     return log("local dependency install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
   if (process.platform === "win32")
