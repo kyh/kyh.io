@@ -1,12 +1,19 @@
 #!/usr/bin/env node
-// Symlinks this package's skills + agents + CLAUDE.md into ~/.claude, the agents
-// into ~/.codex/agents, and merges mcp.json into ~/.claude.json.
+// Links this package into the agent ecosystem, the same way `npx skills` does:
+//
+//   1. Canonical store at ~/.agents — skills/<name> and agents/<name>.md are
+//      symlinked here from the package. "Universal" agents (codex, amp, opencode,
+//      goose, kimi) read ~/.agents directly, so they need nothing further.
+//   2. Non-universal agents (claude) get their own dirs symlinked to the canonical
+//      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
+//   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
 //
 // Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
-// never deleted), and never throws — a failed link must not break `npm install`.
+// never deleted), falls back to copying when symlinks aren't permitted, and never
+// throws — a failed link must not break `npm install`.
 //
-// Auto-skips non-global installs (use `npm i -g`, or KYH_SKILLS_FORCE=1 to link a
-// local/working copy) and CI. Skip entirely with KYH_SKILLS_NO_LINK=1. Preview
+// Auto-skips local dependency installs (use `npm i -g`, or KYH_SKILLS_FORCE=1 to
+// link a working copy) and CI. Skip entirely with KYH_SKILLS_NO_LINK=1. Preview
 // with --dry-run (or KYH_SKILLS_DRY_RUN=1).
 
 import fs from "node:fs";
@@ -16,8 +23,8 @@ import { fileURLToPath } from "node:url";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOME = os.homedir();
-const CLAUDE_DIR = path.join(HOME, ".claude");
-const CODEX_DIR = path.join(HOME, ".codex");
+const AGENTS_DIR = path.join(HOME, ".agents"); // canonical store (read directly by universal agents)
+const CLAUDE_DIR = path.join(HOME, ".claude"); // non-universal: symlinks into the canonical store
 
 const DRY = process.argv.includes("--dry-run") || !!process.env.KYH_SKILLS_DRY_RUN;
 const FORCE = !!process.env.KYH_SKILLS_FORCE;
@@ -29,32 +36,30 @@ const warn = (...a) => console.warn(TAG, ...a);
 function main() {
   if (process.env.KYH_SKILLS_NO_LINK) return log("KYH_SKILLS_NO_LINK set — skipping.");
   if (process.env.CI) return log("CI detected — skipping link.");
-  // A local/workspace install would point global symlinks at a project's
-  // node_modules, which breaks when that tree is removed. Only auto-link for
-  // global installs; running the script by hand (not via postinstall) or setting
-  // KYH_SKILLS_FORCE=1 still links the current copy.
-  if (
-    process.env.npm_lifecycle_event === "postinstall" &&
-    process.env.npm_config_global !== "true" &&
-    !FORCE
-  )
-    return log("non-global install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
+  // A local dependency install would point the canonical symlinks at a project's
+  // node_modules, which breaks when that tree is removed. Detect it by checking
+  // whether the package lives under the current working directory (true for a
+  // project dep, false for a global install). Run by hand or set KYH_SKILLS_FORCE
+  // to link anyway.
+  const looksLocal = PKG_ROOT.startsWith(process.cwd() + path.sep);
+  if (process.env.npm_lifecycle_event === "postinstall" && looksLocal && !FORCE)
+    return log("local dependency install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
   if (process.platform === "win32")
-    warn("Windows symlinks may require admin/developer mode; continuing best-effort.");
+    warn("Windows symlinks may need admin/developer mode; will fall back to copying.");
   if (DRY) log("dry run — no changes will be written.");
 
+  ensureDir(path.join(AGENTS_DIR, "skills"));
+  ensureDir(path.join(AGENTS_DIR, "agents"));
   ensureDir(path.join(CLAUDE_DIR, "skills"));
   ensureDir(path.join(CLAUDE_DIR, "agents"));
-  ensureDir(path.join(CODEX_DIR, "agents"));
 
   // Each phase is isolated: one failing phase must not skip the rest.
-  step(linkSkills);
-  step(linkClaudeAgents);
-  step(linkCodexAgents);
+  step(linkCanonical); // package -> ~/.agents
+  step(linkClaude); // ~/.agents -> ~/.claude
   step(linkClaudeMd);
   step(mergeMcp);
 
-  log("done.");
+  log("done. Universal agents (codex, amp, opencode, goose, kimi) read ~/.agents directly.");
 }
 
 function step(fn) {
@@ -65,37 +70,29 @@ function step(fn) {
   }
 }
 
-// --- Claude: skills (one symlinked dir per skill) ------------------------------
+// --- canonical store: package -> ~/.agents -------------------------------------
 
-function linkSkills() {
-  const src = path.join(PKG_ROOT, "skills");
-  if (!fs.existsSync(src)) return;
-  for (const name of dirents(src, "dir"))
-    symlink(path.join(src, name), path.join(CLAUDE_DIR, "skills", name), "dir");
+function linkCanonical() {
+  forEachSkill((name, src) => place(src, path.join(AGENTS_DIR, "skills", name), "dir"));
+  forEachAgent((name, src) => place(src, path.join(AGENTS_DIR, "agents", name), "file"));
 }
 
-// --- agents (same .md, symlinked into both Claude and Codex) -------------------
+// --- claude (non-universal): ~/.agents -> ~/.claude ----------------------------
 
-function linkClaudeAgents() {
-  linkAgentsInto(path.join(CLAUDE_DIR, "agents"));
-}
-
-function linkCodexAgents() {
-  linkAgentsInto(path.join(CODEX_DIR, "agents"));
-}
-
-function linkAgentsInto(destDir) {
-  const src = path.join(PKG_ROOT, "agents");
-  if (!fs.existsSync(src)) return;
-  for (const name of dirents(src, "file").filter((f) => f.endsWith(".md")))
-    symlink(path.join(src, name), path.join(destDir, name), "file");
+function linkClaude() {
+  forEachSkill((name) =>
+    place(path.join(AGENTS_DIR, "skills", name), path.join(CLAUDE_DIR, "skills", name), "dir"),
+  );
+  forEachAgent((name) =>
+    place(path.join(AGENTS_DIR, "agents", name), path.join(CLAUDE_DIR, "agents", name), "file"),
+  );
 }
 
 // --- global CLAUDE.md ----------------------------------------------------------
 
 function linkClaudeMd() {
   const src = path.join(PKG_ROOT, "CLAUDE.md");
-  if (fs.existsSync(src)) symlink(src, path.join(CLAUDE_DIR, "CLAUDE.md"), "file");
+  if (fs.existsSync(src)) place(src, path.join(CLAUDE_DIR, "CLAUDE.md"), "file");
 }
 
 // --- MCP: merge into ~/.claude.json mcpServers ---------------------------------
@@ -131,28 +128,51 @@ function mergeMcp() {
 
 // --- helpers -------------------------------------------------------------------
 
-function symlink(src, dest, type) {
+function forEachSkill(fn) {
+  const src = path.join(PKG_ROOT, "skills");
+  if (!fs.existsSync(src)) return;
+  for (const name of dirents(src, "dir")) fn(name, path.join(src, name));
+}
+
+function forEachAgent(fn) {
+  const src = path.join(PKG_ROOT, "agents");
+  if (!fs.existsSync(src)) return;
+  for (const name of dirents(src, "file").filter((f) => f.endsWith(".md")))
+    fn(name, path.join(src, name));
+}
+
+// Symlink src -> dest, falling back to a copy when symlinks aren't permitted.
+function place(src, dest, type) {
   const rel = dest.replace(HOME, "~");
   try {
-    if (fs.existsSync(dest) || isSymlink(dest)) {
-      if (isSymlink(dest) && samePath(dest, src)) return; // already linked
-      if (isSymlink(dest)) {
-        if (DRY) return log(`would relink ${rel}`);
-        fs.unlinkSync(dest);
-      } else {
-        const bak = backupPath(dest);
-        if (DRY) return log(`would back up ${rel} -> ${path.basename(bak)} and link`);
-        fs.renameSync(dest, bak);
-        warn(`backed up existing ${rel} -> ${path.basename(bak)}`);
-      }
+    if (isSymlink(dest)) {
+      if (samePath(dest, src)) return; // already linked to the right place
+      if (DRY) return log(`would relink ${rel}`);
+      fs.unlinkSync(dest);
+    } else if (fs.existsSync(dest)) {
+      const bak = backupPath(dest);
+      if (DRY) return log(`would back up ${rel} -> ${path.basename(bak)} and link`);
+      fs.renameSync(dest, bak);
+      warn(`backed up existing ${rel} -> ${path.basename(bak)}`);
     } else if (DRY) {
       return log(`would link ${rel}`);
     }
-    fs.symlinkSync(src, dest, type === "dir" ? "dir" : "file");
-    log(`linked ${rel}`);
+    try {
+      fs.symlinkSync(src, dest, symlinkType(type));
+      log(`linked ${rel}`);
+    } catch (e) {
+      // Cross-device or unprivileged (e.g. Windows without developer mode): copy.
+      fs.cpSync(src, dest, { recursive: type === "dir" });
+      warn(`copied ${rel} (symlink failed: ${e.code ?? e.message})`);
+    }
   } catch (e) {
-    warn(`failed to link ${rel}: ${e.message}`);
+    warn(`failed to place ${rel}: ${e.message}`);
   }
+}
+
+function symlinkType(type) {
+  if (type !== "dir") return "file";
+  return process.platform === "win32" ? "junction" : "dir";
 }
 
 function ensureDir(p) {

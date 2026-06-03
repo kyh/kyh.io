@@ -22,27 +22,36 @@ node "$(npm root -g)/@kyh/skills/scripts/link.mjs"
 
 ### What gets linked
 
+Same model as [`npx skills`](https://github.com/vercel-labs/skills): a single
+canonical store at `~/.agents`, with non-universal agents symlinking into it.
+
 | Source (in this package) | Target | Mechanism |
 | --- | --- | --- |
-| `skills/<name>/` | `~/.claude/skills/<name>` | symlink |
-| `agents/<name>.md` | `~/.claude/agents/<name>.md` | symlink |
-| `agents/<name>.md` | `~/.codex/agents/<name>.md` | symlink |
+| `skills/<name>/` | `~/.agents/skills/<name>` | symlink (canonical) |
+| `agents/<name>.md` | `~/.agents/agents/<name>.md` | symlink (canonical) |
+| `~/.agents/skills/<name>` | `~/.claude/skills/<name>` | symlink |
+| `~/.agents/agents/<name>.md` | `~/.claude/agents/<name>.md` | symlink |
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | symlink |
 | `mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
 
-Symlinks mean edits to the installed source show up everywhere immediately. MCP
-servers are **merged** rather than symlinked (they live under a key inside
-`~/.claude.json`).
+**Universal agents** (codex, amp, opencode, goose, kimi) read `~/.agents`
+directly — nothing else to do. **Non-universal agents** (claude, cursor) get
+their own dirs symlinked to the canonical store.
 
-Existing real files are never deleted: a clashing `~/.claude/CLAUDE.md` (or
-skill/agent) is renamed to `*.bak` before linking.
+Symlinks mean edits to the installed source show up everywhere immediately. If
+symlinks aren't permitted (e.g. Windows without developer mode), it falls back to
+copying. MCP servers are **merged** rather than symlinked (they live under a key
+inside `~/.claude.json`).
+
+Existing real files are never deleted: a clashing target is renamed to `*.bak`
+before linking.
 
 ### Flags / env
 
 - `--dry-run` (or `KYH_SKILLS_DRY_RUN=1`) — print what would change, write nothing.
 - `KYH_SKILLS_NO_LINK=1` — skip linking entirely.
-- `KYH_SKILLS_FORCE=1` — link even for a non-global install (e.g. a working copy).
-- Linking is auto-skipped for non-global installs and when `CI` is set.
+- `KYH_SKILLS_FORCE=1` — link even for a local dependency install (e.g. a working copy).
+- Linking is auto-skipped for local dependency installs and when `CI` is set.
 
 ## Adding skills from other repos
 
