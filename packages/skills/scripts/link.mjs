@@ -8,7 +8,8 @@
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
 //   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
 //   4. External skill repos in external-skills.json are installed globally via
-//      `npx skills add` (skip with KYH_SKILLS_NO_EXTERNAL=1).
+//      `npx skills add`, run in parallel (KYH_SKILLS_CONCURRENCY, default 8;
+//      skip the step with KYH_SKILLS_NO_EXTERNAL=1).
 //
 // Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
 // never deleted), falls back to copying when symlinks aren't permitted, and never
@@ -18,7 +19,7 @@
 // link a working copy) and CI. Skip entirely with KYH_SKILLS_NO_LINK=1. Preview
 // with --dry-run (or KYH_SKILLS_DRY_RUN=1).
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -36,7 +37,7 @@ const TAG = "[@kyh/skills]";
 const log = (...a) => console.log(TAG, ...a);
 const warn = (...a) => console.warn(TAG, ...a);
 
-function main() {
+async function main() {
   if (process.env.KYH_SKILLS_NO_LINK) return log("KYH_SKILLS_NO_LINK set — skipping.");
   if (process.env.CI) return log("CI detected — skipping link.");
   // A local dependency install would point the canonical symlinks at a project's
@@ -62,18 +63,18 @@ function main() {
   ensureDir(path.join(CLAUDE_DIR, "agents"));
 
   // Each phase is isolated: one failing phase must not skip the rest.
-  step(linkCanonical); // package -> ~/.agents
-  step(installExternalSkills); // npx skills add <repo> ... -> ~/.agents
-  step(linkClaude); // mirror everything in ~/.agents -> ~/.claude (incl. external)
-  step(linkClaudeMd);
-  step(mergeMcp);
+  await step(linkCanonical); // package -> ~/.agents
+  await step(installExternalSkills); // npx skills add <repo> ... -> ~/.agents (parallel)
+  await step(linkClaude); // mirror everything in ~/.agents -> ~/.claude (incl. external)
+  await step(linkClaudeMd);
+  await step(mergeMcp);
 
   log("done. Universal agents (codex, amp, opencode, goose, kimi) read ~/.agents directly.");
 }
 
-function step(fn) {
+async function step(fn) {
   try {
-    fn();
+    await fn();
   } catch (e) {
     warn(`${fn.name} failed: ${e?.message ?? e}`);
   }
@@ -144,7 +145,7 @@ function mergeMcp() {
 
 // --- external skills: `npx skills add <repo> -g -s '*' -y` ---------------------
 
-function installExternalSkills() {
+async function installExternalSkills() {
   if (process.env.KYH_SKILLS_NO_EXTERNAL)
     return log("KYH_SKILLS_NO_EXTERNAL set — skipping external skills.");
 
@@ -160,19 +161,51 @@ function installExternalSkills() {
   if (!Array.isArray(repos)) return warn("external-skills.json: `repos` must be an array.");
   if (repos.length === 0) return;
 
-  if (DRY) return log(`would install external skills from: ${repos.join(", ")}`);
+  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || 8);
+  if (DRY)
+    return log(`would install external skills (concurrency ${limit}) from: ${repos.join(", ")}`);
 
-  log(`installing external skills from ${repos.length} repos via \`npx skills\`…`);
-  for (const repo of repos) {
-    // Installs globally into the same ~/.agents canonical store.
-    const res = spawnSync("npx", ["-y", "skills", "add", repo, "-g", "-s", "*", "-y"], {
-      stdio: "inherit",
+  // Warm npx's cache once so the parallel workers below don't each race to
+  // resolve/download the `skills` CLI.
+  try {
+    spawnSync("npx", ["-y", "skills", "--help"], {
+      stdio: "ignore",
       shell: process.platform === "win32",
     });
-    if (res.error || res.status !== 0)
-      warn(`skills add ${repo} failed${res.error ? `: ${res.error.message}` : ` (exit ${res.status})`}`);
-    else log(`added skills from ${repo}`);
+  } catch {
+    /* best-effort warm-up */
   }
+
+  log(`installing external skills from ${repos.length} repos (concurrency ${limit})…`);
+  await pool(repos, limit, addRepo);
+}
+
+// Installs one repo globally into the same ~/.agents canonical store.
+function addRepo(repo) {
+  return new Promise((resolve) => {
+    const child = spawn("npx", ["-y", "skills", "add", repo, "-g", "-s", "*", "-y"], {
+      stdio: "ignore", // parallel output would interleave; we log per-repo status instead
+      shell: process.platform === "win32",
+    });
+    child.on("error", (e) => {
+      warn(`skills add ${repo} failed: ${e.message}`);
+      resolve();
+    });
+    child.on("close", (code) => {
+      if (code === 0) log(`added skills from ${repo}`);
+      else warn(`skills add ${repo} failed (exit ${code})`);
+      resolve();
+    });
+  });
+}
+
+// Runs `fn` over `items` with at most `limit` in flight.
+async function pool(items, limit, fn) {
+  let i = 0;
+  const worker = async () => {
+    while (i < items.length) await fn(items[i++]);
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
 // --- helpers -------------------------------------------------------------------
@@ -258,9 +291,5 @@ function backupPath(p) {
   return bak;
 }
 
-try {
-  main();
-} catch (e) {
-  // Never fail the install.
-  warn(`unexpected error: ${e?.message ?? e}`);
-}
+// Never fail the install.
+main().catch((e) => warn(`unexpected error: ${e?.message ?? e}`));
