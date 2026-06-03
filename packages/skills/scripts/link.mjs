@@ -63,10 +63,10 @@ function main() {
 
   // Each phase is isolated: one failing phase must not skip the rest.
   step(linkCanonical); // package -> ~/.agents
-  step(linkClaude); // ~/.agents -> ~/.claude
+  step(installExternalSkills); // npx skills add <repo> ... -> ~/.agents
+  step(linkClaude); // mirror everything in ~/.agents -> ~/.claude (incl. external)
   step(linkClaudeMd);
   step(mergeMcp);
-  step(installExternalSkills); // npx skills add <repo> ...
 
   log("done. Universal agents (codex, amp, opencode, goose, kimi) read ~/.agents directly.");
 }
@@ -86,15 +86,22 @@ function linkCanonical() {
   forEachAgent((name, src) => place(src, path.join(AGENTS_DIR, "agents", name), "file"));
 }
 
-// --- claude (non-universal): ~/.agents -> ~/.claude ----------------------------
+// --- claude (non-universal): mirror the whole ~/.agents store -> ~/.claude ------
+// Covers both this package's skills/agents and any installed by `npx skills add`.
 
 function linkClaude() {
-  forEachSkill((name) =>
-    place(path.join(AGENTS_DIR, "skills", name), path.join(CLAUDE_DIR, "skills", name), "dir"),
-  );
-  forEachAgent((name) =>
-    place(path.join(AGENTS_DIR, "agents", name), path.join(CLAUDE_DIR, "agents", name), "file"),
-  );
+  mirror(path.join(AGENTS_DIR, "skills"), path.join(CLAUDE_DIR, "skills"), "dir");
+  mirror(path.join(AGENTS_DIR, "agents"), path.join(CLAUDE_DIR, "agents"), "file");
+}
+
+function mirror(srcDir, destDir, type) {
+  if (!fs.existsSync(srcDir)) return;
+  // Entries are dirs/symlinks (skills) or .md files/symlinks (agents); skip dotfiles.
+  for (const entry of fs.readdirSync(srcDir)) {
+    if (entry.startsWith(".")) continue;
+    if (type === "file" && !entry.endsWith(".md")) continue;
+    place(path.join(srcDir, entry), path.join(destDir, entry), type);
+  }
 }
 
 // --- global CLAUDE.md ----------------------------------------------------------
