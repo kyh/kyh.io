@@ -1,0 +1,9 @@
+{
+  "$comment": "MCP servers merged into ~/.claude.json (mcpServers) on install. These run in EVERY project once linked globally, so only list servers you want everywhere. Remove next-devtools if you only want it per-project.",
+  "mcpServers": {
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    }
+  }
+}

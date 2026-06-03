@@ -1,0 +1,23 @@
+{
+  "name": "@kyh/skills",
+  "version": "0.0.0",
+  "description": "Personal Claude Code + Codex skills, agents, MCP servers, and global instructions. Symlinks into ~/.claude and ~/.codex on install.",
+  "license": "MIT",
+  "files": [
+    "scripts",
+    "skills",
+    "agents",
+    "CLAUDE.md",
+    "mcp.json"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "postinstall": "node scripts/link.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
