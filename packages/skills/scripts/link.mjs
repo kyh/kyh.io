@@ -8,8 +8,8 @@
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
 //   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
 //   4. External skill repos in external-skills.json are installed globally via
-//      `npx skills add`, run in parallel (KYH_SKILLS_CONCURRENCY, default 8;
-//      skip the step with KYH_SKILLS_NO_EXTERNAL=1).
+//      `npx skills add`, all in parallel by default (throttle with
+//      KYH_SKILLS_CONCURRENCY; skip the step with KYH_SKILLS_NO_EXTERNAL=1).
 //
 // Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
 // never deleted), falls back to copying when symlinks aren't permitted, and never
@@ -163,7 +163,10 @@ async function installExternalSkills() {
   if (!Array.isArray(repos)) return warn("external-skills.json: `repos` must be an array.");
   if (repos.length === 0) return;
 
-  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || 8);
+  // Default: run every repo at once (they're network-bound git clones). Throttle
+  // with KYH_SKILLS_CONCURRENCY (e.g. on a slow link, or to avoid concurrent
+  // writes to the shared ~/.agents lock).
+  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || repos.length);
   if (DRY)
     return log(`would install external skills (concurrency ${limit}) from: ${repos.join(", ")}`);
 
