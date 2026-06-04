@@ -56,9 +56,9 @@ before linking.
 ## External skills
 
 On install, the postinstall also pulls every skill from a curated list of repos
-into the global space via the `skills` CLI (`npx skills add <repo> -g -s '*' -y`).
-The list lives in [`external-skills.json`](./external-skills.json) — edit it to
-curate.
+into the global space using the bundled `skills` CLI (`skills add <repo> -g -s '*'
+-y`; falls back to `npx skills` if unresolved). The list lives in
+[`external-skills.json`](./external-skills.json) — edit it to curate.
 
 - Repos install all in parallel by default; throttle with `KYH_SKILLS_CONCURRENCY`.
 - Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.

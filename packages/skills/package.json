@@ -12,6 +12,9 @@
     "external-skills.json"
   ],
   "type": "module",
+  "dependencies": {
+    "skills": "^1.5.10"
+  },
   "publishConfig": {
     "access": "public"
   },
