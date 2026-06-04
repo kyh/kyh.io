@@ -74,7 +74,6 @@ Cherry-pick a single skill manually: `npx skills add <repo>@<skill-name> -g -y`.
 | `architect`                 | Deep technical analysis, architecture decisions, code review          |
 | `librarian`                 | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
 | `pr-lifecycle`              | Monitor PR for bot reviews, address feedback, push fixes              |
-| `publish-and-sync-packages` | Bump + publish shared package, update all downstream consumers        |
 | `push`                      | Commit and push; creates PR if on branch                              |
 | `simplify-lifecycle`        | Full architecture sweep, loops until nothing left to simplify         |
 | `sync-conventions`          | Audit convention drift across all projects                            |
