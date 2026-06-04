@@ -46,8 +46,10 @@ Run `pnpm lint` per project. Should pass with 0 errors (warnings OK).
 For each project that has changes:
 
 ```
-git add -A && git commit -m "chore: update packages"
+git add -u && git commit -m "chore: update packages"
 ```
+
+Use `git add -u` (tracked files only) — NOT `-A`. Updates only touch tracked files (package.json, lockfile, fixed source). `-A` would sweep in unrelated WIP (untracked drafts, scratch files, AGENTS.md, etc.) into the chore commit. If a bump genuinely creates a new tracked artifact, stage it explicitly by path.
 
 Do NOT push unless the user explicitly asks.
 
