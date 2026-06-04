@@ -7,9 +7,10 @@
 //   2. Non-universal agents (claude) get their own dirs symlinked to the canonical
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
 //   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
-//   4. External skill repos in external-skills.json are installed globally via
-//      `npx skills add`, all in parallel by default (throttle with
-//      KYH_SKILLS_CONCURRENCY; skip the step with KYH_SKILLS_NO_EXTERNAL=1).
+//   4. External skill repos in external-skills.json are installed globally with
+//      the bundled `skills` CLI (falls back to `npx skills`), all in parallel by
+//      default (throttle with KYH_SKILLS_CONCURRENCY; skip with
+//      KYH_SKILLS_NO_EXTERNAL=1).
 //
 // Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
 // never deleted), falls back to copying when symlinks aren't permitted, and never
@@ -22,9 +23,12 @@
 
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOME = os.homedir();
@@ -146,7 +150,20 @@ function mergeMcp() {
   log(`added mcpServers to ~/.claude.json: ${added.join(", ")}`);
 }
 
-// --- external skills: `npx skills add <repo> -g -s '*' -y` ---------------------
+// --- external skills: `skills add <repo> -g -s '*' -y` -------------------------
+
+// Path to the bundled `skills` CLI, or null to fall back to `npx skills`.
+function skillsBin() {
+  try {
+    const pkgJson = require.resolve("skills/package.json");
+    const { bin } = JSON.parse(fs.readFileSync(pkgJson, "utf8"));
+    const rel = typeof bin === "string" ? bin : bin?.skills;
+    if (rel) return path.join(path.dirname(pkgJson), rel);
+  } catch {
+    /* not installed (e.g. --ignore-scripts / odd layout) — use npx */
+  }
+  return null;
+}
 
 async function installExternalSkills() {
   if (process.env.KYH_SKILLS_NO_EXTERNAL)
@@ -171,27 +188,35 @@ async function installExternalSkills() {
   if (DRY)
     return log(`would install external skills (concurrency ${limit}) from: ${repos.join(", ")}`);
 
-  // Warm npx's cache once so the parallel workers below don't each race to
-  // resolve/download the `skills` CLI.
-  try {
-    spawnSync("npx", ["-y", "skills", "--help"], {
-      stdio: "ignore",
-      shell: process.platform === "win32",
-    });
-  } catch {
-    /* best-effort warm-up */
+  const bin = skillsBin();
+  if (!bin) {
+    // Fallback path: warm npx's cache once so the parallel workers don't each
+    // race to resolve/download the CLI.
+    try {
+      spawnSync("npx", ["-y", "skills", "--help"], {
+        stdio: "ignore",
+        shell: process.platform === "win32",
+      });
+    } catch {
+      /* best-effort warm-up */
+    }
   }
 
   log(`installing external skills from ${repos.length} repos (concurrency ${limit})…`);
-  await pool(repos, limit, addRepo);
+  await pool(repos, limit, (repo) => addRepo(repo, bin));
 }
 
-// Installs one repo globally into the same ~/.agents canonical store.
-function addRepo(repo) {
+// Installs one repo globally into the same ~/.agents canonical store. Uses the
+// bundled CLI directly (no npx resolution) when available.
+function addRepo(repo, bin) {
+  const args = ["add", repo, "-g", "-s", "*", "-y"];
+  const [cmd, argv, useShell] = bin
+    ? [process.execPath, [bin, ...args], false]
+    : ["npx", ["-y", "skills", ...args], process.platform === "win32"];
   return new Promise((resolve) => {
-    const child = spawn("npx", ["-y", "skills", "add", repo, "-g", "-s", "*", "-y"], {
+    const child = spawn(cmd, argv, {
       stdio: "ignore", // parallel output would interleave; we log per-repo status instead
-      shell: process.platform === "win32",
+      shell: useShell,
     });
     child.on("error", (e) => {
       warn(`skills add ${repo} failed: ${e.message}`);
@@ -239,6 +264,7 @@ function place(src, dest, type) {
       if (DRY) return log(`would relink ${rel}`);
       fs.unlinkSync(dest);
     } else if (fs.existsSync(dest)) {
+      if (sameContent(src, dest)) return; // up-to-date copy (symlinks weren't available)
       const bak = backupPath(dest);
       if (DRY) return log(`would back up ${rel} -> ${path.basename(bak)} and link`);
       fs.renameSync(dest, bak);
@@ -287,6 +313,28 @@ function isSymlink(p) {
 function samePath(a, b) {
   try {
     return fs.realpathSync(a) === fs.realpathSync(b);
+  } catch {
+    return false;
+  }
+}
+
+// Deep content equality (follows symlinks), so a prior copy-mode fallback is
+// recognized on re-runs instead of being re-backed-up and re-copied.
+function sameContent(a, b) {
+  try {
+    const sa = fs.statSync(a);
+    const sb = fs.statSync(b);
+    if (sa.isFile() && sb.isFile())
+      return sa.size === sb.size && fs.readFileSync(a).equals(fs.readFileSync(b));
+    if (sa.isDirectory() && sb.isDirectory()) {
+      const ea = fs.readdirSync(a);
+      const eb = new Set(fs.readdirSync(b));
+      return (
+        ea.length === eb.size &&
+        ea.every((n) => eb.has(n) && sameContent(path.join(a, n), path.join(b, n)))
+      );
+    }
+    return false;
   } catch {
     return false;
   }
