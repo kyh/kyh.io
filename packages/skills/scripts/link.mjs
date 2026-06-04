@@ -59,12 +59,8 @@ async function main() {
     warn("Windows symlinks may need admin/developer mode; will fall back to copying.");
   if (DRY) log("dry run — no changes will be written.");
 
-  ensureDir(path.join(AGENTS_DIR, "skills"));
-  ensureDir(path.join(AGENTS_DIR, "agents"));
-  ensureDir(path.join(CLAUDE_DIR, "skills"));
-  ensureDir(path.join(CLAUDE_DIR, "agents"));
-
-  // Each phase is isolated: one failing phase must not skip the rest.
+  // Each phase is isolated: one failing phase must not skip the rest. (Target
+  // dirs are created lazily by place(), so a mkdir failure can't abort everything.)
   await step(linkCanonical); // package -> ~/.agents
   await step(installExternalSkills); // npx skills add <repo> ... -> ~/.agents (parallel)
   await step(linkClaude); // mirror everything in ~/.agents -> ~/.claude (incl. external)
@@ -237,6 +233,7 @@ function forEachAgent(fn) {
 function place(src, dest, type) {
   const rel = dest.replace(HOME, "~");
   try {
+    ensureDir(path.dirname(dest));
     if (isSymlink(dest)) {
       if (samePath(dest, src)) return; // already linked to the right place
       if (DRY) return log(`would relink ${rel}`);
