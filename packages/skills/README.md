@@ -60,7 +60,7 @@ into the global space via the `skills` CLI (`npx skills add <repo> -g -s '*' -y`
 The list lives in [`external-skills.json`](./external-skills.json) — edit it to
 curate.
 
-- Repos install in parallel; tune with `KYH_SKILLS_CONCURRENCY` (default 8).
+- Repos install all in parallel by default; throttle with `KYH_SKILLS_CONCURRENCY`.
 - Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.
 - These install into the same canonical `~/.agents/skills`, so universal agents
   pick them up directly and Claude gets symlinks.
