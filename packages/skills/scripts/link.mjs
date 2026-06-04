@@ -138,11 +138,16 @@ function mergeMcp() {
       return warn(`~/.claude.json is not valid JSON — skipping MCP merge (${e.message}).`);
     }
   }
-  config.mcpServers = { ...config.mcpServers, ...servers };
+  // Only add servers the user doesn't already have; never overwrite their
+  // entries, so reinstalls don't reset local tweaks.
+  const existing = config.mcpServers || {};
+  const added = names.filter((n) => !(n in existing));
+  if (added.length === 0) return;
+  config.mcpServers = { ...servers, ...existing }; // existing entries win
 
-  if (DRY) return log(`would merge mcpServers into ~/.claude.json: ${names.join(", ")}`);
+  if (DRY) return log(`would add mcpServers to ~/.claude.json: ${added.join(", ")}`);
   fs.writeFileSync(dest, JSON.stringify(config, null, 2) + "\n");
-  log(`merged mcpServers into ~/.claude.json: ${names.join(", ")}`);
+  log(`added mcpServers to ~/.claude.json: ${added.join(", ")}`);
 }
 
 // --- external skills: `npx skills add <repo> -g -s '*' -y` ---------------------
