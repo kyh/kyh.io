@@ -59,6 +59,7 @@ pupa() {
   local projects=(
     dataembed
     edgestories
+    idlebiz
     init
     inteligir
     kyh/ai-calendar
