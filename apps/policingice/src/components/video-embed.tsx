@@ -1,6 +1,7 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useState } from "react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useTheme } from "@/components/theme";
@@ -34,6 +35,23 @@ const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform 
     </a>
   );
 };
+
+type EmbedErrorBoundaryProps = { fallback: ReactNode; children: ReactNode };
+
+// Third-party embeds (react-tweet especially) can throw at render time when a
+// platform changes its API response shape. Contain the blast radius to the
+// embed instead of unmounting the whole page.
+class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children;
+  }
+}
 
 const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
   return (
@@ -176,5 +194,11 @@ export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
     }
   };
 
-  return <div className="w-full max-w-[550px]">{renderEmbed()}</div>;
+  return (
+    <div className="w-full max-w-[550px]">
+      <EmbedErrorBoundary fallback={<FallbackLink url={url} platform={platform} />}>
+        {renderEmbed()}
+      </EmbedErrorBoundary>
+    </div>
+  );
 };

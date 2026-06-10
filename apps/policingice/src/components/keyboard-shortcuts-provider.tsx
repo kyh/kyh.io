@@ -189,6 +189,16 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
 const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+  // resolvedTheme is undefined on the server; render theme-dependent UI only
+  // after mount to avoid a hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mounting guard for SSR compatibility
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <div className="fixed right-4 bottom-4 hidden text-xs text-muted-foreground sm:block">
@@ -239,16 +249,12 @@ const KeyboardShortcutsHelp = () => {
         </a>
         <span className="text-muted-foreground/40">·</span>
         <button
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          onClick={() => setTheme(isDark ? "light" : "dark")}
           className="cursor-pointer hover:text-foreground"
           aria-label="Toggle theme"
-          title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {resolvedTheme === "dark" ? (
-            <Sun className="h-3.5 w-3.5" />
-          ) : (
-            <Moon className="h-3.5 w-3.5" />
-          )}
+          {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </button>
       </div>
       <div className="flex items-center gap-3">
