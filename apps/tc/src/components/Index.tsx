@@ -1,4 +1,4 @@
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 import { NumericFormat } from "react-number-format";
 
 import Chart from "@/components/Chart";
