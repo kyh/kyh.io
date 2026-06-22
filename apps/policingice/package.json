@@ -19,6 +19,7 @@
     "@vercel/analytics": "catalog:",
     "ai": "^6.0.191",
     "better-auth": "^1.6.11",
+    "cnfast": "catalog:",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",

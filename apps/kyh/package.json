@@ -17,6 +17,7 @@
     "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "catalog:",
     "@vercel/speed-insights": "^2.0.0",
+    "cnfast": "catalog:",
     "geist": "^1.7.1",
     "matter-js": "^0.20.0",
     "motion": "^12.40.0",
