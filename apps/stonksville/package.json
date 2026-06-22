@@ -10,12 +10,11 @@
   },
   "dependencies": {
     "balloons-js": "^0.0.3",
-    "clsx": "^2.1.1",
+    "cnfast": "catalog:",
     "motion": "^12.40.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tailwind-merge": "^3.6.0",
     "tailwindcss": "catalog:"
   },
   "devDependencies": {

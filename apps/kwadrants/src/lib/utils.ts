@@ -1,3 +1,5 @@
+export { cn } from "cnfast";
+
 export const generateId = () => crypto.randomUUID();
 
 export const downloadURI = (uri: string, name: string) => {
