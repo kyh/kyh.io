@@ -67,6 +67,10 @@ into the global space using the bundled `skills` CLI (`skills add <repo> -g -s '
 
 Cherry-pick a single skill manually: `npx skills add <repo>@<skill-name> -g -y`.
 
+### Not installable from a repo
+
+- **`motion`** — the [Motion AI Kit](https://motion.dev/docs/ai-kit). Proprietary (Motion+), not a GitHub/npm skill. Install it manually from motion.dev; `external-skills.json` can't reproduce it.
+
 ## Custom skills
 
 | Skill                       | What it does                                                          |
