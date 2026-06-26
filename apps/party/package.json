@@ -7,6 +7,7 @@
     "clean": "rm -rf .turbo node_modules .cache .wrangler dist",
     "deploy": "wrangler deploy --name kyh-party",
     "dev": "pnpm with-env wrangler dev",
+    "lint": "oxlint --report-unused-disable-directives",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },

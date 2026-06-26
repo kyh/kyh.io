@@ -142,8 +142,9 @@ const TooltipTrigger = React.forwardRef<
   React.HTMLProps<HTMLElement> & { asChild?: boolean }
 >(({ children, asChild = false, ...props }, propRef) => {
   const context = useTooltipContext();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  const childrenRef = (children as any).ref;
+  const childrenRef = React.isValidElement<{ ref?: React.Ref<unknown> }>(children)
+    ? children.props.ref
+    : undefined;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   if (asChild && React.isValidElement(children)) {

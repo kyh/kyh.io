@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "lint": "oxlint --report-unused-disable-directives",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack -p 3004",
+    "lint": "oxlint --report-unused-disable-directives",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

@@ -7,6 +7,7 @@
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
+    "lint": "oxlint --report-unused-disable-directives",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
