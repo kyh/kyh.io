@@ -1,4 +1,4 @@
-import { projects, workHistory } from "@/lib/data";
+import { connectLinks, projects, workHistory } from "@/lib/data";
 
 export function GET() {
   const markdown = `# Kaiyu Hsu
@@ -31,9 +31,7 @@ Beyond work, I love to learn about economics, psychology, and business. You'll o
 ## Connect
 
 - Website: [kyh.io](https://kyh.io)
-- GitHub: [github.com/kyh](https://github.com/kyh)
-- X: [x.com/kaiyuhsu](https://x.com/kaiyuhsu)
-- LinkedIn: [linkedin.com/in/kyh](https://linkedin.com/in/kyh)
+${connectLinks.map((l) => `- ${l.label}: [${l.value}](${l.href})`).join("\n")}
 - Email: [hello@kyh.io](mailto:hello@kyh.io)
 `;
 

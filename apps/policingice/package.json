@@ -8,6 +8,7 @@
     "db:push": "pnpm with-env drizzle-kit push",
     "db:studio": "pnpm with-env drizzle-kit studio",
     "dev": "pnpm with-env next dev --turbopack -p 3000",
+    "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"

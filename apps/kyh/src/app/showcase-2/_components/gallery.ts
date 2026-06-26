@@ -75,6 +75,18 @@ export class Gallery {
   private imageInfos: ImageInfo[] = [];
   private atlasTexture: THREE.Texture | null = null;
   private instancedMaterial: THREE.ShaderMaterial | null = null;
+  // Typed handle on the shader uniforms. ShaderMaterial.uniforms is a string-
+  // indexed map, so reading uTime back off it is `IUniform | undefined` under
+  // noUncheckedIndexedAccess; holding the concrete object keeps it typed.
+  private uniforms: {
+    uTime: THREE.IUniform<number>;
+    uAtlas: THREE.IUniform<THREE.Texture | null>;
+    uScrollY: THREE.IUniform<number>;
+    uZrange: THREE.IUniform<number>;
+    uMaxZ: THREE.IUniform<number>;
+    uSpeedY: THREE.IUniform<number>;
+    uDirection: THREE.IUniform<number>;
+  } | null = null;
   private instancedMesh: THREE.InstancedMesh | null = null;
   private centerIndex = -1;
 
@@ -220,20 +232,22 @@ export class Gallery {
   private createInstancedMesh() {
     const geometry = new THREE.BoxGeometry(1.5, 1.5, 0.075);
 
+    this.uniforms = {
+      uTime: new THREE.Uniform(0),
+      uAtlas: new THREE.Uniform(this.atlasTexture),
+      uScrollY: new THREE.Uniform(0),
+      uZrange: new THREE.Uniform(HEIGHT),
+      uMaxZ: new THREE.Uniform(HEIGHT * 0.5),
+      uSpeedY: new THREE.Uniform(0),
+      uDirection: new THREE.Uniform(this.scroll.direction),
+    };
+
     this.instancedMaterial = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       precision: "highp",
       transparent: true,
-      uniforms: {
-        uTime: new THREE.Uniform(0),
-        uAtlas: new THREE.Uniform(this.atlasTexture),
-        uScrollY: new THREE.Uniform(0),
-        uZrange: new THREE.Uniform(HEIGHT),
-        uMaxZ: new THREE.Uniform(HEIGHT * 0.5),
-        uSpeedY: new THREE.Uniform(0),
-        uDirection: new THREE.Uniform(this.scroll.direction),
-      },
+      uniforms: this.uniforms,
     });
 
     const mesh = new THREE.InstancedMesh(geometry, this.instancedMaterial, COUNT);
@@ -294,10 +308,10 @@ export class Gallery {
   }
 
   render(time: number) {
-    const instanced = this.instancedMaterial;
-    if (!instanced || this.imageInfos.length === 0) return;
+    const uniforms = this.uniforms;
+    if (!uniforms || this.imageInfos.length === 0) return;
 
-    instanced.uniforms.uTime.value = time;
+    uniforms.uTime.value = time;
 
     // Gentle perpetual drift so the vortex is alive without input. Disabled when
     // the user prefers reduced motion — scrolling still drives it manually.
@@ -317,9 +331,9 @@ export class Gallery {
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, 0.1);
     this.scroll.speedCurrent = lerp(this.scroll.speedCurrent, this.scroll.speedTarget, 0.1);
 
-    instanced.uniforms.uScrollY.value = this.scroll.current;
-    instanced.uniforms.uSpeedY.value = this.scroll.speedCurrent;
-    instanced.uniforms.uDirection.value = this.scroll.direction;
+    uniforms.uScrollY.value = this.scroll.current;
+    uniforms.uSpeedY.value = this.scroll.speedCurrent;
+    uniforms.uDirection.value = this.scroll.direction;
   }
 
   dispose() {

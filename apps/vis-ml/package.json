@@ -8,6 +8,7 @@
     "build": "vite build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "vite",
+    "lint": "oxlint --report-unused-disable-directives",
     "preview": "vite preview"
   },
   "dependencies": {

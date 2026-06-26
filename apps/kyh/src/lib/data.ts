@@ -1,3 +1,4 @@
+import { social } from "@/components/social";
 import { getPublicAssetUrl, getPublicFaviconUrl } from "@/lib/public-assets";
 
 export type ProjectType = {
@@ -345,6 +346,24 @@ export type WorkType = {
   favicon: string;
   link: string;
 };
+
+export type SocialKind = "twitter" | "github" | "dribbble" | "linkedin";
+
+export type ConnectLink = {
+  label: string;
+  value: string;
+  href: string;
+  social: SocialKind;
+};
+
+// Single source of truth for social links, consumed by the homepage
+// ConnectList and the /markdown agent view so they can't drift.
+export const connectLinks: ConnectLink[] = [
+  { label: "Twitter", value: "@kaiyuhsu", href: social.twitter, social: "twitter" },
+  { label: "GitHub", value: "@kyh", href: social.github, social: "github" },
+  { label: "Dribbble", value: "@kaiyuhsu", href: social.dribbble, social: "dribbble" },
+  { label: "LinkedIn", value: "@kyh", href: social.linkedin, social: "linkedin" },
+];
 
 export const workHistory: WorkType[] = [
   {

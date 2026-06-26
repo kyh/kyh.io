@@ -1,53 +1,33 @@
 import { DribbbleIcon, GitHubIcon, LinkedInIcon, TwitterIcon } from "@/components/icons";
-import { social } from "@/components/social";
+import type { SocialKind } from "@/lib/data";
+import { connectLinks } from "@/lib/data";
 
-const connectLinks = [
-  {
-    label: "Twitter",
-    value: "@kaiyuhsu",
-    href: social.twitter,
-    icon: TwitterIcon,
-    social: "twitter",
-  },
-  {
-    label: "GitHub",
-    value: "@kyh",
-    href: social.github,
-    icon: GitHubIcon,
-    social: "github",
-  },
-  {
-    label: "Dribbble",
-    value: "@kaiyuhsu",
-    href: social.dribbble,
-    icon: DribbbleIcon,
-    social: "dribbble",
-  },
-  {
-    label: "LinkedIn",
-    value: "@kyh",
-    href: social.linkedin,
-    icon: LinkedInIcon,
-    social: "linkedin",
-  },
-];
+const icons: Record<SocialKind, typeof TwitterIcon> = {
+  twitter: TwitterIcon,
+  github: GitHubIcon,
+  dribbble: DribbbleIcon,
+  linkedin: LinkedInIcon,
+};
 
 export const ConnectList = () => {
   return (
     <div className="-mx-2 mt-1 flex flex-col">
-      {connectLinks.map((link) => (
-        <a
-          key={link.label}
-          href={link.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`list-row social-${link.social}`}
-        >
-          <link.icon />
-          <span>{link.label}</span>
-          <span>{link.value}</span>
-        </a>
-      ))}
+      {connectLinks.map((link) => {
+        const Icon = icons[link.social];
+        return (
+          <a
+            key={link.label}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`list-row social-${link.social}`}
+          >
+            <Icon />
+            <span>{link.label}</span>
+            <span>{link.value}</span>
+          </a>
+        );
+      })}
     </div>
   );
 };

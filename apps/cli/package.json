@@ -15,6 +15,7 @@
   "scripts": {
     "build": "esbuild src/index.tsx --bundle --platform=node --format=esm --outfile=dist/index.js --banner:js='#!/usr/bin/env node' --packages=external",
     "dev": "tsx --watch src/index.tsx",
+    "lint": "oxlint --report-unused-disable-directives",
     "clean": "rm -rf dist node_modules",
     "typecheck": "tsc --noEmit"
   },
