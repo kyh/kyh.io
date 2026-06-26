@@ -19,7 +19,8 @@
     "access": "public"
   },
   "scripts": {
-    "postinstall": "node scripts/link.mjs"
+    "postinstall": "node scripts/link.mjs",
+    "check:external": "node scripts/check-external-skills.mjs"
   },
   "engines": {
     "node": ">=18"

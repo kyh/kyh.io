@@ -9,9 +9,11 @@
     "anthropics/skills",
     "mattpocock/skills",
     "jakubkrehel/make-interfaces-feel-better",
-    "vercel-labs/next-skills",
     "remotion-dev/skills",
     "supabase/agent-skills",
-    "vercel-labs/agent-skills"
+    "vercel-labs/agent-skills",
+    "coreyhaines31/marketingskills",
+    "shadcn/improve",
+    "cloudflare/skills"
   ]
 }
