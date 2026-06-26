@@ -16,13 +16,21 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
     >
       <mask id="moon-mask-main-nav">
         <rect x="0" y="0" width="18" height="18" fill="#FFF" />
-        <motion.circle animate={{ cx: isLight ? 25 : 10 }} cy="2" r="8" fill="black" />
+        <motion.circle
+          cy="2"
+          r="8"
+          fill="black"
+          initial={false}
+          animate={{ cx: isLight ? 25 : 10 }}
+        />
       </mask>
       <motion.circle
         cx="9"
         cy="9"
+        r="8"
         fill="currentColor"
         mask="url(#moon-mask-main-nav)"
+        initial={false}
         animate={{ r: isLight ? 5 : 8 }}
       />
       <g>

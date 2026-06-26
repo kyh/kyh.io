@@ -77,7 +77,7 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
-  <html lang="en" className={GeistSans.className}>
+  <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <body>
       <Providers>
         <div className="blur-header" aria-hidden="true" />

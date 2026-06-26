@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -11,10 +12,11 @@ type AvatarGroupProps = {
   others: PlayerMap;
 };
 
-const color = getRandomColor();
-
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
+  // Picked after mount — a session-random color would mismatch SSR otherwise.
+  const [color, setColor] = useState<ReturnType<typeof getRandomColor> | null>(null);
+  useEffect(() => setColor(getRandomColor()), []);
   const players = Object.entries(others).toSorted(([, p]) =>
     p.state.pathname === pathname ? -1 : 1,
   );
@@ -27,7 +29,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           className="-mr-2 rounded-full shadow-md"
           style={{
             zIndex: players.length,
-            background: `linear-gradient(${color?.hue}, ${color?.color})`,
+            background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
           }}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: onlyMe ? 0.2 : 1 }}
