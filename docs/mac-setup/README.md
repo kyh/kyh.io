@@ -11,8 +11,9 @@ https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 - `brew install git gh zsh-autosuggestions zsh-syntax-highlighting fzf zoxide bat eza duti`
 - `brew install fnm uv`
+- `fnm install --lts && fnm default lts-latest` (node via fnm — do not `brew install node`)
 - `brew install ffmpeg turso`
-- `brew install claude-code codex gemini-cli`
+- `brew install claude-code codex`
 
 ## Applications
 
