@@ -10,7 +10,6 @@ type PanelProps = {
   flexGrow?: number;
   width?: number | `${number}%`;
   height?: number | `${number}%`;
-  minHeight?: number;
   padding?: number;
 };
 
