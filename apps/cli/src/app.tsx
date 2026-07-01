@@ -85,8 +85,9 @@ export function App() {
   const usable = termWidth - 2;
   // left column carries a 1-col right gutter; each panel eats border(2)+padding(2)
   const mainWidth = showLeft ? usable - LEFT_WIDTH : usable;
-  const mainInner = mainWidth - 4;
-  const leftInner = LEFT_WIDTH - 1 - 4;
+  // clamp so tiny / zero-width terminals never yield negative child widths
+  const mainInner = Math.max(0, mainWidth - 4);
+  const leftInner = Math.max(0, LEFT_WIDTH - 1 - 4);
   // row capacity = termHeight - header(2) - footer(2) - panel border(2)
   //   - column header(1) - two scroll-hint lines(2)
   const maxRows = Math.max(1, termHeight - 9);
