@@ -2,6 +2,7 @@
   "extends": "@kyh/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ESNext"],
+    "types": ["node"],
     "target": "ESNext",
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/react",

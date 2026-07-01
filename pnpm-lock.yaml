@@ -96,6 +96,9 @@ importers:
       '@kyh/tsconfig':
         specifier: workspace:^
         version: link:../../packages/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.1
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.15
