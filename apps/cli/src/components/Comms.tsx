@@ -30,7 +30,9 @@ export function Comms({ links, selectedIndex, innerWidth }: CommsProps) {
                   <text bg={color.accent} fg={color.black} attributes={TextAttributes.BOLD}>
                     {label}
                   </text>
-                  <text bg={color.accent} fg={color.black}>{link.value}</text>
+                  <text bg={color.accent} fg={color.black}>
+                    {pad(link.value, Math.max(0, innerWidth - LABEL_WIDTH - 2))}
+                  </text>
                 </box>
               );
             }

@@ -14,7 +14,10 @@ import { formatClock, formatUptime, openUrl } from "./lib/utils";
 
 const VERSION = "0.1.2";
 const LEFT_WIDTH = 40;
-const LEFT_BREAKPOINT = 96;
+// The identity + status stack needs both room to the side and enough height to
+// render without the two panels overlapping; below either, go full-width.
+const LEFT_MIN_WIDTH = 96;
+const LEFT_MIN_HEIGHT = 36;
 
 const allItems = [...projects, ...work];
 const sections = [
@@ -78,13 +81,15 @@ export function App() {
     }
   });
 
-  const showLeft = termWidth >= LEFT_BREAKPOINT;
+  const showLeft = termWidth >= LEFT_MIN_WIDTH && termHeight >= LEFT_MIN_HEIGHT;
   const usable = termWidth - 2;
   // left column carries a 1-col right gutter; each panel eats border(2)+padding(2)
   const mainWidth = showLeft ? usable - LEFT_WIDTH : usable;
   const mainInner = mainWidth - 4;
   const leftInner = LEFT_WIDTH - 1 - 4;
-  const maxRows = Math.max(5, termHeight - 10);
+  // row capacity = termHeight - header(2) - footer(2) - panel border(2)
+  //   - column header(1) - two scroll-hint lines(2)
+  const maxRows = Math.max(1, termHeight - 9);
 
   const target = showContact
     ? contactLinks[contactIndex]?.url

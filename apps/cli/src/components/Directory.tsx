@@ -29,8 +29,10 @@ function columns(innerWidth: number) {
   const showHost = innerWidth > 60;
   const host = showHost ? Math.min(20, Math.max(12, Math.floor(innerWidth * 0.24))) : 0;
   const fixed = MARKER + IDX + GUT1 + (showHost ? GUT2 + host : 0);
-  const name = Math.min(22, Math.max(12, Math.floor((innerWidth - fixed) * 0.42)));
-  const desc = Math.max(0, innerWidth - fixed - name);
+  const avail = Math.max(0, innerWidth - fixed);
+  // clamp name to what's actually available so the row never exceeds innerWidth
+  const name = Math.min(avail, Math.min(22, Math.max(12, Math.floor(avail * 0.42))));
+  const desc = Math.max(0, avail - name);
   return { showHost, host, name, desc };
 }
 
