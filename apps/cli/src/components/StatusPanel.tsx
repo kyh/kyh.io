@@ -5,6 +5,7 @@ import { TextAttributes } from "@opentui/core";
 import { profile } from "../data/content";
 import { color } from "../lib/theme";
 import { Panel } from "./Panel";
+import { Waves } from "./Waves";
 
 type StatusPanelProps = {
   uptime: string;
@@ -22,19 +23,6 @@ function Readout({ label, children }: { label: string; children: React.ReactNode
       {children}
     </box>
   );
-}
-
-// Deterministic "barcode" strip — pure decoration echoing the data-transfer
-// readouts from the reference art.
-function barcode(width: number): string {
-  const blocks = "▏▎▍▌▋";
-  let out = "";
-  for (let i = 0; i < width; i++) {
-    // cheap deterministic pseudo-noise, no Date/random needed
-    const n = (i * 2654435761) >>> 0;
-    out += n % 5 === 0 ? " " : blocks[n % blocks.length];
-  }
-  return out;
 }
 
 export function StatusPanel({ uptime, entries, online, innerWidth }: StatusPanelProps) {
@@ -61,8 +49,9 @@ export function StatusPanel({ uptime, entries, online, innerWidth }: StatusPanel
             </text>
           </Fragment>
         </Readout>
-        <box paddingTop={1}>
-          <text fg={color.ghost}>{barcode(innerWidth)}</text>
+        <box flexDirection="row" paddingTop={1}>
+          <text fg={color.faint}>{"SIGNAL".padEnd(LABEL_WIDTH)}</text>
+          <Waves width={Math.max(0, innerWidth - LABEL_WIDTH)} height={2} />
         </box>
       </box>
     </Panel>

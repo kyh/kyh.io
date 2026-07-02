@@ -27,6 +27,20 @@ export function useSpinner(intervalMs = 90) {
   return SPINNER_FRAMES[frame]!;
 }
 
+// Elapsed-time driver for frame-based animations. Returns ms since mount,
+// updated at roughly `fps`.
+export function useTick(fps = 15) {
+  const [elapsed, setElapsed] = useState(0);
+  const [start] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Date.now() - start), Math.round(1000 / fps));
+    return () => clearInterval(id);
+  }, [fps, start]);
+
+  return elapsed;
+}
+
 // Slow blink used for the cursor / live glyphs.
 export function useBlink(intervalMs = 600) {
   const [on, setOn] = useState(true);

@@ -7,6 +7,7 @@ import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { Identity } from "./components/Identity";
 import { StatusPanel } from "./components/StatusPanel";
+import { Telemetry } from "./components/Telemetry";
 import { contactLinks, heroText, projects, work } from "./data/content";
 import { useClock, useSpinner } from "./lib/hooks";
 import { color } from "./lib/theme";
@@ -18,6 +19,9 @@ const LEFT_WIDTH = 40;
 // render without the two panels overlapping; below either, go full-width.
 const LEFT_MIN_WIDTH = 96;
 const LEFT_MIN_HEIGHT = 36;
+// Taller terminals also get the spinning-globe telemetry panel.
+const GLOBE_MIN_HEIGHT = 44;
+const GLOBE_HEIGHT = 11;
 
 const allItems = [...projects, ...work];
 const sections = [
@@ -82,6 +86,7 @@ export function App() {
   });
 
   const showLeft = termWidth >= LEFT_MIN_WIDTH && termHeight >= LEFT_MIN_HEIGHT;
+  const showGlobe = showLeft && termHeight >= GLOBE_MIN_HEIGHT;
   const usable = termWidth - 2;
   // left column carries a 1-col right gutter; each panel eats border(2)+padding(2)
   const mainWidth = showLeft ? usable - LEFT_WIDTH : usable;
@@ -124,7 +129,8 @@ export function App() {
       <box flexDirection="row" flexGrow={1} paddingTop={0}>
         {showLeft && (
           <box flexDirection="column" width={LEFT_WIDTH} paddingRight={1}>
-            <Identity hero={heroText} innerWidth={leftInner} />
+            <Identity hero={heroText} innerWidth={leftInner} maxBioLines={showGlobe ? 4 : undefined} />
+            {showGlobe && <Telemetry innerWidth={leftInner} globeHeight={GLOBE_HEIGHT} />}
             <StatusPanel
               uptime={formatUptime(uptime)}
               entries={allItems.length}
