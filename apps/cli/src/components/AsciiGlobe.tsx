@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { useTick } from "../lib/hooks";
 import { renderGlobe } from "../lib/ascii";
 import { color } from "../lib/theme";
@@ -12,7 +14,9 @@ type AsciiGlobeProps = {
 // ramp carries the shading, so no per-cell color work is needed per frame.
 export function AsciiGlobe({ width, height, fg = color.accent }: AsciiGlobeProps) {
   const t = useTick(15);
-  const frame = renderGlobe(width, height, t).join("\n");
+  // only recompute when the frame time (or size) changes, not on unrelated
+  // parent re-renders from the clock/spinner
+  const frame = useMemo(() => renderGlobe(width, height, t).join("\n"), [width, height, t]);
 
   return <text fg={fg}>{frame}</text>;
 }

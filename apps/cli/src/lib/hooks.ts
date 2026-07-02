@@ -32,11 +32,13 @@ export function useSpinner(intervalMs = 90) {
 export function useTick(fps = 15) {
   const [elapsed, setElapsed] = useState(0);
   const [start] = useState(() => Date.now());
+  // guard against 0/negative/huge fps collapsing to a 1ms rapid-fire timer
+  const interval = Math.max(16, Math.round(1000 / Math.max(1, fps)));
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed(Date.now() - start), Math.round(1000 / fps));
+    const id = setInterval(() => setElapsed(Date.now() - start), interval);
     return () => clearInterval(id);
-  }, [fps, start]);
+  }, [interval, start]);
 
   return elapsed;
 }
