@@ -12,7 +12,17 @@ export type ContactLink = {
 
 export const name = "Kaiyu Hsu";
 
+// Rendered as the big ASCII logo in the identity panel.
+export const callsign = "KYH";
+
 export const heroText = `Hello world. You can call me Kai since we're pretty much friends now. I enjoy creating things for the internet. By day, I get to do that through investing, advising, and building products you may not have heard of, yet. Welcome to my corner of the web.`;
+
+// Readout lines for the STATUS panel.
+export const profile = {
+  role: "INVESTOR / ADVISOR / ENGINEER",
+  location: "SAN FRANCISCO, CA",
+  channel: "KYH.IO",
+} as const;
 
 export const projects: Item[] = [
   {
