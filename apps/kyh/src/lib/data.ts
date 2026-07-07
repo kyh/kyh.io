@@ -23,7 +23,7 @@ export const projects: ProjectType[] = [
   {
     slug: "vibedgames",
     title: "Vibedgames",
-    description: "Design, publish, and play personalized multiplayer minigames with your friends",
+    description: "A game studio for your agent",
     url: "https://www.vibedgames.com",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     type: "project",
@@ -130,7 +130,7 @@ export const projects: ProjectType[] = [
   {
     slug: "founding",
     title: "Founding",
-    description: "Your proxy founding team",
+    description: "Initialize your technical team",
     url: "https://www.founding.so",
     favicon: getPublicFaviconUrl("founding-c.png"),
     type: "venture",
@@ -150,7 +150,7 @@ export const projects: ProjectType[] = [
   {
     slug: "inteligir",
     title: "Inteligir",
-    description: "An artificially intelligent operating system. Tailored for you.",
+    description: "An artificially intelligent operating system",
     url: "https://www.inteligir.com",
     favicon: getPublicFaviconUrl("inteligir-c.png"),
     type: "project",
@@ -178,7 +178,7 @@ export const projects: ProjectType[] = [
   {
     slug: "edgestories",
     title: "Edgestories",
-    description: "The stories between people",
+    description: "Research into the data between people",
     url: "https://www.edgestories.com",
     favicon: getPublicFaviconUrl("edgestories-1-c.png"),
     type: "project",
@@ -295,7 +295,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-canvas",
     title: "AI Canvas",
-    description: "A full-featured, hackable, AI canvas app",
+    description: "Forkable Next.js template featuring a design canvas UI with AI integration",
     url: "https://canvas.kyh.io",
     favicon: getPublicFaviconUrl("ai-design-canvas.png"),
     type: "template",
@@ -304,7 +304,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-datagrid",
     title: "AI Datagrid",
-    description: "A full-featured, hackable, AI datagrid app",
+    description: "Forkable Next.js template featuring an Excel-like UI with AI integration",
     url: "https://datagrid.kyh.io",
     favicon: getPublicFaviconUrl("ai-datagrid.png"),
     type: "template",
@@ -313,7 +313,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-notes",
     title: "AI Notes",
-    description: "A full-featured, hackable, AI notes app",
+    description: "Forkable Next.js template featuring an AI-powered notes app",
     url: "https://notes.kyh.io",
     favicon: getPublicFaviconUrl("ai-notes.png"),
     type: "template",
@@ -322,7 +322,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-schedule",
     title: "AI Calendar",
-    description: "A full-featured, hackable, AI calendar app",
+    description: "Forkable Next.js template featuring an AI-powered calendar app",
     url: "https://calendar.kyh.io",
     favicon: getPublicFaviconUrl("ai-schedule.png"),
     type: "template",
@@ -331,7 +331,7 @@ export const projects: ProjectType[] = [
   {
     slug: "ai-coms",
     title: "AI Messages",
-    description: "A full-featured, hackable AI messages app",
+    description: "Forkable Next.js template featuring an AI-powered communications app",
     url: "https://coms.kyh.io",
     favicon: getPublicFaviconUrl("ai-coms.png"),
     type: "template",

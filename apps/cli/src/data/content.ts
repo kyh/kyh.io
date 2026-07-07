@@ -29,7 +29,7 @@ export const profile = {
 export const projects: Item[] = [
   {
     title: "Vibedgames",
-    description: "Design, publish, and play personalized multiplayer minigames with your friends",
+    description: "A game studio for your agent",
     url: "https://www.vibedgames.com",
   },
   {
@@ -44,12 +44,12 @@ export const projects: Item[] = [
   },
   {
     title: "Founding",
-    description: "Your proxy founding team",
+    description: "Initialize your technical team",
     url: "https://www.founding.so",
   },
   {
     title: "Inteligir",
-    description: "An artificially intelligent operating system. Tailored for you.",
+    description: "An artificially intelligent operating system",
     url: "https://www.inteligir.com",
   },
   {
@@ -60,7 +60,7 @@ export const projects: Item[] = [
   },
   {
     title: "Edgestories",
-    description: "The stories between people",
+    description: "Research into the data between people",
     url: "https://www.edgestories.com",
   },
   {
@@ -107,27 +107,27 @@ export const projects: Item[] = [
   },
   {
     title: "AI Canvas",
-    description: "A full-featured, hackable, AI canvas app",
+    description: "Forkable Next.js template featuring a design canvas UI with AI integration",
     url: "https://canvas.kyh.io",
   },
   {
     title: "AI Datagrid",
-    description: "A full-featured, hackable, AI datagrid app",
+    description: "Forkable Next.js template featuring an Excel-like UI with AI integration",
     url: "https://datagrid.kyh.io",
   },
   {
     title: "AI Notes",
-    description: "A full-featured, hackable, AI notes app",
+    description: "Forkable Next.js template featuring an AI-powered notes app",
     url: "https://notes.kyh.io",
   },
   {
     title: "AI Calendar",
-    description: "A full-featured, hackable, AI calendar app",
+    description: "Forkable Next.js template featuring an AI-powered calendar app",
     url: "https://calendar.kyh.io",
   },
   {
     title: "AI Messages",
-    description: "A full-featured, hackable AI messages app",
+    description: "Forkable Next.js template featuring an AI-powered communications app",
     url: "https://coms.kyh.io",
   },
 ];
