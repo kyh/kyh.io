@@ -31,6 +31,8 @@ Parse from the user message:
 
 If ambiguous, ask in one short sentence before proceeding.
 
+**Sanity-check the bump type against the actual changes** (from the step-1 git log), even when one was passed explicitly. New features, redesigns, new packages, or distribution/install changes → suggest `minor`. Breaking CLI flags/behavior or dropped platform support → suggest `major`. If the requested bump undersells the changes, say so in one sentence and ask before proceeding — a wrong version on the registry can't be unpublished, only superseded.
+
 ## Process
 
 ### 1. Preflight
@@ -87,6 +89,7 @@ pnpm publish --access public --no-git-checks
   for d in apps/cli/dist/npm/cli-*; do (cd "$d" && npm publish --access public); done
   (cd apps/cli/dist/npm/kyh && npm publish --access public)
   ```
+  If any platform package is **brand-new to the registry** (first publish of that name), wait until `npm view <pkg> dist-tags` succeeds for all of them **before** publishing `kyh` — new-package creation can take minutes to propagate to npm's read endpoints, and during that window installs of the new `kyh` fail resolving its optionalDependencies. Re-publishes of existing packages propagate in seconds; no wait needed.
 - For **configs**, publish `@kyh/tsconfig` first, then `@kyh/eslint-config` (the latter's `workspace:*` dep on tsconfig is rewritten to the exact new version by pnpm at publish — publishing tsconfig first keeps the registry consistent).
 - `--no-git-checks` because we commit + tag *after* publish, so we never tag a commit for a publish that failed.
 
