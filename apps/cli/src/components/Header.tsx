@@ -4,13 +4,12 @@ import { color, panelBorder } from "../lib/theme";
 
 type HeaderProps = {
   clock: string;
-  spinner: string;
   version: string;
 };
 
 // Top system bar: identity on the left, live status + clock on the right,
 // sitting above a hairline divider.
-export function Header({ clock, spinner, version }: HeaderProps) {
+export function Header({ clock, version }: HeaderProps) {
   return (
     <box
       flexDirection="row"
@@ -32,7 +31,7 @@ export function Header({ clock, spinner, version }: HeaderProps) {
 
       <box flexGrow={1} />
 
-      <text fg={color.accent}>{spinner}</text>
+      <text fg={color.accent}>●</text>
       <text fg={color.dim}> SYSTEM </text>
       <text attributes={TextAttributes.BOLD} fg={color.accent}>
         ONLINE

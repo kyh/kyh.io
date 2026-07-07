@@ -28,7 +28,7 @@ function Readout({ label, children }: { label: string; children: React.ReactNode
 export function StatusPanel({ uptime, entries, online, innerWidth }: StatusPanelProps) {
   return (
     <Panel title="STATUS">
-      <box flexDirection="column" paddingTop={0}>
+      <box flexDirection="column" paddingTop={1}>
         <Readout label="UPTIME">
           <text fg={color.text}>{uptime}</text>
         </Readout>

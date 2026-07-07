@@ -13,20 +13,6 @@ export function useClock() {
   return { now, uptime: now.getTime() - start };
 }
 
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-
-// Braille spinner for the "system active" indicator.
-export function useSpinner(intervalMs = 90) {
-  const [frame, setFrame] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setFrame((f) => (f + 1) % SPINNER_FRAMES.length), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-
-  return SPINNER_FRAMES[frame]!;
-}
-
 // Elapsed-time driver for frame-based animations. Returns ms since mount,
 // updated at roughly `fps`.
 export function useTick(fps = 15) {
@@ -41,16 +27,4 @@ export function useTick(fps = 15) {
   }, [interval, start]);
 
   return elapsed;
-}
-
-// Slow blink used for the cursor / live glyphs.
-export function useBlink(intervalMs = 600) {
-  const [on, setOn] = useState(true);
-
-  useEffect(() => {
-    const id = setInterval(() => setOn((v) => !v), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-
-  return on;
 }

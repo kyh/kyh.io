@@ -1,17 +1,17 @@
-import { AsciiGlobe } from "./AsciiGlobe";
 import { Panel } from "./Panel";
+import "./Hedron";
 
 type TelemetryProps = {
   innerWidth: number;
   globeHeight: number;
 };
 
-// Framed spinning-globe visualization for the left column.
+// Framed dithered icosahedron for the left column — drag it to spin.
 export function Telemetry({ innerWidth, globeHeight }: TelemetryProps) {
   return (
-    <Panel title="ORBITAL UPLINK" bottomTitle="◍ LIVE">
+    <Panel title="GYROSCOPE" bottomTitle="⟲ DRAG">
       <box flexDirection="column" alignItems="center">
-        <AsciiGlobe width={innerWidth} height={globeHeight} />
+        <hedron width={innerWidth} height={globeHeight} />
       </box>
     </Panel>
   );

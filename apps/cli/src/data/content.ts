@@ -19,55 +19,59 @@ export const heroText = `Hello world. You can call me Kai since we're pretty muc
 
 // Readout lines for the STATUS panel.
 export const profile = {
-  role: "INVESTOR / ADVISOR / ENGINEER",
+  role: "DESIGN ENGINEER",
   location: "SAN FRANCISCO, CA",
   channel: "KYH.IO",
 } as const;
 
+// Mirrors apps/kyh/src/lib/data.ts (order, titles, descriptions, urls) —
+// keep in sync with the site. Emoji stripped for the terminal.
 export const projects: Item[] = [
   {
     title: "Vibedgames",
     description: "Design, publish, and play personalized multiplayer minigames with your friends",
-    url: "https://vibedgames.com",
+    url: "https://www.vibedgames.com",
   },
   {
     title: "Yours Sincerely",
     description: "Anonymous love letters written in disappearing ink",
-    url: "https://yourssincerely.org",
+    url: "https://www.yourssincerely.org",
   },
   {
     title: "UICapsule",
     description: "A curated collection of components that spark joy",
-    url: "https://uicapsule.com",
-  },
-  {
-    title: "Inteligir",
-    description: "Turn your social feed into your personal university with bite-sized lessons",
-    url: "https://inteligir.com",
-  },
-  {
-    title: "Dataembed",
-    description: "Search the web like a database. Query and transform scattered web information",
-    url: "https://dataembed.com",
-  },
-  {
-    title: "LoremLLM",
-    description: "Mock responses for LLMs",
-    url: "https://loremllm.com",
+    url: "https://www.uicapsule.com",
   },
   {
     title: "Founding",
     description: "Your proxy founding team",
-    url: "https://founding.so",
+    url: "https://www.founding.so",
+  },
+  {
+    title: "Inteligir",
+    description: "An artificially intelligent operating system. Tailored for you.",
+    url: "https://www.inteligir.com",
+  },
+  {
+    title: "Dataembed",
+    description:
+      "Search the web like a database. Query and transform scattered web information into structured datasets",
+    url: "https://www.dataembed.com",
+  },
+  {
+    title: "Edgestories",
+    description: "The stories between people",
+    url: "https://www.edgestories.com",
   },
   {
     title: "Total Compensation Calculator",
-    description: "Navigate tech startup compensation",
+    description:
+      "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank",
     url: "https://tc.kyh.io",
   },
   {
     title: "Covid-19 Dashboard",
-    description: "Visualize global Covid-19 data and trends",
+    description: "A real-time dashboard visualizing global Covid-19 data and trends",
     url: "https://covid-19.kyh.io",
   },
   {
@@ -78,12 +82,23 @@ export const projects: Item[] = [
   {
     title: "Policing Ice",
     description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
-    url: "https://policingice.com",
+    url: "https://www.policingice.com",
+  },
+  {
+    title: "LoremLLM",
+    description: "Mock responses for LLMs",
+    url: "https://www.loremllm.com",
+  },
+  {
+    title: "Stonksville",
+    description:
+      "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
+    url: "https://www.stonksville.com",
   },
   {
     title: "Kwadrants",
     description: "Everything lives in a 2x2 matrix",
-    url: "https://kwadrants.com",
+    url: "https://www.kwadrants.com",
   },
   {
     title: "Init",
@@ -92,13 +107,28 @@ export const projects: Item[] = [
   },
   {
     title: "AI Canvas",
-    description: "A full-featured, hackable Next.js and AI sdk design canvas",
+    description: "A full-featured, hackable, AI canvas app",
     url: "https://canvas.kyh.io",
   },
   {
     title: "AI Datagrid",
-    description: "A full-featured, hackable Next.js AI datagrid",
+    description: "A full-featured, hackable, AI datagrid app",
     url: "https://datagrid.kyh.io",
+  },
+  {
+    title: "AI Notes",
+    description: "A full-featured, hackable, AI notes app",
+    url: "https://notes.kyh.io",
+  },
+  {
+    title: "AI Calendar",
+    description: "A full-featured, hackable, AI calendar app",
+    url: "https://calendar.kyh.io",
+  },
+  {
+    title: "AI Messages",
+    description: "A full-featured, hackable AI messages app",
+    url: "https://coms.kyh.io",
   },
 ];
 
@@ -126,12 +156,12 @@ export const work: Item[] = [
   {
     title: "Atrium",
     description: "Software Engineer",
-    url: "https://crunchbase.com/organization/atrium-lts",
+    url: "https://www.crunchbase.com/organization/atrium-lts",
   },
   {
     title: "Cardiogram",
     description: "Design Engineer",
-    url: "https://crunchbase.com/organization/cardiogram",
+    url: "https://www.crunchbase.com/organization/cardiogram",
   },
 ];
 

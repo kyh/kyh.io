@@ -283,3 +283,6 @@ branch() {
     git checkout -b "$branch_name"
   fi
 }
+
+# bun completions
+[ -s "/Users/kyh/.bun/_bun" ] && source "/Users/kyh/.bun/_bun"

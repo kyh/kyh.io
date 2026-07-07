@@ -22,11 +22,25 @@ Keys: `↑↓`/`jk` navigate · `⏎` open · `C` comms · `Q`/`esc` quit.
 ## Stack
 
 - UI - [OpenTUI](https://git.new/create-tui) + [React](https://react.dev/)
-- Build - [esbuild](https://esbuild.github.io/)
+- Build - [Bun](https://bun.sh/) (`bun build --compile`)
 
 ## Development
+
+Requires [Bun](https://bun.sh/) (OpenTUI's FFI only runs under the Bun runtime).
 
 ```bash
 pnpm install
 pnpm dev:cli
 ```
+
+## Distribution
+
+`npx kyh` needs Node only — the published `kyh` package is a thin Node
+launcher with platform-specific optional dependencies (`@kyh/cli-<os>-<arch>`),
+each containing a standalone bun-compiled binary with the Bun runtime and
+OpenTUI's native library embedded. Targets: darwin arm64/x64, linux
+arm64/x64 (glibc), win32 x64.
+
+`pnpm build` (`scripts/build.ts`) cross-compiles all targets and stages the
+six publish-ready packages in `dist/npm/`. Publishing happens from there via
+the repo `release` skill — `apps/cli` itself is private.

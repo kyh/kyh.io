@@ -23,6 +23,18 @@ catalog:
 
 linkWorkspacePackages: true
 
+# Install optional native deps for every platform we cross-compile the CLI to
+# (apps/cli bun-compiles binaries for all of these; opentui's per-platform
+# packages must be present in node_modules at build time).
+supportedArchitectures:
+  os:
+    - darwin
+    - linux
+    - win32
+  cpu:
+    - x64
+    - arm64
+
 onlyBuiltDependencies:
   - "@vercel/speed-insights"
   - cbor-extract

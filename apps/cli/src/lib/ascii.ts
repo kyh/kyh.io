@@ -14,62 +14,6 @@ function glyph(brightness: number): string {
   return RAMP[i]!;
 }
 
-// A rotating, lit, lat/long-gridded sphere. Longitude lines sweep with `tMs`,
-// so the globe visibly spins; a fixed light gives it limb shading.
-export function renderGlobe(w: number, h: number, tMs: number): string[] {
-  const cx = w / 2;
-  const cy = h / 2;
-  const R = Math.min(w / 2, h) * 0.96;
-  const rx = R;
-  const ry = R / CELL_ASPECT;
-  const yaw = (tMs / 1000) * 0.7; // rad/s spin
-
-  // view-space light direction (upper-left, toward viewer)
-  const ll = Math.hypot(-0.4, -0.5, 0.85);
-  const lx = -0.4 / ll;
-  const ly = -0.5 / ll;
-  const lz = 0.85 / ll;
-
-  const STEP = Math.PI / 12; // 15° grid
-  const lines: string[] = [];
-
-  for (let yc = 0; yc < h; yc++) {
-    let row = "";
-    for (let xc = 0; xc < w; xc++) {
-      const nx = (xc + 0.5 - cx) / rx;
-      const ny = (yc + 0.5 - cy) / ry;
-      const d2 = nx * nx + ny * ny;
-      if (d2 > 1) {
-        row += " ";
-        continue;
-      }
-      const nz = Math.sqrt(1 - d2);
-
-      // diffuse lighting from the view-space normal (nx, ny, nz)
-      const diffuse = Math.max(0, nx * lx + ny * ly + nz * lz);
-
-      // rotate the surface point back into texture space (about Y by -yaw)
-      const cos = Math.cos(yaw);
-      const sin = Math.sin(yaw);
-      const wx = nx * cos + nz * sin;
-      const wz = -nx * sin + nz * cos;
-      const lat = Math.asin(clamp(ny, -1, 1));
-      const lon = Math.atan2(wx, wz);
-
-      const dLat = Math.abs(lat / STEP - Math.round(lat / STEP));
-      const dLon = Math.abs(lon / STEP - Math.round(lon / STEP));
-      const onGrid = dLat < 0.08 || dLon < 0.08;
-
-      // faint body so the disk reads as a ball; bright meridians/parallels on
-      // top, lit-side lines brighter — the moving longitude lines sell the spin
-      const b = onGrid ? 0.5 + diffuse * 0.5 : 0.1 + diffuse * 0.16;
-      row += glyph(clamp(b, 0, 1));
-    }
-    lines.push(row);
-  }
-  return lines;
-}
-
 // 4×4 Bayer matrix (normalised) for ordered dithering — softens the banding
 // you'd otherwise get quantising a smooth field onto a 10-step ramp.
 const BAYER = [

@@ -3,18 +3,13 @@
   "version": "0.1.2",
   "description": "Personal CLI tool",
   "bin": {
-    "kyh": "./dist/index.js"
+    "kyh": "./bin/kyh.cjs"
   },
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "scripts": {
-    "build": "esbuild src/index.tsx --bundle --platform=node --format=esm --outfile=dist/index.js --banner:js='#!/usr/bin/env node' --packages=external",
-    "dev": "tsx --watch src/index.tsx",
+    "build": "bun scripts/build.ts",
+    "dev": "bun --watch src/index.tsx",
     "lint": "oxlint --report-unused-disable-directives",
     "clean": "rm -rf dist node_modules",
     "typecheck": "tsc --noEmit"
@@ -28,8 +23,6 @@
     "@kyh/tsconfig": "workspace:^",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "esbuild": "^0.28.0",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -2,23 +2,18 @@ import { TextAttributes } from "@opentui/core";
 
 import { callsign, name, profile } from "../data/content";
 import { color } from "../lib/theme";
-import { truncate, wrapText } from "../lib/utils";
+import { wrapText } from "../lib/utils";
 import { Panel } from "./Panel";
 
 type IdentityProps = {
   hero: string;
   innerWidth: number;
-  maxBioLines?: number;
 };
 
-export function Identity({ hero, innerWidth, maxBioLines }: IdentityProps) {
-  const wrapped = wrapText(hero, innerWidth);
-  // trim the bio (with an ellipsis) when vertical space is being shared with
-  // the telemetry globe
-  const bioLines =
-    maxBioLines && wrapped.length > maxBioLines
-      ? [...wrapped.slice(0, maxBioLines - 1), truncate(`${wrapped[maxBioLines - 1]} …`, innerWidth)]
-      : wrapped;
+export function Identity({ hero, innerWidth }: IdentityProps) {
+  // always render the full bio — the globe panel yields (app.tsx) rather than
+  // this text getting clipped
+  const bioLines = wrapText(hero, innerWidth);
 
   return (
     <Panel title="IDENTITY" flexGrow={1}>

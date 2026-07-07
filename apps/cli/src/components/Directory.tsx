@@ -16,6 +16,7 @@ type DirectoryProps = {
 
 type DisplayRow =
   | { kind: "header"; label: string }
+  | { kind: "spacer"; label: string }
   | { kind: "item"; item: Item; index: number };
 
 // Fixed field widths, sized so marker+idx+name+desc+host + gutters == innerWidth
@@ -78,6 +79,8 @@ function buildRows(sections: Section[]): DisplayRow[] {
   const rows: DisplayRow[] = [];
   let index = 0;
   for (const section of sections) {
+    // blank line between sections so each group reads as its own block
+    if (rows.length > 0) rows.push({ kind: "spacer", label: section.label });
     rows.push({ kind: "header", label: section.label });
     for (const item of section.items) {
       rows.push({ kind: "item", item, index });
@@ -125,7 +128,9 @@ export function Directory({ sections, selectedIndex, innerWidth, maxRows }: Dire
         <text fg={color.ghost}>{clippedTop ? "  ↑ more" : ""}</text>
 
         {rows.map((row) =>
-          row.kind === "header" ? (
+          row.kind === "spacer" ? (
+            <text key={`spacer-${row.label}`}> </text>
+          ) : row.kind === "header" ? (
             <box key={`section-${row.label}`} flexDirection="row">
               <text fg={color.accentDim}>{`▸ ${row.label} `}</text>
               <text fg={color.ghost}>{"─".repeat(Math.max(0, innerWidth - row.label.length - 3))}</text>

@@ -15,8 +15,9 @@ Cut new npm versions of the publishable packages in this repo. Replaces the old 
   - **cli** → `kyh` → `apps/cli` → tag `kyh@`
   - **skills** → `@kyh/skills` → `packages/skills` → tag `@kyh/skills@`
   - **configs** → `@kyh/eslint-config` (`packages/eslint`) + `@kyh/tsconfig` (`packages/typescript`) — a **fixed/lockstep pair**: they always share one version and release together. `@kyh/eslint-config` devDepends on `@kyh/tsconfig` via `workspace:*`. Tags `@kyh/eslint-config@` and `@kyh/tsconfig@` (same version).
-- All four are public (`publishConfig.access: "public"`).
+- All are public (`publishConfig.access: "public"`).
 - Only `kyh` and `@kyh/skills` have a `build` script. `@kyh/tsconfig` and `@kyh/eslint-config` are config-only — no build.
+- **cli is special**: `apps/cli/package.json` is `private: true` — it is never published directly. Its build (`bun scripts/build.ts`) bun-compiles standalone binaries and stages **6 publish-ready packages** in `apps/cli/dist/npm/`: five platform packages (`@kyh/cli-darwin-arm64`, `@kyh/cli-darwin-x64`, `@kyh/cli-linux-arm64`, `@kyh/cli-linux-x64`, `@kyh/cli-win32-x64`) plus the main `kyh` package (a Node launcher shim with exact-pinned `optionalDependencies` on the platform packages). All 6 share the version from `apps/cli/package.json`. Building requires bun and all-platform opentui packages in node_modules (`supportedArchitectures` in `pnpm-workspace.yaml` handles this — run `pnpm install` if platform packages are missing).
 - Many internal apps (`@repo/*`) consume `@kyh/tsconfig`/`@kyh/eslint-config` via the workspace catalog. Rolling a new version out to **other repos'** catalogs is a separate concern — see the global `publish-and-sync-packages` skill. This skill is npm-only and does not touch downstream consumers.
 - Current branch: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io rev-parse --abbrev-ref HEAD`
 - Working tree: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io status --short`
@@ -81,12 +82,17 @@ For each remaining unit, from each package's directory:
 ```
 pnpm publish --access public --no-git-checks
 ```
+- For **cli**, publish from the staged dirs instead (never from `apps/cli` itself — it's private). Platform packages first, main `kyh` last, so `kyh`'s optionalDependencies never point at unpublished versions:
+  ```
+  for d in apps/cli/dist/npm/cli-*; do (cd "$d" && npm publish --access public); done
+  (cd apps/cli/dist/npm/kyh && npm publish --access public)
+  ```
 - For **configs**, publish `@kyh/tsconfig` first, then `@kyh/eslint-config` (the latter's `workspace:*` dep on tsconfig is rewritten to the exact new version by pnpm at publish — publishing tsconfig first keeps the registry consistent).
 - `--no-git-checks` because we commit + tag *after* publish, so we never tag a commit for a publish that failed.
 
 ### 6. Verify
 
-`npm view <pkg> dist-tags` for each published package — confirm `latest` matches the new version. Registry can lag; retry once after `sleep 5` before flagging.
+`npm view <pkg> dist-tags` for each published package — confirm `latest` matches the new version. For **cli**, check `kyh` plus spot-check one platform package (`npm view @kyh/cli-darwin-arm64 dist-tags`). Registry can lag; retry once after `sleep 5` before flagging.
 
 ### 7. Commit, tag, push
 
@@ -98,7 +104,7 @@ Stage only the changed `package.json` + `CHANGELOG.md` files. Then one annotated
 ```
 git tag -a '<pkg-name>@<version>' -m '<pkg-name>@<version>'
 ```
-git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). Then:
+git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). **cli gets a single `kyh@<version>` tag** — the `@kyh/cli-*` platform packages are build artifacts of the same release, never tagged individually. Then:
 ```
 git push --follow-tags origin <current-branch>
 ```

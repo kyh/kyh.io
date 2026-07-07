@@ -102,12 +102,6 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.15
-      esbuild:
-        specifier: ^0.28.0
-        version: 0.28.0
-      tsx:
-        specifier: 'catalog:'
-        version: 4.22.3
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
