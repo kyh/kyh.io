@@ -13,7 +13,7 @@ import { useClock } from "./lib/hooks";
 import { color } from "./lib/theme";
 import { formatClock, formatUptime, openUrl, wrapText } from "./lib/utils";
 
-const VERSION = "0.1.3";
+const VERSION = "0.2.0";
 const LEFT_WIDTH = 40;
 // The identity + status stack needs both room to the side and enough height to
 // render without the two panels overlapping; below either, go full-width.

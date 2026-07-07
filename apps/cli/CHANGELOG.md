@@ -1,6 +1,6 @@
 # kyh
 
-## 0.1.3 — 2026-07-06
+## 0.2.0 — 2026-07-07
 
 - Ship as standalone bun-compiled binaries — Node-only install, no Bun/FFI needed (`@kyh/cli-<os>-<arch>` platform packages + launcher shim)
 - Redesign as sci-fi terminal dashboard: identity/status/directory HUD panels

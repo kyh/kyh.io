@@ -1,6 +1,6 @@
 {
   "name": "kyh",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Personal CLI tool",
   "bin": {
     "kyh": "./bin/kyh.cjs"
