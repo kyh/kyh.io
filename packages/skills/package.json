@@ -23,6 +23,6 @@
     "check:external": "node scripts/check-external-skills.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }

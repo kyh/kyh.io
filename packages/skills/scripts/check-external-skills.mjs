@@ -8,16 +8,24 @@
 // machine that has the skills installed. CI has no lock -> the check is skipped.
 // Run manually (e.g. before a release): `node scripts/check-external-skills.mjs`.
 //
+// The lock only sees what the `skills` CLI installed, so it can't catch a skill
+// dropped straight into an agent's own dir by some other installer. `link.mjs`
+// mirrors ~/.agents/skills -> ~/.claude/skills, so we catch those by name: a
+// skill Claude can see with no counterpart in the canonical store came from
+// somewhere this repo doesn't control, and a fresh install won't recreate it.
+//
 // Not every skill comes from a repo (e.g. `motion` = Motion AI Kit from
 // motion.dev). List those here so they don't trip the check.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const lockPath = join(homedir(), ".agents", ".skill-lock.json");
+const agentsSkills = join(homedir(), ".agents", "skills");
+const claudeSkills = join(homedir(), ".claude", "skills");
 const extPath = join(here, "..", "external-skills.json");
 
 // Skills intentionally not sourced from a `skills add <repo>` install.
@@ -46,8 +54,19 @@ for (const [name, meta] of Object.entries(lock.skills ?? {})) {
   if (meta.source) lockedRepos.add(meta.source);
 }
 
-const missing = [...lockedRepos].filter((r) => !listed.has(r)).sort();
-const dead = [...listed].filter((r) => !lockedRepos.has(r)).sort();
+const missing = [...lockedRepos].filter((r) => !listed.has(r)).toSorted();
+const dead = [...listed].filter((r) => !lockedRepos.has(r)).toSorted();
+
+// Compare names, not symlink-ness: `place()` copies instead of symlinking where
+// symlinks aren't permitted, so a real dir in ~/.claude is only drift when the
+// canonical store has no entry of that name at all.
+const skillNames = (dir) =>
+  existsSync(dir) ? readdirSync(dir).filter((n) => !n.startsWith(".")) : [];
+
+const canonical = new Set(skillNames(agentsSkills));
+const untracked = skillNames(claudeSkills)
+  .filter((n) => !canonical.has(n))
+  .toSorted();
 
 if (skipped.length) console.log(`note: skipped non-repo skills: ${skipped.join(", ")}`);
 
@@ -55,13 +74,24 @@ if (missing.length) {
   console.error("\nMISSING from external-skills.json (installed locally, not curated):");
   for (const r of missing) console.error(`  - ${r}`);
 }
+if (untracked.length) {
+  console.error("\nUNTRACKED in ~/.claude/skills (not in ~/.agents, so not in the lock):");
+  for (const n of untracked) console.error(`  - ${n}`);
+}
 if (dead.length) {
   console.warn("\nDEAD in external-skills.json (curated, but no installed skill came from it):");
   for (const r of dead) console.warn(`  - ${r}`);
 }
 
-if (missing.length) {
-  console.error("\nfail: external-skills.json is out of sync. Add the missing repos.");
+if (missing.length || untracked.length) {
+  console.error("\nfail: external-skills.json is out of sync.");
+  if (missing.length) console.error("  - add the missing repos above.");
+  if (untracked.length)
+    console.error(
+      "  - delete the untracked skills, then reinstall their repo with" +
+        " `npx skills add <repo> -g -s '*' -y` so they land in ~/.agents and the lock." +
+        " A DEAD entry above is often the repo they belong to.",
+    );
   process.exit(1);
 }
 console.log(
