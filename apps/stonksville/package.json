@@ -12,7 +12,7 @@
   "dependencies": {
     "balloons-js": "^0.0.3",
     "cnfast": "catalog:",
-    "motion": "^12.40.0",
+    "motion": "^12.42.2",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

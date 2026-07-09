@@ -17,12 +17,12 @@
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
     "d3-time-format": "^4.1.0",
-    "date-fns": "^4.3.0",
+    "date-fns": "^4.4.0",
     "react": "catalog:",
     "react-content-loader": "^7.1.2",
     "react-dom": "catalog:",
-    "react-router-dom": "^7.15.1",
-    "swr": "^2.4.1"
+    "react-router-dom": "^7.18.1",
+    "swr": "^2.4.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",

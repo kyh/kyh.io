@@ -7,7 +7,7 @@ import { BarStack } from "@visx/shape";
 import { defaultStyles, useTooltip, useTooltipInPortal } from "@visx/tooltip";
 import { NumericFormat } from "react-number-format";
 
-import type { SeriesPoint } from "@visx/shape/lib/types";
+import type { SeriesPoint } from "@visx/shape";
 
 type CompTypes = "base" | "bonus" | "stock";
 

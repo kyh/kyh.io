@@ -3,37 +3,27 @@ packages:
   - packages/*
 
 catalog:
-  "@base-ui/react": ^1.5.0
-  "@tailwindcss/postcss": ^4.3.0
-  "@types/node": ^25.9.1
-  "@types/react": ^19.2.15
+  "@base-ui/react": ^1.6.0
+  "@tailwindcss/postcss": ^4.3.2
+  "@types/node": ^26.1.1
+  "@types/react": ^19.2.17
   "@types/react-dom": ^19.2.3
   "@vercel/analytics": ^2.0.1
-  "@vitejs/plugin-react": ^6.0.2
+  "@vitejs/plugin-react": ^6.0.3
   cnfast: ^0.0.8
-  lucide-react: ^1.16.0
-  next: ^16.2.6
-  postcss: ^8.5.15
-  react: ^19.2.6
-  react-dom: ^19.2.6
-  tailwindcss: ^4.3.0
-  tsx: ^4.22.3
+  lucide-react: ^1.24.0
+  next: ^16.2.10
+  postcss: ^8.5.16
+  react: ^19.2.7
+  react-dom: ^19.2.7
+  tailwindcss: ^4.3.2
+  tsx: ^4.23.0
+  # TS 7 (native) drops the JS compiler API (typescript/lib/typescript.js);
+  # Next.js build-time type checking requires it. Pin to 6 until Next supports TS 7.
   typescript: ^6.0.3
-  vite: ^8.0.14
+  vite: ^8.1.4
 
 linkWorkspacePackages: true
-
-# Install optional native deps for every platform we cross-compile the CLI to
-# (apps/cli bun-compiles binaries for all of these; opentui's per-platform
-# packages must be present in node_modules at build time).
-supportedArchitectures:
-  os:
-    - darwin
-    - linux
-    - win32
-  cpu:
-    - x64
-    - arm64
 
 onlyBuiltDependencies:
   - "@vercel/speed-insights"
@@ -41,3 +31,15 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - workerd
+
+# Install optional native deps for every platform we cross-compile the CLI to
+# (apps/cli bun-compiles binaries for all of these; opentui's per-platform
+# packages must be present in node_modules at build time).
+supportedArchitectures:
+  cpu:
+    - x64
+    - arm64
+  os:
+    - darwin
+    - linux
+    - win32

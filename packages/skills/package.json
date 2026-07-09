@@ -13,7 +13,7 @@
   ],
   "type": "module",
   "dependencies": {
-    "skills": "^1.5.10"
+    "skills": "^1.5.15"
   },
   "publishConfig": {
     "access": "public"
