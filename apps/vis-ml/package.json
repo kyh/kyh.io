@@ -2,23 +2,30 @@
   "name": "@repo/vis-ml",
   "version": "0.3.0",
   "private": true,
-  "description": "A visual introduction to machine learning topics",
+  "description": "Learn machine learning by seeing it",
   "author": "Kaiyu Hsu",
   "scripts": {
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "vite",
     "lint": "oxlint --report-unused-disable-directives",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "tsx --test src/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "d3": "^7.9.0",
-    "lodash": "^4.18.1",
-    "scrollama": "^3.2.0",
-    "stickyfilljs": "^2.1.0"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
     "rimraf": "^6.1.3",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
     "vite": "catalog:"
   }
 }

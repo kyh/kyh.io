@@ -2,17 +2,21 @@
 
 > A visual introduction to machine learning topics.
 
-Scroll-driven interactive visualizations powered by D3.
+Scroll-driven interactive lessons. The original linear regression story remains the first lesson.
 
-- Linear Regression
-- Gradient Descent (planned)
-- Deep Learning (planned)
+- Prediction and linear regression
+- Gradient descent
+- Classification boundaries
+- Decision trees
+- Generalization, bias, and variance
+- Ensembles and real-world evaluation
 
 ## Stack
 
-- Visualization - [D3](https://d3js.org/)
-- Scroll - [Scrollama](https://github.com/russellsamora/scrollama)
-- Build Tool - [Vite](https://vitejs.dev/)
+- React
+- TypeScript
+- Responsive SVG
+- Vite
 
 ## Development
 
@@ -20,3 +24,9 @@ Scroll-driven interactive visualizations powered by D3.
 pnpm install
 pnpm dev:vis-ml
 ```
+
+## Structure
+
+- `src/curriculum.ts` — course sequence and availability
+- `src/components/scrolly-story.tsx` — reusable story controller
+- `src/lessons/<slug>` — lesson-local copy, model, scenes, and visualization
