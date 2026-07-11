@@ -46,7 +46,15 @@ Main website.
 
 ### party (`apps/party`)
 
-PartyKit app.
+Real-time multiplayer server. PartyServer on Cloudflare Workers (Durable Objects).
+
+### policingice (`apps/policingice`)
+
+Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
+
+### stonksville (`apps/stonksville`)
+
+Realtime trading chart game. Next.js, canvas-based candlestick rendering.
 
 ### tc, covid-19, vis-ml
 

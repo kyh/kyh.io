@@ -35,7 +35,7 @@ canonical store at `~/.agents`, with non-universal agents symlinking into it.
 | `mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
 
 **Universal agents** (codex, amp, opencode, goose, kimi) read `~/.agents`
-directly — nothing else to do. **Non-universal agents** (claude, cursor) get
+directly — nothing else to do. **Non-universal agents** (claude) get
 their own dirs symlinked to the canonical store.
 
 Symlinks mean edits to the installed source show up everywhere immediately. If

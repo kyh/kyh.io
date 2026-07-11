@@ -11,7 +11,7 @@
 ```
 ├── /src                         # ReactJS client, which contains most of our UI
 │   ├── /components              # React components, reusable across all pages
-│   ├── /css                     # Global style definitions
+│   ├── /data                    # Static data snapshots
 │   ├── /features                # App routes and feature specific code
 │   ├── /hooks                   # React hooks
 │   └── /utils                   # Client side helper functions/Utilities/Services
@@ -22,7 +22,8 @@
 
 - Framework - [Vite](https://vitejs.dev/) + [React](https://react.dev/)
 - Visualization - [D3](https://d3js.org/)
-- Data - [The COVID Tracking Project](https://covidtracking.com/)
+- Styling - [Tailwind CSS](https://tailwindcss.com)
+- Data - archived snapshot of [The COVID Tracking Project](https://covidtracking.com/) (the live API was retired in 2021)
 - Hosting - [Cloudflare Pages](https://pages.cloudflare.com/)
 
 ## Development

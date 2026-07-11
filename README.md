@@ -20,10 +20,11 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 
 ## Packages
 
-| Package                           | Description              |
-| --------------------------------- | ------------------------ |
-| [typescript](packages/typescript) | Shared TypeScript config |
-| [eslint](packages/eslint)         | Shared ESLint config     |
+| Package                           | Description                                      |
+| --------------------------------- | ------------------------------------------------ |
+| [typescript](packages/typescript) | Shared TypeScript config (`@kyh/tsconfig`)       |
+| [eslint](packages/eslint)         | Shared ESLint config (`@kyh/eslint-config`)      |
+| [skills](packages/skills)         | Agent skills, agents & config (`@kyh/skills`)    |
 
 ## Development
 
