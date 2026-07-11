@@ -6,7 +6,7 @@ import { desc } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
 
-const siteUrl = "https://policingice.com";
+const siteUrl = "https://www.policingice.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   cacheLife("hours");

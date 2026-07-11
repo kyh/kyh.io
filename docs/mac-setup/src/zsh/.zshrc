@@ -84,11 +84,11 @@ c() {
   $EDITOR_CMD "$@"
 }
 
-# cc: claude with skip permissions
-cc() { claude --dangerously-skip-permissions "$@"; }
+# cc: claude in auto mode
+cc() { claude --permission-mode auto "$@"; }
 
 # ccw: claude in new workspace
-ccw() { claude --dangerously-skip-permissions --worktree "$@"; }
+ccw() { claude --permission-mode auto --worktree "$@"; }
 
 # =============================================================================
 # Git AI Helpers

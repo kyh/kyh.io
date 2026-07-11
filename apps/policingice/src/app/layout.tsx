@@ -6,7 +6,7 @@ import { Toaster } from "@/components/toast";
 
 import "./styles/globals.css";
 
-const siteUrl = "https://policingice.com";
+const siteUrl = "https://www.policingice.com";
 const siteName = "Policing ICE";
 const siteDescription =
   "Documenting and tracking incidents of ICE overreach across the United States. Community-driven accountability through video evidence.";

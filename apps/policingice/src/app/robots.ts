@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: "/admin",
       },
     ],
-    sitemap: "https://policingice.com/sitemap.xml",
+    sitemap: "https://www.policingice.com/sitemap.xml",
   };
 }

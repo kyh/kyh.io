@@ -3,6 +3,9 @@ export const siteConfig = {
   shortName: "Stonksville",
   description:
     "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
-  url: process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://stonksville.com",
+  url:
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://www.stonksville.com",
   twitter: "@kaiyuhsu",
 };
