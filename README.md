@@ -14,17 +14,17 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 | [stonksville](apps/stonksville) | Trading chart game                      | Next.js, Canvas                 |
 | [tc](apps/tc)                   | Total compensation calculator           | React, Visx, Vite               |
 | [covid-19](apps/covid-19)       | COVID-19 tracking dashboard             | React, D3, Vite                 |
-| [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | D3, Scrollama, Vite             |
+| [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | React, TypeScript, SVG, Vite    |
 | [cli](apps/cli)                 | Personal CLI tool                       | React, OpenTUI, Bun             |
 | [party](apps/party)             | Real-time multiplayer server            | PartyServer, Cloudflare Workers |
 
 ## Packages
 
-| Package                           | Description                                      |
-| --------------------------------- | ------------------------------------------------ |
-| [typescript](packages/typescript) | Shared TypeScript config (`@kyh/tsconfig`)       |
-| [eslint](packages/eslint)         | Shared ESLint config (`@kyh/eslint-config`)      |
-| [skills](packages/skills)         | Agent skills, agents & config (`@kyh/skills`)    |
+| Package                           | Description                                   |
+| --------------------------------- | --------------------------------------------- |
+| [typescript](packages/typescript) | Shared TypeScript config (`@kyh/tsconfig`)    |
+| [eslint](packages/eslint)         | Shared ESLint config (`@kyh/eslint-config`)   |
+| [skills](packages/skills)         | Agent skills, agents & config (`@kyh/skills`) |
 
 ## Development
 

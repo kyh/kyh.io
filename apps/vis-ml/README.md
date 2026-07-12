@@ -28,5 +28,7 @@ pnpm dev:vis-ml
 ## Structure
 
 - `src/curriculum.ts` — course sequence and availability
+- `src/lesson-registry.ts` — available lesson components, checked against curriculum slugs
+- `src/router.tsx` — generated lesson routes, route metadata, and 404 behavior
 - `src/components/scrolly-story.tsx` — reusable story controller
 - `src/lessons/<slug>` — lesson-local copy, model, scenes, and visualization

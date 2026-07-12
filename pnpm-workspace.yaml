@@ -16,6 +16,7 @@ catalog:
   postcss: ^8.5.16
   react: ^19.2.7
   react-dom: ^19.2.7
+  react-router-dom: ^7.18.1
   tailwindcss: ^4.3.2
   tsx: ^4.23.0
   # TS 7 (native) drops the JS compiler API (typescript/lib/typescript.js);

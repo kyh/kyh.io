@@ -5,28 +5,45 @@ type LessonCore = {
   summary: string;
 };
 
-export type AvailableLesson = LessonCore & {
-  status: "available";
-  href: string;
-  duration: string;
+type LessonPage = {
+  title: string;
+  description: string;
 };
 
-export type PlannedLesson = LessonCore & {
+export type AvailableLessonDefinition = LessonCore & {
+  status: "available";
+  slug: string;
+  duration: string;
+  page: LessonPage;
+};
+
+export type PlannedLessonDefinition = LessonCore & {
   status: "planned";
   release: "Next" | "Planned";
 };
 
-export type CurriculumLesson = AvailableLesson | PlannedLesson;
+export type CurriculumLessonDefinition = AvailableLessonDefinition | PlannedLessonDefinition;
 
-export const curriculum: readonly CurriculumLesson[] = [
+function defineCurriculum<
+  const Lessons extends readonly [AvailableLessonDefinition, ...CurriculumLessonDefinition[]],
+>(lessons: Lessons): Lessons {
+  return lessons;
+}
+
+export const curriculum = defineCurriculum([
   {
     number: 1,
     unit: "Foundations",
     title: "Make a prediction",
     summary: "Turn one input into an output, then measure how wrong your first rule is.",
     status: "available",
-    href: "/lessons/prediction/",
+    slug: "prediction",
     duration: "8 min",
+    page: {
+      title: "Visual ML | Linear Regression",
+      description:
+        "A visual introduction to linear regression, prediction error, weight, bias, and training.",
+    },
   },
   {
     number: 2,
@@ -84,4 +101,19 @@ export const curriculum: readonly CurriculumLesson[] = [
     status: "planned",
     release: "Planned",
   },
-];
+]);
+
+export type AvailableLesson = Extract<(typeof curriculum)[number], { status: "available" }>;
+export type AvailableLessonSlug = AvailableLesson["slug"];
+
+export const defaultLesson: AvailableLesson = curriculum[0];
+
+function isAvailableLesson(lesson: (typeof curriculum)[number]): lesson is AvailableLesson {
+  return lesson.status === "available";
+}
+
+export const availableLessons: readonly AvailableLesson[] = curriculum.filter(isAvailableLesson);
+
+export function lessonPath(slug: AvailableLessonSlug): `/lessons/${AvailableLessonSlug}` {
+  return `/lessons/${slug}`;
+}

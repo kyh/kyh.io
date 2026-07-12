@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ScrollyStory, type StorySteps } from "../../components/scrolly-story";
 import { salaryData } from "./data";
@@ -161,17 +161,8 @@ const steps: StorySteps<PredictionScene> = [
 export function PredictionLesson() {
   const [model, setModel] = useState(() => makeFirstGuess(salaryData));
 
-  useEffect(() => {
-    document.title = "Visual ML | Linear Regression";
-    const description = document.querySelector('meta[name="description"]');
-    description?.setAttribute(
-      "content",
-      "A visual introduction to linear regression, prediction error, weight, bias, and training.",
-    );
-  }, []);
-
   return (
-    <main>
+    <main tabIndex={-1}>
       <section className="intro">
         <h1>Linear Regression</h1>
         <p>A visual introduction to prediction, error, and training</p>
