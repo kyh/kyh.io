@@ -207,19 +207,15 @@ export async function searchIncidents(data: {
   return { incidents: sortedResults };
 }
 
-export async function getUserVotes(data: { incidentIds: number[]; userId?: string }) {
+export async function getUserVotes(data: { incidentIds: number[] }) {
   if (data.incidentIds.length === 0) return {};
 
-  let userId = data.userId;
-  if (!userId) {
-    const session = await getSession();
-    if (!session?.user.id) return {};
-    userId = session.user.id;
-  }
+  const session = await getSession();
+  if (!session?.user.id) return {};
 
   const userVotes = await db.query.votes.findMany({
     where: (votes, { and, eq: eqOp, inArray }) =>
-      and(eqOp(votes.sessionId, userId), inArray(votes.incidentId, data.incidentIds)),
+      and(eqOp(votes.sessionId, session.user.id), inArray(votes.incidentId, data.incidentIds)),
   });
 
   return userVotes.reduce(
@@ -231,12 +227,13 @@ export async function getUserVotes(data: { incidentIds: number[]; userId?: strin
   );
 }
 
-export async function getUserVote(data: { sessionId: string; incidentId: number }) {
-  if (!data.sessionId) return null;
+export async function getUserVote(data: { incidentId: number }) {
+  const session = await getSession();
+  if (!session?.user.id) return null;
 
   const vote = await db.query.votes.findFirst({
     where: (votes, { and, eq: eqOp }) =>
-      and(eqOp(votes.sessionId, data.sessionId), eqOp(votes.incidentId, data.incidentId)),
+      and(eqOp(votes.sessionId, session.user.id), eqOp(votes.incidentId, data.incidentId)),
   });
 
   return vote?.type ?? null;

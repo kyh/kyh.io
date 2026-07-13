@@ -389,6 +389,7 @@ export const IncidentFeed = ({
             <p className="mt-1 text-sm text-muted-foreground">
               Documenting incidents of ICE overreach.{" "}
               <button
+                type="button"
                 onClick={() => setIsModalOpen(true)}
                 className="cursor-pointer text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 aria-label="Submit a new incident"
@@ -405,6 +406,7 @@ export const IncidentFeed = ({
                 {searchResults.length !== 1 ? "s" : ""}
               </span>
               <button
+                type="button"
                 onClick={clearSearch}
                 className="inline-flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground"
               >

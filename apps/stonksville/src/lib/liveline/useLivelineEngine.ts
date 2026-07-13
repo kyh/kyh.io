@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import type {
   LivelinePoint,
   LivelinePalette,
@@ -645,7 +645,10 @@ export function useLivelineEngine(
 ) {
   // Store config in refs to avoid re-creating the draw loop
   const configRef = useRef(config);
-  configRef.current = config;
+
+  useLayoutEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   // Animation state (persistent across frames, no allocations)
   const displayValueRef = useRef(config.value);

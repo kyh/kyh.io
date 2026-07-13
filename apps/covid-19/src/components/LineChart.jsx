@@ -1,4 +1,4 @@
-import React, { createRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { pointer, select } from "d3";
 import { format } from "date-fns";
 import {
@@ -26,26 +26,31 @@ const defaultOptions = {
   yAxis: true,
 };
 
-export const LineChart = ({ data = [], dataKey = "positive", options = defaultOptions }) => {
-  const container = createRef();
+const EMPTY_DATA = [];
+
+export const LineChart = ({ data = EMPTY_DATA, dataKey = "positive", options = defaultOptions }) => {
+  const container = useRef(null);
 
   useEffect(() => {
+    const containerElement = container.current;
+    if (!containerElement) return undefined;
+
     const mergedOptions = { ...defaultOptions, ...options };
     // set the dimensions and margins of the graph
     const margin = {
       ...mergedOptions.margin,
     };
-    const width = mergedOptions.width || container.current.offsetWidth || 300;
-    const height = mergedOptions.height || container.current.offsetHeight || 300;
+    const width = mergedOptions.width || containerElement.offsetWidth || 300;
+    const height = mergedOptions.height || containerElement.offsetHeight || 300;
 
     if (data.length) {
       const { x, y } = createScales(data, dataKey, width, height, margin);
       const { xAxis, yAxis } = createAxis(width, x, y);
       const { line, area } = createLineFn(dataKey, x, y);
-      let svg = select(container.current).select(".chart");
+      let svg = select(containerElement).select(".chart");
 
       if (svg.empty()) {
-        svg = appendSvg(container.current, width, height);
+        svg = appendSvg(containerElement, width, height);
         appendDefs(svg);
       }
 
@@ -135,8 +140,17 @@ export const LineChart = ({ data = [], dataKey = "positive", options = defaultOp
           cursorLine.style("display", "none");
         });
       }
+
+      return () => {
+        svg.interrupt();
+        svg.selectAll("*").interrupt();
+        svg.on("touchmove mousemove", null);
+        svg.on("touchend mouseleave", null);
+      };
     }
-  }, [data, dataKey]);
+
+    return undefined;
+  }, [data, dataKey, options]);
 
   return <div className="h-full" ref={container} />;
 };

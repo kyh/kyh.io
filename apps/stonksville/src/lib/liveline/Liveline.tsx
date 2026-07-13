@@ -80,7 +80,14 @@ export function Liveline({
   } | null>(null);
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set());
   const lastSeriesPropRef = useRef(seriesProp);
-  if (seriesProp && seriesProp.length > 0) lastSeriesPropRef.current = seriesProp;
+  const displaySeries =
+    seriesProp && seriesProp.length > 0 ? seriesProp : lastSeriesPropRef.current;
+
+  useLayoutEffect(() => {
+    if (seriesProp && seriesProp.length > 0) {
+      lastSeriesPropRef.current = seriesProp;
+    }
+  }, [seriesProp]);
 
   const palette = useMemo(() => {
     const p = resolveTheme(color, theme);
@@ -89,7 +96,7 @@ export function Liveline({
   }, [color, theme, lineWidth]);
   const isDark = theme === "dark";
   const isMultiSeries = seriesProp != null && seriesProp.length > 0;
-  const showSeriesToggle = (lastSeriesPropRef.current?.length ?? 0) > 1;
+  const showSeriesToggle = (displaySeries?.length ?? 0) > 1;
 
   // Per-series palettes (memoized on series ids + colors + theme)
   const seriesPalettes = useMemo(() => {
@@ -314,6 +321,7 @@ export function Liveline({
                 return (
                   <button
                     key={w.secs}
+                    type="button"
                     ref={(el) => {
                       if (el) windowBtnRefs.current.set(w.secs, el);
                       else windowBtnRefs.current.delete(w.secs);
@@ -382,6 +390,8 @@ export function Liveline({
               )}
               {/* Line icon */}
               <button
+                type="button"
+                aria-label="Line chart"
                 ref={(el) => {
                   if (el) modeBtnRefs.current.set("line", el);
                   else modeBtnRefs.current.delete("line");
@@ -411,6 +421,8 @@ export function Liveline({
               </button>
               {/* Candle icon */}
               <button
+                type="button"
+                aria-label="Candlestick chart"
                 ref={(el) => {
                   if (el) modeBtnRefs.current.set("candle", el);
                   else modeBtnRefs.current.delete("candle");
@@ -485,12 +497,13 @@ export function Liveline({
                 pointerEvents: isMultiSeries ? "auto" : "none",
               }}
             >
-              {(lastSeriesPropRef.current ?? []).map((s, si) => {
+              {(displaySeries ?? []).map((s, si) => {
                 const isHidden = hiddenSeries.has(s.id);
                 const seriesColor = s.color || SERIES_COLORS[si % SERIES_COLORS.length];
                 return (
                   <button
                     key={s.id}
+                    type="button"
                     onClick={() => handleSeriesToggle(s.id)}
                     style={{
                       position: "relative",

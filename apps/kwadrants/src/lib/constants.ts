@@ -1,5 +1,5 @@
 import type { LayoutLabels, QuadrantColors } from "./types";
-import { getAllLayouts, getDefaultLabels } from "./layouts";
+import { getAllLayouts, getDefaultLabels } from "./layouts/registry";
 
 export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
   topLeft: "transparent",

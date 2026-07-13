@@ -249,6 +249,7 @@ const KeyboardShortcutsHelp = () => {
         </a>
         <span className="text-muted-foreground/40">·</span>
         <button
+          type="button"
           onClick={() => setTheme(isDark ? "light" : "dark")}
           className="cursor-pointer hover:text-foreground"
           aria-label="Toggle theme"

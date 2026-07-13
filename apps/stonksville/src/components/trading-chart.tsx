@@ -326,7 +326,7 @@ export function TradingChart() {
     const engine = new PriceEngine();
     engineRef.current = engine;
 
-    engine.subscribe((point) => {
+    const unsubscribe = engine.subscribe((point) => {
       setLiveValue(point.price);
 
       targetCenterRef.current = Math.round(point.price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
@@ -344,7 +344,10 @@ export function TradingChart() {
     });
 
     engine.start();
-    return () => engine.stop();
+    return () => {
+      unsubscribe();
+      engine.stop();
+    };
   }, []);
 
   // Overlay render loop — drawing only, no state mutation
@@ -636,6 +639,7 @@ export function TradingChart() {
           <div className="text-center">
             <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
             <button
+              type="button"
               onClick={handleReset}
               className="pointer-events-auto rounded bg-emerald-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-400"
             >

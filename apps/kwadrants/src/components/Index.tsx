@@ -35,7 +35,7 @@ const KwadrantApp = () => {
       ref={containerRef}
       className={`h-screen w-screen overflow-hidden ${isDark ? "bg-gray-800" : "bg-gray-50"}`}
     >
-      {size && (
+      {size !== null && (
         <>
           <KwadrantCanvas ref={stageRef} width={size.width} height={size.height} />
           <FloatingIsland stageRef={stageRef} canvasSize={size} />
