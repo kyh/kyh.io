@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import type {
   CanvasImage,
@@ -185,26 +185,41 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     setState((prev) => ({ ...prev, theme }));
   }, []);
 
+  const value = useMemo<KwadrantContextValue>(
+    () => ({
+      state,
+      addTag,
+      updateTagPosition,
+      removeTag,
+      addImage,
+      updateImagePosition,
+      updateImageSize,
+      removeImage,
+      updateLabel,
+      setQuadrantColor,
+      setGridType,
+      setLayoutType,
+      setTheme,
+    }),
+    [
+      state,
+      addTag,
+      updateTagPosition,
+      removeTag,
+      addImage,
+      updateImagePosition,
+      updateImageSize,
+      removeImage,
+      updateLabel,
+      setQuadrantColor,
+      setGridType,
+      setLayoutType,
+      setTheme,
+    ],
+  );
+
   return (
-    <KwadrantContext.Provider
-      value={{
-        state,
-        addTag,
-        updateTagPosition,
-        removeTag,
-        addImage,
-        updateImagePosition,
-        updateImageSize,
-        removeImage,
-        updateLabel,
-        setQuadrantColor,
-        setGridType,
-        setLayoutType,
-        setTheme,
-      }}
-    >
-      {children}
-    </KwadrantContext.Provider>
+    <KwadrantContext.Provider value={value}>{children}</KwadrantContext.Provider>
   );
 };
 

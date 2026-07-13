@@ -44,6 +44,7 @@ const LabelEditor = ({
 
   return (
     <input
+      aria-label="Edit canvas label"
       type="text"
       value={text}
       onChange={(e) => setText(e.target.value)}

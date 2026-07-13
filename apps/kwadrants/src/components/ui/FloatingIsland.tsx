@@ -1,5 +1,5 @@
 import type Konva from "konva";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   Download,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { animate, motion, useMotionValue } from "motion/react";
 
-import type { LayoutType, QuadrantColors } from "@/lib/types";
+import type { GridType, LayoutType, QuadrantColors } from "@/lib/types";
 import { DEFAULT_TAG_COLOR, STORAGE_KEY, TAG_COLORS } from "@/lib/constants";
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { getAllLayouts } from "@/lib/layouts";
@@ -34,6 +34,62 @@ type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
 const PANEL_POSITION_KEY = "kwadrant-panel-position";
 const MARGIN = 16;
+const PANEL_POSITIONS: readonly PanelPosition[] = [
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+];
+const GRID_TYPES: readonly GridType[] = ["none", "squares", "dots"];
+const QUADRANT_OPTIONS: ReadonlyArray<{
+  key: keyof QuadrantColors;
+  label: string;
+}> = [
+  { key: "topLeft", label: "Top Left" },
+  { key: "topRight", label: "Top Right" },
+  { key: "bottomLeft", label: "Bottom Left" },
+  { key: "bottomRight", label: "Bottom Right" },
+];
+
+const isPanelPosition = (value: string | null): value is PanelPosition =>
+  value === "top-left" ||
+  value === "top-right" ||
+  value === "bottom-left" ||
+  value === "bottom-right";
+
+const isLayoutType = (value: string): value is LayoutType => value === "axis" || value === "edge";
+
+const getClosestPosition = (px: number, py: number): PanelPosition => {
+  const isLeft = px < window.innerWidth / 2;
+  const isTop = py < window.innerHeight / 2;
+  if (isTop && isLeft) return "top-left";
+  if (isTop) return "top-right";
+  if (isLeft) return "bottom-left";
+  return "bottom-right";
+};
+
+const resetStoredState = () => {
+  if (!confirm("Reset all? This cannot be undone.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  window.location.reload();
+};
+
+const getBackTarget = (mode: IslandMode): IslandMode | null => {
+  switch (mode) {
+    case "add-menu":
+      return "idle";
+    case "adding-tag":
+    case "adding-image":
+      return "add-menu";
+    case "colors":
+    case "export":
+    case "grid":
+    case "layout":
+      return "idle";
+    case "idle":
+      return null;
+  }
+};
 
 interface FloatingIslandProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -45,9 +101,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const [tagText, setTagText] = useState("");
   const [tagColor, setTagColor] = useState<string>(DEFAULT_TAG_COLOR);
   const [position, setPosition] = useState<PanelPosition>(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem(PANEL_POSITION_KEY) as PanelPosition) || "bottom-left";
-    }
+    if (typeof window === "undefined") return "bottom-left";
+    const storedPosition = localStorage.getItem(PANEL_POSITION_KEY);
+    if (isPanelPosition(storedPosition)) return storedPosition;
     return "bottom-left";
   });
   const [isDragging, setIsDragging] = useState(false);
@@ -64,49 +120,41 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const getSnapPosition = (pos: PanelPosition, size = panelSizeRef.current) => ({
-    x: pos.includes("left") ? MARGIN : window.innerWidth - MARGIN - size.width,
-    y: pos.includes("top") ? MARGIN : window.innerHeight - MARGIN - size.height,
-  });
+  const getSnapPosition = useCallback(
+    (pos: PanelPosition, size = panelSizeRef.current) => ({
+      x: pos.includes("left") ? MARGIN : window.innerWidth - MARGIN - size.width,
+      y: pos.includes("top") ? MARGIN : window.innerHeight - MARGIN - size.height,
+    }),
+    [],
+  );
 
-  const getClosestPosition = (px: number, py: number): PanelPosition => {
-    const midX = window.innerWidth / 2;
-    const midY = window.innerHeight / 2;
-    const isLeft = px < midX;
-    const isTop = py < midY;
-    if (isTop && isLeft) return "top-left";
-    if (isTop && !isLeft) return "top-right";
-    if (!isTop && isLeft) return "bottom-left";
-    return "bottom-right";
-  };
-
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     if (!islandRef.current || isDragging) return;
     const rect = islandRef.current.getBoundingClientRect();
     panelSizeRef.current = { width: rect.width, height: rect.height };
     const pos = getSnapPosition(position);
     x.set(pos.x);
     y.set(pos.y);
-  };
+  }, [getSnapPosition, isDragging, position, x, y]);
 
   // Measure and position on mount (before paint)
   useLayoutEffect(() => {
     updatePosition();
     setIsReady(true);
-  }, []);
+  }, [updatePosition]);
 
   // Update on resize, position change, or mode change
   useEffect(() => {
     updatePosition();
     window.addEventListener("resize", updatePosition);
     return () => window.removeEventListener("resize", updatePosition);
-  }, [position, mode, isDragging]);
+  }, [mode, updatePosition]);
 
   // Click outside to close menu
   useEffect(() => {
     if (mode === "idle") return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (islandRef.current && !islandRef.current.contains(e.target as Node)) {
+      if (islandRef.current && e.target instanceof Node && !islandRef.current.contains(e.target)) {
         setMode("idle");
       }
     };
@@ -148,7 +196,8 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const src = event.target?.result as string;
+      const src = event.target?.result;
+      if (typeof src !== "string") return;
       const img = new window.Image();
       img.onload = () => {
         const maxSize = 150;
@@ -181,34 +230,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     setMode("idle");
   };
 
-  const handleReset = () => {
-    if (confirm("Reset all? This cannot be undone.")) {
-      localStorage.removeItem(STORAGE_KEY);
-      window.location.reload();
-    }
-  };
-
-  const getBackTarget = (): IslandMode | null => {
-    switch (mode) {
-      case "add-menu":
-        return "idle";
-      case "adding-tag":
-        return "add-menu";
-      case "adding-image":
-        return "add-menu";
-      case "colors":
-        return "idle";
-      case "export":
-        return "idle";
-      case "grid":
-        return "idle";
-      case "layout":
-        return "idle";
-      default:
-        return null;
-    }
-  };
-
   const renderContent = () => {
     switch (mode) {
       case "add-menu":
@@ -236,6 +257,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-2">
             <input
+              aria-label="Tag name"
               ref={tagInputRef}
               type="text"
               value={tagText}
@@ -252,8 +274,11 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             <div className="flex flex-wrap gap-1">
               {TAG_COLORS.map((c) => (
                 <button
+                  type="button"
                   key={c}
                   onClick={() => setTagColor(c)}
+                  aria-label={`Use ${c} tag color`}
+                  aria-pressed={tagColor === c}
                   className={`h-5 w-5 rounded-full transition-transform ${
                     tagColor === c ? "scale-110 ring-2 ring-gray-400 ring-offset-1" : ""
                   }`}
@@ -262,6 +287,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               ))}
             </div>
             <button
+              type="button"
               onClick={handleAddTag}
               disabled={!tagText.trim()}
               className={`w-full rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
@@ -279,6 +305,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-2">
             <input
+              aria-label="Upload image"
               ref={fileInputRef}
               type="file"
               accept="image/*"
@@ -286,6 +313,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               className="hidden"
             />
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               className={`w-full rounded-md border border-dashed px-3 py-1.5 text-sm transition-colors ${
                 isDark
@@ -301,24 +329,18 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "colors":
         return (
           <div className="flex flex-col gap-2">
-            {(["topLeft", "topRight", "bottomLeft", "bottomRight"] as const).map((q) => (
-              <div key={q} className="flex items-center gap-2">
+            {QUADRANT_OPTIONS.map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={state.quadrantColors[q]}
-                  onChange={(e) => setQuadrantColor(q as keyof QuadrantColors, e.target.value)}
+                  value={state.quadrantColors[key]}
+                  onChange={(e) => setQuadrantColor(key, e.target.value)}
                   className="h-6 w-6 cursor-pointer rounded border-0"
                 />
                 <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                  {q === "topLeft"
-                    ? "Top Left"
-                    : q === "topRight"
-                      ? "Top Right"
-                      : q === "bottomLeft"
-                        ? "Bottom Left"
-                        : "Bottom Right"}
+                  {label}
                 </span>
-              </div>
+              </label>
             ))}
           </div>
         );
@@ -344,7 +366,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "grid":
         return (
           <div className="flex flex-col gap-1">
-            {(["none", "squares", "dots"] as const).map((type) => (
+            {GRID_TYPES.map((type) => (
               <SelectButton
                 key={type}
                 selected={state.gridType === type}
@@ -360,16 +382,20 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
       case "layout":
         return (
           <div className="flex flex-col gap-1">
-            {getAllLayouts().map((layout) => (
-              <SelectButton
-                key={layout.id}
-                selected={state.layoutType === layout.id}
-                onClick={() => setLayoutType(layout.id as LayoutType)}
-                isDark={isDark}
-              >
-                {layout.displayName}
-              </SelectButton>
-            ))}
+            {getAllLayouts().map((layout) => {
+              const layoutType = layout.id;
+              if (!isLayoutType(layoutType)) return null;
+              return (
+                <SelectButton
+                  key={layoutType}
+                  selected={state.layoutType === layoutType}
+                  onClick={() => setLayoutType(layoutType)}
+                  isDark={isDark}
+                >
+                  {layout.displayName}
+                </SelectButton>
+              );
+            })}
           </div>
         );
 
@@ -407,7 +433,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               isDark={isDark}
             />
             <MenuButton
-              onClick={handleReset}
+              onClick={resetStoredState}
               icon={<RotateCcw size={18} />}
               label="Reset"
               isDark={isDark}
@@ -417,16 +443,15 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     }
   };
 
-  const backTarget = getBackTarget();
+  const backTarget = getBackTarget(mode);
 
   const size = panelSizeRef.current;
-  const positions: PanelPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
   return (
     <>
       {/* Ghost placement indicators */}
       {isDragging &&
-        positions.map((pos) => {
+        PANEL_POSITIONS.map((pos) => {
           const snapPos = getSnapPosition(pos);
           const isHovered = hoveredPosition === pos;
           return (
@@ -473,7 +498,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             <GripVertical size={16} />
             {backTarget && (
               <button
+                type="button"
                 onClick={() => setMode(backTarget)}
+                aria-label="Back"
                 className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
               >
                 <ChevronLeft size={16} />
@@ -481,7 +508,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             )}
           </div>
           <button
+            type="button"
             onClick={() => setTheme(isDark ? "light" : "dark")}
+            aria-label={isDark ? "Use light theme" : "Use dark theme"}
             className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
@@ -505,6 +534,7 @@ const MenuButton = ({
   isDark: boolean;
 }) => (
   <button
+    type="button"
     onClick={onClick}
     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
       isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
@@ -527,6 +557,7 @@ const SelectButton = ({
   children: React.ReactNode;
 }) => (
   <button
+    type="button"
     onClick={onClick}
     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
       selected
