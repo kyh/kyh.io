@@ -12,7 +12,8 @@ export type PlayerMap = Record<string, Player>;
 export type ClientMessage =
   | { type: "state_patch"; data: Record<string, unknown> }
   | { type: "player_state_patch"; data: Record<string, unknown> }
-  | { type: "emit"; data: { event: string; payload: unknown } };
+  | { type: "emit"; data: { event: string; payload: unknown } }
+  | { type: "pong" };
 
 // Messages from server
 export type ServerMessage =
@@ -22,4 +23,5 @@ export type ServerMessage =
   | { type: "state_patch"; data: Record<string, unknown> }
   | { type: "player_state"; data: { id: string; state: Record<string, unknown> } }
   | { type: "event"; data: { event: string; payload: unknown; from: string } }
-  | { type: "host"; data: { id: string } };
+  | { type: "host"; data: { id: string } }
+  | { type: "ping" };

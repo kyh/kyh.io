@@ -61,6 +61,13 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     const onMessage = (evt: WebSocketEventMap["message"]) => {
       const msg = JSON.parse(evt.data as string) as ServerMessage;
       switch (msg.type) {
+        case "ping": {
+          // The server reaps connections it stops hearing from, so an idle
+          // visitor who never moves the mouse still has to answer.
+          const pong: ClientMessage = { type: "pong" };
+          socket.send(JSON.stringify(pong));
+          break;
+        }
         case "sync":
           setPlayers({ ...msg.data.players });
           break;
@@ -142,16 +149,30 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     };
   }, [socket, windowDimensions, sendThrottled]);
 
+  // partysocket reuses one socket object across reconnects, so a bare send on
+  // mount is never repeated. Each reconnect is a fresh connection server-side
+  // with empty state, and mousemove only ever patches x/y — so without
+  // re-announcing here, a reconnected player would keep a pathname-less state
+  // forever and their cursor could never render again for anyone.
   useEffect(() => {
-    const message: ClientMessage = {
-      type: "player_state_patch",
-      data: {
-        x: 1,
-        y: 1,
-        pathname,
-      },
+    const announce = () => {
+      const message: ClientMessage = {
+        type: "player_state_patch",
+        data: {
+          x: 1,
+          y: 1,
+          pathname,
+        },
+      };
+      socket.send(JSON.stringify(message));
     };
-    socket.send(JSON.stringify(message));
+
+    // While still connecting, the open handler covers it (and partysocket would
+    // queue the send anyway) — sending now as well would just duplicate the patch.
+    if (socket.readyState === WebSocket.OPEN) announce();
+    socket.addEventListener("open", announce);
+
+    return () => socket.removeEventListener("open", announce);
   }, [socket, pathname]);
 
   return { socket, players, windowDimensions };
