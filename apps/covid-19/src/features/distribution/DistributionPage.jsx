@@ -14,13 +14,7 @@ const US_POPULATION = 400376491;
 export const DistributionPage = () => {
   const { raw, isLoading } = useGetStatesDailyData();
   const [sliderIndex, setSliderIndex] = useState(0);
-  const [sliderInterval, setSliderInterval] = useState(null);
   const [playing, setPlaying] = useState(false);
-  // the data is joined to the stateJson in the Map child component and
-  // updated using setJoinedData.
-  // this is because we need access to the d3 Path used for calculating
-  // the centroid of each state
-  const [joinedData, setJoinedData] = useState(null);
 
   const dates = useMemo(() => set(raw.map((s) => s.date).toReversed()).values(), [raw]);
   // holds the date of the displayed day. calculated using the slider index
@@ -35,33 +29,32 @@ export const DistributionPage = () => {
   );
 
   const sumTotalTestResults = useMemo(
-    () => joinedData && sum(joinedData.features, (d) => getValue(d, "totalTestResults")),
-    [joinedData, getValue],
+    () => sum(raw, (day) => (day.date === currentDate ? day.totalTestResults : 0)),
+    [currentDate, raw],
   );
 
   const sumPositive = useMemo(
-    () => joinedData && sum(joinedData.features, (d) => getValue(d, "positive")),
-    [joinedData, getValue],
+    () => sum(raw, (day) => (day.date === currentDate ? day.positive : 0)),
+    [currentDate, raw],
   );
 
   const sumNegative = useMemo(
-    () => joinedData && sum(joinedData.features, (d) => getValue(d, "negative")),
-    [joinedData, getValue],
+    () => sum(raw, (day) => (day.date === currentDate ? day.negative : 0)),
+    [currentDate, raw],
   );
 
   useEffect(() => {
     if (sliderIndex === dates.length - 1) {
-      stop();
+      setPlaying(false);
     }
-  }, [sliderIndex]);
+  }, [dates.length, sliderIndex]);
 
   useEffect(() => {
-    if (playing && !sliderInterval) {
-      start();
-    } else {
-      stop();
-    }
-  }, [playing]);
+    if (!playing || dates.length === 0) return undefined;
+
+    const interval = setInterval(() => setSliderIndex((index) => index + 1), 300);
+    return () => clearInterval(interval);
+  }, [dates.length, playing]);
 
   useEffect(() => {
     if (dates.length) {
@@ -69,20 +62,13 @@ export const DistributionPage = () => {
     }
   }, [dates.length]);
 
-  const start = () => {
-    if (sliderIndex === dates.length - 1) {
+  const togglePlaying = () => {
+    if (dates.length === 0) return;
+    if (!playing && sliderIndex === dates.length - 1) {
       setSliderIndex(0);
     }
-    setSliderInterval(setInterval(() => setSliderIndex((i) => i + 1), 300));
+    setPlaying((current) => !current);
   };
-
-  const stop = () => {
-    clearInterval(sliderInterval);
-    setPlaying(false);
-    setSliderInterval(null);
-  };
-
-  const togglePlaying = () => setPlaying((p) => !p);
 
   return (
     <PageContainer>
@@ -94,11 +80,12 @@ export const DistributionPage = () => {
             </h4>
             <h1 className="flex items-center text-2xl font-bold">
               <button
+                type="button"
+                disabled={dates.length === 0}
                 className="mr-2"
                 onClick={() => togglePlaying()}
-                onKeyDown={() => togglePlaying()}
                 role="switch"
-                label={playing ? "stop" : "start"}
+                aria-label={playing ? "Stop animation" : "Start animation"}
                 aria-checked={playing}
                 tabIndex={0}
               >
@@ -116,6 +103,7 @@ export const DistributionPage = () => {
           <div>
             <div>
               <input
+                aria-label="Displayed date"
                 className="w-64"
                 onChange={(event) => setSliderIndex(parseInt(event.target.value, 10))}
                 min={0}
@@ -173,7 +161,6 @@ export const DistributionPage = () => {
         ) : (
           <Map
             rawStateData={raw}
-            setJoinedData={setJoinedData}
             getValue={getValue}
             currentDate={currentDate}
             currentField="positive"

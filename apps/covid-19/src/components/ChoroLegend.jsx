@@ -30,7 +30,8 @@ export const ChoroLegend = ({
     if (isHorizontal) {
       return (
         <rect
-          {...props}
+          key={props.key}
+          fill={props.fill}
           x={x(i - 1)}
           y={marginTop}
           width={x(i) - x(i - 1) - spaceBetween}
@@ -40,7 +41,8 @@ export const ChoroLegend = ({
     }
     return (
       <rect
-        {...props}
+        key={props.key}
+        fill={props.fill}
         x={marginLeft + tickSize}
         y={y(i - 1)}
         width={width - marginLeft - marginRight - tickSize}

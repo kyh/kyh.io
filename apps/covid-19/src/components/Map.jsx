@@ -106,7 +106,6 @@ export const Map = ({
   currentDate,
   getValue,
   useChoropleth,
-  setJoinedData,
 }) => {
   const path = useMemo(() => {
     const projection = geoAlbersUsa().fitExtent(
@@ -142,7 +141,6 @@ export const Map = ({
       },
     }));
     const tempData = { ...StatesWithPopulation, features: joinedFeatures };
-    setJoinedData(tempData);
     return tempData;
   }, [rawStateData, path]);
 
