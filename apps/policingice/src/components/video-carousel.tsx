@@ -109,9 +109,10 @@ export const VideoCarousel = ({
             <div>{header}</div>
             {showNav && (
               <div className="flex items-center gap-1">
-                {videos.map((_, index) => (
+                {videos.map((video, index) => (
                   <button
-                    key={index}
+                    key={video.id}
+                    type="button"
                     onClick={() => emblaApi?.scrollTo(index)}
                     className={`h-1.5 rounded-full transition-all ${
                       index === selectedIndex
@@ -122,6 +123,7 @@ export const VideoCarousel = ({
                   />
                 ))}
                 <button
+                  type="button"
                   onClick={() => emblaApi?.scrollPrev()}
                   disabled={!canScrollPrev}
                   className={`pl-1 ${canScrollPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
@@ -130,6 +132,7 @@ export const VideoCarousel = ({
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => emblaApi?.scrollNext()}
                   disabled={!canScrollNext}
                   className={`${canScrollNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}

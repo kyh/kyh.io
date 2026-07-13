@@ -22,7 +22,7 @@ type IncidentDetailProps = {
 };
 
 export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(null);
   const [counts, setCounts] = useState({
     unjustified: incident.unjustifiedCount,
@@ -37,25 +37,22 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
         await authClient.signIn.anonymous();
         session = await authClient.getSession();
       }
-      if (session.data?.user.id) {
-        setSessionId(session.data.user.id);
-      }
+      setSessionReady(session.data?.user.id !== undefined);
     };
     void initSession();
   }, []);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionReady) return;
 
     const loadVote = async () => {
       const voteType = await getUserVote({
-        sessionId,
         incidentId: incident.id,
       });
       setUserVote(voteType);
     };
     void loadVote();
-  }, [sessionId, incident.id]);
+  }, [sessionReady, incident.id]);
 
   const handleVote = useCallback(
     async (type: "unjustified" | "justified") => {

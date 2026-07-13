@@ -83,6 +83,7 @@ export const IncidentCardContent = ({
       <div className="mt-3 flex items-center justify-between text-sm">
         <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
           <button
+            type="button"
             onClick={() => onVote("unjustified")}
             className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             aria-pressed={userVote === "unjustified"}
@@ -91,6 +92,7 @@ export const IncidentCardContent = ({
             unjustified ({unjustifiedCount})
           </button>
           <button
+            type="button"
             onClick={() => onVote("justified")}
             className={`cursor-pointer ${userVote === "justified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             aria-pressed={userVote === "justified"}
@@ -112,6 +114,7 @@ export const IncidentCardContent = ({
           </a>
           {onReport && (
             <button
+              type="button"
               onClick={onReport}
               disabled={reported}
               className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}

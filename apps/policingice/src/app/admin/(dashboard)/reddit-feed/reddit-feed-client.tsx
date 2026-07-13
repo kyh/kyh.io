@@ -75,6 +75,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-medium">Reddit Feed ({posts.length} posts)</h2>
         <button
+          type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
@@ -122,6 +123,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
                         <span className="text-muted-foreground">added</span>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleAdd(post)}
                           disabled={isAdding}
                           className="cursor-pointer text-green-600 hover:text-green-700 disabled:opacity-50"

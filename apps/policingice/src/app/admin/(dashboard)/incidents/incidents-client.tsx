@@ -177,7 +177,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
           save
         </button>
         {" · "}
-        <button onClick={onCancel} className="cursor-pointer hover:text-foreground">
+        <button type="button" onClick={onCancel} className="cursor-pointer hover:text-foreground">
           cancel
         </button>
       </td>
@@ -281,6 +281,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="py-3 pr-3">{formatDate(incident.incidentDate)}</td>
                     <td className="py-3 pr-3">
                       <button
+                        type="button"
                         onClick={() => handleToggleStatus(incident.id, incident.status)}
                         className="cursor-pointer"
                       >
@@ -293,6 +294,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     </td>
                     <td className="py-3 pr-3">
                       <button
+                        type="button"
                         onClick={() => handleTogglePinned(incident.id, incident.pinned)}
                         className="cursor-pointer"
                       >
@@ -316,6 +318,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     </td>
                     <td className="py-3 text-muted-foreground">
                       <button
+                        type="button"
                         onClick={() => setPreviewingIncident(incident)}
                         className="cursor-pointer hover:text-foreground"
                       >
@@ -323,6 +326,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       </button>
                       {" · "}
                       <button
+                        type="button"
                         onClick={() => setEditingId(incident.id)}
                         className="cursor-pointer hover:text-foreground"
                       >
@@ -330,6 +334,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       </button>
                       {" · "}
                       <button
+                        type="button"
                         onClick={() => handleDelete(incident.id)}
                         className="cursor-pointer hover:text-destructive"
                       >
