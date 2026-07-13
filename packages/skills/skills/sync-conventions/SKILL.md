@@ -37,7 +37,14 @@ Root `package.json` scripts should include:
 - No `ignoreDeprecations` in any tsconfig.json
 - No `baseUrl` without path aliases (deprecated in TS6)
 - `lib` should use ES2023+ (not ES2022 or older)
-- tsconfigs extending `@kyh/tsconfig/internal-package.json` should NOT have redundant `rootDir: "./src"`
+- Internal workspace packages (`exports` → `./src/*.ts`, not published) must extend
+  `@kyh/tsconfig/base.json` and have NO `build` script and no `dev: tsc`. Their `typecheck` is
+  plain `tsc --noEmit`. Emitting `.d.ts` for them is dead work — `exports` points at source, so
+  nothing ever resolves the `dist`, and `turbo`'s `^build` makes every app build wait on it.
+- Packages published to npm (`exports`/`publishConfig` → `./dist/*.d.ts`) inline their own
+  tsconfig — no `extends`, no `@kyh/tsconfig` devDependency — so they build standalone. They are
+  the only packages that keep a `build` script.
+- `@kyh/tsconfig` ships `base.json` only. Any reference to `internal-package.json` is stale.
 
 ### 4. Stale References
 - No `"prettier": "@kyh/prettier-config"` in any package.json

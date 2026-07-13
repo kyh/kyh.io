@@ -3,8 +3,6 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      // ~70MB standalone binary per platform target — don't stuff them
-      // into the turbo cache; recompiling is fast (<1s per target).
       "cache": false
     }
   }
