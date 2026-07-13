@@ -349,6 +349,9 @@ export const ShapesCanvas = () => {
       canvas.removeEventListener("click", handleClick);
       canvas.removeEventListener("touchend", handleTouch);
       window.removeEventListener("deviceorientation", handleOrientation);
+      Mouse.clearSourceEvents(mouse);
+      Events.off(engine, "collisionStart");
+      Events.off(engine, "afterUpdate");
       if (renderRef.current) {
         Render.stop(renderRef.current);
         renderRef.current.canvas.remove();
