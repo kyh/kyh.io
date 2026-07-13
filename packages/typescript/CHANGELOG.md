@@ -1,5 +1,11 @@
 # @kyh/tsconfig
 
+## 1.2.0 — 2026-07-13
+
+- remove `internal-package.json` — workspace packages point exports at src, so its declaration-only emit was never resolved
+- `base.json` is now the only config
+
+
 ## 1.1.14
 
 ### Patch Changes
