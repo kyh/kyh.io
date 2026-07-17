@@ -16,6 +16,13 @@
 ## Plans
 
 - At the end of each plan, give me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision.
+- **Planned work is tracked in GitHub Issues, never in-repo markdown.** No `plans/`, `advisor-plans/`, `ROADMAP.md`, `*_GAPS.md`. Files rot within days; issues don't.
+- This **overrides any skill that writes plan files** (e.g. `improve`, which defaults to `plans/`). When such a skill runs: always pass `--issues` if it has one, write any intermediate plan files to the session scratchpad rather than the repo, and publish the final plans as issues. Never commit a plan file.
+- Issue shape: title = imperative summary; body = problem statement, `## Scope` (bullets w/ file paths), `## Acceptance` (verification / STOP conditions), `## Meta` (priority, effort, deps by issue number).
+- Labels: `p1` #B60205, `p2` #D93F0B, `p3` #FBCA04, `plan` #0E8A16, `note` #C5DEF5. Create them if absent.
+- Audit output that is **not work** — rejected findings, "do not re-raise" notes — becomes a pinned `note` issue. Durable architecture decisions go in the repo's `CLAUDE.md` instead.
+- **Check `gh repo view --json visibility` before filing.** On a public repo, ask me before publishing any issue describing an unpatched vulnerability, credential location, or exploit detail.
+- Exception: product backlogs already tracked by open PRs (e.g. uicapsule's `plans/component-roadmap.md`) stay as files.
 
 ## Code Quality Standards
 
