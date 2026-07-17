@@ -16,7 +16,7 @@ Cut new npm versions of the publishable packages in this repo. Replaces the old 
   - **skills** → `@kyh/skills` → `packages/skills` → tag `@kyh/skills@`
   - **configs** → `@kyh/eslint-config` (`packages/eslint`) + `@kyh/tsconfig` (`packages/typescript`) — a **fixed/lockstep pair**: they always share one version and release together. `@kyh/eslint-config` devDepends on `@kyh/tsconfig` via `workspace:*`. Tags `@kyh/eslint-config@` and `@kyh/tsconfig@` (same version).
 - All are public (`publishConfig.access: "public"`).
-- Only `kyh` and `@kyh/skills` have a `build` script. `@kyh/tsconfig` and `@kyh/eslint-config` are config-only — no build.
+- Only `kyh` (the CLI) has a `build` script. `@kyh/skills`, `@kyh/tsconfig`, and `@kyh/eslint-config` publish files as-is — no build.
 - **cli is special**: `apps/cli/package.json` is `private: true` — it is never published directly. Its build (`bun scripts/build.ts`) bun-compiles standalone binaries and stages **6 publish-ready packages** in `apps/cli/dist/npm/`: five platform packages (`@kyh/cli-darwin-arm64`, `@kyh/cli-darwin-x64`, `@kyh/cli-linux-arm64`, `@kyh/cli-linux-x64`, `@kyh/cli-win32-x64`) plus the main `kyh` package (a Node launcher shim with exact-pinned `optionalDependencies` on the platform packages). All 6 share the version from `apps/cli/package.json`. Building requires bun and all-platform opentui packages in node_modules (`supportedArchitectures` in `pnpm-workspace.yaml` handles this — run `pnpm install` if platform packages are missing).
 - Many internal apps (`@repo/*`) consume `@kyh/tsconfig`/`@kyh/eslint-config` via the workspace catalog. Rolling a new version out to **other repos'** catalogs is a separate concern — see the global `publish-and-sync-packages` skill. This skill is npm-only and does not touch downstream consumers.
 - Current branch: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io rev-parse --abbrev-ref HEAD`
@@ -74,9 +74,9 @@ Terse bullets — sacrifice grammar for concision. If unsure, show the proposed 
 ### 4. Install + build
 
 - `pnpm install` from repo root — defensive; deps may be unlinked after a pull.
-- For units with a `build` script (`cli`, `skills`), force a clean build:
+- Only `cli` has a `build` script — force a clean build:
   - `pnpm --filter <name> build`
-- `configs` have no build — skip.
+- `skills` and `configs` have no build — skip.
 
 ### 5. Publish
 

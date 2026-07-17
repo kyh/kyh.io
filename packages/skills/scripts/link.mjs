@@ -264,11 +264,21 @@ function place(src, dest, type) {
       if (DRY) return log(`would relink ${rel}`);
       fs.unlinkSync(dest);
     } else if (fs.existsSync(dest)) {
-      if (sameContent(src, dest)) return; // up-to-date copy (symlinks weren't available)
-      const bak = backupPath(dest);
-      if (DRY) return log(`would back up ${rel} -> ${path.basename(bak)} and link`);
-      fs.renameSync(dest, bak);
-      warn(`backed up existing ${rel} -> ${path.basename(bak)}`);
+      if (sameContent(src, dest)) {
+        // A real copy whose content matches the source — a prior copy-mode
+        // fallback, or drift. Prefer a symlink so future source edits propagate,
+        // but only where symlinks work; otherwise the copy is already the correct
+        // end state, so leave it (no churn, stays idempotent).
+        if (!symlinksSupported()) return;
+        if (DRY) return log(`would upgrade copy ${rel} -> symlink`);
+        fs.rmSync(dest, { recursive: type === "dir", force: true });
+        // fall through to the symlink attempt below
+      } else {
+        const bak = backupPath(dest);
+        if (DRY) return log(`would back up ${rel} -> ${path.basename(bak)} and link`);
+        fs.renameSync(dest, bak);
+        warn(`backed up existing ${rel} -> ${path.basename(bak)}`);
+      }
     } else if (DRY) {
       return log(`would link ${rel}`);
     }
@@ -288,6 +298,29 @@ function place(src, dest, type) {
 function symlinkType(type) {
   if (type !== "dir") return "file";
   return process.platform === "win32" ? "junction" : "dir";
+}
+
+// Whether this platform/privilege level can create symlinks — probed once. Used
+// to decide whether to upgrade a content-identical copy to a symlink: on systems
+// without symlink support (e.g. Windows sans developer mode) that upgrade would
+// rm-and-re-copy the file every run, so we skip it and keep the matching copy.
+let _symlinkSupport;
+function symlinksSupported() {
+  if (_symlinkSupport !== undefined) return _symlinkSupport;
+  const probe = path.join(os.tmpdir(), `kyh-skills-symlink-probe-${process.pid}`);
+  try {
+    fs.symlinkSync(PKG_ROOT, probe, symlinkType("dir"));
+    _symlinkSupport = true;
+  } catch {
+    _symlinkSupport = false;
+  } finally {
+    try {
+      fs.rmSync(probe, { force: true }); // unlink the probe symlink, not its target
+    } catch {
+      /* nothing to clean up */
+    }
+  }
+  return _symlinkSupport;
 }
 
 function ensureDir(p) {
