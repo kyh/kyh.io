@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 — 2026-07-18
+
+- sync-conventions: add db tooling (drizzle push scripts + .env.production.local), secret hygiene, oxlint type-safety rules, and shared-UI/config checks; encode fixing caveats (no live push:remote, no cross-repo token copy)
+
 ## 0.1.3 — 2026-07-17
 
 - link.mjs: upgrade content-identical copies to symlinks (self-heal drift); probe symlink support once to avoid churn where unsupported
