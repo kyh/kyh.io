@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 — 2026-07-17
+
+- link.mjs: upgrade content-identical copies to symlinks (self-heal drift); probe symlink support once to avoid churn where unsupported
+
 ## 0.1.2 — 2026-07-17
 
 - sync CLAUDE.md + curated skill list with global state
