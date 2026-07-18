@@ -19,7 +19,14 @@ export const Multiplayer = () => {
     room: ROOM,
   });
 
-  const cursors = Object.entries(players)
+  // Only surface players that have announced themselves (sent a pathname). A
+  // just-connected or mid-reconnect socket sits at empty state for a beat; the
+  // server reaps genuinely dead ones, but this keeps those blips off the UI.
+  const present = Object.fromEntries(
+    Object.entries(players).filter(([_, player]) => !!player.state.pathname),
+  );
+
+  const cursors = Object.entries(present)
     .filter(([_, player]) => {
       return !!player.state.x && !!player.state.y && player.state.pathname === pathname;
     })
@@ -37,7 +44,7 @@ export const Multiplayer = () => {
   return (
     <>
       <div className="fixed top-6 right-6 z-[1]">
-        <AvatarGroup others={players} />
+        <AvatarGroup others={present} />
       </div>
       {cursors}
     </>
