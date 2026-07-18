@@ -13,6 +13,13 @@ export type Player = {
 
 export type PlayerMap = Record<string, Player>;
 
+/**
+ * The player as stored on the connection, carrying a liveness timestamp the
+ * clients never see. It lives in the connection's attachment (serialized onto
+ * the socket) rather than an instance field on purpose — see the class comment.
+ */
+type StoredPlayer = Player & { seenAt: number };
+
 // Messages from client
 export type ClientMessage =
   | { type: "state_patch"; data: Record<string, unknown> }
@@ -49,8 +56,23 @@ const IDLE_TIMEOUT_MS = 75_000; // tolerates two dropped pings before reaping
 export class KyhServer extends Server {
   private sharedState: Record<string, unknown> = {};
   private hostId: string | null = null;
-  /** Last time each live connection was heard from, for the idle sweep. */
-  private lastSeen = new Map<string, number>();
+
+  /**
+   * Liveness is tracked per connection, in the connection's own attachment,
+   * NOT in an instance field. partyserver runs on Cloudflare's WebSocket
+   * Hibernation API: an idle Durable Object is evicted and its instance
+   * destroyed, but the open sockets — and their serialized attachments —
+   * survive. An in-memory `lastSeen` map was therefore silently emptied on
+   * every hibernation, which broke the sweep two ways: it either found everyone
+   * "fresh" and reaped nothing, or (because the reschedule was gated on the now
+   * empty map) let the ping loop stall until a live idle visitor aged past the
+   * timeout and got reaped by mistake, only to reconnect — the churn that
+   * surfaced as phantom visitors. Storing `seenAt` on the connection keeps it
+   * alive across hibernation, exactly like the player data already was.
+   */
+  private toPlayer(stored: StoredPlayer): Player {
+    return { id: stored.id, color: stored.color, hue: stored.hue, state: stored.state };
+  }
 
   /**
    * Players are derived from the open connections rather than tracked in a
@@ -59,12 +81,19 @@ export class KyhServer extends Server {
    */
   private getPlayers(excludeId?: string): PlayerMap {
     const players: PlayerMap = {};
-    for (const connection of this.getConnections<Player>()) {
+    for (const connection of this.getConnections<StoredPlayer>()) {
       if (connection.id === excludeId) continue;
-      const player = connection.state;
-      if (player) players[connection.id] = player;
+      const stored = connection.state;
+      if (stored) players[connection.id] = this.toPlayer(stored);
     }
     return players;
+  }
+
+  /** Records that a connection was just heard from, for the idle sweep. */
+  private touch(connection: Connection<StoredPlayer>, now: number) {
+    const stored = connection.state;
+    if (!stored) return;
+    connection.setState({ ...stored, seenAt: now });
   }
 
   /**
@@ -73,7 +102,7 @@ export class KyhServer extends Server {
    */
   private resolveHost(): string | null {
     let fallback: string | null = null;
-    for (const connection of this.getConnections<Player>()) {
+    for (const connection of this.getConnections<StoredPlayer>()) {
       if (connection.id === this.hostId) return this.hostId;
       fallback ??= connection.id;
     }
@@ -81,16 +110,16 @@ export class KyhServer extends Server {
     return fallback;
   }
 
-  onConnect(connection: Connection<Player>) {
+  onConnect(connection: Connection<StoredPlayer>) {
     const { color, hue } = getColorById(connection.id);
-    const player: Player = {
+    const stored: StoredPlayer = {
       id: connection.id,
       color,
       hue,
       state: {},
+      seenAt: Date.now(),
     };
-    connection.setState(player);
-    this.lastSeen.set(connection.id, Date.now());
+    connection.setState(stored);
     void this.scheduleSweep();
 
     // The connection is already open, so this elects it host if the room was empty.
@@ -108,20 +137,38 @@ export class KyhServer extends Server {
 
     const joinedMessage: ServerMessage = {
       type: "player_joined",
-      data: player,
+      data: this.toPlayer(stored),
     };
     this.broadcast(JSON.stringify(joinedMessage), [connection.id]);
   }
 
-  onMessage(sender: Connection<Player>, rawMessage: string): void | Promise<void> {
+  onMessage(sender: Connection<StoredPlayer>, rawMessage: string): void | Promise<void> {
     try {
       const message = JSON.parse(rawMessage) as ClientMessage;
-
-      // Any message proves the peer is alive, so `pong` needs no case of its own.
-      this.lastSeen.set(sender.id, Date.now());
+      const now = Date.now();
 
       switch (message.type) {
+        case "player_state_patch": {
+          const stored = sender.state;
+          if (!stored) return;
+
+          // Folds the liveness bump into the same write as the state patch.
+          const next: StoredPlayer = {
+            ...stored,
+            state: { ...stored.state, ...message.data },
+            seenAt: now,
+          };
+          sender.setState(next);
+
+          const updateMessage: ServerMessage = {
+            type: "player_state",
+            data: { id: sender.id, state: next.state },
+          };
+          this.broadcast(JSON.stringify(updateMessage), [sender.id]);
+          break;
+        }
         case "state_patch": {
+          this.touch(sender, now);
           this.sharedState = {
             ...this.sharedState,
             ...message.data,
@@ -133,24 +180,8 @@ export class KyhServer extends Server {
           this.broadcast(JSON.stringify(broadcastMessage), [sender.id]);
           break;
         }
-        case "player_state_patch": {
-          const player = sender.state;
-          if (!player) return;
-
-          const next: Player = {
-            ...player,
-            state: { ...player.state, ...message.data },
-          };
-          sender.setState(next);
-
-          const updateMessage: ServerMessage = {
-            type: "player_state",
-            data: { id: sender.id, state: next.state },
-          };
-          this.broadcast(JSON.stringify(updateMessage), [sender.id]);
-          break;
-        }
         case "emit": {
+          this.touch(sender, now);
           const eventMessage: ServerMessage = {
             type: "event",
             data: {
@@ -163,6 +194,8 @@ export class KyhServer extends Server {
           break;
         }
         default:
+          // `pong` (and any other message) is proof enough that the peer lives.
+          this.touch(sender, now);
           break;
       }
     } catch (error) {
@@ -170,7 +203,7 @@ export class KyhServer extends Server {
     }
   }
 
-  onClose(connection: Connection<Player>) {
+  onClose(connection: Connection<StoredPlayer>) {
     this.removePlayer(connection);
   }
 
@@ -179,7 +212,7 @@ export class KyhServer extends Server {
    * transport failure (dropped wifi, sleeping laptop, lost mobile radio) to
    * `onError`. Both tear the connection down, so both must reap the player.
    */
-  onError(connection: Connection<Player>) {
+  onError(connection: Connection<StoredPlayer>) {
     this.removePlayer(connection);
   }
 
@@ -190,21 +223,34 @@ export class KyhServer extends Server {
    */
   async onAlarm() {
     const now = Date.now();
-    const pingMessage: ServerMessage = { type: "ping" };
-    const stale: Connection<Player>[] = [];
+    const pingMessage = JSON.stringify({ type: "ping" } satisfies ServerMessage);
+    const stale: Connection<StoredPlayer>[] = [];
 
     // Collect first: reaping mutates the connection set, so it cannot happen
     // while we are still iterating it.
-    for (const connection of this.getConnections<Player>()) {
-      const seenAt = this.lastSeen.get(connection.id) ?? now;
-      if (now - seenAt > IDLE_TIMEOUT_MS) stale.push(connection);
-      else connection.send(JSON.stringify(pingMessage));
+    for (const connection of this.getConnections<StoredPlayer>()) {
+      const seenAt = connection.state?.seenAt ?? now;
+      if (now - seenAt > IDLE_TIMEOUT_MS) {
+        stale.push(connection);
+        continue;
+      }
+      try {
+        connection.send(pingMessage);
+      } catch {
+        // Sending to a socket whose peer is already gone throws — reap it, and
+        // don't let one dead connection abort the sweep (and its reschedule).
+        stale.push(connection);
+      }
     }
 
     for (const connection of stale) {
       // Closing may not fire `onClose` for a peer that is already gone, so reap
       // explicitly. `removePlayer` is idempotent if the close event does land.
-      connection.close(1001, "idle");
+      try {
+        connection.close(1001, "idle");
+      } catch {
+        /* already gone */
+      }
       this.removePlayer(connection);
     }
 
@@ -212,18 +258,26 @@ export class KyhServer extends Server {
   }
 
   private async scheduleSweep() {
-    if (this.lastSeen.size === 0) return;
+    // Reschedule while any connection is still open. Read that from the socket
+    // set (restored across hibernation) rather than an in-memory count, so the
+    // ping loop can never stall and starve live idle clients of their pings.
+    let hasConnections = false;
+    for (const _connection of this.getConnections()) {
+      hasConnections = true;
+      break;
+    }
+    if (!hasConnections) return;
+
     const pending = await this.ctx.storage.getAlarm();
     if (pending !== null) return;
     await this.ctx.storage.setAlarm(Date.now() + PING_INTERVAL_MS);
   }
 
-  private removePlayer(connection: Connection<Player>) {
-    // Doubles as the idempotency guard: a connection reaped by the sweep may
-    // still deliver a close event afterwards, and must not be announced twice.
-    if (!this.lastSeen.delete(connection.id)) return;
-
-    // The connection is already out of `getConnections()` by the time we run.
+  private removePlayer(connection: Connection<StoredPlayer>) {
+    // `player_left` is idempotent on the client (deleting an absent id is a
+    // no-op), so the sweep's explicit removal and a trailing `onClose` for the
+    // same connection can both run harmlessly. No in-memory dedupe guard —
+    // hibernation would wipe it anyway, and a duplicate leave costs nothing.
     const leftMessage: ServerMessage = {
       type: "player_left",
       data: { id: connection.id },
