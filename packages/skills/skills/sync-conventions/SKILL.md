@@ -1,6 +1,6 @@
 ---
 name: sync-conventions
-description: Audit and fix convention drift across all projects defined in ~/.zshrc pupa(). Checks tooling choice (oxlint/oxfmt vs eslint/prettier), script consistency, tsconfig settings, and stale config references. Package versions are out of scope — use update-all for those. Use when you want to ensure all projects follow the same patterns.
+description: Audit and fix convention drift across all projects defined in ~/.zshrc pupa(). Checks tooling choice (oxlint/oxfmt vs eslint/prettier), oxlint type-safety rules, script consistency, tsconfig, stale config references, database tooling (drizzle push scripts + .env.production.local convention, no stale migration dirs), secret hygiene (no tracked .env), and shared-UI/config drift (ui source glob, typed next.config). Package versions are out of scope — use update-all for those. Use when you want to ensure all projects follow the same patterns.
 allowed-tools: Bash(*), Read, Edit, Write, Glob, Grep, Agent
 ---
 
@@ -51,15 +51,48 @@ Root `package.json` scripts should include:
 - No eslint/prettier in pnpm-workspace.yaml catalogs
 - No unused `@kyh/eslint-config` or `@kyh/prettier-config` in catalogs or deps
 
+### 5. oxlint Rule Config
+The type-safety guardrails must be enforced in `.oxlintrc.json` (mirrors the CLAUDE.md "never compromise type safety" standard — it's the tool *config*, not a version):
+- `typescript/no-explicit-any`: error
+- `typescript/no-non-null-assertion`: error
+- `typescript/consistent-type-assertions`: `["error", { "assertionStyle": "never" }]`
+- `jsx-a11y` present in `plugins` (for repos with a web/JSX app)
+
+### 6. Database Tooling Convention
+For any repo with a database (drizzle + Turso / Postgres / D1). The db scripts live in the db-owning package — `packages/db` normally, or the DB-owning app (e.g. `apps/cloud`) for D1-bound-to-a-worker setups. **Both use the SAME convention**; the only difference is a `db:` script prefix when the scripts share a multi-purpose app's package.json.
+
+Canonical scripts (relative `../../.env*` paths resolve to repo root):
+- `with-env`: `dotenv -e ../../.env --`
+- `push` (or `db:push`): `pnpm with-env drizzle-kit push`
+- `push:remote` (or `db:push:remote`): `dotenv -e ../../.env.production.local -- drizzle-kit push` — **never a bare `drizzle-kit push` relying on loose shell env**
+- `studio` (or `db:studio`): `pnpm with-env drizzle-kit studio`
+- D1 repos also keep `push:local` (or `db:push:local`): `drizzle-kit push --config drizzle.config.local.ts --force`
+
+Env files:
+- Every repo with a **remote** DB must have `.env.production.local` (gitignored) so `push:remote` works. Flag if missing.
+- Turso split: `.env` = local dev DB, `.env.production.local` = prod. D1: both hold the same `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_DATABASE_ID` / `CLOUDFLARE_D1_TOKEN` (single CF account across projects — only `DATABASE_ID` differs).
+
+Schema is source of truth, **push-based, no migration files**:
+- Flag any committed `packages/db/drizzle/` (or `migrations/`) dir — it drifts from the push-managed live DB. Delete it and any wrangler D1 `"migrations_dir"` that points at it. (Durable-Object `"migrations"` blocks in wrangler.jsonc are unrelated class migrations — leave them.)
+
+### 7. Secret Hygiene
+- No real env file is git-tracked. `git ls-files | grep -iE '(^|/)\.env(\.|$)|\.dev\.vars$'` must return nothing but `.example`/`.sample`/`.template`.
+- `.env`, `.env.local`, `.env.production.local`, `.dev.vars` must all be gitignored (`git check-ignore`).
+
+### 8. Shared UI + Config Drift
+- `packages/ui/src/styles/globals.css` must NOT contain `@source "../../../../apps/**/*.{ts,tsx}"` (or a `components/**` cross-scan). Each app auto-detects its own Tailwind sources; the cross-app glob makes every app ship every other app's classes. Keep only the local `@source "../**/*.{ts,tsx}"`.
+- `next.config` is typed `.ts` (not `.js`) and has no `typescript: { ignoreBuildErrors: true }`.
+- `turbo.json` build/typecheck edges use `^topo` (not `^build`) and drop `dist/**` outputs when no package actually emits a dist (ties into the internal-package rule in check 3).
+
 ## Output Format
 
-After running all checks, output a summary table:
+After running all checks, output a summary table (columns map to checks 1–8; `-` = N/A, e.g. no DB or no web app):
 
 ```
-Project          | Tooling | Scripts | TSConfig | Stale Refs
------------------+---------+---------+----------+-----------
-kyh.io           |  pass   |  pass   |   pass   |    pass
-dataembed        |  drift  |  pass   |   pass   |    pass
+Project     | Tool | Scripts | TSConfig | Stale | oxlint | DB | Secrets | UI/Cfg
+------------+------+---------+----------+-------+--------+----+---------+-------
+kyh.io      | pass |  pass   |   pass   | pass  |  pass  | -  |  pass   | pass
+dataembed   | pass |  pass   |   pass   | pass  |  pass  |dft |  pass   | pass
 ...
 ```
 
@@ -73,11 +106,18 @@ If yes, fix each issue:
 1. Remove stale references (eslint/prettier configs, dead catalog entries)
 2. Fix scripts to the canonical oxlint/oxfmt form
 3. Fix tsconfig settings
-4. Run `pnpm install` per project (only if deps/catalogs changed)
-5. Verify `pnpm build` passes per project
-6. Commit per project with message: `chore: sync conventions`
+4. Add missing oxlint type-safety rules (check 5) — then **fix every violation the new rules surface**; adding a rule that leaves lint red is not a fix. Repo-wide violation counts can be large; if you can't get to error-level cleanly, ratchet (error in shared packages, `warn` elsewhere via `overrides`) and `log()` what was deferred.
+5. Align DB scripts to the canonical form (check 6); create any missing `.env.production.local` (gitignored) from the repo's own prod creds — **never commit it, and never copy a token between repos** (the harness blocks cross-repo cred movement; hand that step to the user). Delete stale `drizzle/` migration dirs + their wrangler `migrations_dir` refs.
+6. Fix ui source-glob / next.config / turbo edges (check 8).
+7. Run `pnpm install` per project (only if deps/catalogs changed)
+8. Verify `pnpm typecheck` + `pnpm lint` pass per project (run a real `next build` too when you touched next.config or app render code — typecheck alone misses prerender/client-boundary breaks).
+9. Commit per project with message: `chore: sync conventions`
 
 Use parallel agents per project when possible to speed things up.
+
+**Out of scope — do NOT do these here:**
+- **Running `push:remote` against a live DB.** Convention-syncing the DB means the *scripts, env files, and migration-dir cleanup* — not applying schema to prod. A live push can hit drift (drizzle tries to recreate tables) and is a data operation. If a live DB has drifted from `schema.ts`, note it and leave it for a deliberate, separately-confirmed reconciliation (throwaway data → drop-all + fresh push; real data → verify the push is additive-only first).
+- **Secret remediation is urgent, not optional:** if check 7 finds a *tracked* real env file, that's a leaked secret — `git rm --cached` it, confirm it's gitignored, and tell the user to rotate the exposed credentials. Don't bury it in the convention summary.
 
 ## Rules
 
