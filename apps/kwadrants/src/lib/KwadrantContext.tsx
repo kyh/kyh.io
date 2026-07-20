@@ -218,9 +218,7 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     ],
   );
 
-  return (
-    <KwadrantContext.Provider value={value}>{children}</KwadrantContext.Provider>
-  );
+  return <KwadrantContext.Provider value={value}>{children}</KwadrantContext.Provider>;
 };
 
 export const useKwadrant = () => {

@@ -12,15 +12,15 @@
     "external-skills.json"
   ],
   "type": "module",
-  "dependencies": {
-    "skills": "^1.5.15"
-  },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "postinstall": "node scripts/link.mjs",
     "check:external": "node scripts/check-external-skills.mjs"
+  },
+  "dependencies": {
+    "skills": "^1.5.15"
   },
   "engines": {
     "node": ">=24"

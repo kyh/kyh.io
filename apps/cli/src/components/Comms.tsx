@@ -25,8 +25,15 @@ export function Comms({ links, selectedIndex, innerWidth }: CommsProps) {
 
             if (selected) {
               return (
-                <box key={link.label} flexDirection="row" width={innerWidth} backgroundColor={color.accent}>
-                  <text bg={color.accent} fg={color.black}>{"▶ "}</text>
+                <box
+                  key={link.label}
+                  flexDirection="row"
+                  width={innerWidth}
+                  backgroundColor={color.accent}
+                >
+                  <text bg={color.accent} fg={color.black}>
+                    {"▶ "}
+                  </text>
                   <text bg={color.accent} fg={color.black} attributes={TextAttributes.BOLD}>
                     {label}
                   </text>
@@ -41,7 +48,9 @@ export function Comms({ links, selectedIndex, innerWidth }: CommsProps) {
               <box key={link.label} flexDirection="row">
                 <text fg={color.ghost}>{"  "}</text>
                 <text fg={color.accentDim}>{label}</text>
-                <text fg={color.dim}>{pad(link.value, Math.max(0, innerWidth - LABEL_WIDTH - 2))}</text>
+                <text fg={color.dim}>
+                  {pad(link.value, Math.max(0, innerWidth - LABEL_WIDTH - 2))}
+                </text>
               </box>
             );
           })}

@@ -25,6 +25,7 @@ Cut new npm versions of the publishable packages in this repo. Replaces the old 
 ## Arguments
 
 Parse from the user message:
+
 - Which unit(s): `cli`, `skills`, `configs`, or `all`. Default `all`.
 - Bump type: `patch`, `minor`, `major`. Default `patch`.
 - `--force` to release even if no changes since last tag (otherwise unchanged units are skipped).
@@ -38,6 +39,7 @@ If ambiguous, ask in one short sentence before proceeding.
 ### 1. Preflight
 
 Run in parallel:
+
 - `npm whoami` — must be `kaiyuhsu`. If not, stop and tell the user to `npm login`.
 - `git status --porcelain` — if dirty in unrelated files, surface and ask whether to proceed.
 - Current published versions for each candidate unit: `npm view kyh version`, `npm view @kyh/skills version`, `npm view @kyh/tsconfig version` (configs version).
@@ -51,6 +53,7 @@ Run in parallel:
 ### 2. Bump
 
 For each remaining unit, edit `version` in its `package.json`(s), keeping semver:
+
 - **cli**: `apps/cli/package.json`
 - **skills**: `packages/skills/package.json`
 - **configs**: bump **both** `packages/eslint/package.json` and `packages/typescript/package.json` to the **same** new version (lockstep — never let them diverge).
@@ -81,9 +84,11 @@ Terse bullets — sacrifice grammar for concision. If unsure, show the proposed 
 ### 5. Publish
 
 For each remaining unit, from each package's directory:
+
 ```
 pnpm publish --access public --no-git-checks
 ```
+
 - For **cli**, publish from the staged dirs instead (never from `apps/cli` itself — it's private). Platform packages first, main `kyh` last, so `kyh`'s optionalDependencies never point at unpublished versions:
   ```
   for d in apps/cli/dist/npm/cli-*; do (cd "$d" && npm publish --access public); done
@@ -91,7 +96,7 @@ pnpm publish --access public --no-git-checks
   ```
   If any platform package is **brand-new to the registry** (first publish of that name), wait until `npm view <pkg> dist-tags` succeeds for all of them **before** publishing `kyh` — new-package creation can take minutes to propagate to npm's read endpoints, and during that window installs of the new `kyh` fail resolving its optionalDependencies. Re-publishes of existing packages propagate in seconds; no wait needed.
 - For **configs**, publish `@kyh/tsconfig` first, then `@kyh/eslint-config` (the latter's `workspace:*` dep on tsconfig is rewritten to the exact new version by pnpm at publish — publishing tsconfig first keeps the registry consistent).
-- `--no-git-checks` because we commit + tag *after* publish, so we never tag a commit for a publish that failed.
+- `--no-git-checks` because we commit + tag _after_ publish, so we never tag a commit for a publish that failed.
 
 ### 6. Verify
 
@@ -100,14 +105,19 @@ pnpm publish --access public --no-git-checks
 ### 7. Commit, tag, push
 
 Single commit covering all bumps + changelogs:
+
 ```
 release: kyh@<v>, @kyh/skills@<v>, @kyh/tsconfig@<v>, @kyh/eslint-config@<v>   (only the units shipped)
 ```
+
 Stage only the changed `package.json` + `CHANGELOG.md` files. Then one annotated tag per **published package** (configs = two tags, same version), pointing at that commit:
+
 ```
 git tag -a '<pkg-name>@<version>' -m '<pkg-name>@<version>'
 ```
+
 git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). **cli gets a single `kyh@<version>` tag** — the `@kyh/cli-*` platform packages are build artifacts of the same release, never tagged individually. Then:
+
 ```
 git push --follow-tags origin <current-branch>
 ```
@@ -123,6 +133,7 @@ Released:
 Skipped (no changes): <unit> (since <last-tag>)
 Commit: <sha> (pushed to origin/<branch>)
 ```
+
 If `@kyh/tsconfig` or `@kyh/eslint-config` shipped, remind the user: run the `publish-and-sync-packages` skill to roll the new version into consumer repos' catalogs.
 If anything failed, lead with the failure and the exact state (published? committed? tagged? pushed?).
 

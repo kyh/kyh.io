@@ -60,15 +60,23 @@ function ItemRow({
 
   return (
     <box flexDirection="row" width={innerWidth} backgroundColor={bg}>
-      <text bg={bg} fg={selected ? color.black : color.ghost}>{selected ? "▶ " : "  "}</text>
+      <text bg={bg} fg={selected ? color.black : color.ghost}>
+        {selected ? "▶ " : "  "}
+      </text>
       <text bg={bg} fg={fg.idx} attributes={bold}>{`${String(index + 1).padStart(2, "0")} `}</text>
-      <text bg={bg} fg={fg.name} attributes={bold}>{pad(item.title, col.name)}</text>
+      <text bg={bg} fg={fg.name} attributes={bold}>
+        {pad(item.title, col.name)}
+      </text>
       <text bg={bg}>{" ".repeat(GUT1)}</text>
-      <text bg={bg} fg={fg.desc}>{pad(item.description, col.desc)}</text>
+      <text bg={bg} fg={fg.desc}>
+        {pad(item.description, col.desc)}
+      </text>
       {col.showHost && (
         <>
           <text bg={bg}>{" ".repeat(GUT2)}</text>
-          <text bg={bg} fg={fg.host}>{pad(truncate(hostFromUrl(item.url), col.host), col.host)}</text>
+          <text bg={bg} fg={fg.host}>
+            {pad(truncate(hostFromUrl(item.url), col.host), col.host)}
+          </text>
         </>
       )}
     </box>
@@ -121,7 +129,9 @@ export function Directory({ sections, selectedIndex, innerWidth, maxRows }: Dire
         <text fg={color.faint}>{pad("#", IDX)}</text>
         <text fg={color.faint}>{pad("NAME", col.name + GUT1)}</text>
         <text fg={color.faint}>{pad("DESCRIPTION", col.desc)}</text>
-        {col.showHost && <text fg={color.faint}>{`${" ".repeat(GUT2)}${pad("HOST", col.host)}`}</text>}
+        {col.showHost && (
+          <text fg={color.faint}>{`${" ".repeat(GUT2)}${pad("HOST", col.host)}`}</text>
+        )}
       </box>
 
       <box flexDirection="column" flexGrow={1}>
@@ -133,7 +143,9 @@ export function Directory({ sections, selectedIndex, innerWidth, maxRows }: Dire
           ) : row.kind === "header" ? (
             <box key={`section-${row.label}`} flexDirection="row">
               <text fg={color.accentDim}>{`▸ ${row.label} `}</text>
-              <text fg={color.ghost}>{"─".repeat(Math.max(0, innerWidth - row.label.length - 3))}</text>
+              <text fg={color.ghost}>
+                {"─".repeat(Math.max(0, innerWidth - row.label.length - 3))}
+              </text>
             </box>
           ) : (
             <ItemRow

@@ -118,9 +118,7 @@ export class Gallery {
   }
 
   private loadMedia(media: MediaSource): Promise<Drawable | null> {
-    return media.type === "video"
-      ? this.loadVideoFrame(media.src)
-      : this.loadImageFrame(media.src);
+    return media.type === "video" ? this.loadVideoFrame(media.src) : this.loadImageFrame(media.src);
   }
 
   private loadImageFrame(src: string): Promise<Drawable | null> {

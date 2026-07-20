@@ -33,6 +33,7 @@
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
 
 ### **ENTROPY REMINDER**
+
 This codebase will outlive you. Every shortcut you take becomes
 someone else's burden. Every hack compounds into technical debt
 that slows the whole team down.
@@ -46,12 +47,15 @@ you cut will be cut again.
 ## Specialized Subagents
 
 ### Frontend
+
 Invoke for: any frontend task — building components/pages, fixing UI bugs, reviewing frontend code, improving performance. Uses browser automation to verify visual changes.
 
 ### Architect
+
 Invoke for: code review, architecture decisions, debugging analysis, refactor planning, second opinion.
 
 ### Librarian
+
 Invoke for: understanding 3rd party libraries/packages, exploring remote repositories, discovering open source patterns.
 
 ## Picking the right models for workflows and subagents
@@ -59,13 +63,14 @@ Invoke for: understanding 3rd party libraries/packages, exploring remote reposit
 Rankings, higher = better. Cost reflects what I actually pay (OpenAI has really generous limits), not list price. Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design, and copy.
 
 | model    | cost | intelligence | taste |
-|----------|------|--------------|-------|
+| -------- | ---- | ------------ | ----- |
 | gpt-5.5  | 9    | 8            | 5     |
 | sonnet-5 | 5    | 5            | 7     |
 | opus-4.8 | 4    | 7            | 8     |
 | fable-5  | 2    | 9            | 9     |
 
 How to apply:
+
 - These are defaults, not limits. You have standing permission to override them: if a cheaper model's output doesn't meet the bar, rerun or redo the work with a smarter model without asking. Judge the output, not the price tag. Escalating costs less than shipping mediocre work.
 - Cost is a tie-breaker only; when axes conflict for anything that ships, intelligence > taste > cost.
 - Bulk/mechanical work (clear-spec implementation, data analysis, migrations): gpt-5.5 — it's effectively free.
@@ -79,5 +84,6 @@ How to apply:
 Steering gpt-5.5: it's extremely steerable but literal — it won't infer repo conventions or unstated constraints the way Claude does. Fable's job is to hand it an exhaustive, self-contained prompt: full context, explicit constraints, and the exact output shape wanted. A vague ask gets taste-5 output; a tight spec gets taste-8 work.
 
 Using gpt-5.5 inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
+
 - Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the raw stdout verbatim. The wrapper adds no judgment of its own — it's a courier: compose prompt → shell out → relay result. Fable does the thinking on both ends (the spec going in, the review coming out).
 - Verify before shipping: gpt-5.5 is taste-5, so route anything user-facing it produces through a fable-5 or opus-4.8 review pass before it lands.

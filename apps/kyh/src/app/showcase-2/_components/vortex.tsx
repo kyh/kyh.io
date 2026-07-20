@@ -65,8 +65,7 @@ export const Vortex = ({ works, tiles }: VortexProps) => {
       maxAnisotropy,
       onCenterChange: (centered) => setActive(centered),
     });
-    const onMotionChange = (event: MediaQueryListEvent) =>
-      gallery.setReducedMotion(event.matches);
+    const onMotionChange = (event: MediaQueryListEvent) => gallery.setReducedMotion(event.matches);
     motionQuery.addEventListener("change", onMotionChange);
 
     let frame = 0;
@@ -152,12 +151,7 @@ export const Vortex = ({ works, tiles }: VortexProps) => {
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={work.favicon}
-                className="size-6 rounded"
-                src={work.favicon}
-                alt=""
-              />
+              <img key={work.favicon} className="size-6 rounded" src={work.favicon} alt="" />
               <ScrambleText
                 key={work.title}
                 as="h1"

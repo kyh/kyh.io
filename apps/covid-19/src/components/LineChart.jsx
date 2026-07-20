@@ -28,7 +28,11 @@ const defaultOptions = {
 
 const EMPTY_DATA = [];
 
-export const LineChart = ({ data = EMPTY_DATA, dataKey = "positive", options = defaultOptions }) => {
+export const LineChart = ({
+  data = EMPTY_DATA,
+  dataKey = "positive",
+  options = defaultOptions,
+}) => {
   const container = useRef(null);
 
   useEffect(() => {

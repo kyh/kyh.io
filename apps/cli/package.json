@@ -1,12 +1,12 @@
 {
   "name": "kyh",
   "version": "0.2.0",
+  "private": true,
   "description": "Personal CLI tool",
   "bin": {
     "kyh": "./bin/kyh.cjs"
   },
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "bun scripts/build.ts",
     "dev": "bun --watch src/index.tsx",

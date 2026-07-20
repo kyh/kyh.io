@@ -103,17 +103,14 @@ export function App() {
   const bioLines = wrapText(heroText, leftInner).length;
   const globeHeight = Math.min(
     GLOBE_MAX_HEIGHT,
-    termHeight -
-      (LAYOUT_CHROME + IDENTITY_CHROME + bioLines + GLOBE_PANEL_CHROME + STATUS_HEIGHT),
+    termHeight - (LAYOUT_CHROME + IDENTITY_CHROME + bioLines + GLOBE_PANEL_CHROME + STATUS_HEIGHT),
   );
   const showGlobe = showLeft && globeHeight >= GLOBE_MIN_HEIGHT;
   // row capacity = termHeight - header(2) - footer(2) - panel border(2)
   //   - column header(1) - two scroll-hint lines(2)
   const maxRows = Math.max(1, termHeight - 9);
 
-  const target = showContact
-    ? contactLinks[contactIndex]?.url
-    : allItems[selectedIndex]?.url;
+  const target = showContact ? contactLinks[contactIndex]?.url : allItems[selectedIndex]?.url;
 
   const footerKeys = showContact
     ? [

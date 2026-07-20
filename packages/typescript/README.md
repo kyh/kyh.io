@@ -14,7 +14,7 @@ pnpm add -D @kyh/tsconfig
 // tsconfig.json
 {
   "extends": "@kyh/tsconfig/base.json",
-  "include": ["src"]
+  "include": ["src"],
 }
 ```
 
