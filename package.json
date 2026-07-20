@@ -16,13 +16,14 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "lint": "oxlint --report-unused-disable-directives",
+    "lint": "oxlint --report-unused-disable-directives --max-warnings 70",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "oxfmt --check",
     "lint:fix": "oxlint --fix",
     "format:fix": "oxfmt --write",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "verify:ci": "pnpm verify && turbo run build --filter=@repo/party..."
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

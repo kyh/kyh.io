@@ -14,7 +14,7 @@ That's the whole setup. There is no bootstrap script, no Docker, no local databa
 Two apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
 
 ```sh
-cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, Supabase-hosted images 404
+cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, project images fall back to a local placeholder
 cp apps/policingice/.env.example apps/policingice/.env  # required: any DB-backed route throws without TURSO_DATABASE_URL
 ```
 
@@ -35,12 +35,17 @@ No other app in the repo has a database. No `.env` is tracked — keep it that w
 Static gate — run before every commit:
 
 ```sh
-pnpm verify    # typecheck · lint · format · test
+pnpm verify       # typecheck · lint · format · test
+pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `lint` is oxlint, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml` — the only app with tests. Caveat worth knowing: `.oxlintrc.json` sets every enabled category to `warn` and `lint` has no `--deny-warnings`, so lint **reports** ~70 pre-existing warnings but exits 0. Read its output; don't trust its exit code alone. CI (`.github/workflows/deploy.yml`) only builds and deploys `apps/party`; the rest of the gate is local-only.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml` — the only app with tests.
 
-Runtime — drive a real app with [agent-browser](https://github.com/vercel-labs/agent-browser) (installed globally; `npm i -g agent-browser && agent-browser install` if missing). `apps/kyh` is the safest surface: no database, no auth, no keys.
+**Read the lint caveat before trusting a green run.** `.oxlintrc.json` sets every enabled category to `warn`, so `lint` is `oxlint --report-unused-disable-directives --max-warnings 70` — a ratchet pinned to the current backlog, not a clean gate. It fails on warning 71, so a new correctness regression is caught, but 70 pre-existing warnings still pass. Lower the number whenever you clear some; never raise it.
+
+`verify` does not build. CI (`.github/workflows/deploy.yml`) builds and deploys only `apps/party` on pushes to `main` touching `apps/party/**`, via `wrangler deploy --dry-run` — which catches bundling failures `tsc --noEmit` cannot. Run `pnpm verify:ci` before touching that app. Everything else is local-only.
+
+Runtime — drive a real app with [agent-browser](https://github.com/vercel-labs/agent-browser) (installed globally; `npm i -g agent-browser && agent-browser install` if missing). `apps/kyh` is the safest surface: no database, no auth, no required keys — every route renders on a clone with no `.env` (verified by curling `/` and `/showcase` with the file moved aside).
 
 ```sh
 pnpm dev:kyh &                                  # → :3000, or the next free port — read the log
@@ -75,10 +80,10 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 ## Rules that matter
 
 - **oxlint + oxfmt, not ESLint + Prettier.** `packages/eslint` is a _published_ artifact (`@kyh/eslint-config`) that nothing in this repo consumes — don't "fix" the repo to use it.
-- **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames for TS/TSX. Make illegal states unrepresentable.
+- **No `any`, no non-null `!`, no `as` casts in new code.** Kebab-case filenames for TS/TSX. Make illegal states unrepresentable. Seven pre-existing `!` survive — `apps/policingice/src/lib/incident-action.ts` (2, commented), `apps/cli/src/app.tsx` (2), `apps/cli/src/lib/ascii.ts` (1), `apps/stonksville/src/lib/price-engine.ts` (2); all are bounded index or `.has()`-guarded map reads. Don't add more; do delete one when you're already in the file.
 - **Dates render through a fixed time zone.** `apps/policingice/src/lib/format.ts` formats in UTC so server and client agree; never inline `toLocaleDateString()` in a server-rendered component. (`apps/kyh`'s PST clock is deliberate and client-only.)
 - **Server Actions own their invariants.** A policingice action reads current state from the database and derives the next one — it never trusts client-supplied "current" values. See `toggleIncidentStatus` in `src/lib/admin-action.ts`.
-- **Env is parsed, not sprinkled.** `apps/policingice/src/lib/env.ts` is the single boundary; a missing optional key disables its feature instead of crashing boot. Add new keys there _and_ to `apps/policingice/turbo.json`'s `build.env` — turbo's strict env mode strips anything undeclared.
+- **Env is parsed, not sprinkled.** `apps/policingice/src/lib/env.ts` is the single boundary; a missing optional key disables its feature instead of crashing boot. Add new keys there _and_ to `apps/policingice/turbo.json`'s `build.env` — turbo's strict env mode strips anything undeclared. Where an app has no env module (`apps/kyh`), the reader guards its own fallback: `src/lib/public-assets.ts` returns a local placeholder rather than interpolating `undefined` into a `next/image` src, which would 500 the page.
 - **Plans live in GitHub Issues, never in-repo markdown.** No `plans/`, no `ROADMAP.md`.
 
 ## Map

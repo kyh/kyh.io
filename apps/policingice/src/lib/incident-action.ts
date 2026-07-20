@@ -163,6 +163,8 @@ export async function searchIncidents(data: {
         });
       }
       if (row.vid) {
+        // Known `!` exception: the branch above `.set(id, …)` on this same `id`
+        // in this same iteration, so the entry always exists here.
         vectorIncidents.get(id)!.incident.videos.push({
           id: row.vid as number,
           incidentId: id,
@@ -186,6 +188,7 @@ export async function searchIncidents(data: {
     for (const [id, { incident, distance }] of vectorIncidents) {
       const vectorScore = 100 - idx - distance * 10;
       if (resultMap.has(id)) {
+        // Known `!` exception: guarded by the `.has(id)` immediately above.
         resultMap.get(id)!._score += vectorScore;
       } else {
         resultMap.set(id, { ...incident, _score: vectorScore });
