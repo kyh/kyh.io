@@ -6,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 
 import { toast } from "@/components/toast";
 import { createFromFeed } from "@/lib/admin-action";
+import { formatDate } from "@/lib/format";
 
 type FeedPost = {
   id: string;
@@ -61,15 +62,6 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -116,7 +108,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
                       </a>
                     </td>
                     <td className="py-3 pr-3 text-muted-foreground">
-                      {formatDate(post.published)}
+                      {formatDate(post.published) ?? "—"}
                     </td>
                     <td className="py-3">
                       {isAdded ? (

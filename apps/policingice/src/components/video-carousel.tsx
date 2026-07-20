@@ -79,7 +79,7 @@ export const VideoCarousel = ({
 
   useEffect(() => {
     if (!emblaApi) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing state from embla API on mount
+    // initializing state from the embla API on mount
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);

@@ -55,19 +55,25 @@ export async function updateIncident(data: {
   return { success: true };
 }
 
-export async function toggleIncidentStatus(data: { id: number; currentStatus: IncidentStatus }) {
+export async function toggleIncidentStatus(data: { id: number }) {
   await requireAdmin();
 
-  const newStatus = data.currentStatus === "approved" ? "hidden" : "approved";
+  const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
+  if (!incident) return { success: false, error: "Not found" };
+
+  const newStatus = incident.status === "approved" ? "hidden" : "approved";
   await db.update(incidents).set({ status: newStatus }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true, newStatus };
 }
 
-export async function toggleIncidentPinned(data: { id: number; currentPinned: boolean }) {
+export async function toggleIncidentPinned(data: { id: number }) {
   await requireAdmin();
 
-  const newPinned = !data.currentPinned;
+  const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
+  if (!incident) return { success: false, error: "Not found" };
+
+  const newPinned = !incident.pinned;
   await db.update(incidents).set({ pinned: newPinned }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true, newPinned };

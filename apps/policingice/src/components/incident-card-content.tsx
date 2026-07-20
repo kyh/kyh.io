@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink, Pin } from "lucide-react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
+import { formatDate } from "@/lib/format";
 import { VideoCarousel } from "./video-carousel";
 
 type Video = {
@@ -28,15 +29,6 @@ type IncidentCardContentProps = {
   pinned?: boolean;
   headerRight?: React.ReactNode;
 };
-
-function formatDate(date: Date | null) {
-  if (!date) return null;
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export const IncidentCardContent = ({
   incidentId,

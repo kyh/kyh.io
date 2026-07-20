@@ -163,7 +163,6 @@ export async function searchIncidents(data: {
         });
       }
       if (row.vid) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         vectorIncidents.get(id)!.incident.videos.push({
           id: row.vid as number,
           incidentId: id,
@@ -187,7 +186,6 @@ export async function searchIncidents(data: {
     for (const [id, { incident, distance }] of vectorIncidents) {
       const vectorScore = 100 - idx - distance * 10;
       if (resultMap.has(id)) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         resultMap.get(id)!._score += vectorScore;
       } else {
         resultMap.set(id, { ...incident, _score: vectorScore });

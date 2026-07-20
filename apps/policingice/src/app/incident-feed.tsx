@@ -49,13 +49,10 @@ export const IncidentFeed = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
+  // `||` not `??` throughout: an empty param should read as undefined, not ""
   const q = searchParams.get("q") || undefined;
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const start = searchParams.get("start") || undefined;
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const end = searchParams.get("end") || undefined;
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should become undefined
   const error = searchParams.get("error") || undefined;
 
   // Show error toast from share redirect
@@ -88,7 +85,7 @@ export const IncidentFeed = ({
   const searchFormRef = useRef<HTMLFormElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const allIncidents = [...initialIncidents, ...extraIncidents];
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- checking for any truthy search param
+  // `||` not `??`: any truthy search param counts
   const hasSearchParams = q || start || end;
 
   // Reset state when initial data changes
