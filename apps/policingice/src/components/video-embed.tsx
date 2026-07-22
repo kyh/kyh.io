@@ -74,7 +74,7 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mounting guard for SSR compatibility
+    // client-only mounting guard for SSR compatibility
     setMounted(true);
   }, []);
 

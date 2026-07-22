@@ -4,7 +4,14 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "VERCEL_PROJECT_PRODUCTION_URL"],
+      "env": [
+        "AI_GATEWAY_API_KEY",
+        "BETTER_AUTH_SECRET",
+        "TURSO_DATABASE_URL",
+        "TURSO_AUTH_TOKEN",
+        "VERCEL_PROJECT_PRODUCTION_URL",
+        "XAI_API_KEY"
+      ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },
     "dev": {

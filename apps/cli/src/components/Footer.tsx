@@ -30,7 +30,8 @@ const GAP = 2; // min gap between keys and the target readout
 // Bottom command bar: keybindings on the left, the currently focused target
 // (like a targeting reticle readout) on the right.
 export function Footer({ keys, target, width }: FooterProps) {
-  const keysWidth = keys.reduce((sum, k) => sum + hintWidth(k), 0) + SEP * Math.max(0, keys.length - 1);
+  const keysWidth =
+    keys.reduce((sum, k) => sum + hintWidth(k), 0) + SEP * Math.max(0, keys.length - 1);
   // Budget the target against the actual keys width (+ padding) so it can never
   // overflow into the keys or the right edge.
   const targetBudget = width - 2 - keysWidth - GAP;
@@ -54,7 +55,9 @@ export function Footer({ keys, target, width }: FooterProps) {
         </Fragment>
       ))}
       <box flexGrow={1} />
-      {showTarget ? <text fg={color.accentDim}>{truncate(targetLabel, Math.max(0, targetBudget))}</text> : null}
+      {showTarget ? (
+        <text fg={color.accentDim}>{truncate(targetLabel, Math.max(0, targetBudget))}</text>
+      ) : null}
     </box>
   );
 }

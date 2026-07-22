@@ -5,7 +5,6 @@
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "db:supabase": "pnpm -F db supabase",
     "dev": "turbo watch dev --continue",
     "dev:cli": "pnpm -F kyh dev",
     "dev:stonksville": "pnpm -F @repo/stonksville dev",
@@ -17,11 +16,14 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "lint": "oxlint --report-unused-disable-directives",
+    "lint": "oxlint --report-unused-disable-directives --max-warnings 70",
     "typecheck": "turbo run typecheck",
-    "format": "oxfmt",
+    "test": "turbo run test",
+    "format": "oxfmt --check",
     "lint:fix": "oxlint --fix",
-    "format:fix": "oxfmt --write"
+    "format:fix": "oxfmt --write",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "verify:ci": "pnpm verify && turbo run build --filter=@repo/party..."
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
@@ -31,10 +33,10 @@
     "turbo": "^2.10.4",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=24"
   },
+  "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "updateConfig": {
       "ignoreDependencies": [

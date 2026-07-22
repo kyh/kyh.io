@@ -7,9 +7,22 @@ Personal monorepo. Uses pnpm workspaces + turborepo.
 ```bash
 pnpm dev:<app>     # dev server for specific app
 pnpm build         # build all
-pnpm lint          # lint all
+pnpm verify        # typecheck · lint · format · test — run before committing
+pnpm verify:ci     # verify + the apps/party build CI runs
+pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
+pnpm format        # check formatting (oxfmt); format:fix writes
+pnpm test          # run tests (apps/vis-ml only)
 ```
+
+## Agent-driven development
+
+`AGENTS.md` is the full workflow — read it first. The essentials:
+
+- **Setup**: `pnpm install`, then `pnpm dev:<app>`. No bootstrap script, no Docker. `pnpm dev:kyh` and `pnpm dev:policingice` both bind :3000, so run one at a time.
+- **Verify**: `pnpm verify` for the static gate (`verify:ci` adds the apps/party build CI runs); drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` and `apps/party` get `typecheck` + `build` only.
+- **`pnpm lint` is a ratchet, not a clean gate** — `--max-warnings 70` pins the current backlog. Lower it when you clear warnings; never raise it.
+- **policingice's database is remote production.** No local DB, no seed, no test login. Never run its `db:push`/`db:studio` or anything in `apps/policingice/scripts/`.
 
 ## Apps
 

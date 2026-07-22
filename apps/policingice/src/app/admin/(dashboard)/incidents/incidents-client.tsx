@@ -5,9 +5,10 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
-import type { IncidentStatus, VideoPlatform } from "@/db/drizzle-schema";
+import type { VideoPlatform } from "@/db/drizzle-schema";
 import { toast } from "@/components/toast";
 import { VideoCarousel } from "@/components/video-carousel";
+import { formatDate } from "@/lib/format";
 import {
   addVideo,
   adminDeleteIncident,
@@ -21,15 +22,6 @@ import {
 import type { getAllIncidents } from "@/lib/admin-action";
 
 type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
-
-function formatDate(date: Date | null) {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 type IncidentEditRowProps = {
   incident: Incident;
@@ -220,14 +212,22 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewingIncident, setPreviewingIncident] = useState<Incident | null>(null);
 
-  const handleToggleStatus = async (id: number, currentStatus: IncidentStatus) => {
-    const result = await toggleIncidentStatus({ id, currentStatus });
+  const handleToggleStatus = async (id: number) => {
+    const result = await toggleIncidentStatus({ id });
+    if (!result.success) {
+      toast.error("Failed to update status");
+      return;
+    }
     router.refresh();
     toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
   };
 
-  const handleTogglePinned = async (id: number, currentPinned: boolean) => {
-    const result = await toggleIncidentPinned({ id, currentPinned });
+  const handleTogglePinned = async (id: number) => {
+    const result = await toggleIncidentPinned({ id });
+    if (!result.success) {
+      toast.error("Failed to pin");
+      return;
+    }
     router.refresh();
     toast.success(result.newPinned ? "Pinned" : "Unpinned");
   };
@@ -278,11 +278,11 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="max-w-48 truncate py-3 pr-3" title={incident.description ?? ""}>
                       {incident.description ?? "—"}
                     </td>
-                    <td className="py-3 pr-3">{formatDate(incident.incidentDate)}</td>
+                    <td className="py-3 pr-3">{formatDate(incident.incidentDate) ?? "—"}</td>
                     <td className="py-3 pr-3">
                       <button
                         type="button"
-                        onClick={() => handleToggleStatus(incident.id, incident.status)}
+                        onClick={() => handleToggleStatus(incident.id)}
                         className="cursor-pointer"
                       >
                         {incident.status === "approved" ? (
@@ -295,7 +295,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="py-3 pr-3">
                       <button
                         type="button"
-                        onClick={() => handleTogglePinned(incident.id, incident.pinned)}
+                        onClick={() => handleTogglePinned(incident.id)}
                         className="cursor-pointer"
                       >
                         {incident.pinned ? (
@@ -366,7 +366,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                   #{previewingIncident.id}
                   {previewingIncident.location && ` · ${previewingIncident.location}`}
                   {previewingIncident.incidentDate &&
-                    ` · ${formatDate(previewingIncident.incidentDate)}`}
+                    ` · ${formatDate(previewingIncident.incidentDate) ?? "—"}`}
                 </div>
                 <VideoCarousel videos={previewingIncident.videos} />
               </>

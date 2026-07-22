@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "prompt": "Monorepo of independent apps — read AGENTS.md first. `pnpm install` is the whole setup for 7 of the 9 apps; apps/kyh and apps/policingice want a `.env` (copy each app's .env.example). Run `pnpm verify` before committing. policingice's database is REMOTE PRODUCTION — never run its db:push, db:studio or anything in apps/policingice/scripts.",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm verify:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(agent-browser:*)"
+    ],
+    "deny": [
+      "Bash(pnpm db:push:*)",
+      "Bash(pnpm db:studio:*)",
+      "Bash(pnpm -F @repo/policingice db:push:*)",
+      "Bash(pnpm -F @repo/policingice db:studio:*)",
+      "Bash(pnpm --filter @repo/policingice db:push:*)",
+      "Bash(pnpm --filter @repo/policingice db:studio:*)",
+      "Bash(drizzle-kit:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(pnpm with-env tsx:*)",
+      "Bash(pnpm -F @repo/policingice with-env:*)",
+      "Bash(pnpm --filter @repo/policingice with-env:*)",
+      "Bash(tsx scripts/:*)",
+      "Bash(npx tsx scripts/:*)",
+      "Bash(tsx apps/policingice/scripts/:*)",
+      "Bash(npx tsx apps/policingice/scripts/:*)"
+    ]
+  }
+}

@@ -87,7 +87,7 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
         }
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- closestId is reassigned in the forEach loop
+      // closestId is reassigned in the forEach loop above
       if (closestId !== null) {
         setActiveIncidentId(closestId);
       }
@@ -194,7 +194,7 @@ const KeyboardShortcutsHelp = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mounting guard for SSR compatibility
+    // client-only mounting guard for SSR compatibility
     setMounted(true);
   }, []);
 

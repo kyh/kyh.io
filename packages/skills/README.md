@@ -25,14 +25,14 @@ node "$(npm root -g)/@kyh/skills/scripts/link.mjs"
 Same model as [`npx skills`](https://github.com/vercel-labs/skills): a single
 canonical store at `~/.agents`, with non-universal agents symlinking into it.
 
-| Source (in this package) | Target | Mechanism |
-| --- | --- | --- |
-| `skills/<name>/` | `~/.agents/skills/<name>` | symlink (canonical) |
-| `agents/<name>.md` | `~/.agents/agents/<name>.md` | symlink (canonical) |
-| `~/.agents/skills/<name>` | `~/.claude/skills/<name>` | symlink |
-| `~/.agents/agents/<name>.md` | `~/.claude/agents/<name>.md` | symlink |
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` | symlink |
-| `mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
+| Source (in this package)     | Target                          | Mechanism             |
+| ---------------------------- | ------------------------------- | --------------------- |
+| `skills/<name>/`             | `~/.agents/skills/<name>`       | symlink (canonical)   |
+| `agents/<name>.md`           | `~/.agents/agents/<name>.md`    | symlink (canonical)   |
+| `~/.agents/skills/<name>`    | `~/.claude/skills/<name>`       | symlink               |
+| `~/.agents/agents/<name>.md` | `~/.claude/agents/<name>.md`    | symlink               |
+| `CLAUDE.md`                  | `~/.claude/CLAUDE.md`           | symlink               |
+| `mcp.json` → `mcpServers`    | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
 
 **Universal agents** (codex, amp, opencode, goose, kimi) read `~/.agents`
 directly — nothing else to do. **Non-universal agents** (claude) get
@@ -73,15 +73,15 @@ Cherry-pick a single skill manually: `npx skills add <repo>@<skill-name> -g -y`.
 
 ## Custom skills
 
-| Skill                       | What it does                                                          |
-| --------------------------- | --------------------------------------------------------------------- |
-| `architect`                 | Deep technical analysis, architecture decisions, code review          |
-| `librarian`                 | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
-| `pr-lifecycle`              | Monitor PR for bot reviews, address feedback, push fixes              |
-| `push`                      | Commit and push; creates PR if on branch                              |
-| `simplify-lifecycle`        | Full architecture sweep, loops until nothing left to simplify         |
-| `sync-conventions`          | Audit convention drift across all projects                            |
-| `update-all`                | Bulk update all projects to latest, fix breakages, commit             |
+| Skill                | What it does                                                          |
+| -------------------- | --------------------------------------------------------------------- |
+| `architect`          | Deep technical analysis, architecture decisions, code review          |
+| `librarian`          | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
+| `pr-lifecycle`       | Monitor PR for bot reviews, address feedback, push fixes              |
+| `push`               | Commit and push; creates PR if on branch                              |
+| `simplify-lifecycle` | Full architecture sweep, loops until nothing left to simplify         |
+| `sync-conventions`   | Audit convention drift across all projects                            |
+| `update-all`         | Bulk update all projects to latest, fix breakages, commit             |
 
 ## Custom agents
 

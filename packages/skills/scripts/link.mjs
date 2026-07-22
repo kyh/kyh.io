@@ -58,7 +58,9 @@ async function main() {
     process.env.npm_config_global !== "true" &&
     !FORCE
   )
-    return log("not a global install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.");
+    return log(
+      "not a global install — skipping. Use `npm i -g`, or KYH_SKILLS_FORCE=1 to link this copy.",
+    );
   if (process.platform === "win32")
     warn("Windows symlinks may need admin/developer mode; will fall back to copying.");
   if (DRY) log("dry run — no changes will be written.");

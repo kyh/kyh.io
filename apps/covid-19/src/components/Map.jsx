@@ -100,13 +100,7 @@ const getStrokeColor = {
 const mapWidth = window.innerWidth < 910 ? window.innerWidth - 30 : 910;
 const mapHeight = 520;
 
-export const Map = ({
-  rawStateData,
-  currentField,
-  currentDate,
-  getValue,
-  useChoropleth,
-}) => {
+export const Map = ({ rawStateData, currentField, currentDate, getValue, useChoropleth }) => {
   const path = useMemo(() => {
     const projection = geoAlbersUsa().fitExtent(
       [
