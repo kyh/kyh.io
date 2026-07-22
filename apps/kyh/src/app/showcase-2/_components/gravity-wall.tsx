@@ -2,7 +2,7 @@
 
 import type { FC, RefObject } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import gsap from "gsap";
+import { animate } from "motion";
 
 import type { Cell, Dims } from "./build-cells";
 import type { WorkMedia } from "./works";
@@ -27,6 +27,17 @@ import {
   VOID_RADIUS_IDLE_MOBILE,
 } from "./build-cells";
 import { FeaturedCard } from "./featured-card";
+
+/* The source drove the intro with a gsap timeline; these reproduce its exact
+   easing curves (power2.inOut, power2.out, back.out(1.4)) for motion's
+   `animate`, which the app already ships for other pages. */
+const quadInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (2 - 2 * t) ** 2 / 2);
+const quadOut = (t: number) => 1 - (1 - t) ** 2;
+const backOut14 = (t: number) => {
+  const c = 1.4;
+  const u = t - 1;
+  return 1 + u * u * ((c + 1) * u + c);
+};
 
 /* ── The wall — memoised so featured/expanded changes never re-render it ─ */
 interface WallProps {
@@ -575,7 +586,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
   /* ── Cinematic intro (runs once, snaps to final on teardown) ─────── */
   /* Deliberately keyed on *whether* a wall exists rather than on `built`
      itself: `built` gets a new identity on every resize, and re-running the
-     effect mid-intro would kill the timeline, snap the values to 1 in cleanup
+     effect mid-intro would stop the tweens, snap the values to 1 in cleanup
      and immediately replay the fly-in from 0. `dims` never returns to null
      once measured, so this runs exactly once per mount — including the second
      mount of a StrictMode double-invoke, which still replays the intro. */
@@ -598,13 +609,16 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
     physics.current.voidRadius = 0;
     physics.current.targetRadius = 0;
 
-    const tl = gsap.timeline({ delay: 0.1 });
-    tl.to(introVals, { entrance: 1, duration: 1.7, ease: "power2.inOut" }, 0);
-    tl.to(introVals, { voidEmerge: 1, duration: 1.1, ease: "power2.out" }, 0.2);
-    tl.to(introVals, { featuredEmerge: 1, duration: 0.8, ease: "back.out(1.4)" }, 0.7);
+    /* The source's timeline offsets (0 / 0.2 / 0.7 after a 0.1 lead-in)
+       become per-animation delays, since nothing here needs re-sequencing. */
+    const animations = [
+      animate(introVals, { entrance: 1 }, { duration: 1.7, ease: quadInOut, delay: 0.1 }),
+      animate(introVals, { voidEmerge: 1 }, { duration: 1.1, ease: quadOut, delay: 0.3 }),
+      animate(introVals, { featuredEmerge: 1 }, { duration: 0.8, ease: backOut14, delay: 0.8 }),
+    ];
 
     return () => {
-      tl.kill();
+      for (const animation of animations) animation.stop();
       /* Snap to the settled state — leaving `entrance` at 0 renders a black
          frame, since it drives every cell's opacity. */
       introVals.entrance = 1;

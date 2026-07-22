@@ -244,7 +244,7 @@ importers:
         version: 10.3.1(react@19.2.7)
       '@vercel/analytics':
         specifier: 'catalog:'
-        version: 2.0.1(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 2.0.1(next@16.2.10(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(next@16.2.10(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
@@ -254,9 +254,6 @@ importers:
       geist:
         specifier: ^1.7.2
         version: 1.7.2(next@16.2.10(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
-      gsap:
-        specifier: ^3.15.0
-        version: 3.15.0
       lucide-react:
         specifier: 'catalog:'
         version: 1.24.0(react@19.2.7)
@@ -344,7 +341,7 @@ importers:
         version: 0.17.4
       '@vercel/analytics':
         specifier: 'catalog:'
-        version: 2.0.1(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 2.0.1(next@16.2.10(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       ai:
         specifier: ^7.0.19
         version: 7.0.19(zod@4.4.3)
@@ -4042,9 +4039,6 @@ packages:
   graphmatch@1.1.1:
     resolution: {integrity: sha512-5ykVn/EXM1hF0XCaWh05VbYvEiOL2lY1kBxZtaYsyvjp7cmWOU1XsAdfQBwClraEofXDT197lFbXOEVMHpvQOg==}
 
-  gsap@3.15.0:
-    resolution: {integrity: sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==}
-
   h3@2.0.1-rc.14:
     resolution: {integrity: sha512-163qbGmTr/9rqQRNuqMqtgXnOUAkE4KTdauiC9y0E5iG1I65kte9NyfWvZw5RTDMt6eY+DtyoNzrQ9wA2BfvGQ==}
     engines: {node: '>=20.11.1'}
@@ -7355,7 +7349,7 @@ snapshots:
       '@use-gesture/core': 10.3.1
       react: 19.2.7
 
-  '@vercel/analytics@2.0.1(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)':
+  '@vercel/analytics@2.0.1(next@16.2.10(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)':
     optionalDependencies:
       next: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
@@ -8386,8 +8380,6 @@ snapshots:
 
   graphmatch@1.1.1:
     optional: true
-
-  gsap@3.15.0: {}
 
   h3@2.0.1-rc.14(crossws@0.4.3(srvx@0.11.21)):
     dependencies:
