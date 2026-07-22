@@ -1,11 +1,11 @@
 "use client";
 
-import type { Dispatch, FC, RefObject, SetStateAction } from "react";
+import type { FC, RefObject } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 
 import type { Cell, Dims } from "./build-cells";
-import type { Photo } from "./photos";
+import type { WorkMedia } from "./works";
 import {
   buildCells,
   CELL_CLASS,
@@ -31,7 +31,7 @@ import { FeaturedCard } from "./featured-card";
 /* ── The wall — memoised so featured/expanded changes never re-render it ─ */
 interface WallProps {
   cells: Cell[];
-  photos: readonly [Photo, ...Photo[]];
+  photos: readonly [WorkMedia, ...WorkMedia[]];
   itemsRef: RefObject<(HTMLDivElement | null)[]>;
 }
 
@@ -93,27 +93,13 @@ interface IntroState {
 
 interface GravityWallProps {
   /** Non-empty by construction, so `photos[0]` needs no guard. */
-  photos: readonly [Photo, ...Photo[]];
-}
-
-/** Membership toggle for one of the photo-slug sets (liked / saved). */
-function useSlugToggle(setSlugs: Dispatch<SetStateAction<Set<string>>>, slug: string) {
-  return useCallback(() => {
-    setSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  }, [setSlugs, slug]);
+  photos: readonly [WorkMedia, ...WorkMedia[]];
 }
 
 export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
   const [dims, setDims] = useState<Dims | null>(null);
   const [featuredIdx, setFeaturedIdx] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [liked, setLiked] = useState<Set<string>>(() => new Set());
-  const [saved, setSaved] = useState<Set<string>>(() => new Set());
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<HTMLDivElement | null>(null);
@@ -154,7 +140,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
     built && built.cells.length > 0
       ? built.cells[Math.min(featuredIdx, built.cells.length - 1)]
       : undefined;
-  const currentPhoto: Photo = featuredCell
+  const currentPhoto: WorkMedia = featuredCell
     ? (photos[featuredCell.photoIndex] ?? photos[0])
     : photos[0];
 
@@ -298,9 +284,6 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
 
   const next = useCallback(() => navigate(1), [navigate]);
   const prev = useCallback(() => navigate(-1), [navigate]);
-
-  const toggleLike = useSlugToggle(setLiked, currentPhoto.slug);
-  const toggleSave = useSlugToggle(setSaved, currentPhoto.slug);
 
   /* ── Pointer / touch / hover listeners ───────────────────────────── */
   useEffect(() => {
@@ -676,14 +659,10 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
             isMobile={dims.isMobile}
             vw={dims.vw}
             vh={dims.vh}
-            liked={liked.has(currentPhoto.slug)}
-            saved={saved.has(currentPhoto.slug)}
             onOpen={open}
             onClose={close}
             onNext={next}
             onPrev={prev}
-            onToggleLike={toggleLike}
-            onToggleSave={toggleSave}
           />
         )}
       </div>

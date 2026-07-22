@@ -2,9 +2,9 @@
 
 import type { FC, ReactNode, Ref } from "react";
 import { useEffect, useRef } from "react";
-import { Bookmark, ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 
-import type { Photo } from "./photos";
+import type { WorkMedia } from "./works";
 
 /* The source shipped these as a `.moments-icon-btn` global class; inlined here
    so the package carries no stylesheet. */
@@ -16,7 +16,7 @@ const ICON_BTN =
 const DISPLAY_FONT = "Georgia, 'Times New Roman', serif";
 
 /* The expanded state hangs satellite UI off the card: prev/next plus a title
-   that can wrap to two lines above (~150px), caption and description below
+   that can wrap to two lines above (~150px), link and description below
    (~95px). The card is centred in the frame, so the taller side governs — the
    budget below reserves twice the top chrome. Under ~430px of frame height the
    chrome cannot fit at any card size; MIN_EXPANDED_H stops the card collapsing
@@ -28,17 +28,15 @@ const MIN_EXPANDED_H = 120;
 interface IconButtonProps {
   onClick: () => void;
   label: string;
-  /** `sm` is the prev/next pair; `md` is like / save / close. */
+  /** `sm` is the prev/next pair; `md` is close. */
   size: "sm" | "md";
-  /** Only set for the two toggles, which are the only buttons with a state. */
-  pressed?: boolean;
   ref?: Ref<HTMLButtonElement>;
   children: ReactNode;
 }
 
 /* Card-level clicks open the detail view, so every control inside has to stop
    the event before running its own action. */
-const IconButton: FC<IconButtonProps> = ({ onClick, label, size, pressed, ref, children }) => (
+const IconButton: FC<IconButtonProps> = ({ onClick, label, size, ref, children }) => (
   <button
     ref={ref}
     type="button"
@@ -48,27 +46,22 @@ const IconButton: FC<IconButtonProps> = ({ onClick, label, size, pressed, ref, c
     }}
     className={`${ICON_BTN} ${size === "sm" ? "size-8" : "size-9"}`}
     aria-label={label}
-    aria-pressed={pressed}
   >
     {children}
   </button>
 );
 
 interface FeaturedCardProps {
-  photo: Photo;
+  photo: WorkMedia;
   expanded: boolean;
   isMobile: boolean;
   /** Frame size, so the card can never outgrow the preview box. */
   vw: number;
   vh: number;
-  liked: boolean;
-  saved: boolean;
   onOpen: () => void;
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
-  onToggleLike: () => void;
-  onToggleSave: () => void;
 }
 
 export const FeaturedCard: FC<FeaturedCardProps> = ({
@@ -77,14 +70,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
   isMobile,
   vw,
   vh,
-  liked,
-  saved,
   onOpen,
   onClose,
   onNext,
   onPrev,
-  onToggleLike,
-  onToggleSave,
 }) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -114,7 +103,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
 
   const h = Math.min(expanded ? expH : restH, heightBudget);
   const maxW = Math.min(expanded ? expMaxW : restMaxW, widthBudget);
-  /* Clamp against the height budget too: without it, a tall-but-narrow photo
+  /* Clamp against the height budget too: without it, a tall-but-narrow asset
      takes the min-width branch below and recomputes frameH from width alone,
      re-inflating past the budget and clipping the satellite UI in short frames. */
   const minW = Math.min(expMinW, widthBudget, heightBudget * photo.aspect);
@@ -129,25 +118,17 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
     frameH = minW / photo.aspect;
   }
 
-  const likeBtn = (
-    <IconButton
-      onClick={onToggleLike}
-      label={liked ? "Remove like" : "Like"}
-      size="md"
-      pressed={liked}
+  const visitLink = (
+    <a
+      href={photo.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1 text-[11px] tracking-[0.24em] text-white/60 uppercase transition-colors hover:text-white"
     >
-      <Heart className="size-4" fill={liked ? "currentColor" : "none"} />
-    </IconButton>
-  );
-  const saveBtn = (
-    <IconButton
-      onClick={onToggleSave}
-      label={saved ? "Remove from saved" : "Save"}
-      size="md"
-      pressed={saved}
-    >
-      <Bookmark className="size-4" fill={saved ? "currentColor" : "none"} />
-    </IconButton>
+      Visit site
+      <ArrowUpRight className="size-3" />
+    </a>
   );
   const closeBtn = (
     <IconButton ref={closeRef} onClick={onClose} label="Close" size="md">
@@ -187,10 +168,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
       {expanded && (
         <div className="absolute bottom-full left-1/2 mb-4 w-max max-w-[80%] -translate-x-1/2 text-center">
           <div className="flex items-center justify-center gap-3">
-            <IconButton onClick={onPrev} label="Previous photo" size="sm">
+            <IconButton onClick={onPrev} label="Previous work" size="sm">
               <ChevronLeft className="size-4" />
             </IconButton>
-            <IconButton onClick={onNext} label="Next photo" size="sm">
+            <IconButton onClick={onNext} label="Next work" size="sm">
               <ChevronRight className="size-4" />
             </IconButton>
           </div>
@@ -210,29 +191,34 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
         </div>
       )}
 
-      {expanded && !isMobile && (
-        <div className="absolute top-1/2 right-full mr-4 flex -translate-y-1/2 flex-col gap-2">
-          {likeBtn}
-          {saveBtn}
-        </div>
-      )}
-
-      {/* Close sits on the card's own corner: with Share/Download dropped a
-          second side rail would be a lone floating button. */}
+      {/* Close sits on the card's own corner: a side rail would be a lone
+          floating button now that the photo-app toggles are gone. */}
       {expanded && !isMobile && <div className="absolute -top-3 -right-3 z-10">{closeBtn}</div>}
 
       <div
         className="relative h-full w-full overflow-hidden rounded-[6px] bg-black"
         style={{ boxShadow: "0 30px 70px -15px rgb(0 0 0 / 0.7)" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- swaps renditions per frame-driven state; plain img keeps it in step with the wall */}
-        <img
-          src={expanded ? photo.imageUrl : photo.thumbUrl}
-          alt={photo.title}
-          draggable={false}
-          decoding="async"
-          className="h-full w-full object-cover"
-        />
+        {expanded && photo.videoUrl ? (
+          <video
+            src={photo.videoUrl}
+            poster={photo.thumbUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
+          <img
+            src={photo.thumbUrl}
+            alt={photo.title}
+            draggable={false}
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        )}
         {!expanded && (
           <div
             className="absolute inset-x-0 bottom-0 p-3"
@@ -259,14 +245,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
             maxWidth: vw * 0.9,
           }}
         >
-          <div className="text-[11px] tracking-[0.24em] text-white/60 uppercase">{photo.year}</div>
+          {visitLink}
 
           {isMobile && (
-            <div className="mt-3 flex items-center justify-center gap-2">
-              {likeBtn}
-              {saveBtn}
-              {closeBtn}
-            </div>
+            <div className="mt-3 flex items-center justify-center gap-2">{closeBtn}</div>
           )}
 
           {!isMobile && (

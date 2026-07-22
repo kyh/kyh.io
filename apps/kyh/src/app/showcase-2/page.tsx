@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 
-import { GravityWall } from "./_components/gravity-wall";
-import { PHOTOS } from "./_components/photos";
+import { projects } from "@/lib/data";
+import { WorkWall } from "./_components/work-wall";
+import { buildWorkSeeds } from "./_components/works";
 
 export const metadata: Metadata = {
   title: "Showcase",
   description: "The ever growing list of things I'm working on.",
 };
 
+const seeds = buildWorkSeeds(projects);
+
 const Page = () => {
   return (
-    <main className="fixed inset-0">
-      <GravityWall photos={PHOTOS} />
+    <main>
+      <WorkWall seeds={seeds} />
     </main>
   );
 };

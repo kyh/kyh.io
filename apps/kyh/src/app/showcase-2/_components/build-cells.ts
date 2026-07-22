@@ -1,4 +1,4 @@
-import type { Photo } from "./photos";
+import type { WorkMedia } from "./works";
 
 /* ── Grid + tile geometry ─────────────────────────────────────────────── */
 export const CELL_H_DESKTOP = 100;
@@ -91,7 +91,7 @@ interface RawItem {
 /* ── Build the wrapping tile of cells ─────────────────────────────────── */
 export function buildCells(
   dims: Dims,
-  photos: readonly [Photo, ...Photo[]],
+  photos: readonly [WorkMedia, ...WorkMedia[]],
 ): { cells: Cell[]; tile: TileSize } {
   const { vw, vh, isMobile } = dims;
   const cellH = isMobile ? CELL_H_MOBILE : CELL_H_DESKTOP;
