@@ -36,7 +36,7 @@ export const SOFT_PUSH_RATIO = 1.3;
 export const CULL_MARGIN = 240;
 
 export const CELL_CLASS =
-  "absolute left-0 top-0 select-none overflow-hidden rounded-[3px] pointer-events-none will-change-transform origin-center [backface-visibility:hidden]";
+  "absolute left-0 top-0 select-none overflow-hidden rounded pointer-events-none will-change-transform origin-center [backface-visibility:hidden]";
 
 /* ── Deterministic helpers (no Math.random anywhere) ──────────────────── */
 function hash(n: number): number {

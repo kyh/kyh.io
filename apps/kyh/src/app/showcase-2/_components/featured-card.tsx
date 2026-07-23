@@ -2,18 +2,14 @@
 
 import type { FC, ReactNode, Ref } from "react";
 import { useEffect, useRef } from "react";
-import { ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import type { WorkMedia } from "./works";
 
-/* The source shipped these as a `.moments-icon-btn` global class; inlined here
-   so the package carries no stylesheet. */
-const ICON_BTN =
-  "flex items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/85 backdrop-blur-[12px] transition-colors hover:bg-white/20 hover:text-white";
-
-/* Playfair Display came from next/font in the source app, which a content
-   package cannot use. Georgia keeps the serif character. */
-const DISPLAY_FONT = "Georgia, 'Times New Roman', serif";
+/* The floating spotlight uses the tooltip/panel shadow rather than a bespoke
+   one, so elevation reads the same as the rest of the site in both themes. */
+const CARD_SHADOW =
+  "var(--colors-shadowLight) 0px 10px 38px -10px, var(--colors-shadowDark) 0px 10px 20px -15px";
 
 /* The expanded state hangs satellite UI off the card: prev/next plus a title
    that can wrap to two lines above (~150px), link and description below
@@ -44,7 +40,7 @@ const IconButton: FC<IconButtonProps> = ({ onClick, label, size, ref, children }
       e.stopPropagation();
       onClick();
     }}
-    className={`${ICON_BTN} ${size === "sm" ? "size-8" : "size-9"}`}
+    className={`dock-item flex items-center justify-center rounded-[25%] ${size === "sm" ? "size-8" : "size-9"}`}
     aria-label={label}
   >
     {children}
@@ -124,10 +120,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
-      className="inline-flex items-center gap-1 text-[11px] tracking-[0.24em] text-white/60 uppercase transition-colors hover:text-white"
+      data-text="Visit"
+      className="link text-sm"
     >
-      Visit site
-      <ArrowUpRight className="size-3" />
+      Visit
     </a>
   );
   const closeBtn = (
@@ -175,19 +171,16 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
               <ChevronRight className="size-4" />
             </IconButton>
           </div>
-          <div className="mt-3 text-[10px] tracking-[0.24em] text-white/60 uppercase">
+          <div className="text-foreground-faded mt-3 text-xs tracking-[0.2em] uppercase">
             {photo.category}
           </div>
-          <div
-            className="mt-1 text-white"
-            style={{
-              fontFamily: DISPLAY_FONT,
-              fontSize: isMobile ? 24 : 30,
-              lineHeight: 1.1,
-            }}
+          <h2
+            className={`text-foreground-highlighted mt-1 leading-tight font-normal ${
+              isMobile ? "text-2xl" : "text-3xl"
+            }`}
           >
             {photo.title}
-          </div>
+          </h2>
         </div>
       )}
 
@@ -195,49 +188,53 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
           floating button now that the photo-app toggles are gone. */}
       {expanded && !isMobile && <div className="absolute -top-3 -right-3 z-10">{closeBtn}</div>}
 
+      {/* Same frame treatment as the site's Card component, minus its
+          pointer-events reset (the collapsed card is itself a button). */}
       <div
-        className="relative h-full w-full overflow-hidden rounded-[6px] bg-black"
-        style={{ boxShadow: "0 30px 70px -15px rgb(0 0 0 / 0.7)" }}
+        className="relative h-full w-full overflow-hidden rounded-xl border border-[var(--dock-border-color)] bg-gradient-to-t from-[var(--dock-border-color)] to-[var(--dock-bg)] p-1 backdrop-blur-[10px]"
+        style={{ boxShadow: CARD_SHADOW }}
       >
-        {photo.videoUrl ? (
-          /* Plays collapsed too — the spotlight is the one place a single
+        <div className="relative h-full w-full overflow-hidden rounded-lg">
+          {photo.videoUrl ? (
+            /* Plays collapsed too — the spotlight is the one place a single
              full-fidelity video is cheap. The poster covers the load gap as
              the void drifts and the featured asset changes. */
-          <video
-            src={photo.videoUrl}
-            poster={photo.thumbUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
-          <img
-            src={photo.thumbUrl}
-            alt={photo.title}
-            draggable={false}
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-        )}
-        {!expanded && (
-          <div
-            className="absolute inset-x-0 bottom-0 p-3"
-            style={{
-              background:
-                "linear-gradient(to top, rgb(0 0 0 / 0.85) 0%, rgb(0 0 0 / 0.4) 50%, transparent 100%)",
-            }}
-          >
-            <div className="text-[10px] tracking-[0.22em] text-white/75 uppercase">
-              {photo.category}
+            <video
+              src={photo.videoUrl}
+              poster={photo.thumbUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
+            <img
+              src={photo.thumbUrl}
+              alt={photo.title}
+              draggable={false}
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          )}
+          {/* Caption sits over arbitrary media, so it keeps its own dark
+              scrim and white text in both themes rather than page tokens. */}
+          {!expanded && (
+            <div
+              className="absolute inset-x-0 bottom-0 p-3"
+              style={{
+                background:
+                  "linear-gradient(to top, rgb(0 0 0 / 0.85) 0%, rgb(0 0 0 / 0.4) 50%, transparent 100%)",
+              }}
+            >
+              <div className="text-[10px] tracking-[0.22em] text-white/75 uppercase">
+                {photo.category}
+              </div>
+              <div className="truncate text-base text-white">{photo.title}</div>
             </div>
-            <div className="truncate text-white" style={{ fontFamily: DISPLAY_FONT, fontSize: 16 }}>
-              {photo.title}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {expanded && (
@@ -255,10 +252,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
           )}
 
           {!isMobile && (
-            <p
-              className="mx-auto mt-3 text-[13px] text-white/70"
-              style={{ maxWidth: 440, lineHeight: 1.6 }}
-            >
+            <p className="text-foreground-faded mx-auto mt-3 text-sm" style={{ maxWidth: 440 }}>
               {photo.description}
             </p>
           )}

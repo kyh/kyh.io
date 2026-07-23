@@ -250,7 +250,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
          subsequent (default-lane) render skips it. An updater that mints a
          fresh object would then see `prev === null` every replay, hand back a
          new `Dims` identity on every render, invalidate `built`, restart both
-         the rAF loop and the GSAP intro, and never settle — a black frame plus
+         the rAF loop and the intro, and never settle — a blank frame plus
          "Maximum update depth exceeded". Comparing against a ref and passing a
          concrete value makes the update replay-safe: however often React
          re-applies it, `dims` keeps one identity. */
@@ -681,7 +681,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
 
     return () => {
       for (const animation of animations) animation.stop();
-      /* Snap to the settled state — leaving `entrance` at 0 renders a black
+      /* Snap to the settled state — leaving `entrance` at 0 renders an empty
          frame, since it drives every cell's opacity. */
       introVals.entrance = 1;
       introVals.voidEmerge = 1;
@@ -693,7 +693,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
     <section
       ref={sectionRef}
       aria-label="Interactive photo wall"
-      className="relative isolate h-full w-full touch-none overflow-hidden bg-[#0a0a0a] text-white select-none"
+      className="text-foreground relative isolate h-full w-full touch-none overflow-hidden select-none"
     >
       <div aria-hidden className="absolute inset-0">
         {built && dims && (
@@ -731,14 +731,14 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
           />
         ))}
 
-      {/* Symmetric vignette — replaces the source's corner gradient, which
-          existed only to darken the ground behind the headline. */}
+      {/* Symmetric vignette, fading the wall's edges into the page background
+          so it works over the body gradient in both themes. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-[14]"
         style={{
           background:
-            "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 40%, rgb(10 10 10 / 0.5) 100%)",
+            "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 40%, color-mix(in srgb, var(--bg-color) 60%, transparent) 100%)",
         }}
       />
 
@@ -748,7 +748,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
         onClick={close}
         className="absolute inset-0 z-20 transition-opacity duration-300"
         style={{
-          background: "rgb(10 10 10 / 0.55)",
+          background: "color-mix(in srgb, var(--bg-highlighted) 70%, transparent)",
           opacity: expanded ? 1 : 0,
           pointerEvents: expanded ? "auto" : "none",
         }}
