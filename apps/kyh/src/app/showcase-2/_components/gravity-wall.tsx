@@ -39,14 +39,32 @@ const backOut14 = (t: number) => {
   return 1 + u * u * ((c + 1) * u + c);
 };
 
+/* object-cover for drawImage: crop the source so it fills the cell. */
+function drawCover(ctx: CanvasRenderingContext2D, video: HTMLVideoElement, dw: number, dh: number) {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) return;
+  const scale = Math.max(dw / vw, dh / vh);
+  const sw = dw / scale;
+  const sh = dh / scale;
+  ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, dw, dh);
+}
+
 /* ── The wall — memoised so featured/expanded changes never re-render it ─ */
 interface WallProps {
   cells: Cell[];
   photos: readonly [WorkMedia, ...WorkMedia[]];
   itemsRef: RefObject<(HTMLDivElement | null)[]>;
+  canvasesRef: RefObject<(HTMLCanvasElement | null)[]>;
+  /** Video cells render as canvases the rAF loop paints from the shared
+   *  players. Off on mobile, where the wall falls back to poster stills. */
+  liveVideo: boolean;
 }
 
-const Wall = memo(function Wall({ cells, photos, itemsRef }: WallProps) {
+const Wall = memo(function Wall({ cells, photos, itemsRef, canvasesRef, liveVideo }: WallProps) {
+  /* Wall only mounts after the client-side measure, so `window` is safe.
+     Capped: cells are ~100px tall, a 2x backing store is already crisp. */
+  const dpr = typeof window === "undefined" ? 1 : Math.min(2, window.devicePixelRatio || 1);
   return (
     <>
       {cells.map((cell, i) => {
@@ -61,14 +79,32 @@ const Wall = memo(function Wall({ cells, photos, itemsRef }: WallProps) {
             className={CELL_CLASS}
             style={{ width: cell.width, height: cell.height, opacity: 0 }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- hundreds of live cells; next/image per cell would overwhelm the optimizer */}
-            <img
-              src={photo.thumbUrl}
-              alt=""
-              draggable={false}
-              decoding="async"
-              className="h-full w-full object-cover select-none"
-            />
+            {liveVideo && photo.videoUrl ? (
+              /* The poster sits behind as a background so the cell reads
+                 correctly until the shared player has frames to paint. */
+              <canvas
+                ref={(el) => {
+                  canvasesRef.current[i] = el;
+                }}
+                width={Math.round(cell.width * dpr)}
+                height={Math.round(cell.height * dpr)}
+                className="h-full w-full"
+                style={{
+                  backgroundImage: `url(${photo.thumbUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- hundreds of live cells; next/image per cell would overwhelm the optimizer
+              <img
+                src={photo.thumbUrl}
+                alt=""
+                draggable={false}
+                decoding="async"
+                className="h-full w-full object-cover select-none"
+              />
+            )}
           </div>
         );
       })}
@@ -115,6 +151,11 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const itemEls = useRef<(HTMLDivElement | null)[]>([]);
+  const cellCanvases = useRef<(HTMLCanvasElement | null)[]>([]);
+  /* One muted looping player per unique video asset. The rAF loop paints
+     their current frame onto every visible cell canvas showing that asset —
+     per-cell <video> elements would need hundreds of concurrent decoders. */
+  const videoPlayers = useRef(new Map<string, HTMLVideoElement>());
   /* Frame origin in client coordinates, so pointer maths stays correct even if
      the section is not flush with the document origin. Anything that can move
      the section relative to the viewport — resize, scroll, pointer entry — has
@@ -146,6 +187,12 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
   });
 
   const built = useMemo(() => (dims ? buildCells(dims, photos) : null), [dims, photos]);
+
+  const uniqueVideoUrls = useMemo(() => {
+    const urls = new Set<string>();
+    for (const photo of photos) if (photo.videoUrl) urls.add(photo.videoUrl);
+    return [...urls];
+  }, [photos]);
 
   const featuredCell =
     built && built.cells.length > 0
@@ -361,6 +408,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
     const introVals = intro.current;
     const tileW = tile.width;
     const tileH = tile.height;
+    const liveVideo = !isMobile;
 
     /* The absolute radii are tuned for a full desktop viewport; cap them
        against the frame so a short preview never loses the whole wall. */
@@ -552,6 +600,20 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
           `translate3d(${screenX.toFixed(2)}px, ${screenY.toFixed(2)}px, 0) ` +
           `rotate(${cell.rotation.toFixed(2)}deg) scale(${s.toFixed(3)})`;
         el.style.opacity = alpha < 0.999 ? alpha.toFixed(3) : "1";
+
+        /* E. paint the live video frame — only cells that survived the cull,
+           so cost tracks what is on screen, not the whole torus tile. */
+        if (liveVideo && !reduceMotionRef.current) {
+          const media = photos[cell.photoIndex];
+          if (media?.videoUrl) {
+            const player = videoPlayers.current.get(media.videoUrl);
+            const canvas = cellCanvases.current[i];
+            if (player && canvas && player.readyState >= 2) {
+              const ctx = canvas.getContext("2d");
+              if (ctx) drawCover(ctx, player, canvas.width, canvas.height);
+            }
+          }
+        }
       }
 
       /* F. featured index update (only on real change, only when closed) */
@@ -581,7 +643,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [built, dims, setFeatured]);
+  }, [built, dims, photos, setFeatured]);
 
   /* ── Cinematic intro (runs once, snaps to final on teardown) ─────── */
   /* Deliberately keyed on *whether* a wall exists rather than on `built`
@@ -634,8 +696,40 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
       className="relative isolate h-full w-full touch-none overflow-hidden bg-[#0a0a0a] text-white select-none"
     >
       <div aria-hidden className="absolute inset-0">
-        {built && <Wall cells={built.cells} photos={photos} itemsRef={itemEls} />}
+        {built && dims && (
+          <Wall
+            cells={built.cells}
+            photos={photos}
+            itemsRef={itemEls}
+            canvasesRef={cellCanvases}
+            liveVideo={!dims.isMobile}
+          />
+        )}
       </div>
+
+      {/* Shared players for the wall's video cells — desktop only, since
+          phones cap concurrent video decoders far below the deck size. */}
+      {dims &&
+        !dims.isMobile &&
+        uniqueVideoUrls.map((src) => (
+          <video
+            key={src}
+            src={src}
+            crossOrigin="anonymous"
+            muted
+            loop
+            playsInline
+            autoPlay
+            preload="auto"
+            aria-hidden
+            tabIndex={-1}
+            className="pointer-events-none absolute h-px w-px opacity-0"
+            ref={(el) => {
+              if (el) videoPlayers.current.set(src, el);
+              else videoPlayers.current.delete(src);
+            }}
+          />
+        ))}
 
       {/* Symmetric vignette — replaces the source's corner gradient, which
           existed only to darken the ground behind the headline. */}

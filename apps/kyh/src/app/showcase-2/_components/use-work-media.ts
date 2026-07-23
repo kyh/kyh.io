@@ -77,6 +77,11 @@ const loadVideoPoster = (seed: WorkSeed): Promise<WorkMedia | null> =>
     video.src = seed.media.src;
   });
 
+/* A video that neither errors nor produces data would otherwise hold the
+   whole deck hostage — Promise.all gates the wall on every asset. */
+const withTimeout = (loader: Promise<WorkMedia | null>): Promise<WorkMedia | null> =>
+  Promise.race([loader, new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000))]);
+
 /** Resolves seeds into the wall deck: measures every image, captures a poster
  *  frame from every video, drops whatever fails to load. `null` until ready. */
 export function useWorkMedia(seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMedia[]] | null {
@@ -87,7 +92,7 @@ export function useWorkMedia(seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMed
     const loadAll = async () => {
       const loaded = await Promise.all(
         seeds.map((seed) =>
-          seed.media.type === "video" ? loadVideoPoster(seed) : loadImage(seed),
+          seed.media.type === "video" ? withTimeout(loadVideoPoster(seed)) : loadImage(seed),
         ),
       );
       if (cancelled) return;

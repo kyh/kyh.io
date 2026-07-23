@@ -199,7 +199,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
         className="relative h-full w-full overflow-hidden rounded-[6px] bg-black"
         style={{ boxShadow: "0 30px 70px -15px rgb(0 0 0 / 0.7)" }}
       >
-        {expanded && photo.videoUrl ? (
+        {photo.videoUrl ? (
+          /* Plays collapsed too — the spotlight is the one place a single
+             full-fidelity video is cheap. The poster covers the load gap as
+             the void drifts and the featured asset changes. */
           <video
             src={photo.videoUrl}
             poster={photo.thumbUrl}
