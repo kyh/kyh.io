@@ -110,11 +110,27 @@ Single commit covering all bumps + changelogs:
 release: kyh@<v>, @kyh/skills@<v>, @kyh/tsconfig@<v>, @kyh/eslint-config@<v>   (only the units shipped)
 ```
 
-Stage only the changed `package.json` + `CHANGELOG.md` files. Then one annotated tag per **published package** (configs = two tags, same version), pointing at that commit:
+**`cd` back to the repo root first.** Step 5 publishes from inside package directories and the shell's cwd persists across calls — staging with repo-relative paths from `packages/skills` silently matches nothing.
+
+Stage only the changed `package.json` + `CHANGELOG.md` files, then tag once per **published package** (configs = two tags, same version). **Chain every step with `&&`** so a failed commit cannot be followed by a tag:
 
 ```
+cd <repo-root> &&
+git add <path>/package.json <path>/CHANGELOG.md &&
+git commit -m 'release: ...' &&
 git tag -a '<pkg-name>@<version>' -m '<pkg-name>@<version>'
 ```
+
+A bare newline-separated sequence is **not** acceptable here: `git commit` exits non-zero when nothing is staged, but the next line still runs and tags whatever `HEAD` happens to be — producing a release tag on an unrelated commit.
+
+Then confirm the tag landed where you think before pushing:
+
+```
+git rev-list -n1 '<pkg-name>@<version>'   # must equal the release commit
+git status --porcelain                    # must be empty
+```
+
+If the tag is on the wrong commit and has **not** been pushed, `git tag -d` it, fix the commit, and re-tag. Once pushed, don't rewrite — cut the next patch instead.
 
 git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). **cli gets a single `kyh@<version>` tag** — the `@kyh/cli-*` platform packages are build artifacts of the same release, never tagged individually. Then:
 
@@ -140,7 +156,7 @@ If anything failed, lead with the failure and the exact state (published? commit
 ## Rules
 
 - `@kyh/eslint-config` and `@kyh/tsconfig` are a fixed pair — always the same version, always released together. Never bump or publish one without the other.
-- Tags are created **after** successful publish + verify, never before.
+- Tags are created **after** successful publish + verify, never before, and only in an `&&` chain behind a successful commit — never as a standalone follow-up line.
 - If `npm publish` fails with `EPUBLISHCONFLICT` (version already on registry), bump again rather than overwrite.
 - Never `--force` push or amend prior release commits. On a partial publish (some packages shipped), commit + tag + push what shipped, then handle the rest separately.
 - Skipping unchanged units is the default. Pass `--force` to override.
