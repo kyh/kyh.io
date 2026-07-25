@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5 — 2026-07-24
+
+- CLAUDE.md: idiomatic-first rule — follow language/framework conventions, look up current practice instead of writing from stale memory
+- CLAUDE.md: drop model routing table (cost/intelligence/taste rankings, gpt-5.5 wrapper pattern)
+- sync init agent-workflow patterns
+- update packages
+
 ## 0.1.4 — 2026-07-18
 
 - sync-conventions: add db tooling (drizzle push scripts + .env.production.local), secret hygiene, oxlint type-safety rules, and shared-UI/config checks; encode fixing caveats (no live push:remote, no cross-repo token copy)
