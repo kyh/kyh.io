@@ -12,10 +12,10 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260724.1",
+    "@cloudflare/workers-types": "^5.20260817.1",
     "@kyh/tsconfig": "workspace:^",
-    "partyserver": "^0.5.8",
+    "partyserver": "^0.5.10",
     "typescript": "catalog:",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.123.0"
   }
 }
