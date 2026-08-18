@@ -47,7 +47,7 @@ type CounterProps = {
   height?: string | number;
 };
 
-const transition = { ease: "easeOut" } as Transition;
+const transition = { ease: "easeOut" } satisfies Transition;
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
   const ref = useRef<HTMLSpanElement>(null);
@@ -55,7 +55,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
 
   const baseStyles = {
     height,
-    lineHeight: typeof height === "string" ? height : `${height}px`,
+    lineHeight: Number.isFinite(height) ? `${height}px` : height,
   };
 
   const textArray = String(text).split("");

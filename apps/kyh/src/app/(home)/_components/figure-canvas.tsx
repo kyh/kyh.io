@@ -23,14 +23,14 @@ const getRenderProps = (isLight: boolean) => ({
   lineWidth: 2,
 });
 
-const INITIAL_SHAPE_COUNT = 20;
+const INITIAL_FIGURE_COUNT = 20;
 const CLICK_SPAWN_COUNT = 6;
 
-const createStaticShape = (isLight: boolean, x: number, y: number) => {
+const createStaticFigure = (isLight: boolean, x: number, y: number) => {
   const render = getRenderProps(isLight);
-  const shapeType = Math.floor(Common.random(0, 4));
+  const figureType = Math.floor(Common.random(0, 4));
 
-  switch (shapeType) {
+  switch (figureType) {
     case 0:
       return Bodies.circle(x, y, Common.random(15, 25), { render });
     case 1:
@@ -42,7 +42,7 @@ const createStaticShape = (isLight: boolean, x: number, y: number) => {
   }
 };
 
-const createClickShape = (isLight: boolean, clickX: number, clickY: number) => {
+const createClickFigure = (isLight: boolean, clickX: number, clickY: number) => {
   const render = getRenderProps(isLight);
 
   // Random angle for radial scatter (bias upward)
@@ -51,11 +51,11 @@ const createClickShape = (isLight: boolean, clickX: number, clickY: number) => {
   const vx = Math.cos(angle) * speed;
   const vy = Math.sin(angle) * speed;
 
-  const shapeType = Math.floor(Common.random(0, 4));
+  const figureType = Math.floor(Common.random(0, 4));
   let body: Matter.Body;
 
   // Small initial size for pop animation
-  switch (shapeType) {
+  switch (figureType) {
     case 0:
       body = Bodies.circle(clickX, clickY, 5, { render });
       break;
@@ -80,21 +80,21 @@ const easeOutBack = (x: number): number => {
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 };
 
-type AnimatingShape = {
+type AnimatingFigure = {
   body: Matter.Body;
   startTime: number;
   targetScale: number;
   currentScale: number;
 };
 
-export const ShapesCanvas = () => {
+export const FigureCanvas = () => {
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const renderRef = useRef<Render | null>(null);
   const runnerRef = useRef<Runner | null>(null);
   const bodiesRef = useRef<Matter.Body[]>([]);
-  const animatingRef = useRef<AnimatingShape[]>([]);
+  const animatingRef = useRef<AnimatingFigure[]>([]);
   const isVisibleRef = useRef(true);
 
   // Pause/resume physics based on visibility
@@ -180,7 +180,7 @@ export const ShapesCanvas = () => {
       canvas.removeEventListener("DOMMouseScroll", mouse.mousewheel);
     }
 
-    // Invisible ground and boundary to remove fallen shapes
+    // Invisible ground and boundary to remove fallen figures
     const ground = Bodies.rectangle(width / 2, height + 25, width * 3, 50, {
       isStatic: true,
       render: { visible: false },
@@ -193,7 +193,7 @@ export const ShapesCanvas = () => {
 
     Composite.add(engine.world, [ground, bottomSensor]);
 
-    // Remove shapes that fall off screen
+    // Remove figures that fall off screen
     Events.on(engine, "collisionStart", ({ pairs }) => {
       pairs.forEach(({ bodyA, bodyB }) => {
         if (bodyA === bottomSensor) {
@@ -207,18 +207,18 @@ export const ShapesCanvas = () => {
       });
     });
 
-    // Initial shapes placed mostly in the middle
+    // Initial figures placed mostly in the middle
     const centerX = width / 2;
-    for (let i = 0; i < INITIAL_SHAPE_COUNT; i++) {
+    for (let i = 0; i < INITIAL_FIGURE_COUNT; i++) {
       const x = centerX + Common.random(-120, 120);
       const y = Common.random(height - 150, height - 50);
-      const shape = createStaticShape(isLight, x, y);
-      bodiesRef.current.push(shape);
-      Composite.add(engine.world, shape);
+      const figure = createStaticFigure(isLight, x, y);
+      bodiesRef.current.push(figure);
+      Composite.add(engine.world, figure);
     }
 
-    // Spawn shapes at position
-    const spawnShapesAt = (x: number, y: number) => {
+    // Spawn figures at position
+    const spawnFiguresAt = (x: number, y: number) => {
       if (!engineRef.current) return;
 
       // Check if click is on an existing body
@@ -230,7 +230,7 @@ export const ShapesCanvas = () => {
 
       const count = Math.floor(Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2));
       for (let i = 0; i < count; i++) {
-        const { body, targetScale } = createClickShape(isLight, x, y);
+        const { body, targetScale } = createClickFigure(isLight, x, y);
         bodiesRef.current.push(body);
         animatingRef.current.push({
           body,
@@ -245,7 +245,7 @@ export const ShapesCanvas = () => {
     // Click handler for desktop
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      spawnShapesAt(e.clientX - rect.left, e.clientY - rect.top);
+      spawnFiguresAt(e.clientX - rect.left, e.clientY - rect.top);
     };
 
     // Touch handler for mobile
@@ -256,7 +256,7 @@ export const ShapesCanvas = () => {
       const touch = e.changedTouches[0];
       if (!touch) return;
       const rect = canvas.getBoundingClientRect();
-      spawnShapesAt(touch.clientX - rect.left, touch.clientY - rect.top);
+      spawnFiguresAt(touch.clientX - rect.left, touch.clientY - rect.top);
     };
 
     canvas.addEventListener("click", handleClick);
@@ -277,11 +277,7 @@ export const ShapesCanvas = () => {
 
     // Request permission on iOS 13+
     const requestOrientationPermission = async () => {
-      if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        // @ts-expect-error - requestPermission is iOS specific
-        typeof DeviceOrientationEvent.requestPermission === "function"
-      ) {
+      if ("DeviceOrientationEvent" in window && "requestPermission" in DeviceOrientationEvent) {
         try {
           // @ts-expect-error - requestPermission is iOS specific
           const permission = await DeviceOrientationEvent.requestPermission();
@@ -299,7 +295,7 @@ export const ShapesCanvas = () => {
 
     requestOrientationPermission();
 
-    // Animate scale for newly spawned shapes
+    // Animate scale for newly spawned figures
     Events.on(engine, "afterUpdate", () => {
       animatingRef.current = animatingRef.current.filter(
         ({ body, startTime, targetScale, currentScale }) => {
@@ -326,7 +322,7 @@ export const ShapesCanvas = () => {
     const runner = Runner.create();
     runnerRef.current = runner;
 
-    // Fade shapes as they approach top of canvas
+    // Fade figures as they approach top of canvas
     const FADE_START = 180; // Start fading at this y
     const FADE_END = 50; // Fully transparent at this y
     Events.on(engine, "afterUpdate", () => {

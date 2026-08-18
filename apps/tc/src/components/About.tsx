@@ -1,11 +1,11 @@
-import type { Placement, Step, TooltipRenderProps } from "react-joyride";
+import type { Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
 import { Joyride, ACTIONS, EVENTS, STATUS } from "react-joyride";
 import { Portal } from "react-portal";
 
 const defaultStepProps = {
   disableBeacon: true,
-  placement: "right" as Placement,
+  placement: "right" as const,
   floaterProps: {
     disableAnimation: true,
   },
@@ -124,10 +124,7 @@ export const useAbout = () => {
     type,
     status,
   }) => {
-    if (
-      action === ACTIONS.CLOSE ||
-      ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
-    ) {
+    if (action === ACTIONS.CLOSE || status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRun(false);
       setStepIndex(0);
       window.scrollTo({
@@ -135,7 +132,7 @@ export const useAbout = () => {
         left: 0,
         behavior: "smooth",
       });
-    } else if (([EVENTS.STEP_AFTER, EVENTS.TARGET_NOT_FOUND] as string[]).includes(type)) {
+    } else if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
       const stepIndex = index + (action === ACTIONS.PREV ? -1 : 1);
       setStepIndex(stepIndex);
     }

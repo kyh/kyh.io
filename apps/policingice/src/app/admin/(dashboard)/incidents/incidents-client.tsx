@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { toast } from "@/components/toast";
 import { VideoCarousel } from "@/components/video-carousel";
+import { formString } from "@/lib/form-utils";
 import { formatDate } from "@/lib/format";
 import {
   addVideo,
@@ -38,9 +39,9 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
     const formData = new FormData(e.currentTarget);
     await updateIncident({
       id: incident.id,
-      location: (formData.get("location") as string).trim() || undefined,
-      description: (formData.get("description") as string).trim() || undefined,
-      incidentDate: (formData.get("incidentDate") as string) || undefined,
+      location: formString(formData, "location").trim() || undefined,
+      description: formString(formData, "description").trim() || undefined,
+      incidentDate: formString(formData, "incidentDate") || undefined,
     });
     router.refresh();
     toast.success("Saved");

@@ -9,7 +9,7 @@ export function computeRange(
   currentValue: number,
   referenceValue?: number,
   exaggerate?: boolean,
-): { min: number; max: number } {
+) {
   let targetMin = Infinity;
   let targetMax = -Infinity;
 

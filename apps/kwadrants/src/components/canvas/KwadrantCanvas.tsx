@@ -88,7 +88,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
     }, [state.layoutLabels, state.layoutType, layout]);
 
     // Derive editor positions from layout label definitions
-    const getEditorPosition = (key: string): { x: number; y: number } => {
+    const getEditorPosition = (key: string) => {
       const labelDef = layout.labels.find((l) => l.key === key);
       if (!labelDef) return { x: 0, y: 0 };
       const pos = labelDef.position(bounds);

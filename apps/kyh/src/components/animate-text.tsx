@@ -83,22 +83,22 @@ export const ScrambleText = ({
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
       <span data-scramble className={trigger !== "hover" ? "scramble" : ""} aria-hidden>
-        {text.split("").map((char, index) => (
-          <span
-            key={index}
-            data-char={char}
-            style={
-              {
-                "--index": index,
-                "--char-1": `"${chars[index]?.char1}"`,
-                "--char-2": `"${chars[index]?.char2}"`,
-                "--char-3": `"${chars[index]?.char3}"`,
-              } as React.CSSProperties
-            }
-          >
-            {char}
-          </span>
-        ))}
+        {text.split("").map((char, index) => {
+          // SAFETY: CSS custom properties are valid inline styles, but
+          // React.CSSProperties has no index signature for `--*` keys; the
+          // object holds nothing else.
+          const charStyle = {
+            "--index": index,
+            "--char-1": `"${chars[index]?.char1}"`,
+            "--char-2": `"${chars[index]?.char2}"`,
+            "--char-3": `"${chars[index]?.char3}"`,
+          } as React.CSSProperties;
+          return (
+            <span key={index} data-char={char} style={charStyle}>
+              {char}
+            </span>
+          );
+        })}
       </span>
       <span className="sr-only">{text}</span>
     </Element>

@@ -32,18 +32,16 @@ const targets: Target[] = [
 const rootDir = join(import.meta.dirname, "..");
 const outDir = join(rootDir, "dist", "npm");
 
-const manifest: unknown = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
-if (
-  typeof manifest !== "object" ||
-  manifest === null ||
-  !("version" in manifest) ||
-  typeof manifest.version !== "string" ||
-  !("description" in manifest) ||
-  typeof manifest.description !== "string"
-) {
-  throw new Error("apps/cli/package.json is missing a string version/description");
-}
+type CliManifest = { version: string; description: string };
+
+// SAFETY: apps/cli/package.json is workspace-owned; npm itself rejects a non-string
+// `version`, and `description` is maintained alongside it. The emptiness check below
+// still fails the build loudly if either field goes missing.
+const manifest = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8")) as CliManifest;
 const { version, description } = manifest;
+if (!version || !description) {
+  throw new Error("apps/cli/package.json is missing a version/description");
+}
 
 rmSync(outDir, { recursive: true, force: true });
 

@@ -12,7 +12,7 @@ type VideoEmbedProps = {
   platform: VideoPlatform;
 };
 
-const platformNames: Record<VideoPlatform, string> = {
+const platformNames = {
   twitter: "x",
   youtube: "youtube",
   tiktok: "tiktok",
@@ -21,7 +21,7 @@ const platformNames: Record<VideoPlatform, string> = {
   linkedin: "linkedin",
   pinterest: "pinterest",
   reddit: "reddit",
-};
+} satisfies Record<VideoPlatform, string>;
 
 const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform }) => {
   return (

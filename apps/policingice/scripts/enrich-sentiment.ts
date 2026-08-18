@@ -31,16 +31,20 @@ const { values: args } = parseArgs({
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROGRESS_FILE = path.join(__dirname, ".enriched-sentiment.json");
 
-type ProgressData = {
-  processedIds: number[];
-  results: Record<number, { justified: number; unjustified: number; reasoning: string }>;
-  lastRun: string;
-};
+const progressSchema = z.object({
+  processedIds: z.array(z.number()),
+  results: z.record(
+    z.string(),
+    z.object({ justified: z.number(), unjustified: z.number(), reasoning: z.string() }),
+  ),
+  lastRun: z.string(),
+});
+type ProgressData = z.infer<typeof progressSchema>;
 
 function loadProgress(): ProgressData {
   try {
     if (fs.existsSync(PROGRESS_FILE)) {
-      return JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")) as ProgressData;
+      return progressSchema.parse(JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")));
     }
   } catch {
     console.warn("Could not load progress, starting fresh");

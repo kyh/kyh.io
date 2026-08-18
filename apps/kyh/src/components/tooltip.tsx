@@ -148,6 +148,9 @@ const TooltipTrigger = React.forwardRef<
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   if (asChild && React.isValidElement(children)) {
+    // SAFETY: asChild hands rendering to the child element, whose props are a
+    // DOM prop bag by contract; getReferenceProps only merges and augments
+    // them, so the merged object is valid HTMLProps for that element.
     return React.cloneElement(
       children,
       context.getReferenceProps({
@@ -162,7 +165,7 @@ const TooltipTrigger = React.forwardRef<
 
   return (
     <button
-      ref={ref as React.Ref<HTMLButtonElement>}
+      ref={ref}
       data-state={context.open ? "open" : "closed"}
       data-side={context.placement.split("-")[0]}
       {...context.getReferenceProps(props)}
@@ -185,6 +188,8 @@ const TooltipContent = React.forwardRef<
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
   const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
+  // SAFETY: `children` entered this component as ReactNode via props;
+  // getFloatingProps forwards it untouched inside its untyped prop bag.
   const children = floatingPropsChildren as React.ReactNode;
   const blockType = type === "block";
 
@@ -319,14 +324,15 @@ const blocks = Array.from({ length: cols * rows }, (_, i) => i);
 const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
+// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
+// has no index signature for `--*` keys; the object holds nothing else.
+const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
+
 const TooltipBlocks = ({ context }: { context: ContextType }) => {
   if (!context?.x || !context.y) return null;
 
   return (
-    <div
-      className="tooltip-blocks-container"
-      style={{ "--cols": cols, "--rows": rows } as React.CSSProperties}
-    >
+    <div className="tooltip-blocks-container" style={tooltipBlocksStyle}>
       {blocks.map((i) => (
         <motion.div
           key={i}

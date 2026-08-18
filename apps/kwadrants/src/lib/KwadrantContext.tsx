@@ -5,6 +5,7 @@ import type {
   CanvasImage,
   GridType,
   KwadrantState,
+  LabelValues,
   LayoutLabels,
   LayoutType,
   QuadrantColors,
@@ -32,29 +33,48 @@ interface KwadrantContextValue {
 
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
 
+type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+type JsonObject = { [key: string]: JsonValue };
+
+const asJsonObject = (value: JsonValue | undefined): JsonObject | null =>
+  value instanceof Object && !Array.isArray(value) ? value : null;
+
+const isString = (value: JsonValue | undefined): value is string => String(value) === value;
+
+const stringEntries = (value: JsonValue | undefined): LabelValues => {
+  const object = asJsonObject(value);
+  if (!object) return {};
+  const entries: LabelValues = {};
+  for (const [key, entry] of Object.entries(object)) {
+    if (isString(entry)) entries[key] = entry;
+  }
+  return entries;
+};
+
 // Migrate old localStorage format (axisLabels/edgeLabels) to new (layoutLabels)
-const migrateState = (stored: Record<string, unknown>): Partial<KwadrantState> => {
+const migrateState = (stored: JsonObject): Partial<KwadrantState> => {
   if (stored.layoutLabels) {
+    // SAFETY: `layoutLabels` marks the current schema, which is only ever
+    // written by this provider as JSON.stringify(state); getInitialState still
+    // falls back per field.
     return stored as Partial<KwadrantState>;
   }
 
   // Old format detected - migrate
   const layoutLabels: LayoutLabels = { ...DEFAULT_LAYOUT_LABELS };
 
-  if (stored.axisLabels && typeof stored.axisLabels === "object") {
-    layoutLabels.axis = {
-      ...DEFAULT_LAYOUT_LABELS.axis,
-      ...(stored.axisLabels as Record<string, string>),
-    };
+  const axisLabels = stringEntries(stored.axisLabels);
+  if (Object.keys(axisLabels).length > 0) {
+    layoutLabels.axis = { ...DEFAULT_LAYOUT_LABELS.axis, ...axisLabels };
   }
-  if (stored.edgeLabels && typeof stored.edgeLabels === "object") {
-    layoutLabels.edge = {
-      ...DEFAULT_LAYOUT_LABELS.edge,
-      ...(stored.edgeLabels as Record<string, string>),
-    };
+  const edgeLabels = stringEntries(stored.edgeLabels);
+  if (Object.keys(edgeLabels).length > 0) {
+    layoutLabels.edge = { ...DEFAULT_LAYOUT_LABELS.edge, ...edgeLabels };
   }
 
-  const { axisLabels, edgeLabels, ...rest } = stored;
+  const { axisLabels: _oldAxis, edgeLabels: _oldEdge, ...rest } = stored;
+  // SAFETY: `rest` is the old persisted KwadrantState minus its replaced label
+  // fields, written by this provider; getInitialState still falls back per field.
   return { ...rest, layoutLabels } as Partial<KwadrantState>;
 };
 
@@ -76,10 +96,13 @@ const getInitialState = (): KwadrantState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const parsed = migrateState(JSON.parse(stored));
+      // SAFETY: JSON.parse output is a JSON value by construction.
+      const storedJson = asJsonObject(JSON.parse(stored) as JsonValue);
+      if (!storedJson) return defaultState;
+      const parsed = migrateState(storedJson);
       return {
-        tags: (parsed.tags as Tag[]) || [],
-        images: (parsed.images as CanvasImage[]) || [],
+        tags: parsed.tags || [],
+        images: parsed.images || [],
         layoutLabels: parsed.layoutLabels || DEFAULT_LAYOUT_LABELS,
         quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
         gridType: parsed.gridType || "none",

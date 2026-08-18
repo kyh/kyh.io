@@ -37,9 +37,9 @@ const PROCESSED_FILE = path.join(__dirname, ".enriched-incidents.json");
 function loadProcessedIds(): Set<number> {
   try {
     if (fs.existsSync(PROCESSED_FILE)) {
-      const data = JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8")) as {
-        processedIds?: number[];
-      };
+      const data = z
+        .object({ processedIds: z.array(z.number()).optional() })
+        .parse(JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8")));
       return new Set(data.processedIds ?? []);
     }
   } catch {

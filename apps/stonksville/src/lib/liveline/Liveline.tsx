@@ -121,7 +121,7 @@ export function Liveline({
   // Resolve momentum prop: boolean enables auto-detect, string overrides
   const showMomentum = momentum !== false;
   const momentumOverride: Momentum | undefined =
-    typeof momentum === "string" ? momentum : undefined;
+    momentum === true || momentum === false ? undefined : momentum;
 
   const defaultRight = badge ? 80 : grid ? 54 : 12;
   const pad = {
@@ -132,12 +132,8 @@ export function Liveline({
   };
 
   // Degen mode: explicit prop wins
-  const degenEnabled = degenProp != null ? degenProp !== false : false;
-  const degenOptions: DegenOptions | undefined = degenEnabled
-    ? typeof degenProp === "object"
-      ? degenProp
-      : {}
-    : undefined;
+  const degenOptions: DegenOptions | undefined =
+    degenProp == null || degenProp === false ? undefined : degenProp === true ? {} : degenProp;
 
   // Window buttons state
   const [activeWindowSecs, setActiveWindowSecs] = useState(

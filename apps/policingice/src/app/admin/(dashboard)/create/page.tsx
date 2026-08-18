@@ -6,6 +6,7 @@ import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
 import { toast } from "@/components/toast";
+import { formString } from "@/lib/form-utils";
 import { isValidVideoUrl } from "@/lib/video-utils";
 import { bulkCreateIncidents } from "@/lib/admin-action";
 
@@ -36,9 +37,9 @@ const AdminCreate = () => {
           if (validUrls.length === 0) return;
 
           const formData = new FormData(e.currentTarget);
-          const location = (formData.get("location") as string).trim();
-          const description = (formData.get("description") as string).trim();
-          const incidentDate = formData.get("incidentDate") as string;
+          const location = formString(formData, "location").trim();
+          const description = formString(formData, "description").trim();
+          const incidentDate = formString(formData, "incidentDate");
 
           setIsSubmitting(true);
 

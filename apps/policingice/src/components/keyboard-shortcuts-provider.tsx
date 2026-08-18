@@ -106,7 +106,7 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement).isContentEditable
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
       ) {
         return;
       }

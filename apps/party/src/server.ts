@@ -3,12 +3,17 @@ import { routePartykitRequest, Server } from "partyserver";
 
 import { getColorById } from "./color";
 
+// Everything here crosses a JSON.stringify/JSON.parse wire, so JSON values are
+// the precise contract for client-supplied state.
+export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+export type JsonObject = { [key: string]: JsonValue };
+
 // Schema
 export type Player = {
   id: string;
   color: string;
   hue: string;
-  state: Record<string, unknown>;
+  state: JsonObject;
 };
 
 export type PlayerMap = Record<string, Player>;
@@ -24,19 +29,19 @@ type Presence = { id: string; color: string; hue: string; seenAt: number };
 
 // Messages from client
 export type ClientMessage =
-  | { type: "state_patch"; data: Record<string, unknown> }
-  | { type: "player_state_patch"; data: Record<string, unknown> }
-  | { type: "emit"; data: { event: string; payload: unknown } }
+  | { type: "state_patch"; data: JsonObject }
+  | { type: "player_state_patch"; data: JsonObject }
+  | { type: "emit"; data: { event: string; payload: JsonValue | undefined } }
   | { type: "pong" };
 
 // Messages from server
 export type ServerMessage =
-  | { type: "sync"; data: { players: PlayerMap; state: Record<string, unknown>; hostId: string } }
+  | { type: "sync"; data: { players: PlayerMap; state: JsonObject; hostId: string } }
   | { type: "player_joined"; data: Player }
   | { type: "player_left"; data: { id: string } }
-  | { type: "state_patch"; data: Record<string, unknown> }
-  | { type: "player_state"; data: { id: string; state: Record<string, unknown> } }
-  | { type: "event"; data: { event: string; payload: unknown; from: string } }
+  | { type: "state_patch"; data: JsonObject }
+  | { type: "player_state"; data: { id: string; state: JsonObject } }
+  | { type: "event"; data: { event: string; payload: JsonValue | undefined; from: string } }
   | { type: "host"; data: { id: string } }
   | { type: "ping" };
 
@@ -55,8 +60,41 @@ type Env = {
 const PING_INTERVAL_MS = 30_000;
 const IDLE_TIMEOUT_MS = 75_000; // tolerates two dropped pings before reaping
 
+const asJsonObject = (value: JsonValue | undefined): JsonObject | null =>
+  value instanceof Object && !Array.isArray(value) ? value : null;
+
+const isString = (value: JsonValue | undefined): value is string => String(value) === value;
+
+/**
+ * Decodes one raw websocket frame into a ClientMessage, or null for anything a
+ * well-behaved client would never send. The wire is public, so nothing beyond
+ * JSON well-formedness is assumed.
+ */
+function parseClientMessage(raw: string): ClientMessage | null {
+  // SAFETY: JSON.parse output is a JSON value by construction; the assertion
+  // names what the parser guarantees before the shape checks below.
+  const message = asJsonObject(JSON.parse(raw) as JsonValue);
+  if (message === null) return null;
+  switch (message.type) {
+    case "pong":
+      return { type: "pong" };
+    case "state_patch":
+    case "player_state_patch": {
+      const data = asJsonObject(message.data);
+      return data === null ? null : { type: message.type, data };
+    }
+    case "emit": {
+      const data = asJsonObject(message.data);
+      if (data === null || !isString(data.event)) return null;
+      return { type: "emit", data: { event: data.event, payload: data.payload } };
+    }
+    default:
+      return null;
+  }
+}
+
 export class KyhServer extends Server {
-  private shared: Record<string, unknown> = {};
+  private shared: JsonObject = {};
   private hostId: string | null = null;
 
   /**
@@ -67,7 +105,7 @@ export class KyhServer extends Server {
    * stale cursors after a hibernation. Who is *present* lives in the durable
    * attachment (Presence); where their cursor is does not.
    */
-  private snapshots = new Map<string, Record<string, unknown>>();
+  private snapshots = new Map<string, JsonObject>();
 
   private toPlayer(presence: Presence): Player {
     return {
@@ -83,7 +121,7 @@ export class KyhServer extends Server {
    * a connection that dies mid-flight can never leave a ghost behind. Identity
    * comes from the durable attachment; cursor state from the in-memory snapshot.
    */
-  private getPlayers(excludeId?: string): PlayerMap {
+  private getPlayers(excludeId?: string) {
     const players: PlayerMap = {};
     for (const connection of this.getConnections<Presence>()) {
       if (connection.id === excludeId) continue;
@@ -149,7 +187,8 @@ export class KyhServer extends Server {
       const presence = sender.state;
       if (!presence) return;
 
-      const message = JSON.parse(rawMessage) as ClientMessage;
+      const message = parseClientMessage(rawMessage);
+      if (message === null) return;
 
       switch (message.type) {
         case "player_state_patch": {

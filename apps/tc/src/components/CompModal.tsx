@@ -259,7 +259,7 @@ export const CompModal = ({
                     return value;
                   }}
                   options={searchResults}
-                  onChange={(selected) => loadCompaniesData((selected ?? []) as MultiValue<any>)}
+                  onChange={(selected) => loadCompaniesData(selected ?? [])}
                   isSearchable={companiesData.length < 3}
                   openMenuOnFocus={false}
                   openMenuOnClick={false}

@@ -70,8 +70,8 @@ export function resolveTheme(color: string, mode: ThemeMode): LivelinePalette {
 
     // Background
     bgRgb: isDark
-      ? ([10, 10, 10] as [number, number, number])
-      : ([255, 255, 255] as [number, number, number]),
+      ? ([10, 10, 10] satisfies [number, number, number])
+      : ([255, 255, 255] satisfies [number, number, number]),
 
     // Fonts
     labelFont: '11px "SF Mono", Menlo, Monaco, "Cascadia Code", monospace',

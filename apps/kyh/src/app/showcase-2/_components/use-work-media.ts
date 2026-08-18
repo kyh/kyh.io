@@ -10,16 +10,19 @@ const clampAspect = (aspect: number) => Math.min(2, Math.max(0.6, aspect || 16 /
 /* Poster frames only ever render in ~100px cells and the featured card. */
 const POSTER_MAX_HEIGHT = 360;
 
-const toWorkMedia = (seed: WorkSeed, aspect: number, thumbUrl: string): WorkMedia => ({
-  slug: seed.slug,
-  title: seed.title,
-  category: seed.category,
-  description: seed.description,
-  url: seed.url,
-  aspect: clampAspect(aspect),
-  thumbUrl,
-  ...(seed.media.type === "video" ? { videoUrl: seed.media.src } : {}),
-});
+const toWorkMedia = (seed: WorkSeed, aspect: number, thumbUrl: string): WorkMedia => {
+  const media: WorkMedia = {
+    slug: seed.slug,
+    title: seed.title,
+    category: seed.category,
+    description: seed.description,
+    url: seed.url,
+    aspect: clampAspect(aspect),
+    thumbUrl,
+  };
+  if (seed.media.type === "video") media.videoUrl = seed.media.src;
+  return media;
+};
 
 const loadImage = (seed: WorkSeed): Promise<WorkMedia | null> =>
   new Promise((resolve) => {

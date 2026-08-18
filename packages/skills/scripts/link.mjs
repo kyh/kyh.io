@@ -159,7 +159,8 @@ function skillsBin() {
   try {
     const pkgJson = require.resolve("skills/package.json");
     const { bin } = JSON.parse(fs.readFileSync(pkgJson, "utf8"));
-    const rel = typeof bin === "string" ? bin : bin?.skills;
+    // npm's `bin` contract: a bare string (single bin) or a name→path map.
+    const rel = bin instanceof Object ? bin.skills : bin;
     if (rel) return path.join(path.dirname(pkgJson), rel);
   } catch {
     /* not installed (e.g. --ignore-scripts / odd layout) — use npx */

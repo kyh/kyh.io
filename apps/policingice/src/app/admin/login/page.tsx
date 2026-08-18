@@ -6,6 +6,7 @@ import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import { formString } from "@/lib/form-utils";
 
 const AdminLogin = () => {
   const router = useRouter();
@@ -26,8 +27,8 @@ const AdminLogin = () => {
             setIsLoading(true);
 
             const formData = new FormData(e.currentTarget);
-            const email = formData.get("email") as string;
-            const password = formData.get("password") as string;
+            const email = formString(formData, "email");
+            const password = formString(formData, "password");
 
             try {
               const result = await authClient.signIn.email({ email, password });

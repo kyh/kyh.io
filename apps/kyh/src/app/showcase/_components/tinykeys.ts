@@ -2,9 +2,9 @@
 // to fix navigator not being defined in SSR context
 
 function isFocusedOnElement() {
-  const el = document.activeElement as HTMLElement;
+  const el = document.activeElement;
 
-  if (!el) return false;
+  if (!(el instanceof HTMLElement)) return false;
 
   if (
     el.contentEditable === "true" ||
@@ -159,7 +159,9 @@ export function tinykeys(
   const possibleMatches = new Map<KeyBindingPress[], KeyBindingPress[]>();
   let timer: any = null;
 
-  const onKeyDown = (event: KeyboardEvent) => {
+  const onKeyDown = (event: Event) => {
+    if (!(event instanceof KeyboardEvent)) return;
+
     // Ignore modifier keydown events
     // Note: This works because:
     // - non-modifiers will always return false
@@ -206,8 +208,8 @@ export function tinykeys(
     timer = setTimeout(possibleMatches.clear.bind(possibleMatches), TIMEOUT);
   };
 
-  target.addEventListener("keydown", onKeyDown as any);
+  target.addEventListener("keydown", onKeyDown);
   return () => {
-    target.removeEventListener("keydown", onKeyDown as any);
+    target.removeEventListener("keydown", onKeyDown);
   };
 }

@@ -164,12 +164,18 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   const handleDragStart = () => setIsDragging(true);
 
-  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }) => {
+  const handleDrag = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: { point: { x: number; y: number } },
+  ) => {
     const newPos = getClosestPosition(info.point.x, info.point.y);
     if (newPos !== hoveredPosition) setHoveredPosition(newPos);
   };
 
-  const handleDragEnd = (_: unknown, info: { point: { x: number; y: number } }) => {
+  const handleDragEnd = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: { point: { x: number; y: number } },
+  ) => {
     const newPosition = getClosestPosition(info.point.x, info.point.y);
     const targetPos = getSnapPosition(newPosition);
     animate(x, targetPos.x, { type: "spring", stiffness: 400, damping: 30 });
@@ -197,7 +203,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     const reader = new FileReader();
     reader.onload = (event) => {
       const src = event.target?.result;
-      if (typeof src !== "string") return;
+      if (src == null || src instanceof ArrayBuffer) return;
       const img = new window.Image();
       img.onload = () => {
         const maxSize = 150;

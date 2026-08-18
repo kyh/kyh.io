@@ -63,18 +63,18 @@ export default function Chart({ data, width, height, margin = defaultMargin }: B
   });
 
   const firstItem = data[0];
-  const keys = firstItem
-    ? (Object.keys(firstItem).filter((d) => d !== "year") as CompTypes[])
-    : ([] as CompTypes[]);
+  const isCompType = (key: string): key is CompTypes =>
+    key === "base" || key === "bonus" || key === "stock";
+  const keys = firstItem ? Object.keys(firstItem).filter(isCompType) : [];
 
-  const totals = data.reduce((all, current) => {
+  const totals = data.reduce<number[]>((all, current) => {
     const tc = keys.reduce((d, k) => {
       d += Number(current[k]);
       return d;
     }, 0);
     all.push(tc);
     return all;
-  }, [] as number[]);
+  }, []);
 
   const xScale = scaleBand<string>({
     domain: data.map((d) => d.year),

@@ -4,7 +4,7 @@ import { Link } from "@/components/link";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
 import { Section, SectionHeading, Separator } from "./_components/section";
-import { ShapesCanvas } from "./_components/shapes-canvas";
+import { FigureCanvas } from "./_components/figure-canvas";
 import { SideQuests } from "./_components/side-quests";
 import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
@@ -147,7 +147,7 @@ const Page = () => {
       </div>
 
       <div className="absolute right-0 bottom-0 left-0 z-0">
-        <ShapesCanvas />
+        <FigureCanvas />
       </div>
     </div>
   );

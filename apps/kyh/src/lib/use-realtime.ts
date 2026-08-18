@@ -42,7 +42,7 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
             pendingMessageRef.current = null;
           }
           rafRef.current = null;
-        }, THROTTLE_MS - timeSinceLastSend) as unknown as number;
+        }, THROTTLE_MS - timeSinceLastSend);
       }
     },
     [socket],
@@ -59,6 +59,9 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
 
   useEffect(() => {
     const onMessage = (evt: WebSocketEventMap["message"]) => {
+      // SAFETY: the only sender on this socket is our own party server
+      // (apps/party KyhServer), which emits ServerMessage JSON strings and
+      // nothing else.
       const msg = JSON.parse(evt.data as string) as ServerMessage;
       switch (msg.type) {
         case "ping": {

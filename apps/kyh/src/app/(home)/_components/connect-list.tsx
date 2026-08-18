@@ -2,12 +2,12 @@ import { DribbbleIcon, GitHubIcon, LinkedInIcon, TwitterIcon } from "@/component
 import type { SocialKind } from "@/lib/data";
 import { connectLinks } from "@/lib/data";
 
-const icons: Record<SocialKind, typeof TwitterIcon> = {
+const icons = {
   twitter: TwitterIcon,
   github: GitHubIcon,
   dribbble: DribbbleIcon,
   linkedin: LinkedInIcon,
-};
+} satisfies Record<SocialKind, typeof TwitterIcon>;
 
 export const ConnectList = () => {
   return (

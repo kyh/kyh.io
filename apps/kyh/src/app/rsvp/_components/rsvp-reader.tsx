@@ -145,17 +145,17 @@ export const RSVPReader = () => {
 
   // Keyboard handler
   useEffect(() => {
-    const handlers: Record<string, () => void> = {
-      Space: togglePlayPause,
-      ArrowLeft: goToPrevWord,
-      ArrowRight: goToNextWord,
-    };
+    const handlers = new Map<string, () => void>([
+      ["Space", togglePlayPause],
+      ["ArrowLeft", goToPrevWord],
+      ["ArrowRight", goToNextWord],
+    ]);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-      const handler = handlers[e.code];
+      const handler = handlers.get(e.code);
       if (handler) {
         e.preventDefault();
         handler();

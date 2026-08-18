@@ -2,8 +2,8 @@ import { animate } from "motion";
 
 const COLORS = ["#34d399", "#6ee7b7", "#a7f3d0", "#fbbf24", "#fcd34d", "#ffffff"];
 
-const SHAPES = ["circle", "rect", "rect", "strip", "strip"] as const;
-type Shape = (typeof SHAPES)[number];
+const PIECE_FORMS = ["circle", "rect", "rect", "strip", "strip"] as const;
+type PieceForm = (typeof PIECE_FORMS)[number];
 
 const KEYFRAME_STEPS = 40;
 const SCALE_DURATION_FRACTION = 0.08;
@@ -172,12 +172,11 @@ export function fireConfetti(
       el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;font-size:${pieceSize * 2}px;line-height:1;pointer-events:none;will-change:transform,opacity`;
       el.textContent = emoji;
     } else {
-      const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)]!;
+      const form = PIECE_FORMS[Math.floor(Math.random() * PIECE_FORMS.length)]!;
       const color = colors[Math.floor(Math.random() * colors.length)]!;
-      const w =
-        shape === "strip" ? pieceSize * 0.3 : shape === "rect" ? pieceSize * 0.7 : pieceSize;
-      const h = shape === "strip" ? pieceSize * 2 : pieceSize;
-      const br = shape === "circle" ? "50%" : shape === "strip" ? `${pieceSize * 0.12}px` : "2px";
+      const w = form === "strip" ? pieceSize * 0.3 : form === "rect" ? pieceSize * 0.7 : pieceSize;
+      const h = form === "strip" ? pieceSize * 2 : pieceSize;
+      const br = form === "circle" ? "50%" : form === "strip" ? `${pieceSize * 0.12}px` : "2px";
       el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;width:${w}px;height:${h}px;border-radius:${br};background:${color};pointer-events:none;will-change:transform,opacity`;
     }
 

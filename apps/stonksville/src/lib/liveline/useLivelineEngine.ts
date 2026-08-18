@@ -176,7 +176,7 @@ function updateWindowTransition(
   points: LivelinePoint[],
   smoothValue: number,
   buffer: number,
-): { windowSecs: number; windowTransProgress: number } {
+) {
   if (wt.to !== cfg.windowSecs) {
     wt.from = displayWindow;
     wt.to = cfg.windowSecs;
@@ -240,16 +240,7 @@ function updateRange(
   adaptiveSpeed: number,
   chartH: number,
   dt: number,
-): {
-  minVal: number;
-  maxVal: number;
-  valRange: number;
-  targetMin: number;
-  targetMax: number;
-  displayMin: number;
-  displayMax: number;
-  rangeInited: boolean;
-} {
+) {
   if (!rangeInited) {
     return {
       minVal: computedRange.min,
@@ -307,14 +298,7 @@ function updateHoverState(
   rightEdge: number,
   chartW: number,
   dt: number,
-): {
-  hoverX: number | null;
-  hoverValue: number | null;
-  hoverTime: number | null;
-  scrubAmount: number;
-  isActiveHover: boolean;
-  lastHover: { x: number; value: number; time: number } | null;
-} {
+) {
   let hoverValue: number | null = null;
   let hoverTime: number | null = null;
   let hoverChartX: number | null = null;
@@ -470,7 +454,7 @@ function updateBadgeDOM(
 
 // --- Candle-specific helper functions ---
 
-function computeCandleRange(candles: CandlePoint[]): { min: number; max: number } {
+function computeCandleRange(candles: CandlePoint[]) {
   let min = Infinity;
   let max = -Infinity;
   for (const c of candles) {
@@ -520,14 +504,7 @@ function updateCandleRange(
   wt: { rangeFromMin: number; rangeFromMax: number; rangeToMin: number; rangeToMax: number },
   chartH: number,
   dt: number,
-): {
-  minVal: number;
-  maxVal: number;
-  valRange: number;
-  displayMin: number;
-  displayMax: number;
-  rangeInited: boolean;
-} {
+) {
   if (!rangeInited) {
     return {
       minVal: computedRange.min,
@@ -587,7 +564,7 @@ function updateCandleWindowTransition(
   liveCandle: CandlePoint | undefined,
   candleWidth: number,
   buffer: number,
-): { windowSecs: number; windowTransProgress: number } {
+) {
   if (wt.to !== targetWindowSecs) {
     wt.from = displayWindow;
     wt.to = targetWindowSecs;
@@ -744,11 +721,11 @@ export function useLivelineEngine(
     rangeFromMax: 0,
     rangeToMin: 0,
     rangeToMax: 0,
-    oldCandles: [] as CandlePoint[],
+    oldCandles: new Array<CandlePoint>(),
     oldWidth: config.candleWidth ?? 1,
   });
   const prevCandleDataRef = useRef({
-    candles: [] as CandlePoint[],
+    candles: new Array<CandlePoint>(),
     width: config.candleWidth ?? 1,
   });
   const pausedCandlesRef = useRef<CandlePoint[] | null>(null);
@@ -965,10 +942,10 @@ export function useLivelineEngine(
       }
     }
 
-    const points = isCandle ? ([] as LivelinePoint[]) : (pausedDataRef.current ?? cfg.data);
+    const points = isCandle ? new Array<LivelinePoint>() : (pausedDataRef.current ?? cfg.data);
     const effectiveCandles = isCandle
       ? (pausedCandlesRef.current ?? cfg.candles ?? [])
-      : ([] as CandlePoint[]);
+      : new Array<CandlePoint>();
     const hasMultiData =
       cfg.isMultiSeries && cfg.multiSeries
         ? cfg.multiSeries.some((s) => s.data.length >= 2)

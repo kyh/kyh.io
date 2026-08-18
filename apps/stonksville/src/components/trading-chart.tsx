@@ -77,7 +77,7 @@ function yToPrice(y: number, dims: OverlayDims): number {
   return dims.priceMax + frac * (dims.priceMin - dims.priceMax);
 }
 
-function snapToGrid(price: number, time: number): { price: number; time: number } {
+function snapToGrid(price: number, time: number) {
   const cellMs = GRID_CELL_SECONDS * 1000;
   const snappedTime = Math.round(time / cellMs) * cellMs;
   const snappedPrice = Math.round(price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;

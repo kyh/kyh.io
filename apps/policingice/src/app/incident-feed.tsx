@@ -17,6 +17,7 @@ import {
 } from "@/components/keyboard-shortcuts-provider";
 import { toast } from "@/components/toast";
 import { authClient } from "@/lib/auth-client";
+import { formString } from "@/lib/form-utils";
 import {
   addVideoToIncident,
   createIncident,
@@ -108,7 +109,7 @@ export const IncidentFeed = ({
       startDate: start,
       endDate: end,
     })
-      .then((result) => setSearchResults(result.incidents as Incident[]))
+      .then((result) => setSearchResults(result.incidents))
       .finally(() => setIsSearching(false));
   }, [q, start, end, hasSearchParams]);
 
@@ -116,9 +117,9 @@ export const IncidentFeed = ({
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
-      const query = (formData.get("q") as string).trim();
-      const startDate = formData.get("start") as string;
-      const endDate = formData.get("end") as string;
+      const query = formString(formData, "q").trim();
+      const startDate = formString(formData, "start");
+      const endDate = formString(formData, "end");
 
       if (!query && !startDate && !endDate) return;
 

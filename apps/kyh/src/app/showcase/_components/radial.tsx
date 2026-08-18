@@ -70,6 +70,8 @@ export type TimelineContext = {
   radialData: RadialDataTypes;
 } & Constants;
 
+// SAFETY: every consumer sits beneath the provider rendered by Radial, so the
+// empty default value is never observed.
 const TimelineContext = createContext({} as TimelineContext);
 const useTimeline = () => useContext(TimelineContext);
 
@@ -193,8 +195,8 @@ export const Radial = ({ projects }: RadialProps) => {
     }
 
     const activeElement = document.querySelector("[data-active=true]");
-    if (activeElement) {
-      activeNode.current = activeElement as HTMLElement;
+    if (activeElement instanceof HTMLElement) {
+      activeNode.current = activeElement;
     }
     rotateToIndex(activeIndex);
   }, [activeIndex, rotate, zoom, setActiveIndex]);

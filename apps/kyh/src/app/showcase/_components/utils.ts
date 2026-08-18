@@ -33,7 +33,7 @@ export function useEvent(
 ) {
   useEffect(() => {
     if (event === "resize") {
-      callback({} as Event);
+      callback(new Event("resize"));
     }
 
     window.addEventListener(event, callback, options);
@@ -60,48 +60,36 @@ export function useShortcuts(keyBindingMap: KeyBindingMap, options?: Options) {
   }, [keyBindingMap, options]);
 }
 
-export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
+function parseHashValue<T>(locationHash: string, fallback: T): T {
+  const hash = locationHash.slice(1);
+  if (!hash) return fallback;
+  try {
+    // SAFETY: the hash is written exclusively by `setHashState` below as
+    // encodeURIComponent(JSON.stringify(val)) of a T; a hand-edited hash that
+    // is not valid JSON lands in the catch.
+    return JSON.parse(decodeURIComponent(hash)) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function useHashState<T>(initialValue: T): [T, (val: T) => void] {
   const [internalValue, setInternalValue] = useState<T>(() => {
-    if (typeof window === "undefined") return initialValue as T;
-    const hash = window.location.hash.slice(1);
-    if (initialValue !== undefined && typeof initialValue !== "string") {
-      try {
-        return hash ? (JSON.parse(decodeURIComponent(hash)) as T) : initialValue;
-      } catch {
-        return initialValue;
-      }
-    }
-    return (hash as unknown as T) || (initialValue as T);
+    if (typeof window === "undefined") return initialValue;
+    return parseHashValue(window.location.hash, initialValue);
   });
 
   useEvent(
     "hashchange",
     () => {
-      const hash = window.location.hash.slice(1);
-      if (initialValue !== undefined && typeof initialValue !== "string") {
-        try {
-          setInternalValue(
-            hash ? (JSON.parse(decodeURIComponent(hash)) as T) : (initialValue as T),
-          );
-        } catch {
-          setInternalValue(initialValue as T);
-        }
-      } else {
-        setInternalValue((hash as unknown as T) || (initialValue as T));
-      }
+      setInternalValue(parseHashValue(window.location.hash, initialValue));
     },
     [initialValue],
   );
 
   const setHashState = useCallback((val: T) => {
-    let hash: string | undefined;
-    if (val === undefined || val === null) {
-      hash = undefined;
-    } else {
-      hash = typeof val === "string" ? val : encodeURIComponent(JSON.stringify(val));
-    }
     if (typeof window !== "undefined") {
-      if (hash === undefined) {
+      if (val === undefined || val === null) {
         if (window.location.hash) {
           history.replaceState(
             null,
@@ -109,8 +97,11 @@ export function useHashState<T>(initialValue?: T): [T, (val: T) => void] {
             window.location.pathname + window.location.search,
           );
         }
-      } else if (window.location.hash.slice(1) !== hash) {
-        window.location.hash = hash;
+      } else {
+        const hash = encodeURIComponent(JSON.stringify(val));
+        if (window.location.hash.slice(1) !== hash) {
+          window.location.hash = hash;
+        }
       }
     }
     setInternalValue(val);

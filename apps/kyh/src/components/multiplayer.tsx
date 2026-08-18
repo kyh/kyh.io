@@ -4,7 +4,11 @@ import { usePathname } from "next/navigation";
 
 import { AvatarGroup } from "@/components/avatar-group";
 import { Cursor } from "@/components/cursor";
+import type { JsonValue } from "@/lib/player";
 import { useRealtime } from "@/lib/use-realtime";
+
+const asCoordinate = (value: JsonValue | undefined) =>
+  Number.isFinite(value) ? Number(value) : undefined;
 
 // const HOST = "http://localhost:8787";
 const HOST = "https://kyh-party.kyh.workers.dev";
@@ -33,8 +37,8 @@ export const Multiplayer = () => {
     .map(([id, player]) => (
       <Cursor
         key={id}
-        x={player.state.x as number | undefined}
-        y={player.state.y as number | undefined}
+        x={asCoordinate(player.state.x)}
+        y={asCoordinate(player.state.y)}
         color={player.color}
         hue={player.hue}
         windowDimensions={windowDimensions}

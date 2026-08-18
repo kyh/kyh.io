@@ -3,12 +3,50 @@
 import { revalidateTag } from "next/cache";
 import { embed } from "ai";
 import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import { client, db } from "@/db/drizzle-client";
 import { incidents, videos, votes } from "@/db/drizzle-schema";
+
+import type { VoteType } from "@/db/drizzle-schema";
+
 import { getSession } from "@/lib/auth";
 import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
+
+// Raw row contract for the vector_top_k query below: incidents.* joined with an
+// optional video, all timestamps as unix seconds. Parsed at the SQL boundary.
+const vectorRowSchema = z.object({
+  id: z.number(),
+  location: z.string().nullable(),
+  description: z.string().nullable(),
+  // Opaque F32_BLOB passed through untouched; never inspected here.
+  embedding: z.custom<Buffer | null>(),
+  incident_date: z.number().nullable(),
+  status: z.enum(["approved", "hidden"]),
+  pinned: z.number(),
+  unjustified_count: z.number(),
+  justified_count: z.number(),
+  report_count: z.number(),
+  created_at: z.number().nullable(),
+  deleted_at: z.number().nullable(),
+  vid: z.number().nullable(),
+  url: z.string().nullable(),
+  platform: z
+    .enum([
+      "twitter",
+      "youtube",
+      "tiktok",
+      "facebook",
+      "instagram",
+      "linkedin",
+      "pinterest",
+      "reddit",
+    ])
+    .nullable(),
+  v_created_at: z.number().nullable(),
+  vec_distance: z.number(),
+});
 
 async function requireAdmin() {
   const session = await getSession();
@@ -140,45 +178,38 @@ export async function searchIncidents(data: {
       }
     >();
 
-    for (const row of vectorResult.rows) {
-      const id = row.id as number;
+    for (const rawRow of vectorResult.rows) {
+      const row = vectorRowSchema.parse(rawRow);
+      const id = row.id;
       if (!vectorIncidents.has(id)) {
         vectorIncidents.set(id, {
           incident: {
             id,
-            location: row.location as string | null,
-            description: row.description as string | null,
-            embedding: row.embedding as Buffer | null,
-            incidentDate: row.incident_date ? new Date((row.incident_date as number) * 1000) : null,
-            status: row.status as "approved" | "hidden",
-            pinned: (row.pinned as number) === 1,
-            unjustifiedCount: row.unjustified_count as number,
-            justifiedCount: row.justified_count as number,
-            reportCount: row.report_count as number,
-            createdAt: row.created_at ? new Date((row.created_at as number) * 1000) : null,
-            deletedAt: row.deleted_at ? new Date((row.deleted_at as number) * 1000) : null,
+            location: row.location,
+            description: row.description,
+            embedding: row.embedding,
+            incidentDate: row.incident_date ? new Date(row.incident_date * 1000) : null,
+            status: row.status,
+            pinned: row.pinned === 1,
+            unjustifiedCount: row.unjustified_count,
+            justifiedCount: row.justified_count,
+            reportCount: row.report_count,
+            createdAt: row.created_at ? new Date(row.created_at * 1000) : null,
+            deletedAt: row.deleted_at ? new Date(row.deleted_at * 1000) : null,
             videos: [],
           },
-          distance: row.vec_distance as number,
+          distance: row.vec_distance,
         });
       }
-      if (row.vid) {
+      if (row.vid && row.url && row.platform) {
         // Known `!` exception: the branch above `.set(id, …)` on this same `id`
         // in this same iteration, so the entry always exists here.
         vectorIncidents.get(id)!.incident.videos.push({
-          id: row.vid as number,
+          id: row.vid,
           incidentId: id,
-          url: row.url as string,
-          platform: row.platform as
-            | "twitter"
-            | "youtube"
-            | "tiktok"
-            | "facebook"
-            | "instagram"
-            | "linkedin"
-            | "pinterest"
-            | "reddit",
-          createdAt: row.v_created_at ? new Date((row.v_created_at as number) * 1000) : null,
+          url: row.url,
+          platform: row.platform,
+          createdAt: row.v_created_at ? new Date(row.v_created_at * 1000) : null,
         });
       }
     }
@@ -219,13 +250,10 @@ export async function getUserVotes(data: { incidentIds: number[] }) {
       and(eqOp(votes.sessionId, session.user.id), inArray(votes.incidentId, data.incidentIds)),
   });
 
-  return userVotes.reduce(
-    (acc, vote) => {
-      acc[vote.incidentId] = vote.type;
-      return acc;
-    },
-    {} as Record<number, "unjustified" | "justified">,
-  );
+  return userVotes.reduce<Record<number, VoteType>>((acc, vote) => {
+    acc[vote.incidentId] = vote.type;
+    return acc;
+  }, {});
 }
 
 export async function getUserVote(data: { incidentId: number }) {

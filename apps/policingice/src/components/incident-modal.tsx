@@ -5,6 +5,7 @@ import { Form } from "@base-ui/react/form";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { toast } from "@/components/toast";
+import { formString } from "@/lib/form-utils";
 import { isValidVideoUrl } from "@/lib/video-utils";
 
 type Video = {
@@ -123,13 +124,13 @@ export const IncidentModal = (props: IncidentModalProps) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    const location = (formData.get("location") as string).trim();
-    const description = (formData.get("description") as string).trim();
-    const incidentDate = formData.get("incidentDate") as string;
+    const location = formString(formData, "location").trim();
+    const description = formString(formData, "description").trim();
+    const incidentDate = formString(formData, "incidentDate");
 
     if (mode === "create") {
       const videoUrls = inputKeys
-        .map((key) => (formData.get(`video-${key}`) as string).trim())
+        .map((key) => formString(formData, `video-${key}`).trim())
         .filter((url) => url && isValidVideoUrl(url));
 
       if (videoUrls.length === 0) {

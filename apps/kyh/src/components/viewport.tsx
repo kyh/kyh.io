@@ -62,9 +62,9 @@ export const useViewport = () => {
 
 const debounce = (fn: () => void, ms = 500) => {
   let timeoutId: ReturnType<typeof setTimeout>;
-  return function (this: unknown) {
+  return () => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn.apply(this), ms);
+    timeoutId = setTimeout(fn, ms);
   };
 };
 
