@@ -16,10 +16,10 @@
     ".conductor",
     ".cursor",
     ".superset",
-    "tools/oxlint/anti-slop"
+    "packages/oxlint/anti-slop"
   ],
   "plugins": ["eslint", "typescript", "unicorn", "react", "nextjs", "oxc", "node", "promise"],
-  "jsPlugins": [{ "name": "anti-slop", "specifier": "./tools/oxlint/anti-slop/index.ts" }],
+  "jsPlugins": [{ "name": "anti-slop", "specifier": "@kyh/oxlint/anti-slop" }],
   "categories": {
     "correctness": "warn",
     "suspicious": "warn",

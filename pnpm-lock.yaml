@@ -65,9 +65,9 @@ importers:
 
   .:
     devDependencies:
-      '@oxlint/plugins':
-        specifier: 1.78.0
-        version: 1.78.0
+      '@kyh/oxlint':
+        specifier: workspace:*
+        version: link:packages/oxlint
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
@@ -595,6 +595,25 @@ importers:
       '@kyh/tsconfig':
         specifier: workspace:*
         version: link:../typescript
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  packages/oxlint:
+    dependencies:
+      '@oxlint/plugins':
+        specifier: 1.78.0
+        version: 1.78.0
+    devDependencies:
+      '@kyh/tsconfig':
+        specifier: workspace:*
+        version: link:../typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.2.0
+      oxlint:
+        specifier: ^1.78.0
+        version: 1.78.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

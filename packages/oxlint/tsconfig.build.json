@@ -1,0 +1,13 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": false,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["anti-slop"],
+  "exclude": ["node_modules", "anti-slop/**/*.test.ts"]
+}

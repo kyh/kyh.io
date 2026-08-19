@@ -1,0 +1,33 @@
+{
+  "name": "@kyh/oxlint",
+  "version": "0.1.2",
+  "description": "Oxlint plugins and shared lint tooling. anti-slop subpath is a fork of dmmulroy/anti-slop.",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    "./anti-slop": "./anti-slop/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      "./anti-slop": "./dist/anti-slop/index.js"
+    },
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "test": "for f in anti-slop/rules/*.test.ts; do node \"$f\" || exit 1; done",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "1.78.0"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "oxlint": "^1.78.0",
+    "typescript": "catalog:"
+  }
+}

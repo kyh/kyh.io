@@ -9,6 +9,11 @@ const allowInTypeGuards = [{ allowInTypeGuards: true }];
 tester.run("anti-slop/no-runtime-typeof", noRuntimeTypeofRule, {
 	valid: [
 		"const value = input;",
+		'if (typeof window === "undefined") useServerPath();',
+		'if (typeof window !== "undefined") useBrowserPath();',
+		'if ("undefined" === typeof document) useServerPath();',
+		'const isNode = typeof process !== "undefined";',
+		'if (typeof globalThis !== "undefined") use(globalThis);',
 		{
 			code: 'function isString(value: unknown): value is string { return typeof value === "string"; }',
 			options: allowInTypeGuards,
@@ -24,6 +29,8 @@ tester.run("anti-slop/no-runtime-typeof", noRuntimeTypeofRule, {
 	],
 	invalid: [
 		{ code: 'if (typeof input === "string") use(input);', errors: [error] },
+		{ code: 'if (typeof window === "object") use(window);', errors: [error] },
+		{ code: 'if (typeof win === "undefined") useServerPath();', errors: [error] },
 		{
 			code: 'function isString(value: unknown): value is string { return typeof value === "string"; }',
 			errors: [error],
