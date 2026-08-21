@@ -16,7 +16,7 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "lint": "oxlint --report-unused-disable-directives --max-warnings 70",
+    "lint": "oxlint --report-unused-disable-directives --max-warnings 54",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "oxfmt --check",
@@ -28,10 +28,10 @@
   "devDependencies": {
     "@kyh/oxlint": "workspace:*",
     "dotenv-cli": "^11.0.0",
-    "oxfmt": "^0.63.0",
-    "oxlint": "^1.78.0",
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.79.0",
     "tsx": "catalog:",
-    "turbo": "^2.10.10",
+    "turbo": "^2.10.11",
     "typescript": "catalog:"
   },
   "engines": {

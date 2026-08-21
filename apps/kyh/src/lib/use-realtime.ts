@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import usePartySocket from "partysocket/react";
 
@@ -181,29 +181,21 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   return { socket, players, windowDimensions };
 };
 
-const useTrackWindow = () => {
-  const [windowDimensions, setWindowDimensions] = useState({
-    width: 0,
-    height: 0,
-  });
-
-  useEffect(() => {
-    setWindowDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-
-    const handleResize = () => {
-      setWindowDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return windowDimensions;
+const subscribeToResize = (onStoreChange: () => void) => {
+  window.addEventListener("resize", onStoreChange);
+  return () => window.removeEventListener("resize", onStoreChange);
 };
+
+const unmeasured = { width: 0, height: 0 };
+// useSyncExternalStore compares snapshots by identity, so a fresh object per
+// read would loop forever. Only allocate when the size actually changed.
+let lastDimensions = unmeasured;
+const getWindowDimensions = () => {
+  if (lastDimensions.width !== window.innerWidth || lastDimensions.height !== window.innerHeight) {
+    lastDimensions = { width: window.innerWidth, height: window.innerHeight };
+  }
+  return lastDimensions;
+};
+
+const useTrackWindow = () =>
+  useSyncExternalStore(subscribeToResize, getWindowDimensions, () => unmeasured);

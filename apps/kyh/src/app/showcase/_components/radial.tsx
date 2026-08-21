@@ -11,14 +11,8 @@ import type { ProjectType } from "@/lib/data";
 import { AnimateSection, ScrambleText } from "@/components/animate-text";
 import { Card } from "@/components/card";
 import { Link } from "@/components/link";
-import {
-  areIntersecting,
-  clamp,
-  useEvent,
-  useHashState,
-  useIsHydrated,
-  useShortcuts,
-} from "./utils";
+import { useIsHydrated } from "@/lib/use-hydrated";
+import { areIntersecting, clamp, useEvent, useHashState, useShortcuts } from "./utils";
 
 type RadialDataType = {
   project: ProjectType;
@@ -123,7 +117,7 @@ export const Radial = ({ projects }: RadialProps) => {
   });
 
   useScroll(
-    ({ delta: [_, dy], offset: [__, oy] }) => {
+    ({ delta: [, dy], offset: [, oy] }) => {
       scrollY.stop();
       scrollY.set(-oy);
 
@@ -199,7 +193,7 @@ export const Radial = ({ projects }: RadialProps) => {
       activeNode.current = activeElement;
     }
     rotateToIndex(activeIndex);
-  }, [activeIndex, rotate, zoom, setActiveIndex]);
+  }, [activeIndex, rotate, zoom, setActiveIndex, radialData]);
 
   useEvent("resize", () => {
     intersectingAtY.set(0);
@@ -390,15 +384,12 @@ const Meta = ({
 
 const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   const { zoom, activeIndex, radialData } = useTimeline();
-  const [item, setItem] = useState<RadialDataType | null>(null);
-
-  useEffect(() => {
-    if (activeIndex === null) return;
-    const item = radialData[activeIndex];
-    if (item) {
-      setItem(item);
-    }
-  }, [activeIndex, radialData]);
+  // Sticky: the sheet keeps rendering the last project while it animates out.
+  const [lastItem, setLastItem] = useState<RadialDataType | null>(null);
+  const item = (activeIndex === null ? undefined : radialData[activeIndex]) ?? lastItem;
+  if (item !== lastItem) {
+    setLastItem(item);
+  }
 
   return (
     <motion.div

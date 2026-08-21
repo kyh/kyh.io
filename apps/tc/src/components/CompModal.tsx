@@ -10,8 +10,7 @@ import { FormField } from "@/components/FormField";
 import { Modal } from "@/components/Modal";
 import { currencyTextFormatProps, staticTextFormatProps } from "@/lib/formProps";
 
-type Props = { setShouldUpdate: (t: boolean) => void } & CompHooksType &
-  Omit<ModalProps, "title" | "children">;
+type Props = { requestUpdate: () => void } & CompHooksType & Omit<ModalProps, "title" | "children">;
 
 const Option = ({ children, ...rest }: OptionProps<any>) => {
   return (
@@ -35,7 +34,7 @@ export const CompModal = ({
   setSharesOutstanding,
   setExpectedRevenue,
   setRevenueMultiple,
-  setShouldUpdate,
+  requestUpdate,
 }: Props) => {
   const [view, setView] = useState("estimate");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -97,7 +96,7 @@ export const CompModal = ({
       setExpectedRevenue(c.revenue.toString());
       setRevenueMultiple(c.revenuePerShare.toString());
     }
-    setShouldUpdate(true);
+    requestUpdate();
     handleClose();
   };
 

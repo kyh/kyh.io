@@ -7,6 +7,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Moon, Sun } from "lucide-react";
 
 import { useTheme } from "@/components/theme";
+import { useIsHydrated } from "@/lib/use-hydrated";
 
 type EmblaApi = ReturnType<typeof useEmblaCarousel>[1];
 
@@ -190,15 +191,8 @@ const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
   // resolvedTheme is undefined on the server; render theme-dependent UI only
-  // after mount to avoid a hydration mismatch.
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // client-only mounting guard for SSR compatibility
-    setMounted(true);
-  }, []);
-
-  const isDark = mounted && resolvedTheme === "dark";
+  // after hydration to avoid a mismatch.
+  const isDark = useIsHydrated() && resolvedTheme === "dark";
 
   return (
     <div className="fixed right-4 bottom-4 hidden text-xs text-muted-foreground sm:block">

@@ -1,6 +1,5 @@
 import type { DependencyList } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { useIsomorphicLayoutEffect } from "motion/react";
 
 import type { KeyBindingMap, Options } from "./tinykeys";
 import { tinykeys } from "./tinykeys";
@@ -40,18 +39,6 @@ export function useEvent(
 
     return () => window.removeEventListener(event, callback, options);
   }, deps);
-}
-
-let globalIsHydrated = false;
-export function useIsHydrated() {
-  const [isHydrated, setIsHydrated] = useState(globalIsHydrated);
-
-  useIsomorphicLayoutEffect(() => {
-    setIsHydrated(true);
-    globalIsHydrated = true;
-  }, []);
-
-  return isHydrated;
 }
 
 export function useShortcuts(keyBindingMap: KeyBindingMap, options?: Options) {

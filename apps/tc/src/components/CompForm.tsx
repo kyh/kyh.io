@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Listbox, RadioGroup } from "@headlessui/react";
 import { NumericFormat } from "react-number-format";
 
@@ -13,15 +13,20 @@ type Props = {
 };
 
 export const CompForm = ({ comp }: Props) => {
-  const [shouldUpdate, setShouldUpdate] = useState(false);
+  // `comp.updateData` reads the field state via closure, so it has to run after
+  // the edits that triggered it have been applied — hence the request counter
+  // rather than a direct call from the handlers.
+  const [updateRequest, setUpdateRequest] = useState(0);
+  const appliedRequest = useRef(0);
   const modalProps = useModal();
 
+  const requestUpdate = () => setUpdateRequest((n) => n + 1);
+
   useEffect(() => {
-    if (shouldUpdate) {
-      comp.updateData();
-      setShouldUpdate(false);
-    }
-  }, [comp, shouldUpdate]);
+    if (appliedRequest.current === updateRequest) return;
+    appliedRequest.current = updateRequest;
+    comp.updateData();
+  }, [comp, updateRequest]);
 
   return (
     <>
@@ -39,7 +44,7 @@ export const CompForm = ({ comp }: Props) => {
                 {...currencyInputFormatProps}
                 value={comp.base}
                 onValueChange={({ value }) => comp.setBase(value)}
-                onBlur={() => setShouldUpdate(true)}
+                onBlur={requestUpdate}
               />
             </FormField>
             <FormField
@@ -52,7 +57,7 @@ export const CompForm = ({ comp }: Props) => {
                 {...currencyInputFormatProps}
                 value={comp.signOnBonus}
                 onValueChange={({ value }) => comp.setSignOnBonus(value)}
-                onBlur={() => setShouldUpdate(true)}
+                onBlur={requestUpdate}
               />
             </FormField>
             <FormField
@@ -65,7 +70,7 @@ export const CompForm = ({ comp }: Props) => {
                 {...currencyInputFormatProps}
                 value={comp.targetBonus}
                 onValueChange={({ value }) => comp.setTargetBonus(value)}
-                onBlur={() => setShouldUpdate(true)}
+                onBlur={requestUpdate}
               />
             </FormField>
           </div>
@@ -83,7 +88,7 @@ export const CompForm = ({ comp }: Props) => {
                 comp.setRsu("");
                 comp.setExpectedGrowthMultiple("");
               }}
-              onBlur={() => setShouldUpdate(true)}
+              onBlur={requestUpdate}
             >
               <RadioGroup.Option value="iso">
                 {({ checked }) => (
@@ -117,7 +122,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...staticInputFormatProps}
                   value={comp.iso}
                   onValueChange={({ value }) => comp.setIso(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
               <FormField
@@ -130,7 +135,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...currencyInputFormatProps}
                   value={comp.strikePrice}
                   onValueChange={({ value }) => comp.setStrikePrice(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
             </div>
@@ -142,7 +147,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...staticInputFormatProps}
                   value={comp.rsu}
                   onValueChange={({ value }) => comp.setRsu(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
             </div>
@@ -230,7 +235,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...currencyInputFormatProps}
                   value={comp.preferredSharePrice}
                   onValueChange={({ value }) => comp.setPreferredSharePrice(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
               <FormField
@@ -249,7 +254,7 @@ export const CompForm = ({ comp }: Props) => {
                   suffix={comp.shareType === "rsu" ? "%" : "x"}
                   value={comp.expectedGrowthMultiple}
                   onValueChange={({ value }) => comp.setExpectedGrowthMultiple(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
             </div>
@@ -266,7 +271,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...staticInputFormatProps}
                   value={comp.sharesOutstanding}
                   onValueChange={({ value }) => comp.setSharesOutstanding(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
               <FormField
@@ -279,7 +284,7 @@ export const CompForm = ({ comp }: Props) => {
                   {...currencyInputFormatProps}
                   value={comp.expectedRevenue}
                   onValueChange={({ value }) => comp.setExpectedRevenue(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
               <FormField
@@ -292,14 +297,14 @@ export const CompForm = ({ comp }: Props) => {
                   {...staticInputFormatProps}
                   value={comp.revenueMultiple}
                   onValueChange={({ value }) => comp.setRevenueMultiple(value)}
-                  onBlur={() => setShouldUpdate(true)}
+                  onBlur={requestUpdate}
                 />
               </FormField>
             </div>
           )}
         </fieldset>
       </div>
-      <CompModal {...comp} {...modalProps} setShouldUpdate={setShouldUpdate} />
+      <CompModal {...comp} {...modalProps} requestUpdate={requestUpdate} />
     </>
   );
 };

@@ -79,15 +79,12 @@ export function Liveline({
     width: number;
   } | null>(null);
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set());
-  const lastSeriesPropRef = useRef(seriesProp);
-  const displaySeries =
-    seriesProp && seriesProp.length > 0 ? seriesProp : lastSeriesPropRef.current;
-
-  useLayoutEffect(() => {
-    if (seriesProp && seriesProp.length > 0) {
-      lastSeriesPropRef.current = seriesProp;
-    }
-  }, [seriesProp]);
+  // Sticky: an empty series prop keeps the toggle row rendering the last real one.
+  const [lastSeries, setLastSeries] = useState(seriesProp);
+  const displaySeries = seriesProp && seriesProp.length > 0 ? seriesProp : lastSeries;
+  if (displaySeries !== lastSeries) {
+    setLastSeries(displaySeries);
+  }
 
   const palette = useMemo(() => {
     const p = resolveTheme(color, theme);

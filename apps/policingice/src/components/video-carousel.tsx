@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -44,9 +44,36 @@ export const VideoCarousel = ({
     shortcuts.registerCarousel(incidentId, emblaApi ?? null);
     return () => shortcuts.unregisterCarousel(incidentId);
   }, [incidentId, emblaApi, shortcuts]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  // Embla owns the scroll position; read it as an external store so the first
+  // render already has the real values instead of seeding state from an effect.
+  const subscribeToEmbla = useCallback(
+    (onStoreChange: () => void) => {
+      if (!emblaApi) return () => {};
+      emblaApi.on("select", onStoreChange);
+      emblaApi.on("reInit", onStoreChange);
+      return () => {
+        emblaApi.off("select", onStoreChange);
+        emblaApi.off("reInit", onStoreChange);
+      };
+    },
+    [emblaApi],
+  );
+  const selectedIndex = useSyncExternalStore(
+    subscribeToEmbla,
+    () => emblaApi?.selectedScrollSnap() ?? 0,
+    () => 0,
+  );
+  const canScrollPrev = useSyncExternalStore(
+    subscribeToEmbla,
+    () => emblaApi?.canScrollPrev() ?? false,
+    () => false,
+  );
+  const canScrollNext = useSyncExternalStore(
+    subscribeToEmbla,
+    () => emblaApi?.canScrollNext() ?? false,
+    () => false,
+  );
 
   // Update container height based on current slide
   const updateHeight = useCallback(() => {
@@ -68,34 +95,22 @@ export const VideoCarousel = ({
     return () => observer.disconnect();
   }, [selectedIndex, updateHeight]);
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    const index = emblaApi.selectedScrollSnap();
-    setSelectedIndex(index);
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-    onSlideChange?.(index);
-  }, [emblaApi, onSlideChange]);
+  useEffect(() => {
+    onSlideChange?.(selectedIndex);
+  }, [selectedIndex, onSlideChange]);
 
   useEffect(() => {
     if (!emblaApi) return;
-    // initializing state from the embla API on mount
-    onSelect();
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-
     const onDragStart = () => setIsDragging(true);
     const onDragEnd = () => setIsDragging(false);
     emblaApi.on("pointerDown", onDragStart);
     emblaApi.on("pointerUp", onDragEnd);
 
     return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
       emblaApi.off("pointerDown", onDragStart);
       emblaApi.off("pointerUp", onDragEnd);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi]);
 
   if (videos.length === 0) return null;
 

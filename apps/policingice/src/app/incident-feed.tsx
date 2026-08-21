@@ -68,7 +68,7 @@ export const IncidentFeed = ({
       if (end) params.set("end", end);
       router.replace(params.toString() ? `/?${params}` : "/");
     }
-  }, [error, router, q, start, end, toast]);
+  }, [error, router, q, start, end]);
 
   const [extraIncidents, setExtraIncidents] = useState<Incident[]>([]);
   const [nextOffset, setNextOffset] = useState(initialNextOffset);
@@ -80,38 +80,37 @@ export const IncidentFeed = ({
   >({});
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<Incident[] | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [fetchedResults, setFetchedResults] = useState<Incident[] | null>(null);
+  const [searchedFor, setSearchedFor] = useState<string | null>(null);
 
   const searchFormRef = useRef<HTMLFormElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const allIncidents = [...initialIncidents, ...extraIncidents];
   // `||` not `??`: any truthy search param counts
-  const hasSearchParams = q || start || end;
+  const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
+  const searchResults = searchKey === null ? null : fetchedResults;
+  const isSearching = searchKey !== null && searchedFor !== searchKey;
 
-  // Reset state when initial data changes
   const loaderKey = initialIncidents.map((i) => i.id).join(",");
-  useEffect(() => {
+  const [loadedKey, setLoadedKey] = useState(loaderKey);
+  if (loadedKey !== loaderKey) {
+    setLoadedKey(loaderKey);
     setExtraIncidents([]);
     setNextOffset(initialNextOffset);
     setUserVotes(initialUserVotes);
-  }, [loaderKey, initialNextOffset, initialUserVotes]);
+  }
 
   // Search when URL params change
   useEffect(() => {
-    if (!hasSearchParams) {
-      setSearchResults(null);
-      return;
-    }
-    setIsSearching(true);
+    if (searchKey === null) return;
     void searchIncidents({
       query: q,
       startDate: start,
       endDate: end,
     })
-      .then((result) => setSearchResults(result.incidents))
-      .finally(() => setIsSearching(false));
-  }, [q, start, end, hasSearchParams]);
+      .then((result) => setFetchedResults(result.incidents))
+      .finally(() => setSearchedFor(searchKey));
+  }, [q, start, end, searchKey]);
 
   const handleSearch = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -231,7 +230,7 @@ export const IncidentFeed = ({
         toast.error("Failed to vote");
       }
     },
-    [userVotes, voteCounts, toast],
+    [userVotes, voteCounts],
   );
 
   const getVoteCount = (incident: Incident, type: "unjustified" | "justified") => {
@@ -240,13 +239,10 @@ export const IncidentFeed = ({
     return base + extra;
   };
 
-  const handleReport = useCallback(
-    async (incidentId: number) => {
-      await reportIncident({ incidentId });
-      toast.success("Reported");
-    },
-    [toast],
-  );
+  const handleReport = useCallback(async (incidentId: number) => {
+    await reportIncident({ incidentId });
+    toast.success("Reported");
+  }, []);
 
   const handleHide = useCallback(
     async (incidentId: number) => {
@@ -258,7 +254,7 @@ export const IncidentFeed = ({
         toast.error("Failed to hide");
       }
     },
-    [router, toast],
+    [router],
   );
 
   const handleDelete = useCallback(
@@ -272,7 +268,7 @@ export const IncidentFeed = ({
         toast.error("Failed to delete");
       }
     },
-    [router, toast],
+    [router],
   );
 
   const handlePin = useCallback(
@@ -285,7 +281,7 @@ export const IncidentFeed = ({
         toast.error("Failed to pin");
       }
     },
-    [router, toast],
+    [router],
   );
 
   const handleAddVideo = useCallback(
@@ -319,7 +315,7 @@ export const IncidentFeed = ({
       }
       toast.success(result.merged ? "Added to existing incident" : "Added to feed");
     },
-    [router, toast],
+    [router],
   );
 
   return (

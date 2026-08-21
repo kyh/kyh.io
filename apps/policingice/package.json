@@ -14,12 +14,12 @@
     "with-env": "dotenv -e .env --"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^4.0.39",
+    "@ai-sdk/xai": "^4.0.42",
     "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.4",
     "@vercel/analytics": "catalog:",
-    "ai": "^7.0.66",
-    "better-auth": "^1.6.29",
+    "ai": "^7.0.71",
+    "better-auth": "^1.7.1",
     "cnfast": "catalog:",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",

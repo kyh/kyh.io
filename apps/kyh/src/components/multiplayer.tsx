@@ -27,11 +27,11 @@ export const Multiplayer = () => {
   // just-connected or mid-reconnect socket sits at empty state for a beat; the
   // server reaps genuinely dead ones, but this keeps those blips off the UI.
   const present = Object.fromEntries(
-    Object.entries(players).filter(([_, player]) => !!player.state.pathname),
+    Object.entries(players).filter(([, player]) => !!player.state.pathname),
   );
 
   const cursors = Object.entries(present)
-    .filter(([_, player]) => {
+    .filter(([, player]) => {
       return !!player.state.x && !!player.state.y && player.state.pathname === pathname;
     })
     .map(([id, player]) => (

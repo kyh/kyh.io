@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Component, lazy, Suspense, useEffect, useState } from "react";
+import { Component, lazy, Suspense } from "react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useTheme } from "@/components/theme";
+import { useIsHydrated } from "@/lib/use-hydrated";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
 
 type VideoEmbedProps = {
@@ -70,15 +71,10 @@ const YouTubeEmbed = ({ videoId }: { videoId: string }) => {
 const LazyTweet = lazy(() => import("react-tweet").then((mod) => ({ default: mod.Tweet })));
 
 const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useIsHydrated();
   const { resolvedTheme } = useTheme();
 
-  useEffect(() => {
-    // client-only mounting guard for SSR compatibility
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!isHydrated) {
     return <div className="h-[200px] animate-pulse bg-muted" />;
   }
 

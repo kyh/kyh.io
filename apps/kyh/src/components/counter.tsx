@@ -1,8 +1,7 @@
 "use client";
 
 import type { Transition } from "motion/react";
-import type { RefObject } from "react";
-import { Fragment, useMemo, useRef } from "react";
+import { Fragment, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 type VerticalProps = {
@@ -50,8 +49,7 @@ type CounterProps = {
 const transition = { ease: "easeOut" } satisfies Transition;
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const getTextStats = useMemo(() => generateTextStats(ref), [ref]);
+  const getTextStats = useMemo(() => generateTextStats(), []);
 
   const baseStyles = {
     height,
@@ -73,9 +71,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
         position: "relative",
       }}
     >
-      <span className="absolute top-0 left-0 text-transparent" ref={ref}>
-        {text}
-      </span>
+      <span className="absolute top-0 left-0 text-transparent">{text}</span>
 
       <AnimatePresence initial={false}>
         {textArray.map((letter, index) => {
@@ -109,7 +105,7 @@ const count = (acc: number, curr: number) => {
   return acc + curr;
 };
 
-const generateTextStats = (ref: RefObject<HTMLSpanElement | null>) => {
+const generateTextStats = () => {
   const cache = new Map<string, number>();
 
   // safety for nodejs/ssr
@@ -126,7 +122,7 @@ const generateTextStats = (ref: RefObject<HTMLSpanElement | null>) => {
   return (letter: string) => {
     if (!cache.has(letter)) {
       if (!hasCalculatedFont) {
-        context.font = getComputedStyle(ref.current ?? document.body).font;
+        context.font = getComputedStyle(document.body).font;
         hasCalculatedFont = true;
       }
       cache.set(letter, (context.measureText(letter).width ?? 0) - 0.2);

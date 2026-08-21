@@ -82,14 +82,14 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
         toast.error("Failed to vote");
       }
     },
-    [incident.id, userVote, counts, toast],
+    [incident.id, userVote, counts],
   );
 
   const handleReport = useCallback(async () => {
     await reportIncident({ incidentId: incident.id });
     setReported(true);
     toast.success("Reported");
-  }, [incident.id, toast]);
+  }, [incident.id]);
 
   return (
     <KeyboardShortcutsProvider>

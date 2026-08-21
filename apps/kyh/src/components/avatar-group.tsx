@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { PlayerMap } from "@/lib/player";
 import { getRandomColor } from "@/lib/color";
+import { useIsHydrated } from "@/lib/use-hydrated";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 type AvatarGroupProps = {
@@ -14,9 +15,9 @@ type AvatarGroupProps = {
 
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
-  // Picked after mount — a session-random color would mismatch SSR otherwise.
-  const [color, setColor] = useState<ReturnType<typeof getRandomColor> | null>(null);
-  useEffect(() => setColor(getRandomColor()), []);
+  // Held back until hydration — a session-random color would mismatch SSR.
+  const [randomColor] = useState(getRandomColor);
+  const color = useIsHydrated() ? randomColor : null;
   const players = Object.entries(others).toSorted(([, p]) =>
     p.state.pathname === pathname ? -1 : 1,
   );

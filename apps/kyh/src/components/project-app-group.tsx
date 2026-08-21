@@ -39,11 +39,16 @@ type ProjectAppProps = {
 
 export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectAppProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
   const labelRef = useRef<HTMLDivElement>(null);
 
-  const isTruncated =
-    labelRef.current && labelRef.current.scrollWidth > labelRef.current.clientWidth;
   const shouldExpand = isHovered && isTruncated;
+
+  const handleHoverStart = () => {
+    const label = labelRef.current;
+    setIsTruncated(!!label && label.scrollWidth > label.clientWidth);
+    setIsHovered(true);
+  };
 
   const Wrapper = url ? motion.a : motion.div;
   const wrapperProps = url ? { href: url, target: "_blank", rel: "noopener noreferrer" } : {};
@@ -53,7 +58,7 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
       {...wrapperProps}
       className="ease relative flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
       data-slot="app"
-      onHoverStart={() => setIsHovered(true)}
+      onHoverStart={handleHoverStart}
       onHoverEnd={() => setIsHovered(false)}
     >
       <div
@@ -107,13 +112,13 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
 const OpenGridItem = ({
   item,
   idx,
-  itemRefs,
+  registerRef,
   itemOffsets,
   offsetsReady,
 }: {
   item: ProjectAppItem;
   idx: number;
-  itemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  registerRef: (key: string, el: HTMLDivElement | null) => void;
   itemOffsets: Record<string, Point>;
   offsetsReady: boolean;
 }) => {
@@ -122,10 +127,8 @@ const OpenGridItem = ({
   const closeDelay = offsetsReady ? closeStaggerDelay : 0;
 
   const setRef = useCallback(
-    (el: HTMLDivElement | null) => {
-      itemRefs.current[item.key] = el;
-    },
-    [itemRefs, item.key],
+    (el: HTMLDivElement | null) => registerRef(item.key, el),
+    [registerRef, item.key],
   );
 
   return (
@@ -160,6 +163,10 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
   const [origin, setOrigin] = useState<Point | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [itemOffsets, setItemOffsets] = useState<Record<string, Point>>({});
+
+  const registerRef = useCallback((key: string, el: HTMLDivElement | null) => {
+    itemRefs.current[key] = el;
+  }, []);
 
   const handleOpen = useCallback(() => {
     const rect = folderRef.current?.getBoundingClientRect();
@@ -303,7 +310,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                       key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
                       item={item}
                       idx={idx}
-                      itemRefs={itemRefs}
+                      registerRef={registerRef}
                       itemOffsets={itemOffsets}
                       offsetsReady={!!offsetsReady}
                     />

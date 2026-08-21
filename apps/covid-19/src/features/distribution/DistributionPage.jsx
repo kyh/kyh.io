@@ -43,31 +43,32 @@ export const DistributionPage = () => {
     [currentDate, raw],
   );
 
-  useEffect(() => {
-    if (sliderIndex === dates.length - 1) {
-      setPlaying(false);
-    }
-  }, [dates.length, sliderIndex]);
+  // The slider starts on the most recent day, and playback stops on its own
+  // once it gets back there.
+  const [knownDateCount, setKnownDateCount] = useState(0);
+  if (dates.length !== knownDateCount) {
+    setKnownDateCount(dates.length);
+    setSliderIndex(dates.length > 0 ? dates.length - 1 : 0);
+  }
+
+  const atEnd = dates.length === 0 || sliderIndex >= dates.length - 1;
+  const isPlaying = playing && !atEnd;
 
   useEffect(() => {
-    if (!playing || dates.length === 0) return undefined;
+    if (!isPlaying) return undefined;
 
     const interval = setInterval(() => setSliderIndex((index) => index + 1), 300);
     return () => clearInterval(interval);
-  }, [dates.length, playing]);
-
-  useEffect(() => {
-    if (dates.length) {
-      setSliderIndex(dates.length - 1);
-    }
-  }, [dates.length]);
+  }, [isPlaying]);
 
   const togglePlaying = () => {
     if (dates.length === 0) return;
-    if (!playing && sliderIndex === dates.length - 1) {
-      setSliderIndex(0);
+    if (isPlaying) {
+      setPlaying(false);
+      return;
     }
-    setPlaying((current) => !current);
+    if (atEnd) setSliderIndex(0);
+    setPlaying(true);
   };
 
   return (
@@ -85,11 +86,11 @@ export const DistributionPage = () => {
                 className="mr-2"
                 onClick={() => togglePlaying()}
                 role="switch"
-                aria-label={playing ? "Stop animation" : "Start animation"}
-                aria-checked={playing}
+                aria-label={isPlaying ? "Stop animation" : "Start animation"}
+                aria-checked={isPlaying}
                 tabIndex={0}
               >
-                <Icon icon={playing ? "pause" : "play"} />
+                <Icon icon={isPlaying ? "pause" : "play"} />
               </button>
               {isLoading ? (
                 <Loader width="100%" height="36">

@@ -31,9 +31,11 @@ type IslandMode =
   | "grid"
   | "layout";
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+type PanelSize = { width: number; height: number };
 
 const PANEL_POSITION_KEY = "kwadrant-panel-position";
 const MARGIN = 16;
+const DEFAULT_PANEL_SIZE: PanelSize = { width: 140, height: 200 };
 const PANEL_POSITIONS: readonly PanelPosition[] = [
   "top-left",
   "top-right",
@@ -108,8 +110,8 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   });
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredPosition, setHoveredPosition] = useState<PanelPosition>("bottom-left");
-  const [isReady, setIsReady] = useState(false);
-  const panelSizeRef = useRef({ width: 140, height: 200 });
+  const [dragGhostSize, setDragGhostSize] = useState(DEFAULT_PANEL_SIZE);
+  const panelSizeRef = useRef(DEFAULT_PANEL_SIZE);
   const islandRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
@@ -119,9 +121,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  // Hides the panel until it has been measured and snapped, without the extra
+  // render an `isReady` state would cost.
+  const opacity = useMotionValue(0);
 
   const getSnapPosition = useCallback(
-    (pos: PanelPosition, size = panelSizeRef.current) => ({
+    (pos: PanelPosition, size: PanelSize) => ({
       x: pos.includes("left") ? MARGIN : window.innerWidth - MARGIN - size.width,
       y: pos.includes("top") ? MARGIN : window.innerHeight - MARGIN - size.height,
     }),
@@ -132,23 +137,27 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     if (!islandRef.current || isDragging) return;
     const rect = islandRef.current.getBoundingClientRect();
     panelSizeRef.current = { width: rect.width, height: rect.height };
-    const pos = getSnapPosition(position);
+    const pos = getSnapPosition(position, panelSizeRef.current);
     x.set(pos.x);
     y.set(pos.y);
-  }, [getSnapPosition, isDragging, position, x, y]);
+    opacity.set(1);
+  }, [getSnapPosition, isDragging, opacity, position, x, y]);
 
-  // Measure and position on mount (before paint)
+  // Re-snap whenever the panel is measured differently — on mount, on window
+  // resize, and whenever opening a menu changes the panel's own size.
   useLayoutEffect(() => {
+    const island = islandRef.current;
+    if (!island) return;
     updatePosition();
-    setIsReady(true);
-  }, [updatePosition]);
 
-  // Update on resize, position change, or mode change
-  useEffect(() => {
-    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(island);
     window.addEventListener("resize", updatePosition);
-    return () => window.removeEventListener("resize", updatePosition);
-  }, [mode, updatePosition]);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [updatePosition]);
 
   // Click outside to close menu
   useEffect(() => {
@@ -162,7 +171,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mode]);
 
-  const handleDragStart = () => setIsDragging(true);
+  const handleDragStart = () => {
+    setDragGhostSize(panelSizeRef.current);
+    setIsDragging(true);
+  };
 
   const handleDrag = (
     _event: MouseEvent | TouchEvent | PointerEvent,
@@ -177,7 +189,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     info: { point: { x: number; y: number } },
   ) => {
     const newPosition = getClosestPosition(info.point.x, info.point.y);
-    const targetPos = getSnapPosition(newPosition);
+    const targetPos = getSnapPosition(newPosition, panelSizeRef.current);
     animate(x, targetPos.x, { type: "spring", stiffness: 400, damping: 30 });
     animate(y, targetPos.y, { type: "spring", stiffness: 400, damping: 30 });
     setPosition(newPosition);
@@ -451,14 +463,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   const backTarget = getBackTarget(mode);
 
-  const size = panelSizeRef.current;
-
   return (
     <>
       {/* Ghost placement indicators */}
       {isDragging &&
         PANEL_POSITIONS.map((pos) => {
-          const snapPos = getSnapPosition(pos);
+          const snapPos = getSnapPosition(pos, dragGhostSize);
           const isHovered = hoveredPosition === pos;
           return (
             <motion.div
@@ -473,8 +483,8 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               style={{
                 left: snapPos.x,
                 top: snapPos.y,
-                width: size.width,
-                height: size.height,
+                width: dragGhostSize.width,
+                height: dragGhostSize.height,
               }}
             />
           );
@@ -488,7 +498,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        style={{ x, y, opacity: isReady ? 1 : 0 }}
+        style={{ x, y, opacity }}
         whileDrag={{
           scale: 1.03,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",

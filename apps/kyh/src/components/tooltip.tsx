@@ -147,20 +147,19 @@ const TooltipTrigger = React.forwardRef<
     : undefined;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
-  if (asChild && React.isValidElement(children)) {
+  if (asChild && React.isValidElement<React.HTMLProps<HTMLElement>>(children)) {
     // SAFETY: asChild hands rendering to the child element, whose props are a
     // DOM prop bag by contract; getReferenceProps only merges and augments
     // them, so the merged object is valid HTMLProps for that element.
-    return React.cloneElement(
-      children,
-      context.getReferenceProps({
-        ref,
+    return React.cloneElement(children, {
+      ...context.getReferenceProps({
         ...props,
-        ...(children.props as object),
+        ...children.props,
         "data-state": context.open ? "open" : "closed",
         "data-side": context.placement.split("-")[0],
       } as React.HTMLProps<HTMLElement>),
-    );
+      ref,
+    });
   }
 
   return (
@@ -272,9 +271,15 @@ const easeInOutQuint = (x: number) =>
 const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
   const [scrollHeight, setScrollHeight] = React.useState(0);
 
+  // The vertical line spans the whole document, so track the page height rather
+  // than sampling it once per tooltip open.
   React.useEffect(() => {
-    setScrollHeight(document.documentElement.scrollHeight);
-  }, [position]);
+    const observer = new ResizeObserver(() =>
+      setScrollHeight(document.documentElement.scrollHeight),
+    );
+    observer.observe(document.documentElement);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <AnimatePresence>
