@@ -19,7 +19,7 @@
     "@libsql/client": "^0.17.4",
     "@vercel/analytics": "catalog:",
     "ai": "^7.0.71",
-    "better-auth": "^1.7.1",
+    "better-auth": "~1.6.30",
     "cnfast": "catalog:",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
