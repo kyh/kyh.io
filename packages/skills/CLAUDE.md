@@ -30,6 +30,9 @@
 - **Idiomatic first, always.** Follow the language/framework/library's own conventions before inventing anything, and match the surrounding code. Convention beats cleverness — a deviation needs a stated reason.
 - **Don't guess at current practice.** If you're unsure what today's idiom is — unfamiliar library, fast-moving API, version you haven't confirmed — look it up (context7 for library docs, web search otherwise) instead of writing from memory. Training data goes stale; the docs don't.
 - **File naming: kebab-case for all TS/TSX files** (`game-scene.ts`, `use-game-state.ts`), including React components. Exceptions: tool-generated files with mandated names (e.g. `routeTree.gen.ts`)
+- **Comments: minimal, and only ever WHY.** The code says what it does; a comment restating it is noise that rots. Write one only where the reason is genuinely non-obvious — an external constraint, a rejected alternative, a footgun someone would otherwise "clean up". Default to none; a better name usually beats a comment.
+  - **Never comment inside JSX.** If markup needs explaining, the component or variable name is wrong.
+  - Never narrate history: no "used to", "previously", "renamed from", no PR/issue number as provenance, no date on a decision. Git holds that. Keep the rule and its reason; drop the story of how it was learned.
 - **Never compromise type safety**: No `any`, no non-null assertion operator (`!`), no type assertions (`as Type`)
 - **Make illegal states unrepresentable**: Model domain with ADTs/discriminated unions; parse inputs at boundaries into typed structures; if state can't exist, code can't mishandle it
 - **Abstractions**: Consciously constrained, pragmatically parameterised, doggedly documented
