@@ -1,14 +1,24 @@
+import type { Metadata } from "next";
+
 import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
+import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
-import { Section, SectionHeading, Separator } from "./_components/section";
 import { FigureCanvas } from "./_components/figure-canvas";
+import { SiteNav } from "./_components/site-nav";
 import { SideQuests } from "./_components/side-quests";
 import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+    types: { "text/markdown": "/markdown" },
+  },
+};
 
 const Page = () => {
   return (
@@ -143,6 +153,8 @@ const Page = () => {
         <Section id="connect" delay={1.1}>
           <SectionHeading id="connect">Connect</SectionHeading>
           <ConnectList />
+          <SubHeading id="around">Around this site</SubHeading>
+          <SiteNav />
         </Section>
       </div>
 

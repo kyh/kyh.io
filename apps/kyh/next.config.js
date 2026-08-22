@@ -46,16 +46,34 @@ const config = {
     remotePatterns: getRemotePatterns(),
     localPatterns: getLocalPatterns(),
   },
+  async headers() {
+    return [
+      {
+        /**
+         * `/` serves HTML or markdown depending on `Accept` (see `middleware.ts`),
+         * so shared caches have to key on it or an agent gets the cached HTML.
+         *
+         * Middleware can't add this on the HTML branch: Next writes its own
+         * `Vary` onto the prerendered response after middleware runs, replacing
+         * whatever was there. So the value below repeats Next's router keys and
+         * appends `Accept` — whichever layer wins, nothing is lost.
+         */
+        source: "/",
+        headers: [
+          {
+            key: "Vary",
+            value:
+              "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding, Accept",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       {
         source: "/projects",
         destination: "/showcase",
-        permanent: true,
-      },
-      {
-        source: "/about",
-        destination: "/",
         permanent: true,
       },
     ];

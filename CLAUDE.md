@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/vis-ml only)
+pnpm test          # run tests (apps/vis-ml, apps/kyh)
 ```
 
 ## Agent-driven development
@@ -55,7 +55,11 @@ Personal CLI tool.
 
 ### kyh (`apps/kyh`)
 
-Main website.
+Main website. Also the agent-facing surface: `src/lib/` holds the pure builders
+behind `/markdown`, `/llms.txt`, the JSON-LD graph and the 404 body, each with
+unit tests next to it. `src/lib/config.ts` is the single source of truth for the
+canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
+the homepage site nav and the 404 recovery links at once.
 
 ### party (`apps/party`)
 

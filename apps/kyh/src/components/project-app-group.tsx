@@ -28,6 +28,7 @@ const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
 const iconSize = 60;
+const miniIconSize = 20;
 const maxLabelWidth = 90;
 
 type ProjectAppProps = {
@@ -69,7 +70,17 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
         }`}
         data-slot="app-icon"
       >
-        <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
+        {/* Fixed width/height (not `fill` + `sizes`) keeps the emitted srcSet at
+            1x/2x. `fill` makes next/image enumerate every configured width,
+            which cost ~2.5 KB of markup per icon on a 60px image. */}
+        <Image
+          src={iconSrc}
+          alt={name}
+          width={iconSize}
+          height={iconSize}
+          className="size-full object-cover"
+          draggable={false}
+        />
       </div>
 
       {/* Visible truncated label */}
@@ -237,8 +248,9 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                       <Image
                         src={item.iconSrc}
                         alt={item.name}
-                        fill
-                        sizes="20px"
+                        width={miniIconSize}
+                        height={miniIconSize}
+                        className="size-full object-cover"
                         draggable={false}
                       />
                     </div>

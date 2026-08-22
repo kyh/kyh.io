@@ -7,6 +7,7 @@ import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config";
+import { buildStructuredData } from "@/lib/structured-data";
 
 import "@/styles/global.css";
 
@@ -76,9 +77,13 @@ export const metadata: Metadata = {
   },
 };
 
+const structuredData = JSON.stringify(buildStructuredData());
+
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <body>
+      {/* Identity graph for agents: Person (primary), Organization (contact + address), WebSite. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
         <Multiplayer />
