@@ -82,7 +82,6 @@ const structuredData = JSON.stringify(buildStructuredData());
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <body>
-      {/* Identity graph for agents: Person (primary), Organization (contact + address), WebSite. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
       <Providers>
         <div className="blur-header" aria-hidden="true" />

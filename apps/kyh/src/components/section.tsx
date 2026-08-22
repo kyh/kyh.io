@@ -47,7 +47,7 @@ export const Section = ({ children, className, id, delay = 0 }: SectionProps) =>
 
 export const Separator = () => <div role="separator" className="bg-border h-px" />;
 
-/** Third-level heading inside a `Section`, so pages have a real outline. */
+/** Gives pages a real heading outline rather than a flat run of h2s. */
 export const SubHeading = ({ children, id }: { children: string; id?: string }) => (
   <h3
     id={id}

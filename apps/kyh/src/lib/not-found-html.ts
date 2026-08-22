@@ -12,10 +12,9 @@ const listItem = (route: SiteRoute) =>
   `<li><a href="${route.path}">${escapeHtml(route.title)}</a> <span>${renderDescription(route.description)}</span></li>`;
 
 /**
- * A self-contained 404 document. It deliberately does not render inside the root
- * layout: the layout ships the dock, the multiplayer canvas and a ~45 KB RSC
- * payload, none of which help someone who landed on a URL that doesn't exist.
- * The styles below mirror the site's own light/dark tokens.
+ * Deliberately does not render inside the root layout: that ships the dock, the
+ * multiplayer canvas and a ~45 KB RSC payload, none of which help someone who
+ * landed on a URL that doesn't exist.
  */
 export const buildNotFoundHtml = (pathname: string) => `<!doctype html>
 <html lang="en">

@@ -12,7 +12,7 @@ const linkLine = (link: ContentLink) =>
 const routeLine = (route: SiteRoute) =>
   linkLine({ label: route.title, href: route.path, description: route.description });
 
-/** Renders a `PageContent` to markdown. Mirrors what the React page renders. */
+/** Paired with `ProsePage`, which renders the same content as HTML. */
 export const renderPageMarkdown = (page: PageContent) => {
   const parts: string[] = [`# ${page.heading}`, ...page.intro];
 

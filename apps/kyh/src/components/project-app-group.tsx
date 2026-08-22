@@ -27,6 +27,8 @@ const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
+// Passed to next/image as explicit width/height. `fill` + `sizes` would make it
+// enumerate every configured width into the srcSet — ~2.5 KB of markup per icon.
 const iconSize = 60;
 const miniIconSize = 20;
 const maxLabelWidth = 90;
@@ -70,9 +72,6 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
         }`}
         data-slot="app-icon"
       >
-        {/* Fixed width/height (not `fill` + `sizes`) keeps the emitted srcSet at
-            1x/2x. `fill` makes next/image enumerate every configured width,
-            which cost ~2.5 KB of markup per icon on a 60px image. */}
         <Image
           src={iconSrc}
           alt={name}

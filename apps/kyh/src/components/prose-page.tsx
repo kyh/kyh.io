@@ -38,11 +38,7 @@ const LinkRow = ({ link }: { link: ContentLink }) => {
   );
 };
 
-/**
- * Renders a `PageContent` as a page in the site's own visual language. The
- * markdown representation of the same content comes from `renderPageMarkdown`,
- * so the two can't drift.
- */
+/** Paired with `renderPageMarkdown`, which renders the same content as markdown. */
 export const ProsePage = ({ content }: { content: PageContent }) => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
     <main className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">

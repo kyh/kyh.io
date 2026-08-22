@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "Kaiyu Hsu",
   shortName: "kyh",
-  /** Product/site name used in titles, llms.txt and structured data. */
+  /** The site, as distinct from `name` — the person. */
   siteName: "kyh.io",
   description:
     "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
@@ -94,6 +94,6 @@ export const agentRoutes: SiteRoute[] = [
   },
 ];
 
-/** Absolute URL for a site-relative path. `/` collapses to the bare origin. */
+/** `/` collapses to the bare origin, so canonical URLs have no trailing slash. */
 export const absoluteUrl = (path: string) =>
   path === "/" ? siteConfig.url : `${siteConfig.url}${path}`;

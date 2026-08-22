@@ -1,9 +1,8 @@
 const CODE_SPAN = /(`[^`]+`)/g;
 
 /**
- * Renders the one piece of inline markup `page-content.ts` allows: backtick code
- * spans. Everything else stays plain text, which keeps the markdown and HTML
- * renderings of a page trivially equivalent.
+ * Code spans are the only inline markup `page-content.ts` allows, so the markdown
+ * and HTML renderings of a page stay trivially equivalent.
  */
 export const ProseText = ({ text }: { text: string }) => (
   <>
