@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/vis-ml only)
+pnpm test          # run tests (apps/vis-ml, apps/policingice)
 ```
 
 ## Agent-driven development
