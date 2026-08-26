@@ -1,4 +1,16 @@
 import { ParentSize } from "@visx/responsive";
+import * as stylex from "@stylexjs/stylex";
+import {
+  colors,
+  containers,
+  defaults,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  letterSpacing,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import { NumericFormat } from "react-number-format";
 
 import Chart from "@/components/Chart";
@@ -7,6 +19,78 @@ import { CompTable } from "@/components/CompTable";
 import { Navigation } from "@/components/Navigation";
 import { useCompHooks } from "@/lib/comp";
 import { currencyTextFormatProps } from "@/lib/formProps";
+
+const styles = stylex.create({
+  main: {
+    position: "relative",
+    marginInline: "auto",
+    marginBottom: spacing[20],
+    maxWidth: containers["7xl"],
+    display: { default: null, [mediaUp.md]: "grid" },
+    gridTemplateColumns: { default: null, [mediaUp.md]: "repeat(5, minmax(0, 1fr))" },
+  },
+  formCol: {
+    marginLeft: `calc(-1 * ${spacing[5]})`,
+    paddingInline: spacing[8],
+    gridColumn: { default: null, [mediaUp.md]: "span 2 / span 2" },
+  },
+  title: {
+    fontSize: fontSizes["2xl"],
+    lineHeight: fontSizeLineHeights["2xl"],
+    fontWeight: fontWeights.bold,
+    letterSpacing: letterSpacing.tight,
+  },
+  subtitle: { marginTop: spacing[3], color: colors.slate300 },
+  formWrap: { marginTop: spacing[10] },
+  chartCol: {
+    position: "sticky",
+    top: spacing[5],
+    overflowX: "hidden",
+    overflowY: "auto",
+    paddingBlock: { default: spacing[10], [mediaUp.md]: 0 },
+    transitionProperty: "opacity",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+    gridColumn: { default: null, [mediaUp.md]: "span 3 / span 3" },
+    height: { default: null, [mediaUp.md]: "100vh" },
+    paddingInline: { default: null, [mediaUp.md]: spacing[20] },
+  },
+  active: { opacity: 1 },
+  inactive: { pointerEvents: "none", opacity: "30%" },
+  eyebrow: {
+    paddingInline: { default: spacing[3], [mediaUp.md]: 0 },
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: colors.slate400,
+  },
+  totalRow: {
+    marginTop: spacing[1],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingInline: { default: spacing[3], [mediaUp.md]: 0 },
+  },
+  total: {
+    fontSize: fontSizes["3xl"],
+    lineHeight: fontSizeLineHeights["3xl"],
+    fontWeight: fontWeights.bold,
+    letterSpacing: letterSpacing.tight,
+  },
+  perYear: {
+    marginLeft: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: colors.slate400,
+  },
+  chartSize: { marginTop: spacing[10] },
+  tableWrap: {
+    position: "relative",
+    marginTop: `calc(-1 * ${spacing[8]})`,
+    width: "100%",
+    overflowX: "auto",
+  },
+  badge: { position: "fixed", right: spacing[5], bottom: spacing[5] },
+});
 
 export default function Index() {
   const comp = useCompHooks();
@@ -19,46 +103,43 @@ export default function Index() {
   return (
     <>
       <Navigation />
-      <main className="relative mx-auto mb-20 max-w-7xl md:grid md:grid-cols-5">
-        <section className="-ml-5 px-8 md:col-span-2">
+      <main {...stylex.props(styles.main)}>
+        <section {...stylex.props(styles.formCol)}>
           <div className="title-section">
-            <h1 className="text-2xl font-bold tracking-tight">
-              A layman's Total Compensation Calculator
-            </h1>
-            <p className="mt-3 text-slate-300">
+            <h1 {...stylex.props(styles.title)}>A layman's Total Compensation Calculator</h1>
+            <p {...stylex.props(styles.subtitle)}>
               Understand your total compensation under current market conditions.
             </p>
           </div>
-          <div className="mt-10">
+          <div {...stylex.props(styles.formWrap)}>
             <CompForm comp={comp} />
           </div>
         </section>
-        <section
-          className={`sticky top-5 overflow-x-hidden overflow-y-auto py-10 transition-opacity md:col-span-3 md:h-screen md:px-20 md:py-0 ${
-            avgTc ? "opacity-100" : "pointer-events-none opacity-30"
-          }`}
-        >
-          <p className="px-3 text-sm text-slate-400 md:px-0">Estimated Total Compensation</p>
-          <div className="mt-1 flex items-center justify-between px-3 md:px-0">
+        <section {...stylex.props(styles.chartCol, avgTc ? styles.active : styles.inactive)}>
+          <p {...stylex.props(styles.eyebrow)}>Estimated Total Compensation</p>
+          <div {...stylex.props(styles.totalRow)}>
             <div>
               <NumericFormat
-                className="text-3xl font-bold tracking-tight"
+                {...stylex.props(styles.total)}
                 value={avgTc}
                 {...currencyTextFormatProps}
               />
-              {!!avgTc && <span className="ml-1 text-xs text-slate-400">(per year)</span>}
+              {!!avgTc && <span {...stylex.props(styles.perYear)}>(per year)</span>}
             </div>
           </div>
-          <ParentSize className="mt-10" parentSizeStyles={{ height: "auto", width: "100%" }}>
+          <ParentSize
+            className={stylex.props(styles.chartSize).className}
+            parentSizeStyles={{ height: "auto", width: "100%" }}
+          >
             {({ width }) => <Chart width={width} height={400} data={comp.data} />}
           </ParentSize>
-          <div className="relative -mt-8 w-full overflow-x-auto">
+          <div {...stylex.props(styles.tableWrap)}>
             <CompTable data={comp.data} />
           </div>
         </section>
       </main>
       <a
-        className="fixed right-5 bottom-5"
+        {...stylex.props(styles.badge)}
         href="https://www.producthunt.com/posts/total-compensation-calculator?utm_source=badge-featured&utm_medium=badge&utm_source=badge-total&#0045;compensation&#0045;calculator"
         target="_blank"
         rel="noopener noreferrer"

@@ -3,6 +3,131 @@ import { useState } from "react";
 import { NumericFormat } from "react-number-format";
 import Select, { components } from "react-select";
 import { useDebouncedCallback } from "use-debounce";
+import * as stylex from "@stylexjs/stylex";
+import {
+  colors,
+  defaults,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+const TRANSITION_ALL =
+  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events";
+
+const styles = stylex.create({
+  chip: {
+    marginRight: spacing[1],
+    display: "inline-flex",
+    alignItems: "center",
+    borderRadius: radii.sm,
+    backgroundColor: colors.gray100,
+    paddingInline: spacing[2],
+    paddingBlock: spacing[0.5],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    fontWeight: fontWeights.medium,
+    color: colors.slate800,
+  },
+  titleRow: { display: "flex", alignItems: "flex-end", justifyContent: "space-between" },
+  segmented: {
+    position: "relative",
+    zIndex: 0,
+    display: "inline-flex",
+    borderRadius: radii.md,
+    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+  },
+  segment: {
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: { default: colors.slate600, ":focus": colors.emerald500 },
+    backgroundColor: {
+      default: colors.black,
+      "@media (hover: hover)": { default: colors.black, ":hover": colors.emerald900 },
+    },
+    paddingInline: spacing[2],
+    paddingBlock: spacing[2],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    transitionProperty: TRANSITION_ALL,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+    zIndex: { default: null, ":focus": 10 },
+    boxShadow: { default: null, ":focus": `0 0 0 1px ${colors.emerald500}` },
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+  segmentFirst: { borderTopLeftRadius: radii.md, borderBottomLeftRadius: radii.md },
+  segmentLast: {
+    marginLeft: -1,
+    borderTopRightRadius: radii.md,
+    borderBottomRightRadius: radii.md,
+  },
+  segmentOn: { backgroundColor: colors.slate800 },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+    borderWidth: 0,
+  },
+  icon3: { height: spacing[3], width: spacing[3] },
+  mt1: { marginTop: spacing[1] },
+  mt3: { marginTop: spacing[3] },
+  h2: { fontWeight: fontWeights.bold, color: colors.slate50 },
+  panel: { display: "flex", minHeight: "360px", flexDirection: "column", gap: spacing[3] },
+  rounded: { borderRadius: radii.default },
+  centered: { display: "flex", flex: 1, alignItems: "center", justifyContent: "center" },
+  loading: { color: colors.slate700 },
+  table: {
+    position: "relative",
+    minWidth: "100%",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  thead: {
+    fontWeight: fontWeights.semibold,
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: colors.slate600,
+  },
+  cell: { display: "table-cell", paddingInline: spacing[3], paddingBlock: spacing[3.5] },
+  left: { textAlign: "left" },
+  right: { textAlign: "right" },
+  cellNoX: { display: "table-cell", paddingBlock: spacing[3.5] },
+  tbody: { color: colors.slate500 },
+  removeButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: { default: colors.slate600, ":focus": colors.emerald500 },
+    paddingInline: spacing[2],
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: colors.white,
+    transitionProperty: TRANSITION_ALL,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.emerald900 },
+    },
+    zIndex: { default: null, ":focus": 10 },
+    boxShadow: { default: null, ":focus": `0 0 0 1px ${colors.emerald500}` },
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+});
 
 import type { Props as ModalProps } from "@/components/Modal";
 import type { CompHooksType } from "@/lib/comp";
@@ -15,9 +140,7 @@ type Props = { requestUpdate: () => void } & CompHooksType & Omit<ModalProps, "t
 const Option = ({ children, ...rest }: OptionProps<any>) => {
   return (
     <components.Option {...rest}>
-      <span className="mr-1 inline-flex items-center rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-slate-800">
-        {rest.data.symbol}
-      </span>
+      <span {...stylex.props(styles.chip)}>{rest.data.symbol}</span>
       <span>{children}</span>
     </components.Option>
   );
@@ -111,19 +234,21 @@ export const CompModal = ({
       openModal={openModal}
       closeModal={handleClose}
       title={
-        <div className="flex items-end justify-between">
+        <div {...stylex.props(styles.titleRow)}>
           <h1>{view === "estimate" ? "Estimate Equity Value" : "Terminology"}</h1>
-          <span className="relative z-0 inline-flex rounded-md shadow-xs">
+          <span {...stylex.props(styles.segmented)}>
             <button
               type="button"
-              className={`relative inline-flex items-center rounded-l-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden ${
-                view === "estimate" ? "bg-slate-800" : ""
-              }`}
+              {...stylex.props(
+                styles.segment,
+                styles.segmentFirst,
+                view === "estimate" && styles.segmentOn,
+              )}
               onClick={() => setView("estimate")}
             >
-              <span className="sr-only">Estimate Equity Value</span>
+              <span {...stylex.props(styles.srOnly)}>Estimate Equity Value</span>
               <svg
-                className="h-3 w-3"
+                {...stylex.props(styles.icon3)}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -144,14 +269,16 @@ export const CompModal = ({
             </button>
             <button
               type="button"
-              className={`relative -ml-px inline-flex items-center rounded-r-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden ${
-                view === "terminology" ? "bg-slate-800" : ""
-              }`}
+              {...stylex.props(
+                styles.segment,
+                styles.segmentLast,
+                view === "terminology" && styles.segmentOn,
+              )}
               onClick={() => setView("terminology")}
             >
-              <span className="sr-only">Terminology</span>
+              <span {...stylex.props(styles.srOnly)}>Terminology</span>
               <svg
-                className="h-3 w-3"
+                {...stylex.props(styles.icon3)}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -169,38 +296,38 @@ export const CompModal = ({
       }
     >
       {view === "terminology" && (
-        <div className="mt-3">
+        <div {...stylex.props(styles.mt3)}>
           {isoCurrent && (
             <div>
-              <h2 className="font-bold text-slate-50">Preferred Stock Price</h2>
-              <p className="mt-1">
+              <h2 {...stylex.props(styles.h2)}>Preferred Stock Price</h2>
+              <p {...stylex.props(styles.mt1)}>
                 The preferred stock price is the price at which investors currently pay for shares
                 of the company. You can ask your recruiter what the current price is.
               </p>
             </div>
           )}
           {rsuCurrent && (
-            <div className="mt-3">
-              <h2 className="font-bold text-slate-50">Current Market Price</h2>
-              <p className="mt-1">
+            <div {...stylex.props(styles.mt3)}>
+              <h2 {...stylex.props(styles.h2)}>Current Market Price</h2>
+              <p {...stylex.props(styles.mt1)}>
                 This is the stock price at which the company is currently trading
               </p>
             </div>
           )}
           {(isoRevenue || rsuRevenue) && (
-            <div className="mt-3">
-              <h2 className="font-bold text-slate-50">Shares Outstanding</h2>
-              <p className="mt-1">
+            <div {...stylex.props(styles.mt3)}>
+              <h2 {...stylex.props(styles.h2)}>Shares Outstanding</h2>
+              <p {...stylex.props(styles.mt1)}>
                 The shares outstanding is the number of shares that the company has available in the
                 market.
               </p>
             </div>
           )}
-          <div className="mt-3">
+          <div {...stylex.props(styles.mt3)}>
             {isoCurrent && (
               <>
-                <h2 className="font-bold text-slate-50">Expected Growth over 4 years</h2>
-                <p className="mt-1">
+                <h2 {...stylex.props(styles.h2)}>Expected Growth over 4 years</h2>
+                <p {...stylex.props(styles.mt1)}>
                   Depending on the stage of the company expected growth can vary. Investors
                   typically expect a 10x return on what they put in.
                 </p>
@@ -208,8 +335,8 @@ export const CompModal = ({
             )}
             {rsuCurrent && (
               <>
-                <h2 className="font-bold text-slate-50">Expected Market Growth</h2>
-                <p className="mt-1">
+                <h2 {...stylex.props(styles.h2)}>Expected Market Growth</h2>
+                <p {...stylex.props(styles.mt1)}>
                   How much do you expect the stock price to change every year? Anualized growth over
                   the last 4 years is a good estimate.
                 </p>
@@ -217,13 +344,13 @@ export const CompModal = ({
             )}
             {(isoRevenue || rsuRevenue) && (
               <>
-                <h2 className="font-bold text-slate-50">Expected Company Revenue</h2>
-                <p className="mt-1">
+                <h2 {...stylex.props(styles.h2)}>Expected Company Revenue</h2>
+                <p {...stylex.props(styles.mt1)}>
                   How much do you expect the company to make every year? Divide this number by the
                   number of shares outstanding to get the revenue multiple.
                 </p>
-                <h2 className="mt-3 font-bold text-slate-50">Revenue Multiple</h2>
-                <p className="mt-1">
+                <h2 {...stylex.props(styles.mt3, styles.h2)}>Revenue Multiple</h2>
+                <p {...stylex.props(styles.mt1)}>
                   The revenue multiple is the ratio of the company’s revenue relative to its stock
                   price. You can use your competitors revenue multiple to estimate what your share
                   value would be.
@@ -234,12 +361,12 @@ export const CompModal = ({
         </div>
       )}
       {view === "estimate" && (
-        <div className="flex min-h-[360px] flex-col gap-3">
-          <div className="mt-3">
+        <div {...stylex.props(styles.panel)}>
+          <div {...stylex.props(styles.mt3)}>
             <p>Estimate reasonable numbers for your equity value by looking at competitors:</p>
-            <div className="mt-3">
+            <div {...stylex.props(styles.mt3)}>
               <FormField
-                className="rounded"
+                {...stylex.props(styles.rounded)}
                 label="Add your company or a competitor"
                 name="competitor"
                 placeholder="Google"
@@ -267,53 +394,53 @@ export const CompModal = ({
             </div>
           </div>
           {companiesLoading && !companiesData.length ? (
-            <div className="flex flex-1 items-center justify-center">
-              <h2 className="text-slate-700">Loading companies...</h2>
+            <div {...stylex.props(styles.centered)}>
+              <h2 {...stylex.props(styles.loading)}>Loading companies...</h2>
             </div>
           ) : companiesData.length ? (
-            <table className="relative min-w-full divide-y divide-slate-600 text-sm">
-              <thead className="font-semibold">
+            <table {...stylex.props(styles.table)}>
+              <thead {...stylex.props(styles.thead)}>
                 <tr>
-                  <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                  <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                     Company
                   </th>
                   {isoCurrent && (
-                    <th scope="col" className="table-cell px-3 py-3.5">
+                    <th scope="col" {...stylex.props(styles.cell)}>
                       Growth over last 4 years
                     </th>
                   )}
                   {rsuCurrent && (
                     <>
-                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                      <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                         Current Market Value
                       </th>
-                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                      <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                         Average Growth per year
                       </th>
                     </>
                   )}
                   {(isoRevenue || rsuRevenue) && (
                     <>
-                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                      <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                         Shares Outstanding
                       </th>
-                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                      <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                         Revenue
                       </th>
-                      <th scope="col" className="table-cell px-3 py-3.5 text-left">
+                      <th scope="col" {...stylex.props(styles.cell, styles.left)}>
                         Revenue Multiple
                       </th>
                     </>
                   )}
-                  <th scope="col" className="table-cell py-3.5 text-right" />
+                  <th scope="col" {...stylex.props(styles.cellNoX, styles.right)} />
                 </tr>
               </thead>
-              <tbody className="text-slate-500">
+              <tbody {...stylex.props(styles.tbody)}>
                 {companiesData.map((c: any) => (
                   <tr key={c.companyName}>
-                    <td className="table-cell px-3 py-3.5">{c.companyName}</td>
+                    <td {...stylex.props(styles.cell)}>{c.companyName}</td>
                     {isoCurrent && (
-                      <td className="table-cell px-3 py-3.5">
+                      <td {...stylex.props(styles.cell)}>
                         <NumericFormat
                           {...staticTextFormatProps}
                           allowNegative
@@ -324,10 +451,10 @@ export const CompModal = ({
                     )}
                     {rsuCurrent && (
                       <>
-                        <td className="table-cell px-3 py-3.5">
+                        <td {...stylex.props(styles.cell)}>
                           <NumericFormat {...currencyTextFormatProps} value={c.day200MovingAvg} />
                         </td>
-                        <td className="table-cell px-3 py-3.5">
+                        <td {...stylex.props(styles.cell)}>
                           <NumericFormat
                             {...staticTextFormatProps}
                             allowNegative
@@ -339,7 +466,7 @@ export const CompModal = ({
                     )}
                     {(isoRevenue || rsuRevenue) && (
                       <>
-                        <td className="table-cell px-3 py-3.5">
+                        <td {...stylex.props(styles.cell)}>
                           <NumericFormat
                             displayType="text"
                             thousandSeparator
@@ -347,10 +474,10 @@ export const CompModal = ({
                             value={c.sharesOutstanding}
                           />
                         </td>
-                        <td className="table-cell px-3 py-3.5">
+                        <td {...stylex.props(styles.cell)}>
                           <NumericFormat {...currencyTextFormatProps} value={c.revenue} />
                         </td>
-                        <td className="table-cell px-3 py-3.5">
+                        <td {...stylex.props(styles.cell)}>
                           <NumericFormat
                             displayType="text"
                             thousandSeparator
@@ -360,10 +487,10 @@ export const CompModal = ({
                         </td>
                       </>
                     )}
-                    <td className="table-cell py-3.5 text-right">
+                    <td {...stylex.props(styles.cellNoX, styles.right)}>
                       <button
                         type="button"
-                        className="inline-flex items-center rounded-md border border-slate-600 px-2 py-1 text-xs text-white transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
+                        {...stylex.props(styles.removeButton)}
                         onClick={() => handleUse(c)}
                       >
                         Use
@@ -374,8 +501,8 @@ export const CompModal = ({
               </tbody>
             </table>
           ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <h2 className="text-slate-700">Add a company above</h2>
+            <div {...stylex.props(styles.centered)}>
+              <h2 {...stylex.props(styles.loading)}>Add a company above</h2>
             </div>
           )}
         </div>

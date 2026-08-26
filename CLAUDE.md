@@ -80,7 +80,7 @@ Shared configs and utilities in `packages/`.
 ## Styling
 
 Apps are migrating from Tailwind to [StyleX](https://stylexjs.com). Migrated so far:
-`stonksville`, `kwadrants`, `covid-19`. (`vis-ml` was never on Tailwind and stays plain CSS.)
+`stonksville`, `kwadrants`, `covid-19`, `tc`. (`vis-ml` was never on Tailwind and stays plain CSS.)
 
 Rules for a migrated app:
 
@@ -112,6 +112,15 @@ Rules for a migrated app:
 - **Apps that overrode Tailwind's theme keep their own `tokens.stylex.js`.** covid-19
   replaced the whole palette (`--color-*: initial`), so only its spacing, radii and
   line-heights come from `@repo/tailwind-compat`.
+- **Check `index.html` too.** StyleX only compiles what the bundler transforms, so
+  utilities on `<body>` or `#root` there have to move into the stylesheet. Both `tc`
+  and `kwadrants` had some.
+- **Class names bound to something other than styling must survive**: react-joyride
+  step targets (`.title-section`), react-select's `classNamePrefix`, and D3 selectors.
+  Merge with ``className={`target ${stylex.props(s).className}`}`` when the element
+  also needs StyleX.
+- **`stylex.props().className` is `string | undefined`.** Libraries that take a class
+  string (Headless UI transitions, `NavLink`, visx) need `?? ""`.
 
 Known cosmetic drift from Tailwind, all verified harmless: lightningcss evaluates
 `calc(1.25/0.875)` to `1.42857` (costs 1/64px of line-height) and emits colors as

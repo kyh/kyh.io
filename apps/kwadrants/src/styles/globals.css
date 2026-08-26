@@ -2,6 +2,11 @@
 @import "@repo/tailwind-compat/forms.css";
 
 @layer base {
+  /* index.html is not compiled by StyleX; was min-h-screen on #root. */
+  #root {
+    min-height: 100vh;
+  }
+
   /* Tailwind v3 default border color, kept so elements without an explicit border
      color utility look unchanged. Was var(--color-gray-200) from Tailwind's theme. */
   *,
