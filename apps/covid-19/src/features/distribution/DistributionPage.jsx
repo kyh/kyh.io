@@ -1,3 +1,14 @@
+import * as stylex from "@stylexjs/stylex";
+import {
+  containers,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  mediaQueries,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import { colors } from "../../styles/tokens.stylex";
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "components/Icon";
 import { Loader } from "components/Loader";
@@ -10,6 +21,46 @@ import { useGetStatesDailyData } from "hooks/useGetStatesDailyData";
 import { formatDate, formatNumber } from "utils/formatter";
 
 const US_POPULATION = 400376491;
+
+const styles = stylex.create({
+  wrap: {
+    marginInline: "auto",
+    marginBottom: spacing[8],
+    width: "100%",
+    maxWidth: containers["4xl"],
+    paddingInline: spacing[4],
+  },
+  head: {
+    marginBottom: spacing[3],
+    alignItems: "center",
+    justifyContent: "space-between",
+    display: { default: null, [mediaQueries.sm]: "flex" },
+  },
+  eyebrow: {
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    fontWeight: fontWeights.semibold,
+    color: colors.gray400,
+    textTransform: "uppercase",
+  },
+  title: {
+    display: "flex",
+    alignItems: "center",
+    fontSize: fontSizes["2xl"],
+    lineHeight: fontSizeLineHeights["2xl"],
+    fontWeight: fontWeights.bold,
+  },
+  playButton: { marginRight: spacing[2] },
+  slider: { width: spacing[64] },
+  sliderLabels: { display: "flex", justifyContent: "space-between" },
+  sliderLabel: { fontSize: fontSizes.xs, lineHeight: fontSizeLineHeights.xs },
+  grid3: {
+    marginBottom: spacing[4],
+    display: { default: null, [mediaQueries.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(3, minmax(0, 1fr))" },
+    gap: spacing[4],
+  },
+});
 
 export const DistributionPage = () => {
   const { raw, isLoading } = useGetStatesDailyData();
@@ -73,17 +124,15 @@ export const DistributionPage = () => {
 
   return (
     <PageContainer>
-      <div className="mx-auto mb-8 w-full max-w-4xl px-4">
-        <div className="mb-3 items-center justify-between sm:flex">
+      <div {...stylex.props(styles.wrap)}>
+        <div {...stylex.props(styles.head)}>
           <div>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase">
-              The Spread of COVID-19 in the US
-            </h4>
-            <h1 className="flex items-center text-2xl font-bold">
+            <h4 {...stylex.props(styles.eyebrow)}>The Spread of COVID-19 in the US</h4>
+            <h1 {...stylex.props(styles.title)}>
               <button
                 type="button"
                 disabled={dates.length === 0}
-                className="mr-2"
+                {...stylex.props(styles.playButton)}
                 onClick={() => togglePlaying()}
                 role="switch"
                 aria-label={isPlaying ? "Stop animation" : "Start animation"}
@@ -105,7 +154,7 @@ export const DistributionPage = () => {
             <div>
               <input
                 aria-label="Displayed date"
-                className="w-64"
+                {...stylex.props(styles.slider)}
                 onChange={(event) => setSliderIndex(parseInt(event.target.value, 10))}
                 min={0}
                 max={dates.length - 1}
@@ -113,25 +162,26 @@ export const DistributionPage = () => {
                 type="range"
               />
             </div>
-            <div className="flex justify-between">
+            <div {...stylex.props(styles.sliderLabels)}>
               {isLoading ? (
                 <Loader width="250" height="18">
                   <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
                 </Loader>
               ) : (
                 <>
-                  <span className="text-xs">{formatDate(dates[0])}</span>
-                  <span className="text-xs">{formatDate(dates[dates.length - 1])}</span>
+                  <span {...stylex.props(styles.sliderLabel)}>{formatDate(dates[0])}</span>
+                  <span {...stylex.props(styles.sliderLabel)}>
+                    {formatDate(dates[dates.length - 1])}
+                  </span>
                 </>
               )}
             </div>
           </div>
         </div>
-        <div className="mb-4 grid-cols-3 gap-4 sm:grid">
+        <div {...stylex.props(styles.grid3)}>
           <StatCard
             label="Total Tests Conducted"
-            pointClassname="bg-gray-500"
-            pointShadeClassname="bg-gray-800"
+            tone="gray"
             value={formatNumber(sumTotalTestResults)}
             suffix={`(${((sumTotalTestResults / US_POPULATION) * 100).toFixed(
               2,
@@ -140,16 +190,14 @@ export const DistributionPage = () => {
           />
           <StatCard
             label="Positive Tests"
-            pointClassname="bg-teal-500"
-            pointShadeClassname="bg-teal-800"
+            tone="teal"
             value={formatNumber(sumPositive)}
             suffix={`(${((sumPositive / sumTotalTestResults) * 100).toFixed(2)}% of tests)`}
             isLoading={isLoading}
           />
           <StatCard
             label="Negative Tests"
-            pointClassname="bg-green-500"
-            pointShadeClassname="bg-green-800"
+            tone="green"
             value={formatNumber(sumNegative)}
             suffix={`(${((sumNegative / sumTotalTestResults) * 100).toFixed(2)}% of tests)`}
             isLoading={isLoading}

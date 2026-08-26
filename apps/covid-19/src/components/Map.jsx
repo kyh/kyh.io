@@ -1,4 +1,12 @@
 import React, { useMemo, useState } from "react";
+import * as stylex from "@stylexjs/stylex";
+import {
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
 import { max } from "d3-array";
 import { nest } from "d3-collection";
 import { format } from "d3-format";
@@ -8,6 +16,47 @@ import StatesWithPopulation from "data/states.json";
 import { formatDate, formatNumber, parseDate } from "utils/formatter";
 
 import { ChoroLegend } from "./ChoroLegend";
+
+import { colors as palette } from "../styles/tokens.stylex";
+
+const styles = stylex.create({
+  root: { position: "relative" },
+  mapWrap: { marginBottom: spacing[4] },
+  note: {
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: palette.gray500,
+  },
+  tooltip: {
+    pointerEvents: "none",
+    position: "absolute",
+    borderRadius: radii.md,
+    backgroundColor: palette.gray800,
+    padding: spacing[2],
+    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+  },
+  table: { tableLayout: "auto", textAlign: "left" },
+  name: {
+    paddingInline: spacing[2],
+    fontSize: fontSizes.lg,
+    lineHeight: fontSizeLineHeights.lg,
+    fontWeight: fontWeights.bold,
+  },
+  date: {
+    paddingInline: spacing[2],
+    textAlign: "right",
+    verticalAlign: "middle",
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    fontWeight: fontWeights.normal,
+  },
+  row: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    fontWeight: fontWeights.normal,
+  },
+  cell: { paddingInline: spacing[2], paddingBlock: spacing[1] },
+});
 
 const colorSchemes = {
   gray: [
@@ -153,7 +202,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
   const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
 
   return (
-    <div className="relative">
+    <div {...stylex.props(styles.root)}>
       <div className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(" ")}>
         {useChoropleth ? (
           <ChoroLegend
@@ -169,7 +218,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
         )}
       </div>
 
-      <div className="mb-4">
+      <div {...stylex.props(styles.mapWrap)}>
         <svg
           width={mapWidth}
           height={mapHeight}
@@ -196,7 +245,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
           <Tooltip hoveredState={hoveredState} getValue={getValue} currentDate={currentDate} />
         )}
       </div>
-      <span className="text-xs text-gray-500">* Per one million people</span>
+      <span {...stylex.props(styles.note)}>* Per one million people</span>
     </div>
   );
 };
@@ -339,40 +388,35 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
   const death = getValue(d, "death");
   const deathNorm = getValue(d, "death", true);
   return (
-    <div
-      className="bg-opacity-75 pointer-events-none absolute rounded-md bg-gray-800 p-2 shadow-sm"
-      style={{ top: y, left: x }}
-    >
-      <table className="table-auto text-left">
+    <div {...stylex.props(styles.tooltip)} style={{ top: y, left: x }}>
+      <table {...stylex.props(styles.table)}>
         <thead>
           <tr>
-            <th className="px-2 text-lg font-bold">{d.properties.NAME}</th>
+            <th {...stylex.props(styles.name)}>{d.properties.NAME}</th>
             <th />
-            <th className="px-2 text-right align-middle text-xs font-normal">
-              ({formatDate(parseDate(currentDate))})
-            </th>
+            <th {...stylex.props(styles.date)}>({formatDate(parseDate(currentDate))})</th>
           </tr>
-          <tr className="text-sm font-normal">
-            <th className="px-2 py-1">Metric</th>
-            <th className="px-2 py-1">Total</th>
-            <th className="px-2 py-1">Per capita*</th>
+          <tr {...stylex.props(styles.row)}>
+            <th {...stylex.props(styles.cell)}>Metric</th>
+            <th {...stylex.props(styles.cell)}>Total</th>
+            <th {...stylex.props(styles.cell)}>Per capita*</th>
           </tr>
         </thead>
-        <tbody className="text-sm font-normal">
+        <tbody {...stylex.props(styles.row)}>
           <tr>
-            <th className="px-2 py-1">Tests</th>
-            <td className="px-2 py-1">{formatNumber(totalTestResults)}</td>
-            <td className="px-2 py-1">{formatNumber(totalTestResultsNorm)}</td>
+            <th {...stylex.props(styles.cell)}>Tests</th>
+            <td {...stylex.props(styles.cell)}>{formatNumber(totalTestResults)}</td>
+            <td {...stylex.props(styles.cell)}>{formatNumber(totalTestResultsNorm)}</td>
           </tr>
           <tr>
-            <th className="px-2 py-1">Positives</th>
-            <td className="px-2 py-1">{formatNumber(positive)}</td>
-            <td className="px-2 py-1">{formatNumber(positiveNorm)}</td>
+            <th {...stylex.props(styles.cell)}>Positives</th>
+            <td {...stylex.props(styles.cell)}>{formatNumber(positive)}</td>
+            <td {...stylex.props(styles.cell)}>{formatNumber(positiveNorm)}</td>
           </tr>
           <tr>
-            <th className="px-2 py-1">Deaths</th>
-            <td className="px-2 py-1">{formatNumber(death)}</td>
-            <td className="px-2 py-1">{formatNumber(deathNorm)}</td>
+            <th {...stylex.props(styles.cell)}>Deaths</th>
+            <td {...stylex.props(styles.cell)}>{formatNumber(death)}</td>
+            <td {...stylex.props(styles.cell)}>{formatNumber(deathNorm)}</td>
           </tr>
         </tbody>
       </table>

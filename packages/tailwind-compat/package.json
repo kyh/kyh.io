@@ -5,14 +5,19 @@
   "description": "Frozen Tailwind v4.3.3 scale and reset for apps migrated to StyleX",
   "license": "MIT",
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     "./tokens.stylex": {
       "types": "./tokens.stylex.d.ts",
       "default": "./tokens.stylex.js"
     },
     "./preflight.css": "./preflight.css",
-    "./forms.css": "./forms.css"
+    "./forms.css": "./forms.css",
+    "./media.stylex": {
+      "default": "./media.stylex.js"
+    }
   },
   "peerDependencies": {
     "@stylexjs/stylex": "*"

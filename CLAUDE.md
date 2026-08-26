@@ -80,7 +80,7 @@ Shared configs and utilities in `packages/`.
 ## Styling
 
 Apps are migrating from Tailwind to [StyleX](https://stylexjs.com). Migrated so far:
-`stonksville`, `kwadrants`. (`vis-ml` was never on Tailwind and stays plain CSS.)
+`stonksville`, `kwadrants`, `covid-19`. (`vis-ml` was never on Tailwind and stays plain CSS.)
 
 Rules for a migrated app:
 
@@ -102,6 +102,16 @@ Rules for a migrated app:
   appends its CSS to the emitted asset — no `@stylex;` directive, unlike PostCSS.
 - **Clear `.next`/`dist` after changing StyleX or package wiring.** Stale caches
   surface as bogus "could not resolve the theme file" errors.
+- **Never stack overlapping `min-width` queries on one property.** StyleX does not
+  order media queries by width, so `{ [up.sm]: 6, [up.lg]: 8 }` can resolve to the
+  `sm` value on a wide screen — whichever atomic class lands later wins. Use the
+  mutually exclusive ranges in `@repo/tailwind-compat/media.stylex` (`only.smToLg`
+  then `up.lg`). This silently broke `sm:px-6 lg:px-8` in covid-19.
+- **StyleX only resolves constants through named imports.** `import * as media` then
+  `media.up.lg` fails with "Referenced constant is not defined"; import the binding.
+- **Apps that overrode Tailwind's theme keep their own `tokens.stylex.js`.** covid-19
+  replaced the whole palette (`--color-*: initial`), so only its spacing, radii and
+  line-heights come from `@repo/tailwind-compat`.
 
 Known cosmetic drift from Tailwind, all verified harmless: lightningcss evaluates
 `calc(1.25/0.875)` to `1.42857` (costs 1/64px of line-height) and emits colors as

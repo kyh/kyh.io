@@ -1,3 +1,10 @@
+import * as stylex from "@stylexjs/stylex";
+import {
+  fontSizeLineHeights,
+  fontSizes,
+  mediaQueries,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
 import { Card } from "components/Card";
 import { LineChart } from "components/LineChart";
 import { StatCard, StatRow } from "components/StatCard";
@@ -7,6 +14,39 @@ import { stateAbbrevToFullname } from "utils/map-utils";
 import { growthRate } from "utils/stats";
 
 import { DataFilter, SELECTIONS } from "./DataFilter";
+
+const styles = stylex.create({
+  section: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    paddingInline: { default: spacing[4], [mediaQueries.sm]: 0 },
+    // was `.featured-content` in TrendPage.css
+    height: { default: null, [mediaQueries.sm]: "var(--trend-page-height)" },
+    overflow: { default: null, [mediaQueries.sm]: "hidden" },
+  },
+  header: {
+    marginBottom: spacing[4],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  title: { fontSize: fontSizes.lg, lineHeight: fontSizeLineHeights.lg },
+  grid4: {
+    marginBottom: spacing[4],
+    display: { default: null, [mediaQueries.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(4, minmax(0, 1fr))" },
+    gap: spacing[4],
+  },
+  grid2: {
+    marginBottom: spacing[4],
+    display: { default: null, [mediaQueries.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(2, minmax(0, 1fr))" },
+    gap: spacing[4],
+  },
+  mb1: { marginBottom: spacing[1] },
+  flex1: { flex: 1 },
+});
 
 const selectionToLabels = {
   [SELECTIONS.time]: {
@@ -79,46 +119,44 @@ export const Featured = ({
   const comparator = dailyData[dailyData.length - label.days];
 
   return (
-    <section className="featured-content flex flex-1 flex-col px-4 sm:px-0">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg">{stateAbbrevToFullname[selectedState] || "United States"}</h1>
+    <section {...stylex.props(styles.section)}>
+      <div {...stylex.props(styles.header)}>
+        <h1 {...stylex.props(styles.title)}>
+          {stateAbbrevToFullname[selectedState] || "United States"}
+        </h1>
         <DataFilter selected={selectedFilter} onSelectFilter={onSelectFilter} />
       </div>
-      <div className="mb-4 grid-cols-4 gap-4 sm:grid">
+      <div {...stylex.props(styles.grid4)}>
         <StatCard
           label="Total Cases"
-          pointClassname="bg-teal-500"
-          pointShadeClassname="bg-teal-800"
+          tone="teal"
           value={today && formatNumber(today.positive)}
           isLoading={isLoading}
         />
         <StatCard
           label="First Case"
-          pointClassname="bg-yellow-500"
-          pointShadeClassname="bg-yellow-800"
+          tone="yellow"
           value={differenceInDays(new Date(), firstDay && firstDay.date)}
           suffix="days ago"
           isLoading={isLoading}
         />
         <StatCard
           label="Recovered"
-          pointClassname="bg-purple-500"
-          pointShadeClassname="bg-purple-800"
+          tone="purple"
           value={today && today.recovered ? formatNumber(today.recovered) : "Unknown"}
           isLoading={isLoading}
         />
         <StatCard
           label="Deaths"
-          pointClassname="bg-pink-500"
-          pointShadeClassname="bg-pink-800"
+          tone="pink"
           value={today && today.death ? formatNumber(today.death) : "Unknown"}
           isLoading={isLoading}
         />
       </div>
-      <div className="mb-4 grid-cols-2 gap-4 sm:grid">
+      <div {...stylex.props(styles.grid2)}>
         <Card>
           <StatRow
-            className="mb-1"
+            style={styles.mb1}
             label={label.positiveChange}
             value={
               today && `${growthRate(comparator[label.positiveKey], today[label.positiveKey])}%`
@@ -127,7 +165,7 @@ export const Featured = ({
             lowercase
           />
           <StatRow
-            className="mb-1"
+            style={styles.mb1}
             label={label.positiveTotal}
             value={today && formatNumber(today[label.positiveKey])}
             isLoading={isLoading}
@@ -142,14 +180,14 @@ export const Featured = ({
         </Card>
         <Card>
           <StatRow
-            className="mb-1"
+            style={styles.mb1}
             label={label.deathChange}
             value={today && `${growthRate(comparator[label.deathKey], today[label.deathKey])}%`}
             isLoading={isLoading}
             lowercase
           />
           <StatRow
-            className="mb-1"
+            style={styles.mb1}
             label={label.deathTotal}
             value={today && formatNumber(today[label.deathKey])}
             isLoading={isLoading}
@@ -163,7 +201,7 @@ export const Featured = ({
           />
         </Card>
       </div>
-      <Card className="flex-1">
+      <Card style={styles.flex1}>
         <LineChart data={dailyData} dataKey={label.positiveKey} />
       </Card>
     </section>
