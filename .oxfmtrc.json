@@ -11,7 +11,8 @@
     ".wxt",
     ".output",
     "out",
-    "packages/oxlint/anti-slop"
+    "packages/oxlint/anti-slop",
+    "packages/stylex-tokens"
   ],
   "experimentalSortPackageJson": {}
 }

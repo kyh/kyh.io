@@ -21,7 +21,6 @@ catalog:
   react: ^19.2.8
   react-dom: ^19.2.8
   react-router-dom: ^7.18.2
-  tailwind-stylex: 0.1.1
   tailwindcss: ^4.3.3
   tsx: ^4.23.12
   typescript: ^7.0.2

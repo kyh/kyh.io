@@ -10,7 +10,7 @@ import {
   fontWeights,
   radii,
   spacing,
-} from "tailwind-stylex/tokens.stylex";
+} from "@repo/stylex-tokens/tokens.stylex";
 
 import type { LivelinePoint } from "@/lib/liveline/types";
 import { Liveline } from "@/lib/liveline/Liveline";
@@ -34,7 +34,6 @@ import {
   updateBlocks,
 } from "@/lib/game-state";
 
-/** Visible time window for Liveline (seconds) */
 const styles = stylex.create({
   container: {
     position: "relative",
@@ -131,6 +130,7 @@ const styles = stylex.create({
   },
 });
 
+/** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
 /** Future zone as fraction of total width */
 const FUTURE_RATIO_MOBILE = 0.5;

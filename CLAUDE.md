@@ -76,3 +76,28 @@ Other project apps.
 ## Packages
 
 Shared configs and utilities in `packages/`.
+
+## Styling
+
+Apps are migrating from Tailwind to [StyleX](https://stylexjs.com). Migrated so far:
+`stonksville`. (`vis-ml` was never on Tailwind and stays plain CSS.)
+
+Rules for a migrated app:
+
+- **StyleX owns what it can express**; hand-written CSS stays CSS. StyleX has no
+  descendant selectors by design, so vendor overrides (`react-tweet`, `react-select`)
+  and anything targeting DOM we don't render must remain in the stylesheet.
+- **Tailwind's preflight is ported verbatim** into the app's stylesheet. Deleting the
+  Tailwind import deletes the reset with it, and every browser default comes back.
+- **Scale values come from `@repo/stylex-tokens`**, vendored from Tailwind 4.3.3 so
+  numbers stay identical. Never inline a magic `0.75rem` where `spacing[3]` exists.
+- **No `cn`/`clsx`/`tw-merge`.** `stylex.props(a, b)` merges last-wins by property.
+- **Next apps need `.babelrc`, not `babel.config.js`** — Next's Babel loader rejects
+  `.cjs`/`.mjs`, and these packages are `type: module`. Because it must be JSON, the
+  StyleX options are duplicated into `postcss.config.mjs`; keep the two in sync.
+- **Wrap `:hover` in `@media (hover: hover)`** to match what Tailwind emitted, or
+  touch devices get sticky hover states.
+
+Known cosmetic drift from Tailwind, both verified harmless: lightningcss evaluates
+`calc(1.25/0.875)` to `1.42857` (costs 1/64px of line-height) and renders `color-mix`
+as `lab()` rather than `oklab()` (byte-identical sRGB).

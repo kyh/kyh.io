@@ -57,9 +57,6 @@ catalogs:
     react-router-dom:
       specifier: ^7.18.2
       version: 7.18.2
-    tailwind-stylex:
-      specifier: 0.1.1
-      version: 0.1.1
     tailwindcss:
       specifier: ^4.3.3
       version: 4.3.3
@@ -430,6 +427,9 @@ importers:
 
   apps/stonksville:
     dependencies:
+      '@repo/stylex-tokens':
+        specifier: workspace:*
+        version: link:../../packages/stylex-tokens
       '@stylexjs/stylex':
         specifier: 'catalog:'
         version: 0.19.0
@@ -448,9 +448,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
-      tailwind-stylex:
-        specifier: 'catalog:'
-        version: 0.1.1(@stylexjs/stylex@0.19.0)
     devDependencies:
       '@kyh/tsconfig':
         specifier: workspace:^
@@ -638,6 +635,12 @@ importers:
       skills:
         specifier: ^1.5.23
         version: 1.5.23
+
+  packages/stylex-tokens:
+    dependencies:
+      '@stylexjs/stylex':
+        specifier: '*'
+        version: 0.19.0
 
   packages/typescript: {}
 
@@ -5468,12 +5471,6 @@ packages:
   tabbable@6.5.0:
     resolution: {integrity: sha512-wieBHXygIm7OyQOu5hQlkk62/WyCFYGlWg7L6/ZCUZwx0o398Zkn4pVmMyfYhfMG8kGrj/Krt8eIk6UKC6VzwA==}
 
-  tailwind-stylex@0.1.1:
-    resolution: {integrity: sha512-BNzbag4sUQ+d212HkAebjVYpdFGajfnBb4HnC/NwtCZnkqw0pfUbFFOee1NcsS2m9ZCpyK6qvHlv4D6ydePwJw==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      '@stylexjs/stylex': '>=0.15.0'
-
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
 
@@ -10229,10 +10226,6 @@ snapshots:
     optional: true
 
   tabbable@6.5.0: {}
-
-  tailwind-stylex@0.1.1(@stylexjs/stylex@0.19.0):
-    dependencies:
-      '@stylexjs/stylex': 0.19.0
 
   tailwindcss@4.3.3: {}
 
