@@ -12,7 +12,7 @@
     ".output",
     "out",
     "packages/oxlint/anti-slop",
-    "packages/stylex-tokens"
+    "packages/tailwind-compat"
   ],
   "experimentalSortPackageJson": {}
 }

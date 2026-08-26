@@ -15,6 +15,15 @@ import {
   Tag,
 } from "lucide-react";
 import { animate, motion, useMotionValue } from "motion/react";
+import * as stylex from "@stylexjs/stylex";
+import {
+  colors,
+  defaults,
+  fontSizeLineHeights,
+  fontSizes,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
 
 import type { GridType, LayoutType, QuadrantColors } from "@/lib/types";
 import { DEFAULT_TAG_COLOR, STORAGE_KEY, TAG_COLORS } from "@/lib/constants";
@@ -32,6 +41,215 @@ type IslandMode =
   | "layout";
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 type PanelSize = { width: number; height: number };
+
+const SHADOW_LG = "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)";
+const TRANSITION_COLORS =
+  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke";
+
+const styles = stylex.create({
+  column: { display: "flex", flexDirection: "column" },
+  gap1: { gap: spacing[1] },
+  gap2: { gap: spacing[2] },
+
+  tagInput: {
+    width: "100%",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    paddingInline: spacing[2],
+    paddingBlock: spacing[1.5],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outlineStyle: { default: null, ":focus": "none" },
+    boxShadow: { default: null, ":focus": `0 0 0 2px ${colors.blue500}` },
+  },
+  tagInputDark: {
+    borderColor: colors.gray600,
+    backgroundColor: colors.gray800,
+    color: colors.white,
+    "::placeholder": { color: colors.gray400 },
+  },
+  tagInputLight: {
+    borderColor: colors.gray200,
+    backgroundColor: colors.white,
+    color: colors.gray900,
+  },
+
+  swatchRow: { display: "flex", flexWrap: "wrap", gap: spacing[1] },
+  swatch: {
+    height: spacing[5],
+    width: spacing[5],
+    borderRadius: radii.full,
+    transitionProperty: "transform, translate, scale, rotate",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  swatchSelected: {
+    scale: "110% 110%",
+    boxShadow: `0 0 0 1px ${colors.white}, 0 0 0 3px ${colors.gray400}`,
+  },
+
+  primaryButton: {
+    width: "100%",
+    borderRadius: radii.md,
+    paddingInline: spacing[3],
+    paddingBlock: spacing[1.5],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    transitionProperty: TRANSITION_COLORS,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+    opacity: { default: null, ":disabled": 0.5 },
+  },
+  primaryButtonDark: {
+    backgroundColor: {
+      default: colors.white,
+      "@media (hover: hover)": { default: colors.white, ":hover": colors.gray100 },
+    },
+    color: colors.gray900,
+  },
+  primaryButtonLight: {
+    backgroundColor: {
+      default: colors.gray900,
+      "@media (hover: hover)": { default: colors.gray900, ":hover": colors.gray800 },
+    },
+    color: colors.white,
+  },
+
+  hidden: { display: "none" },
+
+  dashedButton: {
+    width: "100%",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    paddingInline: spacing[3],
+    paddingBlock: spacing[1.5],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    transitionProperty: TRANSITION_COLORS,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  dashedButtonDark: {
+    borderColor: colors.gray600,
+    color: colors.gray300,
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+    },
+  },
+  dashedButtonLight: {
+    borderColor: colors.gray300,
+    color: colors.gray700,
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray50 },
+    },
+  },
+
+  colorRow: { display: "flex", alignItems: "center", gap: spacing[2] },
+  colorInput: {
+    height: spacing[6],
+    width: spacing[6],
+    cursor: "pointer",
+    borderRadius: radii.sm,
+    borderWidth: 0,
+  },
+  colorLabel: { fontSize: fontSizes.xs, lineHeight: fontSizeLineHeights.xs },
+  colorLabelDark: { color: colors.gray400 },
+  colorLabelLight: { color: colors.gray600 },
+
+  dropGhost: {
+    pointerEvents: "none",
+    position: "fixed",
+    zIndex: 40,
+    borderRadius: radii.xl,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: colors.gray400,
+    backgroundColor: colors.gray300,
+  },
+
+  panel: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    zIndex: 50,
+    minWidth: "140px",
+    cursor: { default: "grab", ":active": "grabbing" },
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderStyle: "solid",
+    padding: spacing[2],
+    boxShadow: SHADOW_LG,
+  },
+  panelDark: { borderColor: colors.gray700, backgroundColor: colors.gray800 },
+  panelLight: { borderColor: colors.gray200, backgroundColor: colors.white },
+
+  panelHeader: {
+    marginBottom: spacing[1],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBlock: spacing[1],
+  },
+  panelHeaderDark: { color: colors.gray500 },
+  panelHeaderLight: { color: colors.gray400 },
+  headerLeft: { display: "flex", alignItems: "center", gap: spacing[1] },
+
+  iconButton: {
+    borderRadius: radii.sm,
+    padding: spacing[1],
+    transitionProperty: TRANSITION_COLORS,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  iconButtonDark: {
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+    },
+  },
+  iconButtonLight: {
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray100 },
+    },
+  },
+
+  menuButton: {
+    display: "flex",
+    width: "100%",
+    alignItems: "center",
+    gap: spacing[2],
+    borderRadius: radii.lg,
+    paddingInline: spacing[3],
+    paddingBlock: spacing[2],
+    textAlign: "left",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    transitionProperty: TRANSITION_COLORS,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  menuButtonDark: {
+    color: colors.gray300,
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+    },
+  },
+  menuButtonLight: {
+    color: colors.gray700,
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": colors.gray100 },
+    },
+  },
+  selectedDark: { backgroundColor: colors.white, color: colors.gray900 },
+  selectedLight: { backgroundColor: colors.gray900, color: colors.white },
+});
 
 const PANEL_POSITION_KEY = "kwadrant-panel-position";
 const MARGIN = 16;
@@ -252,7 +470,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     switch (mode) {
       case "add-menu":
         return (
-          <div className="flex flex-col gap-1">
+          <div {...stylex.props(styles.column, styles.gap1)}>
             <MenuButton
               onClick={() => setMode("adding-tag")}
               icon={<Tag size={18} />}
@@ -273,7 +491,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "adding-tag":
         return (
-          <div className="flex flex-col gap-2">
+          <div {...stylex.props(styles.column, styles.gap2)}>
             <input
               aria-label="Tag name"
               ref={tagInputRef}
@@ -283,13 +501,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
               placeholder="Tag name..."
               autoFocus
-              className={`w-full rounded-md border px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                isDark
-                  ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
-                  : "border-gray-200 bg-white text-gray-900"
-              }`}
+              {...stylex.props(
+                styles.tagInput,
+                isDark ? styles.tagInputDark : styles.tagInputLight,
+              )}
             />
-            <div className="flex flex-wrap gap-1">
+            <div {...stylex.props(styles.swatchRow)}>
               {TAG_COLORS.map((c) => (
                 <button
                   type="button"
@@ -297,9 +514,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                   onClick={() => setTagColor(c)}
                   aria-label={`Use ${c} tag color`}
                   aria-pressed={tagColor === c}
-                  className={`h-5 w-5 rounded-full transition-transform ${
-                    tagColor === c ? "scale-110 ring-2 ring-gray-400 ring-offset-1" : ""
-                  }`}
+                  {...stylex.props(styles.swatch, tagColor === c && styles.swatchSelected)}
                   style={{ backgroundColor: c }}
                 />
               ))}
@@ -308,11 +523,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               type="button"
               onClick={handleAddTag}
               disabled={!tagText.trim()}
-              className={`w-full rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
-                isDark
-                  ? "bg-white text-gray-900 hover:bg-gray-100"
-                  : "bg-gray-900 text-white hover:bg-gray-800"
-              }`}
+              {...stylex.props(
+                styles.primaryButton,
+                isDark ? styles.primaryButtonDark : styles.primaryButtonLight,
+              )}
             >
               Add Tag
             </button>
@@ -321,23 +535,22 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "adding-image":
         return (
-          <div className="flex flex-col gap-2">
+          <div {...stylex.props(styles.column, styles.gap2)}>
             <input
               aria-label="Upload image"
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="hidden"
+              {...stylex.props(styles.hidden)}
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`w-full rounded-md border border-dashed px-3 py-1.5 text-sm transition-colors ${
-                isDark
-                  ? "border-gray-600 text-gray-300 hover:bg-gray-700"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+              {...stylex.props(
+                styles.dashedButton,
+                isDark ? styles.dashedButtonDark : styles.dashedButtonLight,
+              )}
             >
               Choose image...
             </button>
@@ -346,16 +559,21 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "colors":
         return (
-          <div className="flex flex-col gap-2">
+          <div {...stylex.props(styles.column, styles.gap2)}>
             {QUADRANT_OPTIONS.map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-2">
+              <label key={key} {...stylex.props(styles.colorRow)}>
                 <input
                   type="color"
                   value={state.quadrantColors[key]}
                   onChange={(e) => setQuadrantColor(key, e.target.value)}
-                  className="h-6 w-6 cursor-pointer rounded border-0"
+                  {...stylex.props(styles.colorInput)}
                 />
-                <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                <span
+                  {...stylex.props(
+                    styles.colorLabel,
+                    isDark ? styles.colorLabelDark : styles.colorLabelLight,
+                  )}
+                >
                   {label}
                 </span>
               </label>
@@ -365,7 +583,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "export":
         return (
-          <div className="flex flex-col gap-1">
+          <div {...stylex.props(styles.column, styles.gap1)}>
             <MenuButton
               onClick={() => handleExport("png")}
               icon={<Download size={18} />}
@@ -383,7 +601,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "grid":
         return (
-          <div className="flex flex-col gap-1">
+          <div {...stylex.props(styles.column, styles.gap1)}>
             {GRID_TYPES.map((type) => (
               <SelectButton
                 key={type}
@@ -399,7 +617,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       case "layout":
         return (
-          <div className="flex flex-col gap-1">
+          <div {...stylex.props(styles.column, styles.gap1)}>
             {getAllLayouts().map((layout) => {
               const layoutType = layout.id;
               if (!isLayoutType(layoutType)) return null;
@@ -419,7 +637,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
       default:
         return (
-          <div className="flex flex-col gap-1">
+          <div {...stylex.props(styles.column, styles.gap1)}>
             <MenuButton
               onClick={() => setMode("add-menu")}
               icon={<Plus size={18} />}
@@ -479,7 +697,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 scale: isHovered ? 1 : 0.95,
               }}
               transition={{ duration: 0.15 }}
-              className="pointer-events-none fixed z-40 rounded-xl border-2 border-dashed border-gray-400 bg-gray-300"
+              {...stylex.props(styles.dropGhost)}
               style={{
                 left: snapPos.x,
                 top: snapPos.y,
@@ -503,21 +721,25 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           scale: 1.03,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
         }}
-        className={`fixed top-0 left-0 z-50 min-w-[140px] cursor-grab rounded-xl border p-2 shadow-lg active:cursor-grabbing ${
-          isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-        }`}
+        {...stylex.props(styles.panel, isDark ? styles.panelDark : styles.panelLight)}
       >
         <div
-          className={`mb-1 flex items-center justify-between py-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+          {...stylex.props(
+            styles.panelHeader,
+            isDark ? styles.panelHeaderDark : styles.panelHeaderLight,
+          )}
         >
-          <div className="flex items-center gap-1">
+          <div {...stylex.props(styles.headerLeft)}>
             <GripVertical size={16} />
             {backTarget && (
               <button
                 type="button"
                 onClick={() => setMode(backTarget)}
                 aria-label="Back"
-                className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                {...stylex.props(
+                  styles.iconButton,
+                  isDark ? styles.iconButtonDark : styles.iconButtonLight,
+                )}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -527,7 +749,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             type="button"
             onClick={() => setTheme(isDark ? "light" : "dark")}
             aria-label={isDark ? "Use light theme" : "Use dark theme"}
-            className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+            {...stylex.props(
+              styles.iconButton,
+              isDark ? styles.iconButtonDark : styles.iconButtonLight,
+            )}
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -552,9 +777,7 @@ const MenuButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-    }`}
+    {...stylex.props(styles.menuButton, isDark ? styles.menuButtonDark : styles.menuButtonLight)}
   >
     {icon}
     {label}
@@ -575,15 +798,11 @@ const SelectButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-      selected
-        ? isDark
-          ? "bg-white text-gray-900"
-          : "bg-gray-900 text-white"
-        : isDark
-          ? "text-gray-300 hover:bg-gray-700"
-          : "text-gray-700 hover:bg-gray-100"
-    }`}
+    {...stylex.props(
+      styles.menuButton,
+      isDark ? styles.menuButtonDark : styles.menuButtonLight,
+      selected && (isDark ? styles.selectedDark : styles.selectedLight),
+    )}
   >
     {children}
   </button>

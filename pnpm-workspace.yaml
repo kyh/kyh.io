@@ -23,6 +23,7 @@ catalog:
   react-router-dom: ^7.18.2
   tailwindcss: ^4.3.3
   tsx: ^4.23.12
+  unplugin: ^2.3.11
   typescript: ^7.0.2
   vite: ^8.2.2
 

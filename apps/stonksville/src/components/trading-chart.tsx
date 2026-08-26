@@ -10,7 +10,7 @@ import {
   fontWeights,
   radii,
   spacing,
-} from "@repo/stylex-tokens/tokens.stylex";
+} from "@repo/tailwind-compat/tokens.stylex";
 
 import type { LivelinePoint } from "@/lib/liveline/types";
 import { Liveline } from "@/lib/liveline/Liveline";

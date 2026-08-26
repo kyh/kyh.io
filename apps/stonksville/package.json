@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/stylex-tokens": "workspace:*",
+    "@repo/tailwind-compat": "workspace:*",
     "@stylexjs/stylex": "catalog:",
     "balloons-js": "^0.0.3",
     "motion": "^13.1.1",

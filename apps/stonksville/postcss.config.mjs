@@ -12,7 +12,7 @@ const stylexOptions = {
 export default {
   plugins: {
     "@stylexjs/postcss-plugin": {
-      include: ["src/**/*.{js,jsx,ts,tsx}", "../../packages/stylex-tokens/tokens.stylex.js"],
+      include: ["src/**/*.{js,jsx,ts,tsx}", "../../packages/tailwind-compat/tokens.stylex.js"],
       babelConfig: {
         babelrc: false,
         parserOpts: { plugins: ["typescript", "jsx"] },
