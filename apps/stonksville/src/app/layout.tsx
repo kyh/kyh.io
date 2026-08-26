@@ -50,8 +50,8 @@ type LayoutProps = {
 
 const RootLayout = (props: LayoutProps) => {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-background text-foreground font-mono antialiased">{props.children}</body>
+    <html lang="en">
+      <body>{props.children}</body>
     </html>
   );
 };

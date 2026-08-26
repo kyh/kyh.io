@@ -4,6 +4,10 @@ packages:
 
 catalog:
   "@base-ui/react": ^1.7.0
+  "@stylexjs/babel-plugin": ^0.19.0
+  "@stylexjs/postcss-plugin": ^0.19.0
+  "@stylexjs/stylex": ^0.19.0
+  "@stylexjs/unplugin": ^0.19.0
   "@tailwindcss/postcss": ^4.3.3
   "@types/node": ^26.2.0
   "@types/react": ^19.2.18
@@ -17,6 +21,7 @@ catalog:
   react: ^19.2.8
   react-dom: ^19.2.8
   react-router-dom: ^7.18.2
+  tailwind-stylex: 0.1.1
   tailwindcss: ^4.3.3
   tsx: ^4.23.12
   typescript: ^7.0.2
