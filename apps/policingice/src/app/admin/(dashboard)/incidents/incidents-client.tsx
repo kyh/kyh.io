@@ -1,5 +1,19 @@
 "use client";
 
+import { theme } from "../../../styles/tokens.stylex";
+
+import {
+  colors,
+  containers,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Form } from "@base-ui/react/form";
@@ -21,6 +35,170 @@ import {
 } from "@/lib/admin-action";
 
 import type { getAllIncidents } from "@/lib/admin-action";
+
+const styles = stylex.create({
+  row: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: theme.border },
+  headRow: {
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: theme.border,
+    textAlign: "left",
+    color: theme.mutedForeground,
+  },
+  th: { paddingBlock: spacing[2], paddingRight: spacing[3], fontWeight: fontWeights.normal },
+  thLast: { paddingBlock: spacing[2], fontWeight: fontWeights.normal },
+  td: { paddingBlock: spacing[3], paddingRight: spacing[3] },
+  tdLast: { paddingBlock: spacing[3] },
+  tdMuted: { paddingBlock: spacing[3], paddingRight: spacing[3], color: theme.mutedForeground },
+  tdLastMuted: { paddingBlock: spacing[3], color: theme.mutedForeground },
+  tdTruncate: {
+    maxWidth: spacing[48],
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    paddingBlock: spacing[3],
+    paddingRight: spacing[3],
+  },
+  input: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: theme.input,
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outline: "none",
+  },
+  inputAuto: {
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: theme.input,
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outline: "none",
+  },
+  inputSmall: {
+    width: spacing[48],
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: theme.input,
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    outline: "none",
+  },
+  approved: { color: colors.green600 },
+  pinned: { color: colors.blue600 },
+  muted: { color: theme.mutedForeground },
+  faint: { color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)" },
+  danger: { color: theme.destructive },
+  /** was `space-y-1`: a margin on every child but the last */
+  stack1: { marginBottom: spacing[1] },
+  row1: { display: "flex", alignItems: "center", gap: spacing[1] },
+  linkXs: {
+    cursor: "pointer",
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  linkXsDanger: {
+    cursor: "pointer",
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: theme.destructive,
+  },
+  hidden: { display: "none" },
+  action: {
+    cursor: "pointer",
+    color: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": theme.foreground },
+    },
+  },
+  actionDanger: {
+    cursor: "pointer",
+    color: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": theme.destructive },
+    },
+  },
+  pointer: { cursor: "pointer" },
+  heading: {
+    marginBottom: spacing[4],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    fontWeight: fontWeights.medium,
+  },
+  mutedSm: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+  scroller: { overflowX: "auto" },
+  table: {
+    width: "100%",
+    minWidth: "900px",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  backdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 50,
+    backgroundColor: "color-mix(in oklab, #000 50%, transparent)",
+  },
+  popup: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    zIndex: 50,
+    maxHeight: "90vh",
+    width: "100%",
+    maxWidth: containers.xl,
+    translate: "-50% -50%",
+    overflowY: "auto",
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    padding: spacing[6],
+  },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+    borderWidth: 0,
+  },
+  close: {
+    position: "absolute",
+    top: spacing[4],
+    right: spacing[4],
+    cursor: "pointer",
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  previewMeta: {
+    marginBottom: spacing[4],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+});
 
 type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
 
@@ -74,29 +252,29 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
   const formId = `edit-${incident.id}`;
 
   return (
-    <tr className="border-b border-border">
-      <td className="py-3 pr-3">#{incident.id}</td>
-      <td className="py-3 pr-3">
+    <tr {...stylex.props(styles.row)}>
+      <td {...stylex.props(styles.td)}>#{incident.id}</td>
+      <td {...stylex.props(styles.td)}>
         <input
           type="text"
           name="location"
           form={formId}
           defaultValue={incident.location ?? ""}
-          className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
+          {...stylex.props(styles.input)}
           placeholder="Location"
         />
       </td>
-      <td className="py-3 pr-3">
+      <td {...stylex.props(styles.td)}>
         <input
           type="text"
           name="description"
           form={formId}
           defaultValue={incident.description ?? ""}
-          className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
+          {...stylex.props(styles.input)}
           placeholder="Description"
         />
       </td>
-      <td className="py-3 pr-3">
+      <td {...stylex.props(styles.td)}>
         <input
           type="date"
           name="incidentDate"
@@ -104,25 +282,23 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
           defaultValue={
             incident.incidentDate ? new Date(incident.incidentDate).toISOString().split("T")[0] : ""
           }
-          className="border-b border-input bg-transparent py-1 text-sm outline-none"
+          {...stylex.props(styles.inputAuto)}
         />
       </td>
-      <td className="py-3 pr-3">
-        <span
-          className={incident.status === "approved" ? "text-green-600" : "text-muted-foreground"}
-        >
+      <td {...stylex.props(styles.td)}>
+        <span {...stylex.props(incident.status === "approved" ? styles.approved : styles.muted)}>
           {incident.status}
         </span>
       </td>
-      <td className="py-3 pr-3">
+      <td {...stylex.props(styles.td)}>
         {incident.pinned ? (
-          <span className="text-blue-600">pinned</span>
+          <span {...stylex.props(styles.pinned)}>pinned</span>
         ) : (
-          <span className="text-muted-foreground/40">—</span>
+          <span {...stylex.props(styles.faint)}>—</span>
         )}
       </td>
-      <td className="py-3 pr-3">
-        <div className="space-y-1">
+      <td {...stylex.props(styles.td)}>
+        <div>
           {incident.videos.map((video) => (
             <VideoEditInput
               key={video.id}
@@ -131,12 +307,12 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
               onDelete={handleDeleteVideo}
             />
           ))}
-          <div className="flex items-center gap-1">
+          <div {...stylex.props(styles.row1)}>
             <input
               ref={newVideoRef}
               type="text"
               placeholder="Add video URL"
-              className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
+              {...stylex.props(styles.inputSmall)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -144,33 +320,29 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
                 }
               }}
             />
-            <button
-              type="button"
-              onClick={handleAddVideo}
-              className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
-            >
+            <button type="button" onClick={handleAddVideo} {...stylex.props(styles.linkXs)}>
               +
             </button>
           </div>
         </div>
       </td>
-      <td className="py-3 pr-3 text-muted-foreground">
+      <td {...stylex.props(styles.tdMuted)}>
         {incident.unjustifiedCount + incident.justifiedCount}
       </td>
-      <td className="py-3 pr-3">
+      <td {...stylex.props(styles.td)}>
         {incident.reportCount > 0 ? (
-          <span className="text-destructive">{incident.reportCount}</span>
+          <span {...stylex.props(styles.danger)}>{incident.reportCount}</span>
         ) : (
-          <span className="text-muted-foreground/40">0</span>
+          <span {...stylex.props(styles.faint)}>0</span>
         )}
       </td>
-      <td className="py-3 text-muted-foreground">
-        <Form id={formId} onSubmit={handleSubmit} className="hidden" />
-        <button type="submit" form={formId} className="cursor-pointer hover:text-foreground">
+      <td {...stylex.props(styles.tdLastMuted)}>
+        <Form id={formId} onSubmit={handleSubmit} {...stylex.props(styles.hidden)} />
+        <button type="submit" form={formId} {...stylex.props(styles.action)}>
           save
         </button>
         {" · "}
-        <button type="button" onClick={onCancel} className="cursor-pointer hover:text-foreground">
+        <button type="button" onClick={onCancel} {...stylex.props(styles.action)}>
           cancel
         </button>
       </td>
@@ -186,17 +358,17 @@ type VideoEditInputProps = {
 
 const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
   return (
-    <div className="flex items-center gap-1">
+    <div {...stylex.props(styles.row1, styles.stack1)}>
       <input
         type="text"
         defaultValue={video.url}
         onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
-        className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
+        {...stylex.props(styles.inputSmall)}
       />
       <button
         type="button"
         onClick={() => onDelete(video.id)}
-        className="cursor-pointer text-xs text-destructive hover:text-destructive"
+        {...stylex.props(styles.linkXsDanger)}
       >
         ×
       </button>
@@ -242,25 +414,25 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
 
   return (
     <div>
-      <h2 className="mb-4 text-sm font-medium">All Incidents ({initialIncidents.length})</h2>
+      <h2 {...stylex.props(styles.heading)}>All Incidents ({initialIncidents.length})</h2>
 
       {initialIncidents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No incidents.</p>
+        <p {...stylex.props(styles.mutedSm)}>No incidents.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+        <div {...stylex.props(styles.scroller)}>
+          <table {...stylex.props(styles.table)}>
             <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="py-2 pr-3 font-normal">ID</th>
-                <th className="py-2 pr-3 font-normal">Location</th>
-                <th className="py-2 pr-3 font-normal">Description</th>
-                <th className="py-2 pr-3 font-normal">Date</th>
-                <th className="py-2 pr-3 font-normal">Status</th>
-                <th className="py-2 pr-3 font-normal">Pinned</th>
-                <th className="py-2 pr-3 font-normal">Videos</th>
-                <th className="py-2 pr-3 font-normal">Votes</th>
-                <th className="py-2 pr-3 font-normal">Reports</th>
-                <th className="py-2 font-normal">Actions</th>
+              <tr {...stylex.props(styles.headRow)}>
+                <th {...stylex.props(styles.th)}>ID</th>
+                <th {...stylex.props(styles.th)}>Location</th>
+                <th {...stylex.props(styles.th)}>Description</th>
+                <th {...stylex.props(styles.th)}>Date</th>
+                <th {...stylex.props(styles.th)}>Status</th>
+                <th {...stylex.props(styles.th)}>Pinned</th>
+                <th {...stylex.props(styles.th)}>Videos</th>
+                <th {...stylex.props(styles.th)}>Votes</th>
+                <th {...stylex.props(styles.th)}>Reports</th>
+                <th {...stylex.props(styles.thLast)}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -273,55 +445,55 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     onSaved={() => setEditingId(null)}
                   />
                 ) : (
-                  <tr key={incident.id} className="border-b border-border">
-                    <td className="py-3 pr-3">#{incident.id}</td>
-                    <td className="py-3 pr-3">{incident.location ?? "—"}</td>
-                    <td className="max-w-48 truncate py-3 pr-3" title={incident.description ?? ""}>
+                  <tr key={incident.id} {...stylex.props(styles.row)}>
+                    <td {...stylex.props(styles.td)}>#{incident.id}</td>
+                    <td {...stylex.props(styles.td)}>{incident.location ?? "—"}</td>
+                    <td {...stylex.props(styles.tdTruncate)} title={incident.description ?? ""}>
                       {incident.description ?? "—"}
                     </td>
-                    <td className="py-3 pr-3">{formatDate(incident.incidentDate) ?? "—"}</td>
-                    <td className="py-3 pr-3">
+                    <td {...stylex.props(styles.td)}>{formatDate(incident.incidentDate) ?? "—"}</td>
+                    <td {...stylex.props(styles.td)}>
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(incident.id)}
-                        className="cursor-pointer"
+                        {...stylex.props(styles.pointer)}
                       >
                         {incident.status === "approved" ? (
-                          <span className="text-green-600">approved</span>
+                          <span {...stylex.props(styles.approved)}>approved</span>
                         ) : (
-                          <span className="text-muted-foreground">hidden</span>
+                          <span {...stylex.props(styles.muted)}>hidden</span>
                         )}
                       </button>
                     </td>
-                    <td className="py-3 pr-3">
+                    <td {...stylex.props(styles.td)}>
                       <button
                         type="button"
                         onClick={() => handleTogglePinned(incident.id)}
-                        className="cursor-pointer"
+                        {...stylex.props(styles.pointer)}
                       >
                         {incident.pinned ? (
-                          <span className="text-blue-600">pinned</span>
+                          <span {...stylex.props(styles.pinned)}>pinned</span>
                         ) : (
-                          <span className="text-muted-foreground/40">—</span>
+                          <span {...stylex.props(styles.faint)}>—</span>
                         )}
                       </button>
                     </td>
-                    <td className="py-3 pr-3">{incident.videos.length}</td>
-                    <td className="py-3 pr-3 text-muted-foreground">
+                    <td {...stylex.props(styles.td)}>{incident.videos.length}</td>
+                    <td {...stylex.props(styles.tdMuted)}>
                       {incident.unjustifiedCount + incident.justifiedCount}
                     </td>
-                    <td className="py-3 pr-3">
+                    <td {...stylex.props(styles.td)}>
                       {incident.reportCount > 0 ? (
-                        <span className="text-destructive">{incident.reportCount}</span>
+                        <span {...stylex.props(styles.danger)}>{incident.reportCount}</span>
                       ) : (
-                        <span className="text-muted-foreground/40">0</span>
+                        <span {...stylex.props(styles.faint)}>0</span>
                       )}
                     </td>
-                    <td className="py-3 text-muted-foreground">
+                    <td {...stylex.props(styles.tdLastMuted)}>
                       <button
                         type="button"
                         onClick={() => setPreviewingIncident(incident)}
-                        className="cursor-pointer hover:text-foreground"
+                        {...stylex.props(styles.action)}
                       >
                         preview
                       </button>
@@ -329,7 +501,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       <button
                         type="button"
                         onClick={() => setEditingId(incident.id)}
-                        className="cursor-pointer hover:text-foreground"
+                        {...stylex.props(styles.action)}
                       >
                         edit
                       </button>
@@ -337,7 +509,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       <button
                         type="button"
                         onClick={() => handleDelete(incident.id)}
-                        className="cursor-pointer hover:text-destructive"
+                        {...stylex.props(styles.actionDanger)}
                       >
                         delete
                       </button>
@@ -355,15 +527,13 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
         onOpenChange={(open) => !open && setPreviewingIncident(null)}
       >
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-border bg-background p-6">
-            <Dialog.Title className="sr-only">Preview incident</Dialog.Title>
-            <Dialog.Close className="absolute top-4 right-4 cursor-pointer text-muted-foreground hover:text-foreground">
-              ×
-            </Dialog.Close>
+          <Dialog.Backdrop {...stylex.props(styles.backdrop)} />
+          <Dialog.Popup {...stylex.props(styles.popup)}>
+            <Dialog.Title {...stylex.props(styles.srOnly)}>Preview incident</Dialog.Title>
+            <Dialog.Close {...stylex.props(styles.close)}>×</Dialog.Close>
             {previewingIncident && (
               <>
-                <div className="mb-4 text-sm text-muted-foreground">
+                <div {...stylex.props(styles.previewMeta)}>
                   #{previewingIncident.id}
                   {previewingIncident.location && ` · ${previewingIncident.location}`}
                   {previewingIncident.incidentDate &&

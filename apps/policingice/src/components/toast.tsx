@@ -1,5 +1,9 @@
 "use client";
 
+import { animations, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast, type ToasterProps } from "sonner";
 import {
@@ -9,6 +13,11 @@ import {
   OctagonXIcon,
   Loader2Icon,
 } from "lucide-react";
+
+const styles = stylex.create({
+  icon: { width: spacing[4], height: spacing[4] },
+  spin: { animation: animations.spin },
+});
 
 // SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
 // has no index signature for `--*` keys; the object holds nothing else.
@@ -29,11 +38,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={toasterTheme}
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheckIcon {...stylex.props(styles.icon)} />,
+        info: <InfoIcon {...stylex.props(styles.icon)} />,
+        warning: <TriangleAlertIcon {...stylex.props(styles.icon)} />,
+        error: <OctagonXIcon {...stylex.props(styles.icon)} />,
+        loading: <Loader2Icon {...stylex.props(styles.icon, styles.spin)} />,
       }}
       style={toasterStyle}
       toastOptions={{

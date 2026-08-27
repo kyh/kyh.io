@@ -79,14 +79,18 @@ Shared configs and utilities in `packages/`.
 
 ## Styling
 
-Apps are migrating from Tailwind to [StyleX](https://stylexjs.com). Migrated so far:
-`stonksville`, `kwadrants`, `covid-19`, `tc`, `kyh`. (`vis-ml` was never on Tailwind and stays plain CSS.)
+Every app uses [StyleX](https://stylexjs.com). Tailwind is fully removed — no app depends
+on it and nothing imports it. (`vis-ml` was never on Tailwind and stays plain CSS.)
 
-Rules for a migrated app:
+Rules:
 
 - **StyleX owns what it can express**; hand-written CSS stays CSS. StyleX has no
   descendant selectors by design, so vendor overrides (`react-tweet`, `react-select`)
-  and anything targeting DOM we don't render must remain in the stylesheet.
+  and anything targeting DOM we don't render must remain in the stylesheet. It also has
+  no attribute selectors — Base UI's `data-highlighted` lives in CSS for the same reason.
+- **Child-combinator utilities have no equivalent**: `divide-y`, `space-x-*`, `space-y-*`
+  become a style applied to every child but the last, which usually means threading an
+  index or an `isLast` prop.
 - **Import `@repo/tailwind-compat/preflight.css`** at the top of the app's stylesheet.
   Deleting the Tailwind import deletes its reset too, and every browser default comes
   back. Apps that used `@plugin "@tailwindcss/forms"` also import `forms.css`.

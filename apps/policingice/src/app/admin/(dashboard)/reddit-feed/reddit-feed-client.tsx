@@ -1,5 +1,18 @@
 "use client";
 
+import { theme } from "../../../styles/tokens.stylex";
+
+import {
+  animations,
+  colors,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
@@ -7,6 +20,75 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "@/components/toast";
 import { createFromFeed } from "@/lib/admin-action";
 import { formatDate } from "@/lib/format";
+
+const styles = stylex.create({
+  header: {
+    marginBottom: spacing[4],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  heading: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    fontWeight: fontWeights.medium,
+  },
+  refresh: {
+    display: "flex",
+    cursor: "pointer",
+    alignItems: "center",
+    gap: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+    opacity: { default: null, ":disabled": 0.5 },
+  },
+  icon: { height: spacing[4], width: spacing[4] },
+  spin: { animation: animations.spin },
+  muted: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+  scroller: { overflowX: "auto" },
+  table: {
+    width: "100%",
+    minWidth: "600px",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  headRow: {
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: theme.border,
+    textAlign: "left",
+    color: theme.mutedForeground,
+  },
+  th: { paddingBlock: spacing[2], paddingRight: spacing[3], fontWeight: fontWeights.normal },
+  thLast: { paddingBlock: spacing[2], fontWeight: fontWeights.normal },
+  row: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: theme.border },
+  td: { paddingBlock: spacing[3], paddingRight: spacing[3] },
+  tdLast: { paddingBlock: spacing[3] },
+  tdMuted: { paddingBlock: spacing[3], paddingRight: spacing[3], color: theme.mutedForeground },
+  link: {
+    textDecorationLine: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": "underline" },
+    },
+  },
+  mutedText: { color: theme.mutedForeground },
+  add: {
+    cursor: "pointer",
+    color: {
+      default: colors.green600,
+      "@media (hover: hover)": { default: colors.green600, ":hover": colors.green700 },
+    },
+    opacity: { default: null, ":disabled": 0.5 },
+  },
+});
 
 type FeedPost = {
   id: string;
@@ -64,29 +146,29 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Reddit Feed ({posts.length} posts)</h2>
+      <div {...stylex.props(styles.header)}>
+        <h2 {...stylex.props(styles.heading)}>Reddit Feed ({posts.length} posts)</h2>
         <button
           type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          {...stylex.props(styles.refresh)}
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw {...stylex.props(styles.icon, isRefreshing && styles.spin)} />
           Refresh
         </button>
       </div>
 
       {posts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No posts found.</p>
+        <p {...stylex.props(styles.muted)}>No posts found.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
+        <div {...stylex.props(styles.scroller)}>
+          <table {...stylex.props(styles.table)}>
             <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="py-2 pr-3 font-normal">Title</th>
-                <th className="py-2 pr-3 font-normal">Date</th>
-                <th className="py-2 font-normal">Actions</th>
+              <tr {...stylex.props(styles.headRow)}>
+                <th {...stylex.props(styles.th)}>Title</th>
+                <th {...stylex.props(styles.th)}>Date</th>
+                <th {...stylex.props(styles.thLast)}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -95,30 +177,28 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
                 const isAdded = existingSet.has(normalizeUrl(post.link));
 
                 return (
-                  <tr key={post.id} className="border-b border-border">
-                    <td className="py-3 pr-3">
+                  <tr key={post.id} {...stylex.props(styles.row)}>
+                    <td {...stylex.props(styles.td)}>
                       <a
                         href={post.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:underline"
+                        {...stylex.props(styles.link)}
                         title={post.title}
                       >
                         {post.title.length > 80 ? `${post.title.slice(0, 80)}...` : post.title}
                       </a>
                     </td>
-                    <td className="py-3 pr-3 text-muted-foreground">
-                      {formatDate(post.published) ?? "—"}
-                    </td>
-                    <td className="py-3">
+                    <td {...stylex.props(styles.tdMuted)}>{formatDate(post.published) ?? "—"}</td>
+                    <td {...stylex.props(styles.tdLast)}>
                       {isAdded ? (
-                        <span className="text-muted-foreground">added</span>
+                        <span {...stylex.props(styles.mutedText)}>added</span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleAdd(post)}
                           disabled={isAdding}
-                          className="cursor-pointer text-green-600 hover:text-green-700 disabled:opacity-50"
+                          {...stylex.props(styles.add)}
                         >
                           {isAdding ? "adding..." : "+add"}
                         </button>

@@ -1,9 +1,21 @@
+import { theme } from "../styles/tokens.stylex";
+import { fontSizeLineHeights, fontSizes } from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/drizzle-client";
 import { incidents, videos } from "@/db/drizzle-schema";
 import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
+
+const styles = stylex.create({
+  center: { display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" },
+  muted: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+});
 
 const MAX_INPUT_LENGTH = 2048;
 
@@ -95,8 +107,8 @@ export default async function SharePage({
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <span className="text-sm text-muted-foreground">Redirecting...</span>
+        <div {...stylex.props(styles.center)}>
+          <span {...stylex.props(styles.muted)}>Redirecting...</span>
         </div>
       }
     >

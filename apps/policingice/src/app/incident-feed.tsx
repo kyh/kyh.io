@@ -1,5 +1,21 @@
 "use client";
 
+import { theme } from "./styles/tokens.stylex";
+
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
+import {
+  animations,
+  containers,
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
@@ -31,6 +47,155 @@ import {
   togglePinIncident,
   updateIncidentDetails,
 } from "@/lib/incident-action";
+
+const styles = stylex.create({
+  page: {
+    minHeight: "100vh",
+    backgroundColor: theme.background,
+    paddingInline: { default: spacing[4], [mediaUp.sm]: spacing[6] },
+    paddingBlock: spacing[8],
+  },
+  wrap: { maxWidth: containers.xl },
+  header: { marginBottom: spacing[12] },
+  headRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  title: {
+    fontSize: fontSizes.base,
+    lineHeight: fontSizeLineHeights.base,
+    fontWeight: fontWeights.normal,
+  },
+  iconButton: {
+    cursor: "pointer",
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  icon4: { height: spacing[4], width: spacing[4] },
+  icon3: { height: spacing[3], width: spacing[3] },
+  popover: {
+    zIndex: 20,
+    width: spacing[64],
+    borderRadius: radii.default,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    padding: spacing[4],
+  },
+  /** was `space-y-3`: a margin on every child but the last */
+  stack3: { marginBottom: spacing[3] },
+  fieldLabel: {
+    marginBottom: spacing[1],
+    display: "block",
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: theme.mutedForeground,
+  },
+  input: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: { default: theme.input, ":focus": theme.foreground },
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+  searchSubmit: {
+    width: "100%",
+    cursor: "pointer",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+    textDecorationLine: "underline",
+    textUnderlineOffset: "2px",
+    opacity: { default: null, ":disabled": 0.5 },
+  },
+  subtitle: {
+    marginTop: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+  inlineLink: {
+    cursor: "pointer",
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+    textDecorationLine: "underline",
+    textUnderlineOffset: "2px",
+  },
+  filterRow: {
+    marginBottom: spacing[6],
+    display: "flex",
+    alignItems: "center",
+    gap: spacing[2],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  muted: { color: theme.mutedForeground },
+  mutedSm: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+  clearButton: {
+    display: "inline-flex",
+    cursor: "pointer",
+    alignItems: "center",
+    gap: spacing[1],
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  /** was `divide-y divide-border`, a child combinator StyleX cannot express */
+  divider: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: theme.border },
+  menuPopup: {
+    zIndex: 10,
+    minWidth: spacing[32],
+    borderRadius: radii.default,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  menuItem: {
+    display: "block",
+    width: "100%",
+    paddingInline: spacing[3],
+    paddingBlock: spacing[1.5],
+    textAlign: "left",
+    backgroundColor: {
+      default: null,
+      "@media (hover: hover)": { default: null, ":hover": theme.muted },
+    },
+  },
+  menuItemPointer: { cursor: "pointer" },
+  menuItemDanger: { color: theme.destructive },
+  menuSeparator: {
+    marginBlock: spacing[1],
+    borderTopWidth: 1,
+    borderTopStyle: "solid",
+    borderColor: theme.border,
+  },
+  loadMore: { paddingBlock: spacing[8] },
+  endMark: {
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)",
+  },
+  item: { paddingBlock: spacing[6], paddingTop: { default: spacing[6], ":first-child": 0 } },
+  skeleton: { height: "300px", animation: animations.pulse, backgroundColor: theme.muted },
+});
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
@@ -320,57 +485,50 @@ export const IncidentFeed = ({
 
   return (
     <KeyboardShortcutsProvider>
-      <main id="main-content" className="min-h-screen bg-background px-4 py-8 sm:px-6">
-        <div className="max-w-xl">
-          <header className="mb-12">
-            <div className="flex items-center justify-between">
-              <h1 className="text-base font-normal">Policing ICE</h1>
+      <main id="main-content" {...stylex.props(styles.page)}>
+        <div {...stylex.props(styles.wrap)}>
+          <header {...stylex.props(styles.header)}>
+            <div {...stylex.props(styles.headRow)}>
+              <h1 {...stylex.props(styles.title)}>Policing ICE</h1>
               <Popover.Root open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-                <Popover.Trigger
-                  className="cursor-pointer text-muted-foreground hover:text-foreground"
-                  aria-label="Search incidents"
-                >
-                  <Search className="h-4 w-4" />
+                <Popover.Trigger {...stylex.props(styles.iconButton)} aria-label="Search incidents">
+                  <Search {...stylex.props(styles.icon4)} />
                 </Popover.Trigger>
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
-                    <Popover.Popup className="z-20 w-64 rounded border border-border bg-background p-4">
-                      <Form ref={searchFormRef} onSubmit={handleSearch} className="space-y-3">
-                        <Field.Root name="q">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
+                    <Popover.Popup {...stylex.props(styles.popover)}>
+                      <Form ref={searchFormRef} onSubmit={handleSearch}>
+                        <Field.Root name="q" {...stylex.props(styles.stack3)}>
+                          <Field.Label {...stylex.props(styles.fieldLabel)}>
                             Location or description
                           </Field.Label>
                           <Field.Control
                             type="text"
                             defaultValue={q ?? ""}
                             placeholder="Minneapolis, arrest..."
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                            {...stylex.props(styles.input)}
                           />
                         </Field.Root>
-                        <Field.Root name="start">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
-                            From date
-                          </Field.Label>
+                        <Field.Root name="start" {...stylex.props(styles.stack3)}>
+                          <Field.Label {...stylex.props(styles.fieldLabel)}>From date</Field.Label>
                           <Field.Control
                             type="date"
                             defaultValue={start ?? ""}
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                            {...stylex.props(styles.input)}
                           />
                         </Field.Root>
-                        <Field.Root name="end">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
-                            To date
-                          </Field.Label>
+                        <Field.Root name="end" {...stylex.props(styles.stack3)}>
+                          <Field.Label {...stylex.props(styles.fieldLabel)}>To date</Field.Label>
                           <Field.Control
                             type="date"
                             defaultValue={end ?? ""}
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                            {...stylex.props(styles.input)}
                           />
                         </Field.Root>
                         <button
                           type="submit"
                           disabled={isSearching}
-                          className="w-full cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+                          {...stylex.props(styles.searchSubmit)}
                         >
                           {isSearching ? "Searching..." : "Search"}
                         </button>
@@ -380,12 +538,12 @@ export const IncidentFeed = ({
                 </Popover.Portal>
               </Popover.Root>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p {...stylex.props(styles.subtitle)}>
               Documenting incidents of ICE overreach.{" "}
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="cursor-pointer text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                {...stylex.props(styles.inlineLink)}
                 aria-label="Submit a new incident"
               >
                 Submit
@@ -394,35 +552,35 @@ export const IncidentFeed = ({
           </header>
 
           {searchResults !== null && (
-            <div className="mb-6 flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">
+            <div {...stylex.props(styles.filterRow)}>
+              <span {...stylex.props(styles.muted)}>
                 {searchResults.length} result
                 {searchResults.length !== 1 ? "s" : ""}
               </span>
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="inline-flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
+              <button type="button" onClick={clearSearch} {...stylex.props(styles.clearButton)}>
+                <X {...stylex.props(styles.icon3)} />
                 Clear
               </button>
             </div>
           )}
 
           {(searchResults ?? allIncidents).length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p {...stylex.props(styles.mutedSm)}>
               {searchResults !== null ? "No results found." : "No incidents yet."}
             </p>
           ) : (
-            <div className="divide-y divide-border">
-              {(searchResults ?? allIncidents).map((incident) => {
+            <div>
+              {(searchResults ?? allIncidents).map((incident, incidentIndex, list) => {
                 const unjustifiedCount = getVoteCount(incident, "unjustified");
                 const justifiedCount = getVoteCount(incident, "justified");
                 const userVote = userVotes[incident.id];
 
                 return (
-                  <LazyIncidentCard key={incident.id} incidentId={incident.id}>
+                  <LazyIncidentCard
+                    key={incident.id}
+                    incidentId={incident.id}
+                    isLast={incidentIndex === list.length - 1}
+                  >
                     <IncidentCardContent
                       incidentId={incident.id}
                       location={incident.location}
@@ -437,49 +595,49 @@ export const IncidentFeed = ({
                       headerRight={
                         <Menu.Root>
                           <Menu.Trigger
-                            className="cursor-pointer text-muted-foreground hover:text-foreground"
+                            {...stylex.props(styles.iconButton)}
                             aria-label="Incident actions"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal {...stylex.props(styles.icon4)} />
                           </Menu.Trigger>
                           <Menu.Portal>
                             <Menu.Positioner side="bottom" align="end" sideOffset={6}>
-                              <Menu.Popup className="z-10 min-w-32 rounded border border-border bg-background py-1 text-sm">
+                              <Menu.Popup {...stylex.props(styles.menuPopup)}>
                                 <Menu.Item
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
+                                  className={`menu-item ${stylex.props(styles.menuItem).className}`}
                                   render={<Link href={`/incident/${incident.id}`} />}
                                 >
                                   View
                                 </Menu.Item>
                                 <Menu.Item
-                                  className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
+                                  className={`menu-item ${stylex.props(styles.menuItem, styles.menuItemPointer).className}`}
                                   onClick={() => setEditingIncident(incident)}
                                 >
                                   Edit
                                 </Menu.Item>
                                 <Menu.Item
-                                  className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
+                                  className={`menu-item ${stylex.props(styles.menuItem, styles.menuItemPointer, styles.menuItemDanger).className}`}
                                   onClick={() => handleReport(incident.id)}
                                 >
                                   Report
                                 </Menu.Item>
                                 {isAdmin && (
                                   <>
-                                    <Menu.Separator className="my-1 border-t border-border" />
+                                    <Menu.Separator {...stylex.props(styles.menuSeparator)} />
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
+                                      className={`menu-item ${stylex.props(styles.menuItem, styles.menuItemPointer).className}`}
                                       onClick={() => handlePin(incident.id)}
                                     >
                                       {incident.pinned ? "Unpin" : "Pin"}
                                     </Menu.Item>
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
+                                      className={`menu-item ${stylex.props(styles.menuItem, styles.menuItemPointer).className}`}
                                       onClick={() => handleHide(incident.id)}
                                     >
                                       Hide
                                     </Menu.Item>
                                     <Menu.Item
-                                      className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
+                                      className={`menu-item ${stylex.props(styles.menuItem, styles.menuItemPointer, styles.menuItemDanger).className}`}
                                       onClick={() => handleDelete(incident.id)}
                                     >
                                       Delete
@@ -499,10 +657,10 @@ export const IncidentFeed = ({
           )}
 
           {searchResults === null && (
-            <div ref={loadMoreRef} className="py-8">
-              {isLoading && <span className="text-sm text-muted-foreground">Loading...</span>}
+            <div ref={loadMoreRef} {...stylex.props(styles.loadMore)}>
+              {isLoading && <span {...stylex.props(styles.mutedSm)}>Loading...</span>}
               {!nextOffset && allIncidents.length > 0 && (
-                <span className="text-sm text-muted-foreground/40">&mdash;</span>
+                <span {...stylex.props(styles.endMark)}>&mdash;</span>
               )}
             </div>
           )}
@@ -537,9 +695,11 @@ export const IncidentFeed = ({
 
 const LazyIncidentCard = ({
   incidentId,
+  isLast,
   children,
 }: {
   incidentId: number;
+  isLast: boolean;
   children: React.ReactNode;
 }) => {
   const ref = useRef<HTMLElement>(null);
@@ -571,8 +731,8 @@ const LazyIncidentCard = ({
   }, []);
 
   return (
-    <article ref={ref} className="py-6 first:pt-0">
-      {isVisible ? children : <div className="h-[300px] animate-pulse bg-muted" />}
+    <article ref={ref} {...stylex.props(styles.item, !isLast && styles.divider)}>
+      {isVisible ? children : <div {...stylex.props(styles.skeleton)} />}
     </article>
   );
 };

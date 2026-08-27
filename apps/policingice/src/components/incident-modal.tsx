@@ -1,3 +1,11 @@
+import { theme } from "../app/styles/tokens.stylex";
+import {
+  containers,
+  fontSizeLineHeights,
+  fontSizes,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Field } from "@base-ui/react/field";
@@ -7,6 +15,119 @@ import type { VideoPlatform } from "@/db/drizzle-schema";
 import { toast } from "@/components/toast";
 import { formString } from "@/lib/form-utils";
 import { isValidVideoUrl } from "@/lib/video-utils";
+
+const styles = stylex.create({
+  backdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 50,
+    backgroundColor: "color-mix(in oklab, #000 20%, transparent)",
+  },
+  popup: {
+    position: "fixed",
+    top: "15vh",
+    left: "50%",
+    zIndex: 50,
+    width: "100%",
+    maxWidth: containers.md,
+    translate: "-50% 0",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    padding: spacing[6],
+  },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+    borderWidth: 0,
+  },
+  /** was `space-y-4` / `space-y-2` / `space-y-1`: a margin on every child but the last */
+  stack4: { marginBottom: spacing[4] },
+  stack2: { marginBottom: spacing[2] },
+  stack1: { marginBottom: spacing[1] },
+  label: {
+    marginBottom: spacing[1],
+    display: "block",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+  labelMuted: {
+    marginBottom: spacing[2],
+    display: "block",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: theme.mutedForeground,
+  },
+  row2: { display: "flex", gap: spacing[2] },
+  input: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: { default: theme.input, ":focus": theme.foreground },
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+  textarea: {
+    width: "100%",
+    resize: "none",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderColor: { default: theme.input, ":focus": theme.foreground },
+    backgroundColor: "transparent",
+    paddingBlock: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+  linkButton: {
+    cursor: "pointer",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  linkButtonSpaced: { marginTop: spacing[2] },
+  disabledable: { opacity: { default: null, ":disabled": 0.5 } },
+  fieldError: {
+    marginTop: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: theme.destructive,
+  },
+  videoLine: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: theme.mutedForeground,
+  },
+  actions: { display: "flex", gap: spacing[4], paddingTop: spacing[2] },
+  submit: {
+    cursor: "pointer",
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+    color: {
+      default: theme.mutedForeground,
+      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+    textDecorationLine: "underline",
+    textUnderlineOffset: "2px",
+    opacity: { default: null, ":disabled": 0.5 },
+  },
+});
 
 type Video = {
   id: number;
@@ -177,34 +298,38 @@ export const IncidentModal = (props: IncidentModalProps) => {
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
-        <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
-          <Dialog.Title className="sr-only">{title}</Dialog.Title>
-          <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+        <Dialog.Backdrop {...stylex.props(styles.backdrop)} />
+        <Dialog.Popup {...stylex.props(styles.popup)}>
+          <Dialog.Title {...stylex.props(styles.srOnly)}>{title}</Dialog.Title>
+          <Form ref={formRef} onSubmit={handleSubmit}>
             {/* Video URLs - Create mode */}
             {mode === "create" && (
-              <div>
-                <label htmlFor="video-0" className="mb-1 block text-sm">
+              <div {...stylex.props(styles.stack4)}>
+                <label htmlFor="video-0" {...stylex.props(styles.label)}>
                   Video URLs
                 </label>
-                <div className="space-y-2">
+                <div>
                   {inputKeys.map((key, index) => (
-                    <Field.Root key={key} name={`video-${key}`}>
-                      <div className="flex gap-2">
+                    <Field.Root
+                      key={key}
+                      name={`video-${key}`}
+                      {...stylex.props(index < inputKeys.length - 1 && styles.stack2)}
+                    >
+                      <div {...stylex.props(styles.row2)}>
                         <Field.Control
                           type="url"
                           onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
                             validateUrl(key, e.target.value)
                           }
                           placeholder="https://x.com/..."
-                          className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                          {...stylex.props(styles.input)}
                           aria-label={`Video URL ${index + 1}`}
                         />
                         {inputKeys.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeVideoUrl(key)}
-                            className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                            {...stylex.props(styles.linkButton)}
                             aria-label={`Remove video URL ${index + 1}`}
                           >
                             ×
@@ -212,7 +337,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                         )}
                       </div>
                       {urlErrors[key] && (
-                        <p className="mt-1 text-xs text-destructive">{urlErrors[key]}</p>
+                        <p {...stylex.props(styles.fieldError)}>{urlErrors[key]}</p>
                       )}
                     </Field.Root>
                   ))}
@@ -220,7 +345,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                 <button
                   type="button"
                   onClick={addVideoUrl}
-                  className="mt-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                  {...stylex.props(styles.linkButton, styles.linkButtonSpaced)}
                 >
                   + Add another
                 </button>
@@ -230,27 +355,33 @@ export const IncidentModal = (props: IncidentModalProps) => {
             {/* Existing videos - Edit mode */}
             {mode === "edit" && (
               <>
-                <div>
-                  <label className="mb-2 block text-sm text-muted-foreground">
+                <div {...stylex.props(styles.stack4)}>
+                  <label {...stylex.props(styles.labelMuted)}>
                     Videos ({props.incident.videos.length})
                   </label>
-                  <div className="space-y-1">
-                    {props.incident.videos.map((video) => (
-                      <div key={video.id} className="truncate text-xs text-muted-foreground">
+                  <div>
+                    {props.incident.videos.map((video, i) => (
+                      <div
+                        key={video.id}
+                        {...stylex.props(
+                          styles.videoLine,
+                          i < props.incident.videos.length - 1 && styles.stack1,
+                        )}
+                      >
                         {video.platform}: {video.url}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Field.Root name="add-video">
-                  <Field.Label className="mb-1 block text-sm">Add Video</Field.Label>
+                <Field.Root name="add-video" {...stylex.props(styles.stack4)}>
+                  <Field.Label {...stylex.props(styles.label)}>Add Video</Field.Label>
                   <Field.Control
                     ref={addVideoRef}
                     type="url"
                     onChange={() => setVideoError("")}
                     placeholder="https://x.com/..."
-                    className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                    {...stylex.props(styles.input)}
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -258,12 +389,16 @@ export const IncidentModal = (props: IncidentModalProps) => {
                       }
                     }}
                   />
-                  {videoError && <p className="mt-1 text-xs text-destructive">{videoError}</p>}
+                  {videoError && <p {...stylex.props(styles.fieldError)}>{videoError}</p>}
                   <button
                     type="button"
                     onClick={handleAddVideo}
                     disabled={isSubmitting}
-                    className="mt-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+                    {...stylex.props(
+                      styles.linkButton,
+                      styles.linkButtonSpaced,
+                      styles.disabledable,
+                    )}
                   >
                     + Add
                   </button>
@@ -272,18 +407,18 @@ export const IncidentModal = (props: IncidentModalProps) => {
             )}
 
             {/* Shared fields */}
-            <Field.Root name="location">
-              <Field.Label className="mb-1 block text-sm">Location (optional)</Field.Label>
+            <Field.Root name="location" {...stylex.props(styles.stack4)}>
+              <Field.Label {...stylex.props(styles.label)}>Location (optional)</Field.Label>
               <Field.Control
                 type="text"
                 defaultValue={mode === "edit" ? (props.incident.location ?? "") : ""}
                 placeholder="Minneapolis, MN"
-                className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                {...stylex.props(styles.input)}
               />
             </Field.Root>
 
-            <Field.Root name="incidentDate">
-              <Field.Label className="mb-1 block text-sm">Date (optional)</Field.Label>
+            <Field.Root name="incidentDate" {...stylex.props(styles.stack4)}>
+              <Field.Label {...stylex.props(styles.label)}>Date (optional)</Field.Label>
               <Field.Control
                 type="date"
                 defaultValue={
@@ -291,31 +426,25 @@ export const IncidentModal = (props: IncidentModalProps) => {
                     ? new Date(props.incident.incidentDate).toISOString().split("T")[0]
                     : ""
                 }
-                className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                {...stylex.props(styles.input)}
               />
             </Field.Root>
 
-            <Field.Root name="description">
-              <Field.Label className="mb-1 block text-sm">Description (optional)</Field.Label>
+            <Field.Root name="description" {...stylex.props(styles.stack4)}>
+              <Field.Label {...stylex.props(styles.label)}>Description (optional)</Field.Label>
               <Field.Control
                 render={<textarea rows={2} />}
                 defaultValue={mode === "edit" ? (props.incident.description ?? "") : ""}
                 placeholder="Brief description of what happened..."
-                className="w-full resize-none border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+                {...stylex.props(styles.textarea)}
               />
             </Field.Root>
 
-            <div className="flex gap-4 pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
-              >
+            <div {...stylex.props(styles.actions)}>
+              <button type="submit" disabled={isSubmitting} {...stylex.props(styles.submit)}>
                 {isSubmitting ? submittingText : submitText}
               </button>
-              <Dialog.Close className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                Cancel
-              </Dialog.Close>
+              <Dialog.Close {...stylex.props(styles.linkButton)}>Cancel</Dialog.Close>
             </div>
           </Form>
         </Dialog.Popup>
