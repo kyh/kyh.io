@@ -34,7 +34,7 @@ const styles = stylex.create({
     backgroundColor: { default: null, ":hover": theme.backgroundHover },
     transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   tooltip: {
     paddingInline: spacing[2],

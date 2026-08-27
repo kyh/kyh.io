@@ -1,5 +1,6 @@
 "use client";
 
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
 import { theme } from "../styles/tokens.stylex";
 
 import { fontWeights } from "@repo/tailwind-compat/tokens.stylex";
@@ -12,17 +13,6 @@ const styles = stylex.create({
     lineHeight: 1,
     fontWeight: fontWeights.normal,
     color: theme.foregroundHighlighted,
-  },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
   },
 });
 
@@ -126,7 +116,7 @@ export const ScrambleText = ({
           );
         })}
       </span>
-      <span {...stylex.props(styles.srOnly)}>{text}</span>
+      <span {...stylex.props(a11y.srOnly)}>{text}</span>
     </Element>
   );
 };

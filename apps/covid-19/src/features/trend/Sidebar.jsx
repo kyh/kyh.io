@@ -1,3 +1,4 @@
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
@@ -6,7 +7,6 @@ import {
   easings,
   fontSizes,
   fontWeights,
-  mediaQueries,
   radii,
   spacing,
 } from "@repo/tailwind-compat/tokens.stylex";
@@ -20,20 +20,19 @@ import { colors } from "../../styles/tokens.stylex";
 const styles = stylex.create({
   aside: {
     marginRight: spacing[10],
-    display: { default: "none", [mediaQueries.sm]: "block" },
+    display: { default: "none", [mediaUp.sm]: "block" },
     width: spacing[64],
     borderRadius: radii.sm,
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: colors.gray700,
     // was `.sidebar` in TrendPage.css
-    height: { default: null, [mediaQueries.sm]: "var(--trend-page-height)" },
-    overflow: { default: null, [mediaQueries.sm]: "auto" },
+    height: { default: null, [mediaUp.sm]: "var(--trend-page-height)" },
+    overflow: { default: null, [mediaUp.sm]: "auto" },
   },
   list: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: colors.gray700 },
-  /** was `divide-y divide-gray-700`, a child combinator StyleX cannot express */
   divider: {
-    borderBottomWidth: 1,
+    borderBottomWidth: { default: 1, ":last-child": 0 },
     borderBottomStyle: "solid",
     borderColor: colors.gray700,
   },
@@ -49,7 +48,7 @@ const styles = stylex.create({
     outlineStyle: { default: null, ":focus": "none" },
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray800 },
+      [feature.hover]: { default: null, ":hover": colors.gray800 },
     },
   },
   itemSelected: { backgroundColor: colors.gray800 },
@@ -57,7 +56,7 @@ const styles = stylex.create({
   mobile: {
     marginBottom: spacing[4],
     paddingInline: spacing[4],
-    display: { default: null, [mediaQueries.sm]: "none" },
+    display: { default: null, [mediaUp.sm]: "none" },
   },
   mobileSelect: {
     width: "100%",
@@ -67,7 +66,7 @@ const styles = stylex.create({
     borderColor: colors.gray400,
     backgroundColor: {
       default: colors.gray900,
-      "@media (hover: hover)": { default: colors.gray900, ":hover": colors.gray800 },
+      [feature.hover]: { default: colors.gray900, ":hover": colors.gray800 },
     },
     paddingInline: spacing[4],
     paddingBlock: spacing[2],
@@ -106,11 +105,11 @@ export const Sidebar = ({
           </Loader>
         ) : (
           <ul {...stylex.props(styles.list)}>
-            {states.map((state, i) => {
+            {states.map((state) => {
               const data = statesDailyData[state];
               const lastDay = data[data.length - 1];
               return (
-                <li key={state} {...stylex.props(i < states.length - 1 && styles.divider)}>
+                <li key={state} {...stylex.props(styles.divider)}>
                   <button
                     {...stylex.props(styles.item, selectedState === state && styles.itemSelected)}
                     type="button"

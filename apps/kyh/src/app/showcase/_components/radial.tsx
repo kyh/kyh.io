@@ -70,7 +70,7 @@ const styles = stylex.create({
     gap: spacing[1],
     transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   footer: {
     marginTop: spacing[6],

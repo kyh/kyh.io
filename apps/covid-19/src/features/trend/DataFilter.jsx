@@ -1,3 +1,4 @@
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
@@ -44,7 +45,7 @@ const styles = stylex.create({
     outlineStyle: { default: null, ":focus": "none" },
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray800 },
+      [feature.hover]: { default: null, ":hover": colors.gray800 },
     },
   },
   button: {

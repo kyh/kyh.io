@@ -1,6 +1,7 @@
 "use client";
 
-import { animations, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { animate } from "../app/styles/animations.stylex";
+import { spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -16,7 +17,6 @@ import {
 
 const styles = stylex.create({
   icon: { width: spacing[4], height: spacing[4] },
-  spin: { animation: animations.spin },
 });
 
 // SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
@@ -42,7 +42,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <InfoIcon {...stylex.props(styles.icon)} />,
         warning: <TriangleAlertIcon {...stylex.props(styles.icon)} />,
         error: <OctagonXIcon {...stylex.props(styles.icon)} />,
-        loading: <Loader2Icon {...stylex.props(styles.icon, styles.spin)} />,
+        loading: <Loader2Icon {...stylex.props(styles.icon, animate.spin)} />,
       }}
       style={toasterStyle}
       toastOptions={{

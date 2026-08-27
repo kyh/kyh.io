@@ -1,3 +1,4 @@
+import { defaults, easings } from "@repo/tailwind-compat/tokens.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 type CursorProps = {
@@ -21,8 +22,8 @@ const styles = stylex.create({
     left: 0,
     zIndex: 1,
     transitionProperty: transitionProperty.all,
-    transitionTimingFunction: "cubic-bezier(0, 0, .2, 1)",
-    transitionDuration: ".15s",
+    transitionTimingFunction: easings.out,
+    transitionDuration: defaults.transitionDuration,
   },
 });
 

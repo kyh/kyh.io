@@ -1,12 +1,7 @@
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import {
-  containers,
-  fontSizes,
-  fontWeights,
-  mediaQueries,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import { colors } from "../../styles/tokens.stylex";
 import React, { useEffect, useMemo, useState } from "react";
@@ -34,7 +29,7 @@ const styles = stylex.create({
     marginBottom: spacing[3],
     alignItems: "center",
     justifyContent: "space-between",
-    display: { default: null, [mediaQueries.sm]: "flex" },
+    display: { default: null, [mediaUp.sm]: "flex" },
   },
   eyebrow: {
     fontSize: fontSizes.xs,
@@ -56,8 +51,8 @@ const styles = stylex.create({
   sliderLabel: { fontSize: fontSizes.xs, lineHeight: leading.xs },
   grid3: {
     marginBottom: spacing[4],
-    display: { default: null, [mediaQueries.sm]: "grid" },
-    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(3, minmax(0, 1fr))" },
+    display: { default: null, [mediaUp.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaUp.sm]: "repeat(3, minmax(0, 1fr))" },
     gap: spacing[4],
   },
 });

@@ -1,3 +1,5 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { boxShadow, ringSlots } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
@@ -47,7 +49,7 @@ const styles = stylex.create({
     borderColor: { default: colors.slate600, ":focus": colors.emerald500 },
     backgroundColor: {
       default: colors.black,
-      "@media (hover: hover)": { default: colors.black, ":hover": colors.emerald900 },
+      [feature.hover]: { default: colors.black, ":hover": colors.emerald900 },
     },
     paddingInline: spacing[2],
     paddingBlock: spacing[2],
@@ -70,17 +72,6 @@ const styles = stylex.create({
     borderBottomRightRadius: radii.md,
   },
   segmentOn: { backgroundColor: colors.slate800 },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-  },
   icon3: { height: spacing[3], width: spacing[3] },
   mt1: { marginTop: spacing[1] },
   mt3: { marginTop: spacing[3] },
@@ -123,7 +114,7 @@ const styles = stylex.create({
     transitionDuration: defaults.transitionDuration,
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.emerald900 },
+      [feature.hover]: { default: null, ":hover": colors.emerald900 },
     },
     zIndex: { default: null, ":focus": 10 },
     boxShadow: {
@@ -251,7 +242,7 @@ export const CompModal = ({
               )}
               onClick={() => setView("estimate")}
             >
-              <span {...stylex.props(styles.srOnly)}>Estimate Equity Value</span>
+              <span {...stylex.props(a11y.srOnly)}>Estimate Equity Value</span>
               <svg
                 {...stylex.props(styles.icon3)}
                 viewBox="0 0 24 24"
@@ -281,7 +272,7 @@ export const CompModal = ({
               )}
               onClick={() => setView("terminology")}
             >
-              <span {...stylex.props(styles.srOnly)}>Terminology</span>
+              <span {...stylex.props(a11y.srOnly)}>Terminology</span>
               <svg
                 {...stylex.props(styles.icon3)}
                 viewBox="0 0 24 24"

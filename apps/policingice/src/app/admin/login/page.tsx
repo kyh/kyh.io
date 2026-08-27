@@ -1,5 +1,6 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../styles/tokens.stylex";
 
@@ -31,8 +32,7 @@ const styles = stylex.create({
     lineHeight: leading.base,
     fontWeight: fontWeights.normal,
   },
-  /** was `space-y-4`: a margin on every child but the last */
-  stacked: { marginBottom: spacing[4] },
+  stacked: { marginBottom: { default: spacing[4], ":last-child": 0 } },
   control: {
     width: "100%",
     borderBottomWidth: 1,
@@ -63,7 +63,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     opacity: { default: null, ":disabled": 0.5 },
   },

@@ -1,3 +1,4 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
 import { boxShadow, ringSlots, shadowLayers } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
@@ -45,8 +46,7 @@ const styles = stylex.create({
     borderRadius: radii.md,
     boxShadow: boxShadow.xs,
   },
-  /** was `-space-y-px`: a negative margin on every child but the last, so adjacent
-   * field borders collapse into one. */
+  /** Negative margin collapses each field border into its neighbour. */
   stackTop: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
@@ -56,17 +56,6 @@ const styles = stylex.create({
   stackBottom: { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   row: { display: "flex", alignItems: "center" },
   iconButton: { padding: spacing[1] },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-  },
   icon4: { height: spacing[4], width: spacing[4] },
   relative: { position: "relative" },
   listboxButton: { color: colors.emerald500 },
@@ -247,7 +236,7 @@ export const CompForm = ({ comp }: Props) => {
                 className={`estimate-modal-button ${stylex.props(styles.iconButton).className}`}
                 onClick={() => modalProps.openModal()}
               >
-                <span {...stylex.props(styles.srOnly)}>Find out for me</span>
+                <span {...stylex.props(a11y.srOnly)}>Find out for me</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   {...stylex.props(styles.icon4)}

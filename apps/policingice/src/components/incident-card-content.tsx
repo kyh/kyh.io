@@ -1,5 +1,6 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
@@ -32,7 +33,7 @@ const styles = stylex.create({
   voteOff: {
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   sourceLink: {
@@ -41,14 +42,14 @@ const styles = stylex.create({
     gap: spacing[1],
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   extIcon: { height: spacing[3], width: spacing[3] },
   reportOff: {
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.destructive },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.destructive },
     },
   },
   reportOn: { color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)" },

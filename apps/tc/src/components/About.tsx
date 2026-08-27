@@ -1,3 +1,4 @@
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import type { Step, TooltipRenderProps } from "react-joyride";
@@ -72,7 +73,7 @@ const styles = stylex.create({
   next: {
     backgroundColor: {
       default: colors.emerald900,
-      "@media (hover: hover)": { default: colors.emerald900, ":hover": colors.emerald700 },
+      [feature.hover]: { default: colors.emerald900, ":hover": colors.emerald700 },
     },
     color: colors.emerald100,
   },

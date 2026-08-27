@@ -1,3 +1,4 @@
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { boxShadow, ringSlots } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
@@ -99,14 +100,14 @@ const styles = stylex.create({
   primaryButtonDark: {
     backgroundColor: {
       default: colors.white,
-      "@media (hover: hover)": { default: colors.white, ":hover": colors.gray100 },
+      [feature.hover]: { default: colors.white, ":hover": colors.gray100 },
     },
     color: colors.gray900,
   },
   primaryButtonLight: {
     backgroundColor: {
       default: colors.gray900,
-      "@media (hover: hover)": { default: colors.gray900, ":hover": colors.gray800 },
+      [feature.hover]: { default: colors.gray900, ":hover": colors.gray800 },
     },
     color: colors.white,
   },
@@ -131,7 +132,7 @@ const styles = stylex.create({
     color: colors.gray300,
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+      [feature.hover]: { default: null, ":hover": colors.gray700 },
     },
   },
   dashedButtonLight: {
@@ -139,7 +140,7 @@ const styles = stylex.create({
     color: colors.gray700,
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray50 },
+      [feature.hover]: { default: null, ":hover": colors.gray50 },
     },
   },
 
@@ -203,13 +204,13 @@ const styles = stylex.create({
   iconButtonDark: {
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+      [feature.hover]: { default: null, ":hover": colors.gray700 },
     },
   },
   iconButtonLight: {
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray100 },
+      [feature.hover]: { default: null, ":hover": colors.gray100 },
     },
   },
 
@@ -232,14 +233,14 @@ const styles = stylex.create({
     color: colors.gray300,
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray700 },
+      [feature.hover]: { default: null, ":hover": colors.gray700 },
     },
   },
   menuButtonLight: {
     color: colors.gray700,
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray100 },
+      [feature.hover]: { default: null, ":hover": colors.gray100 },
     },
   },
   selectedDark: { backgroundColor: colors.white, color: colors.gray900 },

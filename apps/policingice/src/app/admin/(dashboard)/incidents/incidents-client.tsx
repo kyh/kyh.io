@@ -1,5 +1,7 @@
 "use client";
 
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
@@ -48,7 +50,6 @@ const styles = stylex.create({
   th: { paddingBlock: spacing[2], paddingRight: spacing[3], fontWeight: fontWeights.normal },
   thLast: { paddingBlock: spacing[2], fontWeight: fontWeights.normal },
   td: { paddingBlock: spacing[3], paddingRight: spacing[3] },
-  tdLast: { paddingBlock: spacing[3] },
   tdMuted: { paddingBlock: spacing[3], paddingRight: spacing[3], color: theme.mutedForeground },
   tdLastMuted: { paddingBlock: spacing[3], color: theme.mutedForeground },
   tdTruncate: {
@@ -96,8 +97,7 @@ const styles = stylex.create({
   muted: { color: theme.mutedForeground },
   faint: { color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)" },
   danger: { color: theme.destructive },
-  /** was `space-y-1`: a margin on every child but the last */
-  stack1: { marginBottom: spacing[1] },
+  stack1: { marginBottom: { default: spacing[1], ":last-child": 0 } },
   row1: { display: "flex", alignItems: "center", gap: spacing[1] },
   linkXs: {
     cursor: "pointer",
@@ -105,7 +105,7 @@ const styles = stylex.create({
     lineHeight: leading.xs,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   linkXsDanger: {
@@ -119,14 +119,14 @@ const styles = stylex.create({
     cursor: "pointer",
     color: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": theme.foreground },
+      [feature.hover]: { default: null, ":hover": theme.foreground },
     },
   },
   actionDanger: {
     cursor: "pointer",
     color: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": theme.destructive },
+      [feature.hover]: { default: null, ":hover": theme.destructive },
     },
   },
   pointer: { cursor: "pointer" },
@@ -171,17 +171,6 @@ const styles = stylex.create({
     backgroundColor: theme.background,
     padding: spacing[6],
   },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-  },
   close: {
     position: "absolute",
     top: spacing[4],
@@ -189,7 +178,7 @@ const styles = stylex.create({
     cursor: "pointer",
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   previewMeta: {
@@ -529,7 +518,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
         <Dialog.Portal>
           <Dialog.Backdrop {...stylex.props(styles.backdrop)} />
           <Dialog.Popup {...stylex.props(styles.popup)}>
-            <Dialog.Title {...stylex.props(styles.srOnly)}>Preview incident</Dialog.Title>
+            <Dialog.Title {...stylex.props(a11y.srOnly)}>Preview incident</Dialog.Title>
             <Dialog.Close {...stylex.props(styles.close)}>×</Dialog.Close>
             {previewingIncident && (
               <>

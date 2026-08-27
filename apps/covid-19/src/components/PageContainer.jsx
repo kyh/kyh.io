@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { containers, spacing } from "@repo/tailwind-compat/tokens.stylex";
-import { only as mediaOnly, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { between as mediaBetween, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 const styles = stylex.create({
   main: {
@@ -11,7 +11,7 @@ const styles = stylex.create({
     display: { default: null, [mediaUp.sm]: "flex" },
     paddingInline: {
       default: null,
-      [mediaOnly.smToLg]: spacing[6],
+      [mediaBetween.smToLg]: spacing[6],
       [mediaUp.lg]: spacing[8],
     },
   },

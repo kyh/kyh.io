@@ -1,7 +1,11 @@
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
-import { only as mediaOnly, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import {
+  feature,
+  between as mediaBetween,
+  up as mediaUp,
+} from "@repo/tailwind-compat/media.stylex";
 
 import { colors } from "../styles/tokens.stylex";
 
@@ -13,7 +17,7 @@ const styles = stylex.create({
     justifyContent: "space-between",
     paddingInline: {
       default: spacing[4],
-      [mediaOnly.smToLg]: spacing[6],
+      [mediaBetween.smToLg]: spacing[6],
       [mediaUp.lg]: spacing[8],
     },
     paddingBlock: spacing[4],
@@ -24,7 +28,7 @@ const styles = stylex.create({
   link: {
     color: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray100 },
+      [feature.hover]: { default: null, ":hover": colors.gray100 },
     },
   },
 });

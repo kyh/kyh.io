@@ -41,7 +41,6 @@ const styles = stylex.create({
     overflow: "hidden",
     borderRadius: "14px",
   },
-  /** was a `dark:` shadow pair; the value switches in global.css */
   iconShadow: { boxShadow: appIcon.shadow },
   label: {
     color: theme.foreground,
@@ -125,7 +124,7 @@ const styles = stylex.create({
     fontWeight: fontWeights.medium,
     transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   scrim: {
     position: "fixed",

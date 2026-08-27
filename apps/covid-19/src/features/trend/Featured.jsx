@@ -1,6 +1,7 @@
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import { fontSizes, mediaQueries, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { Card } from "components/Card";
 import { LineChart } from "components/LineChart";
 import { StatCard, StatRow } from "components/StatCard";
@@ -16,10 +17,10 @@ const styles = stylex.create({
     display: "flex",
     flex: 1,
     flexDirection: "column",
-    paddingInline: { default: spacing[4], [mediaQueries.sm]: 0 },
+    paddingInline: { default: spacing[4], [mediaUp.sm]: 0 },
     // was `.featured-content` in TrendPage.css
-    height: { default: null, [mediaQueries.sm]: "var(--trend-page-height)" },
-    overflow: { default: null, [mediaQueries.sm]: "hidden" },
+    height: { default: null, [mediaUp.sm]: "var(--trend-page-height)" },
+    overflow: { default: null, [mediaUp.sm]: "hidden" },
   },
   header: {
     marginBottom: spacing[4],
@@ -30,14 +31,14 @@ const styles = stylex.create({
   title: { fontSize: fontSizes.lg, lineHeight: leading.lg },
   grid4: {
     marginBottom: spacing[4],
-    display: { default: null, [mediaQueries.sm]: "grid" },
-    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(4, minmax(0, 1fr))" },
+    display: { default: null, [mediaUp.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaUp.sm]: "repeat(4, minmax(0, 1fr))" },
     gap: spacing[4],
   },
   grid2: {
     marginBottom: spacing[4],
-    display: { default: null, [mediaQueries.sm]: "grid" },
-    gridTemplateColumns: { default: null, [mediaQueries.sm]: "repeat(2, minmax(0, 1fr))" },
+    display: { default: null, [mediaUp.sm]: "grid" },
+    gridTemplateColumns: { default: null, [mediaUp.sm]: "repeat(2, minmax(0, 1fr))" },
     gap: spacing[4],
   },
   mb1: { marginBottom: spacing[1] },

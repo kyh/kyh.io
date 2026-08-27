@@ -1,5 +1,6 @@
 "use client";
 
+import { easings } from "@repo/tailwind-compat/tokens.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
@@ -54,7 +55,7 @@ const styles = stylex.create({
     inset: 0,
     zIndex: 20,
     transitionProperty: transitionProperty.opacity,
-    transitionTimingFunction: "cubic-bezier(.4, 0, .2, 1)",
+    transitionTimingFunction: easings.inOut,
     transitionDuration: ".3s",
   },
   cursorLayer: {

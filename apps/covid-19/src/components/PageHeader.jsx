@@ -6,7 +6,7 @@ import {
   lineHeights,
   spacing,
 } from "@repo/tailwind-compat/tokens.stylex";
-import { only as mediaOnly, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { between as mediaBetween, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import { colors } from "../styles/tokens.stylex";
 
@@ -16,7 +16,7 @@ const styles = stylex.create({
     maxWidth: containers["7xl"],
     paddingInline: {
       default: spacing[4],
-      [mediaOnly.smToLg]: spacing[6],
+      [mediaBetween.smToLg]: spacing[6],
       [mediaUp.lg]: spacing[8],
     },
   },

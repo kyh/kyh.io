@@ -1,5 +1,6 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -116,7 +117,7 @@ const styles = stylex.create({
     borderRadius: radii.sm,
     backgroundColor: {
       default: colors.emerald500,
-      "@media (hover: hover)": { default: colors.emerald500, ":hover": colors.emerald400 },
+      [feature.hover]: { default: colors.emerald500, ":hover": colors.emerald400 },
     },
     paddingInline: spacing[4],
     paddingBlock: spacing[2],

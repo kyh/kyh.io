@@ -24,7 +24,7 @@ const styles = stylex.create({
     opacity: { default: "var(--group-action-opacity, 0)", ":focus-visible": 1 },
     transitionProperty: "color, background-color, opacity",
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   heading: {
     color: theme.foregroundHighlighted,

@@ -1,15 +1,11 @@
 "use client";
 
+import { animate } from "../../../styles/animations.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
-import {
-  animations,
-  colors,
-  fontSizes,
-  fontWeights,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { colors, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -42,12 +38,12 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     opacity: { default: null, ":disabled": 0.5 },
   },
   icon: { height: spacing[4], width: spacing[4] },
-  spin: { animation: animations.spin },
+
   muted: {
     fontSize: fontSizes.sm,
     lineHeight: leading.sm,
@@ -76,7 +72,7 @@ const styles = stylex.create({
   link: {
     textDecorationLine: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": "underline" },
+      [feature.hover]: { default: null, ":hover": "underline" },
     },
   },
   mutedText: { color: theme.mutedForeground },
@@ -84,7 +80,7 @@ const styles = stylex.create({
     cursor: "pointer",
     color: {
       default: colors.green600,
-      "@media (hover: hover)": { default: colors.green600, ":hover": colors.green700 },
+      [feature.hover]: { default: colors.green600, ":hover": colors.green700 },
     },
     opacity: { default: null, ":disabled": 0.5 },
   },
@@ -154,7 +150,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
           disabled={isRefreshing}
           {...stylex.props(styles.refresh)}
         >
-          <RefreshCw {...stylex.props(styles.icon, isRefreshing && styles.spin)} />
+          <RefreshCw {...stylex.props(styles.icon, isRefreshing && animate.spin)} />
           Refresh
         </button>
       </div>

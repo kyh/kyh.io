@@ -1,6 +1,7 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { containers, spacing } from "@repo/tailwind-compat/tokens.stylex";
-import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import { About, useAbout } from "@/components/About";
 import { Logo } from "@/components/Logo";
@@ -15,17 +16,6 @@ const styles = stylex.create({
     justifyContent: "space-between",
   },
   brand: { display: "inline-flex", paddingInline: spacing[3], paddingBlock: spacing[5] },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-  },
   links: {
     display: "flex",
     alignItems: "center",
@@ -35,7 +25,7 @@ const styles = stylex.create({
   link: {
     textDecoration: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": "underline" },
+      [feature.hover]: { default: null, ":hover": "underline" },
     },
   },
 });
@@ -46,7 +36,7 @@ export const Navigation = () => {
   return (
     <nav {...stylex.props(styles.nav)}>
       <a href="/" {...stylex.props(styles.brand)}>
-        <span {...stylex.props(styles.srOnly)}>Logo</span>
+        <span {...stylex.props(a11y.srOnly)}>Logo</span>
         <Logo />
       </a>
       <div {...stylex.props(styles.links)}>

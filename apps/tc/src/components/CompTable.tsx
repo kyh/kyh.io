@@ -16,11 +16,9 @@ const styles = stylex.create({
     fontSize: fontSizes.sm,
     lineHeight: leading.sm,
   },
-  /** was `divide-y divide-slate-600`, a child combinator StyleX cannot express;
-   * thead is the only non-last child of this table. */
   head: {
     fontWeight: fontWeights.semibold,
-    borderBottomWidth: 1,
+    borderBottomWidth: { default: 1, ":last-child": 0 },
     borderBottomStyle: "solid",
     borderColor: colors.slate600,
   },

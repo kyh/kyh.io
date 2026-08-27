@@ -26,9 +26,13 @@
     },
     "./shadows.stylex": {
       "default": "./shadows.stylex.js"
+    },
+    "./a11y.stylex": {
+      "default": "./a11y.stylex.js"
     }
   },
   "peerDependencies": {
     "@stylexjs/stylex": "*"
-  }
+  },
+  "//peerDependencies": "Load-bearing: @stylexjs/unplugin only compiles workspace packages that declare @stylexjs/stylex. Removing this silently drops this package's CSS from the Vite apps."
 }

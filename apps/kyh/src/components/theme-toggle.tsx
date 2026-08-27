@@ -1,3 +1,4 @@
+import { easings } from "@repo/tailwind-compat/tokens.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { motion } from "motion/react";
@@ -6,7 +7,7 @@ const styles = stylex.create({
   icon: {
     overflow: "visible",
     transitionProperty: transitionProperty.transform,
-    transitionTimingFunction: "cubic-bezier(.4, 0, .2, 1)",
+    transitionTimingFunction: easings.inOut,
     transitionDuration: ".5s",
   },
 });

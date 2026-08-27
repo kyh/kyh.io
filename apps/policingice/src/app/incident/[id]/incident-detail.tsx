@@ -3,7 +3,7 @@
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../styles/tokens.stylex";
 
-import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
@@ -41,7 +41,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   icon: { height: spacing[4], width: spacing[4] },

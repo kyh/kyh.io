@@ -79,83 +79,39 @@ Shared configs and utilities in `packages/`.
 
 ## Styling
 
-Every app uses [StyleX](https://stylexjs.com). Tailwind is fully removed — no app depends
-on it and nothing imports it. (`vis-ml` was never on Tailwind and stays plain CSS.)
+Every app uses [StyleX](https://stylexjs.com); Tailwind is gone. (`vis-ml` was never on
+it and stays plain CSS.) `packages/tailwind-compat` holds Tailwind's frozen scale plus
+the reset, so migrated apps keep rendering identically — see its README.
 
-Rules:
-
-- **StyleX owns what it can express**; hand-written CSS stays CSS. StyleX has no
-  descendant selectors by design, so vendor overrides (`react-tweet`, `react-select`)
-  and anything targeting DOM we don't render must remain in the stylesheet. It also has
-  no attribute selectors — Base UI's `data-highlighted` lives in CSS for the same reason.
-- **Child-combinator utilities have no equivalent**: `divide-y`, `space-x-*`, `space-y-*`
-  become a style applied to every child but the last, which usually means threading an
-  index or an `isLast` prop.
-- **Import `@repo/tailwind-compat/preflight.css`** at the top of the app's stylesheet.
-  Deleting the Tailwind import deletes its reset too, and every browser default comes
-  back. Apps that used `@plugin "@tailwindcss/forms"` also import `forms.css`.
-- **Scale values come from `@repo/tailwind-compat`**, vendored from Tailwind 4.3.3 so
-  numbers stay identical. Never inline a magic `0.75rem` where `spacing[3]` exists.
+- **StyleX owns what it can express**; hand-written CSS stays CSS. It has no descendant
+  or attribute selectors, so vendor overrides (`react-tweet`, `react-select`), Base UI's
+  `data-highlighted`, and anything targeting DOM we don't render stay in the stylesheet.
+- **Import `@repo/tailwind-compat/preflight.css`** at the top of an app's stylesheet;
+  deleting Tailwind deleted its reset. Add `forms.css` if the app used the forms plugin.
+- **Reach for the shared modules before writing a literal**: `leading` for line-height,
+  `transitions`/`shadows` for those properties, `media.feature.hover` for hover queries,
+  `a11y.srOnly` for visually-hidden. They exist because the raw values are easy to get
+  subtly wrong in ways nothing catches.
 - **No `cn`/`clsx`/`tw-merge`.** `stylex.props(a, b)` merges last-wins by property.
-- **Next apps need `.babelrc`, not `babel.config.js`** — Next's Babel loader rejects
-  `.cjs`/`.mjs`, and these packages are `type: module`. Because it must be JSON, the
-  StyleX options are duplicated into `postcss.config.mjs`; keep the two in sync.
-- **Wrap `:hover` in `@media (hover: hover)`** to match what Tailwind emitted, or
-  touch devices get sticky hover states.
-- **Vite apps** use `@stylexjs/unplugin` (`stylex.vite()` before `react()`), which
-  appends its CSS to the emitted asset — no `@stylex;` directive, unlike PostCSS.
-- **Clear `.next`/`dist` after changing StyleX or package wiring.** Stale caches
-  surface as bogus "could not resolve the theme file" errors.
-- **Never stack overlapping `min-width` queries on one property.** StyleX does not
-  order media queries by width, so `{ [up.sm]: 6, [up.lg]: 8 }` can resolve to the
-  `sm` value on a wide screen — whichever atomic class lands later wins. Use the
-  mutually exclusive ranges in `@repo/tailwind-compat/media.stylex` (`only.smToLg`
-  then `up.lg`). This silently broke `sm:px-6 lg:px-8` in covid-19.
-- **StyleX only resolves constants through named imports.** `import * as media` then
-  `media.up.lg` fails with "Referenced constant is not defined"; import the binding.
-- **Apps that overrode Tailwind's theme keep their own `tokens.stylex.js`.** covid-19
-  replaced the whole palette (`--color-*: initial`), so only its spacing, radii and
-  line-heights come from `@repo/tailwind-compat`.
-- **Check `index.html` too.** StyleX only compiles what the bundler transforms, so
-  utilities on `<body>` or `#root` there have to move into the stylesheet. Both `tc`
-  and `kwadrants` had some.
-- **Class names bound to something other than styling must survive**: react-joyride
-  step targets (`.title-section`), react-select's `classNamePrefix`, and D3 selectors.
-  Merge with ``className={`target ${stylex.props(s).className}`}`` when the element
-  also needs StyleX.
-- **`stylex.props().className` is `string | undefined`.** Libraries that take a class
-  string (Headless UI transitions, `NavLink`, visx) need `?? ""`.
-- **`@repo/tailwind-compat` only has Tailwind's NAMED scale steps.** Tailwind v4 also
-  generates arbitrary multiples on demand, so `pt-30` has no `spacing[30]` — the scale
-  jumps 28 → 32. Write `` `calc(${spacing.unit} * 30)` `` for those. `tsc` catches the
-  bad index (TS7053), so **typecheck after every batch of files**, not just at the end.
-- **StyleX resolves imports itself and ignores tsconfig `paths`.** `.babelrc` is JSON so
-  it cannot build an absolute `aliases` map; import local `*.stylex.ts` by relative path.
-- **`-translate-x-1/2` compiles to `translate`, not `transform`** — they are separate
-  properties and stack differently. Same for `scale-95` → `scale`.
-- **`transition-*` utilities also set the timing function.** Porting only
-  `transitionProperty` + `transitionDuration` silently leaves the CSS default `ease`.
-
-When a page animates or has realtime content, diff the same build against itself first
-to measure the noise floor — kyh's scramble text and multiplayer cursors produce ~88
-box diffs per load on their own, and anything at or below that is not signal.
-
-Migrated apps are verified against pre-migration builds by diffing computed styles and
-bounding boxes element by element. `kwadrants`, `covid-19` and `tc` match exactly;
-`stonksville`, `policingice` and `kyh` differ only in how the browser echoes a color
-back (`lab()` vs `oklch()`, or ~1e-5 of float), every pair sampled to byte-identical
-sRGB. Keeping it that way is what the compat package's non-generated files are for:
-
-- `leading.stylex.js` — line-height as a length, because lightningcss rounds unitless
-  numbers to five decimals and `calc(1.25/0.875)` then lands 1/64px short.
-- `transitions.stylex.js` — the property lists Tailwind emitted, `--tw-gradient-*` and
-  all. Those properties no longer exist, so transitioning them is a no-op, but their
-  absence shows up in every computed style.
-- `shadows.stylex.js` — Tailwind composed `box-shadow` from five slots and left the
-  four it wasn't using at `0 0 #0000`. Invisible, but present in the computed value;
-  `ringSlots` exists so a ring lands in the slot Tailwind put it in.
-
-The repo pins a `browserslist` at the oldest browsers that support `oklch()`. Tailwind
-shipped raw `oklch()` with no fallback, so the apps already required them; without the
-pin lightningcss downlevels inlined colors to `lab()` plus a hex fallback and the
-computed values stop matching.
+- **Sibling spacing uses `:last-child`**, not an index or an `isLast` prop —
+  `marginBottom: { default: spacing[4], ":last-child": 0 }`.
+- **Never stack overlapping `min-width` queries on one property.** StyleX does not order
+  media queries by width, so `{ [up.sm]: 6, [up.lg]: 8 }` can resolve to the `sm` value
+  on a wide screen. Chain `between.smToLg` then `up.lg`.
+- **StyleX resolves imports itself**: named imports only (`import * as m` fails), and it
+  ignores tsconfig `paths`, so import local `*.stylex.ts` by relative path.
+- **`animation` is dropped silently** — StyleX treats it as a shorthand-of-shorthands.
+  Use `animationName`/`animationDuration`/etc. The same applies to any shorthand it
+  classifies that way.
+- **Some Tailwind utilities map to a different property than they look like**:
+  `-translate-x-1/2` sets `translate`, `scale-95` sets `scale`, and `transition-*` sets
+  a timing function as well as a property and duration.
+- **`spacing` only has Tailwind's named steps** (it jumps 28 → 32). For anything else
+  write `` `calc(${spacing.unit} * 30)` ``; `tsc` catches a bad index as TS7053.
+- **Class names bound to something other than styling must survive**: react-joyride step
+  targets, react-select's `classNamePrefix`, D3 selectors. Merge them with
+  ``className={`target ${stylex.props(s).className}`}``.
+- **Check `index.html`** — StyleX only compiles what the bundler transforms, so
+  utilities on `<body>` or `#root` belong in the stylesheet.
+- **Clear `.next`/`dist` after changing StyleX or package wiring.** Stale caches surface
+  as bogus "could not resolve the theme file" errors.

@@ -1,5 +1,6 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../app/styles/tokens.stylex";
@@ -41,7 +42,7 @@ const styles = stylex.create({
     width: spacing[1.5],
     backgroundColor: {
       default: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-      "@media (hover: hover)": {
+      [feature.hover]: {
         default: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
         ":hover": "color-mix(in oklab, var(--muted-foreground) 50%, transparent)",
       },
@@ -51,7 +52,7 @@ const styles = stylex.create({
   navOn: {
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   navOff: { color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)" },

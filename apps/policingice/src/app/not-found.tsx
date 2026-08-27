@@ -1,6 +1,6 @@
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
-import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
@@ -23,7 +23,7 @@ const styles = stylex.create({
     textUnderlineOffset: "2px",
     color: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": theme.foreground },
+      [feature.hover]: { default: null, ":hover": theme.foreground },
     },
   },
 });

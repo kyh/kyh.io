@@ -7,7 +7,11 @@ import {
   radii,
   spacing,
 } from "@repo/tailwind-compat/tokens.stylex";
-import { only as mediaOnly, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import {
+  feature,
+  between as mediaBetween,
+  up as mediaUp,
+} from "@repo/tailwind-compat/media.stylex";
 import { NavLink } from "react-router-dom";
 
 import { colors } from "../styles/tokens.stylex";
@@ -24,7 +28,7 @@ const styles = stylex.create({
     maxWidth: containers["7xl"],
     paddingInline: {
       default: null,
-      [mediaOnly.smToLg]: spacing[6],
+      [mediaBetween.smToLg]: spacing[6],
       [mediaUp.lg]: spacing[8],
     },
   },
@@ -40,8 +44,7 @@ const styles = stylex.create({
   logoWrap: { flexShrink: 0 },
   logo: { height: spacing[8], width: spacing[8] },
   links: { marginLeft: spacing[10], display: "flex", alignItems: "baseline" },
-  /** was space-x-4: margin on every child but the last */
-  spaced: { marginInlineEnd: spacing[4] },
+  spaced: { marginInlineEnd: { default: spacing[4], ":last-child": 0 } },
   link: {
     borderRadius: radii.md,
     paddingInline: spacing[3],
@@ -56,9 +59,9 @@ const styles = stylex.create({
   linkHover: {
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": colors.gray800 },
+      [feature.hover]: { default: null, ":hover": colors.gray800 },
     },
-    color: { default: null, "@media (hover: hover)": { default: null, ":hover": colors.white } },
+    color: { default: null, [feature.hover]: { default: null, ":hover": colors.white } },
   },
   linkActive: { backgroundColor: colors.gray800 },
   meta: {
@@ -72,17 +75,13 @@ const styles = stylex.create({
   date: { position: "relative", marginLeft: spacing[3] },
 });
 
-const Link = ({ to, children, isLast }) => {
+const Link = ({ to, children }) => {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        stylex.props(
-          styles.link,
-          styles.linkHover,
-          isActive && styles.linkActive,
-          !isLast && styles.spaced,
-        ).className
+        stylex.props(styles.link, styles.linkHover, styles.spaced, isActive && styles.linkActive)
+          .className
       }
     >
       {children}
@@ -101,8 +100,8 @@ export const Navigation = () => {
                 <img {...stylex.props(styles.logo)} src="/logo.svg" alt="Covid-19 Dashboard" />
               </div>
               <div {...stylex.props(styles.links)}>
-                {LINKS.map(({ to, label }, i) => (
-                  <Link key={to} to={to} isLast={i === LINKS.length - 1}>
+                {LINKS.map(({ to, label }) => (
+                  <Link key={to} to={to}>
                     {label}
                   </Link>
                 ))}

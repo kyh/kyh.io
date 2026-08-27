@@ -1,12 +1,12 @@
 "use client";
 
+import { animate } from "./styles/animations.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
 
-import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import {
-  animations,
   containers,
   fontSizes,
   fontWeights,
@@ -67,7 +67,7 @@ const styles = stylex.create({
     cursor: "pointer",
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   icon4: { height: spacing[4], width: spacing[4] },
@@ -82,8 +82,7 @@ const styles = stylex.create({
     backgroundColor: theme.background,
     padding: spacing[4],
   },
-  /** was `space-y-3`: a margin on every child but the last */
-  stack3: { marginBottom: spacing[3] },
+  stack3: { marginBottom: { default: spacing[3], ":last-child": 0 } },
   fieldLabel: {
     marginBottom: spacing[1],
     display: "block",
@@ -109,7 +108,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     textDecorationLine: "underline",
     textUnderlineOffset: "2px",
@@ -125,7 +124,7 @@ const styles = stylex.create({
     cursor: "pointer",
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     textDecorationLine: "underline",
     textUnderlineOffset: "2px",
@@ -151,11 +150,14 @@ const styles = stylex.create({
     gap: spacing[1],
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
-  /** was `divide-y divide-border`, a child combinator StyleX cannot express */
-  divider: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: theme.border },
+  divider: {
+    borderBottomWidth: { default: 1, ":last-child": 0 },
+    borderBottomStyle: "solid",
+    borderColor: theme.border,
+  },
   menuPopup: {
     zIndex: 10,
     minWidth: spacing[32],
@@ -176,7 +178,7 @@ const styles = stylex.create({
     textAlign: "left",
     backgroundColor: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": theme.muted },
+      [feature.hover]: { default: null, ":hover": theme.muted },
     },
   },
   menuItemPointer: { cursor: "pointer" },
@@ -194,7 +196,7 @@ const styles = stylex.create({
     color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)",
   },
   item: { paddingBlock: spacing[6], paddingTop: { default: spacing[6], ":first-child": 0 } },
-  skeleton: { height: "300px", animation: animations.pulse, backgroundColor: theme.muted },
+  skeleton: { height: "300px", backgroundColor: theme.muted },
 });
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
@@ -570,17 +572,13 @@ export const IncidentFeed = ({
             </p>
           ) : (
             <div>
-              {(searchResults ?? allIncidents).map((incident, incidentIndex, list) => {
+              {(searchResults ?? allIncidents).map((incident) => {
                 const unjustifiedCount = getVoteCount(incident, "unjustified");
                 const justifiedCount = getVoteCount(incident, "justified");
                 const userVote = userVotes[incident.id];
 
                 return (
-                  <LazyIncidentCard
-                    key={incident.id}
-                    incidentId={incident.id}
-                    isLast={incidentIndex === list.length - 1}
-                  >
+                  <LazyIncidentCard key={incident.id} incidentId={incident.id}>
                     <IncidentCardContent
                       incidentId={incident.id}
                       location={incident.location}
@@ -695,11 +693,9 @@ export const IncidentFeed = ({
 
 const LazyIncidentCard = ({
   incidentId,
-  isLast,
   children,
 }: {
   incidentId: number;
-  isLast: boolean;
   children: React.ReactNode;
 }) => {
   const ref = useRef<HTMLElement>(null);
@@ -731,8 +727,8 @@ const LazyIncidentCard = ({
   }, []);
 
   return (
-    <article ref={ref} {...stylex.props(styles.item, !isLast && styles.divider)}>
-      {isVisible ? children : <div {...stylex.props(styles.skeleton)} />}
+    <article ref={ref} {...stylex.props(styles.item, styles.divider)}>
+      {isVisible ? children : <div {...stylex.props(styles.skeleton, animate.pulse)} />}
     </article>
   );
 };

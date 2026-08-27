@@ -3,7 +3,7 @@
 import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
-import { fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { easings, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -21,7 +21,7 @@ const styles = stylex.create({
     marginRight: spacing[2],
     display: "flex",
     transitionProperty: transitionProperty.opacity,
-    transitionTimingFunction: "cubic-bezier(0, 0, .2, 1)",
+    transitionTimingFunction: easings.out,
     transitionDuration: "230ms",
   },
   item: {

@@ -82,7 +82,7 @@ const styles = stylex.create({
     borderRadius: radii.full,
     transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   mono: {
     fontFamily: defaults.monoFontFamily,
@@ -126,7 +126,7 @@ const styles = stylex.create({
     height: "100%",
     transitionProperty: transitionProperty.all,
     transitionTimingFunction: defaults.transitionTimingFunction,
-    transitionDuration: ".15s",
+    transitionDuration: defaults.transitionDuration,
   },
   keyRow: { display: "flex", alignItems: "center", gap: spacing[3] },
   keyGroup: { display: "flex", alignItems: "center", gap: spacing[1] },

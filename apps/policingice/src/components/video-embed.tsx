@@ -1,9 +1,11 @@
 "use client";
 
+import { animate } from "../app/styles/animations.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
-import { animations, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -22,17 +24,17 @@ const styles = stylex.create({
     borderStyle: "solid",
     borderColor: {
       default: theme.border,
-      "@media (hover: hover)": { default: theme.border, ":hover": theme.mutedForeground },
+      [feature.hover]: { default: theme.border, ":hover": theme.mutedForeground },
     },
     padding: spacing[4],
     fontSize: fontSizes.sm,
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
-  skeleton: { height: "200px", animation: animations.pulse, backgroundColor: theme.muted },
+  skeleton: { height: "200px", backgroundColor: theme.muted },
   errorBox: {
     pointerEvents: "auto",
     borderWidth: 1,
@@ -48,7 +50,7 @@ const styles = stylex.create({
     display: "inline-block",
     color: {
       default: theme.foreground,
-      "@media (hover: hover)": { default: theme.foreground, ":hover": theme.mutedForeground },
+      [feature.hover]: { default: theme.foreground, ":hover": theme.mutedForeground },
     },
     textDecorationLine: "underline",
   },
@@ -117,7 +119,7 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const { resolvedTheme } = useTheme();
 
   if (!isHydrated) {
-    return <div {...stylex.props(styles.skeleton)} />;
+    return <div {...stylex.props(styles.skeleton, animate.pulse)} />;
   }
 
   const TweetNotFound = () => (
@@ -131,7 +133,7 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
 
   return (
     <div className="tweet-embed" data-theme={resolvedTheme ?? "light"}>
-      <Suspense fallback={<div {...stylex.props(styles.skeleton)} />}>
+      <Suspense fallback={<div {...stylex.props(styles.skeleton, animate.pulse)} />}>
         <LazyTweet id={tweetId} components={{ TweetNotFound }} />
       </Suspense>
     </div>

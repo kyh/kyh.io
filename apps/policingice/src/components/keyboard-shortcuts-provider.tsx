@@ -3,7 +3,7 @@
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
-import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import {
   containers,
@@ -44,7 +44,7 @@ const styles = stylex.create({
   linkish: {
     color: {
       default: null,
-      "@media (hover: hover)": { default: null, ":hover": theme.foreground },
+      [feature.hover]: { default: null, ":hover": theme.foreground },
     },
   },
   pointer: { cursor: "pointer" },
@@ -81,7 +81,7 @@ const styles = stylex.create({
   },
   para: { marginBottom: spacing[3] },
   list: { marginBottom: spacing[3], listStyleType: "disc", paddingLeft: spacing[5] },
-  listItem: { marginBottom: spacing[1] },
+  listItem: { marginBottom: { default: spacing[1], ":last-child": 0 } },
   close: {
     marginTop: spacing[4],
     cursor: "pointer",
@@ -89,7 +89,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     textDecorationLine: "underline",
     textUnderlineOffset: "2px",
@@ -331,7 +331,9 @@ const KeyboardShortcutsHelp = () => {
                   <li {...stylex.props(styles.listItem)}>
                     Anonymous participation - no account required
                   </li>
-                  <li>Community moderation - incidents with 3+ reports are hidden</li>
+                  <li {...stylex.props(styles.listItem)}>
+                    Community moderation - incidents with 3+ reports are hidden
+                  </li>
                 </ul>
               </Dialog.Description>
               <Dialog.Close {...stylex.props(styles.close)}>Close</Dialog.Close>

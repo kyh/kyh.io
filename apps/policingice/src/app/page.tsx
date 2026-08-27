@@ -1,13 +1,8 @@
+import { animate } from "./styles/animations.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
-import {
-  animations,
-  containers,
-  fontSizes,
-  fontWeights,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { Suspense } from "react";
 
@@ -37,10 +32,13 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
-  /** was `divide-y divide-border`, a child combinator StyleX cannot express */
-  divider: { borderBottomWidth: 1, borderBottomStyle: "solid", borderColor: theme.border },
+  divider: {
+    borderBottomWidth: { default: 1, ":last-child": 0 },
+    borderBottomStyle: "solid",
+    borderColor: theme.border,
+  },
   skeletonRow: { paddingBlock: spacing[6] },
-  skeleton: { height: "300px", animation: animations.pulse, backgroundColor: theme.muted },
+  skeleton: { height: "300px", backgroundColor: theme.muted },
 });
 
 const IncidentFeedLoader = async () => {
@@ -69,8 +67,8 @@ const FeedSkeleton = () => (
       </header>
       <div>
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} {...stylex.props(styles.skeletonRow, i < 2 && styles.divider)}>
-            <div {...stylex.props(styles.skeleton)} />
+          <div key={i} {...stylex.props(styles.skeletonRow, styles.divider)}>
+            <div {...stylex.props(styles.skeleton, animate.pulse)} />
           </div>
         ))}
       </div>

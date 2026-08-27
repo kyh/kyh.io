@@ -43,7 +43,14 @@ target — the apps left Tailwind, so the scale should never change again.
 
 ## Wiring
 
-`tokens.stylex.js` ships uncompiled, so each app's StyleX compiler must process it:
+The `.stylex.js` files ship uncompiled, so each app's StyleX compiler has to process
+them. Next apps list them in the PostCSS `include` glob:
 
-- **PostCSS (Next)**: add `"../../packages/tailwind-compat/tokens.stylex.js"` to `include`
-- **unplugin (Vite)**: add `"@repo/tailwind-compat"` to `externalPackages`
+```js
+include: ["src/**/*.{js,jsx,ts,tsx}", "../../packages/tailwind-compat/*.stylex.js"];
+```
+
+Vite apps need nothing: `@stylexjs/unplugin` compiles any dependency whose manifest
+declares `@stylexjs/stylex`, which is why this package's `peerDependencies` entry is
+load-bearing rather than decorative. Removing it drops the keyframes and every shared
+style from the three Vite builds, with no error.

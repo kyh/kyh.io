@@ -1,3 +1,5 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
 import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
@@ -33,21 +35,9 @@ const styles = stylex.create({
     backgroundColor: theme.background,
     padding: spacing[6],
   },
-  srOnly: {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    borderWidth: 0,
-  },
-  /** was `space-y-4` / `space-y-2` / `space-y-1`: a margin on every child but the last */
-  stack4: { marginBottom: spacing[4] },
-  stack2: { marginBottom: spacing[2] },
-  stack1: { marginBottom: spacing[1] },
+  stack4: { marginBottom: { default: spacing[4], ":last-child": 0 } },
+  stack2: { marginBottom: { default: spacing[2], ":last-child": 0 } },
+  stack1: { marginBottom: { default: spacing[1], ":last-child": 0 } },
   label: {
     marginBottom: spacing[1],
     display: "block",
@@ -91,7 +81,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
   },
   linkButtonSpaced: { marginTop: spacing[2] },
@@ -117,7 +107,7 @@ const styles = stylex.create({
     lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
-      "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
     },
     textDecorationLine: "underline",
     textUnderlineOffset: "2px",
@@ -296,7 +286,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
       <Dialog.Portal>
         <Dialog.Backdrop {...stylex.props(styles.backdrop)} />
         <Dialog.Popup {...stylex.props(styles.popup)}>
-          <Dialog.Title {...stylex.props(styles.srOnly)}>{title}</Dialog.Title>
+          <Dialog.Title {...stylex.props(a11y.srOnly)}>{title}</Dialog.Title>
           <Form ref={formRef} onSubmit={handleSubmit}>
             {/* Video URLs - Create mode */}
             {mode === "create" && (
@@ -306,11 +296,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
                 </label>
                 <div>
                   {inputKeys.map((key, index) => (
-                    <Field.Root
-                      key={key}
-                      name={`video-${key}`}
-                      {...stylex.props(index < inputKeys.length - 1 && styles.stack2)}
-                    >
+                    <Field.Root key={key} name={`video-${key}`} {...stylex.props(styles.stack2)}>
                       <div {...stylex.props(styles.row2)}>
                         <Field.Control
                           type="url"
@@ -356,14 +342,8 @@ export const IncidentModal = (props: IncidentModalProps) => {
                     Videos ({props.incident.videos.length})
                   </label>
                   <div>
-                    {props.incident.videos.map((video, i) => (
-                      <div
-                        key={video.id}
-                        {...stylex.props(
-                          styles.videoLine,
-                          i < props.incident.videos.length - 1 && styles.stack1,
-                        )}
-                      >
+                    {props.incident.videos.map((video) => (
+                      <div key={video.id} {...stylex.props(styles.videoLine, styles.stack1)}>
                         {video.platform}: {video.url}
                       </div>
                     ))}

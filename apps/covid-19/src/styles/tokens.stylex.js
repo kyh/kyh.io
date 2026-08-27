@@ -120,10 +120,6 @@ export const colors = stylex.defineConsts({
   pink900: "#751a3d",
 });
 
-export const fonts = stylex.defineConsts({
-  sans: 'Inter var, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-});
-
 /** Extra step below Tailwind's xs, defined only by this app. */
 export const fontSizes = stylex.defineConsts({
   "2xs": "0.65rem",
