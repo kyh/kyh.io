@@ -140,8 +140,22 @@ When a page animates or has realtime content, diff the same build against itself
 to measure the noise floor — kyh's scramble text and multiplayer cursors produce ~88
 box diffs per load on their own, and anything at or below that is not signal.
 
-Known cosmetic drift from Tailwind, all verified harmless: lightningcss evaluates
-`calc(1.25/0.875)` to `1.42857` (costs 1/64px of line-height) and emits colors as
-`lab()` rather than `oklch()`/`oklab()` (byte-identical sRGB, checked by sampling).
-`transition-colors` also drops `--tw-gradient-from/via/to` from its property list —
-those custom properties no longer exist, so transitioning them was already a no-op.
+Migrated apps are verified against pre-migration builds by diffing computed styles and
+bounding boxes element by element. `kwadrants`, `covid-19` and `tc` match exactly;
+`stonksville`, `policingice` and `kyh` differ only in how the browser echoes a color
+back (`lab()` vs `oklch()`, or ~1e-5 of float), every pair sampled to byte-identical
+sRGB. Keeping it that way is what the compat package's non-generated files are for:
+
+- `leading.stylex.js` — line-height as a length, because lightningcss rounds unitless
+  numbers to five decimals and `calc(1.25/0.875)` then lands 1/64px short.
+- `transitions.stylex.js` — the property lists Tailwind emitted, `--tw-gradient-*` and
+  all. Those properties no longer exist, so transitioning them is a no-op, but their
+  absence shows up in every computed style.
+- `shadows.stylex.js` — Tailwind composed `box-shadow` from five slots and left the
+  four it wasn't using at `0 0 #0000`. Invisible, but present in the computed value;
+  `ringSlots` exists so a ring lands in the slot Tailwind put it in.
+
+The repo pins a `browserslist` at the oldest browsers that support `oklch()`. Tailwind
+shipped raw `oklch()` with no fallback, so the apps already required them; without the
+pin lightningcss downlevels inlined colors to `lab()` plus a hex fallback and the
+computed values stop matching.

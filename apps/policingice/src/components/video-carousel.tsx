@@ -1,14 +1,10 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
-import {
-  defaults,
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { defaults, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -27,7 +23,7 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   row3: { display: "flex", alignItems: "center", gap: spacing[3] },
@@ -36,7 +32,7 @@ const styles = stylex.create({
   dot: {
     height: spacing[1.5],
     borderRadius: radii.full,
-    transitionProperty: "all",
+    transitionProperty: transitionProperty.all,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },

@@ -1,7 +1,7 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -47,7 +47,7 @@ const styles = stylex.create({
     paddingInline: spacing[3],
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.medium,
     color: { default: colors.gray300, ":focus": colors.white },
     outlineStyle: { default: null, ":focus": "none" },
@@ -66,7 +66,7 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: colors.gray400,
   },
   date: { position: "relative", marginLeft: spacing[3] },

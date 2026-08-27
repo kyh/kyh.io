@@ -1,5 +1,6 @@
 "use client";
 
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
@@ -52,7 +53,7 @@ const styles = stylex.create({
     position: "absolute",
     inset: 0,
     zIndex: 20,
-    transitionProperty: "opacity",
+    transitionProperty: transitionProperty.opacity,
     transitionTimingFunction: "cubic-bezier(.4, 0, .2, 1)",
     transitionDuration: ".3s",
   },

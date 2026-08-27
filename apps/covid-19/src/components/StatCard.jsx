@@ -1,11 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import {
-  fontSizeLineHeights,
-  fontSizes,
-  fontWeights,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, fontWeights, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { Card } from "components/Card";
 import { Loader } from "components/Loader";
 
@@ -37,14 +32,14 @@ const styles = stylex.create({
   value: {
     marginRight: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.gray100,
   },
   suffix: { fontSize: localFontSizes["2xs"], color: colors.gray400 },
   row: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   rowValue: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.gray100,
   },
 });

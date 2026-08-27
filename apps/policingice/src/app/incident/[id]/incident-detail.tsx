@@ -1,15 +1,11 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../styles/tokens.stylex";
 
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -42,7 +38,7 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },

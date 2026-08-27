@@ -1,8 +1,9 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { cloneElement } from "react";
 import * as stylex from "@stylexjs/stylex";
+import { ringSlots } from "@repo/tailwind-compat/shadows.stylex";
 import {
   colors,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -27,14 +28,17 @@ const styles = stylex.create({
     paddingInline: spacing[3],
     paddingBlock: spacing[2],
     zIndex: { default: null, ":focus-within": 10 },
-    boxShadow: { default: null, ":focus-within": `0 0 0 1px ${colors.emerald600}` },
+    boxShadow: {
+      default: null,
+      ":focus-within": `${ringSlots.before}, 0 0 0 1px ${colors.emerald600}, ${ringSlots.after}`,
+    },
   },
   label: {
     display: "block",
     cursor: "text",
     paddingBottom: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.medium,
     color: colors.slate50,
   },

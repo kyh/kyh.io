@@ -1,5 +1,7 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
@@ -8,7 +10,6 @@ import {
   colors,
   containers,
   defaults,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   letterSpacing,
@@ -79,15 +80,14 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.full,
-    transitionProperty:
-      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".15s",
   },
   mono: {
     fontFamily: defaults.monoFontFamily,
     fontSize: fontSizes.lg,
-    lineHeight: fontSizeLineHeights.lg,
+    lineHeight: leading.lg,
   },
   hudLeft: {
     color: theme.foregroundFaded,
@@ -96,7 +96,7 @@ const styles = stylex.create({
     left: spacing[12],
     display: { default: "none", [mediaUp.sm]: "block" },
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
   },
   hudRight: {
     color: theme.foregroundFaded,
@@ -105,7 +105,7 @@ const styles = stylex.create({
     bottom: "6dvh",
     display: { default: "none", [mediaUp.sm]: "block" },
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
   },
   counterRow: {
     marginBottom: spacing[2],
@@ -124,7 +124,7 @@ const styles = stylex.create({
   bar: {
     backgroundColor: theme.foregroundFaded,
     height: "100%",
-    transitionProperty: "all",
+    transitionProperty: transitionProperty.all,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".15s",
   },

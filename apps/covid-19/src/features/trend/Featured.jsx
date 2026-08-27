@@ -1,10 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import {
-  fontSizeLineHeights,
-  fontSizes,
-  mediaQueries,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, mediaQueries, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { Card } from "components/Card";
 import { LineChart } from "components/LineChart";
 import { StatCard, StatRow } from "components/StatCard";
@@ -31,7 +27,7 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  title: { fontSize: fontSizes.lg, lineHeight: fontSizeLineHeights.lg },
+  title: { fontSize: fontSizes.lg, lineHeight: leading.lg },
   grid4: {
     marginBottom: spacing[4],
     display: { default: null, [mediaQueries.sm]: "grid" },

@@ -1,10 +1,5 @@
-import {
-  defaults,
-  fontSizeLineHeights,
-  fontSizes,
-  letterSpacing,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { defaults, fontSizes, letterSpacing, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import Image from "next/image";
 
@@ -23,7 +18,7 @@ const styles = stylex.create({
     textAlign: "right",
     fontFamily: defaults.monoFontFamily,
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     letterSpacing: letterSpacing.tight,
   },
   list: { marginInline: `calc(-1 * ${spacing[2]})`, marginTop: spacing[1] },

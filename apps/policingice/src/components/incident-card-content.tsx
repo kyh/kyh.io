@@ -1,13 +1,9 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
-import {
-  colors,
-  fontSizeLineHeights,
-  fontSizes,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { colors, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -27,7 +23,7 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   voteGroup: { display: "flex", alignItems: "center", gap: spacing[4] },
   actionGroup: { display: "flex", alignItems: "center", gap: spacing[3] },

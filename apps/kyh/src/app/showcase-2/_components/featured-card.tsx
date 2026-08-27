@@ -1,9 +1,9 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import {
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   lineHeights,
@@ -24,7 +24,7 @@ const styles = stylex.create({
   size8: { width: spacing[8], height: spacing[8] },
   size9: { width: spacing[9], height: spacing[9] },
   size4: { width: spacing[4], height: spacing[4] },
-  small: { fontSize: fontSizes.sm, lineHeight: fontSizeLineHeights.sm },
+  small: { fontSize: fontSizes.sm, lineHeight: leading.sm },
   card: { pointerEvents: "auto", position: "absolute" },
   cardClickable: { cursor: "pointer" },
   above: {
@@ -42,7 +42,7 @@ const styles = stylex.create({
     color: theme.foregroundFaded,
     marginTop: spacing[3],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     letterSpacing: "0.2em",
     textTransform: "uppercase",
   },
@@ -116,7 +116,7 @@ const styles = stylex.create({
     marginInline: "auto",
     marginTop: spacing[3],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
 });
 

@@ -1,11 +1,11 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import {
   animations,
   colors,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   spacing,
@@ -30,7 +30,7 @@ const styles = stylex.create({
   },
   heading: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.medium,
   },
   refresh: {
@@ -39,7 +39,7 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
@@ -50,7 +50,7 @@ const styles = stylex.create({
   spin: { animation: animations.spin },
   muted: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   scroller: { overflowX: "auto" },
@@ -58,7 +58,7 @@ const styles = stylex.create({
     width: "100%",
     minWidth: "600px",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   headRow: {
     borderBottomWidth: 1,

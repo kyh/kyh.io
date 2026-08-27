@@ -1,5 +1,6 @@
 "use client";
 
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { appIcon, theme } from "../styles/tokens.stylex";
 
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
@@ -13,6 +14,7 @@ import {
 } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
+import { ringSlots } from "@repo/tailwind-compat/shadows.stylex";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -27,7 +29,7 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacing[2],
     textDecoration: "none",
-    transitionProperty: "transform, translate, scale, rotate",
+    transitionProperty: transitionProperty.transform,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".2s",
     scale: { default: null, ":active": "0.95 0.95" },
@@ -75,7 +77,7 @@ const styles = stylex.create({
     flexDirection: "column",
     alignItems: "center",
     gap: spacing[2],
-    transitionProperty: "transform, translate, scale, rotate",
+    transitionProperty: transitionProperty.transform,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".2s",
     willChange: "transform",
@@ -104,7 +106,7 @@ const styles = stylex.create({
     aspectRatio: "1 / 1",
     overflow: "hidden",
     borderRadius: radii.default,
-    boxShadow: `0 0 0 1px ${appIcon.ring}`,
+    boxShadow: `${ringSlots.before}, 0 0 0 1px ${appIcon.ring}, ${ringSlots.after}`,
   },
   /** background follows the hovered `.group` ancestor; see global.css */
   folderLabel: {
@@ -121,8 +123,7 @@ const styles = stylex.create({
     fontSize: fontSizes.xs,
     lineHeight: 1,
     fontWeight: fontWeights.medium,
-    transitionProperty:
-      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".15s",
   },

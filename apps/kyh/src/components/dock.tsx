@@ -1,13 +1,9 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme as t } from "../styles/tokens.stylex";
 
-import {
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -66,7 +62,7 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[0.5],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     whiteSpace: "pre",
     color: t.foreground,
   },

@@ -1,10 +1,11 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { ParentSize } from "@visx/responsive";
 import * as stylex from "@stylexjs/stylex";
 import {
   colors,
   containers,
   defaults,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   letterSpacing,
@@ -36,7 +37,7 @@ const styles = stylex.create({
   },
   title: {
     fontSize: fontSizes["2xl"],
-    lineHeight: fontSizeLineHeights["2xl"],
+    lineHeight: leading["2xl"],
     fontWeight: fontWeights.bold,
     letterSpacing: letterSpacing.tight,
   },
@@ -48,7 +49,7 @@ const styles = stylex.create({
     overflowX: "hidden",
     overflowY: "auto",
     paddingBlock: { default: spacing[10], [mediaUp.md]: 0 },
-    transitionProperty: "opacity",
+    transitionProperty: transitionProperty.opacity,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
     gridColumn: { default: null, [mediaUp.md]: "span 3 / span 3" },
@@ -60,7 +61,7 @@ const styles = stylex.create({
   eyebrow: {
     paddingInline: { default: spacing[3], [mediaUp.md]: 0 },
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate400,
   },
   totalRow: {
@@ -72,14 +73,14 @@ const styles = stylex.create({
   },
   total: {
     fontSize: fontSizes["3xl"],
-    lineHeight: fontSizeLineHeights["3xl"],
+    lineHeight: leading["3xl"],
     fontWeight: fontWeights.bold,
     letterSpacing: letterSpacing.tight,
   },
   perYear: {
     marginLeft: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: colors.slate400,
   },
   chartSize: { marginTop: spacing[10] },

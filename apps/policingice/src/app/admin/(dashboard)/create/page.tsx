@@ -1,10 +1,10 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import {
   colors,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -27,7 +27,7 @@ const styles = stylex.create({
   heading: {
     marginBottom: spacing[4],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.medium,
   },
   /** was `space-y-4`: a margin on every child but the last */
@@ -36,7 +36,7 @@ const styles = stylex.create({
     marginBottom: spacing[1],
     display: "block",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   textarea: {
@@ -48,10 +48,10 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     padding: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
-  counts: { fontSize: fontSizes.sm, lineHeight: fontSizeLineHeights.sm },
+  counts: { fontSize: fontSizes.sm, lineHeight: leading.sm },
   valid: { color: colors.green600 },
   invalid: { marginLeft: spacing[2], color: theme.destructive },
   row: { display: "flex", gap: spacing[4] },
@@ -61,7 +61,7 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   grow: { flex: 1 },
   input: {
@@ -72,7 +72,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
   inputAuto: {
@@ -82,13 +82,13 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
   submit: {
     cursor: { default: "pointer", ":disabled": "not-allowed" },
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },

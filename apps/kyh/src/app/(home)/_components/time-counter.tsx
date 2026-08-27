@@ -1,8 +1,9 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
-import { fontSizeLineHeights, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -17,7 +18,7 @@ const styles = stylex.create({
     height: spacing[4],
     alignItems: "center",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
   },
 });
 

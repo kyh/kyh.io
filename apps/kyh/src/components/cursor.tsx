@@ -1,3 +1,4 @@
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 type CursorProps = {
   x?: number;
@@ -19,7 +20,7 @@ const styles = stylex.create({
     top: 0,
     left: 0,
     zIndex: 1,
-    transitionProperty: "all",
+    transitionProperty: transitionProperty.all,
     transitionTimingFunction: "cubic-bezier(0, 0, .2, 1)",
     transitionDuration: ".15s",
   },

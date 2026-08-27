@@ -1,10 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
@@ -56,13 +52,13 @@ const styles = stylex.create({
     marginBottom: spacing[1],
     display: "block",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   labelMuted: {
     marginBottom: spacing[2],
     display: "block",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   row2: { display: "flex", gap: spacing[2] },
@@ -74,7 +70,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outlineStyle: { default: null, ":focus": "none" },
   },
   textarea: {
@@ -86,13 +82,13 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outlineStyle: { default: null, ":focus": "none" },
   },
   linkButton: {
     cursor: "pointer",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
@@ -103,7 +99,7 @@ const styles = stylex.create({
   fieldError: {
     marginTop: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.destructive,
   },
   videoLine: {
@@ -111,14 +107,14 @@ const styles = stylex.create({
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.mutedForeground,
   },
   actions: { display: "flex", gap: spacing[4], paddingTop: spacing[2] },
   submit: {
     cursor: "pointer",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },

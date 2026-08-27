@@ -1,10 +1,11 @@
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { motion } from "motion/react";
 
 const styles = stylex.create({
   icon: {
     overflow: "visible",
-    transitionProperty: "transform, translate, scale, rotate",
+    transitionProperty: transitionProperty.transform,
     transitionTimingFunction: "cubic-bezier(.4, 0, .2, 1)",
     transitionDuration: ".5s",
   },

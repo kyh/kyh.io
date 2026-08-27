@@ -1,8 +1,9 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
   defaults,
   easings,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   mediaQueries,
@@ -15,9 +16,6 @@ import { formatNumber } from "utils/formatter";
 import { stateAbbrevToFullname } from "utils/map-utils";
 
 import { colors } from "../../styles/tokens.stylex";
-
-const TRANSITION_ALL =
-  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events";
 
 const styles = stylex.create({
   aside: {
@@ -44,8 +42,8 @@ const styles = stylex.create({
     padding: spacing[4],
     textAlign: "left",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    transitionProperty: TRANSITION_ALL,
+    lineHeight: leading.sm,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: easings.inOut,
     transitionDuration: defaults.transitionDuration,
     outlineStyle: { default: null, ":focus": "none" },
@@ -74,9 +72,9 @@ const styles = stylex.create({
     paddingInline: spacing[4],
     paddingBlock: spacing[2],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.medium,
-    transitionProperty: TRANSITION_ALL,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: easings.inOut,
     transitionDuration: defaults.transitionDuration,
     outlineStyle: { default: null, ":focus": "none" },

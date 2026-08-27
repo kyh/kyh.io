@@ -1,24 +1,17 @@
+import { boxShadow, ringSlots, shadowLayers } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { useEffect, useRef, useState } from "react";
 import { Listbox, RadioGroup } from "@headlessui/react";
 import { NumericFormat } from "react-number-format";
 import * as stylex from "@stylexjs/stylex";
-import {
-  colors,
-  fontSizeLineHeights,
-  fontSizes,
-  defaults,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
-
-const TRANSITION_ALL =
-  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events";
+import { colors, fontSizes, defaults, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 const styles = stylex.create({
   mt10: { marginTop: spacing[10] },
   legendPlain: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate300,
   },
   legend: {
@@ -26,7 +19,7 @@ const styles = stylex.create({
     width: "100%",
     justifyContent: "space-between",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate300,
   },
   legendCentered: {
@@ -35,13 +28,13 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate300,
   },
   radioGroup: { display: "flex", gap: spacing[2] },
   radio: {
     cursor: "pointer",
-    transitionProperty: TRANSITION_ALL,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },
@@ -50,7 +43,7 @@ const styles = stylex.create({
     isolation: "isolate",
     marginTop: spacing[2],
     borderRadius: radii.md,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    boxShadow: boxShadow.xs,
   },
   /** was `-space-y-px`: a negative margin on every child but the last, so adjacent
    * field borders collapse into one. */
@@ -96,8 +89,8 @@ const styles = stylex.create({
     borderRadius: radii.lg,
     backgroundColor: colors.black,
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    boxShadow: `0 0 0 1px ${colors.black}, 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)`,
+    lineHeight: leading.sm,
+    boxShadow: `${ringSlots.before}, 0 0 0 1px ${colors.black}, ${shadowLayers.lg}`,
     outlineStyle: { default: null, ":focus": "none" },
   },
 });

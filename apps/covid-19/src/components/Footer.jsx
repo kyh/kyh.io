@@ -1,10 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { only as mediaOnly, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import { colors } from "../styles/tokens.stylex";
@@ -22,7 +18,7 @@ const styles = stylex.create({
     },
     paddingBlock: spacing[4],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.gray400,
   },
   link: {

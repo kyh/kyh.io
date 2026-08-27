@@ -1,11 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
-import {
-  colors,
-  fontSizeLineHeights,
-  fontSizes,
-  fontWeights,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { colors, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { NumericFormat } from "react-number-format";
 
 import type { BaseDataType } from "@/lib/comp";
@@ -19,7 +14,7 @@ const styles = stylex.create({
   table: {
     minWidth: "100%",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   /** was `divide-y divide-slate-600`, a child combinator StyleX cannot express;
    * thead is the only non-last child of this table. */

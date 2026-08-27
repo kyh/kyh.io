@@ -1,9 +1,9 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import {
   animations,
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   spacing,
@@ -28,13 +28,13 @@ const styles = stylex.create({
   header: { marginBottom: spacing[12] },
   title: {
     fontSize: fontSizes.base,
-    lineHeight: fontSizeLineHeights.base,
+    lineHeight: leading.base,
     fontWeight: fontWeights.normal,
   },
   subtitle: {
     marginTop: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   /** was `divide-y divide-border`, a child combinator StyleX cannot express */

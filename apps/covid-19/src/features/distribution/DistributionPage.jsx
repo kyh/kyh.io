@@ -1,7 +1,7 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   mediaQueries,
@@ -38,7 +38,7 @@ const styles = stylex.create({
   },
   eyebrow: {
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.semibold,
     color: colors.gray400,
     textTransform: "uppercase",
@@ -47,13 +47,13 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     fontSize: fontSizes["2xl"],
-    lineHeight: fontSizeLineHeights["2xl"],
+    lineHeight: leading["2xl"],
     fontWeight: fontWeights.bold,
   },
   playButton: { marginRight: spacing[2] },
   slider: { width: spacing[64] },
   sliderLabels: { display: "flex", justifyContent: "space-between" },
-  sliderLabel: { fontSize: fontSizes.xs, lineHeight: fontSizeLineHeights.xs },
+  sliderLabel: { fontSize: fontSizes.xs, lineHeight: leading.xs },
   grid3: {
     marginBottom: spacing[4],
     display: { default: null, [mediaQueries.sm]: "grid" },

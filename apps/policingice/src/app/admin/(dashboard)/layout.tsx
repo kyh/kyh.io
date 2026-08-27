@@ -1,12 +1,7 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../styles/tokens.stylex";
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  fontWeights,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -30,14 +25,14 @@ const styles = stylex.create({
   },
   title: {
     fontSize: fontSizes.base,
-    lineHeight: fontSizeLineHeights.base,
+    lineHeight: leading.base,
     fontWeight: fontWeights.normal,
   },
   nav: {
     display: "flex",
     gap: spacing[4],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   link: {
     color: {
@@ -48,7 +43,7 @@ const styles = stylex.create({
   center: { display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" },
   muted: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
 });

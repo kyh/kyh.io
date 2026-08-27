@@ -1,12 +1,12 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../app/styles/tokens.stylex";
 
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 
 import {
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -31,7 +31,7 @@ const styles = stylex.create({
     bottom: spacing[4],
     display: { default: "none", [mediaUp.sm]: "block" },
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.mutedForeground,
   },
   topRow: {
@@ -70,13 +70,13 @@ const styles = stylex.create({
   },
   dialogTitle: {
     fontSize: fontSizes.base,
-    lineHeight: fontSizeLineHeights.base,
+    lineHeight: leading.base,
     fontWeight: fontWeights.medium,
   },
   dialogBody: {
     marginTop: spacing[3],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   para: { marginBottom: spacing[3] },
@@ -86,7 +86,7 @@ const styles = stylex.create({
     marginTop: spacing[4],
     cursor: "pointer",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },

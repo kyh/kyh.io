@@ -1,11 +1,11 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import {
   colors,
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -67,7 +67,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
   inputAuto: {
@@ -77,7 +77,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
   inputSmall: {
@@ -88,7 +88,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     outline: "none",
   },
   approved: { color: colors.green600 },
@@ -102,7 +102,7 @@ const styles = stylex.create({
   linkXs: {
     cursor: "pointer",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
@@ -111,7 +111,7 @@ const styles = stylex.create({
   linkXsDanger: {
     cursor: "pointer",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.destructive,
   },
   hidden: { display: "none" },
@@ -133,12 +133,12 @@ const styles = stylex.create({
   heading: {
     marginBottom: spacing[4],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.medium,
   },
   mutedSm: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   scroller: { overflowX: "auto" },
@@ -146,7 +146,7 @@ const styles = stylex.create({
     width: "100%",
     minWidth: "900px",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   backdrop: {
     position: "fixed",
@@ -195,7 +195,7 @@ const styles = stylex.create({
   previewMeta: {
     marginBottom: spacing[4],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
 });

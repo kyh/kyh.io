@@ -1,5 +1,6 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
 
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
@@ -7,7 +8,6 @@ import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
 import {
   animations,
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -60,7 +60,7 @@ const styles = stylex.create({
   headRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   title: {
     fontSize: fontSizes.base,
-    lineHeight: fontSizeLineHeights.base,
+    lineHeight: leading.base,
     fontWeight: fontWeights.normal,
   },
   iconButton: {
@@ -88,7 +88,7 @@ const styles = stylex.create({
     marginBottom: spacing[1],
     display: "block",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.mutedForeground,
   },
   input: {
@@ -99,14 +99,14 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outlineStyle: { default: null, ":focus": "none" },
   },
   searchSubmit: {
     width: "100%",
     cursor: "pointer",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },
@@ -118,7 +118,7 @@ const styles = stylex.create({
   subtitle: {
     marginTop: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   inlineLink: {
@@ -136,12 +136,12 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   muted: { color: theme.mutedForeground },
   mutedSm: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   clearButton: {
@@ -166,7 +166,7 @@ const styles = stylex.create({
     backgroundColor: theme.background,
     paddingBlock: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   menuItem: {
     display: "block",
@@ -190,7 +190,7 @@ const styles = stylex.create({
   loadMore: { paddingBlock: spacing[8] },
   endMark: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)",
   },
   item: { paddingBlock: spacing[6], paddingTop: { default: spacing[6], ":first-child": 0 } },

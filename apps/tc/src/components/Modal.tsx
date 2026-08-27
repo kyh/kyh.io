@@ -1,3 +1,6 @@
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import * as stylex from "@stylexjs/stylex";
@@ -6,7 +9,6 @@ import {
   containers,
   defaults,
   easings,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -41,10 +43,10 @@ const styles = stylex.create({
     padding: spacing[6],
     textAlign: "left",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate300,
-    boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-    transitionProperty: "all",
+    boxShadow: boxShadow.xl,
+    transitionProperty: transitionProperty.all,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },

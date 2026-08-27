@@ -1,8 +1,10 @@
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import * as stylex from "@stylexjs/stylex";
 import {
   defaults,
   easings,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -19,16 +21,13 @@ export const SELECTIONS = {
   trendMonth: "trendMonth",
 };
 
-const TRANSITION_ALL =
-  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events";
-
 const styles = stylex.create({
   group: {
     position: "relative",
     zIndex: 0,
     display: "inline-flex",
     borderRadius: radii.md,
-    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    boxShadow: boxShadow.sm,
   },
   control: {
     borderWidth: 1,
@@ -37,9 +36,9 @@ const styles = stylex.create({
     paddingInline: spacing[3],
     paddingBlock: spacing[2],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.medium,
-    transitionProperty: TRANSITION_ALL,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: easings.inOut,
     transitionDuration: defaults.transitionDuration,
     outlineStyle: { default: null, ":focus": "none" },

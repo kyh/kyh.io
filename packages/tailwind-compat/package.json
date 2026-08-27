@@ -17,6 +17,15 @@
     "./forms.css": "./forms.css",
     "./media.stylex": {
       "default": "./media.stylex.js"
+    },
+    "./transitions.stylex": {
+      "default": "./transitions.stylex.js"
+    },
+    "./leading.stylex": {
+      "default": "./leading.stylex.js"
+    },
+    "./shadows.stylex": {
+      "default": "./shadows.stylex.js"
     }
   },
   "peerDependencies": {

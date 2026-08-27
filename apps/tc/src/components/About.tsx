@@ -1,3 +1,5 @@
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import type { Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
 import { Joyride, ACTIONS, EVENTS, STATUS } from "react-joyride";
@@ -6,7 +8,6 @@ import * as stylex from "@stylexjs/stylex";
 import {
   colors,
   containers,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -19,7 +20,7 @@ const styles = stylex.create({
   sectionLabel: {
     marginTop: spacing[4],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: colors.slate400,
     textTransform: "uppercase",
   },
@@ -29,9 +30,9 @@ const styles = stylex.create({
     backgroundColor: colors.black,
     padding: spacing[6],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: colors.slate200,
-    boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    boxShadow: boxShadow.xl,
   },
   tooltipTitle: {
     marginBottom: spacing[5],
@@ -64,7 +65,7 @@ const styles = stylex.create({
     paddingInline: spacing[4],
     paddingBlock: spacing[1.5],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.medium,
   },
   back: { color: colors.emerald600 },

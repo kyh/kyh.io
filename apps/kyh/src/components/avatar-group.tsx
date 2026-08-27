@@ -1,11 +1,9 @@
 "use client";
 
-import {
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import { fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -22,21 +20,21 @@ const styles = stylex.create({
   list: {
     marginRight: spacing[2],
     display: "flex",
-    transitionProperty: "opacity",
+    transitionProperty: transitionProperty.opacity,
     transitionTimingFunction: "cubic-bezier(0, 0, .2, 1)",
     transitionDuration: "230ms",
   },
   item: {
     marginRight: `calc(-1 * ${spacing[2]})`,
     borderRadius: radii.full,
-    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    boxShadow: boxShadow.md,
   },
   trigger: { display: "flex", height: spacing[7], width: spacing[7] },
   tooltip: {
     paddingInline: spacing[2],
     paddingBlock: spacing[0.5],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
   },
 });
 

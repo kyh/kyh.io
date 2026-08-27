@@ -1,12 +1,8 @@
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import React, { useMemo, useState } from "react";
 import * as stylex from "@stylexjs/stylex";
-import {
-  fontSizeLineHeights,
-  fontSizes,
-  fontWeights,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes, fontWeights, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import { max } from "d3-array";
 import { nest } from "d3-collection";
 import { format } from "d3-format";
@@ -24,7 +20,7 @@ const styles = stylex.create({
   mapWrap: { marginBottom: spacing[4] },
   note: {
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: palette.gray500,
   },
   tooltip: {
@@ -33,13 +29,13 @@ const styles = stylex.create({
     borderRadius: radii.md,
     backgroundColor: palette.gray800,
     padding: spacing[2],
-    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    boxShadow: boxShadow.sm,
   },
   table: { tableLayout: "auto", textAlign: "left" },
   name: {
     paddingInline: spacing[2],
     fontSize: fontSizes.lg,
-    lineHeight: fontSizeLineHeights.lg,
+    lineHeight: leading.lg,
     fontWeight: fontWeights.bold,
   },
   date: {
@@ -47,12 +43,12 @@ const styles = stylex.create({
     textAlign: "right",
     verticalAlign: "middle",
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.normal,
   },
   row: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.normal,
   },
   cell: { paddingInline: spacing[2], paddingBlock: spacing[1] },

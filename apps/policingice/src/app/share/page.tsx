@@ -1,5 +1,6 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../styles/tokens.stylex";
-import { fontSizeLineHeights, fontSizes } from "@repo/tailwind-compat/tokens.stylex";
+import { fontSizes } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -12,7 +13,7 @@ const styles = stylex.create({
   center: { display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" },
   muted: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
 });

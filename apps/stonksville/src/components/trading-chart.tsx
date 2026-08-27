@@ -1,11 +1,12 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as stylex from "@stylexjs/stylex";
 import {
   colors,
   defaults,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
@@ -76,7 +77,7 @@ const styles = stylex.create({
     gap: spacing[3],
     fontFamily: defaults.monoFontFamily,
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   liveValue: {
     color: `color-mix(in oklab, ${colors.emerald400} 60%, transparent)`,
@@ -106,7 +107,7 @@ const styles = stylex.create({
   bustedHeading: {
     marginBottom: spacing[3],
     fontSize: fontSizes.lg,
-    lineHeight: fontSizeLineHeights.lg,
+    lineHeight: leading.lg,
     fontWeight: fontWeights.bold,
     color: colors.red400,
   },
@@ -120,11 +121,10 @@ const styles = stylex.create({
     paddingInline: spacing[4],
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     fontWeight: fontWeights.bold,
     color: colors.white,
-    transitionProperty:
-      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },

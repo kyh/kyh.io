@@ -1,3 +1,6 @@
+import { boxShadow, ringSlots } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import type Konva from "konva";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -16,14 +19,7 @@ import {
 } from "lucide-react";
 import { animate, motion, useMotionValue } from "motion/react";
 import * as stylex from "@stylexjs/stylex";
-import {
-  colors,
-  defaults,
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { colors, defaults, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import type { GridType, LayoutType, QuadrantColors } from "@/lib/types";
 import { DEFAULT_TAG_COLOR, STORAGE_KEY, TAG_COLORS } from "@/lib/constants";
@@ -42,10 +38,6 @@ type IslandMode =
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 type PanelSize = { width: number; height: number };
 
-const SHADOW_LG = "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)";
-const TRANSITION_COLORS =
-  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke";
-
 const styles = stylex.create({
   column: { display: "flex", flexDirection: "column" },
   gap1: { gap: spacing[1] },
@@ -59,9 +51,12 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[1.5],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outlineStyle: { default: null, ":focus": "none" },
-    boxShadow: { default: null, ":focus": `0 0 0 2px ${colors.blue500}` },
+    boxShadow: {
+      default: null,
+      ":focus": `${ringSlots.before}, 0 0 0 2px ${colors.blue500}, ${ringSlots.after}`,
+    },
   },
   tagInputDark: {
     borderColor: colors.gray600,
@@ -80,13 +75,13 @@ const styles = stylex.create({
     height: spacing[5],
     width: spacing[5],
     borderRadius: radii.full,
-    transitionProperty: "transform, translate, scale, rotate",
+    transitionProperty: transitionProperty.transform,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },
   swatchSelected: {
     scale: "110% 110%",
-    boxShadow: `0 0 0 1px ${colors.white}, 0 0 0 3px ${colors.gray400}`,
+    boxShadow: `${ringSlots.beforeOffset}, 0 0 0 1px ${colors.white}, 0 0 0 3px ${colors.gray400}, ${ringSlots.after}`,
   },
 
   primaryButton: {
@@ -95,8 +90,8 @@ const styles = stylex.create({
     paddingInline: spacing[3],
     paddingBlock: spacing[1.5],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    transitionProperty: TRANSITION_COLORS,
+    lineHeight: leading.sm,
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
     opacity: { default: null, ":disabled": 0.5 },
@@ -126,8 +121,8 @@ const styles = stylex.create({
     paddingInline: spacing[3],
     paddingBlock: spacing[1.5],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    transitionProperty: TRANSITION_COLORS,
+    lineHeight: leading.sm,
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },
@@ -156,7 +151,7 @@ const styles = stylex.create({
     borderRadius: radii.sm,
     borderWidth: 0,
   },
-  colorLabel: { fontSize: fontSizes.xs, lineHeight: fontSizeLineHeights.xs },
+  colorLabel: { fontSize: fontSizes.xs, lineHeight: leading.xs },
   colorLabelDark: { color: colors.gray400 },
   colorLabelLight: { color: colors.gray600 },
 
@@ -182,7 +177,7 @@ const styles = stylex.create({
     borderWidth: 1,
     borderStyle: "solid",
     padding: spacing[2],
-    boxShadow: SHADOW_LG,
+    boxShadow: boxShadow.lg,
   },
   panelDark: { borderColor: colors.gray700, backgroundColor: colors.gray800 },
   panelLight: { borderColor: colors.gray200, backgroundColor: colors.white },
@@ -201,7 +196,7 @@ const styles = stylex.create({
   iconButton: {
     borderRadius: radii.sm,
     padding: spacing[1],
-    transitionProperty: TRANSITION_COLORS,
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },
@@ -228,8 +223,8 @@ const styles = stylex.create({
     paddingBlock: spacing[2],
     textAlign: "left",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    transitionProperty: TRANSITION_COLORS,
+    lineHeight: leading.sm,
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
   },

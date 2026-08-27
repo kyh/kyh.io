@@ -1,14 +1,10 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
-import {
-  defaults,
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { defaults, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -36,8 +32,7 @@ const styles = stylex.create({
     borderRadius: radii.sm,
     color: { default: theme.foregroundFaded, ":hover": theme.foregroundHighlighted },
     backgroundColor: { default: null, ":hover": theme.backgroundHover },
-    transitionProperty:
-      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".15s",
   },
@@ -45,7 +40,7 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[0.5],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
   },
   code: {
     borderRadius: radii.default,
@@ -67,7 +62,7 @@ const styles = stylex.create({
     borderColor: theme.border,
     padding: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: theme.foreground,
   },
   menuItem: {

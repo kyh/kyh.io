@@ -1,11 +1,7 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "./styles/tokens.stylex";
 import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 
@@ -19,7 +15,7 @@ const styles = stylex.create({
   wrap: { maxWidth: containers.xl },
   muted: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.mutedForeground,
   },
   link: {

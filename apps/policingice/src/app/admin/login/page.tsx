@@ -1,14 +1,9 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import { theme } from "../../styles/tokens.stylex";
 
-import {
-  containers,
-  fontSizeLineHeights,
-  fontSizes,
-  fontWeights,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { containers, fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import * as stylex from "@stylexjs/stylex";
 
@@ -33,7 +28,7 @@ const styles = stylex.create({
   heading: {
     marginBottom: spacing[8],
     fontSize: fontSizes.base,
-    lineHeight: fontSizeLineHeights.base,
+    lineHeight: leading.base,
     fontWeight: fontWeights.normal,
   },
   /** was `space-y-4`: a margin on every child but the last */
@@ -46,18 +41,18 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     outline: "none",
   },
   fieldError: {
     marginTop: spacing[1],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.destructive,
   },
   formError: {
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: theme.destructive,
   },
   submit: {
@@ -65,7 +60,7 @@ const styles = stylex.create({
     cursor: { default: "pointer", ":disabled": "not-allowed" },
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
     color: {
       default: theme.mutedForeground,
       "@media (hover: hover)": { default: theme.mutedForeground, ":hover": theme.foreground },

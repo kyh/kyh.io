@@ -1,3 +1,6 @@
+import { boxShadow, ringSlots } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import type { InputActionMeta, MultiValue, OptionProps } from "react-select";
 import { useState } from "react";
 import { NumericFormat } from "react-number-format";
@@ -7,15 +10,11 @@ import * as stylex from "@stylexjs/stylex";
 import {
   colors,
   defaults,
-  fontSizeLineHeights,
   fontSizes,
   fontWeights,
   radii,
   spacing,
 } from "@repo/tailwind-compat/tokens.stylex";
-
-const TRANSITION_ALL =
-  "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events";
 
 const styles = stylex.create({
   chip: {
@@ -27,7 +26,7 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[0.5],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     fontWeight: fontWeights.medium,
     color: colors.slate800,
   },
@@ -37,7 +36,7 @@ const styles = stylex.create({
     zIndex: 0,
     display: "inline-flex",
     borderRadius: radii.md,
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    boxShadow: boxShadow.xs,
   },
   segment: {
     position: "relative",
@@ -53,12 +52,15 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[2],
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
-    transitionProperty: TRANSITION_ALL,
+    lineHeight: leading.sm,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
     zIndex: { default: null, ":focus": 10 },
-    boxShadow: { default: null, ":focus": `0 0 0 1px ${colors.emerald500}` },
+    boxShadow: {
+      default: null,
+      ":focus": `${ringSlots.before}, 0 0 0 1px ${colors.emerald500}, ${ringSlots.after}`,
+    },
     outlineStyle: { default: null, ":focus": "none" },
   },
   segmentFirst: { borderTopLeftRadius: radii.md, borderBottomLeftRadius: radii.md },
@@ -91,7 +93,7 @@ const styles = stylex.create({
     position: "relative",
     minWidth: "100%",
     fontSize: fontSizes.sm,
-    lineHeight: fontSizeLineHeights.sm,
+    lineHeight: leading.sm,
   },
   thead: {
     fontWeight: fontWeights.semibold,
@@ -114,9 +116,9 @@ const styles = stylex.create({
     paddingInline: spacing[2],
     paddingBlock: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     color: colors.white,
-    transitionProperty: TRANSITION_ALL,
+    transitionProperty: transitionProperty.default,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: defaults.transitionDuration,
     backgroundColor: {
@@ -124,7 +126,10 @@ const styles = stylex.create({
       "@media (hover: hover)": { default: null, ":hover": colors.emerald900 },
     },
     zIndex: { default: null, ":focus": 10 },
-    boxShadow: { default: null, ":focus": `0 0 0 1px ${colors.emerald500}` },
+    boxShadow: {
+      default: null,
+      ":focus": `${ringSlots.before}, 0 0 0 1px ${colors.emerald500}, ${ringSlots.after}`,
+    },
     outlineStyle: { default: null, ":focus": "none" },
   },
 });

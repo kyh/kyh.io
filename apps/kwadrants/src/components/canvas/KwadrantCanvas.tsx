@@ -1,14 +1,10 @@
+import { boxShadow, ringSlots, shadowLayers } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import type Konva from "konva";
 import { forwardRef, useMemo, useState } from "react";
 import { Layer, Stage } from "react-konva";
 import * as stylex from "@stylexjs/stylex";
-import {
-  colors,
-  fontSizeLineHeights,
-  fontSizes,
-  radii,
-  spacing,
-} from "@repo/tailwind-compat/tokens.stylex";
+import { colors, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { getDefaultLabels, getLayout } from "@/lib/layouts";
@@ -31,21 +27,19 @@ interface LabelEditorProps {
   onClose: () => void;
 }
 
-const SHADOW_LG = "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)";
-
 const styles = stylex.create({
   editor: {
     position: "absolute",
     borderRadius: radii.sm,
     paddingInline: spacing[1],
     fontSize: fontSizes.xs,
-    lineHeight: fontSizeLineHeights.xs,
+    lineHeight: leading.xs,
     borderWidth: 1,
     borderStyle: "solid",
     outlineStyle: { default: null, ":focus": "none" },
     boxShadow: {
-      default: SHADOW_LG,
-      ":focus": `0 0 0 1px ${colors.blue500}, ${SHADOW_LG}`,
+      default: boxShadow.lg,
+      ":focus": `${ringSlots.before}, 0 0 0 1px ${colors.blue500}, ${shadowLayers.lg}`,
     },
   },
   editorDark: {

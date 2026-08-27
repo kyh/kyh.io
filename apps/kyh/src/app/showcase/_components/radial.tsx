@@ -1,5 +1,6 @@
 "use client";
 
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { theme } from "../../../styles/tokens.stylex";
 
 import { defaults, containers, spacing } from "@repo/tailwind-compat/tokens.stylex";
@@ -67,8 +68,7 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     gap: spacing[1],
-    transitionProperty:
-      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionProperty: transitionProperty.colors,
     transitionTimingFunction: defaults.transitionTimingFunction,
     transitionDuration: ".15s",
   },
