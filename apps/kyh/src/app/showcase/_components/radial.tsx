@@ -1,5 +1,12 @@
 "use client";
 
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import { theme } from "../../../styles/tokens.stylex";
+
+import { defaults, containers, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import type { MotionStyle, MotionValue, ValueAnimationTransition } from "motion/react";
 import type { Dispatch, ReactNode, Ref, SetStateAction } from "react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +20,71 @@ import { Card } from "@/components/card";
 import { Link } from "@/components/link";
 import { useIsHydrated } from "@/lib/use-hydrated";
 import { areIntersecting, clamp, useEvent, useHashState, useShortcuts } from "./utils";
+
+const styles = stylex.create({
+  stage: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    translate: "-50% -50%",
+    animationName: "animateIn",
+    animationDuration: "0.2s",
+    animationTimingFunction: "ease-out",
+    animationFillMode: "forwards",
+    opacity: 0,
+    scale: { default: null, "@media (width >= 900px)": "0.8 0.8" },
+  },
+  ring: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transformOrigin: "50% 7dvh",
+    translate: "-50% -50%",
+  },
+  fill: { height: "100%", width: "100%" },
+  label: {
+    display: "flex",
+    translate: "0 -50%",
+    flexDirection: "column",
+    alignItems: "center",
+    whiteSpace: "nowrap",
+  },
+  detail: {
+    position: "relative",
+    top: 0,
+    marginInline: "auto",
+    marginTop: "50dvh",
+    maxWidth: containers["3xl"],
+    paddingInline: spacing[5],
+    paddingBottom: "140px",
+  },
+  backButton: {
+    color: {
+      default: theme.foregroundFaded,
+      ":hover": theme.foregroundHighlighted,
+      ":focus-visible": theme.foregroundHighlighted,
+    },
+    marginBottom: spacing[3],
+    display: "flex",
+    alignItems: "center",
+    gap: spacing[1],
+    transitionProperty: transitionProperty.colors,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  footer: {
+    marginTop: spacing[6],
+    display: "flex",
+    justifyContent: "space-between",
+    gap: spacing[3],
+  },
+  project: { display: "flex", width: "100%", flexDirection: "column", gap: spacing[9] },
+  projectHeader: { display: "flex", flexDirection: "column", gap: spacing[3] },
+  projectDesc: { color: theme.foregroundFaded },
+  cover: { objectFit: "cover" },
+  aspect16x9: { aspectRatio: "16 / 9" },
+  aspect4x3: { aspectRatio: "4 / 3" },
+});
 
 type RadialDataType = {
   project: ProjectType;
@@ -212,9 +284,9 @@ export const Radial = ({ projects }: RadialProps) => {
         radialData,
       }}
     >
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[animateIn_0.2s_ease-out_forwards] opacity-0 min-[900px]:scale-[0.8]">
+      <div {...stylex.props(styles.stage)}>
         <motion.div
-          className="absolute top-1/2 left-1/2 origin-[50%_7dvh] -translate-x-1/2 -translate-y-1/2"
+          {...stylex.props(styles.ring)}
           style={{
             width: constants.SIZE,
             height: constants.SIZE,
@@ -231,7 +303,7 @@ export const Radial = ({ projects }: RadialProps) => {
           {isHydrated && (
             <motion.div
               ref={ref}
-              className="h-full w-full"
+              {...stylex.props(styles.fill)}
               style={{ rotate }}
               transition={transition}
             >
@@ -365,7 +437,7 @@ const Meta = ({
 
   return (
     <motion.div
-      className="flex -translate-y-1/2 flex-col items-center whitespace-nowrap"
+      {...stylex.props(styles.label)}
       data-slot="meta"
       style={{ ...style, rotate: reverseRotate }}
       initial={{ opacity }}
@@ -394,7 +466,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
   return (
     <motion.div
       ref={ref}
-      className="relative top-0 mx-auto mt-[50dvh] max-w-3xl px-5 pb-[140px]"
+      {...stylex.props(styles.detail)}
       initial={false}
       style={{
         pointerEvents: zoom ? "auto" : "none",
@@ -416,7 +488,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
       }}
     >
       <button
-        className="radial-back-button text-foreground-faded mb-3 flex items-center gap-1 transition-colors duration-150 hover:text-[var(--body-color-highlighted)] focus-visible:text-[var(--body-color-highlighted)]"
+        className={`radial-back-button ${stylex.props(styles.backButton).className}`}
         onClick={() => {
           const evt = new KeyboardEvent("keydown", { key: "Escape" });
           window.dispatchEvent(evt);
@@ -425,7 +497,7 @@ const Sheet = ({ ref }: { ref: Ref<HTMLDivElement> }) => {
         Back
       </button>
       {item && <Project key={item.project.title} project={item.project} />}
-      <footer className="radial-footer mt-6 flex justify-between gap-3">
+      <footer className={`radial-footer ${stylex.props(styles.footer).className}`}>
         <button
           onClick={() => {
             const evt = new KeyboardEvent("keydown", { key: "ArrowLeft" });
@@ -629,21 +701,21 @@ const transition: ValueAnimationTransition<number> = {
 const Project = ({ project }: { project: ProjectType }) => {
   return (
     <a
-      className="flex w-full flex-col gap-9"
+      {...stylex.props(styles.project)}
       href={project.url}
       target="_blank"
       rel="noopener noreferrer"
     >
-      <header className="flex flex-col gap-3">
+      <header {...stylex.props(styles.projectHeader)}>
         <ScrambleText>{project.title}</ScrambleText>
-        {project.description && <p className="text-foreground-faded">{project.description}</p>}
+        {project.description && <p {...stylex.props(styles.projectDesc)}>{project.description}</p>}
       </header>
       {project.projectAssets.map((asset, assetIndex) => (
         <AnimateSection key={`${project.url}-${asset.src}`} delay={0.2 + 0.2 * assetIndex}>
-          <Card className={asset.aspectRatio === "16:9" ? "aspect-video" : "aspect-[4/3]"}>
+          <Card style={asset.aspectRatio === "16:9" ? styles.aspect16x9 : styles.aspect4x3}>
             {asset.type === "image" && (
               <Image
-                className="object-cover"
+                {...stylex.props(styles.cover)}
                 src={asset.src}
                 alt={asset.description ?? ""}
                 width={400}

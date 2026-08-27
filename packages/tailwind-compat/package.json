@@ -1,0 +1,38 @@
+{
+  "name": "@repo/tailwind-compat",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Frozen Tailwind v4.3.3 scale and reset for apps migrated to StyleX",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    "./tokens.stylex": {
+      "types": "./tokens.stylex.d.ts",
+      "default": "./tokens.stylex.js"
+    },
+    "./preflight.css": "./preflight.css",
+    "./forms.css": "./forms.css",
+    "./media.stylex": {
+      "default": "./media.stylex.js"
+    },
+    "./transitions.stylex": {
+      "default": "./transitions.stylex.js"
+    },
+    "./leading.stylex": {
+      "default": "./leading.stylex.js"
+    },
+    "./shadows.stylex": {
+      "default": "./shadows.stylex.js"
+    },
+    "./a11y.stylex": {
+      "default": "./a11y.stylex.js"
+    }
+  },
+  "peerDependencies": {
+    "@stylexjs/stylex": "*"
+  },
+  "//peerDependencies": "Load-bearing: @stylexjs/unplugin only compiles workspace packages that declare @stylexjs/stylex. Removing this silently drops this package's CSS from the Vite apps."
+}

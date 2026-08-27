@@ -1,5 +1,14 @@
 "use client";
 
+import { animate } from "../app/styles/animations.stylex";
+import { feature } from "@repo/tailwind-compat/media.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme } from "../app/styles/tokens.stylex";
+
+import { fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import type { ReactNode } from "react";
 import { Component, lazy, Suspense } from "react";
 
@@ -7,6 +16,46 @@ import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useTheme } from "@/components/theme";
 import { useIsHydrated } from "@/lib/use-hydrated";
 import { extractInstagramType, extractVideoId } from "@/lib/video-utils";
+
+const styles = stylex.create({
+  fallbackLink: {
+    display: "block",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: {
+      default: theme.border,
+      [feature.hover]: { default: theme.border, ":hover": theme.mutedForeground },
+    },
+    padding: spacing[4],
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: {
+      default: theme.mutedForeground,
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  skeleton: { height: "200px", backgroundColor: theme.muted },
+  errorBox: {
+    pointerEvents: "auto",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    padding: spacing[4],
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: theme.mutedForeground,
+  },
+  errorLink: {
+    marginTop: spacing[2],
+    display: "inline-block",
+    color: {
+      default: theme.foreground,
+      [feature.hover]: { default: theme.foreground, ":hover": theme.mutedForeground },
+    },
+    textDecorationLine: "underline",
+  },
+  frame: { width: "100%", maxWidth: "550px" },
+});
 
 type VideoEmbedProps = {
   url: string;
@@ -26,12 +75,7 @@ const platformNames = {
 
 const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform }) => {
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block border border-border p-4 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground"
-    >
+    <a href={url} target="_blank" rel="noopener noreferrer" {...stylex.props(styles.fallbackLink)}>
       open on {platformNames[platform]}
     </a>
   );
@@ -75,26 +119,21 @@ const TwitterEmbed = ({ tweetId, url }: { tweetId: string; url: string }) => {
   const { resolvedTheme } = useTheme();
 
   if (!isHydrated) {
-    return <div className="h-[200px] animate-pulse bg-muted" />;
+    return <div {...stylex.props(styles.skeleton, animate.pulse)} />;
   }
 
   const TweetNotFound = () => (
-    <div className="pointer-events-auto border border-border p-4 text-sm text-muted-foreground">
+    <div {...stylex.props(styles.errorBox)}>
       <p>Tweet not found. X may have blocked embedding this video.</p>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-block text-foreground underline hover:text-muted-foreground"
-      >
+      <a href={url} target="_blank" rel="noopener noreferrer" {...stylex.props(styles.errorLink)}>
         Open on X to view
       </a>
     </div>
   );
 
   return (
-    <div className="[&_.react-tweet-theme]:!m-0" data-theme={resolvedTheme ?? "light"}>
-      <Suspense fallback={<div className="h-[200px] animate-pulse bg-muted" />}>
+    <div className="tweet-embed" data-theme={resolvedTheme ?? "light"}>
+      <Suspense fallback={<div {...stylex.props(styles.skeleton, animate.pulse)} />}>
         <LazyTweet id={tweetId} components={{ TweetNotFound }} />
       </Suspense>
     </div>
@@ -191,7 +230,7 @@ export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   };
 
   return (
-    <div className="w-full max-w-[550px]">
+    <div {...stylex.props(styles.frame)}>
       <EmbedErrorBoundary fallback={<FallbackLink url={url} platform={platform} />}>
         {renderEmbed()}
       </EmbedErrorBoundary>

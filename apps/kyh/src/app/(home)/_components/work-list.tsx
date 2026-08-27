@@ -1,23 +1,44 @@
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { defaults, fontSizes, letterSpacing, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import Image from "next/image";
 
 import type { WorkType } from "@/lib/data";
 import { workHistory } from "@/lib/data";
 
+const styles = stylex.create({
+  icon: {
+    display: "flex",
+    height: spacing[5],
+    width: spacing[5],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  year: {
+    textAlign: "right",
+    fontFamily: defaults.monoFontFamily,
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+    letterSpacing: letterSpacing.tight,
+  },
+  list: { marginInline: `calc(-1 * ${spacing[2]})`, marginTop: spacing[1] },
+});
+
 const Work = ({ work }: { work: WorkType }) => {
   return (
     <a href={work.link} target="_blank" rel="noopener noreferrer" className="list-row">
-      <span className="flex h-5 w-5 items-center justify-center">
+      <span {...stylex.props(styles.icon)}>
         <Image alt={`${work.company} icon`} width={20} height={20} src={work.favicon} />
       </span>
       <span>{work.role}</span>
       <span>{work.company}</span>
-      <span className="text-right font-mono text-xs tracking-tight">{work.year}</span>
+      <span {...stylex.props(styles.year)}>{work.year}</span>
     </a>
   );
 };
 
 export const WorkList = () => (
-  <div className="-mx-2 mt-1">
+  <div {...stylex.props(styles.list)}>
     {workHistory.map((item) => (
       <Work key={`${item.company}-${item.year}`} work={item} />
     ))}

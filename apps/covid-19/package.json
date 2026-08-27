@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@repo/tailwind-compat": "workspace:*",
+    "@stylexjs/stylex": "catalog:",
     "d3": "^7.9.0",
     "d3-array": "^3.2.4",
     "d3-collection": "^1.0.7",
@@ -25,10 +27,9 @@
     "swr": "^2.5.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "catalog:",
+    "@stylexjs/unplugin": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "postcss": "catalog:",
-    "tailwindcss": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:"
   }
 }

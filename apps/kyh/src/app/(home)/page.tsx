@@ -1,3 +1,7 @@
+import { theme } from "../../styles/tokens.stylex";
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+import { fontSizes, fontWeights, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
@@ -10,29 +14,70 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
+const styles = stylex.create({
+  page: {
+    position: "relative",
+    isolation: "isolate",
+    minHeight: "100vh",
+    paddingInline: spacing[6],
+    /* off Tailwind's named scale; matches what `pt-30` computed */
+    paddingTop: `calc(${spacing.unit} * 30)`,
+    paddingBottom: spacing[64],
+  },
+  column: {
+    position: "relative",
+    zIndex: 10,
+    marginInline: "auto",
+    display: "flex",
+    width: { default: "100%", [mediaUp.sm]: "560px" },
+    flexDirection: "column",
+    gap: spacing[10],
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[2],
+    paddingBlock: spacing[4],
+  },
+  home: { color: theme.foregroundHighlighted, display: "flex", alignItems: "center" },
+  headerRight: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: spacing[1.5],
+  },
+  lede: {
+    color: theme.foregroundHighlighted,
+    marginBottom: spacing[3],
+    fontSize: fontSizes.lg,
+    lineHeight: 1,
+    fontWeight: fontWeights.medium,
+  },
+  body: { color: theme.foreground },
+  bodySpaced: { color: theme.foreground, marginTop: spacing[1] },
+  footerLayer: { position: "absolute", right: 0, bottom: 0, left: 0, zIndex: 0 },
+});
+
 const Page = () => {
   return (
-    <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
-      <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
-        <header className="flex items-center justify-between gap-2 py-4">
-          <div className="text-foreground-highlighted flex items-center" aria-label="Home">
+    <div {...stylex.props(styles.page)}>
+      <div {...stylex.props(styles.column)}>
+        <header {...stylex.props(styles.header)}>
+          <div {...stylex.props(styles.home)} aria-label="Home">
             <Logo />
           </div>
-          <div className="flex flex-col items-end gap-1.5">
+          <div {...stylex.props(styles.headerRight)}>
             <ViewAsMenu />
             <TimeCounter />
           </div>
         </header>
 
         <Section id="intro" delay={0.1}>
-          <ScrambleText
-            as="h1"
-            trigger="both"
-            className="text-foreground-highlighted mb-3 text-lg leading-none font-medium"
-          >
+          <ScrambleText as="h1" trigger="both" className={stylex.props(styles.lede).className}>
             Kaiyu Hsu
           </ScrambleText>
-          <p className="text-foreground">
+          <p {...stylex.props(styles.body)}>
             Hello world. You can call me Kai since we&apos;re pretty much friends now. I enjoy{" "}
             <Link href="/showcase">creating things</Link> for the internet. By day, I get to do that
             through investing, advising, and building products you may not have heard of, yet.
@@ -131,7 +176,7 @@ const Page = () => {
 
         <Section id="other-activities" delay={0.9}>
           <SectionHeading id="other-activities">Other Activities</SectionHeading>
-          <p className="text-foreground mt-1">
+          <p {...stylex.props(styles.bodySpaced)}>
             Beyond work, I love to learn about economics, psychology, and business. You&apos;ll
             occasionally find me dabbling in the open source world, drawing things, building apps,
             and designing games. But honestly, I spend most of my days procrastinating.
@@ -146,7 +191,7 @@ const Page = () => {
         </Section>
       </div>
 
-      <div className="absolute right-0 bottom-0 left-0 z-0">
+      <div {...stylex.props(styles.footerLayer)}>
         <FigureCanvas />
       </div>
     </div>

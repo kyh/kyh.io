@@ -1,4 +1,16 @@
+import { easings } from "@repo/tailwind-compat/tokens.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import * as stylex from "@stylexjs/stylex";
 import { motion } from "motion/react";
+
+const styles = stylex.create({
+  icon: {
+    overflow: "visible",
+    transitionProperty: transitionProperty.transform,
+    transitionTimingFunction: easings.inOut,
+    transitionDuration: ".5s",
+  },
+});
 
 type ThemeToggleIconProps = {
   isLight: boolean;
@@ -11,7 +23,7 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
       width="100%"
       height="100%"
       style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
-      className="overflow-visible transition-transform duration-500 ease-in-out"
+      {...stylex.props(styles.icon)}
       aria-hidden="true"
     >
       <mask id="moon-mask-main-nav">

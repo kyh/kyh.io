@@ -1,5 +1,12 @@
 "use client";
 
+import { boxShadow } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import { easings, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -8,6 +15,28 @@ import type { PlayerMap } from "@/lib/player";
 import { getRandomColor } from "@/lib/color";
 import { useIsHydrated } from "@/lib/use-hydrated";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+
+const styles = stylex.create({
+  list: {
+    marginRight: spacing[2],
+    display: "flex",
+    transitionProperty: transitionProperty.opacity,
+    transitionTimingFunction: easings.out,
+    transitionDuration: "230ms",
+  },
+  item: {
+    marginRight: `calc(-1 * ${spacing[2]})`,
+    borderRadius: radii.full,
+    boxShadow: boxShadow.md,
+  },
+  trigger: { display: "flex", height: spacing[7], width: spacing[7] },
+  tooltip: {
+    paddingInline: spacing[2],
+    paddingBlock: spacing[0.5],
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+  },
+});
 
 type AvatarGroupProps = {
   others: PlayerMap;
@@ -24,10 +53,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const onlyMe = players.length < 1;
 
   return (
-    <ul className="mr-2 flex transition-opacity duration-[230ms] ease-out">
+    <ul {...stylex.props(styles.list)}>
       <AnimatePresence mode="popLayout">
         <motion.li
-          className="-mr-2 rounded-full shadow-md"
+          {...stylex.props(styles.item)}
           style={{
             zIndex: players.length,
             background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
@@ -40,12 +69,12 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
         >
           <Tooltip placement="bottom-end">
             <TooltipTrigger
-              className="flex h-7 w-7"
+              className={stylex.props(styles.trigger).className}
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
               <span aria-hidden="true" />
             </TooltipTrigger>
-            <TooltipContent className="px-2 py-0.5 text-xs">
+            <TooltipContent className={stylex.props(styles.tooltip).className}>
               {onlyMe ? "You're the only one here 🥺" : "You"}
             </TooltipContent>
           </Tooltip>
@@ -61,7 +90,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           return (
             <motion.li
               key={id}
-              className="-mr-2 rounded-full shadow-md"
+              {...stylex.props(styles.item)}
               style={{
                 zIndex: players.length - index,
                 background: `linear-gradient(${player.hue}, ${player.color})`,
@@ -73,10 +102,15 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               layout
             >
               <Tooltip placement="bottom-end">
-                <TooltipTrigger className="flex h-7 w-7" aria-label={label}>
+                <TooltipTrigger
+                  className={stylex.props(styles.trigger).className}
+                  aria-label={label}
+                >
                   <span aria-hidden="true" />
                 </TooltipTrigger>
-                <TooltipContent className="px-2 py-0.5 text-xs">{label}</TooltipContent>
+                <TooltipContent className={stylex.props(styles.tooltip).className}>
+                  {label}
+                </TooltipContent>
               </Tooltip>
             </motion.li>
           );

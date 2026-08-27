@@ -1,14 +1,29 @@
+import * as stylex from "@stylexjs/stylex";
+import { radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
 type CardProps = {
   children: React.ReactNode;
-  className?: string;
-} & React.HTMLProps<HTMLDivElement>;
+  style?: stylex.StyleXStyles;
+} & Omit<React.HTMLProps<HTMLDivElement>, "style">;
 
-export const Card = ({ children, className = "", ...props }: CardProps) => {
+const styles = stylex.create({
+  card: {
+    overflow: "hidden",
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "var(--dock-border-color)",
+    backgroundImage:
+      "linear-gradient(to top in oklab, var(--dock-border-color) 0%, var(--dock-bg) 100%)",
+    padding: spacing[1],
+    backdropFilter: "blur(10px)",
+  },
+});
+
+export const Card = ({ children, style, ...props }: CardProps) => {
+  const { className, style: inline } = stylex.props(styles.card, style);
   return (
-    <article
-      className={`overflow-hidden rounded-xl border border-[var(--dock-border-color)] bg-gradient-to-t from-[var(--dock-border-color)] to-[var(--dock-bg)] p-1 backdrop-blur-[10px] [&_*]:pointer-events-none [&_*]:rounded-lg [&_img]:h-full [&_img]:w-full ${className}`}
-      {...props}
-    >
+    <article className={`card-children ${className ?? ""}`} style={inline} {...props}>
       {children}
     </article>
   );

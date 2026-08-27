@@ -1,3 +1,6 @@
+import { theme } from "./styles/tokens.stylex";
+import { radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -5,6 +8,28 @@ import { ThemeProvider } from "@/components/theme";
 import { Toaster } from "@/components/toast";
 
 import "./styles/globals.css";
+
+const styles = stylex.create({
+  skipLink: {
+    position: { default: "absolute", ":focus": "absolute" },
+    width: { default: 1, ":focus": "auto" },
+    height: { default: 1, ":focus": "auto" },
+    padding: { default: 0, ":focus": null },
+    margin: { default: -1, ":focus": 0 },
+    overflow: { default: "hidden", ":focus": "visible" },
+    clipPath: { default: "inset(50%)", ":focus": "none" },
+    whiteSpace: { default: "nowrap", ":focus": "normal" },
+    borderWidth: 0,
+    top: { default: null, ":focus": spacing[4] },
+    left: { default: null, ":focus": spacing[4] },
+    zIndex: { default: null, ":focus": 50 },
+    borderRadius: { default: null, ":focus": radii.default },
+    backgroundColor: { default: null, ":focus": theme.foreground },
+    paddingInline: { default: null, ":focus": spacing[4] },
+    paddingBlock: { default: null, ":focus": spacing[2] },
+    color: { default: null, ":focus": theme.background },
+  },
+});
 
 const siteUrl = "https://www.policingice.com";
 const siteName = "Policing ICE";
@@ -46,10 +71,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-foreground focus:px-4 focus:py-2 focus:text-background"
-          >
+          <a href="#main-content" {...stylex.props(styles.skipLink)}>
             Skip to content
           </a>
           {children}

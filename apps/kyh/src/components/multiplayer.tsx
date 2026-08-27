@@ -1,5 +1,7 @@
 "use client";
 
+import * as stylex from "@stylexjs/stylex";
+
 import { usePathname } from "next/navigation";
 
 import { AvatarGroup } from "@/components/avatar-group";
@@ -14,6 +16,10 @@ const asCoordinate = (value: JsonValue | undefined) =>
 const HOST = "https://kyh-party.kyh.workers.dev";
 const PARTY = "kyh-server";
 const ROOM = "kyh";
+
+const styles = stylex.create({
+  root: { position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 1 },
+});
 
 export const Multiplayer = () => {
   const pathname = usePathname();
@@ -47,7 +53,7 @@ export const Multiplayer = () => {
 
   return (
     <>
-      <div className="fixed top-6 right-6 z-[1]">
+      <div {...stylex.props(styles.root)}>
         <AvatarGroup others={present} />
       </div>
       {cursors}

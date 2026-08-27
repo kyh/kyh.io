@@ -1,5 +1,13 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme } from "../app/styles/tokens.stylex";
+
+import { colors, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Pin } from "lucide-react";
@@ -7,6 +15,45 @@ import { ExternalLink, Pin } from "lucide-react";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { formatDate } from "@/lib/format";
 import { VideoCarousel } from "./video-carousel";
+
+const styles = stylex.create({
+  pin: { height: spacing[4], width: spacing[4], fill: colors.yellow500, color: colors.yellow500 },
+  meta: {
+    marginTop: spacing[3],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+  },
+  voteGroup: { display: "flex", alignItems: "center", gap: spacing[4] },
+  actionGroup: { display: "flex", alignItems: "center", gap: spacing[3] },
+  vote: { cursor: "pointer" },
+  voteOn: { color: theme.foreground },
+  voteOff: {
+    color: {
+      default: theme.mutedForeground,
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  sourceLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: spacing[1],
+    color: {
+      default: theme.mutedForeground,
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  extIcon: { height: spacing[3], width: spacing[3] },
+  reportOff: {
+    color: {
+      default: theme.mutedForeground,
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.destructive },
+    },
+  },
+  reportOn: { color: "color-mix(in oklab, var(--muted-foreground) 40%, transparent)" },
+});
 
 type Video = {
   id: number;
@@ -64,20 +111,21 @@ export const IncidentCardContent = ({
         }
         headerRight={
           <>
-            {pinned && (
-              <Pin className="h-4 w-4 fill-yellow-500 text-yellow-500" aria-label="Pinned" />
-            )}
+            {pinned && <Pin {...stylex.props(styles.pin)} aria-label="Pinned" />}
             {headerRight}
           </>
         }
       />
 
-      <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
+      <div {...stylex.props(styles.meta)}>
+        <div {...stylex.props(styles.voteGroup)} role="group" aria-label="Vote on this incident">
           <button
             type="button"
             onClick={() => onVote("unjustified")}
-            className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            {...stylex.props(
+              styles.vote,
+              userVote === "unjustified" ? styles.voteOn : styles.voteOff,
+            )}
             aria-pressed={userVote === "unjustified"}
             aria-label={`Vote unjustified, ${unjustifiedCount} votes`}
           >
@@ -86,30 +134,33 @@ export const IncidentCardContent = ({
           <button
             type="button"
             onClick={() => onVote("justified")}
-            className={`cursor-pointer ${userVote === "justified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            {...stylex.props(
+              styles.vote,
+              userVote === "justified" ? styles.voteOn : styles.voteOff,
+            )}
             aria-pressed={userVote === "justified"}
             aria-label={`Vote justified, ${justifiedCount} votes`}
           >
             justified ({justifiedCount})
           </button>
         </div>
-        <div className="flex items-center gap-3">
+        <div {...stylex.props(styles.actionGroup)}>
           <a
             href={currentVideo.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            {...stylex.props(styles.sourceLink)}
             aria-label={`Open video on ${currentVideo.platform === "twitter" ? "X" : currentVideo.platform} (opens in new tab)`}
           >
             open on {currentVideo.platform === "twitter" ? "x" : currentVideo.platform}
-            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <ExternalLink {...stylex.props(styles.extIcon)} aria-hidden="true" />
           </a>
           {onReport && (
             <button
               type="button"
               onClick={onReport}
               disabled={reported}
-              className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}
+              {...stylex.props(styles.vote, reported ? styles.reportOn : styles.reportOff)}
               aria-label={reported ? "This incident has been reported" : "Report this incident"}
             >
               {reported ? "reported" : "report"}

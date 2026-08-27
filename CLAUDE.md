@@ -76,3 +76,42 @@ Other project apps.
 ## Packages
 
 Shared configs and utilities in `packages/`.
+
+## Styling
+
+Every app uses [StyleX](https://stylexjs.com); Tailwind is gone. (`vis-ml` was never on
+it and stays plain CSS.) `packages/tailwind-compat` holds Tailwind's frozen scale plus
+the reset, so migrated apps keep rendering identically — see its README.
+
+- **StyleX owns what it can express**; hand-written CSS stays CSS. It has no descendant
+  or attribute selectors, so vendor overrides (`react-tweet`, `react-select`), Base UI's
+  `data-highlighted`, and anything targeting DOM we don't render stay in the stylesheet.
+- **Import `@repo/tailwind-compat/preflight.css`** at the top of an app's stylesheet;
+  deleting Tailwind deleted its reset. Add `forms.css` if the app used the forms plugin.
+- **Reach for the shared modules before writing a literal**: `leading` for line-height,
+  `transitions`/`shadows` for those properties, `media.feature.hover` for hover queries,
+  `a11y.srOnly` for visually-hidden. They exist because the raw values are easy to get
+  subtly wrong in ways nothing catches.
+- **No `cn`/`clsx`/`tw-merge`.** `stylex.props(a, b)` merges last-wins by property.
+- **Sibling spacing uses `:last-child`**, not an index or an `isLast` prop —
+  `marginBottom: { default: spacing[4], ":last-child": 0 }`.
+- **Never stack overlapping `min-width` queries on one property.** StyleX does not order
+  media queries by width, so `{ [up.sm]: 6, [up.lg]: 8 }` can resolve to the `sm` value
+  on a wide screen. Chain `between.smToLg` then `up.lg`.
+- **StyleX resolves imports itself**: named imports only (`import * as m` fails), and it
+  ignores tsconfig `paths`, so import local `*.stylex.ts` by relative path.
+- **`animation` is dropped silently** — StyleX treats it as a shorthand-of-shorthands.
+  Use `animationName`/`animationDuration`/etc. The same applies to any shorthand it
+  classifies that way.
+- **Some Tailwind utilities map to a different property than they look like**:
+  `-translate-x-1/2` sets `translate`, `scale-95` sets `scale`, and `transition-*` sets
+  a timing function as well as a property and duration.
+- **`spacing` only has Tailwind's named steps** (it jumps 28 → 32). For anything else
+  write `` `calc(${spacing.unit} * 30)` ``; `tsc` catches a bad index as TS7053.
+- **Class names bound to something other than styling must survive**: react-joyride step
+  targets, react-select's `classNamePrefix`, D3 selectors. Merge them with
+  ``className={`target ${stylex.props(s).className}`}``.
+- **Check `index.html`** — StyleX only compiles what the bundler transforms, so
+  utilities on `<body>` or `#root` belong in the stylesheet.
+- **Clear `.next`/`dist` after changing StyleX or package wiring.** Stale caches surface
+  as bogus "could not resolve the theme file" errors.

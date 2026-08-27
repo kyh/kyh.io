@@ -1,12 +1,48 @@
+import * as stylex from "@stylexjs/stylex";
+import { defaults, fontWeights, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
+import { theme } from "../../../styles/tokens.stylex";
 import { ScrambleText } from "@/components/animate-text";
 import { HashIcon } from "@/components/icons";
 
+const styles = stylex.create({
+  headingRow: {
+    marginLeft: `calc(-1 * ${spacing[5]})`,
+    display: "flex",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  /** opacity follows the hovered `.group` ancestor; see global.css */
+  anchor: {
+    color: { default: theme.foregroundFaded, ":hover": theme.foregroundHighlighted },
+    backgroundColor: { default: null, ":hover": theme.backgroundHover },
+    margin: `calc(-1 * ${spacing[1]})`,
+    translate: "0 -0.1875rem",
+    borderRadius: radii.sm,
+    padding: spacing[1],
+    opacity: { default: "var(--group-action-opacity, 0)", ":focus-visible": 1 },
+    transitionProperty: "color, background-color, opacity",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  heading: {
+    color: theme.foregroundHighlighted,
+    scrollMarginTop: { default: "120px", [mediaUp.sm]: "100px" },
+    lineHeight: 1,
+    fontWeight: fontWeights.medium,
+  },
+  section: { display: "flex", flexDirection: "column", gap: spacing[4] },
+  sectionAnchored: { scrollMarginTop: { default: "120px", [mediaUp.sm]: "100px" } },
+  separator: { backgroundColor: theme.border, height: "1px" },
+});
+
 export const SectionHeading = ({ children, id }: { children: string; id?: string }) => (
-  <div className="group -ml-5 flex items-center gap-2">
+  <div className="group" {...stylex.props(styles.headingRow)}>
     {id && (
       <a
         href={`#${id}`}
-        className="text-foreground-faded hover:text-foreground-highlighted hover:bg-background-hover -m-1 -translate-y-0.75 rounded-sm p-1 opacity-0 transition-[color,background-color,opacity] duration-150 group-hover:opacity-100 focus-visible:opacity-100"
+        {...stylex.props(styles.anchor)}
         aria-label={`Link to ${children} section`}
       >
         <HashIcon />
@@ -16,7 +52,7 @@ export const SectionHeading = ({ children, id }: { children: string; id?: string
       id={id}
       as="h2"
       trigger="hover"
-      className="text-foreground-highlighted scroll-mt-[120px] leading-none font-medium sm:scroll-mt-[100px]"
+      className={stylex.props(styles.heading).className}
     >
       {children}
     </ScrambleText>
@@ -25,24 +61,21 @@ export const SectionHeading = ({ children, id }: { children: string; id?: string
 
 type SectionProps = {
   children: React.ReactNode;
-  className?: string;
+  style?: stylex.StyleXStyles;
   id?: string;
   delay?: number;
 };
 
-export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
-  const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
-  const combinedClasses = ["flex flex-col gap-4", scrollMarginClasses, className]
-    .filter(Boolean)
-    .join(" ");
+export const Section = ({ children, style, id, delay = 0 }: SectionProps) => (
+  <div className="animate-section">
+    <section
+      id={id}
+      {...stylex.props(styles.section, Boolean(id) && styles.sectionAnchored, style)}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {children}
+    </section>
+  </div>
+);
 
-  return (
-    <div className="animate-section">
-      <section id={id} className={combinedClasses} style={{ animationDelay: `${delay}s` }}>
-        {children}
-      </section>
-    </div>
-  );
-};
-
-export const Separator = () => <div role="separator" className="bg-border h-px" />;
+export const Separator = () => <div role="separator" {...stylex.props(styles.separator)} />;

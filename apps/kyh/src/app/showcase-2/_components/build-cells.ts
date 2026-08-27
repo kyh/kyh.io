@@ -1,3 +1,5 @@
+import * as stylex from "@stylexjs/stylex";
+
 import type { WorkMedia } from "./works";
 
 /* ── Grid + tile geometry ─────────────────────────────────────────────── */
@@ -35,8 +37,22 @@ export const SOFT_PUSH_RATIO = 1.3;
    enough to cover the largest displacement the void can apply. */
 export const CULL_MARGIN = 240;
 
-export const CELL_CLASS =
-  "absolute left-0 top-0 select-none overflow-hidden rounded pointer-events-none will-change-transform origin-center [backface-visibility:hidden]";
+const cellStyles = stylex.create({
+  cell: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    userSelect: "none",
+    overflow: "hidden",
+    borderRadius: "0.25rem",
+    pointerEvents: "none",
+    willChange: "transform",
+    transformOrigin: "center",
+    backfaceVisibility: "hidden",
+  },
+});
+
+export const CELL_CLASS = stylex.props(cellStyles.cell).className ?? "";
 
 /* ── Deterministic helpers (no Math.random anywhere) ──────────────────── */
 function hash(n: number): number {

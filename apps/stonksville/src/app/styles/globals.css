@@ -1,13 +1,11 @@
-@import "tailwindcss";
+@import "@repo/tailwind-compat/preflight.css";
 
 :root {
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
   --background: hsl(280 20% 5%);
   --foreground: hsl(0 0% 98%);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
 }
 
 @layer base {
@@ -15,7 +13,11 @@
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
     touch-action: manipulation;
     user-select: none;
@@ -43,18 +45,4 @@
   }
 }
 
-/* Force landscape layout on mobile portrait screens.
-   Applied to a wrapper div (not body) so that position:fixed,
-   confetti, and third-party overlays remain in normal viewport space. */
-@media (max-width: 768px) and (orientation: portrait) {
-  .landscape-shell {
-    width: 100dvh;
-    height: 100dvw;
-    overflow: hidden;
-    transform: rotate(90deg);
-    transform-origin: top left;
-    position: absolute;
-    top: 0;
-    left: 100dvw;
-  }
-}
+@stylex;

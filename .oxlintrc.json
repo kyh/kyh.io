@@ -16,7 +16,9 @@
     ".conductor",
     ".cursor",
     ".superset",
-    "packages/oxlint/anti-slop"
+    "packages/oxlint/anti-slop",
+    "packages/tailwind-compat/tokens.stylex.js",
+    "packages/tailwind-compat/tokens.stylex.d.ts"
   ],
   "plugins": ["eslint", "typescript", "unicorn", "react", "nextjs", "oxc", "node", "promise"],
   "jsPlugins": [{ "name": "anti-slop", "specifier": "@kyh/oxlint/anti-slop" }],

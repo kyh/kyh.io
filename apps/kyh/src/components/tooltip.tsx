@@ -1,5 +1,12 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme } from "../styles/tokens.stylex";
+
+import { fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import * as React from "react";
 import {
   autoUpdate,
@@ -18,6 +25,22 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 
 import type { Placement } from "@floating-ui/react";
+
+const tooltipStyles = stylex.create({
+  bubble: {
+    backgroundColor: theme.panel,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    paddingInline: spacing[2],
+    paddingBlock: spacing[0.5],
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+    whiteSpace: "pre",
+    color: theme.foreground,
+  },
+});
 
 // Global lines context - lines are rendered once at provider level
 type LinesPosition = {
@@ -245,7 +268,9 @@ const TooltipContent = React.forwardRef<
       <AnimatePresence>
         {context.open && (
           <motion.div
-            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${!blockType ? "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]" : ""}`}
+            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${
+              blockType ? "" : (stylex.props(tooltipStyles.bubble).className ?? "")
+            }`}
             ref={ref}
             style={context.floatingStyles}
             {...tooltipMotionProps}

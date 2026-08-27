@@ -1,5 +1,24 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import { theme } from "../../../styles/tokens.stylex";
+
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
+import {
+  colors,
+  containers,
+  defaults,
+  fontSizes,
+  fontWeights,
+  letterSpacing,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Counter } from "@/components/counter";
@@ -11,6 +30,121 @@ import {
   PlayIcon,
 } from "@/components/icons";
 import { RSVP_CONTENT, RSVP_SETTINGS } from "./rsvp-config";
+
+const styles = stylex.create({
+  word: { display: "flex", alignItems: "center" },
+  letter: { display: "inline-block", width: "0.6em", textAlign: "center" },
+  orp: { color: colors.red500 },
+  main: {
+    display: "flex",
+    minHeight: "100vh",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[8],
+    padding: spacing[4],
+  },
+  guide: {
+    backgroundColor: "color-mix(in oklab, var(--body-color-faded) 30%, transparent)",
+    position: "absolute",
+    top: 0,
+    left: "50%",
+    height: "100%",
+    width: "1px",
+    translate: "-50% 0",
+  },
+  stage: {
+    position: "relative",
+    display: "flex",
+    height: spacing[32],
+    width: "100%",
+    maxWidth: containers["2xl"],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  display: {
+    fontFamily: defaults.monoFontFamily,
+    fontSize: { default: fontSizes["5xl"], [mediaUp.md]: fontSizes["6xl"] },
+    fontWeight: fontWeights.normal,
+    letterSpacing: letterSpacing.tight,
+  },
+  controlButton: {
+    borderColor: theme.border,
+    borderWidth: 1,
+    borderStyle: "solid",
+    backgroundColor: { default: theme.background, ":hover": theme.backgroundFaded },
+    position: "relative",
+    display: "flex",
+    width: spacing[12],
+    height: spacing[12],
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    transitionProperty: transitionProperty.colors,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  mono: {
+    fontFamily: defaults.monoFontFamily,
+    fontSize: fontSizes.lg,
+    lineHeight: leading.lg,
+  },
+  hudLeft: {
+    color: theme.foregroundFaded,
+    position: "fixed",
+    bottom: "6dvh",
+    left: spacing[12],
+    display: { default: "none", [mediaUp.sm]: "block" },
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+  },
+  hudRight: {
+    color: theme.foregroundFaded,
+    position: "fixed",
+    right: spacing[12],
+    bottom: "6dvh",
+    display: { default: "none", [mediaUp.sm]: "block" },
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+  },
+  counterRow: {
+    marginBottom: spacing[2],
+    display: "flex",
+    alignItems: "center",
+    fontVariantNumeric: "tabular-nums",
+  },
+  tight: { lineHeight: 1 },
+  track: {
+    backgroundColor: theme.border,
+    height: spacing[1],
+    width: spacing[32],
+    overflow: "hidden",
+    borderRadius: radii.full,
+  },
+  bar: {
+    backgroundColor: theme.foregroundFaded,
+    height: "100%",
+    transitionProperty: transitionProperty.all,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  keyRow: { display: "flex", alignItems: "center", gap: spacing[3] },
+  keyGroup: { display: "flex", alignItems: "center", gap: spacing[1] },
+  keyGroupTight: { display: "flex", alignItems: "center", gap: spacing[0.5] },
+  kbd: {
+    borderColor: theme.border,
+    backgroundColor: theme.backgroundFaded,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.default,
+    borderWidth: 1,
+    borderStyle: "solid",
+  },
+  kbdWide: { paddingInline: spacing[1.5], paddingBlock: spacing[0.5] },
+  kbdTight: { padding: spacing[1] },
+  ml1: { marginLeft: spacing[1] },
+});
 
 type RSVPState =
   | { status: "countdown"; count: number }
@@ -46,12 +180,9 @@ const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => 
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
 
   return (
-    <div className="flex items-center" style={{ transform: `translateX(${-offset}em)` }}>
+    <div {...stylex.props(styles.word)} style={{ transform: `translateX(${-offset}em)` }}>
       {letters.map((letter, i) => (
-        <span
-          key={i}
-          className={`inline-block w-[0.6em] text-center ${i === orpIndex ? "text-red-500" : ""}`}
-        >
+        <span key={i} {...stylex.props(styles.letter, i === orpIndex && styles.orp)}>
           {letter}
         </span>
       ))}
@@ -167,31 +298,27 @@ export const RSVPReader = () => {
   }, [togglePlayPause, goToPrevWord, goToNextWord]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-4">
-      <div className="bg-foreground-faded/30 absolute top-0 left-1/2 h-full w-px -translate-x-1/2" />
+    <main {...stylex.props(styles.main)}>
+      <div {...stylex.props(styles.guide)} />
 
-      <div className="relative flex h-32 w-full max-w-2xl items-center justify-center">
-        <div className="font-mono text-5xl font-normal tracking-tight md:text-6xl">
+      <div {...stylex.props(styles.stage)}>
+        <div {...stylex.props(styles.display)}>
           {showWord && currentWord && <WordDisplay word={currentWord} orpIndex={orpIndex} />}
         </div>
       </div>
 
       {state.status === "finished" ? (
-        <a
-          href="/"
-          className="border-border bg-background hover:bg-background-faded relative flex size-12 items-center justify-center rounded-full border transition-colors"
-          aria-label="Go home"
-        >
+        <a href="/" {...stylex.props(styles.controlButton)} aria-label="Go home">
           <HomeIcon />
         </a>
       ) : (
         <button
           onClick={togglePlayPause}
-          className="border-border bg-background hover:bg-background-faded relative flex size-12 items-center justify-center rounded-full border transition-colors"
+          {...stylex.props(styles.controlButton)}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {state.status === "countdown" ? (
-            <span className="font-mono text-lg">{state.count}</span>
+            <span {...stylex.props(styles.mono)}>{state.count}</span>
           ) : isPlaying ? (
             <PauseIcon />
           ) : (
@@ -200,14 +327,14 @@ export const RSVPReader = () => {
         </button>
       )}
 
-      <div className="text-foreground-faded fixed bottom-[6dvh] left-12 hidden text-xs sm:block">
-        <div className="mb-2 flex items-center tabular-nums">
+      <div {...stylex.props(styles.hudLeft)}>
+        <div {...stylex.props(styles.counterRow)}>
           <Counter text={state.status === "countdown" ? 0 : currentIndex + 1} />
-          <span className="leading-none">&nbsp;/&nbsp;{words.length}</span>
+          <span {...stylex.props(styles.tight)}>&nbsp;/&nbsp;{words.length}</span>
         </div>
-        <div className="bg-border h-1 w-32 overflow-hidden rounded-full">
+        <div {...stylex.props(styles.track)}>
           <div
-            className="bg-foreground-faded h-full transition-all duration-150"
+            {...stylex.props(styles.bar)}
             style={{
               width: `${state.status === "countdown" ? 0 : ((currentIndex + 1) / words.length) * 100}%`,
             }}
@@ -215,22 +342,20 @@ export const RSVPReader = () => {
         </div>
       </div>
 
-      <div className="text-foreground-faded fixed right-12 bottom-[6dvh] hidden text-xs sm:block">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <kbd className="border-border bg-background-faded inline-flex items-center justify-center rounded border px-1.5 py-0.5">
-              space
-            </kbd>
+      <div {...stylex.props(styles.hudRight)}>
+        <div {...stylex.props(styles.keyRow)}>
+          <span {...stylex.props(styles.keyGroup)}>
+            <kbd {...stylex.props(styles.kbd, styles.kbdWide)}>space</kbd>
             <span>play/pause</span>
           </span>
-          <span className="flex items-center gap-0.5">
-            <kbd className="border-border bg-background-faded inline-flex items-center justify-center rounded border p-1">
+          <span {...stylex.props(styles.keyGroupTight)}>
+            <kbd {...stylex.props(styles.kbd, styles.kbdTight)}>
               <ChevronLeftIcon />
             </kbd>
-            <kbd className="border-border bg-background-faded inline-flex items-center justify-center rounded border p-1">
+            <kbd {...stylex.props(styles.kbd, styles.kbdTight)}>
               <ChevronRightIcon />
             </kbd>
-            <span className="ml-1">prev/next</span>
+            <span {...stylex.props(styles.ml1)}>prev/next</span>
           </span>
         </div>
       </div>

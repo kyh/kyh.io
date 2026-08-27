@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import * as stylex from "@stylexjs/stylex";
 import { pointer, select } from "d3";
 import { format } from "date-fns";
 import {
@@ -13,6 +14,8 @@ import {
 import { formatNumber } from "utils/formatter";
 
 import "./LineChart.css";
+
+const styles = stylex.create({ full: { height: "100%" } });
 
 const defaultOptions = {
   margin: {
@@ -156,5 +159,5 @@ export const LineChart = ({
     return undefined;
   }, [data, dataKey, options]);
 
-  return <div className="h-full" ref={container} />;
+  return <div {...stylex.props(styles.full)} ref={container} />;
 };

@@ -1,3 +1,10 @@
+import { spacing } from "@repo/tailwind-compat/tokens.stylex";
+import * as stylex from "@stylexjs/stylex";
+
+const styles = stylex.create({
+  icon: { display: "inline-flex", padding: spacing[1.5] },
+  row: { display: "flex", gap: spacing[1] },
+});
 export const social = {
   github: "https://github.com/kyh",
   linkedin: "https://www.linkedin.com/in/kyh",
@@ -7,7 +14,7 @@ export const social = {
 
 export const GithubLink = () => (
   <a
-    className="social-git inline-flex p-1.5"
+    className={`social-git ${stylex.props(styles.icon).className}`}
     href={social.github}
     aria-label="GitHub"
     target="_blank"
@@ -21,7 +28,7 @@ export const GithubLink = () => (
 
 export const DribbbleLink = () => (
   <a
-    className="social-dribbble inline-flex p-1.5"
+    className={`social-dribbble ${stylex.props(styles.icon).className}`}
     href={social.dribbble}
     aria-label="Dribbble"
     target="_blank"
@@ -35,7 +42,7 @@ export const DribbbleLink = () => (
 
 export const TwitterLink = () => (
   <a
-    className="social-twitter inline-flex p-1.5"
+    className={`social-twitter ${stylex.props(styles.icon).className}`}
     href={social.twitter}
     aria-label="Twitter"
     target="_blank"
@@ -49,7 +56,7 @@ export const TwitterLink = () => (
 
 export const LinkedInLink = () => (
   <a
-    className="social-linkedin inline-flex p-1.5"
+    className={`social-linkedin ${stylex.props(styles.icon).className}`}
     href={social.linkedin}
     aria-label="LinkedIn"
     target="_blank"
@@ -61,8 +68,8 @@ export const LinkedInLink = () => (
   </a>
 );
 
-export const SocialLinks = ({ className = "" }: { className?: string }) => (
-  <div className={`flex gap-1 ${className}`}>
+export const SocialLinks = ({ style }: { style?: stylex.StyleXStyles }) => (
+  <div {...stylex.props(styles.row, style)}>
     <GithubLink />
     <DribbbleLink />
     <TwitterLink />

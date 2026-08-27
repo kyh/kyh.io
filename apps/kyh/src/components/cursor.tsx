@@ -1,3 +1,6 @@
+import { defaults, easings } from "@repo/tailwind-compat/tokens.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
+import * as stylex from "@stylexjs/stylex";
 type CursorProps = {
   x?: number;
   y?: number;
@@ -10,6 +13,19 @@ type CursorProps = {
 };
 
 const offset = 10;
+
+const styles = stylex.create({
+  cursor: {
+    pointerEvents: "none",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    zIndex: 1,
+    transitionProperty: transitionProperty.all,
+    transitionTimingFunction: easings.out,
+    transitionDuration: defaults.transitionDuration,
+  },
+});
 
 export const Cursor = ({ x, y, color, hue, windowDimensions }: CursorProps) => {
   if (!x || !y) return null;
@@ -25,7 +41,7 @@ export const Cursor = ({ x, y, color, hue, windowDimensions }: CursorProps) => {
       height="24"
       viewBox="0 0 18 24"
       fill="none"
-      className="pointer-events-none absolute top-0 left-0 z-[1] transition-all duration-150 ease-out"
+      {...stylex.props(styles.cursor)}
       style={{ color, transform: `translateX(${left}px) translateY(${top}px)` }}
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"

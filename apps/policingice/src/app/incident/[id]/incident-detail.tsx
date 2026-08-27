@@ -1,5 +1,14 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme } from "../../styles/tokens.stylex";
+
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
+import { containers, fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -14,6 +23,29 @@ import { authClient } from "@/lib/auth-client";
 import { getUserVote, reportIncident, submitVote } from "@/lib/incident-action";
 
 import type { getIncidents } from "@/lib/incident-action";
+
+const styles = stylex.create({
+  page: {
+    minHeight: "100vh",
+    backgroundColor: theme.background,
+    paddingInline: { default: spacing[4], [mediaUp.sm]: spacing[6] },
+    paddingBlock: spacing[8],
+  },
+  wrap: { maxWidth: containers.xl },
+  nav: { marginBottom: spacing[12] },
+  back: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: spacing[1],
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: {
+      default: theme.mutedForeground,
+      [feature.hover]: { default: theme.mutedForeground, ":hover": theme.foreground },
+    },
+  },
+  icon: { height: spacing[4], width: spacing[4] },
+});
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
@@ -93,15 +125,11 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
 
   return (
     <KeyboardShortcutsProvider>
-      <main id="main-content" className="min-h-screen bg-background px-4 py-8 sm:px-6">
-        <div className="max-w-xl">
-          <nav className="mb-12" aria-label="Breadcrumb">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              aria-label="Back to all incidents"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      <main id="main-content" {...stylex.props(styles.page)}>
+        <div {...stylex.props(styles.wrap)}>
+          <nav {...stylex.props(styles.nav)} aria-label="Breadcrumb">
+            <Link href="/" {...stylex.props(styles.back)} aria-label="Back to all incidents">
+              <ArrowLeft {...stylex.props(styles.icon)} aria-hidden="true" />
               Back
             </Link>
           </nav>

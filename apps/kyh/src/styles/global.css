@@ -1,6 +1,4 @@
-@import "tailwindcss";
-
-@custom-variant dark (&:is([data-theme="dark"] *));
+@import "@repo/tailwind-compat/preflight.css";
 
 :root {
   /* Base color palette */
@@ -41,6 +39,14 @@
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
   --colors-shadowLight: hsl(206 22% 7% / 35%);
   --colors-shadowDark: hsl(206 22% 7% / 20%);
+
+  /* was `dark:` utilities; StyleX has no ancestor selectors, so they switch here */
+  --app-icon-shadow:
+    0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 4px 12px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+  --app-icon-bg: color-mix(in oklab, #fff 50%, transparent);
+  --app-icon-ring: color-mix(in oklab, #000 3%, transparent);
+  --app-overlay-bg: color-mix(in oklab, #fff 92%, transparent);
 }
 
 [data-theme="dark"] {
@@ -57,17 +63,13 @@
   --dock-bg: rgba(71, 85, 105, 0.12);
   --dock-border-color: #1e293b80;
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
-}
 
-@theme inline {
-  --color-foreground: var(--body-color);
-  --color-foreground-faded: var(--body-color-faded);
-  --color-foreground-highlighted: var(--body-color-highlighted);
-  --color-background: var(--bg-highlighted);
-  --color-background-faded: var(--bg-color);
-  --color-background-hover: color-mix(in srgb, var(--bg-color) 50%, transparent);
-  --color-border: var(--border-color);
-  --color-panel: var(--panel);
+  --app-icon-shadow:
+    0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+  --app-icon-bg: color-mix(in oklab, #0f172a 50%, transparent);
+  --app-icon-ring: color-mix(in oklab, #fff 15%, transparent);
+  --app-overlay-bg: color-mix(in oklab, #000 90%, transparent);
 }
 
 body {
@@ -641,3 +643,32 @@ button.link {
     animation: none !important;
   }
 }
+
+/* `group-hover:` needs an ancestor selector, which StyleX has no equivalent for.
+   The parent publishes its hover state as custom properties instead, and the
+   children read them through StyleX. */
+.group {
+  --group-icon-color: var(--body-color-faded);
+  --group-action-opacity: 0;
+  --group-label-bg: transparent;
+}
+
+.group:hover {
+  --group-icon-color: var(--body-color-highlighted);
+  --group-action-opacity: 1;
+  --group-label-bg: color-mix(in srgb, var(--bg-color) 50%, transparent);
+}
+
+/* Card styles its arbitrary children, which StyleX cannot express. */
+.card-children > *,
+.card-children * {
+  pointer-events: none;
+  border-radius: 0.5rem;
+}
+
+.card-children img {
+  height: 100%;
+  width: 100%;
+}
+
+@stylex;

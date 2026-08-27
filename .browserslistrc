@@ -1,0 +1,10 @@
+# StyleX inlines colour literals, so lightningcss will downlevel any oklch() it can
+# see to lab() plus a hex fallback — which changes every computed colour value. These
+# are the oldest browsers with native oklch(); raising the floor is fine, lowering it
+# silently rewrites the colours.
+chrome >= 111
+edge >= 111
+firefox >= 113
+safari >= 15.4
+ios_saf >= 15.4
+not dead

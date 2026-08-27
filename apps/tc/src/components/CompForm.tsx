@@ -1,6 +1,88 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
+import { boxShadow, ringSlots, shadowLayers } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { useEffect, useRef, useState } from "react";
 import { Listbox, RadioGroup } from "@headlessui/react";
 import { NumericFormat } from "react-number-format";
+import * as stylex from "@stylexjs/stylex";
+import { colors, fontSizes, defaults, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+const styles = stylex.create({
+  mt10: { marginTop: spacing[10] },
+  legendPlain: {
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: colors.slate300,
+  },
+  legend: {
+    display: "flex",
+    width: "100%",
+    justifyContent: "space-between",
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: colors.slate300,
+  },
+  legendCentered: {
+    display: "flex",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    color: colors.slate300,
+  },
+  radioGroup: { display: "flex", gap: spacing[2] },
+  radio: {
+    cursor: "pointer",
+    transitionProperty: transitionProperty.default,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+  radioChecked: { color: colors.emerald600 },
+  stack: {
+    isolation: "isolate",
+    marginTop: spacing[2],
+    borderRadius: radii.md,
+    boxShadow: boxShadow.xs,
+  },
+  /** Negative margin collapses each field border into its neighbour. */
+  stackTop: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    marginBottom: -1,
+  },
+  stackMiddle: { borderRadius: 0, marginBottom: -1 },
+  stackBottom: { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
+  row: { display: "flex", alignItems: "center" },
+  iconButton: { padding: spacing[1] },
+  icon4: { height: spacing[4], width: spacing[4] },
+  relative: { position: "relative" },
+  listboxButton: { color: colors.emerald500 },
+  option: {
+    position: "relative",
+    cursor: "pointer",
+    paddingInline: spacing[4],
+    paddingBlock: spacing[2],
+    userSelect: "none",
+  },
+  optionActive: { backgroundColor: colors.emerald900, color: colors.emerald100 },
+  listboxOptions: {
+    position: "absolute",
+    right: 0,
+    zIndex: 10,
+    marginTop: spacing[1],
+    maxHeight: spacing[60],
+    width: "200px",
+    overflow: "auto",
+    borderRadius: radii.lg,
+    backgroundColor: colors.black,
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    boxShadow: `${ringSlots.before}, 0 0 0 1px ${colors.black}, ${shadowLayers.lg}`,
+    outlineStyle: { default: null, ":focus": "none" },
+  },
+});
 
 import type { CompHooksType } from "@/lib/comp";
 import { CompModal } from "@/components/CompModal";
@@ -32,10 +114,10 @@ export const CompForm = ({ comp }: Props) => {
     <>
       <div>
         <fieldset className="cash-section">
-          <legend className="text-sm text-slate-300">Cash Compensation</legend>
-          <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
+          <legend {...stylex.props(styles.legendPlain)}>Cash Compensation</legend>
+          <div {...stylex.props(styles.stack)}>
             <FormField
-              className="rounded-b-none"
+              style={styles.stackTop}
               label="Base Salary"
               name="base"
               placeholder="$100,000.00"
@@ -48,7 +130,7 @@ export const CompForm = ({ comp }: Props) => {
               />
             </FormField>
             <FormField
-              className="rounded-none"
+              style={styles.stackMiddle}
               label="Sign on bonus"
               name="signon"
               placeholder="$10,000.00"
@@ -61,7 +143,7 @@ export const CompForm = ({ comp }: Props) => {
               />
             </FormField>
             <FormField
-              className="rounded-t-none"
+              style={styles.stackBottom}
               label="Yearly bonus target"
               name="target"
               placeholder="$10,000.00"
@@ -75,11 +157,11 @@ export const CompForm = ({ comp }: Props) => {
             </FormField>
           </div>
         </fieldset>
-        <fieldset className="equity-section mt-10">
-          <legend className="flex w-full justify-between text-sm text-slate-300">
+        <fieldset className={`equity-section ${stylex.props(styles.mt10).className}`}>
+          <legend {...stylex.props(styles.legend)}>
             <span>Equity Compensation</span>
             <RadioGroup
-              className="flex gap-2"
+              className={stylex.props(styles.radioGroup).className}
               value={comp.shareType}
               onChange={(shareType) => {
                 comp.setShareType(shareType);
@@ -92,28 +174,20 @@ export const CompForm = ({ comp }: Props) => {
             >
               <RadioGroup.Option value="iso">
                 {({ checked }) => (
-                  <span
-                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
-                  >
-                    ISO
-                  </span>
+                  <span {...stylex.props(styles.radio, checked && styles.radioChecked)}>ISO</span>
                 )}
               </RadioGroup.Option>
               <RadioGroup.Option value="rsu">
                 {({ checked }) => (
-                  <span
-                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
-                  >
-                    RSU
-                  </span>
+                  <span {...stylex.props(styles.radio, checked && styles.radioChecked)}>RSU</span>
                 )}
               </RadioGroup.Option>
             </RadioGroup>
           </legend>
           {comp.shareType === "iso" && (
-            <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
+            <div {...stylex.props(styles.stack)}>
               <FormField
-                className="rounded-b-none"
+                style={styles.stackTop}
                 label="Stock options per year"
                 name="shares"
                 placeholder="1,000"
@@ -126,7 +200,7 @@ export const CompForm = ({ comp }: Props) => {
                 />
               </FormField>
               <FormField
-                className="rounded-t-none"
+                style={styles.stackBottom}
                 label="Strike Price per share"
                 name="strike"
                 placeholder="$10"
@@ -141,7 +215,7 @@ export const CompForm = ({ comp }: Props) => {
             </div>
           )}
           {comp.shareType === "rsu" && (
-            <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
+            <div {...stylex.props(styles.stack)}>
               <FormField label="Shares per year" name="shares" placeholder="1,000">
                 <NumericFormat
                   {...staticInputFormatProps}
@@ -153,19 +227,19 @@ export const CompForm = ({ comp }: Props) => {
             </div>
           )}
         </fieldset>
-        <fieldset className="equity-value-section mt-10">
-          <legend className="flex w-full items-center justify-between text-sm text-slate-300">
-            <div className="flex items-center">
+        <fieldset className={`equity-value-section ${stylex.props(styles.mt10).className}`}>
+          <legend {...stylex.props(styles.legendCentered)}>
+            <div {...stylex.props(styles.row)}>
               <span>Estimate Equity Value</span>
               <button
                 type="button"
-                className="estimate-modal-button p-1"
+                className={`estimate-modal-button ${stylex.props(styles.iconButton).className}`}
                 onClick={() => modalProps.openModal()}
               >
-                <span className="sr-only">Find out for me</span>
+                <span {...stylex.props(a11y.srOnly)}>Find out for me</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
+                  {...stylex.props(styles.icon4)}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -190,21 +264,19 @@ export const CompForm = ({ comp }: Props) => {
                 comp.setRevenueMultiple("");
               }}
             >
-              <div className="relative">
-                <Listbox.Button className="text-emerald-500">
+              <div {...stylex.props(styles.relative)}>
+                <Listbox.Button {...stylex.props(styles.listboxButton)}>
                   {comp.shareCalcType === "current"
                     ? "Growth Based"
                     : comp.shareCalcType === "revenue"
                       ? "Revenue Based"
                       : null}
                 </Listbox.Button>
-                <Listbox.Options className="ring-opacity-5 absolute right-0 z-10 mt-1 max-h-60 w-[200px] overflow-auto rounded-lg bg-black text-sm shadow-lg ring-1 ring-black focus:outline-hidden">
+                <Listbox.Options {...stylex.props(styles.listboxOptions)}>
                   <Listbox.Option
                     value="current"
                     className={({ active }) =>
-                      `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
-                      }`
+                      stylex.props(styles.option, active && styles.optionActive).className ?? ""
                     }
                   >
                     Growth Based
@@ -212,9 +284,7 @@ export const CompForm = ({ comp }: Props) => {
                   <Listbox.Option
                     value="revenue"
                     className={({ active }) =>
-                      `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
-                      }`
+                      stylex.props(styles.option, active && styles.optionActive).className ?? ""
                     }
                   >
                     Revenue Based
@@ -224,9 +294,9 @@ export const CompForm = ({ comp }: Props) => {
             </Listbox>
           </legend>
           {comp.shareCalcType === "current" && (
-            <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
+            <div {...stylex.props(styles.stack)}>
               <FormField
-                className="rounded-b-none"
+                style={styles.stackTop}
                 label={comp.shareType === "rsu" ? "Current Market Value" : "Preffered Stock Price"}
                 name="preferredSharePrice"
                 placeholder="$10.00"
@@ -239,7 +309,7 @@ export const CompForm = ({ comp }: Props) => {
                 />
               </FormField>
               <FormField
-                className="rounded-t-none"
+                style={styles.stackBottom}
                 label={
                   comp.shareType === "rsu"
                     ? "Expected Market Growth (per year)"
@@ -260,9 +330,9 @@ export const CompForm = ({ comp }: Props) => {
             </div>
           )}
           {comp.shareCalcType === "revenue" && (
-            <div className="isolate mt-2 -space-y-px rounded-md shadow-xs">
+            <div {...stylex.props(styles.stack)}>
               <FormField
-                className="rounded-b-none"
+                style={styles.stackTop}
                 label="Shares Outstanding"
                 name="outstanding"
                 placeholder="10,000,000"
@@ -275,7 +345,7 @@ export const CompForm = ({ comp }: Props) => {
                 />
               </FormField>
               <FormField
-                className="rounded-none"
+                style={styles.stackMiddle}
                 label="Expected Company Revenue"
                 name="revenue"
                 placeholder="$100,000,000"
@@ -288,7 +358,7 @@ export const CompForm = ({ comp }: Props) => {
                 />
               </FormField>
               <FormField
-                className="rounded-t-none"
+                style={styles.stackBottom}
                 label="Revenue Multiple"
                 name="revenue-multiple"
                 placeholder="15"

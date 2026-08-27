@@ -1,5 +1,12 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme as t } from "../styles/tokens.stylex";
+
+import { fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import type { MotionValue } from "motion/react";
 import { useRef, useState } from "react";
 import Link from "next/link";
@@ -8,6 +15,81 @@ import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from
 import { useTheme } from "next-themes";
 
 import { ThemeToggleIcon } from "@/components/theme-toggle";
+
+const styles = stylex.create({
+  shell: {
+    pointerEvents: "none",
+    position: "fixed",
+    right: 0,
+    bottom: "4vh",
+    left: 0,
+    zIndex: 10,
+    display: "flex",
+    height: "70px",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bar: {
+    pointerEvents: "auto",
+    position: "relative",
+    display: "flex",
+    height: "100%",
+    alignItems: "center",
+    gap: spacing[2],
+    borderRadius: "20px",
+    backgroundColor: t.dockBg,
+    padding: spacing[3],
+    boxShadow: "rgba(15, 23, 42, 0.12) 0px 30px 60px 0px",
+  },
+  item: {
+    position: "relative",
+    zIndex: 1,
+    display: "flex",
+    aspectRatio: "1 / 1",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "25%",
+  },
+  label: {
+    backgroundColor: t.panel,
+    position: "absolute",
+    top: `calc(-1 * ${spacing[8]})`,
+    left: "50%",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: t.border,
+    paddingInline: spacing[2],
+    paddingBlock: spacing[0.5],
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+    whiteSpace: "pre",
+    color: t.foreground,
+  },
+  iconWrap: { display: "flex", alignItems: "center", justifyContent: "center" },
+  activeDot: {
+    backgroundColor: t.foregroundFaded,
+    position: "absolute",
+    bottom: `calc(-1 * ${spacing[2]})`,
+    left: "50%",
+    height: "3px",
+    width: "3px",
+    translate: "-50% 0",
+    animationName: "fadeInScaleX",
+    animationDuration: "0.6s",
+    animationTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)",
+    borderRadius: radii.full,
+  },
+  glass: {
+    position: "absolute",
+    inset: 0,
+    isolation: "isolate",
+    zIndex: 0,
+    overflow: "hidden",
+    borderRadius: "20px",
+    backdropFilter: "blur(8px)",
+  },
+});
 
 const iconAttrs = {
   xmlns: "http://www.w3.org/2000/svg",
@@ -56,9 +138,9 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
+    <div {...stylex.props(styles.shell)}>
       <nav
-        className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
+        {...stylex.props(styles.bar)}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
@@ -174,7 +256,7 @@ const DockItem = ({
     <motion.div
       ref={ref}
       style={{ width, height }}
-      className="dock-item relative z-[1] flex aspect-square items-center justify-center rounded-[25%]"
+      className={`dock-item ${stylex.props(styles.item).className}`}
     >
       <AnimatePresence>
         {hovered && (
@@ -182,7 +264,7 @@ const DockItem = ({
             initial={{ opacity: 0, y: 10, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 2, x: "-50%" }}
-            className="bg-panel absolute -top-8 left-1/2 rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]"
+            className={stylex.props(styles.label).className}
           >
             {label}
           </motion.div>
@@ -190,13 +272,11 @@ const DockItem = ({
       </AnimatePresence>
       <motion.div
         style={{ width: widthIcon, height: heightIcon }}
-        className="flex items-center justify-center"
+        className={stylex.props(styles.iconWrap).className}
       >
         {children}
       </motion.div>
-      {active && (
-        <div className="bg-foreground-faded absolute -bottom-2 left-1/2 h-[3px] w-[3px] -translate-x-1/2 animate-[fadeInScaleX_0.6s_cubic-bezier(0.23,1,0.32,1)] rounded-full" />
-      )}
+      {active && <div {...stylex.props(styles.activeDot)} />}
     </motion.div>
   );
 };
@@ -204,10 +284,7 @@ const DockItem = ({
 const GlassFilter = () => {
   return (
     <>
-      <div
-        className="absolute inset-0 isolate z-0 overflow-hidden rounded-[20px] backdrop-blur-[8px]"
-        style={{ filter: 'url("#glass-distortion")' }}
-      />
+      <div {...stylex.props(styles.glass)} style={{ filter: 'url("#glass-distortion")' }} />
       <svg style={{ display: "none", width: 0, height: 0 }}>
         <filter
           id="glass-distortion"

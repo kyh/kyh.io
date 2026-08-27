@@ -1,21 +1,54 @@
+import { a11y } from "@repo/tailwind-compat/a11y.stylex";
+import * as stylex from "@stylexjs/stylex";
+import { containers, spacing } from "@repo/tailwind-compat/tokens.stylex";
+import { feature, up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
 import { About, useAbout } from "@/components/About";
 import { Logo } from "@/components/Logo";
+
+const styles = stylex.create({
+  nav: {
+    position: "relative",
+    marginInline: "auto",
+    marginBottom: spacing[10],
+    display: "flex",
+    maxWidth: containers["7xl"],
+    justifyContent: "space-between",
+  },
+  brand: { display: "inline-flex", paddingInline: spacing[3], paddingBlock: spacing[5] },
+  links: {
+    display: "flex",
+    alignItems: "center",
+    gap: { default: spacing[5], [mediaUp.md]: spacing[6] },
+    paddingRight: spacing[2],
+  },
+  link: {
+    textDecoration: {
+      default: null,
+      [feature.hover]: { default: null, ":hover": "underline" },
+    },
+  },
+});
 
 export const Navigation = () => {
   const aboutProps = useAbout();
 
   return (
-    <nav className="relative mx-auto mb-10 flex max-w-7xl justify-between">
-      <a href="/" className="inline-flex px-3 py-5">
-        <span className="sr-only">Logo</span>
+    <nav {...stylex.props(styles.nav)}>
+      <a href="/" {...stylex.props(styles.brand)}>
+        <span {...stylex.props(a11y.srOnly)}>Logo</span>
         <Logo />
       </a>
-      <div className="flex items-center gap-5 pr-2 md:gap-6">
-        <button type="button" className="hover:underline" onClick={() => aboutProps.setRun(true)}>
+      <div {...stylex.props(styles.links)}>
+        <button
+          type="button"
+          {...stylex.props(styles.link)}
+          onClick={() => aboutProps.setRun(true)}
+        >
           About
         </button>
         <a
-          className="hover:underline"
+          {...stylex.props(styles.link)}
           href="https://docs.google.com/spreadsheets/d/1MorR4RBtiFMexFv91w9sKcqBRIkLyv7tb394j8BHlig/edit?usp=sharing"
           target="_blank"
           rel="noopener noreferrer"
@@ -23,7 +56,7 @@ export const Navigation = () => {
           Spreadsheet
         </a>
         <a
-          className="hover:underline"
+          {...stylex.props(styles.link)}
           href="https://github.com/kyh/tc"
           target="_blank"
           rel="noopener noreferrer"

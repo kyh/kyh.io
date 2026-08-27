@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "cnfast": "catalog:",
+    "@repo/tailwind-compat": "workspace:*",
+    "@stylexjs/stylex": "catalog:",
     "konva": "^10.3.1",
     "lucide-react": "catalog:",
     "motion": "^13.1.1",
@@ -23,16 +24,14 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
-    "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/postcss": "catalog:",
+    "@stylexjs/unplugin": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
     "@vitejs/plugin-react": "catalog:",
-    "postcss": "catalog:",
-    "tailwindcss": "catalog:",
     "typescript": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:"
   }
 }

@@ -1,8 +1,26 @@
 "use client";
 
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { theme } from "../../../styles/tokens.stylex";
+
+import { fontSizes, spacing } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useEffect, useState } from "react";
 
 import { Counter } from "@/components/counter";
+
+const styles = stylex.create({
+  row: {
+    color: theme.foregroundFaded,
+    display: "flex",
+    height: spacing[4],
+    alignItems: "center",
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+  },
+});
 
 const getPstTime = () => {
   return new Date().toLocaleString("en-US", {
@@ -33,7 +51,7 @@ export const TimeCounter = () => {
   }, []);
 
   return (
-    <div className="text-foreground-faded flex h-4 items-center text-xs">
+    <div {...stylex.props(styles.row)}>
       <Counter text={time} />
       {time && <span>&nbsp;&#183;&nbsp;SF</span>}
     </div>

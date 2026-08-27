@@ -1,6 +1,19 @@
 "use client";
 
+import { feature } from "@repo/tailwind-compat/media.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
+import { transitionProperty } from "@repo/tailwind-compat/transitions.stylex";
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as stylex from "@stylexjs/stylex";
+import {
+  colors,
+  defaults,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
 import type { LivelinePoint } from "@/lib/liveline/types";
 import { Liveline } from "@/lib/liveline/Liveline";
 import { getDpr } from "@/lib/liveline/canvas/dpr";
@@ -22,6 +35,101 @@ import {
   placeBlock,
   updateBlocks,
 } from "@/lib/game-state";
+
+const styles = stylex.create({
+  container: {
+    position: "relative",
+    height: "100%",
+    width: "100%",
+  },
+  fillLayer: {
+    position: "absolute",
+    inset: 0,
+    height: "100%",
+    width: "100%",
+  },
+  chartLayer: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 10,
+  },
+  clickCapture: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 20,
+    cursor: "crosshair",
+    touchAction: "none",
+  },
+  confettiLayer: {
+    pointerEvents: "none",
+    position: "absolute",
+    inset: 0,
+    zIndex: 25,
+    overflow: "hidden",
+  },
+  hud: {
+    pointerEvents: "none",
+    position: "absolute",
+    top: spacing[3],
+    right: spacing[3],
+    zIndex: 30,
+    display: "flex",
+    alignItems: "center",
+    gap: spacing[3],
+    fontFamily: defaults.monoFontFamily,
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+  },
+  liveValue: {
+    color: `color-mix(in oklab, ${colors.emerald400} 60%, transparent)`,
+  },
+  wins: {
+    color: `color-mix(in oklab, ${colors.emerald300} 50%, transparent)`,
+  },
+  losses: {
+    color: `color-mix(in oklab, ${colors.red400} 50%, transparent)`,
+  },
+  balance: {
+    fontWeight: fontWeights.bold,
+    fontVariantNumeric: "tabular-nums",
+  },
+  bustedOverlay: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 30,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: `color-mix(in oklab, ${colors.black} 60%, transparent)`,
+  },
+  bustedBody: {
+    textAlign: "center",
+  },
+  bustedHeading: {
+    marginBottom: spacing[3],
+    fontSize: fontSizes.lg,
+    lineHeight: leading.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.red400,
+  },
+  resetButton: {
+    pointerEvents: "auto",
+    borderRadius: radii.sm,
+    backgroundColor: {
+      default: colors.emerald500,
+      [feature.hover]: { default: colors.emerald500, ":hover": colors.emerald400 },
+    },
+    paddingInline: spacing[4],
+    paddingBlock: spacing[2],
+    fontSize: fontSizes.sm,
+    lineHeight: leading.sm,
+    fontWeight: fontWeights.bold,
+    color: colors.white,
+    transitionProperty: transitionProperty.colors,
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: defaults.transitionDuration,
+  },
+});
 
 /** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
@@ -582,12 +690,12 @@ export function TradingChart() {
   const { min: rangeMin, max: rangeMax } = priceRange;
 
   return (
-    <div ref={containerRef} className="relative h-full w-full">
+    <div ref={containerRef} {...stylex.props(styles.container)}>
       {/* Grid + blocks canvas (behind chart line) */}
-      <canvas ref={overlayRef} className="absolute inset-0 h-full w-full" />
+      <canvas ref={overlayRef} {...stylex.props(styles.fillLayer)} />
 
       {/* Chart line */}
-      <div className="absolute inset-0 z-10">
+      <div {...stylex.props(styles.chartLayer)}>
         <Liveline
           data={chartData}
           value={liveValue}
@@ -611,8 +719,7 @@ export function TradingChart() {
 
       {/* Click capture (on top) */}
       <div
-        className="absolute inset-0 z-20 cursor-crosshair"
-        style={{ touchAction: "none" }}
+        {...stylex.props(styles.clickCapture)}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -621,28 +728,21 @@ export function TradingChart() {
       />
 
       {/* Confetti layer — inside the container so coordinates are chart-local */}
-      <div
-        ref={confettiLayerRef}
-        className="pointer-events-none absolute inset-0 z-25 overflow-hidden"
-      />
+      <div ref={confettiLayerRef} {...stylex.props(styles.confettiLayer)} />
 
       {/* HUD */}
-      <div className="pointer-events-none absolute top-3 right-3 z-30 flex items-center gap-3 font-mono text-sm">
-        <span className="text-emerald-400/60">{liveValue.toFixed(2)}</span>
-        <span className="text-emerald-300/50">{wins}W</span>
-        <span className="text-red-400/50">{losses}L</span>
-        <span className="font-bold tabular-nums">${balance.toFixed(0)}</span>
+      <div {...stylex.props(styles.hud)}>
+        <span {...stylex.props(styles.liveValue)}>{liveValue.toFixed(2)}</span>
+        <span {...stylex.props(styles.wins)}>{wins}W</span>
+        <span {...stylex.props(styles.losses)}>{losses}L</span>
+        <span {...stylex.props(styles.balance)}>${balance.toFixed(0)}</span>
       </div>
 
       {isBusted && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60">
-          <div className="text-center">
-            <p className="mb-3 text-lg font-bold text-red-400">Busted!</p>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="pointer-events-auto rounded bg-emerald-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-400"
-            >
+        <div {...stylex.props(styles.bustedOverlay)}>
+          <div {...stylex.props(styles.bustedBody)}>
+            <p {...stylex.props(styles.bustedHeading)}>Busted!</p>
+            <button type="button" onClick={handleReset} {...stylex.props(styles.resetButton)}>
               Play Again ($1,000)
             </button>
           </div>

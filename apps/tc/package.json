@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
+    "@repo/tailwind-compat": "workspace:*",
+    "@stylexjs/stylex": "catalog:",
     "@visx/axis": "^4.0.0",
     "@visx/event": "^4.0.0",
     "@visx/grid": "^4.0.0",
@@ -22,7 +24,6 @@
     "@visx/scale": "^4.0.0",
     "@visx/shape": "^4.0.0",
     "@visx/tooltip": "^4.0.0",
-    "cnfast": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-joyride": "^3.2.0",
@@ -33,16 +34,14 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
-    "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/postcss": "catalog:",
+    "@stylexjs/unplugin": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/react-portal": "^4.0.7",
     "@vitejs/plugin-react": "catalog:",
-    "postcss": "catalog:",
-    "tailwindcss": "catalog:",
     "typescript": "catalog:",
+    "unplugin": "catalog:",
     "vite": "catalog:"
   }
 }

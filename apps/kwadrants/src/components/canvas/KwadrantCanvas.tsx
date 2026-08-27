@@ -1,6 +1,10 @@
+import { boxShadow, ringSlots, shadowLayers } from "@repo/tailwind-compat/shadows.stylex";
+import { leading } from "@repo/tailwind-compat/leading.stylex";
 import type Konva from "konva";
 import { forwardRef, useMemo, useState } from "react";
 import { Layer, Stage } from "react-konva";
+import * as stylex from "@stylexjs/stylex";
+import { colors, fontSizes, radii, spacing } from "@repo/tailwind-compat/tokens.stylex";
 
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { getDefaultLabels, getLayout } from "@/lib/layouts";
@@ -22,6 +26,38 @@ interface LabelEditorProps {
   onSave: (value: string) => void;
   onClose: () => void;
 }
+
+const styles = stylex.create({
+  editor: {
+    position: "absolute",
+    borderRadius: radii.sm,
+    paddingInline: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: leading.xs,
+    borderWidth: 1,
+    borderStyle: "solid",
+    outlineStyle: { default: null, ":focus": "none" },
+    boxShadow: {
+      default: boxShadow.lg,
+      ":focus": `${ringSlots.before}, 0 0 0 1px ${colors.blue500}, ${shadowLayers.lg}`,
+    },
+  },
+  editorDark: {
+    borderColor: colors.gray600,
+    backgroundColor: colors.gray800,
+    color: colors.white,
+  },
+  editorLight: {
+    borderColor: colors.gray300,
+    backgroundColor: colors.white,
+    color: colors.gray900,
+  },
+  canvasWrap: {
+    position: "relative",
+    height: "100%",
+    width: "100%",
+  },
+});
 
 const LabelEditor = ({
   value,
@@ -54,9 +90,7 @@ const LabelEditor = ({
         onClose();
       }}
       autoFocus
-      className={`absolute rounded px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-        isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"
-      } border`}
+      {...stylex.props(styles.editor, isDark ? styles.editorDark : styles.editorLight)}
       style={{
         left: isRightEdge ? "auto" : position.x,
         right: isRightEdge ? 16 : "auto",
@@ -107,7 +141,7 @@ export const KwadrantCanvas = forwardRef<Konva.Stage, KwadrantCanvasProps>(
     const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
 
     return (
-      <div className="relative h-full w-full">
+      <div {...stylex.props(styles.canvasWrap)}>
         <Stage width={width} height={height} ref={ref}>
           <Layer>
             <QuadrantGrid

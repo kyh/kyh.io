@@ -1,24 +1,32 @@
-@import "tailwindcss";
+@import "@repo/tailwind-compat/preflight.css";
+@import "@repo/tailwind-compat/forms.css";
 
-@plugin "@tailwindcss/forms";
-
-@custom-variant dark (&:is(.dark *));
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
+  /* index.html is not compiled by StyleX, so what used to be utilities on <body>
+     and #root lives here. */
+  body {
+    background-color: oklch(20.8% 0.042 265.755);
+    background-image: linear-gradient(
+      to bottom right in oklab,
+      oklch(27.9% 0.041 260.031) 0%,
+      oklch(20.8% 0.042 265.755) 50%,
+      #000 100%
+    );
+    color: #fff;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  /* Tailwind v3 default border color, kept so elements without an explicit border
+     color utility look unchanged. Was var(--color-gray-200) from Tailwind's theme. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: oklch(92.8% 0.006 264.531);
   }
 
   ::-webkit-scrollbar {
@@ -39,6 +47,8 @@
   }
 }
 
+/* react-select renders its own DOM; StyleX has no descendant selectors, so these
+   overrides have to stay as CSS. */
 div.react-select__control,
 div.react-select__control:hover,
 div.react-select__control.react-select__control--is-focused {
@@ -49,6 +59,7 @@ div.react-select__control.react-select__control--is-focused {
 
 div.react-select__value-container {
   padding: 0;
+  gap: 2px;
 }
 
 div.react-select__input-container {
@@ -59,10 +70,6 @@ div.react-select__input-container {
 
 input.react-select__input:focus {
   box-shadow: none;
-}
-
-div.react-select__value-container {
-  gap: 2px;
 }
 
 div.react-select__multi-value {
