@@ -1,10 +1,124 @@
 "use client";
 
+import { theme } from "../../../styles/tokens.stylex";
+
+import {
+  fontSizeLineHeights,
+  fontSizes,
+  fontWeights,
+  lineHeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import type { FC, ReactNode, Ref } from "react";
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import type { WorkMedia } from "./works";
+
+const styles = stylex.create({
+  dockBtn: { display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "25%" },
+  size8: { width: spacing[8], height: spacing[8] },
+  size9: { width: spacing[9], height: spacing[9] },
+  size4: { width: spacing[4], height: spacing[4] },
+  small: { fontSize: fontSizes.sm, lineHeight: fontSizeLineHeights.sm },
+  card: { pointerEvents: "auto", position: "absolute" },
+  cardClickable: { cursor: "pointer" },
+  above: {
+    position: "absolute",
+    bottom: "100%",
+    left: "50%",
+    marginBottom: spacing[4],
+    width: "max-content",
+    maxWidth: "80%",
+    translate: "-50% 0",
+    textAlign: "center",
+  },
+  navRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: spacing[3] },
+  eyebrow: {
+    color: theme.foregroundFaded,
+    marginTop: spacing[3],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    letterSpacing: "0.2em",
+    textTransform: "uppercase",
+  },
+  title: {
+    color: theme.foregroundHighlighted,
+    marginTop: spacing[1],
+    lineHeight: lineHeights.tight,
+    fontWeight: fontWeights.normal,
+  },
+  title2xl: { fontSize: fontSizes["2xl"] },
+  title3xl: { fontSize: fontSizes["3xl"] },
+  closeSlot: {
+    position: "absolute",
+    top: `calc(-1 * ${spacing[3]})`,
+    right: `calc(-1 * ${spacing[3]})`,
+    zIndex: 10,
+  },
+  frame: {
+    position: "relative",
+    height: "100%",
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "var(--dock-border-color)",
+    backgroundImage:
+      "linear-gradient(to top in oklab, var(--dock-border-color) 0%, var(--dock-bg) 100%)",
+    padding: spacing[1],
+    backdropFilter: "blur(10px)",
+  },
+  inner: {
+    position: "relative",
+    height: "100%",
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: radii.lg,
+  },
+  cover: { height: "100%", width: "100%", objectFit: "cover" },
+  caption: { position: "absolute", insetInline: 0, bottom: 0, padding: spacing[3] },
+  captionEyebrow: {
+    fontSize: "10px",
+    letterSpacing: "0.22em",
+    color: "color-mix(in oklab, #fff 75%, transparent)",
+    textTransform: "uppercase",
+  },
+  captionTitle: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: fontSizes.base,
+    color: "#fff",
+  },
+  below: {
+    position: "absolute",
+    top: "100%",
+    left: "50%",
+    marginTop: spacing[4],
+    translate: "-50% 0",
+    textAlign: "center",
+  },
+  closeRow: {
+    marginTop: spacing[3],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[2],
+  },
+  blurb: {
+    color: theme.foregroundFaded,
+    marginInline: "auto",
+    marginTop: spacing[3],
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizeLineHeights.sm,
+  },
+});
 
 /* The floating spotlight uses the tooltip/panel shadow rather than a bespoke
    one, so elevation reads the same as the rest of the site in both themes. */
@@ -40,7 +154,7 @@ const IconButton: FC<IconButtonProps> = ({ onClick, label, size, ref, children }
       e.stopPropagation();
       onClick();
     }}
-    className={`dock-item flex items-center justify-center rounded-[25%] ${size === "sm" ? "size-8" : "size-9"}`}
+    className={`dock-item ${stylex.props(styles.dockBtn, size === "sm" ? styles.size8 : styles.size9).className}`}
     aria-label={label}
   >
     {children}
@@ -121,21 +235,21 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
       data-text="Visit"
-      className="link text-sm"
+      className={`link ${stylex.props(styles.small).className}`}
     >
       Visit
     </a>
   );
   const closeBtn = (
     <IconButton ref={closeRef} onClick={onClose} label="Close" size="md">
-      <X className="size-4" />
+      <X {...stylex.props(styles.size4)} />
     </IconButton>
   );
 
   return (
     <div
       ref={cardRef}
-      className={`pointer-events-auto absolute${expanded ? "" : " cursor-pointer"}`}
+      {...stylex.props(styles.card, !expanded && styles.cardClickable)}
       style={{
         width: w,
         height: frameH,
@@ -162,23 +276,17 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
       }
     >
       {expanded && (
-        <div className="absolute bottom-full left-1/2 mb-4 w-max max-w-[80%] -translate-x-1/2 text-center">
-          <div className="flex items-center justify-center gap-3">
+        <div {...stylex.props(styles.above)}>
+          <div {...stylex.props(styles.navRow)}>
             <IconButton onClick={onPrev} label="Previous work" size="sm">
-              <ChevronLeft className="size-4" />
+              <ChevronLeft {...stylex.props(styles.size4)} />
             </IconButton>
             <IconButton onClick={onNext} label="Next work" size="sm">
-              <ChevronRight className="size-4" />
+              <ChevronRight {...stylex.props(styles.size4)} />
             </IconButton>
           </div>
-          <div className="text-foreground-faded mt-3 text-xs tracking-[0.2em] uppercase">
-            {photo.category}
-          </div>
-          <h2
-            className={`text-foreground-highlighted mt-1 leading-tight font-normal ${
-              isMobile ? "text-2xl" : "text-3xl"
-            }`}
-          >
+          <div {...stylex.props(styles.eyebrow)}>{photo.category}</div>
+          <h2 {...stylex.props(styles.title, isMobile ? styles.title2xl : styles.title3xl)}>
             {photo.title}
           </h2>
         </div>
@@ -186,15 +294,12 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
 
       {/* Close sits on the card's own corner: a side rail would be a lone
           floating button now that the photo-app toggles are gone. */}
-      {expanded && !isMobile && <div className="absolute -top-3 -right-3 z-10">{closeBtn}</div>}
+      {expanded && !isMobile && <div {...stylex.props(styles.closeSlot)}>{closeBtn}</div>}
 
       {/* Same frame treatment as the site's Card component, minus its
           pointer-events reset (the collapsed card is itself a button). */}
-      <div
-        className="relative h-full w-full overflow-hidden rounded-xl border border-[var(--dock-border-color)] bg-gradient-to-t from-[var(--dock-border-color)] to-[var(--dock-bg)] p-1 backdrop-blur-[10px]"
-        style={{ boxShadow: CARD_SHADOW }}
-      >
-        <div className="relative h-full w-full overflow-hidden rounded-lg">
+      <div {...stylex.props(styles.frame)} style={{ boxShadow: CARD_SHADOW }}>
+        <div {...stylex.props(styles.inner)}>
           {photo.videoUrl ? (
             /* Plays collapsed too — the spotlight is the one place a single
              full-fidelity video is cheap. The poster covers the load gap as
@@ -206,7 +311,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
               loop
               muted
               playsInline
-              className="h-full w-full object-cover"
+              {...stylex.props(styles.cover)}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
@@ -215,23 +320,21 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
               alt={photo.title}
               draggable={false}
               decoding="async"
-              className="h-full w-full object-cover"
+              {...stylex.props(styles.cover)}
             />
           )}
           {/* Caption sits over arbitrary media, so it keeps its own dark
               scrim and white text in both themes rather than page tokens. */}
           {!expanded && (
             <div
-              className="absolute inset-x-0 bottom-0 p-3"
+              {...stylex.props(styles.caption)}
               style={{
                 background:
                   "linear-gradient(to top, rgb(0 0 0 / 0.85) 0%, rgb(0 0 0 / 0.4) 50%, transparent 100%)",
               }}
             >
-              <div className="text-[10px] tracking-[0.22em] text-white/75 uppercase">
-                {photo.category}
-              </div>
-              <div className="truncate text-base text-white">{photo.title}</div>
+              <div {...stylex.props(styles.captionEyebrow)}>{photo.category}</div>
+              <div {...stylex.props(styles.captionTitle)}>{photo.title}</div>
             </div>
           )}
         </div>
@@ -239,7 +342,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
 
       {expanded && (
         <div
-          className="absolute top-full left-1/2 mt-4 -translate-x-1/2 text-center"
+          {...stylex.props(styles.below)}
           style={{
             minWidth: Math.min(isMobile ? 260 : 320, vw * 0.9),
             maxWidth: vw * 0.9,
@@ -247,12 +350,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
         >
           {visitLink}
 
-          {isMobile && (
-            <div className="mt-3 flex items-center justify-center gap-2">{closeBtn}</div>
-          )}
+          {isMobile && <div {...stylex.props(styles.closeRow)}>{closeBtn}</div>}
 
           {!isMobile && (
-            <p className="text-foreground-faded mx-auto mt-3 text-sm" style={{ maxWidth: 440 }}>
+            <p {...stylex.props(styles.blurb)} style={{ maxWidth: 440 }}>
               {photo.description}
             </p>
           )}

@@ -1,5 +1,7 @@
 "use client";
 
+import * as stylex from "@stylexjs/stylex";
+
 import { useCallback, useEffect, useRef } from "react";
 import {
   Bodies,
@@ -16,6 +18,10 @@ import {
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
+
+const styles = stylex.create({
+  canvas: { height: "480px", width: "100%", touchAction: "pan-y" },
+});
 
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
@@ -374,7 +380,7 @@ export const FigureCanvas = () => {
   return (
     <div
       ref={containerRef}
-      className="h-[480px] w-full touch-pan-y"
+      {...stylex.props(styles.canvas)}
       style={{ touchAction: "pan-y" }}
       aria-hidden="true"
     />

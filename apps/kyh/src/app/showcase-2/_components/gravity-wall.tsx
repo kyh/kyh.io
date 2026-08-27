@@ -1,5 +1,9 @@
 "use client";
 
+import { theme } from "../../../styles/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import type { FC, RefObject } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { animate } from "motion";
@@ -27,6 +31,40 @@ import {
   VOID_RADIUS_IDLE_MOBILE,
 } from "./build-cells";
 import { FeaturedCard } from "./featured-card";
+
+const styles = stylex.create({
+  fill: { height: "100%", width: "100%" },
+  cover: { height: "100%", width: "100%", objectFit: "cover", userSelect: "none" },
+  stage: {
+    color: theme.foreground,
+    position: "relative",
+    isolation: "isolate",
+    height: "100%",
+    width: "100%",
+    touchAction: "none",
+    overflow: "hidden",
+    userSelect: "none",
+  },
+  absoluteFill: { position: "absolute", inset: 0 },
+  probe: { pointerEvents: "none", position: "absolute", height: "1px", width: "1px", opacity: 0 },
+  overlay14: { pointerEvents: "none", position: "absolute", inset: 0, zIndex: 14 },
+  fadeLayer: {
+    position: "absolute",
+    inset: 0,
+    zIndex: 20,
+    transitionProperty: "opacity",
+    transitionTimingFunction: "cubic-bezier(.4, 0, .2, 1)",
+    transitionDuration: ".3s",
+  },
+  cursorLayer: {
+    pointerEvents: "none",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    zIndex: 30,
+    willChange: "transform",
+  },
+});
 
 /* The source drove the intro with a gsap timeline; these reproduce its exact
    easing curves (power2.inOut, power2.out, back.out(1.4)) for motion's
@@ -88,7 +126,7 @@ const Wall = memo(function Wall({ cells, photos, itemsRef, canvasesRef, liveVide
                 }}
                 width={Math.round(cell.width * dpr)}
                 height={Math.round(cell.height * dpr)}
-                className="h-full w-full"
+                {...stylex.props(styles.fill)}
                 style={{
                   backgroundImage: `url(${photo.thumbUrl})`,
                   backgroundSize: "cover",
@@ -102,7 +140,7 @@ const Wall = memo(function Wall({ cells, photos, itemsRef, canvasesRef, liveVide
                 alt=""
                 draggable={false}
                 decoding="async"
-                className="h-full w-full object-cover select-none"
+                {...stylex.props(styles.cover)}
               />
             )}
           </div>
@@ -690,12 +728,8 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
   }, [hasBuilt]);
 
   return (
-    <section
-      ref={sectionRef}
-      aria-label="Interactive photo wall"
-      className="text-foreground relative isolate h-full w-full touch-none overflow-hidden select-none"
-    >
-      <div aria-hidden className="absolute inset-0">
+    <section ref={sectionRef} aria-label="Interactive photo wall" {...stylex.props(styles.stage)}>
+      <div aria-hidden {...stylex.props(styles.absoluteFill)}>
         {built && dims && (
           <Wall
             cells={built.cells}
@@ -723,7 +757,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
             preload="auto"
             aria-hidden
             tabIndex={-1}
-            className="pointer-events-none absolute h-px w-px opacity-0"
+            {...stylex.props(styles.probe)}
             ref={(el) => {
               if (el) videoPlayers.current.set(src, el);
               else videoPlayers.current.delete(src);
@@ -735,7 +769,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
           so it works over the body gradient in both themes. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[14]"
+        {...stylex.props(styles.overlay14)}
         style={{
           background:
             "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 40%, color-mix(in srgb, var(--bg-color) 60%, transparent) 100%)",
@@ -746,7 +780,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
       <div
         aria-hidden
         onClick={close}
-        className="absolute inset-0 z-20 transition-opacity duration-300"
+        {...stylex.props(styles.fadeLayer)}
         style={{
           background: "color-mix(in srgb, var(--bg-highlighted) 70%, transparent)",
           opacity: expanded ? 1 : 0,
@@ -755,11 +789,7 @@ export const GravityWall: FC<GravityWallProps> = ({ photos }) => {
       />
 
       {/* Featured anchor (positioned every frame by the tick) */}
-      <div
-        ref={anchorRef}
-        className="pointer-events-none absolute top-0 left-0 z-30 will-change-transform"
-        style={{ opacity: 0 }}
-      >
+      <div ref={anchorRef} {...stylex.props(styles.cursorLayer)} style={{ opacity: 0 }}>
         {built && dims && (
           <FeaturedCard
             photo={currentPhoto}

@@ -1,8 +1,15 @@
 "use client";
 
+import * as stylex from "@stylexjs/stylex";
+
 import type { Transition } from "motion/react";
 import { Fragment, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
+
+const styles = stylex.create({
+  measure: { position: "absolute", top: 0, left: 0, color: "transparent" },
+  letter: { pointerEvents: "none", position: "absolute", top: 0, left: 0 },
+});
 
 type VerticalProps = {
   letter: string;
@@ -71,7 +78,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
         position: "relative",
       }}
     >
-      <span className="absolute top-0 left-0 text-transparent">{text}</span>
+      <span {...stylex.props(styles.measure)}>{text}</span>
 
       <AnimatePresence initial={false}>
         {textArray.map((letter, index) => {
@@ -89,7 +96,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
               initial={{ x, width, opacity: 0 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ ease: "easeOut" }}
-              className="pointer-events-none absolute top-0 left-0"
+              {...stylex.props(styles.letter)}
               aria-hidden="true"
             >
               <Vertical letter={letter} />

@@ -1,5 +1,31 @@
 "use client";
 
+import { theme } from "../styles/tokens.stylex";
+
+import { fontWeights } from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
+const styles = stylex.create({
+  scrambleDefault: {
+    fontSize: "2em",
+    lineHeight: 1,
+    fontWeight: fontWeights.normal,
+    color: theme.foregroundHighlighted,
+  },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+    borderWidth: 0,
+  },
+});
+
 export type AnimateSectionProps<C> = {
   children: React.ReactNode;
   className?: string;
@@ -54,7 +80,7 @@ type ScrambleTextProps = {
 
 export const ScrambleText = ({
   children,
-  className = "text-[2em] leading-none font-normal text-foreground-highlighted",
+  className = stylex.props(styles.scrambleDefault).className,
   as: Element = "h1",
   trigger = "load",
   ...props
@@ -100,7 +126,7 @@ export const ScrambleText = ({
           );
         })}
       </span>
-      <span className="sr-only">{text}</span>
+      <span {...stylex.props(styles.srOnly)}>{text}</span>
     </Element>
   );
 };

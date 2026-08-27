@@ -1,9 +1,170 @@
 "use client";
 
+import { appIcon, theme } from "../styles/tokens.stylex";
+
+import { up as mediaUp } from "@repo/tailwind-compat/media.stylex";
+
+import {
+  defaults,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+
+const styles = stylex.create({
+  app: {
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: spacing[2],
+    textDecoration: "none",
+    transitionProperty: "transform, translate, scale, rotate",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: ".2s",
+    scale: { default: null, ":active": "0.95 0.95" },
+  },
+  icon: {
+    position: "relative",
+    width: "60px",
+    height: "60px",
+    overflow: "hidden",
+    borderRadius: "14px",
+  },
+  /** was a `dark:` shadow pair; the value switches in global.css */
+  iconShadow: { boxShadow: appIcon.shadow },
+  label: {
+    color: theme.foreground,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    borderRadius: radii.md,
+    paddingInline: spacing[1.5],
+    paddingBlock: spacing[0.5],
+    textAlign: "center",
+    fontSize: fontSizes.xs,
+    lineHeight: 1,
+    fontWeight: fontWeights.medium,
+  },
+  floatLabel: {
+    color: theme.foreground,
+    position: "absolute",
+    top: "68px",
+    zIndex: 10,
+    borderRadius: radii.md,
+    backgroundColor: "color-mix(in srgb, var(--bg-color) 70%, transparent)",
+    paddingInline: spacing[1.5],
+    paddingBlock: spacing[0.5],
+    textAlign: "center",
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.medium,
+    whiteSpace: "nowrap",
+    backdropFilter: "blur(12px)",
+  },
+  centerRow: { display: "flex", alignItems: "center", justifyContent: "center" },
+  folder: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: spacing[2],
+    transitionProperty: "transform, translate, scale, rotate",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: ".2s",
+    willChange: "transform",
+    userSelect: "none",
+    scale: { default: null, ":active": "0.95 0.95" },
+  },
+  folderIcon: {
+    position: "relative",
+    width: "60px",
+    height: "60px",
+    borderRadius: "14px",
+    backgroundColor: appIcon.bg,
+    padding: spacing[2],
+    boxShadow: appIcon.shadow,
+    backdropFilter: "blur(12px)",
+  },
+  folderGrid: {
+    display: "grid",
+    height: "100%",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+    gap: spacing[1],
+  },
+  folderTile: {
+    position: "relative",
+    aspectRatio: "1 / 1",
+    overflow: "hidden",
+    borderRadius: radii.default,
+    boxShadow: `0 0 0 1px ${appIcon.ring}`,
+  },
+  /** background follows the hovered `.group` ancestor; see global.css */
+  folderLabel: {
+    color: theme.foreground,
+    backgroundColor: "var(--group-label-bg, transparent)",
+    maxWidth: "80px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    borderRadius: radii.md,
+    paddingInline: spacing[1.5],
+    paddingBlock: spacing[0.5],
+    textAlign: "center",
+    fontSize: fontSizes.xs,
+    lineHeight: 1,
+    fontWeight: fontWeights.medium,
+    transitionProperty:
+      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: ".15s",
+  },
+  scrim: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 50,
+    backgroundColor: appIcon.overlayBg,
+    backdropFilter: "blur(4px)",
+  },
+  sheet: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    zIndex: 50,
+    display: "flex",
+    width: { default: "100%", [mediaUp.sm]: "auto" },
+    translate: "-50% -50%",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: { default: spacing[4], [mediaUp.sm]: spacing[8] },
+    willChange: "transform",
+  },
+  sheetTitle: {
+    color: theme.foreground,
+    marginBottom: spacing[6],
+    width: "100%",
+    textAlign: "center",
+    fontSize: fontSizes["2xl"],
+    fontWeight: fontWeights.semibold,
+  },
+  sheetGrid: {
+    display: "grid",
+    width: "100%",
+    gridTemplateColumns: {
+      default: "repeat(3, minmax(0, 1fr))",
+      [mediaUp.sm]: "repeat(4, minmax(0, 1fr))",
+    },
+    gap: { default: spacing[4], [mediaUp.sm]: spacing[5] },
+    maxWidth: { default: null, [mediaUp.sm]: "400px" },
+  },
+});
 
 // Types
 type Point = { x: number; y: number };
@@ -56,26 +217,19 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
   return (
     <Wrapper
       {...wrapperProps}
-      className="ease relative flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
+      className={`ease ${stylex.props(styles.app).className}`}
       data-slot="app"
       onHoverStart={handleHoverStart}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <div
-        className={`relative size-[60px] overflow-hidden rounded-[14px] ${
-          showShadow
-            ? "shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
-            : ""
-        }`}
-        data-slot="app-icon"
-      >
+      <div {...stylex.props(styles.icon, showShadow && styles.iconShadow)} data-slot="app-icon">
         <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
       </div>
 
       {/* Visible truncated label */}
       <motion.div
         ref={labelRef}
-        className="text-foreground truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium"
+        className={stylex.props(styles.label).className}
         style={{ maxWidth: maxLabelWidth }}
         data-slot="app-label"
         initial={false}
@@ -94,7 +248,7 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
       <AnimatePresence>
         {shouldExpand && (
           <motion.div
-            className="text-foreground absolute top-[68px] z-10 rounded-md bg-[color-mix(in_srgb,var(--bg-color)_70%,transparent)] px-1.5 py-0.5 text-center text-xs font-medium whitespace-nowrap backdrop-blur-md"
+            className={stylex.props(styles.floatLabel).className}
             data-slot="app-label-expanded"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -210,30 +364,22 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <MotionConfig transition={springTransition}>
-        <div className="flex items-center justify-center" data-slot="app-group">
+        <div {...stylex.props(styles.centerRow)} data-slot="app-group">
           <motion.div
             initial={false}
             animate={{ opacity: isOpen ? 0 : 1, scale: isOpen ? 0.9 : 1 }}
             transition={springTransition}
           >
             <Dialog.Trigger
-              className="group ease flex flex-col items-center gap-2 transition-transform duration-200 will-change-transform select-none active:scale-95"
+              className={`group ease ${stylex.props(styles.folder).className}`}
               onClick={handleOpen}
               style={{ pointerEvents: isOpen ? "none" : "auto" }}
               data-slot="folder-trigger"
             >
-              <div
-                className="relative size-[60px] rounded-[14px] bg-white/50 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-md dark:bg-[#0f172a]/50 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
-                ref={folderRef}
-                data-slot="folder-preview"
-              >
-                <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" data-slot="folder-grid">
+              <div {...stylex.props(styles.folderIcon)} ref={folderRef} data-slot="folder-preview">
+                <div {...stylex.props(styles.folderGrid)} data-slot="folder-grid">
                   {items.slice(0, 4).map((item) => (
-                    <div
-                      key={item.key}
-                      className="relative aspect-square overflow-hidden rounded ring-1 ring-black/3 dark:ring-white/15"
-                      data-slot="mini-cell"
-                    >
+                    <div key={item.key} {...stylex.props(styles.folderTile)} data-slot="mini-cell">
                       <Image
                         src={item.iconSrc}
                         alt={item.name}
@@ -245,10 +391,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                   ))}
                 </div>
               </div>
-              <div
-                className="text-foreground group-hover:bg-background-hover max-w-[80px] truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium transition-colors duration-150"
-                data-slot="folder-name"
-              >
+              <div className={stylex.props(styles.folderLabel).className} data-slot="folder-name">
                 {title}
               </div>
             </Dialog.Trigger>
@@ -261,7 +404,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
               <Dialog.Backdrop
                 render={
                   <motion.div
-                    className="fixed inset-0 z-50 bg-white/92 backdrop-blur-sm dark:bg-black/90"
+                    {...stylex.props(styles.scrim)}
                     data-slot="backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -276,7 +419,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
               <Dialog.Popup
                 render={
                   <motion.div
-                    className="fixed top-1/2 left-1/2 z-50 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col items-center p-4 will-change-transform sm:w-auto sm:p-8"
+                    {...stylex.props(styles.sheet)}
                     data-slot="open-folder"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -285,7 +428,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 }
               >
                 <motion.div
-                  className="text-foreground mb-6 w-full text-center text-2xl font-semibold"
+                  className={stylex.props(styles.sheetTitle).className}
                   data-slot="open-title"
                   initial={{ opacity: 0, y: 30, x: 10, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
@@ -301,10 +444,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                   <Dialog.Title>{title}</Dialog.Title>
                 </motion.div>
 
-                <div
-                  className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
-                  data-slot="open-grid"
-                >
+                <div className={stylex.props(styles.sheetGrid).className} data-slot="open-grid">
                   {items.map((item, idx) => (
                     <OpenGridItem
                       key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}

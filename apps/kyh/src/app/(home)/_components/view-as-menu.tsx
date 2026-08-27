@@ -1,5 +1,17 @@
 "use client";
 
+import { theme } from "../../../styles/tokens.stylex";
+
+import {
+  defaults,
+  fontSizeLineHeights,
+  fontSizes,
+  radii,
+  spacing,
+} from "@repo/tailwind-compat/tokens.stylex";
+
+import * as stylex from "@stylexjs/stylex";
+
 import { useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion } from "motion/react";
@@ -15,8 +27,63 @@ import {
 } from "@/components/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/tooltip";
 
-const iconButtonClassName =
-  "inline-flex -m-1 p-1 rounded-sm text-foreground-faded transition-colors duration-150 hover:text-foreground-highlighted hover:bg-background-hover";
+const styles = stylex.create({
+  row: { display: "flex", height: spacing[4], alignItems: "center", gap: spacing[2] },
+  iconButton: {
+    display: "inline-flex",
+    margin: `calc(-1 * ${spacing[1]})`,
+    padding: spacing[1],
+    borderRadius: radii.sm,
+    color: { default: theme.foregroundFaded, ":hover": theme.foregroundHighlighted },
+    backgroundColor: { default: null, ":hover": theme.backgroundHover },
+    transitionProperty:
+      "color, background-color, border-color, outline-color, text-decoration-color, fill, stroke",
+    transitionTimingFunction: defaults.transitionTimingFunction,
+    transitionDuration: ".15s",
+  },
+  tooltip: {
+    paddingInline: spacing[2],
+    paddingBlock: spacing[0.5],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+  },
+  code: {
+    borderRadius: radii.default,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "color-mix(in srgb, var(--border-color) 50%, transparent)",
+    backgroundColor: "color-mix(in srgb, var(--bg-color) 20%, transparent)",
+    paddingInline: spacing[1.5],
+    fontFamily: defaults.monoFontFamily,
+    fontSize: "0.7rem",
+  },
+  popup: {
+    backgroundColor: theme.panel,
+    zIndex: 50,
+    minWidth: "120px",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: theme.border,
+    padding: spacing[1],
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizeLineHeights.xs,
+    color: theme.foreground,
+  },
+  menuItem: {
+    backgroundColor: { default: null, ":hover": theme.backgroundHover },
+    display: "flex",
+    cursor: "pointer",
+    alignItems: "center",
+    gap: spacing[2],
+    borderRadius: radii.sm,
+    paddingInline: spacing[2],
+    paddingBlock: spacing[1.5],
+    outline: "none",
+  },
+});
+
+const iconButtonClassName = stylex.props(styles.iconButton).className;
 
 const COMMAND = "npx kyh";
 
@@ -47,7 +114,7 @@ export const ViewAsMenu = () => {
   const claudeUrl = getPromptUrl("https://claude.ai/new", "https://kyh.io");
 
   return (
-    <div className="flex h-4 items-center gap-2">
+    <div {...stylex.props(styles.row)}>
       <Tooltip>
         <AnimateSection delay={0.1}>
           <TooltipTrigger asChild>
@@ -56,7 +123,9 @@ export const ViewAsMenu = () => {
             </a>
           </TooltipTrigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">Speed read</TooltipContent>
+        <TooltipContent className={stylex.props(styles.tooltip).className}>
+          Speed read
+        </TooltipContent>
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.15}>
@@ -68,7 +137,7 @@ export const ViewAsMenu = () => {
             <TerminalIcon />
           </TooltipTrigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">
+        <TooltipContent className={stylex.props(styles.tooltip).className}>
           <AnimatePresence mode="wait">
             {copied ? (
               <motion.div
@@ -79,9 +148,7 @@ export const ViewAsMenu = () => {
                 transition={{ ease: "easeOut", duration: 0.13 }}
               >
                 <span>Copied:</span>
-                <code className="rounded border border-[color-mix(in_srgb,var(--border-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--bg-color)_20%,transparent)] px-1.5 font-mono text-[0.7rem]">
-                  {COMMAND}
-                </code>
+                <code {...stylex.props(styles.code)}>{COMMAND}</code>
               </motion.div>
             ) : (
               <motion.div
@@ -111,7 +178,9 @@ export const ViewAsMenu = () => {
             </a>
           </TooltipTrigger>
         </AnimateSection>
-        <TooltipContent className="px-2 py-0.5 text-xs">View as Markdown</TooltipContent>
+        <TooltipContent className={stylex.props(styles.tooltip).className}>
+          View as Markdown
+        </TooltipContent>
       </Tooltip>
       <Menu.Root>
         <AnimateSection delay={0.25}>
@@ -121,16 +190,16 @@ export const ViewAsMenu = () => {
         </AnimateSection>
         <Menu.Portal>
           <Menu.Positioner sideOffset={5} align="end">
-            <Menu.Popup className="bg-panel z-50 min-w-[120px] rounded-md border border-[var(--border-color)] p-1 text-xs text-[var(--body-color)]">
+            <Menu.Popup className={stylex.props(styles.popup).className}>
               <Menu.Item
-                className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
+                className={stylex.props(styles.menuItem).className}
                 render={<a href={chatGPTUrl} target="_blank" rel="noopener noreferrer" />}
               >
                 <ChatGPTIcon />
                 ChatGPT
               </Menu.Item>
               <Menu.Item
-                className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
+                className={stylex.props(styles.menuItem).className}
                 render={<a href={claudeUrl} target="_blank" rel="noopener noreferrer" />}
               >
                 <ClaudeIcon />

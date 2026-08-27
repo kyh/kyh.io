@@ -80,7 +80,7 @@ Shared configs and utilities in `packages/`.
 ## Styling
 
 Apps are migrating from Tailwind to [StyleX](https://stylexjs.com). Migrated so far:
-`stonksville`, `kwadrants`, `covid-19`, `tc`. (`vis-ml` was never on Tailwind and stays plain CSS.)
+`stonksville`, `kwadrants`, `covid-19`, `tc`, `kyh`. (`vis-ml` was never on Tailwind and stays plain CSS.)
 
 Rules for a migrated app:
 
@@ -121,6 +121,20 @@ Rules for a migrated app:
   also needs StyleX.
 - **`stylex.props().className` is `string | undefined`.** Libraries that take a class
   string (Headless UI transitions, `NavLink`, visx) need `?? ""`.
+- **`@repo/tailwind-compat` only has Tailwind's NAMED scale steps.** Tailwind v4 also
+  generates arbitrary multiples on demand, so `pt-30` has no `spacing[30]` — the scale
+  jumps 28 → 32. Write `` `calc(${spacing.unit} * 30)` `` for those. `tsc` catches the
+  bad index (TS7053), so **typecheck after every batch of files**, not just at the end.
+- **StyleX resolves imports itself and ignores tsconfig `paths`.** `.babelrc` is JSON so
+  it cannot build an absolute `aliases` map; import local `*.stylex.ts` by relative path.
+- **`-translate-x-1/2` compiles to `translate`, not `transform`** — they are separate
+  properties and stack differently. Same for `scale-95` → `scale`.
+- **`transition-*` utilities also set the timing function.** Porting only
+  `transitionProperty` + `transitionDuration` silently leaves the CSS default `ease`.
+
+When a page animates or has realtime content, diff the same build against itself first
+to measure the noise floor — kyh's scramble text and multiplayer cursors produce ~88
+box diffs per load on their own, and anything at or below that is not signal.
 
 Known cosmetic drift from Tailwind, all verified harmless: lightningcss evaluates
 `calc(1.25/0.875)` to `1.42857` (costs 1/64px of line-height) and emits colors as
