@@ -70,7 +70,7 @@ type VideoInput = {
 };
 
 /**
- * The default model is tuned for a 9:16 reel clip; an operator-overridden
+ * The default model is tuned for a 16:9 TV-style clip; an operator-overridden
  * model gets only the prompt since input schemas differ per model.
  */
 const buildInput = (model: string, prompt: string): VideoInput => {
@@ -78,7 +78,7 @@ const buildInput = (model: string, prompt: string): VideoInput => {
   if (model === DEFAULT_VIDEO_MODEL) {
     input.duration = 5;
     input.resolution = "768P";
-    input.aspect_ratio = "9:16";
+    input.aspect_ratio = "16:9";
     input.prompt_expansion_mode = "balanced";
   }
   return input;

@@ -64,18 +64,18 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 ## Platform matrix
 
-| App           | Dev command            | Port                        | Agent-verifiable at runtime?                       |
-| ------------- | ---------------------- | --------------------------- | -------------------------------------------------- |
-| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config                      |
-| `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)        |
-| `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                      |
-| `feedreel`    | `pnpm dev:feedreel`    | 3005                        | Login screen yes; the reel needs real X + fal keys |
-| `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots           |
-| `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                            |
-| `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                      |
-| `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task            |
-| `party`       | `pnpm dev:party`       | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build`       |
-| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY             |
+| App           | Dev command            | Port                        | Agent-verifiable at runtime?                   |
+| ------------- | ---------------------- | --------------------------- | ---------------------------------------------- |
+| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config                  |
+| `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)    |
+| `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                  |
+| `feedreel`    | `pnpm dev:feedreel`    | 3005                        | OFF AIR screen yes; live TV needs X + fal keys |
+| `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots       |
+| `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                        |
+| `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                  |
+| `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task        |
+| `party`       | `pnpm dev:party`       | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build`   |
+| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY         |
 
 The Vite apps all default to 5173 and auto-increment when it's taken; read the dev log for the port actually chosen rather than assuming.
 

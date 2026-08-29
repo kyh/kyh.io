@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import type { SessionPayload, UserSummary } from "@/lib/api-contract";
-import { missingEnvKeys } from "@/lib/env";
+import { env, missingEnvKeys } from "@/lib/env";
 import { readSession } from "@/lib/session";
 
 export const GET = async (): Promise<NextResponse> => {
@@ -11,6 +11,15 @@ export const GET = async (): Promise<NextResponse> => {
     user = { name: session.name, username: session.username };
     if (session.profileImageUrl !== undefined) user.profileImageUrl = session.profileImageUrl;
   }
-  const payload: SessionPayload = { missingKeys: missingEnvKeys(), user };
+  const ownerHandle = env.OWNER_X_USERNAME ?? null;
+  const payload: SessionPayload = {
+    missingKeys: missingEnvKeys(),
+    user,
+    ownerHandle,
+    viewerIsOwner:
+      session !== undefined &&
+      ownerHandle !== null &&
+      session.username.toLowerCase() === ownerHandle.toLowerCase(),
+  };
   return NextResponse.json(payload);
 };

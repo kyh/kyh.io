@@ -150,6 +150,13 @@ export const fetchViewer = async (accessToken: string): Promise<XUser> => {
   return toXUser(viewerResponseSchema.parse(await response.json()).data);
 };
 
+const metricsSchema = z.object({
+  like_count: z.number().optional(),
+  retweet_count: z.number().optional(),
+  reply_count: z.number().optional(),
+  quote_count: z.number().optional(),
+});
+
 const timelinePostSchema = z.object({
   id: z.string(),
   text: z.string(),
@@ -157,6 +164,7 @@ const timelinePostSchema = z.object({
   author_id: z.string().optional(),
   note_tweet: z.object({ text: z.string() }).optional(),
   referenced_tweets: z.array(z.object({ type: z.string(), id: z.string() })).optional(),
+  public_metrics: metricsSchema.optional(),
 });
 
 const timelineResponseSchema = z.object({
@@ -167,12 +175,15 @@ const timelineResponseSchema = z.object({
       tweets: z.array(timelinePostSchema).optional(),
     })
     .optional(),
+  meta: z.object({ next_token: z.string().optional() }).optional(),
 });
 
 export type FeedPost = {
   id: string;
   text: string;
   createdAt?: string;
+  /** Engagement score: retweets and quotes weigh most, then replies, likes. */
+  score: number;
   author: {
     name: string;
     username: string;
@@ -182,23 +193,44 @@ export type FeedPost = {
 
 export type FeedSource = "home" | "own";
 
-export type Feed = {
+export type FeedPage = {
   source: FeedSource;
   posts: FeedPost[];
+  nextToken?: string;
+};
+
+const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): number => {
+  if (metrics === undefined) return 0;
+  return (
+    (metrics.like_count ?? 0) +
+    2 * (metrics.reply_count ?? 0) +
+    3 * (metrics.retweet_count ?? 0) +
+    3 * (metrics.quote_count ?? 0)
+  );
 };
 
 const TIMELINE_PARAMS = {
   max_results: "50",
-  "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets",
+  "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
   expansions: "author_id,referenced_tweets.id",
   "user.fields": "name,username,profile_image_url",
 } as const;
 
-const fetchTimeline = async (accessToken: string, path: string): Promise<FeedPost[]> => {
+type TimelinePage = {
+  posts: FeedPost[];
+  nextToken?: string;
+};
+
+const fetchTimeline = async (
+  accessToken: string,
+  path: string,
+  paginationToken?: string,
+): Promise<TimelinePage> => {
   const url = new URL(`${X_API_BASE}${path}`);
   for (const [key, value] of Object.entries(TIMELINE_PARAMS)) {
     url.searchParams.set(key, value);
   }
+  if (paginationToken !== undefined) url.searchParams.set("pagination_token", paginationToken);
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!response.ok) throw await errorFromResponse(response);
   const timeline = timelineResponseSchema.parse(await response.json());
@@ -208,7 +240,7 @@ const fetchTimeline = async (accessToken: string, path: string): Promise<FeedPos
     (timeline.includes?.tweets ?? []).map((tweet) => [tweet.id, tweet]),
   );
 
-  return (timeline.data ?? []).map((post) => {
+  const posts = (timeline.data ?? []).map((post) => {
     // Retweet text arrives truncated ("RT @…"); use the referenced post's
     // full text so the video prompt sees the whole thing. Long posts carry
     // their full text in note_tweet.
@@ -220,6 +252,9 @@ const fetchTimeline = async (accessToken: string, path: string): Promise<FeedPos
     const result: FeedPost = {
       id: post.id,
       text,
+      // A retweet's own metrics are near zero; the referenced original's
+      // engagement is what makes it "popular".
+      score: scoreFromMetrics(source.public_metrics),
       author: {
         name: author?.name ?? "Unknown",
         username: author?.username ?? "unknown",
@@ -231,23 +266,39 @@ const fetchTimeline = async (accessToken: string, path: string): Promise<FeedPos
     }
     return result;
   });
+
+  const page: TimelinePage = { posts };
+  if (timeline.meta?.next_token !== undefined) page.nextToken = timeline.meta.next_token;
+  return page;
 };
 
+const timelinePath = (source: FeedSource, userId: string): string =>
+  source === "home"
+    ? `/users/${userId}/timelines/reverse_chronological`
+    : `/users/${userId}/tweets`;
+
 /**
- * The reverse-chronological home timeline, falling back to the viewer's own
- * posts when the API tier can't read it (402/403 on the free tier).
+ * One page of the reverse-chronological home timeline, falling back to the
+ * viewer's own posts when the API tier can't read it (402/403 on the free
+ * tier). Pass a previous page's source + nextToken to keep paginating.
  */
-export const fetchFeed = async (accessToken: string, userId: string): Promise<Feed> => {
+export const fetchFeedPage = async (
+  accessToken: string,
+  userId: string,
+  source?: FeedSource,
+  paginationToken?: string,
+): Promise<FeedPage> => {
+  if (source !== undefined) {
+    const page = await fetchTimeline(accessToken, timelinePath(source, userId), paginationToken);
+    return { source, ...page };
+  }
   try {
-    const posts = await fetchTimeline(
-      accessToken,
-      `/users/${userId}/timelines/reverse_chronological`,
-    );
-    return { source: "home", posts };
+    const page = await fetchTimeline(accessToken, timelinePath("home", userId), paginationToken);
+    return { source: "home", ...page };
   } catch (error) {
     const forbidden = error instanceof XApiError && (error.status === 402 || error.status === 403);
     if (!forbidden) throw error;
-    const posts = await fetchTimeline(accessToken, `/users/${userId}/tweets`);
-    return { source: "own", posts };
+    const page = await fetchTimeline(accessToken, timelinePath("own", userId), paginationToken);
+    return { source: "own", ...page };
   }
 };

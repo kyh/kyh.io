@@ -55,21 +55,26 @@ Personal CLI tool.
 
 ### feedreel (`apps/feedreel`)
 
-Your X feed as an endless AI-generated video reel. Log in with X, pull the home
-timeline, and each post becomes a short vertical clip via fal.ai
-(`minimax/h3-max/text-to-video` by default — ~3s to generate a 5s clip, so the
-reel stays ahead of playback). Clips generate one at a time, in feed order.
+An X feed as a TV channel of AI-generated video. CH 01 is the owner's feed
+(`OWNER_X_USERNAME`), public to any visitor; signing in with X adds CH 02, your
+own feed. Clips come from fal.ai (`minimax/h3-max/text-to-video` by default,
+~3s per 5s clip). Programming rules: lazy (new clips generate only while the
+feed's owner is watching — everyone else gets reruns), popular-first (highest
+engagement un-aired post next, paginating deeper when nothing qualifies), and
+never-twice (clips archived by post id, daily caps).
 
 **Stack**: Next.js, Tailwind v4, zod. No database — X tokens live in an
-AES-256-GCM sealed httpOnly cookie. Port 3005.
+AES-256-GCM sealed httpOnly cookie; the clip archive is Upstash-compatible
+Redis REST (in-memory fallback for dev). Port 3005.
 
 **Key files**:
 
-- `src/lib/x-api.ts` - OAuth 2.0 PKCE + timeline client (own-posts fallback for free API tiers)
-- `src/lib/fal.ts` - fal queue REST client (submit/poll/result)
+- `src/lib/channel.ts` - programming: popularity selection, lazy generation, rerun archive
+- `src/lib/x-api.ts` - OAuth 2.0 PKCE + timeline client (metrics, pagination, own-posts fallback)
+- `src/lib/fal.ts` - fal queue REST client · `src/lib/store.ts` - KV archive
 - `src/lib/session.ts` - sealed-cookie sessions
-- `src/components/reel.tsx` - vertical snap reel + lookahead generation pipeline
-- `.env.example` - every key documented; app boots without them and shows a setup checklist
+- `src/components/tv.tsx` - the TV: one clip playing, one buffered, static + OSD
+- `.env.example` - every key documented; app boots without them and shows OFF AIR
 
 ### kyh (`apps/kyh`)
 

@@ -16,38 +16,42 @@ export const sessionPayloadSchema = z.object({
   /** Env keys still unset, for the setup checklist. Empty when configured. */
   missingKeys: z.array(z.string()),
   user: userSummarySchema.nullable(),
+  /** Handle of the default public channel's owner (OWNER_X_USERNAME). */
+  ownerHandle: z.string().nullable(),
+  /** True when the logged-in viewer is that owner. */
+  viewerIsOwner: z.boolean(),
 });
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
 
-export const feedPostSchema = z.object({
-  id: z.string(),
+export const clipSchema = z.object({
+  postId: z.string(),
+  videoUrl: z.string(),
   text: z.string(),
-  createdAt: z.string().optional(),
-  author: userSummarySchema,
+  authorName: z.string(),
+  authorUsername: z.string(),
+  authorImage: z.string().optional(),
+  postCreatedAt: z.string().optional(),
+  score: z.number(),
+  generatedAt: z.number(),
 });
 
-export type FeedPostPayload = z.infer<typeof feedPostSchema>;
+export type Clip = z.infer<typeof clipSchema>;
 
-export const feedPayloadSchema = z.object({
-  source: z.enum(["home", "own"]),
-  posts: z.array(feedPostSchema),
+export const channelRequestSchema = z.object({
+  /** Recently shown post ids the viewer doesn't want repeated back-to-back. */
+  exclude: z.array(z.string()).max(32),
+  /** True = the logged-in viewer's own feed; false = the owner channel. */
+  personal: z.boolean(),
 });
 
-export type FeedPayload = z.infer<typeof feedPayloadSchema>;
+export const channelPayloadSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("fresh"), clip: clipSchema }),
+  z.object({ kind: z.literal("rerun"), clip: clipSchema }),
+  z.object({ kind: z.literal("off-air"), reason: z.string() }),
+]);
 
-export const generateRequestSchema = z.object({
-  prompt: z.string().trim().min(1).max(2000),
-});
-
-export const generatePayloadSchema = z.object({
-  status: z.enum(["queued", "generating", "done"]),
-  requestId: z.string(),
-  queuePosition: z.number().optional(),
-  videoUrl: z.string().optional(),
-});
-
-export type GeneratePayload = z.infer<typeof generatePayloadSchema>;
+export type ChannelPayload = z.infer<typeof channelPayloadSchema>;
 
 export const errorPayloadSchema = z.object({
   error: z.string(),

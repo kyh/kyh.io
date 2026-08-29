@@ -31,3 +31,34 @@
     scrollbar-width: none;
   }
 }
+
+/* Analog dressing for the TV. The static is an SVG turbulence tile jittered
+   with a stepped animation; the scanlines are a thin repeating gradient. */
+.tv-static {
+  background-color: #0a0a0a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  animation: tv-static-shift 0.16s steps(2) infinite;
+}
+
+@keyframes tv-static-shift {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: -70px 45px;
+  }
+  100% {
+    background-position: 55px -35px;
+  }
+}
+
+.tv-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(0 0 0 / 0.22) 0px,
+    rgb(0 0 0 / 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}

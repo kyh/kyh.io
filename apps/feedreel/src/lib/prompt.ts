@@ -1,6 +1,6 @@
 // Turns a post into a text-to-video prompt. The default model runs its own
 // prompt expansion, so this stays light: strip feed noise (links, leading
-// mention chains) and frame the rest as a scene.
+// mention chains) and frame the rest as a broadcast scene.
 
 const URL_PATTERN = /https?:\/\/\S+/g;
 const LEADING_MENTIONS = /^(\s*@\w+[,\s]*)+/;
@@ -13,8 +13,8 @@ export const buildVideoPrompt = (text: string, authorName: string): string => {
     .trim();
 
   if (cleaned === "") {
-    return `An abstract, dreamlike vertical video inspired by a post from ${authorName}: drifting light, soft gradients, a feeling of scrolling through a feed late at night.`;
+    return `An abstract, dreamlike television broadcast inspired by a post from ${authorName}: drifting light, soft gradients, late-night channel-surfing energy.`;
   }
 
-  return `A short cinematic vertical video that visualizes this social media post, capturing its mood and subject literally where possible: "${cleaned}"`;
+  return `A short cinematic widescreen video that visualizes this social media post like a TV segment, capturing its mood and subject literally where possible: "${cleaned}"`;
 };
