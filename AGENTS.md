@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**kyh.io** is a personal pnpm + Turborepo monorepo of nine _independent_ apps — three Next.js, four Vite SPAs, one Bun/OpenTUI CLI, one Cloudflare Worker. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**kyh.io** is a personal pnpm + Turborepo monorepo of ten _independent_ apps — four Next.js, four Vite SPAs, one Bun/OpenTUI CLI, one Cloudflare Worker. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -9,13 +9,14 @@ pnpm install
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — seven of the nine apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:cli` additionally needs [Bun](https://bun.sh).
+That's the whole setup. There is no bootstrap script, no Docker, no local database — eight of the ten apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:cli` additionally needs [Bun](https://bun.sh).
 
-Two apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
+Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
 
 ```sh
 cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, project images fall back to a local placeholder
 cp apps/policingice/.env.example apps/policingice/.env  # required: any DB-backed route throws without TURSO_DATABASE_URL
+cp apps/feedreel/.env.example apps/feedreel/.env        # optional to boot: without it the app renders a setup checklist; X + fal keys unlock the real flow
 ```
 
 `pnpm dev` starts _everything_ at once via `turbo watch`. Prefer a single `pnpm dev:<app>` — `dev:kyh` and `dev:policingice` both bind :3000 and cannot run together.
@@ -63,17 +64,18 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 ## Platform matrix
 
-| App           | Dev command            | Port                        | Agent-verifiable at runtime?                 |
-| ------------- | ---------------------- | --------------------------- | -------------------------------------------- |
-| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config                |
-| `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)  |
-| `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                |
-| `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots     |
-| `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                      |
-| `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                |
-| `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task      |
-| `party`       | `pnpm dev:party`       | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build` |
-| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY       |
+| App           | Dev command            | Port                        | Agent-verifiable at runtime?                       |
+| ------------- | ---------------------- | --------------------------- | -------------------------------------------------- |
+| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config                      |
+| `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)        |
+| `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                      |
+| `feedreel`    | `pnpm dev:feedreel`    | 3005                        | Login screen yes; the reel needs real X + fal keys |
+| `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots           |
+| `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                            |
+| `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                      |
+| `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task            |
+| `party`       | `pnpm dev:party`       | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build`       |
+| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY             |
 
 The Vite apps all default to 5173 and auto-increment when it's taken; read the dev log for the port actually chosen rather than assuming.
 
@@ -88,7 +90,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI
+- `apps/{kyh,policingice,stonksville,feedreel}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI
 - `packages/{typescript,eslint,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/eslint-config`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)

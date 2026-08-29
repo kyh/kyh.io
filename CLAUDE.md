@@ -53,6 +53,24 @@ pnpm test          # run tests (apps/vis-ml, apps/policingice)
 
 Personal CLI tool.
 
+### feedreel (`apps/feedreel`)
+
+Your X feed as an endless AI-generated video reel. Log in with X, pull the home
+timeline, and each post becomes a short vertical clip via fal.ai
+(`minimax/h3-max/text-to-video` by default — ~3s to generate a 5s clip, so the
+reel stays ahead of playback). Clips generate one at a time, in feed order.
+
+**Stack**: Next.js, Tailwind v4, zod. No database — X tokens live in an
+AES-256-GCM sealed httpOnly cookie. Port 3005.
+
+**Key files**:
+
+- `src/lib/x-api.ts` - OAuth 2.0 PKCE + timeline client (own-posts fallback for free API tiers)
+- `src/lib/fal.ts` - fal queue REST client (submit/poll/result)
+- `src/lib/session.ts` - sealed-cookie sessions
+- `src/components/reel.tsx` - vertical snap reel + lookahead generation pipeline
+- `.env.example` - every key documented; app boots without them and shows a setup checklist
+
 ### kyh (`apps/kyh`)
 
 Main website.

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "APP_URL",
+        "FAL_KEY",
+        "FAL_VIDEO_MODEL",
+        "SESSION_SECRET",
+        "X_CLIENT_ID",
+        "X_CLIENT_SECRET"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+    },
+    "dev": {
+      "persistent": true
+    }
+  }
+}
