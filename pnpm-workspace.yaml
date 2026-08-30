@@ -5,31 +5,24 @@ packages:
 catalog:
   "@base-ui/react": ^1.7.0
   "@tailwindcss/postcss": ^4.3.3
-  "@types/node": ^26.2.0
+  "@types/node": ^26.4.0
   "@types/react": ^19.2.18
-  "@types/react-dom": ^19.2.4
+  "@types/react-dom": ^19.2.5
   "@vercel/analytics": ^2.0.1
-  "@vitejs/plugin-react": ^6.1.0
+  "@vitejs/plugin-react": ^6.1.1
   cnfast: ^0.1.0
-  lucide-react: ^1.33.0
-  next: ^16.3.1
+  lucide-react: ^1.35.0
+  next: ^16.3.3
   postcss: ^8.5.26
   react: ^19.2.8
   react-dom: ^19.2.8
-  react-router-dom: ^7.18.2
+  react-router-dom: ^7.18.3
   tailwindcss: ^4.3.3
   tsx: ^4.23.12
   typescript: ^7.0.2
   vite: ^8.2.2
 
 linkWorkspacePackages: true
-
-onlyBuiltDependencies:
-  - "@vercel/speed-insights"
-  - cbor-extract
-  - esbuild
-  - sharp
-  - workerd
 
 # Install optional native deps for every platform we cross-compile the CLI to
 # (apps/cli bun-compiles binaries for all of these; opentui's per-platform
@@ -42,3 +35,12 @@ supportedArchitectures:
     - darwin
     - linux
     - win32
+
+allowBuilds:
+  "@prisma/engines": true
+  "@vercel/speed-insights": true
+  cbor-extract: true
+  esbuild: true
+  prisma: true
+  sharp: true
+  workerd: true

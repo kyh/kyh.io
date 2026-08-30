@@ -22,12 +22,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@oxlint/plugins": "1.79.0"
+    "@oxlint/plugins": "1.80.0"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "oxlint": "^1.79.0",
+    "oxlint": "^1.80.0",
     "typescript": "catalog:"
   }
 }

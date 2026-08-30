@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
-    "better-auth": "^1.7.1",
+    "better-auth": "^1.7.2",
     "cnfast": "catalog:",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
@@ -22,7 +22,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tailwindcss": "catalog:",
-    "zod": "^4.4.3"
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
