@@ -7,7 +7,7 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db/drizzle-client";
 import { env } from "@/lib/env";
 
-// better-auth on feedreel's Turso database, same stack as policingice. The
+// better-auth on autoplay's Turso database, same stack as policingice. The
 // only sign-in method is X (Twitter); the provider's tokens land in the
 // `account` table, where src/lib/x-account.ts reads and refreshes them for
 // timeline calls. Auth requires the database — without TURSO_DATABASE_URL
@@ -44,7 +44,7 @@ const createAuth = (
     plugins: [nextCookies()],
     // Both this app and policingice run on localhost; a distinct cookie
     // prefix keeps their sessions from clobbering each other in dev.
-    advanced: { cookiePrefix: "feedreel" },
+    advanced: { cookiePrefix: "autoplay" },
     user: {
       additionalFields: {
         username: { type: "string", required: false, input: false },
@@ -54,13 +54,17 @@ const createAuth = (
       twitter: {
         clientId: twitter.clientId,
         clientSecret: twitter.clientSecret,
+        // better-auth appends `scope` to its own defaults, which include
+        // users.email — a scope X only grants to apps approved for email
+        // access, and one this app has no use for (see mapProfileToUser).
+        disableDefaultScope: true,
         scope: ["users.read", "tweet.read", "offline.access"],
         // X doesn't return an email; synthesize a stable unique one and keep
         // the handle for the owner check + OSD.
         mapProfileToUser: (profile) => ({
           name: profile.data.name,
           username: profile.data.username,
-          email: `${profile.data.username.toLowerCase()}@x.feedreel.invalid`,
+          email: `${profile.data.username.toLowerCase()}@x.autoplay.invalid`,
           image: profile.data.profile_image_url,
         }),
       },

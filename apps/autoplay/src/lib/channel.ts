@@ -59,7 +59,7 @@ export type NextClipResult =
   | { kind: "off-air"; reason: string };
 
 // ---------------------------------------------------------------------------
-// Storage. Drizzle + Turso when TURSO_DATABASE_URL is set (feedreel's own
+// Storage. Drizzle + Turso when TURSO_DATABASE_URL is set (autoplay's own
 // database — see src/db/drizzle-schema.ts); module-level maps otherwise, so a
 // local dev server still builds an archive for its lifetime.
 

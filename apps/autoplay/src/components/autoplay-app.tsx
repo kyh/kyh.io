@@ -16,7 +16,7 @@ const takeUrlError = (): string | undefined => {
   return error;
 };
 
-export const FeedreelApp = () => {
+export const AutoplayApp = () => {
   const [session, setSession] = useState<SessionPayload | undefined>(undefined);
   const [urlError, setUrlError] = useState<string | undefined>(undefined);
 

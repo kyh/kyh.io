@@ -220,7 +220,7 @@ const TvScreen = (props: ScreenProps) => {
             <p className="text-sm text-white/80">{offAir}</p>
             {props.missingKeys.length > 0 && (
               <div className="space-y-1 text-left text-xs text-amber-300">
-                <p className="text-white/60">missing from apps/feedreel/.env:</p>
+                <p className="text-white/60">missing from apps/autoplay/.env:</p>
                 {props.missingKeys.map((key) => (
                   <p key={key}>· {key}</p>
                 ))}
@@ -253,7 +253,7 @@ const TvScreen = (props: ScreenProps) => {
       >
         <div className="absolute top-0 right-0 left-0 flex items-start justify-between p-4 text-xs tracking-widest [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
           <div className="space-y-1">
-            <p className="font-bold">FEEDREEL·TV</p>
+            <p className="font-bold">AUTOPLAY·TV</p>
             <p className="text-white/70">{props.channelLabel}</p>
             {props.urlError !== undefined && <p className="text-red-400">{props.urlError}</p>}
           </div>

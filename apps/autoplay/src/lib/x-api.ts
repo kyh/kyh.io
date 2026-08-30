@@ -216,8 +216,12 @@ const timelinePath = (source: FeedSource, userId: string): string =>
 
 /**
  * One page of the reverse-chronological home timeline, falling back to the
- * viewer's own posts when the API tier can't read it (402/403 on the free
- * tier). Pass a previous page's source + nextToken to keep paginating.
+ * viewer's own posts when the account may not read it (403). Pass a previous
+ * page's source + nextToken to keep paginating.
+ *
+ * 402 is deliberately not a fallback: since X moved to pay-per-use it means
+ * the credit balance is spent, and the own-posts call would fail the same way
+ * after being charged for the attempt.
  */
 export const fetchFeedPage = async (
   accessToken: string,
@@ -233,8 +237,10 @@ export const fetchFeedPage = async (
     const page = await fetchTimeline(accessToken, timelinePath("home", userId), paginationToken);
     return { source: "home", ...page };
   } catch (error) {
-    const forbidden = error instanceof XApiError && (error.status === 402 || error.status === 403);
-    if (!forbidden) throw error;
+    if (error instanceof XApiError && error.status === 402) {
+      throw new XApiError(402, "X API credits exhausted — top up at console.x.com");
+    }
+    if (!(error instanceof XApiError && error.status === 403)) throw error;
     const page = await fetchTimeline(accessToken, timelinePath("own", userId), paginationToken);
     return { source: "own", ...page };
   }

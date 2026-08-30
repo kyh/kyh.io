@@ -1,4 +1,4 @@
-# feedreel
+# autoplay
 
 An X feed as a TV channel of AI-generated video.
 
@@ -19,7 +19,7 @@ away.
    (retweets/quotes ×3, replies ×2, likes ×1, minimum score to qualify).
    When nothing in the current batch clears the bar, older pages of the feed
    are fetched before settling.
-3. **Never twice** — every clip is archived by post id (KV) and rerun
+3. **Never twice** — every clip is archived by post id and rerun
    forever; a post is paid for at most once. Daily caps and generation
    spacing back this up.
 
@@ -27,15 +27,18 @@ away.
 
 ```sh
 cp .env.example .env   # then fill in the keys — each is documented inline
-pnpm dev:feedreel      # → http://localhost:3005
+pnpm dev:autoplay      # → http://localhost:3005
 ```
 
-1. **X OAuth app** — [developer.x.com](https://developer.x.com/en/portal/dashboard),
-   callback `http://localhost:3005/api/auth/callback/twitter`.
+1. **X OAuth app** — [console.x.com](https://console.x.com), callback
+   `http://127.0.0.1:3005/api/auth/callback/twitter` (X rejects `localhost`).
+   Use the **OAuth 2.0** Client ID and Secret from User authentication
+   settings, not the OAuth 1.0a keys shown when the app is created. The API is
+   pay-per-use with no free tier — buy credits and set a spending cap first.
 2. **`OWNER_X_USERNAME`** — the handle whose feed is CH 01.
 3. **fal key** — [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys); billed per video.
-4. **Turso** — feedreel's own database (not policingice's): `turso db create feedreel`,
-   fill in the URL + token, then `pnpm -F @repo/feedreel db:push` once to create the
+4. **Turso** — autoplay's own database (not policingice's): `turso db create autoplay`,
+   fill in the URL + token, then `pnpm -F @repo/autoplay db:push` once to create the
    tables. Skippable in local dev: the archive then lives in server memory only.
 5. **Session secret** — `openssl rand -base64 32`.
 

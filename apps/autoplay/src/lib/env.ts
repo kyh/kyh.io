@@ -18,7 +18,7 @@ const envSchema = z.object({
   APP_URL: optionalKey,
   /** X handle whose feed powers the default public channel. */
   OWNER_X_USERNAME: optionalKey,
-  /** The clip archive's Turso database (feedreel's own, not policingice's). */
+  /** The clip archive's Turso database (autoplay's own, not policingice's). */
   TURSO_DATABASE_URL: optionalKey,
   TURSO_AUTH_TOKEN: optionalKey,
 });
