@@ -1,4 +1,7 @@
 {
+  "terminal": {
+    "dock": "left"
+  },
   "cli_default_open_behavior": "new_window",
   "outline_panel": {
     "dock": "right"
@@ -23,6 +26,7 @@
     "dock": "right"
   },
   "agent": {
+    "sidebar_side": "right",
     "tool_permissions": {
       "default": "allow"
     },

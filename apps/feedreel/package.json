@@ -1,0 +1,36 @@
+{
+  "name": "@repo/feedreel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm with-env next build",
+    "db:push": "pnpm with-env drizzle-kit push",
+    "db:studio": "pnpm with-env drizzle-kit studio",
+    "dev": "pnpm with-env next dev --turbopack -p 3005",
+    "lint": "oxlint --report-unused-disable-directives",
+    "start": "pnpm with-env next start",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e .env --"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "better-auth": "^1.7.1",
+    "cnfast": "catalog:",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "postcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}
