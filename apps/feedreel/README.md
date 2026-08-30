@@ -31,7 +31,7 @@ pnpm dev:feedreel      # → http://localhost:3005
 ```
 
 1. **X OAuth app** — [developer.x.com](https://developer.x.com/en/portal/dashboard),
-   callback `http://localhost:3005/api/auth/callback`.
+   callback `http://localhost:3005/api/auth/callback/twitter`.
 2. **`OWNER_X_USERNAME`** — the handle whose feed is CH 01.
 3. **fal key** — [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys); billed per video.
 4. **Turso** — feedreel's own database (not policingice's): `turso db create feedreel`,
@@ -43,9 +43,11 @@ The app boots with none of these and shows an OFF AIR screen listing what's miss
 
 ## How it works
 
-- **Auth**: OAuth 2.0 Authorization Code + PKCE against X. No user database —
-  tokens are sealed into an httpOnly AES-256-GCM cookie (`src/lib/session.ts`)
-  and refreshed transparently.
+- **Auth**: better-auth (`src/lib/auth.ts`) with the X social provider, same
+  stack as policingice. Users, sessions, and the X OAuth tokens live in the
+  Turso database; `src/lib/x-account.ts` reads the grant back for timeline
+  calls and refreshes it when expired. The X handle is mapped onto the user
+  at sign-in for the owner check.
 - **Channel** (`POST /api/channel`): decides the next program. Fresh clip if
   the viewer may generate (their own feed) and a post qualifies; otherwise a
   rerun from the archive; otherwise OFF AIR. Slow-model generations are

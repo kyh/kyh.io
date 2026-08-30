@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
 import { channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
 import type { ChannelPayload } from "@/lib/api-contract";
+import { authClient } from "@/lib/auth-client";
 
 // The TV. One full-bleed screen, an auto-hiding on-screen display, and static
 // between programs. The client keeps exactly one clip buffered ahead of the
@@ -43,11 +44,11 @@ const requestClip = async (personal: boolean, exclude: string[]): Promise<Channe
 };
 
 const login = () => {
-  window.location.assign("/api/auth/login");
+  void authClient.signIn.social({ provider: "twitter", callbackURL: "/" });
 };
 
 const logout = async () => {
-  await fetch("/api/auth/logout", { method: "POST" });
+  await authClient.signOut();
   window.location.reload();
 };
 
@@ -340,8 +341,10 @@ export const Tv = (props: TvProps) => {
   const ownerLabel =
     session.ownerHandle !== null ? `CH 01 · @${session.ownerHandle}` : "CH 01 · public access";
   const channelLabel = showPersonal ? `CH 02 · @${session.user?.username}` : ownerLabel;
+  // Sign-in runs through better-auth, which needs the X app, a secret, and
+  // the database to store users in.
   const loginReady = !session.missingKeys.some((key) =>
-    ["X_CLIENT_ID", "X_CLIENT_SECRET", "SESSION_SECRET"].includes(key),
+    ["X_CLIENT_ID", "X_CLIENT_SECRET", "BETTER_AUTH_SECRET", "TURSO_DATABASE_URL"].includes(key),
   );
 
   const screenProps: ScreenProps = {

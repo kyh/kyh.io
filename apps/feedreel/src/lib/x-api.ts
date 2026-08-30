@@ -1,21 +1,11 @@
 import { z } from "zod";
 
-// Thin typed client for the X API v2 endpoints this app uses: the OAuth 2.0
-// Authorization Code + PKCE token dance, the viewer lookup, and the home
-// timeline (with an own-posts fallback for API tiers that can't read it).
+// Thin typed client for the X API v2 endpoints this app uses: the home
+// timeline (with an own-posts fallback for API tiers that can't read it),
+// plus the token refresh for grants better-auth stores in the account table.
 
-export const X_AUTHORIZE_URL = "https://x.com/i/oauth2/authorize";
 const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
-const X_REVOKE_URL = "https://api.x.com/2/oauth2/revoke";
 const X_API_BASE = "https://api.x.com/2";
-
-export const OAUTH_SCOPES = ["tweet.read", "users.read", "offline.access"];
-
-export type OauthClient = {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-};
 
 export class XApiError extends Error {
   status: number;
@@ -61,15 +51,24 @@ export type TokenGrant = {
 
 const EXPIRY_MARGIN_MS = 60_000;
 
-const requestToken = async (client: OauthClient, body: URLSearchParams): Promise<TokenGrant> => {
-  const basic = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
+/** Refresh an X OAuth 2.0 grant (confidential client). */
+export const refreshXToken = async (
+  clientId: string,
+  clientSecret: string,
+  refreshToken: string,
+): Promise<TokenGrant> => {
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
   const response = await fetch(X_TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${basic}`,
     },
-    body,
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+    }),
   });
   if (!response.ok) throw await errorFromResponse(response);
   const grant = tokenResponseSchema.parse(await response.json());
@@ -81,74 +80,12 @@ const requestToken = async (client: OauthClient, body: URLSearchParams): Promise
   return result;
 };
 
-export const exchangeCode = (
-  client: OauthClient,
-  code: string,
-  codeVerifier: string,
-): Promise<TokenGrant> =>
-  requestToken(
-    client,
-    new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: client.redirectUri,
-      code_verifier: codeVerifier,
-      client_id: client.clientId,
-    }),
-  );
-
-export const refreshGrant = (client: OauthClient, refreshToken: string): Promise<TokenGrant> =>
-  requestToken(
-    client,
-    new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      client_id: client.clientId,
-    }),
-  );
-
-/** Best-effort: a failed revoke still ends the local session. */
-export const revokeToken = async (client: OauthClient, token: string): Promise<void> => {
-  const basic = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
-  await fetch(X_REVOKE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basic}`,
-    },
-    body: new URLSearchParams({ token, client_id: client.clientId }),
-  }).catch(() => undefined);
-};
-
 const xUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string(),
   profile_image_url: z.string().optional(),
 });
-
-const viewerResponseSchema = z.object({ data: xUserSchema });
-
-export type XUser = {
-  id: string;
-  name: string;
-  username: string;
-  profileImageUrl?: string;
-};
-
-const toXUser = (user: z.infer<typeof xUserSchema>): XUser => {
-  const result: XUser = { id: user.id, name: user.name, username: user.username };
-  if (user.profile_image_url !== undefined) result.profileImageUrl = user.profile_image_url;
-  return result;
-};
-
-export const fetchViewer = async (accessToken: string): Promise<XUser> => {
-  const url = new URL(`${X_API_BASE}/users/me`);
-  url.searchParams.set("user.fields", "profile_image_url");
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw await errorFromResponse(response);
-  return toXUser(viewerResponseSchema.parse(await response.json()).data);
-};
 
 const metricsSchema = z.object({
   like_count: z.number().optional(),

@@ -12,7 +12,7 @@ const optionalKey = z
 const envSchema = z.object({
   X_CLIENT_ID: optionalKey,
   X_CLIENT_SECRET: optionalKey,
-  SESSION_SECRET: optionalKey,
+  BETTER_AUTH_SECRET: optionalKey,
   FAL_KEY: optionalKey,
   FAL_VIDEO_MODEL: optionalKey,
   APP_URL: optionalKey,
@@ -34,7 +34,7 @@ export const missingEnvKeys = (): string[] => {
   const missing: string[] = [];
   if (env.X_CLIENT_ID === undefined) missing.push("X_CLIENT_ID");
   if (env.X_CLIENT_SECRET === undefined) missing.push("X_CLIENT_SECRET");
-  if (env.SESSION_SECRET === undefined) missing.push("SESSION_SECRET");
+  if (env.BETTER_AUTH_SECRET === undefined) missing.push("BETTER_AUTH_SECRET");
   if (env.FAL_KEY === undefined) missing.push("FAL_KEY");
   if (env.OWNER_X_USERNAME === undefined) missing.push("OWNER_X_USERNAME");
   if (env.TURSO_DATABASE_URL === undefined) missing.push("TURSO_DATABASE_URL");

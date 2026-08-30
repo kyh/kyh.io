@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 
 import type { SessionPayload, UserSummary } from "@/lib/api-contract";
+import { getSession } from "@/lib/auth";
 import { env, missingEnvKeys } from "@/lib/env";
-import { readSession } from "@/lib/session";
 
 export const GET = async (): Promise<NextResponse> => {
-  const session = await readSession();
+  const session = await getSession();
   let user: UserSummary | null = null;
-  if (session !== undefined) {
-    user = { name: session.name, username: session.username };
-    if (session.profileImageUrl !== undefined) user.profileImageUrl = session.profileImageUrl;
+  if (session !== null) {
+    user = {
+      name: session.user.name,
+      username: session.user.username ?? session.user.name,
+    };
+    if (session.user.image !== null && session.user.image !== undefined) {
+      user.profileImageUrl = session.user.image;
+    }
   }
   const ownerHandle = env.OWNER_X_USERNAME ?? null;
   const payload: SessionPayload = {
@@ -17,9 +22,9 @@ export const GET = async (): Promise<NextResponse> => {
     user,
     ownerHandle,
     viewerIsOwner:
-      session !== undefined &&
+      user !== null &&
       ownerHandle !== null &&
-      session.username.toLowerCase() === ownerHandle.toLowerCase(),
+      user.username.toLowerCase() === ownerHandle.toLowerCase(),
   };
   return NextResponse.json(payload);
 };

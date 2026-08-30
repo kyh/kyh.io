@@ -6,10 +6,10 @@
       "dependsOn": ["^build"],
       "env": [
         "APP_URL",
+        "BETTER_AUTH_SECRET",
         "FAL_KEY",
         "FAL_VIDEO_MODEL",
         "OWNER_X_USERNAME",
-        "SESSION_SECRET",
         "TURSO_AUTH_TOKEN",
         "TURSO_DATABASE_URL",
         "X_CLIENT_ID",
