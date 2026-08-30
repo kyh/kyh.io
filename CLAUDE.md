@@ -53,7 +53,7 @@ pnpm test          # run tests (apps/vis-ml, apps/policingice)
 
 Personal CLI tool.
 
-### feedreel (`apps/feedreel`)
+### autoplay (`apps/autoplay`)
 
 An X feed as a TV channel of AI-generated video. CH 01 is the owner's feed
 (`OWNER_X_USERNAME`), public to any visitor; signing in with X adds CH 02, your
@@ -64,7 +64,7 @@ engagement un-aired post next, paginating deeper when nothing qualifies), and
 never-twice (clips archived by post id, daily caps).
 
 **Stack**: Next.js, Tailwind v4, zod, Drizzle + Turso, better-auth (X social
-provider) — the policingice stack, on feedreel's own database (its `db:push`
+provider) — the policingice stack, on autoplay's own database (its `db:push`
 is safe, unlike policingice's; the archive falls back in-memory when
 unconfigured, but sign-in needs the DB). Port 3005.
 
