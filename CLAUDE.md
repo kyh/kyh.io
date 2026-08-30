@@ -63,15 +63,17 @@ feed's owner is watching — everyone else gets reruns), popular-first (highest
 engagement un-aired post next, paginating deeper when nothing qualifies), and
 never-twice (clips archived by post id, daily caps).
 
-**Stack**: Next.js, Tailwind v4, zod. No database — X tokens live in an
-AES-256-GCM sealed httpOnly cookie; the clip archive is Upstash-compatible
-Redis REST (in-memory fallback for dev). Port 3005.
+**Stack**: Next.js, Tailwind v4, zod, Drizzle + Turso (feedreel's own
+database — its `db:push` is safe, unlike policingice's; in-memory fallback
+when unconfigured). X tokens live in an AES-256-GCM sealed httpOnly cookie,
+not the DB. Port 3005.
 
 **Key files**:
 
 - `src/lib/channel.ts` - programming: popularity selection, lazy generation, rerun archive
+- `src/db/drizzle-schema.ts` - clip archive tables (clip · channel_clip · pending_job)
 - `src/lib/x-api.ts` - OAuth 2.0 PKCE + timeline client (metrics, pagination, own-posts fallback)
-- `src/lib/fal.ts` - fal queue REST client · `src/lib/store.ts` - KV archive
+- `src/lib/fal.ts` - fal queue REST client
 - `src/lib/session.ts` - sealed-cookie sessions
 - `src/components/tv.tsx` - the TV: one clip playing, one buffered, static + OSD
 - `.env.example` - every key documented; app boots without them and shows OFF AIR

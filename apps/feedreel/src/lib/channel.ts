@@ -1,11 +1,12 @@
+import { count, eq, gte, max } from "drizzle-orm";
 import { z } from "zod";
 
-import { clipSchema } from "@/lib/api-contract";
+import { db } from "@/db/drizzle-client";
+import { channelClip, clip as clipTable, pendingJob } from "@/db/drizzle-schema";
 import type { Clip } from "@/lib/api-contract";
-import { env, kvConfig, videoModel } from "@/lib/env";
+import { env, videoModel } from "@/lib/env";
 import { generateVideo, getVideoJob } from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
-import { kvDel, kvGet, kvIncr, kvSet } from "@/lib/store";
 import { fetchFeedPage } from "@/lib/x-api";
 import type { FeedPost } from "@/lib/x-api";
 
@@ -27,7 +28,8 @@ const BOOTSTRAP_ARCHIVE_SIZE = 3;
 /** Safety caps on spend, over and above viewer-driven laziness. */
 const MAX_CLIPS_PER_DAY = 100;
 const MIN_MS_BETWEEN_GENERATIONS = 8_000;
-const FEED_CACHE_TTL_SECONDS = 120;
+const FEED_CACHE_TTL_MS = 120_000;
+const PENDING_TTL_MS = 3_600_000;
 const GENERATE_BUDGET_MS = 50_000;
 
 export type ChannelGenerator = {
@@ -48,10 +50,9 @@ export type NextClipResult =
   | { kind: "off-air"; reason: string };
 
 // ---------------------------------------------------------------------------
-// Storage. KV (Upstash-compatible REST) when configured; module-level maps
-// otherwise, so a local dev server still builds an archive for its lifetime.
-
-const indexSchema = z.array(z.string());
+// Storage. Drizzle + Turso when TURSO_DATABASE_URL is set (feedreel's own
+// database — see src/db/drizzle-schema.ts); module-level maps otherwise, so a
+// local dev server still builds an archive for its lifetime.
 
 const cachedPostSchema = z.object({
   id: z.string(),
@@ -65,102 +66,99 @@ const cachedPostSchema = z.object({
   }),
 });
 
-const feedCacheSchema = z.object({
-  source: z.enum(["home", "own"]),
-  posts: z.array(cachedPostSchema),
-  nextToken: z.string().optional(),
-  pages: z.number(),
-});
+type CachedPost = z.infer<typeof cachedPostSchema>;
 
-type FeedCache = z.infer<typeof feedCacheSchema>;
+type FeedCache = {
+  source: "home" | "own";
+  posts: CachedPost[];
+  nextToken?: string;
+  pages: number;
+};
 
-const pendingJobSchema = z.object({
-  requestId: z.string(),
-  prompt: z.string(),
-  post: cachedPostSchema,
-});
-
-type PendingJob = z.infer<typeof pendingJobSchema>;
+type PendingJob = {
+  requestId: string;
+  prompt: string;
+  post: CachedPost;
+};
 
 const memClips = new Map<string, Clip>();
 const memIndexes = new Map<string, string[]>();
-const memFeedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
 const memPending = new Map<string, PendingJob>();
 const memGenDays = new Map<string, number>();
 let memLastGenAt = 0;
 
-const useKv = (): boolean => kvConfig() !== undefined;
-
-/** JSON-decode a stored value; corrupt or non-JSON data reads as absent. */
-const decodeStored = <Value>(schema: z.ZodType<Value>, raw: string): Value | undefined => {
-  try {
-    const parsed = schema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : undefined;
-  } catch {
-    return undefined;
-  }
-};
+// The feed cache is a short-lived rate-limit shield for X reads, not durable
+// state — it stays in memory (per server instance) in both storage modes.
+const memFeedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
 
 const readIndex = async (channelKey: string): Promise<string[]> => {
-  if (!useKv()) return memIndexes.get(channelKey) ?? [];
-  const raw = await kvGet(`fr:index:${channelKey}`);
-  if (raw === undefined) return [];
-  return decodeStored(indexSchema, raw) ?? [];
-};
-
-const writeIndex = async (channelKey: string, index: string[]): Promise<void> => {
-  if (!useKv()) {
-    memIndexes.set(channelKey, index);
-    return;
-  }
-  await kvSet(`fr:index:${channelKey}`, JSON.stringify(index));
+  if (db === undefined) return memIndexes.get(channelKey) ?? [];
+  const rows = await db
+    .select({ postId: channelClip.postId })
+    .from(channelClip)
+    .where(eq(channelClip.channelKey, channelKey))
+    .orderBy(channelClip.addedAt);
+  return rows.map((row) => row.postId);
 };
 
 const readClip = async (postId: string): Promise<Clip | undefined> => {
-  if (!useKv()) return memClips.get(postId);
-  const raw = await kvGet(`fr:clip:${postId}`);
-  if (raw === undefined) return undefined;
-  return decodeStored(clipSchema, raw);
+  if (db === undefined) return memClips.get(postId);
+  const rows = await db.select().from(clipTable).where(eq(clipTable.postId, postId)).limit(1);
+  const row = rows[0];
+  if (row === undefined) return undefined;
+  const clip: Clip = {
+    postId: row.postId,
+    videoUrl: row.videoUrl,
+    text: row.text,
+    authorName: row.authorName,
+    authorUsername: row.authorUsername,
+    score: row.score,
+    generatedAt: row.generatedAt,
+  };
+  if (row.authorImage !== null) clip.authorImage = row.authorImage;
+  if (row.postCreatedAt !== null) clip.postCreatedAt = row.postCreatedAt;
+  return clip;
 };
 
-const writeClip = async (clip: Clip): Promise<void> => {
-  if (!useKv()) {
-    memClips.set(clip.postId, clip);
-    return;
-  }
-  await kvSet(`fr:clip:${clip.postId}`, JSON.stringify(clip));
+const readFeedCache = (channelKey: string): FeedCache | undefined => {
+  const entry = memFeedCaches.get(channelKey);
+  return entry !== undefined && entry.expiresAt > Date.now() ? entry.cache : undefined;
 };
 
-const readFeedCache = async (channelKey: string): Promise<FeedCache | undefined> => {
-  if (!useKv()) {
-    const entry = memFeedCaches.get(channelKey);
-    return entry !== undefined && entry.expiresAt > Date.now() ? entry.cache : undefined;
-  }
-  const raw = await kvGet(`fr:feed:${channelKey}`);
-  if (raw === undefined) return undefined;
-  return decodeStored(feedCacheSchema, raw);
-};
-
-const writeFeedCache = async (channelKey: string, cache: FeedCache): Promise<void> => {
-  if (!useKv()) {
-    memFeedCaches.set(channelKey, {
-      cache,
-      expiresAt: Date.now() + FEED_CACHE_TTL_SECONDS * 1000,
-    });
-    return;
-  }
-  await kvSet(`fr:feed:${channelKey}`, JSON.stringify(cache), FEED_CACHE_TTL_SECONDS);
+const writeFeedCache = (channelKey: string, cache: FeedCache): void => {
+  memFeedCaches.set(channelKey, { cache, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
 };
 
 const readPending = async (channelKey: string): Promise<PendingJob | undefined> => {
-  if (!useKv()) return memPending.get(channelKey);
-  const raw = await kvGet(`fr:pending:${channelKey}`);
-  if (raw === undefined) return undefined;
-  return decodeStored(pendingJobSchema, raw);
+  if (db === undefined) return memPending.get(channelKey);
+  const rows = await db
+    .select()
+    .from(pendingJob)
+    .where(eq(pendingJob.channelKey, channelKey))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) return undefined;
+  if (row.createdAt < Date.now() - PENDING_TTL_MS) {
+    // A pending marker outliving an hour is a lost job; drop it.
+    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
+    return undefined;
+  }
+  let post: CachedPost | undefined;
+  try {
+    const parsed = cachedPostSchema.safeParse(JSON.parse(row.postJson));
+    if (parsed.success) post = parsed.data;
+  } catch {
+    // Corrupt row — treated as absent below.
+  }
+  if (post === undefined) {
+    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
+    return undefined;
+  }
+  return { requestId: row.requestId, prompt: row.prompt, post };
 };
 
 const writePending = async (channelKey: string, job: PendingJob | undefined): Promise<void> => {
-  if (!useKv()) {
+  if (db === undefined) {
     if (job === undefined) {
       memPending.delete(channelKey);
     } else {
@@ -169,36 +167,46 @@ const writePending = async (channelKey: string, job: PendingJob | undefined): Pr
     return;
   }
   if (job === undefined) {
-    await kvDel(`fr:pending:${channelKey}`);
+    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
     return;
   }
-  // A pending marker outliving an hour is a lost job; let it expire.
-  await kvSet(`fr:pending:${channelKey}`, JSON.stringify(job), 3_600);
+  const row = {
+    channelKey,
+    requestId: job.requestId,
+    prompt: job.prompt,
+    postJson: JSON.stringify(job.post),
+    createdAt: Date.now(),
+  };
+  await db
+    .insert(pendingJob)
+    .values(row)
+    .onConflictDoUpdate({ target: pendingJob.channelKey, set: row });
 };
 
 // ---------------------------------------------------------------------------
-// Spend guards.
+// Spend guards. With the database, the day count and spacing are derived
+// straight from the clips generated today — no counters to drift.
 
 const dayKey = (): string => new Date().toISOString().slice(0, 10);
 
 const generationAllowed = async (): Promise<boolean> => {
-  const sinceLast = Date.now() - memLastGenAt;
-  if (sinceLast < MIN_MS_BETWEEN_GENERATIONS) return false;
-  if (useKv()) {
-    const last = Number((await kvGet("fr:genlast")) ?? "0");
-    if (Date.now() - last < MIN_MS_BETWEEN_GENERATIONS) return false;
-    const count = Number((await kvGet(`fr:gen:${dayKey()}`)) ?? "0");
-    return count < MAX_CLIPS_PER_DAY;
-  }
-  return (memGenDays.get(dayKey()) ?? 0) < MAX_CLIPS_PER_DAY;
+  if (Date.now() - memLastGenAt < MIN_MS_BETWEEN_GENERATIONS) return false;
+  if (db === undefined) return (memGenDays.get(dayKey()) ?? 0) < MAX_CLIPS_PER_DAY;
+  const dayStart = Date.parse(`${dayKey()}T00:00:00Z`);
+  const rows = await db
+    .select({ total: count(), last: max(clipTable.generatedAt) })
+    .from(clipTable)
+    .where(gte(clipTable.generatedAt, dayStart));
+  const row = rows[0];
+  if (row === undefined) return true;
+  if (row.last !== null && Date.now() - row.last < MIN_MS_BETWEEN_GENERATIONS) return false;
+  return row.total < MAX_CLIPS_PER_DAY;
 };
 
-const recordGeneration = async (): Promise<void> => {
+const recordGeneration = (): void => {
   memLastGenAt = Date.now();
-  memGenDays.set(dayKey(), (memGenDays.get(dayKey()) ?? 0) + 1);
-  if (useKv()) {
-    await kvSet("fr:genlast", String(Date.now()));
-    await kvIncr(`fr:gen:${dayKey()}`, 2 * 86_400);
+  if (db === undefined) {
+    memGenDays.set(dayKey(), (memGenDays.get(dayKey()) ?? 0) + 1);
   }
 };
 
@@ -222,12 +230,12 @@ const pickCandidate = async (
   channelKey: string,
   aired: Set<string>,
 ): Promise<FeedPost | undefined> => {
-  let cache = await readFeedCache(channelKey);
+  let cache = readFeedCache(channelKey);
   if (cache === undefined) {
     const page = await fetchFeedPage(generator.accessToken, generator.userId);
     cache = { source: page.source, posts: page.posts, pages: 1 };
     if (page.nextToken !== undefined) cache.nextToken = page.nextToken;
-    await writeFeedCache(channelKey, cache);
+    writeFeedCache(channelKey, cache);
   }
 
   for (;;) {
@@ -249,7 +257,7 @@ const pickCandidate = async (
       };
       if (page.nextToken !== undefined) next.nextToken = page.nextToken;
       cache = next;
-      await writeFeedCache(channelKey, cache);
+      writeFeedCache(channelKey, cache);
       continue;
     }
 
@@ -259,7 +267,7 @@ const pickCandidate = async (
   }
 };
 
-const clipFromPost = (post: z.infer<typeof cachedPostSchema>, videoUrl: string): Clip => {
+const clipFromPost = (post: CachedPost, videoUrl: string): Clip => {
   const clip: Clip = {
     postId: post.id,
     videoUrl,
@@ -275,9 +283,30 @@ const clipFromPost = (post: z.infer<typeof cachedPostSchema>, videoUrl: string):
 };
 
 const archiveClip = async (channelKey: string, index: string[], clip: Clip): Promise<void> => {
-  await writeClip(clip);
-  await writeIndex(channelKey, [...index, clip.postId]);
-  await recordGeneration();
+  if (db === undefined) {
+    memClips.set(clip.postId, clip);
+    memIndexes.set(channelKey, [...index, clip.postId]);
+  } else {
+    await db
+      .insert(clipTable)
+      .values({
+        postId: clip.postId,
+        videoUrl: clip.videoUrl,
+        text: clip.text,
+        authorName: clip.authorName,
+        authorUsername: clip.authorUsername,
+        authorImage: clip.authorImage ?? null,
+        postCreatedAt: clip.postCreatedAt ?? null,
+        score: clip.score,
+        generatedAt: clip.generatedAt,
+      })
+      .onConflictDoNothing();
+    await db
+      .insert(channelClip)
+      .values({ channelKey, postId: clip.postId, addedAt: Date.now() })
+      .onConflictDoNothing();
+  }
+  recordGeneration();
 };
 
 /** Finish a generation left pending by a slower model, if its clip is ready. */

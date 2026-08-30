@@ -34,9 +34,9 @@ pnpm dev:feedreel      # → http://localhost:3005
    callback `http://localhost:3005/api/auth/callback`.
 2. **`OWNER_X_USERNAME`** — the handle whose feed is CH 01.
 3. **fal key** — [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys); billed per video.
-4. **KV** — any Upstash-compatible Redis REST endpoint (Vercel's Upstash
-   integration sets the env automatically). Skippable in local dev: the
-   archive then lives in server memory only.
+4. **Turso** — feedreel's own database (not policingice's): `turso db create feedreel`,
+   fill in the URL + token, then `pnpm -F @repo/feedreel db:push` once to create the
+   tables. Skippable in local dev: the archive then lives in server memory only.
 5. **Session secret** — `openssl rand -base64 32`.
 
 The app boots with none of these and shows an OFF AIR screen listing what's missing.
@@ -50,8 +50,12 @@ The app boots with none of these and shows an OFF AIR screen listing what's miss
   the viewer may generate (their own feed) and a post qualifies; otherwise a
   rerun from the archive; otherwise OFF AIR. Slow-model generations are
   parked as pending jobs and finished on a later request rather than wasted.
-- **Archive** (`src/lib/store.ts`): Upstash-compatible Redis REST, degrading
-  to in-memory maps when unconfigured.
+- **Archive** (`src/db/drizzle-schema.ts`): Drizzle + Turso, same stack as
+  policingice but a dedicated database. Three tables: `clip` (one row per
+  post ever generated), `channel_clip` (which clips air on which channel),
+  `pending_job` (unfinished slow-model generations). The daily cap and
+  generation spacing are derived from `clip.generatedAt` — no counters.
+  Degrades to in-memory maps when `TURSO_DATABASE_URL` is unset.
 - **TV** (`src/components/tv.tsx`): one clip playing, one buffered ahead,
   requested only while the tab is visible — the client's laziness is what
   makes the whole pipeline lazy.

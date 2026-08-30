@@ -29,7 +29,7 @@ cp apps/feedreel/.env.example apps/feedreel/.env        # optional to boot: with
 - Everything in `apps/policingice/scripts/` (`create-admin`, `delete-admin`, `enrich-*`, `embed-incidents`) writes to **production**. Never run them.
 - **There is no seeded login and no test account.** Nothing in this repo creates one. Any authenticated policingice flow (`/admin/*`) needs real credentials a human supplies; an agent cannot self-provision one. Verify admin changes with `pnpm verify` and a human check.
 
-No other app in the repo has a database. No `.env` is tracked — keep it that way; document new keys in the app's `.env.example`.
+**feedreel has its own Turso database** (clip archive), separate from policingice's. Its `pnpm -F @repo/feedreel db:push` targets that dedicated database and is safe to run; with no `TURSO_DATABASE_URL` the app falls back to an in-memory archive. No other app has a database. No `.env` is tracked — keep it that way; document new keys in the app's `.env.example`.
 
 ## Verify a change end-to-end
 
@@ -95,5 +95,5 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
 - `apps/policingice/src/lib/` — `auth.ts` (better-auth), `admin-action.ts` / `incident-action.ts` (Server Actions), `incident-query.ts` (`"use cache"` reads), `env.ts`, `format.ts`
-- `apps/policingice/src/db/drizzle-schema.ts` — the only schema in the repo
+- `apps/{policingice,feedreel}/src/db/drizzle-schema.ts` — the two Drizzle schemas in the repo (separate Turso databases)
 - `CLAUDE.md` — per-app notes and conventions · `.claude/skills/release/` — the npm release workflow
