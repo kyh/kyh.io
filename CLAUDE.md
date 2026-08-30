@@ -53,6 +53,32 @@ pnpm test          # run tests (apps/vis-ml, apps/policingice)
 
 Personal CLI tool.
 
+### feedreel (`apps/feedreel`)
+
+An X feed as a TV channel of AI-generated video. CH 01 is the owner's feed
+(`OWNER_X_USERNAME`), public to any visitor; signing in with X adds CH 02, your
+own feed. Clips come from fal.ai (`minimax/h3-max/text-to-video` by default,
+~3s per 5s clip). Programming rules: lazy (new clips generate only while the
+feed's owner is watching — everyone else gets reruns), popular-first (highest
+engagement un-aired post next, paginating deeper when nothing qualifies), and
+never-twice (clips archived by post id, daily caps).
+
+**Stack**: Next.js, Tailwind v4, zod, Drizzle + Turso, better-auth (X social
+provider) — the policingice stack, on feedreel's own database (its `db:push`
+is safe, unlike policingice's; the archive falls back in-memory when
+unconfigured, but sign-in needs the DB). Port 3005.
+
+**Key files**:
+
+- `src/lib/channel.ts` - programming: popularity selection, lazy generation, rerun archive
+- `src/db/drizzle-schema.ts` - better-auth tables + clip archive (clip · channel_clip · pending_job)
+- `src/lib/auth.ts` - better-auth config (X provider, handle mapped onto user)
+- `src/lib/x-account.ts` - reads/refreshes the X grant from the account table
+- `src/lib/x-api.ts` - timeline client (metrics, pagination, own-posts fallback)
+- `src/lib/fal.ts` - fal queue REST client
+- `src/components/tv.tsx` - the TV: one clip playing, one buffered, static + OSD
+- `.env.example` - every key documented; app boots without them and shows OFF AIR
+
 ### kyh (`apps/kyh`)
 
 Main website.
