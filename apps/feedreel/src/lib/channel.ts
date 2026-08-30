@@ -30,7 +30,16 @@ const MAX_CLIPS_PER_DAY = 100;
 const MIN_MS_BETWEEN_GENERATIONS = 8_000;
 const FEED_CACHE_TTL_MS = 120_000;
 const PENDING_TTL_MS = 3_600_000;
-const GENERATE_BUDGET_MS = 50_000;
+/**
+ * How long a request may spend reaching a finished clip, measured from when it
+ * arrived — session lookups, token refresh and feed pagination all come out of
+ * it. The route's maxDuration is 60s; the remainder is headroom for parking a
+ * pending job, which is what keeps a slow generation from being paid for and
+ * then lost to a killed function.
+ */
+const GENERATE_BUDGET_MS = 45_000;
+/** Below this much budget left, submitting to fal would only park a job. */
+const MIN_GENERATE_MS = 5_000;
 
 export type ChannelGenerator = {
   accessToken: string;
@@ -309,6 +318,22 @@ const archiveClip = async (channelKey: string, index: string[], clip: Clip): Pro
   recordGeneration();
 };
 
+/**
+ * Air a clip another channel already paid for. Clips are global by post id, so
+ * this is the "never twice" rule doing its job across channels — no spend, and
+ * nothing to record against the daily cap.
+ */
+const adoptClip = async (channelKey: string, index: string[], clip: Clip): Promise<void> => {
+  if (db === undefined) {
+    memIndexes.set(channelKey, [...index, clip.postId]);
+    return;
+  }
+  await db
+    .insert(channelClip)
+    .values({ channelKey, postId: clip.postId, addedAt: Date.now() })
+    .onConflictDoNothing();
+};
+
 /** Finish a generation left pending by a slower model, if its clip is ready. */
 const resumePending = async (
   channelKey: string,
@@ -330,20 +355,33 @@ const resumePending = async (
   }
 };
 
+/** `generated` is false for a clip adopted from another channel's archive. */
+type FreshResult = { clip: Clip; generated: boolean };
+
 const generateFresh = async (
   viewer: ChannelViewer,
   generator: ChannelGenerator,
   index: string[],
   falKey: string,
-): Promise<Clip | undefined> => {
+  deadline: number,
+): Promise<FreshResult | undefined> => {
   const resumed = await resumePending(viewer.channelKey, index, falKey);
-  if (resumed !== undefined) return resumed;
+  if (resumed !== undefined) return { clip: resumed, generated: true };
 
   const candidate = await pickCandidate(generator, viewer.channelKey, new Set(index));
   if (candidate === undefined) return undefined;
 
+  const existing = await readClip(candidate.id);
+  if (existing !== undefined) {
+    await adoptClip(viewer.channelKey, index, existing);
+    return { clip: existing, generated: false };
+  }
+
+  const budget = deadline - Date.now();
+  if (budget < MIN_GENERATE_MS) return undefined;
+
   const prompt = buildVideoPrompt(candidate.text, candidate.author.name);
-  const job = await generateVideo(falKey, videoModel, prompt, GENERATE_BUDGET_MS);
+  const job = await generateVideo(falKey, videoModel, prompt, budget);
   if (job.status !== "done" || job.videoUrl === undefined) {
     // Slower model than the budget: remember the paid-for job and finish it
     // on a later request instead of abandoning it.
@@ -352,21 +390,25 @@ const generateFresh = async (
   }
   const clip = clipFromPost(candidate, job.videoUrl);
   await archiveClip(viewer.channelKey, index, clip);
-  return clip;
+  return { clip, generated: true };
 };
 
 export const nextChannelClip = async (
   viewer: ChannelViewer,
   exclude: string[],
+  receivedAt: number,
 ): Promise<NextClipResult> => {
   const index = await readIndex(viewer.channelKey);
+  const deadline = receivedAt + GENERATE_BUDGET_MS;
 
   let freshFailure: string | undefined;
   const falKey = env.FAL_KEY;
   if (viewer.generator !== undefined && falKey !== undefined && (await generationAllowed())) {
     try {
-      const clip = await generateFresh(viewer, viewer.generator, index, falKey);
-      if (clip !== undefined) return { kind: "fresh", clip };
+      const result = await generateFresh(viewer, viewer.generator, index, falKey, deadline);
+      if (result !== undefined) {
+        return { kind: result.generated ? "fresh" : "rerun", clip: result.clip };
+      }
     } catch (error) {
       freshFailure = error instanceof Error ? error.message : "generation failed";
     }

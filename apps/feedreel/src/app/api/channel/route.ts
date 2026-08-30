@@ -23,6 +23,7 @@ const isOwnerHandle = (username: string): boolean =>
   username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
+  const receivedAt = Date.now();
   const body = channelRequestSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
     return errorResponse(400, "Expected { exclude: string[], personal: boolean }");
@@ -56,6 +57,6 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     }
   }
 
-  const result = await nextChannelClip(viewer, body.data.exclude);
+  const result = await nextChannelClip(viewer, body.data.exclude, receivedAt);
   return NextResponse.json(result);
 };

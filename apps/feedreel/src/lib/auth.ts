@@ -32,11 +32,15 @@ const twitterProvider = (): TwitterProviderConfig | undefined => {
   return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET };
 };
 
-const createAuth = (database: NonNullable<typeof db>, twitter: TwitterProviderConfig) =>
+const createAuth = (
+  database: NonNullable<typeof db>,
+  twitter: TwitterProviderConfig,
+  secret: string,
+) =>
   betterAuth({
     database: drizzleAdapter(database, { provider: "sqlite" }),
     baseURL: baseUrl,
-    secret: env.BETTER_AUTH_SECRET,
+    secret,
     plugins: [nextCookies()],
     // Both this app and policingice run on localhost; a distinct cookie
     // prefix keeps their sessions from clobbering each other in dev.
@@ -63,11 +67,16 @@ const createAuth = (database: NonNullable<typeof db>, twitter: TwitterProviderCo
     },
   });
 
+// better-auth falls back to a shared default secret and then throws on every
+// request when NODE_ENV is production — which is every Vercel deploy. Gate on
+// the secret too so a half-filled .env stays OFF AIR instead of erroring.
 const buildAuth = () => {
   if (db === undefined) return undefined;
+  const secret = env.BETTER_AUTH_SECRET;
+  if (secret === undefined) return undefined;
   const twitter = twitterProvider();
   if (twitter === undefined) return undefined;
-  return createAuth(db, twitter);
+  return createAuth(db, twitter, secret);
 };
 
 export const auth = buildAuth();

@@ -137,7 +137,16 @@ const TvScreen = (props: ScreenProps) => {
   useEffect(() => {
     fillRef.current();
     const retry = setInterval(() => fillRef.current(), RETRY_MS);
-    return () => clearInterval(retry);
+    // fillBuffer declines to run while the tab is hidden, so a returning
+    // viewer would otherwise wait out the retry interval.
+    const onVisible = () => {
+      if (!document.hidden) fillRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(retry);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   useEffect(() => {
@@ -148,6 +157,9 @@ const TvScreen = (props: ScreenProps) => {
   const advance = () => {
     const next = bufferedRef.current;
     if (next !== undefined) {
+      // The refs only catch up after a commit, but fillBuffer below reads them
+      // this tick — leave the buffer stale and it declines to refetch.
+      bufferedRef.current = undefined;
       setBuffered(undefined);
       tuneIn(next);
     } else {
