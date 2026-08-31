@@ -15,10 +15,13 @@ away.
 1. **Lazy** — a new clip is generated only while someone whose feed it is
    watches: the owner on CH 01, you on CH 02. Anonymous visitors and idle
    hours replay the archive (RERUN) instead of spending money.
-2. **Popular first** — the highest-engagement un-aired post goes next
-   (retweets/quotes ×3, replies ×2, likes ×1, minimum score to qualify).
-   When nothing in the current batch clears the bar, older pages of the feed
-   are fetched before settling.
+2. **Popular first** — programs come from what the owner's corner of X is
+   talking about. Personalized trends (cached an hour, cycled one per program
+   so consecutive clips aren't all the same story) seed a search filtered on
+   `min_likes` server-side, and the best un-aired result airs. Trends need the
+   _viewer_ to have X Premium; without it the channel falls back to the home
+   timeline, ranked by engagement (retweets/quotes ×3, replies ×2, likes ×1)
+   and paginated deeper until something clears `MIN_SCORE`.
 3. **Never twice** — every clip is archived by post id and rerun
    forever; a post is paid for at most once. Daily caps and generation
    spacing back this up.
@@ -27,13 +30,13 @@ away.
 
 Two meters run at once, and only the fal one has a cap in code.
 
-**X** bills per post returned. The home timeline is $0.005 a post and the app
-asks for 50 at a time, so a page is ~$0.25; the owner's own posts are $0.001.
-What sets the standing cost is `FEED_CACHE_TTL_MS` (1h), not how often anyone
-watches — roughly one page an hour while the owner is tuned in, up to three if
-a quiet feed makes the scheduler paginate. Nothing in code caps this, so set a
-spending limit at [console.x.com](https://console.x.com); there is no free
-tier, and a $0 balance returns 402 on the first call, sign-in included.
+**X** bills per post returned. The trend path costs ~$0.06 per program: one
+trends call ($0.010 per request, cached an hour) plus one search returning 10
+posts at $0.005 each. The timeline fallback is dearer — 50 posts a page, so
+~$0.25, held an hour by `FEED_CACHE_TTL_MS` and up to three pages when the
+scheduler has to paginate. Nothing in code caps X spend, so set a spending
+limit at [console.x.com](https://console.x.com); there is no free tier, and a
+$0 balance returns 402 on the first call, sign-in included.
 
 **fal** bills per generated video, bounded by `MAX_CLIPS_PER_DAY` (100) and
 `MIN_MS_BETWEEN_GENERATIONS` (8s). Both are advisory under concurrent requests
