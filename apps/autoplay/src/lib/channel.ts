@@ -28,7 +28,15 @@ const BOOTSTRAP_ARCHIVE_SIZE = 3;
 /** Safety caps on spend, over and above viewer-driven laziness. */
 const MAX_CLIPS_PER_DAY = 100;
 const MIN_MS_BETWEEN_GENERATIONS = 8_000;
-const FEED_CACHE_TTL_MS = 120_000;
+/**
+ * X bills per post returned — a 50-post page of the home timeline is ~$0.25 —
+ * so this TTL, not the request rate, sets the standing cost of a watching
+ * owner. An hour keeps that near the price of one page (three, if a quiet feed
+ * makes `pickCandidate` paginate) and sits inside X's 24h read deduplication.
+ * Freshness costs little here: clips are seconds long, the archive reruns
+ * regardless, and a post popular enough to air is rarely brand new.
+ */
+const FEED_CACHE_TTL_MS = 3_600_000;
 const PENDING_TTL_MS = 3_600_000;
 /**
  * How long a request may spend reaching a finished clip, measured from when it
