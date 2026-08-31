@@ -23,6 +23,22 @@ away.
    forever; a post is paid for at most once. Daily caps and generation
    spacing back this up.
 
+## What it costs to run
+
+Two meters run at once, and only the fal one has a cap in code.
+
+**X** bills per post returned. The home timeline is $0.005 a post and the app
+asks for 50 at a time, so a page is ~$0.25; the owner's own posts are $0.001.
+What sets the standing cost is `FEED_CACHE_TTL_MS` (1h), not how often anyone
+watches — roughly one page an hour while the owner is tuned in, up to three if
+a quiet feed makes the scheduler paginate. Nothing in code caps this, so set a
+spending limit at [console.x.com](https://console.x.com); there is no free
+tier, and a $0 balance returns 402 on the first call, sign-in included.
+
+**fal** bills per generated video, bounded by `MAX_CLIPS_PER_DAY` (100) and
+`MIN_MS_BETWEEN_GENERATIONS` (8s). Both are advisory under concurrent requests
+— see the open issue on claiming a generation before spending.
+
 ## Setup
 
 ```sh
