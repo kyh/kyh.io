@@ -7,8 +7,8 @@ import type { Clip } from "@/lib/api-contract";
 import { env, videoModel } from "@/lib/env";
 import { generateVideo, getVideoJob } from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
-import { fetchFeedPage } from "@/lib/x-api";
-import type { FeedPost } from "@/lib/x-api";
+import { fetchFeedPage, fetchPersonalizedTrends, searchTrendPosts } from "@/lib/x-api";
+import type { FeedPost, Trend } from "@/lib/x-api";
 
 // The channel scheduler. Programming rules, in order:
 //   1. Lazy: a new clip is generated only while someone whose feed it is
@@ -20,8 +20,16 @@ import type { FeedPost } from "@/lib/x-api";
 //   3. Never twice: every generated clip is archived by post id and rerun
 //      forever — a post is paid for at most once.
 
-/** A post must clear this engagement score to be worth a video. */
-const MIN_SCORE = 10;
+/**
+ * A timeline post must clear this engagement score to be worth a video. The
+ * timeline is chronological, so this is the only quality filter on that path —
+ * set high enough that a quiet feed reruns rather than airing filler.
+ */
+const MIN_SCORE = 250;
+/** Likes a trend's posts must clear; filtered by X, not after the fact. */
+const MIN_LIKES = 500;
+/** Trends move slowly enough that re-reading them per program is waste. */
+const TREND_CACHE_TTL_MS = 3_600_000;
 const MAX_FEED_PAGES = 3;
 /** While the archive is this small, air the best available post regardless. */
 const BOOTSTRAP_ARCHIVE_SIZE = 3;
@@ -107,6 +115,9 @@ let memLastGenAt = 0;
 // The feed cache is a short-lived rate-limit shield for X reads, not durable
 // state — it stays in memory (per server instance) in both storage modes.
 const memFeedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
+const memTrendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>();
+/** Which trend a channel searches next; rotates so programs stay varied. */
+const memTrendCursors = new Map<string, number>();
 
 const readIndex = async (channelKey: string): Promise<string[]> => {
   if (db === undefined) return memIndexes.get(channelKey) ?? [];
@@ -144,6 +155,15 @@ const readFeedCache = (channelKey: string): FeedCache | undefined => {
 
 const writeFeedCache = (channelKey: string, cache: FeedCache): void => {
   memFeedCaches.set(channelKey, { cache, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
+};
+
+const readTrendCache = (channelKey: string): Trend[] | undefined => {
+  const entry = memTrendCaches.get(channelKey);
+  return entry !== undefined && entry.expiresAt > Date.now() ? entry.trends : undefined;
+};
+
+const writeTrendCache = (channelKey: string, trends: Trend[]): void => {
+  memTrendCaches.set(channelKey, { trends, expiresAt: Date.now() + TREND_CACHE_TTL_MS });
 };
 
 const readPending = async (channelKey: string): Promise<PendingJob | undefined> => {
@@ -239,10 +259,49 @@ const bestOf = (posts: FeedPost[]): FeedPost | undefined => {
 };
 
 /**
+ * One search against the next trend in rotation. Trends are cached and cycled
+ * rather than always taking the biggest, so consecutive programs aren't all
+ * about the same thing and one search per request caps the cost at ~$0.06.
+ *
+ * Returns undefined whenever trends are unavailable — a non-Premium account
+ * gets 401/403 here — leaving the caller to fall back to the timeline.
+ */
+const pickTrendCandidate = async (
+  generator: ChannelGenerator,
+  channelKey: string,
+  aired: Set<string>,
+): Promise<FeedPost | undefined> => {
+  let trends = readTrendCache(channelKey);
+  if (trends === undefined) {
+    try {
+      trends = await fetchPersonalizedTrends(generator.accessToken);
+    } catch {
+      trends = [];
+    }
+    writeTrendCache(channelKey, trends);
+  }
+  if (trends.length === 0) return undefined;
+
+  const offset = memTrendCursors.get(channelKey) ?? 0;
+  memTrendCursors.set(channelKey, offset + 1);
+  const trend = trends[offset % trends.length];
+  if (trend === undefined) return undefined;
+
+  try {
+    const posts = await searchTrendPosts(generator.accessToken, trend.name, MIN_LIKES);
+    return bestOf(posts.filter((post) => !aired.has(post.id)));
+  } catch {
+    // A search failure (including a 400 if the engagement operators regress)
+    // is not fatal — the timeline fallback still has something to air.
+    return undefined;
+  }
+};
+
+/**
  * The most popular un-aired post in the viewer's feed, paginating deeper when
  * the current batch has nothing worth a video.
  */
-const pickCandidate = async (
+const pickTimelineCandidate = async (
   generator: ChannelGenerator,
   channelKey: string,
   aired: Set<string>,
@@ -282,6 +341,21 @@ const pickCandidate = async (
     // air, so bootstrap from the best available; an established one reruns.
     return aired.size < BOOTSTRAP_ARCHIVE_SIZE ? bestOf(unaired) : undefined;
   }
+};
+
+/**
+ * What airs next: the best post about something the viewer's corner of X is
+ * talking about, falling back to their timeline when trends are unavailable
+ * (no Premium) or turned up nothing new.
+ */
+const pickCandidate = async (
+  generator: ChannelGenerator,
+  channelKey: string,
+  aired: Set<string>,
+): Promise<FeedPost | undefined> => {
+  const trending = await pickTrendCandidate(generator, channelKey, aired);
+  if (trending !== undefined) return trending;
+  return pickTimelineCandidate(generator, channelKey, aired);
 };
 
 const clipFromPost = (post: CachedPost, videoUrl: string): Clip => {
