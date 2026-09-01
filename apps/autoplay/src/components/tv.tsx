@@ -6,6 +6,7 @@ import type { Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
 import { channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
 import type { ChannelPayload } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
+import { ProgramsPanel } from "@/components/programs-panel";
 
 // The TV. One full-bleed screen, an auto-hiding on-screen display, and static
 // between programs. The client keeps exactly one clip buffered ahead of the
@@ -76,6 +77,7 @@ const TvScreen = (props: ScreenProps) => {
   const [staticOn, setStaticOn] = useState(true);
   const [osdOn, setOsdOn] = useState(true);
   const [paused, setPaused] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   // Which of the two stacked players is on screen. The other one holds the
   // buffered program, already loaded, so a swap is a crossfade and not a load.
   const [activeSlot, setActiveSlot] = useState<Slot>(0);
@@ -263,6 +265,8 @@ const TvScreen = (props: ScreenProps) => {
         );
       })}
 
+      {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
+
       {/* CRT dressing */}
       <div className="tv-scanlines pointer-events-none absolute inset-0" />
       {(staticOn || offAir !== undefined) && (
@@ -354,6 +358,13 @@ const TvScreen = (props: ScreenProps) => {
             <div />
           )}
           <div className="pointer-events-auto flex shrink-0 items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setGuideOpen(true)}
+              className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+            >
+              guide
+            </button>
             {props.canSwitch && (
               <button
                 type="button"

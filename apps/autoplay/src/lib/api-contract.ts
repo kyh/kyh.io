@@ -53,6 +53,28 @@ export const channelPayloadSchema = z.discriminatedUnion("kind", [
 
 export type ChannelPayload = z.infer<typeof channelPayloadSchema>;
 
+/** An aired program plus whether its channel's owner pulled it off the air. */
+export const programSchema = z.object({
+  clip: clipSchema,
+  hidden: z.boolean(),
+});
+
+export type Program = z.infer<typeof programSchema>;
+
+export const programsPayloadSchema = z.object({
+  programs: z.array(programSchema),
+  /** False for a viewer who may look but not change what airs. */
+  editable: z.boolean(),
+});
+
+export type ProgramsPayload = z.infer<typeof programsPayloadSchema>;
+
+export const hideRequestSchema = z.object({
+  postId: z.string(),
+  personal: z.boolean(),
+  hidden: z.boolean(),
+});
+
 export const errorPayloadSchema = z.object({
   error: z.string(),
 });

@@ -1,9 +1,9 @@
-import { count, desc, eq, gte, max } from "drizzle-orm";
+import { and, count, desc, eq, gte, max } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle-client";
 import { channelClip, clip as clipTable, pendingJob } from "@/db/drizzle-schema";
-import type { Clip } from "@/lib/api-contract";
+import type { Clip, Program } from "@/lib/api-contract";
 import { DEFAULT_VIDEO_MODEL, env, videoModel } from "@/lib/env";
 import { CONTINUATION_VIDEO_MODEL, extractLastFrame, generateVideo, getVideoJob } from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
@@ -122,15 +122,97 @@ const memTrendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>()
 const memSeedFrames = new Map<string, string>();
 /** Which trend a channel searches next; rotates so programs stay varied. */
 const memTrendCursors = new Map<string, number>();
+/** Programs pulled off the air, when there is no database. */
+const memHidden = new Map<string, Set<string>>();
 
-const readIndex = async (channelKey: string): Promise<string[]> => {
-  if (db === undefined) return memIndexes.get(channelKey) ?? [];
+/**
+ * A channel's programs, split by whether they still air.
+ *
+ * `all` is what stops a post being picked again — a hidden program must stay
+ * in it, or the scheduler would treat the post as new and pay to generate it
+ * a second time. `playable` is what reruns draw from.
+ */
+type ChannelIndex = {
+  all: string[];
+  playable: string[];
+};
+
+const readIndex = async (channelKey: string): Promise<ChannelIndex> => {
+  if (db === undefined) {
+    const all = memIndexes.get(channelKey) ?? [];
+    const hidden = memHidden.get(channelKey);
+    return { all, playable: all.filter((id) => hidden?.has(id) !== true) };
+  }
   const rows = await db
-    .select({ postId: channelClip.postId })
+    .select({ postId: channelClip.postId, hiddenAt: channelClip.hiddenAt })
     .from(channelClip)
     .where(eq(channelClip.channelKey, channelKey))
     .orderBy(channelClip.addedAt);
-  return rows.map((row) => row.postId);
+  return {
+    all: rows.map((row) => row.postId),
+    playable: rows.filter((row) => row.hiddenAt === null).map((row) => row.postId),
+  };
+};
+
+/**
+ * Every program that has aired on a channel, newest first, including the ones
+ * pulled off the air — the point of the listing is to be able to put them
+ * back.
+ */
+export const listChannelPrograms = async (channelKey: string): Promise<Program[]> => {
+  if (db === undefined) {
+    const hiddenIds = memHidden.get(channelKey);
+    return (memIndexes.get(channelKey) ?? []).toReversed().flatMap((postId) => {
+      const clip = memClips.get(postId);
+      return clip === undefined ? [] : [{ clip, hidden: hiddenIds?.has(postId) === true }];
+    });
+  }
+  const rows = await db
+    .select()
+    .from(channelClip)
+    .innerJoin(clipTable, eq(channelClip.postId, clipTable.postId))
+    .where(eq(channelClip.channelKey, channelKey))
+    .orderBy(desc(channelClip.addedAt));
+  return rows.map((row) => {
+    const clip: Clip = {
+      postId: row.clip.postId,
+      videoUrl: row.clip.videoUrl,
+      text: row.clip.text,
+      authorName: row.clip.authorName,
+      authorUsername: row.clip.authorUsername,
+      score: row.clip.score,
+      generatedAt: row.clip.generatedAt,
+    };
+    if (row.clip.authorImage !== null) clip.authorImage = row.clip.authorImage;
+    if (row.clip.postCreatedAt !== null) clip.postCreatedAt = row.clip.postCreatedAt;
+    return { clip, hidden: row.channel_clip.hiddenAt !== null };
+  });
+};
+
+/**
+ * Pull a program off the air, or put it back. The channel_clip row is never
+ * deleted: it is what remembers the post was already paid for, so archiving
+ * must not open the door to generating it again.
+ */
+export const setProgramHidden = async (
+  channelKey: string,
+  postId: string,
+  hidden: boolean,
+): Promise<void> => {
+  if (db === undefined) {
+    const set = memHidden.get(channelKey) ?? new Set<string>();
+    if (hidden) {
+      set.add(postId);
+    } else {
+      set.delete(postId);
+    }
+    memHidden.set(channelKey, set);
+    return;
+  }
+  await db
+    .update(channelClip)
+    .set({ hiddenAt: hidden ? Date.now() : null })
+    .where(and(eq(channelClip.channelKey, channelKey), eq(channelClip.postId, postId)));
 };
 
 const readClip = async (postId: string): Promise<Clip | undefined> => {
@@ -479,19 +561,19 @@ type FreshResult = { clip: Clip; generated: boolean };
 const generateFresh = async (
   viewer: ChannelViewer,
   generator: ChannelGenerator,
-  index: string[],
+  index: ChannelIndex,
   falKey: string,
   deadline: number,
 ): Promise<FreshResult | undefined> => {
-  const resumed = await resumePending(viewer.channelKey, index, falKey);
+  const resumed = await resumePending(viewer.channelKey, index.all, falKey);
   if (resumed !== undefined) return { clip: resumed, generated: true };
 
-  const candidate = await pickCandidate(generator, viewer.channelKey, new Set(index));
+  const candidate = await pickCandidate(generator, viewer.channelKey, new Set(index.all));
   if (candidate === undefined) return undefined;
 
   const existing = await readClip(candidate.id);
   if (existing !== undefined) {
-    await adoptClip(viewer.channelKey, index, existing);
+    await adoptClip(viewer.channelKey, index.all, existing);
     return { clip: existing, generated: false };
   }
 
@@ -514,7 +596,7 @@ const generateFresh = async (
   }
   const clip = clipFromPost(candidate, job.videoUrl);
   const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
-  await archiveClip(viewer.channelKey, index, clip, lastFrame);
+  await archiveClip(viewer.channelKey, index.all, clip, lastFrame);
   return { clip, generated: true };
 };
 
@@ -541,8 +623,8 @@ export const nextChannelClip = async (
 
   // Rerun: anything from the archive the viewer hasn't just seen.
   const excluded = new Set(exclude);
-  const pool = index.filter((id) => !excluded.has(id));
-  const candidates = pool.length > 0 ? pool : index;
+  const pool = index.playable.filter((id) => !excluded.has(id));
+  const candidates = pool.length > 0 ? pool : index.playable;
   for (let attempt = 0; attempt < 5 && candidates.length > 0; attempt += 1) {
     const id = candidates[Math.floor(Math.random() * candidates.length)];
     if (id === undefined) break;

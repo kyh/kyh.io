@@ -93,6 +93,12 @@ export const channelClip = sqliteTable(
       .references(() => clip.postId, { onDelete: "cascade" }),
     /** Unix ms. */
     addedAt: integer("added_at").notNull(),
+    /**
+     * Unix ms when the channel's owner pulled this program off the air. The
+     * row stays: it is what stops the post being picked — and paid for —
+     * a second time. Null means it is still in rotation.
+     */
+    hiddenAt: integer("hidden_at"),
   },
   (table) => [primaryKey({ columns: [table.channelKey, table.postId] })],
 );
