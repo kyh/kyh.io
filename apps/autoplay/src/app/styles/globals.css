@@ -299,3 +299,36 @@
     inset -2px -2px var(--chrome-shadow),
     inset 2px 2px var(--chrome-face);
 }
+
+/* Status bar, after a 90s browser's: one short strip of sunken fields rather
+   than a stack of chunky controls. The segment borders do the work, so the
+   fields are flush and the whole bar stays about a line tall. */
+.status-bar {
+  background: var(--chrome);
+  border-top: 1px solid var(--chrome-light);
+}
+
+.status-field {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 1;
+  box-shadow:
+    inset -1px -1px var(--chrome-light),
+    inset 1px 1px var(--chrome-shadow),
+    inset -2px -2px var(--chrome-face),
+    inset 2px 2px var(--chrome-dark);
+}
+
+.status-btn {
+  display: grid;
+  place-items: center;
+  height: 20px;
+  min-width: 22px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 1;
+}

@@ -229,7 +229,7 @@ const TvScreen = (props: ScreenProps) => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col p-3">
+      <div className="flex min-h-0 flex-1 flex-col p-1">
         {/* The screen itself: a sunken well in the plastic. */}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
           {([0, 1] as const).map((slot) => {
@@ -320,7 +320,7 @@ const TvScreen = (props: ScreenProps) => {
 
         {/* Seek */}
         <div
-          className="seek mt-2"
+          className="seek mt-1 shrink-0"
           onPointerDown={(event) => {
             const video = videoRefs.current[activeSlot];
             if (video === null || !(video.duration > 0)) return;
@@ -335,41 +335,46 @@ const TvScreen = (props: ScreenProps) => {
           <div className="seek-handle" style={{ left: `calc(${progress * 100}% - 1px)` }} />
         </div>
 
-        {/* Now playing */}
-        <div className="bevel-in mt-3 min-h-[3.25rem] bg-white/70 px-2 py-1.5">
-          {current === undefined ? (
-            <p className="text-[10px] tracking-widest uppercase opacity-60">no signal</p>
-          ) : (
-            <>
-              <p className="line-clamp-2 text-[11px] leading-relaxed">
-                {displayPostText(current.clip.text)}
-              </p>
-              <p className="mt-0.5 text-[10px] opacity-60">@{current.clip.authorUsername}</p>
-            </>
-          )}
-        </div>
-
-        {/* Transport */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] tracking-widest uppercase">
+        {/* Status bar: caption and controls in one strip, browser-style. */}
+        <div className="status-bar flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <button
             type="button"
             disabled={current === undefined}
             onClick={() => setPaused((value) => !value)}
-            className="y2k-btn min-w-16 cursor-pointer px-3 py-1.5 disabled:cursor-default"
+            className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
+            aria-label={paused ? "Play" : "Pause"}
           >
-            {paused ? "▶ play" : "❚❚ pause"}
+            {paused ? "▶" : "❚❚"}
           </button>
           <button
             type="button"
             onClick={props.onToggleMute}
-            className="y2k-btn min-w-16 cursor-pointer px-3 py-1.5"
+            className="y2k-btn status-btn cursor-pointer"
+            aria-label={props.muted ? "Unmute" : "Mute"}
           >
-            {props.muted ? "unmute" : "mute"}
+            {props.muted ? "🔇" : "🔊"}
           </button>
+
+          <div className="status-field ml-px flex-1">
+            <span className="truncate">
+              {current === undefined
+                ? props.urlError !== undefined
+                  ? props.urlError
+                  : "No signal"
+                : `${displayPostText(current.clip.text)} — @${current.clip.authorUsername}`}
+            </span>
+          </div>
+
+          {current !== undefined && (
+            <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
+              {live ? <span className="text-accent">● live</span> : <span>rerun</span>}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setGuideOpen(true)}
-            className="y2k-btn cursor-pointer px-3 py-1.5"
+            className="y2k-btn status-btn ml-px cursor-pointer"
           >
             guide
           </button>
@@ -377,48 +382,27 @@ const TvScreen = (props: ScreenProps) => {
             <button
               type="button"
               onClick={props.onSwitch}
-              className="y2k-btn cursor-pointer px-3 py-1.5"
+              className="y2k-btn status-btn cursor-pointer"
             >
-              ch +
+              ch+
             </button>
           )}
-
-          <span className="ml-auto flex items-center gap-2">
-            {current !== undefined && (
-              <span
-                className={`bevel-in flex items-center gap-1.5 px-2 py-1 ${live ? "bg-accent text-white" : "bg-white/70"}`}
-              >
-                {live && <span className="size-1.5 animate-pulse rounded-full bg-white" />}
-                {live ? "live" : "rerun"}
-              </span>
-            )}
-            {props.user === null ? (
-              props.loginReady && (
-                <button
-                  type="button"
-                  onClick={login}
-                  className="y2k-btn cursor-pointer px-3 py-1.5"
-                >
-                  sign in
-                </button>
-              )
-            ) : (
-              <button
-                type="button"
-                onClick={() => void logout()}
-                className="y2k-btn cursor-pointer px-3 py-1.5"
-              >
-                sign out
+          {props.user === null ? (
+            props.loginReady && (
+              <button type="button" onClick={login} className="y2k-btn status-btn cursor-pointer">
+                sign in
               </button>
-            )}
-          </span>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="y2k-btn status-btn cursor-pointer"
+            >
+              sign out
+            </button>
+          )}
         </div>
-
-        {props.urlError !== undefined && (
-          <p className="mt-2 text-[10px] tracking-widest text-red-700 uppercase">
-            {props.urlError}
-          </p>
-        )}
       </div>
 
       {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
