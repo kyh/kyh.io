@@ -76,7 +76,10 @@ type VideoInput = {
 const buildInput = (model: string, prompt: string): VideoInput => {
   const input: VideoInput = { prompt };
   if (model === DEFAULT_VIDEO_MODEL) {
-    input.duration = 5;
+    // The model accepts 5-15s and defaults to 5, which is barely a shot. Ten
+    // gives a scene long enough to read as television without pushing
+    // generation past the request budget.
+    input.duration = 10;
     input.resolution = "768P";
     input.aspect_ratio = "16:9";
     input.prompt_expansion_mode = "balanced";

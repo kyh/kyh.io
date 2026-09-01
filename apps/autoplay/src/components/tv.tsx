@@ -65,21 +65,31 @@ type ScreenProps = {
   urlError?: string;
 };
 
+type Slot = 0 | 1;
+
+const other = (slot: Slot): Slot => (slot === 0 ? 1 : 0);
+
 const TvScreen = (props: ScreenProps) => {
   const [current, setCurrent] = useState<Playable | undefined>(undefined);
   const [buffered, setBuffered] = useState<Playable | undefined>(undefined);
   const [offAir, setOffAir] = useState<string | undefined>(undefined);
   const [staticOn, setStaticOn] = useState(true);
   const [osdOn, setOsdOn] = useState(true);
-  const [playCount, setPlayCount] = useState(0);
+  const [paused, setPaused] = useState(false);
+  // Which of the two stacked players is on screen. The other one holds the
+  // buffered program, already loaded, so a swap is a crossfade and not a load.
+  const [activeSlot, setActiveSlot] = useState<Slot>(0);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRefs = useRef<Record<Slot, HTMLVideoElement | null>>({ 0: null, 1: null });
   const fetchingRef = useRef(false);
   const seenRef = useRef<string[]>([]);
   const osdTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const fillRef = useRef<() => void>(() => undefined);
+  const wakeOsdRef = useRef<() => void>(() => undefined);
   const currentRef = useRef<Playable | undefined>(undefined);
   const bufferedRef = useRef<Playable | undefined>(undefined);
+  const activeSlotRef = useRef<Slot>(0);
+  const pausedRef = useRef(false);
 
   const markSeen = (clip: Clip) => {
     seenRef.current = [...seenRef.current.filter((id) => id !== clip.postId), clip.postId].slice(
@@ -87,19 +97,19 @@ const TvScreen = (props: ScreenProps) => {
     );
   };
 
+  /** First program of the session: nothing to crossfade from, so cut through static. */
   const tuneIn = (program: Playable) => {
     setStaticOn(true);
     setOffAir(undefined);
     window.setTimeout(() => {
       markSeen(program.clip);
       setCurrent(program);
-      setPlayCount((count) => count + 1);
       window.setTimeout(() => setStaticOn(false), STATIC_SWAP_MS);
     }, 150);
   };
 
   const fillBuffer = async () => {
-    if (fetchingRef.current || document.hidden) return;
+    if (fetchingRef.current || document.hidden || pausedRef.current) return;
     if (currentRef.current !== undefined && bufferedRef.current !== undefined) return;
     fetchingRef.current = true;
     try {
@@ -124,15 +134,34 @@ const TvScreen = (props: ScreenProps) => {
       fetchingRef.current = false;
     }
   };
+  const wakeOsd = () => {
+    setOsdOn(true);
+    if (osdTimerRef.current !== undefined) clearTimeout(osdTimerRef.current);
+    osdTimerRef.current = setTimeout(() => setOsdOn(false), OSD_HIDE_MS);
+  };
+
   // Refs mirror the latest render so the interval and event handlers below
   // always see current state without re-subscribing.
   useEffect(() => {
     currentRef.current = current;
     bufferedRef.current = buffered;
+    activeSlotRef.current = activeSlot;
+    pausedRef.current = paused;
     fillRef.current = () => {
       void fillBuffer();
     };
+    wakeOsdRef.current = wakeOsd;
   });
+
+  useEffect(() => {
+    const video = videoRefs.current[activeSlot];
+    if (video === null) return;
+    if (paused) {
+      video.pause();
+      return;
+    }
+    void video.play().catch(() => undefined);
+  }, [paused, activeSlot]);
 
   useEffect(() => {
     fillRef.current();
@@ -150,32 +179,36 @@ const TvScreen = (props: ScreenProps) => {
   }, []);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (video !== null) video.muted = props.muted;
+    for (const video of Object.values(videoRefs.current)) {
+      if (video !== null) video.muted = props.muted;
+    }
   }, [props.muted]);
 
+  /**
+   * Hand over to the buffered program by crossfading to the player that
+   * already holds it. Nothing reloads, so there is no black frame between
+   * programs. With no buffer the clip is looping already and there is nothing
+   * to do but keep asking for the next one.
+   */
   const advance = () => {
     const next = bufferedRef.current;
     if (next !== undefined) {
+      const incoming = other(activeSlotRef.current);
+      const video = videoRefs.current[incoming];
+      if (video !== null) {
+        video.currentTime = 0;
+        if (!pausedRef.current) void video.play().catch(() => undefined);
+      }
       // The refs only catch up after a commit, but fillBuffer below reads them
       // this tick — leave the buffer stale and it declines to refetch.
       bufferedRef.current = undefined;
+      activeSlotRef.current = incoming;
+      markSeen(next.clip);
       setBuffered(undefined);
-      tuneIn(next);
-    } else {
-      const video = videoRef.current;
-      if (video !== null) {
-        video.currentTime = 0;
-        void video.play().catch(() => undefined);
-      }
+      setCurrent(next);
+      setActiveSlot(incoming);
     }
     fillRef.current();
-  };
-
-  const wakeOsd = () => {
-    setOsdOn(true);
-    if (osdTimerRef.current !== undefined) clearTimeout(osdTimerRef.current);
-    osdTimerRef.current = setTimeout(() => setOsdOn(false), OSD_HIDE_MS);
   };
 
   useEffect(() => {
@@ -185,27 +218,50 @@ const TvScreen = (props: ScreenProps) => {
     };
   }, []);
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.code !== "Space" && event.key !== "k") return;
+      event.preventDefault();
+      setPaused((value) => !value);
+      wakeOsdRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <main
       className={`relative h-dvh overflow-hidden bg-black font-mono text-white ${osdOn ? "" : "cursor-none"}`}
       onPointerMove={wakeOsd}
       onPointerDown={wakeOsd}
     >
-      {current !== undefined && (
-        <video
-          key={`${current.clip.postId}:${playCount}`}
-          ref={(el) => {
-            videoRef.current = el;
-            if (el !== null) el.muted = props.muted;
-          }}
-          src={current.clip.videoUrl}
-          autoPlay
-          playsInline
-          muted={props.muted}
-          onEnded={advance}
-          className="absolute inset-0 h-full w-full object-contain"
-        />
-      )}
+      {([0, 1] as const).map((slot) => {
+        const program = slot === activeSlot ? current : buffered;
+        if (program === undefined) return null;
+        return (
+          <video
+            key={slot}
+            ref={(el) => {
+              videoRefs.current[slot] = el;
+              if (el !== null) el.muted = props.muted;
+            }}
+            src={program.clip.videoUrl}
+            autoPlay={slot === activeSlot}
+            playsInline
+            preload="auto"
+            muted={props.muted}
+            // Nothing queued behind it: loop instead of ending, so the wait
+            // reads as the picture continuing rather than the same clip
+            // starting over. Once a program buffers, the pass finishes and
+            // `onEnded` hands over.
+            loop={slot === activeSlot && buffered === undefined}
+            onEnded={slot === activeSlot ? advance : undefined}
+            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
+              slot === activeSlot ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        );
+      })}
 
       {/* CRT dressing */}
       <div className="tv-scanlines pointer-events-none absolute inset-0" />
@@ -267,6 +323,15 @@ const TvScreen = (props: ScreenProps) => {
               ) : (
                 <span className="text-white/60">RERUN</span>
               ))}
+            {current !== undefined && (
+              <button
+                type="button"
+                onClick={() => setPaused((value) => !value)}
+                className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+              >
+                {paused ? "play" : "pause"}
+              </button>
+            )}
             <button
               type="button"
               onClick={props.onToggleMute}
