@@ -66,6 +66,29 @@ type ScreenProps = {
   urlError?: string;
 };
 
+/** Pixels the ticker travels per second — a readable walking pace. */
+const MARQUEE_SPEED = 45;
+/** Rough character width at the status bar's 11px monospace. */
+const CHAR_WIDTH = 6.6;
+
+/**
+ * The status bar cannot show a whole post, so it scrolls one. Duration is
+ * derived from the text's length rather than fixed, or a long post would race
+ * past while a short one crawled. Hovering pauses it, which is how you read
+ * the end of a sentence you just missed.
+ */
+const Marquee = (props: { text: string }) => {
+  const seconds = Math.max(8, (props.text.length * CHAR_WIDTH) / MARQUEE_SPEED);
+  return (
+    <div className="marquee" title={props.text}>
+      <div className="marquee-track" style={{ animationDuration: `${seconds}s` }}>
+        <span>{props.text}</span>
+        <span aria-hidden>{props.text}</span>
+      </div>
+    </div>
+  );
+};
+
 type Slot = 0 | 1;
 
 const other = (slot: Slot): Slot => (slot === 0 ? 1 : 0);
@@ -356,13 +379,13 @@ const TvScreen = (props: ScreenProps) => {
           </button>
 
           <div className="status-field ml-px flex-1">
-            <span className="truncate">
-              {current === undefined
-                ? props.urlError !== undefined
-                  ? props.urlError
-                  : "No signal"
-                : `${displayPostText(current.clip.text)} — @${current.clip.authorUsername}`}
-            </span>
+            {current === undefined ? (
+              <span className="truncate">{props.urlError ?? "No signal"}</span>
+            ) : (
+              <Marquee
+                text={`${displayPostText(current.clip.text)} — @${current.clip.authorUsername}`}
+              />
+            )}
           </div>
 
           {current !== undefined && (

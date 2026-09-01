@@ -332,3 +332,46 @@
   font-size: 11px;
   line-height: 1;
 }
+
+/* Status-bar marquee. Two identical copies scroll as one track and the
+   animation ends exactly one copy along, so the loop has no seam — which is
+   why the spacing lives in each copy's padding rather than a flex gap, where
+   it would fall on only one side and make the jump visible. */
+.marquee {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+}
+
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation-name: marquee-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.marquee-track > span {
+  padding-right: 4rem;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .marquee-track > span:last-child {
+    display: none;
+  }
+}
