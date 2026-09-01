@@ -47,7 +47,12 @@ const createAuth = (
     advanced: { cookiePrefix: "autoplay" },
     user: {
       additionalFields: {
-        username: { type: "string", required: false, input: false },
+        // Must stay writable: better-auth drops any additional field marked
+        // `input: false` from the provider profile mapping, so setting it here
+        // would silently null the handle mapProfileToUser resolves — and the
+        // owner check, which compares it to OWNER_X_USERNAME, would never pass.
+        // Nothing else writes it; the only sign-in is X.
+        username: { type: "string", required: false },
       },
     },
     socialProviders: {
