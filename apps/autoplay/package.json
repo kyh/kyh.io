@@ -9,7 +9,7 @@
     "dev": "pnpm with-env next dev --turbopack -p 3005",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "TURSO_DATABASE_URL=libsql://never-connected.invalid BETTER_AUTH_SECRET=test-secret X_CLIENT_ID=test X_CLIENT_SECRET=test tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },
