@@ -11,14 +11,14 @@ catalog:
   "@vercel/analytics": ^2.0.1
   "@vitejs/plugin-react": ^6.1.1
   cnfast: ^0.1.0
-  lucide-react: ^1.35.0
+  lucide-react: ^1.38.0
   next: ^16.3.3
   postcss: ^8.5.26
   react: ^19.2.8
   react-dom: ^19.2.8
   react-router-dom: ^7.18.3
   tailwindcss: ^4.3.3
-  tsx: ^4.23.12
+  tsx: ^4.23.13
   typescript: ^7.0.2
   vite: ^8.2.2
 
