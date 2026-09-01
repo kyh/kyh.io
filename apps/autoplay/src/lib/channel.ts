@@ -1,11 +1,11 @@
-import { count, eq, gte, max } from "drizzle-orm";
+import { count, desc, eq, gte, max } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle-client";
 import { channelClip, clip as clipTable, pendingJob } from "@/db/drizzle-schema";
 import type { Clip } from "@/lib/api-contract";
-import { env, videoModel } from "@/lib/env";
-import { generateVideo, getVideoJob } from "@/lib/fal";
+import { DEFAULT_VIDEO_MODEL, env, videoModel } from "@/lib/env";
+import { CONTINUATION_VIDEO_MODEL, extractLastFrame, generateVideo, getVideoJob } from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
 import { fetchFeedPage, fetchPersonalizedTrends, searchTrendPosts } from "@/lib/x-api";
 import type { FeedPost, Trend } from "@/lib/x-api";
@@ -56,6 +56,8 @@ const PENDING_TTL_MS = 3_600_000;
 const GENERATE_BUDGET_MS = 45_000;
 /** Below this much budget left, submitting to fal would only park a job. */
 const MIN_GENERATE_MS = 5_000;
+/** Pulling the closing frame is a cheap ffmpeg job; never let it hold a request. */
+const FRAME_EXTRACT_BUDGET_MS = 8_000;
 
 export type ChannelGenerator = {
   accessToken: string;
@@ -116,6 +118,8 @@ let memLastGenAt = 0;
 // state — it stays in memory (per server instance) in both storage modes.
 const memFeedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
 const memTrendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>();
+/** Last frame of the newest clip on a channel, when there is no database. */
+const memSeedFrames = new Map<string, string>();
 /** Which trend a channel searches next; rotates so programs stay varied. */
 const memTrendCursors = new Map<string, number>();
 
@@ -155,6 +159,23 @@ const readFeedCache = (channelKey: string): FeedCache | undefined => {
 
 const writeFeedCache = (channelKey: string, cache: FeedCache): void => {
   memFeedCaches.set(channelKey, { cache, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
+};
+
+/**
+ * The frame the next program should continue out of: the final frame of the
+ * clip most recently added to this channel. Undefined starts a fresh scene,
+ * which is right for a channel's first program and after a failed extraction.
+ */
+const readSeedFrame = async (channelKey: string): Promise<string | undefined> => {
+  if (db === undefined) return memSeedFrames.get(channelKey);
+  const rows = await db
+    .select({ lastFrameUrl: clipTable.lastFrameUrl })
+    .from(channelClip)
+    .innerJoin(clipTable, eq(channelClip.postId, clipTable.postId))
+    .where(eq(channelClip.channelKey, channelKey))
+    .orderBy(desc(channelClip.addedAt))
+    .limit(1);
+  return rows[0]?.lastFrameUrl ?? undefined;
 };
 
 const readTrendCache = (channelKey: string): Trend[] | undefined => {
@@ -373,10 +394,20 @@ const clipFromPost = (post: CachedPost, videoUrl: string): Clip => {
   return clip;
 };
 
-const archiveClip = async (channelKey: string, index: string[], clip: Clip): Promise<void> => {
+const archiveClip = async (
+  channelKey: string,
+  index: string[],
+  clip: Clip,
+  lastFrameUrl: string | undefined,
+): Promise<void> => {
   if (db === undefined) {
     memClips.set(clip.postId, clip);
     memIndexes.set(channelKey, [...index, clip.postId]);
+    if (lastFrameUrl === undefined) {
+      memSeedFrames.delete(channelKey);
+    } else {
+      memSeedFrames.set(channelKey, lastFrameUrl);
+    }
   } else {
     await db
       .insert(clipTable)
@@ -389,6 +420,7 @@ const archiveClip = async (channelKey: string, index: string[], clip: Clip): Pro
         authorImage: clip.authorImage ?? null,
         postCreatedAt: clip.postCreatedAt ?? null,
         score: clip.score,
+        lastFrameUrl: lastFrameUrl ?? null,
         generatedAt: clip.generatedAt,
       })
       .onConflictDoNothing();
@@ -425,10 +457,14 @@ const resumePending = async (
   const pending = await readPending(channelKey);
   if (pending === undefined) return undefined;
   try {
+    // A parked job may have gone to either model, but both share the
+    // `minimax/h3-max` root that getVideoJob falls back to, so one lookup
+    // finds it either way.
     const job = await getVideoJob(falKey, videoModel, pending.requestId);
     if (job.status !== "done" || job.videoUrl === undefined) return undefined;
     const clip = clipFromPost(pending.post, job.videoUrl);
-    await archiveClip(channelKey, index, clip);
+    const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
+    await archiveClip(channelKey, index, clip, lastFrame);
     await writePending(channelKey, undefined);
     return clip;
   } catch {
@@ -462,8 +498,14 @@ const generateFresh = async (
   const budget = deadline - Date.now();
   if (budget < MIN_GENERATE_MS) return undefined;
 
+  // Continue out of the previous program's final frame where there is one, so
+  // the cut between clips lands on an identical image.
+  const seedFrame =
+    videoModel === DEFAULT_VIDEO_MODEL ? await readSeedFrame(viewer.channelKey) : undefined;
+  const model = seedFrame === undefined ? videoModel : CONTINUATION_VIDEO_MODEL;
+
   const prompt = buildVideoPrompt(candidate.text, candidate.author.name);
-  const job = await generateVideo(falKey, videoModel, prompt, budget);
+  const job = await generateVideo(falKey, model, prompt, deadline - Date.now(), seedFrame);
   if (job.status !== "done" || job.videoUrl === undefined) {
     // Slower model than the budget: remember the paid-for job and finish it
     // on a later request instead of abandoning it.
@@ -471,7 +513,8 @@ const generateFresh = async (
     return undefined;
   }
   const clip = clipFromPost(candidate, job.videoUrl);
-  await archiveClip(viewer.channelKey, index, clip);
+  const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
+  await archiveClip(viewer.channelKey, index, clip, lastFrame);
   return { clip, generated: true };
 };
 
