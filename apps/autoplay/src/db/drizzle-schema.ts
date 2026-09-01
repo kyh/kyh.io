@@ -1,4 +1,4 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // better-auth tables (same shape as policingice's, plus `username`: the X
 // handle mapped from the profile at sign-in, used for the owner check and
@@ -27,23 +27,28 @@ export const session = sqliteTable("session", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = sqliteTable("account", {
-  id: text().primaryKey(),
-  accountId: text("account_id").notNull(),
-  providerId: text("provider_id").notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  accessToken: text("access_token"),
-  refreshToken: text("refresh_token"),
-  idToken: text("id_token"),
-  accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp" }),
-  refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp" }),
-  scope: text(),
-  password: text(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-});
+export const account = sqliteTable(
+  "account",
+  {
+    id: text().primaryKey(),
+    issuer: text().notNull(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp" }),
+    refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp" }),
+    scope: text(),
+    password: text(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId)],
+);
 
 export const verification = sqliteTable("verification", {
   id: text().primaryKey(),
