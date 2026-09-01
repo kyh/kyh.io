@@ -1,13 +1,31 @@
 @import "tailwindcss";
 
+/* A 90s desktop: hot gradient wallpaper, grey plastic windows, hard black
+   outlines. Everything here is chunky on purpose — the bevels are two solid
+   inset shadows rather than soft ones, because the look comes from flat
+   highlight and shadow, never from a blur. */
+
 :root {
-  --background: hsl(0 0% 2%);
-  --foreground: hsl(0 0% 98%);
+  --background: #b429f9;
+  --foreground: #1a1a2e;
+
+  --chrome: #d4d0c8;
+  --chrome-light: #ffffff;
+  --chrome-shadow: #7f7c73;
+  --outline: #14001f;
+
+  --screen: #0a0a0a;
+  --accent: #ff3ec8;
+  --accent-2: #00e0ff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-chrome: var(--chrome);
+  --color-outline: var(--outline);
+  --color-screen: var(--screen);
+  --color-accent: var(--accent);
 }
 
 @layer base {
@@ -19,21 +37,96 @@
     height: 100%;
   }
   body {
-    @apply bg-background text-foreground;
+    color: var(--foreground);
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% 0%, #ff4fd8 0%, transparent 60%),
+      linear-gradient(160deg, #7b1fd4 0%, #b429f9 45%, #ff3ec8 100%);
+    background-attachment: fixed;
     overscroll-behavior: none;
   }
 
   ::-webkit-scrollbar {
-    width: 0;
-    height: 0;
+    width: 14px;
+    height: 14px;
   }
-  * {
-    scrollbar-width: none;
+  ::-webkit-scrollbar-track {
+    background: repeating-conic-gradient(#cfcbc3 0% 25%, #eae7e1 0% 50%) 0 0 / 4px 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--chrome);
+    border: 2px solid var(--outline);
+    box-shadow:
+      inset 2px 2px 0 var(--chrome-light),
+      inset -2px -2px 0 var(--chrome-shadow);
   }
 }
 
-/* Analog dressing for the TV. The static is an SVG turbulence tile jittered
-   with a stepped animation; the scanlines are a thin repeating gradient. */
+/* Window chrome ---------------------------------------------------------- */
+
+.win {
+  background: var(--chrome);
+  border: 3px solid var(--outline);
+  box-shadow:
+    inset 2px 2px 0 var(--chrome-light),
+    inset -2px -2px 0 var(--chrome-shadow),
+    6px 6px 0 rgb(20 0 31 / 0.45);
+}
+
+.win-title {
+  background: linear-gradient(90deg, #ff2fb4 0%, #a63cf5 55%, #6a2fd4 100%);
+  border-bottom: 3px solid var(--outline);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.5);
+}
+
+.win-title-alt {
+  background: linear-gradient(90deg, #ffc400 0%, #ff8a00 100%);
+}
+
+.win-title-cyan {
+  background: linear-gradient(90deg, #35d6ff 0%, #2f7bf5 100%);
+}
+
+/* A sunken well: the inverse bevel, for anything the chrome contains. */
+.bevel-in {
+  border: 2px solid var(--outline);
+  box-shadow:
+    inset 2px 2px 0 var(--chrome-shadow),
+    inset -2px -2px 0 var(--chrome-light);
+}
+
+.y2k-btn {
+  background: var(--chrome);
+  border: 2px solid var(--outline);
+  box-shadow:
+    inset 2px 2px 0 var(--chrome-light),
+    inset -2px -2px 0 var(--chrome-shadow);
+  color: var(--foreground);
+}
+
+.y2k-btn:hover:not(:disabled) {
+  background: #e6e3dc;
+}
+
+/* Pressed swaps highlight and shadow and nudges the label, which is the whole
+   trick behind a physical-feeling button. */
+.y2k-btn:active:not(:disabled),
+.y2k-btn[data-pressed="true"] {
+  box-shadow:
+    inset 2px 2px 0 var(--chrome-shadow),
+    inset -2px -2px 0 var(--chrome-light);
+  padding-top: 1px;
+  padding-left: 1px;
+}
+
+.y2k-btn:disabled {
+  color: #8a8780;
+  text-shadow: 1px 1px 0 var(--chrome-light);
+}
+
+/* Analog dressing inside the screen. The static is an SVG turbulence tile
+   jittered with a stepped animation; the scanlines are a thin gradient. */
 .tv-static {
   background-color: #0a0a0a;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -61,4 +154,10 @@
     transparent 1px,
     transparent 3px
   );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-static {
+    animation: none;
+  }
 }

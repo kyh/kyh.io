@@ -6,6 +6,7 @@ import type { Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
 import { channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
 import type { ChannelPayload } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
+import { displayPostText } from "@/lib/post-text";
 import { ProgramsPanel } from "@/components/programs-panel";
 
 // The TV. One full-bleed screen, an auto-hiding on-screen display, and static
@@ -18,7 +19,6 @@ type Playable = {
   clip: Clip;
 };
 
-const OSD_HIDE_MS = 4_000;
 const STATIC_SWAP_MS = 350;
 const RETRY_MS = 30_000;
 const SEEN_LIMIT = 16;
@@ -75,7 +75,6 @@ const TvScreen = (props: ScreenProps) => {
   const [buffered, setBuffered] = useState<Playable | undefined>(undefined);
   const [offAir, setOffAir] = useState<string | undefined>(undefined);
   const [staticOn, setStaticOn] = useState(true);
-  const [osdOn, setOsdOn] = useState(true);
   const [paused, setPaused] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   // Which of the two stacked players is on screen. The other one holds the
@@ -85,9 +84,7 @@ const TvScreen = (props: ScreenProps) => {
   const videoRefs = useRef<Record<Slot, HTMLVideoElement | null>>({ 0: null, 1: null });
   const fetchingRef = useRef(false);
   const seenRef = useRef<string[]>([]);
-  const osdTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const fillRef = useRef<() => void>(() => undefined);
-  const wakeOsdRef = useRef<() => void>(() => undefined);
   const currentRef = useRef<Playable | undefined>(undefined);
   const bufferedRef = useRef<Playable | undefined>(undefined);
   const activeSlotRef = useRef<Slot>(0);
@@ -136,12 +133,6 @@ const TvScreen = (props: ScreenProps) => {
       fetchingRef.current = false;
     }
   };
-  const wakeOsd = () => {
-    setOsdOn(true);
-    if (osdTimerRef.current !== undefined) clearTimeout(osdTimerRef.current);
-    osdTimerRef.current = setTimeout(() => setOsdOn(false), OSD_HIDE_MS);
-  };
-
   // Refs mirror the latest render so the interval and event handlers below
   // always see current state without re-subscribing.
   useEffect(() => {
@@ -152,7 +143,6 @@ const TvScreen = (props: ScreenProps) => {
     fillRef.current = () => {
       void fillBuffer();
     };
-    wakeOsdRef.current = wakeOsd;
   });
 
   useEffect(() => {
@@ -214,154 +204,155 @@ const TvScreen = (props: ScreenProps) => {
   };
 
   useEffect(() => {
-    osdTimerRef.current = setTimeout(() => setOsdOn(false), OSD_HIDE_MS);
-    return () => {
-      if (osdTimerRef.current !== undefined) clearTimeout(osdTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.code !== "Space" && event.key !== "k") return;
       event.preventDefault();
       setPaused((value) => !value);
-      wakeOsdRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const live = current !== undefined && current.kind === "fresh";
+
   return (
-    <main
-      className={`relative h-dvh overflow-hidden bg-black font-mono text-white ${osdOn ? "" : "cursor-none"}`}
-      onPointerMove={wakeOsd}
-      onPointerDown={wakeOsd}
-    >
-      {([0, 1] as const).map((slot) => {
-        const program = slot === activeSlot ? current : buffered;
-        if (program === undefined) return null;
-        return (
-          <video
-            key={slot}
-            ref={(el) => {
-              videoRefs.current[slot] = el;
-              if (el !== null) el.muted = props.muted;
-            }}
-            src={program.clip.videoUrl}
-            autoPlay={slot === activeSlot}
-            playsInline
-            preload="auto"
-            muted={props.muted}
-            // Nothing queued behind it: loop instead of ending, so the wait
-            // reads as the picture continuing rather than the same clip
-            // starting over. Once a program buffers, the pass finishes and
-            // `onEnded` hands over.
-            loop={slot === activeSlot && buffered === undefined}
-            onEnded={slot === activeSlot ? advance : undefined}
-            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
-              slot === activeSlot ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        );
-      })}
+    <main className="grid min-h-dvh place-items-center p-3 font-mono sm:p-6">
+      <div className="win flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col sm:max-h-[calc(100dvh-3rem)]">
+        <div className="win-title flex items-center justify-between gap-3 px-3 py-1.5">
+          <p className="truncate text-xs font-bold tracking-[0.2em] uppercase">
+            AUTOPLAY.TV — {props.channelLabel}
+          </p>
+          <div className="flex shrink-0 items-center gap-1 text-[10px]">
+            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
+              ▽
+            </span>
+            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
+              ○
+            </span>
+            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
+              ✕
+            </span>
+          </div>
+        </div>
 
-      {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
+        <div className="flex min-h-0 flex-1 flex-col p-3">
+          {/* The screen itself: a sunken well in the plastic. */}
+          <div className="bevel-in relative aspect-video max-h-[calc(100dvh-16rem)] w-full shrink overflow-hidden bg-screen">
+            {([0, 1] as const).map((slot) => {
+              const program = slot === activeSlot ? current : buffered;
+              if (program === undefined) return null;
+              return (
+                <video
+                  key={slot}
+                  ref={(el) => {
+                    videoRefs.current[slot] = el;
+                    if (el !== null) el.muted = props.muted;
+                  }}
+                  src={program.clip.videoUrl}
+                  autoPlay={slot === activeSlot}
+                  playsInline
+                  preload="auto"
+                  muted={props.muted}
+                  // Nothing queued behind it: loop instead of ending, so the
+                  // wait reads as the picture continuing rather than the same
+                  // clip starting over. Once a program buffers, the pass
+                  // finishes and `onEnded` hands over.
+                  loop={slot === activeSlot && buffered === undefined}
+                  onEnded={slot === activeSlot ? advance : undefined}
+                  className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
+                    slot === activeSlot ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              );
+            })}
 
-      {/* CRT dressing */}
-      <div className="tv-scanlines pointer-events-none absolute inset-0" />
-      {(staticOn || offAir !== undefined) && (
-        <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />
-      )}
+            <div className="tv-scanlines pointer-events-none absolute inset-0" />
+            {(staticOn || offAir !== undefined) && (
+              <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />
+            )}
 
-      {offAir !== undefined && (
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="max-w-md space-y-4 px-6 text-center [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
-            <p className="text-3xl font-bold tracking-[0.3em]">OFF AIR</p>
-            <p className="text-sm text-white/80">{offAir}</p>
-            {props.missingKeys.length > 0 && (
-              <div className="space-y-1 text-left text-xs text-amber-300">
-                <p className="text-white/60">missing from apps/autoplay/.env:</p>
-                {props.missingKeys.map((key) => (
-                  <p key={key}>· {key}</p>
-                ))}
+            {offAir !== undefined && (
+              <div className="absolute inset-0 grid place-items-center p-4">
+                <div className="win w-full max-w-sm">
+                  <div className="win-title flex items-center justify-between px-2 py-1">
+                    <p className="text-[10px] font-bold tracking-[0.2em] uppercase">Off air</p>
+                    <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-[10px] text-outline">
+                      ✕
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3 p-3">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-sm font-bold text-white">
+                      ✕
+                    </span>
+                    <div className="min-w-0 space-y-2">
+                      <p className="text-xs leading-relaxed">{offAir}</p>
+                      {props.missingKeys.length > 0 && (
+                        <div className="bevel-in bg-white/70 p-2 text-[10px] leading-relaxed">
+                          <p>missing from apps/autoplay/.env:</p>
+                          {props.missingKeys.map((key) => (
+                            <p key={key}>· {key}</p>
+                          ))}
+                        </div>
+                      )}
+                      {props.user === null && props.loginReady && (
+                        <button
+                          type="button"
+                          onClick={login}
+                          className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase"
+                        >
+                          Sign in with X
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-            {props.user === null && props.loginReady && (
-              <button
-                type="button"
-                onClick={login}
-                className="cursor-pointer rounded-sm border border-white/40 px-4 py-2 text-xs tracking-widest uppercase hover:bg-white/10"
-              >
-                Sign in with X
-              </button>
+
+            {current === undefined && offAir === undefined && (
+              <div className="absolute inset-0 grid place-items-center">
+                <p className="animate-pulse text-xs tracking-[0.4em] text-white [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
+                  TUNING…
+                </p>
+              </div>
             )}
           </div>
-        </div>
-      )}
 
-      {current === undefined && offAir === undefined && (
-        <div className="absolute inset-0 grid place-items-center">
-          <p className="animate-pulse text-sm tracking-[0.4em] [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
-            TUNING…
-          </p>
-        </div>
-      )}
-
-      {/* On-screen display */}
-      <div
-        className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${osdOn ? "opacity-100" : "opacity-0"}`}
-      >
-        <div className="absolute top-0 right-0 left-0 flex items-start justify-between p-4 text-xs tracking-widest [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
-          <div className="space-y-1">
-            <p className="font-bold">AUTOPLAY·TV</p>
-            <p className="text-white/70">{props.channelLabel}</p>
-            {props.urlError !== undefined && <p className="text-red-400">{props.urlError}</p>}
-          </div>
-          <div className="pointer-events-auto flex items-center gap-2">
-            {current !== undefined &&
-              (current.kind === "fresh" ? (
-                <span className="flex items-center gap-1.5 text-red-400">
-                  <span className="size-2 animate-pulse rounded-full bg-red-500" />
-                  LIVE
-                </span>
-              ) : (
-                <span className="text-white/60">RERUN</span>
-              ))}
-            {current !== undefined && (
-              <button
-                type="button"
-                onClick={() => setPaused((value) => !value)}
-                className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
-              >
-                {paused ? "play" : "pause"}
-              </button>
+          {/* Now playing */}
+          <div className="bevel-in mt-3 min-h-[3.25rem] bg-white/70 px-2 py-1.5">
+            {current === undefined ? (
+              <p className="text-[10px] tracking-widest uppercase opacity-60">no signal</p>
+            ) : (
+              <>
+                <p className="line-clamp-2 text-[11px] leading-relaxed">
+                  {displayPostText(current.clip.text)}
+                </p>
+                <p className="mt-0.5 text-[10px] opacity-60">@{current.clip.authorUsername}</p>
+              </>
             )}
+          </div>
+
+          {/* Transport */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] tracking-widest uppercase">
+            <button
+              type="button"
+              disabled={current === undefined}
+              onClick={() => setPaused((value) => !value)}
+              className="y2k-btn min-w-16 cursor-pointer px-3 py-1.5 disabled:cursor-default"
+            >
+              {paused ? "▶ play" : "❚❚ pause"}
+            </button>
             <button
               type="button"
               onClick={props.onToggleMute}
-              className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+              className="y2k-btn min-w-16 cursor-pointer px-3 py-1.5"
             >
               {props.muted ? "unmute" : "mute"}
             </button>
-          </div>
-        </div>
-
-        <div className="absolute right-0 bottom-0 left-0 flex items-end justify-between gap-6 p-4 [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
-          {current !== undefined ? (
-            <div className="min-w-0 space-y-1">
-              <p className="line-clamp-2 max-w-xl text-sm leading-relaxed normal-case">
-                {current.clip.text}
-              </p>
-              <p className="text-xs text-white/60">@{current.clip.authorUsername}</p>
-            </div>
-          ) : (
-            <div />
-          )}
-          <div className="pointer-events-auto flex shrink-0 items-center gap-2 text-xs">
             <button
               type="button"
               onClick={() => setGuideOpen(true)}
-              className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+              className="y2k-btn cursor-pointer px-3 py-1.5"
             >
               guide
             </button>
@@ -369,33 +360,52 @@ const TvScreen = (props: ScreenProps) => {
               <button
                 type="button"
                 onClick={props.onSwitch}
-                className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+                className="y2k-btn cursor-pointer px-3 py-1.5"
               >
                 ch +
               </button>
             )}
-            {props.user === null ? (
-              props.loginReady && (
+
+            <span className="ml-auto flex items-center gap-2">
+              {current !== undefined && (
+                <span
+                  className={`bevel-in flex items-center gap-1.5 px-2 py-1 ${live ? "bg-accent text-white" : "bg-white/70"}`}
+                >
+                  {live && <span className="size-1.5 animate-pulse rounded-full bg-white" />}
+                  {live ? "live" : "rerun"}
+                </span>
+              )}
+              {props.user === null ? (
+                props.loginReady && (
+                  <button
+                    type="button"
+                    onClick={login}
+                    className="y2k-btn cursor-pointer px-3 py-1.5"
+                  >
+                    sign in
+                  </button>
+                )
+              ) : (
                 <button
                   type="button"
-                  onClick={login}
-                  className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
+                  onClick={() => void logout()}
+                  className="y2k-btn cursor-pointer px-3 py-1.5"
                 >
-                  sign in
+                  sign out
                 </button>
-              )
-            ) : (
-              <button
-                type="button"
-                onClick={() => void logout()}
-                className="cursor-pointer rounded-sm border border-white/30 px-2 py-1 uppercase hover:bg-white/10"
-              >
-                sign out
-              </button>
-            )}
+              )}
+            </span>
           </div>
+
+          {props.urlError !== undefined && (
+            <p className="mt-2 text-[10px] tracking-widest text-red-700 uppercase">
+              {props.urlError}
+            </p>
+          )}
         </div>
       </div>
+
+      {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
     </main>
   );
 };
@@ -411,13 +421,17 @@ export const Tv = (props: TvProps) => {
 
   if (props.session === undefined) {
     return (
-      <main className="relative h-dvh overflow-hidden bg-black font-mono text-white">
-        <div className="tv-static absolute inset-0 opacity-90" />
-        <div className="tv-scanlines pointer-events-none absolute inset-0" />
-        <div className="absolute inset-0 grid place-items-center">
-          <p className="animate-pulse text-sm tracking-[0.4em] [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
-            TUNING…
-          </p>
+      <main className="grid min-h-dvh place-items-center p-6 font-mono">
+        <div className="win w-full max-w-sm">
+          <div className="win-title px-3 py-1.5">
+            <p className="text-xs font-bold tracking-[0.2em] uppercase">AUTOPLAY.TV</p>
+          </div>
+          <div className="space-y-2 p-4">
+            <p className="text-[11px] tracking-widest uppercase">Tuning…</p>
+            <div className="bevel-in h-4 bg-white/70 p-0.5">
+              <div className="h-full w-1/3 animate-pulse bg-accent" />
+            </div>
+          </div>
         </div>
       </main>
     );
