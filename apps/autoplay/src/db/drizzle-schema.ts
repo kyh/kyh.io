@@ -72,6 +72,13 @@ export const clip = sqliteTable("clip", {
   authorImage: text("author_image"),
   postCreatedAt: text("post_created_at"),
   score: integer().notNull(),
+  /**
+   * Final frame of this clip, as an image. The next program on the channel is
+   * generated out of it, so one clip continues into the next instead of
+   * cutting to an unrelated scene. Null for clips generated before this
+   * existed, and whenever frame extraction failed.
+   */
+  lastFrameUrl: text("last_frame_url"),
   /** Unix ms. */
   generatedAt: integer("generated_at").notNull(),
 });

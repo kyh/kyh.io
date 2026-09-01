@@ -8,6 +8,16 @@ import { DEFAULT_VIDEO_MODEL } from "@/lib/env";
 
 const QUEUE_BASE = "https://queue.fal.run";
 
+/**
+ * The image-to-video sibling of the default model, used to continue one
+ * program out of the last frame of the one before it.
+ */
+export const CONTINUATION_VIDEO_MODEL = "minimax/h3-max/image-to-video";
+/** ffmpeg utility that returns a single frame of a video as an image. */
+const EXTRACT_FRAME_MODEL = "fal-ai/ffmpeg-api/extract-frame";
+/** The model's ceiling. Longer clips mean fewer joins to get right. */
+const MAX_CLIP_SECONDS = 15;
+
 export class FalError extends Error {
   status: number;
 
@@ -67,22 +77,29 @@ type VideoInput = {
   resolution?: string;
   aspect_ratio?: string;
   prompt_expansion_mode?: string;
+  /** First frame, for the image-to-video sibling of the default model. */
+  image_url?: string;
 };
 
 /**
  * The default model is tuned for a 16:9 TV-style clip; an operator-overridden
  * model gets only the prompt since input schemas differ per model.
+ *
+ * `seedImageUrl` switches the request to the continuation model, whose input
+ * takes a first frame and — per its schema — has no aspect_ratio, since the
+ * seed image already fixes the framing.
  */
-const buildInput = (model: string, prompt: string): VideoInput => {
+const buildInput = (model: string, prompt: string, seedImageUrl?: string): VideoInput => {
   const input: VideoInput = { prompt };
-  if (model === DEFAULT_VIDEO_MODEL) {
-    // The model accepts 5-15s and defaults to 5, which is barely a shot. Ten
-    // gives a scene long enough to read as television without pushing
-    // generation past the request budget.
-    input.duration = 10;
-    input.resolution = "768P";
+  if (model !== DEFAULT_VIDEO_MODEL && model !== CONTINUATION_VIDEO_MODEL) return input;
+
+  input.duration = MAX_CLIP_SECONDS;
+  input.resolution = "768P";
+  input.prompt_expansion_mode = "balanced";
+  if (seedImageUrl === undefined) {
     input.aspect_ratio = "16:9";
-    input.prompt_expansion_mode = "balanced";
+  } else {
+    input.image_url = seedImageUrl;
   }
   return input;
 };
@@ -91,6 +108,7 @@ export const submitVideoJob = async (
   falKey: string,
   model: string,
   prompt: string,
+  seedImageUrl?: string,
 ): Promise<string> => {
   const response = await fetch(`${QUEUE_BASE}/${model}`, {
     method: "POST",
@@ -98,10 +116,61 @@ export const submitVideoJob = async (
       "Content-Type": "application/json",
       Authorization: `Key ${falKey}`,
     },
-    body: JSON.stringify(buildInput(model, prompt)),
+    body: JSON.stringify(buildInput(model, prompt, seedImageUrl)),
   });
   if (!response.ok) throw await errorFromResponse(response);
   return submitResponseSchema.parse(await response.json()).request_id;
+};
+
+const extractFrameResponseSchema = z.object({
+  images: z.array(z.object({ url: z.string() })).min(1),
+});
+
+/**
+ * The final frame of a clip, as an image URL.
+ *
+ * This is what makes one program continue into the next: hand it to the
+ * continuation model as the first frame and the cut lands on an identical
+ * image, so there is nothing to hide with a fade. Returns undefined rather
+ * than throwing — losing continuity is a cosmetic downgrade, not a reason to
+ * abandon a clip that has already been paid for.
+ */
+export const extractLastFrame = async (
+  falKey: string,
+  videoUrl: string,
+  deadlineMs: number,
+): Promise<string | undefined> => {
+  try {
+    const requestId = await (async () => {
+      const response = await fetch(`${QUEUE_BASE}/${EXTRACT_FRAME_MODEL}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Key ${falKey}` },
+        body: JSON.stringify({ video_url: videoUrl, frame_type: "last" }),
+      });
+      if (!response.ok) throw await errorFromResponse(response);
+      return submitResponseSchema.parse(await response.json()).request_id;
+    })();
+
+    const deadline = Date.now() + deadlineMs;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      const statusResponse = await fetchQueueJson(
+        falKey,
+        EXTRACT_FRAME_MODEL,
+        `${requestId}/status`,
+      );
+      if (!statusResponse.ok) return undefined;
+      const status = statusResponseSchema.parse(await statusResponse.json());
+      if (status.status !== "COMPLETED") continue;
+      const resultResponse = await fetchQueueJson(falKey, EXTRACT_FRAME_MODEL, requestId);
+      if (!resultResponse.ok) return undefined;
+      const result = extractFrameResponseSchema.parse(await resultResponse.json());
+      return result.images[0]?.url;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 // Nested endpoints (owner/app/endpoint) answer status/result requests either
@@ -166,8 +235,9 @@ export const generateVideo = async (
   model: string,
   prompt: string,
   deadlineMs: number,
+  seedImageUrl?: string,
 ): Promise<VideoJob> => {
-  const requestId = await submitVideoJob(falKey, model, prompt);
+  const requestId = await submitVideoJob(falKey, model, prompt, seedImageUrl);
   const deadline = Date.now() + deadlineMs;
   let job: VideoJob = { status: "queued", requestId };
   while (Date.now() < deadline) {
