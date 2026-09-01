@@ -9,9 +9,13 @@
   --background: #b429f9;
   --foreground: #1a1a2e;
 
-  --chrome: #d4d0c8;
+  /* 98.css's four-tone border palette. The authentic bevel is four stacked
+     one-pixel shadows, not one soft edge: white, light, grey, near-black. */
+  --chrome: #c0c0c0;
   --chrome-light: #ffffff;
-  --chrome-shadow: #7f7c73;
+  --chrome-face: #dfdfdf;
+  --chrome-shadow: #808080;
+  --chrome-dark: #0a0a0a;
   --outline: #14001f;
 
   --screen: #0a0a0a;
@@ -23,6 +27,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-chrome: var(--chrome);
+  --color-chrome-face: var(--chrome-face);
   --color-outline: var(--outline);
   --color-screen: var(--screen);
   --color-accent: var(--accent);
@@ -53,12 +58,25 @@
   ::-webkit-scrollbar-track {
     background: repeating-conic-gradient(#cfcbc3 0% 25%, #eae7e1 0% 50%) 0 0 / 4px 4px;
   }
+  /* The reference's scrollbars have stepper buttons at each end. */
+  ::-webkit-scrollbar-button:single-button {
+    display: block;
+    height: 16px;
+    width: 16px;
+    background: var(--chrome);
+    box-shadow:
+      inset -1px -1px var(--chrome-dark),
+      inset 1px 1px var(--chrome-light),
+      inset -2px -2px var(--chrome-shadow),
+      inset 2px 2px var(--chrome-face);
+  }
   ::-webkit-scrollbar-thumb {
     background: var(--chrome);
-    border: 2px solid var(--outline);
     box-shadow:
-      inset 2px 2px 0 var(--chrome-light),
-      inset -2px -2px 0 var(--chrome-shadow);
+      inset -1px -1px var(--chrome-dark),
+      inset 1px 1px var(--chrome-light),
+      inset -2px -2px var(--chrome-shadow),
+      inset 2px 2px var(--chrome-face);
   }
 }
 
@@ -66,11 +84,39 @@
 
 .win {
   background: var(--chrome);
-  border: 3px solid var(--outline);
+  border: 2px solid var(--outline);
   box-shadow:
-    inset 2px 2px 0 var(--chrome-light),
-    inset -2px -2px 0 var(--chrome-shadow),
+    inset -1px -1px var(--chrome-dark),
+    inset 1px 1px var(--chrome-face),
+    inset -2px -2px var(--chrome-shadow),
+    inset 2px 2px var(--chrome-light),
     6px 6px 0 rgb(20 0 31 / 0.45);
+}
+
+/* 98.css sizes these at 16x14 with no padding; the glyph carries the meaning. */
+.title-btn {
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 14px;
+  font-size: 9px;
+  line-height: 1;
+  background: var(--chrome);
+  border: 1px solid var(--outline);
+  box-shadow:
+    inset -1px -1px var(--chrome-dark),
+    inset 1px 1px var(--chrome-light),
+    inset -2px -2px var(--chrome-shadow),
+    inset 2px 2px var(--chrome-face);
+  color: var(--outline);
+}
+
+.title-btn:active {
+  box-shadow:
+    inset -1px -1px var(--chrome-light),
+    inset 1px 1px var(--chrome-dark),
+    inset -2px -2px var(--chrome-face),
+    inset 2px 2px var(--chrome-shadow);
 }
 
 .win-title {
@@ -89,33 +135,41 @@
 }
 
 /* A sunken well: the inverse bevel, for anything the chrome contains. */
+/* The inverse: a sunken well, for anything the chrome contains. */
 .bevel-in {
-  border: 2px solid var(--outline);
+  border: 1px solid var(--outline);
   box-shadow:
-    inset 2px 2px 0 var(--chrome-shadow),
-    inset -2px -2px 0 var(--chrome-light);
+    inset -1px -1px var(--chrome-light),
+    inset 1px 1px var(--chrome-shadow),
+    inset -2px -2px var(--chrome-face),
+    inset 2px 2px var(--chrome-dark);
 }
 
 .y2k-btn {
   background: var(--chrome);
-  border: 2px solid var(--outline);
+  border: 1px solid var(--outline);
   box-shadow:
-    inset 2px 2px 0 var(--chrome-light),
-    inset -2px -2px 0 var(--chrome-shadow);
+    inset -1px -1px var(--chrome-dark),
+    inset 1px 1px var(--chrome-light),
+    inset -2px -2px var(--chrome-shadow),
+    inset 2px 2px var(--chrome-face);
   color: var(--foreground);
 }
 
-.y2k-btn:hover:not(:disabled) {
-  background: #e6e3dc;
+.y2k-btn:focus-visible {
+  outline: 1px dotted var(--chrome-dark);
+  outline-offset: -4px;
 }
 
-/* Pressed swaps highlight and shadow and nudges the label, which is the whole
+/* Pressed inverts all four tones and nudges the label, which is the whole
    trick behind a physical-feeling button. */
 .y2k-btn:active:not(:disabled),
 .y2k-btn[data-pressed="true"] {
   box-shadow:
-    inset 2px 2px 0 var(--chrome-shadow),
-    inset -2px -2px 0 var(--chrome-light);
+    inset -1px -1px var(--chrome-light),
+    inset 1px 1px var(--chrome-dark),
+    inset -2px -2px var(--chrome-face),
+    inset 2px 2px var(--chrome-shadow);
   padding-top: 1px;
   padding-left: 1px;
 }
@@ -160,4 +214,88 @@
   .tv-static {
     animation: none;
   }
+}
+
+/* Desktop icon: a chunky glyph tile with a hard-shadowed label, as on the
+   reference wallpaper. */
+.desk-icon {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 5.5rem;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+}
+
+.desk-icon span:first-child {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.4rem;
+  background: var(--chrome);
+  border: 2px solid var(--outline);
+  box-shadow:
+    inset -1px -1px var(--chrome-dark),
+    inset 1px 1px var(--chrome-face),
+    inset -2px -2px var(--chrome-shadow),
+    inset 2px 2px var(--chrome-light),
+    4px 4px 0 rgb(20 0 31 / 0.4);
+}
+
+.desk-icon span:last-child {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow:
+    1px 1px 0 var(--outline),
+    -1px 1px 0 var(--outline),
+    1px -1px 0 var(--outline),
+    -1px -1px 0 var(--outline);
+}
+
+.desk-icon:hover span:last-child {
+  background: var(--outline);
+}
+
+/* Seek bar, after the reference's media player: a sunken groove with a chunky
+   raised handle rather than a rounded modern slider. */
+.seek {
+  position: relative;
+  height: 18px;
+  background: var(--chrome);
+  cursor: pointer;
+}
+
+.seek-groove {
+  position: absolute;
+  inset: 7px 2px auto 2px;
+  height: 4px;
+  background: var(--chrome-shadow);
+  box-shadow:
+    inset -1px -1px var(--chrome-light),
+    inset 1px 1px var(--chrome-dark);
+}
+
+.seek-fill {
+  position: absolute;
+  inset: 7px auto auto 2px;
+  height: 4px;
+  background: var(--accent);
+}
+
+.seek-handle {
+  position: absolute;
+  top: 1px;
+  width: 10px;
+  height: 16px;
+  margin-left: -5px;
+  background: var(--chrome);
+  border: 1px solid var(--outline);
+  box-shadow:
+    inset -1px -1px var(--chrome-dark),
+    inset 1px 1px var(--chrome-light),
+    inset -2px -2px var(--chrome-shadow),
+    inset 2px 2px var(--chrome-face);
 }

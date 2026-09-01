@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#b429f9",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -41,8 +41,8 @@ type LayoutProps = {
 
 const RootLayout = (props: LayoutProps) => {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-background text-foreground antialiased">{props.children}</body>
+    <html lang="en">
+      <body className="antialiased">{props.children}</body>
     </html>
   );
 };

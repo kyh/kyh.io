@@ -58,6 +58,18 @@ const GENERATE_BUDGET_MS = 45_000;
 const MIN_GENERATE_MS = 5_000;
 /** Pulling the closing frame is a cheap ffmpeg job; never let it hold a request. */
 const FRAME_EXTRACT_BUDGET_MS = 8_000;
+/**
+ * Development only: how many clips a channel may have in rotation before it
+ * stops minting new ones and just reruns. Working on the UI should not cost a
+ * generation every fifteen seconds. It counts what still airs, not everything
+ * ever made, so archiving a clip you dislike in the guide frees a slot and the
+ * next request generates a replacement — which is the loop you want while
+ * tuning prompts.
+ */
+export const DEV_MAX_PLAYABLE_CLIPS = 5;
+
+export const devCapReached = (playableCount: number, nodeEnv: string | undefined): boolean =>
+  nodeEnv !== "production" && playableCount >= DEV_MAX_PLAYABLE_CLIPS;
 
 export type ChannelGenerator = {
   accessToken: string;
@@ -610,7 +622,12 @@ export const nextChannelClip = async (
 
   let freshFailure: string | undefined;
   const falKey = env.FAL_KEY;
-  if (viewer.generator !== undefined && falKey !== undefined && (await generationAllowed())) {
+  if (
+    viewer.generator !== undefined &&
+    falKey !== undefined &&
+    !devCapReached(index.playable.length, process.env.NODE_ENV) &&
+    (await generationAllowed())
+  ) {
     try {
       const result = await generateFresh(viewer, viewer.generator, index, falKey, deadline);
       if (result !== undefined) {

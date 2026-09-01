@@ -42,6 +42,12 @@ $0 balance returns 402 on the first call, sign-in included.
 `MIN_MS_BETWEEN_GENERATIONS` (8s). Both are advisory under concurrent requests
 — see the open issue on claiming a generation before spending.
 
+**Locally, a channel stops at `DEV_MAX_PLAYABLE_CLIPS` (5) and reruns from
+there**, so working on the UI does not mint a paid clip every fifteen seconds.
+It counts clips still in rotation, not everything ever made: archive one in the
+guide and the next request fills the slot, which is the loop you want when
+tuning prompts. Production is unaffected.
+
 ## Setup
 
 ```sh

@@ -1,5 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#050505" />
-  <rect x="18" y="10" width="28" height="44" rx="6" fill="none" stroke="#fafafa" stroke-width="3" />
-  <path d="M28 24l12 8-12 8z" fill="#fafafa" />
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b429f9" />
+      <stop offset="1" stop-color="#ff3ec8" />
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff2fb4" />
+      <stop offset="1" stop-color="#6a2fd4" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="url(#wall)" />
+  <rect x="8" y="14" width="48" height="36" fill="#d4d0c8" stroke="#14001f" stroke-width="3" />
+  <rect x="8" y="14" width="48" height="9" fill="url(#bar)" stroke="#14001f" stroke-width="3" />
+  <rect x="14" y="28" width="36" height="17" fill="#0a0a0a" stroke="#14001f" stroke-width="2" />
+  <path d="M28 32l10 5-10 5z" fill="#fafafa" />
 </svg>

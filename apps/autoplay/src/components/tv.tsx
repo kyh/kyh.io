@@ -77,6 +77,7 @@ const TvScreen = (props: ScreenProps) => {
   const [staticOn, setStaticOn] = useState(true);
   const [paused, setPaused] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
   // Which of the two stacked players is on screen. The other one holds the
   // buffered program, already loaded, so a swap is a crossfade and not a load.
   const [activeSlot, setActiveSlot] = useState<Slot>(0);
@@ -216,22 +217,16 @@ const TvScreen = (props: ScreenProps) => {
   const live = current !== undefined && current.kind === "fresh";
 
   return (
-    <main className="grid min-h-dvh place-items-center p-3 font-mono sm:p-6">
+    <main className="relative grid min-h-dvh place-items-center p-3 font-mono sm:p-6">
       <div className="win flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col sm:max-h-[calc(100dvh-3rem)]">
         <div className="win-title flex items-center justify-between gap-3 px-3 py-1.5">
           <p className="truncate text-xs font-bold tracking-[0.2em] uppercase">
             AUTOPLAY.TV — {props.channelLabel}
           </p>
-          <div className="flex shrink-0 items-center gap-1 text-[10px]">
-            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
-              ▽
-            </span>
-            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
-              ○
-            </span>
-            <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-outline">
-              ✕
-            </span>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <span className="title-btn">▁</span>
+            <span className="title-btn">▢</span>
+            <span className="title-btn">✕</span>
           </div>
         </div>
 
@@ -258,6 +253,14 @@ const TvScreen = (props: ScreenProps) => {
                   // clip starting over. Once a program buffers, the pass
                   // finishes and `onEnded` hands over.
                   loop={slot === activeSlot && buffered === undefined}
+                  onTimeUpdate={
+                    slot === activeSlot
+                      ? (event) => {
+                          const el = event.currentTarget;
+                          setProgress(el.duration > 0 ? el.currentTime / el.duration : 0);
+                        }
+                      : undefined
+                  }
                   onEnded={slot === activeSlot ? advance : undefined}
                   className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
                     slot === activeSlot ? "opacity-100" : "opacity-0"
@@ -276,9 +279,7 @@ const TvScreen = (props: ScreenProps) => {
                 <div className="win w-full max-w-sm">
                   <div className="win-title flex items-center justify-between px-2 py-1">
                     <p className="text-[10px] font-bold tracking-[0.2em] uppercase">Off air</p>
-                    <span className="grid size-4 place-items-center border-2 border-outline bg-chrome text-[10px] text-outline">
-                      ✕
-                    </span>
+                    <span className="title-btn">✕</span>
                   </div>
                   <div className="flex items-start gap-3 p-3">
                     <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-sm font-bold text-white">
@@ -316,6 +317,23 @@ const TvScreen = (props: ScreenProps) => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Seek */}
+          <div
+            className="seek mt-2"
+            onPointerDown={(event) => {
+              const video = videoRefs.current[activeSlot];
+              if (video === null || !(video.duration > 0)) return;
+              const box = event.currentTarget.getBoundingClientRect();
+              const ratio = Math.min(Math.max((event.clientX - box.left) / box.width, 0), 1);
+              video.currentTime = ratio * video.duration;
+              setProgress(ratio);
+            }}
+          >
+            <div className="seek-groove" />
+            <div className="seek-fill" style={{ width: `calc(${progress * 100}% - 4px)` }} />
+            <div className="seek-handle" style={{ left: `calc(${progress * 100}% - 1px)` }} />
           </div>
 
           {/* Now playing */}
@@ -403,6 +421,32 @@ const TvScreen = (props: ScreenProps) => {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="pointer-events-none absolute top-6 left-6 hidden flex-col gap-5 xl:flex">
+        <button
+          type="button"
+          className="desk-icon pointer-events-auto"
+          onClick={() => setGuideOpen(true)}
+        >
+          <span aria-hidden>🗂</span>
+          <span>GUIDE.EXE</span>
+        </button>
+        {props.canSwitch && (
+          <button type="button" className="desk-icon pointer-events-auto" onClick={props.onSwitch}>
+            <span aria-hidden>📺</span>
+            <span>CHANNELS</span>
+          </button>
+        )}
+        <a
+          className="desk-icon pointer-events-auto"
+          href={`https://x.com/${props.channelLabel.split("@")[1] ?? ""}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span aria-hidden>🌐</span>
+          <span>ON X</span>
+        </a>
       </div>
 
       {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
