@@ -255,10 +255,12 @@ export const fetchFeedPage = async (
 // the viewer's corner of X is actually talking about, and search can filter on
 // engagement server-side — better material, and cheaper than a timeline page.
 
+// Only the name is depended on. Everything else X returns here is loosely
+// typed on purpose: `post_count` arrives as "421 posts", not a number, and a
+// strict schema turns a cosmetic surprise into a silent fallback to the
+// timeline for the life of the deployment.
 const trendSchema = z.object({
   trend_name: z.string(),
-  post_count: z.number().optional(),
-  category: z.string().optional(),
 });
 
 const trendsResponseSchema = z.object({
@@ -267,8 +269,6 @@ const trendsResponseSchema = z.object({
 
 export type Trend = {
   name: string;
-  postCount?: number;
-  category?: string;
 };
 
 /**
@@ -279,16 +279,11 @@ export type Trend = {
  */
 export const fetchPersonalizedTrends = async (accessToken: string): Promise<Trend[]> => {
   const url = new URL(`${X_API_BASE}/users/personalized_trends`);
-  url.searchParams.set("personalized_trend.fields", "category,post_count,trend_name");
+  url.searchParams.set("personalized_trend.fields", "trend_name");
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!response.ok) throw await errorFromResponse(response);
   const body = trendsResponseSchema.parse(await response.json());
-  return (body.data ?? []).map((trend) => {
-    const result: Trend = { name: trend.trend_name };
-    if (trend.post_count !== undefined) result.postCount = trend.post_count;
-    if (trend.category !== undefined) result.category = trend.category;
-    return result;
-  });
+  return (body.data ?? []).map((trend) => ({ name: trend.trend_name }));
 };
 
 const SEARCH_PARAMS = {
@@ -301,16 +296,44 @@ const SEARCH_PARAMS = {
   "user.fields": "name,username,profile_image_url",
 } as const;
 
+const STOP_WORDS = new Set(["the", "a", "an", "this", "that", "new", "how", "why", "what"]);
+
 /**
- * A trend name as a search query. Quotes force a phrase match so multi-word
- * trends don't match each word separately; embedded quotes would terminate it
- * early, so they are dropped.
+ * The searchable subject of a trend: one word.
+ *
+ * Personalized trends are AI-written headlines now, not hashtags — "Vercel
+ * CEO: Next Design System Is Just a Markdown File". A headline is a summary,
+ * not anything anyone typed, so searching it verbatim finds nothing. Measured
+ * against the recent-post counts for the same trends, one leading word beats
+ * two every time, because the second word is usually a verb or an unrelated
+ * entity that ANDs the query down to zero:
+ *
+ *     Vercel 34 / "Vercel CEO" 0        Meta 495 / "Meta Slack" 0
+ *     Developers 263 / "Developers Tackle" 0    Doug 319 / "Doug Leone" 7
+ *
+ * Precision is the acceptable loss: `min_likes` and relevancy ordering decide
+ * what actually airs, and the trend only has to point at roughly the subject.
  */
-export const trendQuery = (trend: string, minLikes: number): string => {
-  const phrase = trend.replaceAll('"', "").trim();
-  const term = phrase.includes(" ") ? `"${phrase}"` : phrase;
-  return `${term} min_likes:${minLikes} -is:reply lang:en`;
+export const trendKeyword = (trend: string): string => {
+  const head = (trend.split(":")[0] ?? trend).replaceAll('"', "");
+  const words = head
+    .split(/\s+/)
+    .map((word) => word.replace(/[^\p{L}\p{N}'’-]/gu, "").replace(/['’]s$/u, ""))
+    .filter((word) => word !== "");
+  const meaningful = words.filter((word) => !STOP_WORDS.has(word.toLowerCase()));
+  const named = meaningful.find((word) => word[0] !== word[0]?.toLowerCase());
+  return named ?? meaningful[0] ?? words[0] ?? trend;
 };
+
+/**
+ * Longest keyword worth sending. Real subjects are a word; anything past this
+ * is malformed input, and X rejects the whole query once it exceeds 512 chars.
+ */
+const MAX_KEYWORD_LENGTH = 64;
+
+/** A trend's subject as a search query, filtered on engagement by X itself. */
+export const trendQuery = (trend: string, minLikes: number): string =>
+  `${trendKeyword(trend).slice(0, MAX_KEYWORD_LENGTH)} min_likes:${minLikes} -is:reply lang:en`;
 
 /**
  * The most relevant recent posts about a trend that clear `minLikes`. The
