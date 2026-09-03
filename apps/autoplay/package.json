@@ -16,7 +16,6 @@
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "better-auth": "^1.7.2",
-    "cnfast": "catalog:",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "next": "catalog:",
