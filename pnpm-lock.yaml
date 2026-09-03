@@ -128,9 +128,9 @@ catalogs:
     '@vitejs/plugin-react':
       specifier: ^6.1.1
       version: 6.1.1
-    cnfast:
-      specifier: ^0.1.0
-      version: 0.1.0
+    cn:
+      specifier: ^0.2.3
+      version: 0.2.3
     lucide-react:
       specifier: ^1.38.0
       version: 1.38.0
@@ -196,9 +196,9 @@ importers:
       better-auth:
         specifier: ^1.7.2
         version: 1.7.2(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@libsql/client@0.17.4)(kysely@0.29.5))(next@16.3.3(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -334,9 +334,9 @@ importers:
 
   apps/kwadrants:
     dependencies:
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       konva:
         specifier: ^10.3.2
         version: 10.3.2
@@ -410,9 +410,9 @@ importers:
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(next@16.3.3(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       geist:
         specifier: ^1.7.2
         version: 1.7.2(next@16.3.3(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
@@ -510,9 +510,9 @@ importers:
       better-auth:
         specifier: ^1.7.2
         version: 1.7.2(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@libsql/client@0.17.4)(kysely@0.29.5))(next@16.3.3(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -580,9 +580,9 @@ importers:
       balloons-js:
         specifier: ^0.0.3
         version: 0.0.3
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       motion:
         specifier: ^13.1.1
         version: 13.1.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -650,9 +650,9 @@ importers:
       '@visx/tooltip':
         specifier: ^4.0.0
         version: 4.0.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      cnfast:
+      cn:
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.2.3
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -3294,8 +3294,9 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
-  cnfast@0.1.0:
-    resolution: {integrity: sha512-rH0jBKeLkVrK7NsZ5Ba2l7WdMBmm1k0FMpABeXUU1PgTUxbz3261gEuCSsrYuXo4BwAe3yCcIbQ93YyS52lOGQ==}
+  cn@0.2.3:
+    resolution: {integrity: sha512-z1S2v7FdtqcoXQzJWqNPBJ3KPG1or9FlefB0x+Eu8322BMmCSSVqzeI7itNj/6YRjyendnlWDJnKQkBhukT3fg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   commander@7.2.0:
@@ -6311,7 +6312,7 @@ snapshots:
 
   clsx@2.1.1: {}
 
-  cnfast@0.1.0: {}
+  cn@0.2.3: {}
 
   commander@7.2.0: {}
 

@@ -22,7 +22,7 @@
     "@visx/scale": "^4.0.0",
     "@visx/shape": "^4.0.0",
     "@visx/tooltip": "^4.0.0",
-    "cnfast": "catalog:",
+    "cn": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-joyride": "^3.2.0",

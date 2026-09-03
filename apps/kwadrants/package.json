@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "cnfast": "catalog:",
+    "cn": "catalog:",
     "konva": "^10.3.2",
     "lucide-react": "catalog:",
     "motion": "^13.1.1",
