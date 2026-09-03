@@ -196,9 +196,6 @@ importers:
       better-auth:
         specifier: ^1.7.2
         version: 1.7.2(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@libsql/client@0.17.4)(kysely@0.29.5))(next@16.3.3(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      cn:
-        specifier: 'catalog:'
-        version: 0.2.3
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
