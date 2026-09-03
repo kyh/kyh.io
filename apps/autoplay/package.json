@@ -9,15 +9,17 @@
     "dev": "pnpm with-env next dev --turbopack -p 3005",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
-    "test": "TURSO_DATABASE_URL=libsql://never-connected.invalid BETTER_AUTH_SECRET=test-secret X_CLIENT_ID=test X_CLIENT_SECRET=test tsx --test src/**/*.test.ts",
+    "test": "TURSO_DATABASE_URL=libsql://never-connected.invalid BETTER_AUTH_SECRET=test-secret X_CLIENT_ID=test X_CLIENT_SECRET=test tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
     "@libsql/client": "^0.17.4",
     "better-auth": "^1.7.2",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "fast-xml-parser": "^5.11.1",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

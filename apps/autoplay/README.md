@@ -1,31 +1,52 @@
 # autoplay
 
-An X feed as a TV channel of AI-generated video.
+Your feeds as TV channels of AI-generated video.
 
-Visit the site and CH 01 is already playing: the owner's feed, rendered as
+Visit the site and CH 01 is already playing: the owner's X feed, rendered as
 short clips by fal.ai
 ([`minimax/h3-max/text-to-video`](https://fal.ai/models/minimax/h3-max/text-to-video)
 by default — ten to thirty seconds for a 15s 768p clip, so generation runs a
-program ahead of what is airing).
-Sign in with X and CH 02 becomes your own feed. The UI is a television:
-full-bleed video, static between programs, an on-screen display that fades
-away.
+program ahead of what is airing). Sign in with X and every source you connect
+is a channel of its own: your X, your newsletters (Gmail), a feed URL, your
+YouTube subscriptions. `ch−`/`ch+` tune through the lineup; the guide lines up
+any program that has aired to play next. The UI is a television: full-bleed
+video, static between programs, an on-screen display that fades away.
+
+## Channels (src/lib/lineup.ts)
+
+CH 01 is the public channel: the env-configured owner's X, playable by anyone.
+Every other channel is a `source` row belonging to the signed-in user, in
+`position` order. Sources with a grant behind them are created from the grant
+the next time the session loads — signing in with X adds your X (unless you
+are the owner, whose X is CH 01 already), linking Google with the Gmail scope
+adds Newsletters, with the YouTube scope adds YouTube — and a feed URL is added
+by hand in the sources dialog. Removing a channel keeps its clips archived.
+
+Each kind has one adapter in `src/lib/sources/` that answers "what airs
+next?": X ranks by engagement (trends, then the timeline), Gmail airs the
+newest newsletter (mail with `List-Id`/`List-Unsubscribe` headers, unread
+first), RSS the newest entry, YouTube the most-viewed upload of the week from
+subscribed channels. Adding a kind is a new adapter and a new entry in
+`SOURCE_KINDS`.
 
 ## Programming rules (src/lib/channel.ts)
 
-1. **Lazy** — a new clip is generated only while someone whose feed it is
-   watches: the owner on CH 01, you on CH 02. Anonymous visitors and idle
-   hours replay the archive instead of spending money.
-2. **Popular first** — programs come from what the owner's corner of X is
-   talking about. Personalized trends (cached an hour, cycled one per program
-   so consecutive clips aren't all the same story) seed a search filtered on
-   `min_likes` server-side, and the best un-aired result airs. Trends need the
-   _viewer_ to have X Premium; without it the channel falls back to the home
-   timeline, ranked by engagement (retweets/quotes ×3, replies ×2, likes ×1)
-   and paginated deeper until something clears `MIN_SCORE`.
-3. **Never twice** — every clip is archived by post id and rerun
-   forever; a post is paid for at most once. Daily caps and generation
-   spacing back this up.
+1. **Lazy** — a new clip is generated only while someone whose source it is
+   watches: the owner on CH 01, you on your own channels. Anonymous visitors
+   and idle hours replay the archive instead of spending money. Even then
+   generation runs a program ahead: a request queues the next clip and airs a
+   rerun meanwhile.
+2. **Best first** — the source's adapter picks the un-aired item most worth a
+   video. On X that is what the account's corner of X is talking about:
+   personalized trends (cached an hour, cycled one per program so consecutive
+   clips aren't all the same story) seed a search filtered on `min_likes`
+   server-side, and the best un-aired result airs. Trends need the _viewer_ to
+   have X Premium; without it the channel falls back to the home timeline,
+   ranked by engagement (retweets/quotes ×3, replies ×2, likes ×1) and
+   paginated deeper until something clears `MIN_SCORE`.
+3. **Never twice** — every clip is archived by item id and rerun forever; an
+   item is paid for at most once, even across channels. Daily caps and
+   generation spacing back this up.
 
 ## What it costs to run
 
@@ -68,27 +89,39 @@ pnpm dev:autoplay      # → http://localhost:3005
    fill in the URL + token, then `pnpm -F @repo/autoplay db:push` once to create the
    tables. Skippable in local dev: the archive then lives in server memory only.
 5. **Session secret** — `openssl rand -base64 32`.
+6. **Google OAuth app** (optional, for Newsletters and YouTube) —
+   [console.cloud.google.com](https://console.cloud.google.com/apis/credentials),
+   web application, redirect `http://127.0.0.1:3005/api/auth/callback/google`;
+   enable the Gmail API and YouTube Data API v3. `gmail.readonly` is a
+   restricted scope: a public app needs Google's verification, a personal
+   deploy can stay in Testing mode with the owner as a test user. Without the
+   keys the sources dialog says so and the rest works.
 
 The app boots with none of these and shows an OFF AIR screen listing what's missing.
 
 ## How it works
 
 - **Auth**: better-auth (`src/lib/auth.ts`) with the X social provider, same
-  stack as policingice. Users, sessions, and the X OAuth tokens live in the
-  Turso database; `src/lib/x-account.ts` reads the grant back for timeline
-  calls and refreshes it when expired. The X handle is mapped onto the user
-  at sign-in for the owner check.
-- **Channel** (`POST /api/channel`): decides the next program. A viewer who
-  may generate (their own feed) has the next clip queued and gets a rerun back
-  at once; the clip is harvested and aired by a later request, so generation
-  runs a program ahead and nothing waits on fal except a channel's first-ever
-  program. Anyone else gets a rerun from the archive, or OFF AIR.
+  stack as policingice. Users, sessions, and OAuth tokens live in the Turso
+  database; `src/lib/x-account.ts` reads the X grant back for timeline calls
+  and refreshes it when expired, `src/lib/grants.ts` does the same for Google
+  through better-auth. Google is never a sign-in, only a grant linked to the
+  X-signed-in user (`linkSocial` with the scope a source needs). The X handle
+  is mapped onto the user at sign-in for the owner check.
+- **Channel** (`POST /api/channel` with a `sourceId`): decides the next
+  program. A viewer who may generate (their own source) has the next clip
+  queued and gets a rerun back at once; the clip is harvested and aired by a
+  later request, so generation runs a program ahead and nothing waits on fal
+  except a channel's first-ever program. Anyone else gets a rerun from the
+  archive, or OFF AIR. `GET /api/session` returns the viewer's lineup;
+  `/api/sources` adds a feed, removes a channel, or reorders them.
 - **Archive** (`src/db/drizzle-schema.ts`): Drizzle + Turso, same stack as
-  policingice but a dedicated database. Three tables: `clip` (one row per
-  post ever generated), `channel_clip` (which clips air on which channel),
-  `pending_job` (each channel's one in-flight generation). The daily cap and
-  generation spacing are derived from `clip.generatedAt` — no counters.
-  Degrades to in-memory maps when `TURSO_DATABASE_URL` is unset.
+  policingice but a dedicated database. Four tables: `clip` (one row per item
+  ever generated, keyed `{kind}:{id}`), `channel_clip` (which clips air on
+  which channel), `pending_job` (each channel's one in-flight generation),
+  `source` (a user's connected feeds). The daily cap and generation spacing
+  are derived from `clip.generatedAt` — no counters. Degrades to in-memory
+  maps when `TURSO_DATABASE_URL` is unset.
 - **TV** (`src/components/tv.tsx`): one clip playing, one buffered ahead,
   requested only while the tab is visible — the client's laziness is what
   makes the whole pipeline lazy.

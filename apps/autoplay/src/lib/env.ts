@@ -12,6 +12,9 @@ const optionalKey = z
 const envSchema = z.object({
   X_CLIENT_ID: optionalKey,
   X_CLIENT_SECRET: optionalKey,
+  /** Google OAuth app, for the Gmail and YouTube sources. Optional: without it those can't be connected. */
+  GOOGLE_CLIENT_ID: optionalKey,
+  GOOGLE_CLIENT_SECRET: optionalKey,
   BETTER_AUTH_SECRET: optionalKey,
   FAL_KEY: optionalKey,
   FAL_VIDEO_MODEL: optionalKey,
@@ -28,6 +31,9 @@ export const env = envSchema.parse(process.env);
 export const DEFAULT_VIDEO_MODEL = "minimax/h3-max/text-to-video";
 
 export const videoModel = env.FAL_VIDEO_MODEL ?? DEFAULT_VIDEO_MODEL;
+
+export const googleConfigured =
+  env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined;
 
 /** Keys still unset, in the order the setup checklist should list them. */
 export const missingEnvKeys = (): string[] => {

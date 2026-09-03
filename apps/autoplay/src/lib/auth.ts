@@ -32,6 +32,33 @@ const twitterProvider = (): TwitterProviderConfig | undefined => {
   return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET };
 };
 
+/**
+ * Google is never a way to sign in — only a grant linked to an X-signed-in
+ * user, requested with the Gmail or YouTube scope when that source is
+ * connected. Offline access with a forced consent screen is what makes Google
+ * hand back a refresh token, without which the source dies within the hour.
+ */
+type GoogleProviderConfig = {
+  clientId: string;
+  clientSecret: string;
+  accessType: "offline";
+  prompt: "select_account consent";
+};
+
+const googleProvider = (): { google: GoogleProviderConfig } | undefined => {
+  if (env.GOOGLE_CLIENT_ID === undefined || env.GOOGLE_CLIENT_SECRET === undefined) {
+    return undefined;
+  }
+  return {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      accessType: "offline",
+      prompt: "select_account consent",
+    },
+  };
+};
+
 const createAuth = (
   database: NonNullable<typeof db>,
   twitter: TwitterProviderConfig,
@@ -45,6 +72,11 @@ const createAuth = (
     // Both this app and policingice run on localhost; a distinct cookie
     // prefix keeps their sessions from clobbering each other in dev.
     advanced: { cookiePrefix: "autoplay" },
+    account: {
+      // X accounts carry a synthesized email (see mapProfileToUser) that can
+      // never match the Google one, so linking must not compare them.
+      accountLinking: { enabled: true, allowDifferentEmails: true },
+    },
     user: {
       additionalFields: {
         // Must stay writable: better-auth drops any additional field marked
@@ -73,6 +105,7 @@ const createAuth = (
           image: profile.data.profile_image_url,
         }),
       },
+      ...googleProvider(),
     },
   });
 

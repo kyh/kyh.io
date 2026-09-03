@@ -1,5 +1,4 @@
 import { and, count, desc, eq, gte, max } from "drizzle-orm";
-import { z } from "zod";
 
 import { db } from "@/db/drizzle-client";
 import { channelClip, clip as clipTable, pendingJob } from "@/db/drizzle-schema";
@@ -13,46 +12,25 @@ import {
   submitVideoJob,
 } from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
-import { fetchFeedPage, fetchPersonalizedTrends, searchTrendPosts } from "@/lib/x-api";
-import type { FeedPost, Trend } from "@/lib/x-api";
+import { pickCandidate } from "@/lib/sources";
+import { itemKind, itemSchema } from "@/lib/sources/types";
+import type { Item, SourceAccess } from "@/lib/sources/types";
 
-// The channel scheduler. Programming rules, in order:
-//   1. Lazy: a new clip is generated only while someone whose feed it is
-//      watches (the owner on the public channel, a user on their own) — an
-//      idle channel and anonymous viewers replay the archive instead. Even
+// The channel scheduler. A channel is a source — an X account, a newsletter
+// inbox, a feed — and the rules are the same for all of them, in order:
+//   1. Lazy: a new clip is generated only while someone whose source it is
+//      watches — an idle channel and everyone else replay the archive. Even
 //      then generation runs a program ahead: a request queues the next clip
 //      and airs a rerun meanwhile, and the clip lands on a later request.
-//   2. Popular first: the highest-engagement post without a clip airs next;
-//      when nothing in the current batch clears the bar, older pages of the
-//      feed are fetched (up to a few) before settling.
-//   3. Never twice: every generated clip is archived by post id and rerun
-//      forever — a post is paid for at most once.
+//   2. Best first: the source's adapter (src/lib/sources) says which un-aired
+//      item is worth a video — engagement on X, recency for mail and feeds,
+//      views on YouTube.
+//   3. Never twice: every generated clip is archived by item id and rerun
+//      forever — an item is paid for at most once.
 
-/**
- * A timeline post must clear this engagement score to be worth a video. The
- * timeline is chronological, so this is the only quality filter on that path —
- * set high enough that a quiet feed reruns rather than airing filler.
- */
-const MIN_SCORE = 250;
-/** Likes a trend's posts must clear; filtered by X, not after the fact. */
-const MIN_LIKES = 500;
-/** Trends move slowly enough that re-reading them per program is waste. */
-const TREND_CACHE_TTL_MS = 3_600_000;
-const MAX_FEED_PAGES = 3;
-/** While the archive is this small, air the best available post regardless. */
-const BOOTSTRAP_ARCHIVE_SIZE = 3;
 /** Safety caps on spend, over and above viewer-driven laziness. */
 const MAX_CLIPS_PER_DAY = 100;
 const MIN_MS_BETWEEN_GENERATIONS = 8_000;
-/**
- * X bills per post returned — a 50-post page of the home timeline is ~$0.25 —
- * so this TTL, not the request rate, sets the standing cost of a watching
- * owner. An hour keeps that near the price of one page (three, if a quiet feed
- * makes `pickCandidate` paginate) and sits inside X's 24h read deduplication.
- * Freshness costs little here: clips are seconds long, the archive reruns
- * regardless, and a post popular enough to air is rarely brand new.
- */
-const FEED_CACHE_TTL_MS = 3_600_000;
 /** A submitted job fal still hasn't finished after this long is lost. */
 const PENDING_TTL_MS = 3_600_000;
 /**
@@ -85,16 +63,13 @@ export const DEV_MAX_PLAYABLE_CLIPS = 5;
 export const devCapReached = (playableCount: number, nodeEnv: string | undefined): boolean =>
   nodeEnv !== "production" && playableCount >= DEV_MAX_PLAYABLE_CLIPS;
 
-export type ChannelGenerator = {
-  accessToken: string;
-  userId: string;
-};
-
 export type ChannelViewer = {
-  /** "owner" for the public channel, `u:{id}` for a personal channel. */
+  /** The source id; "owner" for the public channel. */
   channelKey: string;
-  /** Present when this viewer's watching may mint new clips (their feed, their tokens). */
-  generator?: ChannelGenerator;
+  /** Present when this viewer's watching may mint new clips: their source, with a working grant. */
+  access?: SourceAccess;
+  /** Shown instead of the generic OFF AIR reason when there is nothing to rerun. */
+  noAccessReason?: string;
 };
 
 export type NextClipResult =
@@ -107,27 +82,6 @@ export type NextClipResult =
 // database — see src/db/drizzle-schema.ts); module-level maps otherwise, so a
 // local dev server still builds an archive for its lifetime.
 
-const cachedPostSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  createdAt: z.string().optional(),
-  score: z.number(),
-  author: z.object({
-    name: z.string(),
-    username: z.string(),
-    profileImageUrl: z.string().optional(),
-  }),
-});
-
-type CachedPost = z.infer<typeof cachedPostSchema>;
-
-type FeedCache = {
-  source: "home" | "own";
-  posts: CachedPost[];
-  nextToken?: string;
-  pages: number;
-};
-
 /**
  * A channel's one generation, from the moment a request decides to spend
  * until the clip is archived. "claimed" is the window between that decision
@@ -135,8 +89,8 @@ type FeedCache = {
  * slot is taken and airs a rerun instead of paying a second time.
  */
 export type PendingJob =
-  | { phase: "claimed"; prompt: string; post: CachedPost; createdAt: number }
-  | { phase: "submitted"; requestId: string; prompt: string; post: CachedPost; createdAt: number };
+  | { phase: "claimed"; prompt: string; item: Item; createdAt: number }
+  | { phase: "submitted"; requestId: string; prompt: string; item: Item; createdAt: number };
 
 type ClaimedJob = Extract<PendingJob, { phase: "claimed" }>;
 type SubmittedJob = Extract<PendingJob, { phase: "submitted" }>;
@@ -156,23 +110,16 @@ const memIndexes = new Map<string, string[]>();
 const memPending = new Map<string, PendingRow>();
 const memGenDays = new Map<string, number>();
 let memLastGenAt = 0;
-
-// The feed cache is a short-lived rate-limit shield for X reads, not durable
-// state — it stays in memory (per server instance) in both storage modes.
-const memFeedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
-const memTrendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>();
 /** Last frame of the newest clip on a channel, when there is no database. */
 const memSeedFrames = new Map<string, string>();
-/** Which trend a channel searches next; rotates so programs stay varied. */
-const memTrendCursors = new Map<string, number>();
 /** Programs pulled off the air, when there is no database. */
 const memHidden = new Map<string, Set<string>>();
 
 /**
  * A channel's programs, split by whether they still air.
  *
- * `all` is what stops a post being picked again — a hidden program must stay
- * in it, or the scheduler would treat the post as new and pay to generate it
+ * `all` is what stops an item being picked again — a hidden program must stay
+ * in it, or the scheduler would treat the item as new and pay to generate it
  * a second time. `playable` is what reruns draw from.
  */
 type ChannelIndex = {
@@ -187,14 +134,30 @@ const readIndex = async (channelKey: string): Promise<ChannelIndex> => {
     return { all, playable: all.filter((id) => hidden?.has(id) !== true) };
   }
   const rows = await db
-    .select({ postId: channelClip.postId, hiddenAt: channelClip.hiddenAt })
+    .select({ itemId: channelClip.itemId, hiddenAt: channelClip.hiddenAt })
     .from(channelClip)
     .where(eq(channelClip.channelKey, channelKey))
     .orderBy(channelClip.addedAt);
   return {
-    all: rows.map((row) => row.postId),
-    playable: rows.filter((row) => row.hiddenAt === null).map((row) => row.postId),
+    all: rows.map((row) => row.itemId),
+    playable: rows.filter((row) => row.hiddenAt === null).map((row) => row.itemId),
   };
+};
+
+const clipFromRow = (row: typeof clipTable.$inferSelect): Clip => {
+  const clip: Clip = {
+    itemId: row.itemId,
+    kind: itemKind(row.itemId),
+    videoUrl: row.videoUrl,
+    text: row.text,
+    authorName: row.authorName,
+    authorUsername: row.authorUsername,
+    score: row.score,
+    generatedAt: row.generatedAt,
+  };
+  if (row.authorImage !== null) clip.authorImage = row.authorImage;
+  if (row.itemCreatedAt !== null) clip.itemCreatedAt = row.itemCreatedAt;
+  return clip;
 };
 
 /**
@@ -205,49 +168,39 @@ const readIndex = async (channelKey: string): Promise<ChannelIndex> => {
 export const listChannelPrograms = async (channelKey: string): Promise<Program[]> => {
   if (db === undefined) {
     const hiddenIds = memHidden.get(channelKey);
-    return (memIndexes.get(channelKey) ?? []).toReversed().flatMap((postId) => {
-      const clip = memClips.get(postId);
-      return clip === undefined ? [] : [{ clip, hidden: hiddenIds?.has(postId) === true }];
+    return (memIndexes.get(channelKey) ?? []).toReversed().flatMap((itemId) => {
+      const clip = memClips.get(itemId);
+      return clip === undefined ? [] : [{ clip, hidden: hiddenIds?.has(itemId) === true }];
     });
   }
   const rows = await db
     .select()
     .from(channelClip)
-    .innerJoin(clipTable, eq(channelClip.postId, clipTable.postId))
+    .innerJoin(clipTable, eq(channelClip.itemId, clipTable.itemId))
     .where(eq(channelClip.channelKey, channelKey))
     .orderBy(desc(channelClip.addedAt));
-  return rows.map((row) => {
-    const clip: Clip = {
-      postId: row.clip.postId,
-      videoUrl: row.clip.videoUrl,
-      text: row.clip.text,
-      authorName: row.clip.authorName,
-      authorUsername: row.clip.authorUsername,
-      score: row.clip.score,
-      generatedAt: row.clip.generatedAt,
-    };
-    if (row.clip.authorImage !== null) clip.authorImage = row.clip.authorImage;
-    if (row.clip.postCreatedAt !== null) clip.postCreatedAt = row.clip.postCreatedAt;
-    return { clip, hidden: row.channel_clip.hiddenAt !== null };
-  });
+  return rows.map((row) => ({
+    clip: clipFromRow(row.clip),
+    hidden: row.channel_clip.hiddenAt !== null,
+  }));
 };
 
 /**
  * Pull a program off the air, or put it back. The channel_clip row is never
- * deleted: it is what remembers the post was already paid for, so archiving
+ * deleted: it is what remembers the item was already paid for, so archiving
  * must not open the door to generating it again.
  */
 export const setProgramHidden = async (
   channelKey: string,
-  postId: string,
+  itemId: string,
   hidden: boolean,
 ): Promise<void> => {
   if (db === undefined) {
     const set = memHidden.get(channelKey) ?? new Set<string>();
     if (hidden) {
-      set.add(postId);
+      set.add(itemId);
     } else {
-      set.delete(postId);
+      set.delete(itemId);
     }
     memHidden.set(channelKey, set);
     return;
@@ -255,35 +208,14 @@ export const setProgramHidden = async (
   await db
     .update(channelClip)
     .set({ hiddenAt: hidden ? Date.now() : null })
-    .where(and(eq(channelClip.channelKey, channelKey), eq(channelClip.postId, postId)));
+    .where(and(eq(channelClip.channelKey, channelKey), eq(channelClip.itemId, itemId)));
 };
 
-const readClip = async (postId: string): Promise<Clip | undefined> => {
-  if (db === undefined) return memClips.get(postId);
-  const rows = await db.select().from(clipTable).where(eq(clipTable.postId, postId)).limit(1);
+export const readClip = async (itemId: string): Promise<Clip | undefined> => {
+  if (db === undefined) return memClips.get(itemId);
+  const rows = await db.select().from(clipTable).where(eq(clipTable.itemId, itemId)).limit(1);
   const row = rows[0];
-  if (row === undefined) return undefined;
-  const clip: Clip = {
-    postId: row.postId,
-    videoUrl: row.videoUrl,
-    text: row.text,
-    authorName: row.authorName,
-    authorUsername: row.authorUsername,
-    score: row.score,
-    generatedAt: row.generatedAt,
-  };
-  if (row.authorImage !== null) clip.authorImage = row.authorImage;
-  if (row.postCreatedAt !== null) clip.postCreatedAt = row.postCreatedAt;
-  return clip;
-};
-
-const readFeedCache = (channelKey: string): FeedCache | undefined => {
-  const entry = memFeedCaches.get(channelKey);
-  return entry !== undefined && entry.expiresAt > Date.now() ? entry.cache : undefined;
-};
-
-const writeFeedCache = (channelKey: string, cache: FeedCache): void => {
-  memFeedCaches.set(channelKey, { cache, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
+  return row === undefined ? undefined : clipFromRow(row);
 };
 
 /**
@@ -296,47 +228,38 @@ const readSeedFrame = async (channelKey: string): Promise<string | undefined> =>
   const rows = await db
     .select({ lastFrameUrl: clipTable.lastFrameUrl })
     .from(channelClip)
-    .innerJoin(clipTable, eq(channelClip.postId, clipTable.postId))
+    .innerJoin(clipTable, eq(channelClip.itemId, clipTable.itemId))
     .where(eq(channelClip.channelKey, channelKey))
     .orderBy(desc(channelClip.addedAt))
     .limit(1);
   return rows[0]?.lastFrameUrl ?? undefined;
 };
 
-const readTrendCache = (channelKey: string): Trend[] | undefined => {
-  const entry = memTrendCaches.get(channelKey);
-  return entry !== undefined && entry.expiresAt > Date.now() ? entry.trends : undefined;
-};
-
-const writeTrendCache = (channelKey: string, trends: Trend[]): void => {
-  memTrendCaches.set(channelKey, { trends, expiresAt: Date.now() + TREND_CACHE_TTL_MS });
-};
-
 const rowFromPending = (channelKey: string, job: PendingJob): PendingRow => ({
   channelKey,
   requestId: job.phase === "submitted" ? job.requestId : UNSUBMITTED_REQUEST_ID,
   prompt: job.prompt,
-  postJson: JSON.stringify(job.post),
+  itemJson: JSON.stringify(job.item),
   createdAt: job.createdAt,
 });
 
 /**
  * The job a stored row stands for, or undefined once the row is spent: a claim
- * older than CLAIM_TTL_MS, a submission older than PENDING_TTL_MS, or a post
+ * older than CLAIM_TTL_MS, a submission older than PENDING_TTL_MS, or an item
  * that no longer parses.
  */
 export const pendingFromRow = (row: PendingRow, now: number): PendingJob | undefined => {
   const claimed = row.requestId === UNSUBMITTED_REQUEST_ID;
   if (row.createdAt < now - (claimed ? CLAIM_TTL_MS : PENDING_TTL_MS)) return undefined;
-  let post: CachedPost | undefined;
+  let item: Item | undefined;
   try {
-    const parsed = cachedPostSchema.safeParse(JSON.parse(row.postJson));
-    if (parsed.success) post = parsed.data;
+    const parsed = itemSchema.safeParse(JSON.parse(row.itemJson));
+    if (parsed.success) item = parsed.data;
   } catch {
     // Corrupt row — spent.
   }
-  if (post === undefined) return undefined;
-  const base = { prompt: row.prompt, post, createdAt: row.createdAt };
+  if (item === undefined) return undefined;
+  const base = { prompt: row.prompt, item, createdAt: row.createdAt };
   return claimed
     ? { phase: "claimed", ...base }
     : { phase: "submitted", requestId: row.requestId, ...base };
@@ -397,9 +320,9 @@ const readPending = async (channelKey: string): Promise<PendingJob | undefined> 
 const claimPending = async (
   channelKey: string,
   prompt: string,
-  post: CachedPost,
+  item: Item,
 ): Promise<ClaimedJob | undefined> => {
-  const claim: ClaimedJob = { phase: "claimed", prompt, post, createdAt: Date.now() };
+  const claim: ClaimedJob = { phase: "claimed", prompt, item, createdAt: Date.now() };
   const row = rowFromPending(channelKey, claim);
   if (db === undefined) {
     if (memPending.has(channelKey)) return undefined;
@@ -420,7 +343,7 @@ const submitPending = async (
     phase: "submitted",
     requestId,
     prompt: claim.prompt,
-    post: claim.post,
+    item: claim.item,
     createdAt: Date.now(),
   };
   const row = rowFromPending(channelKey, job);
@@ -473,126 +396,19 @@ const recordGeneration = (): void => {
 // ---------------------------------------------------------------------------
 // Programming.
 
-const bestOf = (posts: FeedPost[]): FeedPost | undefined => {
-  let best: FeedPost | undefined;
-  for (const post of posts) {
-    if (best === undefined || post.score > best.score) best = post;
-  }
-  return best;
-};
-
-/**
- * One search against the next trend in rotation. Trends are cached and cycled
- * rather than always taking the biggest, so consecutive programs aren't all
- * about the same thing and one search per request caps the cost at ~$0.06.
- *
- * Returns undefined whenever trends are unavailable — a non-Premium account
- * gets 401/403 here — leaving the caller to fall back to the timeline.
- */
-const pickTrendCandidate = async (
-  generator: ChannelGenerator,
-  channelKey: string,
-  aired: Set<string>,
-): Promise<FeedPost | undefined> => {
-  let trends = readTrendCache(channelKey);
-  if (trends === undefined) {
-    try {
-      trends = await fetchPersonalizedTrends(generator.accessToken);
-    } catch {
-      trends = [];
-    }
-    writeTrendCache(channelKey, trends);
-  }
-  if (trends.length === 0) return undefined;
-
-  const offset = memTrendCursors.get(channelKey) ?? 0;
-  memTrendCursors.set(channelKey, offset + 1);
-  const trend = trends[offset % trends.length];
-  if (trend === undefined) return undefined;
-
-  try {
-    const posts = await searchTrendPosts(generator.accessToken, trend.name, MIN_LIKES);
-    return bestOf(posts.filter((post) => !aired.has(post.id)));
-  } catch {
-    // A search failure (including a 400 if the engagement operators regress)
-    // is not fatal — the timeline fallback still has something to air.
-    return undefined;
-  }
-};
-
-/**
- * The most popular un-aired post in the viewer's feed, paginating deeper when
- * the current batch has nothing worth a video.
- */
-const pickTimelineCandidate = async (
-  generator: ChannelGenerator,
-  channelKey: string,
-  aired: Set<string>,
-): Promise<FeedPost | undefined> => {
-  let cache = readFeedCache(channelKey);
-  if (cache === undefined) {
-    const page = await fetchFeedPage(generator.accessToken, generator.userId);
-    cache = { source: page.source, posts: page.posts, pages: 1 };
-    if (page.nextToken !== undefined) cache.nextToken = page.nextToken;
-    writeFeedCache(channelKey, cache);
-  }
-
-  for (;;) {
-    const unaired = cache.posts.filter((post) => !aired.has(post.id));
-    const popular = unaired.filter((post) => post.score >= MIN_SCORE);
-    if (popular.length > 0) return bestOf(popular);
-
-    if (cache.nextToken !== undefined && cache.pages < MAX_FEED_PAGES) {
-      const page = await fetchFeedPage(
-        generator.accessToken,
-        generator.userId,
-        cache.source,
-        cache.nextToken,
-      );
-      const next: FeedCache = {
-        source: cache.source,
-        posts: [...cache.posts, ...page.posts],
-        pages: cache.pages + 1,
-      };
-      if (page.nextToken !== undefined) next.nextToken = page.nextToken;
-      cache = next;
-      writeFeedCache(channelKey, cache);
-      continue;
-    }
-
-    // Nothing clears the bar. A brand-new channel still needs something on
-    // air, so bootstrap from the best available; an established one reruns.
-    return aired.size < BOOTSTRAP_ARCHIVE_SIZE ? bestOf(unaired) : undefined;
-  }
-};
-
-/**
- * What airs next: the best post about something the viewer's corner of X is
- * talking about, falling back to their timeline when trends are unavailable
- * (no Premium) or turned up nothing new.
- */
-const pickCandidate = async (
-  generator: ChannelGenerator,
-  channelKey: string,
-  aired: Set<string>,
-): Promise<FeedPost | undefined> => {
-  const trending = await pickTrendCandidate(generator, channelKey, aired);
-  if (trending !== undefined) return trending;
-  return pickTimelineCandidate(generator, channelKey, aired);
-};
-
-const clipFromPost = (post: CachedPost, videoUrl: string): Clip => {
+const clipFromItem = (item: Item, videoUrl: string): Clip => {
   const clip: Clip = {
-    postId: post.id,
+    itemId: item.id,
+    kind: item.kind,
     videoUrl,
-    text: post.text,
-    authorName: post.author.name,
-    authorUsername: post.author.username,
-    score: post.score,
+    text: item.text,
+    authorName: item.author.name,
+    authorUsername: item.author.username,
+    score: item.score,
     generatedAt: Date.now(),
   };
-  if (post.author.profileImageUrl !== undefined) clip.authorImage = post.author.profileImageUrl;
-  if (post.createdAt !== undefined) clip.postCreatedAt = post.createdAt;
+  if (item.author.profileImageUrl !== undefined) clip.authorImage = item.author.profileImageUrl;
+  if (item.createdAt !== undefined) clip.itemCreatedAt = item.createdAt;
   return clip;
 };
 
@@ -603,8 +419,8 @@ const archiveClip = async (
   lastFrameUrl: string | undefined,
 ): Promise<void> => {
   if (db === undefined) {
-    memClips.set(clip.postId, clip);
-    memIndexes.set(channelKey, [...index, clip.postId]);
+    memClips.set(clip.itemId, clip);
+    memIndexes.set(channelKey, [...index, clip.itemId]);
     if (lastFrameUrl === undefined) {
       memSeedFrames.delete(channelKey);
     } else {
@@ -614,13 +430,13 @@ const archiveClip = async (
     await db
       .insert(clipTable)
       .values({
-        postId: clip.postId,
+        itemId: clip.itemId,
         videoUrl: clip.videoUrl,
         text: clip.text,
         authorName: clip.authorName,
         authorUsername: clip.authorUsername,
         authorImage: clip.authorImage ?? null,
-        postCreatedAt: clip.postCreatedAt ?? null,
+        itemCreatedAt: clip.itemCreatedAt ?? null,
         score: clip.score,
         lastFrameUrl: lastFrameUrl ?? null,
         generatedAt: clip.generatedAt,
@@ -628,25 +444,25 @@ const archiveClip = async (
       .onConflictDoNothing();
     await db
       .insert(channelClip)
-      .values({ channelKey, postId: clip.postId, addedAt: Date.now() })
+      .values({ channelKey, itemId: clip.itemId, addedAt: Date.now() })
       .onConflictDoNothing();
   }
   recordGeneration();
 };
 
 /**
- * Air a clip another channel already paid for. Clips are global by post id, so
+ * Air a clip another channel already paid for. Clips are global by item id, so
  * this is the "never twice" rule doing its job across channels — no spend, and
  * nothing to record against the daily cap.
  */
 const adoptClip = async (channelKey: string, index: string[], clip: Clip): Promise<void> => {
   if (db === undefined) {
-    memIndexes.set(channelKey, [...index, clip.postId]);
+    memIndexes.set(channelKey, [...index, clip.itemId]);
     return;
   }
   await db
     .insert(channelClip)
-    .values({ channelKey, postId: clip.postId, addedAt: Date.now() })
+    .values({ channelKey, itemId: clip.itemId, addedAt: Date.now() })
     .onConflictDoNothing();
 };
 
@@ -676,7 +492,7 @@ const resumePending = async (
     return { status: "none" };
   }
   if (job.status !== "done" || job.videoUrl === undefined) return { status: "in-flight" };
-  const clip = clipFromPost(pending.post, job.videoUrl);
+  const clip = clipFromItem(pending.item, job.videoUrl);
   const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
   await archiveClip(channelKey, index, clip, lastFrame);
   // Overlapping requests can both find the job finished. Archiving twice is
@@ -696,8 +512,8 @@ type FreshResult = { clip: Clip; generated: boolean };
  * to rerun, which waits out its budget for the first-ever program.
  */
 const generateFresh = async (
-  viewer: ChannelViewer,
-  generator: ChannelGenerator,
+  channelKey: string,
+  access: SourceAccess,
   index: ChannelIndex,
   falKey: string,
   deadline: number,
@@ -707,51 +523,51 @@ const generateFresh = async (
   const mayQueue =
     !devCapReached(index.playable.length, process.env.NODE_ENV) && (await generationAllowed());
 
-  const pending = await resumePending(viewer.channelKey, index.all, falKey);
+  const pending = await resumePending(channelKey, index.all, falKey);
   if (pending.status === "in-flight") return undefined;
   const harvested: FreshResult | undefined =
     pending.status === "done" ? { clip: pending.clip, generated: true } : undefined;
   if (!mayQueue) return harvested;
 
   const aired = new Set(index.all);
-  if (harvested !== undefined) aired.add(harvested.clip.postId);
-  const candidate = await pickCandidate(generator, viewer.channelKey, aired);
+  if (harvested !== undefined) aired.add(harvested.clip.itemId);
+  const candidate = await pickCandidate(access, channelKey, aired);
   if (candidate === undefined) return harvested;
 
   const existing = await readClip(candidate.id);
   if (existing !== undefined) {
-    await adoptClip(viewer.channelKey, [...aired], existing);
+    await adoptClip(channelKey, [...aired], existing);
     return harvested ?? { clip: existing, generated: false };
   }
 
   const prompt = buildVideoPrompt(candidate.text, candidate.author.name);
-  const claim = await claimPending(viewer.channelKey, prompt, candidate);
+  const claim = await claimPending(channelKey, prompt, candidate);
   if (claim === undefined) return harvested;
 
   // Continue out of the previous program's final frame where there is one, so
   // the cut between clips lands on an identical image.
   const seedFrame =
-    videoModel === DEFAULT_VIDEO_MODEL ? await readSeedFrame(viewer.channelKey) : undefined;
+    videoModel === DEFAULT_VIDEO_MODEL ? await readSeedFrame(channelKey) : undefined;
   const model = seedFrame === undefined ? videoModel : CONTINUATION_VIDEO_MODEL;
 
   let requestId: string;
   try {
     requestId = await submitVideoJob(falKey, model, prompt, seedFrame);
   } catch (error) {
-    await releasePending(viewer.channelKey, rowFromPending(viewer.channelKey, claim));
+    await releasePending(channelKey, rowFromPending(channelKey, claim));
     throw error;
   }
-  const submitted = await submitPending(viewer.channelKey, claim, requestId);
+  const submitted = await submitPending(channelKey, claim, requestId);
 
   if (harvested !== undefined || index.playable.length > 0) return harvested;
 
   // Nothing to rerun yet: the first program is worth waiting for.
   const job = await awaitVideoJob(falKey, model, requestId, deadline - Date.now());
   if (job.status !== "done" || job.videoUrl === undefined) return undefined;
-  const clip = clipFromPost(candidate, job.videoUrl);
+  const clip = clipFromItem(candidate, job.videoUrl);
   const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
-  await archiveClip(viewer.channelKey, [...aired], clip, lastFrame);
-  await releasePending(viewer.channelKey, rowFromPending(viewer.channelKey, submitted));
+  await archiveClip(channelKey, [...aired], clip, lastFrame);
+  await releasePending(channelKey, rowFromPending(channelKey, submitted));
   return { clip, generated: true };
 };
 
@@ -765,9 +581,9 @@ export const nextChannelClip = async (
 
   let freshFailure: string | undefined;
   const falKey = env.FAL_KEY;
-  if (viewer.generator !== undefined && falKey !== undefined) {
+  if (viewer.access !== undefined && falKey !== undefined) {
     try {
-      const result = await generateFresh(viewer, viewer.generator, index, falKey, deadline);
+      const result = await generateFresh(viewer.channelKey, viewer.access, index, falKey, deadline);
       if (result !== undefined) {
         return { kind: result.generated ? "fresh" : "rerun", clip: result.clip };
       }
@@ -790,11 +606,14 @@ export const nextChannelClip = async (
   if (freshFailure !== undefined) {
     return { kind: "off-air", reason: freshFailure };
   }
-  if (viewer.generator === undefined) {
+  if (viewer.noAccessReason !== undefined) {
+    return { kind: "off-air", reason: viewer.noAccessReason };
+  }
+  if (viewer.access === undefined) {
     return {
       kind: "off-air",
       reason: "Nothing in the archive yet — the channel goes live once its owner tunes in.",
     };
   }
-  return { kind: "off-air", reason: "Nothing worth airing in the feed yet — check back soon." };
+  return { kind: "off-air", reason: "Nothing worth airing on this source yet — check back soon." };
 };

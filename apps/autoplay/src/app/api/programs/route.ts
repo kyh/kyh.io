@@ -5,10 +5,10 @@ import type { ErrorPayload, ProgramsPayload } from "@/lib/api-contract";
 import { hideRequestSchema } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
 import { listChannelPrograms, setProgramHidden } from "@/lib/channel";
-import { env } from "@/lib/env";
+import { resolveSource } from "@/lib/lineup";
 
 // What has aired on a channel, and whether it still does. Anyone may look at
-// the public channel's history; only the account whose feed a channel is may
+// the public channel's history; only the account whose source a channel is may
 // take something off the air.
 
 const errorResponse = (status: number, error: string): NextResponse => {
@@ -16,37 +16,14 @@ const errorResponse = (status: number, error: string): NextResponse => {
   return NextResponse.json(payload, { status });
 };
 
-const isOwnerHandle = (username: string): boolean =>
-  env.OWNER_X_USERNAME !== undefined &&
-  username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
-
-type Channel = {
-  key: string;
-  editable: boolean;
-};
-
-const resolveChannel = async (personal: boolean): Promise<Channel | undefined> => {
-  const session = await getSession();
-  if (personal) {
-    if (session === null) return undefined;
-    return { key: `u:${session.user.id}`, editable: true };
-  }
-  const username = session?.user.username ?? undefined;
-  return {
-    key: "owner",
-    editable: session !== null && username !== undefined && isOwnerHandle(username),
-  };
-};
-
 export const GET = async (request: NextRequest): Promise<NextResponse> => {
-  const personal = request.nextUrl.searchParams.get("personal") === "true";
-  const channel = await resolveChannel(personal);
-  if (channel === undefined) {
-    return errorResponse(401, "Sign in with X to see your own channel");
-  }
+  const sourceId = request.nextUrl.searchParams.get("sourceId");
+  if (sourceId === null) return errorResponse(400, "Expected ?sourceId=");
+  const source = await resolveSource(sourceId, await getSession());
+  if (source === undefined) return errorResponse(404, "No such channel");
   const payload: ProgramsPayload = {
-    programs: await listChannelPrograms(channel.key),
-    editable: channel.editable,
+    programs: await listChannelPrograms(source.channelKey),
+    editable: source.editable,
   };
   return NextResponse.json(payload);
 };
@@ -54,12 +31,12 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const body = hideRequestSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
-    return errorResponse(400, "Expected { postId: string, personal: boolean, hidden: boolean }");
+    return errorResponse(400, "Expected { sourceId: string, itemId: string, hidden: boolean }");
   }
-  const channel = await resolveChannel(body.data.personal);
-  if (channel === undefined || !channel.editable) {
+  const source = await resolveSource(body.data.sourceId, await getSession());
+  if (source === undefined || !source.editable) {
     return errorResponse(403, "Only the channel's own account can change what airs");
   }
-  await setProgramHidden(channel.key, body.data.postId, body.data.hidden);
+  await setProgramHidden(source.channelKey, body.data.itemId, body.data.hidden);
   return NextResponse.json({ ok: true });
 };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import type { SessionPayload } from "@/lib/api-contract";
-import { sessionPayloadSchema } from "@/lib/api-contract";
+import { PUBLIC_CHANNEL, sessionPayloadSchema } from "@/lib/api-contract";
 import { Tv } from "@/components/tv";
 import type { TvProps } from "@/components/tv";
 
@@ -31,7 +31,12 @@ export const AutoplayApp = () => {
         if (!cancelled) setSession(payload);
       } catch {
         if (!cancelled) {
-          setSession({ missingKeys: [], user: null, ownerHandle: null, viewerIsOwner: false });
+          setSession({
+            missingKeys: [],
+            user: null,
+            channels: [PUBLIC_CHANNEL],
+            googleReady: false,
+          });
           setUrlError("Couldn't reach the station — reload the page");
         }
       }

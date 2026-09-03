@@ -38,8 +38,9 @@ describe("devCapReached", () => {
 
 describe("pendingFromRow", () => {
   const now = 1_700_000_000_000;
-  const postJson = JSON.stringify({
-    id: "1",
+  const itemJson = JSON.stringify({
+    id: "x:1",
+    kind: "x",
     text: "hello",
     score: 1,
     author: { name: "A", username: "a" },
@@ -48,7 +49,7 @@ describe("pendingFromRow", () => {
     channelKey: "owner",
     requestId: "req-1",
     prompt: "p",
-    postJson,
+    itemJson,
     createdAt: now,
   };
 
@@ -72,7 +73,7 @@ describe("pendingFromRow", () => {
   });
 
   it("treats a post that no longer parses as no job", () => {
-    assert.equal(pendingFromRow({ ...submitted, postJson: "{" }, now), undefined);
-    assert.equal(pendingFromRow({ ...submitted, postJson: "{}" }, now), undefined);
+    assert.equal(pendingFromRow({ ...submitted, itemJson: "{" }, now), undefined);
+    assert.equal(pendingFromRow({ ...submitted, itemJson: "{}" }, now), undefined);
   });
 });

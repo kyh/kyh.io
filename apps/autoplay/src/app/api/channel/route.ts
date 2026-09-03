@@ -6,8 +6,7 @@ import { channelRequestSchema } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
 import { nextChannelClip } from "@/lib/channel";
 import type { ChannelViewer } from "@/lib/channel";
-import { env } from "@/lib/env";
-import { freshXAccount } from "@/lib/x-account";
+import { resolveSource } from "@/lib/lineup";
 
 // Only a channel's first-ever program waits on generation; everything after
 // is served from the archive while the next clip generates ahead.
@@ -18,44 +17,27 @@ const errorResponse = (status: number, error: string): NextResponse => {
   return NextResponse.json(payload, { status });
 };
 
-const isOwnerHandle = (username: string): boolean =>
-  env.OWNER_X_USERNAME !== undefined &&
-  username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
-
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const receivedAt = Date.now();
   const body = channelRequestSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
-    return errorResponse(400, "Expected { exclude: string[], personal: boolean }");
+    return errorResponse(400, "Expected { sourceId: string, exclude: string[] }");
   }
 
   const session = await getSession();
-
-  let viewer: ChannelViewer;
-  if (body.data.personal) {
-    if (session === null) {
-      return errorResponse(401, "Sign in with X to watch your own channel");
-    }
-    const xAccount = await freshXAccount(session.user.id);
-    if (xAccount === undefined) {
-      return errorResponse(401, "X connection expired — sign in again");
-    }
-    viewer = {
-      channelKey: `u:${session.user.id}`,
-      generator: { accessToken: xAccount.accessToken, userId: xAccount.xUserId },
-    };
-  } else {
-    // The public channel: only its owner's watching mints new clips —
-    // everyone else replays the archive, so visitors can't spend money.
-    viewer = { channelKey: "owner" };
-    const username = session?.user.username ?? undefined;
-    if (session !== null && username !== undefined && isOwnerHandle(username)) {
-      const xAccount = await freshXAccount(session.user.id);
-      if (xAccount !== undefined) {
-        viewer.generator = { accessToken: xAccount.accessToken, userId: xAccount.xUserId };
-      }
-    }
+  const source = await resolveSource(body.data.sourceId, session);
+  if (source === undefined) {
+    return errorResponse(
+      session === null ? 401 : 404,
+      session === null ? "Sign in with X to watch your own channels" : "No such channel",
+    );
   }
+
+  // Generation happens only for the viewer whose source this is — everyone
+  // else replays the archive, so visitors can't spend money.
+  const viewer: ChannelViewer = { channelKey: source.channelKey };
+  if (source.access !== undefined) viewer.access = source.access;
+  if (source.noAccessReason !== undefined) viewer.noAccessReason = source.noAccessReason;
 
   const result = await nextChannelClip(viewer, body.data.exclude, receivedAt);
   return NextResponse.json(result);

@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
-import { channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
+import type { ChannelSummary, Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
+import { PUBLIC_CHANNEL, channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
 import type { ChannelPayload } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
-import { ProgramsPanel } from "@/components/programs-panel";
+import { GuideDialog } from "@/components/guide-dialog";
+import { SourcesDialog } from "@/components/sources-dialog";
 
 // The TV. One full-bleed screen, an auto-hiding on-screen display, and static
 // between programs. The client keeps exactly one clip buffered ahead of the
@@ -23,12 +24,12 @@ const STATIC_SWAP_MS = 350;
 const RETRY_MS = 30_000;
 const SEEN_LIMIT = 16;
 
-const requestClip = async (personal: boolean, exclude: string[]): Promise<ChannelPayload> => {
+const requestClip = async (sourceId: string, exclude: string[]): Promise<ChannelPayload> => {
   try {
     const response = await fetch("/api/channel", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ exclude, personal }),
+      body: JSON.stringify({ sourceId, exclude }),
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
@@ -54,10 +55,13 @@ const logout = async () => {
 };
 
 type ScreenProps = {
-  personal: boolean;
+  channel: ChannelSummary;
   channelLabel: string;
-  canSwitch: boolean;
-  onSwitch: () => void;
+  channels: ChannelSummary[];
+  onPrev: () => void;
+  onNext: () => void;
+  onLineup: (channels: ChannelSummary[]) => void;
+  googleReady: boolean;
   muted: boolean;
   onToggleMute: () => void;
   user: UserSummary | null;
@@ -100,6 +104,7 @@ const TvScreen = (props: ScreenProps) => {
   const [staticOn, setStaticOn] = useState(true);
   const [paused, setPaused] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   // Which of the two stacked players is on screen. The other one holds the
   // buffered program, already loaded, so a swap is a crossfade and not a load.
@@ -115,7 +120,7 @@ const TvScreen = (props: ScreenProps) => {
   const pausedRef = useRef(false);
 
   const markSeen = (clip: Clip) => {
-    seenRef.current = [...seenRef.current.filter((id) => id !== clip.postId), clip.postId].slice(
+    seenRef.current = [...seenRef.current.filter((id) => id !== clip.itemId), clip.itemId].slice(
       -SEEN_LIMIT,
     );
   };
@@ -136,7 +141,7 @@ const TvScreen = (props: ScreenProps) => {
     if (currentRef.current !== undefined && bufferedRef.current !== undefined) return;
     fetchingRef.current = true;
     try {
-      const result = await requestClip(props.personal, seenRef.current);
+      const result = await requestClip(props.channel.sourceId, seenRef.current);
       if (result.kind === "off-air") {
         if (currentRef.current === undefined) {
           setOffAir(result.reason);
@@ -150,7 +155,9 @@ const TvScreen = (props: ScreenProps) => {
         // Start buffering the next program right away so the first clip
         // doesn't have to loop while the pipeline warms up.
         window.setTimeout(() => fillRef.current(), 500);
-      } else {
+      } else if (bufferedRef.current === undefined) {
+        // The guide may have lined something up while this was in flight;
+        // the viewer's pick wins over the channel's.
         setBuffered(program);
       }
     } finally {
@@ -225,6 +232,23 @@ const TvScreen = (props: ScreenProps) => {
       setActiveSlot(incoming);
     }
     fillRef.current();
+  };
+
+  /**
+   * Line up a program of the viewer's choosing. It goes into the buffer, so
+   * the clip on air plays out and the usual handover brings it in; with
+   * nothing on air yet it is simply the first program.
+   */
+  const queueNext = (clip: Clip) => {
+    const program: Playable = { kind: "rerun", clip };
+    setGuideOpen(false);
+    if (currentRef.current === undefined) {
+      tuneIn(program);
+      return;
+    }
+    bufferedRef.current = program;
+    markSeen(clip);
+    setBuffered(program);
   };
 
   useEffect(() => {
@@ -383,7 +407,7 @@ const TvScreen = (props: ScreenProps) => {
               <span className="truncate">{props.urlError ?? "No signal"}</span>
             ) : (
               <Marquee
-                text={`${displayPostText(current.clip.text)} — @${current.clip.authorUsername}`}
+                text={`${displayPostText(current.clip.text)} — ${attribution(current.clip)}`}
               />
             )}
           </div>
@@ -401,14 +425,34 @@ const TvScreen = (props: ScreenProps) => {
           >
             guide
           </button>
-          {props.canSwitch && (
+          {props.user !== null && (
             <button
               type="button"
-              onClick={props.onSwitch}
+              onClick={() => setSourcesOpen(true)}
               className="y2k-btn status-btn cursor-pointer"
             >
-              ch+
+              sources
             </button>
+          )}
+          {props.channels.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={props.onPrev}
+                aria-label="Previous channel"
+                className="y2k-btn status-btn cursor-pointer"
+              >
+                ch−
+              </button>
+              <button
+                type="button"
+                onClick={props.onNext}
+                aria-label="Next channel"
+                className="y2k-btn status-btn cursor-pointer"
+              >
+                ch+
+              </button>
+            </>
           )}
           {props.user === null ? (
             props.loginReady && (
@@ -428,7 +472,22 @@ const TvScreen = (props: ScreenProps) => {
         </div>
       </div>
 
-      {guideOpen && <ProgramsPanel personal={props.personal} onClose={() => setGuideOpen(false)} />}
+      {guideOpen && (
+        <GuideDialog
+          sourceId={props.channel.sourceId}
+          {...(buffered === undefined ? {} : { queuedItemId: buffered.clip.itemId })}
+          onQueue={queueNext}
+          onClose={() => setGuideOpen(false)}
+        />
+      )}
+      {props.user !== null && sourcesOpen && (
+        <SourcesDialog
+          channels={props.channels}
+          googleReady={props.googleReady}
+          onLineup={props.onLineup}
+          onClose={() => setSourcesOpen(false)}
+        />
+      )}
     </main>
   );
 };
@@ -438,9 +497,25 @@ export type TvProps = {
   urlError?: string;
 };
 
+/** How the ticker credits a program; the @handle convention is X's alone. */
+const attribution = (clip: Clip): string =>
+  clip.kind === "x" ? `@${clip.authorUsername}` : clip.authorName;
+
+const channelNumber = (channel: ChannelSummary): string =>
+  `CH ${String(channel.number).padStart(2, "0")}`;
+
+/** Wraps in both directions: ch− on CH 01 lands on the last channel. */
+const channelAt = (channels: ChannelSummary[], tuned: number): ChannelSummary => {
+  const count = channels.length;
+  return channels[((tuned % count) + count) % count] ?? PUBLIC_CHANNEL;
+};
+
 export const Tv = (props: TvProps) => {
-  const [personal, setPersonal] = useState(false);
+  const [tuned, setTuned] = useState(0);
   const [muted, setMuted] = useState(true);
+  // The lineup as last told by the station; the sources dialog updates it
+  // without a reload.
+  const [lineup, setLineup] = useState<ChannelSummary[] | undefined>(undefined);
 
   if (props.session === undefined) {
     return (
@@ -461,11 +536,8 @@ export const Tv = (props: TvProps) => {
   }
 
   const session = props.session;
-  const canSwitch = session.user !== null;
-  const showPersonal = personal && canSwitch;
-  const ownerLabel =
-    session.ownerHandle !== null ? `CH 01 · @${session.ownerHandle}` : "CH 01 · public access";
-  const channelLabel = showPersonal ? `CH 02 · @${session.user?.username}` : ownerLabel;
+  const channels = lineup ?? session.channels;
+  const channel = channelAt(channels, tuned);
   // Sign-in runs through better-auth, which needs the X app, a secret, and
   // the database to store users in.
   const loginReady = !session.missingKeys.some((key) =>
@@ -473,10 +545,13 @@ export const Tv = (props: TvProps) => {
   );
 
   const screenProps: ScreenProps = {
-    personal: showPersonal,
-    channelLabel,
-    canSwitch,
-    onSwitch: () => setPersonal((value) => !value),
+    channel,
+    channelLabel: `${channelNumber(channel)} · ${channel.label}`,
+    channels,
+    onPrev: () => setTuned((value) => value - 1),
+    onNext: () => setTuned((value) => value + 1),
+    onLineup: setLineup,
+    googleReady: session.googleReady,
     muted,
     onToggleMute: () => setMuted((value) => !value),
     user: session.user,
@@ -485,5 +560,5 @@ export const Tv = (props: TvProps) => {
   };
   if (props.urlError !== undefined) screenProps.urlError = props.urlError;
 
-  return <TvScreen key={showPersonal ? "personal" : "owner"} {...screenProps} />;
+  return <TvScreen key={channel.sourceId} {...screenProps} />;
 };
