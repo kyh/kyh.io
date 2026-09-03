@@ -46,3 +46,13 @@ export const Section = ({ children, className, id, delay = 0 }: SectionProps) =>
 };
 
 export const Separator = () => <div role="separator" className="bg-border h-px" />;
+
+/** Gives pages a real heading outline rather than a flat run of h2s. */
+export const SubHeading = ({ children, id }: { children: string; id?: string }) => (
+  <h3
+    id={id}
+    className="text-foreground-highlighted mt-2 scroll-mt-[120px] text-sm leading-none font-medium sm:scroll-mt-[100px]"
+  >
+    {children}
+  </h3>
+);

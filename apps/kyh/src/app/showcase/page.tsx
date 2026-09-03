@@ -6,6 +6,7 @@ import { Radial } from "./_components/radial";
 export const metadata: Metadata = {
   title: "Showcase",
   description: "The ever growing list of things I'm working on.",
+  alternates: { canonical: "/showcase" },
 };
 
 const filteredProjects = projects.filter(

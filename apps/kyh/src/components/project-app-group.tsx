@@ -27,7 +27,10 @@ const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
+// Passed to next/image as explicit width/height. `fill` + `sizes` would make it
+// enumerate every configured width into the srcSet — ~2.5 KB of markup per icon.
 const iconSize = 60;
+const miniIconSize = 20;
 const maxLabelWidth = 90;
 
 type ProjectAppProps = {
@@ -69,7 +72,14 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
         }`}
         data-slot="app-icon"
       >
-        <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />
+        <Image
+          src={iconSrc}
+          alt={name}
+          width={iconSize}
+          height={iconSize}
+          className="size-full object-cover"
+          draggable={false}
+        />
       </div>
 
       {/* Visible truncated label */}
@@ -237,8 +247,9 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                       <Image
                         src={item.iconSrc}
                         alt={item.name}
-                        fill
-                        sizes="20px"
+                        width={miniIconSize}
+                        height={miniIconSize}
+                        className="size-full object-cover"
                         draggable={false}
                       />
                     </div>

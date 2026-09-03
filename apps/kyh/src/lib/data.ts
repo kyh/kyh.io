@@ -1,4 +1,4 @@
-import { social } from "@/components/social";
+import { social } from "@/lib/social";
 import { getPublicAssetUrl, getPublicFaviconUrl } from "@/lib/public-assets";
 
 export type ProjectType = {

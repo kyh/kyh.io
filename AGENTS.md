@@ -40,7 +40,7 @@ pnpm verify       # typecheck · lint · format · test
 pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml` and `apps/policingice` — the only apps with tests.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml`, `apps/policingice` and `apps/kyh` — the only apps with tests. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
 **Read the lint caveat before trusting a green run.** `.oxlintrc.json` sets every enabled category to `warn`, so `lint` is `oxlint --report-unused-disable-directives --max-warnings 54` — a ratchet pinned to the current backlog, not a clean gate. It fails on warning 55, so a new correctness regression is caught, but 54 pre-existing warnings still pass. Lower the number whenever you clear some; never raise it.
 
@@ -66,7 +66,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 | App           | Dev command            | Port                        | Agent-verifiable at runtime?                   |
 | ------------- | ---------------------- | --------------------------- | ---------------------------------------------- |
-| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config                  |
+| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config; has tests       |
 | `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)    |
 | `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                  |
 | `autoplay`    | `pnpm dev:autoplay`    | 3005                        | OFF AIR screen yes; live TV needs X + fal keys |
