@@ -388,9 +388,9 @@ const TvScreen = (props: ScreenProps) => {
             )}
           </div>
 
-          {current !== undefined && (
+          {live && (
             <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
-              {live ? <span className="text-accent">● live</span> : <span>rerun</span>}
+              <span className="text-accent">● live</span>
             </div>
           )}
 

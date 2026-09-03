@@ -9,8 +9,8 @@ import type { ChannelViewer } from "@/lib/channel";
 import { env } from "@/lib/env";
 import { freshXAccount } from "@/lib/x-account";
 
-// Generation for the default model takes a few seconds; leave headroom for
-// slower models before their job is parked as pending.
+// Only a channel's first-ever program waits on generation; everything after
+// is served from the archive while the next clip generates ahead.
 export const maxDuration = 60;
 
 const errorResponse = (status: number, error: string): NextResponse => {

@@ -226,18 +226,16 @@ export const getVideoJob = async (
 const POLL_INTERVAL_MS = 1_000;
 
 /**
- * Submit and poll until done or the deadline passes. The default model
- * finishes in a few seconds so the caller usually gets the finished job in
- * one round trip; slower models return a pending job for client polling.
+ * Poll a submitted job until it finishes or the deadline passes. The default
+ * model takes ten to thirty seconds for a clip, so callers wait only when they
+ * have nothing else to air; otherwise the job comes back still in flight.
  */
-export const generateVideo = async (
+export const awaitVideoJob = async (
   falKey: string,
   model: string,
-  prompt: string,
+  requestId: string,
   deadlineMs: number,
-  seedImageUrl?: string,
 ): Promise<VideoJob> => {
-  const requestId = await submitVideoJob(falKey, model, prompt, seedImageUrl);
   const deadline = Date.now() + deadlineMs;
   let job: VideoJob = { status: "queued", requestId };
   while (Date.now() < deadline) {

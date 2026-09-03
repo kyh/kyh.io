@@ -5,7 +5,13 @@ import { db } from "@/db/drizzle-client";
 import { channelClip, clip as clipTable, pendingJob } from "@/db/drizzle-schema";
 import type { Clip, Program } from "@/lib/api-contract";
 import { DEFAULT_VIDEO_MODEL, env, videoModel } from "@/lib/env";
-import { CONTINUATION_VIDEO_MODEL, extractLastFrame, generateVideo, getVideoJob } from "@/lib/fal";
+import {
+  CONTINUATION_VIDEO_MODEL,
+  awaitVideoJob,
+  extractLastFrame,
+  getVideoJob,
+  submitVideoJob,
+} from "@/lib/fal";
 import { buildVideoPrompt } from "@/lib/prompt";
 import { fetchFeedPage, fetchPersonalizedTrends, searchTrendPosts } from "@/lib/x-api";
 import type { FeedPost, Trend } from "@/lib/x-api";
@@ -13,7 +19,9 @@ import type { FeedPost, Trend } from "@/lib/x-api";
 // The channel scheduler. Programming rules, in order:
 //   1. Lazy: a new clip is generated only while someone whose feed it is
 //      watches (the owner on the public channel, a user on their own) — an
-//      idle channel and anonymous viewers replay the archive instead.
+//      idle channel and anonymous viewers replay the archive instead. Even
+//      then generation runs a program ahead: a request queues the next clip
+//      and airs a rerun meanwhile, and the clip lands on a later request.
 //   2. Popular first: the highest-engagement post without a clip airs next;
 //      when nothing in the current batch clears the bar, older pages of the
 //      feed are fetched (up to a few) before settling.
@@ -45,17 +53,23 @@ const MIN_MS_BETWEEN_GENERATIONS = 8_000;
  * regardless, and a post popular enough to air is rarely brand new.
  */
 const FEED_CACHE_TTL_MS = 3_600_000;
+/** A submitted job fal still hasn't finished after this long is lost. */
 const PENDING_TTL_MS = 3_600_000;
 /**
- * How long a request may spend reaching a finished clip, measured from when it
- * arrived — session lookups, token refresh and feed pagination all come out of
- * it. The route's maxDuration is 60s; the remainder is headroom for parking a
- * pending job, which is what keeps a slow generation from being paid for and
- * then lost to a killed function.
+ * A claim that never turned into a submission belongs to a request that died
+ * between the two; submitting takes well under a second, so anything older
+ * is safe to take over.
+ */
+const CLAIM_TTL_MS = 60_000;
+/**
+ * How long a request may wait for a channel's first-ever program, measured
+ * from when it arrived — session lookups, token refresh and feed pagination
+ * all come out of it. Every later program is served from the archive while
+ * generation runs ahead, so nothing else waits on fal. The route's
+ * maxDuration is 60s; the remainder is headroom for the frame extraction and
+ * archive writes that follow.
  */
 const GENERATE_BUDGET_MS = 45_000;
-/** Below this much budget left, submitting to fal would only park a job. */
-const MIN_GENERATE_MS = 5_000;
 /** Pulling the closing frame is a cheap ffmpeg job; never let it hold a request. */
 const FRAME_EXTRACT_BUDGET_MS = 8_000;
 /**
@@ -114,15 +128,32 @@ type FeedCache = {
   pages: number;
 };
 
-type PendingJob = {
-  requestId: string;
-  prompt: string;
-  post: CachedPost;
-};
+/**
+ * A channel's one generation, from the moment a request decides to spend
+ * until the clip is archived. "claimed" is the window between that decision
+ * and fal accepting the job — written first, so a concurrent request sees the
+ * slot is taken and airs a rerun instead of paying a second time.
+ */
+export type PendingJob =
+  | { phase: "claimed"; prompt: string; post: CachedPost; createdAt: number }
+  | { phase: "submitted"; requestId: string; prompt: string; post: CachedPost; createdAt: number };
+
+type ClaimedJob = Extract<PendingJob, { phase: "claimed" }>;
+type SubmittedJob = Extract<PendingJob, { phase: "submitted" }>;
+
+type PendingRow = typeof pendingJob.$inferInsert;
+/** What tells one occupant of the slot from the next: the id and when it arrived. */
+type PendingIdentity = Pick<PendingRow, "requestId" | "createdAt">;
+
+/**
+ * `pending_job.request_id` is NOT NULL, so a claim that has not reached fal
+ * yet is stored with an empty id rather than a schema change.
+ */
+const UNSUBMITTED_REQUEST_ID = "";
 
 const memClips = new Map<string, Clip>();
 const memIndexes = new Map<string, string[]>();
-const memPending = new Map<string, PendingJob>();
+const memPending = new Map<string, PendingRow>();
 const memGenDays = new Map<string, number>();
 let memLastGenAt = 0;
 
@@ -281,58 +312,135 @@ const writeTrendCache = (channelKey: string, trends: Trend[]): void => {
   memTrendCaches.set(channelKey, { trends, expiresAt: Date.now() + TREND_CACHE_TTL_MS });
 };
 
-const readPending = async (channelKey: string): Promise<PendingJob | undefined> => {
-  if (db === undefined) return memPending.get(channelKey);
-  const rows = await db
-    .select()
-    .from(pendingJob)
-    .where(eq(pendingJob.channelKey, channelKey))
-    .limit(1);
-  const row = rows[0];
-  if (row === undefined) return undefined;
-  if (row.createdAt < Date.now() - PENDING_TTL_MS) {
-    // A pending marker outliving an hour is a lost job; drop it.
-    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
-    return undefined;
-  }
+const rowFromPending = (channelKey: string, job: PendingJob): PendingRow => ({
+  channelKey,
+  requestId: job.phase === "submitted" ? job.requestId : UNSUBMITTED_REQUEST_ID,
+  prompt: job.prompt,
+  postJson: JSON.stringify(job.post),
+  createdAt: job.createdAt,
+});
+
+/**
+ * The job a stored row stands for, or undefined once the row is spent: a claim
+ * older than CLAIM_TTL_MS, a submission older than PENDING_TTL_MS, or a post
+ * that no longer parses.
+ */
+export const pendingFromRow = (row: PendingRow, now: number): PendingJob | undefined => {
+  const claimed = row.requestId === UNSUBMITTED_REQUEST_ID;
+  if (row.createdAt < now - (claimed ? CLAIM_TTL_MS : PENDING_TTL_MS)) return undefined;
   let post: CachedPost | undefined;
   try {
     const parsed = cachedPostSchema.safeParse(JSON.parse(row.postJson));
     if (parsed.success) post = parsed.data;
   } catch {
-    // Corrupt row — treated as absent below.
+    // Corrupt row — spent.
   }
-  if (post === undefined) {
-    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
-    return undefined;
-  }
-  return { requestId: row.requestId, prompt: row.prompt, post };
+  if (post === undefined) return undefined;
+  const base = { prompt: row.prompt, post, createdAt: row.createdAt };
+  return claimed
+    ? { phase: "claimed", ...base }
+    : { phase: "submitted", requestId: row.requestId, ...base };
 };
 
-const writePending = async (channelKey: string, job: PendingJob | undefined): Promise<void> => {
+const sameOccupant = (row: PendingIdentity, other: PendingIdentity): boolean =>
+  row.requestId === other.requestId && row.createdAt === other.createdAt;
+
+/**
+ * Delete the row, but only while it is still the one that was read. Between
+ * the read and now another request may have released it and claimed afresh,
+ * and that claim must not be swept away with the old row. Returns whether this
+ * caller was the one to release it — the tie-break when two requests both
+ * find the same job finished.
+ */
+const releasePending = async (channelKey: string, row: PendingIdentity): Promise<boolean> => {
   if (db === undefined) {
-    if (job === undefined) {
-      memPending.delete(channelKey);
-    } else {
-      memPending.set(channelKey, job);
-    }
-    return;
+    const current = memPending.get(channelKey);
+    if (current === undefined || !sameOccupant(current, row)) return false;
+    memPending.delete(channelKey);
+    return true;
   }
-  if (job === undefined) {
-    await db.delete(pendingJob).where(eq(pendingJob.channelKey, channelKey));
-    return;
+  const result = await db
+    .delete(pendingJob)
+    .where(
+      and(
+        eq(pendingJob.channelKey, channelKey),
+        eq(pendingJob.requestId, row.requestId),
+        eq(pendingJob.createdAt, row.createdAt),
+      ),
+    );
+  return result.rowsAffected > 0;
+};
+
+const readPending = async (channelKey: string): Promise<PendingJob | undefined> => {
+  let row: PendingRow | undefined;
+  if (db === undefined) {
+    row = memPending.get(channelKey);
+  } else {
+    const rows = await db
+      .select()
+      .from(pendingJob)
+      .where(eq(pendingJob.channelKey, channelKey))
+      .limit(1);
+    row = rows[0];
   }
-  const row = {
-    channelKey,
-    requestId: job.requestId,
-    prompt: job.prompt,
-    postJson: JSON.stringify(job.post),
+  if (row === undefined) return undefined;
+  const job = pendingFromRow(row, Date.now());
+  if (job === undefined) await releasePending(channelKey, row);
+  return job;
+};
+
+/**
+ * Reserve the channel's generation slot before any money is spent. Undefined
+ * means another request holds it; that request's clip will air on a later
+ * program, so the caller reruns rather than submitting a duplicate.
+ */
+const claimPending = async (
+  channelKey: string,
+  prompt: string,
+  post: CachedPost,
+): Promise<ClaimedJob | undefined> => {
+  const claim: ClaimedJob = { phase: "claimed", prompt, post, createdAt: Date.now() };
+  const row = rowFromPending(channelKey, claim);
+  if (db === undefined) {
+    if (memPending.has(channelKey)) return undefined;
+    memPending.set(channelKey, row);
+    return claim;
+  }
+  const result = await db.insert(pendingJob).values(row).onConflictDoNothing();
+  return result.rowsAffected > 0 ? claim : undefined;
+};
+
+/** The claim, now accepted by fal under `requestId`. */
+const submitPending = async (
+  channelKey: string,
+  claim: ClaimedJob,
+  requestId: string,
+): Promise<SubmittedJob> => {
+  const job: SubmittedJob = {
+    phase: "submitted",
+    requestId,
+    prompt: claim.prompt,
+    post: claim.post,
     createdAt: Date.now(),
   };
+  const row = rowFromPending(channelKey, job);
+  const claimRow = rowFromPending(channelKey, claim);
+  if (db === undefined) {
+    const current = memPending.get(channelKey);
+    if (current !== undefined && sameOccupant(current, claimRow)) memPending.set(channelKey, row);
+    return job;
+  }
   await db
-    .insert(pendingJob)
-    .values(row)
-    .onConflictDoUpdate({ target: pendingJob.channelKey, set: row });
+    .update(pendingJob)
+    .set(row)
+    .where(
+      and(
+        eq(pendingJob.channelKey, channelKey),
+        eq(pendingJob.requestId, claimRow.requestId),
+        eq(pendingJob.createdAt, claimRow.createdAt),
+      ),
+    );
+  return job;
 };
 
 // ---------------------------------------------------------------------------
@@ -542,34 +650,51 @@ const adoptClip = async (channelKey: string, index: string[], clip: Clip): Promi
     .onConflictDoNothing();
 };
 
-/** Finish a generation left pending by a slower model, if its clip is ready. */
+type PendingOutcome = { status: "none" } | { status: "in-flight" } | { status: "done"; clip: Clip };
+
+/**
+ * The channel's in-flight generation, archived if fal has finished it. Only a
+ * job fal no longer knows about frees the slot without a clip; anything still
+ * running keeps it, which is what stops the next request paying twice.
+ */
 const resumePending = async (
   channelKey: string,
   index: string[],
   falKey: string,
-): Promise<Clip | undefined> => {
+): Promise<PendingOutcome> => {
   const pending = await readPending(channelKey);
-  if (pending === undefined) return undefined;
-  try {
-    // A parked job may have gone to either model, but both share the
-    // `minimax/h3-max` root that getVideoJob falls back to, so one lookup
-    // finds it either way.
-    const job = await getVideoJob(falKey, videoModel, pending.requestId);
-    if (job.status !== "done" || job.videoUrl === undefined) return undefined;
-    const clip = clipFromPost(pending.post, job.videoUrl);
-    const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
-    await archiveClip(channelKey, index, clip, lastFrame);
-    await writePending(channelKey, undefined);
-    return clip;
-  } catch {
-    await writePending(channelKey, undefined);
-    return undefined;
+  if (pending === undefined) return { status: "none" };
+  if (pending.phase === "claimed") return { status: "in-flight" };
+  const row = rowFromPending(channelKey, pending);
+  // A parked job may have gone to either model, but both share the
+  // `minimax/h3-max` root that getVideoJob falls back to, so one lookup
+  // finds it either way.
+  const job = await getVideoJob(falKey, videoModel, pending.requestId).catch(() => undefined);
+  if (job === undefined) {
+    // fal no longer knows the job: lost, and the slot is free.
+    await releasePending(channelKey, row);
+    return { status: "none" };
   }
+  if (job.status !== "done" || job.videoUrl === undefined) return { status: "in-flight" };
+  const clip = clipFromPost(pending.post, job.videoUrl);
+  const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
+  await archiveClip(channelKey, index, clip, lastFrame);
+  // Overlapping requests can both find the job finished. Archiving twice is
+  // harmless; airing it as fresh twice is not, so only the one that clears
+  // the row does.
+  return (await releasePending(channelKey, row)) ? { status: "done", clip } : { status: "none" };
 };
 
 /** `generated` is false for a clip adopted from another channel's archive. */
 type FreshResult = { clip: Clip; generated: boolean };
 
+/**
+ * Generation runs one program ahead of the viewer instead of in their way. A
+ * request harvests the channel's in-flight job if fal has finished it, queues
+ * the next one, and returns without waiting — the rerun that airs meanwhile is
+ * what makes tuning in instant. The one exception is a channel with nothing
+ * to rerun, which waits out its budget for the first-ever program.
+ */
 const generateFresh = async (
   viewer: ChannelViewer,
   generator: ChannelGenerator,
@@ -577,20 +702,31 @@ const generateFresh = async (
   falKey: string,
   deadline: number,
 ): Promise<FreshResult | undefined> => {
-  const resumed = await resumePending(viewer.channelKey, index.all, falKey);
-  if (resumed !== undefined) return { clip: resumed, generated: true };
+  // Decided before harvesting, or the clip archived just below would count as
+  // "too soon" and the pipeline could never stay a program ahead.
+  const mayQueue =
+    !devCapReached(index.playable.length, process.env.NODE_ENV) && (await generationAllowed());
 
-  const candidate = await pickCandidate(generator, viewer.channelKey, new Set(index.all));
-  if (candidate === undefined) return undefined;
+  const pending = await resumePending(viewer.channelKey, index.all, falKey);
+  if (pending.status === "in-flight") return undefined;
+  const harvested: FreshResult | undefined =
+    pending.status === "done" ? { clip: pending.clip, generated: true } : undefined;
+  if (!mayQueue) return harvested;
+
+  const aired = new Set(index.all);
+  if (harvested !== undefined) aired.add(harvested.clip.postId);
+  const candidate = await pickCandidate(generator, viewer.channelKey, aired);
+  if (candidate === undefined) return harvested;
 
   const existing = await readClip(candidate.id);
   if (existing !== undefined) {
-    await adoptClip(viewer.channelKey, index.all, existing);
-    return { clip: existing, generated: false };
+    await adoptClip(viewer.channelKey, [...aired], existing);
+    return harvested ?? { clip: existing, generated: false };
   }
 
-  const budget = deadline - Date.now();
-  if (budget < MIN_GENERATE_MS) return undefined;
+  const prompt = buildVideoPrompt(candidate.text, candidate.author.name);
+  const claim = await claimPending(viewer.channelKey, prompt, candidate);
+  if (claim === undefined) return harvested;
 
   // Continue out of the previous program's final frame where there is one, so
   // the cut between clips lands on an identical image.
@@ -598,17 +734,24 @@ const generateFresh = async (
     videoModel === DEFAULT_VIDEO_MODEL ? await readSeedFrame(viewer.channelKey) : undefined;
   const model = seedFrame === undefined ? videoModel : CONTINUATION_VIDEO_MODEL;
 
-  const prompt = buildVideoPrompt(candidate.text, candidate.author.name);
-  const job = await generateVideo(falKey, model, prompt, deadline - Date.now(), seedFrame);
-  if (job.status !== "done" || job.videoUrl === undefined) {
-    // Slower model than the budget: remember the paid-for job and finish it
-    // on a later request instead of abandoning it.
-    await writePending(viewer.channelKey, { requestId: job.requestId, prompt, post: candidate });
-    return undefined;
+  let requestId: string;
+  try {
+    requestId = await submitVideoJob(falKey, model, prompt, seedFrame);
+  } catch (error) {
+    await releasePending(viewer.channelKey, rowFromPending(viewer.channelKey, claim));
+    throw error;
   }
+  const submitted = await submitPending(viewer.channelKey, claim, requestId);
+
+  if (harvested !== undefined || index.playable.length > 0) return harvested;
+
+  // Nothing to rerun yet: the first program is worth waiting for.
+  const job = await awaitVideoJob(falKey, model, requestId, deadline - Date.now());
+  if (job.status !== "done" || job.videoUrl === undefined) return undefined;
   const clip = clipFromPost(candidate, job.videoUrl);
   const lastFrame = await extractLastFrame(falKey, job.videoUrl, FRAME_EXTRACT_BUDGET_MS);
-  await archiveClip(viewer.channelKey, index.all, clip, lastFrame);
+  await archiveClip(viewer.channelKey, [...aired], clip, lastFrame);
+  await releasePending(viewer.channelKey, rowFromPending(viewer.channelKey, submitted));
   return { clip, generated: true };
 };
 
@@ -622,12 +765,7 @@ export const nextChannelClip = async (
 
   let freshFailure: string | undefined;
   const falKey = env.FAL_KEY;
-  if (
-    viewer.generator !== undefined &&
-    falKey !== undefined &&
-    !devCapReached(index.playable.length, process.env.NODE_ENV) &&
-    (await generationAllowed())
-  ) {
+  if (viewer.generator !== undefined && falKey !== undefined) {
     try {
       const result = await generateFresh(viewer, viewer.generator, index, falKey, deadline);
       if (result !== undefined) {

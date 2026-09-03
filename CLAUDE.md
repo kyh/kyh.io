@@ -58,8 +58,9 @@ Personal CLI tool.
 An X feed as a TV channel of AI-generated video. CH 01 is the owner's feed
 (`OWNER_X_USERNAME`), public to any visitor; signing in with X adds CH 02, your
 own feed. Clips come from fal.ai (`minimax/h3-max/text-to-video` by default,
-~3s per 5s clip). Programming rules: lazy (new clips generate only while the
-feed's owner is watching — everyone else gets reruns), popular-first
+~10–30s per 15s clip; generation runs a program ahead). Programming rules:
+lazy (new clips generate only while the feed's owner is watching — everyone
+else gets reruns), popular-first
 (personalized trends seed a `min_likes` search; falls back to the home
 timeline above `MIN_SCORE` when the viewer has no X Premium), and never-twice
 (clips archived by post id, daily caps).
