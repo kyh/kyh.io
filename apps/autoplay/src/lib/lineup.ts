@@ -24,16 +24,15 @@ export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 /** The signed-in user, as much of it as the lineup needs. Null for a visitor. */
 export type Viewer = { user: { id: string; username?: string | null } } | null;
 
-export type ResolvedSource = {
-  channelKey: string;
-  kind: SourceKind;
-  /** May this viewer change what airs? */
-  editable: boolean;
-  /** Present when this viewer's watching may generate: it is their source and its grant works. */
-  access?: SourceAccess;
-  /** Why generation can't happen, for the OFF AIR screen when there is nothing to rerun. */
-  noAccessReason?: string;
-};
+/**
+ * A channel as this viewer may watch it. "live" means their watching runs a
+ * session: it is their source, read with their grant. Anyone else on the
+ * public channel gets the replay, and a grant that no longer works says why.
+ */
+export type ResolvedSource =
+  | { mode: "live"; channelKey: string; kind: SourceKind; access: SourceAccess }
+  | { mode: "replay"; channelKey: string; kind: SourceKind }
+  | { mode: "off-air"; channelKey: string; kind: SourceKind; reason: string };
 
 const rssConfigSchema = z.object({ url: z.string(), title: z.string() });
 
@@ -45,12 +44,12 @@ export const isOwnerHandle = (username: string | null | undefined): boolean =>
   env.OWNER_X_USERNAME !== undefined &&
   username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
 
-const ownerChannel = (editable: boolean): ChannelSummary => ({
+const ownerChannel = (owner: boolean): ChannelSummary => ({
   number: 1,
   sourceId: OWNER_SOURCE_ID,
   kind: "x",
   label: env.OWNER_X_USERNAME === undefined ? "public access" : `@${env.OWNER_X_USERNAME}`,
-  editable,
+  mode: owner ? "live" : "replay",
 });
 
 const toChannel = (row: SourceRow, number: number): ChannelSummary => ({
@@ -58,7 +57,7 @@ const toChannel = (row: SourceRow, number: number): ChannelSummary => ({
   sourceId: row.id,
   kind: row.kind,
   label: row.label,
-  editable: true,
+  mode: "live",
 });
 
 type NewSource = {
@@ -145,8 +144,7 @@ export const ensureSources = async (viewer: NonNullable<Viewer>): Promise<void> 
 };
 
 export const listChannels = async (viewer: Viewer): Promise<ChannelSummary[]> => {
-  const owner = viewer !== null && isOwnerHandle(viewer.user.username);
-  const channels = [ownerChannel(owner)];
+  const channels = [ownerChannel(viewer !== null && isOwnerHandle(viewer.user.username))];
   if (viewer === null || db === undefined) return channels;
   const rows = await db
     .select()
@@ -204,17 +202,16 @@ export const resolveSource = async (
   viewer: Viewer,
 ): Promise<ResolvedSource | undefined> => {
   if (sourceId === OWNER_SOURCE_ID) {
-    const resolved: ResolvedSource = { channelKey: OWNER_SOURCE_ID, kind: "x", editable: false };
-    if (viewer !== null && isOwnerHandle(viewer.user.username)) {
-      resolved.editable = true;
-      const grant = await freshXAccount(viewer.user.id);
-      if (grant === undefined) {
-        resolved.noAccessReason = "X connection expired — sign in again";
-      } else {
-        resolved.access = { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId };
-      }
-    }
-    return resolved;
+    const base = { channelKey: OWNER_SOURCE_ID, kind: "x" as const };
+    if (viewer === null || !isOwnerHandle(viewer.user.username)) return { mode: "replay", ...base };
+    const grant = await freshXAccount(viewer.user.id);
+    return grant === undefined
+      ? { mode: "off-air", ...base, reason: "X connection expired — sign in again" }
+      : {
+          mode: "live",
+          ...base,
+          access: { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId },
+        };
   }
   if (viewer === null || db === undefined) return undefined;
   const rows = await db
@@ -226,14 +223,10 @@ export const resolveSource = async (
     .limit(1);
   const row = rows[0];
   if (row === undefined) return undefined;
-  const resolved: ResolvedSource = { channelKey: row.id, kind: row.kind, editable: true };
   const outcome = await accessFor(row, viewer.user.id);
-  if ("access" in outcome) {
-    resolved.access = outcome.access;
-  } else {
-    resolved.noAccessReason = outcome.noAccessReason;
-  }
-  return resolved;
+  return "access" in outcome
+    ? { mode: "live", channelKey: row.id, kind: row.kind, access: outcome.access }
+    : { mode: "off-air", channelKey: row.id, kind: row.kind, reason: outcome.noAccessReason };
 };
 
 /**

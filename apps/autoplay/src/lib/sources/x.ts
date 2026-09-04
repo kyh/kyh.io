@@ -18,6 +18,12 @@ const MIN_SCORE = 250;
 const MIN_LIKES = 500;
 /** Trends move slowly enough that re-reading them per program is waste. */
 const TREND_CACHE_TTL_MS = 3_600_000;
+/**
+ * A trend's search results, likewise: ten posts is several programs' worth,
+ * and at $0.05 a search re-running it per program would make X, not fal, the
+ * bigger meter on a live channel.
+ */
+const SEARCH_CACHE_TTL_MS = 3_600_000;
 const MAX_FEED_PAGES = 3;
 /** While the archive is this small, air the best available post regardless. */
 const BOOTSTRAP_ARCHIVE_SIZE = 3;
@@ -42,6 +48,8 @@ type FeedCache = {
 // instance, keyed by source.
 const feedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
 const trendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>();
+/** Search results per trend name. */
+const searchCaches = new Map<string, { posts: FeedPost[]; expiresAt: number }>();
 /** Which trend a source searches next; rotates so programs stay varied. */
 const trendCursors = new Map<string, number>();
 
@@ -93,7 +101,14 @@ const pickTrendCandidate = async (
   if (trend === undefined) return undefined;
 
   try {
-    const posts = await searchTrendPosts(access.accessToken, trend.name, MIN_LIKES);
+    const cached = searchCaches.get(trend.name);
+    let posts: FeedPost[];
+    if (cached !== undefined && cached.expiresAt > Date.now()) {
+      posts = cached.posts;
+    } else {
+      posts = await searchTrendPosts(access.accessToken, trend.name, MIN_LIKES);
+      searchCaches.set(trend.name, { posts, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
+    }
     return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id)));
   } catch {
     // A search failure (including a 400 if the engagement operators regress)

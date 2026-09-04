@@ -1,50 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import type { ChannelSummary, Clip, SessionPayload, UserSummary } from "@/lib/api-contract";
-import { PUBLIC_CHANNEL, channelPayloadSchema, errorPayloadSchema } from "@/lib/api-contract";
-import type { ChannelPayload } from "@/lib/api-contract";
+import type { ChannelSummary, LiveProgram, SessionPayload, UserSummary } from "@/lib/api-contract";
+import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
 import { Glyph } from "@/components/glyph";
-import { GuideDialog } from "@/components/guide-dialog";
+import { LiveScreen } from "@/components/live-screen";
+import type { LiveState } from "@/components/live-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
 
-// The TV. One full-bleed screen, an auto-hiding on-screen display, and static
-// between programs. The client keeps exactly one clip buffered ahead of the
-// one playing; every advance asks the channel for the next program, so
-// generation only ever happens while somebody is actually watching.
-
-type Playable = {
-  kind: "fresh" | "rerun";
-  clip: Clip;
-};
-
-const STATIC_SWAP_MS = 350;
-const RETRY_MS = 30_000;
-const SEEN_LIMIT = 16;
-
-const requestClip = async (sourceId: string, exclude: string[]): Promise<ChannelPayload> => {
-  try {
-    const response = await fetch("/api/channel", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sourceId, exclude }),
-    });
-    const body = await response.json().catch(() => null);
-    if (!response.ok) {
-      const parsed = errorPayloadSchema.safeParse(body);
-      return {
-        kind: "off-air",
-        reason: parsed.success ? parsed.data.error : "Signal lost — try again",
-      };
-    }
-    return channelPayloadSchema.parse(body);
-  } catch {
-    return { kind: "off-air", reason: "Signal lost — try again" };
-  }
-};
+// The TV. One full-bleed screen, static while it tunes, a status bar with the
+// program on air. A channel the viewer owns is a live session in this browser;
+// the public channel, for anyone but its owner, is the replay.
 
 const login = () => {
   void authClient.signIn.social({ provider: "twitter", callbackURL: "/" });
@@ -63,6 +32,7 @@ type ScreenProps = {
   onNext: () => void;
   onLineup: (channels: ChannelSummary[]) => void;
   googleReady: boolean;
+  liveReady: boolean;
   muted: boolean;
   onToggleMute: () => void;
   user: UserSummary | null;
@@ -94,163 +64,15 @@ const Marquee = (props: { text: string }) => {
   );
 };
 
-type Slot = 0 | 1;
-
-const other = (slot: Slot): Slot => (slot === 0 ? 1 : 0);
+/** How the ticker credits a program; the @handle convention is X's alone. */
+const attribution = (program: LiveProgram): string =>
+  program.kind === "x" ? `@${program.authorUsername}` : program.authorName;
 
 const TvScreen = (props: ScreenProps) => {
-  const [current, setCurrent] = useState<Playable | undefined>(undefined);
-  const [buffered, setBuffered] = useState<Playable | undefined>(undefined);
-  const [offAir, setOffAir] = useState<string | undefined>(undefined);
-  const [staticOn, setStaticOn] = useState(true);
+  const [live, setLive] = useState<LiveState>({ status: "connecting" });
+  const [program, setProgram] = useState<LiveProgram | undefined>(undefined);
   const [paused, setPaused] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
-  const [progress, setProgress] = useState(0);
-  // Which of the two stacked players is on screen. The other one holds the
-  // buffered program, already loaded, so a swap is a crossfade and not a load.
-  const [activeSlot, setActiveSlot] = useState<Slot>(0);
-
-  const videoRefs = useRef<Record<Slot, HTMLVideoElement | null>>({ 0: null, 1: null });
-  const fetchingRef = useRef(false);
-  const seenRef = useRef<string[]>([]);
-  const fillRef = useRef<() => void>(() => undefined);
-  const currentRef = useRef<Playable | undefined>(undefined);
-  const bufferedRef = useRef<Playable | undefined>(undefined);
-  const activeSlotRef = useRef<Slot>(0);
-  const pausedRef = useRef(false);
-
-  const markSeen = (clip: Clip) => {
-    seenRef.current = [...seenRef.current.filter((id) => id !== clip.itemId), clip.itemId].slice(
-      -SEEN_LIMIT,
-    );
-  };
-
-  /** First program of the session: nothing to crossfade from, so cut through static. */
-  const tuneIn = (program: Playable) => {
-    setStaticOn(true);
-    setOffAir(undefined);
-    window.setTimeout(() => {
-      markSeen(program.clip);
-      setCurrent(program);
-      window.setTimeout(() => setStaticOn(false), STATIC_SWAP_MS);
-    }, 150);
-  };
-
-  const fillBuffer = async () => {
-    if (fetchingRef.current || document.hidden || pausedRef.current) return;
-    if (currentRef.current !== undefined && bufferedRef.current !== undefined) return;
-    fetchingRef.current = true;
-    try {
-      const result = await requestClip(props.channel.sourceId, seenRef.current);
-      if (result.kind === "off-air") {
-        if (currentRef.current === undefined) {
-          setOffAir(result.reason);
-          setStaticOn(true);
-        }
-        return;
-      }
-      const program: Playable = { kind: result.kind, clip: result.clip };
-      if (currentRef.current === undefined) {
-        tuneIn(program);
-        // Start buffering the next program right away so the first clip
-        // doesn't have to loop while the pipeline warms up.
-        window.setTimeout(() => fillRef.current(), 500);
-      } else if (bufferedRef.current === undefined) {
-        // The guide may have lined something up while this was in flight;
-        // the viewer's pick wins over the channel's.
-        setBuffered(program);
-      }
-    } finally {
-      fetchingRef.current = false;
-    }
-  };
-  // Refs mirror the latest render so the interval and event handlers below
-  // always see current state without re-subscribing.
-  useEffect(() => {
-    currentRef.current = current;
-    bufferedRef.current = buffered;
-    activeSlotRef.current = activeSlot;
-    pausedRef.current = paused;
-    fillRef.current = () => {
-      void fillBuffer();
-    };
-  });
-
-  useEffect(() => {
-    const video = videoRefs.current[activeSlot];
-    if (video === null) return;
-    if (paused) {
-      video.pause();
-      return;
-    }
-    void video.play().catch(() => undefined);
-  }, [paused, activeSlot]);
-
-  useEffect(() => {
-    fillRef.current();
-    const retry = setInterval(() => fillRef.current(), RETRY_MS);
-    // fillBuffer declines to run while the tab is hidden, so a returning
-    // viewer would otherwise wait out the retry interval.
-    const onVisible = () => {
-      if (!document.hidden) fillRef.current();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      clearInterval(retry);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, []);
-
-  useEffect(() => {
-    for (const video of Object.values(videoRefs.current)) {
-      if (video !== null) video.muted = props.muted;
-    }
-  }, [props.muted]);
-
-  /**
-   * Hand over to the buffered program by crossfading to the player that
-   * already holds it. Nothing reloads, so there is no black frame between
-   * programs. With no buffer the clip is looping already and there is nothing
-   * to do but keep asking for the next one.
-   */
-  const advance = () => {
-    const next = bufferedRef.current;
-    if (next !== undefined) {
-      const incoming = other(activeSlotRef.current);
-      const video = videoRefs.current[incoming];
-      if (video !== null) {
-        video.currentTime = 0;
-        if (!pausedRef.current) void video.play().catch(() => undefined);
-      }
-      // The refs only catch up after a commit, but fillBuffer below reads them
-      // this tick — leave the buffer stale and it declines to refetch.
-      bufferedRef.current = undefined;
-      activeSlotRef.current = incoming;
-      markSeen(next.clip);
-      setBuffered(undefined);
-      setCurrent(next);
-      setActiveSlot(incoming);
-    }
-    fillRef.current();
-  };
-
-  /**
-   * Line up a program of the viewer's choosing. It goes into the buffer, so
-   * the clip on air plays out and the usual handover brings it in; with
-   * nothing on air yet it is simply the first program.
-   */
-  const queueNext = (clip: Clip) => {
-    const program: Playable = { kind: "rerun", clip };
-    setGuideOpen(false);
-    if (currentRef.current === undefined) {
-      tuneIn(program);
-      return;
-    }
-    bufferedRef.current = program;
-    markSeen(clip);
-    setBuffered(program);
-  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -262,7 +84,16 @@ const TvScreen = (props: ScreenProps) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const live = current !== undefined && current.kind === "fresh";
+  const isLive = props.channel.mode === "live" && props.liveReady;
+  const offAir: string | undefined = !props.liveReady
+    ? "The station can't go on air without fal."
+    : props.channel.mode === "replay"
+      ? "Nothing recorded yet — CH 01 records while its owner is watching."
+      : live.status === "off-air"
+        ? live.reason
+        : undefined;
+  const tuning = isLive && live.status === "connecting";
+  const onAir = isLive && live.status === "live";
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
@@ -286,46 +117,18 @@ const TvScreen = (props: ScreenProps) => {
       <div className="flex min-h-0 flex-1 flex-col p-1">
         {/* The screen itself: a sunken well in the plastic. */}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
-          {([0, 1] as const).map((slot) => {
-            const program = slot === activeSlot ? current : buffered;
-            if (program === undefined) return null;
-            return (
-              <video
-                key={slot}
-                ref={(el) => {
-                  videoRefs.current[slot] = el;
-                  if (el !== null) el.muted = props.muted;
-                }}
-                src={program.clip.videoUrl}
-                autoPlay={slot === activeSlot}
-                playsInline
-                preload="auto"
-                muted={props.muted}
-                // Nothing queued behind it: loop instead of ending, so the
-                // wait reads as the picture continuing rather than the same
-                // clip starting over. Once a program buffers, the pass
-                // finishes and `onEnded` hands over.
-                loop={slot === activeSlot && buffered === undefined}
-                onTimeUpdate={
-                  slot === activeSlot
-                    ? (event) => {
-                        const el = event.currentTarget;
-                        setProgress(el.duration > 0 ? el.currentTime / el.duration : 0);
-                      }
-                    : undefined
-                }
-                onEnded={slot === activeSlot ? advance : undefined}
-                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
-                  slot === activeSlot ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            );
-          })}
+          {isLive && (
+            <LiveScreen
+              sourceId={props.channel.sourceId}
+              muted={props.muted}
+              paused={paused}
+              onProgram={setProgram}
+              onState={setLive}
+            />
+          )}
 
           <div className="tv-scanlines pointer-events-none absolute inset-0" />
-          {(staticOn || offAir !== undefined) && (
-            <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />
-          )}
+          {!onAir && <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />}
 
           {offAir !== undefined && (
             <div className="absolute inset-0 grid place-items-center p-4">
@@ -365,7 +168,7 @@ const TvScreen = (props: ScreenProps) => {
             </div>
           )}
 
-          {current === undefined && offAir === undefined && (
+          {tuning && (
             <div className="absolute inset-0 grid place-items-center">
               <p className="animate-pulse text-xs tracking-[0.4em] text-white [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
                 TUNING…
@@ -374,28 +177,11 @@ const TvScreen = (props: ScreenProps) => {
           )}
         </div>
 
-        {/* Seek */}
-        <div
-          className="seek mt-1 shrink-0"
-          onPointerDown={(event) => {
-            const video = videoRefs.current[activeSlot];
-            if (video === null || !(video.duration > 0)) return;
-            const box = event.currentTarget.getBoundingClientRect();
-            const ratio = Math.min(Math.max((event.clientX - box.left) / box.width, 0), 1);
-            video.currentTime = ratio * video.duration;
-            setProgress(ratio);
-          }}
-        >
-          <div className="seek-groove" />
-          <div className="seek-fill" style={{ width: `calc(${progress * 100}% - 4px)` }} />
-          <div className="seek-handle" style={{ left: `calc(${progress * 100}% - 1px)` }} />
-        </div>
-
         {/* Status bar: caption and controls in one strip, browser-style. */}
-        <div className="status-bar flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
+        <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <button
             type="button"
-            disabled={current === undefined}
+            disabled={!isLive}
             onClick={() => setPaused((value) => !value)}
             className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
             aria-label={paused ? "Play" : "Pause"}
@@ -412,33 +198,24 @@ const TvScreen = (props: ScreenProps) => {
           </button>
 
           <div className="status-field ml-px flex-1">
-            {current === undefined ? (
+            {program === undefined ? (
               <span className="truncate">{props.urlError ?? "No signal"}</span>
             ) : (
-              <Marquee
-                text={`${displayPostText(current.clip.text)} — ${attribution(current.clip)}`}
-              />
+              <Marquee text={`${displayPostText(program.text)} — ${attribution(program)}`} />
             )}
           </div>
 
-          {live && (
+          {onAir && (
             <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
               <span className="text-accent">● live</span>
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => setGuideOpen(true)}
-            className="y2k-btn status-btn ml-px cursor-pointer"
-          >
-            guide
-          </button>
           {props.user !== null && (
             <button
               type="button"
               onClick={() => setSourcesOpen(true)}
-              className="y2k-btn status-btn cursor-pointer"
+              className="y2k-btn status-btn ml-px cursor-pointer"
             >
               sources
             </button>
@@ -481,14 +258,6 @@ const TvScreen = (props: ScreenProps) => {
         </div>
       </div>
 
-      {guideOpen && (
-        <GuideDialog
-          sourceId={props.channel.sourceId}
-          {...(buffered === undefined ? {} : { queuedItemId: buffered.clip.itemId })}
-          onQueue={queueNext}
-          onClose={() => setGuideOpen(false)}
-        />
-      )}
       {props.user !== null && sourcesOpen && (
         <SourcesDialog
           channels={props.channels}
@@ -505,10 +274,6 @@ export type TvProps = {
   session?: SessionPayload;
   urlError?: string;
 };
-
-/** How the ticker credits a program; the @handle convention is X's alone. */
-const attribution = (clip: Clip): string =>
-  clip.kind === "x" ? `@${clip.authorUsername}` : clip.authorName;
 
 const channelNumber = (channel: ChannelSummary): string =>
   `CH ${String(channel.number).padStart(2, "0")}`;
@@ -561,6 +326,7 @@ export const Tv = (props: TvProps) => {
     onNext: () => setTuned((value) => value + 1),
     onLineup: setLineup,
     googleReady: session.googleReady,
+    liveReady: session.liveReady,
     muted,
     onToggleMute: () => setMuted((value) => !value),
     user: session.user,

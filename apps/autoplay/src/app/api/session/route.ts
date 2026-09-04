@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import type { SessionPayload, UserSummary } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
-import { googleConfigured, missingEnvKeys } from "@/lib/env";
+import { env, googleConfigured, missingEnvKeys } from "@/lib/env";
 import { ensureSources, listChannels } from "@/lib/lineup";
 
 // Who is watching and what they can tune to. Loading a session is also when
@@ -27,6 +27,7 @@ export const GET = async (): Promise<NextResponse> => {
     user,
     channels: await listChannels(session),
     googleReady: googleConfigured,
+    liveReady: env.FAL_KEY !== undefined,
   };
   return NextResponse.json(payload);
 };

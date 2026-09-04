@@ -16,8 +16,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: optionalKey,
   GOOGLE_CLIENT_SECRET: optionalKey,
   BETTER_AUTH_SECRET: optionalKey,
+  /** fal.ai, for the director model every channel streams through. */
   FAL_KEY: optionalKey,
-  FAL_VIDEO_MODEL: optionalKey,
   APP_URL: optionalKey,
   /** X handle whose feed powers the default public channel. */
   OWNER_X_USERNAME: optionalKey,
@@ -27,10 +27,6 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
-
-export const DEFAULT_VIDEO_MODEL = "minimax/h3-max/text-to-video";
-
-export const videoModel = env.FAL_VIDEO_MODEL ?? DEFAULT_VIDEO_MODEL;
 
 export const googleConfigured =
   env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined;

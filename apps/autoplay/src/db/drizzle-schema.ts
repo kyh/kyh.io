@@ -61,73 +61,28 @@ export const verification = sqliteTable("verification", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
-// The clip archive. A clip is global — one row per item ever generated — so an
-// item is paid for at most once even when it appears on several channels. The
-// daily generation cap and spacing guards are derived from `generatedAt`
-// rather than kept in counters.
-export const clip = sqliteTable("clip", {
-  /**
-   * `{kind}:{id inside the source}` — the kind is read off the prefix, see
-   * itemKind in src/lib/sources/types.ts. The column name predates other
-   * kinds, as do rows with a bare X post id.
-   */
-  itemId: text("post_id").primaryKey(),
-  videoUrl: text("video_url").notNull(),
-  text: text().notNull(),
-  authorName: text("author_name").notNull(),
-  /** An X handle, a sender address, a feed host, a channel name. */
-  authorUsername: text("author_username").notNull(),
-  authorImage: text("author_image"),
-  itemCreatedAt: text("post_created_at"),
-  score: integer().notNull(),
-  /**
-   * Final frame of this clip, as an image. The next program on the channel is
-   * generated out of it, so one clip continues into the next instead of
-   * cutting to an unrelated scene. Null for clips generated before this
-   * existed, and whenever frame extraction failed.
-   */
-  lastFrameUrl: text("last_frame_url"),
-  /** Unix ms. */
-  generatedAt: integer("generated_at").notNull(),
-});
-
-// Which clips air on which channel, in air order. A channel is keyed by its
-// source id; "owner" is the public channel, whose source is the env-configured
-// owner rather than a `source` row.
-export const channelClip = sqliteTable(
-  "channel_clip",
+// What a channel has aired. A program is a prompt streamed through the
+// director model, not a file, so there is nothing to replay from here — but
+// the item is spent all the same, and this is what keeps it from airing
+// twice. The daily budgets are derived from `aired_at`, so no counters drift.
+export const airedItem = sqliteTable(
+  "aired_item",
   {
     channelKey: text("channel_key").notNull(),
-    itemId: text("post_id")
+    /** `{kind}:{id inside the source}` — see itemKind in src/lib/sources/types.ts. */
+    itemId: text("item_id").notNull(),
+    /** Who was watching when it aired; what their daily budget is counted from. */
+    userId: text("user_id")
       .notNull()
-      .references(() => clip.itemId, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     /** Unix ms. */
-    addedAt: integer("added_at").notNull(),
-    /**
-     * Unix ms when the channel's owner pulled this program off the air. The
-     * row stays: it is what stops the post being picked — and paid for —
-     * a second time. Null means it is still in rotation.
-     */
-    hiddenAt: integer("hidden_at"),
+    airedAt: integer("aired_at").notNull(),
   },
   (table) => [primaryKey({ columns: [table.channelKey, table.itemId] })],
 );
 
-// A channel's one generation in flight: claimed before fal is paid, released
-// once the clip is archived. See channel.ts for the claim protocol.
-export const pendingJob = sqliteTable("pending_job", {
-  channelKey: text("channel_key").primaryKey(),
-  /** Empty until fal has accepted the job. */
-  requestId: text("request_id").notNull(),
-  prompt: text().notNull(),
-  /** The item being generated, as JSON. */
-  itemJson: text("post_json").notNull(),
-  /** Unix ms. */
-  createdAt: integer("created_at").notNull(),
-});
-
 // A feed a user has connected. Each source is a channel in that user's lineup;
-// the public channel is not a row here (see channel_clip). Sources backed by a
+// the public channel is not a row here (see lineup.ts). Sources backed by a
 // grant are created from the grant — see lineup.ts — so a row exists for as
 // long as the grant does, and `removed_at` is what takes it off the lineup.
 export const source = sqliteTable(
