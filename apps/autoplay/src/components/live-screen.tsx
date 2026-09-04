@@ -25,10 +25,12 @@ import type { Recorder } from "@/lib/recorder";
 
 const DIRECTOR_MODEL = "minimax/h3-max/director";
 /**
- * Seconds of stream per program. Chunks are served at this length when the
- * model honours the request (its range is 5–15s), so a program is one chunk.
+ * Seconds of stream per subject. Long enough for a scene to develop around
+ * it; a subject every chunk made the stream read as cuts.
  */
-const PROGRAM_SECONDS = 15;
+const PROGRAM_SECONDS = 30;
+/** Chunk length asked of the model, the longest it serves (5–15s). */
+const CHUNK_SECONDS = 15;
 /** How long a hidden or paused tab keeps its session before it is closed. */
 const IDLE_CLOSE_MS = 30_000;
 
@@ -51,6 +53,11 @@ const serverMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stream_exhausted"), reason: z.string() }),
 ]);
 
+/**
+ * "live" means a frame has reached the screen — not that the session is up.
+ * The session reports itself live seconds before the first chunk arrives,
+ * and a black screen with a LIVE badge reads as broken.
+ */
 export type LiveState =
   | { status: "connecting" }
   | { status: "live" }
@@ -103,7 +110,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
   /** Chunks the model serves; what a program's length is counted in. */
-  const chunkSecondsRef = useRef(PROGRAM_SECONDS);
+  const chunkSecondsRef = useRef(CHUNK_SECONDS);
   /** Chunks generated so far for the program on the latest prompt. */
   const chunksIntoProgramRef = useRef(0);
   const tickerTimerRef = useRef<number | undefined>(undefined);
@@ -125,6 +132,15 @@ export const LiveScreen = (props: LiveScreenProps) => {
     if (video === null || stream === undefined) return;
     video.srcObject = stream;
     void video.play().catch(() => undefined);
+    // The first presented frame is what makes it live; `playing` alone fires
+    // on a MediaStream before any picture has come down the wire.
+    let cancelled = false;
+    video.requestVideoFrameCallback(() => {
+      if (!cancelled) onStateRef.current({ status: "live" });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [stream]);
 
   useEffect(() => {
@@ -179,7 +195,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
             result.world === undefined
               ? result.program.prompt
               : `${result.world}\n\n${result.program.prompt}`,
-          chunk_duration: PROGRAM_SECONDS,
+          chunk_duration: CHUNK_SECONDS,
           resolution: "768p",
           aspect_ratio: "16:9",
         });
@@ -223,7 +239,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
         },
         onState: (state) => {
           if (sessionRef.current !== session) return;
-          if (state === "live") onStateRef.current({ status: "live" });
+          if (state === "closed") onProgramRef.current(undefined);
         },
         onError: (error) => {
           if (sessionRef.current !== session) return;

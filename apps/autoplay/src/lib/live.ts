@@ -15,19 +15,20 @@ import type { SourceAccess } from "@/lib/sources/types";
 //      views on YouTube.
 //   2. Never twice: an item handed out is marked aired on the spot, since the
 //      stream will have shown it before any later request could tell.
-//   3. Budgeted: the session is the meter, and every program is 15s of it.
+//   3. Budgeted: the session is the meter, and every program is 30s of it.
 //      Two daily caps, derived from what has aired: one for the station, one
 //      for each signed-in viewer on their own channels. The owner's CH 01
 //      counts only against the station's.
 
 /**
- * Programs a day across the whole station. A program is one 15s chunk of
- * stream, so this is about forty-five minutes of live video — at list price
- * about $4.80 a minute, which makes this the number to change first.
+ * Programs a day across the whole station. A program is 30s of stream (the
+ * client's PROGRAM_SECONDS), so this is about forty-five minutes of live
+ * video — at list price about $4.80 a minute, which makes this the number
+ * to change first.
  */
-export const MAX_PROGRAMS_PER_DAY = 180;
+export const MAX_PROGRAMS_PER_DAY = 90;
 /** What one signed-in viewer may take of that on their own channels: about fifteen minutes. */
-export const MAX_PROGRAMS_PER_USER_PER_DAY = 60;
+export const MAX_PROGRAMS_PER_USER_PER_DAY = 30;
 
 export type Viewer = { userId: string; owner: boolean };
 

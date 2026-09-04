@@ -7,7 +7,7 @@ import type { Recording } from "@/lib/api-contract";
 import { itemKind } from "@/lib/sources/types";
 
 // The replay. The public channel is recorded in its owner's browser while it
-// is live — one webm per 15s program, uploaded to Vercel Blob — and everyone
+// is live — one webm per 30s program, uploaded to Vercel Blob — and everyone
 // else watches the newest of those, on a loop. Retention is by age: a day of
 // stream at the station's cap is under a gigabyte, so a few hours is plenty
 // and keeps the store from growing without bound.
@@ -15,8 +15,8 @@ import { itemKind } from "@/lib/sources/types";
 /** How far back a replay reaches; older segments and their files are dropped. */
 const RETENTION_MS = 6 * 3_600_000;
 /** How many segments a replay is handed at once: about half an hour. */
-const REPLAY_LENGTH = 120;
-/** A 15s segment at the recorder's bitrate is ~3MB; anything near this is not one. */
+const REPLAY_LENGTH = 60;
+/** A 30s segment at the recorder's bitrate is ~6MB; anything near this is not one. */
 export const MAX_SEGMENT_BYTES = 12 * 1024 * 1024;
 
 const memRecordings: (typeof recording.$inferSelect)[] = [];

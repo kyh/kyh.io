@@ -234,7 +234,9 @@ const TvScreen = (props: ScreenProps) => {
 
           <div className="status-field ml-px flex-1">
             {program === undefined ? (
-              <span className="truncate">{props.urlError ?? "No signal"}</span>
+              <span className="truncate">
+                {props.urlError ?? (tuning ? "Tuning in…" : "No signal")}
+              </span>
             ) : (
               <Marquee text={`${displayPostText(program.text)} — ${attribution(program)}`} />
             )}
