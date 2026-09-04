@@ -10,25 +10,41 @@ import { errorPayloadSchema, livePayloadSchema } from "@/lib/api-contract";
 import { fal } from "@/lib/fal-client";
 
 // The screen: one director session in this browser. The model streams
-// continuous video over WebRTC and takes a new prompt whenever the programming
-// says so; this keeps exactly one prompt queued behind the one on air, and
-// queues the next only once the queued one is actually playing — the model
-// accepts prompts into a deck faster than it plays them, and every program
-// handed out is a paid source read.
+// continuous video over WebRTC in chunks and takes a new prompt whenever the
+// programming says so. A program is a whole number of chunks: the next
+// prompt is queued when the current program's last chunk is generated, so it
+// takes over at the following chunk boundary. Queuing any earlier would not
+// shorten anything — the model accepts prompts into a deck faster than it
+// plays them, and every program handed out is a paid source read.
 //
 // The session is the meter. It runs only while the tab is visible and the
 // viewer isn't paused, and one idle long enough to be billed anyway is closed
 // rather than left running.
 
 const DIRECTOR_MODEL = "minimax/h3-max/director";
+/**
+ * Seconds of stream per program. Chunks are served at this length when the
+ * model honours the request (its range is 5–15s), so a program is one chunk.
+ */
+const PROGRAM_SECONDS = 15;
 /** How long a hidden or paused tab keeps its session before it is closed. */
 const IDLE_CLOSE_MS = 30_000;
 
 const serverMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("configured"), prompt_version: z.number() }),
+  z.object({
+    type: z.literal("configured"),
+    prompt_version: z.number(),
+    chunk_duration: z.number().nullable().optional(),
+  }),
   z.object({ type: z.literal("prompt_applied"), prompt_version: z.number() }),
   z.object({ type: z.literal("prompt_rejected"), prompt_version: z.number() }),
-  z.object({ type: z.literal("chunk"), prompt_version: z.number() }),
+  z.object({
+    type: z.literal("chunk"),
+    prompt_version: z.number(),
+    chunk_index: z.number(),
+    buffer_depth_seconds: z.number(),
+    requested_duration_seconds: z.number(),
+  }),
   z.object({ type: z.literal("error"), code: z.string(), error: z.string() }),
   z.object({ type: z.literal("stream_exhausted"), reason: z.string() }),
 ]);
@@ -49,14 +65,14 @@ type LiveScreenProps = {
 
 type Session = ManagedRealtimeSession<WmaRealtimeSession>;
 
-type ProgramResult = { program: LiveProgram } | { reason: string };
+type ProgramResult = { program: LiveProgram; world?: string } | { reason: string };
 
-const requestProgram = async (sourceId: string): Promise<ProgramResult> => {
+const requestProgram = async (sourceId: string, opening: boolean): Promise<ProgramResult> => {
   try {
     const response = await fetch("/api/live", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sourceId }),
+      body: JSON.stringify({ sourceId, opening }),
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
@@ -64,7 +80,10 @@ const requestProgram = async (sourceId: string): Promise<ProgramResult> => {
       return { reason: parsed.success ? parsed.data.error : "Signal lost — try again" };
     }
     const payload = livePayloadSchema.parse(body);
-    return payload.kind === "off-air" ? { reason: payload.reason } : { program: payload.program };
+    if (payload.kind === "off-air") return { reason: payload.reason };
+    return payload.world === undefined
+      ? { program: payload.program }
+      : { program: payload.program, world: payload.world };
   } catch {
     return { reason: "Signal lost — try again" };
   }
@@ -76,6 +95,11 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const [stream, setStream] = useState<MediaStream | undefined>(undefined);
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
+  /** Chunks the model serves; what a program's length is counted in. */
+  const chunkSecondsRef = useRef(PROGRAM_SECONDS);
+  /** Chunks generated so far for the program on the latest prompt. */
+  const chunksIntoProgramRef = useRef(0);
+  const tickerTimerRef = useRef<number | undefined>(undefined);
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
   const settleRef = useRef<() => void>(() => undefined);
@@ -123,7 +147,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
     const direct = async (opening: boolean) => {
       const session = sessionRef.current;
       if (session === undefined || closed) return;
-      const result = await requestProgram(props.sourceId);
+      const result = await requestProgram(props.sourceId, opening);
       if (closed || sessionRef.current !== session) return;
       if ("reason" in result) {
         onStateRef.current({ status: "off-air", reason: result.reason });
@@ -133,18 +157,35 @@ export const LiveScreen = (props: LiveScreenProps) => {
       versionRef.current += 1;
       const version = versionRef.current;
       programsRef.current.set(version, result.program);
+      chunksIntoProgramRef.current = 0;
       if (opening) {
         session.send({
           type: "configure",
           protocol_version: 1,
           prompt_version: version,
-          prompt: result.program.prompt,
+          prompt:
+            result.world === undefined
+              ? result.program.prompt
+              : `${result.world}\n\n${result.program.prompt}`,
+          chunk_duration: PROGRAM_SECONDS,
           resolution: "768p",
           aspect_ratio: "16:9",
         });
       } else {
         session.send({ type: "prompt", prompt_version: version, prompt: result.program.prompt });
       }
+    };
+
+    /** Put a program in the ticker when its picture reaches the screen, not its buffer. */
+    const showWhenPlaying = (program: LiveProgram, inSeconds: number) => {
+      if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
+      tickerTimerRef.current = window.setTimeout(
+        () => {
+          tickerTimerRef.current = undefined;
+          if (!closed) onProgramRef.current(program);
+        },
+        Math.max(0, inSeconds) * 1000,
+      );
     };
 
     const openSession = () => {
@@ -176,16 +217,28 @@ export const LiveScreen = (props: LiveScreenProps) => {
           }
           const message = serverMessageSchema.safeParse(parsed);
           if (!message.success) return;
+          console.debug("[live]", message.data);
           switch (message.data.type) {
             case "configured":
-              // One program queued behind the opener from the start.
-              void direct(false);
+              chunkSecondsRef.current = message.data.chunk_duration ?? chunkSecondsRef.current;
               return;
             case "chunk": {
+              // What the model actually serves, whatever was asked for.
+              chunkSecondsRef.current = message.data.requested_duration_seconds;
               const program = programsRef.current.get(message.data.prompt_version);
-              if (program !== undefined) onProgramRef.current(program);
-              // The queued program has reached the screen: line up the next.
-              if (message.data.prompt_version === versionRef.current) void direct(false);
+              if (program !== undefined && message.data.prompt_version === versionRef.current) {
+                if (chunksIntoProgramRef.current === 0) {
+                  showWhenPlaying(program, message.data.buffer_depth_seconds);
+                }
+                chunksIntoProgramRef.current += 1;
+                // This program has all the chunks it gets; the next one takes
+                // over at the following boundary.
+                const chunksPerProgram = Math.max(
+                  1,
+                  Math.round(PROGRAM_SECONDS / chunkSecondsRef.current),
+                );
+                if (chunksIntoProgramRef.current >= chunksPerProgram) void direct(false);
+              }
               return;
             }
             case "prompt_applied":
@@ -239,6 +292,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       closed = true;
       document.removeEventListener("visibilitychange", settle);
       if (idleRef.current !== undefined) window.clearTimeout(idleRef.current);
+      if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
       closeSession();
     };
   }, [props.sourceId]);

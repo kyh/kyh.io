@@ -3,7 +3,7 @@ import { and, count, eq, gte } from "drizzle-orm";
 import { db } from "@/db/drizzle-client";
 import { airedItem } from "@/db/drizzle-schema";
 import type { LivePayload } from "@/lib/api-contract";
-import { buildVideoPrompt } from "@/lib/prompt";
+import { buildSegmentPrompt, pickFormat } from "@/lib/prompt";
 import { pickCandidate } from "@/lib/sources";
 import type { SourceAccess } from "@/lib/sources/types";
 
@@ -15,18 +15,18 @@ import type { SourceAccess } from "@/lib/sources/types";
 //      views on YouTube.
 //   2. Never twice: an item handed out is marked aired on the spot, since the
 //      stream will have shown it before any later request could tell.
-//   3. Budgeted: the session is the meter, and every program is ~10s of it.
+//   3. Budgeted: the session is the meter, and every program is 15s of it.
 //      Two daily caps, derived from what has aired: one for the station, one
 //      for each signed-in viewer on their own channels. The owner's CH 01
 //      counts only against the station's.
 
 /**
- * Programs a day across the whole station. A program is one ~10s chunk of
- * stream, so this is roughly thirty minutes of live video — at list price
- * about $2.40 a minute, which makes this the number to change first.
+ * Programs a day across the whole station. A program is one 15s chunk of
+ * stream, so this is about forty-five minutes of live video — at list price
+ * about $4.80 a minute, which makes this the number to change first.
  */
 export const MAX_PROGRAMS_PER_DAY = 180;
-/** What one signed-in viewer may take of that on their own channels: about ten minutes. */
+/** What one signed-in viewer may take of that on their own channels: about fifteen minutes. */
 export const MAX_PROGRAMS_PER_USER_PER_DAY = 60;
 
 export type Viewer = { userId: string; owner: boolean };
@@ -104,6 +104,7 @@ export const createProgramming = (store: AiredStore) => {
     channelKey: string,
     access: SourceAccess,
     viewer: Viewer,
+    opening: boolean,
   ): Promise<LivePayload> => {
     if (!(await withinBudget(viewer))) {
       return {
@@ -129,7 +130,7 @@ export const createProgramming = (store: AiredStore) => {
       };
     }
     await store.mark(channelKey, item.id, viewer.userId);
-    return {
+    const payload: LivePayload = {
       kind: "program",
       program: {
         itemId: item.id,
@@ -137,9 +138,17 @@ export const createProgramming = (store: AiredStore) => {
         text: item.text,
         authorName: item.author.name,
         authorUsername: item.author.username,
-        prompt: buildVideoPrompt(item.text, item.author.name),
+        prompt: buildSegmentPrompt(item.text, item.author.name),
       },
     };
+    if (opening) {
+      // A new session, a new world: any of the formats, so channels don't
+      // all look alike and reopening one feels like a different night.
+      const format = pickFormat();
+      payload.world = format.world;
+      payload.formatLabel = format.label;
+    }
+    return payload;
   };
 
   return { withinBudget, nextProgram };

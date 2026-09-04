@@ -1,23 +1,69 @@
-// Turns a post into a text-to-video prompt.
+// Turns programming into prompts for the director model.
 //
-// A post is not a shot list: it carries links, handles, hashtags and opinions,
-// and handing one over raw produces the incoherence you would expect — the
-// model tries to render an argument. So the noise is stripped and what remains
-// is framed as a single continuous scene, which is the only thing a few
-// seconds of video can actually be. Asking for no on-screen text matters too:
-// left alone these models letter the frame with garbled captions.
+// A session is opened on a WORLD: the format of the channel — a sitcom, a
+// news network — described once, which the model keeps in memory so that
+// characters, sets and running jokes persist across every program. Each
+// program is then a SEGMENT: the next thing that happens in that world,
+// which is where a post comes in. A post is not a shot list: it carries
+// links, handles, hashtags and opinions, and handed over raw the model tries
+// to render an argument. So the noise is stripped and what remains is framed
+// as the subject of the next segment.
 
 const URL_PATTERN = /https?:\/\/\S+/g;
 const MENTION_PATTERN = /@\w+/g;
 const HASHTAG_PATTERN = /#(\w+)/g;
-/** Long posts blur the subject; a video only ever depicts the opening idea. */
+/** Long posts blur the subject; a segment only ever depicts the opening idea. */
 const MAX_SUBJECT_LENGTH = 300;
 
-const SHOT = "A single continuous cinematic shot, filmed like a television news segment";
-const STYLE =
-  "Natural light, shallow depth of field, steady camera with slow deliberate movement. " +
-  "Photographic and grounded, not illustrated. No on-screen text, captions, subtitles, " +
-  "watermarks or user interface.";
+export type Format = {
+  id: string;
+  label: string;
+  world: string;
+};
+
+/** The channel formats, each a world the model can hold onto. */
+export const FORMATS: readonly Format[] = [
+  {
+    id: "sitcom-94",
+    label: "1994 sitcom",
+    world:
+      "A continuous original live-action American sitcom produced in 1994, following the same ensemble of adult roommates, coworkers, neighbors, and rivals. Preserve appearances, apartment and workplace layouts, relationships, jobs, secrets, running jokes, and unresolved storylines. Advance through dialogue, entrances, misunderstandings, escalating attempts to hide mistakes, reversals, and warm character payoffs. Avoid references to existing sitcoms or actors.",
+  },
+  {
+    id: "satire-news",
+    label: "satirical news network",
+    world:
+      "A continuous satirical news network covering an entirely fictional world. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
+  },
+  {
+    id: "music-video",
+    label: "music-video channel",
+    world:
+      "An always-on original music-video channel receiving broadcasts from alternate realities. Every transmission introduces a new fictional performer, genre, era, world, and visual language, from medieval hip-hop to underwater soul or robot garage rock. Connect videos with seamless portal jumps, distorted signals, and reality glitches. Never imitate or depict real performers, copyrighted songs, or existing franchises.",
+  },
+  {
+    id: "pirate-tv",
+    label: "pirate television network",
+    world:
+      "A continuous pirate television network from an alternate world, inhabited by recurring synthetic hosts with persistent identities and shared lore. Rotate through absurd local news, late-night call-ins, paranormal reports, public-access experiments, original music, fake commercials, and sitcom-like situations. Preserve characters, relationships, running jokes, station history, and consequences across every program.",
+  },
+  {
+    id: "anime-news",
+    label: "anime news network",
+    world:
+      "A continuous original Japanese anime-style news network rendered entirely as polished 2D cel animation. Every shot, person, location, transition, field report, and on-screen element must remain visibly anime-style—never live action or photorealistic. Follow a fixed team of anime anchors, correspondents, analysts, and weather presenters. Preserve their character designs, personalities, newsroom relationships, studio, and the evolving fictional world they cover. Choose among fictional headlines and report them through desk segments, field reports, interviews, weather, culture, and sports with energetic anime storytelling. Clearly label the world as fictional and avoid real-person impersonation.",
+  },
+];
+
+/** A format for a new session: any of them, so consecutive sessions differ. */
+export const pickFormat = (): Format => {
+  const format = FORMATS[Math.floor(Math.random() * FORMATS.length)];
+  if (format === undefined) throw new Error("no formats");
+  return format;
+};
+
+export const formatById = (id: string): Format | undefined =>
+  FORMATS.find((format) => format.id === id);
 
 const clean = (text: string): string =>
   text
@@ -35,12 +81,19 @@ const truncate = (text: string): string => {
   return lastStop > MAX_SUBJECT_LENGTH / 2 ? clipped.slice(0, lastStop) : clipped;
 };
 
-export const buildVideoPrompt = (text: string, authorName: string): string => {
+/**
+ * The next segment of the world, about a post. Neutral about the format on
+ * purpose: the world is in the model's memory, and "the next segment" reads
+ * as a scene in a sitcom and a report on a news desk alike.
+ */
+export const buildSegmentPrompt = (text: string, authorName: string): string => {
   const subject = truncate(clean(text));
-
   if (subject === "") {
-    return `${SHOT}: an abstract late-night broadcast interlude inspired by ${authorName} — drifting light over soft gradients, dust in the air, the feeling of channel-surfing after midnight. ${STYLE}`;
+    return `Next segment: a brief interlude in the same world, inspired by ${authorName} — a lull between programs, the station's own texture. Keep every character, set and style exactly as established.`;
   }
-
-  return `${SHOT}, depicting this scene literally wherever it can be pictured, and evoking its mood where it cannot: "${subject}". ${STYLE}`;
+  return `Next segment, in the same world and with the same cast, sets and style: the story is about this — "${subject}". Depict it literally where it can be pictured and evoke its mood where it cannot. No on-screen text, captions, subtitles, watermarks or user interface.`;
 };
+
+/** What a session opens on: the world, then its first segment. */
+export const buildOpeningPrompt = (format: Format, firstSegment: string): string =>
+  `${format.world}\n\n${firstSegment}`;

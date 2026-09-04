@@ -54,7 +54,7 @@ export const sessionPayloadSchema = z.object({
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
 
-/** What a program is made of: the item on air and the prompt that directs it. */
+/** What a program is made of: the item on air and the segment prompt that directs it. */
 export const liveProgramSchema = z.object({
   itemId: z.string(),
   kind: sourceKindSchema,
@@ -68,10 +68,18 @@ export type LiveProgram = z.infer<typeof liveProgramSchema>;
 
 export const liveRequestSchema = z.object({
   sourceId: z.string(),
+  /** True for the program a session opens on, which comes with the world to open it in. */
+  opening: z.boolean(),
 });
 
 export const livePayloadSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("program"), program: liveProgramSchema }),
+  z.object({
+    kind: z.literal("program"),
+    program: liveProgramSchema,
+    /** The format's world prompt, only with an opening program. */
+    world: z.string().optional(),
+    formatLabel: z.string().optional(),
+  }),
   z.object({ kind: z.literal("off-air"), reason: z.string() }),
 ]);
 

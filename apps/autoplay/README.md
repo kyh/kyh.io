@@ -28,18 +28,27 @@ unread first), RSS the newest entry, YouTube the most-viewed upload of the
 week from subscribed channels. Adding a kind is a new adapter and a new entry
 in `SOURCE_KINDS`.
 
-## Programming rules (src/lib/live.ts)
+## Programming rules (src/lib/live.ts, src/lib/prompt.ts)
+
+A session opens on a **world** — one of the channel formats in `FORMATS`
+(a 1994 sitcom, a satirical news network, a music-video channel, a pirate TV
+network, an anime news network), picked at random per session — and the
+model keeps it in memory so characters, sets and running jokes persist.
+Every program after that is a **segment** of that world about the next item,
+15 seconds long (`PROGRAM_SECONDS`; the model serves chunks at that length
+and a program is one chunk). Which item:
 
 1. **Best first** — the source's adapter picks the un-aired item most worth
    airing. On X: personalized trends (cached an hour, cycled one per program
    so consecutive programs aren't all the same story) seed a search filtered
-   on `min_likes` server-side; without Premium the channel falls back to the
-   home timeline ranked by engagement above `MIN_SCORE`.
+   on `min_likes` server-side, itself cached an hour; without Premium the
+   channel falls back to the home timeline ranked by engagement above
+   `MIN_SCORE`.
 2. **Never twice** — an item is marked aired the moment it is handed to a
    session, in `aired_item`, and never comes back.
 3. **Budgeted** — the session is the meter. Two daily caps are derived from
-   `aired_item`: `MAX_PROGRAMS_PER_DAY` (180 programs ≈ 30 min of stream) for
-   the station, and `MAX_PROGRAMS_PER_USER_PER_DAY` (60 ≈ 10 min) for each
+   `aired_item`: `MAX_PROGRAMS_PER_DAY` (180 programs ≈ 45 min of stream) for
+   the station, and `MAX_PROGRAMS_PER_USER_PER_DAY` (60 ≈ 15 min) for each
    signed-in viewer on their own channels. The owner's CH 01 counts against
    the station's only. Both are checked before a session is negotiated.
 
@@ -103,9 +112,10 @@ The app boots with none of these and shows an OFF AIR screen listing what's miss
 - **Session** (`src/components/live-screen.tsx`): the browser opens the
   director session through `/api/fal/proxy` (`@fal-ai/server-proxy`, which
   holds `FAL_KEY`, admits only signed-in viewers inside their budget, and
-  allows only the director endpoint), configures it with the first program's
-  prompt, and keeps exactly one prompt queued behind the one on air: each
-  `prompt_applied` from the model triggers a `POST /api/live` for the next.
+  allows only the director endpoint), configures it with the world and the
+  first segment, and queues the next segment the moment the current one's
+  chunk is generated, so it takes over at the next boundary. The ticker
+  changes when the picture does, not when the chunk lands in the buffer.
 - **Programming** (`POST /api/live`): resolves the channel for this viewer,
   picks the next item through its adapter, marks it aired, returns the prompt
   (`src/lib/prompt.ts` turns an item into a single continuous shot). `GET

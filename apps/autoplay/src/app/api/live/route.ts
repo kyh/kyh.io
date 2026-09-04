@@ -18,7 +18,7 @@ const errorResponse = (status: number, error: string): NextResponse => {
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const body = liveRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Expected { sourceId: string }");
+  if (!body.success) return errorResponse(400, "Expected { sourceId: string, opening: boolean }");
   const session = await getSession();
   if (session === null) return errorResponse(401, "Sign in with X to go live");
   const source = await resolveSource(body.data.sourceId, session);
@@ -29,5 +29,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     return NextResponse.json(payload);
   }
   const viewer = { userId: session.user.id, owner: isOwnerHandle(session.user.username) };
-  return NextResponse.json(await programming.nextProgram(source.channelKey, source.access, viewer));
+  return NextResponse.json(
+    await programming.nextProgram(source.channelKey, source.access, viewer, body.data.opening),
+  );
 };
