@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { Clip, Program } from "@/lib/api-contract";
 import { programsPayloadSchema } from "@/lib/api-contract";
 import { displayPostText } from "@/lib/post-text";
+import { Glyph } from "@/components/glyph";
 import { WindowDialog } from "@/components/window-dialog";
 
 // The programme guide: everything this channel has aired. Pick one and it
@@ -132,8 +133,8 @@ export const GuideDialog = (props: GuideDialogProps) => {
                         {program.hidden ? " · off air" : ""}
                       </span>
                       {queued && (
-                        <span className="block text-[10px] tracking-widest text-accent uppercase">
-                          ▶ up next
+                        <span className="flex items-center gap-1 text-[10px] tracking-widest text-accent uppercase">
+                          <Glyph name="play" size={8} /> up next
                         </span>
                       )}
                     </span>

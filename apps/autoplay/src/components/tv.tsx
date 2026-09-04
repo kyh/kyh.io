@@ -7,6 +7,7 @@ import { PUBLIC_CHANNEL, channelPayloadSchema, errorPayloadSchema } from "@/lib/
 import type { ChannelPayload } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
+import { Glyph } from "@/components/glyph";
 import { GuideDialog } from "@/components/guide-dialog";
 import { SourcesDialog } from "@/components/sources-dialog";
 
@@ -270,9 +271,15 @@ const TvScreen = (props: ScreenProps) => {
           AUTOPLAY.TV — {props.channelLabel}
         </p>
         <div className="flex shrink-0 items-center gap-0.5">
-          <span className="title-btn">▁</span>
-          <span className="title-btn">▢</span>
-          <span className="title-btn">✕</span>
+          <span className="title-btn">
+            <Glyph name="minimize" size={8} />
+          </span>
+          <span className="title-btn">
+            <Glyph name="maximize" size={8} />
+          </span>
+          <span className="title-btn">
+            <Glyph name="close" size={8} />
+          </span>
         </div>
       </div>
 
@@ -325,11 +332,13 @@ const TvScreen = (props: ScreenProps) => {
               <div className="win w-full max-w-sm">
                 <div className="win-title flex items-center justify-between px-2 py-1">
                   <p className="text-[10px] font-bold tracking-[0.2em] uppercase">Off air</p>
-                  <span className="title-btn">✕</span>
+                  <span className="title-btn">
+                    <Glyph name="close" size={8} />
+                  </span>
                 </div>
                 <div className="flex items-start gap-3 p-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-sm font-bold text-white">
-                    ✕
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-white">
+                    <Glyph name="close" size={12} />
                   </span>
                   <div className="min-w-0 space-y-2">
                     <p className="text-xs leading-relaxed">{offAir}</p>
@@ -391,7 +400,7 @@ const TvScreen = (props: ScreenProps) => {
             className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
             aria-label={paused ? "Play" : "Pause"}
           >
-            {paused ? "▶" : "❚❚"}
+            <Glyph name={paused ? "play" : "pause"} />
           </button>
           <button
             type="button"
@@ -399,7 +408,7 @@ const TvScreen = (props: ScreenProps) => {
             className="y2k-btn status-btn cursor-pointer"
             aria-label={props.muted ? "Unmute" : "Mute"}
           >
-            {props.muted ? "🔇" : "🔊"}
+            <Glyph name={props.muted ? "sound-off" : "sound-on"} />
           </button>
 
           <div className="status-field ml-px flex-1">

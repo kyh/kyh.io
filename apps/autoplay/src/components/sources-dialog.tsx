@@ -14,6 +14,7 @@ import {
 } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import type { SourceKind } from "@/lib/source-kinds";
+import { Glyph } from "@/components/glyph";
 import { WindowDialog } from "@/components/window-dialog";
 
 // The lineup, edited. Connecting a Google scope or adding a feed creates its
@@ -123,7 +124,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                     aria-label="Move up"
                     className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
                   >
-                    ▲
+                    <Glyph name="up" size={8} />
                   </button>
                   <button
                     type="button"
@@ -132,7 +133,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                     aria-label="Move down"
                     className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
                   >
-                    ▼
+                    <Glyph name="down" size={8} />
                   </button>
                   <button
                     type="button"

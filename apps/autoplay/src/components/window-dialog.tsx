@@ -2,6 +2,8 @@
 
 import { Dialog } from "@base-ui/react/dialog";
 
+import { Glyph } from "@/components/glyph";
+
 // A desktop window as a modal: Base UI handles focus, escape, the backdrop and
 // scroll locking; the chrome is the same `win` plastic as everything else.
 
@@ -34,9 +36,9 @@ export const WindowDialog = (props: WindowDialogProps) => (
           </Dialog.Title>
           <Dialog.Close
             aria-label="Close"
-            className="grid size-4 cursor-pointer place-items-center border-2 border-outline bg-chrome text-[10px] text-outline"
+            className="grid size-4 cursor-pointer place-items-center border-2 border-outline bg-chrome text-outline"
           >
-            ✕
+            <Glyph name="close" size={8} />
           </Dialog.Close>
         </div>
         {props.children}
