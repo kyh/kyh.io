@@ -107,6 +107,26 @@ pnpm dev:autoplay      # → http://127.0.0.1:3005
 
 The app boots with none of these and shows an OFF AIR screen listing what's missing.
 
+## Testing
+
+`pnpm test` covers the pure parts. The station itself is checked end to end
+with [agent-browser](https://github.com/vercel-labs/agent-browser) against a
+running deployment — **this opens one real director session as the owner,
+about 75 seconds, billed at fal's 60-second minimum**:
+
+```sh
+pnpm with-env node e2e/owner-cookie.mjs > /tmp/owner-cookie   # signs the owner's live session
+BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
+```
+
+It checks the guards (the proxy and the live and recording routes refuse
+what they should), an anonymous visitor's view before and after, the owner
+going live and recording, the sources dialog adding and removing a feed, and
+the replay playing from the store. The owner has to have signed in on the
+site at least once for a session to sign. Don't copy the owner's X grant into
+another database to test with: X rotates the refresh token on every refresh,
+and whichever copy refreshes first invalidates the other.
+
 ## How it works
 
 - **Auth**: better-auth (`src/lib/auth.ts`) with the X social provider, same
