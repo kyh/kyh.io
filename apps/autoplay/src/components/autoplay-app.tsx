@@ -37,6 +37,7 @@ export const AutoplayApp = () => {
             channels: [PUBLIC_CHANNEL],
             googleReady: false,
             liveReady: false,
+            recordReady: false,
           });
           setUrlError("Couldn't reach the station — reload the page");
         }

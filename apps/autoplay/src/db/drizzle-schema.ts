@@ -81,6 +81,25 @@ export const airedItem = sqliteTable(
   (table) => [primaryKey({ columns: [table.channelKey, table.itemId] })],
 );
 
+// A segment of the public channel's stream, recorded in the owner's browser
+// while it was live and kept so that everyone else has something to watch.
+// One row per program; the file lives in Vercel Blob at `url`.
+export const recording = sqliteTable("recording", {
+  id: text().primaryKey(),
+  channelKey: text("channel_key").notNull(),
+  itemId: text("item_id").notNull(),
+  url: text().notNull(),
+  /** The format the session was opened on, so a replay can say what it is. */
+  formatLabel: text("format_label").notNull(),
+  text: text().notNull(),
+  authorName: text("author_name").notNull(),
+  authorUsername: text("author_username").notNull(),
+  seconds: integer().notNull(),
+  bytes: integer().notNull(),
+  /** Unix ms. */
+  recordedAt: integer("recorded_at").notNull(),
+});
+
 // A feed a user has connected. Each source is a channel in that user's lineup;
 // the public channel is not a row here (see lineup.ts). Sources backed by a
 // grant are created from the grant — see lineup.ts — so a row exists for as

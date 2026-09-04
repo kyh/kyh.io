@@ -50,6 +50,8 @@ export const sessionPayloadSchema = z.object({
   googleReady: z.boolean(),
   /** Whether anything can air: fal is configured. */
   liveReady: z.boolean(),
+  /** Whether the public channel records while live: Vercel Blob is configured. */
+  recordReady: z.boolean(),
 });
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
@@ -84,6 +86,42 @@ export const livePayloadSchema = z.discriminatedUnion("kind", [
 ]);
 
 export type LivePayload = z.infer<typeof livePayloadSchema>;
+
+/** A recorded segment of a channel's stream, as a replay plays it. */
+export const recordingSchema = z.object({
+  id: z.string(),
+  itemId: z.string(),
+  kind: sourceKindSchema,
+  url: z.string(),
+  formatLabel: z.string(),
+  text: z.string(),
+  authorName: z.string(),
+  authorUsername: z.string(),
+  seconds: z.number(),
+  recordedAt: z.number(),
+});
+
+export type Recording = z.infer<typeof recordingSchema>;
+
+export const replayPayloadSchema = z.object({
+  /** Newest first. */
+  recordings: z.array(recordingSchema),
+});
+
+export type ReplayPayload = z.infer<typeof replayPayloadSchema>;
+
+/** What the browser tells the station about a segment it just uploaded. */
+export const recordingRequestSchema = z.object({
+  sourceId: z.string(),
+  itemId: z.string(),
+  url: z.url(),
+  formatLabel: z.string().max(80),
+  text: z.string().max(4000),
+  authorName: z.string().max(200),
+  authorUsername: z.string().max(200),
+  seconds: z.number().positive().max(60),
+  bytes: z.number().int().nonnegative(),
+});
 
 /** Sources with a grant behind them are created from the grant; only a feed is added by hand. */
 export const addSourceRequestSchema = z.object({

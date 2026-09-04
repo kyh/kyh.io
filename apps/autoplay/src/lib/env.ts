@@ -18,6 +18,8 @@ const envSchema = z.object({
   BETTER_AUTH_SECRET: optionalKey,
   /** fal.ai, for the director model every channel streams through. */
   FAL_KEY: optionalKey,
+  /** Vercel Blob, where the public channel's recordings go. Optional: without it there is no replay. */
+  BLOB_READ_WRITE_TOKEN: optionalKey,
   APP_URL: optionalKey,
   /** X handle whose feed powers the default public channel. */
   OWNER_X_USERNAME: optionalKey,
@@ -30,6 +32,8 @@ export const env = envSchema.parse(process.env);
 
 export const googleConfigured =
   env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined;
+
+export const recordingConfigured = env.BLOB_READ_WRITE_TOKEN !== undefined;
 
 /** Keys still unset, in the order the setup checklist should list them. */
 export const missingEnvKeys = (): string[] => {

@@ -8,6 +8,8 @@ import { z } from "zod";
 import type { LiveProgram } from "@/lib/api-contract";
 import { errorPayloadSchema, livePayloadSchema } from "@/lib/api-contract";
 import { fal } from "@/lib/fal-client";
+import { canRecord, createRecorder } from "@/lib/recorder";
+import type { Recorder } from "@/lib/recorder";
 
 // The screen: one director session in this browser. The model streams
 // continuous video over WebRTC in chunks and takes a new prompt whenever the
@@ -56,6 +58,8 @@ export type LiveState =
 
 type LiveScreenProps = {
   sourceId: string;
+  /** Record each program for the replay; only the public channel does. */
+  record: boolean;
   muted: boolean;
   paused: boolean;
   /** The program now on air, for the ticker; undefined between sessions. */
@@ -65,7 +69,9 @@ type LiveScreenProps = {
 
 type Session = ManagedRealtimeSession<WmaRealtimeSession>;
 
-type ProgramResult = { program: LiveProgram; world?: string } | { reason: string };
+type ProgramResult =
+  | { program: LiveProgram; world?: string; formatLabel?: string }
+  | { reason: string };
 
 const requestProgram = async (sourceId: string, opening: boolean): Promise<ProgramResult> => {
   try {
@@ -81,9 +87,10 @@ const requestProgram = async (sourceId: string, opening: boolean): Promise<Progr
     }
     const payload = livePayloadSchema.parse(body);
     if (payload.kind === "off-air") return { reason: payload.reason };
-    return payload.world === undefined
-      ? { program: payload.program }
-      : { program: payload.program, world: payload.world };
+    const result: ProgramResult = { program: payload.program };
+    if (payload.world !== undefined) result.world = payload.world;
+    if (payload.formatLabel !== undefined) result.formatLabel = payload.formatLabel;
+    return result;
   } catch {
     return { reason: "Signal lost — try again" };
   }
@@ -100,6 +107,8 @@ export const LiveScreen = (props: LiveScreenProps) => {
   /** Chunks generated so far for the program on the latest prompt. */
   const chunksIntoProgramRef = useRef(0);
   const tickerTimerRef = useRef<number | undefined>(undefined);
+  const recorderRef = useRef<Recorder | undefined>(undefined);
+  const formatLabelRef = useRef("live");
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
   const settleRef = useRef<() => void>(() => undefined);
@@ -135,6 +144,8 @@ export const LiveScreen = (props: LiveScreenProps) => {
     let closed = false;
 
     const closeSession = () => {
+      recorderRef.current?.stop();
+      recorderRef.current = undefined;
       const session = sessionRef.current;
       sessionRef.current = undefined;
       if (session === undefined) return;
@@ -158,6 +169,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       const version = versionRef.current;
       programsRef.current.set(version, result.program);
       chunksIntoProgramRef.current = 0;
+      if (result.formatLabel !== undefined) formatLabelRef.current = result.formatLabel;
       if (opening) {
         session.send({
           type: "configure",
@@ -176,13 +188,23 @@ export const LiveScreen = (props: LiveScreenProps) => {
       }
     };
 
-    /** Put a program in the ticker when its picture reaches the screen, not its buffer. */
+    /**
+     * Put a program in the ticker when its picture reaches the screen, not
+     * its buffer — and cut the recording there too, so a segment is one
+     * program and not the tail of the last.
+     */
     const showWhenPlaying = (program: LiveProgram, inSeconds: number) => {
       if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
       tickerTimerRef.current = window.setTimeout(
         () => {
           tickerTimerRef.current = undefined;
-          if (!closed) onProgramRef.current(program);
+          if (closed) return;
+          onProgramRef.current(program);
+          recorderRef.current?.rotate({
+            program,
+            formatLabel: formatLabelRef.current,
+            startedAt: Date.now(),
+          });
         },
         Math.max(0, inSeconds) * 1000,
       );
@@ -193,7 +215,12 @@ export const LiveScreen = (props: LiveScreenProps) => {
       onStateRef.current({ status: "connecting" });
       const session = fal.realtime.open(wma(DIRECTOR_MODEL), {
         receive: ["video", "audio"],
-        onMedia: (media) => setStream(media),
+        onMedia: (media) => {
+          setStream(media);
+          if (props.record && canRecord()) {
+            recorderRef.current = createRecorder(media, props.sourceId);
+          }
+        },
         onState: (state) => {
           if (sessionRef.current !== session) return;
           if (state === "live") onStateRef.current({ status: "live" });
@@ -295,7 +322,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
       closeSession();
     };
-  }, [props.sourceId]);
+  }, [props.sourceId, props.record]);
 
   useEffect(() => {
     pausedRef.current = props.paused;

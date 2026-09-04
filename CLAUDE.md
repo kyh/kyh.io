@@ -56,7 +56,8 @@ Personal CLI tool.
 ### autoplay (`apps/autoplay`)
 
 Your feeds as live TV channels of AI-generated video. CH 01 is the owner's X
-(`OWNER_X_USERNAME`): live while the owner watches, a replay for everyone else.
+(`OWNER_X_USERNAME`): live while the owner watches — and recorded to Vercel
+Blob as it plays — a replay of those recordings for everyone else.
 Signing in with X gives a lineup of your own channels, one per connected
 source: your X (unless you are the owner), Gmail newsletters, a feed URL,
 YouTube subscriptions. A channel is a MiniMax H3 Max Director session
@@ -78,9 +79,10 @@ needs the DB, aired items fall back in-memory). Port 3005.
 - `src/lib/lineup.ts` - a viewer's channels: the public owner channel + their `source` rows; auto-creates sources from grants; resolves live vs replay
 - `src/lib/live.ts` - programming: next item via the adapter, never-twice, daily budgets
 - `src/lib/sources/` - one adapter per kind (`x`, `gmail`, `rss`, `youtube`); `types.ts` is the Item contract
-- `src/components/live-screen.tsx` - the director session: opens via the proxy, keeps one prompt queued, closes when idle
+- `src/components/live-screen.tsx` - the director session: opens via the proxy, keeps one prompt queued, closes when idle, records CH 01
+- `src/lib/recorder.ts` / `src/lib/recordings.ts` / `src/components/replay-screen.tsx` - one webm per program to Blob; the replay loops the newest
 - `src/app/api/fal/proxy/route.ts` - gated fal proxy (signed-in, within budget, director endpoint only)
-- `src/db/drizzle-schema.ts` - better-auth tables + `source` + `aired_item`
+- `src/db/drizzle-schema.ts` - better-auth tables + `source` + `aired_item` + `recording`
 - `src/lib/auth.ts` - better-auth config (X sign-in, Google as a linkable grant with per-source scopes)
 - `src/lib/x-account.ts` / `src/lib/grants.ts` - read/refresh the X and Google grants
 - `src/components/tv.tsx` - the TV chrome: ch−/ch+, static, status bar, sources dialog

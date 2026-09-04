@@ -2,18 +2,27 @@
 
 import { useEffect, useState } from "react";
 
-import type { ChannelSummary, LiveProgram, SessionPayload, UserSummary } from "@/lib/api-contract";
+import type {
+  ChannelSummary,
+  LiveProgram,
+  Recording,
+  SessionPayload,
+  UserSummary,
+} from "@/lib/api-contract";
 import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
 import { Glyph } from "@/components/glyph";
 import { LiveScreen } from "@/components/live-screen";
 import type { LiveState } from "@/components/live-screen";
+import { ReplayScreen } from "@/components/replay-screen";
+import type { ReplayState } from "@/components/replay-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
 
 // The TV. One full-bleed screen, static while it tunes, a status bar with the
 // program on air. A channel the viewer owns is a live session in this browser;
-// the public channel, for anyone but its owner, is the replay.
+// the public channel, for anyone but its owner — and for the owner once the
+// day's budget is spent — is the replay of what it recorded while live.
 
 const login = () => {
   void authClient.signIn.social({ provider: "twitter", callbackURL: "/" });
@@ -33,6 +42,7 @@ type ScreenProps = {
   onLineup: (channels: ChannelSummary[]) => void;
   googleReady: boolean;
   liveReady: boolean;
+  recordReady: boolean;
   muted: boolean;
   onToggleMute: () => void;
   user: UserSummary | null;
@@ -64,13 +74,17 @@ const Marquee = (props: { text: string }) => {
   );
 };
 
+/** What the ticker shows: the program or recording on air. */
+type OnAir = Pick<LiveProgram, "kind" | "text" | "authorName" | "authorUsername">;
+
 /** How the ticker credits a program; the @handle convention is X's alone. */
-const attribution = (program: LiveProgram): string =>
+const attribution = (program: OnAir): string =>
   program.kind === "x" ? `@${program.authorUsername}` : program.authorName;
 
 const TvScreen = (props: ScreenProps) => {
   const [live, setLive] = useState<LiveState>({ status: "connecting" });
-  const [program, setProgram] = useState<LiveProgram | undefined>(undefined);
+  const [replay, setReplay] = useState<ReplayState>({ status: "loading" });
+  const [program, setProgram] = useState<OnAir | undefined>(undefined);
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
@@ -85,15 +99,24 @@ const TvScreen = (props: ScreenProps) => {
   }, []);
 
   const isLive = props.channel.mode === "live" && props.liveReady;
-  const offAir: string | undefined = !props.liveReady
-    ? "The station can't go on air without fal."
-    : props.channel.mode === "replay"
-      ? "Nothing recorded yet — CH 01 records while its owner is watching."
-      : live.status === "off-air"
-        ? live.reason
-        : undefined;
-  const tuning = isLive && live.status === "connecting";
-  const onAir = isLive && live.status === "live";
+  // The public channel falls back to its replay when its owner can't be live
+  // — budget spent, grant expired — rather than going dark on them.
+  const isReplay = props.channel.sourceId === "owner" && (!isLive || live.status === "off-air");
+  const replayEmpty = isReplay && replay.status === "empty" ? replay.reason : undefined;
+  const liveDown = live.status === "off-air" ? live.reason : undefined;
+  let offAir: string | undefined;
+  if (isReplay) {
+    if (replayEmpty !== undefined) {
+      offAir = liveDown === undefined ? replayEmpty : `${liveDown} ${replayEmpty}`;
+    }
+  } else if (!props.liveReady) {
+    offAir = "The station can't go on air without fal.";
+  } else {
+    offAir = liveDown;
+  }
+  const tuning = isReplay ? replay.status === "loading" : isLive && live.status === "connecting";
+  const onAir = !isReplay && isLive && live.status === "live";
+  const replaying = isReplay && replay.status === "playing";
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
@@ -117,18 +140,30 @@ const TvScreen = (props: ScreenProps) => {
       <div className="flex min-h-0 flex-1 flex-col p-1">
         {/* The screen itself: a sunken well in the plastic. */}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
-          {isLive && (
+          {isLive && !isReplay && (
             <LiveScreen
               sourceId={props.channel.sourceId}
+              record={props.channel.sourceId === "owner" && props.recordReady}
               muted={props.muted}
               paused={paused}
               onProgram={setProgram}
               onState={setLive}
             />
           )}
+          {isReplay && (
+            <ReplayScreen
+              sourceId={props.channel.sourceId}
+              muted={props.muted}
+              paused={paused}
+              onProgram={(recording: Recording | undefined) => setProgram(recording)}
+              onState={setReplay}
+            />
+          )}
 
           <div className="tv-scanlines pointer-events-none absolute inset-0" />
-          {!onAir && <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />}
+          {!onAir && !replaying && (
+            <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />
+          )}
 
           {offAir !== undefined && (
             <div className="absolute inset-0 grid place-items-center p-4">
@@ -181,7 +216,7 @@ const TvScreen = (props: ScreenProps) => {
         <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <button
             type="button"
-            disabled={!isLive}
+            disabled={!onAir && !replaying}
             onClick={() => setPaused((value) => !value)}
             className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
             aria-label={paused ? "Play" : "Pause"}
@@ -208,6 +243,11 @@ const TvScreen = (props: ScreenProps) => {
           {onAir && (
             <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
               <span className="text-accent">● live</span>
+            </div>
+          )}
+          {replaying && (
+            <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
+              <span>replay</span>
             </div>
           )}
 
@@ -327,6 +367,7 @@ export const Tv = (props: TvProps) => {
     onLineup: setLineup,
     googleReady: session.googleReady,
     liveReady: session.liveReady,
+    recordReady: session.recordReady,
     muted,
     onToggleMute: () => setMuted((value) => !value),
     user: session.user,
