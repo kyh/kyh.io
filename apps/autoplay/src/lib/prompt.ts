@@ -55,9 +55,16 @@ export const FORMATS: readonly Format[] = [
   },
 ];
 
-/** A format for a new session: any of them, so consecutive sessions differ. */
-export const pickFormat = (): Format => {
-  const format = FORMATS[Math.floor(Math.random() * FORMATS.length)];
+/**
+ * The format for a day, the same for every session that day: a channel is one
+ * show at a time, and a replay of the day's sessions reads as one show too.
+ * The day is UTC and the pick is a hash of it, so it changes overnight and
+ * never depends on who asked.
+ */
+export const pickFormat = (day: string = new Date().toISOString().slice(0, 10)): Format => {
+  let hash = 0;
+  for (const char of day) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  const format = FORMATS[hash % FORMATS.length];
   if (format === undefined) throw new Error("no formats");
   return format;
 };

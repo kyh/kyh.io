@@ -10,7 +10,7 @@
 set -u
 H=${BASE_URL:?BASE_URL is required}
 OWNER=$(cat "${OWNER_COOKIE:?OWNER_COOKIE is required}")
-OUT=${OUT_DIR:-$(mktemp -d)}
+OUT=${OUT_DIR:-$(mktemp -d)}; mkdir -p "$OUT"
 COOKIE_NAME=${OWNER%%=*}
 export AGENT_BROWSER_SESSION="$(agent-browser session id --scope worktree --prefix autoplay-e2e)"
 

@@ -144,8 +144,8 @@ export const createProgramming = (store: AiredStore) => {
       },
     };
     if (opening) {
-      // A new session, a new world: any of the formats, so channels don't
-      // all look alike and reopening one feels like a different night.
+      // The day's format: one show per day, so reopening a channel or
+      // replaying its sessions stays in the same world.
       const format = pickFormat();
       payload.world = format.world;
       payload.formatLabel = format.label;

@@ -46,7 +46,10 @@ describe("formats", () => {
     assert.match(prompt, /Next segment.*rain tomorrow/);
   });
 
-  it("only ever picks one of the known formats", () => {
-    for (let i = 0; i < 50; i += 1) assert.ok(FORMATS.includes(pickFormat()));
+  it("picks the same format all day and a different one on other days", () => {
+    assert.equal(pickFormat("2026-09-04"), pickFormat("2026-09-04"));
+    assert.ok(FORMATS.includes(pickFormat()));
+    const week = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05"];
+    assert.ok(new Set(week.map((day) => pickFormat(day).id)).size > 1);
   });
 });
