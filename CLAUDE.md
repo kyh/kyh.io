@@ -58,7 +58,7 @@ Personal CLI tool.
 Your feeds as live TV channels of AI-generated video. CH 01 is the owner's X
 (`OWNER_X_USERNAME`): live while the owner watches — and recorded to Vercel
 Blob as it plays — which everyone else follows ~20s behind, or replays later.
-Sign-up needs `INVITE_CODE` when set.
+Sign-up is invite-only: codes are `invite_code` rows, minted with `pnpm -F @repo/autoplay invite`.
 Signing in with X gives a lineup of your own channels, one per connected
 source: your X (unless you are the owner), Gmail newsletters, a feed URL,
 YouTube subscriptions. A channel is a MiniMax H3 Max Director session
@@ -83,7 +83,7 @@ needs the DB, aired items fall back in-memory). Port 3005.
 - `src/components/live-screen.tsx` - the director session: opens via the proxy, paces prompts off the picture, closes when idle, records CH 01
 - `src/lib/recorder.ts` / `src/lib/recordings.ts` / `src/components/replay-screen.tsx` - one webm per program to Blob; the replay loops the newest
 - `src/app/api/fal/proxy/route.ts` - gated fal proxy (signed-in, within budget, director endpoint only)
-- `src/db/drizzle-schema.ts` - better-auth tables + `source` + `aired_item` + `recording`
+- `src/db/drizzle-schema.ts` - better-auth tables + `invite_code` + `source` + `aired_item` + `recording`
 - `src/lib/auth.ts` - better-auth config (X sign-in, Google as a linkable grant with per-source scopes)
 - `src/lib/x-account.ts` / `src/lib/grants.ts` - read/refresh the X and Google grants
 - `src/components/tv.tsx` - the TV chrome: ch−/ch+, static, status bar, sources dialog

@@ -12,6 +12,8 @@ export const user = sqliteTable("user", {
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull(),
   image: text(),
   username: text(),
+  /** The invite this user came in on; written by the sign-up hook, never by input. */
+  invitedByCode: text("invited_by_code"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
@@ -59,6 +61,27 @@ export const verification = sqliteTable("verification", {
   expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+// Invite codes, the door to the station. Sign-in is X, but an account is
+// created only for a browser that gave a code with capacity left. Claiming a
+// use is one conditional UPDATE, so two sign-ups on the same last use cannot
+// both succeed; `user.invitedByCode` records which code each viewer redeemed,
+// which is how a code's usage is read. Minted with scripts/create-invite.ts.
+export const inviteCode = sqliteTable("invite_code", {
+  id: text().primaryKey(),
+  /** Upper case, from an alphabet without 0/O/1/I. */
+  code: text().notNull().unique(),
+  /** Uses before exhaustion; null means unlimited. */
+  maxUses: integer("max_uses"),
+  usedCount: integer("used_count").notNull().default(0),
+  /** Unix ms, or null for never. */
+  expiresAt: integer("expires_at"),
+  /** Unix ms when it was withdrawn. */
+  revokedAt: integer("revoked_at"),
+  note: text(),
+  /** Unix ms. */
+  createdAt: integer("created_at").notNull(),
 });
 
 // What a channel has aired. A program is a prompt streamed through the

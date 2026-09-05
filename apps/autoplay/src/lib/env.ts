@@ -16,8 +16,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: optionalKey,
   GOOGLE_CLIENT_SECRET: optionalKey,
   BETTER_AUTH_SECRET: optionalKey,
-  /** Word a new viewer must give before their account is created. Unset means anyone may sign up. */
-  INVITE_CODE: optionalKey,
   /** fal.ai, for the director model every channel streams through. */
   FAL_KEY: optionalKey,
   /** Vercel Blob, where the public channel's recordings go. Optional: without it there is no replay. */

@@ -4,10 +4,12 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
+import { user as userTable } from "@/db/drizzle-schema";
 import { env } from "@/lib/env";
-import { invited } from "@/lib/invite";
+import { claimInviteCode, inviteFromCookie, validateInviteCode } from "@/lib/invite";
 
 // better-auth on autoplay's Turso database, same stack as policingice. The
 // only sign-in method is X (Twitter); the provider's tokens land in the
@@ -61,6 +63,10 @@ const googleProvider = (): { google: GoogleProviderConfig } | undefined => {
   };
 };
 
+/** The browser's cookies as the hook sees them: on the request, or on the context alone. */
+const cookieHeader = (ctx: { headers?: Headers; request?: Request } | null | undefined) =>
+  ctx?.headers?.get("cookie") ?? ctx?.request?.headers.get("cookie");
+
 const createAuth = (
   database: NonNullable<typeof db>,
   twitter: TwitterProviderConfig,
@@ -83,15 +89,30 @@ const createAuth = (
       user: {
         create: {
           // The invite gate. Sign-in itself is open — an existing viewer just
-          // signs in — but a user row is created only for a browser that gave
-          // the invite code (src/lib/invite.ts). The OAuth callback carries
-          // the browser's cookies, so the check lands here.
+          // signs in — but a user row is created only for a browser whose
+          // invite cookie names a code with a use left (src/lib/invite.ts).
+          // The OAuth callback carries the browser's cookies, so the check
+          // lands here. Validate before, claim after: a sign-up that fails
+          // between the two must not burn a code.
           before: async (user, ctx) => {
-            const cookie = ctx?.headers?.get("cookie") ?? ctx?.request?.headers.get("cookie");
-            if (!invited(cookie)) {
+            const code = inviteFromCookie(cookieHeader(ctx));
+            if (code === undefined || (await validateInviteCode(code)) === undefined) {
               throw new APIError("FORBIDDEN", { message: "invite_required" });
             }
             return { data: user };
+          },
+          after: async (user, ctx) => {
+            const code = inviteFromCookie(cookieHeader(ctx));
+            if (code === undefined) return;
+            if (!(await claimInviteCode(code))) {
+              // Lost the race for the last use: no account after all.
+              await database.delete(userTable).where(eq(userTable.id, user.id));
+              throw new APIError("CONFLICT", { message: "invite_spent" });
+            }
+            await database
+              .update(userTable)
+              .set({ invitedByCode: code })
+              .where(eq(userTable.id, user.id));
           },
         },
       },
@@ -104,6 +125,8 @@ const createAuth = (
         // owner check, which compares it to OWNER_X_USERNAME, would never pass.
         // Nothing else writes it; the only sign-in is X.
         username: { type: "string", required: false },
+        // Written by the sign-up hook once the invite is claimed; never by input.
+        invitedByCode: { type: "string", required: false, input: false },
       },
     },
     socialProviders: {

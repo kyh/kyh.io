@@ -6,10 +6,11 @@
     "build": "pnpm with-env next build",
     "db:push": "pnpm with-env drizzle-kit push",
     "db:studio": "pnpm with-env drizzle-kit studio",
+    "invite": "pnpm with-env tsx scripts/create-invite.ts",
     "dev": "pnpm with-env next dev --turbopack -p 3005",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
-    "test": "TURSO_DATABASE_URL=libsql://never-connected.invalid BETTER_AUTH_SECRET=test-secret X_CLIENT_ID=test X_CLIENT_SECRET=test INVITE_CODE=Sesame tsx --test \"src/**/*.test.ts\"",
+    "test": "TURSO_DATABASE_URL=libsql://never-connected.invalid BETTER_AUTH_SECRET=test-secret X_CLIENT_ID=test X_CLIENT_SECRET=test tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },

@@ -52,7 +52,7 @@ export const sessionPayloadSchema = z.object({
   liveReady: z.boolean(),
   /** Whether the public channel records while live: Vercel Blob is configured. */
   recordReady: z.boolean(),
-  /** Whether signing up takes an invite code first. */
+  /** Signing up takes an invite code first; always, on a station with a database. */
   inviteRequired: z.boolean(),
 });
 

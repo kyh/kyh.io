@@ -1,29 +1,46 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { INVITE_COOKIE, inviteToken, invited } from "./invite";
+import {
+  INVITE_COOKIE,
+  generateInviteCode,
+  inviteCookieValue,
+  inviteFromCookie,
+  isWellFormedInviteCode,
+  normalizeInviteCode,
+} from "./invite";
 
-// The invite is the only thing between a stranger with an X account and the
-// station's fal budget, so the gate has to hold with the code and open
-// without it — and never accept the code typed straight into the cookie.
+// The invite cookie is the only thing between a stranger with an X account
+// and the station's fal budget: it must name a code only with the secret's
+// signature, and a code has to read back exactly as it was minted.
 
-describe("invite", () => {
-  it("answers the right code, in any case, with a token and nothing else", () => {
-    const token = inviteToken("sesame");
-    assert.ok(token !== undefined);
-    assert.equal(inviteToken("SESAME "), token);
-    assert.equal(inviteToken("open sesame"), undefined);
-    assert.equal(inviteToken(""), undefined);
-    assert.notEqual(token, "sesame");
+describe("invite codes", () => {
+  it("are six letters or digits, whatever case they were typed in", () => {
+    assert.equal(normalizeInviteCode(" vickie "), "VICKIE");
+    assert.equal(isWellFormedInviteCode("VICKIE"), true);
+    assert.equal(isWellFormedInviteCode("VICK-E"), false);
+    assert.equal(isWellFormedInviteCode("VICKI"), false);
+    assert.equal(isWellFormedInviteCode("vickie"), false);
+    for (let i = 0; i < 50; i += 1)
+      assert.equal(isWellFormedInviteCode(generateInviteCode()), true);
   });
+});
 
-  it("admits a browser carrying the token and nobody else", () => {
-    const token = inviteToken("Sesame") ?? "";
-    assert.equal(invited(`${INVITE_COOKIE}=${token}; other=1`), true);
-    assert.equal(invited(`other=1; ${INVITE_COOKIE}=${encodeURIComponent(token)}`), true);
-    assert.equal(invited(`${INVITE_COOKIE}=sesame`), false);
-    assert.equal(invited(`${INVITE_COOKIE}=`), false);
-    assert.equal(invited(undefined), false);
-    assert.equal(invited(null), false);
+describe("invite cookie", () => {
+  it("names the code and reads it back only with the right signature", () => {
+    const value = inviteCookieValue("VICKIE");
+    assert.ok(value !== undefined);
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=${value}; other=1`), "VICKIE");
+    assert.equal(
+      inviteFromCookie(`other=1; ${INVITE_COOKIE}=${encodeURIComponent(value)}`),
+      "VICKIE",
+    );
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE`), undefined);
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE.forged`), undefined);
+    assert.equal(
+      inviteFromCookie(`${INVITE_COOKIE}=${value.replace("VICKIE", "SESAME")}`),
+      undefined,
+    );
+    assert.equal(inviteFromCookie(undefined), undefined);
   });
 });

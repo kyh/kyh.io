@@ -29,7 +29,7 @@ export const GET = async (): Promise<NextResponse> => {
     googleReady: googleConfigured,
     liveReady: env.FAL_KEY !== undefined,
     recordReady: recordingConfigured,
-    inviteRequired: env.INVITE_CODE !== undefined,
+    inviteRequired: true,
   };
   return NextResponse.json(payload);
 };
