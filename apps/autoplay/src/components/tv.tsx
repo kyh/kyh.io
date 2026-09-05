@@ -19,7 +19,7 @@ import type { LiveState } from "@/components/live-screen";
 import { ReplayScreen } from "@/components/replay-screen";
 import type { ReplayState } from "@/components/replay-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
-import { testPatternRequested } from "@/lib/test-pattern";
+import { testStreamRequested } from "@/lib/test-stream";
 
 // The TV. One full-bleed screen, static while it tunes, a status bar with the
 // program on air. A channel the viewer owns is a live session in this browser;
@@ -91,11 +91,11 @@ const TvScreen = (props: ScreenProps) => {
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  // The test pattern stands in for fal, so it counts as fal being there. It
+  // The test stream stands in for fal, so it counts as fal being there. It
   // is read off the URL, which the server render cannot see.
-  const testPattern = useSyncExternalStore(
+  const testStream = useSyncExternalStore(
     () => () => undefined,
-    testPatternRequested,
+    testStreamRequested,
     () => false,
   );
 
@@ -118,7 +118,7 @@ const TvScreen = (props: ScreenProps) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const liveReady = props.liveReady || testPattern;
+  const liveReady = props.liveReady || testStream;
   const isLive = props.channel.mode === "live" && liveReady;
   // The public channel falls back to its replay when its owner can't be live
   // — budget spent, grant expired — rather than going dark on them.

@@ -8,13 +8,13 @@
 # 60s minimum), records it, and then watches the replay anonymously; the
 # default LIVE=0 skips the session and checks the replay of whatever is
 # already recorded — free, and enough unless the live path itself changed.
-# Against a development server, TESTPATTERN=1 goes live on the test card
+# Against a development server, TESTSTREAM=1 goes live on the test stream
 # instead of fal, which exercises recording and the tail for nothing.
 # Screenshots land in OUT_DIR (default: a temp directory).
 set -u
 H=${BASE_URL:?BASE_URL is required}
 LIVE=${LIVE:-0}
-LIVE_URL=$H${TESTPATTERN:+/?testpattern}
+LIVE_URL=$H${TESTSTREAM:+/?teststream}
 OWNER=$(cat "${OWNER_COOKIE:?OWNER_COOKIE is required}")
 OUT=${OUT_DIR:-$(mktemp -d)}; mkdir -p "$OUT"
 COOKIE_NAME=${OWNER%%=*}
@@ -54,7 +54,7 @@ echo "  screen: $(screen)"
 ab screenshot "$OUT/anon-before.png" | tail -1
 
 if [ "$LIVE" = "1" ]; then
-echo; echo "### owner live on CH 01 (~75s, records)${TESTPATTERN:+ — test pattern}"
+echo; echo "### owner live on CH 01 (~75s, records)${TESTSTREAM:+ — test stream}"
 setcookie; ab open "$LIVE_URL" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 3000 >/dev/null
 check "signed in" "$(ab eval "!!document.body.innerText.match(/sign out/)" | tail -1)" "true"
 LIVE_AT=""

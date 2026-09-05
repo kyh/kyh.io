@@ -132,10 +132,10 @@ live path itself changed.
 
 Everything downstream of the director — recording, upload, the live tail,
 the replay — can be driven for free on a development server with the test
-pattern: open `http://127.0.0.1:3005/?testpattern` as the owner, or run the
-suite with `TESTPATTERN=1 LIVE=1` against it. It draws a test card in place
-of the stream and answers prompts the way the model does, reading no source
-and spending nothing.
+stream: open `http://127.0.0.1:3005/?teststream` as the owner, or run the
+suite with `TESTSTREAM=1 LIVE=1` against it. It plays a stored recording of
+a real session in place of the stream (`src/lib/test-stream.ts`) and answers
+prompts the way the model does, reading no source and spending nothing.
 
 The owner has to have signed in on the site at least once for a session to
 sign. Don't copy the owner's X grant into another database to test with: X

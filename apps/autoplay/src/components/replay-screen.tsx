@@ -62,7 +62,7 @@ const isOnAir = (session: RecordedSession): boolean => Date.now() - session.upda
 /**
  * A SourceBuffer must be told exactly the tracks its header carries: it
  * refuses a header missing a declared one. A recording made where no audio
- * could run (the test pattern in a browser without a gesture) has only the
+ * could run (the test stream in a browser without a gesture) has only the
  * picture, and its Tracks element names no Opus codec.
  */
 const mimeTypeFor = (header: ArrayBuffer): string =>
