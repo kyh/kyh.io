@@ -49,7 +49,7 @@ export const FORMATS: readonly Format[] = [
     id: "pirate-tv",
     label: "pirate television network",
     world:
-      "A continuous pirate television network from an alternate world, inhabited by recurring synthetic hosts with persistent identities and shared lore. Rotate through absurd local news, late-night call-ins, paranormal reports, public-access experiments, original music, fake commercials, and sitcom-like situations. Preserve characters, relationships, running jokes, station history, and consequences across every program.",
+      "A continuous pirate television network from an alternate world, rendered as warm, cozy 3D computer animation in the style of a family animated feature film: soft golden light, rounded expressive characters, tactile handmade-looking textures, gentle depth of field, and rich painterly color. Every shot, host, set, and on-screen element must remain visibly stylized 3D animation—never live action, photorealistic, or 2D. The network is run by recurring hosts with persistent identities and shared lore. Rotate through absurd local news, late-night call-ins, paranormal reports, public-access experiments, original music, fake commercials, and sitcom-like situations. Preserve characters, relationships, running jokes, station history, and consequences across every program. Avoid depicting existing films, studios, or characters.",
   },
   {
     id: "anime-news",
