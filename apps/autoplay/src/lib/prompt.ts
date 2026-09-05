@@ -23,8 +23,8 @@ export type Format = {
 
 /**
  * The channel formats, each a world the model can hold onto. The channel of
- * alternate-reality music videos is not among them: it came out as glass
- * figures, crystals and robots, and read as noise.
+ * alternate-reality music videos is kept out of the rotation: it came out as
+ * glass figures, crystals and robots, and read as noise.
  */
 export const FORMATS: readonly Format[] = [
   {
@@ -39,6 +39,12 @@ export const FORMATS: readonly Format[] = [
     world:
       "A continuous satirical news network covering an entirely fictional world. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
   },
+  // {
+  //   id: "music-video",
+  //   label: "music-video channel",
+  //   world:
+  //     "An always-on original music-video channel receiving broadcasts from alternate realities. Every transmission introduces a new fictional performer, genre, era, world, and visual language, from medieval hip-hop to underwater soul or robot garage rock. Connect videos with seamless portal jumps, distorted signals, and reality glitches. Never imitate or depict real performers, copyrighted songs, or existing franchises.",
+  // },
   {
     id: "pirate-tv",
     label: "pirate television network",
