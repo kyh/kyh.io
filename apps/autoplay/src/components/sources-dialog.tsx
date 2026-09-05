@@ -13,7 +13,7 @@ import {
   reorderSourcesRequestSchema,
 } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
-import type { SourceKind } from "@/lib/source-kinds";
+import { SOURCE_KIND_NAMES, type SourceKind } from "@/lib/source-kinds";
 import { Glyph } from "@/components/glyph";
 import { WindowDialog } from "@/components/window-dialog";
 
@@ -22,13 +22,6 @@ import { WindowDialog } from "@/components/window-dialog";
 
 const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
-
-const KIND_LABEL = {
-  x: "X",
-  gmail: "Newsletters",
-  rss: "Feed",
-  youtube: "YouTube",
-} satisfies Record<SourceKind, string>;
 
 type SourcesDialogProps = {
   channels: ChannelSummary[];
@@ -112,7 +105,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                 CH {String(channel.number).padStart(2, "0")}
               </span>
               <span className="w-20 shrink-0 text-[10px] tracking-widest uppercase opacity-60">
-                {KIND_LABEL[channel.kind]}
+                {SOURCE_KIND_NAMES[channel.kind]}
               </span>
               <span className="min-w-0 flex-1 truncate">{channel.label}</span>
               {channel.number > 1 && (

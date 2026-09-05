@@ -12,6 +12,7 @@ import type {
 import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
+import { SOURCE_KIND_NAMES } from "@/lib/source-kinds";
 import { Glyph } from "@/components/glyph";
 import { InviteDialog } from "@/components/invite-dialog";
 import { LiveScreen } from "@/components/live-screen";
@@ -393,7 +394,7 @@ export const Tv = (props: TvProps) => {
   const screenProps: ScreenProps = {
     channel,
     inviteRequired: session.inviteRequired,
-    channelLabel: `${channelNumber(channel)} · ${channel.label}`,
+    channelLabel: `${channelNumber(channel)} · ${SOURCE_KIND_NAMES[channel.kind]} · ${channel.label}`,
     channels,
     onPrev: () => setTuned((value) => value - 1),
     onNext: () => setTuned((value) => value + 1),

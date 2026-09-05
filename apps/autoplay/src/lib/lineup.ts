@@ -135,7 +135,7 @@ export const ensureSources = async (viewer: NonNullable<Viewer>): Promise<void> 
           kind: "youtube",
           accountId: row.id,
           key: `youtube:${row.accountId}`,
-          label: "YouTube",
+          label: "Subscriptions",
         });
       }
     }
