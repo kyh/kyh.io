@@ -43,8 +43,9 @@ next ten-second chunk — fifteen to twenty seconds a subject.
 While the owner watches CH 01, the browser also **records** the session as
 one continuous stream (`src/lib/recorder.ts`: a single MediaRecorder, handed
 to Vercel Blob ten seconds at a time) and that is the **replay** everyone
-else sees — and the owner too, once the day's budget is spent. Recordings
-are kept six hours (`src/lib/recordings.ts`). Which item:
+else sees — and the owner too, once the day's budget is spent. The newest six
+sessions are kept, however old (`src/lib/recordings.ts`), so the channel has
+something to show for as long as its owner is away. Which item:
 
 1. **Best first** — the source's adapter picks the un-aired item most worth
    airing. On X: personalized trends (cached an hour, cycled one per program
