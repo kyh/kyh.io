@@ -46,7 +46,6 @@ source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2
 
 # Aliases
 alias cat='bat --no-pager'
-alias ls='eza --icons=always'
 alias s='source ~/.zshrc'
 alias pu="pnpm dlx taze -r -w"
 alias pi="pnpm install"
