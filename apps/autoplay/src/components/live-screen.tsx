@@ -29,8 +29,13 @@ const DIRECTOR_MODEL = "minimax/h3-max/director";
  * it; a subject every chunk made the stream read as cuts.
  */
 const PROGRAM_SECONDS = 30;
-/** Chunk length asked of the model, the longest it serves (5–15s). */
-const CHUNK_SECONDS = 15;
+/**
+ * The model's default chunk length, which it is tuned to generate ahead of
+ * realtime. Asking for longer chunks left under four seconds of runway and a
+ * stream that froze and jumped whenever generation slipped; the actual
+ * length is read off every chunk message regardless.
+ */
+const DEFAULT_CHUNK_SECONDS = 10;
 /** How long a hidden or paused tab keeps its session before it is closed. */
 const IDLE_CLOSE_MS = 30_000;
 
@@ -110,7 +115,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
   /** Chunks the model serves; what a program's length is counted in. */
-  const chunkSecondsRef = useRef(CHUNK_SECONDS);
+  const chunkSecondsRef = useRef(DEFAULT_CHUNK_SECONDS);
   /** Chunks generated so far for the program on the latest prompt. */
   const chunksIntoProgramRef = useRef(0);
   const tickerTimerRef = useRef<number | undefined>(undefined);
@@ -195,7 +200,6 @@ export const LiveScreen = (props: LiveScreenProps) => {
             result.world === undefined
               ? result.program.prompt
               : `${result.world}\n\n${result.program.prompt}`,
-          chunk_duration: CHUNK_SECONDS,
           resolution: "768p",
           aspect_ratio: "16:9",
         });
@@ -258,9 +262,9 @@ export const LiveScreen = (props: LiveScreenProps) => {
           } catch {
             return;
           }
+          console.debug("[live]", parsed);
           const message = serverMessageSchema.safeParse(parsed);
           if (!message.success) return;
-          console.debug("[live]", message.data);
           switch (message.data.type) {
             case "configured":
               chunkSecondsRef.current = message.data.chunk_duration ?? chunkSecondsRef.current;
