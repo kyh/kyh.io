@@ -12,8 +12,9 @@ import type { LiveProgram } from "@/lib/api-contract";
 // that version, a second later), and is only ever reachable from a
 // development build with ?teststream in the URL.
 
-/** One real session, recorded as it aired, stitched into a single file. */
-const TEST_STREAM_URL = "https://euxclvii9nvaixnr.public.blob.vercel-storage.com/test/stream.webm";
+/** One real session, recorded as it aired, stitched into a single file by scripts/stitch-test-stream.ts. */
+export const TEST_STREAM_PATH = "test/stream.webm";
+const TEST_STREAM_URL = `https://euxclvii9nvaixnr.public.blob.vercel-storage.com/${TEST_STREAM_PATH}`;
 /** How long after a prompt its "chunk" is reported, standing in for generation. */
 const CHUNK_DELAY_MS = 1_000;
 

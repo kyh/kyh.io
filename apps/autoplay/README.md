@@ -135,7 +135,10 @@ the replay — can be driven for free on a development server with the test
 stream: open `http://127.0.0.1:3005/?teststream` as the owner, or run the
 suite with `TESTSTREAM=1 LIVE=1` against it. It plays a stored recording of
 a real session in place of the stream (`src/lib/test-stream.ts`) and answers
-prompts the way the model does, reading no source and spending nothing.
+prompts the way the model does, reading no source and spending nothing. The
+recording is the newest session on the public channel at the time
+`pnpm -F @repo/autoplay stitch-test-stream` last ran; run it again to keep a
+session whose look you like, or after clearing the store.
 
 The owner has to have signed in on the site at least once for a session to
 sign. Don't copy the owner's X grant into another database to test with: X

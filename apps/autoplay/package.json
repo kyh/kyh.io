@@ -7,6 +7,7 @@
     "db:push": "pnpm with-env drizzle-kit push",
     "db:studio": "pnpm with-env drizzle-kit studio",
     "invite": "pnpm with-env tsx scripts/create-invite.ts",
+    "stitch-test-stream": "pnpm with-env tsx scripts/stitch-test-stream.ts",
     "dev": "pnpm with-env next dev --turbopack -p 3005",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
