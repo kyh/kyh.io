@@ -12,12 +12,14 @@ import { canRecord, createRecorder } from "@/lib/recorder";
 import type { Recorder } from "@/lib/recorder";
 
 // The screen: one director session in this browser. The model streams
-// continuous video over WebRTC in chunks and takes a new prompt whenever the
-// programming says so. A program is a whole number of chunks: the next
-// prompt is queued when the current program's last chunk is generated, so it
-// takes over at the following chunk boundary. Queuing any earlier would not
-// shorten anything — the model accepts prompts into a deck faster than it
-// plays them, and every program handed out is a paid source read.
+// continuous video over WebRTC and takes a new prompt whenever the
+// programming says so. Prompts are paced off the picture, not the clock:
+// every chunk the model reports carries the prompt version it was made
+// under and how far ahead of the screen it is, so the moment a subject
+// reaches the screen is known — the subject holds from there, and the next
+// prompt goes out after that. Sending any earlier would not shorten anything;
+// the model accepts prompts into a deck faster than it plays them, and every
+// program handed out is a paid source read.
 //
 // The session is the meter. It runs only while the tab is visible and the
 // viewer isn't paused, and one idle long enough to be billed anyway is closed
@@ -25,34 +27,23 @@ import type { Recorder } from "@/lib/recorder";
 
 const DIRECTOR_MODEL = "minimax/h3-max/director";
 /**
- * Seconds of stream per subject. Long enough for a scene to develop around
- * it; a subject every chunk made the stream read as cuts.
+ * How long a subject holds once its picture is on screen before the next
+ * prompt goes out. The model applies a prompt at its next chunk boundary
+ * (chunks are its default ten seconds; asking for longer ones starved the
+ * buffer), so a subject is on screen for this plus up to a chunk.
  */
-const PROGRAM_SECONDS = 30;
-/**
- * The model's default chunk length, which it is tuned to generate ahead of
- * realtime. Asking for longer chunks left under four seconds of runway and a
- * stream that froze and jumped whenever generation slipped; the actual
- * length is read off every chunk message regardless.
- */
-const DEFAULT_CHUNK_SECONDS = 10;
+const HOLD_SECONDS = 10;
 /** How long a hidden or paused tab keeps its session before it is closed. */
 const IDLE_CLOSE_MS = 30_000;
 
 const serverMessageSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("configured"),
-    prompt_version: z.number(),
-    chunk_duration: z.number().nullable().optional(),
-  }),
+  z.object({ type: z.literal("configured"), prompt_version: z.number() }),
   z.object({ type: z.literal("prompt_applied"), prompt_version: z.number() }),
   z.object({ type: z.literal("prompt_rejected"), prompt_version: z.number() }),
   z.object({
     type: z.literal("chunk"),
     prompt_version: z.number(),
-    chunk_index: z.number(),
     buffer_depth_seconds: z.number(),
-    requested_duration_seconds: z.number(),
   }),
   z.object({ type: z.literal("error"), code: z.string(), error: z.string() }),
   z.object({ type: z.literal("stream_exhausted"), reason: z.string() }),
@@ -114,11 +105,10 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const [stream, setStream] = useState<MediaStream | undefined>(undefined);
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
-  /** Chunks the model serves; what a program's length is counted in. */
-  const chunkSecondsRef = useRef(DEFAULT_CHUNK_SECONDS);
-  /** Chunks generated so far for the program on the latest prompt. */
-  const chunksIntoProgramRef = useRef(0);
+  /** The latest version whose picture has been scheduled onto the screen. */
+  const shownVersionRef = useRef(0);
   const tickerTimerRef = useRef<number | undefined>(undefined);
+  const nextTimerRef = useRef<number | undefined>(undefined);
   const recorderRef = useRef<Recorder | undefined>(undefined);
   const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
@@ -191,7 +181,6 @@ export const LiveScreen = (props: LiveScreenProps) => {
       versionRef.current += 1;
       const version = versionRef.current;
       programsRef.current.set(version, result.program);
-      chunksIntoProgramRef.current = 0;
       if (result.formatLabel !== undefined) formatLabelRef.current = result.formatLabel;
       if (opening) {
         session.send({
@@ -211,28 +200,34 @@ export const LiveScreen = (props: LiveScreenProps) => {
     };
 
     /**
-     * Put a program in the ticker when its picture reaches the screen, not
-     * its buffer — and tell the recording, which stamps it on the chunks
-     * from here, so the replay's ticker follows the same picture.
+     * A subject's picture has been generated and will reach the screen in
+     * `inSeconds`. Then: the ticker changes, the recording is told what is
+     * on air, and the hold starts — the next prompt goes out when it ends.
      */
-    const showWhenPlaying = (program: LiveProgram, inSeconds: number) => {
+    const onScreenIn = (program: LiveProgram, inSeconds: number) => {
       if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
-      tickerTimerRef.current = window.setTimeout(
+      if (nextTimerRef.current !== undefined) window.clearTimeout(nextTimerRef.current);
+      const delay = Math.max(0, inSeconds) * 1000;
+      tickerTimerRef.current = window.setTimeout(() => {
+        tickerTimerRef.current = undefined;
+        if (closed) return;
+        onProgramRef.current(program);
+        const onAir = { program, formatLabel: formatLabelRef.current };
+        const stream = streamRef.current;
+        if (recorderRef.current !== undefined) {
+          recorderRef.current.setOnAir(onAir);
+        } else if (props.record && stream !== undefined && canRecord()) {
+          // The recording starts with the first picture, not the black
+          // frames before it.
+          recorderRef.current = createRecorder(stream, props.sourceId, onAir);
+        }
+      }, delay);
+      nextTimerRef.current = window.setTimeout(
         () => {
-          tickerTimerRef.current = undefined;
-          if (closed) return;
-          onProgramRef.current(program);
-          const onAir = { program, formatLabel: formatLabelRef.current };
-          const stream = streamRef.current;
-          if (recorderRef.current !== undefined) {
-            recorderRef.current.setOnAir(onAir);
-          } else if (props.record && stream !== undefined && canRecord()) {
-            // The recording starts with the first picture, not the black
-            // frames before it.
-            recorderRef.current = createRecorder(stream, props.sourceId, onAir);
-          }
+          nextTimerRef.current = undefined;
+          if (!closed) void direct(false);
         },
-        Math.max(0, inSeconds) * 1000,
+        delay + HOLD_SECONDS * 1000,
       );
     };
 
@@ -271,24 +266,15 @@ export const LiveScreen = (props: LiveScreenProps) => {
           if (!message.success) return;
           switch (message.data.type) {
             case "configured":
-              chunkSecondsRef.current = message.data.chunk_duration ?? chunkSecondsRef.current;
               return;
             case "chunk": {
-              // What the model actually serves, whatever was asked for.
-              chunkSecondsRef.current = message.data.requested_duration_seconds;
-              const program = programsRef.current.get(message.data.prompt_version);
-              if (program !== undefined && message.data.prompt_version === versionRef.current) {
-                if (chunksIntoProgramRef.current === 0) {
-                  showWhenPlaying(program, message.data.buffer_depth_seconds);
-                }
-                chunksIntoProgramRef.current += 1;
-                // This program has all the chunks it gets; the next one takes
-                // over at the following boundary.
-                const chunksPerProgram = Math.max(
-                  1,
-                  Math.round(PROGRAM_SECONDS / chunkSecondsRef.current),
-                );
-                if (chunksIntoProgramRef.current >= chunksPerProgram) void direct(false);
+              // The first chunk under a version is that subject's picture on
+              // its way to the screen.
+              const version = message.data.prompt_version;
+              const program = programsRef.current.get(version);
+              if (program !== undefined && version > shownVersionRef.current) {
+                shownVersionRef.current = version;
+                onScreenIn(program, message.data.buffer_depth_seconds);
               }
               return;
             }
@@ -344,6 +330,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       document.removeEventListener("visibilitychange", settle);
       if (idleRef.current !== undefined) window.clearTimeout(idleRef.current);
       if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
+      if (nextTimerRef.current !== undefined) window.clearTimeout(nextTimerRef.current);
       closeSession();
     };
   }, [props.sourceId, props.record]);

@@ -35,8 +35,11 @@ A session opens on a **world** — one of the channel formats in `FORMATS`
 network, an anime news network), picked at random per session — and the
 model keeps it in memory so characters, sets and running jokes persist.
 Every program after that is a **segment** of that world about the next
-item, 30 seconds long (`PROGRAM_SECONDS`: three of the model's 10s chunks,
-which it generates in about six seconds each so playback never outruns it).
+item. Prompts are paced off the picture: the model reports each chunk with
+the prompt it was made under and how far ahead of the screen it is, so the
+browser knows when a subject actually appears; it holds it ten seconds
+(`HOLD_SECONDS`) and then sends the next, which the model takes up at its
+next ten-second chunk — fifteen to twenty seconds a subject.
 While the owner watches CH 01, the browser also **records** the session as
 one continuous stream (`src/lib/recorder.ts`: a single MediaRecorder, handed
 to Vercel Blob ten seconds at a time) and that is the **replay** everyone
@@ -52,8 +55,8 @@ are kept six hours (`src/lib/recordings.ts`). Which item:
 2. **Never twice** — an item is marked aired the moment it is handed to a
    session, in `aired_item`, and never comes back.
 3. **Budgeted** — the session is the meter. Two daily caps are derived from
-   `aired_item`: `MAX_PROGRAMS_PER_DAY` (90 programs ≈ 45 min of stream) for
-   the station, and `MAX_PROGRAMS_PER_USER_PER_DAY` (30 ≈ 15 min) for each
+   `aired_item`: `MAX_PROGRAMS_PER_DAY` (150 programs ≈ 45 min of stream) for
+   the station, and `MAX_PROGRAMS_PER_USER_PER_DAY` (50 ≈ 15 min) for each
    signed-in viewer on their own channels. The owner's CH 01 counts against
    the station's only. Both are checked before a session is negotiated.
 
