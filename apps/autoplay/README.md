@@ -55,20 +55,25 @@ something to show for as long as its owner is away. Which item:
    `MIN_SCORE`.
 2. **Never twice** — an item is marked aired the moment it is handed to a
    session, in `aired_item`, and never comes back.
-3. **Budgeted** — the session is the meter. Two daily caps are derived from
-   `aired_item`: `MAX_PROGRAMS_PER_DAY` (150 programs ≈ 45 min of stream) for
-   the station, and `MAX_PROGRAMS_PER_USER_PER_DAY` (50 ≈ 15 min) for each
-   signed-in viewer on their own channels. The owner's CH 01 counts against
-   the station's only. Both are checked before a session is negotiated.
+3. **Budgeted** — the session is the meter, in dollars. The proxy records
+   every session fal opens and every heartbeat it relays, in `live_session`,
+   and `src/lib/live.ts` prices them the way fal does (per second, a minute
+   minimum, promotional rate until it ends). Two daily caps:
+   `DAILY_BUDGET_USD_PER_VIEWER` ($10) for each signed-in viewer on their own
+   channels, `DAILY_BUDGET_USD` ($50) for the whole station. The owner's
+   CH 01 counts against the station's only. A session is refused before it is
+   negotiated when the minute it will cost doesn't fit; a running one is
+   refused its next program at the cap and, a minute past it, its heartbeats.
 
 ## What it costs to run
 
 **fal** bills the director session per second of video — $0.08/s at list
 price ($0.02/s promotional until Sep 14 2026), with a 60-second minimum per
-session. A watching viewer is ~$4.80 a minute at list; the caps above bound a
-day at about $144. The client closes a session 30s after the tab is hidden or
-the viewer pauses, so channel-surfing and idle tabs don't run the meter, but
-every reopen is another 60-second minimum.
+session. A watching viewer is ~$4.80 a minute at list, so a viewer's $10 a day
+is eight minutes at the promotional rate and two at list — after the promotion
+the per-viewer cap is worth revisiting. The client closes a session 30s after
+the tab is hidden or the viewer pauses, so channel-surfing and idle tabs don't
+run the meter, but every reopen is another 60-second minimum.
 
 **X** bills per post returned. The trend path costs ~$0.06 per program: one
 trends call ($0.010, cached an hour) plus one search returning 10 posts at

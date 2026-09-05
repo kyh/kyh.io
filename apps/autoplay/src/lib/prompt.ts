@@ -31,13 +31,13 @@ export const FORMATS: readonly Format[] = [
     id: "sitcom-94",
     label: "1994 sitcom",
     world:
-      "A continuous original live-action American sitcom produced in 1994, following the same ensemble of adult roommates, coworkers, neighbors, and rivals. Preserve appearances, apartment and workplace layouts, relationships, jobs, secrets, running jokes, and unresolved storylines. Advance through dialogue, entrances, misunderstandings, escalating attempts to hide mistakes, reversals, and warm character payoffs. Avoid references to existing sitcoms or actors.",
+      "A continuous original live-action American sitcom produced in 1994, shot multi-camera on studio videotape: bright flat three-point lighting, soft broadcast-tape bloom and grain, saturated nineties wardrobe, wallpapered apartment and workplace sets built for a live audience. Every shot must remain visibly 1994 videotape sitcom—never film-look, modern digital, or animated. Follow the same ensemble of adult roommates, coworkers, neighbors, and rivals. Preserve appearances, apartment and workplace layouts, relationships, jobs, secrets, running jokes, and unresolved storylines. Advance through dialogue, entrances, misunderstandings, escalating attempts to hide mistakes, reversals, and warm character payoffs. Avoid references to existing sitcoms or actors.",
   },
   {
     id: "satire-news",
     label: "satirical news network",
     world:
-      "A continuous satirical news network covering an entirely fictional world. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
+      "A continuous satirical news network covering an entirely fictional world, rendered as handcrafted stop-motion claymation: sculpted plasticine anchors with visible fingerprints and seams, miniature cardboard-and-paint studio and city sets, practical lighting, and the slightly stepped motion of frame-by-frame animation. Every shot, person, place, and on-screen element must remain visibly clay stop-motion—never live action, photorealistic, or CGI-smooth. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
   },
   // {
   //   id: "music-video",

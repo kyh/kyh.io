@@ -1,4 +1,11 @@
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { SOURCE_KINDS } from "@/lib/source-kinds";
 
@@ -102,6 +109,26 @@ export const airedItem = sqliteTable(
     airedAt: integer("aired_at").notNull(),
   },
   (table) => [primaryKey({ columns: [table.channelKey, table.itemId] })],
+);
+
+// The meter. A director session as the proxy saw fal open it for a viewer,
+// and the last heartbeat it relayed: fal bills a session from the moment it
+// exists, a minute at least, until its heartbeats stop, and this is what the
+// daily budgets in src/lib/live.ts are counted from.
+export const liveSession = sqliteTable(
+  "live_session",
+  {
+    /** fal's own id for the session, which its heartbeats carry. */
+    id: text().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** Unix ms. */
+    startedAt: integer("started_at").notNull(),
+    /** Unix ms of the last heartbeat relayed. */
+    seenAt: integer("seen_at").notNull(),
+  },
+  (table) => [index("live_session_started_idx").on(table.startedAt)],
 );
 
 // The public channel's stream, recorded in the owner's browser while it was
