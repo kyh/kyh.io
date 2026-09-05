@@ -153,11 +153,14 @@ and whichever copy refreshes first invalidates the other.
   (`src/lib/prompt.ts` turns an item into a single continuous shot). `GET
 /api/session` returns the viewer's lineup; `/api/sources` adds a feed,
   removes a channel, or reorders them.
-- **Replay** (`src/components/replay-screen.tsx`): `GET /api/replay` lists a
-  channel's recorded sessions, newest first, each as its chunks in order; the
-  player appends a session's chunks into one MediaSource stream, so what plays
-  is exactly the stream that was on air, and moves to the next session when
-  it ends. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
+- **Replay and the live tail** (`src/components/replay-screen.tsx`):
+  `GET /api/replay` lists a channel's recorded sessions, newest first, each as
+  its chunks in order; the player appends a session's chunks into one
+  MediaSource stream, so what plays is exactly the stream that was on air,
+  and moves to the next session when it ends. A session still receiving
+  chunks is the owner watching right now: the player joins it near the end
+  and keeps appending as chunks land, so everyone watches the one session
+  the owner is paying for, twenty seconds or so behind, with the LIVE badge. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
   Firefox). The owner's browser uploads each chunk with a token minted by
   `POST /api/recordings/upload` (owner only, webm only, a chunk's worth of
   bytes) and registers it with `POST /api/recordings`.

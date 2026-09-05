@@ -30,8 +30,10 @@ const toSessions = (rows: Row[]): RecordedSession[] => {
       sessionId: row.sessionId,
       formatLabel: row.formatLabel,
       startedAt: row.recordedAt,
+      updatedAt: row.recordedAt,
       chunks: [],
     };
+    session.updatedAt = Math.max(session.updatedAt, row.recordedAt);
     session.chunks.push({
       index: row.index,
       url: row.url,

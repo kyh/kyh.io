@@ -5,21 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import type { RecordedSession, RecordingChunk } from "@/lib/api-contract";
 import { replayPayloadSchema } from "@/lib/api-contract";
 
-// The replay: the channel's recorded sessions, newest first, each appended
-// back into a single stream through MediaSource — the chunks are slices of
-// one recording, so what plays is exactly the stream that was on air, with no
-// seam between them. One session ends, the next begins; a fresh look at the
-// list now and then picks up sessions that landed meanwhile.
+// The replay, and the live tail. The channel's recorded sessions, newest
+// first, each appended back into a single stream through MediaSource — the
+// chunks are slices of one recording, so what plays is exactly the stream
+// that was on air, with no seam between them. A session that is still
+// receiving chunks is on air right now: the player joins it near its end and
+// keeps appending as chunks land, so everyone watches the one stream the
+// owner is paying for, twenty seconds or so behind. When a session ends the
+// next one begins.
 
 const MIME_TYPE = 'video/webm;codecs="vp8,opus"';
 /** How much stream to keep appended ahead of the playhead. */
 const AHEAD_SECONDS = 30;
-/** How often the list is re-read while a replay runs. */
+/** A session whose newest chunk is younger than this is still on air. */
+const ON_AIR_MS = 45_000;
+/**
+ * How far behind the live edge to join. A chunk reaches the store some
+ * seconds after it was recorded, so this has to cover that lag plus a few
+ * chunks, or a viewer catches the edge and waits.
+ */
+const TAIL_SECONDS = 40;
+/** How often to look for new chunks while following a session on air. */
+const TAIL_POLL_MS = 5_000;
+/** How often the list is re-read otherwise. */
 const REFRESH_MS = 120_000;
 
 export type ReplayState =
   | { status: "loading" }
-  | { status: "playing" }
+  | { status: "playing"; onAir: boolean }
   | { status: "empty"; reason: string };
 
 type ReplayScreenProps = {
@@ -43,36 +56,57 @@ const fetchSessions = async (sourceId: string): Promise<RecordedSession[] | unde
 export const canReplay = (): boolean =>
   "MediaSource" in globalThis && MediaSource.isTypeSupported(MIME_TYPE);
 
+const isOnAir = (session: RecordedSession): boolean => Date.now() - session.updatedAt < ON_AIR_MS;
+
 /**
- * Plays one session into a video element: chunks are fetched in order and
- * appended as the playhead approaches the end of what is buffered. Each
- * chunk's place on the timeline is where the buffer ended before it, which
- * is what the ticker reads the program on air from.
+ * Plays one session into a video element. Chunks are fetched in order and
+ * appended as the playhead approaches the end of what is buffered; chunk 0
+ * always goes first, since it carries the container header. Joining a
+ * session on air skips ahead: the header, then the chunks covering the last
+ * TAIL_SECONDS, and a seek to where they start. Each chunk's place on the
+ * timeline is read back from the buffer once it is in, which is what the
+ * ticker reads the program on air from.
  */
+type Player = {
+  /** New chunks may have arrived; append if the buffer wants them. */
+  poke(): void;
+  stop(): void;
+};
+
 const playSession = (
   video: HTMLVideoElement,
-  session: RecordedSession,
+  first: RecordedSession,
+  latest: () => RecordedSession,
   onChunk: (chunk: RecordingChunk) => void,
   onDone: () => void,
-): (() => void) => {
+): Player => {
   const source = new MediaSource();
   const url = URL.createObjectURL(source);
   const starts: { at: number; chunk: RecordingChunk }[] = [];
   let next = 0;
+  let pending: RecordingChunk | undefined;
   let appending = false;
   let stopped = false;
   let buffer: SourceBuffer | undefined;
+  let seekTo: number | undefined;
 
   const bufferedEnd = (): number => {
     const ranges = video.buffered;
     return ranges.length === 0 ? 0 : ranges.end(ranges.length - 1);
   };
 
+  const finish = () => {
+    if (!stopped && source.readyState === "open" && !buffer?.updating) source.endOfStream();
+  };
+
   const appendNext = async () => {
     if (stopped || appending || buffer === undefined || buffer.updating) return;
+    const session = latest();
     const chunk = session.chunks[next];
     if (chunk === undefined) {
-      if (source.readyState === "open") source.endOfStream();
+      // Nothing more yet: a session on air will have more shortly, a
+      // finished one is over.
+      if (!isOnAir(session)) finish();
       return;
     }
     if (bufferedEnd() - video.currentTime > AHEAD_SECONDS) return;
@@ -81,15 +115,28 @@ const playSession = (
       const response = await fetch(chunk.url);
       const bytes = await response.arrayBuffer();
       if (stopped || buffer === undefined) return;
-      starts.push({ at: bufferedEnd(), chunk });
+      pending = chunk;
       buffer.appendBuffer(bytes);
       next += 1;
     } catch {
       // A missing chunk ends the session early rather than stalling it.
-      if (!stopped && source.readyState === "open") source.endOfStream();
+      finish();
     } finally {
       appending = false;
     }
+  };
+
+  const onAppended = () => {
+    if (pending !== undefined) {
+      const end = bufferedEnd();
+      starts.push({ at: Math.max(0, end - pending.seconds), chunk: pending });
+      pending = undefined;
+      if (seekTo !== undefined && end >= seekTo) {
+        video.currentTime = seekTo;
+        seekTo = undefined;
+      }
+    }
+    void appendNext();
   };
 
   const onTime = () => {
@@ -104,28 +151,63 @@ const playSession = (
   source.addEventListener("sourceopen", () => {
     if (stopped) return;
     buffer = source.addSourceBuffer(MIME_TYPE);
-    buffer.addEventListener("updateend", () => void appendNext());
+    buffer.addEventListener("updateend", onAppended);
+    if (isOnAir(first) && first.chunks.length > 1) {
+      // Join near the live edge: play the header chunk's picture only long
+      // enough for the tail to land, then seek onto it.
+      let seconds = 0;
+      let index = first.chunks.length;
+      while (index > 1 && seconds < TAIL_SECONDS) {
+        index -= 1;
+        seconds += first.chunks[index]?.seconds ?? 0;
+      }
+      const before = first.chunks.slice(0, index).reduce((sum, chunk) => sum + chunk.seconds, 0);
+      seekTo = before;
+      next = index;
+      // The header chunk is appended out of order, at its own timestamps.
+      void (async () => {
+        const header = first.chunks[0];
+        if (header === undefined || buffer === undefined) return;
+        const response = await fetch(header.url);
+        const bytes = await response.arrayBuffer();
+        if (stopped || buffer === undefined) return;
+        pending = header;
+        buffer.appendBuffer(bytes);
+      })();
+      return;
+    }
     void appendNext();
   });
+  // A video that has run out of buffer stops firing timeupdate, so the
+  // stall itself has to ask for more.
+  const onWaiting = () => void appendNext();
   video.addEventListener("timeupdate", onTime);
+  video.addEventListener("waiting", onWaiting);
   video.addEventListener("ended", onDone);
   video.src = url;
   void video.play().catch(() => undefined);
 
-  return () => {
-    stopped = true;
-    video.removeEventListener("timeupdate", onTime);
-    video.removeEventListener("ended", onDone);
-    video.removeAttribute("src");
-    video.load();
-    URL.revokeObjectURL(url);
+  return {
+    poke: () => void appendNext(),
+    stop: () => {
+      stopped = true;
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("ended", onDone);
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
+    },
   };
 };
 
 export const ReplayScreen = (props: ReplayScreenProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sessions, setSessions] = useState<RecordedSession[] | undefined>(undefined);
+  const sessionsRef = useRef<RecordedSession[]>([]);
   const [cursor, setCursor] = useState(0);
+  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+  const playerRef = useRef<Player | undefined>(undefined);
   const onProgramRef = useRef(props.onProgram);
   const onStateRef = useRef(props.onState);
 
@@ -134,18 +216,31 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
     onStateRef.current = props.onState;
   });
 
+  // The list is re-read often while the session being played is on air —
+  // that is how its new chunks arrive — and rarely otherwise.
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
     const load = async () => {
       const list = await fetchSessions(props.sourceId);
       if (cancelled) return;
-      setSessions(list ?? []);
+      if (list !== undefined) {
+        sessionsRef.current = list;
+        setSessions(list);
+        playerRef.current?.poke();
+      } else if (sessionsRef.current.length === 0) {
+        setSessions([]);
+      }
+      const newest = list?.[0];
+      timer = window.setTimeout(
+        () => void load(),
+        newest !== undefined && isOnAir(newest) ? TAIL_POLL_MS : REFRESH_MS,
+      );
     };
     void load();
-    const refresh = window.setInterval(() => void load(), REFRESH_MS);
     return () => {
       cancelled = true;
-      window.clearInterval(refresh);
+      if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [props.sourceId]);
 
@@ -169,20 +264,35 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       onProgramRef.current(undefined);
       return;
     }
-    onStateRef.current({ status: "playing" });
-  }, [sessions]);
+    const playing = sessions.find((session) => session.sessionId === playingId);
+    onStateRef.current({ status: "playing", onAir: playing !== undefined && isOnAir(playing) });
+  }, [sessions, playingId]);
 
+  // A session starts playing when the cursor lands on it and keeps playing
+  // through list refreshes; only the cursor moving restarts the player.
+  const loaded = sessions !== undefined;
   useEffect(() => {
+    if (!loaded) return;
     const video = videoRef.current;
-    const session = sessions?.[cursor % (sessions.length || 1)];
+    const list = sessionsRef.current;
+    const session = list[cursor % (list.length || 1)];
     if (video === null || session === undefined || !canReplay()) return;
-    return playSession(
+    setPlayingId(session.sessionId);
+    const latest = () =>
+      sessionsRef.current.find((entry) => entry.sessionId === session.sessionId) ?? session;
+    const player = playSession(
       video,
       session,
+      latest,
       (chunk) => onProgramRef.current(chunk),
       () => setCursor((value) => value + 1),
     );
-  }, [sessions, cursor]);
+    playerRef.current = player;
+    return () => {
+      playerRef.current = undefined;
+      player.stop();
+    };
+  }, [cursor, loaded]);
 
   useEffect(() => {
     const video = videoRef.current;

@@ -13,6 +13,7 @@ import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
 import { Glyph } from "@/components/glyph";
+import { InviteDialog } from "@/components/invite-dialog";
 import { LiveScreen } from "@/components/live-screen";
 import type { LiveState } from "@/components/live-screen";
 import { ReplayScreen } from "@/components/replay-screen";
@@ -35,6 +36,7 @@ const logout = async () => {
 
 type ScreenProps = {
   channel: ChannelSummary;
+  inviteRequired: boolean;
   channelLabel: string;
   channels: ChannelSummary[];
   onPrev: () => void;
@@ -87,6 +89,16 @@ const TvScreen = (props: ScreenProps) => {
   const [program, setProgram] = useState<OnAir | undefined>(undefined);
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  /** New viewers give the invite code first; the dialog then runs the sign-in. */
+  const signIn = () => {
+    if (props.inviteRequired) {
+      setInviteOpen(true);
+    } else {
+      login();
+    }
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -117,6 +129,9 @@ const TvScreen = (props: ScreenProps) => {
   const tuning = isReplay ? replay.status === "loading" : isLive && live.status === "connecting";
   const onAir = !isReplay && isLive && live.status === "live";
   const replaying = isReplay && replay.status === "playing";
+  // Following the owner's session as it records is watching live, a little
+  // behind; the badge says so rather than "replay".
+  const tailing = replaying && replay.status === "playing" && replay.onAir;
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
@@ -191,7 +206,7 @@ const TvScreen = (props: ScreenProps) => {
                     {props.user === null && props.loginReady && (
                       <button
                         type="button"
-                        onClick={login}
+                        onClick={signIn}
                         className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase"
                       >
                         Sign in with X
@@ -242,14 +257,19 @@ const TvScreen = (props: ScreenProps) => {
             )}
           </div>
 
-          {onAir && (
+          {(onAir || tailing) && (
             <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
               <span className="text-accent">● live</span>
             </div>
           )}
-          {replaying && (
-            <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
-              <span>replay</span>
+          {replaying && !tailing && (
+            <div
+              className="status-field w-16 shrink-0 justify-center tracking-widest uppercase"
+              title={liveDown}
+            >
+              <span className={liveDown === undefined ? undefined : "text-red-700"}>
+                {liveDown === undefined ? "replay" : "off air"}
+              </span>
             </div>
           )}
 
@@ -284,7 +304,7 @@ const TvScreen = (props: ScreenProps) => {
           )}
           {props.user === null ? (
             props.loginReady && (
-              <button type="button" onClick={login} className="y2k-btn status-btn cursor-pointer">
+              <button type="button" onClick={signIn} className="y2k-btn status-btn cursor-pointer">
                 sign in
               </button>
             )
@@ -300,6 +320,7 @@ const TvScreen = (props: ScreenProps) => {
         </div>
       </div>
 
+      {inviteOpen && <InviteDialog onInvited={login} onClose={() => setInviteOpen(false)} />}
       {props.user !== null && sourcesOpen && (
         <SourcesDialog
           channels={props.channels}
@@ -362,6 +383,7 @@ export const Tv = (props: TvProps) => {
 
   const screenProps: ScreenProps = {
     channel,
+    inviteRequired: session.inviteRequired,
     channelLabel: `${channelNumber(channel)} · ${channel.label}`,
     channels,
     onPrev: () => setTuned((value) => value - 1),

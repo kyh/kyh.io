@@ -57,7 +57,8 @@ Personal CLI tool.
 
 Your feeds as live TV channels of AI-generated video. CH 01 is the owner's X
 (`OWNER_X_USERNAME`): live while the owner watches — and recorded to Vercel
-Blob as it plays — a replay of those recordings for everyone else.
+Blob as it plays — which everyone else follows ~20s behind, or replays later.
+Sign-up needs `INVITE_CODE` when set.
 Signing in with X gives a lineup of your own channels, one per connected
 source: your X (unless you are the owner), Gmail newsletters, a feed URL,
 YouTube subscriptions. A channel is a MiniMax H3 Max Director session

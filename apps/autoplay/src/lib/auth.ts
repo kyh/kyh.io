@@ -2,10 +2,12 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 
 import { db } from "@/db/drizzle-client";
 import { env } from "@/lib/env";
+import { invited } from "@/lib/invite";
 
 // better-auth on autoplay's Turso database, same stack as policingice. The
 // only sign-in method is X (Twitter); the provider's tokens land in the
@@ -76,6 +78,23 @@ const createAuth = (
       // X accounts carry a synthesized email (see mapProfileToUser) that can
       // never match the Google one, so linking must not compare them.
       accountLinking: { enabled: true, allowDifferentEmails: true },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          // The invite gate. Sign-in itself is open — an existing viewer just
+          // signs in — but a user row is created only for a browser that gave
+          // the invite code (src/lib/invite.ts). The OAuth callback carries
+          // the browser's cookies, so the check lands here.
+          before: async (user, ctx) => {
+            const cookie = ctx?.headers?.get("cookie") ?? ctx?.request?.headers.get("cookie");
+            if (!invited(cookie)) {
+              throw new APIError("FORBIDDEN", { message: "invite_required" });
+            }
+            return { data: user };
+          },
+        },
+      },
     },
     user: {
       additionalFields: {

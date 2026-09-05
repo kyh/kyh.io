@@ -52,6 +52,8 @@ export const sessionPayloadSchema = z.object({
   liveReady: z.boolean(),
   /** Whether the public channel records while live: Vercel Blob is configured. */
   recordReady: z.boolean(),
+  /** Whether signing up takes an invite code first. */
+  inviteRequired: z.boolean(),
 });
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
@@ -107,6 +109,8 @@ export const recordedSessionSchema = z.object({
   formatLabel: z.string(),
   /** Unix ms of the first chunk. */
   startedAt: z.number(),
+  /** Unix ms of the newest chunk; a session still receiving chunks is on air. */
+  updatedAt: z.number(),
   chunks: z.array(recordingChunkSchema).min(1),
 });
 
@@ -155,6 +159,10 @@ export const channelsPayloadSchema = z.object({
 });
 
 export type ChannelsPayload = z.infer<typeof channelsPayloadSchema>;
+
+export const inviteRequestSchema = z.object({
+  code: z.string().min(1).max(100),
+});
 
 export const errorPayloadSchema = z.object({
   error: z.string(),

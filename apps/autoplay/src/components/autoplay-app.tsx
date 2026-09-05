@@ -38,6 +38,7 @@ export const AutoplayApp = () => {
             googleReady: false,
             liveReady: false,
             recordReady: false,
+            inviteRequired: false,
           });
           setUrlError("Couldn't reach the station — reload the page");
         }
