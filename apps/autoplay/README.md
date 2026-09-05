@@ -59,7 +59,7 @@ something to show for as long as its owner is away. Which item:
    every session fal opens and every heartbeat it relays, in `live_session`,
    and `src/lib/live.ts` prices them the way fal does (per second, a minute
    minimum, promotional rate until it ends). Two daily caps:
-   `DAILY_BUDGET_USD_PER_VIEWER` ($10) for each signed-in viewer on their own
+   `DAILY_BUDGET_USD_PER_VIEWER` ($20) for each signed-in viewer on their own
    channels, `DAILY_BUDGET_USD` ($50) for the whole station. The owner's
    CH 01 counts against the station's only. A session is refused before it is
    negotiated when the minute it will cost doesn't fit; a running one is
@@ -69,9 +69,8 @@ something to show for as long as its owner is away. Which item:
 
 **fal** bills the director session per second of video — $0.08/s at list
 price ($0.02/s promotional until Sep 14 2026), with a 60-second minimum per
-session. A watching viewer is ~$4.80 a minute at list, so a viewer's $10 a day
-is eight minutes at the promotional rate and two at list — after the promotion
-the per-viewer cap is worth revisiting. The client closes a session 30s after
+session. A watching viewer is ~$4.80 a minute at list, so a viewer's $20 a day
+is about sixteen minutes at the promotional rate and four at list. The client closes a session 30s after
 the tab is hidden or the viewer pauses, so channel-surfing and idle tabs don't
 run the meter, but every reopen is another 60-second minimum.
 

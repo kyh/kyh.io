@@ -29,7 +29,7 @@ const PROMO_LAST_DAY = "2026-09-14";
 /** A session is billed at least this long the moment it exists. */
 export const MIN_BILLED_SECONDS = 60;
 /** What one signed-in viewer may spend a day on their own channels. */
-export const DAILY_BUDGET_USD_PER_VIEWER = 10;
+export const DAILY_BUDGET_USD_PER_VIEWER = 20;
 /** What the whole station may spend a day, the owner's CH 01 included. */
 export const DAILY_BUDGET_USD = 50;
 /**

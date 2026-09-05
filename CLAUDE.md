@@ -66,7 +66,7 @@ YouTube subscriptions. A channel is a MiniMax H3 Max Director session
 `/api/fal/proxy`, opened on one of the formats in `src/lib/prompt.ts` (sitcom, satirical news, pirate TV, anime news); the programming sends the next item ten seconds after the previous one reaches the screen.
 Rules: best first (each kind's adapter ranks: X by engagement via personalized
 trends then the home timeline above `MIN_SCORE`; mail and feeds by recency;
-YouTube by views), never twice (`aired_item`), budgeted ($10 a day a viewer,
+YouTube by views), never twice (`aired_item`), budgeted ($20 a day a viewer,
 $50 the station, priced from `live_session` — the sessions and heartbeats the
 proxy relays — and checked before a session is negotiated).
 
