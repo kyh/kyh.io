@@ -32,8 +32,11 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const body = recordingRequestSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return errorResponse(400, "Not a recording chunk");
   if (!inOwnStore(body.data.url)) return errorResponse(400, "Not in the station's store");
+  // Off air still resolves for the channel's owner — a source that cannot be
+  // read, or a test pattern — and the chunk is theirs either way.
   const source = await resolveSource(body.data.sourceId, session);
-  if (source === undefined || source.mode !== "live") return errorResponse(403, "Not your channel");
+  if (source === undefined || source.mode === "replay")
+    return errorResponse(403, "Not your channel");
   const { sourceId: _sourceId, ...chunk } = body.data;
   await addChunk({ channelKey: source.channelKey, ...chunk });
   return NextResponse.json({ ok: true });

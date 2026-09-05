@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import type {
   ChannelSummary,
@@ -19,6 +19,7 @@ import type { LiveState } from "@/components/live-screen";
 import { ReplayScreen } from "@/components/replay-screen";
 import type { ReplayState } from "@/components/replay-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
+import { testPatternRequested } from "@/lib/test-pattern";
 
 // The TV. One full-bleed screen, static while it tunes, a status bar with the
 // program on air. A channel the viewer owns is a live session in this browser;
@@ -90,6 +91,13 @@ const TvScreen = (props: ScreenProps) => {
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  // The test pattern stands in for fal, so it counts as fal being there. It
+  // is read off the URL, which the server render cannot see.
+  const testPattern = useSyncExternalStore(
+    () => () => undefined,
+    testPatternRequested,
+    () => false,
+  );
 
   /** New viewers give the invite code first; the dialog then runs the sign-in. */
   const signIn = () => {
@@ -110,7 +118,8 @@ const TvScreen = (props: ScreenProps) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const isLive = props.channel.mode === "live" && props.liveReady;
+  const liveReady = props.liveReady || testPattern;
+  const isLive = props.channel.mode === "live" && liveReady;
   // The public channel falls back to its replay when its owner can't be live
   // — budget spent, grant expired — rather than going dark on them.
   const isReplay = props.channel.sourceId === "owner" && (!isLive || live.status === "off-air");
@@ -121,7 +130,7 @@ const TvScreen = (props: ScreenProps) => {
     if (replayEmpty !== undefined) {
       offAir = liveDown === undefined ? replayEmpty : `${liveDown} ${replayEmpty}`;
     }
-  } else if (!props.liveReady) {
+  } else if (!liveReady) {
     offAir = "The station can't go on air without fal.";
   } else {
     offAir = liveDown;

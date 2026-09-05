@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ManagedRealtimeSession, WmaRealtimeSession } from "@fal-ai/client/realtime";
 import { wma } from "@fal-ai/client/realtime/wma";
 import { z } from "zod";
 
@@ -10,6 +9,12 @@ import { errorPayloadSchema, livePayloadSchema } from "@/lib/api-contract";
 import { fal } from "@/lib/fal-client";
 import { canRecord, createRecorder } from "@/lib/recorder";
 import type { Recorder } from "@/lib/recorder";
+import {
+  openTestPatternSession,
+  testPatternProgram,
+  testPatternRequested,
+} from "@/lib/test-pattern";
+import type { ClientMessage } from "@/lib/test-pattern";
 
 // The screen: one director session in this browser. The model streams
 // continuous video over WebRTC and takes a new prompt whenever the
@@ -70,7 +75,11 @@ type LiveScreenProps = {
   onState: (state: LiveState) => void;
 };
 
-type Session = ManagedRealtimeSession<WmaRealtimeSession>;
+/** What this screen needs of a session: the director's, or the test pattern's. */
+type Session = {
+  send(message: ClientMessage): void;
+  close(): void | Promise<void>;
+};
 
 type ProgramResult =
   | { program: LiveProgram; world?: string; formatLabel?: string }
@@ -112,6 +121,8 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const recorderRef = useRef<Recorder | undefined>(undefined);
   const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
+  const testPatternRef = useRef(false);
+  const testProgramsRef = useRef(0);
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
   const settleRef = useRef<() => void>(() => undefined);
@@ -177,7 +188,14 @@ export const LiveScreen = (props: LiveScreenProps) => {
     const direct = async (opening: boolean) => {
       const session = sessionRef.current;
       if (session === undefined || closed) return;
-      const result = await requestProgram(props.sourceId, opening);
+      // The test pattern reads no source: nothing is spent on X either.
+      const result: ProgramResult = testPatternRef.current
+        ? {
+            program: testPatternProgram((testProgramsRef.current += 1)),
+            world: "Test pattern.",
+            formatLabel: "test pattern",
+          }
+        : await requestProgram(props.sourceId, opening);
       if (closed || sessionRef.current !== session) return;
       if ("reason" in result) {
         offAir(result.reason);
@@ -240,23 +258,14 @@ export const LiveScreen = (props: LiveScreenProps) => {
     const openSession = () => {
       if (sessionRef.current !== undefined || closed) return;
       onStateRef.current({ status: "connecting" });
-      const session = fal.realtime.open(wma(DIRECTOR_MODEL), {
-        receive: ["video", "audio"],
-        onMedia: (media) => {
-          setStream(media);
-          streamRef.current = media;
-        },
-        onState: (state) => {
-          if (sessionRef.current !== session) return;
-          if (state === "closed") onProgramRef.current(undefined);
-        },
-        onError: (error) => {
-          if (sessionRef.current !== session) return;
-          sessionRef.current = undefined;
-          onProgramRef.current(undefined);
-          offAir(error instanceof Error ? error.message : "The live signal dropped");
-        },
-        onData: (raw) => {
+      testPatternRef.current = testPatternRequested();
+      const onMedia = (media: MediaStream) => {
+        setStream(media);
+        streamRef.current = media;
+      };
+      const handlers = {
+        onMedia,
+        onData: (raw: string) => {
           if (sessionRef.current !== session) return;
           let parsed: unknown;
           try {
@@ -301,7 +310,23 @@ export const LiveScreen = (props: LiveScreenProps) => {
               return;
           }
         },
-      });
+      };
+      const session: Session = testPatternRef.current
+        ? openTestPatternSession(handlers)
+        : fal.realtime.open(wma(DIRECTOR_MODEL), {
+            receive: ["video", "audio"],
+            ...handlers,
+            onState: (state) => {
+              if (sessionRef.current !== session) return;
+              if (state === "closed") onProgramRef.current(undefined);
+            },
+            onError: (error) => {
+              if (sessionRef.current !== session) return;
+              sessionRef.current = undefined;
+              onProgramRef.current(undefined);
+              offAir(error instanceof Error ? error.message : "The live signal dropped");
+            },
+          });
       sessionRef.current = session;
       void direct(true);
     };

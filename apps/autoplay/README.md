@@ -42,7 +42,7 @@ browser knows when a subject actually appears; it holds it ten seconds
 next ten-second chunk — fifteen to twenty seconds a subject.
 While the owner watches CH 01, the browser also **records** the session as
 one continuous stream (`src/lib/recorder.ts`: a single MediaRecorder, handed
-to Vercel Blob ten seconds at a time) and that is the **replay** everyone
+to Vercel Blob ten-odd seconds at a time) and that is the **replay** everyone
 else sees — and the owner too, once the day's budget is spent. The newest six
 sessions are kept, however old (`src/lib/recordings.ts`), so the channel has
 something to show for as long as its owner is away. Which item:
@@ -116,21 +116,31 @@ The app boots with none of these and shows an OFF AIR screen listing what's miss
 
 `pnpm test` covers the pure parts. The station itself is checked end to end
 with [agent-browser](https://github.com/vercel-labs/agent-browser) against a
-running deployment — **this opens one real director session as the owner,
-about 75 seconds, billed at fal's 60-second minimum**:
+running deployment:
 
 ```sh
 pnpm with-env node e2e/owner-cookie.mjs > /tmp/owner-cookie   # signs the owner's live session
 BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
 ```
 
-It checks the guards (the proxy and the live and recording routes refuse
-what they should), an anonymous visitor's view before and after, the owner
-going live and recording, the sources dialog adding and removing a feed, and
-the replay playing from the store. The owner has to have signed in on the
-site at least once for a session to sign. Don't copy the owner's X grant into
-another database to test with: X rotates the refresh token on every refresh,
-and whichever copy refreshes first invalidates the other.
+By default that costs nothing: it checks the guards (the proxy and the live
+and recording routes refuse what they should), an anonymous visitor's view,
+the sources dialog adding and removing a feed, and the replay of whatever is
+already recorded. **`LIVE=1` adds one real director session as the owner,
+about 75 seconds, billed at fal's 60-second minimum** — run it only when the
+live path itself changed.
+
+Everything downstream of the director — recording, upload, the live tail,
+the replay — can be driven for free on a development server with the test
+pattern: open `http://127.0.0.1:3005/?testpattern` as the owner, or run the
+suite with `TESTPATTERN=1 LIVE=1` against it. It draws a test card in place
+of the stream and answers prompts the way the model does, reading no source
+and spending nothing.
+
+The owner has to have signed in on the site at least once for a session to
+sign. Don't copy the owner's X grant into another database to test with: X
+rotates the refresh token on every refresh, and whichever copy refreshes
+first invalidates the other.
 
 ## How it works
 
@@ -160,7 +170,7 @@ and whichever copy refreshes first invalidates the other.
   and moves to the next session when it ends. A session still receiving
   chunks is the owner watching right now: the player joins it near the end
   and keeps appending as chunks land, so everyone watches the one session
-  the owner is paying for, twenty seconds or so behind, with the LIVE badge. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
+  the owner is paying for, under a minute behind, with the LIVE badge. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
   Firefox). The owner's browser uploads each chunk with a token minted by
   `POST /api/recordings/upload` (owner only, webm only, a chunk's worth of
   bytes) and registers it with `POST /api/recordings`.

@@ -3,12 +3,18 @@
 #
 #   BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
 #
-# OWNER_COOKIE is the file e2e/owner-cookie.mjs prints. The run opens ONE real
-# director session as the owner (~75 seconds, billed at fal's 60s minimum),
-# records it, and then watches the replay anonymously. Screenshots land in
-# OUT_DIR (default: a temp directory).
+# OWNER_COOKIE is the file e2e/owner-cookie.mjs prints. With LIVE=1 the run
+# opens ONE real director session as the owner (~75 seconds, billed at fal's
+# 60s minimum), records it, and then watches the replay anonymously; the
+# default LIVE=0 skips the session and checks the replay of whatever is
+# already recorded — free, and enough unless the live path itself changed.
+# Against a development server, TESTPATTERN=1 goes live on the test card
+# instead of fal, which exercises recording and the tail for nothing.
+# Screenshots land in OUT_DIR (default: a temp directory).
 set -u
 H=${BASE_URL:?BASE_URL is required}
+LIVE=${LIVE:-0}
+LIVE_URL=$H${TESTPATTERN:+/?testpattern}
 OWNER=$(cat "${OWNER_COOKIE:?OWNER_COOKIE is required}")
 OUT=${OUT_DIR:-$(mktemp -d)}; mkdir -p "$OUT"
 COOKIE_NAME=${OWNER%%=*}
@@ -26,7 +32,8 @@ vidt() { node -e "try{console.log(JSON.parse(process.argv[1]).t)}catch{console.l
 setcookie() { ab eval "document.cookie = '${OWNER}; path=/; secure'" >/dev/null; }
 clearcookie() { ab eval "document.cookie = '${COOKIE_NAME}=; path=/; max-age=0; secure'" >/dev/null; }
 open() { ab open "$H" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 3000 >/dev/null; }
-count() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);console.log(j.sessions.reduce((n,x)=>n+x.chunks.length,0))})'; }
+# The newest session and its chunk count; totals shrink when retention drops an old session.
+newest() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);const n=j.sessions[0];console.log(n?n.sessionId+" "+n.chunks.length:"none 0")})'; }
 pass=0; fail=0
 check() { if [ "$2" = "$3" ]; then echo "  ✓ $1"; pass=$((pass+1)); else echo "  ✗ $1 — got '$2', wanted '$3'"; fail=$((fail+1)); fi; }
 checkmatch() { if [[ "$2" =~ $3 ]]; then echo "  ✓ $1"; pass=$((pass+1)); else echo "  ✗ $1 — got '$2'"; fail=$((fail+1)); fi; }
@@ -37,8 +44,8 @@ check "proxy refuses another model for the owner" "$(curl -s -o /dev/null -w '%{
 check "live refuses anonymous" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$H/api/live" -H 'Content-Type: application/json' -d '{"sourceId":"owner","opening":true}')" 401
 check "upload token refuses anonymous" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$H/api/recordings/upload" -H 'Content-Type: application/json' -d '{"type":"blob.generate-client-token","payload":{"pathname":"recordings/owner/x.webm","callbackUrl":"","clientPayload":null,"multipart":false}}')" 403
 check "recording register refuses a foreign url" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OWNER" -X POST "$H/api/recordings" -H 'Content-Type: application/json' -d '{"sourceId":"owner","itemId":"x:1","url":"https://evil.example/x.webm","formatLabel":"x","text":"x","authorName":"x","authorUsername":"x","seconds":10,"bytes":1}')" 400
-BEFORE=$(curl -s "$H/api/replay?sourceId=owner" | count)
-echo "  recorded chunks before: $BEFORE"
+BEFORE=$(curl -s "$H/api/replay?sourceId=owner" | newest)
+echo "  newest session before: $BEFORE"
 
 echo; echo "### anonymous"
 open; clearcookie; open
@@ -46,8 +53,9 @@ checkmatch "title is CH 01" "$(title)" '^AUTOPLAY.TV — CH 01'
 echo "  screen: $(screen)"
 ab screenshot "$OUT/anon-before.png" | tail -1
 
-echo; echo "### owner live on CH 01 (~75s, records)"
-setcookie; open
+if [ "$LIVE" = "1" ]; then
+echo; echo "### owner live on CH 01 (~75s, records)${TESTPATTERN:+ — test pattern}"
+setcookie; ab open "$LIVE_URL" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 3000 >/dev/null
 check "signed in" "$(ab eval "!!document.body.innerText.match(/sign out/)" | tail -1)" "true"
 LIVE_AT=""
 for i in $(seq 1 15); do
@@ -61,9 +69,13 @@ echo "  programs: $(ab network requests --filter /api/live | grep -c POST), uplo
 echo "  console: $(ab console 2>&1 | grep -E '\[live\]' | sed -E 's/.*\[live\]//' | head -3 | tr '\n' ' ')"
 ab screenshot "$OUT/owner-live.png" | tail -1
 ab find role button click --name "Pause" >/dev/null; ab wait 36000 >/dev/null
-AFTER=$(curl -s "$H/api/replay?sourceId=owner" | count)
-echo "  recorded chunks after: $AFTER"
-checkmatch "recording grew" "$([ "$AFTER" -gt "$BEFORE" ] && echo yes || echo no)" '^yes$'
+AFTER=$(curl -s "$H/api/replay?sourceId=owner" | newest)
+echo "  newest session after: $AFTER"
+checkmatch "a new session was recorded" "$([ "${AFTER%% *}" != "${BEFORE%% *}" ] && [ "${AFTER##* }" -ge 3 ] && echo yes || echo no)" '^yes$'
+else
+echo; echo "### owner live — skipped (LIVE=0)"
+setcookie; open
+fi
 
 echo; echo "### owner: sources dialog"
 ab find role button click --name "sources" >/dev/null; ab wait 1500 >/dev/null
@@ -80,7 +92,11 @@ check "escape closes dialog" "$(ab eval "document.querySelector('[role=dialog]')
 
 echo; echo "### anonymous replay"
 clearcookie; open; ab wait 5000 >/dev/null
-check "badge is REPLAY" "$(badge)" "REPLAY"
+if [ "$(curl -s "$H/api/replay?sourceId=owner" | newest)" = "none 0" ]; then
+  echo "  nothing recorded — skipped"
+else
+# Within a minute of the owner's last chunk the viewer is on the live tail.
+checkmatch "badge is REPLAY (or the live tail)" "$(badge)" '^(REPLAY|● LIVE)$'
 echo "  ticker: $(ticker)"
 v1=$(vid); echo "  video: $v1"
 checkmatch "plays a MediaSource stream" "$v1" '"src":"blob:"'
@@ -89,6 +105,7 @@ v2=$(vid); echo "  after 25s: $v2"
 t1=$(vidt "$v1"); t2=$(vidt "$v2")
 checkmatch "kept playing through chunk boundaries" "$(node -e "console.log($t2 - $t1 > 15 ? 'yes' : 'no')")" '^yes$'
 ab screenshot "$OUT/anon-replay.png" | tail -1
+fi
 clearcookie; ab close >/dev/null
 echo; echo "pass $pass fail $fail (screenshots in $OUT)"
 [ "$fail" -eq 0 ]

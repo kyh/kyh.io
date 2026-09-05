@@ -7,14 +7,15 @@ import { replayPayloadSchema } from "@/lib/api-contract";
 
 // The replay, and the live tail. The channel's recorded sessions, newest
 // first, each appended back into a single stream through MediaSource — the
-// chunks are slices of one recording, so what plays is exactly the stream
-// that was on air, with no seam between them. A session that is still
-// receiving chunks is on air right now: the player joins it near its end and
-// keeps appending as chunks land, so everyone watches the one stream the
-// owner is paying for, twenty seconds or so behind. When a session ends the
-// next one begins.
+// chunks are consecutive whole clusters of one recording, so what plays is
+// exactly the stream that was on air, with no seam between them. A session
+// that is still receiving chunks is on air right now: the player joins it
+// near its end and keeps appending as chunks land, so everyone watches the
+// one stream the owner is paying for, under a minute behind. When a session
+// ends the next one begins.
 
 const MIME_TYPE = 'video/webm;codecs="vp8,opus"';
+const VIDEO_ONLY_MIME_TYPE = 'video/webm;codecs="vp8"';
 /** How much stream to keep appended ahead of the playhead. */
 const AHEAD_SECONDS = 30;
 /** A session whose newest chunk is younger than this is still on air. */
@@ -57,6 +58,17 @@ export const canReplay = (): boolean =>
   "MediaSource" in globalThis && MediaSource.isTypeSupported(MIME_TYPE);
 
 const isOnAir = (session: RecordedSession): boolean => Date.now() - session.updatedAt < ON_AIR_MS;
+
+/**
+ * A SourceBuffer must be told exactly the tracks its header carries: it
+ * refuses a header missing a declared one. A recording made where no audio
+ * could run (the test pattern in a browser without a gesture) has only the
+ * picture, and its Tracks element names no Opus codec.
+ */
+const mimeTypeFor = (header: ArrayBuffer): string =>
+  new TextDecoder("latin1").decode(header.slice(0, 16_384)).includes("A_OPUS")
+    ? MIME_TYPE
+    : VIDEO_ONLY_MIME_TYPE;
 
 /**
  * Plays one session into a video element. Chunks are fetched in order and
@@ -132,7 +144,12 @@ const playSession = (
       starts.push({ at: Math.max(0, end - pending.seconds), chunk: pending });
       pending = undefined;
       if (seekTo !== undefined && end >= seekTo) {
-        video.currentTime = seekTo;
+        // Onto the tail where it really begins: a chunk is cut on time, not
+        // on a keyframe, so the frames before its first keyframe are dropped
+        // on append and its range starts a little after the chunk nominally
+        // does. A seek into that gap never completes.
+        const ranges = video.buffered;
+        video.currentTime = Math.max(seekTo, ranges.start(ranges.length - 1));
         seekTo = undefined;
       }
     }
@@ -148,35 +165,32 @@ const playSession = (
     void appendNext();
   };
 
+  // The header chunk goes in first, on its own: the buffer's type is read
+  // off it. Joining a session on air then skips ahead — the header's picture
+  // plays only long enough for the tail to land, then a seek onto it.
   source.addEventListener("sourceopen", () => {
-    if (stopped) return;
-    buffer = source.addSourceBuffer(MIME_TYPE);
-    buffer.addEventListener("updateend", onAppended);
-    if (isOnAir(first) && first.chunks.length > 1) {
-      // Join near the live edge: play the header chunk's picture only long
-      // enough for the tail to land, then seek onto it.
-      let seconds = 0;
-      let index = first.chunks.length;
-      while (index > 1 && seconds < TAIL_SECONDS) {
-        index -= 1;
-        seconds += first.chunks[index]?.seconds ?? 0;
+    void (async () => {
+      const header = first.chunks[0];
+      if (stopped || header === undefined) return;
+      const response = await fetch(header.url);
+      const bytes = await response.arrayBuffer();
+      if (stopped) return;
+      buffer = source.addSourceBuffer(mimeTypeFor(bytes));
+      buffer.addEventListener("updateend", onAppended);
+      next = 1;
+      if (isOnAir(first) && first.chunks.length > 1) {
+        let seconds = 0;
+        let index = first.chunks.length;
+        while (index > 1 && seconds < TAIL_SECONDS) {
+          index -= 1;
+          seconds += first.chunks[index]?.seconds ?? 0;
+        }
+        seekTo = first.chunks.slice(0, index).reduce((sum, chunk) => sum + chunk.seconds, 0);
+        next = index;
       }
-      const before = first.chunks.slice(0, index).reduce((sum, chunk) => sum + chunk.seconds, 0);
-      seekTo = before;
-      next = index;
-      // The header chunk is appended out of order, at its own timestamps.
-      void (async () => {
-        const header = first.chunks[0];
-        if (header === undefined || buffer === undefined) return;
-        const response = await fetch(header.url);
-        const bytes = await response.arrayBuffer();
-        if (stopped || buffer === undefined) return;
-        pending = header;
-        buffer.appendBuffer(bytes);
-      })();
-      return;
-    }
-    void appendNext();
+      pending = header;
+      buffer.appendBuffer(bytes);
+    })();
   });
   // A video that has run out of buffer stops firing timeupdate, so the
   // stall itself has to ask for more.

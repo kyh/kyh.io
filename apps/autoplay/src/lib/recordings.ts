@@ -7,7 +7,7 @@ import type { RecordedSession } from "@/lib/api-contract";
 import { itemKind } from "@/lib/sources/types";
 
 // The replay. The public channel is recorded in its owner's browser while it
-// is live — one continuous recording per session, uploaded ten seconds at a
+// is live — one continuous recording per session, uploaded ten-odd seconds at a
 // time — and everyone else watches the newest sessions, each appended back
 // into a single stream. Retention is by count, not age: the channel has to
 // have something to show however long its owner has been away, so the newest
