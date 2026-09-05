@@ -21,7 +21,12 @@ export type Format = {
   world: string;
 };
 
-/** The channel formats, each a world the model can hold onto. */
+/**
+ * The channel formats, each a world the model can hold onto. All of them are
+ * grounded — people, sets, a broadcast — because the abstract ones (a channel
+ * of alternate-reality music videos, a pirate network of synthetic hosts)
+ * came out as glass figures, crystals and chrome robots, and read as noise.
+ */
 export const FORMATS: readonly Format[] = [
   {
     id: "sitcom-94",
@@ -34,18 +39,6 @@ export const FORMATS: readonly Format[] = [
     label: "satirical news network",
     world:
       "A continuous satirical news network covering an entirely fictional world. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
-  },
-  {
-    id: "music-video",
-    label: "music-video channel",
-    world:
-      "An always-on original music-video channel receiving broadcasts from alternate realities. Every transmission introduces a new fictional performer, genre, era, world, and visual language, from medieval hip-hop to underwater soul or robot garage rock. Connect videos with seamless portal jumps, distorted signals, and reality glitches. Never imitate or depict real performers, copyrighted songs, or existing franchises.",
-  },
-  {
-    id: "pirate-tv",
-    label: "pirate television network",
-    world:
-      "A continuous pirate television network from an alternate world, inhabited by recurring synthetic hosts with persistent identities and shared lore. Rotate through absurd local news, late-night call-ins, paranormal reports, public-access experiments, original music, fake commercials, and sitcom-like situations. Preserve characters, relationships, running jokes, station history, and consequences across every program.",
   },
   {
     id: "anime-news",

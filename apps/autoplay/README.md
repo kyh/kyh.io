@@ -31,8 +31,8 @@ in `SOURCE_KINDS`.
 ## Programming rules (src/lib/live.ts, src/lib/prompt.ts)
 
 A session opens on a **world** — one of the channel formats in `FORMATS`
-(a 1994 sitcom, a satirical news network, a music-video channel, a pirate TV
-network, an anime news network), one per UTC day for every session — and the
+(a 1994 sitcom, a satirical news network, an anime news network), one per
+UTC day for every session — and the
 model keeps it in memory so characters, sets and running jokes persist.
 Every program after that is a **segment** of that world about the next
 item. Prompts are paced off the picture: the model reports each chunk with
