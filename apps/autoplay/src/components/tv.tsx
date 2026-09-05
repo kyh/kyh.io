@@ -258,13 +258,13 @@ const TvScreen = (props: ScreenProps) => {
           </div>
 
           {(onAir || tailing) && (
-            <div className="status-field w-16 shrink-0 justify-center tracking-widest uppercase">
+            <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
               <span className="text-accent">● live</span>
             </div>
           )}
           {replaying && !tailing && (
             <div
-              className="status-field w-16 shrink-0 justify-center tracking-widest uppercase"
+              className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase"
               title={liveDown}
             >
               <span className={liveDown === undefined ? undefined : "text-red-700"}>
