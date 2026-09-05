@@ -17,17 +17,16 @@ describe("buildSegmentPrompt", () => {
     assert.doesNotMatch(prompt, /#WWDC/);
   });
 
-  it("carries the scene on to the subject rather than cutting to it", () => {
+  it("frames the post as the next segment of the same world", () => {
     const prompt = buildSegmentPrompt("a dog on a skateboard", "Kai");
-    assert.match(prompt, /^Continue without a cut/);
-    assert.match(prompt, /never begin a new video/i);
-    assert.match(prompt, /a dog on a skateboard/);
+    assert.match(prompt, /^Next segment/);
+    assert.match(prompt, /same world/);
     assert.match(prompt, /No on-screen text/);
   });
 
   it("falls back to an interlude when nothing survives stripping", () => {
     const prompt = buildSegmentPrompt("https://t.co/abc @someone @another", "Kai");
-    assert.match(prompt, /same place .* inspired by Kai/);
+    assert.match(prompt, /interlude .* inspired by Kai/);
   });
 
   it("truncates a long post rather than blurring the subject", () => {
@@ -44,8 +43,7 @@ describe("formats", () => {
     if (format === undefined) return;
     const prompt = buildOpeningPrompt(format, buildSegmentPrompt("rain tomorrow", "Kai"));
     assert.match(prompt, /^A continuous satirical news network/);
-    assert.match(prompt, /one unbroken stream/);
-    assert.match(prompt, /Continue without a cut.*rain tomorrow/);
+    assert.match(prompt, /Next segment.*rain tomorrow/);
   });
 
   it("only ever picks one of the known formats", () => {

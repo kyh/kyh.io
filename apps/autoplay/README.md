@@ -34,11 +34,9 @@ A session opens on a **world** — one of the channel formats in `FORMATS`
 (a 1994 sitcom, a satirical news network, a music-video channel, a pirate TV
 network, an anime news network), picked at random per session — and the
 model keeps it in memory so characters, sets and running jokes persist.
-Every program after that is the world turning to a new **subject** — the
-next item — for 30 seconds (`PROGRAM_SECONDS`, three of the model's 10s
-chunks, which it generates in about six seconds each so playback never
-outruns it), phrased so the scene on screen carries on rather than cutting
-to a new one. While the owner watches CH 01, the browser also **records**
+Every program after that is a **segment** of that world about the next
+item, 30 seconds long (`PROGRAM_SECONDS`: three of the model's 10s chunks,
+which it generates in about six seconds each so playback never outruns it). While the owner watches CH 01, the browser also **records**
 each program (`src/lib/recorder.ts`, one webm per program, straight to
 Vercel Blob) and that is the **replay** everyone else sees — and the owner
 too, once the day's budget is spent. Recordings are kept six hours

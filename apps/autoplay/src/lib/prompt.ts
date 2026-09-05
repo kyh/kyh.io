@@ -3,9 +3,8 @@
 // A session is opened on a WORLD: the format of the channel — a sitcom, a
 // news network — described once, which the model keeps in memory so that
 // characters, sets and running jokes persist across every program. Each
-// program is then a SUBJECT the world turns to — the next thing the anchors
-// pick up, the next thing the roommates argue about — which is where a post
-// comes in. A post is not a shot list: it carries
+// program is then a SEGMENT: the next thing that happens in that world,
+// which is where a post comes in. A post is not a shot list: it carries
 // links, handles, hashtags and opinions, and handed over raw the model tries
 // to render an argument. So the noise is stripped and what remains is framed
 // as the subject of the next segment.
@@ -83,28 +82,18 @@ const truncate = (text: string): string => {
 };
 
 /**
- * Stated on every prompt, not only the first: the model keeps a handful of
- * prior prompts as context, and a rule that scrolled out of that window is
- * a rule it no longer has.
- */
-const CONTINUITY =
-  "Continue without a cut, in the same shot or a camera move within it, keeping every character, set and style exactly as established. Never restart the scene, never fade to black, never begin a new video.";
-
-/**
- * The world turning to a new subject, about a post. The stream must not
- * cut: "next segment" reads to the model as a new scene, so the wording is
- * that the scene already on screen carries on and the subject enters it —
- * a story the anchors pick up, a thing the roommates start arguing about.
- * Neutral about the format on purpose; the world is in the model's memory.
+ * The next segment of the world, about a post. Neutral about the format on
+ * purpose: the world is in the model's memory, and "the next segment" reads
+ * as a scene in a sitcom and a report on a news desk alike.
  */
 export const buildSegmentPrompt = (text: string, authorName: string): string => {
   const subject = truncate(clean(text));
   if (subject === "") {
-    return `${CONTINUITY} The moment drifts: a lull in the same place with the same people, inspired by ${authorName} — the station's own texture between stories.`;
+    return `Next segment: a brief interlude in the same world, inspired by ${authorName} — a lull between programs, the station's own texture. Keep every character, set and style exactly as established.`;
   }
-  return `${CONTINUITY} The same people, in the same place, now turn to this — "${subject}". They talk about it, react to it, show it where it can be shown; the world evolves around it rather than cutting to something else. No on-screen text, captions, subtitles, watermarks or user interface.`;
+  return `Next segment, in the same world and with the same cast, sets and style: the story is about this — "${subject}". Depict it literally where it can be pictured and evoke its mood where it cannot. No on-screen text, captions, subtitles, watermarks or user interface.`;
 };
 
-/** What a session opens on: the world, then its first subject. */
+/** What a session opens on: the world, then its first segment. */
 export const buildOpeningPrompt = (format: Format, firstSegment: string): string =>
-  `${format.world} The broadcast is one unbroken stream: scenes evolve, they are never restarted.\n\n${firstSegment}`;
+  `${format.world}\n\n${firstSegment}`;
