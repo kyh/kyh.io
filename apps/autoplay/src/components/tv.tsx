@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type {
   ChannelSummary,
   LiveProgram,
-  Recording,
+  RecordingChunk,
   SessionPayload,
   UserSummary,
 } from "@/lib/api-contract";
@@ -155,7 +155,7 @@ const TvScreen = (props: ScreenProps) => {
               sourceId={props.channel.sourceId}
               muted={props.muted}
               paused={paused}
-              onProgram={(recording: Recording | undefined) => setProgram(recording)}
+              onProgram={(chunk: RecordingChunk | undefined) => setProgram(chunk)}
               onState={setReplay}
             />
           )}

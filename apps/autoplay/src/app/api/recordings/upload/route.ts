@@ -6,10 +6,10 @@ import type { NextRequest } from "next/server";
 import type { ErrorPayload } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
 import { isOwnerHandle } from "@/lib/lineup";
-import { MAX_SEGMENT_BYTES } from "@/lib/recordings";
+import { MAX_CHUNK_BYTES } from "@/lib/recordings";
 
-// Mints the token the owner's browser uploads a recorded segment with. Only
-// the owner, only webm, only a segment's worth of bytes, only under the
+// Mints the token the owner's browser uploads a recorded chunk with. Only
+// the owner, only webm, only a chunk's worth of bytes, only under the
 // channel's own prefix: the token is the whole of what the browser may do to
 // the store.
 
@@ -34,7 +34,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
         if (!pathname.startsWith("recordings/owner/")) throw new Error("Not a recording path");
         return {
           allowedContentTypes: ["video/webm"],
-          maximumSizeInBytes: MAX_SEGMENT_BYTES,
+          maximumSizeInBytes: MAX_CHUNK_BYTES,
           addRandomSuffix: true,
         };
       },

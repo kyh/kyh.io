@@ -36,11 +36,12 @@ network, an anime news network), picked at random per session — and the
 model keeps it in memory so characters, sets and running jokes persist.
 Every program after that is a **segment** of that world about the next
 item, 30 seconds long (`PROGRAM_SECONDS`: three of the model's 10s chunks,
-which it generates in about six seconds each so playback never outruns it). While the owner watches CH 01, the browser also **records**
-each program (`src/lib/recorder.ts`, one webm per program, straight to
-Vercel Blob) and that is the **replay** everyone else sees — and the owner
-too, once the day's budget is spent. Recordings are kept six hours
-(`src/lib/recordings.ts`). Which item:
+which it generates in about six seconds each so playback never outruns it).
+While the owner watches CH 01, the browser also **records** the session as
+one continuous stream (`src/lib/recorder.ts`: a single MediaRecorder, handed
+to Vercel Blob ten seconds at a time) and that is the **replay** everyone
+else sees — and the owner too, once the day's budget is spent. Recordings
+are kept six hours (`src/lib/recordings.ts`). Which item:
 
 1. **Best first** — the source's adapter picks the un-aired item most worth
    airing. On X: personalized trends (cached an hour, cycled one per program
@@ -149,11 +150,14 @@ and whichever copy refreshes first invalidates the other.
 /api/session` returns the viewer's lineup; `/api/sources` adds a feed,
   removes a channel, or reorders them.
 - **Replay** (`src/components/replay-screen.tsx`): `GET /api/replay` lists a
-  channel's newest recordings; two stacked players crossfade through them on
-  a loop. The owner's browser uploads each segment with a token minted by
-  `POST /api/recordings/upload` (owner only, webm only, a segment's worth of
+  channel's recorded sessions, newest first, each as its chunks in order; the
+  player appends a session's chunks into one MediaSource stream, so what plays
+  is exactly the stream that was on air, and moves to the next session when
+  it ends. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
+  Firefox). The owner's browser uploads each chunk with a token minted by
+  `POST /api/recordings/upload` (owner only, webm only, a chunk's worth of
   bytes) and registers it with `POST /api/recordings`.
 - **Database** (`src/db/drizzle-schema.ts`): better-auth tables, `source` (a
   user's connected feeds), `aired_item` (what aired where, by whom, when),
-  `recording` (the replay's segments). Degrades to in-memory maps when
+  `recording` (the replay's chunks). Degrades to in-memory maps when
   `TURSO_DATABASE_URL` is unset.

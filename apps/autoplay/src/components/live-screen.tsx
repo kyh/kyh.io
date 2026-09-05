@@ -120,6 +120,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const chunksIntoProgramRef = useRef(0);
   const tickerTimerRef = useRef<number | undefined>(undefined);
   const recorderRef = useRef<Recorder | undefined>(undefined);
+  const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
@@ -167,6 +168,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
     const closeSession = () => {
       recorderRef.current?.stop();
       recorderRef.current = undefined;
+      streamRef.current = undefined;
       const session = sessionRef.current;
       sessionRef.current = undefined;
       if (session === undefined) return;
@@ -210,8 +212,8 @@ export const LiveScreen = (props: LiveScreenProps) => {
 
     /**
      * Put a program in the ticker when its picture reaches the screen, not
-     * its buffer — and cut the recording there too, so a segment is one
-     * program and not the tail of the last.
+     * its buffer — and tell the recording, which stamps it on the chunks
+     * from here, so the replay's ticker follows the same picture.
      */
     const showWhenPlaying = (program: LiveProgram, inSeconds: number) => {
       if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
@@ -220,11 +222,15 @@ export const LiveScreen = (props: LiveScreenProps) => {
           tickerTimerRef.current = undefined;
           if (closed) return;
           onProgramRef.current(program);
-          recorderRef.current?.rotate({
-            program,
-            formatLabel: formatLabelRef.current,
-            startedAt: Date.now(),
-          });
+          const onAir = { program, formatLabel: formatLabelRef.current };
+          const stream = streamRef.current;
+          if (recorderRef.current !== undefined) {
+            recorderRef.current.setOnAir(onAir);
+          } else if (props.record && stream !== undefined && canRecord()) {
+            // The recording starts with the first picture, not the black
+            // frames before it.
+            recorderRef.current = createRecorder(stream, props.sourceId, onAir);
+          }
         },
         Math.max(0, inSeconds) * 1000,
       );
@@ -237,9 +243,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
         receive: ["video", "audio"],
         onMedia: (media) => {
           setStream(media);
-          if (props.record && canRecord()) {
-            recorderRef.current = createRecorder(media, props.sourceId);
-          }
+          streamRef.current = media;
         },
         onState: (state) => {
           if (sessionRef.current !== session) return;

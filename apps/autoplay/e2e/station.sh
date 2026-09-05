@@ -24,7 +24,7 @@ vid() { ab eval "(()=>{const v=document.querySelector('main video'); if(!v) retu
 setcookie() { ab eval "document.cookie = '${OWNER}; path=/; secure'" >/dev/null; }
 clearcookie() { ab eval "document.cookie = '${COOKIE_NAME}=; path=/; max-age=0; secure'" >/dev/null; }
 open() { ab open "$H" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 3000 >/dev/null; }
-count() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).recordings.length))'; }
+count() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);console.log(j.sessions.reduce((n,x)=>n+x.chunks.length,0))})'; }
 pass=0; fail=0
 check() { if [ "$2" = "$3" ]; then echo "  ✓ $1"; pass=$((pass+1)); else echo "  ✗ $1 — got '$2', wanted '$3'"; fail=$((fail+1)); fi; }
 checkmatch() { if [[ "$2" =~ $3 ]]; then echo "  ✓ $1"; pass=$((pass+1)); else echo "  ✗ $1 — got '$2'"; fail=$((fail+1)); fi; }
@@ -36,7 +36,7 @@ check "live refuses anonymous" "$(curl -s -o /dev/null -w '%{http_code}' -X POST
 check "upload token refuses anonymous" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$H/api/recordings/upload" -H 'Content-Type: application/json' -d '{"type":"blob.generate-client-token","payload":{"pathname":"recordings/owner/x.webm","callbackUrl":"","clientPayload":null,"multipart":false}}')" 403
 check "recording register refuses a foreign url" "$(curl -s -o /dev/null -w '%{http_code}' -b "$OWNER" -X POST "$H/api/recordings" -H 'Content-Type: application/json' -d '{"sourceId":"owner","itemId":"x:1","url":"https://evil.example/x.webm","formatLabel":"x","text":"x","authorName":"x","authorUsername":"x","seconds":10,"bytes":1}')" 400
 BEFORE=$(curl -s "$H/api/replay?sourceId=owner" | count)
-echo "  recordings before: $BEFORE"
+echo "  recorded chunks before: $BEFORE"
 
 echo; echo "### anonymous"
 open; clearcookie; open
@@ -58,8 +58,8 @@ echo "  programs: $(ab network requests --filter /api/live | grep -c POST), uplo
 ab screenshot "$OUT/owner-live.png" | tail -1
 ab find role button click --name "Pause" >/dev/null; ab wait 36000 >/dev/null
 AFTER=$(curl -s "$H/api/replay?sourceId=owner" | count)
-echo "  recordings after: $AFTER"
-checkmatch "recordings grew" "$([ "$AFTER" -gt "$BEFORE" ] && echo yes || echo no)" '^yes$'
+echo "  recorded chunks after: $AFTER"
+checkmatch "recording grew" "$([ "$AFTER" -gt "$BEFORE" ] && echo yes || echo no)" '^yes$'
 
 echo; echo "### owner: sources dialog"
 ab find role button click --name "sources" >/dev/null; ab wait 1500 >/dev/null
@@ -77,10 +77,11 @@ clearcookie; open; ab wait 5000 >/dev/null
 check "badge is REPLAY" "$(badge)" "REPLAY"
 echo "  ticker: $(ticker)"
 v1=$(vid); echo "  video: $v1"
-checkmatch "plays from the blob store" "$v1" 'blob\.vercel-storage\.com'
-ab wait 20000 >/dev/null
-v2=$(vid); echo "  after 20s: $v2"
-checkmatch "kept playing" "$([ "$v1" != "$v2" ] && echo yes || echo no)" '^yes$'
+checkmatch "plays a MediaSource stream" "$v1" '"host":""'
+ab wait 25000 >/dev/null
+v2=$(vid); echo "  after 25s: $v2"
+t1=$(node -e "console.log(JSON.parse(process.argv[1]).t)" "$v1" 2>/dev/null || echo 0); t2=$(node -e "console.log(JSON.parse(process.argv[1]).t)" "$v2" 2>/dev/null || echo 0)
+checkmatch "kept playing through chunk boundaries" "$(node -e "console.log($t2 - $t1 > 15 ? 'yes' : 'no')")" '^yes$'
 ab screenshot "$OUT/anon-replay.png" | tail -1
 clearcookie; ab close >/dev/null
 echo; echo "pass $pass fail $fail (screenshots in $OUT)"

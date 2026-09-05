@@ -81,24 +81,34 @@ export const airedItem = sqliteTable(
   (table) => [primaryKey({ columns: [table.channelKey, table.itemId] })],
 );
 
-// A segment of the public channel's stream, recorded in the owner's browser
-// while it was live and kept so that everyone else has something to watch.
-// One row per program; the file lives in Vercel Blob at `url`.
-export const recording = sqliteTable("recording", {
-  id: text().primaryKey(),
-  channelKey: text("channel_key").notNull(),
-  itemId: text("item_id").notNull(),
-  url: text().notNull(),
-  /** The format the session was opened on, so a replay can say what it is. */
-  formatLabel: text("format_label").notNull(),
-  text: text().notNull(),
-  authorName: text("author_name").notNull(),
-  authorUsername: text("author_username").notNull(),
-  seconds: integer().notNull(),
-  bytes: integer().notNull(),
-  /** Unix ms. */
-  recordedAt: integer("recorded_at").notNull(),
-});
+// The public channel's stream, recorded in the owner's browser while it was
+// live and kept so that everyone else has something to watch. One row per
+// ten-second chunk of one continuous recording per session; a replay appends
+// a session's chunks back into a single stream. Files live in Vercel Blob.
+export const recording = sqliteTable(
+  "recording",
+  {
+    id: text().primaryKey(),
+    channelKey: text("channel_key").notNull(),
+    /** One live session, one recording; chunks share it. */
+    sessionId: text("session_id").notNull(),
+    /** Position in the session's stream; chunk 0 carries the container header. */
+    index: integer().notNull(),
+    url: text().notNull(),
+    /** The format the session was opened on, so a replay can say what it is. */
+    formatLabel: text("format_label").notNull(),
+    /** The program on air when the chunk began, for the ticker. */
+    itemId: text("item_id").notNull(),
+    text: text().notNull(),
+    authorName: text("author_name").notNull(),
+    authorUsername: text("author_username").notNull(),
+    seconds: integer().notNull(),
+    bytes: integer().notNull(),
+    /** Unix ms. */
+    recordedAt: integer("recorded_at").notNull(),
+  },
+  (table) => [uniqueIndex("recording_session_index_uidx").on(table.sessionId, table.index)],
+);
 
 // A feed a user has connected. Each source is a channel in that user's lineup;
 // the public channel is not a row here (see lineup.ts). Sources backed by a

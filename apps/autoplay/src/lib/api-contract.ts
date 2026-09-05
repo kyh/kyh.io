@@ -87,35 +87,46 @@ export const livePayloadSchema = z.discriminatedUnion("kind", [
 
 export type LivePayload = z.infer<typeof livePayloadSchema>;
 
-/** A recorded segment of a channel's stream, as a replay plays it. */
-export const recordingSchema = z.object({
-  id: z.string(),
+/** One chunk of a recorded session, as a replay appends it. */
+export const recordingChunkSchema = z.object({
+  index: z.number().int().nonnegative(),
+  url: z.string(),
+  seconds: z.number(),
   itemId: z.string(),
   kind: sourceKindSchema,
-  url: z.string(),
-  formatLabel: z.string(),
   text: z.string(),
   authorName: z.string(),
   authorUsername: z.string(),
-  seconds: z.number(),
-  recordedAt: z.number(),
 });
 
-export type Recording = z.infer<typeof recordingSchema>;
+export type RecordingChunk = z.infer<typeof recordingChunkSchema>;
+
+/** One live session as recorded: its chunks in order, which play as one stream. */
+export const recordedSessionSchema = z.object({
+  sessionId: z.string(),
+  formatLabel: z.string(),
+  /** Unix ms of the first chunk. */
+  startedAt: z.number(),
+  chunks: z.array(recordingChunkSchema).min(1),
+});
+
+export type RecordedSession = z.infer<typeof recordedSessionSchema>;
 
 export const replayPayloadSchema = z.object({
-  /** Newest first. */
-  recordings: z.array(recordingSchema),
+  /** Newest session first. */
+  sessions: z.array(recordedSessionSchema),
 });
 
 export type ReplayPayload = z.infer<typeof replayPayloadSchema>;
 
-/** What the browser tells the station about a segment it just uploaded. */
+/** What the browser tells the station about a chunk it just uploaded. */
 export const recordingRequestSchema = z.object({
   sourceId: z.string(),
-  itemId: z.string(),
+  sessionId: z.string().max(80),
+  index: z.number().int().nonnegative(),
   url: z.url(),
   formatLabel: z.string().max(80),
+  itemId: z.string().max(200),
   text: z.string().max(4000),
   authorName: z.string().max(200),
   authorUsername: z.string().max(200),

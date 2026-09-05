@@ -5,9 +5,9 @@ import type { ErrorPayload } from "@/lib/api-contract";
 import { recordingRequestSchema } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
 import { isOwnerHandle, resolveSource } from "@/lib/lineup";
-import { addRecording } from "@/lib/recordings";
+import { addChunk } from "@/lib/recordings";
 
-// A segment the owner's browser has finished uploading, now on the record.
+// A chunk the owner's browser has finished uploading, now on the record.
 // The file must be in the station's own store: a URL anywhere else would let
 // a replay play whatever someone pointed it at.
 
@@ -30,11 +30,11 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     return errorResponse(403, "Only the station's owner records");
   }
   const body = recordingRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Not a recording");
+  if (!body.success) return errorResponse(400, "Not a recording chunk");
   if (!inOwnStore(body.data.url)) return errorResponse(400, "Not in the station's store");
   const source = await resolveSource(body.data.sourceId, session);
   if (source === undefined || source.mode !== "live") return errorResponse(403, "Not your channel");
-  const { sourceId: _sourceId, ...segment } = body.data;
-  await addRecording({ channelKey: source.channelKey, ...segment });
+  const { sourceId: _sourceId, ...chunk } = body.data;
+  await addChunk({ channelKey: source.channelKey, ...chunk });
   return NextResponse.json({ ok: true });
 };
