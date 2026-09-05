@@ -167,6 +167,12 @@ export const LiveScreen = (props: LiveScreenProps) => {
       onProgramRef.current(undefined);
     };
 
+    /** Off the air, and why — in the console too, since the screen may show the replay instead. */
+    const offAir = (reason: string) => {
+      console.warn("[live] off air:", reason);
+      onStateRef.current({ status: "off-air", reason });
+    };
+
     /** Line up the next program behind the one on air, or open on it. */
     const direct = async (opening: boolean) => {
       const session = sessionRef.current;
@@ -174,7 +180,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       const result = await requestProgram(props.sourceId, opening);
       if (closed || sessionRef.current !== session) return;
       if ("reason" in result) {
-        onStateRef.current({ status: "off-air", reason: result.reason });
+        offAir(result.reason);
         closeSession();
         return;
       }
@@ -248,10 +254,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
           if (sessionRef.current !== session) return;
           sessionRef.current = undefined;
           onProgramRef.current(undefined);
-          onStateRef.current({
-            status: "off-air",
-            reason: error instanceof Error ? error.message : "The live signal dropped",
-          });
+          offAir(error instanceof Error ? error.message : "The live signal dropped");
         },
         onData: (raw) => {
           if (sessionRef.current !== session) return;
@@ -283,17 +286,15 @@ export const LiveScreen = (props: LiveScreenProps) => {
               void direct(false);
               return;
             case "error":
-              onStateRef.current({ status: "off-air", reason: message.data.error });
+              offAir(`${message.data.code}: ${message.data.error}`);
               closeSession();
               return;
             case "stream_exhausted":
-              onStateRef.current({
-                status: "off-air",
-                reason:
-                  message.data.reason === "session_limit"
-                    ? "This session hit fal's length limit — tune away and back for a new one."
-                    : "The session ended.",
-              });
+              offAir(
+                message.data.reason === "session_limit"
+                  ? "This session hit fal's length limit — tune away and back for a new one."
+                  : "The session ended.",
+              );
               closeSession();
               return;
             default:

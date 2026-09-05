@@ -20,7 +20,9 @@ title() { ab eval "document.querySelector('.win-title p')?.textContent" | tail -
 screen() { ab eval "document.querySelector('main .bevel-in')?.innerText.replace(/\\s+/g,' ').slice(0,120)" | tail -1; }
 ticker() { ab eval "document.querySelector('.status-field')?.innerText.replace(/\\s+/g,' ').slice(0,70)" | tail -1; }
 badge() { ab eval "document.body.innerText.match(/● LIVE|REPLAY/)?.[0] ?? 'none'" | tail -1 | unquote; }
-vid() { ab eval "(()=>{const v=document.querySelector('main video'); if(!v) return 'no video'; return JSON.stringify({live: !!v.srcObject, host: v.src? new URL(v.src).host:'', t:+v.currentTime.toFixed(1), w:v.videoWidth, h:v.videoHeight})})()" | tail -1; }
+# One line of plain JSON: the eval returns a JSON-encoded string, so unwrap it.
+vid() { ab eval "(()=>{const v=document.querySelector('main video'); if(!v) return 'no video'; return JSON.stringify({live: !!v.srcObject, src: v.src.slice(0,5), t:+v.currentTime.toFixed(1), w:v.videoWidth, h:v.videoHeight})})()" | tail -1 | sed -E 's/^"//; s/"$//; s/\\"/"/g'; }
+vidt() { node -e "try{console.log(JSON.parse(process.argv[1]).t)}catch{console.log(0)}" "$1"; }
 setcookie() { ab eval "document.cookie = '${OWNER}; path=/; secure'" >/dev/null; }
 clearcookie() { ab eval "document.cookie = '${COOKIE_NAME}=; path=/; max-age=0; secure'" >/dev/null; }
 open() { ab open "$H" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 3000 >/dev/null; }
@@ -55,6 +57,8 @@ for i in $(seq 1 15); do
 done
 checkmatch "went live" "$LIVE_AT" '^[0-9]+$'
 echo "  programs: $(ab network requests --filter /api/live | grep -c POST), uploads: $(ab network requests --filter /api/recordings | grep -c POST)"
+[ "$(badge)" != "● LIVE" ] && echo "  not live at the end — screen: $(screen)"
+echo "  console: $(ab console 2>&1 | grep -E '\[live\]' | sed -E 's/.*\[live\]//' | head -3 | tr '\n' ' ')"
 ab screenshot "$OUT/owner-live.png" | tail -1
 ab find role button click --name "Pause" >/dev/null; ab wait 36000 >/dev/null
 AFTER=$(curl -s "$H/api/replay?sourceId=owner" | count)
@@ -65,8 +69,10 @@ echo; echo "### owner: sources dialog"
 ab find role button click --name "sources" >/dev/null; ab wait 1500 >/dev/null
 check "dialog opens" "$(ab eval "document.querySelector('[role=dialog] h2')?.textContent" | tail -1 | unquote)" "Sources"
 ab find label "Feed URL" fill "https://hnrss.org/frontpage" >/dev/null
-ab find role button click --name "add feed" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 2000 >/dev/null
+ab find role button click --name "add feed" >/dev/null
+for i in $(seq 1 10); do ab wait 1000 >/dev/null; ab eval "document.querySelectorAll('[role=dialog] li').length" | tail -1 | grep -q 2 && break; done
 checkmatch "feed added as CH 02" "$(ab eval "Array.from(document.querySelectorAll('[role=dialog] li')).map(l=>l.innerText.replace(/\\s+/g,' ')).join(' || ')" | tail -1)" 'CH 02 FEED Hacker News'
+echo "  dialog error: $(ab eval "document.querySelector('[role=dialog] .text-red-700')?.textContent ?? 'none'" | tail -1)"
 ab find role button click --name "remove" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 1500 >/dev/null
 check "feed removed" "$(ab eval "document.querySelectorAll('[role=dialog] li').length" | tail -1)" 1
 ab press Escape >/dev/null; ab wait 500 >/dev/null
@@ -77,10 +83,10 @@ clearcookie; open; ab wait 5000 >/dev/null
 check "badge is REPLAY" "$(badge)" "REPLAY"
 echo "  ticker: $(ticker)"
 v1=$(vid); echo "  video: $v1"
-checkmatch "plays a MediaSource stream" "$v1" '"host":""'
+checkmatch "plays a MediaSource stream" "$v1" '"src":"blob:"'
 ab wait 25000 >/dev/null
 v2=$(vid); echo "  after 25s: $v2"
-t1=$(node -e "console.log(JSON.parse(process.argv[1]).t)" "$v1" 2>/dev/null || echo 0); t2=$(node -e "console.log(JSON.parse(process.argv[1]).t)" "$v2" 2>/dev/null || echo 0)
+t1=$(vidt "$v1"); t2=$(vidt "$v2")
 checkmatch "kept playing through chunk boundaries" "$(node -e "console.log($t2 - $t1 > 15 ? 'yes' : 'no')")" '^yes$'
 ab screenshot "$OUT/anon-replay.png" | tail -1
 clearcookie; ab close >/dev/null
