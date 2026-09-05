@@ -63,7 +63,7 @@ Signing in with X gives a lineup of your own channels, one per connected
 source: your X (unless you are the owner), Gmail newsletters, a feed URL,
 YouTube subscriptions. A channel is a MiniMax H3 Max Director session
 (`minimax/h3-max/director`) opened in the viewer's browser over WebRTC via
-`/api/fal/proxy`, opened on one of the formats in `src/lib/prompt.ts` (sitcom, satirical news, anime news); the programming sends the next item ten seconds after the previous one reaches the screen.
+`/api/fal/proxy`, opened on one of the formats in `src/lib/prompt.ts` (sitcom, satirical news, pirate TV, anime news); the programming sends the next item ten seconds after the previous one reaches the screen.
 Rules: best first (each kind's adapter ranks: X by engagement via personalized
 trends then the home timeline above `MIN_SCORE`; mail and feeds by recency;
 YouTube by views), never twice (`aired_item`), budgeted (daily caps derived

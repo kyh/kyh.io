@@ -22,10 +22,9 @@ export type Format = {
 };
 
 /**
- * The channel formats, each a world the model can hold onto. All of them are
- * grounded — people, sets, a broadcast — because the abstract ones (a channel
- * of alternate-reality music videos, a pirate network of synthetic hosts)
- * came out as glass figures, crystals and chrome robots, and read as noise.
+ * The channel formats, each a world the model can hold onto. The channel of
+ * alternate-reality music videos is not among them: it came out as glass
+ * figures, crystals and robots, and read as noise.
  */
 export const FORMATS: readonly Format[] = [
   {
@@ -39,6 +38,12 @@ export const FORMATS: readonly Format[] = [
     label: "satirical news network",
     world:
       "A continuous satirical news network covering an entirely fictional world. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
+  },
+  {
+    id: "pirate-tv",
+    label: "pirate television network",
+    world:
+      "A continuous pirate television network from an alternate world, inhabited by recurring synthetic hosts with persistent identities and shared lore. Rotate through absurd local news, late-night call-ins, paranormal reports, public-access experiments, original music, fake commercials, and sitcom-like situations. Preserve characters, relationships, running jokes, station history, and consequences across every program.",
   },
   {
     id: "anime-news",
