@@ -167,7 +167,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
       onProgramRef.current(undefined);
     };
 
-    /** Queue the next program behind the one on air, or open on it. */
+    /** Line up the next program behind the one on air, or open on it. */
     const direct = async (opening: boolean) => {
       const session = sessionRef.current;
       if (session === undefined || closed) return;
@@ -261,7 +261,6 @@ export const LiveScreen = (props: LiveScreenProps) => {
           } catch {
             return;
           }
-          console.debug("[live]", parsed);
           const message = serverMessageSchema.safeParse(parsed);
           if (!message.success) return;
           switch (message.data.type) {

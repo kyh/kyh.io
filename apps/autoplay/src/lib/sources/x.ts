@@ -11,7 +11,7 @@ import type { AccessOf, Item } from "./types";
 /**
  * A timeline post must clear this engagement score to be worth a video. The
  * timeline is chronological, so this is the only quality filter on that path —
- * set high enough that a quiet feed reruns rather than airing filler.
+ * set high enough that a quiet feed goes quiet rather than airing filler.
  */
 const MIN_SCORE = 250;
 /** Likes a trend's posts must clear; filtered by X, not after the fact. */
@@ -25,15 +25,15 @@ const TREND_CACHE_TTL_MS = 3_600_000;
  */
 const SEARCH_CACHE_TTL_MS = 3_600_000;
 const MAX_FEED_PAGES = 3;
-/** While the archive is this small, air the best available post regardless. */
-const BOOTSTRAP_ARCHIVE_SIZE = 3;
+/** While a channel has aired this little, air the best available post regardless. */
+const BOOTSTRAP_AIRED_SIZE = 3;
 /**
  * X bills per post returned — a 50-post page of the home timeline is ~$0.25 —
  * so this TTL, not the request rate, sets the standing cost of a watching
  * owner. An hour keeps that near the price of one page (three, if a quiet feed
  * makes the picker paginate) and sits inside X's 24h read deduplication.
- * Freshness costs little here: clips are seconds long, the archive reruns
- * regardless, and a post popular enough to air is rarely brand new.
+ * Freshness costs little here: a program is seconds long, and a post popular
+ * enough to air is rarely brand new.
  */
 const FEED_CACHE_TTL_MS = 3_600_000;
 
@@ -158,8 +158,8 @@ const pickTimelineCandidate = async (
     }
 
     // Nothing clears the bar. A brand-new channel still needs something on
-    // air, so bootstrap from the best available; an established one reruns.
-    return aired.size < BOOTSTRAP_ARCHIVE_SIZE ? bestOf(unaired) : undefined;
+    // air, so bootstrap from the best available; an established one waits.
+    return aired.size < BOOTSTRAP_AIRED_SIZE ? bestOf(unaired) : undefined;
   }
 };
 

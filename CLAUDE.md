@@ -79,7 +79,7 @@ needs the DB, aired items fall back in-memory). Port 3005.
 - `src/lib/lineup.ts` - a viewer's channels: the public owner channel + their `source` rows; auto-creates sources from grants; resolves live vs replay
 - `src/lib/live.ts` - programming: next item via the adapter, never-twice, daily budgets
 - `src/lib/sources/` - one adapter per kind (`x`, `gmail`, `rss`, `youtube`); `types.ts` is the Item contract
-- `src/components/live-screen.tsx` - the director session: opens via the proxy, keeps one prompt queued, closes when idle, records CH 01
+- `src/components/live-screen.tsx` - the director session: opens via the proxy, paces prompts off the picture, closes when idle, records CH 01
 - `src/lib/recorder.ts` / `src/lib/recordings.ts` / `src/components/replay-screen.tsx` - one webm per program to Blob; the replay loops the newest
 - `src/app/api/fal/proxy/route.ts` - gated fal proxy (signed-in, within budget, director endpoint only)
 - `src/db/drizzle-schema.ts` - better-auth tables + `source` + `aired_item` + `recording`

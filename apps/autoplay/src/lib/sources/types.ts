@@ -9,10 +9,7 @@ import type { SourceKind } from "@/lib/source-kinds";
 
 export const sourceKindSchema = z.enum(SOURCE_KINDS);
 
-/**
- * One thing a source can turn into a program. Stored as JSON on the pending
- * job while its video generates, hence the schema rather than a plain type.
- */
+/** One thing a source can turn into a program. */
 export const itemSchema = z.object({
   /** Unique across kinds: `{kind}:{id inside the source}`. */
   id: z.string(),
@@ -42,8 +39,8 @@ export type SourceAccess =
 export type AccessOf<K extends SourceKind> = Extract<SourceAccess, { kind: K }>;
 
 /**
- * The kind an item id carries as its prefix. Ids written before there were
- * other kinds are bare X post ids, so no prefix means X.
+ * The kind an item id carries as its prefix. Every adapter writes one; the
+ * fallback to X only makes the function total.
  */
 export const itemKind = (itemId: string): SourceKind => {
   const prefix = itemId.slice(0, itemId.indexOf(":"));

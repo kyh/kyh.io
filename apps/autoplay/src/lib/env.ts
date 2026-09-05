@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Every key an operator has to supply. All optional: a missing key disables
-// its feature (login, video generation, the shared archive) and the UI shows
+// its feature (login, the stream, the replay, Google sources) and the UI shows
 // what's missing instead of the app crashing at boot. `.env.example`
 // documents each key.
 const optionalKey = z
@@ -23,7 +23,7 @@ const envSchema = z.object({
   APP_URL: optionalKey,
   /** X handle whose feed powers the default public channel. */
   OWNER_X_USERNAME: optionalKey,
-  /** The clip archive's Turso database (autoplay's own, not policingice's). */
+  /** Turso database (autoplay's own, not policingice's): users, grants, lineup, what aired, recordings. */
   TURSO_DATABASE_URL: optionalKey,
   TURSO_AUTH_TOKEN: optionalKey,
 });

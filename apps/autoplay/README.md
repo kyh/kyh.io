@@ -144,8 +144,8 @@ and whichever copy refreshes first invalidates the other.
   director session through `/api/fal/proxy` (`@fal-ai/server-proxy`, which
   holds `FAL_KEY`, admits only signed-in viewers inside their budget, and
   allows only the director endpoint), configures it with the world and the
-  first segment, and queues the next segment the moment the current one's
-  chunk is generated, so it takes over at the next boundary. The ticker
+  first segment, and paces every prompt after that off the picture: ten
+  seconds after a subject reaches the screen, the next goes out. The ticker
   changes when the picture does, not when the chunk lands in the buffer.
 - **Programming** (`POST /api/live`): resolves the channel for this viewer,
   picks the next item through its adapter, marks it aired, returns the prompt

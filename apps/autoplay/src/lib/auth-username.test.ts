@@ -13,7 +13,7 @@ import { auth } from "./auth";
  * success. The owner check then silently fails and CH 01 never generates.
  *
  * Nothing else catches that: the column exists, the row is written, and the
- * only symptom is a channel that reruns forever.
+ * only symptom is a public channel that never goes live.
  */
 
 // Parsed rather than read directly: while the flag is absent the config's

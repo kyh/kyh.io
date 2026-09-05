@@ -77,8 +77,7 @@ describe("itemKind", () => {
     assert.equal(itemKind("rss:https://a.b/c"), "rss");
   });
 
-  it("treats a bare id, or an unknown prefix, as an X post", () => {
-    assert.equal(itemKind("2093759658699964834"), "x");
+  it("falls back to X for a prefix it does not know", () => {
     assert.equal(itemKind("mastodon:1"), "x");
   });
 });

@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth";
 
 // Google grants are read through better-auth, which refreshes an expired
-// access token itself and stores the new one. X keeps its own path in
-// x-account.ts: its refresh needs the confidential-client basic auth that
-// predates this, and it is proven.
+// access token itself and stores the new one. X is read in x-account.ts,
+// whose refresh sends the confidential-client basic auth X requires.
 
 export const googleAccessToken = async (
   accountId: string,
