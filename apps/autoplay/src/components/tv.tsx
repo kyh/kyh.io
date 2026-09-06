@@ -302,7 +302,7 @@ const TvScreen = (props: ScreenProps) => {
       {session.user !== null && sourcesOpen && (
         <SourcesDialog
           channels={props.channels}
-          googleReady={session.googleReady}
+          google={session.google}
           onLineup={props.onLineup}
           onClose={() => setSourcesOpen(false)}
         />

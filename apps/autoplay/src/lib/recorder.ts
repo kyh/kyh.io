@@ -4,6 +4,7 @@ import { upload } from "@vercel/blob/client";
 
 import type { LiveProgram, RecordingRequest } from "@/lib/api-contract";
 import { jsonRequest } from "@/lib/api-contract";
+import { EBML_CLUSTER, EBML_SEGMENT, EBML_TIMECODE, readUint, readVint } from "@/lib/webm";
 
 // Records the live stream as one continuous recording per session, handed to
 // the store a chunk at a time. One MediaRecorder run for the whole session:
@@ -28,10 +29,6 @@ const CHUNK_MS = 10_000;
 /** Bytes held back without a cluster to cut at before the chunk is cut anyway. */
 const MAX_PENDING_BYTES = 8 * 1024 * 1024;
 
-const EBML_SEGMENT = 0x18538067;
-const EBML_CLUSTER = 0x1f43b675;
-const EBML_TIMECODE = 0xe7;
-
 export type OnAir = {
   program: LiveProgram;
   formatLabel: string;
@@ -46,32 +43,6 @@ export type Recorder = {
 
 export const canRecord = (): boolean =>
   "MediaRecorder" in globalThis && MediaRecorder.isTypeSupported(MIME_TYPE);
-
-type Vint = { value: number; length: number; unknown: boolean };
-
-/** An EBML variable-length integer; ids keep their length-marker bit, sizes drop it. */
-const readVint = (bytes: Uint8Array, at: number, id: boolean): Vint | undefined => {
-  const first = bytes[at];
-  if (first === undefined || first === 0) return undefined;
-  let length = 1;
-  while ((first & (0x80 >> (length - 1))) === 0) length += 1;
-  if (at + length > bytes.length) return undefined;
-  const mask = 0xff >> length;
-  let value = id ? first : first & mask;
-  let unknown = (first & mask) === mask;
-  for (let k = 1; k < length; k++) {
-    const byte = bytes[at + k] ?? 0;
-    value = value * 256 + byte;
-    if (byte !== 0xff) unknown = false;
-  }
-  return { value, length, unknown: !id && unknown };
-};
-
-const readUint = (bytes: Uint8Array, at: number, length: number): number => {
-  let value = 0;
-  for (let k = 0; k < length; k++) value = value * 256 + (bytes[at + k] ?? 0);
-  return value;
-};
 
 type Cluster = { at: number; timecode: number };
 
@@ -120,6 +91,7 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   let cursor = 0;
   let clusters: Cluster[] = [];
   let queue = Promise.resolve();
+  const uploads = new Set<Promise<void>>();
 
   const walk = () => {
     for (;;) {
@@ -155,9 +127,17 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   const cut = (at: number, seconds: number, timecode: number | undefined) => {
     // A failed upload loses one chunk of replay, nothing more; the stream on
     // screen is unaffected.
-    void publish(sourceId, sessionId, index, pending.slice(0, at), seconds, chunkOnAir).catch(
-      () => undefined,
-    );
+    const upload: Promise<void> = publish(
+      sourceId,
+      sessionId,
+      index,
+      pending.slice(0, at),
+      seconds,
+      chunkOnAir,
+    )
+      .catch(() => undefined)
+      .finally(() => uploads.delete(upload));
+    uploads.add(upload);
     index += 1;
     pending = pending.slice(at);
     cursor -= at;
@@ -217,8 +197,17 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   recorder.ondataavailable = (event) => {
     queue = queue.then(() => ingest(event.data)).catch(() => undefined);
   };
+  // With the last chunk in, the session is asked for as one file, for the
+  // browsers that cannot append a stream; a viewer asking first gets it built then.
+  const requestFile = async () => {
+    await Promise.all(uploads);
+    await fetch("/api/replay/file", jsonRequest("POST", { sourceId, sessionId }));
+  };
   recorder.onstop = () => {
-    queue = queue.then(flush).catch(() => undefined);
+    queue = queue
+      .then(flush)
+      .then(requestFile)
+      .catch(() => undefined);
   };
   recorder.start(SLICE_MS);
   return {

@@ -87,7 +87,7 @@ needs the DB, aired items fall back in-memory). Port 3005.
 - `src/components/live-screen.tsx` - the director session: opens via the proxy, paces prompts off the picture, closes when idle, records CH 01
 - `src/lib/recorder.ts` / `src/lib/recordings.ts` / `src/components/replay-screen.tsx` - one webm per program to Blob; the replay loops the newest
 - `src/app/api/fal/proxy/route.ts` - gated fal proxy (signed-in, within budget, director endpoint only); records the sessions and heartbeats it relays as the meter
-- `src/db/drizzle-schema.ts` - better-auth tables + `invite_code` + `source` + `aired_item` + `live_session` + `recording` + `source_cache` + `source_read`
+- `src/db/drizzle-schema.ts` - better-auth tables + `invite_code` + `source` + `aired_item` + `live_session` + `recording` + `recording_file` + `source_cache` + `source_read`
 - `src/lib/auth.ts` - better-auth config (X sign-in, Google as a linkable grant with per-source scopes)
 - `src/lib/x-account.ts` / `src/lib/grants.ts` - read/refresh the X and Google grants
 - `src/components/tv.tsx` - the TV chrome: ch−/ch+, static, status bar, sources dialog

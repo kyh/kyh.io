@@ -15,6 +15,8 @@ const envSchema = z.object({
   /** Google OAuth app, for the Gmail and YouTube sources. Optional: without it those can't be connected. */
   GOOGLE_CLIENT_ID: optionalKey,
   GOOGLE_CLIENT_SECRET: optionalKey,
+  /** Set once Google has verified the app; until then Gmail and YouTube connect for the owner alone. */
+  GOOGLE_OPEN_TO_ALL: optionalKey,
   BETTER_AUTH_SECRET: optionalKey,
   /** fal.ai, for the director model every channel streams through. */
   FAL_KEY: optionalKey,
@@ -36,6 +38,8 @@ export const env = envSchema.parse(process.env);
 
 export const googleConfigured =
   env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined;
+
+export const googleOpenToAll = env.GOOGLE_OPEN_TO_ALL !== undefined;
 
 export const recordingConfigured = env.BLOB_READ_WRITE_TOKEN !== undefined;
 

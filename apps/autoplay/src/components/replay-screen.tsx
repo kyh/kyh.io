@@ -3,7 +3,12 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import type { RecordedSession, RecordingChunk } from "@/lib/api-contract";
-import { replayPayloadSchema, requestJson } from "@/lib/api-contract";
+import {
+  jsonRequest,
+  replayFilePayloadSchema,
+  replayPayloadSchema,
+  requestJson,
+} from "@/lib/api-contract";
 import type { ReplayState } from "@/lib/screen-state";
 import { TvVideo, useVideoPlayback } from "@/components/tv-video";
 
@@ -14,7 +19,9 @@ import { TvVideo, useVideoPlayback } from "@/components/tv-video";
 // that is still receiving chunks is on air right now: the player joins it
 // near its end and keeps appending as chunks land, so everyone watches the
 // one stream the owner is paying for, under a minute behind. When a session
-// ends the next one begins.
+// ends the next one begins. A browser that cannot append a WebM stream —
+// Safari, every browser on an iPhone — plays a finished session as one file
+// the station builds from the same chunks, and cannot follow the live tail.
 
 const MIME_TYPE = 'video/webm;codecs="vp8,opus"';
 const VIDEO_ONLY_MIME_TYPE = 'video/webm;codecs="vp8"';
@@ -58,6 +65,25 @@ const fetchSessions = async (sourceId: string): Promise<RecordedSession[] | unde
 
 const canReplay = (): boolean =>
   "MediaSource" in globalThis && MediaSource.isTypeSupported(MIME_TYPE);
+
+/** Whether the browser plays a WebM file the plain way — Safari, and every browser on an iPhone. */
+const canPlayFile = (): boolean => document.createElement("video").canPlayType("video/webm") !== "";
+
+const FILE_NOT_READY =
+  "Nothing to play yet — a session's file is made when it ends. Try again in a minute.";
+
+const fetchSessionFile = async (
+  sourceId: string,
+  sessionId: string,
+): Promise<string | undefined> => {
+  const answer = await requestJson(
+    "/api/replay/file",
+    replayFilePayloadSchema,
+    "The file isn't ready",
+    jsonRequest("POST", { sourceId, sessionId }),
+  );
+  return "error" in answer ? undefined : answer.data.url;
+};
 
 const isOnAir = (session: RecordedSession): boolean => Date.now() - session.updatedAt < ON_AIR_MS;
 
@@ -229,12 +255,67 @@ const playSession = (
   };
 };
 
+/**
+ * Plays one finished session as a file, for a browser that cannot append a
+ * stream: the whole recording, built by the station from the chunks a stream
+ * would have appended. The program on air is read off the chunk lengths.
+ */
+const playSessionFile = (
+  video: HTMLVideoElement,
+  sourceId: string,
+  session: RecordedSession,
+  onChunk: (chunk: RecordingChunk) => void,
+  onDone: () => void,
+  onFail: () => void,
+): Player => {
+  let stopped = false;
+  const starts: { at: number; chunk: RecordingChunk }[] = [];
+  let at = 0;
+  for (const chunk of session.chunks) {
+    starts.push({ at, chunk });
+    at += chunk.seconds;
+  }
+  const onTime = () => {
+    let onAir: RecordingChunk | undefined;
+    for (const entry of starts) {
+      if (entry.at <= video.currentTime + 0.25) onAir = entry.chunk;
+    }
+    if (onAir !== undefined) onChunk(onAir);
+  };
+  video.addEventListener("timeupdate", onTime);
+  video.addEventListener("ended", onDone);
+  video.addEventListener("error", onFail);
+  void (async () => {
+    const url = session.fileUrl ?? (await fetchSessionFile(sourceId, session.sessionId));
+    if (stopped) return;
+    if (url === undefined) {
+      onFail();
+      return;
+    }
+    video.src = url;
+    void video.play().catch(() => undefined);
+  })();
+  return {
+    poke: () => undefined,
+    stop: () => {
+      stopped = true;
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("ended", onDone);
+      video.removeEventListener("error", onFail);
+      video.removeAttribute("src");
+      video.load();
+    },
+  };
+};
+
 export const ReplayScreen = (props: ReplayScreenProps) => {
   const videoRef = useVideoPlayback(props.muted, props.paused);
   const [sessions, setSessions] = useState<RecordedSession[] | undefined>(undefined);
   const sessionsRef = useRef<RecordedSession[]>([]);
   const [cursor, setCursor] = useState(0);
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+  /** Sessions whose file would not play; skipped rather than retried forever. */
+  const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const playerRef = useRef<Player | undefined>(undefined);
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);
@@ -272,10 +353,10 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       emitState({ status: "loading" });
       return;
     }
-    if (!canReplay()) {
+    if (!canReplay() && !canPlayFile()) {
       emitState({
         status: "empty",
-        reason: "The replay needs a browser that can play WebM streams — Chrome, Edge or Firefox.",
+        reason: "The replay needs a browser that can play WebM video.",
       });
       return;
     }
@@ -287,9 +368,22 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       emitProgram(undefined);
       return;
     }
+    if (!canReplay()) {
+      // A file exists only for a finished session; one still on air is for streams.
+      const playable = sessions.some(
+        (session) => !isOnAir(session) && !failed.has(session.sessionId),
+      );
+      if (!playable) {
+        emitState({ status: "empty", reason: FILE_NOT_READY });
+        emitProgram(undefined);
+        return;
+      }
+      emitState({ status: "playing", onAir: false });
+      return;
+    }
     const playing = sessions.find((session) => session.sessionId === playingId);
     emitState({ status: "playing", onAir: playing !== undefined && isOnAir(playing) });
-  }, [sessions, playingId]);
+  }, [sessions, playingId, failed]);
 
   // A session starts playing when the cursor lands on it and keeps playing
   // through list refreshes; only the cursor moving restarts the player.
@@ -298,24 +392,33 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
     if (!loaded) return;
     const video = videoRef.current;
     const list = sessionsRef.current;
-    const session = list[cursor % (list.length || 1)];
-    if (video === null || session === undefined || !canReplay()) return;
+    if (video === null || list.length === 0) return;
+    const streaming = canReplay();
+    if (!streaming && !canPlayFile()) return;
+    const start = cursor % list.length;
+    const session = streaming
+      ? list[start]
+      : [...list.slice(start), ...list.slice(0, start)].find(
+          (entry) => !isOnAir(entry) && !failed.has(entry.sessionId),
+        );
+    if (session === undefined) return;
     setPlayingId(session.sessionId);
+    const onChunk = (chunk: RecordingChunk) => emitProgram(chunk);
+    const onDone = () => setCursor((value) => value + 1);
     const latest = () =>
       sessionsRef.current.find((entry) => entry.sessionId === session.sessionId) ?? session;
-    const player = playSession(
-      video,
-      session,
-      latest,
-      (chunk) => emitProgram(chunk),
-      () => setCursor((value) => value + 1),
-    );
+    const player = streaming
+      ? playSession(video, session, latest, onChunk, onDone)
+      : playSessionFile(video, props.sourceId, session, onChunk, onDone, () => {
+          setFailed((known) => new Set([...known, session.sessionId]));
+          onDone();
+        });
     playerRef.current = player;
     return () => {
       playerRef.current = undefined;
       player.stop();
     };
-  }, [cursor, loaded, videoRef]);
+  }, [cursor, loaded, failed, props.sourceId, videoRef]);
 
   return <TvVideo videoRef={videoRef} muted={props.muted} />;
 };

@@ -73,10 +73,11 @@ type NewSource = {
 };
 
 /**
- * Idempotent: the unique (user, key) index makes a repeat a no-op, so this is
- * safe to call on every session load. A removed source is not resurrected —
- * the row still exists, removed — except by `addSource`, which is the user
- * asking for it back.
+ * Idempotent: the unique (user, key) index makes a repeat a no-op but for the
+ * label and settings, which follow the code and the grant — a rename here or
+ * on X reaches the lineup on the next load. A removed source is not
+ * resurrected — the row still exists, removed — except by `addRssSource`,
+ * which is the user asking for it back.
  */
 const insertSource = async (
   database: NonNullable<typeof db>,
@@ -100,7 +101,10 @@ const insertSource = async (
       position: (rows[0]?.last ?? 0) + 1,
       createdAt: Date.now(),
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [source.userId, source.key],
+      set: { label: entry.label, config: entry.config ?? null },
+    });
 };
 
 const grantedScopes = (scope: string | null): string[] => (scope ?? "").split(/[,\s]+/);

@@ -225,3 +225,21 @@ export const sourceRead = sqliteTable(
   },
   (table) => [index("source_read_kind_read_idx").on(table.kind, table.readAt)],
 );
+
+// A finished session as one file, for browsers that cannot append a stream —
+// Safari, and every browser on an iPhone. Built from the session's chunks once
+// the last one is in, or the first time someone asks (src/lib/recordings.ts),
+// and kept as long as the chunks are.
+export const recordingFile = sqliteTable(
+  "recording_file",
+  {
+    sessionId: text("session_id").primaryKey(),
+    channelKey: text("channel_key").notNull(),
+    url: text().notNull(),
+    bytes: integer().notNull(),
+    seconds: real().notNull(),
+    /** Unix ms. */
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [index("recording_file_channel_idx").on(table.channelKey)],
+);

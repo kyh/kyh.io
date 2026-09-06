@@ -49,8 +49,12 @@ export const sessionPayloadSchema = z.object({
   channels: z.array(channelSummarySchema).min(1),
   /** Whether signing in can work: the X app, a secret and the database are configured. */
   loginReady: z.boolean(),
-  /** Whether connecting Google can work: the Google OAuth app is configured. */
-  googleReady: z.boolean(),
+  /**
+   * Whether this viewer can connect Gmail and YouTube: "owner-only" while
+   * Google's verification of the restricted Gmail scope is pending, so only
+   * the owner — a test user on the OAuth app — may consent.
+   */
+  google: z.enum(["ready", "owner-only", "unconfigured"]),
   /** Whether anything can air: fal is configured. */
   liveReady: z.boolean(),
   /** Whether the public channel records while live: Vercel Blob is configured. */
@@ -109,6 +113,8 @@ const recordedSessionSchema = z.object({
   /** Unix ms of the newest chunk; a session still receiving chunks is on air. */
   updatedAt: z.number(),
   chunks: z.array(recordingChunkSchema).min(1),
+  /** The session as one file, once built: what a browser without MediaSource plays. */
+  fileUrl: z.string().optional(),
 });
 
 export type RecordedSession = z.infer<typeof recordedSessionSchema>;
@@ -119,6 +125,16 @@ export const replayPayloadSchema = z.object({
 });
 
 export type ReplayPayload = z.infer<typeof replayPayloadSchema>;
+
+/** A finished session as one file, built if it has to be. */
+export const replayFileRequestSchema = z.object({
+  sourceId: z.string(),
+  sessionId: z.string().max(80),
+});
+
+export const replayFilePayloadSchema = z.object({ url: z.url() });
+
+export type ReplayFilePayload = z.infer<typeof replayFilePayloadSchema>;
 
 /** What the browser tells the station about a chunk it just uploaded — bounded, since it is written down. */
 export const recordingRequestSchema = recordingChunkSchema.extend({

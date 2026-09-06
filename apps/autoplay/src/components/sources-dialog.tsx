@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { z } from "zod";
 
-import type { ChannelSummary } from "@/lib/api-contract";
+import type { ChannelSummary, SessionPayload } from "@/lib/api-contract";
 import {
   addSourceRequestSchema,
   channelsPayloadSchema,
@@ -24,7 +24,7 @@ import { WindowDialog } from "@/components/window-dialog";
 
 type SourcesDialogProps = {
   channels: ChannelSummary[];
-  googleReady: boolean;
+  google: SessionPayload["google"];
   onLineup: (channels: ChannelSummary[]) => void;
   onClose: () => void;
 };
@@ -136,22 +136,29 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
 
         <div className="space-y-2 border-t-2 border-outline pt-2">
           <p className="text-[10px] tracking-[0.3em] uppercase opacity-60">Connect</p>
-          <div className="flex flex-wrap gap-1">
-            {GOOGLE_SOURCES.map((entry) => (
-              <button
-                key={entry.kind}
-                type="button"
-                disabled={!props.googleReady || has(entry.kind)}
-                onClick={() => connectGoogle(entry.scope)}
-                className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
-              >
-                {has(entry.kind)
-                  ? `${entry.label} ✓`
-                  : `${SOURCE_KIND_NAMES[entry.kind]} ${entry.label}`}
-              </button>
-            ))}
-          </div>
-          {!props.googleReady && (
+          {props.google === "ready" && (
+            <div className="flex flex-wrap gap-1">
+              {GOOGLE_SOURCES.map((entry) => (
+                <button
+                  key={entry.kind}
+                  type="button"
+                  disabled={has(entry.kind)}
+                  onClick={() => connectGoogle(entry.scope)}
+                  className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
+                >
+                  {has(entry.kind)
+                    ? `${entry.label} ✓`
+                    : `${SOURCE_KIND_NAMES[entry.kind]} ${entry.label}`}
+                </button>
+              ))}
+            </div>
+          )}
+          {props.google === "owner-only" && (
+            <p className="text-[10px] opacity-60">
+              Gmail and YouTube open to everyone once Google has verified the app.
+            </p>
+          )}
+          {props.google === "unconfigured" && (
             <p className="text-[10px] opacity-60">
               Google isn't configured on this station — GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.
             </p>

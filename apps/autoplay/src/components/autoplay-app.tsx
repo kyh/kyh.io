@@ -12,7 +12,7 @@ const OFFLINE_SESSION: SessionPayload = {
   user: null,
   channels: [PUBLIC_CHANNEL],
   loginReady: false,
-  googleReady: false,
+  google: "unconfigured",
   liveReady: false,
   recordReady: false,
 };

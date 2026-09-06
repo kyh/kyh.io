@@ -120,8 +120,10 @@ pnpm dev:autoplay      # → http://127.0.0.1:3005
    web application, redirect `http://127.0.0.1:3005/api/auth/callback/google`;
    enable the Gmail API and YouTube Data API v3. `gmail.readonly` is a
    restricted scope: a public app needs Google's verification, a personal
-   deploy can stay in Testing mode with the owner as a test user. Without the
-   keys the sources dialog says so and the rest works.
+   deploy can stay in Testing mode with the owner as a test user. Until
+   `GOOGLE_OPEN_TO_ALL` is set, Gmail and YouTube connect for the owner alone
+   and the sources dialog tells everyone else so. Without the keys the dialog
+   says that instead, and the rest works.
 
 The app boots with none of these and shows an OFF AIR screen listing what's missing.
 
