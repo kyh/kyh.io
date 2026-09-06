@@ -2,6 +2,7 @@ import type { Step, TooltipRenderProps } from "react-joyride";
 import { useState } from "react";
 import { Joyride, ACTIONS, EVENTS, STATUS } from "react-joyride";
 import { Portal } from "react-portal";
+import { cn } from "cn";
 
 const defaultStepProps = {
   disableBeacon: true,
@@ -169,9 +170,10 @@ const Tooltip = ({
         {defaultSteps.map((_s, i) => (
           <div
             key={i}
-            className={`h-2 w-2 rounded-full border border-slate-200 ${
-              i === index ? "bg-slate-200" : "bg-transparent"
-            }`}
+            className={cn(
+              "h-2 w-2 rounded-full border border-slate-200",
+              i === index ? "bg-slate-200" : "bg-transparent",
+            )}
             aria-hidden="true"
           />
         ))}

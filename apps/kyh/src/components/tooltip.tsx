@@ -18,6 +18,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 
 import type { Placement } from "@floating-ui/react";
+import { cn } from "cn";
 
 // Global lines context - lines are rendered once at provider level
 type LinesPosition = {
@@ -245,7 +246,13 @@ const TooltipContent = React.forwardRef<
       <AnimatePresence>
         {context.open && (
           <motion.div
-            className={`tooltip ${blockType ? "block" : ""} ${className ?? ""} ${!blockType ? "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]" : ""}`}
+            className={cn(
+              "tooltip",
+              blockType && "block",
+              className,
+              !blockType &&
+                "bg-panel rounded-md border border-[var(--border-color)] px-2 py-0.5 text-xs whitespace-pre text-[var(--body-color)]",
+            )}
             ref={ref}
             style={context.floatingStyles}
             {...tooltipMotionProps}

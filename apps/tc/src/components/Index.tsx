@@ -7,6 +7,7 @@ import { CompTable } from "@/components/CompTable";
 import { Navigation } from "@/components/Navigation";
 import { useCompHooks } from "@/lib/comp";
 import { currencyTextFormatProps } from "@/lib/formProps";
+import { cn } from "cn";
 
 export default function Index() {
   const comp = useCompHooks();
@@ -34,9 +35,10 @@ export default function Index() {
           </div>
         </section>
         <section
-          className={`sticky top-5 overflow-x-hidden overflow-y-auto py-10 transition-opacity md:col-span-3 md:h-screen md:px-20 md:py-0 ${
-            avgTc ? "opacity-100" : "pointer-events-none opacity-30"
-          }`}
+          className={cn(
+            "sticky top-5 overflow-x-hidden overflow-y-auto py-10 transition-opacity md:col-span-3 md:h-screen md:px-20 md:py-0",
+            avgTc ? "opacity-100" : "pointer-events-none opacity-30",
+          )}
         >
           <p className="px-3 text-sm text-slate-400 md:px-0">Estimated Total Compensation</p>
           <div className="mt-1 flex items-center justify-between px-3 md:px-0">

@@ -20,6 +20,7 @@ import type { GridType, LayoutType, QuadrantColors } from "@/lib/types";
 import { DEFAULT_TAG_COLOR, STORAGE_KEY, TAG_COLORS } from "@/lib/constants";
 import { useKwadrant } from "@/lib/KwadrantContext";
 import { getAllLayouts } from "@/lib/layouts";
+import { cn } from "cn";
 
 type IslandMode =
   | "idle"
@@ -283,11 +284,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
               placeholder="Tag name..."
               autoFocus
-              className={`w-full rounded-md border px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+              className={cn(
+                "w-full rounded-md border px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none",
                 isDark
                   ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
-                  : "border-gray-200 bg-white text-gray-900"
-              }`}
+                  : "border-gray-200 bg-white text-gray-900",
+              )}
             />
             <div className="flex flex-wrap gap-1">
               {TAG_COLORS.map((c) => (
@@ -297,9 +299,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                   onClick={() => setTagColor(c)}
                   aria-label={`Use ${c} tag color`}
                   aria-pressed={tagColor === c}
-                  className={`h-5 w-5 rounded-full transition-transform ${
-                    tagColor === c ? "scale-110 ring-2 ring-gray-400 ring-offset-1" : ""
-                  }`}
+                  className={cn(
+                    "h-5 w-5 rounded-full transition-transform",
+                    tagColor === c && "scale-110 ring-2 ring-gray-400 ring-offset-1",
+                  )}
                   style={{ backgroundColor: c }}
                 />
               ))}
@@ -308,11 +311,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               type="button"
               onClick={handleAddTag}
               disabled={!tagText.trim()}
-              className={`w-full rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50 ${
+              className={cn(
+                "w-full rounded-md px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
                 isDark
                   ? "bg-white text-gray-900 hover:bg-gray-100"
-                  : "bg-gray-900 text-white hover:bg-gray-800"
-              }`}
+                  : "bg-gray-900 text-white hover:bg-gray-800",
+              )}
             >
               Add Tag
             </button>
@@ -333,11 +337,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`w-full rounded-md border border-dashed px-3 py-1.5 text-sm transition-colors ${
+              className={cn(
+                "w-full rounded-md border border-dashed px-3 py-1.5 text-sm transition-colors",
                 isDark
                   ? "border-gray-600 text-gray-300 hover:bg-gray-700"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50",
+              )}
             >
               Choose image...
             </button>
@@ -355,7 +360,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                   onChange={(e) => setQuadrantColor(key, e.target.value)}
                   className="h-6 w-6 cursor-pointer rounded border-0"
                 />
-                <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                <span className={cn("text-xs", isDark ? "text-gray-400" : "text-gray-600")}>
                   {label}
                 </span>
               </label>
@@ -503,12 +508,16 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           scale: 1.03,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.3)",
         }}
-        className={`fixed top-0 left-0 z-50 min-w-[140px] cursor-grab rounded-xl border p-2 shadow-lg active:cursor-grabbing ${
-          isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-        }`}
+        className={cn(
+          "fixed top-0 left-0 z-50 min-w-[140px] cursor-grab rounded-xl border p-2 shadow-lg active:cursor-grabbing",
+          isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white",
+        )}
       >
         <div
-          className={`mb-1 flex items-center justify-between py-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+          className={cn(
+            "mb-1 flex items-center justify-between py-1",
+            isDark ? "text-gray-500" : "text-gray-400",
+          )}
         >
           <div className="flex items-center gap-1">
             <GripVertical size={16} />
@@ -517,7 +526,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 type="button"
                 onClick={() => setMode(backTarget)}
                 aria-label="Back"
-                className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                className={cn(
+                  "rounded p-1 transition-colors",
+                  isDark ? "hover:bg-gray-700" : "hover:bg-gray-100",
+                )}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -527,7 +539,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             type="button"
             onClick={() => setTheme(isDark ? "light" : "dark")}
             aria-label={isDark ? "Use light theme" : "Use dark theme"}
-            className={`rounded p-1 transition-colors ${isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+            className={cn(
+              "rounded p-1 transition-colors",
+              isDark ? "hover:bg-gray-700" : "hover:bg-gray-100",
+            )}
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -552,9 +567,10 @@ const MenuButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-    }`}
+    className={cn(
+      "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+      isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100",
+    )}
   >
     {icon}
     {label}
@@ -575,15 +591,16 @@ const SelectButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+    className={cn(
+      "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
       selected
         ? isDark
           ? "bg-white text-gray-900"
           : "bg-gray-900 text-white"
         : isDark
           ? "text-gray-300 hover:bg-gray-700"
-          : "text-gray-700 hover:bg-gray-100"
-    }`}
+          : "text-gray-700 hover:bg-gray-100",
+    )}
   >
     {children}
   </button>

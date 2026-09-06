@@ -9,6 +9,7 @@ import type { CompHooksType } from "@/lib/comp";
 import { FormField } from "@/components/FormField";
 import { Modal } from "@/components/Modal";
 import { currencyTextFormatProps, staticTextFormatProps } from "@/lib/formProps";
+import { cn } from "cn";
 
 type Props = { requestUpdate: () => void } & CompHooksType & Omit<ModalProps, "title" | "children">;
 
@@ -116,9 +117,10 @@ export const CompModal = ({
           <span className="relative z-0 inline-flex rounded-md shadow-xs">
             <button
               type="button"
-              className={`relative inline-flex items-center rounded-l-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden ${
-                view === "estimate" ? "bg-slate-800" : ""
-              }`}
+              className={cn(
+                "relative inline-flex items-center rounded-l-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden",
+                view === "estimate" && "bg-slate-800",
+              )}
               onClick={() => setView("estimate")}
             >
               <span className="sr-only">Estimate Equity Value</span>
@@ -144,9 +146,10 @@ export const CompModal = ({
             </button>
             <button
               type="button"
-              className={`relative -ml-px inline-flex items-center rounded-r-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden ${
-                view === "terminology" ? "bg-slate-800" : ""
-              }`}
+              className={cn(
+                "relative -ml-px inline-flex items-center rounded-r-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden",
+                view === "terminology" && "bg-slate-800",
+              )}
               onClick={() => setView("terminology")}
             >
               <span className="sr-only">Terminology</span>

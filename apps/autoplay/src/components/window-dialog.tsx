@@ -3,6 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 
 import { Glyph } from "@/components/glyph";
+import { cn } from "cn";
 
 // A desktop window as a modal: Base UI handles focus, escape, the backdrop and
 // scroll locking; the chrome is the same `win` plastic as everything else.
@@ -27,9 +28,10 @@ export const WindowDialog = (props: WindowDialogProps) => (
       <Dialog.Backdrop className="fixed inset-0 z-10 bg-outline/50" />
       <Dialog.Popup className="win fixed top-1/2 left-1/2 z-20 flex max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col font-mono outline-none">
         <div
-          className={`win-title flex shrink-0 items-center justify-between px-3 py-1.5 ${
-            props.tone === "cyan" ? "win-title-cyan" : "win-title-alt"
-          }`}
+          className={cn(
+            "win-title flex shrink-0 items-center justify-between px-3 py-1.5",
+            props.tone === "cyan" ? "win-title-cyan" : "win-title-alt",
+          )}
         >
           <Dialog.Title className="text-xs font-bold tracking-[0.2em] uppercase">
             {props.title}

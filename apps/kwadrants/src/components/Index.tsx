@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { KwadrantProvider, useKwadrant } from "@/lib/KwadrantContext";
 import { KwadrantCanvas } from "./canvas/KwadrantCanvas";
 import { FloatingIsland } from "./ui/FloatingIsland";
+import { cn } from "cn";
 
 const KwadrantApp = () => {
   const stageRef = useRef<Konva.Stage>(null);
@@ -33,7 +34,7 @@ const KwadrantApp = () => {
   return (
     <div
       ref={containerRef}
-      className={`h-screen w-screen overflow-hidden ${isDark ? "bg-gray-800" : "bg-gray-50"}`}
+      className={cn("h-screen w-screen overflow-hidden", isDark ? "bg-gray-800" : "bg-gray-50")}
     >
       {size !== null && (
         <>

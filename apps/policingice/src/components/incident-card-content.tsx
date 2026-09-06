@@ -7,6 +7,7 @@ import { ExternalLink, Pin } from "lucide-react";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { formatDate } from "@/lib/format";
 import { VideoCarousel } from "./video-carousel";
+import { cn } from "cn";
 
 type Video = {
   id: number;
@@ -77,7 +78,12 @@ export const IncidentCardContent = ({
           <button
             type="button"
             onClick={() => onVote("unjustified")}
-            className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={cn(
+              "cursor-pointer",
+              userVote === "unjustified"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
             aria-pressed={userVote === "unjustified"}
             aria-label={`Vote unjustified, ${unjustifiedCount} votes`}
           >
@@ -86,7 +92,12 @@ export const IncidentCardContent = ({
           <button
             type="button"
             onClick={() => onVote("justified")}
-            className={`cursor-pointer ${userVote === "justified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={cn(
+              "cursor-pointer",
+              userVote === "justified"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
             aria-pressed={userVote === "justified"}
             aria-label={`Vote justified, ${justifiedCount} votes`}
           >
@@ -109,7 +120,12 @@ export const IncidentCardContent = ({
               type="button"
               onClick={onReport}
               disabled={reported}
-              className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}
+              className={cn(
+                "cursor-pointer",
+                reported
+                  ? "text-muted-foreground/40"
+                  : "text-muted-foreground hover:text-destructive",
+              )}
               aria-label={reported ? "This incident has been reported" : "Report this incident"}
             >
               {reported ? "reported" : "report"}
