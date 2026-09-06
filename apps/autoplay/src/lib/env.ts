@@ -26,6 +26,10 @@ const envSchema = z.object({
   /** Turso database (autoplay's own, not policingice's): users, grants, lineup, what aired, recordings. */
   TURSO_DATABASE_URL: optionalKey,
   TURSO_AUTH_TOKEN: optionalKey,
+  /** Set by Vercel; where the OAuth redirect comes home to when APP_URL is not given. */
+  VERCEL_ENV: optionalKey,
+  VERCEL_URL: optionalKey,
+  VERCEL_PROJECT_PRODUCTION_URL: optionalKey,
 });
 
 export const env = envSchema.parse(process.env);

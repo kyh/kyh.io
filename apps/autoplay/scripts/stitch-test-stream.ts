@@ -9,34 +9,29 @@
 //
 // Needs BLOB_READ_WRITE_TOKEN in .env; the sessions come off the public
 // replay route, so no sign-in.
+import { parseArgs } from "node:util";
 import { put } from "@vercel/blob";
 
 import { replayPayloadSchema } from "@/lib/api-contract";
 import { env } from "@/lib/env";
+import { OWNER_SOURCE_ID } from "@/lib/source-kinds";
 import { TEST_STREAM_PATH } from "@/lib/test-stream";
-
-type Args = { from: string; session?: string };
-
-const parseArgs = (argv: string[]): Args => {
-  const args: Args = { from: "https://autoplay.kyh.io" };
-  for (let i = 0; i < argv.length; i++) {
-    const flag = argv[i];
-    const value = argv[i + 1];
-    if (flag === "--from" && value !== undefined) args.from = value.replace(/\/$/, "");
-    else if (flag === "--session" && value !== undefined) args.session = value;
-    else throw new Error(`Unknown or incomplete option: ${flag}`);
-    i += 1;
-  }
-  return args;
-};
 
 const main = async () => {
   if (env.BLOB_READ_WRITE_TOKEN === undefined) {
     throw new Error("BLOB_READ_WRITE_TOKEN is not set");
   }
-  const args = parseArgs(process.argv.slice(2));
-  const response = await fetch(`${args.from}/api/replay?sourceId=owner`);
-  if (!response.ok) throw new Error(`${args.from}: replay route answered ${response.status}`);
+  const { values: args } = parseArgs({
+    args: process.argv.slice(2),
+    strict: true,
+    options: {
+      from: { type: "string", default: "https://autoplay.kyh.io" },
+      session: { type: "string" },
+    },
+  });
+  const from = args.from.replace(/\/$/, "");
+  const response = await fetch(`${from}/api/replay?sourceId=${OWNER_SOURCE_ID}`);
+  if (!response.ok) throw new Error(`${from}: replay route answered ${response.status}`);
   const { sessions } = replayPayloadSchema.parse(await response.json());
   const session =
     args.session === undefined
@@ -59,7 +54,7 @@ const main = async () => {
   }
   const seconds = chunks.reduce((total, chunk) => total + chunk.seconds, 0);
 
-  const stored = await put(TEST_STREAM_PATH, bytes, {
+  const stored = await put(TEST_STREAM_PATH, new Blob([bytes], { type: "video/webm" }), {
     access: "public",
     contentType: "video/webm",
     addRandomSuffix: false,

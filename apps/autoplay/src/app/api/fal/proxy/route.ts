@@ -10,10 +10,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
+import { DIRECTOR_MODEL } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
-import { isOwnerHandle } from "@/lib/lineup";
+import { budgetViewerOf } from "@/lib/lineup";
 import { programming } from "@/lib/live";
-import type { Viewer } from "@/lib/live";
+import type { BudgetViewer } from "@/lib/live";
 
 // The browser's way to fal, for the director session: the key stays here, and
 // only a signed-in viewer inside the day's budget may open anything — checked
@@ -30,17 +31,15 @@ import type { Viewer } from "@/lib/live";
 // past their cap by more than the grace, their heartbeats are refused and the
 // transport gives the session up.
 
-export const DIRECTOR_MODEL = "minimax/h3-max/director";
 const SESSION_URL = "https://wma.fal.run/session";
 const HEARTBEAT_URL = "https://wma.fal.run/session/heartbeat";
 
 const sessionAnswerSchema = z.object({ session_id: z.string() });
 const heartbeatSchema = z.object({ session_id: z.string() });
 
-const viewerOf = async (): Promise<Viewer | undefined> => {
+const viewerOf = async (): Promise<BudgetViewer | undefined> => {
   const session = await getSession();
-  if (session === null) return undefined;
-  return { userId: session.user.id, owner: isOwnerHandle(session.user.username) };
+  return session === null ? undefined : budgetViewerOf(session);
 };
 
 const targetOf = (getHeader: (name: string) => HeaderValue): string | undefined => {

@@ -11,6 +11,7 @@
 // of your own may use any letters or digits, and is normalised to upper case
 // the way sign-up normalises what a viewer types.
 // --max-uses defaults to 1; `unlimited` (or 0) lifts the cap.
+import { parseArgs } from "node:util";
 import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
@@ -32,44 +33,41 @@ type Args = {
 const usage = `Usage: pnpm -F @repo/autoplay invite [--code CODE] [--count n] [--max-uses n|unlimited]
                                      [--expires-days n] [--note text] [--list] [--revoke CODE]`;
 
-const parseArgs = (argv: string[]): Args => {
-  const args: Args = { count: 1, maxUses: 1, list: false };
-  for (let i = 0; i < argv.length; i += 1) {
-    const flag = argv[i];
-    const value = argv[i + 1];
-    const needs = () => {
-      if (value === undefined) throw new Error(`${flag} needs a value\n${usage}`);
-      i += 1;
-      return value;
-    };
-    switch (flag) {
-      case "--code":
-        args.code = needs();
-        break;
-      case "--count":
-        args.count = Number(needs());
-        break;
-      case "--max-uses": {
-        const raw = needs();
-        args.maxUses = raw === "unlimited" || raw === "0" ? null : Number(raw);
-        break;
-      }
-      case "--expires-days":
-        args.expiresDays = Number(needs());
-        break;
-      case "--note":
-        args.note = needs();
-        break;
-      case "--list":
-        args.list = true;
-        break;
-      case "--revoke":
-        args.revoke = needs();
-        break;
-      default:
-        throw new Error(`unknown flag ${flag}\n${usage}`);
-    }
+const readArgs = (argv: string[]): Args => {
+  const parse = () =>
+    parseArgs({
+      args: argv,
+      strict: true,
+      options: {
+        code: { type: "string" },
+        count: { type: "string", default: "1" },
+        "max-uses": { type: "string", default: "1" },
+        "expires-days": { type: "string" },
+        note: { type: "string" },
+        list: { type: "boolean", default: false },
+        revoke: { type: "string" },
+      },
+    }).values;
+  let values: ReturnType<typeof parse>;
+  try {
+    values = parse();
+  } catch (error) {
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\n${usage}`, {
+      cause: error,
+    });
   }
+  const args: Args = {
+    code: values.code,
+    count: Number(values.count),
+    maxUses:
+      values["max-uses"] === "unlimited" || values["max-uses"] === "0"
+        ? null
+        : Number(values["max-uses"]),
+    expiresDays: values["expires-days"] === undefined ? undefined : Number(values["expires-days"]),
+    note: values.note,
+    list: values.list,
+    revoke: values.revoke,
+  };
   if (!Number.isInteger(args.count) || args.count < 1 || args.count > MAX_BATCH) {
     throw new Error(`--count must be 1..${MAX_BATCH}`);
   }
@@ -81,7 +79,7 @@ const parseArgs = (argv: string[]): Args => {
 
 const main = async () => {
   if (db === undefined) throw new Error("TURSO_DATABASE_URL is not set");
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(process.argv.slice(2));
 
   if (args.list) {
     const codes = await db.select().from(inviteCode).orderBy(asc(inviteCode.createdAt));

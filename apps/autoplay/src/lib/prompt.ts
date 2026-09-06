@@ -1,3 +1,5 @@
+import { today } from "@/lib/day";
+
 // Turns programming into prompts for the director model.
 //
 // A session is opened on a WORLD: the format of the channel — a sitcom, a
@@ -65,16 +67,13 @@ export const FORMATS: readonly Format[] = [
  * The day is UTC and the pick is a hash of it, so it changes overnight and
  * never depends on who asked.
  */
-export const pickFormat = (day: string = new Date().toISOString().slice(0, 10)): Format => {
+export const pickFormat = (day: string = today()): Format => {
   let hash = 0;
   for (const char of day) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   const format = FORMATS[hash % FORMATS.length];
   if (format === undefined) throw new Error("no formats");
   return format;
 };
-
-export const formatById = (id: string): Format | undefined =>
-  FORMATS.find((format) => format.id === id);
 
 const clean = (text: string): string =>
   text
@@ -106,5 +105,5 @@ export const buildSegmentPrompt = (text: string, authorName: string): string => 
 };
 
 /** What a session opens on: the world, then its first segment. */
-export const buildOpeningPrompt = (format: Format, firstSegment: string): string =>
-  `${format.world}\n\n${firstSegment}`;
+export const buildOpeningPrompt = (world: string, firstSegment: string): string =>
+  `${world}\n\n${firstSegment}`;

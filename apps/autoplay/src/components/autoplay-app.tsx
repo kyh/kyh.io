@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 
 import type { SessionPayload } from "@/lib/api-contract";
-import { PUBLIC_CHANNEL, sessionPayloadSchema } from "@/lib/api-contract";
+import { PUBLIC_CHANNEL, requestJson, sessionPayloadSchema } from "@/lib/api-contract";
 import { Tv } from "@/components/tv";
-import type { TvProps } from "@/components/tv";
+
+/** What there is to watch when the station cannot be reached: the public channel, off air. */
+const OFFLINE_SESSION: SessionPayload = {
+  missingKeys: [],
+  user: null,
+  channels: [PUBLIC_CHANNEL],
+  loginReady: false,
+  googleReady: false,
+  liveReady: false,
+  recordReady: false,
+};
 
 /** The ?error= query left behind by a failed OAuth redirect, then cleared. */
 const takeUrlError = (): string | undefined => {
@@ -25,23 +35,17 @@ export const AutoplayApp = () => {
     const boot = async () => {
       const error = takeUrlError();
       if (error !== undefined) setUrlError(error);
-      try {
-        const response = await fetch("/api/session");
-        const payload = sessionPayloadSchema.parse(await response.json());
-        if (!cancelled) setSession(payload);
-      } catch {
-        if (!cancelled) {
-          setSession({
-            missingKeys: [],
-            user: null,
-            channels: [PUBLIC_CHANNEL],
-            googleReady: false,
-            liveReady: false,
-            recordReady: false,
-            inviteRequired: false,
-          });
-          setUrlError("Couldn't reach the station — reload the page");
-        }
+      const answer = await requestJson(
+        "/api/session",
+        sessionPayloadSchema,
+        "Couldn't reach the station — reload the page",
+      );
+      if (cancelled) return;
+      if ("error" in answer) {
+        setSession(OFFLINE_SESSION);
+        setUrlError(answer.error);
+      } else {
+        setSession(answer.data);
       }
     };
     void boot();
@@ -50,8 +54,5 @@ export const AutoplayApp = () => {
     };
   }, []);
 
-  const props: TvProps = {};
-  if (session !== undefined) props.session = session;
-  if (urlError !== undefined) props.urlError = urlError;
-  return <Tv {...props} />;
+  return <Tv session={session} urlError={urlError} />;
 };

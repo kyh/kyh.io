@@ -3,26 +3,18 @@ import type { HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import type { ErrorPayload } from "@/lib/api-contract";
-import { getSession } from "@/lib/auth";
-import { isOwnerHandle } from "@/lib/lineup";
 import { MAX_CHUNK_BYTES } from "@/lib/recordings";
+import { errorResponse, requireOwner } from "@/lib/route";
+import { OWNER_SOURCE_ID } from "@/lib/source-kinds";
 
 // Mints the token the owner's browser uploads a recorded chunk with. Only
 // the owner, only webm, only a chunk's worth of bytes, only under the
 // channel's own prefix: the token is the whole of what the browser may do to
 // the store.
 
-const errorResponse = (status: number, error: string): NextResponse => {
-  const payload: ErrorPayload = { error };
-  return NextResponse.json(payload, { status });
-};
-
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
-  const session = await getSession();
-  if (session === null || !isOwnerHandle(session.user.username)) {
-    return errorResponse(403, "Only the station's owner records");
-  }
+  const owner = await requireOwner();
+  if ("refused" in owner) return owner.refused;
   // The event is the SDK's own protocol; handleUpload validates it and
   // rejects anything that is not one of its two message types.
   const body: HandleUploadBody = await request.json();
@@ -31,7 +23,9 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
       request,
       body,
       onBeforeGenerateToken: async (pathname) => {
-        if (!pathname.startsWith("recordings/owner/")) throw new Error("Not a recording path");
+        if (!pathname.startsWith(`recordings/${OWNER_SOURCE_ID}/`)) {
+          throw new Error("Not a recording path");
+        }
         return {
           allowedContentTypes: ["video/webm"],
           maximumSizeInBytes: MAX_CHUNK_BYTES,

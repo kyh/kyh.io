@@ -1,59 +1,57 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import type { ChannelsPayload, ErrorPayload } from "@/lib/api-contract";
+import type { ChannelsPayload } from "@/lib/api-contract";
 import {
   addSourceRequestSchema,
   removeSourceRequestSchema,
   reorderSourcesRequestSchema,
 } from "@/lib/api-contract";
-import { getSession } from "@/lib/auth";
 import { addRssSource, listChannels, removeSource, reorderSources } from "@/lib/lineup";
+import { errorResponse, readBody, requireSession } from "@/lib/route";
+import type { Session } from "@/lib/route";
 
 // The lineup, edited. Grant-backed sources come and go with their grants (see
 // /api/session); this is for the feed URL a user types in, for taking a
 // channel off the lineup, and for the order they air in. Every answer is the
 // lineup as it now stands.
 
-const errorResponse = (status: number, error: string): NextResponse => {
-  const payload: ErrorPayload = { error };
-  return NextResponse.json(payload, { status });
-};
-
-const lineupResponse = async (
-  session: NonNullable<Awaited<ReturnType<typeof getSession>>>,
-): Promise<NextResponse> => {
+const lineupResponse = async (session: Session): Promise<NextResponse> => {
   const payload: ChannelsPayload = { channels: await listChannels(session) };
   return NextResponse.json(payload);
 };
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
-  const session = await getSession();
-  if (session === null) return errorResponse(401, "Sign in with X to add channels");
-  const body = addSourceRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Expected { kind: 'rss', url: string }");
+  const viewer = await requireSession("Sign in with X to add channels");
+  if ("refused" in viewer) return viewer.refused;
+  const body = await readBody(
+    request,
+    addSourceRequestSchema,
+    "Expected { kind: 'rss', url: string }",
+  );
+  if ("refused" in body) return body.refused;
   try {
-    await addRssSource(session, body.data.url);
+    await addRssSource(viewer.session, body.data.url);
   } catch (error) {
     return errorResponse(400, error instanceof Error ? error.message : "Couldn't read that feed");
   }
-  return lineupResponse(session);
+  return lineupResponse(viewer.session);
 };
 
 export const DELETE = async (request: NextRequest): Promise<NextResponse> => {
-  const session = await getSession();
-  if (session === null) return errorResponse(401, "Sign in with X to change channels");
-  const body = removeSourceRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Expected { sourceId: string }");
-  await removeSource(session, body.data.sourceId);
-  return lineupResponse(session);
+  const viewer = await requireSession("Sign in with X to change channels");
+  if ("refused" in viewer) return viewer.refused;
+  const body = await readBody(request, removeSourceRequestSchema, "Expected { sourceId: string }");
+  if ("refused" in body) return body.refused;
+  await removeSource(viewer.session, body.data.sourceId);
+  return lineupResponse(viewer.session);
 };
 
 export const PATCH = async (request: NextRequest): Promise<NextResponse> => {
-  const session = await getSession();
-  if (session === null) return errorResponse(401, "Sign in with X to change channels");
-  const body = reorderSourcesRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Expected { order: string[] }");
-  await reorderSources(session, body.data.order);
-  return lineupResponse(session);
+  const viewer = await requireSession("Sign in with X to change channels");
+  if ("refused" in viewer) return viewer.refused;
+  const body = await readBody(request, reorderSourcesRequestSchema, "Expected { order: string[] }");
+  if ("refused" in body) return body.refused;
+  await reorderSources(viewer.session, body.data.order);
+  return lineupResponse(viewer.session);
 };

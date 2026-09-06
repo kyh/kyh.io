@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { bestOf, plainText } from "./types";
-import type { AccessOf, Item } from "./types";
+import { cachedPick, fetchJson, plainText } from "./types";
+import type { AccessOf, Item, SourceContext } from "./types";
 
 // YouTube as a source: recent uploads from the channels the account follows,
 // most viewed first. The Data API has a 10 000-unit daily quota; a refresh
@@ -13,7 +13,6 @@ const MAX_CHANNELS = 20;
 const UPLOADS_PER_CHANNEL = 3;
 /** An old viral upload must not win forever; only this window competes. */
 const RECENT_MS = 7 * 24 * 3_600_000;
-const CACHE_TTL_MS = 3_600_000;
 const MAX_DESCRIPTION_LENGTH = 300;
 /** The Data API answers up to this many video ids per call. */
 const VIDEOS_PER_CALL = 50;
@@ -61,9 +60,7 @@ const videosSchema = z.object({
     .optional(),
 });
 
-const caches = new Map<string, { items: Item[]; expiresAt: number }>();
-
-const ytFetch = async <T>(
+const ytFetch = <T>(
   accessToken: string,
   path: string,
   params: Record<string, string>,
@@ -71,9 +68,7 @@ const ytFetch = async <T>(
 ): Promise<T> => {
   const url = new URL(`${YT_BASE}/${path}`);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw new Error(`YouTube request failed (${response.status})`);
-  return schema.parse(await response.json());
+  return fetchJson("YouTube", url, accessToken, schema);
 };
 
 /** A channel's uploads playlist has the channel's id with its "UC" prefix swapped for "UU". */
@@ -126,32 +121,22 @@ const fetchUploads = async (access: AccessOf<"youtube">): Promise<Item[]> => {
       videosSchema,
     );
     for (const video of videos.items ?? []) {
-      const item: Item = {
+      items.push({
         id: `youtube:${video.id}`,
         kind: "youtube",
         text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
+        createdAt: video.snippet.publishedAt,
         score: Number(video.statistics?.viewCount ?? 0),
         author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
-      };
-      if (video.snippet.publishedAt !== undefined) item.createdAt = video.snippet.publishedAt;
-      items.push(item);
+      });
     }
   }
   return items;
 };
 
-export const pickYoutubeCandidate = async (
+export const pickYoutubeCandidate = (
   access: AccessOf<"youtube">,
   sourceId: string,
-  aired: Set<string>,
-): Promise<Item | undefined> => {
-  const cached = caches.get(sourceId);
-  let items: Item[];
-  if (cached !== undefined && cached.expiresAt > Date.now()) {
-    items = cached.items;
-  } else {
-    items = await fetchUploads(access);
-    caches.set(sourceId, { items, expiresAt: Date.now() + CACHE_TTL_MS });
-  }
-  return bestOf(items.filter((item) => !aired.has(item.id)));
-};
+  context: SourceContext,
+): Promise<Item | undefined> =>
+  cachedPick(context, `youtube:${sourceId}`, () => fetchUploads(access));

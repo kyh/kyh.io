@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import type { RecordedSession, RecordingChunk } from "@/lib/api-contract";
-import { replayPayloadSchema } from "@/lib/api-contract";
+import { replayPayloadSchema, requestJson } from "@/lib/api-contract";
+import type { ReplayState } from "@/lib/screen-state";
+import { TvVideo, useVideoPlayback } from "@/components/tv-video";
 
 // The replay, and the live tail. The channel's recorded sessions, newest
 // first, each appended back into a single stream through MediaSource — the
@@ -18,6 +20,12 @@ const MIME_TYPE = 'video/webm;codecs="vp8,opus"';
 const VIDEO_ONLY_MIME_TYPE = 'video/webm;codecs="vp8"';
 /** How much stream to keep appended ahead of the playhead. */
 const AHEAD_SECONDS = 30;
+/**
+ * How much played stream to keep behind it. The rest is let go, in stretches:
+ * a SourceBuffer holds what it is given, and a session an hour long would
+ * fill the browser's quota, after which appends fail and the picture stops.
+ */
+const BEHIND_SECONDS = 60;
 /** A session whose newest chunk is younger than this is still on air. */
 const ON_AIR_MS = 45_000;
 /**
@@ -31,11 +39,6 @@ const TAIL_POLL_MS = 5_000;
 /** How often the list is re-read otherwise. */
 const REFRESH_MS = 120_000;
 
-export type ReplayState =
-  | { status: "loading" }
-  | { status: "playing"; onAir: boolean }
-  | { status: "empty"; reason: string };
-
 type ReplayScreenProps = {
   sourceId: string;
   muted: boolean;
@@ -45,16 +48,15 @@ type ReplayScreenProps = {
 };
 
 const fetchSessions = async (sourceId: string): Promise<RecordedSession[] | undefined> => {
-  try {
-    const response = await fetch(`/api/replay?sourceId=${encodeURIComponent(sourceId)}`);
-    if (!response.ok) return undefined;
-    return replayPayloadSchema.parse(await response.json()).sessions;
-  } catch {
-    return undefined;
-  }
+  const answer = await requestJson(
+    `/api/replay?sourceId=${encodeURIComponent(sourceId)}`,
+    replayPayloadSchema,
+    "The replay couldn't be read",
+  );
+  return "error" in answer ? undefined : answer.data.sessions;
 };
 
-export const canReplay = (): boolean =>
+const canReplay = (): boolean =>
   "MediaSource" in globalThis && MediaSource.isTypeSupported(MIME_TYPE);
 
 const isOnAir = (session: RecordedSession): boolean => Date.now() - session.updatedAt < ON_AIR_MS;
@@ -138,6 +140,16 @@ const playSession = (
     }
   };
 
+  /** Let go of what has played, once a stretch of it has; the buffer holds a window, not the session. */
+  const evict = (): boolean => {
+    if (buffer === undefined || buffer.updating) return false;
+    const ranges = video.buffered;
+    if (ranges.length === 0 || video.currentTime - ranges.start(0) <= 2 * BEHIND_SECONDS)
+      return false;
+    buffer.remove(0, video.currentTime - BEHIND_SECONDS);
+    return true;
+  };
+
   const onAppended = () => {
     if (pending !== undefined) {
       const end = bufferedEnd();
@@ -153,6 +165,8 @@ const playSession = (
         seekTo = undefined;
       }
     }
+    // A removal ends with its own updateend, which comes back here to append.
+    if (evict()) return;
     void appendNext();
   };
 
@@ -216,19 +230,14 @@ const playSession = (
 };
 
 export const ReplayScreen = (props: ReplayScreenProps) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useVideoPlayback(props.muted, props.paused);
   const [sessions, setSessions] = useState<RecordedSession[] | undefined>(undefined);
   const sessionsRef = useRef<RecordedSession[]>([]);
   const [cursor, setCursor] = useState(0);
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
   const playerRef = useRef<Player | undefined>(undefined);
-  const onProgramRef = useRef(props.onProgram);
-  const onStateRef = useRef(props.onState);
-
-  useEffect(() => {
-    onProgramRef.current = props.onProgram;
-    onStateRef.current = props.onState;
-  });
+  const emitProgram = useEffectEvent(props.onProgram);
+  const emitState = useEffectEvent(props.onState);
 
   // The list is re-read often while the session being played is on air —
   // that is how its new chunks arrive — and rarely otherwise.
@@ -260,26 +269,26 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
 
   useEffect(() => {
     if (sessions === undefined) {
-      onStateRef.current({ status: "loading" });
+      emitState({ status: "loading" });
       return;
     }
     if (!canReplay()) {
-      onStateRef.current({
+      emitState({
         status: "empty",
         reason: "The replay needs a browser that can play WebM streams — Chrome, Edge or Firefox.",
       });
       return;
     }
     if (sessions.length === 0) {
-      onStateRef.current({
+      emitState({
         status: "empty",
         reason: "Nothing recorded yet — this channel records while its owner is watching.",
       });
-      onProgramRef.current(undefined);
+      emitProgram(undefined);
       return;
     }
     const playing = sessions.find((session) => session.sessionId === playingId);
-    onStateRef.current({ status: "playing", onAir: playing !== undefined && isOnAir(playing) });
+    emitState({ status: "playing", onAir: playing !== undefined && isOnAir(playing) });
   }, [sessions, playingId]);
 
   // A session starts playing when the cursor lands on it and keeps playing
@@ -298,7 +307,7 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       video,
       session,
       latest,
-      (chunk) => onProgramRef.current(chunk),
+      (chunk) => emitProgram(chunk),
       () => setCursor((value) => value + 1),
     );
     playerRef.current = player;
@@ -306,26 +315,7 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       playerRef.current = undefined;
       player.stop();
     };
-  }, [cursor, loaded]);
+  }, [cursor, loaded, videoRef]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video === null) return;
-    video.muted = props.muted;
-    if (props.paused) {
-      video.pause();
-    } else {
-      void video.play().catch(() => undefined);
-    }
-  }, [props.muted, props.paused]);
-
-  return (
-    <video
-      ref={videoRef}
-      autoPlay
-      playsInline
-      muted={props.muted}
-      className="absolute inset-0 h-full w-full object-contain"
-    />
-  );
+  return <TvVideo videoRef={videoRef} muted={props.muted} />;
 };

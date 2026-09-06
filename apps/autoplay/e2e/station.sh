@@ -83,7 +83,7 @@ check "dialog opens" "$(ab eval "document.querySelector('[role=dialog] h2')?.tex
 ab find label "Feed URL" fill "https://hnrss.org/frontpage" >/dev/null
 ab find role button click --name "add feed" >/dev/null
 for i in $(seq 1 10); do ab wait 1000 >/dev/null; ab eval "document.querySelectorAll('[role=dialog] li').length" | tail -1 | grep -q 2 && break; done
-checkmatch "feed added as CH 02" "$(ab eval "Array.from(document.querySelectorAll('[role=dialog] li')).map(l=>l.innerText.replace(/\\s+/g,' ')).join(' || ')" | tail -1)" 'CH 02 FEED Hacker News'
+checkmatch "feed added as CH 02" "$(ab eval "Array.from(document.querySelectorAll('[role=dialog] li')).map(l=>l.innerText.replace(/\\s+/g,' ')).join(' || ')" | tail -1)" 'CH 02 RSS Hacker News'
 echo "  dialog error: $(ab eval "document.querySelector('[role=dialog] .text-red-700')?.textContent ?? 'none'" | tail -1)"
 ab find role button click --name "remove" >/dev/null; ab wait --load networkidle >/dev/null; ab wait 1500 >/dev/null
 check "feed removed" "$(ab eval "document.querySelectorAll('[role=dialog] li').length" | tail -1)" 1

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import type { SessionPayload, UserSummary } from "@/lib/api-contract";
-import { getSession } from "@/lib/auth";
+import type { SessionPayload } from "@/lib/api-contract";
+import { auth, getSession } from "@/lib/auth";
 import { env, googleConfigured, missingEnvKeys, recordingConfigured } from "@/lib/env";
 import { ensureSources, listChannels } from "@/lib/lineup";
 
@@ -11,25 +11,23 @@ import { ensureSources, listChannels } from "@/lib/lineup";
 
 export const GET = async (): Promise<NextResponse> => {
   const session = await getSession();
-  let user: UserSummary | null = null;
-  if (session !== null) {
-    user = {
-      name: session.user.name,
-      username: session.user.username ?? session.user.name,
-    };
-    if (session.user.image !== null && session.user.image !== undefined) {
-      user.profileImageUrl = session.user.image;
-    }
-    await ensureSources(session);
-  }
+  if (session !== null) await ensureSources(session);
   const payload: SessionPayload = {
     missingKeys: missingEnvKeys(),
-    user,
+    user:
+      session === null
+        ? null
+        : {
+            name: session.user.name,
+            username: session.user.username ?? session.user.name,
+            profileImageUrl: session.user.image ?? undefined,
+          },
     channels: await listChannels(session),
+    // better-auth exists only with the X app, a secret and the database to keep users in.
+    loginReady: auth !== undefined,
     googleReady: googleConfigured,
     liveReady: env.FAL_KEY !== undefined,
     recordReady: recordingConfigured,
-    inviteRequired: true,
   };
   return NextResponse.json(payload);
 };

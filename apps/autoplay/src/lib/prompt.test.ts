@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { FORMATS, buildOpeningPrompt, buildSegmentPrompt, formatById, pickFormat } from "./prompt";
+import { FORMATS, buildOpeningPrompt, buildSegmentPrompt, pickFormat } from "./prompt";
 
 describe("buildSegmentPrompt", () => {
   it("strips links and handles, which render as garbled text on screen", () => {
@@ -38,11 +38,9 @@ describe("buildSegmentPrompt", () => {
 
 describe("formats", () => {
   it("opens on the world and then the first segment", () => {
-    const format = formatById("satire-news");
-    assert.ok(format !== undefined);
-    if (format === undefined) return;
-    const prompt = buildOpeningPrompt(format, buildSegmentPrompt("rain tomorrow", "Kai"));
-    assert.match(prompt, /^A continuous satirical news network/);
+    const format = pickFormat("2026-09-04");
+    const prompt = buildOpeningPrompt(format.world, buildSegmentPrompt("rain tomorrow", "Kai"));
+    assert.ok(prompt.startsWith(format.world));
     assert.match(prompt, /Next segment.*rain tomorrow/);
   });
 

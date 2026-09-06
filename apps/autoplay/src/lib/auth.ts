@@ -20,10 +20,10 @@ import { claimInviteCode, inviteFromCookie, validateInviteCode } from "@/lib/inv
 
 const baseUrl =
   env.APP_URL ??
-  (process.env.VERCEL_ENV === "production"
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_ENV === "preview"
-      ? `https://${process.env.VERCEL_URL}`
+  (env.VERCEL_ENV === "production"
+    ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : env.VERCEL_ENV === "preview"
+      ? `https://${env.VERCEL_URL}`
       : "http://localhost:3005");
 
 type TwitterProviderConfig = {
@@ -80,6 +80,12 @@ const createAuth = (
     // Both this app and policingice run on localhost; a distinct cookie
     // prefix keeps their sessions from clobbering each other in dev.
     advanced: { cookiePrefix: "autoplay" },
+    session: {
+      // Every heartbeat, program and chunk asks who is asking. A minute of
+      // signed cookie spares the database that read; nothing here needs a
+      // revocation to land faster.
+      cookieCache: { enabled: true, maxAge: 60 },
+    },
     account: {
       // X accounts carry a synthesized email (see mapProfileToUser) that can
       // never match the Google one, so linking must not compare them.

@@ -47,13 +47,10 @@ const clientMessageSchema = z.discriminatedUnion("type", [
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
-/** The server messages the stand-in sends, a subset of the director's. */
-type ServerMessage =
-  | { type: "configured"; prompt_version: number }
-  | { type: "prompt_applied"; prompt_version: number }
-  | { type: "chunk"; prompt_version: number; buffer_depth_seconds: number };
+/** The one server message the screen acts on: a chunk, which is a prompt's picture on its way. */
+type ServerMessage = { type: "chunk"; prompt_version: number; buffer_depth_seconds: number };
 
-export type TestStreamSession = {
+type TestStreamSession = {
   send(message: ClientMessage): void;
   close(): void;
 };
@@ -109,8 +106,6 @@ export const openTestStreamSession = (handlers: Handlers): TestStreamSession => 
       const sent = parsed.data;
       if (sent.type === "stop" || sent.type === "ping") return;
       const version = sent.prompt_version;
-      if (sent.type === "configure") emit({ type: "configured", prompt_version: version });
-      emit({ type: "prompt_applied", prompt_version: version });
       timers.push(
         window.setTimeout(
           () => emit({ type: "chunk", prompt_version: version, buffer_depth_seconds: 1 }),

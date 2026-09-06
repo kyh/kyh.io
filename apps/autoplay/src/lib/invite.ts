@@ -17,7 +17,7 @@ import { env } from "@/lib/env";
 export const INVITE_COOKIE = "autoplay.invite";
 /** Long enough to get through X's consent screen and back. */
 export const INVITE_COOKIE_MAX_AGE = 3600;
-export const INVITE_CODE_LENGTH = 6;
+const INVITE_CODE_LENGTH = 6;
 /** No 0/O/1/I, so a code survives being read aloud or copied by hand. */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 

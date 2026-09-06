@@ -9,6 +9,7 @@ import {
   memorySessionStore,
   usdPerSecond,
 } from "./live";
+import { DAILY_READ_BUDGET_USD, memoryReads } from "./reads";
 
 // The programming rules on in-memory stores, with a feed served from a stub:
 // never twice, and the daily dollars that stand between a viewer and the
@@ -40,7 +41,11 @@ afterEach(() => {
 
 describe("programming", () => {
   it("airs the newest entry first and never the same one twice", async () => {
-    const { nextProgram } = createProgramming(memoryAiredStore(), memorySessionStore());
+    const { nextProgram } = createProgramming(
+      memoryAiredStore(),
+      memorySessionStore(),
+      memoryReads(),
+    );
     const owner = { userId: "u1", owner: true };
     const first = await nextProgram("test:never-twice", access, owner, true);
     const second = await nextProgram("test:never-twice", access, owner, false);
@@ -50,8 +55,14 @@ describe("programming", () => {
     assert.equal(first.program.itemId, "rss:e29");
     assert.equal(second.program.itemId, "rss:e28");
     assert.match(first.program.prompt, /Entry 29/);
-    assert.ok(first.world !== undefined, "an opening program carries the world");
-    assert.equal(second.world, undefined);
+    assert.ok(first.formatLabel !== undefined, "an opening program names its format");
+    assert.match(
+      first.program.prompt,
+      /^A continuous .*\n\nNext segment/s,
+      "and opens on the world",
+    );
+    assert.equal(second.formatLabel, undefined);
+    assert.match(second.program.prompt, /^Next segment/);
   });
 
   it("bills the promotional rate through its last day and list after", () => {
@@ -63,6 +74,7 @@ describe("programming", () => {
     const { nextProgram, mayOpen, mayContinue, sessionOpened, sessionSeen } = createProgramming(
       memoryAiredStore(),
       memorySessionStore(),
+      memoryReads(),
     );
     const guest = { userId: "u2", owner: false };
     const owner = { userId: "u1", owner: true };
@@ -89,9 +101,76 @@ describe("programming", () => {
 
   it("puts a source that can't be read on the screen as the reason", async () => {
     globalThis.fetch = async () => new Response("nope", { status: 403 });
-    const { nextProgram } = createProgramming(memoryAiredStore(), memorySessionStore());
+    const { nextProgram } = createProgramming(
+      memoryAiredStore(),
+      memorySessionStore(),
+      memoryReads(),
+    );
     const result = await nextProgram("test:dead", access, { userId: "u1", owner: true }, true);
     assert.equal(result.kind, "off-air");
     if (result.kind === "off-air") assert.match(result.reason, /403/);
+  });
+});
+
+// X, stubbed: one personalized trend, and ten posts about it with falling
+// likes. Every path the adapter can buy from lands here, so the ledger and
+// the cache can be read back against what was actually asked for.
+const xAccess = { kind: "x" as const, accessToken: "token", xUserId: "42" };
+
+const json = <Body extends object>(body: Body): Response =>
+  new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+let xCalls: string[] = [];
+
+const xStub: typeof fetch = async (input) => {
+  const url = input instanceof Request ? input.url : String(input);
+  xCalls.push(new URL(url).pathname);
+  if (url.includes("/users/personalized_trends")) return json({ data: [{ trend_name: "Vercel" }] });
+  if (url.includes("/tweets/search/recent")) {
+    return json({
+      data: Array.from({ length: 10 }, (_, i) => ({
+        id: `p${i}`,
+        text: `post ${i}`,
+        author_id: "a1",
+        public_metrics: { like_count: 1000 - i },
+      })),
+      includes: { users: [{ id: "a1", name: "Ada", username: "ada" }] },
+    });
+  }
+  return new Response("not stubbed", { status: 500 });
+};
+
+describe("X reads", () => {
+  it("are priced into the ledger, served from the cache for the hour, and stopped at the day's cap", async () => {
+    xCalls = [];
+    globalThis.fetch = xStub;
+    const reads = memoryReads();
+    const { nextProgram } = createProgramming(memoryAiredStore(), memorySessionStore(), reads);
+    const owner = { userId: "u1", owner: true };
+
+    const first = await nextProgram("x:test", xAccess, owner, true);
+    assert.equal(first.kind, "program");
+    if (first.kind === "program") assert.equal(first.program.itemId, "x:p0");
+    // One trends call ($0.010) and one ten-post search ($0.050).
+    const spent = await reads.spend.spent("x", 0);
+    assert.ok(Math.abs(spent - 0.06) < 1e-9, `spent ${spent}`);
+    assert.equal(xCalls.length, 2);
+
+    // The next program comes out of the cache: nothing more is bought.
+    const second = await nextProgram("x:test", xAccess, owner, false);
+    assert.equal(second.kind, "program");
+    if (second.kind === "program") assert.equal(second.program.itemId, "x:p1");
+    assert.equal(xCalls.length, 2);
+    assert.equal(await reads.spend.spent("x", 0), spent);
+
+    // At the cap the channel goes off air with the reason, and buys nothing.
+    await reads.spend.record("x", "x:test", DAILY_READ_BUDGET_USD.x);
+    const third = await nextProgram("x:test", xAccess, owner, false);
+    assert.equal(third.kind, "off-air");
+    if (third.kind === "off-air") assert.match(third.reason, /X read budget/);
+    assert.equal(xCalls.length, 2);
   });
 });

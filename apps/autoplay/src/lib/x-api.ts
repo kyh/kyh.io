@@ -45,11 +45,9 @@ const tokenResponseSchema = z.object({
 export type TokenGrant = {
   accessToken: string;
   refreshToken?: string;
-  /** Unix ms, with a safety margin subtracted so a grant is refreshed early. */
+  /** Unix ms. */
   expiresAt: number;
 };
-
-const EXPIRY_MARGIN_MS = 60_000;
 
 /** Refresh an X OAuth 2.0 grant (confidential client). */
 export const refreshXToken = async (
@@ -72,12 +70,11 @@ export const refreshXToken = async (
   });
   if (!response.ok) throw await errorFromResponse(response);
   const grant = tokenResponseSchema.parse(await response.json());
-  const result: TokenGrant = {
+  return {
     accessToken: grant.access_token,
-    expiresAt: Date.now() + grant.expires_in * 1000 - EXPIRY_MARGIN_MS,
+    refreshToken: grant.refresh_token,
+    expiresAt: Date.now() + grant.expires_in * 1000,
   };
-  if (grant.refresh_token !== undefined) result.refreshToken = grant.refresh_token;
-  return result;
 };
 
 const xUserSchema = z.object({
@@ -115,20 +112,25 @@ const timelineResponseSchema = z.object({
   meta: z.object({ next_token: z.string().optional() }).optional(),
 });
 
-export type FeedPost = {
-  id: string;
-  text: string;
-  createdAt?: string;
+/** A post as the adapter sees it — a schema, since pages come back out of the shared cache as data. */
+export const feedPostSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  createdAt: z.string().optional(),
   /** Engagement score: retweets and quotes weigh most, then replies, likes. */
-  score: number;
-  author: {
-    name: string;
-    username: string;
-    profileImageUrl?: string;
-  };
-};
+  score: z.number(),
+  author: z.object({
+    name: z.string(),
+    username: z.string(),
+    profileImageUrl: z.string().optional(),
+  }),
+});
 
-export type FeedSource = "home" | "own";
+export type FeedPost = z.infer<typeof feedPostSchema>;
+
+export const feedSourceSchema = z.enum(["home", "own"]);
+
+export type FeedSource = z.infer<typeof feedSourceSchema>;
 
 export type FeedPage = {
   source: FeedSource;
@@ -146,12 +148,21 @@ const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): n
   );
 };
 
-const TIMELINE_PARAMS = {
-  max_results: "50",
+/** What every posts endpoint is asked to return: the fields postsFromResponse reads. */
+const POST_FIELDS = {
   "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
   expansions: "author_id,referenced_tweets.id",
   "user.fields": "name,username,profile_image_url",
 } as const;
+
+const TIMELINE_PARAMS = { max_results: "50", ...POST_FIELDS } as const;
+
+/** A GET against the API, parsed; a refusal becomes an XApiError with X's own words. */
+const xGet = async <T>(accessToken: string, url: URL, schema: z.ZodType<T>): Promise<T> => {
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!response.ok) throw await errorFromResponse(response);
+  return schema.parse(await response.json());
+};
 
 type TimelinePage = {
   posts: FeedPost[];
@@ -174,22 +185,19 @@ const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>): Fe
     const text = source.note_tweet?.text ?? source.text;
 
     const author = post.author_id === undefined ? undefined : usersById.get(post.author_id);
-    const result: FeedPost = {
+    return {
       id: post.id,
       text,
+      createdAt: post.created_at,
       // A retweet's own metrics are near zero; the referenced original's
       // engagement is what makes it "popular".
       score: scoreFromMetrics(source.public_metrics),
       author: {
         name: author?.name ?? "Unknown",
         username: author?.username ?? "unknown",
+        profileImageUrl: author?.profile_image_url,
       },
     };
-    if (post.created_at !== undefined) result.createdAt = post.created_at;
-    if (author?.profile_image_url !== undefined) {
-      result.author.profileImageUrl = author.profile_image_url;
-    }
-    return result;
   });
 };
 
@@ -203,13 +211,8 @@ const fetchTimeline = async (
     url.searchParams.set(key, value);
   }
   if (paginationToken !== undefined) url.searchParams.set("pagination_token", paginationToken);
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw await errorFromResponse(response);
-  const timeline = timelineResponseSchema.parse(await response.json());
-
-  const page: TimelinePage = { posts: postsFromResponse(timeline) };
-  if (timeline.meta?.next_token !== undefined) page.nextToken = timeline.meta.next_token;
-  return page;
+  const timeline = await xGet(accessToken, url, timelineResponseSchema);
+  return { posts: postsFromResponse(timeline), nextToken: timeline.meta?.next_token };
 };
 
 const timelinePath = (source: FeedSource, userId: string): string =>
@@ -267,23 +270,17 @@ const trendsResponseSchema = z.object({
   data: z.array(trendSchema).optional(),
 });
 
-export type Trend = {
-  name: string;
-};
-
 /**
  * Trends personalized to the authenticated user. Requires the *user* to have
  * an X Premium subscription — a non-Premium account gets 401/403, which
  * callers should treat as "no trends" and fall back to the timeline rather
  * than as an error.
  */
-export const fetchPersonalizedTrends = async (accessToken: string): Promise<Trend[]> => {
+export const fetchPersonalizedTrends = async (accessToken: string): Promise<string[]> => {
   const url = new URL(`${X_API_BASE}/users/personalized_trends`);
   url.searchParams.set("personalized_trend.fields", "trend_name");
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw await errorFromResponse(response);
-  const body = trendsResponseSchema.parse(await response.json());
-  return (body.data ?? []).map((trend) => ({ name: trend.trend_name }));
+  const body = await xGet(accessToken, url, trendsResponseSchema);
+  return (body.data ?? []).map((trend) => trend.trend_name);
 };
 
 const SEARCH_PARAMS = {
@@ -291,9 +288,7 @@ const SEARCH_PARAMS = {
   // Relevancy is reported not to paginate; that is fine, one page is all a
   // single program needs.
   sort_order: "relevancy",
-  "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
-  expansions: "author_id,referenced_tweets.id",
-  "user.fields": "name,username,profile_image_url",
+  ...POST_FIELDS,
 } as const;
 
 const STOP_WORDS = new Set(["the", "a", "an", "this", "that", "new", "how", "why", "what"]);
@@ -350,7 +345,5 @@ export const searchTrendPosts = async (
   for (const [key, value] of Object.entries(SEARCH_PARAMS)) {
     url.searchParams.set(key, value);
   }
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw await errorFromResponse(response);
-  return postsFromResponse(timelineResponseSchema.parse(await response.json()));
+  return postsFromResponse(await xGet(accessToken, url, timelineResponseSchema));
 };

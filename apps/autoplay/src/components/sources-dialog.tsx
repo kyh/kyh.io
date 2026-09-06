@@ -8,20 +8,19 @@ import type { ChannelSummary } from "@/lib/api-contract";
 import {
   addSourceRequestSchema,
   channelsPayloadSchema,
-  errorPayloadSchema,
+  jsonRequest,
   removeSourceRequestSchema,
   reorderSourcesRequestSchema,
+  requestJson,
 } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
-import { SOURCE_KIND_NAMES, type SourceKind } from "@/lib/source-kinds";
+import { GOOGLE_SOURCES, SOURCE_KIND_NAMES } from "@/lib/source-kinds";
+import type { SourceKind } from "@/lib/source-kinds";
 import { Glyph } from "@/components/glyph";
 import { WindowDialog } from "@/components/window-dialog";
 
 // The lineup, edited. Connecting a Google scope or adding a feed creates its
 // channel with no further step; CH 01 is the station's and cannot be removed.
-
-const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
 type SourcesDialogProps = {
   channels: ChannelSummary[];
@@ -40,22 +39,13 @@ const connectGoogle = (scope: string) => {
   void authClient.linkSocial({ provider: "google", scopes: [scope], callbackURL: "/" });
 };
 
-const editLineup = async (
-  edit: LineupEdit,
-): Promise<{ channels: ChannelSummary[] } | { error: string }> => {
-  const response = await fetch("/api/sources", {
-    method: edit.method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(edit.body),
-  });
-  const json = await response.json().catch(() => null);
-  if (!response.ok) {
-    const parsed = errorPayloadSchema.safeParse(json);
-    return { error: parsed.success ? parsed.data.error : "Couldn't change the lineup" };
-  }
-  const parsed = channelsPayloadSchema.safeParse(json);
-  return parsed.success ? parsed.data : { error: "Couldn't read the lineup" };
-};
+const editLineup = (edit: LineupEdit) =>
+  requestJson(
+    "/api/sources",
+    channelsPayloadSchema,
+    "Couldn't change the lineup",
+    jsonRequest(edit.method, edit.body),
+  );
 
 export const SourcesDialog = (props: SourcesDialogProps) => {
   const [feedUrl, setFeedUrl] = useState("");
@@ -74,7 +64,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
         setError(result.error);
         return false;
       }
-      props.onLineup(result.channels);
+      props.onLineup(result.data.channels);
       return true;
     } finally {
       setBusy(false);
@@ -147,22 +137,19 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
         <div className="space-y-2 border-t-2 border-outline pt-2">
           <p className="text-[10px] tracking-[0.3em] uppercase opacity-60">Connect</p>
           <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              disabled={!props.googleReady || has("gmail")}
-              onClick={() => connectGoogle(GMAIL_SCOPE)}
-              className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
-            >
-              {has("gmail") ? "newsletters ✓" : "gmail newsletters"}
-            </button>
-            <button
-              type="button"
-              disabled={!props.googleReady || has("youtube")}
-              onClick={() => connectGoogle(YOUTUBE_SCOPE)}
-              className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
-            >
-              {has("youtube") ? "youtube ✓" : "youtube"}
-            </button>
+            {GOOGLE_SOURCES.map((entry) => (
+              <button
+                key={entry.kind}
+                type="button"
+                disabled={!props.googleReady || has(entry.kind)}
+                onClick={() => connectGoogle(entry.scope)}
+                className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
+              >
+                {has(entry.kind)
+                  ? `${entry.label} ✓`
+                  : `${SOURCE_KIND_NAMES[entry.kind]} ${entry.label}`}
+              </button>
+            ))}
           </div>
           {!props.googleReady && (
             <p className="text-[10px] opacity-60">

@@ -1,12 +1,35 @@
-import { fetchFeedPage, fetchPersonalizedTrends, searchTrendPosts } from "@/lib/x-api";
-import type { FeedPost, Trend } from "@/lib/x-api";
+import { z } from "zod";
+
+import {
+  feedPostSchema,
+  feedSourceSchema,
+  fetchFeedPage,
+  fetchPersonalizedTrends,
+  searchTrendPosts,
+} from "@/lib/x-api";
+import type { FeedPage, FeedPost } from "@/lib/x-api";
 import { bestOf } from "./types";
-import type { AccessOf, Item } from "./types";
+import type { AccessOf, Item, SourceContext } from "./types";
 
 // X as a source. Programs come from what the account's corner of X is talking
 // about: personalized trends seed a search filtered on engagement, and the
 // home timeline is the fallback when trends are unavailable (no Premium) or
 // turn up nothing new.
+//
+// Every read here is paid — X bills per post returned — so each is priced as
+// it lands and written to the ledger the read budget is counted from, and
+// everything read is cached where every instance of the server can see it: a
+// page bought once serves the hour, whichever instance answers.
+
+/**
+ * What X bills at the self-serve rates: per post returned, per call for
+ * trends. An overcount, if anything — X does not recharge a post it already
+ * returned that UTC day, and this does not try to know which those were.
+ */
+const USD_PER_TIMELINE_POST = 0.005;
+const USD_PER_OWN_POST = 0.001;
+const USD_PER_SEARCH_POST = 0.005;
+const USD_PER_TRENDS_CALL = 0.01;
 
 /**
  * A timeline post must clear this engagement score to be worth a video. The
@@ -37,39 +60,32 @@ const BOOTSTRAP_AIRED_SIZE = 3;
  */
 const FEED_CACHE_TTL_MS = 3_600_000;
 
-type FeedCache = {
-  source: "home" | "own";
-  posts: FeedPost[];
-  nextToken?: string;
-  pages: number;
-};
+const feedCacheSchema = z.object({
+  source: feedSourceSchema,
+  posts: z.array(feedPostSchema),
+  nextToken: z.string().optional(),
+  pages: z.number().int(),
+});
 
-// Caches are rate-limit shields for X reads, not durable state — per server
-// instance, keyed by source.
-const feedCaches = new Map<string, { cache: FeedCache; expiresAt: number }>();
-const trendCaches = new Map<string, { trends: Trend[]; expiresAt: number }>();
-/** Search results per trend name. */
-const searchCaches = new Map<string, { posts: FeedPost[]; expiresAt: number }>();
+type FeedCache = z.infer<typeof feedCacheSchema>;
+
+const trendsSchema = z.array(z.string());
+const searchSchema = z.array(feedPostSchema);
 /** Which trend a source searches next; rotates so programs stay varied. */
-const trendCursors = new Map<string, number>();
+const cursorSchema = z.object({ next: z.number().int() });
+
+const feedKey = (sourceId: string): string => `x:feed:${sourceId}`;
+const trendsKey = (sourceId: string): string => `x:trends:${sourceId}`;
+const cursorKey = (sourceId: string): string => `x:cursor:${sourceId}`;
+/** By the trend alone: two sources on the same trend want the same posts. */
+const searchKey = (trend: string): string => `x:search:${trend}`;
 
 export const xItemId = (postId: string): string => `x:${postId}`;
 
 const toItem = (post: FeedPost): Item => ({ ...post, id: xItemId(post.id), kind: "x" });
 
-const readFeedCache = (sourceId: string): FeedCache | undefined => {
-  const entry = feedCaches.get(sourceId);
-  return entry !== undefined && entry.expiresAt > Date.now() ? entry.cache : undefined;
-};
-
-const writeFeedCache = (sourceId: string, cache: FeedCache): void => {
-  feedCaches.set(sourceId, { cache, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
-};
-
-const readTrendCache = (sourceId: string): Trend[] | undefined => {
-  const entry = trendCaches.get(sourceId);
-  return entry !== undefined && entry.expiresAt > Date.now() ? entry.trends : undefined;
-};
+const pageUsd = (page: FeedPage): number =>
+  page.posts.length * (page.source === "home" ? USD_PER_TIMELINE_POST : USD_PER_OWN_POST);
 
 /**
  * One search against the next trend in rotation. Trends are cached and cycled
@@ -82,32 +98,32 @@ const readTrendCache = (sourceId: string): Trend[] | undefined => {
 const pickTrendCandidate = async (
   access: AccessOf<"x">,
   sourceId: string,
-  aired: Set<string>,
+  context: SourceContext,
 ): Promise<Item | undefined> => {
-  let trends = readTrendCache(sourceId);
+  const { aired, cache, spend } = context;
+  let trends = await cache.get(trendsKey(sourceId), trendsSchema);
   if (trends === undefined) {
     try {
       trends = await fetchPersonalizedTrends(access.accessToken);
+      await spend.record("x", sourceId, USD_PER_TRENDS_CALL);
     } catch {
       trends = [];
     }
-    trendCaches.set(sourceId, { trends, expiresAt: Date.now() + TREND_CACHE_TTL_MS });
+    await cache.set(trendsKey(sourceId), trends, TREND_CACHE_TTL_MS);
   }
   if (trends.length === 0) return undefined;
 
-  const offset = trendCursors.get(sourceId) ?? 0;
-  trendCursors.set(sourceId, offset + 1);
-  const trend = trends[offset % trends.length];
+  const next = (await cache.get(cursorKey(sourceId), cursorSchema))?.next ?? 0;
+  await cache.set(cursorKey(sourceId), { next: next + 1 }, TREND_CACHE_TTL_MS);
+  const trend = trends[next % trends.length];
   if (trend === undefined) return undefined;
 
   try {
-    const cached = searchCaches.get(trend.name);
-    let posts: FeedPost[];
-    if (cached !== undefined && cached.expiresAt > Date.now()) {
-      posts = cached.posts;
-    } else {
-      posts = await searchTrendPosts(access.accessToken, trend.name, MIN_LIKES);
-      searchCaches.set(trend.name, { posts, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
+    let posts = await cache.get(searchKey(trend), searchSchema);
+    if (posts === undefined) {
+      posts = await searchTrendPosts(access.accessToken, trend, MIN_LIKES);
+      await spend.record("x", sourceId, posts.length * USD_PER_SEARCH_POST);
+      await cache.set(searchKey(trend), posts, SEARCH_CACHE_TTL_MS);
     }
     return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id)));
   } catch {
@@ -124,36 +140,38 @@ const pickTrendCandidate = async (
 const pickTimelineCandidate = async (
   access: AccessOf<"x">,
   sourceId: string,
-  aired: Set<string>,
+  context: SourceContext,
 ): Promise<Item | undefined> => {
-  let cache = readFeedCache(sourceId);
-  if (cache === undefined) {
+  const { aired, cache, spend } = context;
+  let feed = await cache.get(feedKey(sourceId), feedCacheSchema);
+  if (feed === undefined) {
     const page = await fetchFeedPage(access.accessToken, access.xUserId);
-    cache = { source: page.source, posts: page.posts, pages: 1 };
-    if (page.nextToken !== undefined) cache.nextToken = page.nextToken;
-    writeFeedCache(sourceId, cache);
+    await spend.record("x", sourceId, pageUsd(page));
+    feed = { source: page.source, posts: page.posts, nextToken: page.nextToken, pages: 1 };
+    await cache.set(feedKey(sourceId), feed, FEED_CACHE_TTL_MS);
   }
 
   for (;;) {
-    const unaired = cache.posts.map(toItem).filter((item) => !aired.has(item.id));
+    const unaired = feed.posts.map(toItem).filter((item) => !aired.has(item.id));
     const popular = unaired.filter((item) => item.score >= MIN_SCORE);
     if (popular.length > 0) return bestOf(popular);
 
-    if (cache.nextToken !== undefined && cache.pages < MAX_FEED_PAGES) {
+    if (feed.nextToken !== undefined && feed.pages < MAX_FEED_PAGES) {
       const page = await fetchFeedPage(
         access.accessToken,
         access.xUserId,
-        cache.source,
-        cache.nextToken,
+        feed.source,
+        feed.nextToken,
       );
-      const next: FeedCache = {
-        source: cache.source,
-        posts: [...cache.posts, ...page.posts],
-        pages: cache.pages + 1,
+      await spend.record("x", sourceId, pageUsd(page));
+      const deeper: FeedCache = {
+        source: feed.source,
+        posts: [...feed.posts, ...page.posts],
+        nextToken: page.nextToken,
+        pages: feed.pages + 1,
       };
-      if (page.nextToken !== undefined) next.nextToken = page.nextToken;
-      cache = next;
-      writeFeedCache(sourceId, cache);
+      feed = deeper;
+      await cache.set(feedKey(sourceId), feed, FEED_CACHE_TTL_MS);
       continue;
     }
 
@@ -166,9 +184,9 @@ const pickTimelineCandidate = async (
 export const pickXCandidate = async (
   access: AccessOf<"x">,
   sourceId: string,
-  aired: Set<string>,
+  context: SourceContext,
 ): Promise<Item | undefined> => {
-  const trending = await pickTrendCandidate(access, sourceId, aired);
+  const trending = await pickTrendCandidate(access, sourceId, context);
   if (trending !== undefined) return trending;
-  return pickTimelineCandidate(access, sourceId, aired);
+  return pickTimelineCandidate(access, sourceId, context);
 };

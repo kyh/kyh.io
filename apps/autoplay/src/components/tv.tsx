@@ -2,25 +2,19 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import type {
-  ChannelSummary,
-  LiveProgram,
-  RecordingChunk,
-  SessionPayload,
-  UserSummary,
-} from "@/lib/api-contract";
+import type { ChannelSummary, LiveProgram, SessionPayload } from "@/lib/api-contract";
 import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
-import { SOURCE_KIND_NAMES } from "@/lib/source-kinds";
+import { screenState, surfaceOf } from "@/lib/screen-state";
+import type { LiveState, ReplayState } from "@/lib/screen-state";
+import { OWNER_SOURCE_ID, SOURCE_KIND_NAMES } from "@/lib/source-kinds";
+import { testStreamRequested } from "@/lib/test-stream";
 import { Glyph } from "@/components/glyph";
 import { InviteDialog } from "@/components/invite-dialog";
 import { LiveScreen } from "@/components/live-screen";
-import type { LiveState } from "@/components/live-screen";
 import { ReplayScreen } from "@/components/replay-screen";
-import type { ReplayState } from "@/components/replay-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
-import { testStreamRequested } from "@/lib/test-stream";
 
 // The TV. One full-bleed screen, static while it tunes, a status bar with the
 // program on air. A channel the viewer owns is a live session in this browser;
@@ -37,21 +31,14 @@ const logout = async () => {
 };
 
 type ScreenProps = {
+  session: SessionPayload;
   channel: ChannelSummary;
-  inviteRequired: boolean;
-  channelLabel: string;
   channels: ChannelSummary[];
   onPrev: () => void;
   onNext: () => void;
   onLineup: (channels: ChannelSummary[]) => void;
-  googleReady: boolean;
-  liveReady: boolean;
-  recordReady: boolean;
   muted: boolean;
   onToggleMute: () => void;
-  user: UserSummary | null;
-  loginReady: boolean;
-  missingKeys: string[];
   urlError?: string;
 };
 
@@ -85,7 +72,11 @@ type OnAir = Pick<LiveProgram, "kind" | "text" | "authorName" | "authorUsername"
 const attribution = (program: OnAir): string =>
   program.kind === "x" ? `@${program.authorUsername}` : program.authorName;
 
+const channelNumber = (channel: ChannelSummary): string =>
+  `CH ${String(channel.number).padStart(2, "0")}`;
+
 const TvScreen = (props: ScreenProps) => {
+  const { session, channel } = props;
   const [live, setLive] = useState<LiveState>({ status: "connecting" });
   const [replay, setReplay] = useState<ReplayState>({ status: "loading" });
   const [program, setProgram] = useState<OnAir | undefined>(undefined);
@@ -100,15 +91,6 @@ const TvScreen = (props: ScreenProps) => {
     () => false,
   );
 
-  /** New viewers give the invite code first; the dialog then runs the sign-in. */
-  const signIn = () => {
-    if (props.inviteRequired) {
-      setInviteOpen(true);
-    } else {
-      login();
-    }
-  };
-
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.code !== "Space" && event.key !== "k") return;
@@ -119,35 +101,18 @@ const TvScreen = (props: ScreenProps) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const liveReady = props.liveReady || testStream;
-  const isLive = props.channel.mode === "live" && liveReady;
-  // The public channel falls back to its replay when its owner can't be live
-  // — budget spent, grant expired — rather than going dark on them.
-  const isReplay = props.channel.sourceId === "owner" && (!isLive || live.status === "off-air");
-  const replayEmpty = isReplay && replay.status === "empty" ? replay.reason : undefined;
-  const liveDown = live.status === "off-air" ? live.reason : undefined;
-  let offAir: string | undefined;
-  if (isReplay) {
-    if (replayEmpty !== undefined) {
-      offAir = liveDown === undefined ? replayEmpty : `${liveDown} ${replayEmpty}`;
-    }
-  } else if (!liveReady) {
-    offAir = "The station can't go on air without fal.";
-  } else {
-    offAir = liveDown;
-  }
-  const tuning = isReplay ? replay.status === "loading" : isLive && live.status === "connecting";
-  const onAir = !isReplay && isLive && live.status === "live";
-  const replaying = isReplay && replay.status === "playing";
-  // Following the owner's session as it records is watching live, a little
-  // behind; the badge says so rather than "replay".
-  const tailing = replaying && replay.status === "playing" && replay.onAir;
+  const liveReady = session.liveReady || testStream;
+  const surface = surfaceOf(channel, liveReady, live);
+  const screen = screenState(surface, liveReady, live, replay);
+  const playing = screen.status === "live" || screen.status === "replay";
+  const liveDown = screen.status === "replay" ? screen.liveDown : undefined;
+  const canSignIn = session.user === null && session.loginReady;
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
       <div className="win-title flex shrink-0 items-center justify-between gap-3 px-3 py-1.5">
         <p className="truncate text-xs font-bold tracking-[0.2em] uppercase">
-          autoplay — {props.channelLabel}
+          autoplay — {channelNumber(channel)} · {SOURCE_KIND_NAMES[channel.kind]} · {channel.label}
         </p>
         <div className="flex shrink-0 items-center gap-0.5">
           <span className="title-btn">
@@ -165,32 +130,32 @@ const TvScreen = (props: ScreenProps) => {
       <div className="flex min-h-0 flex-1 flex-col p-1">
         {/* The screen itself: a sunken well in the plastic. */}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
-          {isLive && !isReplay && (
+          {surface === "live" && liveReady && (
             <LiveScreen
-              sourceId={props.channel.sourceId}
-              record={props.channel.sourceId === "owner" && props.recordReady}
+              sourceId={channel.sourceId}
+              record={channel.sourceId === OWNER_SOURCE_ID && session.recordReady}
               muted={props.muted}
               paused={paused}
               onProgram={setProgram}
               onState={setLive}
             />
           )}
-          {isReplay && (
+          {surface === "replay" && (
             <ReplayScreen
-              sourceId={props.channel.sourceId}
+              sourceId={channel.sourceId}
               muted={props.muted}
               paused={paused}
-              onProgram={(chunk: RecordingChunk | undefined) => setProgram(chunk)}
+              onProgram={setProgram}
               onState={setReplay}
             />
           )}
 
           <div className="tv-scanlines pointer-events-none absolute inset-0" />
-          {!onAir && !replaying && (
+          {!playing && (
             <div className="tv-static pointer-events-none absolute inset-0 opacity-90" />
           )}
 
-          {offAir !== undefined && (
+          {screen.status === "off-air" && (
             <div className="absolute inset-0 grid place-items-center p-4">
               <div className="win w-full max-w-sm">
                 <div className="win-title flex items-center justify-between px-2 py-1">
@@ -204,19 +169,19 @@ const TvScreen = (props: ScreenProps) => {
                     <Glyph name="close" size={12} />
                   </span>
                   <div className="min-w-0 space-y-2">
-                    <p className="text-xs leading-relaxed">{offAir}</p>
-                    {props.missingKeys.length > 0 && (
+                    <p className="text-xs leading-relaxed">{screen.reason}</p>
+                    {session.missingKeys.length > 0 && (
                       <div className="bevel-in bg-white/70 p-2 text-[10px] leading-relaxed">
                         <p>missing from apps/autoplay/.env:</p>
-                        {props.missingKeys.map((key) => (
+                        {session.missingKeys.map((key) => (
                           <p key={key}>· {key}</p>
                         ))}
                       </div>
                     )}
-                    {props.user === null && props.loginReady && (
+                    {canSignIn && (
                       <button
                         type="button"
-                        onClick={signIn}
+                        onClick={() => setInviteOpen(true)}
                         className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase"
                       >
                         Sign in with X
@@ -228,7 +193,7 @@ const TvScreen = (props: ScreenProps) => {
             </div>
           )}
 
-          {tuning && (
+          {screen.status === "tuning" && (
             <div className="absolute inset-0 grid place-items-center">
               <p className="animate-pulse text-xs tracking-[0.4em] text-white [text-shadow:0_0_12px_rgba(0,0,0,0.9)]">
                 TUNING…
@@ -241,7 +206,7 @@ const TvScreen = (props: ScreenProps) => {
         <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <button
             type="button"
-            disabled={!onAir && !replaying}
+            disabled={!playing}
             onClick={() => setPaused((value) => !value)}
             className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
             aria-label={paused ? "Play" : "Pause"}
@@ -260,19 +225,19 @@ const TvScreen = (props: ScreenProps) => {
           <div className="status-field ml-px flex-1">
             {program === undefined ? (
               <span className="truncate">
-                {props.urlError ?? (tuning ? "Tuning in…" : "No signal")}
+                {props.urlError ?? (screen.status === "tuning" ? "Tuning in…" : "No signal")}
               </span>
             ) : (
               <Marquee text={`${displayPostText(program.text)} — ${attribution(program)}`} />
             )}
           </div>
 
-          {(onAir || tailing) && (
+          {screen.status === "live" && (
             <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
               <span className="text-accent">● live</span>
             </div>
           )}
-          {replaying && !tailing && (
+          {screen.status === "replay" && (
             <div
               className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase"
               title={liveDown}
@@ -283,7 +248,7 @@ const TvScreen = (props: ScreenProps) => {
             </div>
           )}
 
-          {props.user !== null && (
+          {session.user !== null && (
             <button
               type="button"
               onClick={() => setSourcesOpen(true)}
@@ -312,13 +277,16 @@ const TvScreen = (props: ScreenProps) => {
               </button>
             </>
           )}
-          {props.user === null ? (
-            props.loginReady && (
-              <button type="button" onClick={signIn} className="y2k-btn status-btn cursor-pointer">
-                sign in
-              </button>
-            )
-          ) : (
+          {canSignIn && (
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="y2k-btn status-btn cursor-pointer"
+            >
+              sign in
+            </button>
+          )}
+          {session.user !== null && (
             <button
               type="button"
               onClick={() => void logout()}
@@ -331,10 +299,10 @@ const TvScreen = (props: ScreenProps) => {
       </div>
 
       {inviteOpen && <InviteDialog onInvited={login} onClose={() => setInviteOpen(false)} />}
-      {props.user !== null && sourcesOpen && (
+      {session.user !== null && sourcesOpen && (
         <SourcesDialog
           channels={props.channels}
-          googleReady={props.googleReady}
+          googleReady={session.googleReady}
           onLineup={props.onLineup}
           onClose={() => setSourcesOpen(false)}
         />
@@ -347,9 +315,6 @@ export type TvProps = {
   session?: SessionPayload;
   urlError?: string;
 };
-
-const channelNumber = (channel: ChannelSummary): string =>
-  `CH ${String(channel.number).padStart(2, "0")}`;
 
 /** Wraps in both directions: ch− on CH 01 lands on the last channel. */
 const channelAt = (channels: ChannelSummary[], tuned: number): ChannelSummary => {
@@ -382,33 +347,23 @@ export const Tv = (props: TvProps) => {
     );
   }
 
-  const session = props.session;
-  const channels = lineup ?? session.channels;
+  const channels = lineup ?? props.session.channels;
   const channel = channelAt(channels, tuned);
-  // Sign-in runs through better-auth, which needs the X app, a secret, and
-  // the database to store users in.
-  const loginReady = !session.missingKeys.some((key) =>
-    ["X_CLIENT_ID", "X_CLIENT_SECRET", "BETTER_AUTH_SECRET", "TURSO_DATABASE_URL"].includes(key),
+
+  // A channel change remounts the screen: the session, the players and the
+  // ticker are all bound to the channel they were opened for.
+  return (
+    <TvScreen
+      key={channel.sourceId}
+      session={props.session}
+      channel={channel}
+      channels={channels}
+      onPrev={() => setTuned((value) => value - 1)}
+      onNext={() => setTuned((value) => value + 1)}
+      onLineup={setLineup}
+      muted={muted}
+      onToggleMute={() => setMuted((value) => !value)}
+      urlError={props.urlError}
+    />
   );
-
-  const screenProps: ScreenProps = {
-    channel,
-    inviteRequired: session.inviteRequired,
-    channelLabel: `${channelNumber(channel)} · ${SOURCE_KIND_NAMES[channel.kind]} · ${channel.label}`,
-    channels,
-    onPrev: () => setTuned((value) => value - 1),
-    onNext: () => setTuned((value) => value + 1),
-    onLineup: setLineup,
-    googleReady: session.googleReady,
-    liveReady: session.liveReady,
-    recordReady: session.recordReady,
-    muted,
-    onToggleMute: () => setMuted((value) => !value),
-    user: session.user,
-    loginReady,
-    missingKeys: session.missingKeys,
-  };
-  if (props.urlError !== undefined) screenProps.urlError = props.urlError;
-
-  return <TvScreen key={channel.sourceId} {...screenProps} />;
 };

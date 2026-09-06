@@ -7,8 +7,10 @@
       "env": [
         "APP_URL",
         "BETTER_AUTH_SECRET",
+        "BLOB_READ_WRITE_TOKEN",
         "FAL_KEY",
-        "FAL_VIDEO_MODEL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
         "OWNER_X_USERNAME",
         "TURSO_AUTH_TOKEN",
         "TURSO_DATABASE_URL",

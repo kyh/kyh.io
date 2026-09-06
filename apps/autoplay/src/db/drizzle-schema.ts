@@ -2,6 +2,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -58,7 +59,11 @@ export const account = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
-  (t) => [uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId)],
+  (t) => [
+    uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId),
+    // Every grant read is by user and provider: the X token per program, the Google grants per session load.
+    index("account_user_provider_idx").on(t.userId, t.providerId),
+  ],
 );
 
 export const verification = sqliteTable("verification", {
@@ -94,7 +99,7 @@ export const inviteCode = sqliteTable("invite_code", {
 // What a channel has aired. A program is a prompt streamed through the
 // director model, not a file, so there is nothing to replay from here — but
 // the item is spent all the same, and this is what keeps it from airing
-// twice. The daily budgets are derived from `aired_at`, so no counters drift.
+// twice.
 export const airedItem = sqliteTable(
   "aired_item",
   {
@@ -157,7 +162,11 @@ export const recording = sqliteTable(
     /** Unix ms. */
     recordedAt: integer("recorded_at").notNull(),
   },
-  (table) => [uniqueIndex("recording_session_index_uidx").on(table.sessionId, table.index)],
+  (table) => [
+    uniqueIndex("recording_session_index_uidx").on(table.sessionId, table.index),
+    // A replay lists a channel newest first, every few seconds while it tails a session.
+    index("recording_channel_recorded_idx").on(table.channelKey, table.recordedAt),
+  ],
 );
 
 // A feed a user has connected. Each source is a channel in that user's lineup;
@@ -186,4 +195,33 @@ export const source = sqliteTable(
     removedAt: integer("removed_at"),
   },
   (table) => [uniqueIndex("source_user_key_uidx").on(table.userId, table.key)],
+);
+
+// What reading the sources remembered: a page of X, a list of trends, a
+// feed's items, kept under a key until it expires. One table for every
+// instance of the server, because X bills per post returned — a page one
+// instance bought must serve the rest (src/lib/reads.ts).
+export const sourceCache = sqliteTable("source_cache", {
+  key: text().primaryKey(),
+  value: text({ mode: "json" }).notNull(),
+  /** Unix ms. */
+  expiresAt: integer("expires_at").notNull(),
+});
+
+// What reading the sources cost: one row per paid API call, priced at what
+// the API bills for what it returned. The daily read budget in
+// src/lib/reads.ts is counted from here; the console's spending cap is the
+// backstop behind it, not the guard.
+export const sourceRead = sqliteTable(
+  "source_read",
+  {
+    id: text().primaryKey(),
+    kind: text({ enum: SOURCE_KINDS }).notNull(),
+    /** The channel whose program bought it. */
+    channelKey: text("channel_key").notNull(),
+    usd: real().notNull(),
+    /** Unix ms. */
+    readAt: integer("read_at").notNull(),
+  },
+  (table) => [index("source_read_kind_read_idx").on(table.kind, table.readAt)],
 );

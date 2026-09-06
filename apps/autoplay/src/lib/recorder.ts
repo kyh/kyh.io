@@ -2,7 +2,8 @@
 
 import { upload } from "@vercel/blob/client";
 
-import type { LiveProgram } from "@/lib/api-contract";
+import type { LiveProgram, RecordingRequest } from "@/lib/api-contract";
+import { jsonRequest } from "@/lib/api-contract";
 
 // Records the live stream as one continuous recording per session, handed to
 // the store a chunk at a time. One MediaRecorder run for the whole session:
@@ -89,23 +90,18 @@ const publish = async (
     contentType: "video/webm",
     handleUploadUrl: "/api/recordings/upload",
   });
-  await fetch("/api/recordings", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sourceId,
-      sessionId,
-      index,
-      url: put.url,
-      formatLabel: onAir.formatLabel,
-      itemId: onAir.program.itemId,
-      text: onAir.program.text,
-      authorName: onAir.program.authorName,
-      authorUsername: onAir.program.authorUsername,
-      seconds,
-      bytes: bytes.length,
-    }),
-  });
+  const { prompt: _prompt, ...program } = onAir.program;
+  const body: RecordingRequest = {
+    ...program,
+    sourceId,
+    sessionId,
+    index,
+    url: put.url,
+    formatLabel: onAir.formatLabel,
+    seconds,
+    bytes: bytes.length,
+  };
+  await fetch("/api/recordings", jsonRequest("POST", body));
 };
 
 export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnAir): Recorder => {

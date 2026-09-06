@@ -80,6 +80,8 @@ export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "
     return;
   }
   await db.insert(recording).values(entry).onConflictDoNothing();
+  // Retention is by session, so it can only change when one begins.
+  if (row.index !== 0) return;
   const starts = await db
     .select({ sessionId: recording.sessionId, startedAt: min(recording.recordedAt) })
     .from(recording)

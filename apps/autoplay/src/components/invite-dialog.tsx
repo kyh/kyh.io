@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { errorPayloadSchema } from "@/lib/api-contract";
+import { jsonRequest, okPayloadSchema, requestJson } from "@/lib/api-contract";
 import { WindowDialog } from "@/components/window-dialog";
 
 // The door. A new viewer gives the invite code once; the station answers with
@@ -22,14 +22,14 @@ export const InviteDialog = (props: InviteDialogProps) => {
     setBusy(true);
     setError(undefined);
     try {
-      const response = await fetch("/api/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      if (!response.ok) {
-        const parsed = errorPayloadSchema.safeParse(await response.json().catch(() => null));
-        setError(parsed.success ? parsed.data.error : "Couldn't check the code");
+      const answer = await requestJson(
+        "/api/invite",
+        okPayloadSchema,
+        "Couldn't check the code",
+        jsonRequest("POST", { code }),
+      );
+      if ("error" in answer) {
+        setError(answer.error);
         return;
       }
       props.onInvited();

@@ -9,12 +9,13 @@ import { refreshXToken } from "@/lib/x-api";
 // grant in the `account` table at sign-in; this reads it back for timeline
 // calls, refreshing (and persisting) the token when it has expired.
 
-export type XAccount = {
+type XAccount = {
   accessToken: string;
   /** The X user id (the provider account id), used in timeline paths. */
   xUserId: string;
 };
 
+/** A token this close to expiry is refreshed now rather than failing mid-program. */
 const EXPIRY_MARGIN_MS = 60_000;
 
 /**

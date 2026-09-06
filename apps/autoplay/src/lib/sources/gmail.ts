@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { bestOf, decodeEntities } from "./types";
-import type { AccessOf, Item } from "./types";
+import { cachedPick, decodeEntities, fetchJson } from "./types";
+import type { AccessOf, Item, SourceContext } from "./types";
 
 // Gmail as a source: newsletters only. What counts is decided by the list
 // headers every newsletter platform sets, not by the search query — the query
@@ -11,8 +11,6 @@ import type { AccessOf, Item } from "./types";
 const GMAIL_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
 const LIST_QUERY = "newer_than:7d -in:chats -category:social";
 const MAX_MESSAGES = 40;
-/** The Gmail API is free within quota; this just spares a watching owner a re-read per program. */
-const CACHE_TTL_MS = 3_600_000;
 /** An unread newsletter outranks a read one by this much: a day. */
 const UNREAD_BONUS_MINUTES = 24 * 60;
 const METADATA_HEADERS = ["From", "Subject", "List-Id", "List-Unsubscribe"];
@@ -37,9 +35,7 @@ type Header = { name: string; value: string };
 
 type Sender = { name: string; address: string };
 
-const caches = new Map<string, { items: Item[]; expiresAt: number }>();
-
-const gmailFetch = async <T>(
+const gmailFetch = <T>(
   accessToken: string,
   path: string,
   params: [string, string][],
@@ -47,9 +43,7 @@ const gmailFetch = async <T>(
 ): Promise<T> => {
   const url = new URL(`${GMAIL_BASE}/${path}`);
   for (const [key, value] of params) url.searchParams.append(key, value);
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw new Error(`Gmail request failed (${response.status})`);
-  return schema.parse(await response.json());
+  return fetchJson("Gmail", url, accessToken, schema);
 };
 
 const header = (headers: Header[], name: string): string | undefined =>
@@ -99,31 +93,21 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
     const from = parseFrom(header(headers, "From") ?? "");
     const receivedMs = Number(message.internalDate ?? 0);
     const unread = (message.labelIds ?? []).includes("UNREAD");
-    const item: Item = {
+    items.push({
       id: `gmail:${message.id}`,
       kind: "gmail",
       text: `${subject}. ${decodeEntities(message.snippet ?? "")}`.trim(),
+      createdAt: receivedMs > 0 ? new Date(receivedMs).toISOString() : undefined,
       score: Math.round(receivedMs / 60_000) + (unread ? UNREAD_BONUS_MINUTES : 0),
       author: { name: from.name, username: from.address },
-    };
-    if (receivedMs > 0) item.createdAt = new Date(receivedMs).toISOString();
-    items.push(item);
+    });
   }
   return items;
 };
 
-export const pickGmailCandidate = async (
+export const pickGmailCandidate = (
   access: AccessOf<"gmail">,
   sourceId: string,
-  aired: Set<string>,
-): Promise<Item | undefined> => {
-  const cached = caches.get(sourceId);
-  let items: Item[];
-  if (cached !== undefined && cached.expiresAt > Date.now()) {
-    items = cached.items;
-  } else {
-    items = await fetchNewsletters(access);
-    caches.set(sourceId, { items, expiresAt: Date.now() + CACHE_TTL_MS });
-  }
-  return bestOf(items.filter((item) => !aired.has(item.id)));
-};
+  context: SourceContext,
+): Promise<Item | undefined> =>
+  cachedPick(context, `gmail:${sourceId}`, () => fetchNewsletters(access));

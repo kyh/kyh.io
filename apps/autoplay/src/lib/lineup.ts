@@ -6,6 +6,8 @@ import { account, source } from "@/db/drizzle-schema";
 import type { ChannelSummary } from "@/lib/api-contract";
 import { env } from "@/lib/env";
 import { googleAccessToken } from "@/lib/grants";
+import type { BudgetViewer } from "@/lib/live";
+import { GOOGLE_SOURCES, OWNER_SOURCE_ID } from "@/lib/source-kinds";
 import type { SourceKind } from "@/lib/source-kinds";
 import { fetchFeed } from "@/lib/sources/rss";
 import type { SourceAccess } from "@/lib/sources/types";
@@ -16,10 +18,6 @@ import { freshXAccount } from "@/lib/x-account";
 // `source` rows in position order. Sources with a grant behind them are
 // derived from the grant, so connecting Gmail is all it takes to get a
 // channel; a feed URL is the one source added by hand.
-
-export const OWNER_SOURCE_ID = "owner";
-export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
 /** The signed-in user, as much of it as the lineup needs. Null for a visitor. */
 export type Viewer = { user: { id: string; username?: string | null } } | null;
@@ -43,6 +41,12 @@ export const isOwnerHandle = (username: string | null | undefined): boolean =>
   username !== null &&
   env.OWNER_X_USERNAME !== undefined &&
   username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
+
+/** The same viewer as the budgets see them. */
+export const budgetViewerOf = (viewer: NonNullable<Viewer>): BudgetViewer => ({
+  userId: viewer.user.id,
+  owner: isOwnerHandle(viewer.user.username),
+});
 
 const ownerChannel = (owner: boolean): ChannelSummary => ({
   number: 1,
@@ -122,20 +126,13 @@ export const ensureSources = async (viewer: NonNullable<Viewer>): Promise<void> 
     }
     if (row.providerId === "google") {
       const scopes = grantedScopes(row.scope);
-      if (scopes.includes(GMAIL_SCOPE)) {
+      for (const entry of GOOGLE_SOURCES) {
+        if (!scopes.includes(entry.scope)) continue;
         wanted.push({
-          kind: "gmail",
+          kind: entry.kind,
           accountId: row.id,
-          key: `gmail:${row.accountId}`,
-          label: "Newsletters",
-        });
-      }
-      if (scopes.includes(YOUTUBE_SCOPE)) {
-        wanted.push({
-          kind: "youtube",
-          accountId: row.id,
-          key: `youtube:${row.accountId}`,
-          label: "Subscriptions",
+          key: `${entry.kind}:${row.accountId}`,
+          label: entry.label,
         });
       }
     }
@@ -164,17 +161,20 @@ const parseRssConfig = (row: SourceRow): z.infer<typeof rssConfigSchema> | undef
   }
 };
 
-const accessFor = async (
-  row: SourceRow,
-  userId: string,
-): Promise<{ access: SourceAccess } | { noAccessReason: string }> => {
+/** What reading a source came to: the access to read it with, or why there is none. */
+type Access = { access: SourceAccess } | { noAccessReason: string };
+
+const xAccess = async (userId: string): Promise<Access> => {
+  const grant = await freshXAccount(userId);
+  return grant === undefined
+    ? { noAccessReason: "X connection expired — sign in again" }
+    : { access: { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId } };
+};
+
+const accessFor = async (row: SourceRow, userId: string): Promise<Access> => {
   switch (row.kind) {
-    case "x": {
-      const grant = await freshXAccount(userId);
-      return grant === undefined
-        ? { noAccessReason: "X connection expired — sign in again" }
-        : { access: { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId } };
-    }
+    case "x":
+      return xAccess(userId);
     case "gmail":
     case "youtube": {
       const accessToken =
@@ -192,6 +192,11 @@ const accessFor = async (
   }
 };
 
+const resolved = (channelKey: string, kind: SourceKind, outcome: Access): ResolvedSource =>
+  "access" in outcome
+    ? { mode: "live", channelKey, kind, access: outcome.access }
+    : { mode: "off-air", channelKey, kind, reason: outcome.noAccessReason };
+
 /**
  * The channel behind a source id, as this viewer may use it. The public
  * channel resolves for everyone; a `source` row only for the user it belongs
@@ -202,16 +207,10 @@ export const resolveSource = async (
   viewer: Viewer,
 ): Promise<ResolvedSource | undefined> => {
   if (sourceId === OWNER_SOURCE_ID) {
-    const base = { channelKey: OWNER_SOURCE_ID, kind: "x" as const };
-    if (viewer === null || !isOwnerHandle(viewer.user.username)) return { mode: "replay", ...base };
-    const grant = await freshXAccount(viewer.user.id);
-    return grant === undefined
-      ? { mode: "off-air", ...base, reason: "X connection expired — sign in again" }
-      : {
-          mode: "live",
-          ...base,
-          access: { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId },
-        };
+    if (viewer === null || !isOwnerHandle(viewer.user.username)) {
+      return { mode: "replay", channelKey: OWNER_SOURCE_ID, kind: "x" };
+    }
+    return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id));
   }
   if (viewer === null || db === undefined) return undefined;
   const rows = await db
@@ -223,10 +222,7 @@ export const resolveSource = async (
     .limit(1);
   const row = rows[0];
   if (row === undefined) return undefined;
-  const outcome = await accessFor(row, viewer.user.id);
-  return "access" in outcome
-    ? { mode: "live", channelKey: row.id, kind: row.kind, access: outcome.access }
-    : { mode: "off-air", channelKey: row.id, kind: row.kind, reason: outcome.noAccessReason };
+  return resolved(row.id, row.kind, await accessFor(row, viewer.user.id));
 };
 
 /**

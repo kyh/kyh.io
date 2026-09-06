@@ -64,6 +64,10 @@ something to show for as long as its owner is away. Which item:
    CH 01 counts against the station's only. A session is refused before it is
    negotiated when the minute it will cost doesn't fit; a running one is
    refused its next program at the cap and, a minute past it, its heartbeats.
+4. **Reads budgeted too** — X bills per post returned, so what its adapter
+   buys is priced into `source_read` as it lands and capped by
+   `DAILY_READ_BUDGET_USD` (`src/lib/reads.ts`); between buys, `source_cache`
+   serves every server instance for an hour.
 
 ## What it costs to run
 
@@ -74,13 +78,18 @@ is about sixteen minutes at the promotional rate and four at list. The client cl
 the tab is hidden or the viewer pauses, so channel-surfing and idle tabs don't
 run the meter, but every reopen is another 60-second minimum.
 
-**X** bills per post returned. The trend path costs ~$0.06 per program: one
-trends call ($0.010, cached an hour) plus one search returning 10 posts at
-$0.005 each. The timeline fallback is dearer — 50 posts a page, ~$0.25, held
-an hour by `FEED_CACHE_TTL_MS` and up to three pages when the picker has to
-paginate. Nothing in code caps X spend, so set a spending limit at
-[console.x.com](https://console.x.com); there is no free tier, and a $0
-balance returns 402 on the first call, sign-in included.
+**X** bills per post returned, so every X read is priced as it lands — $0.005
+a timeline post, $0.001 an own post, $0.005 a search result, $0.010 a trends
+call — and written to `source_read`. A day of X reads is capped at
+`DAILY_READ_BUDGET_USD.x` ($10, `src/lib/reads.ts`) for the whole station; at
+the cap an X channel goes off air with the reason until midnight UTC. What is
+read is kept in `source_cache`, shared by every server instance for an hour,
+so a cold start does not buy a page again. Steady state for one watching X
+channel: one trends call and one ten-post search (~$0.06) per trend per
+hour, or up to three 50-post timeline pages (~$0.75) an hour when trends are
+unavailable — about a dollar an hour at worst. Keep a spending cap at
+[console.x.com](https://console.x.com) as the backstop; there is no free
+tier, and a $0 balance returns 402 on the first call, sign-in included.
 
 Gmail and YouTube reads are free within Google's quotas; RSS is free.
 

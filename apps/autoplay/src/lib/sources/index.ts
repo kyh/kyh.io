@@ -1,6 +1,6 @@
 import { pickGmailCandidate } from "./gmail";
 import { pickRssCandidate } from "./rss";
-import type { Item, SourceAccess } from "./types";
+import type { Item, SourceAccess, SourceContext } from "./types";
 import { pickXCandidate } from "./x";
 import { pickYoutubeCandidate } from "./youtube";
 
@@ -8,16 +8,16 @@ import { pickYoutubeCandidate } from "./youtube";
 export const pickCandidate = (
   access: SourceAccess,
   sourceId: string,
-  aired: Set<string>,
+  context: SourceContext,
 ): Promise<Item | undefined> => {
   switch (access.kind) {
     case "x":
-      return pickXCandidate(access, sourceId, aired);
+      return pickXCandidate(access, sourceId, context);
     case "gmail":
-      return pickGmailCandidate(access, sourceId, aired);
+      return pickGmailCandidate(access, sourceId, context);
     case "rss":
-      return pickRssCandidate(access, sourceId, aired);
+      return pickRssCandidate(access, sourceId, context);
     case "youtube":
-      return pickYoutubeCandidate(access, sourceId, aired);
+      return pickYoutubeCandidate(access, sourceId, context);
   }
 };

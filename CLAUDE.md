@@ -68,7 +68,9 @@ Rules: best first (each kind's adapter ranks: X by engagement via personalized
 trends then the home timeline above `MIN_SCORE`; mail and feeds by recency;
 YouTube by views), never twice (`aired_item`), budgeted ($20 a day a viewer,
 $50 the station, priced from `live_session` — the sessions and heartbeats the
-proxy relays — and checked before a session is negotiated).
+proxy relays — and checked before a session is negotiated; X reads priced
+into `source_read`, $10 a day the station, served between buys from
+`source_cache`, which every instance shares).
 
 **Stack**: Next.js, Tailwind v4, zod, Drizzle + Turso, better-auth (X social
 provider for sign-in, Google linked for grants), Base UI dialogs,
@@ -80,11 +82,12 @@ needs the DB, aired items fall back in-memory). Port 3005.
 
 - `src/lib/lineup.ts` - a viewer's channels: the public owner channel + their `source` rows; auto-creates sources from grants; resolves live vs replay
 - `src/lib/live.ts` - programming: next item via the adapter, never-twice, daily budgets
+- `src/lib/reads.ts` - the read cache every instance shares, and the ledger of paid X reads the read budget is counted from
 - `src/lib/sources/` - one adapter per kind (`x`, `gmail`, `rss`, `youtube`); `types.ts` is the Item contract
 - `src/components/live-screen.tsx` - the director session: opens via the proxy, paces prompts off the picture, closes when idle, records CH 01
 - `src/lib/recorder.ts` / `src/lib/recordings.ts` / `src/components/replay-screen.tsx` - one webm per program to Blob; the replay loops the newest
 - `src/app/api/fal/proxy/route.ts` - gated fal proxy (signed-in, within budget, director endpoint only); records the sessions and heartbeats it relays as the meter
-- `src/db/drizzle-schema.ts` - better-auth tables + `invite_code` + `source` + `aired_item` + `live_session` + `recording`
+- `src/db/drizzle-schema.ts` - better-auth tables + `invite_code` + `source` + `aired_item` + `live_session` + `recording` + `source_cache` + `source_read`
 - `src/lib/auth.ts` - better-auth config (X sign-in, Google as a linkable grant with per-source scopes)
 - `src/lib/x-account.ts` / `src/lib/grants.ts` - read/refresh the X and Google grants
 - `src/components/tv.tsx` - the TV chrome: ch−/ch+, static, status bar, sources dialog

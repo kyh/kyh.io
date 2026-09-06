@@ -3,7 +3,11 @@ import { and, eq, gte } from "drizzle-orm";
 import { db } from "@/db/drizzle-client";
 import { airedItem, liveSession } from "@/db/drizzle-schema";
 import type { LivePayload } from "@/lib/api-contract";
-import { buildSegmentPrompt, pickFormat } from "@/lib/prompt";
+import { dayStart, today } from "@/lib/day";
+import { buildOpeningPrompt, buildSegmentPrompt, pickFormat } from "@/lib/prompt";
+import { DAILY_READ_BUDGET_USD, databaseReads, memoryReads } from "@/lib/reads";
+import type { Reads } from "@/lib/reads";
+import { SOURCE_KIND_NAMES } from "@/lib/source-kinds";
 import { pickCandidate } from "@/lib/sources";
 import type { SourceAccess } from "@/lib/sources/types";
 
@@ -20,6 +24,10 @@ import type { SourceAccess } from "@/lib/sources/types";
 //      seen fal open and heartbeat (src/app/api/fal/proxy). One cap for the
 //      station, one for each signed-in viewer on their own channels; the
 //      owner's CH 01 counts only against the station's.
+//   4. Reads budgeted too: X bills per post returned, so what its adapter
+//      buys is priced into a ledger as it lands (src/lib/reads.ts) and the
+//      day has a cap of its own; between buys, a cache every instance
+//      shares answers instead.
 
 /** What fal bills a director session per second, at list and until the promotion ends. */
 const LIST_USD_PER_SECOND = 0.08;
@@ -39,12 +47,10 @@ export const DAILY_BUDGET_USD = 50;
  */
 const OVERRUN_GRACE_SECONDS = 60;
 
-const today = (): string => new Date().toISOString().slice(0, 10);
-
 export const usdPerSecond = (day: string = today()): number =>
   day <= PROMO_LAST_DAY ? PROMO_USD_PER_SECOND : LIST_USD_PER_SECOND;
 
-export type Viewer = { userId: string; owner: boolean };
+export type BudgetViewer = { userId: string; owner: boolean };
 
 /** Where aired items are kept: the database, or memory while there is none. */
 export type AiredStore = {
@@ -52,8 +58,8 @@ export type AiredStore = {
   mark(channelKey: string, itemId: string, userId: string): Promise<void>;
 };
 
-/** When a session was opened and last heard from. */
-export type SessionSpan = { startedAt: number; seenAt: number };
+/** Whose session, when it was opened, and when it was last heard from. */
+export type SessionSpan = { userId: string; startedAt: number; seenAt: number };
 
 /** Where the meter's sessions are kept: the database, or memory while there is none. */
 export type SessionStore = {
@@ -61,8 +67,8 @@ export type SessionStore = {
   open(id: string, userId: string, at: number): Promise<void>;
   /** A heartbeat for it; not this viewer's session, not counted. */
   touch(id: string, userId: string, at: number): Promise<void>;
-  /** Sessions opened since `since` (unix ms): every viewer's, or one viewer's. */
-  spans(since: number, userId: string | undefined): Promise<SessionSpan[]>;
+  /** Every session opened since `since` (unix ms). */
+  spans(since: number): Promise<SessionSpan[]>;
 };
 
 export const memoryAiredStore = (): AiredStore => {
@@ -78,7 +84,7 @@ export const memoryAiredStore = (): AiredStore => {
 };
 
 export const memorySessionStore = (): SessionStore => {
-  const sessions = new Map<string, SessionSpan & { userId: string }>();
+  const sessions = new Map<string, SessionSpan>();
   return {
     open: async (id, userId, at) => {
       if (!sessions.has(id)) sessions.set(id, { userId, startedAt: at, seenAt: at });
@@ -87,11 +93,7 @@ export const memorySessionStore = (): SessionStore => {
       const session = sessions.get(id);
       if (session !== undefined && session.userId === userId) session.seenAt = at;
     },
-    spans: async (since, userId) =>
-      [...sessions.values()].filter(
-        (session) =>
-          session.startedAt >= since && (userId === undefined || session.userId === userId),
-      ),
+    spans: async (since) => [...sessions.values()].filter((session) => session.startedAt >= since),
   };
 };
 
@@ -124,13 +126,15 @@ export const databaseSessionStore = (database: NonNullable<typeof db>): SessionS
       .set({ seenAt: at })
       .where(and(eq(liveSession.id, id), eq(liveSession.userId, userId)));
   },
-  spans: async (since, userId) => {
-    const recent = gte(liveSession.startedAt, since);
-    return database
-      .select({ startedAt: liveSession.startedAt, seenAt: liveSession.seenAt })
+  spans: async (since) =>
+    database
+      .select({
+        userId: liveSession.userId,
+        startedAt: liveSession.startedAt,
+        seenAt: liveSession.seenAt,
+      })
       .from(liveSession)
-      .where(userId === undefined ? recent : and(recent, eq(liveSession.userId, userId)));
-  },
+      .where(gte(liveSession.startedAt, since)),
 });
 
 /** What fal bills for these sessions, in seconds: each at least the minimum. */
@@ -140,55 +144,69 @@ const billedSeconds = (spans: SessionSpan[]): number =>
     0,
   );
 
-const dayStart = (): number => Date.parse(`${today()}T00:00:00Z`);
-
-export const createProgramming = (store: AiredStore, sessions: SessionStore) => {
+export const createProgramming = (store: AiredStore, sessions: SessionStore, reads: Reads) => {
   /**
    * Dollars left of today's budget for this viewer: the station's, and their
    * own unless they are the owner, whichever is tighter. Sessions count
    * toward the day they were opened on.
    */
-  const budgetLeft = async (viewer: Viewer): Promise<number> => {
-    const since = dayStart();
+  const budgetLeft = async (viewer: BudgetViewer): Promise<number> => {
+    const spans = await sessions.spans(dayStart());
     const rate = usdPerSecond();
-    const station = DAILY_BUDGET_USD - billedSeconds(await sessions.spans(since, undefined)) * rate;
+    const station = DAILY_BUDGET_USD - billedSeconds(spans) * rate;
     if (viewer.owner) return station;
     const own =
       DAILY_BUDGET_USD_PER_VIEWER -
-      billedSeconds(await sessions.spans(since, viewer.userId)) * rate;
+      billedSeconds(spans.filter((span) => span.userId === viewer.userId)) * rate;
     return Math.min(station, own);
   };
 
   /** Whether a session may be opened: it is billed a minute the moment it exists. */
-  const mayOpen = async (viewer: Viewer): Promise<boolean> =>
+  const mayOpen = async (viewer: BudgetViewer): Promise<boolean> =>
     (await budgetLeft(viewer)) >= MIN_BILLED_SECONDS * usdPerSecond();
 
   /** Whether a running session may go on: past the cap by no more than the grace. */
-  const mayContinue = async (viewer: Viewer): Promise<boolean> =>
+  const mayContinue = async (viewer: BudgetViewer): Promise<boolean> =>
     (await budgetLeft(viewer)) > -OVERRUN_GRACE_SECONDS * usdPerSecond();
 
-  const sessionOpened = (id: string, viewer: Viewer, at: number = Date.now()) =>
+  const sessionOpened = (id: string, viewer: BudgetViewer, at: number = Date.now()) =>
     sessions.open(id, viewer.userId, at);
 
-  const sessionSeen = (id: string, viewer: Viewer, at: number = Date.now()) =>
+  const sessionSeen = (id: string, viewer: BudgetViewer, at: number = Date.now()) =>
     sessions.touch(id, viewer.userId, at);
 
   /** The next program to direct on a channel, spent the moment it is handed out. */
   const nextProgram = async (
     channelKey: string,
     access: SourceAccess,
-    viewer: Viewer,
+    viewer: BudgetViewer,
     opening: boolean,
   ): Promise<LivePayload> => {
-    if ((await budgetLeft(viewer)) <= 0) {
+    const readCap = DAILY_READ_BUDGET_USD[access.kind];
+    const [left, spentOnReads, aired] = await Promise.all([
+      budgetLeft(viewer),
+      readCap === undefined ? 0 : reads.spend.spent(access.kind, dayStart()),
+      store.aired(channelKey),
+    ]);
+    if (left <= 0) {
       return {
         kind: "off-air",
         reason: `Today's live budget ($${DAILY_BUDGET_USD_PER_VIEWER} a viewer, $${DAILY_BUDGET_USD} the station) is spent — back on air at midnight UTC.`,
       };
     }
+    if (readCap !== undefined && spentOnReads >= readCap) {
+      return {
+        kind: "off-air",
+        reason: `Today's ${SOURCE_KIND_NAMES[access.kind]} read budget ($${readCap}) is spent — back on air at midnight UTC.`,
+      };
+    }
     let item;
     try {
-      item = await pickCandidate(access, channelKey, await store.aired(channelKey));
+      item = await pickCandidate(access, channelKey, {
+        aired,
+        cache: reads.cache,
+        spend: reads.spend,
+      });
     } catch (error) {
       // The source couldn't be read — an expired grant, a dead feed, a spent
       // X balance. The reason is the program.
@@ -204,7 +222,11 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore) => 
       };
     }
     await store.mark(channelKey, item.id, viewer.userId);
-    const payload: LivePayload = {
+    // The day's format: one show per day, so reopening a channel or replaying
+    // its sessions stays in the same world.
+    const format = opening ? pickFormat() : undefined;
+    const segment = buildSegmentPrompt(item.text, item.author.name);
+    return {
       kind: "program",
       program: {
         itemId: item.id,
@@ -212,17 +234,10 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore) => 
         text: item.text,
         authorName: item.author.name,
         authorUsername: item.author.username,
-        prompt: buildSegmentPrompt(item.text, item.author.name),
+        prompt: format === undefined ? segment : buildOpeningPrompt(format.world, segment),
       },
+      formatLabel: format?.label,
     };
-    if (opening) {
-      // The day's format: one show per day, so reopening a channel or
-      // replaying its sessions stays in the same world.
-      const format = pickFormat();
-      payload.world = format.world;
-      payload.formatLabel = format.label;
-    }
-    return payload;
   };
 
   return { budgetLeft, mayOpen, mayContinue, sessionOpened, sessionSeen, nextProgram };
@@ -231,5 +246,5 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore) => 
 /** The station's programming, on whichever stores the deployment has. */
 export const programming =
   db === undefined
-    ? createProgramming(memoryAiredStore(), memorySessionStore())
-    : createProgramming(databaseAiredStore(db), databaseSessionStore(db));
+    ? createProgramming(memoryAiredStore(), memorySessionStore(), memoryReads())
+    : createProgramming(databaseAiredStore(db), databaseSessionStore(db), databaseReads(db));

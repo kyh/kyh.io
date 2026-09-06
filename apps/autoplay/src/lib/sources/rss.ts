@@ -1,15 +1,14 @@
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
 
-import { bestOf, plainText, recencyScore } from "./types";
-import type { AccessOf, Item } from "./types";
+import { cachedPick, plainText, recencyScore } from "./types";
+import type { AccessOf, Item, SourceContext } from "./types";
 
 // A feed URL as a source. RSS 2.0 and Atom, newest entry first. The only
 // source with no grant behind it, so the URL is checked at add time and every
 // fetch is bounded: http(s) only, a timeout, and a cap on entries read.
 
 const FETCH_TIMEOUT_MS = 10_000;
-const CACHE_TTL_MS = 3_600_000;
 const MAX_ENTRIES = 30;
 const MAX_BODY_LENGTH = 400;
 
@@ -96,8 +95,6 @@ const feedSchema = z.object({
 
 type Feed = { title: string; entries: z.infer<typeof entrySchema>[] };
 
-const caches = new Map<string, { items: Item[]; expiresAt: number }>();
-
 const isHttp = (url: string): boolean => {
   try {
     const parsed = new URL(url);
@@ -142,33 +139,26 @@ const toItems = (url: string, feed: Feed): Item[] => {
       textOf(entry.summary) ??
       "";
     const published = textOf(entry.pubDate) ?? textOf(entry.published) ?? textOf(entry.updated);
-    const item: Item = {
+    items.push({
       id: `rss:${id}`,
       kind: "rss",
       text: `${plainText(title, 200)}. ${plainText(body, MAX_BODY_LENGTH)}`.trim(),
+      createdAt:
+        published !== undefined && !Number.isNaN(Date.parse(published))
+          ? new Date(published).toISOString()
+          : undefined,
       score: recencyScore(published),
       author: { name: feed.title, username: host },
-    };
-    if (published !== undefined && !Number.isNaN(Date.parse(published))) {
-      item.createdAt = new Date(published).toISOString();
-    }
-    items.push(item);
+    });
   }
   return items;
 };
 
-export const pickRssCandidate = async (
+export const pickRssCandidate = (
   access: AccessOf<"rss">,
   sourceId: string,
-  aired: Set<string>,
-): Promise<Item | undefined> => {
-  const cached = caches.get(sourceId);
-  let items: Item[];
-  if (cached !== undefined && cached.expiresAt > Date.now()) {
-    items = cached.items;
-  } else {
-    items = toItems(access.url, await fetchFeed(access.url));
-    caches.set(sourceId, { items, expiresAt: Date.now() + CACHE_TTL_MS });
-  }
-  return bestOf(items.filter((item) => !aired.has(item.id)));
-};
+  context: SourceContext,
+): Promise<Item | undefined> =>
+  cachedPick(context, `rss:${sourceId}`, async () =>
+    toItems(access.url, await fetchFeed(access.url)),
+  );

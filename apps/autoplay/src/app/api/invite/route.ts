@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import type { ErrorPayload } from "@/lib/api-contract";
 import { inviteRequestSchema } from "@/lib/api-contract";
 import {
   INVITE_COOKIE,
@@ -9,18 +8,14 @@ import {
   inviteCookieValue,
   validateInviteCode,
 } from "@/lib/invite";
+import { errorResponse, readBody } from "@/lib/route";
 
 // Turns an invite code into the cookie that lets an account be created. The
 // use is not taken here — only once the sign-up that follows succeeds.
 
-const errorResponse = (status: number, error: string): NextResponse => {
-  const payload: ErrorPayload = { error };
-  return NextResponse.json(payload, { status });
-};
-
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
-  const body = inviteRequestSchema.safeParse(await request.json().catch(() => null));
-  if (!body.success) return errorResponse(400, "Expected { code: string }");
+  const body = await readBody(request, inviteRequestSchema, "Expected { code: string }");
+  if ("refused" in body) return body.refused;
   const code = await validateInviteCode(body.data.code);
   const value = code === undefined ? undefined : inviteCookieValue(code);
   if (value === undefined) return errorResponse(403, "That invite code isn't valid");

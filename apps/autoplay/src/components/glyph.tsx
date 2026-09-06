@@ -45,7 +45,7 @@ const GLYPHS = {
   down: <path d="M1 3h8l-4 5z" />,
 } as const;
 
-export type GlyphName = keyof typeof GLYPHS;
+type GlyphName = keyof typeof GLYPHS;
 
 type GlyphProps = {
   name: GlyphName;
