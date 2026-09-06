@@ -8,6 +8,7 @@ import { AxisLabels } from "./AxisLabels";
 import { CanvasImage } from "./CanvasImage";
 import { QuadrantGrid } from "./QuadrantGrid";
 import { Tag } from "./Tag";
+import { cn } from "cn";
 
 interface KwadrantCanvasProps {
   width: number;
@@ -54,9 +55,12 @@ const LabelEditor = ({
         onClose();
       }}
       autoFocus
-      className={`absolute rounded px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-        isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"
-      } border`}
+      className={cn(
+        "absolute rounded border px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none",
+        isDark
+          ? "border-gray-600 bg-gray-800 text-white"
+          : "border-gray-300 bg-white text-gray-900",
+      )}
       style={{
         left: isRightEdge ? "auto" : position.x,
         right: isRightEdge ? 16 : "auto",

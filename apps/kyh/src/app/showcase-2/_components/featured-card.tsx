@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import type { WorkMedia } from "./works";
+import { cn } from "cn";
 
 /* The floating spotlight uses the tooltip/panel shadow rather than a bespoke
    one, so elevation reads the same as the rest of the site in both themes. */
@@ -40,7 +41,10 @@ const IconButton: FC<IconButtonProps> = ({ onClick, label, size, ref, children }
       e.stopPropagation();
       onClick();
     }}
-    className={`dock-item flex items-center justify-center rounded-[25%] ${size === "sm" ? "size-8" : "size-9"}`}
+    className={cn(
+      "dock-item flex items-center justify-center rounded-[25%]",
+      size === "sm" ? "size-8" : "size-9",
+    )}
     aria-label={label}
   >
     {children}
@@ -135,7 +139,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
   return (
     <div
       ref={cardRef}
-      className={`pointer-events-auto absolute${expanded ? "" : " cursor-pointer"}`}
+      className={cn("pointer-events-auto absolute", !expanded && "cursor-pointer")}
       style={{
         width: w,
         height: frameH,
@@ -175,9 +179,10 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
             {photo.category}
           </div>
           <h2
-            className={`text-foreground-highlighted mt-1 leading-tight font-normal ${
-              isMobile ? "text-2xl" : "text-3xl"
-            }`}
+            className={cn(
+              "text-foreground-highlighted mt-1 leading-tight font-normal",
+              isMobile ? "text-2xl" : "text-3xl",
+            )}
           >
             {photo.title}
           </h2>

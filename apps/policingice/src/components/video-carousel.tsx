@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useKeyboardShortcuts } from "./keyboard-shortcuts-provider";
 import { VideoEmbed } from "./video-embed";
+import { cn } from "cn";
 
 type Video = {
   id: number;
@@ -129,11 +130,12 @@ export const VideoCarousel = ({
                     key={video.id}
                     type="button"
                     onClick={() => emblaApi?.scrollTo(index)}
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
                       index === selectedIndex
                         ? "w-4 bg-foreground"
-                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    }`}
+                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+                    )}
                     aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
@@ -141,7 +143,12 @@ export const VideoCarousel = ({
                   type="button"
                   onClick={() => emblaApi?.scrollPrev()}
                   disabled={!canScrollPrev}
-                  className={`pl-1 ${canScrollPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                  className={cn(
+                    "pl-1",
+                    canScrollPrev
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/40",
+                  )}
                   aria-label="Previous"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -150,7 +157,11 @@ export const VideoCarousel = ({
                   type="button"
                   onClick={() => emblaApi?.scrollNext()}
                   disabled={!canScrollNext}
-                  className={`${canScrollNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                  className={
+                    canScrollNext
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/40"
+                  }
                   aria-label="Next"
                 >
                   <ChevronRight className="h-4 w-4" />

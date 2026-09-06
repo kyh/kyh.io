@@ -7,6 +7,7 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "@/components/toast";
 import { createFromFeed } from "@/lib/admin-action";
 import { formatDate } from "@/lib/format";
+import { cn } from "cn";
 
 type FeedPost = {
   id: string;
@@ -72,7 +73,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
           disabled={isRefreshing}
           className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           Refresh
         </button>
       </div>

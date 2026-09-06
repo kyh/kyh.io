@@ -4,6 +4,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { cn } from "cn";
 
 // Types
 type Point = { x: number; y: number };
@@ -62,11 +63,11 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
       onHoverEnd={() => setIsHovered(false)}
     >
       <div
-        className={`relative size-[60px] overflow-hidden rounded-[14px] ${
-          showShadow
-            ? "shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
-            : ""
-        }`}
+        className={cn(
+          "relative size-[60px] overflow-hidden rounded-[14px]",
+          showShadow &&
+            "shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]",
+        )}
         data-slot="app-icon"
       >
         <Image src={iconSrc} alt={name} fill sizes={`${iconSize}px`} draggable={false} />

@@ -11,6 +11,7 @@ import {
   PlayIcon,
 } from "@/components/icons";
 import { RSVP_CONTENT, RSVP_SETTINGS } from "./rsvp-config";
+import { cn } from "cn";
 
 type RSVPState =
   | { status: "countdown"; count: number }
@@ -50,7 +51,7 @@ const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => 
       {letters.map((letter, i) => (
         <span
           key={i}
-          className={`inline-block w-[0.6em] text-center ${i === orpIndex ? "text-red-500" : ""}`}
+          className={cn("inline-block w-[0.6em] text-center", i === orpIndex && "text-red-500")}
         >
           {letter}
         </span>

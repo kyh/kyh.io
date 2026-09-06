@@ -7,6 +7,7 @@ import { CompModal } from "@/components/CompModal";
 import { FormField } from "@/components/FormField";
 import { useModal } from "@/components/Modal";
 import { currencyInputFormatProps, staticInputFormatProps } from "@/lib/formProps";
+import { cn } from "cn";
 
 type Props = {
   comp: CompHooksType;
@@ -92,18 +93,14 @@ export const CompForm = ({ comp }: Props) => {
             >
               <RadioGroup.Option value="iso">
                 {({ checked }) => (
-                  <span
-                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
-                  >
+                  <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     ISO
                   </span>
                 )}
               </RadioGroup.Option>
               <RadioGroup.Option value="rsu">
                 {({ checked }) => (
-                  <span
-                    className={`cursor-pointer transition ${checked ? "text-emerald-600" : ""}`}
-                  >
+                  <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     RSU
                   </span>
                 )}

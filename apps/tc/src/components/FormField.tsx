@@ -1,4 +1,5 @@
 import { cloneElement } from "react";
+import { cn } from "cn";
 
 type Props = {
   label: string;
@@ -22,7 +23,10 @@ export const FormField = ({ label, name, className = "", placeholder, children }
 
   return (
     <div
-      className={`relative rounded-md border border-slate-600 px-3 py-2 focus-within:z-10 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600 ${className}`}
+      className={cn(
+        "relative rounded-md border border-slate-600 px-3 py-2 focus-within:z-10 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600",
+        className,
+      )}
     >
       <label htmlFor={name} className="block cursor-text pb-1 text-sm font-medium text-slate-50">
         {label}
