@@ -49,7 +49,7 @@ echo "  newest session before: $BEFORE"
 
 echo; echo "### anonymous"
 open; clearcookie; open
-checkmatch "title is CH 01" "$(title)" '^AUTOPLAY.TV — CH 01 · X · '
+checkmatch "title is CH 01" "$(title)" '^autoplay — CH 01 · X · '
 echo "  screen: $(screen)"
 ab screenshot "$OUT/anon-before.png" | tail -1
 

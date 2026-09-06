@@ -147,7 +147,7 @@ const TvScreen = (props: ScreenProps) => {
     <main className="flex h-dvh flex-col bg-chrome font-mono">
       <div className="win-title flex shrink-0 items-center justify-between gap-3 px-3 py-1.5">
         <p className="truncate text-xs font-bold tracking-[0.2em] uppercase">
-          AUTOPLAY.TV — {props.channelLabel}
+          autoplay — {props.channelLabel}
         </p>
         <div className="flex shrink-0 items-center gap-0.5">
           <span className="title-btn">
@@ -369,7 +369,7 @@ export const Tv = (props: TvProps) => {
       <main className="grid h-dvh place-items-center bg-chrome p-6 font-mono">
         <div className="win w-full max-w-sm">
           <div className="win-title px-3 py-1.5">
-            <p className="text-xs font-bold tracking-[0.2em] uppercase">AUTOPLAY.TV</p>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase">autoplay</p>
           </div>
           <div className="space-y-2 p-4">
             <p className="text-[11px] tracking-widest uppercase">Tuning…</p>
