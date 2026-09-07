@@ -27,7 +27,7 @@
   "devDependencies": {
     "@kyh/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "oxlint": "^1.80.0",
+    "oxlint": "^1.81.0",
     "typescript": "catalog:"
   }
 }
