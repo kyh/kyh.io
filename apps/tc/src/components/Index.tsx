@@ -1,15 +1,24 @@
 import { ParentSize } from "@visx/responsive";
 import { NumericFormat } from "react-number-format";
 
-import Chart from "@/components/Chart";
-import { CompForm } from "@/components/CompForm";
-import { CompTable } from "@/components/CompTable";
-import { Navigation } from "@/components/Navigation";
+import Chart from "@/components/chart";
+import { CompForm } from "@/components/comp-form";
+import { CompTable } from "@/components/comp-table";
+import { Navigation } from "@/components/navigation";
 import { useCompHooks } from "@/lib/comp";
-import { currencyTextFormatProps } from "@/lib/formProps";
+import { currencyTextFormatProps } from "@/lib/form-props";
 import { cn } from "cn";
 
-export default function Index() {
+const productHuntBadge = (
+  <img
+    src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=347810&theme=dark"
+    alt="Total Compensation Calculator - Your total compensation under current market conditions | Product Hunt"
+    width={250}
+    height={54}
+  />
+);
+
+const Index = () => {
   const comp = useCompHooks();
   const totalTc = comp.data.reduce<number>(
     (acc, curr) => acc + curr.base + curr.bonus + curr.stock,
@@ -24,7 +33,7 @@ export default function Index() {
         <section className="-ml-5 px-8 md:col-span-2">
           <div className="title-section">
             <h1 className="text-2xl font-bold tracking-tight">
-              A layman's Total Compensation Calculator
+              A layman’s Total Compensation Calculator
             </h1>
             <p className="mt-3 text-slate-300">
               Understand your total compensation under current market conditions.
@@ -65,13 +74,10 @@ export default function Index() {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <img
-          src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=347810&theme=dark"
-          alt="Total Compensation Calculator - Your total compensation under current market conditions | Product Hunt"
-          width={250}
-          height={54}
-        />
+        {productHuntBadge}
       </a>
     </>
   );
-}
+};
+
+export default Index;

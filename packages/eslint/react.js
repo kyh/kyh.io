@@ -5,6 +5,11 @@ import hooksPlugin from "eslint-plugin-react-hooks";
 export default [
   {
     files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      globals: {
+        React: "writable",
+      },
+    },
     plugins: {
       react: reactPlugin,
       "react-hooks": hooksPlugin,
@@ -19,11 +24,6 @@ export default [
           unnamedComponents: "arrow-function",
         },
       ],
-    },
-    languageOptions: {
-      globals: {
-        React: "writable",
-      },
     },
   },
 ];

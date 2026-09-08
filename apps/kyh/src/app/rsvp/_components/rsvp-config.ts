@@ -25,7 +25,7 @@ Welcome to my corner of the web.
 
 export const RSVP_SETTINGS = {
   baseTime: 60,
-  timePerChar: 14,
-  punctuationMultiplier: 2.5,
   commaMultiplier: 1.5,
+  punctuationMultiplier: 2.5,
+  timePerChar: 14,
 } as const;

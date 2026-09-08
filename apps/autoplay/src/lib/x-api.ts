@@ -18,10 +18,10 @@ export class XApiError extends Error {
 }
 
 const apiErrorSchema = z.object({
-  title: z.string().optional(),
   detail: z.string().optional(),
-  error_description: z.string().optional(),
   error: z.string().optional(),
+  error_description: z.string().optional(),
+  title: z.string().optional(),
 });
 
 const errorFromResponse = async (response: Response): Promise<XApiError> => {
@@ -29,7 +29,9 @@ const errorFromResponse = async (response: Response): Promise<XApiError> => {
   try {
     const body = apiErrorSchema.parse(await response.json());
     const detail = body.detail ?? body.error_description ?? body.title ?? body.error;
-    if (detail !== undefined) message = detail;
+    if (detail !== undefined) {
+      message = detail;
+    }
   } catch {
     // Non-JSON error body — keep the status message.
   }
@@ -38,16 +40,16 @@ const errorFromResponse = async (response: Response): Promise<XApiError> => {
 
 const tokenResponseSchema = z.object({
   access_token: z.string(),
-  refresh_token: z.string().optional(),
   expires_in: z.number(),
+  refresh_token: z.string().optional(),
 });
 
-export type TokenGrant = {
+export interface TokenGrant {
   accessToken: string;
   refreshToken?: string;
   /** Unix ms. */
   expiresAt: number;
-};
+}
 
 /** Refresh an X OAuth 2.0 grant (confidential client). */
 export const refreshXToken = async (
@@ -57,56 +59,58 @@ export const refreshXToken = async (
 ): Promise<TokenGrant> => {
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
   const response = await fetch(X_TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basic}`,
-    },
     body: new URLSearchParams({
+      client_id: clientId,
       grant_type: "refresh_token",
       refresh_token: refreshToken,
-      client_id: clientId,
     }),
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    method: "POST",
   });
-  if (!response.ok) throw await errorFromResponse(response);
+  if (!response.ok) {
+    throw await errorFromResponse(response);
+  }
   const grant = tokenResponseSchema.parse(await response.json());
   return {
     accessToken: grant.access_token,
-    refreshToken: grant.refresh_token,
     expiresAt: Date.now() + grant.expires_in * 1000,
+    refreshToken: grant.refresh_token,
   };
 };
 
 const xUserSchema = z.object({
   id: z.string(),
   name: z.string(),
-  username: z.string(),
   profile_image_url: z.string().optional(),
+  username: z.string(),
 });
 
 const metricsSchema = z.object({
   like_count: z.number().optional(),
-  retweet_count: z.number().optional(),
-  reply_count: z.number().optional(),
   quote_count: z.number().optional(),
+  reply_count: z.number().optional(),
+  retweet_count: z.number().optional(),
 });
 
 const timelinePostSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  created_at: z.string().optional(),
   author_id: z.string().optional(),
+  created_at: z.string().optional(),
+  id: z.string(),
   note_tweet: z.object({ text: z.string() }).optional(),
-  referenced_tweets: z.array(z.object({ type: z.string(), id: z.string() })).optional(),
   public_metrics: metricsSchema.optional(),
+  referenced_tweets: z.array(z.object({ id: z.string(), type: z.string() })).optional(),
+  text: z.string(),
 });
 
 const timelineResponseSchema = z.object({
   data: z.array(timelinePostSchema).optional(),
   includes: z
     .object({
-      users: z.array(xUserSchema).optional(),
       tweets: z.array(timelinePostSchema).optional(),
+      users: z.array(xUserSchema).optional(),
     })
     .optional(),
   meta: z.object({ next_token: z.string().optional() }).optional(),
@@ -114,16 +118,16 @@ const timelineResponseSchema = z.object({
 
 /** A post as the adapter sees it — a schema, since pages come back out of the shared cache as data. */
 export const feedPostSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  createdAt: z.string().optional(),
-  /** Engagement score: retweets and quotes weigh most, then replies, likes. */
-  score: z.number(),
   author: z.object({
     name: z.string(),
-    username: z.string(),
     profileImageUrl: z.string().optional(),
+    username: z.string(),
   }),
+  createdAt: z.string().optional(),
+  id: z.string(),
+  /** Engagement score: retweets and quotes weigh most, then replies, likes. */
+  score: z.number(),
+  text: z.string(),
 });
 
 export type FeedPost = z.infer<typeof feedPostSchema>;
@@ -132,14 +136,16 @@ export const feedSourceSchema = z.enum(["home", "own"]);
 
 export type FeedSource = z.infer<typeof feedSourceSchema>;
 
-export type FeedPage = {
+export interface FeedPage {
   source: FeedSource;
   posts: FeedPost[];
   nextToken?: string;
-};
+}
 
 const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): number => {
-  if (metrics === undefined) return 0;
+  if (metrics === undefined) {
+    return 0;
+  }
   return (
     (metrics.like_count ?? 0) +
     2 * (metrics.reply_count ?? 0) +
@@ -150,8 +156,8 @@ const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): n
 
 /** What every posts endpoint is asked to return: the fields postsFromResponse reads. */
 const POST_FIELDS = {
-  "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
   expansions: "author_id,referenced_tweets.id",
+  "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
   "user.fields": "name,username,profile_image_url",
 } as const;
 
@@ -160,14 +166,16 @@ const TIMELINE_PARAMS = { max_results: "50", ...POST_FIELDS } as const;
 /** A GET against the API, parsed; a refusal becomes an XApiError with X's own words. */
 const xGet = async <T>(accessToken: string, url: URL, schema: z.ZodType<T>): Promise<T> => {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw await errorFromResponse(response);
+  if (!response.ok) {
+    throw await errorFromResponse(response);
+  }
   return schema.parse(await response.json());
 };
 
-type TimelinePage = {
+interface TimelinePage {
   posts: FeedPost[];
   nextToken?: string;
-};
+}
 
 /** Shape returned by every endpoint that hands back posts + expansions. */
 const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>): FeedPost[] => {
@@ -186,17 +194,17 @@ const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>): Fe
 
     const author = post.author_id === undefined ? undefined : usersById.get(post.author_id);
     return {
-      id: post.id,
-      text,
+      author: {
+        name: author?.name ?? "Unknown",
+        profileImageUrl: author?.profile_image_url,
+        username: author?.username ?? "unknown",
+      },
       createdAt: post.created_at,
+      id: post.id,
       // A retweet's own metrics are near zero; the referenced original's
       // engagement is what makes it "popular".
       score: scoreFromMetrics(source.public_metrics),
-      author: {
-        name: author?.name ?? "Unknown",
-        username: author?.username ?? "unknown",
-        profileImageUrl: author?.profile_image_url,
-      },
+      text,
     };
   });
 };
@@ -210,9 +218,11 @@ const fetchTimeline = async (
   for (const [key, value] of Object.entries(TIMELINE_PARAMS)) {
     url.searchParams.set(key, value);
   }
-  if (paginationToken !== undefined) url.searchParams.set("pagination_token", paginationToken);
+  if (paginationToken !== undefined) {
+    url.searchParams.set("pagination_token", paginationToken);
+  }
   const timeline = await xGet(accessToken, url, timelineResponseSchema);
-  return { posts: postsFromResponse(timeline), nextToken: timeline.meta?.next_token };
+  return { nextToken: timeline.meta?.next_token, posts: postsFromResponse(timeline) };
 };
 
 const timelinePath = (source: FeedSource, userId: string): string =>
@@ -246,7 +256,9 @@ export const fetchFeedPage = async (
     if (error instanceof XApiError && error.status === 402) {
       throw new XApiError(402, "X API credits exhausted — top up at console.x.com");
     }
-    if (!(error instanceof XApiError && error.status === 403)) throw error;
+    if (!(error instanceof XApiError && error.status === 403)) {
+      throw error;
+    }
     const page = await fetchTimeline(accessToken, timelinePath("own", userId), paginationToken);
     return { source: "own", ...page };
   }
@@ -312,8 +324,8 @@ const STOP_WORDS = new Set(["the", "a", "an", "this", "that", "new", "how", "why
 export const trendKeyword = (trend: string): string => {
   const head = (trend.split(":")[0] ?? trend).replaceAll('"', "");
   const words = head
-    .split(/\s+/)
-    .map((word) => word.replace(/[^\p{L}\p{N}'’-]/gu, "").replace(/['’]s$/u, ""))
+    .split(/\s+/u)
+    .map((word) => word.replaceAll(/[^\p{L}\p{N}'’-]/gu, "").replace(/['’]s$/u, ""))
     .filter((word) => word !== "");
   const meaningful = words.filter((word) => !STOP_WORDS.has(word.toLowerCase()));
   const named = meaningful.find((word) => word[0] !== word[0]?.toLowerCase());

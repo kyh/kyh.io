@@ -37,20 +37,20 @@ describe("trendKeyword", () => {
 describe("trendQuery", () => {
   it("uses min_likes, not the web-search spelling min_faves", () => {
     const query = trendQuery("Formula 1 Season Opener", 500);
-    assert.match(query, /\bmin_likes:500\b/);
-    assert.doesNotMatch(query, /min_faves|min_retweets/);
+    assert.match(query, /\bmin_likes:500\b/u);
+    assert.doesNotMatch(query, /min_faves|min_retweets/u);
   });
 
   it("excludes replies and pins a language", () => {
     const query = trendQuery("News", 100);
-    assert.match(query, /-is:reply/);
-    assert.match(query, /lang:en/);
+    assert.match(query, /-is:reply/u);
+    assert.match(query, /lang:en/u);
   });
 
   it("emits a bare keyword, never a quoted headline", () => {
     const query = trendQuery("Vercel CEO: Next Design System Is Just a Markdown File", 500);
     assert.equal(query, "Vercel min_likes:500 -is:reply lang:en");
-    assert.doesNotMatch(query, /"/);
+    assert.doesNotMatch(query, /"/u);
   });
 
   it("stays inside the 512-character self-serve query limit", () => {

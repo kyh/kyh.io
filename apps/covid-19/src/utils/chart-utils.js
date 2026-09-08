@@ -36,7 +36,8 @@ export const createAxis = (width, x, y) => {
   return { xAxis, yAxis };
 };
 
-const isDefined = (d, dataKey) => d[dataKey] && d.date && !isNaN(d[dataKey]) && !isNaN(d.date);
+const isDefined = (d, dataKey) =>
+  d[dataKey] && d.date && !Number.isNaN(Number(d[dataKey])) && !Number.isNaN(d.date.getTime());
 
 export const createLineFn = (dataKey, x, y) => {
   const d3Line = line()
@@ -50,46 +51,46 @@ export const createLineFn = (dataKey, x, y) => {
     .y0(y(0))
     .y1((d) => y(d[dataKey]));
 
-  return { line: d3Line, area: d3Area };
+  return { area: d3Area, line: d3Line };
 };
 
-export const createTooltipEvents = (data, x, y) => {
-  const callout = (g, value) => {
-    g.style("display", null).style("pointer-events", "none").style("font-size", "10px");
+const callout = (g, value) => {
+  g.style("display", null).style("pointer-events", "none").style("font-size", "10px");
 
-    const path = g
-      .selectAll("path")
-      .data([null])
-      .join("path")
-      .attr("fill", "#252f3f")
-      .attr("stroke", "#374151");
+  const path = g
+    .selectAll("path")
+    .data([null])
+    .join("path")
+    .attr("fill", "#252f3f")
+    .attr("stroke", "#374151");
 
-    const text = g
-      .selectAll("text")
-      .data([null])
-      .join("text")
-      .call((text) =>
-        text
-          .selectAll("tspan")
-          .data((value + "").split(/\n/))
-          .join("tspan")
-          .attr("fill", "#d2d6dc")
-          .attr("x", 0)
-          .attr("y", (_, i) => `${i * 1.1}em`)
-          .text((d) => d),
-      );
-
-    const { y, width: w, height: h } = text.node().getBBox();
-
-    text.attr("transform", `translate(${-w / 2},${15 - y})`);
-    path.attr(
-      "d",
-      `M${-w / 2 - 10},5H${w / 2 + 10} a3,3 0 0 1 3,3 v${
-        h + 15
-      } a3,3 0 0 1 -3,3 h-${w + 20} a3,3 0 0 1 -3,-3 v-${h + 15} a3,3 0 0 1 3,-3 z`,
+  const text = g
+    .selectAll("text")
+    .data([null])
+    .join("text")
+    .call((textSel) =>
+      textSel
+        .selectAll("tspan")
+        .data(`${value}`.split(/\n/u))
+        .join("tspan")
+        .attr("fill", "#d2d6dc")
+        .attr("x", 0)
+        .attr("y", (_, i) => `${i * 1.1}em`)
+        .text((d) => d),
     );
-  };
 
+  const { y: textY, width: w, height: h } = text.node().getBBox();
+
+  text.attr("transform", `translate(${-w / 2},${15 - textY})`);
+  path.attr(
+    "d",
+    `M${-w / 2 - 10},5H${w / 2 + 10} a3,3 0 0 1 3,3 v${
+      h + 15
+    } a3,3 0 0 1 -3,3 h-${w + 20} a3,3 0 0 1 -3,-3 v-${h + 15} a3,3 0 0 1 3,-3 z`,
+  );
+};
+
+export const createTooltipEvents = (data, x) => {
   const bisect = bisector((d) => d.date).left;
   const onMouseEvent = (mx) => {
     const date = x.invert(mx);
@@ -98,9 +99,8 @@ export const createTooltipEvents = (data, x, y) => {
     const b = data[index];
     if (a && b) {
       return date - a.date > b.date - date ? b : a;
-    } else {
-      return {};
     }
+    return {};
   };
 
   return { callout, onMouseEvent };
@@ -163,5 +163,5 @@ export const appendTooltip = (svg) => {
     tooltip = svg.append("g").attr("class", "cursor-tooltip");
   }
 
-  return { tooltip, point, cursorLine };
+  return { cursorLine, point, tooltip };
 };

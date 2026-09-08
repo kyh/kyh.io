@@ -13,19 +13,17 @@ import { embed } from "ai";
 
 const { client, db } = await import("../src/db/drizzle-client");
 
-async function generateEmbedding(text: string): Promise<number[]> {
+const generateEmbedding = async (text: string): Promise<number[]> => {
   const { embedding } = await embed({
     model: "openai/text-embedding-3-small",
     value: text,
   });
   return embedding;
-}
+};
 
-function vectorToString(vector: number[]): string {
-  return `[${vector.join(",")}]`;
-}
+const vectorToString = (vector: number[]): string => `[${vector.join(",")}]`;
 
-async function ensureVectorIndex() {
+const ensureVectorIndex = async () => {
   try {
     await client.execute(`
       CREATE INDEX IF NOT EXISTS incidents_embedding_idx
@@ -35,9 +33,9 @@ async function ensureVectorIndex() {
   } catch {
     console.log("Note: Vector index creation skipped (may already exist)");
   }
-}
+};
 
-async function main() {
+const main = async () => {
   await ensureVectorIndex();
 
   console.log("Finding incidents with descriptions but no embeddings...");
@@ -63,8 +61,8 @@ async function main() {
       const embedding = await generateEmbedding(textToEmbed);
 
       await client.execute({
-        sql: `UPDATE incidents SET embedding = vector32(?) WHERE id = ?`,
         args: [vectorToString(embedding), incident.id],
+        sql: `UPDATE incidents SET embedding = vector32(?) WHERE id = ?`,
       });
 
       console.log(`  Done`);
@@ -74,6 +72,10 @@ async function main() {
   }
 
   console.log("\nDone!");
-}
+};
 
-main().catch(console.error);
+try {
+  await main();
+} catch (error) {
+  console.error(error);
+}

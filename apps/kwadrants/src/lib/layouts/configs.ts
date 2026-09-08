@@ -3,31 +3,31 @@ import type { LayoutConfig } from "./types";
 const PADDING = 16;
 
 export const axisLayout: LayoutConfig = {
-  id: "axis",
   displayName: "Axis",
-  getBounds: (w, h) => ({ x: 0, y: 0, width: w, height: h }),
+  getBounds: (w, h) => ({ height: h, width: w, x: 0, y: 0 }),
+  id: "axis",
   labels: [
     {
-      key: "xPositive",
       defaultText: "High",
+      key: "xPositive",
       position: (b) => ({
         x: b.x + b.width - 80,
         y: b.y + b.height / 2 + PADDING,
       }),
     },
     {
-      key: "xNegative",
       defaultText: "Low",
+      key: "xNegative",
       position: (b) => ({ x: b.x + PADDING, y: b.y + b.height / 2 + PADDING }),
     },
     {
-      key: "yPositive",
       defaultText: "High",
+      key: "yPositive",
       position: (b) => ({ x: b.x + b.width / 2 + PADDING, y: b.y + PADDING }),
     },
     {
-      key: "yNegative",
       defaultText: "Low",
+      key: "yNegative",
       position: (b) => ({
         x: b.x + b.width / 2 + PADDING,
         y: b.y + b.height - PADDING - 14,
@@ -38,19 +38,19 @@ export const axisLayout: LayoutConfig = {
 };
 
 export const edgeLayout: LayoutConfig = {
-  id: "edge",
   displayName: "Edge",
-  getBounds: (w, h) => ({ x: 80, y: 50, width: w - 100, height: h - 70 }),
+  getBounds: (w, h) => ({ height: h - 70, width: w - 100, x: 80, y: 50 }),
+  id: "edge",
   labels: [
     {
-      key: "horizontal",
       defaultText: "X Axis",
+      key: "horizontal",
       position: (b) => ({ x: b.x + b.width / 2, y: b.y - 25 }),
       textProps: { align: "center", fontStyle: "bold", offsetX: 30 },
     },
     {
-      key: "vertical",
       defaultText: "Y Axis",
+      key: "vertical",
       position: (b) => ({ x: b.x - 25, y: b.y + b.height / 2 }),
       rotation: -90,
       textProps: { fontStyle: "bold", offsetY: -7 },

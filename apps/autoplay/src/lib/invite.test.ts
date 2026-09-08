@@ -21,8 +21,9 @@ describe("invite codes", () => {
     assert.equal(isWellFormedInviteCode("VICK-E"), false);
     assert.equal(isWellFormedInviteCode("VICKI"), false);
     assert.equal(isWellFormedInviteCode("vickie"), false);
-    for (let i = 0; i < 50; i += 1)
+    for (let i = 0; i < 50; i += 1) {
       assert.equal(isWellFormedInviteCode(generateInviteCode()), true);
+    }
   });
 });
 
@@ -41,6 +42,6 @@ describe("invite cookie", () => {
       inviteFromCookie(`${INVITE_COOKIE}=${value.replace("VICKIE", "SESAME")}`),
       undefined,
     );
-    assert.equal(inviteFromCookie(undefined), undefined);
+    assert.equal(inviteFromCookie(), undefined);
   });
 });

@@ -8,7 +8,9 @@ export const googleAccessToken = async (
   accountId: string,
   userId: string,
 ): Promise<string | undefined> => {
-  if (auth === undefined) return undefined;
+  if (auth === undefined) {
+    return undefined;
+  }
   try {
     const tokens = await auth.api.getAccessToken({ body: { accountId, userId } });
     return tokens.accessToken ?? undefined;

@@ -8,7 +8,7 @@ import { PUBLIC_CHANNEL } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
 import { displayPostText } from "@/lib/post-text";
 import { screenState, surfaceOf } from "@/lib/screen-state";
-import type { LiveState, ReplayState } from "@/lib/screen-state";
+import type { LiveState, ReplayState, ScreenState } from "@/lib/screen-state";
 import { OWNER_SOURCE_ID, SOURCE_KIND_NAMES } from "@/lib/source-kinds";
 import { testStreamRequested } from "@/lib/test-stream";
 import { Glyph } from "@/components/glyph";
@@ -23,7 +23,7 @@ import { SourcesDialog } from "@/components/sources-dialog";
 // day's budget is spent — is the replay of what it recorded while live.
 
 const login = () => {
-  void authClient.signIn.social({ provider: "twitter", callbackURL: "/" });
+  void authClient.signIn.social({ callbackURL: "/", provider: "twitter" });
 };
 
 const logout = async () => {
@@ -31,7 +31,7 @@ const logout = async () => {
   window.location.reload();
 };
 
-type ScreenProps = {
+interface ScreenProps {
   session: SessionPayload;
   channel: ChannelSummary;
   channels: ChannelSummary[];
@@ -41,7 +41,7 @@ type ScreenProps = {
   muted: boolean;
   onToggleMute: () => void;
   urlError?: string;
-};
+}
 
 /** Pixels the ticker travels per second — a readable walking pace. */
 const MARQUEE_SPEED = 45;
@@ -98,13 +98,15 @@ const MarqueeCopy = (props: { text: string; roll: "on" | "off" }) => {
 const Ticker = (props: { program: OnAir }) => {
   const { program } = props;
   const [seen, setSeen] = useState(program);
-  const [leaving, setLeaving] = useState<OnAir | undefined>(undefined);
+  const [leaving, setLeaving] = useState<OnAir | undefined>();
   if (seen.itemId !== program.itemId) {
     setSeen(program);
     setLeaving(seen);
   }
   useEffect(() => {
-    if (leaving === undefined) return;
+    if (leaving === undefined) {
+      return;
+    }
     const timer = window.setTimeout(() => setLeaving(undefined), ROLL_MS);
     return () => window.clearTimeout(timer);
   }, [leaving]);
@@ -160,25 +162,148 @@ const Ticker = (props: { program: OnAir }) => {
 const channelNumber = (channel: ChannelSummary): string =>
   `CH ${String(channel.number).padStart(2, "0")}`;
 
+interface OffAirPanelProps {
+  reason: string;
+  missingKeys: string[];
+  onSignIn: (() => void) | undefined;
+}
+
+const OffAirPanel = ({ reason, missingKeys, onSignIn }: OffAirPanelProps) => (
+  <div className="absolute inset-0 grid place-items-center p-4">
+    <div className="win w-full max-w-sm">
+      <div className="win-title flex items-center justify-between px-2 py-1">
+        <p className="text-[10px] font-bold tracking-[0.2em] uppercase">Off air</p>
+        <span className="title-btn">
+          <Glyph name="close" size={8} />
+        </span>
+      </div>
+      <div className="flex items-start gap-3 p-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-white">
+          <Glyph name="close" size={12} />
+        </span>
+        <div className="min-w-0 space-y-2">
+          <p className="text-xs leading-relaxed">{reason}</p>
+          {missingKeys.length > 0 && (
+            <div className="bevel-in bg-white/70 p-2 text-[10px] leading-relaxed">
+              <p>missing from apps/autoplay/.env:</p>
+              {missingKeys.map((key) => (
+                <p key={key}>· {key}</p>
+              ))}
+            </div>
+          )}
+          {onSignIn !== undefined && (
+            <button
+              type="button"
+              onClick={onSignIn}
+              className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase"
+            >
+              Sign in with X
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+interface PlaybackControlsProps {
+  playing: boolean;
+  paused: boolean;
+  muted: boolean;
+  onTogglePause: () => void;
+  onToggleMute: () => void;
+}
+
+const PlaybackControls = (props: PlaybackControlsProps) => (
+  <>
+    <button
+      type="button"
+      disabled={!props.playing}
+      onClick={props.onTogglePause}
+      className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
+      aria-label={props.paused ? "Play" : "Pause"}
+    >
+      <Glyph name={props.paused ? "play" : "pause"} />
+    </button>
+    <button
+      type="button"
+      onClick={props.onToggleMute}
+      className="y2k-btn status-btn cursor-pointer"
+      aria-label={props.muted ? "Unmute" : "Mute"}
+    >
+      <Glyph name={props.muted ? "sound-off" : "sound-on"} />
+    </button>
+  </>
+);
+
+interface StatusCaptionProps {
+  program: OnAir | undefined;
+  urlError: string | undefined;
+  tuning: boolean;
+}
+
+const StatusCaption = ({ program, urlError, tuning }: StatusCaptionProps) => {
+  if (program !== undefined) {
+    return <Ticker program={program} />;
+  }
+  if (urlError !== undefined) {
+    return <span className="truncate">{urlError}</span>;
+  }
+  return <span className="truncate">{tuning ? "Tuning in…" : "No signal"}</span>;
+};
+
+/** The badge at the status bar's right: on air live, or a replay, off air when the live signal dropped. */
+const ScreenBadge = ({ screen }: { screen: ScreenState }) => {
+  if (screen.status === "live") {
+    return (
+      <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
+        <span className="text-accent">● live</span>
+      </div>
+    );
+  }
+  if (screen.status !== "replay") {
+    return null;
+  }
+  if (screen.liveDown === undefined) {
+    return (
+      <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
+        <span>replay</span>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase"
+      title={screen.liveDown}
+    >
+      <span className="text-red-700">off air</span>
+    </div>
+  );
+};
+
 const TvScreen = (props: ScreenProps) => {
   const { session, channel } = props;
   const [live, setLive] = useState<LiveState>({ status: "connecting" });
   const [replay, setReplay] = useState<ReplayState>({ status: "loading" });
-  const [program, setProgram] = useState<OnAir | undefined>(undefined);
+  const [program, setProgram] = useState<OnAir | undefined>();
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   // The test stream stands in for fal, so it counts as fal being there. It
   // is read off the URL, which the server render cannot see.
   const testStream = useSyncExternalStore(
-    () => () => undefined,
+    () => () => {
+      /* empty */
+    },
     testStreamRequested,
     () => false,
   );
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.code !== "Space" && event.key !== "k") return;
+      if (event.code !== "Space" && event.key !== "k") {
+        return;
+      }
       event.preventDefault();
       setPaused((value) => !value);
     };
@@ -190,8 +315,8 @@ const TvScreen = (props: ScreenProps) => {
   const surface = surfaceOf(channel, liveReady, live);
   const screen = screenState(surface, liveReady, live, replay);
   const playing = screen.status === "live" || screen.status === "replay";
-  const liveDown = screen.status === "replay" ? screen.liveDown : undefined;
   const canSignIn = session.user === null && session.loginReady;
+  const openInvite = () => setInviteOpen(true);
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
@@ -241,41 +366,11 @@ const TvScreen = (props: ScreenProps) => {
           )}
 
           {screen.status === "off-air" && (
-            <div className="absolute inset-0 grid place-items-center p-4">
-              <div className="win w-full max-w-sm">
-                <div className="win-title flex items-center justify-between px-2 py-1">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase">Off air</p>
-                  <span className="title-btn">
-                    <Glyph name="close" size={8} />
-                  </span>
-                </div>
-                <div className="flex items-start gap-3 p-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full border-2 border-outline bg-accent text-white">
-                    <Glyph name="close" size={12} />
-                  </span>
-                  <div className="min-w-0 space-y-2">
-                    <p className="text-xs leading-relaxed">{screen.reason}</p>
-                    {session.missingKeys.length > 0 && (
-                      <div className="bevel-in bg-white/70 p-2 text-[10px] leading-relaxed">
-                        <p>missing from apps/autoplay/.env:</p>
-                        {session.missingKeys.map((key) => (
-                          <p key={key}>· {key}</p>
-                        ))}
-                      </div>
-                    )}
-                    {canSignIn && (
-                      <button
-                        type="button"
-                        onClick={() => setInviteOpen(true)}
-                        className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase"
-                      >
-                        Sign in with X
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <OffAirPanel
+              reason={screen.reason}
+              missingKeys={session.missingKeys}
+              onSignIn={canSignIn ? openInvite : undefined}
+            />
           )}
 
           {screen.status === "tuning" && (
@@ -289,49 +384,23 @@ const TvScreen = (props: ScreenProps) => {
 
         {/* Status bar: caption and controls in one strip, browser-style. */}
         <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
-          <button
-            type="button"
-            disabled={!playing}
-            onClick={() => setPaused((value) => !value)}
-            className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
-            aria-label={paused ? "Play" : "Pause"}
-          >
-            <Glyph name={paused ? "play" : "pause"} />
-          </button>
-          <button
-            type="button"
-            onClick={props.onToggleMute}
-            className="y2k-btn status-btn cursor-pointer"
-            aria-label={props.muted ? "Unmute" : "Mute"}
-          >
-            <Glyph name={props.muted ? "sound-off" : "sound-on"} />
-          </button>
+          <PlaybackControls
+            playing={playing}
+            paused={paused}
+            muted={props.muted}
+            onTogglePause={() => setPaused((value) => !value)}
+            onToggleMute={props.onToggleMute}
+          />
 
           <div className="status-field ml-px flex-1">
-            {program === undefined ? (
-              <span className="truncate">
-                {props.urlError ?? (screen.status === "tuning" ? "Tuning in…" : "No signal")}
-              </span>
-            ) : (
-              <Ticker program={program} />
-            )}
+            <StatusCaption
+              program={program}
+              urlError={props.urlError}
+              tuning={screen.status === "tuning"}
+            />
           </div>
 
-          {screen.status === "live" && (
-            <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
-              <span className="text-accent">● live</span>
-            </div>
-          )}
-          {screen.status === "replay" && (
-            <div
-              className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase"
-              title={liveDown}
-            >
-              <span className={liveDown === undefined ? undefined : "text-red-700"}>
-                {liveDown === undefined ? "replay" : "off air"}
-              </span>
-            </div>
-          )}
+          <ScreenBadge screen={screen} />
 
           {session.user !== null && (
             <button
@@ -365,7 +434,7 @@ const TvScreen = (props: ScreenProps) => {
           {canSignIn && (
             <button
               type="button"
-              onClick={() => setInviteOpen(true)}
+              onClick={openInvite}
               className="y2k-btn status-btn cursor-pointer"
             >
               sign in
@@ -374,7 +443,9 @@ const TvScreen = (props: ScreenProps) => {
           {session.user !== null && (
             <button
               type="button"
-              onClick={() => void logout()}
+              onClick={() => {
+                void logout();
+              }}
               className="y2k-btn status-btn cursor-pointer"
             >
               sign out
@@ -396,10 +467,10 @@ const TvScreen = (props: ScreenProps) => {
   );
 };
 
-export type TvProps = {
+export interface TvProps {
   session?: SessionPayload;
   urlError?: string;
-};
+}
 
 /** Wraps in both directions: ch− on CH 01 lands on the last channel. */
 const channelAt = (channels: ChannelSummary[], tuned: number): ChannelSummary => {
@@ -412,7 +483,7 @@ export const Tv = (props: TvProps) => {
   const [muted, setMuted] = useState(true);
   // The lineup as last told by the station; the sources dialog updates it
   // without a reload.
-  const [lineup, setLineup] = useState<ChannelSummary[] | undefined>(undefined);
+  const [lineup, setLineup] = useState<ChannelSummary[] | undefined>();
 
   if (props.session === undefined) {
     return (

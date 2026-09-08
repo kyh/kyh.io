@@ -5,7 +5,7 @@ import NextLink from "next/link";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
-type LinkProps = {
+interface LinkProps {
   children: React.ReactNode;
   href?: string;
   noStyles?: boolean;
@@ -16,7 +16,7 @@ type LinkProps = {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   active?: boolean;
-};
+}
 
 export const Link = ({
   children,
@@ -81,34 +81,32 @@ export const Link = ({
         </a>
       );
     }
+  } else if (noAction) {
+    action = (
+      <span className={actionClassName} data-text={actionDataText}>
+        {children}
+      </span>
+    );
   } else {
-    if (noAction) {
-      action = (
-        <span className={actionClassName} data-text={actionDataText}>
-          {children}
-        </span>
-      );
-    } else {
-      action = (
-        <button
-          type="button"
-          className={actionClassName}
-          data-text={actionDataText}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          onFocus={onMouseEnter}
-          onBlur={onMouseLeave}
-        >
-          {children}
-        </button>
-      );
-    }
+    action = (
+      <button
+        type="button"
+        className={actionClassName}
+        data-text={actionDataText}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onFocus={onMouseEnter}
+        onBlur={onMouseLeave}
+      >
+        {children}
+      </button>
+    );
   }
 
   if (src) {
     const isRelativeUrl = (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
     content = (
-      <a href={href} {...(isRelativeUrl ? {} : { target: "_blank", rel: "noreferrer noopener" })}>
+      <a href={href} {...(isRelativeUrl ? {} : { rel: "noreferrer noopener", target: "_blank" })}>
         <Image src={src} alt={alt ?? "image"} width={320} height={240} />
       </a>
     );

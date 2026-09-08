@@ -9,9 +9,9 @@ const miniApps = projects.filter((p) => p.type === "mini-app");
 const templates = projects.filter((p) => p.type === "template");
 
 const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
+  iconSrc: p.favicon,
   key: p.slug,
   name: p.title,
-  iconSrc: p.favicon,
   url: p.url,
 });
 

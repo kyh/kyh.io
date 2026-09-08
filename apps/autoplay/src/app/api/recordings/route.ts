@@ -20,14 +20,22 @@ const inOwnStore = (url: string): boolean => {
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const owner = await requireOwner();
-  if ("refused" in owner) return owner.refused;
+  if ("refused" in owner) {
+    return owner.refused;
+  }
   const body = await readBody(request, recordingRequestSchema, "Not a recording chunk");
-  if ("refused" in body) return body.refused;
-  if (!inOwnStore(body.data.url)) return errorResponse(400, "Not in the station's store");
+  if ("refused" in body) {
+    return body.refused;
+  }
+  if (!inOwnStore(body.data.url)) {
+    return errorResponse(400, "Not in the station's store");
+  }
   // Only CH 01 records — the owner's other channels never do — so the chunk
   // is the public channel's whatever state its source is in, the test stream
   // included; nothing about the source needs resolving to keep it.
-  if (body.data.sourceId !== OWNER_SOURCE_ID) return errorResponse(403, "Only CH 01 records");
+  if (body.data.sourceId !== OWNER_SOURCE_ID) {
+    return errorResponse(403, "Only CH 01 records");
+  }
   const { sourceId: _sourceId, ...chunk } = body.data;
   await addChunk({ channelKey: OWNER_SOURCE_ID, ...chunk });
   return NextResponse.json({ ok: true });

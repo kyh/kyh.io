@@ -10,11 +10,11 @@ if (url === undefined) {
 }
 
 export default defineConfig({
+  dbCredentials: {
+    authToken: env.TURSO_AUTH_TOKEN,
+    url,
+  },
+  dialect: "turso",
   out: "./drizzle",
   schema: "./src/db/drizzle-schema.ts",
-  dialect: "turso",
-  dbCredentials: {
-    url,
-    authToken: env.TURSO_AUTH_TOKEN,
-  },
 });

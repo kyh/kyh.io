@@ -13,11 +13,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const PLACEHOLDER_URL = "/assets/placeholder.png";
 
 export const getPublicAssetUrl = (path: string) => {
-  if (!supabaseUrl) return PLACEHOLDER_URL;
+  if (!supabaseUrl) {
+    return PLACEHOLDER_URL;
+  }
   return `${supabaseUrl}/storage/v1/object/public/projects/${path}`;
 };
 
 export const getPublicFaviconUrl = (path: string) => {
-  if (!supabaseUrl) return PLACEHOLDER_URL;
+  if (!supabaseUrl) {
+    return PLACEHOLDER_URL;
+  }
   return `${supabaseUrl}/storage/v1/object/public/favicons/${path}`;
 };

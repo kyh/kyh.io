@@ -11,8 +11,8 @@ export const DIRECTOR_MODEL = "minimax/h3-max/director";
 
 const userSummarySchema = z.object({
   name: z.string(),
-  username: z.string(),
   profileImageUrl: z.string().optional(),
+  username: z.string(),
 });
 
 export type UserSummary = z.infer<typeof userSummarySchema>;
@@ -23,32 +23,27 @@ export type UserSummary = z.infer<typeof userSummarySchema>;
  * "replay" means they watch what was recorded while its owner was on.
  */
 const channelSummarySchema = z.object({
-  number: z.number().int().positive(),
-  sourceId: z.string(),
   kind: sourceKindSchema,
   label: z.string(),
   mode: z.enum(["live", "replay"]),
+  number: z.number().int().positive(),
+  sourceId: z.string(),
 });
 
 export type ChannelSummary = z.infer<typeof channelSummarySchema>;
 
 /** What a viewer can watch when the station cannot even be reached. */
 export const PUBLIC_CHANNEL: ChannelSummary = {
-  number: 1,
-  sourceId: OWNER_SOURCE_ID,
   kind: "x",
   label: "public access",
   mode: "replay",
+  number: 1,
+  sourceId: OWNER_SOURCE_ID,
 };
 
 export const sessionPayloadSchema = z.object({
-  /** Env keys still unset, for the setup checklist. Empty when configured. */
-  missingKeys: z.array(z.string()),
-  user: userSummarySchema.nullable(),
   /** The viewer's lineup, CH 01 first. Anonymous viewers get CH 01 alone. */
   channels: z.array(channelSummarySchema).min(1),
-  /** Whether signing in can work: the X app, a secret and the database are configured. */
-  loginReady: z.boolean(),
   /**
    * Whether this viewer can connect Gmail and YouTube: "owner-only" while
    * Google's verification of the restricted Gmail scope is pending, so only
@@ -57,21 +52,26 @@ export const sessionPayloadSchema = z.object({
   google: z.enum(["ready", "owner-only", "unconfigured"]),
   /** Whether anything can air: fal is configured. */
   liveReady: z.boolean(),
+  /** Whether signing in can work: the X app, a secret and the database are configured. */
+  loginReady: z.boolean(),
+  /** Env keys still unset, for the setup checklist. Empty when configured. */
+  missingKeys: z.array(z.string()),
   /** Whether the public channel records while live: Vercel Blob is configured. */
   recordReady: z.boolean(),
+  user: userSummarySchema.nullable(),
 });
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
 
 /** The item on air, as the ticker reads it and the record keeps it. */
 const programFieldsSchema = z.object({
-  itemId: z.string(),
-  kind: sourceKindSchema,
-  text: z.string(),
-  /** The item on its service, which the ticker links to. */
-  link: z.string().optional(),
   authorName: z.string(),
   authorUsername: z.string(),
+  itemId: z.string(),
+  kind: sourceKindSchema,
+  /** The item on its service, which the ticker links to. */
+  link: z.string().optional(),
+  text: z.string(),
 });
 
 /** What a program is made of: the item on air and the prompt that directs it. */
@@ -80,17 +80,17 @@ const liveProgramSchema = programFieldsSchema.extend({ prompt: z.string() });
 export type LiveProgram = z.infer<typeof liveProgramSchema>;
 
 export const liveRequestSchema = z.object({
-  sourceId: z.string(),
   /** True for the program a session opens on, whose prompt then begins with the world. */
   opening: z.boolean(),
+  sourceId: z.string(),
 });
 
 export const livePayloadSchema = z.discriminatedUnion("kind", [
   z.object({
-    kind: z.literal("program"),
-    program: liveProgramSchema,
     /** The format the session opens in, only with an opening program. */
     formatLabel: z.string().optional(),
+    kind: z.literal("program"),
+    program: liveProgramSchema,
   }),
   z.object({ kind: z.literal("off-air"), reason: z.string() }),
 ]);
@@ -100,23 +100,23 @@ export type LivePayload = z.infer<typeof livePayloadSchema>;
 /** One chunk of a recorded session, as a replay appends it. */
 const recordingChunkSchema = programFieldsSchema.extend({
   index: z.number().int().nonnegative(),
-  url: z.string(),
   seconds: z.number(),
+  url: z.string(),
 });
 
 export type RecordingChunk = z.infer<typeof recordingChunkSchema>;
 
 /** One live session as recorded: its chunks in order, which play as one stream. */
 const recordedSessionSchema = z.object({
-  sessionId: z.string(),
+  chunks: z.array(recordingChunkSchema).min(1),
+  /** The session as one file, once built: what a browser without MediaSource plays. */
+  fileUrl: z.string().optional(),
   formatLabel: z.string(),
+  sessionId: z.string(),
   /** Unix ms of the first chunk. */
   startedAt: z.number(),
   /** Unix ms of the newest chunk; a session still receiving chunks is on air. */
   updatedAt: z.number(),
-  chunks: z.array(recordingChunkSchema).min(1),
-  /** The session as one file, once built: what a browser without MediaSource plays. */
-  fileUrl: z.string().optional(),
 });
 
 export type RecordedSession = z.infer<typeof recordedSessionSchema>;
@@ -130,8 +130,8 @@ export type ReplayPayload = z.infer<typeof replayPayloadSchema>;
 
 /** A finished session as one file, built if it has to be. */
 export const replayFileRequestSchema = z.object({
-  sourceId: z.string(),
   sessionId: z.string().max(80),
+  sourceId: z.string(),
 });
 
 export const replayFilePayloadSchema = z.object({ url: z.url() });
@@ -140,17 +140,17 @@ export type ReplayFilePayload = z.infer<typeof replayFilePayloadSchema>;
 
 /** What the browser tells the station about a chunk it just uploaded — bounded, since it is written down. */
 export const recordingRequestSchema = recordingChunkSchema.extend({
-  sourceId: z.string(),
-  sessionId: z.string().max(80),
-  url: z.url(),
-  formatLabel: z.string().max(80),
-  itemId: z.string().max(200),
-  text: z.string().max(4000),
-  link: z.url().max(2000).optional(),
   authorName: z.string().max(200),
   authorUsername: z.string().max(200),
-  seconds: z.number().positive().max(60),
   bytes: z.number().int().nonnegative(),
+  formatLabel: z.string().max(80),
+  itemId: z.string().max(200),
+  link: z.url().max(2000).optional(),
+  seconds: z.number().positive().max(60),
+  sessionId: z.string().max(80),
+  sourceId: z.string(),
+  text: z.string().max(4000),
+  url: z.url(),
 });
 
 export type RecordingRequest = z.infer<typeof recordingRequestSchema>;
@@ -197,9 +197,9 @@ export const jsonRequest = <Body extends object>(
   method: "POST" | "DELETE" | "PATCH",
   body: Body,
 ): RequestInit => ({
-  method,
-  headers: { "Content-Type": "application/json" },
   body: JSON.stringify(body),
+  headers: { "Content-Type": "application/json" },
+  method,
 });
 
 /**

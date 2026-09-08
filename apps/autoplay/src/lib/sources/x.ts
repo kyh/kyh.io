@@ -61,10 +61,10 @@ const BOOTSTRAP_AIRED_SIZE = 3;
 const FEED_CACHE_TTL_MS = 3_600_000;
 
 const feedCacheSchema = z.object({
-  source: feedSourceSchema,
-  posts: z.array(feedPostSchema),
   nextToken: z.string().optional(),
   pages: z.number().int(),
+  posts: z.array(feedPostSchema),
+  source: feedSourceSchema,
 });
 
 type FeedCache = z.infer<typeof feedCacheSchema>;
@@ -116,12 +116,17 @@ const pickTrendCandidate = async (
     }
     await cache.set(trendsKey(sourceId), trends, TREND_CACHE_TTL_MS);
   }
-  if (trends.length === 0) return undefined;
+  if (trends.length === 0) {
+    return undefined;
+  }
 
-  const next = (await cache.get(cursorKey(sourceId), cursorSchema))?.next ?? 0;
+  const cursor = await cache.get(cursorKey(sourceId), cursorSchema);
+  const next = cursor?.next ?? 0;
   await cache.set(cursorKey(sourceId), { next: next + 1 }, TREND_CACHE_TTL_MS);
   const trend = trends[next % trends.length];
-  if (trend === undefined) return undefined;
+  if (trend === undefined) {
+    return undefined;
+  }
 
   try {
     let posts = await cache.get(searchKey(trend), searchSchema);
@@ -152,14 +157,16 @@ const pickTimelineCandidate = async (
   if (feed === undefined) {
     const page = await fetchFeedPage(access.accessToken, access.xUserId);
     await spend.record("x", sourceId, pageUsd(page));
-    feed = { source: page.source, posts: page.posts, nextToken: page.nextToken, pages: 1 };
+    feed = { nextToken: page.nextToken, pages: 1, posts: page.posts, source: page.source };
     await cache.set(feedKey(sourceId), feed, FEED_CACHE_TTL_MS);
   }
 
   for (;;) {
     const unaired = feed.posts.map(toItem).filter((item) => !aired.has(item.id));
     const popular = unaired.filter((item) => item.score >= MIN_SCORE);
-    if (popular.length > 0) return bestOf(popular);
+    if (popular.length > 0) {
+      return bestOf(popular);
+    }
 
     if (feed.nextToken !== undefined && feed.pages < MAX_FEED_PAGES) {
       const page = await fetchFeedPage(
@@ -170,10 +177,10 @@ const pickTimelineCandidate = async (
       );
       await spend.record("x", sourceId, pageUsd(page));
       const deeper: FeedCache = {
-        source: feed.source,
-        posts: [...feed.posts, ...page.posts],
         nextToken: page.nextToken,
         pages: feed.pages + 1,
+        posts: [...feed.posts, ...page.posts],
+        source: feed.source,
       };
       feed = deeper;
       await cache.set(feedKey(sourceId), feed, FEED_CACHE_TTL_MS);
@@ -192,6 +199,8 @@ export const pickXCandidate = async (
   context: SourceContext,
 ): Promise<Item | undefined> => {
   const trending = await pickTrendCandidate(access, sourceId, context);
-  if (trending !== undefined) return trending;
+  if (trending !== undefined) {
+    return trending;
+  }
   return pickTimelineCandidate(access, sourceId, context);
 };

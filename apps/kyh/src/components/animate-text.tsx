@@ -1,12 +1,12 @@
 "use client";
 
-export type AnimateSectionProps<C> = {
+export interface AnimateSectionProps<C> {
   children: React.ReactNode;
   className?: string;
   duration?: number;
   delay?: number;
   as?: C;
-};
+}
 
 export const AnimateSection = <C extends React.ElementType>({
   children,
@@ -39,7 +39,7 @@ const GLYPHS =
 const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
 
 const generateChars = (text: string) =>
-  text.split("").map(() => ({
+  [...text].map(() => ({
     char1: getRandomGlyph(),
     char2: getRandomGlyph(),
     char3: getRandomGlyph(),
@@ -63,35 +63,40 @@ export const ScrambleText = ({
   const chars = generateChars(text);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
-    if (trigger === "load") return;
+    if (trigger === "load") {
+      return;
+    }
     const span = e.currentTarget.querySelector<HTMLSpanElement>("[data-scramble]");
-    if (!span) return;
+    if (!span) {
+      return;
+    }
 
     // Update CSS vars with new random chars
-    span.querySelectorAll<HTMLSpanElement>("span[data-char]").forEach((el) => {
+    for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
       el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
       el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
       el.style.setProperty("--char-3", `"${getRandomGlyph()}"`);
-    });
+    }
 
-    // Restart animation by removing and re-adding class
+    // Restart animation by removing and re-adding class; reading offsetWidth
+    // forces the reflow that makes the browser notice the removal
     span.classList.remove("scramble");
-    void span.offsetWidth; // Force reflow
+    void span.offsetWidth;
     span.classList.add("scramble");
   };
 
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span data-scramble className={trigger !== "hover" ? "scramble" : ""} aria-hidden>
-        {text.split("").map((char, index) => {
+      <span data-scramble className={trigger === "hover" ? "" : "scramble"} aria-hidden>
+        {[...text].map((char, index) => {
           // SAFETY: CSS custom properties are valid inline styles, but
           // React.CSSProperties has no index signature for `--*` keys; the
           // object holds nothing else.
           const charStyle = {
-            "--index": index,
             "--char-1": `"${chars[index]?.char1}"`,
             "--char-2": `"${chars[index]?.char2}"`,
             "--char-3": `"${chars[index]?.char3}"`,
+            "--index": index,
           } as React.CSSProperties;
           return (
             <span key={index} data-char={char} style={charStyle}>

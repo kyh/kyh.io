@@ -9,126 +9,185 @@ import { incidents, videos } from "@/db/drizzle-schema";
 import { getSession } from "@/lib/auth";
 import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
 
-async function requireAdmin() {
+interface FeedPost {
+  id: string;
+  title: string;
+  link: string;
+  content: string;
+  published: string;
+}
+
+const decodeHTMLEntities = (text: string): string =>
+  text
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&apos;", "'");
+
+const feedField = (entry: string, pattern: RegExp): string =>
+  pattern.exec(entry)?.groups?.value ?? "";
+
+const parseAtomFeed = (xml: string): FeedPost[] => {
+  const posts: FeedPost[] = [];
+
+  for (const match of xml.matchAll(/<entry>(?<body>[\s\S]*?)<\/entry>/gu)) {
+    const entry = match.groups?.body ?? "";
+
+    const id = feedField(entry, /<id>(?<value>[^<]+)<\/id>/u);
+    const title = feedField(entry, /<title>(?<value>[^<]+)<\/title>/u);
+    const link = feedField(entry, /<link href="(?<value>[^"]+)"/u);
+    const content = feedField(entry, /<content[^>]*>(?<value>[\s\S]*?)<\/content>/u);
+    const published = feedField(entry, /<updated>(?<value>[^<]+)<\/updated>/u);
+
+    if (id && link) {
+      posts.push({
+        content: decodeHTMLEntities(content),
+        id,
+        link,
+        published,
+        title: decodeHTMLEntities(title),
+      });
+    }
+  }
+
+  return posts;
+};
+
+const normalizeUrl = (url: string): string => {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`.replace(/\/$/u, "");
+  } catch {
+    return url.split("?")[0].replace(/\/$/u, "");
+  }
+};
+
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const requireAdmin = async () => {
   const session = await getSession();
   if (!session?.user || session.user.isAnonymous) {
     throw new Error("Unauthorized");
   }
   return session.user;
-}
+};
 
-export async function getAllIncidents() {
+export const getAllIncidents = async () => {
   await requireAdmin();
 
   const results = await db.query.incidents.findMany({
-    with: { videos: true },
-    where: isNull(incidents.deletedAt),
     orderBy: [desc(incidents.createdAt)],
+    where: isNull(incidents.deletedAt),
+    with: { videos: true },
   });
   return results;
-}
+};
 
-export async function updateIncident(data: {
+export const updateIncident = async (data: {
   id: number;
   location?: string;
   description?: string;
   incidentDate?: string;
   status?: IncidentStatus;
-}) {
+}) => {
   await requireAdmin();
-
-  function parseLocalDate(dateStr: string): Date {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
 
   await db
     .update(incidents)
     .set({
-      location: data.location,
       description: data.description,
       incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+      location: data.location,
       status: data.status,
     })
     .where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function toggleIncidentStatus(data: { id: number }) {
+export const toggleIncidentStatus = async (data: { id: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
-  if (!incident) return { success: false, error: "Not found" };
+  if (!incident) {
+    return { error: "Not found", success: false };
+  }
 
   const newStatus = incident.status === "approved" ? "hidden" : "approved";
   await db.update(incidents).set({ status: newStatus }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
-  return { success: true, newStatus };
-}
+  return { newStatus, success: true };
+};
 
-export async function toggleIncidentPinned(data: { id: number }) {
+export const toggleIncidentPinned = async (data: { id: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
-  if (!incident) return { success: false, error: "Not found" };
+  if (!incident) {
+    return { error: "Not found", success: false };
+  }
 
   const newPinned = !incident.pinned;
   await db.update(incidents).set({ pinned: newPinned }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
-  return { success: true, newPinned };
-}
+  return { newPinned, success: true };
+};
 
-export async function adminDeleteIncident(data: { id: number }) {
+export const adminDeleteIncident = async (data: { id: number }) => {
   await requireAdmin();
 
   await db.delete(incidents).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function addVideo(data: { incidentId: number; url: string }) {
+export const addVideo = async (data: { incidentId: number; url: string }) => {
   await requireAdmin();
 
   const platform = detectPlatform(data.url);
   await db.insert(videos).values({
     incidentId: data.incidentId,
-    url: data.url,
     platform,
+    url: data.url,
   });
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function updateVideo(data: { id: number; url: string }) {
+export const updateVideo = async (data: { id: number; url: string }) => {
   await requireAdmin();
 
   const platform = detectPlatform(data.url);
-  await db.update(videos).set({ url: data.url, platform }).where(eq(videos.id, data.id));
+  await db.update(videos).set({ platform, url: data.url }).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function deleteVideo(data: { id: number }) {
+export const deleteVideo = async (data: { id: number }) => {
   await requireAdmin();
 
   await db.delete(videos).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function bulkCreateIncidents(data: {
+export const bulkCreateIncidents = async (data: {
   urls: string[];
   groupAsOne: boolean;
   location?: string;
   description?: string;
   incidentDate?: string;
-}) {
+}) => {
   await requireAdmin();
 
   const validUrls = data.urls.filter((url) => isValidVideoUrl(url));
   if (validUrls.length === 0) {
-    return { created: 0, skipped: 0, error: "No valid URLs" };
+    return { created: 0, error: "No valid URLs", skipped: 0 };
   }
 
   const resolvedUrls = await Promise.all(validUrls.map(resolveVideoUrl));
@@ -149,9 +208,9 @@ export async function bulkCreateIncidents(data: {
     const [incident] = await db
       .insert(incidents)
       .values({
-        location: data.location ?? null,
         description: data.description ?? null,
         incidentDate,
+        location: data.location ?? null,
         status: "approved",
       })
       .returning();
@@ -159,40 +218,39 @@ export async function bulkCreateIncidents(data: {
     await db.insert(videos).values(
       newUrls.map((url) => ({
         incidentId: incident.id,
-        url,
         platform: detectPlatform(url),
+        url,
       })),
     );
 
     revalidateTag("incidents", "max");
     return { created: 1, skipped: existingUrls.size };
-  } else {
-    let created = 0;
-    for (const url of newUrls) {
-      const [incident] = await db
-        .insert(incidents)
-        .values({
-          location: data.location ?? null,
-          description: data.description ?? null,
-          incidentDate,
-          status: "approved",
-        })
-        .returning();
-
-      await db.insert(videos).values({
-        incidentId: incident.id,
-        url,
-        platform: detectPlatform(url),
-      });
-      created++;
-    }
-
-    revalidateTag("incidents", "max");
-    return { created, skipped: existingUrls.size };
   }
-}
+  let created = 0;
+  for (const url of newUrls) {
+    const [incident] = await db
+      .insert(incidents)
+      .values({
+        description: data.description ?? null,
+        incidentDate,
+        location: data.location ?? null,
+        status: "approved",
+      })
+      .returning();
 
-export async function getFeedPosts() {
+    await db.insert(videos).values({
+      incidentId: incident.id,
+      platform: detectPlatform(url),
+      url,
+    });
+    created += 1;
+  }
+
+  revalidateTag("incidents", "max");
+  return { created, skipped: existingUrls.size };
+};
+
+export const getFeedPosts = async () => {
   await requireAdmin();
 
   const res = await fetch("https://www.reddit.com/r/ICE_Watch.rss", {
@@ -209,23 +267,23 @@ export async function getFeedPosts() {
   const posts = parseAtomFeed(xml);
 
   const existingVideos = await db.query.videos.findMany({
-    where: (v, { like }) => like(v.url, "%reddit.com%"),
     columns: { url: true },
+    where: (v, { like }) => like(v.url, "%reddit.com%"),
   });
   const existingUrls = existingVideos.map((v) => normalizeUrl(v.url));
 
-  return { posts, existingUrls };
-}
+  return { existingUrls, posts };
+};
 
-export async function createFromFeed(data: { url: string; title: string; published: string }) {
+export const createFromFeed = async (data: { url: string; title: string; published: string }) => {
   await requireAdmin();
 
   const existing = await db.query.videos.findFirst({
-    where: (v, { eq }) => eq(v.url, data.url),
+    where: (v, { eq: eqOp }) => eqOp(v.url, data.url),
   });
 
   if (existing) {
-    return { success: false, error: "Already added" };
+    return { error: "Already added", success: false };
   }
 
   const [incident] = await db
@@ -239,67 +297,10 @@ export async function createFromFeed(data: { url: string; title: string; publish
 
   await db.insert(videos).values({
     incidentId: incident.id,
-    url: data.url,
     platform: detectPlatform(data.url),
+    url: data.url,
   });
 
   revalidateTag("incidents", "max");
-  return { success: true, incidentId: incident.id };
-}
-
-// Helpers
-
-type FeedPost = {
-  id: string;
-  title: string;
-  link: string;
-  content: string;
-  published: string;
+  return { incidentId: incident.id, success: true };
 };
-
-function parseAtomFeed(xml: string): FeedPost[] {
-  const posts: FeedPost[] = [];
-  const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-  let match;
-
-  while ((match = entryRegex.exec(xml)) !== null) {
-    const entry = match[1];
-
-    const id = /<id>([^<]+)<\/id>/.exec(entry)?.[1] ?? "";
-    const title = /<title>([^<]+)<\/title>/.exec(entry)?.[1] ?? "";
-    const link = /<link href="([^"]+)"/.exec(entry)?.[1] ?? "";
-    const content = /<content[^>]*>([\s\S]*?)<\/content>/.exec(entry)?.[1] ?? "";
-    const published = /<updated>([^<]+)<\/updated>/.exec(entry)?.[1] ?? "";
-
-    if (id && link) {
-      posts.push({
-        id,
-        title: decodeHTMLEntities(title),
-        link,
-        content: decodeHTMLEntities(content),
-        published,
-      });
-    }
-  }
-
-  return posts;
-}
-
-function decodeHTMLEntities(text: string): string {
-  return text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
-}
-
-function normalizeUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    return `${u.origin}${u.pathname}`.replace(/\/$/, "");
-  } catch {
-    return url.split("?")[0].replace(/\/$/, "");
-  }
-}

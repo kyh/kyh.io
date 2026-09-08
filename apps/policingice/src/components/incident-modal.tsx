@@ -8,27 +8,27 @@ import { toast } from "@/components/toast";
 import { formString } from "@/lib/form-utils";
 import { isValidVideoUrl } from "@/lib/video-utils";
 
-type Video = {
+interface Video {
   id: number;
   url: string;
   platform: VideoPlatform;
-};
+}
 
-type IncidentData = {
+interface IncidentData {
   location?: string;
   description?: string;
   incidentDate?: string;
   videoUrls?: string[];
-};
+}
 
-type CreateModeProps = {
+interface CreateModeProps {
   mode: "create";
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: IncidentData & { videoUrls: string[] }) => Promise<void>;
-};
+}
 
-type EditModeProps = {
+interface EditModeProps {
   mode: "edit";
   isOpen: boolean;
   onClose: () => void;
@@ -40,9 +40,12 @@ type EditModeProps = {
   };
   onAddVideo: (url: string) => Promise<void>;
   onUpdate: (data: IncidentData) => Promise<void>;
-};
+}
 
 type IncidentModalProps = CreateModeProps | EditModeProps;
+
+const withoutKey = (errors: Record<number, string>, key: number): Record<number, string> =>
+  Object.fromEntries(Object.entries(errors).filter(([k]) => Number(k) !== key));
 
 export const IncidentModal = (props: IncidentModalProps) => {
   const { isOpen, onClose, mode } = props;
@@ -69,16 +72,12 @@ export const IncidentModal = (props: IncidentModalProps) => {
   // Create mode: video URL management
   const addVideoUrl = () => {
     setInputKeys([...inputKeys, nextKeyRef.current]);
-    nextKeyRef.current++;
+    nextKeyRef.current += 1;
   };
 
   const removeVideoUrl = (key: number) => {
     setInputKeys(inputKeys.filter((k) => k !== key));
-    setUrlErrors((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
+    setUrlErrors((prev) => withoutKey(prev, key));
   };
 
   const validateUrl = (key: number, value: string) => {
@@ -88,19 +87,19 @@ export const IncidentModal = (props: IncidentModalProps) => {
         [key]: "Use a supported platform link",
       }));
     } else {
-      setUrlErrors((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
+      setUrlErrors((prev) => withoutKey(prev, key));
     }
   };
 
   // Edit mode: add video
   const handleAddVideo = async () => {
-    if (mode !== "edit") return;
+    if (mode !== "edit") {
+      return;
+    }
     const url = addVideoRef.current?.value.trim();
-    if (!url) return;
+    if (!url) {
+      return;
+    }
 
     if (!isValidVideoUrl(url)) {
       setVideoError("Use a supported platform link");
@@ -111,13 +110,14 @@ export const IncidentModal = (props: IncidentModalProps) => {
     setVideoError("");
     try {
       await props.onAddVideo(url);
-      if (addVideoRef.current) addVideoRef.current.value = "";
+      if (addVideoRef.current) {
+        addVideoRef.current.value = "";
+      }
       toast.success("Video added");
     } catch {
       toast.error("Failed to add video");
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -128,46 +128,39 @@ export const IncidentModal = (props: IncidentModalProps) => {
     const description = formString(formData, "description").trim();
     const incidentDate = formString(formData, "incidentDate");
 
-    if (mode === "create") {
-      const videoUrls = inputKeys
-        .map((key) => formString(formData, `video-${key}`).trim())
-        .filter((url) => url && isValidVideoUrl(url));
+    const details = {
+      description: description || undefined,
+      incidentDate: incidentDate || undefined,
+      location: location || undefined,
+    };
+    const videoUrls =
+      mode === "create"
+        ? inputKeys
+            .map((key) => formString(formData, `video-${key}`).trim())
+            .filter((url) => url && isValidVideoUrl(url))
+        : [];
 
-      if (videoUrls.length === 0) {
-        setUrlErrors({
-          [inputKeys[0]]: "At least one valid video URL required",
-        });
-        return;
-      }
+    if (mode === "create" && videoUrls.length === 0) {
+      setUrlErrors({
+        [inputKeys[0]]: "At least one valid video URL required",
+      });
+      return;
+    }
 
-      setIsSubmitting(true);
-      try {
-        await props.onSubmit({
-          location: location || undefined,
-          description: description || undefined,
-          incidentDate: incidentDate || undefined,
-          videoUrls,
-        });
+    setIsSubmitting(true);
+    try {
+      if (mode === "create") {
+        await props.onSubmit({ ...details, videoUrls });
         handleClose();
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      setIsSubmitting(true);
-      try {
-        await props.onUpdate({
-          location: location || undefined,
-          description: description || undefined,
-          incidentDate: incidentDate || undefined,
-        });
+      } else {
+        await props.onUpdate(details);
         toast.success("Saved");
         onClose();
-      } catch {
-        toast.error("Failed to save");
-      } finally {
-        setIsSubmitting(false);
       }
+    } catch {
+      toast.error(mode === "create" ? "Failed to submit" : "Failed to save");
     }
+    setIsSubmitting(false);
   };
 
   const title = mode === "create" ? "Submit an incident" : "Edit incident";

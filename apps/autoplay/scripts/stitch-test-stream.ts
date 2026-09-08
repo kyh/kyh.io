@@ -23,27 +23,33 @@ const main = async () => {
   }
   const { values: args } = parseArgs({
     args: process.argv.slice(2),
-    strict: true,
     options: {
-      from: { type: "string", default: "https://autoplay.kyh.io" },
+      from: { default: "https://autoplay.kyh.io", type: "string" },
       session: { type: "string" },
     },
+    strict: true,
   });
-  const from = args.from.replace(/\/$/, "");
+  const from = args.from.replace(/\/$/u, "");
   const response = await fetch(`${from}/api/replay?sourceId=${OWNER_SOURCE_ID}`);
-  if (!response.ok) throw new Error(`${from}: replay route answered ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`${from}: replay route answered ${response.status}`);
+  }
   const { sessions } = replayPayloadSchema.parse(await response.json());
   const session =
     args.session === undefined
       ? sessions[0]
       : sessions.find((entry) => entry.sessionId === args.session);
-  if (session === undefined) throw new Error("No such session recorded");
+  if (session === undefined) {
+    throw new Error("No such session recorded");
+  }
 
   const chunks = session.chunks.toSorted((a, b) => a.index - b.index);
   const parts: Uint8Array[] = [];
   for (const chunk of chunks) {
     const file = await fetch(chunk.url);
-    if (!file.ok) throw new Error(`Chunk ${chunk.index} answered ${file.status}`);
+    if (!file.ok) {
+      throw new Error(`Chunk ${chunk.index} answered ${file.status}`);
+    }
     parts.push(new Uint8Array(await file.arrayBuffer()));
   }
   const bytes = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
@@ -56,9 +62,9 @@ const main = async () => {
 
   const stored = await put(TEST_STREAM_PATH, new Blob([bytes], { type: "video/webm" }), {
     access: "public",
-    contentType: "video/webm",
     addRandomSuffix: false,
     allowOverwrite: true,
+    contentType: "video/webm",
     token: env.BLOB_READ_WRITE_TOKEN,
   });
   console.log(

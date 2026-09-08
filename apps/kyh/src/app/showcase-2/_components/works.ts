@@ -34,11 +34,11 @@ export const buildWorkSeeds = (projects: ProjectType[]): WorkSeed[] =>
     .filter((p) => p.type === "project" || p.type === "venture" || p.type === "mini-app")
     .flatMap((p) =>
       p.projectAssets.slice(0, MAX_ASSETS_PER_PROJECT).map((asset, i) => ({
-        slug: `${p.slug}-${i}`,
-        title: p.title,
         category: p.type,
         description: p.description,
+        media: { src: asset.src, type: asset.type },
+        slug: `${p.slug}-${i}`,
+        title: p.title,
         url: p.url,
-        media: { type: asset.type, src: asset.src },
       })),
     );

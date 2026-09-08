@@ -1,9 +1,9 @@
 import type Konva from "konva";
 import { useEffect, useRef, useState } from "react";
 
-import { KwadrantProvider, useKwadrant } from "@/lib/KwadrantContext";
-import { KwadrantCanvas } from "./canvas/KwadrantCanvas";
-import { FloatingIsland } from "./ui/FloatingIsland";
+import { KwadrantProvider, useKwadrant } from "@/lib/kwadrant-context";
+import { KwadrantCanvas } from "./canvas/kwadrant-canvas";
+import { FloatingIsland } from "./ui/floating-island";
 import { cn } from "cn";
 
 const KwadrantApp = () => {
@@ -17,7 +17,7 @@ const KwadrantApp = () => {
     const updateSize = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        setSize({ width: rect.width, height: rect.height });
+        setSize({ height: rect.height, width: rect.width });
       }
     };
 
@@ -46,10 +46,10 @@ const KwadrantApp = () => {
   );
 };
 
-export default function Index() {
-  return (
-    <KwadrantProvider>
-      <KwadrantApp />
-    </KwadrantProvider>
-  );
-}
+const Index = () => (
+  <KwadrantProvider>
+    <KwadrantApp />
+  </KwadrantProvider>
+);
+
+export default Index;

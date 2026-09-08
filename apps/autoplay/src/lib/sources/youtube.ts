@@ -22,8 +22,8 @@ const subscriptionsSchema = z.object({
     .array(
       z.object({
         snippet: z.object({
-          title: z.string(),
           resourceId: z.object({ channelId: z.string() }),
+          title: z.string(),
         }),
       }),
     )
@@ -49,10 +49,10 @@ const videosSchema = z.object({
       z.object({
         id: z.string(),
         snippet: z.object({
-          title: z.string(),
-          description: z.string().optional(),
           channelTitle: z.string(),
+          description: z.string().optional(),
           publishedAt: z.string().optional(),
+          title: z.string(),
         }),
         statistics: z.object({ viewCount: z.string().optional() }).optional(),
       }),
@@ -67,7 +67,9 @@ const ytFetch = <T>(
   schema: z.ZodType<T>,
 ): Promise<T> => {
   const url = new URL(`${YT_BASE}/${path}`);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
   return fetchJson("YouTube", url, accessToken, schema);
 };
 
@@ -78,7 +80,7 @@ const fetchUploads = async (access: AccessOf<"youtube">): Promise<Item[]> => {
   const subscriptions = await ytFetch(
     access.accessToken,
     "subscriptions",
-    { part: "snippet", mine: "true", maxResults: String(MAX_CHANNELS) },
+    { maxResults: String(MAX_CHANNELS), mine: "true", part: "snippet" },
     subscriptionsSchema,
   );
   const channelIds = (subscriptions.items ?? []).map((sub) => sub.snippet.resourceId.channelId);
@@ -91,9 +93,9 @@ const fetchUploads = async (access: AccessOf<"youtube">): Promise<Item[]> => {
           access.accessToken,
           "playlistItems",
           {
+            maxResults: String(UPLOADS_PER_CHANNEL),
             part: "contentDetails",
             playlistId: uploadsPlaylistId(channelId),
-            maxResults: String(UPLOADS_PER_CHANNEL),
           },
           playlistItemsSchema,
         );
@@ -117,18 +119,18 @@ const fetchUploads = async (access: AccessOf<"youtube">): Promise<Item[]> => {
     const videos = await ytFetch(
       access.accessToken,
       "videos",
-      { part: "snippet,statistics", id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(",") },
+      { id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(","), part: "snippet,statistics" },
       videosSchema,
     );
     for (const video of videos.items ?? []) {
       items.push({
+        author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
+        createdAt: video.snippet.publishedAt,
         id: `youtube:${video.id}`,
         kind: "youtube",
-        text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
         link: `https://www.youtube.com/watch?v=${video.id}`,
-        createdAt: video.snippet.publishedAt,
         score: Number(video.statistics?.viewCount ?? 0),
-        author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
+        text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
       });
     }
   }

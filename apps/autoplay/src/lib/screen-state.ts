@@ -51,17 +51,25 @@ export const screenState = (
 ): ScreenState => {
   const liveDown = live.status === "off-air" ? live.reason : undefined;
   if (surface === "replay") {
-    if (replay.status === "loading") return { status: "tuning" };
+    if (replay.status === "loading") {
+      return { status: "tuning" };
+    }
     if (replay.status === "empty") {
       return {
-        status: "off-air",
         reason: liveDown === undefined ? replay.reason : `${liveDown} ${replay.reason}`,
+        status: "off-air",
       };
     }
-    return replay.onAir ? { status: "live", tailing: true } : { status: "replay", liveDown };
+    return replay.onAir ? { status: "live", tailing: true } : { liveDown, status: "replay" };
   }
-  if (!liveReady) return { status: "off-air", reason: "The station can't go on air without fal." };
-  if (live.status === "connecting") return { status: "tuning" };
-  if (live.status === "off-air") return { status: "off-air", reason: live.reason };
+  if (!liveReady) {
+    return { reason: "The station can't go on air without fal.", status: "off-air" };
+  }
+  if (live.status === "connecting") {
+    return { status: "tuning" };
+  }
+  if (live.status === "off-air") {
+    return { reason: live.reason, status: "off-air" };
+  }
   return { status: "live", tailing: false };
 };

@@ -11,17 +11,17 @@ import { today } from "@/lib/day";
 // to render an argument. So the noise is stripped and what remains is framed
 // as the subject of the next segment.
 
-const URL_PATTERN = /https?:\/\/\S+/g;
-const MENTION_PATTERN = /@\w+/g;
-const HASHTAG_PATTERN = /#(\w+)/g;
+const URL_PATTERN = /https?:\/\/\S+/gu;
+const MENTION_PATTERN = /@\w+/gu;
+const HASHTAG_PATTERN = /#(?<word>\w+)/gu;
 /** Long posts blur the subject; a segment only ever depicts the opening idea. */
 const MAX_SUBJECT_LENGTH = 300;
 
-export type Format = {
+export interface Format {
   id: string;
   label: string;
   world: string;
-};
+}
 
 /**
  * The channel formats, each a world the model can hold onto. The channel of
@@ -69,9 +69,13 @@ export const FORMATS: readonly Format[] = [
  */
 export const pickFormat = (day: string = today()): Format => {
   let hash = 0;
-  for (const char of day) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  for (const char of day) {
+    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2 ** 32;
+  }
   const format = FORMATS[hash % FORMATS.length];
-  if (format === undefined) throw new Error("no formats");
+  if (format === undefined) {
+    throw new Error("no formats");
+  }
   return format;
 };
 
@@ -80,12 +84,14 @@ const clean = (text: string): string =>
     .replace(URL_PATTERN, "")
     .replace(MENTION_PATTERN, "")
     // A hashtag's word is usually the subject — keep it, drop the hash.
-    .replace(HASHTAG_PATTERN, "$1")
-    .replace(/\s+/g, " ")
+    .replace(HASHTAG_PATTERN, "$<word>")
+    .replaceAll(/\s+/gu, " ")
     .trim();
 
 const truncate = (text: string): string => {
-  if (text.length <= MAX_SUBJECT_LENGTH) return text;
+  if (text.length <= MAX_SUBJECT_LENGTH) {
+    return text;
+  }
   const clipped = text.slice(0, MAX_SUBJECT_LENGTH);
   const lastStop = Math.max(clipped.lastIndexOf(". "), clipped.lastIndexOf(", "));
   return lastStop > MAX_SUBJECT_LENGTH / 2 ? clipped.slice(0, lastStop) : clipped;

@@ -6,23 +6,23 @@ import { lerp } from "../math/lerp";
 const PULSE_INTERVAL = 1500;
 const PULSE_DURATION = 900;
 
-function lerpColor(a: [number, number, number], b: [number, number, number], t: number): string {
+const lerpColor = (a: [number, number, number], b: [number, number, number], t: number): string => {
   const r = Math.round(a[0] + (b[0] - a[0]) * t);
   const g = Math.round(a[1] + (b[1] - a[1]) * t);
   const bl = Math.round(a[2] + (b[2] - a[2]) * t);
   return `rgb(${r},${g},${bl})`;
-}
+};
 
 /** Draw the live dot: expanding ring pulse, white outer circle, colored inner dot. */
-export function drawDot(
+export const drawDot = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   palette: LivelinePalette,
-  pulse: boolean = true,
-  scrubAmount: number = 0,
+  pulse = true,
+  scrubAmount = 0,
   now_ms: number = performance.now(),
-): void {
+): void => {
   const baseAlpha = ctx.globalAlpha;
   const dim = scrubAmount * 0.7;
 
@@ -67,18 +67,18 @@ export function drawDot(
     ctx.fillStyle = palette.line;
   }
   ctx.fill();
-}
+};
 
 /** Draw a multi-series endpoint dot with optional pulse ring (colored ring + solid dot, no white outer, no shadow). */
-export function drawMultiDot(
+export const drawMultiDot = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   color: string,
-  pulse: boolean = true,
+  pulse = true,
   now_ms: number = performance.now(),
-  radius: number = 3,
-): void {
+  radius = 3,
+): void => {
   const baseAlpha = ctx.globalAlpha;
 
   // Expanding ring pulse (series-colored, every 1.5s)
@@ -102,24 +102,24 @@ export function drawMultiDot(
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
-}
+};
 
 /** Draw a small colored dot for multi-series endpoints (no ring, no pulse, no shadow). */
-export function drawSimpleDot(
+export const drawSimpleDot = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   color: string,
-  radius: number = 3,
-): void {
+  radius = 3,
+): void => {
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
-}
+};
 
 /** Draw momentum arrows (chevrons) next to the dot. */
-export function drawArrows(
+export const drawArrows = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -128,7 +128,7 @@ export function drawArrows(
   arrows: ArrowState,
   dt: number,
   now_ms: number = performance.now(),
-): void {
+): void => {
   const baseAlpha = ctx.globalAlpha;
 
   // Update arrow opacities — fade out old direction fully before fading in new
@@ -146,17 +146,27 @@ export function drawArrows(
     dt,
   );
 
-  if (arrows.up < 0.01) arrows.up = 0;
-  if (arrows.down < 0.01) arrows.down = 0;
-  if (arrows.up > 0.99) arrows.up = 1;
-  if (arrows.down > 0.99) arrows.down = 1;
+  if (arrows.up < 0.01) {
+    arrows.up = 0;
+  }
+  if (arrows.down < 0.01) {
+    arrows.down = 0;
+  }
+  if (arrows.up > 0.99) {
+    arrows.up = 1;
+  }
+  if (arrows.down > 0.99) {
+    arrows.down = 1;
+  }
 
   // Draw chevrons — directional cascade animation.
   // UP: bottom arrow fires first, then top (energy moves upward).
   // DOWN: top arrow fires first, then bottom.
   const cycle = (now_ms % 1400) / 1400;
   const drawChevrons = (dir: -1 | 1, opacity: number) => {
-    if (opacity < 0.01) return;
+    if (opacity < 0.01) {
+      return;
+    }
     const baseX = x + 19;
     const baseY = y;
 
@@ -166,7 +176,7 @@ export function drawArrows(
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i += 1) {
       // Stagger: arrow 0 brightens at t=0, arrow 1 at t=0.2
       // Both always visible (min 0.3), cascade just brightens each in sequence
       const start = i * 0.2;
@@ -193,4 +203,4 @@ export function drawArrows(
   drawChevrons(1, arrows.down);
 
   ctx.globalAlpha = baseAlpha;
-}
+};

@@ -4,8 +4,8 @@ import { createRoot } from "@opentui/react";
 import { App } from "./app";
 
 // Clear screen and hide cursor while the terminal UI is mounted; restore on exit.
-process.stdout.write("\x1b[2J\x1b[H\x1b[?25l");
-process.on("exit", () => process.stdout.write("\x1b[?25h\x1b[2J\x1b[H"));
+process.stdout.write("\u001B[2J\u001B[H\u001B[?25l");
+process.on("exit", () => process.stdout.write("\u001B[?25h\u001B[2J\u001B[H"));
 
 const renderer = await createCliRenderer();
 createRoot(renderer).render(<App />);

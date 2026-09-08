@@ -5,46 +5,44 @@ import { siteConfig } from "@/lib/site-config";
 import "./styles/globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: siteConfig.name,
   description: siteConfig.description,
+  metadataBase: new URL(siteConfig.url),
   openGraph: {
+    description: siteConfig.description,
     locale: "en-US",
+    siteName: siteConfig.name,
+    title: siteConfig.name,
     type: "website",
     url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    creator: siteConfig.twitter,
   },
   other: {
     "apple-mobile-web-app-title": siteConfig.shortName,
   },
+  title: siteConfig.name,
+  twitter: {
+    card: "summary_large_image",
+    creator: siteConfig.twitter,
+    description: siteConfig.description,
+    title: siteConfig.name,
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#b429f9",
-  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#b429f9",
   userScalable: false,
+  width: "device-width",
 };
 
-type LayoutProps = {
+interface LayoutProps {
   children: React.ReactNode;
-};
+}
 
-const RootLayout = (props: LayoutProps) => {
-  return (
-    <html lang="en">
-      <body className="antialiased">{props.children}</body>
-    </html>
-  );
-};
+const RootLayout = (props: LayoutProps) => (
+  <html lang="en">
+    <body className="antialiased">{props.children}</body>
+  </html>
+);
 
 export default RootLayout;

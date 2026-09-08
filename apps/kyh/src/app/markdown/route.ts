@@ -1,6 +1,6 @@
 import { connectLinks, projects, workHistory } from "@/lib/data";
 
-export function GET() {
+export const GET = () => {
   const markdown = `# Kaiyu Hsu
 
 Hello world. You can call me Kai since we're pretty much friends now. I enjoy creating things for the internet. By day, I get to do that through investing, advising, and building products you may not have heard of, yet.
@@ -40,4 +40,4 @@ ${connectLinks.map((l) => `- ${l.label}: [${l.value}](${l.href})`).join("\n")}
       "Content-Type": "text/markdown; charset=utf-8",
     },
   });
-}
+};

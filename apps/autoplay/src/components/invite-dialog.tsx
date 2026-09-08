@@ -8,15 +8,15 @@ import { WindowDialog } from "@/components/window-dialog";
 // The door. A new viewer gives the invite code once; the station answers with
 // a cookie, and the X sign-in that follows is allowed to create their account.
 
-type InviteDialogProps = {
+interface InviteDialogProps {
   onInvited: () => void;
   onClose: () => void;
-};
+}
 
 export const InviteDialog = (props: InviteDialogProps) => {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>();
 
   const submit = async () => {
     setBusy(true);
@@ -30,12 +30,13 @@ export const InviteDialog = (props: InviteDialogProps) => {
       );
       if ("error" in answer) {
         setError(answer.error);
-        return;
+      } else {
+        props.onInvited();
       }
-      props.onInvited();
-    } finally {
-      setBusy(false);
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : "Couldn't check the code");
     }
+    setBusy(false);
   };
 
   return (
@@ -44,7 +45,9 @@ export const InviteDialog = (props: InviteDialogProps) => {
         className="m-3 space-y-2 text-[11px]"
         onSubmit={(event) => {
           event.preventDefault();
-          if (code.trim() !== "") void submit();
+          if (code.trim() !== "") {
+            void submit();
+          }
         }}
       >
         <p className="leading-relaxed">

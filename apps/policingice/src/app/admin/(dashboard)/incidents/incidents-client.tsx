@@ -24,11 +24,35 @@ import type { getAllIncidents } from "@/lib/admin-action";
 
 type Incident = Awaited<ReturnType<typeof getAllIncidents>>[0];
 
-type IncidentEditRowProps = {
+interface VideoEditInputProps {
+  video: { id: number; url: string; platform: VideoPlatform };
+  onUpdate: (id: number, newUrl: string, originalUrl: string) => void;
+  onDelete: (id: number) => void;
+}
+
+const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => (
+  <div className="flex items-center gap-1">
+    <input
+      type="text"
+      defaultValue={video.url}
+      onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
+      className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
+    />
+    <button
+      type="button"
+      onClick={() => onDelete(video.id)}
+      className="cursor-pointer text-xs text-destructive hover:text-destructive"
+    >
+      ×
+    </button>
+  </div>
+);
+
+interface IncidentEditRowProps {
   incident: Incident;
   onCancel: () => void;
   onSaved: () => void;
-};
+}
 
 const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) => {
   const router = useRouter();
@@ -38,10 +62,10 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     await updateIncident({
-      id: incident.id,
-      location: formString(formData, "location").trim() || undefined,
       description: formString(formData, "description").trim() || undefined,
+      id: incident.id,
       incidentDate: formString(formData, "incidentDate") || undefined,
+      location: formString(formData, "location").trim() || undefined,
     });
     router.refresh();
     toast.success("Saved");
@@ -58,9 +82,13 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
 
   const handleAddVideo = async () => {
     const url = newVideoRef.current?.value.trim();
-    if (!url) return;
+    if (!url) {
+      return;
+    }
     await addVideo({ incidentId: incident.id, url });
-    if (newVideoRef.current) newVideoRef.current.value = "";
+    if (newVideoRef.current) {
+      newVideoRef.current.value = "";
+    }
     router.refresh();
     toast.success("Video added");
   };
@@ -80,6 +108,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         <input
           type="text"
           name="location"
+          aria-label="Location"
           form={formId}
           defaultValue={incident.location ?? ""}
           className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
@@ -90,6 +119,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         <input
           type="text"
           name="description"
+          aria-label="Description"
           form={formId}
           defaultValue={incident.description ?? ""}
           className="w-full border-b border-input bg-transparent py-1 text-sm outline-none"
@@ -100,6 +130,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         <input
           type="date"
           name="incidentDate"
+          aria-label="Incident date"
           form={formId}
           defaultValue={
             incident.incidentDate ? new Date(incident.incidentDate).toISOString().split("T")[0] : ""
@@ -178,35 +209,9 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
   );
 };
 
-type VideoEditInputProps = {
-  video: { id: number; url: string; platform: VideoPlatform };
-  onUpdate: (id: number, newUrl: string, originalUrl: string) => void;
-  onDelete: (id: number) => void;
-};
-
-const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => {
-  return (
-    <div className="flex items-center gap-1">
-      <input
-        type="text"
-        defaultValue={video.url}
-        onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
-        className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
-      />
-      <button
-        type="button"
-        onClick={() => onDelete(video.id)}
-        className="cursor-pointer text-xs text-destructive hover:text-destructive"
-      >
-        ×
-      </button>
-    </div>
-  );
-};
-
-type AdminIncidentsClientProps = {
+interface AdminIncidentsClientProps {
   initialIncidents: Incident[];
-};
+}
 
 export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientProps) => {
   const router = useRouter();
@@ -234,7 +239,10 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this incident?")) return;
+    // oxlint-disable-next-line no-alert -- admin-only destructive action; native confirm is deliberate
+    if (!confirm("Delete this incident?")) {
+      return;
+    }
     await adminDeleteIncident({ id });
     router.refresh();
     toast.success("Deleted");

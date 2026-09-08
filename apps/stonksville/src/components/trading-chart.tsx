@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LivelinePoint } from "@/lib/liveline/types";
-import { Liveline } from "@/lib/liveline/Liveline";
+import { Liveline } from "@/lib/liveline/liveline";
 import { getDpr } from "@/lib/liveline/canvas/dpr";
 import { lerp } from "@/lib/liveline/math/lerp";
 
@@ -16,12 +16,12 @@ import {
   GRID_CELL_SECONDS,
   INITIAL_BALANCE,
   MIN_FUTURE_SECONDS,
-  type Block,
   calculateMultiplier,
   createInitialState,
   placeBlock,
   updateBlocks,
 } from "@/lib/game-state";
+import type { Block } from "@/lib/game-state";
 
 /** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
@@ -31,11 +31,10 @@ const FUTURE_RATIO_DESKTOP = 0.35;
 const MOBILE_BREAKPOINT = 768;
 
 const mobileQuery =
-  typeof window !== "undefined" ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`) : null;
+  typeof window === "undefined" ? null : window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
-function getFutureRatio(): number {
-  return mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
-}
+const getFutureRatio = (): number =>
+  mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
 /** Fixed price range (half above + half below current price) */
@@ -43,7 +42,7 @@ const PRICE_RANGE_HALF = 200;
 /** Half block height in price units */
 const HALF_BLOCK_H = BLOCK_PRICE_HEIGHT / 2;
 
-type OverlayDims = {
+interface OverlayDims {
   width: number;
   height: number;
   left: number;
@@ -55,43 +54,43 @@ type OverlayDims = {
   timeEnd: number;
   priceMin: number;
   priceMax: number;
-};
+}
 
-function timeToX(time: number, dims: OverlayDims): number {
+const timeToX = (time: number, dims: OverlayDims): number => {
   const frac = (time - dims.timeStart) / (dims.timeEnd - dims.timeStart);
   return dims.left + frac * (dims.right - dims.left);
-}
+};
 
-function priceToY(price: number, dims: OverlayDims): number {
+const priceToY = (price: number, dims: OverlayDims): number => {
   const frac = (price - dims.priceMax) / (dims.priceMin - dims.priceMax);
   return dims.top + frac * (dims.bottom - dims.top);
-}
+};
 
-function xToTime(x: number, dims: OverlayDims): number {
+const xToTime = (x: number, dims: OverlayDims): number => {
   const frac = (x - dims.left) / (dims.right - dims.left);
   return dims.timeStart + frac * (dims.timeEnd - dims.timeStart);
-}
+};
 
-function yToPrice(y: number, dims: OverlayDims): number {
+const yToPrice = (y: number, dims: OverlayDims): number => {
   const frac = (y - dims.top) / (dims.bottom - dims.top);
   return dims.priceMax + frac * (dims.priceMin - dims.priceMax);
-}
+};
 
-function snapToGrid(price: number, time: number) {
+const snapToGrid = (price: number, time: number) => {
   const cellMs = GRID_CELL_SECONDS * 1000;
   const snappedTime = Math.round(time / cellMs) * cellMs;
   const snappedPrice = Math.round(price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
   return { price: snappedPrice, time: snappedTime };
-}
+};
 
-function computeDims(
+const computeDims = (
   width: number,
   height: number,
   now: number,
   priceMin: number,
   priceMax: number,
   futureRatio: number,
-): OverlayDims {
+): OverlayDims => {
   const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
@@ -102,33 +101,102 @@ function computeDims(
   const futureSeconds = padRight * timePerPx;
 
   return {
-    width,
+    bottom: height - padBottom,
     height,
     left: padLeft,
     nowX: padLeft + chartWidth,
-    right: width - 2,
-    top: padTop,
-    bottom: height - padBottom,
-    timeStart: now - CHART_WINDOW * 1000,
-    timeEnd: now + futureSeconds * 1000,
-    priceMin,
     priceMax,
+    priceMin,
+    right: width - 2,
+    timeEnd: now + futureSeconds * 1000,
+    timeStart: now - CHART_WINDOW * 1000,
+    top: padTop,
+    width,
   };
-}
+};
 
-type HoverState = {
+interface HoverState {
   x: number;
   y: number;
   currentPrice: number;
   balance: number;
+}
+
+const drawBlock = (ctx: CanvasRenderingContext2D, dims: OverlayDims, block: Block) => {
+  const x1 = timeToX(block.targetTime - HALF_CELL_MS, dims);
+  const x2 = timeToX(block.targetTime + HALF_CELL_MS, dims);
+  const y1 = priceToY(block.priceLevel + HALF_BLOCK_H, dims);
+  const y2 = priceToY(block.priceLevel - HALF_BLOCK_H, dims);
+  const w = x2 - x1;
+  const h = y2 - y1;
+
+  if (x2 < dims.left || x1 > dims.right) {
+    return;
+  }
+
+  // Fade out resolved blocks over 1s
+  let alpha = 1;
+  if (block.resolvedAt !== null) {
+    const elapsed = Date.now() - block.resolvedAt;
+    alpha = Math.max(0, 1 - elapsed / 1000);
+    if (alpha <= 0) {
+      return;
+    }
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  let border: string;
+  let fill: string;
+  let glow: string;
+  if (block.touched || block.status === "won") {
+    fill = "rgba(74, 222, 128, 0.9)";
+    border = "rgba(74, 222, 128, 1)";
+    glow = "rgba(74, 222, 128, 0.5)";
+  } else if (block.status === "lost") {
+    fill = "rgba(248, 113, 113, 0.6)";
+    border = "rgba(248, 113, 113, 0.8)";
+    glow = "rgba(248, 113, 113, 0.3)";
+  } else if (block.status === "locked") {
+    fill = "rgba(250, 200, 50, 0.9)";
+    border = "rgba(255, 180, 0, 1)";
+    glow = "rgba(255, 180, 0, 0.5)";
+  } else {
+    fill = "rgba(250, 240, 50, 0.85)";
+    border = "rgba(250, 240, 50, 1)";
+    glow = "rgba(250, 240, 50, 0.4)";
+  }
+
+  ctx.shadowColor = glow;
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = fill;
+  ctx.fillRect(x1, y1, w, h);
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = border;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x1, y1, w, h);
+
+  const cx = x1 + w / 2;
+  const cy = y1 + h / 2;
+  ctx.fillStyle = block.status === "lost" ? "#fff" : "#000";
+  ctx.font = "bold 12px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`$${block.amount}`, cx, cy - 7);
+  ctx.font = "10px monospace";
+  ctx.fillText(`${block.multiplier.toFixed(1)}x`, cx, cy + 7);
+
+  ctx.restore();
 };
 
-function drawOverlay(
+const drawOverlay = (
   ctx: CanvasRenderingContext2D,
   dims: OverlayDims,
   blocks: Block[],
   hover: HoverState | null,
-) {
+) => {
   ctx.clearRect(0, 0, dims.width, dims.height);
 
   // "Now" dashed line
@@ -149,7 +217,9 @@ function drawOverlay(
   ctx.lineWidth = 1;
   for (let t = firstGridTime; t <= dims.timeEnd; t += cellMs) {
     const x = timeToX(t, dims);
-    if (x < dims.nowX - 2 || x > dims.right) continue;
+    if (x < dims.nowX - 2 || x > dims.right) {
+      continue;
+    }
     ctx.beginPath();
     ctx.moveTo(x, dims.top);
     ctx.lineTo(x, dims.height);
@@ -168,7 +238,9 @@ function drawOverlay(
   ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
   for (let p = firstGridPrice; p <= dims.priceMax; p += BLOCK_PRICE_HEIGHT) {
     const y = priceToY(p, dims);
-    if (y < dims.top || y > dims.height) continue;
+    if (y < dims.top || y > dims.height) {
+      continue;
+    }
     const startX = Math.max(dims.nowX - 2, dims.left);
     ctx.beginPath();
     ctx.moveTo(startX, y);
@@ -210,72 +282,9 @@ function drawOverlay(
       ctx.fillText(`$${DEFAULT_BET} · ${mult.toFixed(1)}x`, (x1 + x2) / 2, (y1 + y2) / 2);
     }
   }
-}
+};
 
-function drawBlock(ctx: CanvasRenderingContext2D, dims: OverlayDims, block: Block) {
-  const x1 = timeToX(block.targetTime - HALF_CELL_MS, dims);
-  const x2 = timeToX(block.targetTime + HALF_CELL_MS, dims);
-  const y1 = priceToY(block.priceLevel + HALF_BLOCK_H, dims);
-  const y2 = priceToY(block.priceLevel - HALF_BLOCK_H, dims);
-  const w = x2 - x1;
-  const h = y2 - y1;
-
-  if (x2 < dims.left || x1 > dims.right) return;
-
-  // Fade out resolved blocks over 1s
-  let alpha = 1;
-  if (block.resolvedAt !== null) {
-    const elapsed = Date.now() - block.resolvedAt;
-    alpha = Math.max(0, 1 - elapsed / 1000);
-    if (alpha <= 0) return;
-  }
-
-  ctx.save();
-  ctx.globalAlpha = alpha;
-
-  let fill: string, border: string, glow: string;
-  if (block.touched || block.status === "won") {
-    fill = "rgba(74, 222, 128, 0.9)";
-    border = "rgba(74, 222, 128, 1)";
-    glow = "rgba(74, 222, 128, 0.5)";
-  } else if (block.status === "lost") {
-    fill = "rgba(248, 113, 113, 0.6)";
-    border = "rgba(248, 113, 113, 0.8)";
-    glow = "rgba(248, 113, 113, 0.3)";
-  } else if (block.status === "locked") {
-    fill = "rgba(250, 200, 50, 0.9)";
-    border = "rgba(255, 180, 0, 1)";
-    glow = "rgba(255, 180, 0, 0.5)";
-  } else {
-    fill = "rgba(250, 240, 50, 0.85)";
-    border = "rgba(250, 240, 50, 1)";
-    glow = "rgba(250, 240, 50, 0.4)";
-  }
-
-  ctx.shadowColor = glow;
-  ctx.shadowBlur = 14;
-  ctx.fillStyle = fill;
-  ctx.fillRect(x1, y1, w, h);
-  ctx.shadowBlur = 0;
-
-  ctx.strokeStyle = border;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x1, y1, w, h);
-
-  const cx = x1 + w / 2;
-  const cy = y1 + h / 2;
-  ctx.fillStyle = block.status === "lost" ? "#fff" : "#000";
-  ctx.font = "bold 12px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(`$${block.amount}`, cx, cy - 7);
-  ctx.font = "10px monospace";
-  ctx.fillText(`${block.multiplier.toFixed(1)}x`, cx, cy + 7);
-
-  ctx.restore();
-}
-
-export function TradingChart() {
+export const TradingChart = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const confettiLayerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -287,12 +296,12 @@ export function TradingChart() {
   const rangeCenterRef = useRef(5200);
   const targetCenterRef = useRef(5200);
   const animRef = useRef<number>(0);
-  const sizeRef = useRef({ width: 0, height: 0 });
+  const sizeRef = useRef({ height: 0, width: 0 });
   const prevUIRef = useRef({
     balance: INITIAL_BALANCE,
-    totalWins: 0,
-    totalLosses: 0,
     blockCount: 0,
+    totalLosses: 0,
+    totalWins: 0,
   });
 
   const [chartData, setChartData] = useState<LivelinePoint[]>([]);
@@ -302,18 +311,20 @@ export function TradingChart() {
   const [losses, setLosses] = useState(0);
   const [blockCount, setBlockCount] = useState(0);
   const [rightPad, setRightPad] = useState(200);
-  const [priceRange, setPriceRange] = useState({ min: 5000, max: 5400 });
+  const [priceRange, setPriceRange] = useState({ max: 5400, min: 5000 });
 
   // ResizeObserver for sizeRef and rightPad
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
+      const [entry] = entries;
       if (entry) {
         const { width, height } = entry.contentRect;
-        sizeRef.current = { width, height };
+        sizeRef.current = { height, width };
         setRightPad(Math.round(width * getFutureRatio()) || 200);
       }
     });
@@ -335,12 +346,7 @@ export function TradingChart() {
       const history = engine.getHistoryRaw();
       stateRef.current = updateBlocks(stateRef.current, point.price, Date.now(), history);
 
-      const llData: LivelinePoint[] = [];
-      for (let i = 0; i < history.length; i++) {
-        const p = history[i]!;
-        llData.push({ time: p.time / 1000, value: p.price });
-      }
-      setChartData(llData);
+      setChartData(history.map((p) => ({ time: p.time / 1000, value: p.price })));
     });
 
     engine.start();
@@ -389,7 +395,7 @@ export function TradingChart() {
       rangeCenterRef.current = lerp(rangeCenterRef.current, targetCenterRef.current, 0.04, dt);
       const min = rangeCenterRef.current - PRICE_RANGE_HALF;
       const max = rangeCenterRef.current + PRICE_RANGE_HALF;
-      setPriceRange((prev) => (prev.min === min && prev.max === max ? prev : { min, max }));
+      setPriceRange((prev) => (prev.min === min && prev.max === max ? prev : { max, min }));
 
       const next = stateRef.current;
 
@@ -419,7 +425,7 @@ export function TradingChart() {
         ctx,
         dims,
         next.blocks,
-        hover ? { ...hover, currentPrice: price, balance: next.balance } : null,
+        hover ? { ...hover, balance: next.balance, currentPrice: price } : null,
       );
 
       animRef.current = requestAnimationFrame(render);
@@ -435,7 +441,9 @@ export function TradingChart() {
     const interval = setInterval(() => {
       const next = stateRef.current;
       const prev = prevBlocksRef.current;
-      if (next.blocks === prev) return;
+      if (next.blocks === prev) {
+        return;
+      }
 
       const prevById = new Map(prev.map((b) => [b.id, b]));
       const confettiLayer = confettiLayerRef.current;
@@ -455,21 +463,21 @@ export function TradingChart() {
           const count = 3 + Math.floor(Math.random() * 5);
           textBalloons([
             {
-              text: "💸".repeat(count),
-              fontSize: 80 + Math.floor(Math.random() * 60),
               color: "#000000",
+              fontSize: 80 + Math.floor(Math.random() * 60),
+              text: "💸".repeat(count),
             },
           ]);
           if (confettiLayer) {
             fireConfetti(timeToX(b.targetTime, dims), priceToY(b.priceLevel, dims), {
-              particleCount: 12,
-              startVelocity: 8,
-              spread: 360,
               decay: 0.94,
-              gravity: 0.4,
-              size: 0.7,
               emojis: ["💰"],
+              gravity: 0.4,
               parent: confettiLayer,
+              particleCount: 12,
+              size: 0.7,
+              spread: 360,
+              startVelocity: 8,
             });
           }
         }
@@ -500,7 +508,9 @@ export function TradingChart() {
       const price = engineRef.current?.getCurrentPrice() ?? 5200;
       const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
       const cellKey = `${snapped.price}:${snapped.time}`;
-      if (cellKey === lastPlacedCellRef.current) return;
+      if (cellKey === lastPlacedCellRef.current) {
+        return;
+      }
       lastPlacedCellRef.current = cellKey;
       const prev = stateRef.current;
       stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
@@ -508,9 +518,9 @@ export function TradingChart() {
         const confettiLayer = confettiLayerRef.current;
         if (confettiLayer) {
           fireConfetti(timeToX(snapped.time, dims), priceToY(snapped.price, dims), {
+            parent: confettiLayer,
             particleCount: 20,
             size: 0.6,
-            parent: confettiLayer,
           });
         }
       }
@@ -546,7 +556,9 @@ export function TradingChart() {
     e.currentTarget.releasePointerCapture(e.pointerId);
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
-    if (e.pointerType !== "mouse") hoverRef.current = null;
+    if (e.pointerType !== "mouse") {
+      hoverRef.current = null;
+    }
   }, []);
 
   const resetPointerState = useCallback(() => {
@@ -567,9 +579,9 @@ export function TradingChart() {
     stateRef.current = createInitialState();
     prevUIRef.current = {
       balance: INITIAL_BALANCE,
-      totalWins: 0,
-      totalLosses: 0,
       blockCount: 0,
+      totalLosses: 0,
+      totalWins: 0,
     };
     setBalance(INITIAL_BALANCE);
     setWins(0);
@@ -605,7 +617,7 @@ export function TradingChart() {
           minValue={rangeMin}
           maxValue={rangeMax}
           formatValue={(v: number) => v.toFixed(2)}
-          padding={{ top: 0, right: rightPad, bottom: 28, left: 2 }}
+          padding={{ bottom: 28, left: 2, right: rightPad, top: 0 }}
         />
       </div>
 
@@ -650,4 +662,4 @@ export function TradingChart() {
       )}
     </div>
   );
-}
+};

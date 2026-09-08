@@ -31,8 +31,10 @@ let originalFetch: typeof fetch;
 
 beforeEach(() => {
   originalFetch = globalThis.fetch;
-  globalThis.fetch = async () =>
-    new Response(feed(30), { status: 200, headers: { "Content-Type": "application/xml" } });
+  globalThis.fetch = () =>
+    Promise.resolve(
+      new Response(feed(30), { headers: { "Content-Type": "application/xml" }, status: 200 }),
+    );
 });
 
 afterEach(() => {
@@ -46,23 +48,25 @@ describe("programming", () => {
       memorySessionStore(),
       memoryReads(),
     );
-    const owner = { userId: "u1", owner: true };
+    const owner = { owner: true, userId: "u1" };
     const first = await nextProgram("test:never-twice", access, owner, true);
     const second = await nextProgram("test:never-twice", access, owner, false);
     assert.equal(first.kind, "program");
     assert.equal(second.kind, "program");
-    if (first.kind !== "program" || second.kind !== "program") return;
+    if (first.kind !== "program" || second.kind !== "program") {
+      return;
+    }
     assert.equal(first.program.itemId, "rss:e29");
     assert.equal(second.program.itemId, "rss:e28");
-    assert.match(first.program.prompt, /Entry 29/);
+    assert.match(first.program.prompt, /Entry 29/u);
     assert.ok(first.formatLabel !== undefined, "an opening program names its format");
     assert.match(
       first.program.prompt,
-      /^A continuous .*\n\nNext segment/s,
+      /^A continuous .*\n\nNext segment/su,
       "and opens on the world",
     );
     assert.equal(second.formatLabel, undefined);
-    assert.match(second.program.prompt, /^Next segment/);
+    assert.match(second.program.prompt, /^Next segment/u);
   });
 
   it("bills the promotional rate through its last day and list after", () => {
@@ -76,71 +80,81 @@ describe("programming", () => {
       memorySessionStore(),
       memoryReads(),
     );
-    const guest = { userId: "u2", owner: false };
-    const owner = { userId: "u1", owner: true };
+    const guest = { owner: false, userId: "u2" };
+    const owner = { owner: true, userId: "u1" };
     const openedAt = Date.now();
     assert.equal(await mayOpen(guest), true);
     await sessionOpened("s1", guest, openedAt);
     // Open and not yet heard from: a minute's worth, spent.
     assert.equal(await mayOpen(guest), true);
-    assert.equal((await nextProgram("test:budget", access, guest, true)).kind, "program");
+    const withinBudget = await nextProgram("test:budget", access, guest, true);
+    assert.equal(withinBudget.kind, "program");
     // Heartbeats carry it to the cap.
     const capSeconds = DAILY_BUDGET_USD_PER_VIEWER / usdPerSecond();
     await sessionSeen("s1", guest, openedAt + capSeconds * 1000);
     assert.equal(await mayOpen(guest), false);
-    assert.equal((await nextProgram("test:budget", access, guest, false)).kind, "off-air");
+    const overBudget = await nextProgram("test:budget", access, guest, false);
+    assert.equal(overBudget.kind, "off-air");
     // A little over, the session may still be heard from; well over, not.
     assert.equal(await mayContinue(guest), true);
     await sessionSeen("s1", guest, openedAt + (capSeconds + MIN_BILLED_SECONDS + 1) * 1000);
     assert.equal(await mayContinue(guest), false);
     // Someone else's heartbeat for it counts for nothing.
-    await sessionSeen("s1", { userId: "u3", owner: false }, openedAt + 10 * capSeconds * 1000);
-    assert.equal(await mayOpen({ userId: "u3", owner: false }), true);
+    await sessionSeen("s1", { owner: false, userId: "u3" }, openedAt + 10 * capSeconds * 1000);
+    assert.equal(await mayOpen({ owner: false, userId: "u3" }), true);
     assert.equal(await mayOpen(owner), true);
   });
 
   it("puts a source that can't be read on the screen as the reason", async () => {
-    globalThis.fetch = async () => new Response("nope", { status: 403 });
+    globalThis.fetch = () => Promise.resolve(new Response("nope", { status: 403 }));
     const { nextProgram } = createProgramming(
       memoryAiredStore(),
       memorySessionStore(),
       memoryReads(),
     );
-    const result = await nextProgram("test:dead", access, { userId: "u1", owner: true }, true);
+    const result = await nextProgram("test:dead", access, { owner: true, userId: "u1" }, true);
     assert.equal(result.kind, "off-air");
-    if (result.kind === "off-air") assert.match(result.reason, /403/);
+    if (result.kind === "off-air") {
+      assert.match(result.reason, /403/u);
+    }
   });
 });
 
 // X, stubbed: one personalized trend, and ten posts about it with falling
 // likes. Every path the adapter can buy from lands here, so the ledger and
 // the cache can be read back against what was actually asked for.
-const xAccess = { kind: "x" as const, accessToken: "token", xUserId: "42" };
+const xAccess = { accessToken: "token", kind: "x" as const, xUserId: "42" };
 
 const json = <Body extends object>(body: Body): Response =>
-  new Response(JSON.stringify(body), {
-    status: 200,
+  Response.json(body, {
     headers: { "Content-Type": "application/json" },
+    status: 200,
   });
 
 let xCalls: string[] = [];
 
-const xStub: typeof fetch = async (input) => {
-  const url = input instanceof Request ? input.url : String(input);
-  xCalls.push(new URL(url).pathname);
-  if (url.includes("/users/personalized_trends")) return json({ data: [{ trend_name: "Vercel" }] });
+const xStubResponse = (url: string): Response => {
+  if (url.includes("/users/personalized_trends")) {
+    return json({ data: [{ trend_name: "Vercel" }] });
+  }
   if (url.includes("/tweets/search/recent")) {
     return json({
       data: Array.from({ length: 10 }, (_, i) => ({
-        id: `p${i}`,
-        text: `post ${i}`,
         author_id: "a1",
+        id: `p${i}`,
         public_metrics: { like_count: 1000 - i },
+        text: `post ${i}`,
       })),
       includes: { users: [{ id: "a1", name: "Ada", username: "ada" }] },
     });
   }
   return new Response("not stubbed", { status: 500 });
+};
+
+const xStub: typeof fetch = (input) => {
+  const url = input instanceof Request ? input.url : String(input);
+  xCalls.push(new URL(url).pathname);
+  return Promise.resolve(xStubResponse(url));
 };
 
 describe("X reads", () => {
@@ -149,11 +163,13 @@ describe("X reads", () => {
     globalThis.fetch = xStub;
     const reads = memoryReads();
     const { nextProgram } = createProgramming(memoryAiredStore(), memorySessionStore(), reads);
-    const owner = { userId: "u1", owner: true };
+    const owner = { owner: true, userId: "u1" };
 
     const first = await nextProgram("x:test", xAccess, owner, true);
     assert.equal(first.kind, "program");
-    if (first.kind === "program") assert.equal(first.program.itemId, "x:p0");
+    if (first.kind === "program") {
+      assert.equal(first.program.itemId, "x:p0");
+    }
     // One trends call ($0.010) and one ten-post search ($0.050).
     const spent = await reads.spend.spent("x", 0);
     assert.ok(Math.abs(spent - 0.06) < 1e-9, `spent ${spent}`);
@@ -162,7 +178,9 @@ describe("X reads", () => {
     // The next program comes out of the cache: nothing more is bought.
     const second = await nextProgram("x:test", xAccess, owner, false);
     assert.equal(second.kind, "program");
-    if (second.kind === "program") assert.equal(second.program.itemId, "x:p1");
+    if (second.kind === "program") {
+      assert.equal(second.program.itemId, "x:p1");
+    }
     assert.equal(xCalls.length, 2);
     assert.equal(await reads.spend.spent("x", 0), spent);
 
@@ -170,7 +188,9 @@ describe("X reads", () => {
     await reads.spend.record("x", "x:test", DAILY_READ_BUDGET_USD.x);
     const third = await nextProgram("x:test", xAccess, owner, false);
     assert.equal(third.kind, "off-air");
-    if (third.kind === "off-air") assert.match(third.reason, /X read budget/);
+    if (third.kind === "off-air") {
+      assert.match(third.reason, /X read budget/u);
+    }
     assert.equal(xCalls.length, 2);
   });
 });

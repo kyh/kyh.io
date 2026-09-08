@@ -4,15 +4,14 @@ import { useEffect, useState } from "react";
 
 import { Counter } from "@/components/counter";
 
-const getPstTime = () => {
-  return new Date().toLocaleString("en-US", {
-    timeZone: "America/Los_Angeles",
-    hour12: true,
+const getPstTime = () =>
+  new Date().toLocaleString("en-US", {
     hour: "numeric",
+    hour12: true,
     minute: "numeric",
     second: "numeric",
+    timeZone: "America/Los_Angeles",
   });
-};
 
 export const TimeCounter = () => {
   const [time, setTime] = useState("");

@@ -1,6 +1,7 @@
 {
   "name": "kyh-monorepo",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -17,7 +18,7 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "lint": "oxlint --report-unused-disable-directives --max-warnings 54",
+    "lint": "oxlint --report-unused-disable-directives",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "oxfmt --check",
@@ -27,13 +28,13 @@
     "verify:ci": "pnpm verify && turbo run build --filter=@repo/party..."
   },
   "devDependencies": {
-    "@kyh/oxlint": "workspace:*",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
     "tsx": "catalog:",
     "turbo": "^2.10.12",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "ultracite": "^7.11.0"
   },
   "engines": {
     "node": "24.x"

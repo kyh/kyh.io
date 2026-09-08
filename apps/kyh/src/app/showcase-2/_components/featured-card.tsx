@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC, ReactNode, Ref } from "react";
+import type { FC, KeyboardEvent, ReactNode, Ref } from "react";
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -64,6 +64,104 @@ interface FeaturedCardProps {
   onPrev: () => void;
 }
 
+interface FrameSize {
+  w: number;
+  frameH: number;
+}
+
+/* Fits the card into the frame: rest and expanded sizes each have a height
+   and max width, and the expanded card also has a min width. */
+const computeFrame = (
+  expanded: boolean,
+  isMobile: boolean,
+  vw: number,
+  vh: number,
+  aspect: number,
+): FrameSize => {
+  const restH = isMobile ? 220 : 280;
+  const restMaxW = isMobile ? 270 : 400;
+  const expH = isMobile ? 280 : 360;
+  const expMaxW = isMobile ? 300 : 480;
+  const expMinW = isMobile ? 260 : 340;
+
+  const heightBudget = expanded
+    ? Math.min(vh * 0.44, Math.max(MIN_EXPANDED_H, vh - EXPANDED_CHROME_H))
+    : vh * 0.62;
+  const widthBudget = vw * (expanded ? 0.78 : 0.86);
+
+  const h = Math.min(expanded ? expH : restH, heightBudget);
+  const maxW = Math.min(expanded ? expMaxW : restMaxW, widthBudget);
+  /* Clamp against the height budget too: without it, a tall-but-narrow asset
+     takes the min-width branch below and recomputes frameH from width alone,
+     re-inflating past the budget and clipping the satellite UI in short frames. */
+  const minW = Math.min(expMinW, widthBudget, heightBudget * aspect);
+
+  const w = h * aspect;
+  if (w > maxW) {
+    return { frameH: maxW / aspect, w: maxW };
+  }
+  if (expanded && w < minW) {
+    return { frameH: minW / aspect, w: minW };
+  }
+  return { frameH: h, w };
+};
+
+interface ExpandedHeaderProps {
+  photo: WorkMedia;
+  isMobile: boolean;
+  onNext: () => void;
+  onPrev: () => void;
+}
+
+const ExpandedHeader: FC<ExpandedHeaderProps> = ({ photo, isMobile, onNext, onPrev }) => (
+  <div className="absolute bottom-full left-1/2 mb-4 w-max max-w-[80%] -translate-x-1/2 text-center">
+    <div className="flex items-center justify-center gap-3">
+      <IconButton onClick={onPrev} label="Previous work" size="sm">
+        <ChevronLeft className="size-4" />
+      </IconButton>
+      <IconButton onClick={onNext} label="Next work" size="sm">
+        <ChevronRight className="size-4" />
+      </IconButton>
+    </div>
+    <div className="text-foreground-faded mt-3 text-xs tracking-[0.2em] uppercase">
+      {photo.category}
+    </div>
+    <h2
+      className={cn(
+        "text-foreground-highlighted mt-1 leading-tight font-normal",
+        isMobile ? "text-2xl" : "text-3xl",
+      )}
+    >
+      {photo.title}
+    </h2>
+  </div>
+);
+
+/* Plays collapsed too — the spotlight is the one place a single full-fidelity
+   video is cheap. The poster covers the load gap as the void drifts and the
+   featured asset changes. */
+const CardMedia: FC<{ photo: WorkMedia }> = ({ photo }) =>
+  photo.videoUrl ? (
+    <video
+      src={photo.videoUrl}
+      poster={photo.thumbUrl}
+      autoPlay
+      loop
+      muted
+      playsInline
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
+    <img
+      src={photo.thumbUrl}
+      alt={photo.title}
+      draggable={false}
+      decoding="async"
+      className="h-full w-full object-cover"
+    />
+  );
+
 export const FeaturedCard: FC<FeaturedCardProps> = ({
   photo,
   expanded,
@@ -84,39 +182,18 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
   const wasExpanded = useRef(expanded);
 
   useEffect(() => {
-    if (wasExpanded.current === expanded) return;
+    if (wasExpanded.current === expanded) {
+      return;
+    }
     wasExpanded.current = expanded;
-    if (expanded) closeRef.current?.focus();
-    else cardRef.current?.focus();
+    if (expanded) {
+      closeRef.current?.focus();
+    } else {
+      cardRef.current?.focus();
+    }
   }, [expanded]);
 
-  const restH = isMobile ? 220 : 280;
-  const restMaxW = isMobile ? 270 : 400;
-  const expH = isMobile ? 280 : 360;
-  const expMaxW = isMobile ? 300 : 480;
-  const expMinW = isMobile ? 260 : 340;
-
-  const heightBudget = expanded
-    ? Math.min(vh * 0.44, Math.max(MIN_EXPANDED_H, vh - EXPANDED_CHROME_H))
-    : vh * 0.62;
-  const widthBudget = vw * (expanded ? 0.78 : 0.86);
-
-  const h = Math.min(expanded ? expH : restH, heightBudget);
-  const maxW = Math.min(expanded ? expMaxW : restMaxW, widthBudget);
-  /* Clamp against the height budget too: without it, a tall-but-narrow asset
-     takes the min-width branch below and recomputes frameH from width alone,
-     re-inflating past the budget and clipping the satellite UI in short frames. */
-  const minW = Math.min(expMinW, widthBudget, heightBudget * photo.aspect);
-
-  let w = h * photo.aspect;
-  let frameH = h;
-  if (w > maxW) {
-    w = maxW;
-    frameH = maxW / photo.aspect;
-  } else if (expanded && w < minW) {
-    w = minW;
-    frameH = minW / photo.aspect;
-  }
+  const { w, frameH } = computeFrame(expanded, isMobile, vw, vh, photo.aspect);
 
   const visitLink = (
     <a
@@ -136,57 +213,39 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
     </IconButton>
   );
 
+  /* Expanded, this behaves as a modal — Escape and a backdrop click both
+     close it, and the wall behind is `aria-hidden`. Collapsed, the whole card
+     is the button that opens the detail view. */
+  const roleProps = expanded
+    ? { "aria-label": photo.title, "aria-modal": true, role: "dialog", tabIndex: -1 }
+    : {
+        "aria-label": `Open ${photo.title}`,
+        onClick: onOpen,
+        onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen();
+          }
+        },
+        role: "button",
+        tabIndex: 0,
+      };
+
   return (
     <div
       ref={cardRef}
       className={cn("pointer-events-auto absolute", !expanded && "cursor-pointer")}
       style={{
-        width: w,
         height: frameH,
         transform: "translate(-50%, -50%)",
         transition:
           "width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        width: w,
       }}
-      onClick={onOpen}
-      /* Expanded, this behaves as a modal — Escape and a backdrop click both
-         close it, and the wall behind is `aria-hidden`. */
-      role={expanded ? "dialog" : "button"}
-      aria-modal={expanded ? true : undefined}
-      tabIndex={expanded ? -1 : 0}
-      aria-label={expanded ? photo.title : `Open ${photo.title}`}
-      onKeyDown={
-        expanded
-          ? undefined
-          : (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen();
-              }
-            }
-      }
+      {...roleProps}
     >
       {expanded && (
-        <div className="absolute bottom-full left-1/2 mb-4 w-max max-w-[80%] -translate-x-1/2 text-center">
-          <div className="flex items-center justify-center gap-3">
-            <IconButton onClick={onPrev} label="Previous work" size="sm">
-              <ChevronLeft className="size-4" />
-            </IconButton>
-            <IconButton onClick={onNext} label="Next work" size="sm">
-              <ChevronRight className="size-4" />
-            </IconButton>
-          </div>
-          <div className="text-foreground-faded mt-3 text-xs tracking-[0.2em] uppercase">
-            {photo.category}
-          </div>
-          <h2
-            className={cn(
-              "text-foreground-highlighted mt-1 leading-tight font-normal",
-              isMobile ? "text-2xl" : "text-3xl",
-            )}
-          >
-            {photo.title}
-          </h2>
-        </div>
+        <ExpandedHeader photo={photo} isMobile={isMobile} onNext={onNext} onPrev={onPrev} />
       )}
 
       {/* Close sits on the card's own corner: a side rail would be a lone
@@ -200,29 +259,7 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
         style={{ boxShadow: CARD_SHADOW }}
       >
         <div className="relative h-full w-full overflow-hidden rounded-lg">
-          {photo.videoUrl ? (
-            /* Plays collapsed too — the spotlight is the one place a single
-             full-fidelity video is cheap. The poster covers the load gap as
-             the void drifts and the featured asset changes. */
-            <video
-              src={photo.videoUrl}
-              poster={photo.thumbUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element -- wall deck srcs include generated poster data URLs; next/image can't optimize those
-            <img
-              src={photo.thumbUrl}
-              alt={photo.title}
-              draggable={false}
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          )}
+          <CardMedia photo={photo} />
           {/* Caption sits over arbitrary media, so it keeps its own dark
               scrim and white text in both themes rather than page tokens. */}
           {!expanded && (
@@ -246,8 +283,8 @@ export const FeaturedCard: FC<FeaturedCardProps> = ({
         <div
           className="absolute top-full left-1/2 mt-4 -translate-x-1/2 text-center"
           style={{
-            minWidth: Math.min(isMobile ? 260 : 320, vw * 0.9),
             maxWidth: vw * 0.9,
+            minWidth: Math.min(isMobile ? 260 : 320, vw * 0.9),
           }}
         >
           {visitLink}

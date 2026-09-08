@@ -1,22 +1,22 @@
 "use client";
 
 import type { Transition } from "motion/react";
-import { Fragment, useMemo } from "react";
+import { useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
-type VerticalProps = {
+interface VerticalProps {
   letter: string;
-};
+}
 
 const chars = ["9", "8", "7", "6", "5", "4", "3", "2", "1", "0", ",", ".", "-"];
 const amountOfItems = chars.length + 1;
 const containerHeight = `${amountOfItems}em`;
 
 const Vertical = ({ letter }: VerticalProps) => {
-  const charIndex = chars.findIndex((char) => char === letter);
+  const charIndex = chars.indexOf(letter);
 
   if (charIndex === -1) {
-    return <Fragment>{letter}</Fragment>;
+    return letter;
   }
 
   const y = `${(-charIndex / (amountOfItems - 1)) * 100}%`;
@@ -24,13 +24,13 @@ const Vertical = ({ letter }: VerticalProps) => {
   return (
     <div style={{ height: containerHeight, position: "relative" }}>
       <motion.div
-        initial={{ y, opacity: 0 }}
-        animate={{ y, opacity: 1 }}
-        exit={{ y, opacity: 0 }}
+        initial={{ opacity: 0, y }}
+        animate={{ opacity: 1, y }}
+        exit={{ opacity: 0, y }}
         transition={{ ease: "easeOut" }}
         style={{
-          position: `absolute`,
           left: 0,
+          position: `absolute`,
         }}
       >
         {chars.map((char) => (
@@ -41,9 +41,45 @@ const Vertical = ({ letter }: VerticalProps) => {
   );
 };
 
-type CounterProps = {
+interface CounterProps {
   text: string | number;
   height?: string | number;
+}
+
+const sum = (values: number[]) => {
+  let total = 0;
+  for (const value of values) {
+    total += value;
+  }
+  return total;
+};
+
+const generateTextStats = () => {
+  const cache = new Map<string, number>();
+  const fromCache = (letter: string) => cache.get(letter) ?? 0;
+
+  // safety for nodejs/ssr
+  if (typeof document === "undefined") {
+    return fromCache;
+  }
+
+  let hasCalculatedFont = false;
+  const context = document.createElement("canvas").getContext("2d");
+  if (!context) {
+    return fromCache;
+  }
+
+  return (letter: string) => {
+    if (!cache.has(letter)) {
+      if (!hasCalculatedFont) {
+        context.font = getComputedStyle(document.body).font;
+        hasCalculatedFont = true;
+      }
+      cache.set(letter, (context.measureText(letter).width ?? 0) - 0.2);
+    }
+
+    return fromCache(letter);
+  };
 };
 
 const transition = { ease: "easeOut" } satisfies Transition;
@@ -56,9 +92,9 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
     lineHeight: Number.isFinite(height) ? `${height}px` : height,
   };
 
-  const textArray = String(text).split("");
+  const textArray = [...String(text)];
   const stats = textArray.map(getTextStats);
-  const totalWidth = Math.ceil(stats.reduce(count, 0));
+  const totalWidth = Math.ceil(sum(stats));
 
   return (
     <motion.div
@@ -75,7 +111,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
 
       <AnimatePresence initial={false}>
         {textArray.map((letter, index) => {
-          const x = stats.slice(0, index).reduce(count, 0);
+          const x = sum(stats.slice(0, index));
           const width = stats[index];
 
           // animate from the right to left, so we need to invert the index
@@ -85,9 +121,9 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
             <motion.span
               key={key}
               layoutId={key}
-              animate={{ x, width, opacity: 1 }}
-              initial={{ x, width, opacity: 0 }}
-              exit={{ width: 0, opacity: 0 }}
+              animate={{ opacity: 1, width, x }}
+              initial={{ opacity: 0, width, x }}
+              exit={{ opacity: 0, width: 0 }}
               transition={{ ease: "easeOut" }}
               className="pointer-events-none absolute top-0 left-0"
               aria-hidden="true"
@@ -99,35 +135,4 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
       </AnimatePresence>
     </motion.div>
   );
-};
-
-const count = (acc: number, curr: number) => {
-  return acc + curr;
-};
-
-const generateTextStats = () => {
-  const cache = new Map<string, number>();
-
-  // safety for nodejs/ssr
-  if (typeof document === "undefined") {
-    return (letter: string) => {
-      return cache.get(letter) ?? 0;
-    };
-  }
-
-  let hasCalculatedFont = false;
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d")!;
-
-  return (letter: string) => {
-    if (!cache.has(letter)) {
-      if (!hasCalculatedFont) {
-        context.font = getComputedStyle(document.body).font;
-        hasCalculatedFont = true;
-      }
-      cache.set(letter, (context.measureText(letter).width ?? 0) - 0.2);
-    }
-
-    return cache.get(letter) ?? 0;
-  };
 };

@@ -2,7 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 
-const subscribe = () => () => {};
+const subscribe = () => () => {
+  /* empty */
+};
 const onClient = () => true;
 const onServer = () => false;
 

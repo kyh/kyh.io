@@ -17,21 +17,16 @@ import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 // Raw row contract for the vector_top_k query below: incidents.* joined with an
 // optional video, all timestamps as unix seconds. Parsed at the SQL boundary.
 const vectorRowSchema = z.object({
-  id: z.number(),
-  location: z.string().nullable(),
+  created_at: z.number().nullable(),
+  deleted_at: z.number().nullable(),
   description: z.string().nullable(),
   // Opaque F32_BLOB passed through untouched; never inspected here.
   embedding: z.custom<Buffer | null>(),
+  id: z.number(),
   incident_date: z.number().nullable(),
-  status: z.enum(["approved", "hidden"]),
-  pinned: z.number(),
-  unjustified_count: z.number(),
   justified_count: z.number(),
-  report_count: z.number(),
-  created_at: z.number().nullable(),
-  deleted_at: z.number().nullable(),
-  vid: z.number().nullable(),
-  url: z.string().nullable(),
+  location: z.string().nullable(),
+  pinned: z.number(),
   platform: z
     .enum([
       "twitter",
@@ -44,34 +39,38 @@ const vectorRowSchema = z.object({
       "reddit",
     ])
     .nullable(),
+  report_count: z.number(),
+  status: z.enum(["approved", "hidden"]),
+  unjustified_count: z.number(),
+  url: z.string().nullable(),
   v_created_at: z.number().nullable(),
   vec_distance: z.number(),
+  vid: z.number().nullable(),
 });
 
-async function requireAdmin() {
+const requireAdmin = async () => {
   const session = await getSession();
   if (!session?.user || session.user.isAnonymous) {
     throw new Error("Unauthorized");
   }
   return session.user;
-}
+};
 
 // Parse date string as local time (not UTC)
-function parseLocalDate(dateStr: string): Date {
+const parseLocalDate = (dateStr: string): Date => {
   const parts = dateStr.split("-").map(Number);
   return new Date(parts[0], parts[1] - 1, parts[2]);
-}
+};
 
 // Server action wrapper — delegates to cached query so clients can call it
-export async function getIncidents(data: { offset?: number; limit?: number }) {
-  return getCachedIncidents(data);
-}
+export const getIncidents = async (data: { offset?: number; limit?: number }) =>
+  await getCachedIncidents(data);
 
-export async function searchIncidents(data: {
+export const searchIncidents = async (data: {
   query?: string;
   startDate?: string;
   endDate?: string;
-}) {
+}) => {
   const baseConditions = [
     eq(incidents.status, "approved"),
     sql`${incidents.deletedAt} IS NULL`,
@@ -92,10 +91,10 @@ export async function searchIncidents(data: {
   // No text query - just date filters
   if (!data.query) {
     const results = await db.query.incidents.findMany({
-      with: { videos: true },
-      where: and(...baseConditions),
-      orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
       limit: 50,
+      orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
+      where: and(...baseConditions),
+      with: { videos: true },
     });
     return { incidents: results };
   }
@@ -117,16 +116,16 @@ export async function searchIncidents(data: {
   ];
 
   const keywordResults = await db.query.incidents.findMany({
-    with: { videos: true },
-    where: and(...keywordConditions),
-    orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
     limit: 30,
+    orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
+    where: and(...keywordConditions),
+    with: { videos: true },
   });
 
   // Add keyword results with score based on position
-  keywordResults.forEach((incident, idx) => {
+  for (const [idx, incident] of keywordResults.entries()) {
     resultMap.set(incident.id, { ...incident, _score: 100 - idx });
-  });
+  }
 
   // 2. Vector search (only if we have embeddings)
   try {
@@ -152,6 +151,7 @@ export async function searchIncidents(data: {
     }
 
     const vectorResult = await client.execute({
+      args,
       sql: `
         SELECT i.*, v.id as vid, v.url, v.platform, v.created_at as v_created_at,
                vec.distance as vec_distance
@@ -164,7 +164,6 @@ export async function searchIncidents(data: {
           ${dateConditions}
         ORDER BY vec.distance ASC
       `,
-      args,
     });
 
     // Group videos and merge with existing results
@@ -180,36 +179,36 @@ export async function searchIncidents(data: {
 
     for (const rawRow of vectorResult.rows) {
       const row = vectorRowSchema.parse(rawRow);
-      const id = row.id;
-      if (!vectorIncidents.has(id)) {
-        vectorIncidents.set(id, {
+      const { id } = row;
+      let entry = vectorIncidents.get(id);
+      if (!entry) {
+        entry = {
+          distance: row.vec_distance,
           incident: {
-            id,
-            location: row.location,
-            description: row.description,
-            embedding: row.embedding,
-            incidentDate: row.incident_date ? new Date(row.incident_date * 1000) : null,
-            status: row.status,
-            pinned: row.pinned === 1,
-            unjustifiedCount: row.unjustified_count,
-            justifiedCount: row.justified_count,
-            reportCount: row.report_count,
             createdAt: row.created_at ? new Date(row.created_at * 1000) : null,
             deletedAt: row.deleted_at ? new Date(row.deleted_at * 1000) : null,
+            description: row.description,
+            embedding: row.embedding,
+            id,
+            incidentDate: row.incident_date ? new Date(row.incident_date * 1000) : null,
+            justifiedCount: row.justified_count,
+            location: row.location,
+            pinned: row.pinned === 1,
+            reportCount: row.report_count,
+            status: row.status,
+            unjustifiedCount: row.unjustified_count,
             videos: [],
           },
-          distance: row.vec_distance,
-        });
+        };
+        vectorIncidents.set(id, entry);
       }
       if (row.vid && row.url && row.platform) {
-        // Known `!` exception: the branch above `.set(id, …)` on this same `id`
-        // in this same iteration, so the entry always exists here.
-        vectorIncidents.get(id)!.incident.videos.push({
+        entry.incident.videos.push({
+          createdAt: row.v_created_at ? new Date(row.v_created_at * 1000) : null,
           id: row.vid,
           incidentId: id,
-          url: row.url,
           platform: row.platform,
-          createdAt: row.v_created_at ? new Date(row.v_created_at * 1000) : null,
+          url: row.url,
         });
       }
     }
@@ -218,70 +217,79 @@ export async function searchIncidents(data: {
     let idx = 0;
     for (const [id, { incident, distance }] of vectorIncidents) {
       const vectorScore = 100 - idx - distance * 10;
-      if (resultMap.has(id)) {
-        // Known `!` exception: guarded by the `.has(id)` immediately above.
-        resultMap.get(id)!._score += vectorScore;
+      const existing = resultMap.get(id);
+      if (existing) {
+        existing._score += vectorScore;
       } else {
         resultMap.set(id, { ...incident, _score: vectorScore });
       }
-      idx++;
+      idx += 1;
     }
   } catch {
     // Vector search failed (no index, no embeddings, etc) - keyword results only
   }
 
   // Sort by combined score
-  const sortedResults = Array.from(resultMap.values())
+  const sortedResults = [...resultMap.values()]
     .toSorted((a, b) => b._score - a._score)
     .slice(0, 50)
     .map(({ _score, ...incident }) => incident);
 
   return { incidents: sortedResults };
-}
+};
 
-export async function getUserVotes(data: { incidentIds: number[] }) {
-  if (data.incidentIds.length === 0) return {};
+export const getUserVotes = async (data: { incidentIds: number[] }) => {
+  if (data.incidentIds.length === 0) {
+    return {};
+  }
 
   const session = await getSession();
-  if (!session?.user.id) return {};
+  if (!session?.user.id) {
+    return {};
+  }
 
   const userVotes = await db.query.votes.findMany({
-    where: (votes, { and, eq: eqOp, inArray }) =>
-      and(eqOp(votes.sessionId, session.user.id), inArray(votes.incidentId, data.incidentIds)),
+    where: (v, { and: andOp, eq: eqOp, inArray }) =>
+      andOp(eqOp(v.sessionId, session.user.id), inArray(v.incidentId, data.incidentIds)),
   });
 
-  return userVotes.reduce<Record<number, VoteType>>((acc, vote) => {
-    acc[vote.incidentId] = vote.type;
-    return acc;
-  }, {});
-}
+  const byIncident: Record<number, VoteType> = {};
+  for (const vote of userVotes) {
+    byIncident[vote.incidentId] = vote.type;
+  }
+  return byIncident;
+};
 
-export async function getUserVote(data: { incidentId: number }) {
+export const getUserVote = async (data: { incidentId: number }) => {
   const session = await getSession();
-  if (!session?.user.id) return null;
+  if (!session?.user.id) {
+    return null;
+  }
 
   const vote = await db.query.votes.findFirst({
-    where: (votes, { and, eq: eqOp }) =>
-      and(eqOp(votes.sessionId, session.user.id), eqOp(votes.incidentId, data.incidentId)),
+    where: (v, { and: andOp, eq: eqOp }) =>
+      andOp(eqOp(v.sessionId, session.user.id), eqOp(v.incidentId, data.incidentId)),
   });
 
   return vote?.type ?? null;
-}
+};
 
-export async function createIncident(data: {
+export const createIncident = async (data: {
   location?: string;
   description?: string;
   incidentDate?: string;
   videoUrls: string[];
-}) {
+}) => {
   const session = await getSession();
-  if (!session?.user.id) return { incident: null, error: "Unauthorized" };
+  if (!session?.user.id) {
+    return { error: "Unauthorized", incident: null };
+  }
 
   // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
 
   const existingVideos = await db.query.videos.findMany({
-    where: (videos, { inArray }) => inArray(videos.url, resolvedUrls),
+    where: (v, { inArray }) => inArray(v.url, resolvedUrls),
     with: { incident: true },
   });
 
@@ -294,16 +302,16 @@ export async function createIncident(data: {
       await db.insert(videos).values(
         newUrls.map((url) => ({
           incidentId: existingIncident.id,
-          url,
           platform: detectPlatform(url),
+          url,
         })),
       );
     }
 
     revalidateTag("incidents", "max");
     return {
-      incident: existingIncident,
       autoApproved: true,
+      incident: existingIncident,
       merged: true,
     };
   }
@@ -311,9 +319,9 @@ export async function createIncident(data: {
   const [incident] = await db
     .insert(incidents)
     .values({
-      location: data.location,
       description: data.description,
       incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : new Date(),
+      location: data.location,
       status: "approved",
     })
     .returning();
@@ -321,26 +329,29 @@ export async function createIncident(data: {
   await db.insert(videos).values(
     resolvedUrls.map((url) => ({
       incidentId: incident.id,
-      url,
       platform: detectPlatform(url),
+      url,
     })),
   );
 
   revalidateTag("incidents", "max");
-  return { incident, autoApproved: true, merged: false };
-}
+  return { autoApproved: true, incident, merged: false };
+};
 
-export async function submitVote(data: { incidentId: number; type: "unjustified" | "justified" }) {
+export const submitVote = async (data: {
+  incidentId: number;
+  type: "unjustified" | "justified";
+}) => {
   const session = await getSession();
   if (!session?.user.id) {
-    return { success: false, error: "No session" };
+    return { error: "No session", success: false };
   }
 
   const sessionId = session.user.id;
 
   const existing = await db.query.votes.findFirst({
-    where: (votes, { and, eq: eqOp }) =>
-      and(eqOp(votes.sessionId, sessionId), eqOp(votes.incidentId, data.incidentId)),
+    where: (v, { and: andOp, eq: eqOp }) =>
+      andOp(eqOp(v.sessionId, sessionId), eqOp(v.incidentId, data.incidentId)),
   });
 
   // Toggle: if same vote type, remove it
@@ -352,7 +363,7 @@ export async function submitVote(data: { incidentId: number; type: "unjustified"
       .set({ [field]: sql`${incidents[field]} - 1` })
       .where(eq(incidents.id, data.incidentId));
     revalidateTag("incidents", "max");
-    return { success: true, action: "removed" as const };
+    return { action: "removed" as const, success: true };
   }
 
   // If different vote type exists, switch it
@@ -368,7 +379,7 @@ export async function submitVote(data: { incidentId: number; type: "unjustified"
       })
       .where(eq(incidents.id, data.incidentId));
     revalidateTag("incidents", "max");
-    return { success: true, action: "switched" as const };
+    return { action: "switched" as const, success: true };
   }
 
   // New vote
@@ -385,55 +396,59 @@ export async function submitVote(data: { incidentId: number; type: "unjustified"
     .where(eq(incidents.id, data.incidentId));
 
   revalidateTag("incidents", "max");
-  return { success: true, action: "added" as const };
-}
+  return { action: "added" as const, success: true };
+};
 
-export async function reportIncident(data: { incidentId: number }) {
+export const reportIncident = async (data: { incidentId: number }) => {
   await db
     .update(incidents)
     .set({ reportCount: sql`${incidents.reportCount} + 1` })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function addVideoToIncident(data: { incidentId: number; url: string }) {
+export const addVideoToIncident = async (data: { incidentId: number; url: string }) => {
   const session = await getSession();
-  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+  if (!session?.user.id) {
+    return { error: "Unauthorized", success: false };
+  }
 
   const resolvedUrl = await resolveVideoUrl(data.url);
   const platform = detectPlatform(resolvedUrl);
   await db.insert(videos).values({
     incidentId: data.incidentId,
-    url: resolvedUrl,
     platform,
+    url: resolvedUrl,
   });
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function updateIncidentDetails(data: {
+export const updateIncidentDetails = async (data: {
   incidentId: number;
   location?: string;
   description?: string;
   incidentDate?: string;
-}) {
+}) => {
   const session = await getSession();
-  if (!session?.user.id) return { success: false, error: "Unauthorized" };
+  if (!session?.user.id) {
+    return { error: "Unauthorized", success: false };
+  }
 
   await db
     .update(incidents)
     .set({
-      location: data.location ?? null,
       description: data.description ?? null,
       incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+      location: data.location ?? null,
     })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function hideIncident(data: { incidentId: number }) {
+export const hideIncident = async (data: { incidentId: number }) => {
   await requireAdmin();
 
   await db
@@ -442,28 +457,30 @@ export async function hideIncident(data: { incidentId: number }) {
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function deleteIncident(data: { incidentId: number }) {
+export const deleteIncident = async (data: { incidentId: number }) => {
   await requireAdmin();
 
   await db.delete(incidents).where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
   return { success: true };
-}
+};
 
-export async function togglePinIncident(data: { incidentId: number }) {
+export const togglePinIncident = async (data: { incidentId: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({
     where: eq(incidents.id, data.incidentId),
   });
-  if (!incident) return { success: false, error: "Not found" };
+  if (!incident) {
+    return { error: "Not found", success: false };
+  }
 
   await db
     .update(incidents)
     .set({ pinned: !incident.pinned })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
-  return { success: true, pinned: !incident.pinned };
-}
+  return { pinned: !incident.pinned, success: true };
+};

@@ -1,7 +1,5 @@
 import { AutoplayApp } from "@/components/autoplay-app";
 
-const Page = () => {
-  return <AutoplayApp />;
-};
+const Page = () => <AutoplayApp />;
 
 export default Page;

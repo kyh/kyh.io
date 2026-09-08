@@ -16,18 +16,18 @@ const {
   BETTER_AUTH_SECRET: secret,
   OWNER_X_USERNAME: owner,
 } = process.env;
-if (!url || !secret || !owner)
+if (!url || !secret || !owner) {
   throw new Error("TURSO_DATABASE_URL, BETTER_AUTH_SECRET and OWNER_X_USERNAME are required");
-const db = createClient({ url, authToken });
-const rows = (
-  await db.execute({
-    sql: "select s.token from session s join user u on u.id = s.user_id where lower(u.username) = lower(?) and s.expires_at > ? order by s.updated_at desc limit 1",
-    args: [owner, Math.floor(Date.now() / 1000)],
-  })
-).rows;
+}
+const db = createClient({ authToken, url });
+const { rows } = await db.execute({
+  args: [owner, Math.floor(Date.now() / 1000)],
+  sql: "select s.token from session s join user u on u.id = s.user_id where lower(u.username) = lower(?) and s.expires_at > ? order by s.updated_at desc limit 1",
+});
 const token = rows[0]?.token;
-if (token === undefined)
+if (token === undefined) {
   throw new Error("the owner has no live session — sign in on the site first");
+}
 const signature = createHmac("sha256", secret).update(String(token)).digest("base64");
 const name = process.argv.includes("--insecure")
   ? "autoplay.session_token"

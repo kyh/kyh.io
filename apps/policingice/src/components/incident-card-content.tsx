@@ -9,13 +9,13 @@ import { formatDate } from "@/lib/format";
 import { VideoCarousel } from "./video-carousel";
 import { cn } from "cn";
 
-type Video = {
+interface Video {
   id: number;
   url: string;
   platform: VideoPlatform;
-};
+}
 
-type IncidentCardContentProps = {
+interface IncidentCardContentProps {
   incidentId: number;
   location: string | null;
   incidentDate: Date | null;
@@ -29,7 +29,7 @@ type IncidentCardContentProps = {
   reported?: boolean;
   pinned?: boolean;
   headerRight?: React.ReactNode;
-};
+}
 
 export const IncidentCardContent = ({
   incidentId,
@@ -58,7 +58,7 @@ export const IncidentCardContent = ({
         onSlideChange={setCurrentSlide}
         header={
           <Link href={`/incident/${incidentId}`}>
-            {location && <>{location}</>}
+            {location}
             {location && displayDate && <> · </>}
             {displayDate && formatDate(displayDate)}
           </Link>
@@ -74,7 +74,7 @@ export const IncidentCardContent = ({
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
+        <fieldset className="flex items-center gap-4" aria-label="Vote on this incident">
           <button
             type="button"
             onClick={() => onVote("unjustified")}
@@ -103,7 +103,7 @@ export const IncidentCardContent = ({
           >
             justified ({justifiedCount})
           </button>
-        </div>
+        </fieldset>
         <div className="flex items-center gap-3">
           <a
             href={currentVideo.url}

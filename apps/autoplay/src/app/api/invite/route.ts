@@ -15,17 +15,21 @@ import { errorResponse, readBody } from "@/lib/route";
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const body = await readBody(request, inviteRequestSchema, "Expected { code: string }");
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   const code = await validateInviteCode(body.data.code);
   const value = code === undefined ? undefined : inviteCookieValue(code);
-  if (value === undefined) return errorResponse(403, "That invite code isn't valid");
+  if (value === undefined) {
+    return errorResponse(403, "That invite code isn't valid");
+  }
   const response = NextResponse.json({ ok: true });
   response.cookies.set(INVITE_COOKIE, value, {
     httpOnly: true,
+    maxAge: INVITE_COOKIE_MAX_AGE,
+    path: "/",
     sameSite: "lax",
     secure: request.nextUrl.protocol === "https:",
-    path: "/",
-    maxAge: INVITE_COOKIE_MAX_AGE,
   });
   return response;
 };

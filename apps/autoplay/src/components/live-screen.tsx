@@ -12,7 +12,7 @@ import type { Recorder } from "@/lib/recorder";
 import type { LiveState } from "@/lib/screen-state";
 import { openTestStreamSession, testStreamProgram, testStreamRequested } from "@/lib/test-stream";
 import type { ClientMessage } from "@/lib/test-stream";
-import { TvVideo, useVideoPlayback } from "@/components/tv-video";
+import { TvVideo, playQuietly, useVideoPlayback } from "@/components/tv-video";
 
 // The screen: one director session in this browser. The model streams
 // continuous video over WebRTC and takes a new prompt whenever the
@@ -40,32 +40,32 @@ const IDLE_CLOSE_MS = 30_000;
 
 /** What the director reports that the screen acts on; anything else it says passes unread. */
 const serverMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("prompt_rejected"), prompt_version: z.number() }),
+  z.object({ prompt_version: z.number(), type: z.literal("prompt_rejected") }),
   z.object({
-    type: z.literal("chunk"),
-    prompt_version: z.number(),
     buffer_depth_seconds: z.number(),
+    prompt_version: z.number(),
+    type: z.literal("chunk"),
   }),
-  z.object({ type: z.literal("error"), code: z.string(), error: z.string() }),
-  z.object({ type: z.literal("stream_exhausted"), reason: z.string() }),
+  z.object({ code: z.string(), error: z.string(), type: z.literal("error") }),
+  z.object({ reason: z.string(), type: z.literal("stream_exhausted") }),
 ]);
 
-type LiveScreenProps = {
+interface LiveScreenProps {
   sourceId: string;
   /** Record each program for the replay; only the public channel does. */
   record: boolean;
   muted: boolean;
   paused: boolean;
   /** The program now on air, for the ticker; undefined between sessions. */
-  onProgram: (program: LiveProgram | undefined) => void;
+  onProgram: (program?: LiveProgram) => void;
   onState: (state: LiveState) => void;
-};
+}
 
 /** What this screen needs of a session: the director's, or the test stream's. */
-type Session = {
-  send(message: ClientMessage): void;
-  close(): void | Promise<void>;
-};
+interface Session {
+  send: (message: ClientMessage) => void;
+  close: () => void | Promise<void>;
+}
 
 type ProgramResult = { program: LiveProgram; formatLabel?: string } | { reason: string };
 
@@ -74,45 +74,59 @@ const requestProgram = async (sourceId: string, opening: boolean): Promise<Progr
     "/api/live",
     livePayloadSchema,
     "Signal lost — try again",
-    jsonRequest("POST", { sourceId, opening }),
+    jsonRequest("POST", { opening, sourceId }),
   );
-  if ("error" in answer) return { reason: answer.error };
+  if ("error" in answer) {
+    return { reason: answer.error };
+  }
   return answer.data.kind === "off-air"
     ? { reason: answer.data.reason }
-    : { program: answer.data.program, formatLabel: answer.data.formatLabel };
+    : { formatLabel: answer.data.formatLabel, program: answer.data.program };
 };
 
 export const LiveScreen = (props: LiveScreenProps) => {
   const videoRef = useVideoPlayback(props.muted, props.paused);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const sessionRef = useRef<Session | undefined>(undefined);
-  const [stream, setStream] = useState<MediaStream | undefined>(undefined);
+  const [stream, setStream] = useState<MediaStream | undefined>();
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
   /** The latest version whose picture has been scheduled onto the screen. */
   const shownVersionRef = useRef(0);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const tickerTimerRef = useRef<number | undefined>(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const nextTimerRef = useRef<number | undefined>(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const recorderRef = useRef<Recorder | undefined>(undefined);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
   const testStreamRef = useRef(false);
   const testProgramsRef = useRef(0);
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
-  const settleRef = useRef<() => void>(() => undefined);
+  const settleRef = useRef<() => void>(() => {
+    // Replaced once a session is open; nothing to settle before then.
+  });
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (video === null || stream === undefined) return;
+    if (video === null || stream === undefined) {
+      return;
+    }
     video.srcObject = stream;
-    void video.play().catch(() => undefined);
+    void playQuietly(video);
     // The first presented frame is what makes it live; `playing` alone fires
     // on a MediaStream before any picture has come down the wire.
     let cancelled = false;
     video.requestVideoFrameCallback(() => {
-      if (!cancelled) emitState({ status: "live" });
+      if (!cancelled) {
+        emitState({ status: "live" });
+      }
     });
     return () => {
       cancelled = true;
@@ -130,27 +144,33 @@ export const LiveScreen = (props: LiveScreenProps) => {
       streamRef.current = undefined;
       const session = sessionRef.current;
       sessionRef.current = undefined;
-      if (session === undefined) return;
+      if (session === undefined) {
+        return;
+      }
       session.send({ type: "stop" });
       void session.close();
-      emitProgram(undefined);
+      emitProgram();
     };
 
     /** Off the air, and why — in the console too, since the screen may show the replay instead. */
     const offAir = (reason: string) => {
       console.warn("[live] off air:", reason);
-      emitState({ status: "off-air", reason });
+      emitState({ reason, status: "off-air" });
     };
 
     /** Line up the next program behind the one on air, or open on it. */
     const direct = async (opening: boolean) => {
       const session = sessionRef.current;
-      if (session === undefined || closed) return;
+      if (session === undefined || closed) {
+        return;
+      }
       // The test stream reads no source: nothing is spent on X either.
       const result: ProgramResult = testStreamRef.current
-        ? { program: testStreamProgram((testProgramsRef.current += 1)), formatLabel: "test stream" }
+        ? { formatLabel: "test stream", program: testStreamProgram((testProgramsRef.current += 1)) }
         : await requestProgram(props.sourceId, opening);
-      if (closed || sessionRef.current !== session) return;
+      if (closed || sessionRef.current !== session) {
+        return;
+      }
       if ("reason" in result) {
         offAir(result.reason);
         closeSession();
@@ -159,18 +179,20 @@ export const LiveScreen = (props: LiveScreenProps) => {
       versionRef.current += 1;
       const version = versionRef.current;
       programsRef.current.set(version, result.program);
-      if (result.formatLabel !== undefined) formatLabelRef.current = result.formatLabel;
+      if (result.formatLabel !== undefined) {
+        formatLabelRef.current = result.formatLabel;
+      }
       if (opening) {
         session.send({
-          type: "configure",
-          protocol_version: 1,
-          prompt_version: version,
-          prompt: result.program.prompt,
-          resolution: "768p",
           aspect_ratio: "16:9",
+          prompt: result.program.prompt,
+          prompt_version: version,
+          protocol_version: 1,
+          resolution: "768p",
+          type: "configure",
         });
       } else {
-        session.send({ type: "prompt", prompt_version: version, prompt: result.program.prompt });
+        session.send({ prompt: result.program.prompt, prompt_version: version, type: "prompt" });
       }
     };
 
@@ -180,34 +202,44 @@ export const LiveScreen = (props: LiveScreenProps) => {
      * on air, and the hold starts — the next prompt goes out when it ends.
      */
     const onScreenIn = (program: LiveProgram, inSeconds: number) => {
-      if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
-      if (nextTimerRef.current !== undefined) window.clearTimeout(nextTimerRef.current);
+      if (tickerTimerRef.current !== undefined) {
+        window.clearTimeout(tickerTimerRef.current);
+      }
+      if (nextTimerRef.current !== undefined) {
+        window.clearTimeout(nextTimerRef.current);
+      }
       const delay = Math.max(0, inSeconds) * 1000;
       tickerTimerRef.current = window.setTimeout(() => {
         tickerTimerRef.current = undefined;
-        if (closed) return;
+        if (closed) {
+          return;
+        }
         emitProgram(program);
-        const onAir = { program, formatLabel: formatLabelRef.current };
-        const stream = streamRef.current;
+        const onAir = { formatLabel: formatLabelRef.current, program };
+        const media = streamRef.current;
         if (recorderRef.current !== undefined) {
           recorderRef.current.setOnAir(onAir);
-        } else if (props.record && stream !== undefined && canRecord()) {
+        } else if (props.record && media !== undefined && canRecord()) {
           // The recording starts with the first picture, not the black
           // frames before it.
-          recorderRef.current = createRecorder(stream, props.sourceId, onAir);
+          recorderRef.current = createRecorder(media, props.sourceId, onAir);
         }
       }, delay);
       nextTimerRef.current = window.setTimeout(
         () => {
           nextTimerRef.current = undefined;
-          if (!closed) void direct(false);
+          if (!closed) {
+            void direct(false);
+          }
         },
         delay + HOLD_SECONDS * 1000,
       );
     };
 
     const openSession = () => {
-      if (sessionRef.current !== undefined || closed) return;
+      if (sessionRef.current !== undefined || closed) {
+        return;
+      }
       emitState({ status: "connecting" });
       testStreamRef.current = testStreamRequested();
       const onMedia = (media: MediaStream) => {
@@ -215,9 +247,11 @@ export const LiveScreen = (props: LiveScreenProps) => {
         streamRef.current = media;
       };
       const handlers = {
-        onMedia,
         onData: (raw: string) => {
-          if (sessionRef.current !== session) return;
+          // oxlint-disable-next-line no-use-before-define -- the handler closes over the session it is registered on
+          if (sessionRef.current !== session) {
+            return;
+          }
           let parsed: unknown;
           try {
             parsed = JSON.parse(raw);
@@ -225,7 +259,9 @@ export const LiveScreen = (props: LiveScreenProps) => {
             return;
           }
           const message = serverMessageSchema.safeParse(parsed);
-          if (!message.success) return;
+          if (!message.success) {
+            return;
+          }
           switch (message.data.type) {
             case "chunk": {
               // The first chunk under a version is that subject's picture on
@@ -238,38 +274,49 @@ export const LiveScreen = (props: LiveScreenProps) => {
               }
               return;
             }
-            case "prompt_rejected":
+            case "prompt_rejected": {
               void direct(false);
               return;
-            case "error":
+            }
+            case "error": {
               offAir(`${message.data.code}: ${message.data.error}`);
               closeSession();
               return;
-            case "stream_exhausted":
+            }
+            case "stream_exhausted": {
               offAir(
                 message.data.reason === "session_limit"
                   ? "This session hit fal's length limit — tune away and back for a new one."
                   : "The session ended.",
               );
               closeSession();
-              return;
+              break;
+            }
+            // no default
           }
         },
+        onMedia,
       };
       const session: Session = testStreamRef.current
         ? openTestStreamSession(handlers)
         : fal.realtime.open(wma(DIRECTOR_MODEL), {
             receive: ["video", "audio"],
             ...handlers,
-            onState: (state) => {
-              if (sessionRef.current !== session) return;
-              if (state === "closed") emitProgram(undefined);
-            },
             onError: (error) => {
-              if (sessionRef.current !== session) return;
+              if (sessionRef.current !== session) {
+                return;
+              }
               sessionRef.current = undefined;
-              emitProgram(undefined);
+              emitProgram();
               offAir(error instanceof Error ? error.message : "The live signal dropped");
+            },
+            onState: (state) => {
+              if (sessionRef.current !== session) {
+                return;
+              }
+              if (state === "closed") {
+                emitProgram();
+              }
             },
           });
       sessionRef.current = session;
@@ -298,9 +345,15 @@ export const LiveScreen = (props: LiveScreenProps) => {
     return () => {
       closed = true;
       document.removeEventListener("visibilitychange", settle);
-      if (idleRef.current !== undefined) window.clearTimeout(idleRef.current);
-      if (tickerTimerRef.current !== undefined) window.clearTimeout(tickerTimerRef.current);
-      if (nextTimerRef.current !== undefined) window.clearTimeout(nextTimerRef.current);
+      if (idleRef.current !== undefined) {
+        window.clearTimeout(idleRef.current);
+      }
+      if (tickerTimerRef.current !== undefined) {
+        window.clearTimeout(tickerTimerRef.current);
+      }
+      if (nextTimerRef.current !== undefined) {
+        window.clearTimeout(nextTimerRef.current);
+      }
       closeSession();
     };
   }, [props.sourceId, props.record]);

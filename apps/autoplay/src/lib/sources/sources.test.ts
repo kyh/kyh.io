@@ -18,23 +18,23 @@ describe("isNewsletter", () => {
 describe("parseFrom", () => {
   it("splits a display name from the address", () => {
     assert.deepEqual(parseFrom('"Ben Thompson" <ben@stratechery.com>'), {
-      name: "Ben Thompson",
       address: "ben@stratechery.com",
+      name: "Ben Thompson",
     });
     assert.deepEqual(parseFrom("Morning Brew <crew@morningbrew.com>"), {
-      name: "Morning Brew",
       address: "crew@morningbrew.com",
+      name: "Morning Brew",
     });
   });
 
   it("falls back to the address when there is no name", () => {
     assert.deepEqual(parseFrom("<noreply@example.com>"), {
-      name: "noreply@example.com",
       address: "noreply@example.com",
+      name: "noreply@example.com",
     });
     assert.deepEqual(parseFrom("noreply@example.com"), {
-      name: "noreply@example.com",
       address: "noreply@example.com",
+      name: "noreply@example.com",
     });
   });
 });
@@ -51,17 +51,17 @@ describe("plainText", () => {
 });
 
 const item = (id: string, score: number) => ({
+  author: { name: "a", username: "a" },
   id,
   kind: "rss" as const,
-  text: id,
   score,
-  author: { name: "a", username: "a" },
+  text: id,
 });
 
 describe("ranking helpers", () => {
   it("scores recency in minutes and tolerates missing dates", () => {
     assert.equal(recencyScore("1970-01-01T01:00:00.000Z"), 60);
-    assert.equal(recencyScore(undefined), 0);
+    assert.equal(recencyScore(), 0);
     assert.equal(recencyScore("not a date"), 0);
   });
 

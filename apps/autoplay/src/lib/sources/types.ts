@@ -10,32 +10,32 @@ import type { SourceKind } from "@/lib/source-kinds";
 
 /** One thing a source can turn into a program. A schema, since items come back out of the shared cache as data. */
 export const itemSchema = z.object({
+  author: z.object({
+    name: z.string(),
+    profileImageUrl: z.string().optional(),
+    /** An X handle, a sender address, a feed host, a channel name. */
+    username: z.string(),
+  }),
+  createdAt: z.string().optional(),
   /** Unique across kinds: `{kind}:{id inside the source}`. */
   id: z.string(),
   kind: sourceKindSchema,
-  /** What the prompt and the status-bar ticker are built from. */
-  text: z.string(),
   /** The item on its service, for a viewer to open; a feed entry may have none. */
   link: z.string().optional(),
-  createdAt: z.string().optional(),
   /** Higher airs first — engagement on X, recency or views elsewhere. */
   score: z.number(),
-  author: z.object({
-    name: z.string(),
-    /** An X handle, a sender address, a feed host, a channel name. */
-    username: z.string(),
-    profileImageUrl: z.string().optional(),
-  }),
+  /** What the prompt and the status-bar ticker are built from. */
+  text: z.string(),
 });
 
 export type Item = z.infer<typeof itemSchema>;
 
 /** What every adapter gets besides its access: what has aired, the shared cache, and the ledger of paid reads. */
-export type SourceContext = {
+export interface SourceContext {
   aired: Set<string>;
   cache: CacheStore;
   spend: SpendStore;
-};
+}
 
 /** What reading a source takes: a grant for an API, a URL for a feed. */
 export type SourceAccess =
@@ -59,14 +59,18 @@ export const itemKind = (itemId: string): SourceKind => {
 export const bestOf = (items: Item[]): Item | undefined => {
   let best: Item | undefined;
   for (const item of items) {
-    if (best === undefined || item.score > best.score) best = item;
+    if (best === undefined || item.score > best.score) {
+      best = item;
+    }
   }
   return best;
 };
 
 /** Minutes since the epoch: a recency score that stays comparable across kinds. */
-export const recencyScore = (iso: string | undefined): number => {
-  if (iso === undefined) return 0;
+export const recencyScore = (iso?: string): number => {
+  if (iso === undefined) {
+    return 0;
+  }
   const ms = Date.parse(iso);
   return Number.isNaN(ms) ? 0 : Math.round(ms / 60_000);
 };
@@ -102,7 +106,9 @@ export const fetchJson = async <T>(
   schema: z.ZodType<T>,
 ): Promise<T> => {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw new Error(`${service} request failed (${response.status})`);
+  if (!response.ok) {
+    throw new Error(`${service} request failed (${response.status})`);
+  }
   return schema.parse(await response.json());
 };
 
@@ -117,18 +123,20 @@ const NAMED_ENTITIES = new Map([
 
 /** APIs hand back HTML-escaped snippets; a prompt should not read "&#39;". */
 export const decodeEntities = (text: string): string =>
-  text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, entity: string) => {
+  text.replaceAll(/&(?<entity>#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/gu, (whole, entity: string) => {
     if (entity.startsWith("#x") || entity.startsWith("#X")) {
       return String.fromCodePoint(Number.parseInt(entity.slice(2), 16));
     }
-    if (entity.startsWith("#")) return String.fromCodePoint(Number.parseInt(entity.slice(1), 10));
+    if (entity.startsWith("#")) {
+      return String.fromCodePoint(Math.trunc(Number(entity.slice(1))));
+    }
     return NAMED_ENTITIES.get(entity.toLowerCase()) ?? whole;
   });
 
 /** Markup stripped, entities decoded, whitespace collapsed, length bounded. */
 export const plainText = (html: string, maxLength: number): string => {
-  const text = decodeEntities(html.replace(/<[^>]+>/g, " "))
-    .replace(/\s+/g, " ")
+  const text = decodeEntities(html.replaceAll(/<[^>]+>/gu, " "))
+    .replaceAll(/\s+/gu, " ")
     .trim();
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 };

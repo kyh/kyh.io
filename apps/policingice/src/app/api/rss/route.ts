@@ -7,21 +7,21 @@ const siteUrl = "https://policingice.com";
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 
-function escapeXml(str: string | null | undefined): string {
-  if (!str) return "";
+const escapeXml = (str: string | null | undefined): string => {
+  if (!str) {
+    return "";
+  }
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+};
 
-function formatRFC2822(date: Date): string {
-  return date.toUTCString();
-}
+const formatRFC2822 = (date: Date): string => date.toUTCString();
 
-function formatReadableDate(date: Date): string {
+const formatReadableDate = (date: Date): string => {
   const months = [
     "Jan",
     "Feb",
@@ -37,57 +37,59 @@ function formatReadableDate(date: Date): string {
     "Dec",
   ];
   return `${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
-}
+};
 
-export async function GET(request: Request) {
+const feedUrl = (page: number, limit: number, before: string | null) => {
+  const params = new URLSearchParams();
+  if (limit !== DEFAULT_LIMIT) {
+    params.set("limit", String(limit));
+  }
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+  if (before) {
+    params.set("before", before);
+  }
+  return params.toString() ? `${siteUrl}/api/rss?${params}` : `${siteUrl}/api/rss`;
+};
+
+export const GET = async (request: Request) => {
   const url = new URL(request.url);
   const limitParam = url.searchParams.get("limit");
   const pageParam = url.searchParams.get("page");
   const beforeParam = url.searchParams.get("before");
 
-  const limit = Math.min(Math.max(1, parseInt(limitParam ?? "", 10) || DEFAULT_LIMIT), MAX_LIMIT);
-  const page = Math.max(1, parseInt(pageParam ?? "", 10) || 1);
+  const limit = Math.min(
+    Math.max(1, Math.trunc(Number(limitParam ?? "")) || DEFAULT_LIMIT),
+    MAX_LIMIT,
+  );
+  const page = Math.max(1, Math.trunc(Number(pageParam ?? "")) || 1);
   const offset = (page - 1) * limit;
   const beforeDate = beforeParam ? new Date(beforeParam) : null;
 
   const results = await db.query.incidents.findMany({
-    with: { videos: true },
+    limit,
+    offset,
+    orderBy: (inc) => [desc(inc.createdAt)],
     where: (inc, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
       andOp(
         eqOp(inc.status, "approved"),
         isNullOp(inc.deletedAt),
         ltOp(inc.reportCount, 3),
-        beforeDate && !isNaN(beforeDate.getTime())
+        beforeDate && !Number.isNaN(beforeDate.getTime())
           ? lt(incidents.createdAt, beforeDate)
           : undefined,
       ),
-    orderBy: (inc) => [desc(inc.createdAt)],
-    limit,
-    offset,
+    with: { videos: true },
   });
 
   const lastBuildDate = results[0]?.createdAt
     ? new Date(results[0].createdAt).toUTCString()
     : new Date().toUTCString();
 
-  const selfParams = new URLSearchParams();
-  if (limit !== DEFAULT_LIMIT) selfParams.set("limit", String(limit));
-  if (page > 1) selfParams.set("page", String(page));
-  if (beforeParam) selfParams.set("before", beforeParam);
-  const selfUrl = selfParams.toString() ? `${siteUrl}/api/rss?${selfParams}` : `${siteUrl}/api/rss`;
-
-  const nextParams = new URLSearchParams();
-  if (limit !== DEFAULT_LIMIT) nextParams.set("limit", String(limit));
-  nextParams.set("page", String(page + 1));
-  if (beforeParam) nextParams.set("before", beforeParam);
-  const nextUrl = results.length === limit ? `${siteUrl}/api/rss?${nextParams}` : null;
-
-  const prevParams = new URLSearchParams();
-  if (limit !== DEFAULT_LIMIT) prevParams.set("limit", String(limit));
-  if (page > 2) prevParams.set("page", String(page - 1));
-  if (beforeParam) prevParams.set("before", beforeParam);
-  const prevUrl =
-    page > 1 ? `${siteUrl}/api/rss${prevParams.toString() ? `?${prevParams}` : ""}` : null;
+  const selfUrl = feedUrl(page, limit, beforeParam);
+  const nextUrl = results.length === limit ? feedUrl(page + 1, limit, beforeParam) : null;
+  const prevUrl = page > 1 ? feedUrl(page - 1, limit, beforeParam) : null;
 
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
@@ -113,15 +115,14 @@ ${results
 
     const mediaContent =
       incident.videos.length > 0
-        ? "\n" +
-          incident.videos
+        ? `\n${incident.videos
             .map(
               (v) =>
                 `      <media:content url="${escapeXml(v.url)}" medium="video" type="text/html">
         <media:credit>${escapeXml(v.platform)}</media:credit>
       </media:content>`,
             )
-            .join("\n")
+            .join("\n")}`
         : "";
 
     return `    <item>
@@ -138,8 +139,8 @@ ${results
 
   return new Response(rss, {
     headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
       "Cache-Control": "public, max-age=3600",
+      "Content-Type": "application/rss+xml; charset=utf-8",
     },
   });
-}
+};

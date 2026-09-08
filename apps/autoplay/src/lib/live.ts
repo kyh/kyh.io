@@ -50,35 +50,43 @@ const OVERRUN_GRACE_SECONDS = 60;
 export const usdPerSecond = (day: string = today()): number =>
   day <= PROMO_LAST_DAY ? PROMO_USD_PER_SECOND : LIST_USD_PER_SECOND;
 
-export type BudgetViewer = { userId: string; owner: boolean };
+export interface BudgetViewer {
+  userId: string;
+  owner: boolean;
+}
 
 /** Where aired items are kept: the database, or memory while there is none. */
-export type AiredStore = {
-  aired(channelKey: string): Promise<Set<string>>;
-  mark(channelKey: string, itemId: string, userId: string): Promise<void>;
-};
+export interface AiredStore {
+  aired: (channelKey: string) => Promise<Set<string>>;
+  mark: (channelKey: string, itemId: string, userId: string) => Promise<void>;
+}
 
 /** Whose session, when it was opened, and when it was last heard from. */
-export type SessionSpan = { userId: string; startedAt: number; seenAt: number };
+export interface SessionSpan {
+  userId: string;
+  startedAt: number;
+  seenAt: number;
+}
 
 /** Where the meter's sessions are kept: the database, or memory while there is none. */
-export type SessionStore = {
+export interface SessionStore {
   /** A session fal has opened for this viewer. */
-  open(id: string, userId: string, at: number): Promise<void>;
+  open: (id: string, userId: string, at: number) => Promise<void>;
   /** A heartbeat for it; not this viewer's session, not counted. */
-  touch(id: string, userId: string, at: number): Promise<void>;
+  touch: (id: string, userId: string, at: number) => Promise<void>;
   /** Every session opened since `since` (unix ms). */
-  spans(since: number): Promise<SessionSpan[]>;
-};
+  spans: (since: number) => Promise<SessionSpan[]>;
+}
 
 export const memoryAiredStore = (): AiredStore => {
   const aired = new Map<string, Set<string>>();
   return {
-    aired: async (channelKey) => new Set(aired.get(channelKey) ?? []),
-    mark: async (channelKey, itemId) => {
+    aired: (channelKey) => Promise.resolve(new Set(aired.get(channelKey))),
+    mark: (channelKey, itemId) => {
       const channel = aired.get(channelKey) ?? new Set<string>();
       channel.add(itemId);
       aired.set(channelKey, channel);
+      return Promise.resolve();
     },
   };
 };
@@ -86,14 +94,21 @@ export const memoryAiredStore = (): AiredStore => {
 export const memorySessionStore = (): SessionStore => {
   const sessions = new Map<string, SessionSpan>();
   return {
-    open: async (id, userId, at) => {
-      if (!sessions.has(id)) sessions.set(id, { userId, startedAt: at, seenAt: at });
+    open: (id, userId, at) => {
+      if (!sessions.has(id)) {
+        sessions.set(id, { seenAt: at, startedAt: at, userId });
+      }
+      return Promise.resolve();
     },
-    touch: async (id, userId, at) => {
+    spans: (since) =>
+      Promise.resolve([...sessions.values()].filter((session) => session.startedAt >= since)),
+    touch: (id, userId, at) => {
       const session = sessions.get(id);
-      if (session !== undefined && session.userId === userId) session.seenAt = at;
+      if (session !== undefined && session.userId === userId) {
+        session.seenAt = at;
+      }
+      return Promise.resolve();
     },
-    spans: async (since) => [...sessions.values()].filter((session) => session.startedAt >= since),
   };
 };
 
@@ -108,7 +123,7 @@ export const databaseAiredStore = (database: NonNullable<typeof db>): AiredStore
   mark: async (channelKey, itemId, userId) => {
     await database
       .insert(airedItem)
-      .values({ channelKey, itemId, userId, airedAt: Date.now() })
+      .values({ airedAt: Date.now(), channelKey, itemId, userId })
       .onConflictDoNothing();
   },
 });
@@ -117,24 +132,24 @@ export const databaseSessionStore = (database: NonNullable<typeof db>): SessionS
   open: async (id, userId, at) => {
     await database
       .insert(liveSession)
-      .values({ id, userId, startedAt: at, seenAt: at })
+      .values({ id, seenAt: at, startedAt: at, userId })
       .onConflictDoNothing();
   },
+  spans: (since) =>
+    database
+      .select({
+        seenAt: liveSession.seenAt,
+        startedAt: liveSession.startedAt,
+        userId: liveSession.userId,
+      })
+      .from(liveSession)
+      .where(gte(liveSession.startedAt, since)),
   touch: async (id, userId, at) => {
     await database
       .update(liveSession)
       .set({ seenAt: at })
       .where(and(eq(liveSession.id, id), eq(liveSession.userId, userId)));
   },
-  spans: async (since) =>
-    database
-      .select({
-        userId: liveSession.userId,
-        startedAt: liveSession.startedAt,
-        seenAt: liveSession.seenAt,
-      })
-      .from(liveSession)
-      .where(gte(liveSession.startedAt, since)),
 });
 
 /** What fal bills for these sessions, in seconds: each at least the minimum. */
@@ -154,7 +169,9 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
     const spans = await sessions.spans(dayStart());
     const rate = usdPerSecond();
     const station = DAILY_BUDGET_USD - billedSeconds(spans) * rate;
-    if (viewer.owner) return station;
+    if (viewer.owner) {
+      return station;
+    }
     const own =
       DAILY_BUDGET_USD_PER_VIEWER -
       billedSeconds(spans.filter((span) => span.userId === viewer.userId)) * rate;
@@ -227,21 +244,21 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
     const format = opening ? pickFormat() : undefined;
     const segment = buildSegmentPrompt(item.text, item.author.name);
     return {
+      formatLabel: format?.label,
       kind: "program",
       program: {
-        itemId: item.id,
-        kind: item.kind,
-        text: item.text,
-        link: item.link,
         authorName: item.author.name,
         authorUsername: item.author.username,
+        itemId: item.id,
+        kind: item.kind,
+        link: item.link,
         prompt: format === undefined ? segment : buildOpeningPrompt(format.world, segment),
+        text: item.text,
       },
-      formatLabel: format?.label,
     };
   };
 
-  return { budgetLeft, mayOpen, mayContinue, sessionOpened, sessionSeen, nextProgram };
+  return { budgetLeft, mayContinue, mayOpen, nextProgram, sessionOpened, sessionSeen };
 };
 
 /** The station's programming, on whichever stores the deployment has. */

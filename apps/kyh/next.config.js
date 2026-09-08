@@ -5,24 +5,25 @@ const getRemotePatterns = () => {
   const remotePatterns = [];
 
   if (SUPABASE_URL) {
-    const hostname = new URL(SUPABASE_URL).hostname;
+    const { hostname } = new URL(SUPABASE_URL);
 
     remotePatterns.push({
-      protocol: "https",
       hostname,
+      protocol: "https",
     });
   }
 
   if (!IS_PRODUCTION) {
-    remotePatterns.push({
-      protocol: "http",
-      hostname: "127.0.0.1",
-    });
-
-    remotePatterns.push({
-      protocol: "http",
-      hostname: "localhost",
-    });
+    remotePatterns.push(
+      {
+        hostname: "127.0.0.1",
+        protocol: "http",
+      },
+      {
+        hostname: "localhost",
+        protocol: "http",
+      },
+    );
   }
 
   return remotePatterns;
@@ -43,20 +44,20 @@ const config = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   images: {
-    remotePatterns: getRemotePatterns(),
     localPatterns: getLocalPatterns(),
+    remotePatterns: getRemotePatterns(),
   },
-  async redirects() {
+  redirects() {
     return [
       {
-        source: "/projects",
         destination: "/showcase",
         permanent: true,
+        source: "/projects",
       },
       {
-        source: "/about",
         destination: "/",
         permanent: true,
+        source: "/about",
       },
     ];
   },

@@ -1,16 +1,36 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import usePartySocket from "partysocket/react";
+import { usePartySocket } from "partysocket/react";
 
 import type { ClientMessage, PlayerMap, ServerMessage } from "@/lib/player";
 
-const THROTTLE_MS = 32; // ~30fps, good balance between smoothness and network
+// ~30fps, good balance between smoothness and network
+const THROTTLE_MS = 32;
 
-type useRealtimeProps = {
+interface useRealtimeProps {
   host: string;
   party: string;
   room: string;
+}
+
+const subscribeToResize = (onStoreChange: () => void) => {
+  window.addEventListener("resize", onStoreChange);
+  return () => window.removeEventListener("resize", onStoreChange);
 };
+
+const unmeasured = { height: 0, width: 0 };
+// useSyncExternalStore compares snapshots by identity, so a fresh object per
+// read would loop forever. Only allocate when the size actually changed.
+let lastDimensions = unmeasured;
+const getWindowDimensions = () => {
+  if (lastDimensions.width !== window.innerWidth || lastDimensions.height !== window.innerHeight) {
+    lastDimensions = { height: window.innerHeight, width: window.innerWidth };
+  }
+  return lastDimensions;
+};
+
+const useTrackWindow = () =>
+  useSyncExternalStore(subscribeToResize, getWindowDimensions, () => unmeasured);
 
 export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   const socket = usePartySocket({ host, party, room });
@@ -49,13 +69,14 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   );
 
   // Cleanup pending timeout on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (rafRef.current) {
         clearTimeout(rafRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const onMessage = (evt: WebSocketEventMap["message"]) => {
@@ -71,29 +92,36 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
           socket.send(JSON.stringify(pong));
           break;
         }
-        case "sync":
+        case "sync": {
           setPlayers({ ...msg.data.players });
           break;
-        case "player_joined":
+        }
+        case "player_joined": {
           setPlayers((prev) => ({ ...prev, [msg.data.id]: msg.data }));
           break;
-        case "player_state":
+        }
+        case "player_state": {
           setPlayers((prev) => {
             const player = prev[msg.data.id];
-            if (!player) return prev;
+            if (!player) {
+              return prev;
+            }
             return {
               ...prev,
               [msg.data.id]: { ...player, state: { ...player.state, ...msg.data.state } },
             };
           });
           break;
-        case "player_left":
-          setPlayers((prev) => {
-            const next = { ...prev };
-            delete next[msg.data.id];
-            return next;
-          });
+        }
+        case "player_left": {
+          setPlayers((prev) =>
+            Object.fromEntries(Object.entries(prev).filter(([id]) => id !== msg.data.id)),
+          );
           break;
+        }
+        default: {
+          break;
+        }
       }
     };
     socket.addEventListener("message", onMessage);
@@ -106,28 +134,34 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   // Track mouse/touch position with throttling
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
-      if (!windowDimensions.width || !windowDimensions.height) return;
+      if (!windowDimensions.width || !windowDimensions.height) {
+        return;
+      }
       const message: ClientMessage = {
-        type: "player_state_patch",
         data: {
+          pointer: "mouse",
           x: e.clientX / windowDimensions.width,
           y: e.clientY / windowDimensions.height,
-          pointer: "mouse",
         },
+        type: "player_state_patch",
       };
       sendThrottled(message);
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!windowDimensions.width || !windowDimensions.height) return;
-      if (!e.touches[0]) return;
+      if (!windowDimensions.width || !windowDimensions.height) {
+        return;
+      }
+      if (!e.touches[0]) {
+        return;
+      }
       const message: ClientMessage = {
-        type: "player_state_patch",
         data: {
+          pointer: "touch",
           x: e.touches[0].clientX / windowDimensions.width,
           y: e.touches[0].clientY / windowDimensions.height,
-          pointer: "touch",
         },
+        type: "player_state_patch",
       };
       sendThrottled(message);
     };
@@ -135,8 +169,8 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
     // touchend sends immediately (no throttle needed)
     const onTouchEnd = () => {
       const message: ClientMessage = {
-        type: "player_state_patch",
         data: { x: null, y: null },
+        type: "player_state_patch",
       };
       socket.send(JSON.stringify(message));
     };
@@ -160,42 +194,25 @@ export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
   useEffect(() => {
     const announce = () => {
       const message: ClientMessage = {
-        type: "player_state_patch",
         data: {
+          pathname,
           x: 1,
           y: 1,
-          pathname,
         },
+        type: "player_state_patch",
       };
       socket.send(JSON.stringify(message));
     };
 
     // While still connecting, the open handler covers it (and partysocket would
     // queue the send anyway) — sending now as well would just duplicate the patch.
-    if (socket.readyState === WebSocket.OPEN) announce();
+    if (socket.readyState === WebSocket.OPEN) {
+      announce();
+    }
     socket.addEventListener("open", announce);
 
     return () => socket.removeEventListener("open", announce);
   }, [socket, pathname]);
 
-  return { socket, players, windowDimensions };
+  return { players, socket, windowDimensions };
 };
-
-const subscribeToResize = (onStoreChange: () => void) => {
-  window.addEventListener("resize", onStoreChange);
-  return () => window.removeEventListener("resize", onStoreChange);
-};
-
-const unmeasured = { width: 0, height: 0 };
-// useSyncExternalStore compares snapshots by identity, so a fresh object per
-// read would loop forever. Only allocate when the size actually changed.
-let lastDimensions = unmeasured;
-const getWindowDimensions = () => {
-  if (lastDimensions.width !== window.innerWidth || lastDimensions.height !== window.innerHeight) {
-    lastDimensions = { width: window.innerWidth, height: window.innerHeight };
-  }
-  return lastDimensions;
-};
-
-const useTrackWindow = () =>
-  useSyncExternalStore(subscribeToResize, getWindowDimensions, () => unmeasured);
