@@ -155,6 +155,7 @@ export const recording = sqliteTable(
     /** The program on air when the chunk began, for the ticker. */
     itemId: text("item_id").notNull(),
     text: text().notNull(),
+    link: text(),
     authorName: text("author_name").notNull(),
     authorUsername: text("author_username").notNull(),
     seconds: integer().notNull(),

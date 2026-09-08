@@ -125,6 +125,7 @@ const fetchUploads = async (access: AccessOf<"youtube">): Promise<Item[]> => {
         id: `youtube:${video.id}`,
         kind: "youtube",
         text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
+        link: `https://www.youtube.com/watch?v=${video.id}`,
         createdAt: video.snippet.publishedAt,
         score: Number(video.statistics?.viewCount ?? 0),
         author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },

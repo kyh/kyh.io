@@ -56,6 +56,7 @@ const toSessions = (rows: Row[], files: Map<string, string>): RecordedSession[] 
       itemId: row.itemId,
       kind: itemKind(row.itemId),
       text: row.text,
+      link: row.link ?? undefined,
       authorName: row.authorName,
       authorUsername: row.authorUsername,
     });
@@ -99,7 +100,7 @@ export const listSessions = async (channelKey: string): Promise<RecordedSession[
  * than a file nothing points at.
  */
 export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "recordedAt">) => {
-  const entry = { ...row, id: crypto.randomUUID(), recordedAt: Date.now() };
+  const entry = { ...row, link: row.link ?? null, id: crypto.randomUUID(), recordedAt: Date.now() };
   if (db === undefined) {
     memRecordings.push(entry);
     return;

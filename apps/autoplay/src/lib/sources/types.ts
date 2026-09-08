@@ -15,6 +15,8 @@ export const itemSchema = z.object({
   kind: sourceKindSchema,
   /** What the prompt and the status-bar ticker are built from. */
   text: z.string(),
+  /** The item on its service, for a viewer to open; a feed entry may have none. */
+  link: z.string().optional(),
   createdAt: z.string().optional(),
   /** Higher airs first — engagement on X, recency or views elsewhere. */
   score: z.number(),

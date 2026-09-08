@@ -143,6 +143,7 @@ const toItems = (url: string, feed: Feed): Item[] => {
       id: `rss:${id}`,
       kind: "rss",
       text: `${plainText(title, 200)}. ${plainText(body, MAX_BODY_LENGTH)}`.trim(),
+      link: link !== undefined && isHttp(link) ? link : undefined,
       createdAt:
         published !== undefined && !Number.isNaN(Date.parse(published))
           ? new Date(published).toISOString()

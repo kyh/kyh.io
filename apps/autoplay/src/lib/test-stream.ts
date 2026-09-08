@@ -65,6 +65,7 @@ export const testStreamProgram = (n: number): LiveProgram => ({
   itemId: `test:${n}`,
   kind: "x",
   text: `Test stream ${n} — ${new Date().toLocaleTimeString()}`,
+  link: `https://example.com/test-stream/${n}`,
   authorName: "Test stream",
   authorUsername: "teststream",
   prompt: `Test stream ${n}`,

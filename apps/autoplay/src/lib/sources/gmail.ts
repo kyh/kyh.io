@@ -97,6 +97,7 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
       id: `gmail:${message.id}`,
       kind: "gmail",
       text: `${subject}. ${decodeEntities(message.snippet ?? "")}`.trim(),
+      link: `https://mail.google.com/mail/u/0/#all/${message.id}`,
       createdAt: receivedMs > 0 ? new Date(receivedMs).toISOString() : undefined,
       score: Math.round(receivedMs / 60_000) + (unread ? UNREAD_BONUS_MINUTES : 0),
       author: { name: from.name, username: from.address },

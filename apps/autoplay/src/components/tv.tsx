@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { PreviewCard } from "@base-ui/react/preview-card";
 
 import type { ChannelSummary, LiveProgram, SessionPayload } from "@/lib/api-contract";
 import { PUBLIC_CHANNEL } from "@/lib/api-contract";
@@ -46,17 +47,38 @@ type ScreenProps = {
 const MARQUEE_SPEED = 45;
 /** Rough character width at the status bar's 11px monospace. */
 const CHAR_WIDTH = 6.6;
+/** How long a caption takes to roll off as the next rolls on. */
+const ROLL_MS = 400;
+
+/** What the ticker shows: the program or recording on air. */
+type OnAir = Pick<
+  LiveProgram,
+  "itemId" | "kind" | "text" | "link" | "authorName" | "authorUsername"
+>;
+
+/** The account behind a program: an @handle on X, a sender address, a feed host, a channel name. */
+const handle = (program: OnAir): string =>
+  program.kind === "x" ? `@${program.authorUsername}` : program.authorUsername;
+
+/** How the ticker credits a program; the @handle convention is X's alone. */
+const attribution = (program: OnAir): string =>
+  program.kind === "x" ? handle(program) : program.authorName;
+
+const caption = (program: OnAir): string =>
+  `${displayPostText(program.text)} — ${attribution(program)}`;
 
 /**
- * The status bar cannot show a whole post, so it scrolls one. Duration is
- * derived from the text's length rather than fixed, or a long post would race
- * past while a short one crawled. Hovering pauses it, which is how you read
- * the end of a sentence you just missed.
+ * One caption, scrolling. Duration is derived from the text's length rather
+ * than fixed, or a long post would race past while a short one crawled.
  */
-const Marquee = (props: { text: string }) => {
+const MarqueeCopy = (props: { text: string; roll: "on" | "off" }) => {
   const seconds = Math.max(8, (props.text.length * CHAR_WIDTH) / MARQUEE_SPEED);
   return (
-    <div className="marquee" title={props.text}>
+    <div
+      className="marquee-copy"
+      data-roll={props.roll}
+      style={{ animationDuration: `${ROLL_MS}ms` }}
+    >
       <div className="marquee-track" style={{ animationDuration: `${seconds}s` }}>
         <span>{props.text}</span>
         <span aria-hidden>{props.text}</span>
@@ -65,12 +87,75 @@ const Marquee = (props: { text: string }) => {
   );
 };
 
-/** What the ticker shows: the program or recording on air. */
-type OnAir = Pick<LiveProgram, "kind" | "text" | "authorName" | "authorUsername">;
+/**
+ * The status bar cannot show a whole post, so it scrolls one — and is the
+ * link to it. A change of program rolls the caption over rather than cutting,
+ * since the picture it captions never cuts either: the old caption keeps
+ * scrolling as it rolls off, and the new one rolls on beneath it. Hovering
+ * pauses the scroll, which is how you read the end of a sentence you just
+ * missed, and opens the whole post as a card.
+ */
+const Ticker = (props: { program: OnAir }) => {
+  const { program } = props;
+  const [seen, setSeen] = useState(program);
+  const [leaving, setLeaving] = useState<OnAir | undefined>(undefined);
+  if (seen.itemId !== program.itemId) {
+    setSeen(program);
+    setLeaving(seen);
+  }
+  useEffect(() => {
+    if (leaving === undefined) return;
+    const timer = window.setTimeout(() => setLeaving(undefined), ROLL_MS);
+    return () => window.clearTimeout(timer);
+  }, [leaving]);
+  const host = program.link === undefined ? undefined : URL.parse(program.link)?.host;
 
-/** How the ticker credits a program; the @handle convention is X's alone. */
-const attribution = (program: OnAir): string =>
-  program.kind === "x" ? `@${program.authorUsername}` : program.authorName;
+  return (
+    <PreviewCard.Root>
+      <PreviewCard.Trigger href={program.link} target="_blank" rel="noreferrer" className="marquee">
+        {leaving !== undefined && (
+          <MarqueeCopy key={leaving.itemId} text={caption(leaving)} roll="off" />
+        )}
+        <MarqueeCopy key={program.itemId} text={caption(program)} roll="on" />
+      </PreviewCard.Trigger>
+      <PreviewCard.Portal>
+        <PreviewCard.Positioner
+          side="top"
+          align="start"
+          sideOffset={6}
+          collisionPadding={8}
+          className="z-30"
+        >
+          <PreviewCard.Popup className="win w-72 font-mono text-[11px] outline-none transition-[opacity,translate] duration-150 ease-out data-starting-style:translate-y-1 data-starting-style:opacity-0 data-ending-style:translate-y-1 data-ending-style:opacity-0">
+            <div className="win-title px-2 py-1">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase">
+                {SOURCE_KIND_NAMES[program.kind]}
+              </p>
+            </div>
+            <div className="space-y-1.5 p-3">
+              <p className="truncate font-bold">{program.authorName}</p>
+              {handle(program) !== program.authorName && (
+                <p className="truncate opacity-60">{handle(program)}</p>
+              )}
+              <p className="leading-relaxed break-words">{displayPostText(program.text)}</p>
+              {program.link !== undefined && (
+                <a
+                  href={program.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 pt-1 text-[10px] tracking-widest uppercase hover:underline"
+                >
+                  <Glyph name="open" size={9} />
+                  {host}
+                </a>
+              )}
+            </div>
+          </PreviewCard.Popup>
+        </PreviewCard.Positioner>
+      </PreviewCard.Portal>
+    </PreviewCard.Root>
+  );
+};
 
 const channelNumber = (channel: ChannelSummary): string =>
   `CH ${String(channel.number).padStart(2, "0")}`;
@@ -228,7 +313,7 @@ const TvScreen = (props: ScreenProps) => {
                 {props.urlError ?? (screen.status === "tuning" ? "Tuning in…" : "No signal")}
               </span>
             ) : (
-              <Marquee text={`${displayPostText(program.text)} — ${attribution(program)}`} />
+              <Ticker program={program} />
             )}
           </div>
 

@@ -232,6 +232,7 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
         itemId: item.id,
         kind: item.kind,
         text: item.text,
+        link: item.link,
         authorName: item.author.name,
         authorUsername: item.author.username,
         prompt: format === undefined ? segment : buildOpeningPrompt(format.world, segment),

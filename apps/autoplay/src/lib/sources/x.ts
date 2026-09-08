@@ -82,7 +82,12 @@ const searchKey = (trend: string): string => `x:search:${trend}`;
 
 export const xItemId = (postId: string): string => `x:${postId}`;
 
-const toItem = (post: FeedPost): Item => ({ ...post, id: xItemId(post.id), kind: "x" });
+const toItem = (post: FeedPost): Item => ({
+  ...post,
+  id: xItemId(post.id),
+  kind: "x",
+  link: `https://x.com/${post.author.username}/status/${post.id}`,
+});
 
 const pageUsd = (page: FeedPage): number =>
   page.posts.length * (page.source === "home" ? USD_PER_TIMELINE_POST : USD_PER_OWN_POST);

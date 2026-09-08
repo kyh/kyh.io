@@ -68,6 +68,8 @@ const programFieldsSchema = z.object({
   itemId: z.string(),
   kind: sourceKindSchema,
   text: z.string(),
+  /** The item on its service, which the ticker links to. */
+  link: z.string().optional(),
   authorName: z.string(),
   authorUsername: z.string(),
 });
@@ -144,6 +146,7 @@ export const recordingRequestSchema = recordingChunkSchema.extend({
   formatLabel: z.string().max(80),
   itemId: z.string().max(200),
   text: z.string().max(4000),
+  link: z.url().max(2000).optional(),
   authorName: z.string().max(200),
   authorUsername: z.string().max(200),
   seconds: z.number().positive().max(60),

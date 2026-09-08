@@ -333,19 +333,49 @@
   line-height: 1;
 }
 
-/* Status-bar marquee. Two identical copies scroll as one track and the
-   animation ends exactly one copy along, so the loop has no seam — which is
-   why the spacing lives in each copy's padding rather than a flex gap, where
-   it would fall on only one side and make the jump visible. */
+/* Status-bar marquee: a link that scrolls its caption. Two identical copies
+   scroll as one track and the animation ends exactly one copy along, so the
+   loop has no seam — which is why the spacing lives in each copy's padding
+   rather than a flex gap, where it would fall on only one side and make the
+   jump visible. A change of caption rolls the old copy up and out as the new
+   one rolls in beneath, the two overlapping in the same clipped line. */
 .marquee {
   position: relative;
   overflow: hidden;
   min-width: 0;
   flex: 1;
+  align-self: stretch;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.marquee:focus-visible {
+  outline: 1px dotted var(--chrome-dark);
+  outline-offset: -3px;
+}
+
+.marquee-copy {
+  --roll: 100%;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.marquee-copy[data-roll="on"] {
+  animation-name: marquee-roll-on;
+}
+
+.marquee-copy[data-roll="off"] {
+  animation-name: marquee-roll-off;
 }
 
 .marquee-track {
   display: inline-flex;
+  flex: none;
   white-space: nowrap;
   will-change: transform;
   animation-name: marquee-scroll;
@@ -357,7 +387,8 @@
   padding-right: 4rem;
 }
 
-.marquee:hover .marquee-track {
+.marquee:hover .marquee-track,
+.marquee[data-popup-open] .marquee-track {
   animation-play-state: paused;
 }
 
@@ -367,11 +398,29 @@
   }
 }
 
+@keyframes marquee-roll-on {
+  from {
+    opacity: 0;
+    transform: translateY(var(--roll));
+  }
+}
+
+@keyframes marquee-roll-off {
+  to {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--roll)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
   }
   .marquee-track > span:last-child {
     display: none;
+  }
+  /* The captions still fade over; only the roll goes. */
+  .marquee-copy {
+    --roll: 0%;
   }
 }

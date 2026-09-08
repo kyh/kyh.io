@@ -43,6 +43,15 @@ const GLYPHS = {
   ),
   up: <path d="M5 2l4 5H1z" />,
   down: <path d="M1 3h8l-4 5z" />,
+  open: (
+    <path
+      d="M4.5 1.5H9v4.5M9 1.5L4 6.5M6.5 7v2H1V3.5h2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="square"
+    />
+  ),
 } as const;
 
 type GlyphName = keyof typeof GLYPHS;
