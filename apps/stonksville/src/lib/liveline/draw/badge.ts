@@ -5,15 +5,17 @@
  * Total size: (tailLen + pillW) × pillH.
  * The tail tip points left at (0, pillH/2).
  */
-export function badgeSvgPath(
+export const badgeSvgPath = (
   pillW: number,
   pillH: number,
   tailLen: number,
   tailSpread: number,
-): string {
+): string => {
   const r = pillH / 2;
-  const cx = tailLen + pillW - r; // right semicircle center X
-  const tl = tailLen + r; // top-left junction X
+  // right semicircle center X
+  const cx = tailLen + pillW - r;
+  // top-left junction X
+  const tl = tailLen + r;
 
   return [
     `M${tl},0`,
@@ -24,12 +26,12 @@ export function badgeSvgPath(
     `C${3},${r - tailSpread},${tailLen + 2},0,${tl},0`,
     "Z",
   ].join(" ");
-}
+};
 
 /**
  * Simple pill (no tail) — a rounded rect.
  */
-export function badgePillOnly(pillW: number, pillH: number): string {
+export const badgePillOnly = (pillW: number, pillH: number): string => {
   const r = pillH / 2;
   return [
     `M${r},0`,
@@ -39,7 +41,7 @@ export function badgePillOnly(pillW: number, pillH: number): string {
     `A${r},${r},0,0,1,${r},0`,
     "Z",
   ].join(" ");
-}
+};
 
 /** Badge geometry constants */
 export const BADGE_PAD_X = 10;

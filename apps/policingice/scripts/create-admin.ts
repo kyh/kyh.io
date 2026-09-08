@@ -13,22 +13,21 @@
  */
 import { auth } from "../src/lib/auth";
 
-const email = process.argv[2];
-const password = process.argv[3];
-const name = process.argv[4] || "Admin";
+const [email, password, nameArg] = process.argv.slice(2);
+const name = nameArg || "Admin";
 
 if (!email || !password) {
   console.log("Usage: npx tsx scripts/create-admin.ts <email> <password> [name]");
   process.exit(1);
 }
 
-async function main() {
+const main = async () => {
   try {
     const result = await auth.api.signUpEmail({
       body: {
         email,
-        password,
         name,
+        password,
       },
     });
 
@@ -37,6 +36,6 @@ async function main() {
     console.error("Failed to create admin user:", error);
     process.exit(1);
   }
-}
+};
 
 void main();

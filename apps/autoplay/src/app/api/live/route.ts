@@ -17,12 +17,20 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     liveRequestSchema,
     "Expected { sourceId: string, opening: boolean }",
   );
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   const viewer = await requireSession("Sign in with X to go live");
-  if ("refused" in viewer) return viewer.refused;
+  if ("refused" in viewer) {
+    return viewer.refused;
+  }
   const source = await resolveSource(body.data.sourceId, viewer.session);
-  if (source === undefined) return errorResponse(404, "No such channel");
-  if (source.mode === "replay") return errorResponse(403, "Only the station's owner directs CH 01");
+  if (source === undefined) {
+    return errorResponse(404, "No such channel");
+  }
+  if (source.mode === "replay") {
+    return errorResponse(403, "Only the station's owner directs CH 01");
+  }
   if (source.mode === "off-air") {
     const payload: LivePayload = { kind: "off-air", reason: source.reason };
     return NextResponse.json(payload);

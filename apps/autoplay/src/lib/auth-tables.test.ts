@@ -46,7 +46,9 @@ for (const [key, authTable] of Object.entries(authTables)) {
 
     it("declares every field better-auth requires", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
+      if (!table) {
+        return;
+      }
       const properties = new Set(Object.keys(getTableColumns(table)));
       const missing = fieldNamesOf(authTable).filter((fieldName) => !properties.has(fieldName));
       assert.deepEqual(missing, []);
@@ -54,7 +56,9 @@ for (const [key, authTable] of Object.entries(authTables)) {
 
     it("does not declare fields better-auth does not know about", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
+      if (!table) {
+        return;
+      }
       const known = new Set([...fieldNamesOf(authTable), "id"]);
       const extra = Object.keys(getTableColumns(table)).filter((property) => !known.has(property));
       assert.deepEqual(extra, []);
@@ -62,7 +66,9 @@ for (const [key, authTable] of Object.entries(authTables)) {
 
     it("matches better-auth on which fields are NOT NULL", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
+      if (!table) {
+        return;
+      }
       const columns = getTableColumns(table);
       const mismatched = Object.entries(authTable.fields)
         .map(([fieldKey, field]) => ({

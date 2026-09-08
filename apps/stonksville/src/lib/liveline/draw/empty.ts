@@ -5,7 +5,7 @@ import {
   loadingBreath,
   LOADING_AMPLITUDE_RATIO,
   LOADING_SCROLL_SPEED,
-} from "./loadingShape";
+} from "./loading-shape";
 
 /**
  * Draw the empty/no-data state: a breathing squiggly line (grey) with
@@ -15,17 +15,17 @@ import {
  * gap + text. Used as an overlay during chart morph so the gap fades
  * in smoothly over the morphing chart line.
  */
-export function drawEmpty(
+export const drawEmpty = (
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   pad: Required<Padding>,
   palette: LivelinePalette,
-  alpha: number = 1,
-  now_ms: number = 0,
-  skipLine: boolean = false,
+  alpha = 1,
+  now_ms = 0,
+  skipLine = false,
   emptyText?: string,
-): void {
+): void => {
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
   const centerY = pad.top + chartH / 2;
@@ -40,8 +40,10 @@ export function drawEmpty(
 
   // Measure text to know gap size
   const textW = ctx.measureText(text).width;
-  const gapHalf = textW / 2 + 20; // padding around text
-  const fadeW = 30; // gradient fade width on each side
+  // padding around text
+  const gapHalf = textW / 2 + 20;
+  // gradient fade width on each side
+  const fadeW = 30;
 
   if (!skipLine) {
     const scroll = now_ms * LOADING_SCROLL_SPEED;
@@ -50,7 +52,7 @@ export function drawEmpty(
     // Breathing squiggly line — same shape as drawLoading but grey
     const numPts = 32;
     const pts: [number, number][] = [];
-    for (let i = 0; i <= numPts; i++) {
+    for (let i = 0; i <= numPts; i += 1) {
       const t = i / numPts;
       const x = pad.left + t * chartW;
       const y = loadingY(t, centerY, amplitude, scroll);
@@ -94,4 +96,4 @@ export function drawEmpty(
   ctx.fillText(text, cx, centerY);
 
   ctx.restore();
-}
+};

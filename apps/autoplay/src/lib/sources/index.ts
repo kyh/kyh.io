@@ -11,13 +11,18 @@ export const pickCandidate = (
   context: SourceContext,
 ): Promise<Item | undefined> => {
   switch (access.kind) {
-    case "x":
+    case "x": {
       return pickXCandidate(access, sourceId, context);
-    case "gmail":
+    }
+    case "gmail": {
       return pickGmailCandidate(access, sourceId, context);
-    case "rss":
+    }
+    case "rss": {
       return pickRssCandidate(access, sourceId, context);
-    case "youtube":
+    }
+    case "youtube": {
       return pickYoutubeCandidate(access, sourceId, context);
+    }
+    // no default
   }
 };

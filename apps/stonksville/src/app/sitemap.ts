@@ -5,9 +5,9 @@ import { siteConfig } from "@/lib/site-config";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: siteConfig.url,
       changeFrequency: "monthly",
-      priority: 1.0,
+      priority: 1,
+      url: siteConfig.url,
     },
   ];
 }

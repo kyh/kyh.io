@@ -8,20 +8,22 @@ import { cn } from "cn";
 // A desktop window as a modal: Base UI handles focus, escape, the backdrop and
 // scroll locking; the chrome is the same `win` plastic as everything else.
 
-type WindowDialogProps = {
+interface WindowDialogProps {
   open: boolean;
   onClose: () => void;
   title: string;
   /** Title-bar gradient variant, matching the window's role. */
   tone?: "alt" | "cyan";
   children: React.ReactNode;
-};
+}
 
 export const WindowDialog = (props: WindowDialogProps) => (
   <Dialog.Root
     open={props.open}
     onOpenChange={(open) => {
-      if (!open) props.onClose();
+      if (!open) {
+        props.onClose();
+      }
     }}
   >
     <Dialog.Portal>

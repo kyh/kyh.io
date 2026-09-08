@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 import { Counter } from "@/components/counter";
 import {
@@ -30,20 +31,28 @@ const getWordDuration = (word: string): number => {
   const { baseTime, timePerChar, punctuationMultiplier, commaMultiplier } = RSVP_SETTINGS;
   const duration = baseTime + word.length * timePerChar;
   const lastChar = word.slice(-1);
-  if (/[.!?]/.test(lastChar)) return duration * punctuationMultiplier;
-  if (lastChar === ",") return duration * commaMultiplier;
+  if (/[.!?]/u.test(lastChar)) {
+    return duration * punctuationMultiplier;
+  }
+  if (lastChar === ",") {
+    return duration * commaMultiplier;
+  }
   return duration;
 };
 
 const getCurrentIndex = (state: RSVPState, totalWords: number): number => {
-  if (state.status === "playing" || state.status === "paused") return state.wordIndex;
-  if (state.status === "finished") return totalWords - 1;
+  if (state.status === "playing" || state.status === "paused") {
+    return state.wordIndex;
+  }
+  if (state.status === "finished") {
+    return totalWords - 1;
+  }
   return 0;
 };
 
 // Word display component
 const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => {
-  const letters = word.split("");
+  const letters = [...word];
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
 
   return (
@@ -61,10 +70,10 @@ const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => 
 };
 
 export const RSVPReader = () => {
-  const words = useMemo(() => RSVP_CONTENT.trim().split(/\s+/).filter(Boolean), []);
+  const words = useMemo(() => RSVP_CONTENT.trim().split(/\s+/u).filter(Boolean), []);
   const [state, setState] = useState<RSVPState>({
-    status: "countdown",
     count: 3,
+    status: "countdown",
   });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,12 +92,14 @@ export const RSVPReader = () => {
         setState(
           state.count <= 1
             ? { status: "playing", wordIndex: 0 }
-            : { status: "countdown", count: state.count - 1 },
+            : { count: state.count - 1, status: "countdown" },
         );
       }, 1000);
     } else if (state.status === "playing") {
       const word = words[state.wordIndex];
-      if (!word) return;
+      if (!word) {
+        return;
+      }
 
       timeoutRef.current = setTimeout(() => {
         const nextIndex = state.wordIndex + 1;
@@ -167,6 +178,13 @@ export const RSVPReader = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlayPause, goToPrevWord, goToNextWord]);
 
+  let playButtonContent = <PlayIcon />;
+  if (state.status === "countdown") {
+    playButtonContent = <span className="font-mono text-lg">{state.count}</span>;
+  } else if (isPlaying) {
+    playButtonContent = <PauseIcon />;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-4">
       <div className="bg-foreground-faded/30 absolute top-0 left-1/2 h-full w-px -translate-x-1/2" />
@@ -178,26 +196,21 @@ export const RSVPReader = () => {
       </div>
 
       {state.status === "finished" ? (
-        <a
+        <Link
           href="/"
           className="border-border bg-background hover:bg-background-faded relative flex size-12 items-center justify-center rounded-full border transition-colors"
           aria-label="Go home"
         >
           <HomeIcon />
-        </a>
+        </Link>
       ) : (
         <button
+          type="button"
           onClick={togglePlayPause}
           className="border-border bg-background hover:bg-background-faded relative flex size-12 items-center justify-center rounded-full border transition-colors"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
-          {state.status === "countdown" ? (
-            <span className="font-mono text-lg">{state.count}</span>
-          ) : isPlaying ? (
-            <PauseIcon />
-          ) : (
-            <PlayIcon />
-          )}
+          {playButtonContent}
         </button>
       )}
 

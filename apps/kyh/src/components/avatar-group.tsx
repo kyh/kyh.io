@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -9,14 +9,14 @@ import { getRandomColor } from "@/lib/color";
 import { useIsHydrated } from "@/lib/use-hydrated";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
-type AvatarGroupProps = {
+interface AvatarGroupProps {
   others: PlayerMap;
-};
+}
 
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
   // Held back until hydration — a session-random color would mismatch SSR.
-  const [randomColor] = useState(getRandomColor);
+  const randomColor = useMemo(() => getRandomColor(), []);
   const color = useIsHydrated() ? randomColor : null;
   const players = Object.entries(others).toSorted(([, p]) =>
     p.state.pathname === pathname ? -1 : 1,
@@ -29,13 +29,13 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
         <motion.li
           className="-mr-2 rounded-full shadow-md"
           style={{
-            zIndex: players.length,
             background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
+            zIndex: players.length,
           }}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: onlyMe ? 0.2 : 1 }}
-          exit={{ scale: 0.8, opacity: 0 }}
-          transition={{ ease: "easeOut", duration: 0.2 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: onlyMe ? 0.2 : 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           layout
         >
           <Tooltip placement="bottom-end">
@@ -63,13 +63,13 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               key={id}
               className="-mr-2 rounded-full shadow-md"
               style={{
-                zIndex: players.length - index,
                 background: `linear-gradient(${player.hue}, ${player.color})`,
+                zIndex: players.length - index,
               }}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: anotherPage ? 0.2 : 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ ease: "easeOut", duration: 0.2 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: anotherPage ? 0.2 : 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               layout
             >
               <Tooltip placement="bottom-end">

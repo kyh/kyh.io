@@ -7,34 +7,40 @@ import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-ut
 
 const MAX_INPUT_LENGTH = 2048;
 
-function sanitizeInput(input?: string): string | undefined {
-  if (!input) return undefined;
+const sanitizeInput = (input?: string): string | undefined => {
+  if (!input) {
+    return undefined;
+  }
   return input.slice(0, MAX_INPUT_LENGTH);
-}
+};
 
-function extractUrls(text: string): string[] {
-  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+const extractUrls = (text: string): string[] => {
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/giu;
   const matches = text.match(urlRegex) ?? [];
-  return matches.map((url) => url.replace(/[.,;:!?)]+$/, ""));
-}
+  return matches.map((url) => url.replace(/[.,;:!?)]+$/u, ""));
+};
 
-function findVideoUrl(url?: string, text?: string, title?: string): string | null {
+const findVideoUrl = (url?: string, text?: string, title?: string): string | null => {
   if (url && isValidVideoUrl(url)) {
     return url;
   }
 
   if (text) {
     const found = extractUrls(text).find(isValidVideoUrl);
-    if (found) return found;
+    if (found) {
+      return found;
+    }
   }
 
   if (title) {
     const found = extractUrls(title).find(isValidVideoUrl);
-    if (found) return found;
+    if (found) {
+      return found;
+    }
   }
 
   return null;
-}
+};
 
 const ShareHandler = async ({
   searchParams,
@@ -57,7 +63,7 @@ const ShareHandler = async ({
 
   // Check if URL already exists
   const existingVideo = await db.query.videos.findFirst({
-    where: (videos, { eq }) => eq(videos.url, videoUrl),
+    where: (v, { eq }) => eq(v.url, videoUrl),
   });
 
   if (existingVideo) {
@@ -70,15 +76,15 @@ const ShareHandler = async ({
     const [newIncident] = await tx
       .insert(incidents)
       .values({
-        status: "approved",
         incidentDate: new Date(),
+        status: "approved",
       })
       .returning();
 
     await tx.insert(videos).values({
       incidentId: newIncident.id,
-      url: videoUrl,
       platform,
+      url: videoUrl,
     });
 
     return newIncident;
@@ -87,20 +93,20 @@ const ShareHandler = async ({
   redirect(`/incident/${incident.id}`);
 };
 
-export default async function SharePage({
+const SharePage = ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
-}) {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <span className="text-sm text-muted-foreground">Redirecting...</span>
-        </div>
-      }
-    >
-      <ShareHandler searchParams={searchParams} />
-    </Suspense>
-  );
-}
+}) => (
+  <Suspense
+    fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="text-sm text-muted-foreground">Redirecting...</span>
+      </div>
+    }
+  >
+    <ShareHandler searchParams={searchParams} />
+  </Suspense>
+);
+
+export default SharePage;

@@ -1,32 +1,30 @@
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const root = import.meta.dirname;
 
 export default defineConfig({
+  esbuild: {
+    include: /src\/.*\.[tj]sx?$/u,
+    loader: "jsx",
+  },
   plugins: [
     react({
-      include: [/\.jsx?$/, /\.tsx?$/],
+      include: [/\.jsx?$/u, /\.tsx?$/u],
     }),
   ],
   resolve: {
     alias: {
-      components: path.resolve(__dirname, "src/components"),
-      data: path.resolve(__dirname, "src/data"),
-      features: path.resolve(__dirname, "src/features"),
-      hooks: path.resolve(__dirname, "src/hooks"),
-      utils: path.resolve(__dirname, "src/utils"),
+      components: path.resolve(root, "src/components"),
+      data: path.resolve(root, "src/data"),
+      features: path.resolve(root, "src/features"),
+      hooks: path.resolve(root, "src/hooks"),
+      utils: path.resolve(root, "src/utils"),
     },
-  },
-  esbuild: {
-    loader: "jsx",
-    include: /src\/.*\.[tj]sx?$/,
   },
   test: {
     environment: "jsdom",
-    setupFiles: "./src/setupTests.js",
+    setupFiles: "./src/setup-tests.js",
   },
 });

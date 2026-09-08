@@ -4,13 +4,16 @@ import { useState } from "react";
 
 import type { z } from "zod";
 
-import type { ChannelSummary, SessionPayload } from "@/lib/api-contract";
+import type {
+  ChannelSummary,
+  SessionPayload,
+  removeSourceRequestSchema,
+  reorderSourcesRequestSchema,
+} from "@/lib/api-contract";
 import {
   addSourceRequestSchema,
   channelsPayloadSchema,
   jsonRequest,
-  removeSourceRequestSchema,
-  reorderSourcesRequestSchema,
   requestJson,
 } from "@/lib/api-contract";
 import { authClient } from "@/lib/auth-client";
@@ -22,12 +25,12 @@ import { WindowDialog } from "@/components/window-dialog";
 // The lineup, edited. Connecting a Google scope or adding a feed creates its
 // channel with no further step; CH 01 is the station's and cannot be removed.
 
-type SourcesDialogProps = {
+interface SourcesDialogProps {
   channels: ChannelSummary[];
   google: SessionPayload["google"];
   onLineup: (channels: ChannelSummary[]) => void;
   onClose: () => void;
-};
+}
 
 /** One change to the lineup, as the sources route accepts it. */
 type LineupEdit =
@@ -36,7 +39,7 @@ type LineupEdit =
   | { method: "PATCH"; body: z.infer<typeof reorderSourcesRequestSchema> };
 
 const connectGoogle = (scope: string) => {
-  void authClient.linkSocial({ provider: "google", scopes: [scope], callbackURL: "/" });
+  void authClient.linkSocial({ callbackURL: "/", provider: "google", scopes: [scope] });
 };
 
 const editLineup = (edit: LineupEdit) =>
@@ -50,7 +53,7 @@ const editLineup = (edit: LineupEdit) =>
 export const SourcesDialog = (props: SourcesDialogProps) => {
   const [feedUrl, setFeedUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>();
 
   const own = props.channels.filter((channel) => channel.number > 1);
   const has = (kind: SourceKind) => own.some((channel) => channel.kind === kind);
@@ -58,16 +61,34 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
   const apply = async (edit: LineupEdit) => {
     setBusy(true);
     setError(undefined);
+    let applied = false;
     try {
       const result = await editLineup(edit);
       if ("error" in result) {
         setError(result.error);
-        return false;
+      } else {
+        props.onLineup(result.data.channels);
+        applied = true;
       }
-      props.onLineup(result.data.channels);
-      return true;
-    } finally {
-      setBusy(false);
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : "Couldn't update the lineup");
+    }
+    setBusy(false);
+    return applied;
+  };
+
+  const addFeed = async () => {
+    const url = feedUrl.trim();
+    if (url === "") {
+      return;
+    }
+    const body = addSourceRequestSchema.safeParse({ kind: "rss", url });
+    if (!body.success) {
+      setError("That doesn't look like a URL");
+      return;
+    }
+    if (await apply({ body: body.data, method: "POST" })) {
+      setFeedUrl("");
     }
   };
 
@@ -76,10 +97,12 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
     const target = index + delta;
     const moving = order[index];
     const displaced = order[target];
-    if (moving === undefined || displaced === undefined) return;
+    if (moving === undefined || displaced === undefined) {
+      return;
+    }
     order[index] = displaced;
     order[target] = moving;
-    void apply({ method: "PATCH", body: { order } });
+    void apply({ body: { order }, method: "PATCH" });
   };
 
   return (
@@ -121,9 +144,9 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() =>
-                      void apply({ method: "DELETE", body: { sourceId: channel.sourceId } })
-                    }
+                    onClick={() => {
+                      void apply({ body: { sourceId: channel.sourceId }, method: "DELETE" });
+                    }}
                     className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
                   >
                     remove
@@ -160,24 +183,15 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
           )}
           {props.google === "unconfigured" && (
             <p className="text-[10px] opacity-60">
-              Google isn't configured on this station — GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.
+              Google isn&apos;t configured on this station — GOOGLE_CLIENT_ID /
+              GOOGLE_CLIENT_SECRET.
             </p>
           )}
           <form
             className="flex gap-1"
             onSubmit={(event) => {
               event.preventDefault();
-              const url = feedUrl.trim();
-              if (url === "") return;
-              const body = addSourceRequestSchema.safeParse({ kind: "rss", url });
-              if (!body.success) {
-                setError("That doesn't look like a URL");
-                return;
-              }
-              void apply({ method: "POST", body: body.data }).then((ok) => {
-                if (ok) setFeedUrl("");
-                return ok;
-              });
+              void addFeed();
             }}
           >
             <input

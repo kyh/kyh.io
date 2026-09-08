@@ -4,9 +4,9 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "*",
         allow: "/",
         disallow: "/admin",
+        userAgent: "*",
       },
     ],
     sitemap: "https://www.policingice.com/sitemap.xml",

@@ -21,7 +21,6 @@ const listSchema = z.object({
 
 const messageSchema = z.object({
   id: z.string(),
-  snippet: z.string().optional(),
   internalDate: z.string().optional(),
   labelIds: z.array(z.string()).optional(),
   payload: z
@@ -29,11 +28,18 @@ const messageSchema = z.object({
       headers: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
     })
     .optional(),
+  snippet: z.string().optional(),
 });
 
-type Header = { name: string; value: string };
+interface Header {
+  name: string;
+  value: string;
+}
 
-type Sender = { name: string; address: string };
+interface Sender {
+  name: string;
+  address: string;
+}
 
 const gmailFetch = <T>(
   accessToken: string,
@@ -42,7 +48,9 @@ const gmailFetch = <T>(
   schema: z.ZodType<T>,
 ): Promise<T> => {
   const url = new URL(`${GMAIL_BASE}/${path}`);
-  for (const [key, value] of params) url.searchParams.append(key, value);
+  for (const [key, value] of params) {
+    url.searchParams.append(key, value);
+  }
   return fetchJson("Gmail", url, accessToken, schema);
 };
 
@@ -51,11 +59,13 @@ const header = (headers: Header[], name: string): string | undefined =>
 
 /** `"Name" <addr>`, `Name <addr>`, or a bare address. */
 export const parseFrom = (value: string): Sender => {
-  const match = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value);
-  if (match === null) return { name: value.trim(), address: value.trim() };
-  const address = (match[2] ?? value).trim();
-  const name = (match[1] ?? "").trim();
-  return { name: name === "" ? address : name, address };
+  const match = /^\s*"?(?<name>[^"<]*?)"?\s*<(?<address>[^>]+)>\s*$/u.exec(value);
+  if (match === null) {
+    return { address: value.trim(), name: value.trim() };
+  }
+  const address = (match.groups?.address ?? value).trim();
+  const name = (match.groups?.name ?? "").trim();
+  return { address, name: name === "" ? address : name };
 };
 
 export const isNewsletter = (headers: Header[]): boolean =>
@@ -88,19 +98,21 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
   const items: Item[] = [];
   for (const message of messages) {
     const headers = message.payload?.headers ?? [];
-    if (!isNewsletter(headers)) continue;
+    if (!isNewsletter(headers)) {
+      continue;
+    }
     const subject = header(headers, "Subject") ?? "(no subject)";
     const from = parseFrom(header(headers, "From") ?? "");
     const receivedMs = Number(message.internalDate ?? 0);
     const unread = (message.labelIds ?? []).includes("UNREAD");
     items.push({
+      author: { name: from.name, username: from.address },
+      createdAt: receivedMs > 0 ? new Date(receivedMs).toISOString() : undefined,
       id: `gmail:${message.id}`,
       kind: "gmail",
-      text: `${subject}. ${decodeEntities(message.snippet ?? "")}`.trim(),
       link: `https://mail.google.com/mail/u/0/#all/${message.id}`,
-      createdAt: receivedMs > 0 ? new Date(receivedMs).toISOString() : undefined,
       score: Math.round(receivedMs / 60_000) + (unread ? UNREAD_BONUS_MINUTES : 0),
-      author: { name: from.name, username: from.address },
+      text: `${subject}. ${decodeEntities(message.snippet ?? "")}`.trim(),
     });
   }
   return items;

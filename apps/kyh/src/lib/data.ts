@@ -1,7 +1,7 @@
 import { social } from "@/components/social";
 import { getPublicAssetUrl, getPublicFaviconUrl } from "@/lib/public-assets";
 
-export type ProjectType = {
+export interface ProjectType {
   slug: string;
   title: string;
   description: string;
@@ -9,403 +9,412 @@ export type ProjectType = {
   favicon: string;
   projectAssets: ProjectAssetType[];
   type: "venture" | "project" | "mini-app" | "template";
-};
+}
 
-type ProjectAssetType = {
+interface ProjectAssetType {
   src: string;
   type: "image" | "video";
   aspectRatio?: "16:9" | "4:3";
   description?: string;
   dataBlur?: string;
-};
+}
 
 export const projects: ProjectType[] = [
   {
+    description: "A game studio for your agent",
+    favicon: getPublicFaviconUrl("vibedgames-c.png"),
+    projectAssets: [
+      {
+        src: getPublicAssetUrl("vibedgames.mp4"),
+        type: "video",
+      },
+      {
+        aspectRatio: "16:9",
+        src: getPublicAssetUrl("pacman.mp4"),
+        type: "video",
+      },
+      {
+        aspectRatio: "16:9",
+        src: getPublicAssetUrl("flappy.mp4"),
+        type: "video",
+      },
+      {
+        aspectRatio: "16:9",
+        src: getPublicAssetUrl("pong.mp4"),
+        type: "video",
+      },
+    ],
     slug: "vibedgames",
     title: "Vibedgames",
-    description: "A game studio for your agent",
-    url: "https://www.vibedgames.com",
-    favicon: getPublicFaviconUrl("vibedgames-c.png"),
     type: "project",
-    projectAssets: [
-      {
-        type: "video",
-        src: getPublicAssetUrl("vibedgames.mp4"),
-      },
-      {
-        type: "video",
-        src: getPublicAssetUrl("pacman.mp4"),
-        aspectRatio: "16:9",
-      },
-      {
-        type: "video",
-        src: getPublicAssetUrl("flappy.mp4"),
-        aspectRatio: "16:9",
-      },
-      {
-        type: "video",
-        src: getPublicAssetUrl("pong.mp4"),
-        aspectRatio: "16:9",
-      },
-    ],
+    url: "https://www.vibedgames.com",
   },
   {
-    slug: "yourssincerely",
-    title: "Yours Sincerely",
     description: "Anonymous love letters 💌 written in disappearing ink",
-    url: "https://www.yourssincerely.org",
     favicon: getPublicFaviconUrl("yourssincerely-c.png"),
-    type: "project",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("ys.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAAAwAgCdASoQAAwAAUAmJaACdAEXubBHzPstwAD0ZOFZFDNEv1GcgJuIQsF7FKkObWMZEvmAVVcg3CNWlmjn0hWF/u44eMQUJn943B+usgCfjK3H1zS4K+5UzhR64AAA",
+        src: getPublicAssetUrl("ys.webp"),
+        type: "image",
       },
       {
-        type: "video",
+        aspectRatio: "16:9",
         src: getPublicAssetUrl("ys.mp4"),
-        aspectRatio: "16:9",
+        type: "video",
       },
       {
-        type: "video",
-        src: getPublicAssetUrl("ys-2.mp4"),
         aspectRatio: "16:9",
+        src: getPublicAssetUrl("ys-2.mp4"),
+        type: "video",
       },
     ],
+    slug: "yourssincerely",
+    title: "Yours Sincerely",
+    type: "project",
+    url: "https://www.yourssincerely.org",
   },
   {
-    slug: "uicapsule",
-    title: "UICapsule",
     description: "A curated collection of components that spark joy",
-    url: "https://www.uicapsule.com",
     favicon: getPublicFaviconUrl("uicapsule-c.png"),
-    type: "project",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("uicapsule.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAwAgCdASoQAAwAAUAmJZwCdIExGBjScIj3AAD+/sYZZecDsl3PR5dQ/ZmFfvxk7Ws/2VYmsUfxLG0pnynnuvVYrpjy3UXYSKw/3INfiTyGZTrNcAA=",
+        src: getPublicAssetUrl("uicapsule.webp"),
+        type: "image",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("globe.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("parallax.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("infinite-grid.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("astroids.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("ascii.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("ios-volume.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("ios-header-menu.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("reading-progress.mp4"),
+        type: "video",
       },
       {
-        type: "video",
         src: getPublicAssetUrl("radial-slider.mp4"),
+        type: "video",
       },
     ],
+    slug: "uicapsule",
+    title: "UICapsule",
+    type: "project",
+    url: "https://www.uicapsule.com",
   },
   {
-    slug: "founding",
-    title: "Founding",
     description: "Initialize your technical team",
-    url: "https://www.founding.so",
     favicon: getPublicFaviconUrl("founding-c.png"),
-    type: "venture",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("founding.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACQAQCdASoQAAgAAUAmJZwC7H8AHIAA/vyn53W6rmzbDsOD67FpggQRemJVpupEpwAAAA==",
+        src: getPublicAssetUrl("founding.webp"),
+        type: "image",
       },
       {
-        type: "image",
         src: getPublicAssetUrl("founding-1.webp"),
+        type: "image",
       },
     ],
+    slug: "founding",
+    title: "Founding",
+    type: "venture",
+    url: "https://www.founding.so",
   },
   {
+    description: "An artificially intelligent operating system",
+    favicon: getPublicFaviconUrl("inteligir-c.png"),
+    projectAssets: [],
     slug: "inteligir",
     title: "Inteligir",
-    description: "An artificially intelligent operating system",
-    url: "https://www.inteligir.com",
-    favicon: getPublicFaviconUrl("inteligir-c.png"),
     type: "project",
-    projectAssets: [],
+    url: "https://www.inteligir.com",
   },
   {
-    slug: "dataembed",
-    title: "Dataembed",
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
-    url: "https://www.dataembed.com",
     favicon: getPublicFaviconUrl("dataembed-1-c.png"),
-    type: "project",
     projectAssets: [
       {
-        type: "video",
         src: getPublicAssetUrl("dataembed.mp4"),
+        type: "video",
       },
       {
-        type: "image",
         src: getPublicAssetUrl("dataembed-1.webp"),
+        type: "image",
       },
     ],
+    slug: "dataembed",
+    title: "Dataembed",
+    type: "project",
+    url: "https://www.dataembed.com",
   },
   {
+    description: "Research into the data between people",
+    favicon: getPublicFaviconUrl("edgestories-1-c.png"),
+    projectAssets: [],
     slug: "edgestories",
     title: "Edgestories",
-    description: "Research into the data between people",
-    url: "https://www.edgestories.com",
-    favicon: getPublicFaviconUrl("edgestories-1-c.png"),
     type: "project",
-    projectAssets: [],
+    url: "https://www.edgestories.com",
   },
   // Mini Apps
   {
-    slug: "total-compensation-calculator",
-    title: "Total Compensation Calculator",
     description:
       "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank",
-    url: "https://tc.kyh.io",
     favicon: getPublicFaviconUrl("tc-2.png"),
-    type: "mini-app",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("tc.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADwAQCdASoQAAwAAUAmJQBOgCP/2Rtk5AAA/v0X8ETwDumeYkE4wslUaJKeR8yv3Y80opDLuqTqk+tpiAA=",
+        src: getPublicAssetUrl("tc.webp"),
+        type: "image",
       },
     ],
+    slug: "total-compensation-calculator",
+    title: "Total Compensation Calculator",
+    type: "mini-app",
+    url: "https://tc.kyh.io",
   },
   {
-    slug: "covid-19-dashboard",
-    title: "Covid-19 Dashboard",
     description: "A real-time dashboard visualizing global Covid-19 data and trends",
-    url: "https://covid-19.kyh.io",
     favicon: getPublicFaviconUrl("covid-19-1.png"),
-    type: "mini-app",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("covid19.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAACwAQCdASoQAAwAAUAmJQBOgCHw3N8oAP79nRPM1rR6f3natj7PvZau2tOobhEqOtCAAA==",
+        src: getPublicAssetUrl("covid19.webp"),
+        type: "image",
       },
       {
-        type: "image",
         src: getPublicAssetUrl("covid19-1.webp"),
+        type: "image",
       },
     ],
+    slug: "covid-19-dashboard",
+    title: "Covid-19 Dashboard",
+    type: "mini-app",
+    url: "https://covid-19.kyh.io",
   },
   {
-    slug: "keiko-and-friends",
-    title: "Keiko and Friends",
     description: "Cute sticker pack",
-    url: "https://apps.apple.com/us/app/id1209391711",
     favicon: getPublicFaviconUrl("keiko.png"),
-    type: "mini-app",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("keiko.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQAgCdASoQAAwAAUAmJYwCdAD0ikApuuAAAP7+mkH3G+z+NDoe9ydN17TBCmONmSaqlqIXR6uLgpRujwewAV4bB8JzlHN4q5RygJTAtYILfs0AAAA=",
+        src: getPublicAssetUrl("keiko.webp"),
+        type: "image",
       },
     ],
+    slug: "keiko-and-friends",
+    title: "Keiko and Friends",
+    type: "mini-app",
+    url: "https://apps.apple.com/us/app/id1209391711",
   },
   {
+    description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
+    favicon: getPublicFaviconUrl("policing-ice-1.png"),
+    projectAssets: [],
     slug: "policing-ice",
     title: "Policing Ice",
-    description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
-    url: "https://www.policingice.com",
-    favicon: getPublicFaviconUrl("policing-ice-1.png"),
     type: "mini-app",
-    projectAssets: [],
+    url: "https://www.policingice.com",
   },
   {
+    description: "Mock responses for LLMs",
+    favicon: getPublicFaviconUrl("loremllm.png"),
+    projectAssets: [],
     slug: "loremllm",
     title: "LoremLLM",
-    description: "Mock responses for LLMs",
-    url: "https://www.loremllm.com",
-    favicon: getPublicFaviconUrl("loremllm.png"),
     type: "mini-app",
-    projectAssets: [],
+    url: "https://www.loremllm.com",
   },
   {
-    slug: "stonksville",
-    title: "Stonksville",
     description:
       "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
-    url: "https://www.stonksville.com",
     favicon: getPublicFaviconUrl("stonksville.png"),
-    type: "mini-app",
     projectAssets: [],
+    slug: "stonksville",
+    title: "Stonksville",
+    type: "mini-app",
+    url: "https://www.stonksville.com",
   },
   {
+    description: "Everything lives in a 2x2 matrix",
+    favicon: getPublicFaviconUrl("kwadrants-1.png"),
+    projectAssets: [],
     slug: "kwadrants",
     title: "Kwadrants",
-    description: "Everything lives in a 2x2 matrix",
-    url: "https://www.kwadrants.com",
-    favicon: getPublicFaviconUrl("kwadrants-1.png"),
     type: "mini-app",
+    url: "https://www.kwadrants.com",
+  },
+  {
+    description: "Your feeds as live TV channels of AI-generated video",
+    favicon: getPublicFaviconUrl("autoplay.png"),
     projectAssets: [],
+    slug: "autoplay",
+    title: "Autoplay",
+    type: "mini-app",
+    url: "https://autoplay.kyh.io",
   },
   // Templates
   {
-    slug: "init",
-    title: "Init",
     description: "An AI native starter kit to build, launch, and scale your next project",
-    url: "https://init.kyh.io",
     favicon: getPublicFaviconUrl("init.png"),
-    type: "template",
     projectAssets: [
       {
-        type: "image",
-        src: getPublicAssetUrl("init.webp"),
         dataBlur:
           "data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADQAQCdASoQAAwAAUAmJZQAAudj19lgAAD+/nn2cDnMhddaGFhQ9NBAcjHOdvmihKb/DWxPnHRoAAAA",
+        src: getPublicAssetUrl("init.webp"),
+        type: "image",
       },
     ],
+    slug: "init",
+    title: "Init",
+    type: "template",
+    url: "https://init.kyh.io",
   },
   {
+    description: "Forkable Next.js template featuring a design canvas UI with AI integration",
+    favicon: getPublicFaviconUrl("ai-design-canvas.png"),
+    projectAssets: [],
     slug: "ai-canvas",
     title: "AI Canvas",
-    description: "Forkable Next.js template featuring a design canvas UI with AI integration",
-    url: "https://canvas.kyh.io",
-    favicon: getPublicFaviconUrl("ai-design-canvas.png"),
     type: "template",
-    projectAssets: [],
+    url: "https://canvas.kyh.io",
   },
   {
+    description: "Forkable Next.js template featuring an Excel-like UI with AI integration",
+    favicon: getPublicFaviconUrl("ai-datagrid.png"),
+    projectAssets: [],
     slug: "ai-datagrid",
     title: "AI Datagrid",
-    description: "Forkable Next.js template featuring an Excel-like UI with AI integration",
-    url: "https://datagrid.kyh.io",
-    favicon: getPublicFaviconUrl("ai-datagrid.png"),
     type: "template",
-    projectAssets: [],
+    url: "https://datagrid.kyh.io",
   },
   {
+    description: "Forkable Next.js template featuring an AI-powered notes app",
+    favicon: getPublicFaviconUrl("ai-notes.png"),
+    projectAssets: [],
     slug: "ai-notes",
     title: "AI Notes",
-    description: "Forkable Next.js template featuring an AI-powered notes app",
-    url: "https://notes.kyh.io",
-    favicon: getPublicFaviconUrl("ai-notes.png"),
     type: "template",
-    projectAssets: [],
+    url: "https://notes.kyh.io",
   },
   {
+    description: "Forkable Next.js template featuring an AI-powered calendar app",
+    favicon: getPublicFaviconUrl("ai-schedule.png"),
+    projectAssets: [],
     slug: "ai-schedule",
     title: "AI Calendar",
-    description: "Forkable Next.js template featuring an AI-powered calendar app",
-    url: "https://calendar.kyh.io",
-    favicon: getPublicFaviconUrl("ai-schedule.png"),
     type: "template",
-    projectAssets: [],
+    url: "https://calendar.kyh.io",
   },
   {
+    description: "Forkable Next.js template featuring an AI-powered communications app",
+    favicon: getPublicFaviconUrl("ai-coms.png"),
+    projectAssets: [],
     slug: "ai-coms",
     title: "AI Messages",
-    description: "Forkable Next.js template featuring an AI-powered communications app",
-    url: "https://coms.kyh.io",
-    favicon: getPublicFaviconUrl("ai-coms.png"),
     type: "template",
-    projectAssets: [],
+    url: "https://coms.kyh.io",
   },
 ] as const;
 
-export type WorkType = {
+export interface WorkType {
   role: string;
   company: string;
   year: string;
   favicon: string;
   link: string;
-};
+}
 
 export type SocialKind = "twitter" | "github" | "dribbble" | "linkedin";
 
-export type ConnectLink = {
+export interface ConnectLink {
   label: string;
   value: string;
   href: string;
   social: SocialKind;
-};
+}
 
 // Single source of truth for social links, consumed by the homepage
 // ConnectList and the /markdown agent view so they can't drift.
 export const connectLinks: ConnectLink[] = [
-  { label: "Twitter", value: "@kaiyuhsu", href: social.twitter, social: "twitter" },
-  { label: "GitHub", value: "@kyh", href: social.github, social: "github" },
-  { label: "Dribbble", value: "@kaiyuhsu", href: social.dribbble, social: "dribbble" },
-  { label: "LinkedIn", value: "@kyh", href: social.linkedin, social: "linkedin" },
+  { href: social.twitter, label: "Twitter", social: "twitter", value: "@kaiyuhsu" },
+  { href: social.github, label: "GitHub", social: "github", value: "@kyh" },
+  { href: social.dribbble, label: "Dribbble", social: "dribbble", value: "@kaiyuhsu" },
+  { href: social.linkedin, label: "LinkedIn", social: "linkedin", value: "@kyh" },
 ];
 
 export const workHistory: WorkType[] = [
   {
-    role: "Technical Staff",
     company: "Sequoia Capital",
-    year: "Now",
     favicon: getPublicFaviconUrl("sequoia.png"),
     link: "https://sequoiacap.com",
+    role: "Technical Staff",
+    year: "Now",
   },
   {
-    role: "Software Engineer",
     company: "Vercel",
-    year: "2022",
     favicon: getPublicFaviconUrl("vercel.png"),
     link: "https://vercel.com",
+    role: "Software Engineer",
+    year: "2022",
   },
   {
-    role: "Design Engineer",
     company: "Google",
-    year: "2022",
     favicon: getPublicFaviconUrl("google.png"),
     link: "https://grow.google",
+    role: "Design Engineer",
+    year: "2022",
   },
   {
-    role: "Software Engineer",
     company: "Amazon",
-    year: "2020",
     favicon: getPublicFaviconUrl("amazon.jpeg"),
     link: "https://amazon.design",
+    role: "Software Engineer",
+    year: "2020",
   },
   {
-    role: "Software Engineer",
     company: "Atrium",
-    year: "2019",
     favicon: getPublicFaviconUrl("atrium-1.png"),
     link: "https://www.crunchbase.com/organization/atrium-lts",
+    role: "Software Engineer",
+    year: "2019",
   },
   {
-    role: "Design Engineer",
     company: "Cardiogram",
-    year: "2015",
     favicon: getPublicFaviconUrl("cardiogram.jpeg"),
     link: "https://www.crunchbase.com/organization/cardiogram",
+    role: "Design Engineer",
+    year: "2015",
   },
 ] as const;

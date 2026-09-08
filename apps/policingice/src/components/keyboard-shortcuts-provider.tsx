@@ -2,7 +2,15 @@
 
 import type useEmblaCarousel from "embla-carousel-react";
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Moon, Sun } from "lucide-react";
 
@@ -11,181 +19,17 @@ import { useIsHydrated } from "@/lib/use-hydrated";
 
 type EmblaApi = ReturnType<typeof useEmblaCarousel>[1];
 
-type KeyboardShortcutsContextValue = {
+interface KeyboardShortcutsContextValue {
   registerCarousel: (id: number, api: EmblaApi | null) => void;
   unregisterCarousel: (id: number) => void;
   registerIncident: (id: number, element: HTMLElement | null) => void;
   unregisterIncident: (id: number) => void;
   activeIncidentId: number | null;
-};
+}
 
 const KeyboardShortcutsContext = createContext<KeyboardShortcutsContextValue | null>(null);
 
-export function useKeyboardShortcuts() {
-  return useContext(KeyboardShortcutsContext);
-}
-
-type KeyboardShortcutsProviderProps = {
-  children: ReactNode;
-};
-
-export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProviderProps) => {
-  const carouselsRef = useRef<Map<number, EmblaApi | null>>(new Map());
-  const incidentsRef = useRef<Map<number, HTMLElement>>(new Map());
-  const incidentOrderRef = useRef<number[]>([]);
-  const [activeIncidentId, setActiveIncidentId] = useState<number | null>(null);
-
-  const registerCarousel = useCallback((id: number, api: EmblaApi | null) => {
-    carouselsRef.current.set(id, api);
-  }, []);
-
-  const unregisterCarousel = useCallback((id: number) => {
-    carouselsRef.current.delete(id);
-  }, []);
-
-  const registerIncident = useCallback(
-    (id: number, element: HTMLElement | null) => {
-      if (element) {
-        incidentsRef.current.set(id, element);
-        // Rebuild order based on DOM position
-        const entries = Array.from(incidentsRef.current.entries());
-        entries.sort((a, b) => {
-          const rectA = a[1].getBoundingClientRect();
-          const rectB = b[1].getBoundingClientRect();
-          return rectA.top - rectB.top;
-        });
-        incidentOrderRef.current = entries.map(([id]) => id);
-
-        // Set initial active if none
-        if (activeIncidentId === null && incidentOrderRef.current.length > 0) {
-          setActiveIncidentId(incidentOrderRef.current[0]);
-        }
-      }
-    },
-    [activeIncidentId],
-  );
-
-  const unregisterIncident = useCallback((id: number) => {
-    incidentsRef.current.delete(id);
-    incidentOrderRef.current = incidentOrderRef.current.filter((i) => i !== id);
-  }, []);
-
-  // Update active incident based on scroll position
-  useEffect(() => {
-    const handleScroll = () => {
-      const viewportCenter = window.innerHeight / 3;
-      let closestId: number | null = null;
-      let closestDistance = Infinity;
-
-      incidentsRef.current.forEach((element, id) => {
-        const rect = element.getBoundingClientRect();
-        const elementCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(elementCenter - viewportCenter);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestId = id;
-        }
-      });
-
-      // closestId is reassigned in the forEach loop above
-      if (closestId !== null) {
-        setActiveIncidentId(closestId);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Keyboard event handler
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
-      ) {
-        return;
-      }
-
-      const order = incidentOrderRef.current;
-      const currentIndex = activeIncidentId !== null ? order.indexOf(activeIncidentId) : -1;
-
-      switch (e.key) {
-        case "ArrowDown":
-        case "j": {
-          e.preventDefault();
-          if (currentIndex < order.length - 1) {
-            const nextId = order[currentIndex + 1];
-            const element = incidentsRef.current.get(nextId);
-            if (element) {
-              element.scrollIntoView({ behavior: "smooth", block: "start" });
-              setActiveIncidentId(nextId);
-            }
-          }
-          break;
-        }
-        case "ArrowUp":
-        case "k": {
-          e.preventDefault();
-          if (currentIndex > 0) {
-            const prevId = order[currentIndex - 1];
-            const element = incidentsRef.current.get(prevId);
-            if (element) {
-              element.scrollIntoView({ behavior: "smooth", block: "start" });
-              setActiveIncidentId(prevId);
-            }
-          }
-          break;
-        }
-        case "ArrowLeft":
-        case "h": {
-          if (activeIncidentId !== null) {
-            const api = carouselsRef.current.get(activeIncidentId);
-            if (api?.canScrollPrev()) {
-              e.preventDefault();
-              api.scrollPrev();
-            }
-          }
-          break;
-        }
-        case "ArrowRight":
-        case "l": {
-          if (activeIncidentId !== null) {
-            const api = carouselsRef.current.get(activeIncidentId);
-            if (api?.canScrollNext()) {
-              e.preventDefault();
-              api.scrollNext();
-            }
-          }
-          break;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeIncidentId]);
-
-  return (
-    <KeyboardShortcutsContext.Provider
-      value={{
-        registerCarousel,
-        unregisterCarousel,
-        registerIncident,
-        unregisterIncident,
-        activeIncidentId,
-      }}
-    >
-      {children}
-      <KeyboardShortcutsHelp />
-    </KeyboardShortcutsContext.Provider>
-  );
-};
+export const useKeyboardShortcuts = () => useContext(KeyboardShortcutsContext);
 
 const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -273,5 +117,173 @@ const KeyboardShortcutsHelp = () => {
         </span>
       </div>
     </div>
+  );
+};
+
+interface KeyboardShortcutsProviderProps {
+  children: ReactNode;
+}
+
+export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProviderProps) => {
+  const carouselsRef = useRef<Map<number, EmblaApi | null>>(new Map());
+  const incidentsRef = useRef<Map<number, HTMLElement>>(new Map());
+  const incidentOrderRef = useRef<number[]>([]);
+  const [activeIncidentId, setActiveIncidentId] = useState<number | null>(null);
+
+  const registerCarousel = useCallback((id: number, api: EmblaApi | null) => {
+    carouselsRef.current.set(id, api);
+  }, []);
+
+  const unregisterCarousel = useCallback((id: number) => {
+    carouselsRef.current.delete(id);
+  }, []);
+
+  const registerIncident = useCallback(
+    (id: number, element: HTMLElement | null) => {
+      if (element) {
+        incidentsRef.current.set(id, element);
+        // Rebuild order based on DOM position
+        const entries = [...incidentsRef.current.entries()];
+        entries.sort((a, b) => {
+          const rectA = a[1].getBoundingClientRect();
+          const rectB = b[1].getBoundingClientRect();
+          return rectA.top - rectB.top;
+        });
+        incidentOrderRef.current = entries.map(([entryId]) => entryId);
+
+        // Set initial active if none
+        if (activeIncidentId === null && incidentOrderRef.current.length > 0) {
+          setActiveIncidentId(incidentOrderRef.current[0]);
+        }
+      }
+    },
+    [activeIncidentId],
+  );
+
+  const unregisterIncident = useCallback((id: number) => {
+    incidentsRef.current.delete(id);
+    incidentOrderRef.current = incidentOrderRef.current.filter((i) => i !== id);
+  }, []);
+
+  // Update active incident based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      const viewportCenter = window.innerHeight / 3;
+      let closestId: number | null = null;
+      let closestDistance = Infinity;
+
+      for (const [id, element] of incidentsRef.current) {
+        const rect = element.getBoundingClientRect();
+        const elementCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(elementCenter - viewportCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestId = id;
+        }
+      }
+
+      if (closestId !== null) {
+        setActiveIncidentId(closestId);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) =>
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLElement && target.isContentEditable);
+
+    const goToIncident = (index: number) => {
+      const order = incidentOrderRef.current;
+      if (index < 0 || index >= order.length) {
+        return;
+      }
+      const id = order[index];
+      const element = incidentsRef.current.get(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveIncidentId(id);
+      }
+    };
+
+    const scrollCarousel = (e: KeyboardEvent, direction: "prev" | "next") => {
+      const api = activeIncidentId === null ? null : carouselsRef.current.get(activeIncidentId);
+      if (!api) {
+        return;
+      }
+      if (direction === "prev" && api.canScrollPrev()) {
+        e.preventDefault();
+        api.scrollPrev();
+      }
+      if (direction === "next" && api.canScrollNext()) {
+        e.preventDefault();
+        api.scrollNext();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) {
+        return;
+      }
+
+      const currentIndex =
+        activeIncidentId === null ? -1 : incidentOrderRef.current.indexOf(activeIncidentId);
+
+      switch (e.key) {
+        case "ArrowDown":
+        case "j": {
+          e.preventDefault();
+          goToIncident(currentIndex + 1);
+          break;
+        }
+        case "ArrowUp":
+        case "k": {
+          e.preventDefault();
+          goToIncident(currentIndex - 1);
+          break;
+        }
+        case "ArrowLeft":
+        case "h": {
+          scrollCarousel(e, "prev");
+          break;
+        }
+        case "ArrowRight":
+        case "l": {
+          scrollCarousel(e, "next");
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeIncidentId]);
+
+  const value = useMemo(
+    () => ({
+      activeIncidentId,
+      registerCarousel,
+      registerIncident,
+      unregisterCarousel,
+      unregisterIncident,
+    }),
+    [activeIncidentId, registerCarousel, registerIncident, unregisterCarousel, unregisterIncident],
+  );
+
+  return (
+    <KeyboardShortcutsContext.Provider value={value}>
+      {children}
+      <KeyboardShortcutsHelp />
+    </KeyboardShortcutsContext.Provider>
   );
 };

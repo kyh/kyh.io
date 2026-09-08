@@ -13,29 +13,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   cacheTag("incidents");
 
   const approvedIncidents = await db.query.incidents.findMany({
+    columns: { createdAt: true, id: true },
+    orderBy: (incidents) => [desc(incidents.createdAt)],
     where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
       and(
         eqOp(incidents.status, "approved"),
         isNullOp(incidents.deletedAt),
         ltOp(incidents.reportCount, 3),
       ),
-    orderBy: (incidents) => [desc(incidents.createdAt)],
-    columns: { id: true, createdAt: true },
   });
 
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: siteUrl,
       changeFrequency: "daily",
-      priority: 1.0,
+      priority: 1,
+      url: siteUrl,
     },
   ];
 
   const incidentPages: MetadataRoute.Sitemap = approvedIncidents.map((incident) => ({
-    url: `${siteUrl}/incident/${incident.id}`,
-    lastModified: incident.createdAt ? new Date(incident.createdAt) : undefined,
     changeFrequency: "weekly" as const,
+    lastModified: incident.createdAt ? new Date(incident.createdAt) : undefined,
     priority: 0.8,
+    url: `${siteUrl}/incident/${incident.id}`,
   }));
 
   return [...staticPages, ...incidentPages];

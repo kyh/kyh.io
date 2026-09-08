@@ -49,14 +49,16 @@ const targetOf = (getHeader: (name: string) => HeaderValue): string | undefined 
 
 const config = resolveProxyConfig({
   allowUnauthorizedRequests: false,
+  allowedEndpoints: [DIRECTOR_MODEL, `${DIRECTOR_MODEL}/**`],
   isAuthenticated: async (behavior) => {
     const viewer = await viewerOf();
-    if (viewer === undefined) return false;
+    if (viewer === undefined) {
+      return false;
+    }
     return targetOf(behavior.getHeader) === HEARTBEAT_URL
       ? programming.mayContinue(viewer)
       : programming.mayOpen(viewer);
   },
-  allowedEndpoints: [DIRECTOR_MODEL, `${DIRECTOR_MODEL}/**`],
 });
 
 const heartbeatOf = (body: string): string | undefined => {
@@ -72,13 +74,19 @@ const heartbeatOf = (body: string): string | undefined => {
 const meter = async (target: string | undefined, body: string, response: Response) => {
   try {
     const viewer = await viewerOf();
-    if (viewer === undefined) return;
+    if (viewer === undefined) {
+      return;
+    }
     if (target === SESSION_URL) {
       const answer = sessionAnswerSchema.safeParse(await response.clone().json());
-      if (answer.success) await programming.sessionOpened(answer.data.session_id, viewer);
+      if (answer.success) {
+        await programming.sessionOpened(answer.data.session_id, viewer);
+      }
     } else if (target === HEARTBEAT_URL) {
       const sessionId = heartbeatOf(body);
-      if (sessionId !== undefined) await programming.sessionSeen(sessionId, viewer);
+      if (sessionId !== undefined) {
+        await programming.sessionSeen(sessionId, viewer);
+      }
     }
   } catch (error) {
     console.error("[proxy] meter:", error);
@@ -89,16 +97,18 @@ export const POST = async (request: NextRequest): Promise<Response> => {
   const responseHeaders = new Headers();
   const body = await request.text();
   const behavior: ProxyBehavior<Response> = {
+    getHeader: (name) => request.headers.get(name),
+    getHeaders: () => fromHeaders(request.headers),
+    getRequestBody: () => Promise.resolve(body),
     id: "nextjs-app-router",
     method: request.method,
-    getRequestBody: async () => body,
-    getHeaders: () => fromHeaders(request.headers),
-    getHeader: (name) => request.headers.get(name),
+    respondWith: (status, data) => NextResponse.json(data, { headers: responseHeaders, status }),
     sendHeader: (name, value) => responseHeaders.set(name, value),
-    respondWith: (status, data) => NextResponse.json(data, { status, headers: responseHeaders }),
     sendResponse: responsePassthrough,
   };
   const response = await handleRequest(behavior, config);
-  if (response.ok) await meter(targetOf(behavior.getHeader), body, response);
+  if (response.ok) {
+    await meter(targetOf(behavior.getHeader), body, response);
+  }
   return response;
 };

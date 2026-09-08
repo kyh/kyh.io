@@ -23,12 +23,12 @@ export const SectionHeading = ({ children, id }: { children: string; id?: string
   </div>
 );
 
-type SectionProps = {
+interface SectionProps {
   children: React.ReactNode;
   className?: string;
   id?: string;
   delay?: number;
-};
+}
 
 export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
   const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
@@ -45,4 +45,4 @@ export const Section = ({ children, className, id, delay = 0 }: SectionProps) =>
   );
 };
 
-export const Separator = () => <div role="separator" className="bg-border h-px" />;
+export const Separator = () => <hr className="bg-border h-px border-0" />;

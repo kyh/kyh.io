@@ -12,9 +12,9 @@ export const sourceKindSchema = z.enum(SOURCE_KINDS);
 
 /** The service each kind pulls from, as the chrome names it. */
 export const SOURCE_KIND_NAMES = {
-  x: "X",
   gmail: "Gmail",
   rss: "RSS",
+  x: "X",
   youtube: "YouTube",
 } satisfies Record<SourceKind, string>;
 
@@ -29,12 +29,12 @@ export const OWNER_SOURCE_ID = "owner";
 export const GOOGLE_SOURCES = [
   {
     kind: "gmail",
-    scope: "https://www.googleapis.com/auth/gmail.readonly",
     label: "Newsletters",
+    scope: "https://www.googleapis.com/auth/gmail.readonly",
   },
   {
     kind: "youtube",
-    scope: "https://www.googleapis.com/auth/youtube.readonly",
     label: "Subscriptions",
+    scope: "https://www.googleapis.com/auth/youtube.readonly",
   },
 ] as const satisfies readonly { kind: SourceKind; scope: string; label: string }[];

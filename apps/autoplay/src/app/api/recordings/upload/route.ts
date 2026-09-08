@@ -14,24 +14,26 @@ import { OWNER_SOURCE_ID } from "@/lib/source-kinds";
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const owner = await requireOwner();
-  if ("refused" in owner) return owner.refused;
+  if ("refused" in owner) {
+    return owner.refused;
+  }
   // The event is the SDK's own protocol; handleUpload validates it and
   // rejects anything that is not one of its two message types.
   const body: HandleUploadBody = await request.json();
   try {
     const result = await handleUpload({
-      request,
       body,
-      onBeforeGenerateToken: async (pathname) => {
+      onBeforeGenerateToken: (pathname) => {
         if (!pathname.startsWith(`recordings/${OWNER_SOURCE_ID}/`)) {
           throw new Error("Not a recording path");
         }
-        return {
+        return Promise.resolve({
+          addRandomSuffix: true,
           allowedContentTypes: ["video/webm"],
           maximumSizeInBytes: MAX_CHUNK_BYTES,
-          addRandomSuffix: true,
-        };
+        });
       },
+      request,
     });
     return NextResponse.json(result);
   } catch (error) {

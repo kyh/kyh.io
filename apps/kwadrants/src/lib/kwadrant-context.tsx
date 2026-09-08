@@ -1,0 +1,261 @@
+import type { ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+
+import type {
+  CanvasImage,
+  GridType,
+  KwadrantState,
+  LabelValues,
+  LayoutLabels,
+  LayoutType,
+  QuadrantColors,
+  Tag,
+  ThemeType,
+} from "./types";
+import { DEFAULT_LAYOUT_LABELS, DEFAULT_QUADRANT_COLORS, STORAGE_KEY } from "./constants";
+import { generateId } from "./utils";
+
+interface KwadrantContextValue {
+  state: KwadrantState;
+  addTag: (tag: Omit<Tag, "id">) => void;
+  updateTagPosition: (id: string, x: number, y: number) => void;
+  removeTag: (id: string) => void;
+  addImage: (image: Omit<CanvasImage, "id">) => void;
+  updateImagePosition: (id: string, x: number, y: number) => void;
+  updateImageSize: (id: string, width: number, height: number) => void;
+  removeImage: (id: string) => void;
+  updateLabel: (layoutId: string, key: string, value: string) => void;
+  setQuadrantColor: (quadrant: keyof QuadrantColors, color: string) => void;
+  setGridType: (gridType: GridType) => void;
+  setLayoutType: (layoutType: LayoutType) => void;
+  setTheme: (theme: ThemeType) => void;
+}
+
+const KwadrantContext = createContext<KwadrantContextValue | null>(null);
+
+type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+const asJsonObject = (value: JsonValue | undefined): JsonObject | null =>
+  value instanceof Object && !Array.isArray(value) ? value : null;
+
+const isString = (value: JsonValue | undefined): value is string => String(value) === value;
+
+const stringEntries = (value: JsonValue | undefined): LabelValues => {
+  const object = asJsonObject(value);
+  if (!object) {
+    return {};
+  }
+  const entries: LabelValues = {};
+  for (const [key, entry] of Object.entries(object)) {
+    if (isString(entry)) {
+      entries[key] = entry;
+    }
+  }
+  return entries;
+};
+
+// Migrate old localStorage format (axisLabels/edgeLabels) to new (layoutLabels)
+const migrateState = (stored: JsonObject): Partial<KwadrantState> => {
+  if (stored.layoutLabels) {
+    // SAFETY: `layoutLabels` marks the current schema, which is only ever
+    // written by this provider as JSON.stringify(state); getInitialState still
+    // falls back per field.
+    return stored as Partial<KwadrantState>;
+  }
+
+  // Old format detected - migrate
+  const layoutLabels: LayoutLabels = { ...DEFAULT_LAYOUT_LABELS };
+
+  const axisLabels = stringEntries(stored.axisLabels);
+  if (Object.keys(axisLabels).length > 0) {
+    layoutLabels.axis = { ...DEFAULT_LAYOUT_LABELS.axis, ...axisLabels };
+  }
+  const edgeLabels = stringEntries(stored.edgeLabels);
+  if (Object.keys(edgeLabels).length > 0) {
+    layoutLabels.edge = { ...DEFAULT_LAYOUT_LABELS.edge, ...edgeLabels };
+  }
+
+  const { axisLabels: _oldAxis, edgeLabels: _oldEdge, ...rest } = stored;
+  // SAFETY: `rest` is the old persisted KwadrantState minus its replaced label
+  // fields, written by this provider; getInitialState still falls back per field.
+  return { ...rest, layoutLabels } as Partial<KwadrantState>;
+};
+
+const getInitialState = (): KwadrantState => {
+  const defaultState: KwadrantState = {
+    gridType: "none",
+    images: [],
+    layoutLabels: DEFAULT_LAYOUT_LABELS,
+    layoutType: "axis",
+    quadrantColors: DEFAULT_QUADRANT_COLORS,
+    tags: [],
+    theme: "light",
+  };
+
+  if (typeof window === "undefined") {
+    return defaultState;
+  }
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      // SAFETY: JSON.parse output is a JSON value by construction.
+      const storedJson = asJsonObject(JSON.parse(stored) as JsonValue);
+      if (!storedJson) {
+        return defaultState;
+      }
+      const parsed = migrateState(storedJson);
+      return {
+        gridType: parsed.gridType || "none",
+        images: parsed.images || [],
+        layoutLabels: parsed.layoutLabels || DEFAULT_LAYOUT_LABELS,
+        layoutType: parsed.layoutType || "axis",
+        quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
+        tags: parsed.tags || [],
+        theme: parsed.theme || "light",
+      };
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  return defaultState;
+};
+
+export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
+  const [state, setState] = useState<KwadrantState>(getInitialState);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [state]);
+
+  const addTag = useCallback((tag: Omit<Tag, "id">) => {
+    setState((prev) => ({
+      ...prev,
+      tags: [...prev.tags, { ...tag, id: generateId() }],
+    }));
+  }, []);
+
+  const updateTagPosition = useCallback((id: string, x: number, y: number) => {
+    setState((prev) => ({
+      ...prev,
+      tags: prev.tags.map((tag) => (tag.id === id ? { ...tag, x, y } : tag)),
+    }));
+  }, []);
+
+  const removeTag = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag.id !== id),
+    }));
+  }, []);
+
+  const addImage = useCallback((image: Omit<CanvasImage, "id">) => {
+    setState((prev) => ({
+      ...prev,
+      images: [...prev.images, { ...image, id: generateId() }],
+    }));
+  }, []);
+
+  const updateImagePosition = useCallback((id: string, x: number, y: number) => {
+    setState((prev) => ({
+      ...prev,
+      images: prev.images.map((img) => (img.id === id ? { ...img, x, y } : img)),
+    }));
+  }, []);
+
+  const updateImageSize = useCallback((id: string, width: number, height: number) => {
+    setState((prev) => ({
+      ...prev,
+      images: prev.images.map((img) => (img.id === id ? { ...img, height, width } : img)),
+    }));
+  }, []);
+
+  const removeImage = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      images: prev.images.filter((img) => img.id !== id),
+    }));
+  }, []);
+
+  const updateLabel = useCallback((layoutId: string, key: string, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      layoutLabels: {
+        ...prev.layoutLabels,
+        [layoutId]: {
+          ...prev.layoutLabels[layoutId],
+          [key]: value,
+        },
+      },
+    }));
+  }, []);
+
+  const setQuadrantColor = useCallback((quadrant: keyof QuadrantColors, color: string) => {
+    setState((prev) => ({
+      ...prev,
+      quadrantColors: { ...prev.quadrantColors, [quadrant]: color },
+    }));
+  }, []);
+
+  const setGridType = useCallback((gridType: GridType) => {
+    setState((prev) => ({ ...prev, gridType }));
+  }, []);
+
+  const setLayoutType = useCallback((layoutType: LayoutType) => {
+    setState((prev) => ({ ...prev, layoutType }));
+  }, []);
+
+  const setTheme = useCallback((theme: ThemeType) => {
+    setState((prev) => ({ ...prev, theme }));
+  }, []);
+
+  const value = useMemo<KwadrantContextValue>(
+    () => ({
+      addImage,
+      addTag,
+      removeImage,
+      removeTag,
+      setGridType,
+      setLayoutType,
+      setQuadrantColor,
+      setTheme,
+      state,
+      updateImagePosition,
+      updateImageSize,
+      updateLabel,
+      updateTagPosition,
+    }),
+    [
+      state,
+      addTag,
+      updateTagPosition,
+      removeTag,
+      addImage,
+      updateImagePosition,
+      updateImageSize,
+      removeImage,
+      updateLabel,
+      setQuadrantColor,
+      setGridType,
+      setLayoutType,
+      setTheme,
+    ],
+  );
+
+  return <KwadrantContext.Provider value={value}>{children}</KwadrantContext.Provider>;
+};
+
+export const useKwadrant = () => {
+  const context = useContext(KwadrantContext);
+  if (!context) {
+    throw new Error("useKwadrant must be used within a KwadrantProvider");
+  }
+  return context;
+};

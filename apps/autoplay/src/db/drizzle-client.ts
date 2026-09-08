@@ -13,8 +13,8 @@ export const db =
     ? undefined
     : drizzle(
         createClient({
-          url: env.TURSO_DATABASE_URL,
           authToken: env.TURSO_AUTH_TOKEN,
+          url: env.TURSO_DATABASE_URL,
         }),
         { schema },
       );

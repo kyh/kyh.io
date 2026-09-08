@@ -22,10 +22,14 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     replayFileRequestSchema,
     "Expected { sourceId: string, sessionId: string }",
   );
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   const session = await getSession();
   const source = await resolveSource(body.data.sourceId, session);
-  if (source === undefined) return errorResponse(404, "No such channel");
+  if (source === undefined) {
+    return errorResponse(404, "No such channel");
+  }
   const owner = session !== null && isOwnerHandle(session.user.username);
   const file = await sessionFile(source.channelKey, body.data.sessionId, owner);
   if ("refused" in file) {

@@ -16,30 +16,34 @@ import { ensureSources, isOwnerHandle, listChannels } from "@/lib/lineup";
 // landed a minute ago becomes a channel here, with no further step.
 
 const googleFor = (owner: boolean): SessionPayload["google"] => {
-  if (!googleConfigured) return "unconfigured";
+  if (!googleConfigured) {
+    return "unconfigured";
+  }
   return googleOpenToAll || owner ? "ready" : "owner-only";
 };
 
 export const GET = async (): Promise<NextResponse> => {
   const session = await getSession();
-  if (session !== null) await ensureSources(session);
+  if (session !== null) {
+    await ensureSources(session);
+  }
   const owner = session !== null && isOwnerHandle(session.user.username);
   const payload: SessionPayload = {
+    channels: await listChannels(session),
+    google: googleFor(owner),
+    liveReady: env.FAL_KEY !== undefined,
+    // better-auth exists only with the X app, a secret and the database to keep users in.
+    loginReady: auth !== undefined,
     missingKeys: missingEnvKeys(),
+    recordReady: recordingConfigured,
     user:
       session === null
         ? null
         : {
             name: session.user.name,
-            username: session.user.username ?? session.user.name,
             profileImageUrl: session.user.image ?? undefined,
+            username: session.user.username ?? session.user.name,
           },
-    channels: await listChannels(session),
-    // better-auth exists only with the X app, a secret and the database to keep users in.
-    loginReady: auth !== undefined,
-    google: googleFor(owner),
-    liveReady: env.FAL_KEY !== undefined,
-    recordReady: recordingConfigured,
   };
   return NextResponse.json(payload);
 };

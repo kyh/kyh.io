@@ -5,8 +5,10 @@
  *
  * Continues from current ctx position — caller must moveTo first point.
  */
-export function drawSpline(ctx: CanvasRenderingContext2D, pts: [number, number][]) {
-  if (pts.length < 2) return;
+export const drawSpline = (ctx: CanvasRenderingContext2D, pts: [number, number][]) => {
+  if (pts.length < 2) {
+    return;
+  }
   if (pts.length === 2) {
     ctx.lineTo(pts[1][0], pts[1][1]);
     return;
@@ -14,29 +16,23 @@ export function drawSpline(ctx: CanvasRenderingContext2D, pts: [number, number][
 
   const n = pts.length;
 
-  // 1. Compute secant slopes (delta) between consecutive points
-  const delta: number[] = new Array(n - 1);
-  const h: number[] = new Array(n - 1); // x-intervals
-  for (let i = 0; i < n - 1; i++) {
-    h[i] = pts[i + 1][0] - pts[i][0];
-    delta[i] = h[i] === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / h[i];
-  }
+  // 1. x-intervals and secant slopes (delta) between consecutive points
+  const h = Array.from({ length: n - 1 }, (_, i) => pts[i + 1][0] - pts[i][0]);
+  const delta = h.map((hi, i) => (hi === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / hi));
 
-  // 2. Initial tangent estimates
-  const m: number[] = new Array(n);
-  m[0] = delta[0];
-  m[n - 1] = delta[n - 2];
-  for (let i = 1; i < n - 1; i++) {
-    if (delta[i - 1] * delta[i] <= 0) {
-      // Sign change or zero — tangent must be zero for monotonicity
-      m[i] = 0;
-    } else {
-      m[i] = (delta[i - 1] + delta[i]) / 2;
+  // 2. Initial tangent estimates — zero on sign change for monotonicity
+  const m = Array.from({ length: n }, (_, i) => {
+    if (i === 0) {
+      return delta[0];
     }
-  }
+    if (i === n - 1) {
+      return delta[n - 2];
+    }
+    return delta[i - 1] * delta[i] <= 0 ? 0 : (delta[i - 1] + delta[i]) / 2;
+  });
 
   // 3. Fritsch-Carlson constraint: alpha^2 + beta^2 <= 9
-  for (let i = 0; i < n - 1; i++) {
+  for (let i = 0; i < n - 1; i += 1) {
     if (delta[i] === 0) {
       // Flat segment — zero both endpoint tangents
       m[i] = 0;
@@ -54,7 +50,7 @@ export function drawSpline(ctx: CanvasRenderingContext2D, pts: [number, number][
   }
 
   // 4. Draw bezier curves using tangents as control points
-  for (let i = 0; i < n - 1; i++) {
+  for (let i = 0; i < n - 1; i += 1) {
     const hi = h[i];
     ctx.bezierCurveTo(
       pts[i][0] + hi / 3,
@@ -65,4 +61,4 @@ export function drawSpline(ctx: CanvasRenderingContext2D, pts: [number, number][
       pts[i + 1][1],
     );
   }
-}
+};

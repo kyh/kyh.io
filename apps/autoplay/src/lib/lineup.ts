@@ -32,7 +32,7 @@ export type ResolvedSource =
   | { mode: "replay"; channelKey: string; kind: SourceKind }
   | { mode: "off-air"; channelKey: string; kind: SourceKind; reason: string };
 
-const rssConfigSchema = z.object({ url: z.string(), title: z.string() });
+const rssConfigSchema = z.object({ title: z.string(), url: z.string() });
 
 type SourceRow = typeof source.$inferSelect;
 
@@ -44,33 +44,33 @@ export const isOwnerHandle = (username: string | null | undefined): boolean =>
 
 /** The same viewer as the budgets see them. */
 export const budgetViewerOf = (viewer: NonNullable<Viewer>): BudgetViewer => ({
-  userId: viewer.user.id,
   owner: isOwnerHandle(viewer.user.username),
+  userId: viewer.user.id,
 });
 
 const ownerChannel = (owner: boolean): ChannelSummary => ({
-  number: 1,
-  sourceId: OWNER_SOURCE_ID,
   kind: "x",
   label: env.OWNER_X_USERNAME === undefined ? "public access" : `@${env.OWNER_X_USERNAME}`,
   mode: owner ? "live" : "replay",
+  number: 1,
+  sourceId: OWNER_SOURCE_ID,
 });
 
 const toChannel = (row: SourceRow, number: number): ChannelSummary => ({
-  number,
-  sourceId: row.id,
   kind: row.kind,
   label: row.label,
   mode: "live",
+  number,
+  sourceId: row.id,
 });
 
-type NewSource = {
+interface NewSource {
   kind: SourceKind;
   key: string;
   label: string;
   accountId?: string;
   config?: string;
-};
+}
 
 /**
  * Idempotent: the unique (user, key) index makes a repeat a no-op but for the
@@ -91,23 +91,23 @@ const insertSource = async (
   await database
     .insert(source)
     .values({
-      id: crypto.randomUUID(),
-      userId,
-      kind: entry.kind,
       accountId: entry.accountId ?? null,
       config: entry.config ?? null,
-      label: entry.label,
-      key: entry.key,
-      position: (rows[0]?.last ?? 0) + 1,
       createdAt: Date.now(),
+      id: crypto.randomUUID(),
+      key: entry.key,
+      kind: entry.kind,
+      label: entry.label,
+      position: (rows[0]?.last ?? 0) + 1,
+      userId,
     })
     .onConflictDoUpdate({
+      set: { config: entry.config ?? null, label: entry.label },
       target: [source.userId, source.key],
-      set: { label: entry.label, config: entry.config ?? null },
     });
 };
 
-const grantedScopes = (scope: string | null): string[] => (scope ?? "").split(/[,\s]+/);
+const grantedScopes = (scope: string | null): string[] => (scope ?? "").split(/[,\s]+/u);
 
 /**
  * The sources a user's grants imply. Their X is a source unless it is the
@@ -115,44 +115,54 @@ const grantedScopes = (scope: string | null): string[] => (scope ?? "").split(/[
  * carries, so one consent can add two channels.
  */
 export const ensureSources = async (viewer: NonNullable<Viewer>): Promise<void> => {
-  if (db === undefined) return;
+  if (db === undefined) {
+    return;
+  }
   const accounts = await db.select().from(account).where(eq(account.userId, viewer.user.id));
   const wanted: NewSource[] = [];
   for (const row of accounts) {
     if (row.providerId === "twitter" && !isOwnerHandle(viewer.user.username)) {
-      const username = viewer.user.username;
+      const { username } = viewer.user;
       wanted.push({
-        kind: "x",
         accountId: row.id,
         key: `x:${row.accountId}`,
+        kind: "x",
         label: username === undefined || username === null ? "your X" : `@${username}`,
       });
     }
     if (row.providerId === "google") {
       const scopes = grantedScopes(row.scope);
       for (const entry of GOOGLE_SOURCES) {
-        if (!scopes.includes(entry.scope)) continue;
+        if (!scopes.includes(entry.scope)) {
+          continue;
+        }
         wanted.push({
-          kind: entry.kind,
           accountId: row.id,
           key: `${entry.kind}:${row.accountId}`,
+          kind: entry.kind,
           label: entry.label,
         });
       }
     }
   }
-  for (const entry of wanted) await insertSource(db, viewer.user.id, entry);
+  for (const entry of wanted) {
+    await insertSource(db, viewer.user.id, entry);
+  }
 };
 
 export const listChannels = async (viewer: Viewer): Promise<ChannelSummary[]> => {
   const channels = [ownerChannel(viewer !== null && isOwnerHandle(viewer.user.username))];
-  if (viewer === null || db === undefined) return channels;
+  if (viewer === null || db === undefined) {
+    return channels;
+  }
   const rows = await db
     .select()
     .from(source)
     .where(and(eq(source.userId, viewer.user.id), isNull(source.removedAt)))
     .orderBy(asc(source.position));
-  for (const row of rows) channels.push(toChannel(row, channels.length + 1));
+  for (const row of rows) {
+    channels.push(toChannel(row, channels.length + 1));
+  }
   return channels;
 };
 
@@ -172,20 +182,21 @@ const xAccess = async (userId: string): Promise<Access> => {
   const grant = await freshXAccount(userId);
   return grant === undefined
     ? { noAccessReason: "X connection expired — sign in again" }
-    : { access: { kind: "x", accessToken: grant.accessToken, xUserId: grant.xUserId } };
+    : { access: { accessToken: grant.accessToken, kind: "x", xUserId: grant.xUserId } };
 };
 
 const accessFor = async (row: SourceRow, userId: string): Promise<Access> => {
   switch (row.kind) {
-    case "x":
+    case "x": {
       return xAccess(userId);
+    }
     case "gmail":
     case "youtube": {
       const accessToken =
         row.accountId === null ? undefined : await googleAccessToken(row.accountId, userId);
       return accessToken === undefined
         ? { noAccessReason: "Google connection expired — reconnect it in sources" }
-        : { access: { kind: row.kind, accessToken } };
+        : { access: { accessToken, kind: row.kind } };
     }
     case "rss": {
       const config = parseRssConfig(row);
@@ -193,13 +204,14 @@ const accessFor = async (row: SourceRow, userId: string): Promise<Access> => {
         ? { noAccessReason: "This feed's settings are unreadable — remove and re-add it" }
         : { access: { kind: "rss", url: config.url } };
     }
+    // no default
   }
 };
 
 const resolved = (channelKey: string, kind: SourceKind, outcome: Access): ResolvedSource =>
   "access" in outcome
-    ? { mode: "live", channelKey, kind, access: outcome.access }
-    : { mode: "off-air", channelKey, kind, reason: outcome.noAccessReason };
+    ? { access: outcome.access, channelKey, kind, mode: "live" }
+    : { channelKey, kind, mode: "off-air", reason: outcome.noAccessReason };
 
 /**
  * The channel behind a source id, as this viewer may use it. The public
@@ -212,11 +224,13 @@ export const resolveSource = async (
 ): Promise<ResolvedSource | undefined> => {
   if (sourceId === OWNER_SOURCE_ID) {
     if (viewer === null || !isOwnerHandle(viewer.user.username)) {
-      return { mode: "replay", channelKey: OWNER_SOURCE_ID, kind: "x" };
+      return { channelKey: OWNER_SOURCE_ID, kind: "x", mode: "replay" };
     }
     return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id));
   }
-  if (viewer === null || db === undefined) return undefined;
+  if (viewer === null || db === undefined) {
+    return undefined;
+  }
   const rows = await db
     .select()
     .from(source)
@@ -224,8 +238,10 @@ export const resolveSource = async (
       and(eq(source.id, sourceId), eq(source.userId, viewer.user.id), isNull(source.removedAt)),
     )
     .limit(1);
-  const row = rows[0];
-  if (row === undefined) return undefined;
+  const [row] = rows;
+  if (row === undefined) {
+    return undefined;
+  }
   return resolved(row.id, row.kind, await accessFor(row, viewer.user.id));
 };
 
@@ -235,14 +251,16 @@ export const resolveSource = async (
  * removed feed puts it back rather than failing on the unique key.
  */
 export const addRssSource = async (viewer: NonNullable<Viewer>, url: string): Promise<void> => {
-  if (db === undefined) return;
+  if (db === undefined) {
+    return;
+  }
   const feed = await fetchFeed(url);
   const key = `rss:${url}`;
   await insertSource(db, viewer.user.id, {
-    kind: "rss",
+    config: JSON.stringify({ title: feed.title, url }),
     key,
+    kind: "rss",
     label: feed.title,
-    config: JSON.stringify({ url, title: feed.title }),
   });
   await db
     .update(source)
@@ -254,7 +272,9 @@ export const removeSource = async (
   viewer: NonNullable<Viewer>,
   sourceId: string,
 ): Promise<void> => {
-  if (db === undefined) return;
+  if (db === undefined) {
+    return;
+  }
   await db
     .update(source)
     .set({ removedAt: Date.now() })
@@ -266,7 +286,9 @@ export const reorderSources = async (
   viewer: NonNullable<Viewer>,
   order: string[],
 ): Promise<void> => {
-  if (db === undefined) return;
+  if (db === undefined) {
+    return;
+  }
   for (const [index, sourceId] of order.entries()) {
     await db
       .update(source)

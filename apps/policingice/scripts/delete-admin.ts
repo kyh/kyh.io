@@ -15,14 +15,14 @@ import { eq } from "drizzle-orm";
 import { db } from "../src/db/drizzle-client";
 import { user } from "../src/db/drizzle-schema";
 
-const email = process.argv[2];
+const [email] = process.argv.slice(2);
 
 if (!email) {
   console.log("Usage: npx tsx scripts/delete-admin.ts <email>");
   process.exit(1);
 }
 
-async function main() {
+const main = async () => {
   try {
     const existing = await db.query.user.findFirst({
       where: eq(user.email, email),
@@ -39,6 +39,6 @@ async function main() {
     console.error("Failed to delete user:", error);
     process.exit(1);
   }
-}
+};
 
 void main();

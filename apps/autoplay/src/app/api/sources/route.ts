@@ -23,13 +23,17 @@ const lineupResponse = async (session: Session): Promise<NextResponse> => {
 
 export const POST = async (request: NextRequest): Promise<NextResponse> => {
   const viewer = await requireSession("Sign in with X to add channels");
-  if ("refused" in viewer) return viewer.refused;
+  if ("refused" in viewer) {
+    return viewer.refused;
+  }
   const body = await readBody(
     request,
     addSourceRequestSchema,
     "Expected { kind: 'rss', url: string }",
   );
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   try {
     await addRssSource(viewer.session, body.data.url);
   } catch (error) {
@@ -40,18 +44,26 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
 
 export const DELETE = async (request: NextRequest): Promise<NextResponse> => {
   const viewer = await requireSession("Sign in with X to change channels");
-  if ("refused" in viewer) return viewer.refused;
+  if ("refused" in viewer) {
+    return viewer.refused;
+  }
   const body = await readBody(request, removeSourceRequestSchema, "Expected { sourceId: string }");
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   await removeSource(viewer.session, body.data.sourceId);
   return lineupResponse(viewer.session);
 };
 
 export const PATCH = async (request: NextRequest): Promise<NextResponse> => {
   const viewer = await requireSession("Sign in with X to change channels");
-  if ("refused" in viewer) return viewer.refused;
+  if ("refused" in viewer) {
+    return viewer.refused;
+  }
   const body = await readBody(request, reorderSourcesRequestSchema, "Expected { order: string[] }");
-  if ("refused" in body) return body.refused;
+  if ("refused" in body) {
+    return body.refused;
+  }
   await reorderSources(viewer.session, body.data.order);
   return lineupResponse(viewer.session);
 };

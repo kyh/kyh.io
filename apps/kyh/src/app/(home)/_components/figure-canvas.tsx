@@ -19,9 +19,17 @@ import { useTheme } from "next-themes";
 
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
-  strokeStyle: isLight ? "black" : "white",
   lineWidth: 2,
+  strokeStyle: isLight ? "black" : "white",
 });
+
+const isEventListener = (value: unknown): value is EventListener => typeof value === "function";
+
+const restrokeBodies = (bodies: Matter.Body[], isLight: boolean) => {
+  for (const body of bodies) {
+    body.render.strokeStyle = isLight ? "black" : "white";
+  }
+};
 
 const INITIAL_FIGURE_COUNT = 20;
 const CLICK_SPAWN_COUNT = 6;
@@ -31,14 +39,18 @@ const createStaticFigure = (isLight: boolean, x: number, y: number) => {
   const figureType = Math.floor(Common.random(0, 4));
 
   switch (figureType) {
-    case 0:
+    case 0: {
       return Bodies.circle(x, y, Common.random(15, 25), { render });
-    case 1:
+    }
+    case 1: {
       return Bodies.rectangle(x, y, Common.random(20, 35), Common.random(20, 35), { render });
-    case 2:
+    }
+    case 2: {
       return Bodies.polygon(x, y, 3, Common.random(18, 28), { render });
-    default:
+    }
+    default: {
       return Bodies.polygon(x, y, 6, Common.random(15, 22), { render });
+    }
   }
 };
 
@@ -56,17 +68,21 @@ const createClickFigure = (isLight: boolean, clickX: number, clickY: number) => 
 
   // Small initial size for pop animation
   switch (figureType) {
-    case 0:
+    case 0: {
       body = Bodies.circle(clickX, clickY, 5, { render });
       break;
-    case 1:
+    }
+    case 1: {
       body = Bodies.rectangle(clickX, clickY, 8, 8, { render });
       break;
-    case 2:
+    }
+    case 2: {
       body = Bodies.polygon(clickX, clickY, 3, 6, { render });
       break;
-    default:
+    }
+    default: {
       body = Bodies.polygon(clickX, clickY, 6, 5, { render });
+    }
   }
 
   Body.setVelocity(body, { x: vx, y: vy });
@@ -77,15 +93,15 @@ const createClickFigure = (isLight: boolean, clickX: number, clickY: number) => 
 const easeOutBack = (x: number): number => {
   const c1 = 1.70158;
   const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+  return 1 + c3 * (x - 1) ** 3 + c1 * (x - 1) ** 2;
 };
 
-type AnimatingFigure = {
+interface AnimatingFigure {
   body: Matter.Body;
   startTime: number;
   targetScale: number;
   currentScale: number;
-};
+}
 
 export const FigureCanvas = () => {
   const { resolvedTheme } = useTheme();
@@ -112,7 +128,9 @@ export const FigureCanvas = () => {
 
   // IntersectionObserver to pause when not visible
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -133,7 +151,9 @@ export const FigureCanvas = () => {
   }, [pausePhysics, resumePhysics]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     const width = containerRef.current.offsetWidth;
     const height = 480;
@@ -144,13 +164,13 @@ export const FigureCanvas = () => {
 
     const render = Render.create({
       element: containerRef.current,
-      engine: engine,
+      engine,
       options: {
-        width,
-        height,
-        wireframes: false,
         background: "transparent",
+        height,
         pixelRatio: window.devicePixelRatio || 1,
+        width,
+        wireframes: false,
       },
     });
     renderRef.current = render;
@@ -158,26 +178,23 @@ export const FigureCanvas = () => {
     // Mouse interaction for dragging
     const mouse = Mouse.create(render.canvas);
     const mouseConstraint = MouseConstraint.create(engine, {
-      mouse: mouse,
       constraint: {
-        stiffness: 0.2,
         render: { visible: false },
+        stiffness: 0.2,
       },
+      mouse,
     });
     Composite.add(engine.world, mouseConstraint);
     render.mouse = mouse;
 
-    // Allow page scrolling by removing matter-js wheel listener
-    const canvas = render.canvas;
-    canvas.onwheel = null;
-    // @ts-expect-error - mousewheel is internal to matter-js
-    if (mouse.mousewheel) {
-      // @ts-expect-error
-      canvas.removeEventListener("wheel", mouse.mousewheel);
-      // @ts-expect-error
-      canvas.removeEventListener("mousewheel", mouse.mousewheel);
-      // @ts-expect-error
-      canvas.removeEventListener("DOMMouseScroll", mouse.mousewheel);
+    // Allow page scrolling by removing matter-js wheel listener, which Mouse
+    // keeps on an undocumented property
+    const { canvas } = render;
+    const mousewheel = "mousewheel" in mouse ? mouse.mousewheel : undefined;
+    if (isEventListener(mousewheel)) {
+      canvas.removeEventListener("wheel", mousewheel);
+      canvas.removeEventListener("mousewheel", mousewheel);
+      canvas.removeEventListener("DOMMouseScroll", mousewheel);
     }
 
     // Invisible ground and boundary to remove fallen figures
@@ -195,7 +212,7 @@ export const FigureCanvas = () => {
 
     // Remove figures that fall off screen
     Events.on(engine, "collisionStart", ({ pairs }) => {
-      pairs.forEach(({ bodyA, bodyB }) => {
+      for (const { bodyA, bodyB } of pairs) {
         if (bodyA === bottomSensor) {
           World.remove(engine.world, bodyB);
           bodiesRef.current = bodiesRef.current.filter((b) => b !== bodyB);
@@ -204,12 +221,12 @@ export const FigureCanvas = () => {
           World.remove(engine.world, bodyA);
           bodiesRef.current = bodiesRef.current.filter((b) => b !== bodyA);
         }
-      });
+      }
     });
 
     // Initial figures placed mostly in the middle
     const centerX = width / 2;
-    for (let i = 0; i < INITIAL_FIGURE_COUNT; i++) {
+    for (let i = 0; i < INITIAL_FIGURE_COUNT; i += 1) {
       const x = centerX + Common.random(-120, 120);
       const y = Common.random(height - 150, height - 50);
       const figure = createStaticFigure(isLight, x, y);
@@ -219,24 +236,28 @@ export const FigureCanvas = () => {
 
     // Spawn figures at position
     const spawnFiguresAt = (x: number, y: number) => {
-      if (!engineRef.current) return;
+      if (!engineRef.current) {
+        return;
+      }
 
       // Check if click is on an existing body
       const bodies = Composite.allBodies(engineRef.current.world).filter((b) => !b.isStatic);
       const clickedBodies = Query.point(bodies, { x, y });
 
       // Only spawn if clicking empty space
-      if (clickedBodies.length > 0) return;
+      if (clickedBodies.length > 0) {
+        return;
+      }
 
       const count = Math.floor(Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2));
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < count; i += 1) {
         const { body, targetScale } = createClickFigure(isLight, x, y);
         bodiesRef.current.push(body);
         animatingRef.current.push({
           body,
+          currentScale: 1,
           startTime: Date.now(),
           targetScale,
-          currentScale: 1,
         });
         Composite.add(engineRef.current.world, body);
       }
@@ -251,10 +272,14 @@ export const FigureCanvas = () => {
     // Touch handler for mobile
     const handleTouch = (e: TouchEvent) => {
       // Only handle single taps, not drags
-      if (e.touches.length > 1) return;
+      if (e.touches.length > 1) {
+        return;
+      }
 
-      const touch = e.changedTouches[0];
-      if (!touch) return;
+      const [touch] = e.changedTouches;
+      if (!touch) {
+        return;
+      }
       const rect = canvas.getBoundingClientRect();
       spawnFiguresAt(touch.clientX - rect.left, touch.clientY - rect.top);
     };
@@ -264,12 +289,15 @@ export const FigureCanvas = () => {
 
     // Device orientation for tilt-based gravity
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      if (!engineRef.current || e.gamma === null || e.beta === null) return;
+      if (!engineRef.current || e.gamma === null || e.beta === null) {
+        return;
+      }
 
-      // gamma: left/right tilt (-90 to 90)
-      // beta: front/back tilt (-180 to 180)
-      const gravityX = (e.gamma / 90) * 2; // Map to -2 to 2
-      const gravityY = Math.max(0.5, Math.min(2, (e.beta / 90) * 2)); // Map to 0.5 to 2, always some downward
+      // gamma: left/right tilt (-90 to 90), mapped to -2..2
+      // beta: front/back tilt (-180 to 180), mapped to 0.5..2 so gravity
+      // always keeps some downward pull
+      const gravityX = (e.gamma / 90) * 2;
+      const gravityY = Math.max(0.5, Math.min(2, (e.beta / 90) * 2));
 
       engine.gravity.x = gravityX;
       engine.gravity.y = gravityY;
@@ -322,12 +350,13 @@ export const FigureCanvas = () => {
     const runner = Runner.create();
     runnerRef.current = runner;
 
-    // Fade figures as they approach top of canvas
-    const FADE_START = 180; // Start fading at this y
-    const FADE_END = 50; // Fully transparent at this y
+    // Fade figures as they approach top of canvas: start at FADE_START,
+    // fully transparent by FADE_END
+    const FADE_START = 180;
+    const FADE_END = 50;
     Events.on(engine, "afterUpdate", () => {
-      bodiesRef.current.forEach((body) => {
-        const y = body.position.y;
+      for (const body of bodiesRef.current) {
+        const { y } = body.position;
         if (y < FADE_START) {
           const opacity = Math.max(0, (y - FADE_END) / (FADE_START - FADE_END));
           const baseColor = isLight ? "0, 0, 0" : "255, 255, 255";
@@ -335,7 +364,7 @@ export const FigureCanvas = () => {
         } else {
           body.render.strokeStyle = isLight ? "black" : "white";
         }
-      });
+      }
     });
 
     Render.run(render);
@@ -365,10 +394,7 @@ export const FigureCanvas = () => {
 
   // Update colors on theme change
   useEffect(() => {
-    const isLight = resolvedTheme === "light";
-    bodiesRef.current.forEach((body) => {
-      body.render.strokeStyle = isLight ? "black" : "white";
-    });
+    restrokeBodies(bodiesRef.current, resolvedTheme === "light");
   }, [resolvedTheme]);
 
   return (

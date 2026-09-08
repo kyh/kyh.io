@@ -1,15 +1,17 @@
 // Everything here crosses a JSON.stringify/JSON.parse wire, so JSON values are
 // the precise contract for player state. Mirrors apps/party/src/server.ts.
 export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
-export type JsonObject = { [key: string]: JsonValue };
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
 
 // Schema
-export type Player = {
+export interface Player {
   id: string;
   color: string;
   hue: string;
   state: JsonObject;
-};
+}
 
 export type PlayerMap = Record<string, Player>;
 

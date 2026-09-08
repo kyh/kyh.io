@@ -21,20 +21,75 @@ import type { Placement } from "@floating-ui/react";
 import { cn } from "cn";
 
 // Global lines context - lines are rendered once at provider level
-type LinesPosition = {
+interface LinesPosition {
   x: number;
   y: number;
   width: number;
   height: number;
-};
+}
 
-type TooltipLinesContextType = {
+interface TooltipLinesContextType {
   updatePosition: (id: string, pos: LinesPosition | null) => void;
-};
+}
 
-const TooltipLinesContext = React.createContext<TooltipLinesContextType>({
-  updatePosition: () => {},
-});
+const TooltipLinesContext = React.createContext<TooltipLinesContextType | null>(null);
+
+const easeInOutQuint = (x: number) =>
+  x < 0.5 ? 16 * x * x * x * x * x : 1 - (-2 * x + 2) ** 5 / 2;
+
+// Single set of lines rendered at provider level
+const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
+  const [scrollHeight, setScrollHeight] = React.useState(0);
+
+  // The vertical line spans the whole document, so track the page height rather
+  // than sampling it once per tooltip open.
+  React.useEffect(() => {
+    const observer = new ResizeObserver(() =>
+      setScrollHeight(document.documentElement.scrollHeight),
+    );
+    observer.observe(document.documentElement);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {position && (
+        <>
+          <motion.div
+            className="tooltip-line tooltip-line-h"
+            initial={{ opacity: 0, top: -1 }}
+            animate={{ opacity: 1, top: position.y }}
+            exit={{ opacity: 0, top: -1 }}
+            transition={{ duration: 1, ease: easeInOutQuint }}
+          />
+          <motion.div
+            className="tooltip-line tooltip-line-h"
+            initial={{ opacity: 0, top: "100dvh" }}
+            animate={{ opacity: 1, top: position.y + position.height }}
+            exit={{ opacity: 0, top: "100dvh" }}
+            transition={{ duration: 1, ease: easeInOutQuint }}
+          />
+          <motion.div
+            className="tooltip-line tooltip-line-v"
+            style={{ height: scrollHeight }}
+            initial={{ left: -1, opacity: 0 }}
+            animate={{ left: position.x, opacity: 1 }}
+            exit={{ left: -1, opacity: 0 }}
+            transition={{ duration: 1, ease: easeInOutQuint }}
+          />
+          <motion.div
+            className="tooltip-line tooltip-line-v"
+            style={{ height: scrollHeight }}
+            initial={{ left: "100dvw", opacity: 0 }}
+            animate={{ left: position.x + position.width, opacity: 1 }}
+            exit={{ left: "100dvw", opacity: 0 }}
+            transition={{ duration: 1, ease: easeInOutQuint }}
+          />
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
   const [position, setPosition] = React.useState<LinesPosition | null>(null);
@@ -47,25 +102,27 @@ const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       positionsRef.current.delete(id);
       // Use any remaining open tooltip's position, or null
-      const remaining = Array.from(positionsRef.current.values());
-      setPosition(remaining.length > 0 ? (remaining[remaining.length - 1] ?? null) : null);
+      const remaining = [...positionsRef.current.values()];
+      setPosition(remaining.length > 0 ? (remaining.at(-1) ?? null) : null);
     }
   }, []);
 
+  const linesContext = React.useMemo(() => ({ updatePosition }), [updatePosition]);
+
   return (
-    <TooltipLinesContext.Provider value={{ updatePosition }}>
+    <TooltipLinesContext.Provider value={linesContext}>
       {children}
       <TooltipLines position={position} />
     </TooltipLinesContext.Provider>
   );
 };
 
-type TooltipOptions = {
+interface TooltipOptions {
   initialOpen?: boolean;
   placement?: Placement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-};
+}
 
 const useTooltip = ({
   initialOpen = false,
@@ -77,12 +134,9 @@ const useTooltip = ({
 
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
+  const uncontrolled = controlledOpen === undefined;
 
   const data = useFloating({
-    placement,
-    open,
-    onOpenChange: setOpen,
-    whileElementsMounted: autoUpdate,
     middleware: [
       offset(5),
       flip({
@@ -91,16 +145,20 @@ const useTooltip = ({
       }),
       shift({ padding: 5 }),
     ],
+    onOpenChange: setOpen,
+    open,
+    placement,
+    whileElementsMounted: autoUpdate,
   });
 
-  const context = data.context;
+  const { context } = data;
 
   const hover = useHover(context, {
+    enabled: uncontrolled,
     move: false,
-    enabled: controlledOpen == null,
   });
   const focus = useFocus(context, {
-    enabled: controlledOpen == null,
+    enabled: uncontrolled,
   });
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: "tooltip" });
@@ -125,7 +183,7 @@ const TooltipContext = React.createContext<ContextType>(null);
 const useTooltipContext = () => {
   const context = React.useContext(TooltipContext);
 
-  if (context == null) {
+  if (context === null) {
     throw new Error("Tooltip components must be wrapped in <Tooltip />");
   }
 
@@ -138,10 +196,12 @@ const Tooltip = ({ children, ...options }: { children: React.ReactNode } & Toolt
   return <TooltipContext.Provider value={tooltip}>{children}</TooltipContext.Provider>;
 };
 
-const TooltipTrigger = React.forwardRef<
-  HTMLElement,
-  React.HTMLProps<HTMLElement> & { asChild?: boolean }
->(({ children, asChild = false, ...props }, propRef) => {
+const TooltipTrigger = ({
+  children,
+  asChild = false,
+  ref: propRef,
+  ...props
+}: React.HTMLProps<HTMLElement> & { asChild?: boolean; ref?: React.Ref<HTMLElement> }) => {
   const context = useTooltipContext();
   const childrenRef = React.isValidElement<{ ref?: React.Ref<unknown> }>(children)
     ? children.props.ref
@@ -152,12 +212,13 @@ const TooltipTrigger = React.forwardRef<
     // SAFETY: asChild hands rendering to the child element, whose props are a
     // DOM prop bag by contract; getReferenceProps only merges and augments
     // them, so the merged object is valid HTMLProps for that element.
+    // oxlint-disable-next-line react/no-clone-element -- asChild is the Slot pattern: the child element is the trigger, so its props must be merged onto it
     return React.cloneElement(children, {
       ...context.getReferenceProps({
         ...props,
         ...children.props,
-        "data-state": context.open ? "open" : "closed",
         "data-side": context.placement.split("-")[0],
+        "data-state": context.open ? "open" : "closed",
       } as React.HTMLProps<HTMLElement>),
       ref,
     });
@@ -165,6 +226,7 @@ const TooltipTrigger = React.forwardRef<
 
   return (
     <button
+      type="button"
       ref={ref}
       data-state={context.open ? "open" : "closed"}
       data-side={context.placement.split("-")[0]}
@@ -173,18 +235,65 @@ const TooltipTrigger = React.forwardRef<
       {children}
     </button>
   );
-});
+};
 
-TooltipTrigger.displayName = "TooltipTrigger";
+const cols = 11;
+const rows = 8;
+const duration = 0.07;
+const baseDelay = duration / 2;
+const blocks = Array.from({ length: cols * rows }, (_, i) => i);
+const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
+const totalDelay = calculateDelay(cols * rows);
 
-const TooltipContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLProps<HTMLDivElement> & {
-    type?: "default" | "block";
+// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
+// has no index signature for `--*` keys; the object holds nothing else.
+const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
+
+const TooltipBlocks = ({ context }: { context: ContextType }) => {
+  if (!context?.x || !context.y) {
+    return null;
   }
->(({ className, type = "default", ...props }, propRef) => {
+
+  return (
+    <div className="tooltip-blocks-container" style={tooltipBlocksStyle}>
+      {blocks.map((i) => (
+        <motion.div
+          key={i}
+          className="tooltip-block"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ delay: calculateDelay(i), duration }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const tooltipFadeProps = {
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  initial: { opacity: 0 },
+  transition: { duration: 0.23 },
+};
+
+const blockContentProps = {
+  animate: { opacity: 1, transition: { delay: totalDelay * 2 } },
+  exit: { opacity: 0 },
+  initial: { opacity: 0 },
+};
+
+const TooltipContent = ({
+  className,
+  type = "default",
+  ref: propRef,
+  ...props
+}: React.HTMLProps<HTMLDivElement> & {
+  type?: "default" | "block";
+  ref?: React.Ref<HTMLDivElement>;
+}) => {
   const context = useTooltipContext();
-  const { updatePosition } = React.useContext(TooltipLinesContext);
+  const linesContext = React.useContext(TooltipLinesContext);
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
   const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
@@ -195,16 +304,19 @@ const TooltipContent = React.forwardRef<
 
   // Update global lines position when this tooltip opens/closes/moves
   React.useLayoutEffect(() => {
-    if (!blockType) return;
+    if (!blockType || !linesContext) {
+      return;
+    }
+    const { updatePosition } = linesContext;
 
-    if (context.open && context.x != null && context.y != null) {
+    if (context.open && context.x !== null && context.y !== null) {
       const floatingEl = context.elements.floating;
       if (floatingEl) {
         updatePosition(tooltipId, {
+          height: floatingEl.offsetHeight,
+          width: floatingEl.offsetWidth,
           x: context.x,
           y: context.y,
-          width: floatingEl.offsetWidth,
-          height: floatingEl.offsetHeight,
         });
       }
     } else {
@@ -220,26 +332,12 @@ const TooltipContent = React.forwardRef<
     context.x,
     context.y,
     context.elements.floating,
-    updatePosition,
+    linesContext,
     tooltipId,
   ]);
 
-  const tooltipMotionProps = blockType
-    ? {}
-    : {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 0.23 },
-      };
-
-  const contentMotionProps = blockType
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1, transition: { delay: totalDelay * 2 } },
-        exit: { opacity: 0 },
-      }
-    : {};
+  const tooltipMotionProps = blockType ? {} : tooltipFadeProps;
+  const contentMotionProps = blockType ? blockContentProps : {};
 
   return (
     <FloatingPortal>
@@ -266,96 +364,6 @@ const TooltipContent = React.forwardRef<
         )}
       </AnimatePresence>
     </FloatingPortal>
-  );
-});
-
-TooltipContent.displayName = "TooltipContent";
-
-const easeInOutQuint = (x: number) =>
-  x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
-
-// Single set of lines rendered at provider level
-const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
-  const [scrollHeight, setScrollHeight] = React.useState(0);
-
-  // The vertical line spans the whole document, so track the page height rather
-  // than sampling it once per tooltip open.
-  React.useEffect(() => {
-    const observer = new ResizeObserver(() =>
-      setScrollHeight(document.documentElement.scrollHeight),
-    );
-    observer.observe(document.documentElement);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <AnimatePresence>
-      {position && (
-        <>
-          <motion.div
-            className="tooltip-line tooltip-line-h"
-            initial={{ opacity: 0, top: -1 }}
-            animate={{ opacity: 1, top: position.y }}
-            exit={{ opacity: 0, top: -1 }}
-            transition={{ ease: easeInOutQuint, duration: 1 }}
-          />
-          <motion.div
-            className="tooltip-line tooltip-line-h"
-            initial={{ opacity: 0, top: "100dvh" }}
-            animate={{ opacity: 1, top: position.y + position.height }}
-            exit={{ opacity: 0, top: "100dvh" }}
-            transition={{ ease: easeInOutQuint, duration: 1 }}
-          />
-          <motion.div
-            className="tooltip-line tooltip-line-v"
-            style={{ height: scrollHeight }}
-            initial={{ opacity: 0, left: -1 }}
-            animate={{ opacity: 1, left: position.x }}
-            exit={{ opacity: 0, left: -1 }}
-            transition={{ ease: easeInOutQuint, duration: 1 }}
-          />
-          <motion.div
-            className="tooltip-line tooltip-line-v"
-            style={{ height: scrollHeight }}
-            initial={{ opacity: 0, left: "100dvw" }}
-            animate={{ opacity: 1, left: position.x + position.width }}
-            exit={{ opacity: 0, left: "100dvw" }}
-            transition={{ ease: easeInOutQuint, duration: 1 }}
-          />
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const cols = 11;
-const rows = 8;
-const duration = 0.07;
-const baseDelay = duration / 2;
-const blocks = Array.from({ length: cols * rows }, (_, i) => i);
-const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
-const totalDelay = calculateDelay(cols * rows);
-
-// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
-// has no index signature for `--*` keys; the object holds nothing else.
-const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
-
-const TooltipBlocks = ({ context }: { context: ContextType }) => {
-  if (!context?.x || !context.y) return null;
-
-  return (
-    <div className="tooltip-blocks-container" style={tooltipBlocksStyle}>
-      {blocks.map((i) => (
-        <motion.div
-          key={i}
-          className="tooltip-block"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration, delay: calculateDelay(i) }}
-        />
-      ))}
-    </div>
   );
 };
 

@@ -1,9 +1,9 @@
-export type PricePoint = {
+export interface PricePoint {
   time: number;
   price: number;
-};
+}
 
-export type PriceEngineConfig = {
+export interface PriceEngineConfig {
   /** Starting price (e.g. S&P ~5200) */
   startPrice: number;
   /** Volatility factor - higher = more movement */
@@ -12,13 +12,26 @@ export type PriceEngineConfig = {
   drift: number;
   /** Tick interval in ms */
   tickInterval: number;
-};
+}
 
 const DEFAULT_CONFIG: PriceEngineConfig = {
-  startPrice: 5200,
-  volatility: 0.004,
   drift: 0.0005,
+  startPrice: 5200,
   tickInterval: 100,
+  volatility: 0.004,
+};
+
+/** Box-Muller transform. */
+const gaussianRandom = (): number => {
+  let u = 0;
+  let v = 0;
+  while (u === 0) {
+    u = Math.random();
+  }
+  while (v === 0) {
+    v = Math.random();
+  }
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 };
 
 /**
@@ -31,7 +44,7 @@ export class PriceEngine {
   private currentPrice: number;
   private history: PricePoint[] = [];
   private intervalId: ReturnType<typeof setInterval> | null = null;
-  private listeners: Set<(point: PricePoint) => void> = new Set();
+  private listeners = new Set<(point: PricePoint) => void>();
   constructor(config: Partial<PriceEngineConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.currentPrice = this.config.startPrice;
@@ -45,12 +58,15 @@ export class PriceEngine {
 
   /** Start generating price data */
   start() {
-    if (this.intervalId) return;
+    if (this.intervalId) {
+      return;
+    }
 
     // Generate initial history (60 seconds of data)
     const now = Date.now();
-    const historyPoints = 600; // 60s / 100ms
-    for (let i = historyPoints; i > 0; i--) {
+    // 60s / 100ms
+    const historyPoints = 600;
+    for (let i = historyPoints; i > 0; i -= 1) {
       const time = now - i * this.config.tickInterval;
       this.tick(time, false);
     }
@@ -71,7 +87,7 @@ export class PriceEngine {
   private tick(time: number, notify: boolean) {
     // Geometric Brownian motion
     const dt = this.config.tickInterval / 1000;
-    const randomComponent = this.gaussianRandom() * this.config.volatility * Math.sqrt(dt);
+    const randomComponent = gaussianRandom() * this.config.volatility * Math.sqrt(dt);
     const driftComponent = this.config.drift * dt;
     const change = this.currentPrice * (driftComponent + randomComponent);
     this.currentPrice += change;
@@ -82,15 +98,15 @@ export class PriceEngine {
       this.currentPrice += jumpSize;
     }
 
-    const point: PricePoint = { time, price: this.currentPrice };
+    const point: PricePoint = { price: this.currentPrice, time };
     this.history.push(point);
 
     // Keep last 5 minutes — bulk splice instead of O(n) per-shift
     const cutoff = time - 5 * 60 * 1000;
-    if (this.history.length > 0 && this.history[0]!.time < cutoff) {
+    if (this.history.length > 0 && this.history[0].time < cutoff) {
       let trimCount = 0;
-      while (trimCount < this.history.length && this.history[trimCount]!.time < cutoff) {
-        trimCount++;
+      while (trimCount < this.history.length && this.history[trimCount].time < cutoff) {
+        trimCount += 1;
       }
       if (trimCount > 0) {
         this.history.splice(0, trimCount);
@@ -102,15 +118,6 @@ export class PriceEngine {
         listener(point);
       }
     }
-  }
-
-  private gaussianRandom(): number {
-    // Box-Muller transform
-    let u = 0,
-      v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   }
 
   /** Returns the internal array directly — do not mutate. */

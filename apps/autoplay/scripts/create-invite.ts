@@ -20,7 +20,7 @@ import { generateInviteCode, isWellFormedInviteCode, normalizeInviteCode } from 
 
 const MAX_BATCH = 100;
 
-type Args = {
+interface Args {
   code?: string;
   count: number;
   maxUses: number | null;
@@ -28,7 +28,7 @@ type Args = {
   note?: string;
   list: boolean;
   revoke?: string;
-};
+}
 
 const usage = `Usage: pnpm -F @repo/autoplay invite [--code CODE] [--count n] [--max-uses n|unlimited]
                                      [--expires-days n] [--note text] [--list] [--revoke CODE]`;
@@ -37,16 +37,16 @@ const readArgs = (argv: string[]): Args => {
   const parse = () =>
     parseArgs({
       args: argv,
-      strict: true,
       options: {
         code: { type: "string" },
-        count: { type: "string", default: "1" },
-        "max-uses": { type: "string", default: "1" },
+        count: { default: "1", type: "string" },
         "expires-days": { type: "string" },
+        list: { default: false, type: "boolean" },
+        "max-uses": { default: "1", type: "string" },
         note: { type: "string" },
-        list: { type: "boolean", default: false },
         revoke: { type: "string" },
       },
+      strict: true,
     }).values;
   let values: ReturnType<typeof parse>;
   try {
@@ -59,13 +59,13 @@ const readArgs = (argv: string[]): Args => {
   const args: Args = {
     code: values.code,
     count: Number(values.count),
+    expiresDays: values["expires-days"] === undefined ? undefined : Number(values["expires-days"]),
+    list: values.list,
     maxUses:
       values["max-uses"] === "unlimited" || values["max-uses"] === "0"
         ? null
         : Number(values["max-uses"]),
-    expiresDays: values["expires-days"] === undefined ? undefined : Number(values["expires-days"]),
     note: values.note,
-    list: values.list,
     revoke: values.revoke,
   };
   if (!Number.isInteger(args.count) || args.count < 1 || args.count > MAX_BATCH) {
@@ -77,26 +77,34 @@ const readArgs = (argv: string[]): Args => {
   return args;
 };
 
+const stateOf = (row: typeof inviteCode.$inferSelect): string => {
+  if (row.revokedAt !== null) {
+    return "revoked";
+  }
+  if (row.expiresAt !== null && row.expiresAt < Date.now()) {
+    return "expired";
+  }
+  if (row.maxUses !== null && row.usedCount >= row.maxUses) {
+    return "spent";
+  }
+  return "open";
+};
+
 const main = async () => {
-  if (db === undefined) throw new Error("TURSO_DATABASE_URL is not set");
+  if (db === undefined) {
+    throw new Error("TURSO_DATABASE_URL is not set");
+  }
   const args = readArgs(process.argv.slice(2));
 
   if (args.list) {
     const codes = await db.select().from(inviteCode).orderBy(asc(inviteCode.createdAt));
     const users = await db
-      .select({ username: user.username, code: user.invitedByCode })
+      .select({ code: user.invitedByCode, username: user.username })
       .from(user)
       .orderBy(asc(user.createdAt));
     for (const row of codes) {
       const cap = row.maxUses === null ? "∞" : String(row.maxUses);
-      const state =
-        row.revokedAt !== null
-          ? "revoked"
-          : row.expiresAt !== null && row.expiresAt < Date.now()
-            ? "expired"
-            : row.maxUses !== null && row.usedCount >= row.maxUses
-              ? "spent"
-              : "open";
+      const state = stateOf(row);
       const invited = users
         .filter((entry) => entry.code === row.code)
         .map((entry) => `@${entry.username ?? "?"}`)
@@ -120,30 +128,34 @@ const main = async () => {
   }
 
   const codes: string[] = [];
-  if (args.code !== undefined) {
+  if (args.code === undefined) {
+    const set = new Set<string>();
+    while (set.size < args.count) {
+      set.add(generateInviteCode());
+    }
+    codes.push(...set);
+  } else {
     const code = normalizeInviteCode(args.code);
     if (!isWellFormedInviteCode(code)) {
       throw new Error(`a code is six letters or digits; got ${code}`);
     }
     codes.push(code);
-  } else {
-    const set = new Set<string>();
-    while (set.size < args.count) set.add(generateInviteCode());
-    codes.push(...set);
   }
   const expiresAt =
     args.expiresDays === undefined ? null : Date.now() + args.expiresDays * 86_400_000;
   await db.insert(inviteCode).values(
     codes.map((code) => ({
-      id: crypto.randomUUID(),
       code,
-      maxUses: args.maxUses,
-      expiresAt,
-      note: args.note ?? null,
       createdAt: Date.now(),
+      expiresAt,
+      id: crypto.randomUUID(),
+      maxUses: args.maxUses,
+      note: args.note ?? null,
     })),
   );
-  for (const code of codes) console.log(code);
+  for (const code of codes) {
+    console.log(code);
+  }
 };
 
 await main();

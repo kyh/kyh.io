@@ -1,7 +1,7 @@
 import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { z } from "zod";
 
-import { db } from "@/db/drizzle-client";
+import type { db } from "@/db/drizzle-client";
 import { sourceCache, sourceRead } from "@/db/drizzle-schema";
 import type { SourceKind } from "@/lib/source-kinds";
 
@@ -14,59 +14,72 @@ import type { SourceKind } from "@/lib/source-kinds";
 
 /** What a day of reads may cost, per kind; undefined is free, and only X bills. */
 export const DAILY_READ_BUDGET_USD = {
+  gmail: undefined,
+  rss: undefined,
   // Trends and a search run ~$0.06 a program before the hour-long caches, the
   // timeline fallback up to $0.75 an hour. Ten dollars is a long day of
   // several X channels, and a short one of something gone wrong.
   x: 10,
-  gmail: undefined,
-  rss: undefined,
   youtube: undefined,
 } satisfies Record<SourceKind, number | undefined>;
 
-export type CacheStore = {
+export interface CacheStore {
   /** What is under `key`, if it is there and has not expired — parsed, since it comes back as data. */
-  get<T>(key: string, schema: z.ZodType<T>): Promise<T | undefined>;
-  set<T extends object>(key: string, value: T, ttlMs: number): Promise<void>;
-};
+  get: <T>(key: string, schema: z.ZodType<T>) => Promise<T | undefined>;
+  set: <T extends object>(key: string, value: T, ttlMs: number) => Promise<void>;
+}
 
-export type SpendStore = {
+export interface SpendStore {
   /** Dollars spent reading sources of `kind` since `since` (unix ms). */
-  spent(kind: SourceKind, since: number): Promise<number>;
+  spent: (kind: SourceKind, since: number) => Promise<number>;
   /** A paid read on a channel, priced at what the API bills for what it returned. */
-  record(kind: SourceKind, channelKey: string, usd: number, at?: number): Promise<void>;
-};
+  record: (kind: SourceKind, channelKey: string, usd: number, at?: number) => Promise<void>;
+}
 
 /** The cache and the ledger together: what an adapter is handed. */
-export type Reads = { cache: CacheStore; spend: SpendStore };
+export interface Reads {
+  cache: CacheStore;
+  spend: SpendStore;
+}
 
 export const memoryReads = (): Reads => {
   const entries = new Map<string, { value: unknown; expiresAt: number }>();
   const ledger: { kind: SourceKind; channelKey: string; usd: number; at: number }[] = [];
+  const lookup = <T>(key: string, schema: z.ZodType<T>): T | undefined => {
+    const entry = entries.get(key);
+    if (entry === undefined) {
+      return undefined;
+    }
+    if (entry.expiresAt <= Date.now()) {
+      entries.delete(key);
+      return undefined;
+    }
+    const parsed = schema.safeParse(entry.value);
+    return parsed.success ? parsed.data : undefined;
+  };
   return {
     cache: {
-      get: async (key, schema) => {
-        const entry = entries.get(key);
-        if (entry === undefined) return undefined;
-        if (entry.expiresAt <= Date.now()) {
-          entries.delete(key);
-          return undefined;
-        }
-        const parsed = schema.safeParse(entry.value);
-        return parsed.success ? parsed.data : undefined;
-      },
-      set: async (key, value, ttlMs) => {
-        entries.set(key, { value, expiresAt: Date.now() + ttlMs });
+      get: (key, schema) => Promise.resolve(lookup(key, schema)),
+      set: (key, value, ttlMs) => {
+        entries.set(key, { expiresAt: Date.now() + ttlMs, value });
+        return Promise.resolve();
       },
     },
     spend: {
-      spent: async (kind, since) =>
-        ledger.reduce(
-          (total, row) => (row.kind === kind && row.at >= since ? total + row.usd : total),
-          0,
-        ),
-      record: async (kind, channelKey, usd, at = Date.now()) => {
-        if (usd <= 0) return;
-        ledger.push({ kind, channelKey, usd, at });
+      record: (kind, channelKey, usd, at = Date.now()) => {
+        if (usd > 0) {
+          ledger.push({ at, channelKey, kind, usd });
+        }
+        return Promise.resolve();
+      },
+      spent: (kind, since) => {
+        let total = 0;
+        for (const row of ledger) {
+          if (row.kind === kind && row.at >= since) {
+            total += row.usd;
+          }
+        }
+        return Promise.resolve(total);
       },
     },
   };
@@ -80,11 +93,13 @@ export const databaseReads = (database: NonNullable<typeof db>): Reads => ({
         .from(sourceCache)
         .where(eq(sourceCache.key, key))
         .limit(1);
-      const row = rows[0];
-      if (row === undefined) return undefined;
+      const [row] = rows;
+      if (row === undefined) {
+        return;
+      }
       if (row.expiresAt <= Date.now()) {
         await database.delete(sourceCache).where(eq(sourceCache.key, key));
-        return undefined;
+        return;
       }
       // A shape left by an earlier deploy is a miss, not a crash.
       const parsed = schema.safeParse(row.value);
@@ -95,25 +110,27 @@ export const databaseReads = (database: NonNullable<typeof db>): Reads => ({
       const expiresAt = now + ttlMs;
       await database
         .insert(sourceCache)
-        .values({ key, value, expiresAt })
-        .onConflictDoUpdate({ target: sourceCache.key, set: { value, expiresAt } });
+        .values({ expiresAt, key, value })
+        .onConflictDoUpdate({ set: { expiresAt, value }, target: sourceCache.key });
       // A key nobody asks for again — a trend that never comes back — would otherwise stay forever.
       await database.delete(sourceCache).where(lt(sourceCache.expiresAt, now));
     },
   },
   spend: {
+    record: async (kind, channelKey, usd, at = Date.now()) => {
+      if (usd <= 0) {
+        return;
+      }
+      await database
+        .insert(sourceRead)
+        .values({ channelKey, id: crypto.randomUUID(), kind, readAt: at, usd });
+    },
     spent: async (kind, since) => {
       const rows = await database
         .select({ total: sql<number>`coalesce(sum(${sourceRead.usd}), 0)` })
         .from(sourceRead)
         .where(and(eq(sourceRead.kind, kind), gte(sourceRead.readAt, since)));
       return rows[0]?.total ?? 0;
-    },
-    record: async (kind, channelKey, usd, at = Date.now()) => {
-      if (usd <= 0) return;
-      await database
-        .insert(sourceRead)
-        .values({ id: crypto.randomUUID(), kind, channelKey, usd, readAt: at });
     },
   },
 });

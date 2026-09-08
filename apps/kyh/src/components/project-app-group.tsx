@@ -7,22 +7,25 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
 
 // Types
-type Point = { x: number; y: number };
+interface Point {
+  x: number;
+  y: number;
+}
 
-export type ProjectAppItem = {
+export interface ProjectAppItem {
   key: string;
   name: string;
   iconSrc: string;
   url?: string;
-};
+}
 
 // Motion config
 const springTransition = {
-  type: "spring",
-  stiffness: 200,
   damping: 22,
+  stiffness: 200,
+  type: "spring",
 } as const;
-const labelSpring = { type: "spring", stiffness: 400, damping: 30 } as const;
+const labelSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
 const titleSpring = { ...springTransition, damping: 19 } as const;
 const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
@@ -31,12 +34,12 @@ const closeStaggerDelay = 0.05;
 const iconSize = 60;
 const maxLabelWidth = 90;
 
-type ProjectAppProps = {
+interface ProjectAppProps {
   name: string;
   iconSrc: string;
   url?: string;
   showShadow?: boolean;
-};
+}
 
 export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectAppProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -52,7 +55,7 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
   };
 
   const Wrapper = url ? motion.a : motion.div;
-  const wrapperProps = url ? { href: url, target: "_blank", rel: "noopener noreferrer" } : {};
+  const wrapperProps = url ? { href: url, rel: "noopener noreferrer", target: "_blank" } : {};
 
   return (
     <Wrapper
@@ -140,13 +143,13 @@ const OpenGridItem = ({
       exit={{
         opacity: 0,
         scale: 0.2,
-        x: offset.x,
-        y: offset.y,
         transition: {
           ...springTransition,
           delay: closeDelay,
           opacity: { delay: closeStaggerDelay },
         },
+        x: offset.x,
+        y: offset.y,
       }}
       transition={{
         ...springTransition,
@@ -188,13 +191,17 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
   }, [isOpen]);
 
   useLayoutEffect(() => {
-    if (!isOpen || !origin) return;
+    if (!isOpen || !origin) {
+      return;
+    }
 
     const frame = requestAnimationFrame(() => {
       const next: Record<string, Point> = {};
       for (const item of items) {
         const el = itemRefs.current[item.key];
-        if (!el) continue;
+        if (!el) {
+          continue;
+        }
         const rect = el.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -288,14 +295,14 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 <motion.div
                   className="text-foreground mb-6 w-full text-center text-2xl font-semibold"
                   data-slot="open-title"
-                  initial={{ opacity: 0, y: 30, x: 10, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+                  initial={{ opacity: 0, scale: 0.8, x: 10, y: 30 }}
+                  animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
                   exit={{
                     opacity: 0,
-                    y: 30,
-                    x: 10,
                     scale: 0.8,
                     transition: titleExitSpring,
+                    x: 10,
+                    y: 30,
                   }}
                   transition={titleSpring}
                 >

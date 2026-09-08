@@ -41,28 +41,30 @@ const toSessions = (rows: Row[], files: Map<string, string>): RecordedSession[] 
   const sessions = new Map<string, RecordedSession>();
   for (const row of rows.toSorted((a, b) => a.recordedAt - b.recordedAt || a.index - b.index)) {
     const session = sessions.get(row.sessionId) ?? {
-      sessionId: row.sessionId,
-      formatLabel: row.formatLabel,
-      startedAt: row.recordedAt,
-      updatedAt: row.recordedAt,
       chunks: [],
       fileUrl: files.get(row.sessionId),
+      formatLabel: row.formatLabel,
+      sessionId: row.sessionId,
+      startedAt: row.recordedAt,
+      updatedAt: row.recordedAt,
     };
     session.updatedAt = Math.max(session.updatedAt, row.recordedAt);
     session.chunks.push({
-      index: row.index,
-      url: row.url,
-      seconds: row.seconds,
-      itemId: row.itemId,
-      kind: itemKind(row.itemId),
-      text: row.text,
-      link: row.link ?? undefined,
       authorName: row.authorName,
       authorUsername: row.authorUsername,
+      index: row.index,
+      itemId: row.itemId,
+      kind: itemKind(row.itemId),
+      link: row.link ?? undefined,
+      seconds: row.seconds,
+      text: row.text,
+      url: row.url,
     });
     sessions.set(row.sessionId, session);
   }
-  for (const session of sessions.values()) session.chunks.sort((a, b) => a.index - b.index);
+  for (const session of sessions.values()) {
+    session.chunks.sort((a, b) => a.index - b.index);
+  }
   return (
     [...sessions.values()]
       // A session whose first chunk is missing has no container header and
@@ -100,14 +102,16 @@ export const listSessions = async (channelKey: string): Promise<RecordedSession[
  * than a file nothing points at.
  */
 export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "recordedAt">) => {
-  const entry = { ...row, link: row.link ?? null, id: crypto.randomUUID(), recordedAt: Date.now() };
+  const entry = { ...row, id: crypto.randomUUID(), link: row.link ?? null, recordedAt: Date.now() };
   if (db === undefined) {
     memRecordings.push(entry);
     return;
   }
   await db.insert(recording).values(entry).onConflictDoNothing();
   // Retention is by session, so it can only change when one begins.
-  if (row.index !== 0) return;
+  if (row.index !== 0) {
+    return;
+  }
   const starts = await db
     .select({ sessionId: recording.sessionId, startedAt: min(recording.recordedAt) })
     .from(recording)
@@ -115,7 +119,9 @@ export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "
     .groupBy(recording.sessionId)
     .orderBy(desc(min(recording.recordedAt)));
   const dropped = starts.slice(KEPT_SESSIONS).map((session) => session.sessionId);
-  if (dropped.length === 0) return;
+  if (dropped.length === 0) {
+    return;
+  }
   const [expired, expiredFiles] = await Promise.all([
     db
       .select({ id: recording.id, url: recording.url })
@@ -127,14 +133,18 @@ export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "
       .where(inArray(recordingFile.sessionId, dropped)),
   ]);
   const urls = [...expired.map((old) => old.url), ...expiredFiles.map((old) => old.url)];
-  if (urls.length === 0) return;
+  if (urls.length === 0) {
+    return;
+  }
   try {
     await del(urls);
   } catch {
     // Left for the next pass; the rows stay so the files are not forgotten.
     return;
   }
-  for (const old of expired) await db.delete(recording).where(eq(recording.id, old.id));
+  for (const old of expired) {
+    await db.delete(recording).where(eq(recording.id, old.id));
+  }
   for (const old of expiredFiles) {
     await db.delete(recordingFile).where(eq(recordingFile.sessionId, old.sessionId));
   }
@@ -153,7 +163,9 @@ const sessionRows = async (channelKey: string, sessionId: string): Promise<Row[]
 };
 
 const knownFile = async (sessionId: string): Promise<FileRow | undefined> => {
-  if (db === undefined) return memFiles.find((file) => file.sessionId === sessionId);
+  if (db === undefined) {
+    return memFiles.find((file) => file.sessionId === sessionId);
+  }
   const rows = await db
     .select()
     .from(recordingFile)
@@ -171,8 +183,8 @@ const keepFile = async (file: FileRow): Promise<void> => {
     .insert(recordingFile)
     .values(file)
     .onConflictDoUpdate({
+      set: { bytes: file.bytes, createdAt: file.createdAt, seconds: file.seconds, url: file.url },
       target: recordingFile.sessionId,
-      set: { url: file.url, bytes: file.bytes, seconds: file.seconds, createdAt: file.createdAt },
     });
 };
 
@@ -189,16 +201,24 @@ export const sessionFile = async (
   owner: boolean,
 ): Promise<{ url: string } | { refused: "unknown" | "on-air" }> => {
   const known = await knownFile(sessionId);
-  if (known !== undefined) return { url: known.url };
+  if (known !== undefined) {
+    return { url: known.url };
+  }
   const rows = await sessionRows(channelKey, sessionId);
-  if (rows[0]?.index !== 0) return { refused: "unknown" };
-  const lastAt = rows.reduce((latest, row) => Math.max(latest, row.recordedAt), 0);
-  if (!owner && Date.now() - lastAt < FILE_AFTER_MS) return { refused: "on-air" };
+  if (rows[0]?.index !== 0) {
+    return { refused: "unknown" };
+  }
+  const lastAt = Math.max(0, ...rows.map((row) => row.recordedAt));
+  if (!owner && Date.now() - lastAt < FILE_AFTER_MS) {
+    return { refused: "on-air" };
+  }
 
   const parts: Uint8Array[] = [];
   for (const row of rows) {
     const response = await fetch(row.url);
-    if (!response.ok) throw new Error(`Chunk ${row.index} answered ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Chunk ${row.index} answered ${response.status}`);
+    }
     parts.push(new Uint8Array(await response.arrayBuffer()));
   }
   const stream = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
@@ -214,18 +234,18 @@ export const sessionFile = async (
     new Blob([bytes], { type: "video/webm" }),
     {
       access: "public",
-      contentType: "video/webm",
       addRandomSuffix: false,
       allowOverwrite: true,
+      contentType: "video/webm",
     },
   );
   await keepFile({
-    sessionId,
-    channelKey,
-    url: stored.url,
     bytes: bytes.length,
-    seconds,
+    channelKey,
     createdAt: Date.now(),
+    seconds,
+    sessionId,
+    url: stored.url,
   });
   return { url: stored.url };
 };

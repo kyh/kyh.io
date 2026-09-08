@@ -30,6 +30,7 @@ const id = (value: number): number[] => {
 
 const element = (value: number, body: number[]): number[] => [
   ...id(value),
+  // oxlint-disable-next-line no-bitwise -- EBML: one-byte size with its length marker bit
   0x80 | body.length,
   ...body,
 ];
@@ -40,7 +41,7 @@ const stream = (): Uint8Array<ArrayBuffer> =>
     ...id(EBML_SEGMENT),
     ...UNKNOWN_8,
     ...element(EBML_INFO, element(EBML_TIMECODE_SCALE, [0x0f, 0x42, 0x40])),
-    ...element(0x1654ae6b, []),
+    ...element(0x16_54_ae_6b, []),
     ...id(EBML_CLUSTER),
     ...UNKNOWN_8,
     ...element(0xe7, [0x00]),
@@ -51,7 +52,13 @@ const stream = (): Uint8Array<ArrayBuffer> =>
     ...element(0xa3, [0x81, 0x00, 0x00, 0x80, 0x33]),
   ]);
 
-type Found = { id: number; at: number; body: number; size: number; unknown: boolean };
+interface Found {
+  id: number;
+  at: number;
+  body: number;
+  size: number;
+  unknown: boolean;
+}
 
 /** Every element at one level, `from` to `to`, entering nothing. */
 const elements = (bytes: Uint8Array, from: number, to: number): Found[] => {
@@ -61,9 +68,11 @@ const elements = (bytes: Uint8Array, from: number, to: number): Found[] => {
     const elementId = readVint(bytes, cursor, true);
     const size =
       elementId === undefined ? undefined : readVint(bytes, cursor + elementId.length, false);
-    if (elementId === undefined || size === undefined) break;
+    if (elementId === undefined || size === undefined) {
+      break;
+    }
     const body = cursor + elementId.length + size.length;
-    found.push({ id: elementId.value, at: cursor, body, size: size.value, unknown: size.unknown });
+    found.push({ at: cursor, body, id: elementId.value, size: size.value, unknown: size.unknown });
     cursor = size.unknown ? body : body + size.value;
   }
   return found;

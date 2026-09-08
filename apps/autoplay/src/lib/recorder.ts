@@ -23,28 +23,31 @@ import { EBML_CLUSTER, EBML_SEGMENT, EBML_TIMECODE, readUint, readVint } from "@
 const VIDEO_BITS_PER_SECOND = 1_500_000;
 const MIME_TYPE = "video/webm;codecs=vp8,opus";
 /** How often the recorder hands bytes over: how far behind the store runs. */
-const SLICE_MS = 2_000;
+const SLICE_MS = 2000;
 /** A chunk is cut at the first cluster this far past its start. */
 const CHUNK_MS = 10_000;
 /** Bytes held back without a cluster to cut at before the chunk is cut anyway. */
 const MAX_PENDING_BYTES = 8 * 1024 * 1024;
 
-export type OnAir = {
+export interface OnAir {
   program: LiveProgram;
   formatLabel: string;
-};
+}
 
-export type Recorder = {
+export interface Recorder {
   /** What is on air now; stamped on the chunks recorded from here. */
-  setOnAir(onAir: OnAir): void;
+  setOnAir: (onAir: OnAir) => void;
   /** Finish the recording; the last whole clusters are handed over. */
-  stop(): void;
-};
+  stop: () => void;
+}
 
 export const canRecord = (): boolean =>
   "MediaRecorder" in globalThis && MediaRecorder.isTypeSupported(MIME_TYPE);
 
-type Cluster = { at: number; timecode: number };
+interface Cluster {
+  at: number;
+  timecode: number;
+}
 
 const publish = async (
   sourceId: string,
@@ -54,7 +57,9 @@ const publish = async (
   seconds: number,
   onAir: OnAir,
 ): Promise<void> => {
-  if (bytes.length === 0) return;
+  if (bytes.length === 0) {
+    return;
+  }
   const file = new Blob([bytes], { type: "video/webm" });
   const put = await upload(`recordings/${sourceId}/${sessionId}/${index}.webm`, file, {
     access: "public",
@@ -64,13 +69,13 @@ const publish = async (
   const { prompt: _prompt, ...program } = onAir.program;
   const body: RecordingRequest = {
     ...program,
-    sourceId,
-    sessionId,
-    index,
-    url: put.url,
-    formatLabel: onAir.formatLabel,
-    seconds,
     bytes: bytes.length,
+    formatLabel: onAir.formatLabel,
+    index,
+    seconds,
+    sessionId,
+    sourceId,
+    url: put.url,
   };
   await fetch("/api/recordings", jsonRequest("POST", body));
 };
@@ -91,23 +96,33 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   let cursor = 0;
   let clusters: Cluster[] = [];
   let queue = Promise.resolve();
-  const uploads = new Set<Promise<void>>();
+  const uploads = new Map<number, Promise<void>>();
 
   const walk = () => {
     for (;;) {
       const id = readVint(pending, cursor, true);
-      if (id === undefined) return;
+      if (id === undefined) {
+        return;
+      }
       const size = readVint(pending, cursor + id.length, false);
-      if (size === undefined) return;
+      if (size === undefined) {
+        return;
+      }
       const body = cursor + id.length + size.length;
       if (id.value === EBML_CLUSTER) {
         // Its Timecode comes first; a cluster is only a cut point once it is in.
         const timecodeId = readVint(pending, body, true);
-        if (timecodeId === undefined) return;
+        if (timecodeId === undefined) {
+          return;
+        }
         const timecodeSize = readVint(pending, body + timecodeId.length, false);
-        if (timecodeSize === undefined) return;
+        if (timecodeSize === undefined) {
+          return;
+        }
         const timecodeAt = body + timecodeId.length + timecodeSize.length;
-        if (timecodeAt + timecodeSize.value > pending.length) return;
+        if (timecodeAt + timecodeSize.value > pending.length) {
+          return;
+        }
         if (timecodeId.value === EBML_TIMECODE) {
           const timecode = readUint(pending, timecodeAt, timecodeSize.value);
           clusters.push({ at: cursor, timecode });
@@ -124,20 +139,21 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
     }
   };
 
-  const cut = (at: number, seconds: number, timecode: number | undefined) => {
+  const cut = (at: number, seconds: number, timecode?: number) => {
     // A failed upload loses one chunk of replay, nothing more; the stream on
     // screen is unaffected.
-    const upload: Promise<void> = publish(
-      sourceId,
-      sessionId,
-      index,
-      pending.slice(0, at),
-      seconds,
-      chunkOnAir,
-    )
-      .catch(() => undefined)
-      .finally(() => uploads.delete(upload));
-    uploads.add(upload);
+    const chunk = pending.slice(0, at);
+    const chunkIndex = index;
+    const settled = (async () => {
+      try {
+        await publish(sourceId, sessionId, chunkIndex, chunk, seconds, chunkOnAir);
+      } catch {
+        // Nothing to do: the loss is this one chunk.
+      } finally {
+        uploads.delete(chunkIndex);
+      }
+    })();
+    uploads.set(chunkIndex, settled);
     index += 1;
     pending = pending.slice(at);
     cursor -= at;
@@ -166,11 +182,7 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
       if (pending.length > MAX_PENDING_BYTES) {
         // The walker found nothing to cut at: hand it over as it is, the way
         // a plain slice would be, rather than hold the stream back.
-        cut(
-          pending.length,
-          Math.min(60, Math.max(1, (Date.now() - chunkStartedAt) / 1000)),
-          undefined,
-        );
+        cut(pending.length, Math.min(60, Math.max(1, (Date.now() - chunkStartedAt) / 1000)));
       }
       return;
     }
@@ -190,24 +202,37 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
     // The last whole clusters; the partial one after them cannot be played.
     const last = clusters.at(-1);
     const start = chunkTimecode;
-    if (last === undefined || start === undefined || last.at === 0) return;
+    if (last === undefined || start === undefined || last.at === 0) {
+      return;
+    }
     cut(last.at, Math.max(0.1, (last.timecode - start) / 1000), last.timecode);
   };
 
+  const enqueue = (step: () => Promise<void>) => {
+    const previous = queue;
+    queue = (async () => {
+      await previous;
+      try {
+        await step();
+      } catch {
+        // A step that fails must not stall the ones after it.
+      }
+    })();
+  };
   recorder.ondataavailable = (event) => {
-    queue = queue.then(() => ingest(event.data)).catch(() => undefined);
+    enqueue(() => ingest(event.data));
   };
   // With the last chunk in, the session is asked for as one file, for the
   // browsers that cannot append a stream; a viewer asking first gets it built then.
   const requestFile = async () => {
-    await Promise.all(uploads);
-    await fetch("/api/replay/file", jsonRequest("POST", { sourceId, sessionId }));
+    await Promise.all(uploads.values());
+    await fetch("/api/replay/file", jsonRequest("POST", { sessionId, sourceId }));
   };
   recorder.onstop = () => {
-    queue = queue
-      .then(flush)
-      .then(requestFile)
-      .catch(() => undefined);
+    enqueue(async () => {
+      flush();
+      await requestFile();
+    });
   };
   recorder.start(SLICE_MS);
   return {
@@ -215,7 +240,9 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
       current = next;
     },
     stop: () => {
-      if (recorder.state !== "inactive") recorder.stop();
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
     },
   };
 };

@@ -11,9 +11,13 @@ import { errorResponse } from "@/lib/route";
 
 export const GET = async (request: NextRequest): Promise<NextResponse> => {
   const sourceId = request.nextUrl.searchParams.get("sourceId");
-  if (sourceId === null) return errorResponse(400, "Expected ?sourceId=");
+  if (sourceId === null) {
+    return errorResponse(400, "Expected ?sourceId=");
+  }
   const source = await resolveSource(sourceId, await getSession());
-  if (source === undefined) return errorResponse(404, "No such channel");
+  if (source === undefined) {
+    return errorResponse(404, "No such channel");
+  }
   const payload: ReplayPayload = { sessions: await listSessions(source.channelKey) };
   return NextResponse.json(payload);
 };
