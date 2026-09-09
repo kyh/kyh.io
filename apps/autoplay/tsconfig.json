@@ -9,6 +9,6 @@
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": ["src", "scripts", ".next/types/**/*.ts"],
+  "include": ["next.config.ts", "src", "scripts", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

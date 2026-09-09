@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^topo"],
       "env": [
         "APP_URL",
         "BETTER_AUTH_SECRET",

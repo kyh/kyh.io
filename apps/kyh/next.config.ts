@@ -1,8 +1,14 @@
+import type { NextConfig } from "next";
+
+type ImageConfig = NonNullable<NextConfig["images"]>;
+type LocalPatterns = NonNullable<ImageConfig["localPatterns"]>;
+type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
+
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-const getRemotePatterns = () => {
-  const remotePatterns = [];
+const getRemotePatterns = (): RemotePatterns => {
+  const remotePatterns: RemotePatterns = [];
 
   if (SUPABASE_URL) {
     const { hostname } = new URL(SUPABASE_URL);
@@ -29,8 +35,8 @@ const getRemotePatterns = () => {
   return remotePatterns;
 };
 
-const getLocalPatterns = () => {
-  const localPatterns = [
+const getLocalPatterns = (): LocalPatterns => {
+  const localPatterns: LocalPatterns = [
     {
       pathname: "/assets/**",
     },
@@ -39,16 +45,15 @@ const getLocalPatterns = () => {
   return localPatterns;
 };
 
-/** @type {import('next').NextConfig} */
-const config = {
+const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   images: {
     localPatterns: getLocalPatterns(),
     remotePatterns: getRemotePatterns(),
   },
-  redirects() {
-    return [
+  redirects: () =>
+    Promise.resolve([
       {
         destination: "/showcase",
         permanent: true,
@@ -59,10 +64,7 @@ const config = {
         permanent: true,
         source: "/about",
       },
-    ];
-  },
-  /** We already do linting and typechecking as separate tasks in CI */
-  typescript: { ignoreBuildErrors: true },
+    ]),
 };
 
 export default config;

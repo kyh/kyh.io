@@ -9,7 +9,7 @@
  */
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-/** Allowed by `next.config.js`'s `images.localPatterns` (`/assets/**`). */
+/** Allowed by `next.config.ts`'s `images.localPatterns` (`/assets/**`). */
 const PLACEHOLDER_URL = "/assets/placeholder.png";
 
 export const getPublicAssetUrl = (path: string) => {
