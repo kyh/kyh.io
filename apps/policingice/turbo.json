@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^topo"],
       "env": [
         "AI_GATEWAY_API_KEY",
         "BETTER_AUTH_SECRET",
