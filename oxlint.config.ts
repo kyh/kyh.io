@@ -18,7 +18,6 @@ export default defineConfig({
     ".conductor",
     ".cursor",
     ".superset",
-    "packages/oxlint/anti-slop",
   ],
   overrides: [{ files: nextApps, plugins: next.plugins, rules: next.rules }],
   rules: {

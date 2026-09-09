@@ -770,25 +770,6 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
-  packages/oxlint:
-    dependencies:
-      '@oxlint/plugins':
-        specifier: 1.80.0
-        version: 1.80.0
-    devDependencies:
-      '@kyh/tsconfig':
-        specifier: workspace:*
-        version: link:../typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.4.0
-      oxlint:
-        specifier: ^1.80.0
-        version: 1.80.0
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-
   packages/skills:
     dependencies:
       skills:
@@ -2568,10 +2549,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
-
-  '@oxlint/plugins@1.80.0':
-    resolution: {integrity: sha512-QRgH1XqQEYNHa4f1vvPQ5fAdNdncHGIUG1ZWLlGIZHky3qwCEeAKYitZNbZMtaXtAQAAFFTOwqUfzESvimqZNA==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   '@poppinss/colors@4.1.6':
     resolution: {integrity: sha512-H9xkIdFswbS8n1d6vmRd8+c10t2Qe+rZITbbDHHkQixH5+2x1FDGmi/0K+WgWiqQFKPSlIYB7jlH6Kpfn6Fleg==}
@@ -6276,8 +6253,6 @@ snapshots:
 
   '@oxlint/binding-win32-x64-msvc@1.80.0':
     optional: true
-
-  '@oxlint/plugins@1.80.0': {}
 
   '@poppinss/colors@4.1.6':
     dependencies:

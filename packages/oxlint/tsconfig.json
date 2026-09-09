@@ -1,9 +1,0 @@
-{
-  "extends": "@kyh/tsconfig/base.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "allowImportingTsExtensions": true
-  },
-  "include": ["anti-slop"],
-  "exclude": ["node_modules"]
-}
