@@ -9,7 +9,7 @@ const nextApps = ["apps/autoplay/**", "apps/kyh/**", "apps/policingice/**", "app
 export default defineConfig({
   extends: [core, react, antiSlop],
   ignorePatterns: [
-    ...core.ignorePatterns,
+    ...(core.ignorePatterns ?? []),
     "dist-electron",
     ".expo",
     ".wxt",
