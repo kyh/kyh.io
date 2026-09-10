@@ -12,13 +12,12 @@ const getIncident = async (id: number) => {
   cacheLife("hours");
   cacheTag("incidents", `incident-${id}`);
   const incident = await db.query.incidents.findFirst({
-    where: (inc, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
-      and(
-        eqOp(inc.id, id),
-        eqOp(inc.status, "approved"),
-        isNullOp(inc.deletedAt),
-        ltOp(inc.reportCount, 3),
-      ),
+    where: {
+      deletedAt: { isNull: true },
+      id,
+      reportCount: { lt: 3 },
+      status: "approved",
+    },
     with: { videos: true },
   });
   return incident ?? null;

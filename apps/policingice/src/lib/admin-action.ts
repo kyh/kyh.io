@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { desc, eq, inArray, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { IncidentStatus } from "@/db/drizzle-schema";
 import { db } from "@/db/drizzle-client";
@@ -81,8 +81,8 @@ export const getAllIncidents = async () => {
   await requireAdmin();
 
   const results = await db.query.incidents.findMany({
-    orderBy: [desc(incidents.createdAt)],
-    where: isNull(incidents.deletedAt),
+    orderBy: { createdAt: "desc" },
+    where: { deletedAt: { isNull: true } },
     with: { videos: true },
   });
   return results;
@@ -113,7 +113,7 @@ export const updateIncident = async (data: {
 export const toggleIncidentStatus = async (data: { id: number }) => {
   await requireAdmin();
 
-  const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
+  const incident = await db.query.incidents.findFirst({ where: { id: data.id } });
   if (!incident) {
     return { error: "Not found", success: false };
   }
@@ -127,7 +127,7 @@ export const toggleIncidentStatus = async (data: { id: number }) => {
 export const toggleIncidentPinned = async (data: { id: number }) => {
   await requireAdmin();
 
-  const incident = await db.query.incidents.findFirst({ where: eq(incidents.id, data.id) });
+  const incident = await db.query.incidents.findFirst({ where: { id: data.id } });
   if (!incident) {
     return { error: "Not found", success: false };
   }
@@ -193,7 +193,7 @@ export const bulkCreateIncidents = async (data: {
   const resolvedUrls = await Promise.all(validUrls.map(resolveVideoUrl));
 
   const existingVideos = await db.query.videos.findMany({
-    where: inArray(videos.url, resolvedUrls),
+    where: { url: { in: resolvedUrls } },
   });
   const existingUrls = new Set(existingVideos.map((v) => v.url));
   const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
@@ -268,7 +268,7 @@ export const getFeedPosts = async () => {
 
   const existingVideos = await db.query.videos.findMany({
     columns: { url: true },
-    where: (v, { like }) => like(v.url, "%reddit.com%"),
+    where: { url: { like: "%reddit.com%" } },
   });
   const existingUrls = existingVideos.map((v) => normalizeUrl(v.url));
 
@@ -279,7 +279,7 @@ export const createFromFeed = async (data: { url: string; title: string; publish
   await requireAdmin();
 
   const existing = await db.query.videos.findFirst({
-    where: (v, { eq: eqOp }) => eqOp(v.url, data.url),
+    where: { url: data.url },
   });
 
   if (existing) {

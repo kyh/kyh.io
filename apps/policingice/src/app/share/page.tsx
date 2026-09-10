@@ -63,7 +63,7 @@ const ShareHandler = async ({
 
   // Check if URL already exists
   const existingVideo = await db.query.videos.findFirst({
-    where: (v, { eq }) => eq(v.url, videoUrl),
+    where: { url: videoUrl },
   });
 
   if (existingVideo) {

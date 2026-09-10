@@ -2,7 +2,6 @@
 
 import type { MetadataRoute } from "next";
 import { cacheLife, cacheTag } from "next/cache";
-import { desc } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
 
@@ -14,13 +13,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const approvedIncidents = await db.query.incidents.findMany({
     columns: { createdAt: true, id: true },
-    orderBy: (incidents) => [desc(incidents.createdAt)],
-    where: (incidents, { and, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
-      and(
-        eqOp(incidents.status, "approved"),
-        isNullOp(incidents.deletedAt),
-        ltOp(incidents.reportCount, 3),
-      ),
+    orderBy: { createdAt: "desc" },
+    where: { deletedAt: { isNull: true }, reportCount: { lt: 3 }, status: "approved" },
   });
 
   const staticPages: MetadataRoute.Sitemap = [

@@ -25,7 +25,7 @@ if (!email) {
 const main = async () => {
   try {
     const existing = await db.query.user.findFirst({
-      where: eq(user.email, email),
+      where: { email },
     });
 
     if (!existing) {

@@ -1,7 +1,4 @@
-import { desc, lt } from "drizzle-orm";
-
 import { db } from "@/db/drizzle-client";
-import { incidents } from "@/db/drizzle-schema";
 
 const siteUrl = "https://policingice.com";
 const DEFAULT_LIMIT = 100;
@@ -70,16 +67,13 @@ export const GET = async (request: Request) => {
   const results = await db.query.incidents.findMany({
     limit,
     offset,
-    orderBy: (inc) => [desc(inc.createdAt)],
-    where: (inc, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
-      andOp(
-        eqOp(inc.status, "approved"),
-        isNullOp(inc.deletedAt),
-        ltOp(inc.reportCount, 3),
-        beforeDate && !Number.isNaN(beforeDate.getTime())
-          ? lt(incidents.createdAt, beforeDate)
-          : undefined,
-      ),
+    orderBy: { createdAt: "desc" },
+    where: {
+      createdAt: beforeDate && !Number.isNaN(beforeDate.getTime()) ? { lt: beforeDate } : undefined,
+      deletedAt: { isNull: true },
+      reportCount: { lt: 3 },
+      status: "approved",
+    },
     with: { videos: true },
   });
 
