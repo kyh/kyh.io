@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
+    "@better-auth/drizzle-adapter": "^1.7.2",
     "@fal-ai/client": "1.11.0-alpha.2",
     "@fal-ai/server-proxy": "1.3.0-alpha.0",
     "@libsql/client": "^0.17.4",

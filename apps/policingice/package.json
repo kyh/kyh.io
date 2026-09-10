@@ -17,6 +17,7 @@
   "dependencies": {
     "@ai-sdk/xai": "^4.0.50",
     "@base-ui/react": "catalog:",
+    "@better-auth/drizzle-adapter": "^1.7.2",
     "@libsql/client": "^0.17.4",
     "@vercel/analytics": "catalog:",
     "ai": "^7.0.85",
