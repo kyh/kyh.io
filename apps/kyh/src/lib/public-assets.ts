@@ -1,6 +1,6 @@
 /**
- * Project images, videos and favicons live in the public `kyh-assets` R2 bucket,
- * keyed `projects/<file>` and `favicons/<file>`.
+ * Project images, videos and favicons live in the public `kyh-assets` Vercel Blob
+ * store, keyed `projects/<file>` and `favicons/<file>`.
  *
  * `NEXT_PUBLIC_ASSETS_URL` is optional on purpose — `pnpm install && pnpm dev:kyh`
  * has to work on a fresh clone with no `.env` (see AGENTS.md). When it is unset we
