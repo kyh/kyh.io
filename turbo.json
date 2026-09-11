@@ -28,7 +28,7 @@
       "cache": false
     }
   },
-  "globalEnv": ["NEXT_PUBLIC_SUPABASE_URL", "PORT"],
+  "globalEnv": ["NEXT_PUBLIC_ASSETS_URL", "PORT"],
   "globalPassThroughEnv": [
     "NODE_ENV",
     "CI",
