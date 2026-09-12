@@ -41,8 +41,7 @@ const main = async () => {
   console.log("Finding incidents with descriptions but no embeddings...");
 
   const incidents = await db.query.incidents.findMany({
-    where: (t, { and: andOp, isNotNull: isNotNullOp, isNull: isNullOp }) =>
-      andOp(isNotNullOp(t.description), isNullOp(t.embedding)),
+    where: { description: { isNotNull: true }, embedding: { isNull: true } },
   });
 
   console.log(`Found ${incidents.length} incidents to embed`);
