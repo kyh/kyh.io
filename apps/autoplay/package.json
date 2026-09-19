@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "db:push": "pnpm with-env drizzle-kit push",
+    "db:push-remote": "dotenv -e .env.production.local -- sh -c 'drizzle-kit push --explain && printf \"Apply to the REMOTE database? [y/N] \" && read ok && [ \"$ok\" = y ] && drizzle-kit push'",
     "db:studio": "pnpm with-env drizzle-kit studio",
     "invite": "pnpm with-env tsx scripts/create-invite.ts",
     "stitch-test-stream": "pnpm with-env tsx scripts/stitch-test-stream.ts",
