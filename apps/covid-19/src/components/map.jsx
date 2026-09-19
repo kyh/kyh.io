@@ -99,105 +99,6 @@ const getStrokeColor = {
 const mapWidth = window.innerWidth < 910 ? window.innerWidth - 30 : 910;
 const mapHeight = 520;
 
-export const Map = ({ rawStateData, currentField, currentDate, getValue, useChoropleth }) => {
-  const path = useMemo(() => {
-    const projection = geoAlbersUsa().fitExtent(
-      [
-        [margin.left, margin.top],
-        [mapWidth - margin.right, mapHeight - margin.bottom],
-      ],
-      StatesWithPopulation,
-    );
-    return geoPath().projection(projection);
-  }, []);
-
-  const data = useMemo(() => {
-    if (!rawStateData || !rawStateData.length || !path) {
-      return null;
-    }
-    const createMapFromArray = (array, keyField, valueField = null) =>
-      Object.assign(
-        {},
-        ...array.map((a) => ({
-          [a[keyField]]: valueField ? a[valueField] : a,
-        })),
-      );
-    const groupedByState = nest()
-      .key((d) => d.state)
-      .entries(rawStateData);
-    const stateMap = createMapFromArray(groupedByState, "key", "values");
-    const joinedFeatures = StatesWithPopulation.features.map((feature) => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        centroidCoordinates: path.centroid(feature),
-        dailyData: createMapFromArray(stateMap[feature.properties.STUSPS], "date"),
-      },
-    }));
-    const tempData = { ...StatesWithPopulation, features: joinedFeatures };
-    return tempData;
-  }, [rawStateData, path]);
-
-  const [hoveredState, setHoveredState] = useState(null);
-  const maxValue = useMemo(
-    () =>
-      data &&
-      max(
-        data.features
-          .flatMap((d) => Object.values(d.properties.dailyData))
-          .map((d) => d.totalTestResults),
-      ),
-    [data],
-  );
-  const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
-
-  return (
-    <div className="relative">
-      <div className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(" ")}>
-        {useChoropleth ? (
-          <ChoroLegend
-            color={getColor[currentField]}
-            height={36}
-            width={300}
-            tickSize={6}
-            tickFormat="~s"
-            spaceBetween={2}
-          />
-        ) : (
-          <BubbleLegend data={data} r={r} maxValue={maxValue} height={150} width={150} />
-        )}
-      </div>
-
-      <div className="mb-4">
-        <svg
-          width={mapWidth}
-          height={mapHeight}
-          onMouseLeave={() => {
-            if (hoveredState) {
-              setHoveredState(null);
-            }
-          }}
-        >
-          {!useChoropleth && <Bubbles geoJson={data} getValue={getValue} r={r} />}
-          <States
-            geoJson={data}
-            useChoropleth={useChoropleth}
-            currentField={currentField}
-            getValue={getValue}
-            hoveredState={hoveredState}
-            setHoveredState={setHoveredState}
-            path={path}
-          />
-        </svg>
-        {!!hoveredState && (
-          <Tooltip hoveredState={hoveredState} getValue={getValue} currentDate={currentDate} />
-        )}
-      </div>
-      <span className="text-xs text-gray-500">* Per one million people</span>
-    </div>
-  );
-};
-
 const States = ({
   geoJson,
   useChoropleth,
@@ -377,6 +278,105 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
           </tr>
         </tbody>
       </table>
+    </div>
+  );
+};
+
+export const Map = ({ rawStateData, currentField, currentDate, getValue, useChoropleth }) => {
+  const path = useMemo(() => {
+    const projection = geoAlbersUsa().fitExtent(
+      [
+        [margin.left, margin.top],
+        [mapWidth - margin.right, mapHeight - margin.bottom],
+      ],
+      StatesWithPopulation,
+    );
+    return geoPath().projection(projection);
+  }, []);
+
+  const data = useMemo(() => {
+    if (!rawStateData || !rawStateData.length || !path) {
+      return null;
+    }
+    const createMapFromArray = (array, keyField, valueField = null) =>
+      Object.assign(
+        {},
+        ...array.map((a) => ({
+          [a[keyField]]: valueField ? a[valueField] : a,
+        })),
+      );
+    const groupedByState = nest()
+      .key((d) => d.state)
+      .entries(rawStateData);
+    const stateMap = createMapFromArray(groupedByState, "key", "values");
+    const joinedFeatures = StatesWithPopulation.features.map((feature) => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        centroidCoordinates: path.centroid(feature),
+        dailyData: createMapFromArray(stateMap[feature.properties.STUSPS], "date"),
+      },
+    }));
+    const tempData = { ...StatesWithPopulation, features: joinedFeatures };
+    return tempData;
+  }, [rawStateData, path]);
+
+  const [hoveredState, setHoveredState] = useState(null);
+  const maxValue = useMemo(
+    () =>
+      data &&
+      max(
+        data.features
+          .flatMap((d) => Object.values(d.properties.dailyData))
+          .map((d) => d.totalTestResults),
+      ),
+    [data],
+  );
+  const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
+
+  return (
+    <div className="relative">
+      <div className={["map-legend", useChoropleth ? "choropleth" : "bubble"].join(" ")}>
+        {useChoropleth ? (
+          <ChoroLegend
+            color={getColor[currentField]}
+            height={36}
+            width={300}
+            tickSize={6}
+            tickFormat="~s"
+            spaceBetween={2}
+          />
+        ) : (
+          <BubbleLegend data={data} r={r} maxValue={maxValue} height={150} width={150} />
+        )}
+      </div>
+
+      <div className="mb-4">
+        <svg
+          width={mapWidth}
+          height={mapHeight}
+          onMouseLeave={() => {
+            if (hoveredState) {
+              setHoveredState(null);
+            }
+          }}
+        >
+          {!useChoropleth && <Bubbles geoJson={data} getValue={getValue} r={r} />}
+          <States
+            geoJson={data}
+            useChoropleth={useChoropleth}
+            currentField={currentField}
+            getValue={getValue}
+            hoveredState={hoveredState}
+            setHoveredState={setHoveredState}
+            path={path}
+          />
+        </svg>
+        {!!hoveredState && (
+          <Tooltip hoveredState={hoveredState} getValue={getValue} currentDate={currentDate} />
+        )}
+      </div>
+      <span className="text-xs text-gray-500">* Per one million people</span>
     </div>
   );
 };
