@@ -48,7 +48,6 @@ export const account = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     id: text().primaryKey(),
     idToken: text("id_token"),
-    issuer: text().notNull(),
     password: text(),
     providerId: text("provider_id").notNull(),
     refreshToken: text("refresh_token"),
@@ -60,7 +59,6 @@ export const account = sqliteTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (t) => [
-    uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId),
     // Every grant read is by user and provider: the X token per program, the Google grants per session load.
     index("account_user_provider_idx").on(t.userId, t.providerId),
   ],

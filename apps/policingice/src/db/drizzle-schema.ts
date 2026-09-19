@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { blob, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // Embedding dimensions for text-embedding-3-small
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -41,32 +41,27 @@ export const session = sqliteTable("session", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = sqliteTable(
-  "account",
-  {
-    accessToken: text("access_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", {
-      mode: "timestamp",
-    }),
-    accountId: text("account_id").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    id: text().primaryKey(),
-    idToken: text("id_token"),
-    issuer: text().notNull(),
-    password: text(),
-    providerId: text("provider_id").notNull(),
-    refreshToken: text("refresh_token"),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", {
-      mode: "timestamp",
-    }),
-    scope: text(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (t) => [uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId)],
-);
+export const account = sqliteTable("account", {
+  accessToken: text("access_token"),
+  accessTokenExpiresAt: integer("access_token_expires_at", {
+    mode: "timestamp",
+  }),
+  accountId: text("account_id").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  id: text().primaryKey(),
+  idToken: text("id_token"),
+  password: text(),
+  providerId: text("provider_id").notNull(),
+  refreshToken: text("refresh_token"),
+  refreshTokenExpiresAt: integer("refresh_token_expires_at", {
+    mode: "timestamp",
+  }),
+  scope: text(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
 
 export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
