@@ -2,7 +2,7 @@ import { createClient } from "@libsql/client/web";
 import { drizzle } from "drizzle-orm/libsql/web";
 
 import { env } from "@/lib/env";
-import * as schema from "./drizzle-schema";
+import { relations } from "./drizzle-relations";
 
 // Unlike policingice, the database is optional: without TURSO_DATABASE_URL
 // what aired and what was recorded live in server memory (see src/lib/live.ts
@@ -11,10 +11,10 @@ import * as schema from "./drizzle-schema";
 export const db =
   env.TURSO_DATABASE_URL === undefined
     ? undefined
-    : drizzle(
-        createClient({
+    : drizzle({
+        client: createClient({
           authToken: env.TURSO_AUTH_TOKEN,
           url: env.TURSO_DATABASE_URL,
         }),
-        { schema },
-      );
+        relations,
+      });

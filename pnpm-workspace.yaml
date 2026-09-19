@@ -3,26 +3,32 @@ packages:
   - packages/*
 
 catalog:
-  "@base-ui/react": ^1.7.0
+  "@base-ui/react": ^1.8.0
   "@tailwindcss/postcss": ^4.3.3
-  "@types/node": ^26.4.0
-  "@types/react": ^19.2.18
-  "@types/react-dom": ^19.2.5
+  "@types/node": ^26.6.1
+  "@types/react": ^19.3.0
+  "@types/react-dom": ^19.3.0
   "@vercel/analytics": ^2.0.1
   "@vitejs/plugin-react": ^6.1.1
-  cn: ^0.2.5
-  lucide-react: ^1.38.0
-  next: ^16.3.3
-  postcss: ^8.5.26
-  react: ^19.2.8
-  react-dom: ^19.2.8
-  react-router-dom: ^7.18.3
+  cn: ^0.3.0
+  lucide-react: ^1.47.0
+  next: ^16.3.5
+  postcss: ^8.5.28
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  react-router-dom: ^7.18.4
   tailwindcss: ^4.3.3
   tsx: ^4.23.13
   typescript: ^7.0.2
-  vite: ^8.2.2
+  vite: ^8.3.0
 
 linkWorkspacePackages: true
+
+# better-auth >=1.7.3 stops writing account.issuer, which both Turso schemas declare NOT NULL;
+# every account insert would fail until that column is relaxed. The adapter's ^1.7.2 peer range
+# otherwise auto-installs a newer core beside the pinned better-auth.
+overrides:
+  "@better-auth/core": 1.7.2
 
 # Install optional native deps for every platform we cross-compile the CLI to
 # (apps/cli bun-compiles binaries for all of these; opentui's per-platform

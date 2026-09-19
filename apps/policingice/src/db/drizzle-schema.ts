@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { blob, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // Embedding dimensions for text-embedding-3-small
@@ -114,23 +114,3 @@ export const votes = sqliteTable("votes", {
   sessionId: text("session_id").notNull(),
   type: text().$type<VoteType>().notNull(),
 });
-
-// Relations
-export const incidentsRelations = relations(incidents, ({ many }) => ({
-  videos: many(videos),
-  votes: many(votes),
-}));
-
-export const videosRelations = relations(videos, ({ one }) => ({
-  incident: one(incidents, {
-    fields: [videos.incidentId],
-    references: [incidents.id],
-  }),
-}));
-
-export const votesRelations = relations(votes, ({ one }) => ({
-  incident: one(incidents, {
-    fields: [votes.incidentId],
-    references: [incidents.id],
-  }),
-}));

@@ -1,8 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { desc, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
-import { incidents } from "@/db/drizzle-schema";
 
 export const getIncidents = async (data: { offset?: number; limit?: number }) => {
   "use cache";
@@ -13,13 +11,12 @@ export const getIncidents = async (data: { offset?: number; limit?: number }) =>
   const results = await db.query.incidents.findMany({
     limit: limit + 1,
     offset,
-    orderBy: [
-      desc(incidents.pinned),
-      desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
-      desc(incidents.id),
+    orderBy: (inc, { desc, sql }) => [
+      desc(inc.pinned),
+      desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
+      desc(inc.id),
     ],
-    where: (inc, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
-      andOp(eqOp(inc.status, "approved"), isNullOp(inc.deletedAt), ltOp(inc.reportCount, 3)),
+    where: { deletedAt: { isNull: true }, reportCount: { lt: 3 }, status: "approved" },
     with: { videos: true },
   });
   const hasMore = results.length > limit;

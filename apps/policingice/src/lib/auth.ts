@@ -1,7 +1,8 @@
 import { cache } from "react";
 import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+// The default adapter entry reads `db._.fullSchema`, gone in drizzle 1.0; relations-v2 reads `db._.relations`.
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { nextCookies } from "better-auth/next-js";
 import { anonymous } from "better-auth/plugins";
 

@@ -2,7 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { embed } from "ai";
-import { and, desc, eq, gte, like, lt, lte, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { client, db } from "@/db/drizzle-client";
@@ -62,6 +62,12 @@ const parseLocalDate = (dateStr: string): Date => {
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
 
+// Relational-query ordering: undated incidents sort as newest, then by id.
+const newestFirst = (inc: typeof incidents) => [
+  desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
+  desc(inc.id),
+];
+
 // Server action wrapper — delegates to cached query so clients can call it
 export const getIncidents = async (data: { offset?: number; limit?: number }) =>
   await getCachedIncidents(data);
@@ -71,29 +77,23 @@ export const searchIncidents = async (data: {
   startDate?: string;
   endDate?: string;
 }) => {
-  const baseConditions = [
-    eq(incidents.status, "approved"),
-    sql`${incidents.deletedAt} IS NULL`,
-    lt(incidents.reportCount, 3),
-  ];
-
-  if (data.startDate) {
-    const start = parseLocalDate(data.startDate);
-    baseConditions.push(gte(incidents.incidentDate, start));
-  }
-
-  if (data.endDate) {
-    const end = parseLocalDate(data.endDate);
-    end.setDate(end.getDate() + 1);
-    baseConditions.push(lte(incidents.incidentDate, end));
-  }
+  const rangeStart = data.startDate ? parseLocalDate(data.startDate) : undefined;
+  const rangeEnd = data.endDate ? parseLocalDate(data.endDate) : undefined;
+  rangeEnd?.setDate(rangeEnd.getDate() + 1);
+  // An undefined bound is dropped from the filter, so the date range is optional on either side.
+  const baseFilter = {
+    deletedAt: { isNull: true },
+    incidentDate: { gte: rangeStart, lte: rangeEnd },
+    reportCount: { lt: 3 },
+    status: "approved",
+  } as const;
 
   // No text query - just date filters
   if (!data.query) {
     const results = await db.query.incidents.findMany({
       limit: 50,
-      orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
-      where: and(...baseConditions),
+      orderBy: newestFirst,
+      where: baseFilter,
       with: { videos: true },
     });
     return { incidents: results };
@@ -110,15 +110,10 @@ export const searchIncidents = async (data: {
 
   // 1. Keyword search (always works, even without embeddings)
   const q = `%${data.query}%`;
-  const keywordConditions = [
-    ...baseConditions,
-    sql`(${like(incidents.location, q)} OR ${like(incidents.description, q)})`,
-  ];
-
   const keywordResults = await db.query.incidents.findMany({
     limit: 30,
-    orderBy: [desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`), desc(incidents.id)],
-    where: and(...keywordConditions),
+    orderBy: newestFirst,
+    where: { ...baseFilter, OR: [{ location: { like: q } }, { description: { like: q } }] },
     with: { videos: true },
   });
 
@@ -249,8 +244,7 @@ export const getUserVotes = async (data: { incidentIds: number[] }) => {
   }
 
   const userVotes = await db.query.votes.findMany({
-    where: (v, { and: andOp, eq: eqOp, inArray }) =>
-      andOp(eqOp(v.sessionId, session.user.id), inArray(v.incidentId, data.incidentIds)),
+    where: { incidentId: { in: data.incidentIds }, sessionId: session.user.id },
   });
 
   const byIncident: Record<number, VoteType> = {};
@@ -267,8 +261,7 @@ export const getUserVote = async (data: { incidentId: number }) => {
   }
 
   const vote = await db.query.votes.findFirst({
-    where: (v, { and: andOp, eq: eqOp }) =>
-      andOp(eqOp(v.sessionId, session.user.id), eqOp(v.incidentId, data.incidentId)),
+    where: { incidentId: data.incidentId, sessionId: session.user.id },
   });
 
   return vote?.type ?? null;
@@ -289,7 +282,7 @@ export const createIncident = async (data: {
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
 
   const existingVideos = await db.query.videos.findMany({
-    where: (v, { inArray }) => inArray(v.url, resolvedUrls),
+    where: { url: { in: resolvedUrls } },
     with: { incident: true },
   });
 
@@ -350,8 +343,7 @@ export const submitVote = async (data: {
   const sessionId = session.user.id;
 
   const existing = await db.query.votes.findFirst({
-    where: (v, { and: andOp, eq: eqOp }) =>
-      andOp(eqOp(v.sessionId, sessionId), eqOp(v.incidentId, data.incidentId)),
+    where: { incidentId: data.incidentId, sessionId },
   });
 
   // Toggle: if same vote type, remove it
@@ -471,7 +463,7 @@ export const togglePinIncident = async (data: { incidentId: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({
-    where: eq(incidents.id, data.incidentId),
+    where: { id: data.incidentId },
   });
   if (!incident) {
     return { error: "Not found", success: false };
