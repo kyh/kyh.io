@@ -40,8 +40,44 @@ const getFutureRatio = (): number =>
   mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
-/** Fixed vertical range in grid rows (half above + half below current price) */
-const RANGE_HALF_ROWS = 10;
+/**
+ * Rows always kept visible above and below the current price so bets have
+ * room. The range grows past this to fit whatever history is on screen —
+ * nothing is clipped, a 20% day just makes the rows shorter for a while.
+ */
+const MIN_HALF_ROWS = 10;
+/** Breathing room added above and below the fitted range, in rows */
+const RANGE_MARGIN_ROWS = 1;
+
+interface LevelRange {
+  min: number;
+  max: number;
+}
+
+/** Vertical range that fits every tick in the visible window plus the minimum room around the current price */
+const fitRange = (
+  history: readonly { time: number; price: number }[],
+  now: number,
+  currentLevel: number,
+): LevelRange => {
+  let min = currentLevel - MIN_HALF_ROWS;
+  let max = currentLevel + MIN_HALF_ROWS;
+  const windowStart = now - CHART_WINDOW * 1000;
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const p = history[i];
+    if (p.time < windowStart) {
+      break;
+    }
+    const level = priceToLevel(p.price);
+    if (level < min) {
+      min = level;
+    }
+    if (level > max) {
+      max = level;
+    }
+  }
+  return { max: max + RANGE_MARGIN_ROWS, min: min - RANGE_MARGIN_ROWS };
+};
 /** Half block height in grid rows */
 const HALF_BLOCK_H = 0.5;
 /** Grid cells of history the chart shows before the first live tick */
@@ -311,8 +347,8 @@ export const TradingChart = () => {
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef(false);
   const lastPlacedCellRef = useRef<string | null>(null);
-  const rangeCenterRef = useRef(0);
-  const targetCenterRef = useRef(0);
+  const rangeRef = useRef<LevelRange>({ max: MIN_HALF_ROWS, min: -MIN_HALF_ROWS });
+  const targetRangeRef = useRef<LevelRange>({ max: MIN_HALF_ROWS, min: -MIN_HALF_ROWS });
   const animRef = useRef<number>(0);
   const sizeRef = useRef({ height: 0, width: 0 });
   const prevUIRef = useRef({
@@ -331,7 +367,10 @@ export const TradingChart = () => {
   const [losses, setLosses] = useState(0);
   const [blockCount, setBlockCount] = useState(0);
   const [rightPad, setRightPad] = useState(200);
-  const [levelRange, setLevelRange] = useState({ max: RANGE_HALF_ROWS, min: -RANGE_HALF_ROWS });
+  const [levelRange, setLevelRange] = useState<LevelRange>({
+    max: MIN_HALF_ROWS,
+    min: -MIN_HALF_ROWS,
+  });
 
   // ResizeObserver for sizeRef and rightPad
   useEffect(() => {
@@ -379,24 +418,27 @@ export const TradingChart = () => {
       engine = replay;
       engineRef.current = replay;
 
-      const startLevel = Math.round(priceToLevel(replay.getCurrentPrice()));
-      rangeCenterRef.current = startLevel;
-      targetCenterRef.current = startLevel;
-
       unsubscribe = replay.subscribe((point) => {
         setLivePrice(point.price);
         setTradingDate(replay.getCurrentBar().date);
 
-        targetCenterRef.current = Math.round(priceToLevel(point.price));
-
         // Update game state on each tick (10/sec) instead of every rAF frame (60/sec)
         const history = replay.getHistoryRaw();
-        stateRef.current = updateBlocks(stateRef.current, point.price, Date.now(), history);
+        const now = Date.now();
+        stateRef.current = updateBlocks(stateRef.current, point.price, now, history);
+        targetRangeRef.current = fitRange(history, now, priceToLevel(point.price));
 
         setChartData(history.map((p) => ({ time: p.time / 1000, value: priceToLevel(p.price) })));
       });
 
       replay.start();
+      const startRange = fitRange(
+        replay.getHistoryRaw(),
+        Date.now(),
+        priceToLevel(replay.getCurrentPrice()),
+      );
+      rangeRef.current = startRange;
+      targetRangeRef.current = startRange;
       setLivePrice(replay.getCurrentPrice());
       setTradingDate(replay.getCurrentBar().date);
       setFeed("live");
@@ -446,10 +488,11 @@ export const TradingChart = () => {
       const now = Date.now();
       const price = engineRef.current?.getCurrentPrice() ?? 0;
 
-      // Frame-rate-independent lerp for smooth grid panning
-      rangeCenterRef.current = lerp(rangeCenterRef.current, targetCenterRef.current, 0.04, dt);
-      const min = rangeCenterRef.current - RANGE_HALF_ROWS;
-      const max = rangeCenterRef.current + RANGE_HALF_ROWS;
+      // Frame-rate-independent lerp for smooth grid panning and zooming
+      const target = targetRangeRef.current;
+      const min = lerp(rangeRef.current.min, target.min, 0.04, dt);
+      const max = lerp(rangeRef.current.max, target.max, 0.04, dt);
+      rangeRef.current = { max, min };
       setLevelRange((prev) => (prev.min === min && prev.max === max ? prev : { max, min }));
 
       const next = stateRef.current;
@@ -503,15 +546,8 @@ export const TradingChart = () => {
       const prevById = new Map(prev.map((b) => [b.id, b]));
       const confettiLayer = confettiLayerRef.current;
       const { width, height } = sizeRef.current;
-      const center = rangeCenterRef.current;
-      const dims = computeDims(
-        width,
-        height,
-        Date.now(),
-        center - RANGE_HALF_ROWS,
-        center + RANGE_HALF_ROWS,
-        getFutureRatio(),
-      );
+      const range = rangeRef.current;
+      const dims = computeDims(width, height, Date.now(), range.min, range.max, getFutureRatio());
 
       for (const b of next.blocks) {
         if (b.touched && !prevById.get(b.id)?.touched) {
@@ -546,15 +582,8 @@ export const TradingChart = () => {
   const getClickDims = useCallback(() => {
     const { width, height } = sizeRef.current;
     const now = Date.now();
-    const center = rangeCenterRef.current;
-    return computeDims(
-      width,
-      height,
-      now,
-      center - RANGE_HALF_ROWS,
-      center + RANGE_HALF_ROWS,
-      getFutureRatio(),
-    );
+    const range = rangeRef.current;
+    return computeDims(width, height, now, range.min, range.max, getFutureRatio());
   }, []);
 
   const tryPlaceAt = useCallback(
