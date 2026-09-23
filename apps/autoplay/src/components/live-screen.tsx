@@ -236,16 +236,17 @@ export const LiveScreen = (props: LiveScreenProps) => {
       );
     };
 
+    const onMedia = (media: MediaStream) => {
+      setStream(media);
+      streamRef.current = media;
+    };
+
     const openSession = () => {
       if (sessionRef.current !== undefined || closed) {
         return;
       }
       emitState({ status: "connecting" });
       testStreamRef.current = testStreamRequested();
-      const onMedia = (media: MediaStream) => {
-        setStream(media);
-        streamRef.current = media;
-      };
       const handlers = {
         onData: (raw: string) => {
           // oxlint-disable-next-line no-use-before-define -- the handler closes over the session it is registered on
