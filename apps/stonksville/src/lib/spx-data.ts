@@ -1,4 +1,4 @@
-/** One trading day of the S&P 500. Loaded from `public/spx-daily.csv` (see `scripts/fetch-spx.ts`). */
+/** One trading day of the S&P 500. Served as CSV by `/api/spx` (see `spx-source.ts`). */
 export interface DailyBar {
   /** Trading date — UTC midnight, unix ms */
   date: number;
@@ -13,7 +13,7 @@ export interface DailyBar {
   hasRange: boolean;
 }
 
-export const SPX_DATA_URL = "/spx-daily.csv";
+export const SPX_DATA_URL = "/api/spx";
 
 const parseRow = (fields: string[], previousClose: number | null): DailyBar | null => {
   const date = Date.parse(`${fields[0]}T00:00:00Z`);

@@ -107,7 +107,7 @@ Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
 
 ### stonksville (`apps/stonksville`)
 
-Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history (`public/spx-daily.csv`, one trading day per 5s grid cell; `pnpm -F @repo/stonksville data:spx` refreshes it from Yahoo Finance). `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
+Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history, one trading day per 5s grid cell. The CSV lives in Vercel Blob, served by `/api/spx` (seeds itself from Yahoo Finance on first request, reads Yahoo directly without a store) and refreshed by a weekday Vercel Cron hitting `/api/cron/spx`. `src/lib/spx-source.ts` fetches and stores it; `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
 
 ### tc, covid-19, vis-ml
 

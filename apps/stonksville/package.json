@@ -4,13 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "next build",
-    "data:spx": "tsx scripts/fetch-spx.ts",
     "dev": "next dev --turbopack -p 3004",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "balloons-js": "^0.0.3",
     "motion": "^13.4.0",
     "next": "catalog:",
@@ -25,7 +25,6 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "postcss": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }
