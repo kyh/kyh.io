@@ -598,6 +598,9 @@ importers:
 
   apps/stonksville:
     dependencies:
+      '@vercel/blob':
+        specifier: ^2.8.0
+        version: 2.8.0
       balloons-js:
         specifier: ^0.0.3
         version: 0.0.3

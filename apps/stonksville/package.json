@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "balloons-js": "^0.0.3",
     "motion": "^13.4.0",
     "next": "catalog:",

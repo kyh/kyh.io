@@ -2,8 +2,11 @@ export type BlockStatus = "active" | "locked" | "won" | "lost";
 
 export interface Block {
   id: string;
-  /** Price level (center of block) */
-  priceLevel: number;
+  /** Grid row this block sits on — see `levelToPrice` */
+  level: number;
+  /** Price band the row covers */
+  priceLow: number;
+  priceHigh: number;
   /** Time column this block targets */
   targetTime: number;
   /** Bet amount in dollars */
@@ -30,14 +33,24 @@ export interface GameState {
 
 export const INITIAL_BALANCE = 1000;
 export const DEFAULT_BET = 10;
-/** Price height of each block in price units */
-export const BLOCK_PRICE_HEIGHT = 20;
-/** Grid cell width in seconds — must match chart grid */
+/**
+ * Height of each grid row as a percent of price. Rows are geometric, so the
+ * grid means the same thing whether the index prints 17 (1928) or 7,700 (2026).
+ */
+export const ROW_PCT = 0.4;
+/** Grid cell width in seconds — one trading day of history plays per cell */
 export const GRID_CELL_SECONDS = 5;
 /** How many seconds before target time a block locks */
 export const LOCK_SECONDS = 10;
 /** Minimum time into the future a block can be placed (seconds) */
 export const MIN_FUTURE_SECONDS = 15;
+
+const LEVEL_STEP = Math.log(1 + ROW_PCT / 100);
+
+/** Continuous grid-row coordinate of a price (row `k` is centred on `levelToPrice(k)`) */
+export const priceToLevel = (price: number): number => Math.log(price) / LEVEL_STEP;
+
+export const levelToPrice = (level: number): number => Math.exp(level * LEVEL_STEP);
 
 export const createInitialState = (): GameState => ({
   balance: INITIAL_BALANCE,
@@ -87,7 +100,7 @@ export const calculateMultiplier = (currentPrice: number, targetPrice: number): 
 export const placeBlock = (
   state: GameState,
   currentPrice: number,
-  priceLevel: number,
+  level: number,
   targetTime: number,
 ): GameState => {
   const now = Date.now();
@@ -99,21 +112,21 @@ export const placeBlock = (
   if (targetTime - now < MIN_FUTURE_SECONDS * 1000) {
     return state;
   }
-  const occupied = state.blocks.some(
-    (b) => b.priceLevel === priceLevel && b.targetTime === targetTime,
-  );
+  const occupied = state.blocks.some((b) => b.level === level && b.targetTime === targetTime);
   if (occupied) {
     return state;
   }
 
-  const multiplier = calculateMultiplier(currentPrice, priceLevel);
+  const multiplier = calculateMultiplier(currentPrice, levelToPrice(level));
 
   const block: Block = {
     amount: DEFAULT_BET,
     id: crypto.randomUUID(),
+    level,
     multiplier,
     placedAt: now,
-    priceLevel,
+    priceHigh: levelToPrice(level + 0.5),
+    priceLow: levelToPrice(level - 0.5),
     resolvedAt: null,
     status: "active",
     targetTime,
@@ -125,6 +138,34 @@ export const placeBlock = (
     balance: state.balance - DEFAULT_BET,
     blocks: [...state.blocks, block],
   };
+};
+
+/**
+ * Whether the price path crossed the band [low, high] inside the time window.
+ * Checks the segment between consecutive ticks, so a fast move through the
+ * band counts even if no single tick landed inside it.
+ */
+const crossedBand = (
+  history: readonly { time: number; price: number }[],
+  windowStart: number,
+  windowEnd: number,
+  low: number,
+  high: number,
+): boolean => {
+  for (let i = history.length - 1; i > 0; i -= 1) {
+    const p = history[i];
+    if (p.time < windowStart) {
+      break;
+    }
+    if (p.time > windowEnd) {
+      continue;
+    }
+    const q = history[i - 1];
+    if (Math.max(p.price, q.price) >= low && Math.min(p.price, q.price) <= high) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -146,34 +187,22 @@ export const updateBlocks = (
   let changed = false;
 
   const halfColumnMs = (GRID_CELL_SECONDS * 1000) / 2;
-  const halfH = BLOCK_PRICE_HEIGHT / 2;
 
   const updatedBlocks = state.blocks.map((block) => {
     if (block.status === "won" || block.status === "lost") {
       return block;
     }
 
-    const priceTop = block.priceLevel + halfH;
-    const priceBottom = block.priceLevel - halfH;
-
-    // Check if any price point crossed through the block during its time window
+    // Check if the price path crossed through the block during its time window
     let nowTouched = block.touched;
     if (!nowTouched && priceHistory) {
-      const windowStart = block.targetTime - halfColumnMs;
-      const windowEnd = block.targetTime + halfColumnMs;
-      for (let i = priceHistory.length - 1; i >= 0; i -= 1) {
-        const p = priceHistory[i];
-        if (p.time < windowStart) {
-          break;
-        }
-        if (p.time > windowEnd) {
-          continue;
-        }
-        if (p.price >= priceBottom && p.price <= priceTop) {
-          nowTouched = true;
-          break;
-        }
-      }
+      nowTouched = crossedBand(
+        priceHistory,
+        block.targetTime - halfColumnMs,
+        block.targetTime + halfColumnMs,
+        block.priceLow,
+        block.priceHigh,
+      );
     }
 
     // Lock blocks that are close to resolution
