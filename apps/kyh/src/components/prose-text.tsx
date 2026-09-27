@@ -1,4 +1,4 @@
-const CODE_SPAN = /(`[^`]+`)/g;
+const CODE_SPAN = /(?<code>`[^`]+`)/gu;
 
 /**
  * Code spans are the only inline markup `page-content.ts` allows, so the markdown

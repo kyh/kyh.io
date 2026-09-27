@@ -10,7 +10,7 @@ const linkLine = (link: ContentLink) =>
   `- [${link.label}](${resolveHref(link.href)}): ${link.description}`;
 
 const routeLine = (route: SiteRoute) =>
-  linkLine({ label: route.title, href: route.path, description: route.description });
+  linkLine({ description: route.description, href: route.path, label: route.title });
 
 /** Paired with `ProsePage`, which renders the same content as HTML. */
 export const renderPageMarkdown = (page: PageContent) => {
@@ -19,9 +19,15 @@ export const renderPageMarkdown = (page: PageContent) => {
   for (const section of page.sections) {
     parts.push(`## ${section.heading}`);
     for (const block of section.blocks) {
-      if (block.kind === "text") parts.push(block.text);
-      if (block.kind === "subheading") parts.push(`### ${block.text}`);
-      if (block.kind === "links") parts.push(block.items.map(linkLine).join("\n"));
+      if (block.kind === "text") {
+        parts.push(block.text);
+      }
+      if (block.kind === "subheading") {
+        parts.push(`### ${block.text}`);
+      }
+      if (block.kind === "links") {
+        parts.push(block.items.map(linkLine).join("\n"));
+      }
     }
   }
 

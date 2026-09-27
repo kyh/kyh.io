@@ -7,7 +7,7 @@ import { buildNotFoundHtml } from "./not-found-html";
 test("is a complete, self-contained document", () => {
   const html = buildNotFoundHtml("/missing");
 
-  assert.match(html, /^<!doctype html>/);
+  assert.match(html, /^<!doctype html>/u);
   assert.ok(html.includes('<html lang="en">'));
   assert.ok(html.includes("<title>404 — Not found | Kaiyu Hsu</title>"));
   assert.ok(html.includes(`<link rel="canonical" href="${absoluteUrl("/")}">`));
@@ -39,5 +39,5 @@ test("renders code spans in descriptions instead of raw backticks", () => {
 });
 
 test("stays small enough to be cheap for an agent that took a wrong turn", () => {
-  assert.ok(buildNotFoundHtml("/missing").length < 6_000);
+  assert.ok(buildNotFoundHtml("/missing").length < 6000);
 });

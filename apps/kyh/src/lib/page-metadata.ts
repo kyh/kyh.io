@@ -4,9 +4,9 @@ import { siteConfig } from "@/lib/config";
 import type { PageContent } from "@/lib/page-content";
 
 const ogImage = {
+  height: 1080,
   url: `${siteConfig.url}/og.jpg`,
   width: 1920,
-  height: 1080,
 };
 
 /**
@@ -15,23 +15,23 @@ const ogImage = {
  * page keeps `og:image`, `og:type` and a canonical URL.
  */
 export const buildPageMetadata = (content: PageContent): Metadata => ({
-  title: content.title,
-  description: content.description,
   alternates: { canonical: content.path },
+  description: content.description,
   openGraph: {
+    description: content.description,
+    images: [ogImage],
     locale: "en-US",
+    siteName: siteConfig.name,
+    title: `${content.title} | ${siteConfig.name}`,
     type: "website",
     url: content.path,
-    title: `${content.title} | ${siteConfig.name}`,
-    description: content.description,
-    siteName: siteConfig.name,
-    images: [ogImage],
   },
+  title: content.title,
   twitter: {
     card: "summary_large_image",
-    title: `${content.title} | ${siteConfig.name}`,
+    creator: siteConfig.creator,
     description: content.description,
     images: [ogImage],
-    creator: siteConfig.creator,
+    title: `${content.title} | ${siteConfig.name}`,
   },
 });

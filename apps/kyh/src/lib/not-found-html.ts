@@ -2,11 +2,15 @@ import type { SiteRoute } from "@/lib/config";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 
 const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 
 /** Descriptions are authored as markdown-ish text; only code spans need markup. */
 const renderDescription = (description: string) =>
-  escapeHtml(description).replace(/`([^`]+)`/g, "<code>$1</code>");
+  escapeHtml(description).replaceAll(/`(?<code>[^`]+)`/gu, "<code>$<code></code>");
 
 const listItem = (route: SiteRoute) =>
   `<li><a href="${route.path}">${escapeHtml(route.title)}</a> <span>${renderDescription(route.description)}</span></li>`;

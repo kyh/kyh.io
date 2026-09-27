@@ -11,7 +11,9 @@ test("absoluteUrl collapses the root path to the bare origin", () => {
 test("every advertised route is site-relative and unique", () => {
   const paths = [...siteRoutes, ...agentRoutes].map((route) => route.path);
 
-  for (const path of paths) assert.ok(path.startsWith("/"), `${path} is not site-relative`);
+  for (const path of paths) {
+    assert.ok(path.startsWith("/"), `${path} is not site-relative`);
+  }
   assert.equal(new Set(paths).size, paths.length, "duplicate route paths");
 });
 

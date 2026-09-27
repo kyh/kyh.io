@@ -15,19 +15,19 @@ export type ContentBlock =
   | { kind: "subheading"; text: string }
   | { kind: "links"; items: ContentLink[] };
 
-export type ContentLink = {
+export interface ContentLink {
   label: string;
   href: string;
   description: string;
-};
+}
 
-export type ContentSection = {
+export interface ContentSection {
   id: string;
   heading: string;
   blocks: ContentBlock[];
-};
+}
 
-export type PageContent = {
+export interface PageContent {
   path: string;
   title: string;
   /** Rendered as the `<h1>` and as the markdown `#` heading. */
@@ -35,32 +35,29 @@ export type PageContent = {
   description: string;
   intro: string[];
   sections: ContentSection[];
-};
+}
 
 const toContentLink = (route: {
   path: string;
   title: string;
   description: string;
 }): ContentLink => ({
-  label: route.title,
-  href: route.path,
   description: route.description,
+  href: route.path,
+  label: route.title,
 });
 
 export const aboutContent: PageContent = {
-  path: "/about",
-  title: "About",
-  heading: "About Kaiyu Hsu",
   description:
     "Kaiyu Hsu (Kai) is a Technical Staff member at Sequoia Capital who has built and shipped software at Vercel, Google and Amazon.",
+  heading: "About Kaiyu Hsu",
   intro: [
     "Hello world. You can call me Kai since we're pretty much friends now. I'm an engineer, designer and investor based in San Francisco, and kyh.io is my corner of the web — the durable version of a business card, a portfolio and a lab notebook rolled into one.",
     "I've spent my career in the space between design and infrastructure: making interfaces that feel obvious, and making the systems underneath them fast enough that the interface stays obvious under load. That has looked like frontend framework work at Amazon, design engineering at Google, developer experience at Vercel, and now technical work alongside founders at Sequoia Capital.",
   ],
+  path: "/about",
   sections: [
     {
-      id: "work",
-      heading: "What I do",
       blocks: [
         {
           kind: "text",
@@ -75,10 +72,10 @@ export const aboutContent: PageContent = {
           text: "I've taken startups through the full range of outcomes: an acquisition at Cardiogram, where I was a design engineer and co-authored published research on growth and retention; a public listing at Slyce; and a shutdown at Atrium. The failures taught more than the exits did. I'm also a contributing member of the U.S. Digital Response and the OpenJS Foundation.",
         },
       ],
+      heading: "What I do",
+      id: "work",
     },
     {
-      id: "building",
-      heading: "What I build",
       blocks: [
         {
           kind: "text",
@@ -89,68 +86,67 @@ export const aboutContent: PageContent = {
           text: "Beyond software I read about economics, psychology and business, draw things badly, and design games. But honestly, I spend most of my days procrastinating.",
         },
       ],
+      heading: "What I build",
+      id: "building",
     },
     {
-      id: "elsewhere",
-      heading: "Elsewhere",
       blocks: [
         {
-          kind: "links",
           items: [
             {
-              label: "Showcase",
-              href: "/showcase",
               description: "Everything I've built, with screenshots.",
+              href: "/showcase",
+              label: "Showcase",
             },
-            { label: "Contact", href: "/contact", description: "How to get in touch." },
+            { description: "How to get in touch.", href: "/contact", label: "Contact" },
             {
-              label: "Developers",
-              href: "/developers",
               description: "Machine-readable views of this site.",
+              href: "/developers",
+              label: "Developers",
             },
-            { label: "GitHub", href: social.github, description: "Open source work." },
-            { label: "LinkedIn", href: social.linkedin, description: "Work history." },
+            { description: "Open source work.", href: social.github, label: "GitHub" },
+            { description: "Work history.", href: social.linkedin, label: "LinkedIn" },
           ],
+          kind: "links",
         },
       ],
+      heading: "Elsewhere",
+      id: "elsewhere",
     },
   ],
+  title: "About",
 };
 
 export const contactContent: PageContent = {
-  path: "/contact",
-  title: "Contact",
+  description: `Reach Kaiyu Hsu by email at ${siteConfig.email}, or through GitHub, X, LinkedIn and Dribbble.`,
   heading: "Contact Kaiyu Hsu",
-  description:
-    "Reach Kaiyu Hsu by email at hello@kyh.io, or through GitHub, X, LinkedIn and Dribbble.",
   intro: [
     `The fastest way to reach me is email: ${siteConfig.email}. I read everything that arrives there, and I answer most things within a few business days. If it has been longer than a week, it means the message got buried rather than ignored — a short nudge is welcome.`,
     "I'm based in San Francisco, California, and I work on Pacific time. The clock in the corner of the homepage is my local time, so you can tell at a glance whether a reply is likely in the next hour or the next morning.",
   ],
+  path: "/contact",
   sections: [
     {
-      id: "channels",
-      heading: "Channels",
       blocks: [
         {
-          kind: "links",
           items: [
             {
-              label: "Email",
-              href: `mailto:${siteConfig.email}`,
               description: "Best for anything substantive. Goes straight to me.",
+              href: `mailto:${siteConfig.email}`,
+              label: "Email",
             },
-            { label: "GitHub", href: social.github, description: "Issues, pull requests, code." },
-            { label: "X", href: social.twitter, description: "Short questions and hellos." },
-            { label: "LinkedIn", href: social.linkedin, description: "Work and hiring context." },
-            { label: "Dribbble", href: social.dribbble, description: "Design work." },
+            { description: "Issues, pull requests, code.", href: social.github, label: "GitHub" },
+            { description: "Short questions and hellos.", href: social.twitter, label: "X" },
+            { description: "Work and hiring context.", href: social.linkedin, label: "LinkedIn" },
+            { description: "Design work.", href: social.dribbble, label: "Dribbble" },
           ],
+          kind: "links",
         },
       ],
+      heading: "Channels",
+      id: "channels",
     },
     {
-      id: "what-to-send",
-      heading: "What to send",
       blocks: [
         {
           kind: "text",
@@ -165,24 +161,24 @@ export const contactContent: PageContent = {
           text: "Cold sales outreach, unsolicited recruiting pitches for roles I haven't asked about, and requests to add links to this site. I'm not the right person for those and I'd rather say so up front than leave you waiting on a reply that isn't coming.",
         },
       ],
+      heading: "What to send",
+      id: "what-to-send",
     },
   ],
+  title: "Contact",
 };
 
 export const privacyContent: PageContent = {
-  path: "/privacy",
-  title: "Privacy",
-  heading: "Privacy",
   description:
     "What kyh.io collects, what it doesn't, and which third parties process data on its behalf.",
+  heading: "Privacy",
   intro: [
     "kyh.io is a personal website. It has no accounts, no login, no shopping cart and no newsletter, so there is nothing here for you to sign up to and nothing for me to lose. This page describes the small amount of data that does get collected when you load a page, and who touches it.",
     "The short version: I collect anonymous, aggregate traffic and performance measurements, and nothing else. I do not sell data, I do not run advertising, and I do not build profiles of visitors.",
   ],
+  path: "/privacy",
   sections: [
     {
-      id: "collected",
-      heading: "What is collected",
       blocks: [
         {
           kind: "text",
@@ -197,10 +193,10 @@ export const privacyContent: PageContent = {
           text: "No advertising or cross-site tracking cookies. No fingerprinting. No session recording or heatmaps. No email addresses, unless you choose to send me one. The multiplayer cursors on the homepage broadcast an ephemeral, randomly assigned position and colour over a websocket; nothing about that connection is stored once you close the tab.",
         },
       ],
+      heading: "What is collected",
+      id: "collected",
     },
     {
-      id: "processors",
-      heading: "Who processes it",
       blocks: [
         {
           kind: "text",
@@ -215,26 +211,26 @@ export const privacyContent: PageContent = {
           text: `Blocking analytics with a content blocker or a "do not track" setting will not break anything on this site — every page is server-rendered and readable without it. If you'd like anything associated with you removed, or you have a question about the above, email ${siteConfig.email} and I'll handle it personally.`,
         },
       ],
+      heading: "Who processes it",
+      id: "processors",
     },
   ],
+  title: "Privacy",
 };
 
 export const developersContent: PageContent = {
-  path: "/developers",
-  title: "Developers",
-  heading: "Developer and agent resources for kyh.io",
   description:
     "Machine-readable endpoints for kyh.io: llms.txt, markdown content negotiation, sitemap, robots, and the npx kyh CLI.",
+  heading: "Developer and agent resources for kyh.io",
   intro: [
     "kyh.io is built to be read by software as well as by people. Every page is server-rendered, the homepage is available as markdown through content negotiation, and there's an llms.txt index describing what lives where. This page is the human-readable map of those endpoints.",
     "There is no public HTTP API, no authentication, no webhooks and no MCP server behind this domain — if you find something claiming otherwise, it isn't mine. What follows is the complete list.",
   ],
+  path: "/developers",
   sections: [
     {
-      id: "machine-readable",
-      heading: "Machine-readable endpoints",
       blocks: [
-        { kind: "links", items: agentRoutes.map(toContentLink) },
+        { items: agentRoutes.map(toContentLink), kind: "links" },
         {
           kind: "subheading",
           text: "Content negotiation",
@@ -244,53 +240,56 @@ export const developersContent: PageContent = {
           text: "Send `Accept: text/markdown` to https://www.kyh.io/ and you'll get the markdown representation of the homepage instead of HTML; send anything else and you'll get HTML. Both representations send `Vary: Accept` so a shared cache can't hand you the wrong one. The HTML response also advertises the alternate through an RFC 8288 `Link` header pointing at /markdown. Requests for paths that don't exist return a real HTTP 404 with a short markdown body listing where to look instead.",
         },
       ],
+      heading: "Machine-readable endpoints",
+      id: "machine-readable",
     },
     {
-      id: "cli",
-      heading: "The kyh CLI",
       blocks: [
         {
           kind: "text",
           text: "`npx kyh` runs this site in your terminal. It's a published npm package (`kyh`) built with Bun and OpenTUI that renders the same bio, work history and project list you see here, without a browser. No install, no configuration, no network calls beyond fetching the package.",
         },
         {
-          kind: "links",
           items: [
             {
-              label: "kyh on npm",
-              href: "https://www.npmjs.com/package/kyh",
               description: "The CLI package. Run it with `npx kyh`.",
+              href: "https://www.npmjs.com/package/kyh",
+              label: "kyh on npm",
             },
             {
-              label: "kyh/kyh.io on GitHub",
-              href: "https://github.com/kyh/kyh.io",
               description: "The monorepo behind this site and the CLI, including AGENTS.md.",
+              href: "https://github.com/kyh/kyh.io",
+              label: "kyh/kyh.io on GitHub",
             },
             {
-              label: "@kyh/skills on npm",
-              href: "https://www.npmjs.com/package/@kyh/skills",
               description: "Agent skills I use day to day, installable globally.",
+              href: "https://www.npmjs.com/package/@kyh/skills",
+              label: "@kyh/skills on npm",
             },
           ],
+          kind: "links",
         },
       ],
+      heading: "The kyh CLI",
+      id: "cli",
     },
     {
-      id: "reuse",
-      heading: "Reuse and crawling",
       blocks: [
         {
           kind: "text",
           text: "robots.txt allows every user agent and declares Content-Signal preferences of `search=yes, ai-input=yes, ai-train=yes` — you may crawl this site, quote it, use it as model input, and train on it. Attribution back to https://www.kyh.io is appreciated but not required. Please read llms.txt before crawling broadly; it will save you most of the requests.",
         },
       ],
+      heading: "Reuse and crawling",
+      id: "reuse",
     },
     {
-      id: "pages",
+      blocks: [{ items: siteRoutes.map(toContentLink), kind: "links" }],
       heading: "Pages",
-      blocks: [{ kind: "links", items: siteRoutes.map(toContentLink) }],
+      id: "pages",
     },
   ],
+  title: "Developers",
 };
 
 export const prosePages: PageContent[] = [

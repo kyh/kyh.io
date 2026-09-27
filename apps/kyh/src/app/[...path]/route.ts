@@ -14,20 +14,20 @@ import { buildNotFoundHtml } from "@/lib/not-found-html";
  * 404 with a short body instead: HTML for browsers, markdown for everything else.
  */
 const handle = (req: NextRequest) => {
-  const pathname = req.nextUrl.pathname;
+  const { pathname } = req.nextUrl;
   const html = prefersHtml(req.headers.get("accept"));
 
   const headers = new Headers({
-    "Content-Type": html ? "text/html; charset=utf-8" : "text/markdown; charset=utf-8",
-    Vary: "Accept",
     "Cache-Control": "public, max-age=0, must-revalidate",
+    "Content-Type": html ? "text/html; charset=utf-8" : "text/markdown; charset=utf-8",
     Link: `<${absoluteUrl("/llms.txt")}>; rel="help"; type="text/plain", <${absoluteUrl("/sitemap.xml")}>; rel="index"; type="application/xml"`,
+    Vary: "Accept",
     "X-Robots-Tag": "noindex, follow",
   });
 
   const body = html ? buildNotFoundHtml(pathname) : buildNotFoundMarkdown(pathname);
 
-  return new Response(body, { status: 404, headers });
+  return new Response(body, { headers, status: 404 });
 };
 
 export const GET = handle;
