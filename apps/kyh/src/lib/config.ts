@@ -2,7 +2,7 @@ export const siteConfig = {
   creator: "@kaiyuhsu",
   description:
     "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
-  email: "im.kaiyu@gmail.com",
+  email: "kai@kyh.io",
   name: "Kaiyu Hsu",
   shortName: "kyh",
   /** The site, as distinct from `name` — the person. */

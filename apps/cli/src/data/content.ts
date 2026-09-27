@@ -171,7 +171,7 @@ export const work: Item[] = [
 ];
 
 export const contactLinks: ContactLink[] = [
-  { label: "Website", url: "https://kyh.io", value: "kyh.io" },
+  { label: "Website", url: "https://www.kyh.io", value: "kyh.io" },
   { label: "GitHub", url: "https://github.com/kyh", value: "github.com/kyh" },
   { label: "X", url: "https://x.com/kaiyuhsu", value: "x.com/kaiyuhsu" },
   {
@@ -179,5 +179,5 @@ export const contactLinks: ContactLink[] = [
     url: "https://linkedin.com/in/kyh",
     value: "linkedin.com/in/kyh",
   },
-  { label: "Email", url: "mailto:hello@kyh.io", value: "hello@kyh.io" },
+  { label: "Email", url: "mailto:kai@kyh.io", value: "kai@kyh.io" },
 ];
