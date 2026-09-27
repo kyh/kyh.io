@@ -40,8 +40,8 @@ export const siteRoutes: SiteRoute[] = [
   {
     description:
       "Machine-readable files, the `npx kyh` CLI, and how an agent should read this site.",
-    path: "/developers",
-    title: "Developers",
+    path: "/agents",
+    title: "For agents",
   },
   {
     description: "Email and social channels, what to send, and what to expect back.",
@@ -62,7 +62,7 @@ export const siteRoutes: SiteRoute[] = [
 
 /**
  * Machine-readable views of the same content. Kept next to `siteRoutes` because
- * `llms.txt`, `/developers` and the 404 body all advertise both lists.
+ * `llms.txt`, `/agents` and the 404 body all advertise both lists.
  */
 export const agentRoutes: SiteRoute[] = [
   {

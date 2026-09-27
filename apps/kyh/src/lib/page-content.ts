@@ -3,7 +3,7 @@ import { social } from "@/lib/social";
 
 /**
  * A tiny content model for the prose pages (`/about`, `/contact`, `/privacy`,
- * `/developers`). Authoring the copy once as data means the React page and the
+ * `/agents`). Authoring the copy once as data means the React page and the
  * `text/markdown` representation of that page can't drift apart — the same
  * problem `connectLinks` already solves for the homepage.
  *
@@ -101,8 +101,8 @@ export const aboutContent: PageContent = {
             { description: "How to get in touch.", href: "/contact", label: "Contact" },
             {
               description: "Machine-readable views of this site.",
-              href: "/developers",
-              label: "Developers",
+              href: "/agents",
+              label: "For agents",
             },
             { description: "Open source work.", href: social.github, label: "GitHub" },
             { description: "Work history.", href: social.linkedin, label: "LinkedIn" },
@@ -218,15 +218,15 @@ export const privacyContent: PageContent = {
   title: "Privacy",
 };
 
-export const developersContent: PageContent = {
+export const agentsContent: PageContent = {
   description:
     "Machine-readable files for kyh.io: llms.txt, the markdown view, sitemap, robots, and the npx kyh CLI.",
-  heading: "Developer and agent resources for kyh.io",
+  heading: "Agent resources for kyh.io",
   intro: [
     "kyh.io is built to be read by software as well as by people. Every page is server-rendered, the homepage is available as markdown through content negotiation, and there's an llms.txt index describing what lives where. This page is the human-readable map of those files.",
     "kyh.io is a personal site, not a service: nothing here takes input or has anything to integrate with. What follows is the complete list.",
   ],
-  path: "/developers",
+  path: "/agents",
   sections: [
     {
       blocks: [
@@ -289,12 +289,12 @@ export const developersContent: PageContent = {
       id: "pages",
     },
   ],
-  title: "Developers",
+  title: "For agents",
 };
 
 export const prosePages: PageContent[] = [
   aboutContent,
   contactContent,
   privacyContent,
-  developersContent,
+  agentsContent,
 ];
