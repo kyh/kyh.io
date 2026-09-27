@@ -7,7 +7,7 @@ const otherPages = siteRoutes.filter((route) => route.path !== "/");
 
 /**
  * Footer-weight links to the rest of the site and to its machine-readable views.
- * Crawlers and agents only find `/about`, `/contact`, `/privacy`, `/developers`
+ * Crawlers and agents only find `/about`, `/contact`, `/privacy`, `/agents`
  * and `llms.txt` if something links to them; the homepage is that something.
  */
 export const SiteNav = () => (
