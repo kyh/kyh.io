@@ -4,6 +4,7 @@ import { projects } from "@/lib/data";
 import { Radial } from "./_components/radial";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/showcase" },
   description: "The ever growing list of things I'm working on.",
   title: "Showcase",
 };

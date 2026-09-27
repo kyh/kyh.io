@@ -5,6 +5,7 @@ import { WorkWall } from "./_components/work-wall";
 import { buildWorkSeeds } from "./_components/works";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/showcase-2" },
   description: "The ever growing list of things I'm working on.",
   title: "Showcase",
 };

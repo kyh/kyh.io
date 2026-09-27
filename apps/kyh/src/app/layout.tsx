@@ -7,6 +7,7 @@ import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config";
+import { JsonLd } from "@/components/json-ld";
 
 import "@/styles/global.css";
 
@@ -79,6 +80,7 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <body>
+      <JsonLd />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
         <Multiplayer />

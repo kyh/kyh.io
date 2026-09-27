@@ -9,6 +9,7 @@ const miniApps = projects.filter((p) => p.type === "mini-app");
 const templates = projects.filter((p) => p.type === "template");
 
 const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
+  description: p.description,
   iconSrc: p.favicon,
   key: p.slug,
   name: p.title,
@@ -18,7 +19,13 @@ const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
 export const SideQuests = () => (
   <div className="side-quests-grid">
     {projectsAndVentures.map((p) => (
-      <ProjectApp key={p.slug} name={p.title} iconSrc={p.favicon} url={p.url} />
+      <ProjectApp
+        key={p.slug}
+        name={p.title}
+        description={p.description}
+        iconSrc={p.favicon}
+        url={p.url}
+      />
     ))}
     <ProjectAppGroup title="Mini Apps" items={miniApps.map(toAppItem)} />
     <ProjectAppGroup title="Templates" items={templates.map(toAppItem)} />

@@ -585,6 +585,12 @@ button.link {
   }
 }
 
+/* List row without a leading icon (prose pages, site nav) */
+.list-row.list-row-plain {
+  grid-template-columns: 120px 1fr;
+  align-items: baseline;
+}
+
 /* Arrow list (highlights) */
 .arrow-list {
   margin-top: 0.25rem;

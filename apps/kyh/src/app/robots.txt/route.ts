@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/config";
+import { absoluteUrl } from "@/lib/config";
 
 // Custom robots.txt route (instead of the metadata `robots.ts`) so we can emit
 // Content-Signal directives declaring AI usage preferences.
@@ -8,7 +8,9 @@ export const GET = () => {
 Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
-Sitemap: ${siteConfig.url}/sitemap.xml
+Sitemap: ${absoluteUrl("/sitemap.xml")}
+
+# Agent index: ${absoluteUrl("/llms.txt")}
 `;
 
   return new Response(body, {

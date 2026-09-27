@@ -48,6 +48,22 @@ const getLocalPatterns = (): LocalPatterns => {
 const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
+  headers: () =>
+    Promise.resolve([
+      {
+        // `/` negotiates HTML vs markdown on Accept (see middleware.ts). Next
+        // overwrites Vary on the prerendered HTML after middleware runs, so this
+        // repeats its router keys and appends Accept rather than setting it there.
+        headers: [
+          {
+            key: "Vary",
+            value:
+              "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding, Accept",
+          },
+        ],
+        source: "/",
+      },
+    ]),
   images: {
     localPatterns: getLocalPatterns(),
     remotePatterns: getRemotePatterns(),
@@ -58,11 +74,6 @@ const config: NextConfig = {
         destination: "/showcase",
         permanent: true,
         source: "/projects",
-      },
-      {
-        destination: "/",
-        permanent: true,
-        source: "/about",
       },
     ]),
 };

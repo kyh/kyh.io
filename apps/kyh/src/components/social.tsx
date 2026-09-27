@@ -1,11 +1,6 @@
 import { cn } from "cn";
 
-export const social = {
-  dribbble: "https://dribbble.com/kaiyuhsu",
-  github: "https://github.com/kyh",
-  linkedin: "https://www.linkedin.com/in/kyh",
-  twitter: "https://x.com/kaiyuhsu",
-};
+import { social } from "@/lib/social";
 
 export const GithubLink = () => (
   <a
