@@ -2,13 +2,7 @@ export const siteConfig = {
   creator: "@kaiyuhsu",
   description:
     "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
-  email: "hello@kyh.io",
-  /** Where I am. Used by structured data. */
-  location: {
-    city: "San Francisco",
-    country: "US",
-    region: "CA",
-  },
+  email: "im.kaiyu@gmail.com",
   name: "Kaiyu Hsu",
   shortName: "kyh",
   /** The site, as distinct from `name` — the person. */
@@ -16,11 +10,11 @@ export const siteConfig = {
   url: process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.kyh.io",
 };
 
-export type SiteRoute = {
+export interface SiteRoute {
   path: string;
   title: string;
   description: string;
-};
+}
 
 /**
  * Single source of truth for the canonical HTML routes. Drives `sitemap.xml`,
@@ -29,40 +23,40 @@ export type SiteRoute = {
  */
 export const siteRoutes: SiteRoute[] = [
   {
+    description: "Who I am, what I've shipped, and every way to reach me.",
     path: "/",
     title: "Home",
-    description: "Who I am, what I've shipped, and every way to reach me.",
   },
   {
+    description: "Long-form background: the roles, the research, and the work I take on.",
     path: "/about",
     title: "About",
-    description: "Long-form background: the roles, the research, and the work I take on.",
   },
   {
+    description: "Ventures, projects, mini apps and templates, with links to each one.",
     path: "/showcase",
     title: "Showcase",
-    description: "Ventures, projects, mini apps and templates, with links to each one.",
   },
   {
-    path: "/developers",
-    title: "Developers",
     description:
       "Machine-readable endpoints, the `npx kyh` CLI, and how an agent should read this site.",
+    path: "/developers",
+    title: "Developers",
   },
   {
+    description: "Email and social channels, what to send, and what to expect back.",
     path: "/contact",
     title: "Contact",
-    description: "Email and social channels, what to send, and what to expect back.",
   },
   {
+    description: "What this site collects, what it doesn't, and who processes it.",
     path: "/privacy",
     title: "Privacy",
-    description: "What this site collects, what it doesn't, and who processes it.",
   },
   {
+    description: "The bio streamed one word at a time (rapid serial visual presentation).",
     path: "/rsvp",
     title: "Speed read",
-    description: "The bio streamed one word at a time (rapid serial visual presentation).",
   },
 ];
 
@@ -72,25 +66,25 @@ export const siteRoutes: SiteRoute[] = [
  */
 export const agentRoutes: SiteRoute[] = [
   {
+    description: "The agent index for this site, including when to use it.",
     path: "/llms.txt",
     title: "llms.txt",
-    description: "The agent index for this site, including when to use it.",
   },
   {
-    path: "/markdown",
-    title: "Markdown view",
     description:
       "The homepage as `text/markdown`. Also served from `/` when you send `Accept: text/markdown`.",
+    path: "/markdown",
+    title: "Markdown view",
   },
   {
+    description: "Every canonical URL on this site.",
     path: "/sitemap.xml",
     title: "Sitemap",
-    description: "Every canonical URL on this site.",
   },
   {
+    description: "Crawl rules plus Content-Signal AI usage preferences.",
     path: "/robots.txt",
     title: "robots.txt",
-    description: "Crawl rules plus Content-Signal AI usage preferences.",
   },
 ];
 

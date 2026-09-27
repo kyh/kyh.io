@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { absoluteUrl, siteConfig } from "./config";
-import { buildStructuredData } from "./structured-data";
+import { buildStructuredData, serializeStructuredData } from "./structured-data";
 
 const [person, organization, website] = buildStructuredData()["@graph"];
 
@@ -29,7 +29,7 @@ test("the Person node carries name, description, url and profiles", () => {
   assert.equal(person.worksFor.name, "Sequoia Capital");
 });
 
-test("the Organization node has both a contactPoint and a postal address", () => {
+test("the Organization node has a contactPoint and no postal address", () => {
   const [contactPoint] = organization.contactPoint;
 
   assert.equal(contactPoint?.["@type"], "ContactPoint");
@@ -37,13 +37,19 @@ test("the Organization node has both a contactPoint and a postal address", () =>
   assert.ok((contactPoint?.contactType.length ?? 0) > 0);
   assert.equal(contactPoint?.url, absoluteUrl("/contact"));
 
-  assert.equal(organization.address["@type"], "PostalAddress");
-  assert.equal(organization.address.addressLocality, siteConfig.location.city);
-  assert.equal(organization.address.addressCountry, siteConfig.location.country);
+  assert.equal("address" in organization, false);
+  assert.equal("address" in person, false);
 });
 
 test("nodes cross-reference each other by @id", () => {
   assert.equal(organization.founder["@id"], person["@id"]);
   assert.equal(website.publisher["@id"], organization["@id"]);
   assert.equal(website.about["@id"], person["@id"]);
+});
+
+test("serialization escapes < so the inline script can't be closed early", () => {
+  const serialized = serializeStructuredData(buildStructuredData());
+
+  assert.equal(serialized.includes("<"), false);
+  assert.deepEqual(JSON.parse(serialized), buildStructuredData());
 });

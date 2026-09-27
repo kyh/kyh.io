@@ -6,23 +6,16 @@ const PERSON_ID = `${siteConfig.url}/#person`;
 const ORGANIZATION_ID = `${siteConfig.url}/#organization`;
 const WEBSITE_ID = `${siteConfig.url}/#website`;
 
-type PostalAddress = {
-  "@type": "PostalAddress";
-  addressLocality: string;
-  addressRegion: string;
-  addressCountry: string;
-};
-
-type ContactPoint = {
+interface ContactPoint {
   "@type": "ContactPoint";
   contactType: string;
   email: string;
   url: string;
   availableLanguage: string[];
   areaServed: string;
-};
+}
 
-type PersonNode = {
+interface PersonNode {
   "@type": "Person";
   "@id": string;
   name: string;
@@ -34,12 +27,11 @@ type PersonNode = {
   email: string;
   jobTitle: string;
   worksFor: { "@type": "Organization"; name: string; url: string };
-  address: PostalAddress;
   knowsAbout: string[];
   sameAs: string[];
-};
+}
 
-type OrganizationNode = {
+interface OrganizationNode {
   "@type": "Organization";
   "@id": string;
   name: string;
@@ -49,12 +41,11 @@ type OrganizationNode = {
   description: string;
   email: string;
   founder: { "@id": string };
-  address: PostalAddress;
   contactPoint: ContactPoint[];
   sameAs: string[];
-};
+}
 
-type WebSiteNode = {
+interface WebSiteNode {
   "@type": "WebSite";
   "@id": string;
   url: string;
@@ -64,50 +55,34 @@ type WebSiteNode = {
   inLanguage: string;
   publisher: { "@id": string };
   about: { "@id": string };
-};
+}
 
-export type StructuredData = {
+export interface StructuredData {
   "@context": "https://schema.org";
   "@graph": [PersonNode, OrganizationNode, WebSiteNode];
-};
+}
 
 const sameAs = [social.github, social.twitter, social.linkedin, social.dribbble];
 
-/** Street address is deliberately omitted — this is a personal site, not an office. */
-const address: PostalAddress = {
-  "@type": "PostalAddress",
-  addressLocality: siteConfig.location.city,
-  addressRegion: siteConfig.location.region,
-  addressCountry: siteConfig.location.country,
-};
-
-const currentRole = workHistory[0];
+const [currentRole] = workHistory;
 
 /**
  * JSON-LD identity graph. `Person` is the primary entity (this is a personal
- * site); `Organization` carries the contactPoint and address an agent needs to
- * verify who is behind the domain; `WebSite` ties the two to the URL.
+ * site); `Organization` carries the contactPoint an agent needs to verify who is
+ * behind the domain; `WebSite` ties the two to the URL. No PostalAddress or
+ * phone: a personal site has no office to list.
  */
 export const buildStructuredData = (): StructuredData => ({
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "Person",
       "@id": PERSON_ID,
-      name: siteConfig.name,
+      "@type": "Person",
       alternateName: ["Kai", siteConfig.shortName],
-      url: siteConfig.url,
-      mainEntityOfPage: absoluteUrl("/about"),
-      image: `${siteConfig.url}/og.jpg`,
       description: siteConfig.description,
       email: `mailto:${siteConfig.email}`,
+      image: `${siteConfig.url}/og.jpg`,
       jobTitle: currentRole?.role ?? "Software Engineer",
-      worksFor: {
-        "@type": "Organization",
-        name: currentRole?.company ?? siteConfig.siteName,
-        url: currentRole?.link ?? siteConfig.url,
-      },
-      address,
       knowsAbout: [
         "Software engineering",
         "Design engineering",
@@ -115,41 +90,52 @@ export const buildStructuredData = (): StructuredData => ({
         "Developer experience",
         "Venture capital",
       ],
+      mainEntityOfPage: absoluteUrl("/about"),
+      name: siteConfig.name,
       sameAs,
+      url: siteConfig.url,
+      worksFor: {
+        "@type": "Organization",
+        name: currentRole?.company ?? siteConfig.siteName,
+        url: currentRole?.link ?? siteConfig.url,
+      },
     },
     {
-      "@type": "Organization",
       "@id": ORGANIZATION_ID,
-      name: siteConfig.siteName,
-      url: siteConfig.url,
-      logo: `${siteConfig.url}/favicon/web-app-manifest-512x512.png`,
-      image: `${siteConfig.url}/og.jpg`,
-      description: siteConfig.description,
-      email: `mailto:${siteConfig.email}`,
-      founder: { "@id": PERSON_ID },
-      address,
+      "@type": "Organization",
       contactPoint: [
         {
           "@type": "ContactPoint",
+          areaServed: "Worldwide",
+          availableLanguage: ["English"],
           contactType: "customer support",
           email: siteConfig.email,
           url: absoluteUrl("/contact"),
-          availableLanguage: ["English"],
-          areaServed: "Worldwide",
         },
       ],
+      description: siteConfig.description,
+      email: `mailto:${siteConfig.email}`,
+      founder: { "@id": PERSON_ID },
+      image: `${siteConfig.url}/og.jpg`,
+      logo: `${siteConfig.url}/favicon/web-app-manifest-512x512.png`,
+      name: siteConfig.siteName,
       sameAs,
+      url: siteConfig.url,
     },
     {
-      "@type": "WebSite",
       "@id": WEBSITE_ID,
-      url: siteConfig.url,
-      name: siteConfig.siteName,
+      "@type": "WebSite",
+      about: { "@id": PERSON_ID },
       alternateName: siteConfig.name,
       description: siteConfig.description,
       inLanguage: "en-US",
+      name: siteConfig.siteName,
       publisher: { "@id": ORGANIZATION_ID },
-      about: { "@id": PERSON_ID },
+      url: siteConfig.url,
     },
   ],
 });
+
+/** Escapes `<` so a value containing `</script>` can't end the inline tag early. */
+export const serializeStructuredData = (data: StructuredData) =>
+  JSON.stringify(data).replaceAll("<", String.raw`<`);

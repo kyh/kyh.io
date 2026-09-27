@@ -7,7 +7,7 @@ import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config";
-import { buildStructuredData } from "@/lib/structured-data";
+import { JsonLd } from "@/components/json-ld";
 
 import "@/styles/global.css";
 
@@ -77,12 +77,10 @@ export const metadata: Metadata = {
   },
 };
 
-const structuredData = JSON.stringify(buildStructuredData());
-
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <body>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
+      <JsonLd />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
         <Multiplayer />
