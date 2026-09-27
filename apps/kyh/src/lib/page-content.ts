@@ -220,11 +220,11 @@ export const privacyContent: PageContent = {
 
 export const developersContent: PageContent = {
   description:
-    "Machine-readable endpoints for kyh.io: llms.txt, markdown content negotiation, sitemap, robots, and the npx kyh CLI.",
+    "Machine-readable files for kyh.io: llms.txt, the markdown view, sitemap, robots, and the npx kyh CLI.",
   heading: "Developer and agent resources for kyh.io",
   intro: [
-    "kyh.io is built to be read by software as well as by people. Every page is server-rendered, the homepage is available as markdown through content negotiation, and there's an llms.txt index describing what lives where. This page is the human-readable map of those endpoints.",
-    "There is no public HTTP API, no authentication, no webhooks and no MCP server behind this domain — if you find something claiming otherwise, it isn't mine. What follows is the complete list.",
+    "kyh.io is built to be read by software as well as by people. Every page is server-rendered, the homepage is available as markdown through content negotiation, and there's an llms.txt index describing what lives where. This page is the human-readable map of those files.",
+    "kyh.io is a personal site, not a service: nothing here takes input or has anything to integrate with. What follows is the complete list.",
   ],
   path: "/developers",
   sections: [
@@ -240,7 +240,7 @@ export const developersContent: PageContent = {
           text: "Send `Accept: text/markdown` to https://www.kyh.io/ and you'll get the markdown representation of the homepage instead of HTML; send anything else and you'll get HTML. Both representations send `Vary: Accept` so a shared cache can't hand you the wrong one. The HTML response also advertises the alternate through an RFC 8288 `Link` header pointing at /markdown. Requests for paths that don't exist return a real HTTP 404 with a short markdown body listing where to look instead.",
         },
       ],
-      heading: "Machine-readable endpoints",
+      heading: "Machine-readable files",
       id: "machine-readable",
     },
     {

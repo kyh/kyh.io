@@ -39,7 +39,7 @@ export const siteRoutes: SiteRoute[] = [
   },
   {
     description:
-      "Machine-readable endpoints, the `npx kyh` CLI, and how an agent should read this site.",
+      "Machine-readable files, the `npx kyh` CLI, and how an agent should read this site.",
     path: "/developers",
     title: "Developers",
   },
