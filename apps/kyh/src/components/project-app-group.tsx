@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
@@ -15,6 +15,7 @@ interface Point {
 export interface ProjectAppItem {
   key: string;
   name: string;
+  description: string;
   iconSrc: string;
   url?: string;
 }
@@ -39,12 +40,20 @@ const maxLabelWidth = 90;
 
 interface ProjectAppProps {
   name: string;
+  /** Screen-reader only: the grid shows icons and names, so this is the only text saying what each thing is. */
+  description: string;
   iconSrc: string;
   url?: string;
   showShadow?: boolean;
 }
 
-export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectAppProps) => {
+export const ProjectApp = ({
+  name,
+  description,
+  iconSrc,
+  url,
+  showShadow = true,
+}: ProjectAppProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const labelRef = useRef<HTMLDivElement>(null);
@@ -103,6 +112,7 @@ export const ProjectApp = ({ name, iconSrc, url, showShadow = true }: ProjectApp
       >
         {name}
       </motion.div>
+      <span className="sr-only">{description}</span>
 
       {/* Expanded label tooltip */}
       <AnimatePresence>
@@ -166,13 +176,20 @@ const OpenGridItem = ({
         delay: openDelay,
       }}
     >
-      <ProjectApp name={item.name} iconSrc={item.iconSrc} url={item.url} showShadow={false} />
+      <ProjectApp
+        name={item.name}
+        description={item.description}
+        iconSrc={item.iconSrc}
+        url={item.url}
+        showShadow={false}
+      />
     </motion.div>
   );
 };
 
 export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const contentsId = useId();
   const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<Point | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -236,6 +253,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
           >
             <Dialog.Trigger
               className="group ease flex flex-col items-center gap-2 transition-transform duration-200 will-change-transform select-none active:scale-95"
+              aria-describedby={contentsId}
               onClick={handleOpen}
               style={{ pointerEvents: isOpen ? "none" : "auto" }}
               data-slot="folder-trigger"
@@ -271,6 +289,9 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 {title}
               </div>
             </Dialog.Trigger>
+            <p id={contentsId} className="sr-only">
+              {items.map((item) => `${item.name}: ${item.description}.`).join(" ")}
+            </p>
           </motion.div>
         </div>
 
