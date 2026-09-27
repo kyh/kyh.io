@@ -2,7 +2,7 @@
 
 Personal monorepo. Uses pnpm workspaces + Turborepo.
 
-[kyh.io](https://kyh.io)
+[kyh.io](https://www.kyh.io)
 
 ## Apps
 

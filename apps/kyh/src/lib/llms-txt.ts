@@ -1,6 +1,7 @@
 import type { SiteRoute } from "@/lib/config";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 import { projects, workHistory } from "@/lib/data";
+import { OPENAPI_PATH } from "@/lib/openapi";
 
 const routeLine = (route: SiteRoute) =>
   `- [${route.title}](${absoluteUrl(route.path)}): ${route.description}`;
@@ -18,7 +19,7 @@ export const buildLlmsTxt = () => `# ${siteConfig.siteName} — ${siteConfig.nam
 
 > The personal site of Kaiyu Hsu (Kai): Technical Staff at Sequoia Capital, previously Vercel, Google and Amazon. Bio, work history, and ${projects.length} shipped projects, ventures, mini apps and templates.
 
-Every page here is server-rendered and readable without JavaScript. The homepage is also available as markdown — request ${siteConfig.url}/ with \`Accept: text/markdown\`, or fetch ${absoluteUrl("/markdown")} directly. Responses that negotiate on \`Accept\` send \`Vary: Accept\`. Paths that do not exist return a real HTTP 404 with a short markdown body pointing back here.
+Every page here is server-rendered and readable without JavaScript. The homepage is also available as markdown — request ${siteConfig.url}/ with \`Accept: text/markdown\`, or fetch ${absoluteUrl("/markdown")} directly. Responses that negotiate on \`Accept\` send \`Vary: Accept\`. Paths that do not exist return a real HTTP 404 with a short markdown body pointing back here. Every machine-readable endpoint is a read-only GET described by the OpenAPI 3.1 document at ${absoluteUrl(OPENAPI_PATH)}; unknown \`/api/*\` paths return an \`application/problem+json\` 404.
 
 ## When to use this
 

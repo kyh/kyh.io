@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { acceptsMarkdown } from "@/lib/content-negotiation";
+import { discoveryLinks } from "@/lib/openapi";
 
 // Agent discovery on the homepage:
-// - Link header (RFC 8288) advertises the markdown view as an alternate.
+// - Link header (RFC 8288) advertises the markdown view as an alternate, plus
+//   the OpenAPI description and API catalog.
 // - Content negotiation: agents sending `Accept: text/markdown` get the
 //   markdown version while browsers keep the HTML default.
 // - `Vary: Accept` is appended (never set) on both branches so it joins Next's
@@ -20,7 +22,10 @@ export const middleware = (req: NextRequest) => {
   const res = NextResponse.next();
   res.headers.set(
     "Link",
-    `</markdown>; rel="alternate"; type="text/markdown"; title="Markdown version for agents"`,
+    [
+      `</markdown>; rel="alternate"; type="text/markdown"; title="Markdown version for agents"`,
+      ...discoveryLinks,
+    ].join(", "),
   );
   res.headers.append("Vary", "Accept");
   return res;

@@ -3,6 +3,15 @@ import test from "node:test";
 
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "./config";
 
+// The apex 308s to www, so anything else would advertise a redirect as canonical.
+test("canonical origin is the host production actually serves", () => {
+  assert.equal(siteConfig.url, "https://www.kyh.io");
+});
+
+test("contact email is the published address", () => {
+  assert.equal(siteConfig.email, "kai@kyh.io");
+});
+
 test("absoluteUrl collapses the root path to the bare origin", () => {
   assert.equal(absoluteUrl("/"), siteConfig.url);
   assert.equal(absoluteUrl("/about"), `${siteConfig.url}/about`);

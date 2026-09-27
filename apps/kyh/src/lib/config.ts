@@ -2,7 +2,7 @@ export const siteConfig = {
   creator: "@kaiyuhsu",
   description:
     "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
-  email: "im.kaiyu@gmail.com",
+  email: "kai@kyh.io",
   name: "Kaiyu Hsu",
   shortName: "kyh",
   /** The site, as distinct from `name` — the person. */
@@ -85,6 +85,16 @@ export const agentRoutes: SiteRoute[] = [
     description: "Crawl rules plus Content-Signal AI usage preferences.",
     path: "/robots.txt",
     title: "robots.txt",
+  },
+  {
+    description: "OpenAPI 3.1 description of every machine-readable endpoint listed here.",
+    path: "/openapi.json",
+    title: "OpenAPI",
+  },
+  {
+    description: "RFC 9727 API catalog linking to the OpenAPI description.",
+    path: "/.well-known/api-catalog",
+    title: "API catalog",
   },
 ];
 
