@@ -86,6 +86,16 @@ export const agentRoutes: SiteRoute[] = [
     path: "/robots.txt",
     title: "robots.txt",
   },
+  {
+    description: "OpenAPI 3.1 description of every machine-readable endpoint listed here.",
+    path: "/openapi.json",
+    title: "OpenAPI",
+  },
+  {
+    description: "RFC 9727 API catalog linking to the OpenAPI description.",
+    path: "/.well-known/api-catalog",
+    title: "API catalog",
+  },
 ];
 
 /** `/` collapses to the bare origin, so canonical URLs have no trailing slash. */

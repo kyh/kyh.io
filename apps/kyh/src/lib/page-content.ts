@@ -220,7 +220,7 @@ export const privacyContent: PageContent = {
 
 export const agentsContent: PageContent = {
   description:
-    "Machine-readable files for kyh.io: llms.txt, the markdown view, sitemap, robots, and the npx kyh CLI.",
+    "Machine-readable files for kyh.io: llms.txt, the markdown view, sitemap, robots, OpenAPI description, and the npx kyh CLI.",
   heading: "Agent resources for kyh.io",
   intro: [
     "kyh.io is built to be read by software as well as by people. Every page is server-rendered, the homepage is available as markdown through content negotiation, and there's an llms.txt index describing what lives where. This page is the human-readable map of those files.",
@@ -238,6 +238,14 @@ export const agentsContent: PageContent = {
         {
           kind: "text",
           text: "Send `Accept: text/markdown` to https://www.kyh.io/ and you'll get the markdown representation of the homepage instead of HTML; send anything else and you'll get HTML. Both representations send `Vary: Accept` so a shared cache can't hand you the wrong one. The HTML response also advertises the alternate through an RFC 8288 `Link` header pointing at /markdown. Requests for paths that don't exist return a real HTTP 404 with a short markdown body listing where to look instead.",
+        },
+        {
+          kind: "subheading",
+          text: "OpenAPI",
+        },
+        {
+          kind: "text",
+          text: '/openapi.json is an OpenAPI 3.1 description of the endpoints above — every one an unauthenticated, read-only GET. It\'s also advertised from the homepage through a `Link: </openapi.json>; rel="service-desc"` header and from the RFC 9727 catalog at /.well-known/api-catalog. There is no write API, no auth and no OAuth; unknown paths under /api return an RFC 9457 `application/problem+json` 404 rather than a page.',
         },
       ],
       heading: "Machine-readable files",
