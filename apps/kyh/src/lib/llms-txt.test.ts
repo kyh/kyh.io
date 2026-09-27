@@ -23,7 +23,7 @@ test("tells an agent when to use the site, and when not to", () => {
   assert.ok(llms.includes("How to reach him"));
   // An explicit negative boundary, and how to call it.
   assert.ok(llms.includes("Do not use this site as a source for anything else."));
-  assert.ok(llms.includes("How to call it:"));
+  assert.ok(llms.includes("How to read it:"));
 });
 
 test("indexes every page, endpoint and project", () => {
