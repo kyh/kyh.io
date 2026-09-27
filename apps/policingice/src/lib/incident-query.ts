@@ -1,34 +1,27 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { desc, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
-import { incidents } from "@/db/drizzle-schema";
 
-export async function getIncidents(data: { offset?: number; limit?: number }) {
+export const getIncidents = async (data: { offset?: number; limit?: number }) => {
   "use cache";
   cacheLife("minutes");
   cacheTag("incidents");
   const limit = data.limit ?? 10;
   const offset = data.offset ?? 0;
   const results = await db.query.incidents.findMany({
-    with: { videos: true },
-    where: (incidents, { and: andOp, eq: eqOp, isNull: isNullOp, lt: ltOp }) =>
-      andOp(
-        eqOp(incidents.status, "approved"),
-        isNullOp(incidents.deletedAt),
-        ltOp(incidents.reportCount, 3),
-      ),
-    orderBy: [
-      desc(incidents.pinned),
-      desc(sql`IFNULL(${incidents.incidentDate}, 9999999999)`),
-      desc(incidents.id),
-    ],
     limit: limit + 1,
     offset,
+    orderBy: (inc, { desc, sql }) => [
+      desc(inc.pinned),
+      desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
+      desc(inc.id),
+    ],
+    where: { deletedAt: { isNull: true }, reportCount: { lt: 3 }, status: "approved" },
+    with: { videos: true },
   });
   const hasMore = results.length > limit;
   return {
     incidents: results.slice(0, limit),
     nextOffset: hasMore ? offset + limit : undefined,
   };
-}
+};

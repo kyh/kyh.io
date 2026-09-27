@@ -31,9 +31,9 @@ export const Multiplayer = () => {
   );
 
   const cursors = Object.entries(present)
-    .filter(([, player]) => {
-      return !!player.state.x && !!player.state.y && player.state.pathname === pathname;
-    })
+    .filter(
+      ([, player]) => !!player.state.x && !!player.state.y && player.state.pathname === pathname,
+    )
     .map(([id, player]) => (
       <Cursor
         key={id}

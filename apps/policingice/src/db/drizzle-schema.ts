@@ -1,5 +1,5 @@
-import { relations, sql } from "drizzle-orm";
-import { blob, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // Embedding dimensions for text-embedding-3-small
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -18,118 +18,94 @@ export type VoteType = "unjustified" | "justified";
 
 // better-auth tables
 export const user = sqliteTable("user", {
-  id: text().primaryKey(),
-  name: text().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   email: text().notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull(),
+  id: text().primaryKey(),
   image: text(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   isAnonymous: integer("is_anonymous", { mode: "boolean" }),
+  name: text().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
 export const session = sqliteTable("session", {
-  id: text().primaryKey(),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-  token: text().notNull().unique(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  id: text().primaryKey(),
   ipAddress: text("ip_address"),
+  token: text().notNull().unique(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   userAgent: text("user_agent"),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = sqliteTable(
-  "account",
-  {
-    id: text().primaryKey(),
-    issuer: text().notNull(),
-    accountId: text("account_id").notNull(),
-    providerId: text("provider_id").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    accessToken: text("access_token"),
-    refreshToken: text("refresh_token"),
-    idToken: text("id_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", {
-      mode: "timestamp",
-    }),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", {
-      mode: "timestamp",
-    }),
-    scope: text(),
-    password: text(),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-  },
-  (t) => [uniqueIndex("account_issuer_accountId_uidx").on(t.issuer, t.accountId)],
-);
+export const account = sqliteTable("account", {
+  accessToken: text("access_token"),
+  accessTokenExpiresAt: integer("access_token_expires_at", {
+    mode: "timestamp",
+  }),
+  accountId: text("account_id").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  id: text().primaryKey(),
+  idToken: text("id_token"),
+  password: text(),
+  providerId: text("provider_id").notNull(),
+  refreshToken: text("refresh_token"),
+  refreshTokenExpiresAt: integer("refresh_token_expires_at", {
+    mode: "timestamp",
+  }),
+  scope: text(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
 
 export const verification = sqliteTable("verification", {
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
   id: text().primaryKey(),
   identifier: text().notNull(),
-  value: text().notNull(),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  value: text().notNull(),
 });
 
 export const incidents = sqliteTable("incidents", {
-  id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  location: text(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
   description: text(),
-  embedding: blob({ mode: "buffer" }), // F32_BLOB for vector search
+  // F32_BLOB for vector search
+  embedding: blob({ mode: "buffer" }),
+  id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   incidentDate: integer("incident_date", { mode: "timestamp" }),
-  status: text().$type<IncidentStatus>().default("approved").notNull(),
+  justifiedCount: integer("justified_count").default(0).notNull(),
+  location: text(),
   pinned: integer({ mode: "boolean" })
     .default(sql`0`)
     .notNull(),
-  unjustifiedCount: integer("unjustified_count").default(0).notNull(),
-  justifiedCount: integer("justified_count").default(0).notNull(),
   reportCount: integer("report_count").default(0).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
-  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  status: text().$type<IncidentStatus>().default("approved").notNull(),
+  unjustifiedCount: integer("unjustified_count").default(0).notNull(),
 });
 
 export const videos = sqliteTable("videos", {
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   incidentId: integer("incident_id")
     .references(() => incidents.id, { onDelete: "cascade" })
     .notNull(),
-  url: text().notNull(),
   platform: text().$type<VideoPlatform>().notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
+  url: text().notNull(),
 });
 
 export const votes = sqliteTable("votes", {
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   incidentId: integer("incident_id")
     .references(() => incidents.id, { onDelete: "cascade" })
     .notNull(),
   sessionId: text("session_id").notNull(),
   type: text().$type<VoteType>().notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
-
-// Relations
-export const incidentsRelations = relations(incidents, ({ many }) => ({
-  videos: many(videos),
-  votes: many(votes),
-}));
-
-export const videosRelations = relations(videos, ({ one }) => ({
-  incident: one(incidents, {
-    fields: [videos.incidentId],
-    references: [incidents.id],
-  }),
-}));
-
-export const votesRelations = relations(votes, ({ one }) => ({
-  incident: one(incidents, {
-    fields: [votes.incidentId],
-    references: [incidents.id],
-  }),
-}));

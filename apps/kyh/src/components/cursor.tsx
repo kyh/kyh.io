@@ -1,4 +1,4 @@
-type CursorProps = {
+interface CursorProps {
   x?: number;
   y?: number;
   color?: string;
@@ -7,12 +7,14 @@ type CursorProps = {
     width: number;
     height: number;
   };
-};
+}
 
 const offset = 10;
 
 export const Cursor = ({ x, y, color, hue, windowDimensions }: CursorProps) => {
-  if (!x || !y) return null;
+  if (!x || !y) {
+    return null;
+  }
 
   const cursorWidth = 18;
   const maxLeft = windowDimensions.width - cursorWidth;

@@ -4,27 +4,39 @@ import type { LivelinePoint } from "../types";
  * Compute visible Y range from data points + current value.
  * Returns { min, max } with margin applied.
  */
-export function computeRange(
+export const computeRange = (
   visible: LivelinePoint[],
   currentValue: number,
   referenceValue?: number,
   exaggerate?: boolean,
-) {
+) => {
   let targetMin = Infinity;
   let targetMax = -Infinity;
 
   for (const p of visible) {
-    if (p.value < targetMin) targetMin = p.value;
-    if (p.value > targetMax) targetMax = p.value;
+    if (p.value < targetMin) {
+      targetMin = p.value;
+    }
+    if (p.value > targetMax) {
+      targetMax = p.value;
+    }
   }
 
-  if (currentValue < targetMin) targetMin = currentValue;
-  if (currentValue > targetMax) targetMax = currentValue;
+  if (currentValue < targetMin) {
+    targetMin = currentValue;
+  }
+  if (currentValue > targetMax) {
+    targetMax = currentValue;
+  }
 
   // Include reference line so it's always visible
   if (referenceValue !== undefined) {
-    if (referenceValue < targetMin) targetMin = referenceValue;
-    if (referenceValue > targetMax) targetMax = referenceValue;
+    if (referenceValue < targetMin) {
+      targetMin = referenceValue;
+    }
+    if (referenceValue > targetMax) {
+      targetMax = referenceValue;
+    }
   }
 
   const rawRange = targetMax - targetMin;
@@ -41,5 +53,5 @@ export function computeRange(
     targetMax += margin;
   }
 
-  return { min: targetMin, max: targetMax };
-}
+  return { max: targetMax, min: targetMin };
+};

@@ -35,6 +35,34 @@ lists back to the expected version. Re-run until it prints `Dependencies are up 
 Keep Expo's React out of the shared catalog — it legitimately diverges from web's. Put it
 in a named `expo:` catalog (see `init`, `yours-sincerely`) so it is separately bumpable.
 
+Expo repos guard the SDK-only names (`expo`, `expo-*`, `@expo/*`, `react-native`,
+`react-native-*`, `@react-native/*`) with `update.ignoreDeps` in `pnpm-workspace.yaml`
+(pnpm ≥ 11.16; `updateConfig.ignoreDependencies` is the deprecated alias). It matches by
+name, globs and `!` negation work, and naming a package on the command line bypasses it.
+If an Expo repo lacks the block, add it.
+
+`--latest` still bumps the `expo:` catalog rows (`react`, `react-dom`, `typescript`,
+`@types/react`): they share a name with web's, so `ignoreDeps` cannot guard them without
+freezing web. Revert those rows by hand. When web's `@types/react`
+moves ahead of Expo's, give the `expo:` catalog its own `@types/react` row and point the
+Expo app at `catalog:expo`.
+
+### Phase 1c: Pins `--latest` must not move
+
+`--latest` follows the npm `latest` dist-tag, not the repo's intent. Before verifying,
+`git diff -- '**/package.json' pnpm-workspace.yaml` and undo any of these:
+
+- **Prerelease pins** (`drizzle-orm`/`drizzle-kit` `1.0.0-rc.x`, `@orpc/*` betas, nativewind
+  previews): when `latest` is older than the pin, `--latest` is a downgrade. Restore the
+  exact version — no caret, a caret on an rc resolves to hash-suffixed snapshot builds.
+- **Exact or tilde pins with a WHY comment** in `pnpm-workspace.yaml` / `CLAUDE.md`: the
+  comment is the contract. Leave them.
+- **`minimumReleaseAgeExclude`** that pnpm wrote on its own to get a too-fresh release
+  past `minimumReleaseAge`: remove it and resolve to the previous version instead.
+- **Peer- and engine-capped majors**: don't take `@types/node` past the `engines` major,
+  or one half of a lockstep pair (`@babel/types` 8 with `@babel/parser` 7, `react` past a
+  peer's `<19.3` cap, `vitest` past `@cloudflare/vitest-pool-workers`' peer).
+
 ### Phase 2: Verify & Fix
 
 For each project, spawn a parallel agent that:
@@ -90,6 +118,14 @@ Failed (needs manual intervention):
   to the previous major, keep every other update, and report it as follow-up work. Do not
   rewrite a feature inside a `chore: update packages` commit, and do not reach for a
   compatibility shim (`/legacy` entrypoints) to dodge the decision.
+- **A bump that needs a database change is not a chore either.** The auth schemas are
+  hand-maintained, so a `better-auth` release that adds or drops a required column fails
+  the `auth-tables` drift test — and would fail every insert in production. Pin
+  `better-auth` and every `@better-auth/*` to the last compatible version (add a
+  `@better-auth/core` override if a second core instance appears), and report the schema
+  migration as follow-up. Never fold an ORM/migration-tool upgrade (drizzle) into this sweep.
+- Never run a remote `db:push` as part of an update. drizzle-kit 1.0 `push` applies table
+  recreates without prompting, and on D1 a recreate cascade-deletes child rows.
 - For auto-generated files (content-data.ts, etc.), fix the generator input, then regenerate.
 - If a build was already broken BEFORE the update (check with `git stash && pnpm build && git stash pop`), skip that failure — it's not our problem.
 - Commit per project, not one big commit.

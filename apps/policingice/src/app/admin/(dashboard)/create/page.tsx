@@ -34,7 +34,9 @@ const AdminCreate = () => {
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          if (validUrls.length === 0) return;
+          if (validUrls.length === 0) {
+            return;
+          }
 
           const formData = new FormData(e.currentTarget);
           const location = formString(formData, "location").trim();
@@ -45,11 +47,11 @@ const AdminCreate = () => {
 
           try {
             const res = await bulkCreateIncidents({
-              urls: validUrls,
-              groupAsOne,
-              location: location || undefined,
               description: description || undefined,
+              groupAsOne,
               incidentDate: incidentDate || undefined,
+              location: location || undefined,
+              urls: validUrls,
             });
             if (res.created > 0) {
               toast.success(`Created ${res.created} incident(s)`);
@@ -60,9 +62,10 @@ const AdminCreate = () => {
             if (res.skipped > 0) {
               toast(`Skipped ${res.skipped} existing URL(s)`);
             }
-          } finally {
-            setIsSubmitting(false);
+          } catch {
+            toast.error("Failed to create incidents");
           }
+          setIsSubmitting(false);
         }}
       >
         <Field.Root name="urls">
@@ -139,7 +142,7 @@ const AdminCreate = () => {
         >
           {isSubmitting
             ? "Creating..."
-            : `Create ${incidentCount} incident${incidentCount !== 1 ? "s" : ""}`}
+            : `Create ${incidentCount} incident${incidentCount === 1 ? "" : "s"}`}
         </button>
       </Form>
     </div>

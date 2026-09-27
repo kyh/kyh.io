@@ -13,13 +13,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "cnfast": "catalog:",
-    "konva": "^10.3.1",
+    "cn": "catalog:",
+    "konva": "^10.6.0",
     "lucide-react": "catalog:",
-    "motion": "^13.1.1",
+    "motion": "^13.4.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-konva": "^19.2.5"
+    "react-konva": "^19.3.0"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",

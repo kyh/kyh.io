@@ -1,6 +1,7 @@
 {
   "name": "kyh-monorepo",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -9,7 +10,7 @@
     "dev:cli": "pnpm -F kyh dev",
     "dev:stonksville": "pnpm -F @repo/stonksville dev",
     "dev:covid": "pnpm -F @repo/covid-19-dashboard dev",
-    "dev:feedreel": "pnpm -F @repo/feedreel dev",
+    "dev:autoplay": "pnpm -F @repo/autoplay dev",
     "dev:kwadrants": "pnpm -F @repo/kwadrants dev",
     "dev:policingice": "pnpm -F @repo/policingice dev",
     "dev:kyh": "pnpm -F @repo/kyh dev",
@@ -17,7 +18,7 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "lint": "oxlint --report-unused-disable-directives --max-warnings 54",
+    "lint": "oxlint --report-unused-disable-directives",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "oxfmt --check",
@@ -27,17 +28,16 @@
     "verify:ci": "pnpm verify && turbo run build --filter=@repo/party..."
   },
   "devDependencies": {
-    "@kyh/oxlint": "workspace:*",
     "dotenv-cli": "^11.0.0",
-    "oxfmt": "^0.64.0",
-    "oxlint": "^1.79.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
     "tsx": "catalog:",
-    "turbo": "^2.10.11",
-    "typescript": "catalog:"
+    "turbo": "^2.11.2",
+    "typescript": "catalog:",
+    "ultracite": "^7.12.0"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
-  "packageManager": "pnpm@10.33.0",
-  "pnpm": {}
+  "packageManager": "pnpm@12.3.4"
 }

@@ -39,9 +39,8 @@ const AdminLogin = () => {
               }
             } catch {
               setErrors({ form: "Login failed" });
-            } finally {
-              setIsLoading(false);
             }
+            setIsLoading(false);
           }}
         >
           <Field.Root name="email">

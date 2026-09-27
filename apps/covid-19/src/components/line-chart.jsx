@@ -1,0 +1,160 @@
+import React, { useEffect, useRef } from "react";
+import { pointer, select } from "d3";
+import { format } from "date-fns";
+import {
+  appendDefs,
+  appendSvg,
+  appendTooltip,
+  createAxis,
+  createLineFn,
+  createScales,
+  createTooltipEvents,
+} from "utils/chart-utils";
+import { formatNumber } from "utils/formatter";
+
+import "./line-chart.css";
+
+const defaultOptions = {
+  margin: {
+    bottom: 20,
+    left: 50,
+    right: 30,
+    top: 10,
+  },
+  tooltip: true,
+  xAxis: true,
+  yAxis: true,
+};
+
+const EMPTY_DATA = [];
+
+export const LineChart = ({
+  data = EMPTY_DATA,
+  dataKey = "positive",
+  options = defaultOptions,
+}) => {
+  const container = useRef(null);
+
+  useEffect(() => {
+    const containerElement = container.current;
+    if (!containerElement) {
+      return;
+    }
+
+    const mergedOptions = { ...defaultOptions, ...options };
+    // set the dimensions and margins of the graph
+    const margin = {
+      ...mergedOptions.margin,
+    };
+    const width = mergedOptions.width || containerElement.offsetWidth || 300;
+    const height = mergedOptions.height || containerElement.offsetHeight || 300;
+
+    if (data.length) {
+      const { x, y } = createScales(data, dataKey, width, height, margin);
+      const { xAxis, yAxis } = createAxis(width, x, y);
+      const { line, area } = createLineFn(dataKey, x, y);
+      let svg = select(containerElement).select(".chart");
+
+      if (svg.empty()) {
+        svg = appendSvg(containerElement, width, height);
+        appendDefs(svg);
+      }
+
+      if (mergedOptions.xAxis) {
+        const xAxisSvg = svg.selectAll(".x-axis");
+        if (xAxisSvg.empty()) {
+          svg
+            .append("g")
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .attr("class", "x-axis")
+            .call(xAxis);
+        } else {
+          xAxisSvg.transition().duration(1500).call(xAxis);
+        }
+      }
+
+      if (mergedOptions.yAxis) {
+        const yAxisSvg = svg.selectAll(".y-axis");
+        if (yAxisSvg.empty()) {
+          svg
+            .append("g")
+            .attr("transform", `translate(${margin.left},0)`)
+            .attr("class", "y-axis")
+            .call(yAxis)
+            .call((g) => g.select(".domain").remove());
+        } else {
+          yAxisSvg
+            .transition()
+            .duration(1500)
+            .call(yAxis)
+            .call((g) => g.select(".domain").remove());
+        }
+      }
+
+      const valueArea = svg.selectAll(".growth-background").data([data]);
+      valueArea.exit().remove();
+      valueArea
+        .enter()
+        .append("path")
+        .attr("class", "growth-background")
+        .attr("fill", "url(#svgGradient)")
+        .attr("d", area)
+        .merge(valueArea)
+        .transition()
+        .duration(1500)
+        .attr("d", area);
+
+      const valueLine = svg.selectAll(".growth-line").data([data]);
+      valueLine.exit().remove();
+      valueLine
+        .enter()
+        .append("path")
+        .attr("class", "growth-line")
+        .attr("fill", "none")
+        .attr("stroke-width", 1.5)
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("d", line)
+        .merge(valueLine)
+        .transition()
+        .duration(1500)
+        .attr("d", line);
+
+      if (mergedOptions.tooltip) {
+        const { onMouseEvent, callout } = createTooltipEvents(data, x);
+        const { tooltip, point, cursorLine } = appendTooltip(svg);
+
+        svg.on("touchmove mousemove", (event) => {
+          const e = onMouseEvent(pointer(event)[0]);
+          if (e.date && e[dataKey]) {
+            tooltip
+              .attr("transform", `translate(${x(e.date)},${0})`)
+              .call(callout, `${format(e.date, "MM/dd")} - ${formatNumber(e[dataKey])}`);
+            cursorLine
+              .style("display", null)
+              .attr("y1", 0)
+              .attr("x1", x(e.date))
+              .attr("y2", height - margin.bottom)
+              .attr("x2", x(e.date));
+            point.style("display", null).attr("cx", x(e.date)).attr("cy", y(e[dataKey]));
+          }
+        });
+
+        svg.on("touchend mouseleave", () => {
+          tooltip.style("display", "none");
+          point.style("display", "none");
+          cursorLine.style("display", "none");
+        });
+      }
+
+      return () => {
+        svg.interrupt();
+        svg.selectAll("*").interrupt();
+        svg.on("touchmove mousemove", null);
+        svg.on("touchend mouseleave", null);
+      };
+    }
+  }, [data, dataKey, options]);
+
+  return <div className="h-full" ref={container} />;
+};

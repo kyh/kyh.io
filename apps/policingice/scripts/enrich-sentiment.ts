@@ -12,8 +12,7 @@
  *   pnpm with-env tsx scripts/enrich-sentiment.ts -f     # Force reprocess all incidents
  */
 import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { parseArgs } from "node:util";
 import { gateway, generateObject } from "ai";
 import { eq } from "drizzle-orm";
@@ -24,24 +23,24 @@ const schema = await import("../src/db/drizzle-schema");
 
 const { values: args } = parseArgs({
   options: {
-    force: { type: "boolean", short: "f", default: false },
+    force: { default: false, short: "f", type: "boolean" },
   },
 });
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 const PROGRESS_FILE = path.join(__dirname, ".enriched-sentiment.json");
 
 const progressSchema = z.object({
+  lastRun: z.string(),
   processedIds: z.array(z.number()),
   results: z.record(
     z.string(),
-    z.object({ justified: z.number(), unjustified: z.number(), reasoning: z.string() }),
+    z.object({ justified: z.number(), reasoning: z.string(), unjustified: z.number() }),
   ),
-  lastRun: z.string(),
 });
 type ProgressData = z.infer<typeof progressSchema>;
 
-function loadProgress(): ProgressData {
+const loadProgress = (): ProgressData => {
   try {
     if (fs.existsSync(PROGRESS_FILE)) {
       return progressSchema.parse(JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")));
@@ -49,19 +48,19 @@ function loadProgress(): ProgressData {
   } catch {
     console.warn("Could not load progress, starting fresh");
   }
-  return { processedIds: [], results: {}, lastRun: "" };
-}
+  return { lastRun: "", processedIds: [], results: {} };
+};
 
-function saveProgress(data: ProgressData) {
+const saveProgress = (data: ProgressData) => {
   data.lastRun = new Date().toISOString();
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
-}
+};
 
-// Add random jitter to score (±7) while keeping within 1-100
-function jitter(score: number): number {
-  const offset = Math.floor(Math.random() * 15) - 7; // -7 to +7
+// Random ±7 jitter so seeded scores don't read as machine-generated round numbers
+const jitter = (score: number): number => {
+  const offset = Math.floor(Math.random() * 15) - 7;
   return Math.max(1, Math.min(100, score + offset));
-}
+};
 
 const SentimentSchema = z.object({
   justifiedScore: z
@@ -71,6 +70,7 @@ const SentimentSchema = z.object({
     .describe(
       "Score 1-100 based on actual public replies/comments viewing the ICE action as justified.",
     ),
+  reasoning: z.string().describe("Brief summary of the actual public sentiment in the thread"),
   unjustifiedScore: z
     .number()
     .min(1)
@@ -78,14 +78,13 @@ const SentimentSchema = z.object({
     .describe(
       "Score 1-100 based on actual public replies/comments viewing the ICE action as unjustified.",
     ),
-  reasoning: z.string().describe("Brief summary of the actual public sentiment in the thread"),
 });
 
 // Threshold for considering sentiment already seeded
 const SENTIMENT_THRESHOLD = 5;
 
-async function main() {
-  const progress = args.force ? { processedIds: [], results: {}, lastRun: "" } : loadProgress();
+const main = async () => {
+  const progress = args.force ? { lastRun: "", processedIds: [], results: {} } : loadProgress();
   const processedSet = new Set(progress.processedIds);
 
   if (args.force) {
@@ -110,13 +109,13 @@ async function main() {
   for (const incident of allIncidents) {
     // Skip if no videos
     if (incident.videos.length === 0) {
-      skippedNoVideos++;
+      skippedNoVideos += 1;
       continue;
     }
 
     // Skip if already in processed file (unless force mode)
     if (processedSet.has(incident.id)) {
-      skippedAlreadyProcessed++;
+      skippedAlreadyProcessed += 1;
       continue;
     }
 
@@ -128,7 +127,7 @@ async function main() {
     if (hasExistingSentiment) {
       // Already has sentiment in DB, add to processed file and skip
       processedSet.add(incident.id);
-      skippedAlreadyComplete++;
+      skippedAlreadyComplete += 1;
       continue;
     }
 
@@ -150,7 +149,7 @@ async function main() {
   console.log(`Found ${incidentsToEnrich.length} incidents to enrich`);
 
   for (const incident of incidentsToEnrich) {
-    const video = incident.videos[0];
+    const [video] = incident.videos;
     console.log(`\nProcessing incident ${incident.id}...`);
     console.log(`  Video: ${video.url}`);
 
@@ -165,7 +164,6 @@ async function main() {
 
       const { object } = await generateObject({
         model: gateway("xai/grok-3-fast"),
-        schema: SentimentSchema,
         prompt: `Analyze the public sentiment in the replies and comments on this Twitter/X thread about an ICE incident.
 
 ${context}
@@ -175,6 +173,7 @@ Look at the replies, quote tweets, and engagement on this post. Based on what pe
 - unjustifiedScore: What percentage of commenters view the ICE action as unjustified? (1-100)
 
 Analyze the real public discourse in the thread, not a prediction.`,
+        schema: SentimentSchema,
       });
 
       const justified = jitter(object.justifiedScore);
@@ -202,8 +201,8 @@ Analyze the real public discourse in the thread, not a prediction.`,
       progress.processedIds = [...processedSet];
       progress.results[incident.id] = {
         justified,
-        unjustified,
         reasoning: object.reasoning,
+        unjustified,
       };
       saveProgress(progress);
     } catch (error) {
@@ -215,6 +214,10 @@ Analyze the real public discourse in the thread, not a prediction.`,
   saveProgress(progress);
   console.log("\nDone!");
   console.log(`Processed ${processedSet.size} total incidents`);
-}
+};
 
-main().catch(console.error);
+try {
+  await main();
+} catch (error) {
+  console.error(error);
+}

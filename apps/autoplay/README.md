@@ -1,0 +1,198 @@
+# autoplay
+
+Your feeds as live TV channels of AI-generated video.
+
+Sign in with X and every source you connect is a channel: your X, your
+newsletters (Gmail), a feed URL, your YouTube subscriptions. Tune to one and a
+[MiniMax H3 Max Director](https://fal.ai/models/minimax/h3-max/director)
+session opens in your browser — continuous video over WebRTC that keeps its
+characters and setting while the programming feeds it a new prompt every
+program. CH 01 is the owner's X, live while the owner watches; everyone else
+gets its replay. `ch−`/`ch+` tune through the lineup. The UI is a television:
+full-bleed video, static while it tunes, a status bar with the program on air.
+
+## Channels (src/lib/lineup.ts)
+
+CH 01 is the public channel: the env-configured owner's X. Every other channel
+is a `source` row belonging to the signed-in user, in `position` order.
+Sources with a grant behind them are created from the grant the next time the
+session loads — signing in with X adds your X (unless you are the owner, whose
+X is CH 01 already), linking Google with the Gmail scope adds Newsletters,
+with the YouTube scope adds YouTube — and a feed URL is added by hand in the
+sources dialog.
+
+Each kind has one adapter in `src/lib/sources/` that answers "what airs
+next?": X ranks by engagement (personalized trends, then the timeline), Gmail
+airs the newest newsletter (mail with `List-Id`/`List-Unsubscribe` headers,
+unread first), RSS the newest entry, YouTube the most-viewed upload of the
+week from subscribed channels. Adding a kind is a new adapter and a new entry
+in `SOURCE_KINDS`.
+
+## Programming rules (src/lib/live.ts, src/lib/prompt.ts)
+
+A session opens on a **world** — one of the channel formats in `FORMATS`
+(a 1994 sitcom, a satirical news network, a pirate TV network, an anime
+news network), one per UTC day for every session — and the
+model keeps it in memory so characters, sets and running jokes persist.
+Every program after that is a **segment** of that world about the next
+item. Prompts are paced off the picture: the model reports each chunk with
+the prompt it was made under and how far ahead of the screen it is, so the
+browser knows when a subject actually appears; it holds it ten seconds
+(`HOLD_SECONDS`) and then sends the next, which the model takes up at its
+next ten-second chunk — fifteen to twenty seconds a subject.
+While the owner watches CH 01, the browser also **records** the session as
+one continuous stream (`src/lib/recorder.ts`: a single MediaRecorder, handed
+to Vercel Blob ten-odd seconds at a time) and that is the **replay** everyone
+else sees — and the owner too, once the day's budget is spent. The newest six
+sessions are kept, however old (`src/lib/recordings.ts`), so the channel has
+something to show for as long as its owner is away. Which item:
+
+1. **Best first** — the source's adapter picks the un-aired item most worth
+   airing. On X: personalized trends (cached an hour, cycled one per program
+   so consecutive programs aren't all the same story) seed a search filtered
+   on `min_likes` server-side, itself cached an hour; without Premium the
+   channel falls back to the home timeline ranked by engagement above
+   `MIN_SCORE`.
+2. **Never twice** — an item is marked aired the moment it is handed to a
+   session, in `aired_item`, and never comes back.
+3. **Budgeted** — the session is the meter, in dollars. The proxy records
+   every session fal opens and every heartbeat it relays, in `live_session`,
+   and `src/lib/live.ts` prices them the way fal does (per second, a minute
+   minimum, promotional rate until it ends). Two daily caps:
+   `DAILY_BUDGET_USD_PER_VIEWER` ($20) for each signed-in viewer on their own
+   channels, `DAILY_BUDGET_USD` ($50) for the whole station. The owner's
+   CH 01 counts against the station's only. A session is refused before it is
+   negotiated when the minute it will cost doesn't fit; a running one is
+   refused its next program at the cap and, a minute past it, its heartbeats.
+4. **Reads budgeted too** — X bills per post returned, so what its adapter
+   buys is priced into `source_read` as it lands and capped by
+   `DAILY_READ_BUDGET_USD` (`src/lib/reads.ts`); between buys, `source_cache`
+   serves every server instance for an hour.
+
+## What it costs to run
+
+**fal** bills the director session per second of video — $0.08/s at list
+price ($0.02/s promotional until Sep 14 2026), with a 60-second minimum per
+session. A watching viewer is ~$4.80 a minute at list, so a viewer's $20 a day
+is about sixteen minutes at the promotional rate and four at list. The client closes a session 30s after
+the tab is hidden or the viewer pauses, so channel-surfing and idle tabs don't
+run the meter, but every reopen is another 60-second minimum.
+
+**X** bills per post returned, so every X read is priced as it lands — $0.005
+a timeline post, $0.001 an own post, $0.005 a search result, $0.010 a trends
+call — and written to `source_read`. A day of X reads is capped at
+`DAILY_READ_BUDGET_USD.x` ($10, `src/lib/reads.ts`) for the whole station; at
+the cap an X channel goes off air with the reason until midnight UTC. What is
+read is kept in `source_cache`, shared by every server instance for an hour,
+so a cold start does not buy a page again. Steady state for one watching X
+channel: one trends call and one ten-post search (~$0.06) per trend per
+hour, or up to three 50-post timeline pages (~$0.75) an hour when trends are
+unavailable — about a dollar an hour at worst. Keep a spending cap at
+[console.x.com](https://console.x.com) as the backstop; there is no free
+tier, and a $0 balance returns 402 on the first call, sign-in included.
+
+Gmail and YouTube reads are free within Google's quotas; RSS is free.
+
+## Setup
+
+```sh
+cp .env.example .env   # then fill in the keys — each is documented inline
+pnpm dev:autoplay      # → http://127.0.0.1:3005
+```
+
+1. **X OAuth app** — [console.x.com](https://console.x.com), callback
+   `http://127.0.0.1:3005/api/auth/callback/twitter` (X rejects `localhost`).
+   Use the **OAuth 2.0** Client ID and Secret from User authentication
+   settings, not the OAuth 1.0a keys shown when the app is created. The API is
+   pay-per-use with no free tier — buy credits and set a spending cap first.
+2. **`OWNER_X_USERNAME`** — the handle whose feed is CH 01.
+3. **fal key** — [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys); billed per session second.
+4. **Turso** — autoplay's own database (not policingice's): `turso db create autoplay`,
+   fill in the URL + token, then `pnpm -F @repo/autoplay db:push` once to create the
+   tables. Skippable in local dev: aired items then live in server memory only,
+   but sign-in needs the database.
+5. **Session secret** — `openssl rand -base64 32`.
+6. **Vercel Blob** (optional, for the replay) — a store connected to the
+   project puts `BLOB_READ_WRITE_TOKEN` in the environment; without it CH 01
+   is live for the owner and off air for everyone else.
+7. **Google OAuth app** (optional, for Newsletters and YouTube) —
+   [console.cloud.google.com](https://console.cloud.google.com/apis/credentials),
+   web application, redirect `http://127.0.0.1:3005/api/auth/callback/google`;
+   enable the Gmail API and YouTube Data API v3. `gmail.readonly` is a
+   restricted scope: a public app needs Google's verification, a personal
+   deploy can stay in Testing mode with the owner as a test user. Until
+   `GOOGLE_OPEN_TO_ALL` is set, Gmail and YouTube connect for the owner alone
+   and the sources dialog tells everyone else so. Without the keys the dialog
+   says that instead, and the rest works.
+
+The app boots with none of these and shows an OFF AIR screen listing what's missing.
+
+## Testing
+
+`pnpm test` covers the pure parts. The station itself is checked end to end
+with [agent-browser](https://github.com/vercel-labs/agent-browser) against a
+running deployment:
+
+```sh
+pnpm with-env node e2e/owner-cookie.mjs > /tmp/owner-cookie   # signs the owner's live session
+BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
+```
+
+By default that costs nothing: it checks the guards (the proxy and the live
+and recording routes refuse what they should), an anonymous visitor's view,
+the sources dialog adding and removing a feed, and the replay of whatever is
+already recorded. **`LIVE=1` adds one real director session as the owner,
+about 75 seconds, billed at fal's 60-second minimum** — run it only when the
+live path itself changed.
+
+Everything downstream of the director — recording, upload, the live tail,
+the replay — can be driven for free on a development server with the test
+stream: open `http://127.0.0.1:3005/?teststream` as the owner, or run the
+suite with `TESTSTREAM=1 LIVE=1` against it. It plays a stored recording of
+a real session in place of the stream (`src/lib/test-stream.ts`) and answers
+prompts the way the model does, reading no source and spending nothing. The
+recording is the newest session on the public channel at the time
+`pnpm -F @repo/autoplay stitch-test-stream` last ran; run it again to keep a
+session whose look you like, or after clearing the store.
+
+The owner has to have signed in on the site at least once for a session to
+sign. Don't copy the owner's X grant into another database to test with: X
+rotates the refresh token on every refresh, and whichever copy refreshes
+first invalidates the other.
+
+## How it works
+
+- **Auth**: better-auth (`src/lib/auth.ts`) with the X social provider, same
+  stack as policingice. Users, sessions, and OAuth tokens live in the Turso
+  database; `src/lib/x-account.ts` reads the X grant back for API calls and
+  refreshes it when expired, `src/lib/grants.ts` does the same for Google
+  through better-auth. Google is never a sign-in, only a grant linked to the
+  X-signed-in user (`linkSocial` with the scope a source needs). The X handle
+  is mapped onto the user at sign-in for the owner check.
+- **Session** (`src/components/live-screen.tsx`): the browser opens the
+  director session through `/api/fal/proxy` (`@fal-ai/server-proxy`, which
+  holds `FAL_KEY`, admits only signed-in viewers inside their budget, and
+  allows only the director endpoint), configures it with the world and the
+  first segment, and paces every prompt after that off the picture: ten
+  seconds after a subject reaches the screen, the next goes out. The ticker
+  changes when the picture does, not when the chunk lands in the buffer.
+- **Programming** (`POST /api/live`): resolves the channel for this viewer,
+  picks the next item through its adapter, marks it aired, returns the prompt
+  (`src/lib/prompt.ts` turns an item into a single continuous shot). `GET
+/api/session` returns the viewer's lineup; `/api/sources` adds a feed,
+  removes a channel, or reorders them.
+- **Replay and the live tail** (`src/components/replay-screen.tsx`):
+  `GET /api/replay` lists a channel's recorded sessions, newest first, each as
+  its chunks in order; the player appends a session's chunks into one
+  MediaSource stream, so what plays is exactly the stream that was on air,
+  and moves to the next session when it ends. A session still receiving
+  chunks is the owner watching right now: the player joins it near the end
+  and keeps appending as chunks land, so everyone watches the one session
+  the owner is paying for, under a minute behind, with the LIVE badge. Needs a browser that plays WebM through MediaSource (Chrome, Edge,
+  Firefox). The owner's browser uploads each chunk with a token minted by
+  `POST /api/recordings/upload` (owner only, webm only, a chunk's worth of
+  bytes) and registers it with `POST /api/recordings`.
+- **Database** (`src/db/drizzle-schema.ts`): better-auth tables, `source` (a
+  user's connected feeds), `aired_item` (what aired where, by whom, when),
+  `recording` (the replay's chunks). Degrades to in-memory maps when
+  `TURSO_DATABASE_URL` is unset.

@@ -6,7 +6,37 @@ export interface MultiSeriesHoverEntry {
   value: number;
 }
 
-export function drawCrosshair(
+interface Segment {
+  text: string;
+  color: string;
+  isDot?: boolean;
+}
+
+const SEPARATOR = "  ·  ";
+const DOT_SEGMENT_WIDTH = 12;
+
+/** "TIME  ·  ● Label Value  ·  ● Label Value" — the dot is drawn as a circle, not text. */
+const buildSegments = (
+  palette: LivelinePalette,
+  timeText: string,
+  entries: MultiSeriesHoverEntry[],
+  formatValue: (v: number) => string,
+): Segment[] => {
+  const segments: Segment[] = [{ color: palette.gridLabel, text: timeText }];
+  for (const e of entries) {
+    segments.push(
+      { color: palette.gridLabel, text: SEPARATOR },
+      { color: e.color, isDot: true, text: " " },
+    );
+    if (e.label) {
+      segments.push({ color: palette.gridLabel, text: `${e.label} ` });
+    }
+    segments.push({ color: palette.tooltipText, text: formatValue(e.value) });
+  }
+  return segments;
+};
+
+export const drawCrosshair = (
   ctx: CanvasRenderingContext2D,
   layout: ChartLayout,
   palette: LivelinePalette,
@@ -19,8 +49,10 @@ export function drawCrosshair(
   tooltipY?: number,
   liveDotX?: number,
   tooltipOutline?: boolean,
-) {
-  if (scrubOpacity < 0.01) return;
+) => {
+  if (scrubOpacity < 0.01) {
+    return;
+  }
 
   const { h, pad, toY } = layout;
   const y = toY(hoverValue);
@@ -49,7 +81,9 @@ export function drawCrosshair(
 
   // Top label: "$VALUE - TIME" — fixed at top, moves horizontally only
   // Skip text for small containers (text is ~200px wide)
-  if (scrubOpacity < 0.1 || layout.w < 300) return;
+  if (scrubOpacity < 0.1 || layout.w < 300) {
+    return;
+  }
 
   const valueText = formatValue(hoverValue);
   const timeText = formatTime(hoverTime);
@@ -68,12 +102,17 @@ export function drawCrosshair(
   // Right edge of tooltip text aligns with the right edge of the live dot circle
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
-  const dotRightEdge = liveDotX != null ? liveDotX + 7 : layout.w - pad.right;
+  const dotRightEdge = liveDotX === undefined ? layout.w - pad.right : liveDotX + 7;
   const maxX = dotRightEdge - totalW;
-  if (tx < minX) tx = minX;
-  if (tx > maxX) tx = maxX;
+  if (tx < minX) {
+    tx = minX;
+  }
+  if (tx > maxX) {
+    tx = maxX;
+  }
 
-  const ty = pad.top + (tooltipY ?? 14) + 10; // offset from top
+  // offset from top
+  const ty = pad.top + (tooltipY ?? 14) + 10;
 
   ctx.textAlign = "left";
 
@@ -95,10 +134,10 @@ export function drawCrosshair(
   ctx.fillText(separator + timeText, tx + valueW, ty);
 
   ctx.restore();
-}
+};
 
 /** Multi-series crosshair: vertical line + inline text at top, matching single-series style. */
-export function drawMultiCrosshair(
+export const drawMultiCrosshair = (
   ctx: CanvasRenderingContext2D,
   layout: ChartLayout,
   palette: LivelinePalette,
@@ -111,8 +150,10 @@ export function drawMultiCrosshair(
   tooltipY?: number,
   tooltipOutline?: boolean,
   liveDotX?: number,
-) {
-  if (scrubOpacity < 0.01 || entries.length === 0) return;
+) => {
+  if (scrubOpacity < 0.01 || entries.length === 0) {
+    return;
+  }
 
   const { h, pad, toY } = layout;
 
@@ -141,7 +182,9 @@ export function drawMultiCrosshair(
     }
   }
 
-  if (scrubOpacity < 0.1 || layout.w < 300) return;
+  if (scrubOpacity < 0.1 || layout.w < 300) {
+    return;
+  }
 
   // Inline text at top — same style as single-series crosshair
   // Format: "TIME  ·  ● Label Value  ·  ● Label Value"
@@ -150,28 +193,12 @@ export function drawMultiCrosshair(
   ctx.font = '400 13px "SF Mono", Menlo, monospace';
   ctx.textAlign = "left";
 
-  const timeText = formatTime(hoverTime);
-  const sep = "  ·  ";
-  const dotInline = " "; // spacing for inline colored dot
-
-  // Build segments: [ { text, color } ... ]
-  type Seg = { text: string; color: string; isDot?: boolean };
-  const segments: Seg[] = [{ text: timeText, color: palette.gridLabel }];
-  for (const e of entries) {
-    segments.push({ text: sep, color: palette.gridLabel });
-    // Inline dot (drawn as circle, not text)
-    segments.push({ text: dotInline, color: e.color, isDot: true });
-    const label = e.label ? `${e.label} ` : "";
-    if (label) segments.push({ text: label, color: palette.gridLabel });
-    segments.push({ text: formatValue(e.value), color: palette.tooltipText });
-  }
-
-  // Measure total width
+  const segments = buildSegments(palette, formatTime(hoverTime), entries, formatValue);
+  const segWidths = segments.map((seg) =>
+    seg.isDot ? DOT_SEGMENT_WIDTH : ctx.measureText(seg.text).width,
+  );
   let totalW = 0;
-  const segWidths: number[] = [];
-  for (const seg of segments) {
-    const w = seg.isDot ? 12 : ctx.measureText(seg.text).width;
-    segWidths.push(w);
+  for (const w of segWidths) {
     totalW += w;
   }
 
@@ -179,10 +206,14 @@ export function drawMultiCrosshair(
   // Right edge of tooltip aligns with the right edge of live dots (matching single-series)
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
-  const dotRightEdge = liveDotX != null ? liveDotX + 7 : layout.w - pad.right;
+  const dotRightEdge = liveDotX === undefined ? layout.w - pad.right : liveDotX + 7;
   const maxX = dotRightEdge - totalW;
-  if (tx < minX) tx = minX;
-  if (tx > maxX) tx = maxX;
+  if (tx < minX) {
+    tx = minX;
+  }
+  if (tx > maxX) {
+    tx = maxX;
+  }
 
   const ty = pad.top + (tooltipY ?? 14) + 10;
 
@@ -192,7 +223,7 @@ export function drawMultiCrosshair(
     ctx.lineWidth = 3;
     ctx.lineJoin = "round";
     let ox = tx;
-    for (let i = 0; i < segments.length; i++) {
+    for (let i = 0; i < segments.length; i += 1) {
       const seg = segments[i];
       if (!seg.isDot) {
         ctx.strokeText(seg.text, ox, ty);
@@ -203,7 +234,7 @@ export function drawMultiCrosshair(
 
   // Fill pass
   let ox = tx;
-  for (let i = 0; i < segments.length; i++) {
+  for (let i = 0; i < segments.length; i += 1) {
     const seg = segments[i];
     if (seg.isDot) {
       // Draw small colored circle inline
@@ -219,4 +250,4 @@ export function drawMultiCrosshair(
   }
 
   ctx.restore();
-}
+};

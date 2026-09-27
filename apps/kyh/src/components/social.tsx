@@ -1,3 +1,5 @@
+import { cn } from "cn";
+
 import { social } from "@/lib/social";
 
 export const GithubLink = () => (
@@ -57,7 +59,7 @@ export const LinkedInLink = () => (
 );
 
 export const SocialLinks = ({ className = "" }: { className?: string }) => (
-  <div className={`flex gap-1 ${className}`}>
+  <div className={cn("flex gap-1", className)}>
     <GithubLink />
     <DribbbleLink />
     <TwitterLink />

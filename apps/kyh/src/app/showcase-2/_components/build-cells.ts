@@ -39,21 +39,21 @@ export const CELL_CLASS =
   "absolute left-0 top-0 select-none overflow-hidden rounded pointer-events-none will-change-transform origin-center [backface-visibility:hidden]";
 
 /* ── Deterministic helpers (no Math.random anywhere) ──────────────────── */
-function hash(n: number): number {
-  const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+const hash = (n: number): number => {
+  const x = Math.sin(n * 12.9898 + 78.233) * 43_758.5453;
   return x - Math.floor(x);
-}
+};
 
-export function smoothstep(a: number, b: number, x: number): number {
+export const smoothstep = (a: number, b: number, x: number): number => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
-}
+};
 
-export function rowDriftSpeed(rowIndex: number): number {
+export const rowDriftSpeed = (rowIndex: number): number => {
   const magnitude = 0.05 + hash(rowIndex * 41.3 + 17.1) * 0.18;
   const sign = rowIndex % 2 === 0 ? -1 : 1;
   return magnitude * sign;
-}
+};
 
 /* ── Types ────────────────────────────────────────────────────────────── */
 export interface Cell {
@@ -88,8 +88,32 @@ interface RawItem {
   colIdx: number;
 }
 
+/* Index of the photo directly above `rawX` in the previous row, or -1. */
+const photoAbove = (prevRow: RawItem[] | null, rawX: number, gap: number): number => {
+  if (!prevRow) {
+    return -1;
+  }
+  for (const prev of prevRow) {
+    if (rawX >= prev.rawX && rawX < prev.rawX + prev.width + gap) {
+      return prev.photoIndex;
+    }
+  }
+  return -1;
+};
+
+/* Deterministic pick that avoids the left and above neighbours. */
+const pickPhoto = (seed: number, count: number, leftIdx: number, aboveIdx: number): number => {
+  let candidate = Math.floor(hash(seed) * count);
+  let attempts = 0;
+  while ((candidate === leftIdx || candidate === aboveIdx) && attempts < count) {
+    candidate = (candidate + 1) % count;
+    attempts += 1;
+  }
+  return candidate;
+};
+
 /* ── Build the wrapping tile of cells ─────────────────────────────────── */
-export function buildCells(dims: Dims, photos: readonly [WorkMedia, ...WorkMedia[]]) {
+export const buildCells = (dims: Dims, photos: readonly [WorkMedia, ...WorkMedia[]]) => {
   const { vw, vh, isMobile } = dims;
   const cellH = isMobile ? CELL_H_MOBILE : CELL_H_DESKTOP;
   const gap = isMobile ? CELL_GAP_MOBILE : CELL_GAP_DESKTOP;
@@ -115,44 +139,31 @@ export function buildCells(dims: Dims, photos: readonly [WorkMedia, ...WorkMedia
   let maxNaturalWidth = 0;
   let prevRow: RawItem[] | null = null;
 
-  for (let r = 0; r < rows; r++) {
+  for (let r = 0; r < rows; r += 1) {
     const rowItems: RawItem[] = [];
     let rawX = 0;
     let colIdx = 0;
 
     while (rawX < targetTileW) {
-      let candidate = Math.floor(hash(r * 17.3 + colIdx * 31.7 + 5) * photos.length);
-
-      const left = rowItems[rowItems.length - 1];
+      const left = rowItems.at(-1);
       const leftIdx = left ? left.photoIndex : -1;
-      let aboveIdx = -1;
-      if (prevRow) {
-        for (const prev of prevRow) {
-          if (rawX >= prev.rawX && rawX < prev.rawX + prev.width + gap) {
-            aboveIdx = prev.photoIndex;
-            break;
-          }
-        }
-      }
-
-      let attempts = 0;
-      while ((candidate === leftIdx || candidate === aboveIdx) && attempts < photos.length) {
-        candidate = (candidate + 1) % photos.length;
-        attempts++;
-      }
+      const aboveIdx = photoAbove(prevRow, rawX, gap);
+      const candidate = pickPhoto(r * 17.3 + colIdx * 31.7 + 5, photos.length, leftIdx, aboveIdx);
 
       const photo = photos[candidate] ?? photos[0];
       const width = cellH * photo.aspect;
-      rowItems.push({ photoIndex: candidate, width, rawX, colIdx });
+      rowItems.push({ colIdx, photoIndex: candidate, rawX, width });
       rawX += width + gap;
-      colIdx++;
+      colIdx += 1;
     }
 
     rawRows.push(rowItems);
     prevRow = rowItems;
 
     const rowNaturalWidth = rawX - gap;
-    if (rowNaturalWidth > maxNaturalWidth) maxNaturalWidth = rowNaturalWidth;
+    if (rowNaturalWidth > maxNaturalWidth) {
+      maxNaturalWidth = rowNaturalWidth;
+    }
   }
 
   /* Tile width = widest natural row; shorter rows widen their gaps to match,
@@ -163,12 +174,12 @@ export function buildCells(dims: Dims, photos: readonly [WorkMedia, ...WorkMedia
   const cells: Cell[] = [];
   let idx = 0;
 
-  for (let r = 0; r < rows; r++) {
+  for (let r = 0; r < rows; r += 1) {
     const rowItems = rawRows[r];
-    if (!rowItems || rowItems.length === 0) continue;
-
-    const last = rowItems[rowItems.length - 1];
-    if (!last) continue;
+    const last = rowItems?.at(-1);
+    if (!rowItems || !last) {
+      continue;
+    }
     const rowNaturalWidth = last.rawX + last.width;
     const extra = tileW - rowNaturalWidth - gap;
     const extraPerGap = rowItems.length > 1 ? extra / rowItems.length : 0;
@@ -177,20 +188,21 @@ export function buildCells(dims: Dims, photos: readonly [WorkMedia, ...WorkMedia
     for (const item of rowItems) {
       const cellCenterX = runningX + item.width / 2;
       cells.push({
-        index: idx++,
-        rowIndex: r,
+        angle: hash(r * 31 + item.colIdx * 17 + 7) * Math.PI * 2,
         baseX: cellCenterX,
         baseY: r * stepY + firstRowY,
-        width: item.width,
         height: cellH,
+        index: idx,
         photoIndex: item.photoIndex,
-        angle: hash(r * 31 + item.colIdx * 17 + 7) * Math.PI * 2,
         rotation: (hash(r * 5 + item.colIdx * 11 + 3) - 0.5) * 3.6,
+        rowIndex: r,
         scale: 1 + (hash(r * 7 + item.colIdx * 13 + 5) - 0.5) * 0.05,
+        width: item.width,
       });
+      idx += 1;
       runningX += item.width + gap + extraPerGap;
     }
   }
 
-  return { cells, tile: { width: tileW, height: tileH, rows } };
-}
+  return { cells, tile: { height: tileH, rows, width: tileW } };
+};

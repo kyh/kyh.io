@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { RSVPReader } from "./_components/rsvp-reader";
 
 export const metadata: Metadata = {
-  title: "RSVP",
-  description: "Speed read through my bio",
   alternates: { canonical: "/rsvp" },
+  description: "Speed read through my bio",
+  title: "RSVP",
 };
 
-const Page = () => {
-  return <RSVPReader />;
-};
+const Page = () => <RSVPReader />;
 
 export default Page;

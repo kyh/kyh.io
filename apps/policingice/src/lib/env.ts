@@ -8,10 +8,10 @@ import { z } from "zod";
 // are optional so a missing key disables its feature (AI enrichment, embeddings)
 // rather than crashing boot.
 const envSchema = z.object({
-  TURSO_DATABASE_URL: z.string().min(1),
-  TURSO_AUTH_TOKEN: z.string().optional(),
-  BETTER_AUTH_SECRET: z.string().optional(),
   AI_GATEWAY_API_KEY: z.string().optional(),
+  BETTER_AUTH_SECRET: z.string().optional(),
+  TURSO_AUTH_TOKEN: z.string().optional(),
+  TURSO_DATABASE_URL: z.string().min(1),
   XAI_API_KEY: z.string().optional(),
 });
 

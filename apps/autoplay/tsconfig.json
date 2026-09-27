@@ -1,0 +1,14 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [{ "name": "next" }],
+    "module": "esnext"
+  },
+  "include": ["next.config.ts", "src", "scripts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

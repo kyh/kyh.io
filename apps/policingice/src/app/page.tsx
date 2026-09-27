@@ -43,12 +43,10 @@ const FeedSkeleton = () => (
   </main>
 );
 
-const HomePage = async () => {
-  return (
-    <Suspense fallback={<FeedSkeleton />}>
-      <IncidentFeedLoader />
-    </Suspense>
-  );
-};
+const HomePage = () => (
+  <Suspense fallback={<FeedSkeleton />}>
+    <IncidentFeedLoader />
+  </Suspense>
+);
 
 export default HomePage;

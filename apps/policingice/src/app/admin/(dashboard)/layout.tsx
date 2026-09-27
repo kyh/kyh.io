@@ -36,18 +36,16 @@ const AdminContent = async ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const AdminLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <span className="text-sm text-muted-foreground">Loading...</span>
-        </div>
-      }
-    >
-      <AdminContent>{children}</AdminContent>
-    </Suspense>
-  );
-};
+const AdminLayout = ({ children }: { children: React.ReactNode }) => (
+  <Suspense
+    fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="text-sm text-muted-foreground">Loading...</span>
+      </div>
+    }
+  >
+    <AdminContent>{children}</AdminContent>
+  </Suspense>
+);
 
 export default AdminLayout;

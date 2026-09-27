@@ -7,28 +7,29 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "@/components/toast";
 import { createFromFeed } from "@/lib/admin-action";
 import { formatDate } from "@/lib/format";
+import { cn } from "cn";
 
-type FeedPost = {
+interface FeedPost {
   id: string;
   title: string;
   link: string;
   content: string;
   published: string;
-};
-
-function normalizeUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    return `${u.origin}${u.pathname}`.replace(/\/$/, "");
-  } catch {
-    return url.split("?")[0].replace(/\/$/, "");
-  }
 }
 
-type RedditFeedClientProps = {
+const normalizeUrl = (url: string): string => {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`.replace(/\/$/u, "");
+  } catch {
+    return url.split("?")[0].replace(/\/$/u, "");
+  }
+};
+
+interface RedditFeedClientProps {
   posts: FeedPost[];
   existingUrls: string[];
-};
+}
 
 export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps) => {
   const router = useRouter();
@@ -46,9 +47,9 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
     setAddingUrl(post.link);
     try {
       const result = await createFromFeed({
-        url: post.link,
-        title: post.title,
         published: post.published,
+        title: post.title,
+        url: post.link,
       });
 
       if (result.success) {
@@ -57,9 +58,10 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
       } else {
         toast.error(result.error ?? "Failed to create");
       }
-    } finally {
-      setAddingUrl(null);
+    } catch {
+      toast.error("Failed to create");
     }
+    setAddingUrl(null);
   };
 
   return (
@@ -72,7 +74,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
           disabled={isRefreshing}
           className="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           Refresh
         </button>
       </div>

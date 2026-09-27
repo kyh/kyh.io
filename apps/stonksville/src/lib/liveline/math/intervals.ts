@@ -1,16 +1,27 @@
+const WEEK = 604_800;
+
+/** [max window secs, tick interval secs], ascending. */
+const TICK_STEPS: [number, number][] = [
+  [15, 2],
+  [30, 5],
+  [60, 10],
+  [120, 15],
+  [300, 30],
+  [600, 60],
+  [1800, 300],
+  [3600, 600],
+  [14_400, 1800],
+  [43_200, 3600],
+  [86_400, 7200],
+  [WEEK, 86_400],
+];
+
 /** Pick a nice time interval in seconds for time axis labels. */
-export function niceTimeInterval(windowSecs: number): number {
-  if (windowSecs <= 15) return 2;
-  if (windowSecs <= 30) return 5;
-  if (windowSecs <= 60) return 10;
-  if (windowSecs <= 120) return 15;
-  if (windowSecs <= 300) return 30;
-  if (windowSecs <= 600) return 60; // 10min → 1min ticks
-  if (windowSecs <= 1800) return 300; // 30min → 5min ticks
-  if (windowSecs <= 3600) return 600; // 1hr → 10min ticks
-  if (windowSecs <= 14400) return 1800; // 4hr → 30min ticks
-  if (windowSecs <= 43200) return 3600; // 12hr → 1hr ticks
-  if (windowSecs <= 86400) return 7200; // 1day → 2hr ticks
-  if (windowSecs <= 604800) return 86400; // 1week → 1day ticks
-  return 604800; // beyond → 1week ticks
-}
+export const niceTimeInterval = (windowSecs: number): number => {
+  for (const [maxWindow, tick] of TICK_STEPS) {
+    if (windowSecs <= maxWindow) {
+      return tick;
+    }
+  }
+  return WEEK;
+};

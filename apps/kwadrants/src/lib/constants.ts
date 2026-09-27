@@ -2,10 +2,10 @@ import type { LayoutLabels, QuadrantColors } from "./types";
 import { getAllLayouts, getDefaultLabels } from "./layouts/registry";
 
 export const DEFAULT_QUADRANT_COLORS: QuadrantColors = {
-  topLeft: "transparent",
-  topRight: "transparent",
   bottomLeft: "transparent",
   bottomRight: "transparent",
+  topLeft: "transparent",
+  topRight: "transparent",
 };
 
 export const DEFAULT_LAYOUT_LABELS: LayoutLabels = Object.fromEntries(
@@ -23,6 +23,6 @@ export const TAG_COLORS = [
   "#f97316",
 ] as const;
 
-export const DEFAULT_TAG_COLOR = TAG_COLORS[0];
+export const [DEFAULT_TAG_COLOR] = TAG_COLORS;
 
 export const STORAGE_KEY = "kwadrants-state";

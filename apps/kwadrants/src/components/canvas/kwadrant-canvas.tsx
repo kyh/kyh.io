@@ -1,0 +1,164 @@
+import type Konva from "konva";
+import { useMemo, useState } from "react";
+import type { Ref } from "react";
+import { Layer, Stage } from "react-konva";
+
+import { useKwadrant } from "@/lib/kwadrant-context";
+import { getDefaultLabels, getLayout } from "@/lib/layouts";
+import { AxisLabels } from "./axis-labels";
+import { CanvasImage } from "./canvas-image";
+import { QuadrantGrid } from "./quadrant-grid";
+import { Tag } from "./tag";
+import { cn } from "cn";
+
+interface KwadrantCanvasProps {
+  ref: Ref<Konva.Stage>;
+  width: number;
+  height: number;
+}
+
+interface LabelEditorProps {
+  value: string;
+  position: { x: number; y: number };
+  isRightEdge?: boolean;
+  isDark?: boolean;
+  onSave: (value: string) => void;
+  onClose: () => void;
+}
+
+const LabelEditor = ({
+  value,
+  position,
+  isRightEdge,
+  isDark,
+  onSave,
+  onClose,
+}: LabelEditorProps) => {
+  const [text, setText] = useState(value);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      onSave(text);
+      onClose();
+    } else if (e.key === "Escape") {
+      onClose();
+    }
+  };
+
+  return (
+    <input
+      aria-label="Edit canvas label"
+      type="text"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onBlur={() => {
+        onSave(text);
+        onClose();
+      }}
+      autoFocus
+      className={cn(
+        "absolute rounded border px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none",
+        isDark
+          ? "border-gray-600 bg-gray-800 text-white"
+          : "border-gray-300 bg-white text-gray-900",
+      )}
+      style={{
+        height: 20,
+        left: isRightEdge ? "auto" : position.x,
+        right: isRightEdge ? 16 : "auto",
+        top: position.y,
+        width: 70,
+      }}
+    />
+  );
+};
+
+export const KwadrantCanvas = ({ ref, width, height }: KwadrantCanvasProps) => {
+  const { state, updateTagPosition, removeTag, updateImagePosition, removeImage, updateLabel } =
+    useKwadrant();
+  const [editingLabel, setEditingLabel] = useState<{
+    key: string;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  const layout = getLayout(state.layoutType);
+  const bounds = useMemo(() => layout.getBounds(width, height), [layout, width, height]);
+
+  // Get current labels with defaults
+  const currentLabels = useMemo(() => {
+    const stored = state.layoutLabels[state.layoutType] ?? {};
+    const defaults = getDefaultLabels(layout);
+    return { ...defaults, ...stored };
+  }, [state.layoutLabels, state.layoutType, layout]);
+
+  // Derive editor positions from layout label definitions
+  const getEditorPosition = (key: string) => {
+    const labelDef = layout.labels.find((l) => l.key === key);
+    if (!labelDef) {
+      return { x: 0, y: 0 };
+    }
+    const pos = labelDef.position(bounds);
+    // Adjust for editor offset
+    return {
+      x: pos.x - (labelDef.textProps?.offsetX ?? 0),
+      y: pos.y - 10,
+    };
+  };
+
+  const handleLabelClick = (key: string) => {
+    setEditingLabel({ key, position: getEditorPosition(key) });
+  };
+
+  // Check if this label is on right edge (for axis layout xPositive)
+  const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
+
+  return (
+    <div className="relative h-full w-full">
+      <Stage width={width} height={height} ref={ref}>
+        <Layer>
+          <QuadrantGrid
+            canvasWidth={width}
+            canvasHeight={height}
+            bounds={bounds}
+            colors={state.quadrantColors}
+            gridType={state.gridType}
+            showOuterBorder={layout.showOuterBorder}
+            theme={state.theme}
+          />
+          <AxisLabels
+            layout={layout}
+            labels={currentLabels}
+            bounds={bounds}
+            theme={state.theme}
+            onLabelClick={handleLabelClick}
+          />
+          {state.images.map((image) => (
+            <CanvasImage
+              key={image.id}
+              {...image}
+              onDragEnd={updateImagePosition}
+              onRemove={removeImage}
+            />
+          ))}
+          {state.tags.map((tag) => (
+            <Tag key={tag.id} {...tag} onDragEnd={updateTagPosition} onRemove={removeTag} />
+          ))}
+        </Layer>
+      </Stage>
+
+      {editingLabel && (
+        <LabelEditor
+          value={currentLabels[editingLabel.key] ?? ""}
+          position={editingLabel.position}
+          isRightEdge={isRightEdgeLabel}
+          isDark={state.theme === "dark"}
+          onSave={(value) => {
+            updateLabel(state.layoutType, editingLabel.key, value);
+          }}
+          onClose={() => setEditingLabel(null)}
+        />
+      )}
+    </div>
+  );
+};

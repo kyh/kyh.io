@@ -1,19 +1,19 @@
 export const siteConfig = {
+  creator: "@kaiyuhsu",
+  description:
+    "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
+  email: "hello@kyh.io",
+  /** Where I am. Used by structured data. */
+  location: {
+    city: "San Francisco",
+    country: "US",
+    region: "CA",
+  },
   name: "Kaiyu Hsu",
   shortName: "kyh",
   /** The site, as distinct from `name` — the person. */
   siteName: "kyh.io",
-  description:
-    "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
   url: process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.kyh.io",
-  creator: "@kaiyuhsu",
-  email: "hello@kyh.io",
-  /** Where I am. Used by the PST clock on the homepage and by structured data. */
-  location: {
-    city: "San Francisco",
-    region: "CA",
-    country: "US",
-  },
 };
 
 export type SiteRoute = {

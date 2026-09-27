@@ -6,8 +6,7 @@
       "dependsOn": ["^topo"]
     },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": ["^topo"]
     },
     "dev": {
       "dependsOn": ["^dev"],
@@ -15,7 +14,7 @@
       "persistent": false
     },
     "typecheck": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^topo"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "test": {
@@ -29,7 +28,7 @@
       "cache": false
     }
   },
-  "globalEnv": ["NEXT_PUBLIC_SUPABASE_URL", "PORT"],
+  "globalEnv": ["NEXT_PUBLIC_ASSETS_URL", "PORT"],
   "globalPassThroughEnv": [
     "NODE_ENV",
     "CI",

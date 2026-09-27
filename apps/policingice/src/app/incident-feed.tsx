@@ -34,12 +34,122 @@ import {
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
-type IncidentFeedProps = {
+const LazyIncidentCard = ({
+  incidentId,
+  children,
+}: {
+  incidentId: number;
+  children: React.ReactNode;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const shortcuts = useKeyboardShortcuts();
+
+  useEffect(() => {
+    if (!shortcuts) {
+      return;
+    }
+    shortcuts.registerIncident(incidentId, ref.current);
+    return () => shortcuts.unregisterIncident(incidentId);
+  }, [incidentId, shortcuts]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <article ref={ref} className="py-6 first:pt-0">
+      {isVisible ? children : <div className="h-[300px] animate-pulse bg-muted" />}
+    </article>
+  );
+};
+
+const SearchForm = ({
+  formRef,
+  onSubmit,
+  q,
+  start,
+  end,
+  isSearching,
+}: {
+  formRef: React.RefObject<HTMLFormElement | null>;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  q: string | undefined;
+  start: string | undefined;
+  end: string | undefined;
+  isSearching: boolean;
+}) => (
+  <Form ref={formRef} onSubmit={onSubmit} className="space-y-3">
+    <Field.Root name="q">
+      <Field.Label className="mb-1 block text-xs text-muted-foreground">
+        Location or description
+      </Field.Label>
+      <Field.Control
+        type="text"
+        defaultValue={q ?? ""}
+        placeholder="Minneapolis, arrest..."
+        className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+      />
+    </Field.Root>
+    <Field.Root name="start">
+      <Field.Label className="mb-1 block text-xs text-muted-foreground">From date</Field.Label>
+      <Field.Control
+        type="date"
+        defaultValue={start ?? ""}
+        className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+      />
+    </Field.Root>
+    <Field.Root name="end">
+      <Field.Label className="mb-1 block text-xs text-muted-foreground">To date</Field.Label>
+      <Field.Control
+        type="date"
+        defaultValue={end ?? ""}
+        className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
+      />
+    </Field.Root>
+    <button
+      type="submit"
+      disabled={isSearching}
+      className="w-full cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+    >
+      {isSearching ? "Searching..." : "Search"}
+    </button>
+  </Form>
+);
+
+// `||` not `??` throughout: an empty param should read as undefined, not ""
+const readFeedParams = (searchParams: URLSearchParams) => {
+  const q = searchParams.get("q") || undefined;
+  const start = searchParams.get("start") || undefined;
+  const end = searchParams.get("end") || undefined;
+  const error = searchParams.get("error") || undefined;
+  // any truthy search param counts
+  const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
+  return { end, error, q, searchKey, start };
+};
+
+interface IncidentFeedProps {
   initialIncidents: Incident[];
   initialNextOffset: number | undefined;
   initialUserVotes: Record<number, "unjustified" | "justified">;
   isAdmin: boolean;
-};
+}
 
 export const IncidentFeed = ({
   initialIncidents,
@@ -50,11 +160,7 @@ export const IncidentFeed = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // `||` not `??` throughout: an empty param should read as undefined, not ""
-  const q = searchParams.get("q") || undefined;
-  const start = searchParams.get("start") || undefined;
-  const end = searchParams.get("end") || undefined;
-  const error = searchParams.get("error") || undefined;
+  const { q, start, end, error, searchKey } = readFeedParams(searchParams);
 
   // Show error toast from share redirect
   useEffect(() => {
@@ -63,9 +169,15 @@ export const IncidentFeed = ({
         "No supported video URL found. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
       );
       const params = new URLSearchParams();
-      if (q) params.set("q", q);
-      if (start) params.set("start", start);
-      if (end) params.set("end", end);
+      if (q) {
+        params.set("q", q);
+      }
+      if (start) {
+        params.set("start", start);
+      }
+      if (end) {
+        params.set("end", end);
+      }
       router.replace(params.toString() ? `/?${params}` : "/");
     }
   }, [error, router, q, start, end]);
@@ -86,8 +198,6 @@ export const IncidentFeed = ({
   const searchFormRef = useRef<HTMLFormElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const allIncidents = [...initialIncidents, ...extraIncidents];
-  // `||` not `??`: any truthy search param counts
-  const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
   const searchResults = searchKey === null ? null : fetchedResults;
   const isSearching = searchKey !== null && searchedFor !== searchKey;
 
@@ -102,14 +212,19 @@ export const IncidentFeed = ({
 
   // Search when URL params change
   useEffect(() => {
-    if (searchKey === null) return;
-    void searchIncidents({
-      query: q,
-      startDate: start,
-      endDate: end,
-    })
-      .then((result) => setFetchedResults(result.incidents))
-      .finally(() => setSearchedFor(searchKey));
+    if (searchKey === null) {
+      return;
+    }
+    const search = async () => {
+      try {
+        const result = await searchIncidents({ endDate: end, query: q, startDate: start });
+        setFetchedResults(result.incidents);
+      } catch {
+        toast.error("Search failed");
+      }
+      setSearchedFor(searchKey);
+    };
+    void search();
   }, [q, start, end, searchKey]);
 
   const handleSearch = useCallback(
@@ -120,13 +235,21 @@ export const IncidentFeed = ({
       const startDate = formString(formData, "start");
       const endDate = formString(formData, "end");
 
-      if (!query && !startDate && !endDate) return;
+      if (!query && !startDate && !endDate) {
+        return;
+      }
 
       setIsSearchOpen(false);
       const params = new URLSearchParams();
-      if (query) params.set("q", query);
-      if (startDate) params.set("start", startDate);
-      if (endDate) params.set("end", endDate);
+      if (query) {
+        params.set("q", query);
+      }
+      if (startDate) {
+        params.set("start", startDate);
+      }
+      if (endDate) {
+        params.set("end", endDate);
+      }
       router.push(`/?${params}`);
     },
     [router],
@@ -138,7 +261,9 @@ export const IncidentFeed = ({
   }, [router]);
 
   const loadMore = useCallback(async () => {
-    if (!nextOffset || isLoading) return;
+    if (!nextOffset || isLoading) {
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await getIncidents({ offset: nextOffset });
@@ -151,15 +276,18 @@ export const IncidentFeed = ({
         });
         setUserVotes((prev) => ({ ...prev, ...newVotes }));
       }
-    } finally {
-      setIsLoading(false);
+    } catch {
+      toast.error("Failed to load more");
     }
+    setIsLoading(false);
   }, [nextOffset, isLoading]);
 
   // Infinite scroll
   useEffect(() => {
     const ref = loadMoreRef.current;
-    if (!ref || searchResults !== null) return;
+    if (!ref || searchResults !== null) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -183,37 +311,35 @@ export const IncidentFeed = ({
 
       const prevVote = userVotes[incidentId];
       const prevCounts = voteCounts[incidentId] ?? {
-        unjustified: 0,
         justified: 0,
+        unjustified: 0,
       };
 
       // Optimistic update
       if (prevVote === type) {
-        setUserVotes((prev) => {
-          const next = { ...prev };
-          delete next[incidentId];
-          return next;
-        });
+        setUserVotes((prev) =>
+          Object.fromEntries(Object.entries(prev).filter(([id]) => Number(id) !== incidentId)),
+        );
         setVoteCounts((prev) => {
-          const cur = prev[incidentId] ?? { unjustified: 0, justified: 0 };
+          const cur = prev[incidentId] ?? { justified: 0, unjustified: 0 };
           return {
             ...prev,
             [incidentId]: {
-              unjustified: cur.unjustified - (type === "unjustified" ? 1 : 0),
               justified: cur.justified - (type === "justified" ? 1 : 0),
+              unjustified: cur.unjustified - (type === "unjustified" ? 1 : 0),
             },
           };
         });
       } else {
         setUserVotes((prev) => ({ ...prev, [incidentId]: type }));
         setVoteCounts((prev) => {
-          const cur = prev[incidentId] ?? { unjustified: 0, justified: 0 };
-          const switching = prevVote !== undefined;
+          const cur = prev[incidentId] ?? { justified: 0, unjustified: 0 };
+          const otherDelta = prevVote === undefined ? 0 : -1;
           return {
             ...prev,
             [incidentId]: {
-              unjustified: cur.unjustified + (type === "unjustified" ? 1 : switching ? -1 : 0),
-              justified: cur.justified + (type === "justified" ? 1 : switching ? -1 : 0),
+              justified: cur.justified + (type === "justified" ? 1 : otherDelta),
+              unjustified: cur.unjustified + (type === "unjustified" ? 1 : otherDelta),
             },
           };
         });
@@ -259,7 +385,10 @@ export const IncidentFeed = ({
 
   const handleDelete = useCallback(
     async (incidentId: number) => {
-      if (!confirm("Delete this incident?")) return;
+      // oxlint-disable-next-line no-alert -- admin-only destructive action; native confirm is deliberate
+      if (!confirm("Delete this incident?")) {
+        return;
+      }
       const result = await deleteIncident({ incidentId });
       if (result.success) {
         toast.success("Deleted");
@@ -286,7 +415,9 @@ export const IncidentFeed = ({
 
   const handleAddVideo = useCallback(
     async (url: string) => {
-      if (!editingIncident) return;
+      if (!editingIncident) {
+        return;
+      }
       await addVideoToIncident({ incidentId: editingIncident.id, url });
       router.refresh();
     },
@@ -295,7 +426,9 @@ export const IncidentFeed = ({
 
   const handleUpdateIncident = useCallback(
     async (data: { location?: string; description?: string; incidentDate?: string }) => {
-      if (!editingIncident) return;
+      if (!editingIncident) {
+        return;
+      }
       await updateIncidentDetails({ incidentId: editingIncident.id, ...data });
       router.refresh();
     },
@@ -335,46 +468,14 @@ export const IncidentFeed = ({
                 <Popover.Portal>
                   <Popover.Positioner side="bottom" align="end" sideOffset={8}>
                     <Popover.Popup className="z-20 w-64 rounded border border-border bg-background p-4">
-                      <Form ref={searchFormRef} onSubmit={handleSearch} className="space-y-3">
-                        <Field.Root name="q">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
-                            Location or description
-                          </Field.Label>
-                          <Field.Control
-                            type="text"
-                            defaultValue={q ?? ""}
-                            placeholder="Minneapolis, arrest..."
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
-                          />
-                        </Field.Root>
-                        <Field.Root name="start">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
-                            From date
-                          </Field.Label>
-                          <Field.Control
-                            type="date"
-                            defaultValue={start ?? ""}
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
-                          />
-                        </Field.Root>
-                        <Field.Root name="end">
-                          <Field.Label className="mb-1 block text-xs text-muted-foreground">
-                            To date
-                          </Field.Label>
-                          <Field.Control
-                            type="date"
-                            defaultValue={end ?? ""}
-                            className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
-                          />
-                        </Field.Root>
-                        <button
-                          type="submit"
-                          disabled={isSearching}
-                          className="w-full cursor-pointer text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
-                        >
-                          {isSearching ? "Searching..." : "Search"}
-                        </button>
-                      </Form>
+                      <SearchForm
+                        formRef={searchFormRef}
+                        onSubmit={handleSearch}
+                        q={q}
+                        start={start}
+                        end={end}
+                        isSearching={isSearching}
+                      />
                     </Popover.Popup>
                   </Popover.Positioner>
                 </Popover.Portal>
@@ -397,7 +498,7 @@ export const IncidentFeed = ({
             <div className="mb-6 flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">
                 {searchResults.length} result
-                {searchResults.length !== 1 ? "s" : ""}
+                {searchResults.length === 1 ? "" : "s"}
               </span>
               <button
                 type="button"
@@ -412,7 +513,7 @@ export const IncidentFeed = ({
 
           {(searchResults ?? allIncidents).length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {searchResults !== null ? "No results found." : "No incidents yet."}
+              {searchResults === null ? "No incidents yet." : "No results found."}
             </p>
           ) : (
             <div className="divide-y divide-border">
@@ -520,9 +621,9 @@ export const IncidentFeed = ({
             mode="edit"
             isOpen={true}
             incident={{
-              location: editingIncident.location,
               description: editingIncident.description,
               incidentDate: editingIncident.incidentDate,
+              location: editingIncident.location,
               videos: editingIncident.videos,
             }}
             onClose={() => setEditingIncident(null)}
@@ -532,47 +633,5 @@ export const IncidentFeed = ({
         )}
       </main>
     </KeyboardShortcutsProvider>
-  );
-};
-
-const LazyIncidentCard = ({
-  incidentId,
-  children,
-}: {
-  incidentId: number;
-  children: React.ReactNode;
-}) => {
-  const ref = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const shortcuts = useKeyboardShortcuts();
-
-  useEffect(() => {
-    if (!shortcuts) return;
-    shortcuts.registerIncident(incidentId, ref.current);
-    return () => shortcuts.unregisterIncident(incidentId);
-  }, [incidentId, shortcuts]);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <article ref={ref} className="py-6 first:pt-0">
-      {isVisible ? children : <div className="h-[300px] animate-pulse bg-muted" />}
-    </article>
   );
 };

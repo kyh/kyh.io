@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 
-import { Comms } from "./components/Comms";
-import { Directory } from "./components/Directory";
-import { Footer } from "./components/Footer";
-import { Header } from "./components/Header";
-import { Identity } from "./components/Identity";
-import { StatusPanel } from "./components/StatusPanel";
-import { Telemetry } from "./components/Telemetry";
+import { Comms } from "./components/comms";
+import { Directory } from "./components/directory";
+import { Footer } from "./components/footer";
+import { Header } from "./components/header";
+import { Identity } from "./components/identity";
+import { StatusPanel } from "./components/status-panel";
+import { Telemetry } from "./components/telemetry";
 import { contactLinks, heroText, projects, work } from "./data/content";
 import { useClock } from "./lib/hooks";
 import { color } from "./lib/theme";
@@ -24,18 +24,22 @@ const LEFT_MIN_HEIGHT = 36;
 const GLOBE_MIN_HEIGHT = 7;
 const GLOBE_MAX_HEIGHT = 13;
 // Left-column row budget (see Identity/StatusPanel/Telemetry internals):
-const LAYOUT_CHROME = 4; // header + footer
-const IDENTITY_CHROME = 13; // border(2) + gap + logo(6) + gap + name + role + gap
-const STATUS_HEIGHT = 11; // border(2) + gap + 5 readouts + gap + signal(2)
-const GLOBE_PANEL_CHROME = 2; // border
+// header + footer
+const LAYOUT_CHROME = 4;
+// border(2) + gap + logo(6) + gap + name + role + gap
+const IDENTITY_CHROME = 13;
+// border(2) + gap + 5 readouts + gap + signal(2)
+const STATUS_HEIGHT = 11;
+// border
+const GLOBE_PANEL_CHROME = 2;
 
 const allItems = [...projects, ...work];
 const sections = [
-  { label: "PROJECTS", items: projects },
-  { label: "EMPLOYMENT", items: work },
+  { items: projects, label: "PROJECTS" },
+  { items: work, label: "EMPLOYMENT" },
 ];
 
-export function App() {
+export const App = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [contactIndex, setContactIndex] = useState(0);
@@ -46,47 +50,69 @@ export function App() {
     if (showContact) {
       switch (key.name) {
         case "up":
-        case "k":
+        case "k": {
           setContactIndex((i) => (i > 0 ? i - 1 : contactLinks.length - 1));
           break;
+        }
         case "down":
-        case "j":
+        case "j": {
           setContactIndex((i) => (i < contactLinks.length - 1 ? i + 1 : 0));
           break;
-        case "return":
-          openUrl(contactLinks[contactIndex]!.url);
+        }
+        case "return": {
+          const link = contactLinks[contactIndex];
+          if (link) {
+            openUrl(link.url);
+          }
           break;
+        }
         case "escape":
-        case "c":
+        case "c": {
           setShowContact(false);
           setContactIndex(0);
           break;
-        case "q":
+        }
+        case "q": {
           process.exit(0);
           break;
+        }
+        default: {
+          break;
+        }
       }
       return;
     }
 
     switch (key.name) {
       case "up":
-      case "k":
+      case "k": {
         setSelectedIndex((i) => (i > 0 ? i - 1 : allItems.length - 1));
         break;
+      }
       case "down":
-      case "j":
+      case "j": {
         setSelectedIndex((i) => (i < allItems.length - 1 ? i + 1 : 0));
         break;
-      case "return":
-        openUrl(allItems[selectedIndex]!.url);
+      }
+      case "return": {
+        const item = allItems[selectedIndex];
+        if (item) {
+          openUrl(item.url);
+        }
         break;
-      case "c":
+      }
+      case "c": {
         setShowContact(true);
         break;
+      }
       case "escape":
-      case "q":
+      case "q": {
         process.exit(0);
         break;
+      }
+      default: {
+        break;
+      }
     }
   });
 
@@ -166,4 +192,4 @@ export function App() {
       <Footer keys={footerKeys} target={target} width={termWidth} />
     </box>
   );
-}
+};

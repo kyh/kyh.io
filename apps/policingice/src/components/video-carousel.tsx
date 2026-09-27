@@ -7,20 +7,21 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { useKeyboardShortcuts } from "./keyboard-shortcuts-provider";
 import { VideoEmbed } from "./video-embed";
+import { cn } from "cn";
 
-type Video = {
+interface Video {
   id: number;
   url: string;
   platform: VideoPlatform;
-};
+}
 
-type VideoCarouselProps = {
+interface VideoCarouselProps {
   videos: Video[];
   header?: React.ReactNode;
   headerRight?: React.ReactNode;
   incidentId?: number;
   onSlideChange?: (index: number) => void;
-};
+}
 
 export const VideoCarousel = ({
   videos,
@@ -40,7 +41,9 @@ export const VideoCarousel = ({
 
   // Register carousel with keyboard shortcuts provider
   useEffect(() => {
-    if (incidentId === undefined || !shortcuts) return;
+    if (incidentId === undefined || !shortcuts) {
+      return;
+    }
     shortcuts.registerCarousel(incidentId, emblaApi ?? null);
     return () => shortcuts.unregisterCarousel(incidentId);
   }, [incidentId, emblaApi, shortcuts]);
@@ -49,7 +52,11 @@ export const VideoCarousel = ({
   // render already has the real values instead of seeding state from an effect.
   const subscribeToEmbla = useCallback(
     (onStoreChange: () => void) => {
-      if (!emblaApi) return () => {};
+      if (!emblaApi) {
+        return () => {
+          /* empty */
+        };
+      }
       emblaApi.on("select", onStoreChange);
       emblaApi.on("reInit", onStoreChange);
       return () => {
@@ -86,7 +93,9 @@ export const VideoCarousel = ({
   // Observe slide height changes (for when embeds load)
   useEffect(() => {
     const slide = slidesRef.current.get(selectedIndex);
-    if (!slide) return;
+    if (!slide) {
+      return;
+    }
 
     updateHeight();
 
@@ -100,7 +109,9 @@ export const VideoCarousel = ({
   }, [selectedIndex, onSlideChange]);
 
   useEffect(() => {
-    if (!emblaApi) return;
+    if (!emblaApi) {
+      return;
+    }
     const onDragStart = () => setIsDragging(true);
     const onDragEnd = () => setIsDragging(false);
     emblaApi.on("pointerDown", onDragStart);
@@ -112,13 +123,18 @@ export const VideoCarousel = ({
     };
   }, [emblaApi]);
 
-  if (videos.length === 0) return null;
+  if (videos.length === 0) {
+    return null;
+  }
 
   const showNav = videos.length > 1;
+  const hasHeader = header !== null && header !== undefined;
+  const hasHeaderRight = headerRight !== null && headerRight !== undefined;
+  const showHeaderRow = hasHeader || showNav || hasHeaderRight;
 
   return (
     <div>
-      {(header != null || showNav || headerRight != null) && (
+      {showHeaderRow && (
         <div className="mb-3 flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-3">
             <div>{header}</div>
@@ -129,11 +145,12 @@ export const VideoCarousel = ({
                     key={video.id}
                     type="button"
                     onClick={() => emblaApi?.scrollTo(index)}
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
                       index === selectedIndex
                         ? "w-4 bg-foreground"
-                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    }`}
+                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+                    )}
                     aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
@@ -141,7 +158,12 @@ export const VideoCarousel = ({
                   type="button"
                   onClick={() => emblaApi?.scrollPrev()}
                   disabled={!canScrollPrev}
-                  className={`pl-1 ${canScrollPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                  className={cn(
+                    "pl-1",
+                    canScrollPrev
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/40",
+                  )}
                   aria-label="Previous"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -150,7 +172,11 @@ export const VideoCarousel = ({
                   type="button"
                   onClick={() => emblaApi?.scrollNext()}
                   disabled={!canScrollNext}
-                  className={`${canScrollNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/40"}`}
+                  className={
+                    canScrollNext
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/40"
+                  }
                   aria-label="Next"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -173,8 +199,11 @@ export const VideoCarousel = ({
               key={video.id}
               className="relative min-w-0 flex-[0_0_100%]"
               ref={(el) => {
-                if (el) slidesRef.current.set(index, el);
-                else slidesRef.current.delete(index);
+                if (el) {
+                  slidesRef.current.set(index, el);
+                } else {
+                  slidesRef.current.delete(index);
+                }
               }}
             >
               <VideoEmbed url={video.url} platform={video.platform} />

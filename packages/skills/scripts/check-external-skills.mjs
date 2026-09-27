@@ -19,19 +19,18 @@
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const lockPath = join(homedir(), ".agents", ".skill-lock.json");
-const agentsSkills = join(homedir(), ".agents", "skills");
-const claudeSkills = join(homedir(), ".claude", "skills");
-const extPath = join(here, "..", "external-skills.json");
+const here = import.meta.dirname;
+const lockPath = path.join(homedir(), ".agents", ".skill-lock.json");
+const agentsSkills = path.join(homedir(), ".agents", "skills");
+const claudeSkills = path.join(homedir(), ".claude", "skills");
+const extPath = path.join(here, "..", "external-skills.json");
 
 // Skills intentionally not sourced from a `skills add <repo>` install.
 const NON_REPO = new Set(["motion"]);
 
-const read = (p) => JSON.parse(readFileSync(p, "utf8"));
+const read = (p) => JSON.parse(readFileSync(p, "utf-8"));
 
 let lock;
 try {
@@ -51,7 +50,9 @@ for (const [name, meta] of Object.entries(lock.skills ?? {})) {
     skipped.push(name);
     continue;
   }
-  if (meta.source) lockedRepos.add(meta.source);
+  if (meta.source) {
+    lockedRepos.add(meta.source);
+  }
 }
 
 const missing = [...lockedRepos].filter((r) => !listed.has(r)).toSorted();
@@ -68,30 +69,41 @@ const untracked = skillNames(claudeSkills)
   .filter((n) => !canonical.has(n))
   .toSorted();
 
-if (skipped.length) console.log(`note: skipped non-repo skills: ${skipped.join(", ")}`);
+if (skipped.length) {
+  console.log(`note: skipped non-repo skills: ${skipped.join(", ")}`);
+}
 
 if (missing.length) {
   console.error("\nMISSING from external-skills.json (installed locally, not curated):");
-  for (const r of missing) console.error(`  - ${r}`);
+  for (const r of missing) {
+    console.error(`  - ${r}`);
+  }
 }
 if (untracked.length) {
   console.error("\nUNTRACKED in ~/.claude/skills (not in ~/.agents, so not in the lock):");
-  for (const n of untracked) console.error(`  - ${n}`);
+  for (const n of untracked) {
+    console.error(`  - ${n}`);
+  }
 }
 if (dead.length) {
   console.warn("\nDEAD in external-skills.json (curated, but no installed skill came from it):");
-  for (const r of dead) console.warn(`  - ${r}`);
+  for (const r of dead) {
+    console.warn(`  - ${r}`);
+  }
 }
 
 if (missing.length || untracked.length) {
   console.error("\nfail: external-skills.json is out of sync.");
-  if (missing.length) console.error("  - add the missing repos above.");
-  if (untracked.length)
+  if (missing.length) {
+    console.error("  - add the missing repos above.");
+  }
+  if (untracked.length) {
     console.error(
       "  - delete the untracked skills, then reinstall their repo with" +
         " `npx skills add <repo> -g -s '*' -y` so they land in ~/.agents and the lock." +
         " A DEAD entry above is often the repo they belong to.",
     );
+  }
   process.exit(1);
 }
 console.log(

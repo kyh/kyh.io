@@ -6,15 +6,17 @@ import { getColorById } from "./color";
 // Everything here crosses a JSON.stringify/JSON.parse wire, so JSON values are
 // the precise contract for client-supplied state.
 export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
-export type JsonObject = { [key: string]: JsonValue };
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
 
 // Schema
-export type Player = {
+export interface Player {
   id: string;
   color: string;
   hue: string;
   state: JsonObject;
-};
+}
 
 export type PlayerMap = Record<string, Player>;
 
@@ -25,7 +27,12 @@ export type PlayerMap = Record<string, Player>;
  * deliberately tiny and bounded — never the cursor snapshot, which changes every
  * frame and could brush the 2KB attachment cap.
  */
-type Presence = { id: string; color: string; hue: string; seenAt: number };
+interface Presence {
+  id: string;
+  color: string;
+  hue: string;
+  seenAt: number;
+}
 
 // Messages from client
 export type ClientMessage =
@@ -45,9 +52,9 @@ export type ServerMessage =
   | { type: "host"; data: { id: string } }
   | { type: "ping" };
 
-type Env = {
+interface Env {
   KyhServer: DurableObjectNamespace<KyhServer>;
-};
+}
 
 /**
  * A websocket whose peer vanished without a close handshake — a slept laptop, a
@@ -58,7 +65,8 @@ type Env = {
  * ping every live connection, and reap the ones that stop answering.
  */
 const PING_INTERVAL_MS = 30_000;
-const IDLE_TIMEOUT_MS = 75_000; // tolerates two dropped pings before reaping
+// Tolerates two dropped pings before reaping.
+const IDLE_TIMEOUT_MS = 75_000;
 
 const asJsonObject = (value: JsonValue | undefined): JsonObject | null =>
   value instanceof Object && !Array.isArray(value) ? value : null;
@@ -70,28 +78,43 @@ const isString = (value: JsonValue | undefined): value is string => String(value
  * well-behaved client would never send. The wire is public, so nothing beyond
  * JSON well-formedness is assumed.
  */
-function parseClientMessage(raw: string): ClientMessage | null {
+const parseClientMessage = (raw: string): ClientMessage | null => {
   // SAFETY: JSON.parse output is a JSON value by construction; the assertion
   // names what the parser guarantees before the shape checks below.
   const message = asJsonObject(JSON.parse(raw) as JsonValue);
-  if (message === null) return null;
+  if (message === null) {
+    return null;
+  }
   switch (message.type) {
-    case "pong":
+    case "pong": {
       return { type: "pong" };
+    }
     case "state_patch":
     case "player_state_patch": {
       const data = asJsonObject(message.data);
-      return data === null ? null : { type: message.type, data };
+      return data === null ? null : { data, type: message.type };
     }
     case "emit": {
       const data = asJsonObject(message.data);
-      if (data === null || !isString(data.event)) return null;
-      return { type: "emit", data: { event: data.event, payload: data.payload } };
+      if (data === null || !isString(data.event)) {
+        return null;
+      }
+      return { data: { event: data.event, payload: data.payload }, type: "emit" };
     }
-    default:
+    default: {
       return null;
+    }
   }
-}
+};
+
+/** Mark a connection heard-from, on the low-frequency keepalive channel. */
+const touch = (connection: Connection<Presence>) => {
+  const presence = connection.state;
+  if (!presence) {
+    return;
+  }
+  connection.setState({ ...presence, seenAt: Date.now() });
+};
 
 export class KyhServer extends Server {
   private shared: JsonObject = {};
@@ -109,9 +132,9 @@ export class KyhServer extends Server {
 
   private toPlayer(presence: Presence): Player {
     return {
-      id: presence.id,
       color: presence.color,
       hue: presence.hue,
+      id: presence.id,
       state: this.snapshots.get(presence.id) ?? {},
     };
   }
@@ -124,18 +147,15 @@ export class KyhServer extends Server {
   private getPlayers(excludeId?: string) {
     const players: PlayerMap = {};
     for (const connection of this.getConnections<Presence>()) {
-      if (connection.id === excludeId) continue;
+      if (connection.id === excludeId) {
+        continue;
+      }
       const presence = connection.state;
-      if (presence) players[connection.id] = this.toPlayer(presence);
+      if (presence) {
+        players[connection.id] = this.toPlayer(presence);
+      }
     }
     return players;
-  }
-
-  /** Mark a connection heard-from, on the low-frequency keepalive channel. */
-  private touch(connection: Connection<Presence>) {
-    const presence = connection.state;
-    if (!presence) return;
-    connection.setState({ ...presence, seenAt: Date.now() });
   }
 
   /**
@@ -145,7 +165,9 @@ export class KyhServer extends Server {
   private resolveHost(): string | null {
     let fallback: string | null = null;
     for (const connection of this.getConnections<Presence>()) {
-      if (connection.id === this.hostId) return this.hostId;
+      if (connection.id === this.hostId) {
+        return this.hostId;
+      }
       fallback ??= connection.id;
     }
     this.hostId = fallback;
@@ -154,7 +176,7 @@ export class KyhServer extends Server {
 
   onConnect(connection: Connection<Presence>) {
     const { color, hue } = getColorById(connection.id);
-    const presence: Presence = { id: connection.id, color, hue, seenAt: Date.now() };
+    const presence: Presence = { color, hue, id: connection.id, seenAt: Date.now() };
     connection.setState(presence);
     this.snapshots.set(connection.id, {});
     void this.scheduleSweep();
@@ -163,18 +185,18 @@ export class KyhServer extends Server {
     const hostId = this.resolveHost() ?? connection.id;
 
     const syncMessage: ServerMessage = {
-      type: "sync",
       data: {
+        hostId,
         players: this.getPlayers(connection.id),
         state: this.shared,
-        hostId,
       },
+      type: "sync",
     };
     connection.send(JSON.stringify(syncMessage));
 
     const joinedMessage: ServerMessage = {
-      type: "player_joined",
       data: this.toPlayer(presence),
+      type: "player_joined",
     };
     this.broadcast(JSON.stringify(joinedMessage), [connection.id]);
   }
@@ -185,55 +207,60 @@ export class KyhServer extends Server {
       // survived hibernation is still admitted even though its in-memory
       // snapshot was wiped — the next patch just re-fills it.
       const presence = sender.state;
-      if (!presence) return;
+      if (!presence) {
+        return;
+      }
 
       const message = parseClientMessage(rawMessage);
-      if (message === null) return;
+      if (message === null) {
+        return;
+      }
 
       switch (message.type) {
         case "player_state_patch": {
           // Hot path: snapshot + broadcast only, no attachment write. Liveness
           // rides the keepalive (pong) channel below.
-          const next = { ...(this.snapshots.get(sender.id) ?? {}), ...message.data };
+          const next = { ...this.snapshots.get(sender.id), ...message.data };
           this.snapshots.set(sender.id, next);
 
           const updateMessage: ServerMessage = {
-            type: "player_state",
             data: { id: sender.id, state: next },
+            type: "player_state",
           };
           this.broadcast(JSON.stringify(updateMessage), [sender.id]);
           break;
         }
         case "state_patch": {
-          this.touch(sender);
+          touch(sender);
           this.shared = {
             ...this.shared,
             ...message.data,
           };
           const broadcastMessage: ServerMessage = {
-            type: "state_patch",
             data: message.data,
+            type: "state_patch",
           };
           this.broadcast(JSON.stringify(broadcastMessage), [sender.id]);
           break;
         }
         case "emit": {
-          this.touch(sender);
+          touch(sender);
           const eventMessage: ServerMessage = {
-            type: "event",
             data: {
               event: message.data.event,
-              payload: message.data.payload,
               from: sender.id,
+              payload: message.data.payload,
             },
+            type: "event",
           };
           this.broadcast(JSON.stringify(eventMessage), []);
           break;
         }
-        default:
+        default: {
           // `pong` (the keepalive channel) proves the peer is alive.
-          this.touch(sender);
+          touch(sender);
           break;
+        }
       }
     } catch (error) {
       console.error("Error handling message", error);
@@ -298,15 +325,14 @@ export class KyhServer extends Server {
     // Reschedule while any connection is still open. Read that from the socket
     // set (restored across hibernation) rather than an in-memory count, so the
     // ping loop can never stall and starve live idle clients of their pings.
-    let hasConnections = false;
-    for (const _connection of this.getConnections()) {
-      hasConnections = true;
-      break;
+    if (this.getConnections()[Symbol.iterator]().next().done) {
+      return;
     }
-    if (!hasConnections) return;
 
     const pending = await this.ctx.storage.getAlarm();
-    if (pending !== null) return;
+    if (pending !== null) {
+      return;
+    }
     await this.ctx.storage.setAlarm(Date.now() + PING_INTERVAL_MS);
   }
 
@@ -317,20 +343,24 @@ export class KyhServer extends Server {
     // no-op), so the sweep's explicit removal and a trailing `onClose` for the
     // same connection can both run harmlessly.
     const leftMessage: ServerMessage = {
-      type: "player_left",
       data: { id: connection.id },
+      type: "player_left",
     };
     this.broadcast(JSON.stringify(leftMessage), [connection.id]);
 
-    if (this.hostId !== connection.id) return;
+    if (this.hostId !== connection.id) {
+      return;
+    }
 
     this.hostId = null;
     const hostId = this.resolveHost();
-    if (!hostId) return;
+    if (!hostId) {
+      return;
+    }
 
     const hostMessage: ServerMessage = {
-      type: "host",
       data: { id: hostId },
+      type: "host",
     };
     this.broadcast(JSON.stringify(hostMessage), [connection.id]);
   }

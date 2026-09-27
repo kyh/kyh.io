@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^topo"],
+      "env": [
+        "APP_URL",
+        "BETTER_AUTH_SECRET",
+        "BLOB_READ_WRITE_TOKEN",
+        "FAL_KEY",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "OWNER_X_USERNAME",
+        "TURSO_AUTH_TOKEN",
+        "TURSO_DATABASE_URL",
+        "X_CLIENT_ID",
+        "X_CLIENT_SECRET"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+    },
+    "dev": {
+      "persistent": true
+    }
+  }
+}

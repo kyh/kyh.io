@@ -12,19 +12,22 @@ const POSTER_MAX_HEIGHT = 360;
 
 const toWorkMedia = (seed: WorkSeed, aspect: number, thumbUrl: string): WorkMedia => {
   const media: WorkMedia = {
-    slug: seed.slug,
-    title: seed.title,
+    aspect: clampAspect(aspect),
     category: seed.category,
     description: seed.description,
-    url: seed.url,
-    aspect: clampAspect(aspect),
+    slug: seed.slug,
     thumbUrl,
+    title: seed.title,
+    url: seed.url,
   };
-  if (seed.media.type === "video") media.videoUrl = seed.media.src;
+  if (seed.media.type === "video") {
+    media.videoUrl = seed.media.src;
+  }
   return media;
 };
 
 const loadImage = (seed: WorkSeed): Promise<WorkMedia | null> =>
+  // oxlint-disable-next-line promise/avoid-new -- adapts load/error DOM events into a promise
   new Promise((resolve) => {
     const img = new Image();
     img.addEventListener("load", () =>
@@ -39,6 +42,7 @@ const loadImage = (seed: WorkSeed): Promise<WorkMedia | null> =>
    URL (not an object URL) so the deck needs no revocation lifecycle. Requires
    CORS-clean pixels; a tainted canvas throws and the asset is dropped. */
 const loadVideoPoster = (seed: WorkSeed): Promise<WorkMedia | null> =>
+  // oxlint-disable-next-line promise/avoid-new -- adapts seeked/error DOM events into a promise
   new Promise((resolve) => {
     const video = document.createElement("video");
     video.crossOrigin = "anonymous";
@@ -48,7 +52,9 @@ const loadVideoPoster = (seed: WorkSeed): Promise<WorkMedia | null> =>
 
     let settled = false;
     const finish = (value: WorkMedia | null) => {
-      if (settled) return;
+      if (settled) {
+        return;
+      }
       settled = true;
       resolve(value);
     };
@@ -61,13 +67,17 @@ const loadVideoPoster = (seed: WorkSeed): Promise<WorkMedia | null> =>
     video.addEventListener("seeked", () => {
       const w = video.videoWidth;
       const h = video.videoHeight;
-      if (!w || !h) return finish(null);
+      if (!w || !h) {
+        return finish(null);
+      }
       const scale = Math.min(1, POSTER_MAX_HEIGHT / h);
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(w * scale);
       canvas.height = Math.round(h * scale);
       const ctx = canvas.getContext("2d");
-      if (!ctx) return finish(null);
+      if (!ctx) {
+        return finish(null);
+      }
       try {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         finish(toWorkMedia(seed, w / h, canvas.toDataURL("image/jpeg", 0.7)));
@@ -83,11 +93,17 @@ const loadVideoPoster = (seed: WorkSeed): Promise<WorkMedia | null> =>
 /* A video that neither errors nor produces data would otherwise hold the
    whole deck hostage — Promise.all gates the wall on every asset. */
 const withTimeout = (loader: Promise<WorkMedia | null>): Promise<WorkMedia | null> =>
-  Promise.race([loader, new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000))]);
+  Promise.race([
+    loader,
+    // oxlint-disable-next-line promise/avoid-new -- a timer has no promise form
+    new Promise<null>((resolve) => {
+      setTimeout(() => resolve(null), 10_000);
+    }),
+  ]);
 
 /** Resolves seeds into the wall deck: measures every image, captures a poster
  *  frame from every video, drops whatever fails to load. `null` until ready. */
-export function useWorkMedia(seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMedia[]] | null {
+export const useWorkMedia = (seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMedia[]] | null => {
   const [media, setMedia] = useState<readonly [WorkMedia, ...WorkMedia[]] | null>(null);
 
   useEffect(() => {
@@ -98,9 +114,13 @@ export function useWorkMedia(seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMed
           seed.media.type === "video" ? withTimeout(loadVideoPoster(seed)) : loadImage(seed),
         ),
       );
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       const [first, ...rest] = loaded.filter((m): m is WorkMedia => m !== null);
-      if (first) setMedia([first, ...rest]);
+      if (first) {
+        setMedia([first, ...rest]);
+      }
     };
     void loadAll();
     return () => {
@@ -109,4 +129,4 @@ export function useWorkMedia(seeds: WorkSeed[]): readonly [WorkMedia, ...WorkMed
   }, [seeds]);
 
   return media;
-}
+};

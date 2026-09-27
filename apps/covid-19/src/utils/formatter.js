@@ -13,8 +13,8 @@ export const formatDaily = (data) => {
   };
 };
 
-export const formatDate = (date, format = "%b %e") => {
-  const formatFn = timeFormat(format);
+export const formatDate = (date, pattern = "%b %e") => {
+  const formatFn = timeFormat(pattern);
   if (date instanceof Date) {
     return formatFn(date);
   }

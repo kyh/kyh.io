@@ -17,16 +17,37 @@ import type { getIncidents } from "@/lib/incident-action";
 
 type Incident = Awaited<ReturnType<typeof getIncidents>>["incidents"][0];
 
-type IncidentDetailProps = {
-  incident: Incident;
+const IncidentArticle = ({
+  incidentId,
+  children,
+}: {
+  incidentId: number;
+  children: React.ReactNode;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  const shortcuts = useKeyboardShortcuts();
+
+  useEffect(() => {
+    if (!shortcuts) {
+      return;
+    }
+    shortcuts.registerIncident(incidentId, ref.current);
+    return () => shortcuts.unregisterIncident(incidentId);
+  }, [incidentId, shortcuts]);
+
+  return <article ref={ref}>{children}</article>;
 };
+
+interface IncidentDetailProps {
+  incident: Incident;
+}
 
 export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
   const [sessionReady, setSessionReady] = useState(false);
   const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(null);
   const [counts, setCounts] = useState({
-    unjustified: incident.unjustifiedCount,
     justified: incident.justifiedCount,
+    unjustified: incident.unjustifiedCount,
   });
   const [reported, setReported] = useState(false);
 
@@ -43,7 +64,9 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
   }, []);
 
   useEffect(() => {
-    if (!sessionReady) return;
+    if (!sessionReady) {
+      return;
+    }
 
     const loadVote = async () => {
       const voteType = await getUserVote({
@@ -66,8 +89,8 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
       } else if (prevVote) {
         setUserVote(type);
         setCounts((prev) => ({
-          unjustified: prev.unjustified + (type === "unjustified" ? 1 : -1),
           justified: prev.justified + (type === "justified" ? 1 : -1),
+          unjustified: prev.unjustified + (type === "unjustified" ? 1 : -1),
         }));
       } else {
         setUserVote(type);
@@ -125,23 +148,4 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
       </main>
     </KeyboardShortcutsProvider>
   );
-};
-
-const IncidentArticle = ({
-  incidentId,
-  children,
-}: {
-  incidentId: number;
-  children: React.ReactNode;
-}) => {
-  const ref = useRef<HTMLElement>(null);
-  const shortcuts = useKeyboardShortcuts();
-
-  useEffect(() => {
-    if (!shortcuts) return;
-    shortcuts.registerIncident(incidentId, ref.current);
-    return () => shortcuts.unregisterIncident(incidentId);
-  }, [incidentId, shortcuts]);
-
-  return <article ref={ref}>{children}</article>;
 };

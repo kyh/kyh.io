@@ -1,6 +1,5 @@
-export const growthRate = (yesterday, today) => {
-  return (((today - yesterday) / yesterday) * 100).toFixed(2);
-};
+export const growthRate = (yesterday, today) =>
+  (((today - yesterday) / yesterday) * 100).toFixed(2);
 
 export const growthRateDifference = (twoDaysAgo, yesterday, today) => {
   const todayGrowth = growthRate(yesterday, today);

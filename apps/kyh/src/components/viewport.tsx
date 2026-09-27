@@ -2,27 +2,38 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type ViewportContextType = {
+interface ViewportContextType {
   width: number;
   height: number;
   isMobile: boolean;
-};
+}
 
 const ViewportContext = createContext<ViewportContextType | null>(null);
 
-type ViewportProviderProps = {
-  children: React.ReactNode;
+const debounce = (fn: () => void, ms = 500) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(fn, ms);
+  };
 };
+
+const isMobile = () =>
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/iu.test(navigator.userAgent);
+
+interface ViewportProviderProps {
+  children: React.ReactNode;
+}
 
 export const ViewportProvider = ({ children }: ViewportProviderProps) => {
   const [size, setSize] = useState(
-    typeof window !== "undefined"
-      ? {
-          width: window.innerWidth,
+    typeof window === "undefined"
+      ? { height: 0, isMobile: true, width: 0 }
+      : {
           height: window.innerHeight,
           isMobile: isMobile(),
-        }
-      : { width: 0, height: 0, isMobile: true },
+          width: window.innerWidth,
+        },
   );
 
   useEffect(() => {
@@ -32,8 +43,8 @@ export const ViewportProvider = ({ children }: ViewportProviderProps) => {
 
       setSize((state) => ({
         ...state,
-        width: windowWidth,
         height: windowHeight,
+        width: windowWidth,
       }));
     };
 
@@ -59,14 +70,3 @@ export const useViewport = () => {
 
   return viewportContext;
 };
-
-const debounce = (fn: () => void, ms = 500) => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return () => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(fn, ms);
-  };
-};
-
-const isMobile = () =>
-  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);

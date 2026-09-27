@@ -16,7 +16,7 @@ Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not 
 ```sh
 cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, project images fall back to a local placeholder
 cp apps/policingice/.env.example apps/policingice/.env  # required: any DB-backed route throws without TURSO_DATABASE_URL
-cp apps/feedreel/.env.example apps/feedreel/.env        # optional to boot: without it the app renders a setup checklist; X + fal keys unlock the real flow
+cp apps/autoplay/.env.example apps/autoplay/.env        # optional to boot: without it the app renders a setup checklist; X + fal keys unlock the real flow
 ```
 
 `pnpm dev` starts _everything_ at once via `turbo watch`. Prefer a single `pnpm dev:<app>` — `dev:kyh` and `dev:policingice` both bind :3000 and cannot run together.
@@ -29,7 +29,7 @@ cp apps/feedreel/.env.example apps/feedreel/.env        # optional to boot: with
 - Everything in `apps/policingice/scripts/` (`create-admin`, `delete-admin`, `enrich-*`, `embed-incidents`) writes to **production**. Never run them.
 - **There is no seeded login and no test account.** Nothing in this repo creates one. Any authenticated policingice flow (`/admin/*`) needs real credentials a human supplies; an agent cannot self-provision one. Verify admin changes with `pnpm verify` and a human check.
 
-**feedreel has its own Turso database** (clip archive), separate from policingice's. Its `pnpm -F @repo/feedreel db:push` targets that dedicated database and is safe to run; with no `TURSO_DATABASE_URL` the app falls back to an in-memory archive. No other app has a database. No `.env` is tracked — keep it that way; document new keys in the app's `.env.example`.
+**autoplay has its own Turso database** (clip archive), separate from policingice's. Its `pnpm -F @repo/autoplay db:push` targets that dedicated database and is safe to run; with no `TURSO_DATABASE_URL` the app falls back to an in-memory archive. No other app has a database. No `.env` is tracked — keep it that way; document new keys in the app's `.env.example`.
 
 ## Verify a change end-to-end
 
@@ -42,7 +42,7 @@ pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 
 `typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml`, `apps/policingice` and `apps/kyh` — the only apps with tests. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
-**Read the lint caveat before trusting a green run.** `.oxlintrc.json` sets every enabled category to `warn`, so `lint` is `oxlint --report-unused-disable-directives --max-warnings 54` — a ratchet pinned to the current backlog, not a clean gate. It fails on warning 55, so a new correctness regression is caught, but 54 pre-existing warnings still pass. Lower the number whenever you clear some; never raise it.
+**Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`); every rule is an error and `lint` fails on the first one. `no-await-in-loop` is the one deliberate override (sequential awaits are intentional). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
 
 `verify` does not build. CI (`.github/workflows/deploy.yml`) builds and deploys only `apps/party` on pushes to `main` touching `apps/party/**`, via `wrangler deploy --dry-run` — which catches bundling failures `tsc --noEmit` cannot. Run `pnpm verify:ci` before touching that app. Everything else is local-only.
 
@@ -69,7 +69,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config; has tests       |
 | `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)    |
 | `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                  |
-| `feedreel`    | `pnpm dev:feedreel`    | 3005                        | OFF AIR screen yes; live TV needs X + fal keys |
+| `autoplay`    | `pnpm dev:autoplay`    | 3005                        | OFF AIR screen yes; live TV needs X + fal keys |
 | `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots       |
 | `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                        |
 | `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                  |
@@ -90,10 +90,10 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,feedreel}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI
+- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI
 - `packages/{typescript,eslint,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/eslint-config`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
 - `apps/policingice/src/lib/` — `auth.ts` (better-auth), `admin-action.ts` / `incident-action.ts` (Server Actions), `incident-query.ts` (`"use cache"` reads), `env.ts`, `format.ts`
-- `apps/{policingice,feedreel}/src/db/drizzle-schema.ts` — the two Drizzle schemas in the repo (separate Turso databases)
+- `apps/{policingice,autoplay}/src/db/drizzle-schema.ts` — the two Drizzle schemas in the repo (separate Turso databases)
 - `CLAUDE.md` — per-app notes and conventions · `.claude/skills/release/` — the npm release workflow

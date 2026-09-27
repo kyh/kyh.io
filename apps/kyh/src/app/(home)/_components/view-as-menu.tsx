@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -20,13 +21,12 @@ const iconButtonClassName =
 
 const COMMAND = "npx kyh";
 
-function getPromptUrl(baseURL: string, url: string) {
-  return `${baseURL}?q=${encodeURIComponent(
+const getPromptUrl = (baseURL: string, url: string) =>
+  `${baseURL}?q=${encodeURIComponent(
     `I'm looking at the website of Kaiyu Hsu: ${url}.
 Help me understand their background, experience, and work. Be ready to answer questions about their projects, provide insights, or help with similar work.
   `,
   )}`;
-}
 
 export const ViewAsMenu = () => {
   const [copied, setCopied] = useState(false);
@@ -38,8 +38,8 @@ export const ViewAsMenu = () => {
       setTimeout(() => {
         setCopied(false);
       }, 2000);
-    } catch (err) {
-      console.error("Failed to copy command:", err);
+    } catch (error) {
+      console.error("Failed to copy command:", error);
     }
   };
 
@@ -51,9 +51,9 @@ export const ViewAsMenu = () => {
       <Tooltip>
         <AnimateSection delay={0.1}>
           <TooltipTrigger asChild>
-            <a className={iconButtonClassName} aria-label="Speed read" href="/rsvp">
+            <Link className={iconButtonClassName} aria-label="Speed read" href="/rsvp">
               <TextIcon />
-            </a>
+            </Link>
           </TooltipTrigger>
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">Speed read</TooltipContent>
@@ -76,7 +76,7 @@ export const ViewAsMenu = () => {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                transition={{ ease: "easeOut", duration: 0.13 }}
+                transition={{ duration: 0.13, ease: "easeOut" }}
               >
                 <span>Copied:</span>
                 <code className="rounded border border-[color-mix(in_srgb,var(--border-color)_50%,transparent)] bg-[color-mix(in_srgb,var(--bg-color)_20%,transparent)] px-1.5 font-mono text-[0.7rem]">
@@ -89,7 +89,7 @@ export const ViewAsMenu = () => {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                transition={{ ease: "easeOut", duration: 0.13 }}
+                transition={{ duration: 0.13, ease: "easeOut" }}
               >
                 Open as CLI
               </motion.div>
@@ -124,18 +124,22 @@ export const ViewAsMenu = () => {
             <Menu.Popup className="bg-panel z-50 min-w-[120px] rounded-md border border-[var(--border-color)] p-1 text-xs text-[var(--body-color)]">
               <Menu.Item
                 className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
-                render={<a href={chatGPTUrl} target="_blank" rel="noopener noreferrer" />}
-              >
-                <ChatGPTIcon />
-                ChatGPT
-              </Menu.Item>
+                render={
+                  <a href={chatGPTUrl} target="_blank" rel="noopener noreferrer">
+                    <ChatGPTIcon />
+                    ChatGPT
+                  </a>
+                }
+              />
               <Menu.Item
                 className="hover:bg-background-hover flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 outline-none"
-                render={<a href={claudeUrl} target="_blank" rel="noopener noreferrer" />}
-              >
-                <ClaudeIcon />
-                Claude
-              </Menu.Item>
+                render={
+                  <a href={claudeUrl} target="_blank" rel="noopener noreferrer">
+                    <ClaudeIcon />
+                    Claude
+                  </a>
+                }
+              />
             </Menu.Popup>
           </Menu.Positioner>
         </Menu.Portal>

@@ -1,0 +1,53 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
+import { FORMATS, buildOpeningPrompt, buildSegmentPrompt, pickFormat } from "./prompt";
+
+describe("buildSegmentPrompt", () => {
+  it("strips links and handles, which render as garbled text on screen", () => {
+    const prompt = buildSegmentPrompt("look at this https://t.co/abc123 cc @someone", "Kai");
+    assert.doesNotMatch(prompt, /https?:\/\//u);
+    assert.doesNotMatch(prompt, /@someone/u);
+    assert.match(prompt, /look at this/u);
+  });
+
+  it("keeps a hashtag's word, since it is usually the subject", () => {
+    const prompt = buildSegmentPrompt("full send at #WWDC today", "Kai");
+    assert.match(prompt, /WWDC/u);
+    assert.doesNotMatch(prompt, /#WWDC/u);
+  });
+
+  it("frames the post as the next segment of the same world", () => {
+    const prompt = buildSegmentPrompt("a dog on a skateboard", "Kai");
+    assert.match(prompt, /^Next segment/u);
+    assert.match(prompt, /same world/u);
+    assert.match(prompt, /No on-screen text/u);
+  });
+
+  it("falls back to an interlude when nothing survives stripping", () => {
+    const prompt = buildSegmentPrompt("https://t.co/abc @someone @another", "Kai");
+    assert.match(prompt, /interlude .* inspired by Kai/u);
+  });
+
+  it("truncates a long post rather than blurring the subject", () => {
+    const prompt = buildSegmentPrompt(`${"word ".repeat(200)}tail`, "Kai");
+    assert.ok(prompt.length < 800);
+    assert.doesNotMatch(prompt, /tail/u);
+  });
+});
+
+describe("formats", () => {
+  it("opens on the world and then the first segment", () => {
+    const format = pickFormat("2026-09-04");
+    const prompt = buildOpeningPrompt(format.world, buildSegmentPrompt("rain tomorrow", "Kai"));
+    assert.ok(prompt.startsWith(format.world));
+    assert.match(prompt, /Next segment.*rain tomorrow/u);
+  });
+
+  it("picks the same format all day and a different one on other days", () => {
+    assert.equal(pickFormat("2026-09-04"), pickFormat("2026-09-04"));
+    assert.ok(FORMATS.includes(pickFormat()));
+    const week = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05"];
+    assert.ok(new Set(week.map((day) => pickFormat(day).id)).size > 1);
+  });
+});

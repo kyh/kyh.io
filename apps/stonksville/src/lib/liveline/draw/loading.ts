@@ -5,7 +5,7 @@ import {
   loadingBreath,
   LOADING_AMPLITUDE_RATIO,
   LOADING_SCROLL_SPEED,
-} from "./loadingShape";
+} from "./loading-shape";
 
 /**
  * Draw the loading state: a gently undulating line in accent color at
@@ -13,16 +13,16 @@ import {
  * through evenly-spaced samples of loadingY — guarantees the loading
  * line and chart morph base produce visually identical curves.
  */
-export function drawLoading(
+export const drawLoading = (
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   pad: Required<Padding>,
   palette: LivelinePalette,
   now_ms: number,
-  alpha: number = 1,
+  alpha = 1,
   strokeColor?: string,
-): void {
+): void => {
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
   const centerY = pad.top + chartH / 2;
@@ -37,7 +37,7 @@ export function drawLoading(
   // loading→chart handoff has zero visual shape difference.
   const numPts = 32;
   const pts: [number, number][] = [];
-  for (let i = 0; i <= numPts; i++) {
+  for (let i = 0; i <= numPts; i += 1) {
     const t = i / numPts;
     const x = leftX + t * chartW;
     const y = loadingY(t, centerY, amplitude, scroll);
@@ -56,4 +56,4 @@ export function drawLoading(
   ctx.lineJoin = "round";
   ctx.stroke();
   ctx.restore();
-}
+};

@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "balloons-js": "^0.0.3",
-    "cnfast": "catalog:",
-    "motion": "^13.1.1",
+    "motion": "^13.4.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

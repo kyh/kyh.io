@@ -1,10 +1,12 @@
 // forked from https://github.com/jamiebuilds/tinykeys
 // to fix navigator not being defined in SSR context
 
-function isFocusedOnElement() {
+const isFocusedOnElement = () => {
   const el = document.activeElement;
 
-  if (!(el instanceof HTMLElement)) return false;
+  if (!(el instanceof HTMLElement)) {
+    return false;
+  }
 
   if (
     el.contentEditable === "true" ||
@@ -21,7 +23,7 @@ function isFocusedOnElement() {
   }
 
   return false;
-}
+};
 
 /*
 
@@ -54,11 +56,12 @@ type KeyBindingPress = [string[], string];
 /**
  * A map of keybinding strings to event handlers.
  */
-export type KeyBindingMap = Record<string, (event: KeyboardEvent) => void>;
+type KeyBindingHandler = (event: KeyboardEvent) => void;
+export type KeyBindingMap = Record<string, KeyBindingHandler>;
 
-export type Options = {
+export interface Options {
   ignoreFocus?: boolean;
-};
+}
 
 /**
  * These are the modifier keys that change the meaning of keybindings.
@@ -74,11 +77,6 @@ const KEYBINDING_MODIFIER_KEYS = ["Shift", "Meta", "Alt", "Control"];
 const TIMEOUT = 1000;
 
 /**
- * When focus is on these elements, ignore the keydown event.
- */
-const inputs = ["select", "textarea", "input"];
-
-/**
  * Parses a "Key Binding String" into its parts
  *
  * grammar    = `<sequence>`
@@ -86,42 +84,37 @@ const inputs = ["select", "textarea", "input"];
  * <press>    = `<key>` or `<mods>+<key>`
  * <mods>     = `<mod>+<mod>+...`
  */
-function parse(str: string): KeyBindingPress[] {
-  const MOD = /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? "Meta" : "Control";
+const parse = (str: string): KeyBindingPress[] => {
+  const MOD = /Mac|iPod|iPhone|iPad/u.test(navigator.platform) ? "Meta" : "Control";
 
   return str
     .trim()
     .split(" ")
     .map((press) => {
-      let mods = press.split("+");
-      const key = mods.pop()!;
-      mods = mods.map((mod) => (mod === "$mod" ? MOD : mod));
+      const parts = press.split("+");
+      const key = parts.pop() ?? "";
+      const mods = parts.map((mod) => (mod === "$mod" ? MOD : mod));
       return [mods, key];
     });
-}
+};
 
 /**
  * This tells us if a series of events matches a key binding sequence either
  * partially or exactly.
  */
-function match(event: KeyboardEvent, press: KeyBindingPress): boolean {
-  return !(
+const match = (event: KeyboardEvent, press: KeyBindingPress): boolean =>
+  !(
     // Allow either the `event.key` or the `event.code`
     // MDN event.key: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
     // MDN event.code: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
     (press[1].toUpperCase() !== event.key.toUpperCase() && press[1] !== event.code) ||
     // Ensure all the modifiers in the keybinding are pressed.
-    press[0].find((mod) => {
-      return !event.getModifierState(mod);
-    }) ||
+    press[0].some((mod) => !event.getModifierState(mod)) ||
     // KEYBINDING_MODIFIER_KEYS (Shift/Control/etc) change the meaning of a
     // keybinding. So if they are pressed but aren't part of this keybinding,
     // then we don't have a match.
-    KEYBINDING_MODIFIER_KEYS.find((mod) => {
-      return !press[0].includes(mod) && event.getModifierState(mod);
-    })
+    KEYBINDING_MODIFIER_KEYS.some((mod) => !press[0].includes(mod) && event.getModifierState(mod))
   );
-}
 
 /**
  * Subscribes to keybindings.
@@ -145,20 +138,23 @@ function match(event: KeyboardEvent, press: KeyBindingPress): boolean {
  * })
  * ```
  */
-export function tinykeys(
+export const tinykeys = (
   target: Window | HTMLElement,
   keyBindingMap: KeyBindingMap,
-  options: Options = { ignoreFocus: true },
-) {
-  const keyBindings = Object.keys(keyBindingMap).map((key) => {
-    return [parse(key), keyBindingMap[key]] as const;
-  });
+  options?: Options,
+) => {
+  const { ignoreFocus = true } = options ?? {};
+  const keyBindings = Object.entries(keyBindingMap).map(
+    ([key, handler]): [KeyBindingPress[], KeyBindingHandler] => [parse(key), handler],
+  );
 
   const possibleMatches = new Map<KeyBindingPress[], KeyBindingPress[]>();
-  let timer: any = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
 
   const onKeyDown = (event: Event) => {
-    if (!(event instanceof KeyboardEvent)) return;
+    if (!(event instanceof KeyboardEvent)) {
+      return;
+    }
 
     // Ignore modifier keydown events
     // Note: This works because:
@@ -170,25 +166,22 @@ export function tinykeys(
     }
 
     // Ignore event when a focusable item is focused
-    if (options.ignoreFocus) {
-      if (isFocusedOnElement()) {
-        return;
-      }
+    if (ignoreFocus && isFocusedOnElement()) {
+      return;
     }
 
-    keyBindings.forEach((keyBinding) => {
-      const sequence = keyBinding[0];
-      const callback = keyBinding[1];
-
+    for (const [sequence, handler] of keyBindings) {
       if (event.key === "/") {
-        callback?.(event);
-        return;
+        handler(event);
+        continue;
       }
 
       const prev = possibleMatches.get(sequence);
-      const remainingExpectedPresses = prev ? prev : sequence;
-      const currentExpectedPress = remainingExpectedPresses[0];
-      if (!currentExpectedPress) return;
+      const remainingExpectedPresses = prev || sequence;
+      const [currentExpectedPress] = remainingExpectedPresses;
+      if (!currentExpectedPress) {
+        continue;
+      }
 
       const matches = match(event, currentExpectedPress);
 
@@ -198,11 +191,13 @@ export function tinykeys(
         possibleMatches.set(sequence, remainingExpectedPresses.slice(1));
       } else {
         possibleMatches.delete(sequence);
-        callback?.(event);
+        handler(event);
       }
-    });
+    }
 
-    clearTimeout(timer);
+    if (timer !== null) {
+      clearTimeout(timer);
+    }
     timer = setTimeout(possibleMatches.clear.bind(possibleMatches), TIMEOUT);
   };
 
@@ -210,4 +205,4 @@ export function tinykeys(
   return () => {
     target.removeEventListener("keydown", onKeyDown);
   };
-}
+};

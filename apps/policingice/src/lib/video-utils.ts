@@ -1,44 +1,60 @@
 import type { VideoPlatform } from "@/db/drizzle-schema";
 
-export function detectPlatform(url: string): VideoPlatform {
+export const detectPlatform = (url: string): VideoPlatform => {
   const u = url.toLowerCase();
-  if (u.includes("twitter.com") || u.includes("x.com")) return "twitter";
-  if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
-  if (u.includes("tiktok.com")) return "tiktok";
-  if (u.includes("facebook.com") || u.includes("fb.watch")) return "facebook";
-  if (u.includes("instagram.com")) return "instagram";
-  if (u.includes("linkedin.com")) return "linkedin";
-  if (u.includes("pinterest.com") || u.includes("pin.it")) return "pinterest";
-  if (u.includes("reddit.com") || u.includes("redd.it")) return "reddit";
+  if (u.includes("twitter.com") || u.includes("x.com")) {
+    return "twitter";
+  }
+  if (u.includes("youtube.com") || u.includes("youtu.be")) {
+    return "youtube";
+  }
+  if (u.includes("tiktok.com")) {
+    return "tiktok";
+  }
+  if (u.includes("facebook.com") || u.includes("fb.watch")) {
+    return "facebook";
+  }
+  if (u.includes("instagram.com")) {
+    return "instagram";
+  }
+  if (u.includes("linkedin.com")) {
+    return "linkedin";
+  }
+  if (u.includes("pinterest.com") || u.includes("pin.it")) {
+    return "pinterest";
+  }
+  if (u.includes("reddit.com") || u.includes("redd.it")) {
+    return "reddit";
+  }
   throw new Error(
     "Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
   );
-}
+};
 
-export function isValidVideoUrl(url: string): boolean {
+export const isValidVideoUrl = (url: string): boolean => {
   try {
     detectPlatform(url);
     return true;
   } catch {
     return false;
   }
-}
+};
 
 const FETCH_TIMEOUT_MS = 5000;
 const ALLOWED_TWITTER_HOSTS = new Set(["twitter.com", "x.com"]);
 
 // Validate URL is from allowed Twitter/X domains (SSRF protection)
-function isAllowedTwitterHost(url: string): boolean {
+const isAllowedTwitterHost = (url: string): boolean => {
   try {
     const parsed = new URL(url);
     return ALLOWED_TWITTER_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
-}
+};
 
 // Fetch with timeout
-async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -46,13 +62,12 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   } finally {
     clearTimeout(timeout);
   }
-}
+};
 
 // Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
-export async function resolveVideoUrl(url: string): Promise<string> {
+export const resolveVideoUrl = async (url: string): Promise<string> => {
   // Check if it's a Twitter/X URL with /i/status/ pattern
-  const match = /^https?:\/\/(twitter\.com|x\.com)\/i\/status\/(\d+)/.exec(url);
-  if (!match) {
+  if (!/^https?:\/\/(?:twitter\.com|x\.com)\/i\/status\/\d+/u.test(url)) {
     return url;
   }
 
@@ -92,52 +107,40 @@ export async function resolveVideoUrl(url: string): Promise<string> {
   }
 
   return url;
-}
+};
 
 // Extract Instagram post type from URL
-export function extractInstagramType(url: string): "p" | "reel" | "tv" {
-  if (url.includes("/reel/")) return "reel";
-  if (url.includes("/tv/")) return "tv";
+export const extractInstagramType = (url: string): "p" | "reel" | "tv" => {
+  if (url.includes("/reel/")) {
+    return "reel";
+  }
+  if (url.includes("/tv/")) {
+    return "tv";
+  }
   return "p";
-}
+};
+
+const hostMarkerId = (url: string, markers: string[], id: string): string | null =>
+  markers.some((marker) => url.includes(marker)) ? id : null;
+
+const extractors: Record<VideoPlatform, (url: string) => string | null> = {
+  // Facebook URLs vary widely, just check it's a valid FB URL
+  facebook: (url) => hostMarkerId(url, ["facebook.com", "fb.watch"], "facebook"),
+  instagram: (url) => /instagram\.com\/(?:p|reel|tv)\/(?<id>[^/?]+)/u.exec(url)?.groups?.id ?? null,
+  linkedin: (url) => hostMarkerId(url, ["linkedin.com"], "linkedin"),
+  pinterest: (url) => hostMarkerId(url, ["pinterest.com", "pin.it"], "pinterest"),
+  reddit: (url) => hostMarkerId(url, ["reddit.com", "redd.it"], "reddit"),
+  tiktok: (url) =>
+    /tiktok\.com\/@[\w.]+\/video\/(?<id>\d+)/u.exec(url)?.groups?.id ??
+    /vm\.tiktok\.com\/(?<id>\w+)/u.exec(url)?.groups?.id ??
+    null,
+  twitter: (url) =>
+    /(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(?<id>\d+)/u.exec(url)?.groups?.id ?? null,
+  youtube: (url) =>
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)(?<id>[^&?\s]+)/u.exec(url)?.groups?.id ??
+    null,
+};
 
 // Returns video ID for embedding
-export function extractVideoId(url: string, platform: VideoPlatform): string | null {
-  switch (platform) {
-    case "youtube": {
-      const match = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&?\s]+)/.exec(url);
-      return match?.[1] ?? null;
-    }
-    case "twitter": {
-      const match = /(?:twitter\.com|x\.com)\/(?:\w+|i)\/status\/(\d+)/.exec(url);
-      return match?.[1] ?? null;
-    }
-    case "tiktok": {
-      const videoMatch = /tiktok\.com\/@[\w.]+\/video\/(\d+)/.exec(url);
-      if (videoMatch) return videoMatch[1];
-      const vmMatch = /vm\.tiktok\.com\/(\w+)/.exec(url);
-      return vmMatch?.[1] ?? null;
-    }
-    case "facebook": {
-      // Facebook URLs vary widely, just check it's a valid FB URL
-      if (url.includes("facebook.com") || url.includes("fb.watch")) return "facebook";
-      return null;
-    }
-    case "instagram": {
-      const match = /instagram\.com\/(?:p|reel|tv)\/([^/?]+)/.exec(url);
-      return match?.[1] ?? null;
-    }
-    case "linkedin": {
-      if (url.includes("linkedin.com")) return "linkedin";
-      return null;
-    }
-    case "pinterest": {
-      if (url.includes("pinterest.com") || url.includes("pin.it")) return "pinterest";
-      return null;
-    }
-    case "reddit": {
-      if (url.includes("reddit.com") || url.includes("redd.it")) return "reddit";
-      return null;
-    }
-  }
-}
+export const extractVideoId = (url: string, platform: VideoPlatform): string | null =>
+  extractors[platform](url);

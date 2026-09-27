@@ -7,14 +7,15 @@ import { ExternalLink, Pin } from "lucide-react";
 import type { VideoPlatform } from "@/db/drizzle-schema";
 import { formatDate } from "@/lib/format";
 import { VideoCarousel } from "./video-carousel";
+import { cn } from "cn";
 
-type Video = {
+interface Video {
   id: number;
   url: string;
   platform: VideoPlatform;
-};
+}
 
-type IncidentCardContentProps = {
+interface IncidentCardContentProps {
   incidentId: number;
   location: string | null;
   incidentDate: Date | null;
@@ -28,7 +29,7 @@ type IncidentCardContentProps = {
   reported?: boolean;
   pinned?: boolean;
   headerRight?: React.ReactNode;
-};
+}
 
 export const IncidentCardContent = ({
   incidentId,
@@ -57,7 +58,7 @@ export const IncidentCardContent = ({
         onSlideChange={setCurrentSlide}
         header={
           <Link href={`/incident/${incidentId}`}>
-            {location && <>{location}</>}
+            {location}
             {location && displayDate && <> · </>}
             {displayDate && formatDate(displayDate)}
           </Link>
@@ -73,11 +74,16 @@ export const IncidentCardContent = ({
       />
 
       <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4" role="group" aria-label="Vote on this incident">
+        <fieldset className="flex items-center gap-4" aria-label="Vote on this incident">
           <button
             type="button"
             onClick={() => onVote("unjustified")}
-            className={`cursor-pointer ${userVote === "unjustified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={cn(
+              "cursor-pointer",
+              userVote === "unjustified"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
             aria-pressed={userVote === "unjustified"}
             aria-label={`Vote unjustified, ${unjustifiedCount} votes`}
           >
@@ -86,13 +92,18 @@ export const IncidentCardContent = ({
           <button
             type="button"
             onClick={() => onVote("justified")}
-            className={`cursor-pointer ${userVote === "justified" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={cn(
+              "cursor-pointer",
+              userVote === "justified"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
             aria-pressed={userVote === "justified"}
             aria-label={`Vote justified, ${justifiedCount} votes`}
           >
             justified ({justifiedCount})
           </button>
-        </div>
+        </fieldset>
         <div className="flex items-center gap-3">
           <a
             href={currentVideo.url}
@@ -109,7 +120,12 @@ export const IncidentCardContent = ({
               type="button"
               onClick={onReport}
               disabled={reported}
-              className={`cursor-pointer ${reported ? "text-muted-foreground/40" : "text-muted-foreground hover:text-destructive"}`}
+              className={cn(
+                "cursor-pointer",
+                reported
+                  ? "text-muted-foreground/40"
+                  : "text-muted-foreground hover:text-destructive",
+              )}
               aria-label={reported ? "This incident has been reported" : "Report this incident"}
             >
               {reported ? "reported" : "report"}

@@ -5,7 +5,9 @@ const layoutMap = new Map<string, LayoutConfig>(layouts.map((layout) => [layout.
 
 export const getLayout = (id: string): LayoutConfig => {
   const layout = layoutMap.get(id);
-  if (!layout) throw new Error(`Unknown layout: ${id}`);
+  if (!layout) {
+    throw new Error(`Unknown layout: ${id}`);
+  }
   return layout;
 };
 

@@ -1,0 +1,227 @@
+import { z } from "zod";
+
+import { OWNER_SOURCE_ID, sourceKindSchema } from "@/lib/source-kinds";
+
+// Payloads exchanged between the API routes and the client. Routes build
+// these objects; the client re-parses responses through the same schemas, so
+// both sides agree on one contract.
+
+/** The model every channel streams through: what the client opens, and the only endpoint the proxy admits. */
+export const DIRECTOR_MODEL = "minimax/h3-max/director";
+
+const userSummarySchema = z.object({
+  name: z.string(),
+  profileImageUrl: z.string().optional(),
+  username: z.string(),
+});
+
+export type UserSummary = z.infer<typeof userSummarySchema>;
+
+/**
+ * One channel in a viewer's lineup. CH 01 is always the public owner channel.
+ * "live" means this viewer's watching runs a session — it is their source;
+ * "replay" means they watch what was recorded while its owner was on.
+ */
+const channelSummarySchema = z.object({
+  kind: sourceKindSchema,
+  label: z.string(),
+  mode: z.enum(["live", "replay"]),
+  number: z.number().int().positive(),
+  sourceId: z.string(),
+});
+
+export type ChannelSummary = z.infer<typeof channelSummarySchema>;
+
+/** What a viewer can watch when the station cannot even be reached. */
+export const PUBLIC_CHANNEL: ChannelSummary = {
+  kind: "x",
+  label: "public access",
+  mode: "replay",
+  number: 1,
+  sourceId: OWNER_SOURCE_ID,
+};
+
+export const sessionPayloadSchema = z.object({
+  /** The viewer's lineup, CH 01 first. Anonymous viewers get CH 01 alone. */
+  channels: z.array(channelSummarySchema).min(1),
+  /**
+   * Whether this viewer can connect Gmail and YouTube: "owner-only" while
+   * Google's verification of the restricted Gmail scope is pending, so only
+   * the owner — a test user on the OAuth app — may consent.
+   */
+  google: z.enum(["ready", "owner-only", "unconfigured"]),
+  /** Whether anything can air: fal is configured. */
+  liveReady: z.boolean(),
+  /** Whether signing in can work: the X app, a secret and the database are configured. */
+  loginReady: z.boolean(),
+  /** Env keys still unset, for the setup checklist. Empty when configured. */
+  missingKeys: z.array(z.string()),
+  /** Whether the public channel records while live: Vercel Blob is configured. */
+  recordReady: z.boolean(),
+  user: userSummarySchema.nullable(),
+});
+
+export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
+
+/** The item on air, as the ticker reads it and the record keeps it. */
+const programFieldsSchema = z.object({
+  authorName: z.string(),
+  authorUsername: z.string(),
+  itemId: z.string(),
+  kind: sourceKindSchema,
+  /** The item on its service, which the ticker links to. */
+  link: z.string().optional(),
+  text: z.string(),
+});
+
+/** What a program is made of: the item on air and the prompt that directs it. */
+const liveProgramSchema = programFieldsSchema.extend({ prompt: z.string() });
+
+export type LiveProgram = z.infer<typeof liveProgramSchema>;
+
+export const liveRequestSchema = z.object({
+  /** True for the program a session opens on, whose prompt then begins with the world. */
+  opening: z.boolean(),
+  sourceId: z.string(),
+});
+
+export const livePayloadSchema = z.discriminatedUnion("kind", [
+  z.object({
+    /** The format the session opens in, only with an opening program. */
+    formatLabel: z.string().optional(),
+    kind: z.literal("program"),
+    program: liveProgramSchema,
+  }),
+  z.object({ kind: z.literal("off-air"), reason: z.string() }),
+]);
+
+export type LivePayload = z.infer<typeof livePayloadSchema>;
+
+/** One chunk of a recorded session, as a replay appends it. */
+const recordingChunkSchema = programFieldsSchema.extend({
+  index: z.number().int().nonnegative(),
+  seconds: z.number(),
+  url: z.string(),
+});
+
+export type RecordingChunk = z.infer<typeof recordingChunkSchema>;
+
+/** One live session as recorded: its chunks in order, which play as one stream. */
+const recordedSessionSchema = z.object({
+  chunks: z.array(recordingChunkSchema).min(1),
+  /** The session as one file, once built: what a browser without MediaSource plays. */
+  fileUrl: z.string().optional(),
+  formatLabel: z.string(),
+  sessionId: z.string(),
+  /** Unix ms of the first chunk. */
+  startedAt: z.number(),
+  /** Unix ms of the newest chunk; a session still receiving chunks is on air. */
+  updatedAt: z.number(),
+});
+
+export type RecordedSession = z.infer<typeof recordedSessionSchema>;
+
+export const replayPayloadSchema = z.object({
+  /** Newest session first. */
+  sessions: z.array(recordedSessionSchema),
+});
+
+export type ReplayPayload = z.infer<typeof replayPayloadSchema>;
+
+/** A finished session as one file, built if it has to be. */
+export const replayFileRequestSchema = z.object({
+  sessionId: z.string().max(80),
+  sourceId: z.string(),
+});
+
+export const replayFilePayloadSchema = z.object({ url: z.url() });
+
+export type ReplayFilePayload = z.infer<typeof replayFilePayloadSchema>;
+
+/** What the browser tells the station about a chunk it just uploaded — bounded, since it is written down. */
+export const recordingRequestSchema = recordingChunkSchema.extend({
+  authorName: z.string().max(200),
+  authorUsername: z.string().max(200),
+  bytes: z.number().int().nonnegative(),
+  formatLabel: z.string().max(80),
+  itemId: z.string().max(200),
+  link: z.url().max(2000).optional(),
+  seconds: z.number().positive().max(60),
+  sessionId: z.string().max(80),
+  sourceId: z.string(),
+  text: z.string().max(4000),
+  url: z.url(),
+});
+
+export type RecordingRequest = z.infer<typeof recordingRequestSchema>;
+
+/** Sources with a grant behind them are created from the grant; only a feed is added by hand. */
+export const addSourceRequestSchema = z.object({
+  kind: z.literal("rss"),
+  url: z.url(),
+});
+
+export const removeSourceRequestSchema = z.object({
+  sourceId: z.string(),
+});
+
+export const reorderSourcesRequestSchema = z.object({
+  /** Source ids in the order they should air, CH 02 onwards. */
+  order: z.array(z.string()).max(64),
+});
+
+/** What every change to the lineup answers with: the lineup. */
+export const channelsPayloadSchema = z.object({
+  channels: z.array(channelSummarySchema).min(1),
+});
+
+export type ChannelsPayload = z.infer<typeof channelsPayloadSchema>;
+
+export const inviteRequestSchema = z.object({
+  code: z.string().min(1).max(100),
+});
+
+/** What a route answers when there is nothing to say but that it worked. */
+export const okPayloadSchema = z.object({ ok: z.literal(true) });
+
+export const errorPayloadSchema = z.object({
+  error: z.string(),
+});
+
+export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
+
+/** A route's answer as the client reads it: the payload, or the station's error. */
+export type Answer<T> = { data: T } | { error: string };
+
+export const jsonRequest = <Body extends object>(
+  method: "POST" | "DELETE" | "PATCH",
+  body: Body,
+): RequestInit => ({
+  body: JSON.stringify(body),
+  headers: { "Content-Type": "application/json" },
+  method,
+});
+
+/**
+ * A route's answer, parsed: the payload through `schema`, or the error the
+ * station gave — `fallback` when it gave none a viewer could read.
+ */
+export const requestJson = async <T>(
+  input: string,
+  schema: z.ZodType<T>,
+  fallback: string,
+  init?: RequestInit,
+): Promise<Answer<T>> => {
+  try {
+    const response = await fetch(input, init);
+    const body: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      const failure = errorPayloadSchema.safeParse(body);
+      return { error: failure.success ? failure.data.error : fallback };
+    }
+    const payload = schema.safeParse(body);
+    return payload.success ? { data: payload.data } : { error: fallback };
+  } catch {
+    return { error: fallback };
+  }
+};

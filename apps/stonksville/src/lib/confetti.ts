@@ -5,10 +5,22 @@ const COLORS = ["#34d399", "#6ee7b7", "#a7f3d0", "#fbbf24", "#fcd34d", "#ffffff"
 const PIECE_FORMS = ["circle", "rect", "rect", "strip", "strip"] as const;
 type PieceForm = (typeof PIECE_FORMS)[number];
 
+interface PieceGeometry {
+  w: number;
+  h: number;
+  borderRadius: string;
+}
+
+const PIECE_GEOMETRY: Record<PieceForm, (size: number) => PieceGeometry> = {
+  circle: (size) => ({ borderRadius: "50%", h: size, w: size }),
+  rect: (size) => ({ borderRadius: "2px", h: size, w: size * 0.7 }),
+  strip: (size) => ({ borderRadius: `${size * 0.12}px`, h: size * 2, w: size * 0.3 }),
+};
+
 const KEYFRAME_STEPS = 40;
 const SCALE_DURATION_FRACTION = 0.08;
 
-function computeKeyframes(params: {
+const computeKeyframes = (params: {
   angle: number;
   startVelocity: number;
   decay: number;
@@ -20,7 +32,7 @@ function computeKeyframes(params: {
   ticks: number;
   tiltRotations: number;
   rotation: number;
-}) {
+}) => {
   const {
     angle,
     startVelocity,
@@ -44,7 +56,7 @@ function computeKeyframes(params: {
   let wobble = wobbleOffset;
   let tick = 0;
 
-  for (let step = 0; step <= KEYFRAME_STEPS; step++) {
+  for (let step = 0; step <= KEYFRAME_STEPS; step += 1) {
     const t = step / KEYFRAME_STEPS;
 
     if (step > 0) {
@@ -54,7 +66,7 @@ function computeKeyframes(params: {
         y += Math.sin(angle) * velocity + gravity * 3;
         velocity *= decay;
         wobble += wobbleSpeed;
-        tick++;
+        tick += 1;
       }
     }
 
@@ -88,8 +100,8 @@ function computeKeyframes(params: {
     opacity.push(opacityKeyframe);
   }
 
-  return { transform, opacity };
-}
+  return { opacity, transform };
+};
 
 /**
  * Fire confetti from a specific position.
@@ -97,7 +109,7 @@ function computeKeyframes(params: {
  * position:absolute (coordinates are parent-local). Otherwise falls back
  * to a viewport-fixed overlay on document.body.
  */
-export function fireConfetti(
+export const fireConfetti = (
   originX: number,
   originY: number,
   opts: {
@@ -113,7 +125,7 @@ export function fireConfetti(
     emojis?: string[];
     parent?: HTMLElement;
   } = {},
-) {
+) => {
   const {
     particleCount = 30,
     startVelocity = 20,
@@ -132,16 +144,16 @@ export function fireConfetti(
   if (parent) {
     container.style.cssText =
       "position:absolute;inset:0;pointer-events:none;z-index:99999;overflow:hidden";
-    parent.appendChild(container);
+    parent.append(container);
   } else {
     container.style.cssText =
       "position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;overflow:hidden";
-    document.body.appendChild(container);
+    document.body.append(container);
   }
 
   const ticks = Math.round(duration * 60);
 
-  for (let i = 0; i < particleCount; i++) {
+  for (let i = 0; i < particleCount; i += 1) {
     const radSpread = spread * (Math.PI / 180);
     const angle = -Math.PI / 2 + (0.5 * radSpread - Math.random() * radSpread);
     const velocity = startVelocity * 0.5 + Math.random() * startVelocity;
@@ -153,37 +165,35 @@ export function fireConfetti(
 
     const keyframes = computeKeyframes({
       angle,
-      startVelocity: velocity,
       decay,
-      gravity,
       drift,
-      wobbleSpeed,
-      wobbleOffset,
+      gravity,
+      rotation,
       size,
+      startVelocity: velocity,
       ticks,
       tiltRotations,
-      rotation,
+      wobbleOffset,
+      wobbleSpeed,
     });
 
     const el = document.createElement("div");
 
     if (emojis) {
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)]!;
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
       el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;font-size:${pieceSize * 2}px;line-height:1;pointer-events:none;will-change:transform,opacity`;
       el.textContent = emoji;
     } else {
-      const form = PIECE_FORMS[Math.floor(Math.random() * PIECE_FORMS.length)]!;
-      const color = colors[Math.floor(Math.random() * colors.length)]!;
-      const w = form === "strip" ? pieceSize * 0.3 : form === "rect" ? pieceSize * 0.7 : pieceSize;
-      const h = form === "strip" ? pieceSize * 2 : pieceSize;
-      const br = form === "circle" ? "50%" : form === "strip" ? `${pieceSize * 0.12}px` : "2px";
-      el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;width:${w}px;height:${h}px;border-radius:${br};background:${color};pointer-events:none;will-change:transform,opacity`;
+      const form = PIECE_FORMS[Math.floor(Math.random() * PIECE_FORMS.length)];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const { w, h, borderRadius } = PIECE_GEOMETRY[form](pieceSize);
+      el.style.cssText = `position:absolute;left:${originX}px;top:${originY}px;width:${w}px;height:${h}px;border-radius:${borderRadius};background:${color};pointer-events:none;will-change:transform,opacity`;
     }
 
-    container.appendChild(el);
+    container.append(el);
 
     animate(el, keyframes, { duration, ease: "linear" });
   }
 
   setTimeout(() => container.remove(), (duration + 0.5) * 1000);
-}
+};

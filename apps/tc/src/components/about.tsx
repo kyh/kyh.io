@@ -1,0 +1,211 @@
+import type { EventHandler, Step, TooltipRenderProps } from "react-joyride";
+import { useState } from "react";
+import { Joyride, ACTIONS, EVENTS, STATUS } from "react-joyride";
+import { Portal } from "react-portal";
+import { cn } from "cn";
+
+const defaultStepProps = {
+  disableBeacon: true,
+  floaterProps: {
+    disableAnimation: true,
+  },
+  placement: "right" as const,
+};
+
+export const defaultSteps: Step[] = [
+  {
+    ...defaultStepProps,
+    content: (
+      <>
+        <p>
+          The term <strong>Total Compensation</strong> captures all the different ways you are
+          financially compensated by your employer: base salary, bonus, equity, benefits, etc.
+        </p>
+        <p className="mt-2 font-bold text-emerald-500">
+          This calculator normalizes all these different forms of compensation into dollar values
+          (from private or public companies) so you can estimate the final amount you are paid.
+        </p>
+      </>
+    ),
+    target: ".title-section",
+  },
+  {
+    ...defaultStepProps,
+    content: (
+      <>
+        <p>
+          Cash compensation is the simplest category to understand because it’s what gets directly
+          deposited into your bank account.
+        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Types of cash compensation:</p>
+        <ul>
+          <li className="mt-2">
+            <strong>Base Salary</strong> - amount of money you receive just for being employed
+            (regardless of the performance of the company or your performance)
+          </li>
+          <li className="mt-2">
+            <strong>Bonuses</strong> - a single lump sum of cash (sometimes it’s a yearly bonus,
+            other times it could be a one time bonus at certain milestones)
+          </li>
+        </ul>
+      </>
+    ),
+    target: ".cash-section",
+  },
+  {
+    ...defaultStepProps,
+    content: (
+      <>
+        <p>
+          Equity compensation is more complex, you only recieve during certain periods and it’s
+          difficult to get the exact dollar value of your equity.
+        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Types of equity compensation:</p>
+        <ul>
+          <li className="mt-2">
+            <strong>ISO</strong> - your typical startup equity package consists of stock options
+            which translate to stocks once you buy them for a certain strike price
+          </li>
+          <li className="mt-2">
+            <strong>RSU</strong> - these are just like any other shares of company stock once they
+            are vested
+          </li>
+        </ul>
+      </>
+    ),
+    target: ".equity-section",
+  },
+  {
+    ...defaultStepProps,
+    content: (
+      <>
+        <p>
+          Estimating the value of your equity is the hard part. Investors often look at value from
+          multiple dimensions. To keep things simple, we offer 2 different approaches.
+        </p>
+        <p className="mt-4 text-xs text-slate-400 uppercase">Estimating equity value:</p>
+        <ul>
+          <li className="mt-2">
+            <strong>Growth based</strong> - At high-growth startup companies it may be easier to
+            think of your stock value as an N multiple after 4 years. Often, VCs expect a 10x return
+            on their investment
+          </li>
+          <li className="mt-2">
+            <strong>Revenue based</strong> - If you know the revenue of your company, you can
+            estimate the value of your equity by comparing it against the revenue multiple of an
+            equivalent public company
+          </li>
+        </ul>
+      </>
+    ),
+    target: ".equity-value-section",
+  },
+  {
+    ...defaultStepProps,
+    content: (
+      <p>
+        If you don’t know what numbers to use, we can offer reasonable defaults for you by looking
+        at competitors.
+      </p>
+    ),
+    target: ".estimate-modal-button",
+  },
+];
+
+export const useAbout = () => {
+  const [run, setRun] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const handleJoyrideCallback: EventHandler = ({ action, index, type, status }) => {
+    if (action === ACTIONS.CLOSE || status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setRun(false);
+      setStepIndex(0);
+      window.scrollTo({
+        behavior: "smooth",
+        left: 0,
+        top: 0,
+      });
+    } else if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
+      setStepIndex(index + (action === ACTIONS.PREV ? -1 : 1));
+    }
+  };
+
+  return {
+    handleJoyrideCallback,
+    run,
+    setRun,
+    setStepIndex,
+    stepIndex,
+    steps: defaultSteps,
+  };
+};
+
+const Tooltip = ({
+  index,
+  step,
+  backProps,
+  primaryProps,
+  tooltipProps,
+  isLastStep,
+}: TooltipRenderProps) => (
+  <div
+    className="max-w-sm rounded-sm bg-black p-6 text-sm text-slate-200 shadow-xl"
+    {...tooltipProps}
+  >
+    {step.title && (
+      <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">{step.title}</h1>
+    )}
+    {step.content}
+    <footer className="mt-5 flex items-center justify-between">
+      <div className="flex gap-1">
+        {defaultSteps.map((_s, i) => (
+          <div
+            key={i}
+            className={cn(
+              "h-2 w-2 rounded-full border border-slate-200",
+              i === index ? "bg-slate-200" : "bg-transparent",
+            )}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+      <div>
+        {index > 0 && (
+          <button
+            className="inline-flex items-center rounded-sm px-4 py-1.5 text-xs font-medium text-emerald-600"
+            type="button"
+            {...backProps}
+          >
+            Back
+          </button>
+        )}
+        <button
+          className="inline-flex items-center rounded-sm bg-emerald-900 px-4 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-700"
+          type="button"
+          {...primaryProps}
+        >
+          {isLastStep ? "Done" : "Next"}
+        </button>
+      </div>
+    </footer>
+  </div>
+);
+
+type Props = ReturnType<typeof useAbout>;
+
+export const About = ({ run, stepIndex, steps, handleJoyrideCallback }: Props) => (
+  <Portal>
+    <Joyride
+      continuous
+      tooltipComponent={Tooltip}
+      onEvent={handleJoyrideCallback}
+      run={run}
+      stepIndex={stepIndex}
+      steps={steps}
+      styles={{
+        arrow: {
+          color: "transparent",
+        },
+      }}
+    />
+  </Portal>
+);

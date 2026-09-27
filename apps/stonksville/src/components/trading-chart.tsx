@@ -2,26 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LivelinePoint } from "@/lib/liveline/types";
-import { Liveline } from "@/lib/liveline/Liveline";
+import { Liveline } from "@/lib/liveline/liveline";
 import { getDpr } from "@/lib/liveline/canvas/dpr";
 import { lerp } from "@/lib/liveline/math/lerp";
 
 import { textBalloons } from "balloons-js";
 
 import { fireConfetti } from "@/lib/confetti";
-import { PriceEngine } from "@/lib/price-engine";
+import { ReplayEngine } from "@/lib/price-engine";
 import {
-  BLOCK_PRICE_HEIGHT,
   DEFAULT_BET,
   GRID_CELL_SECONDS,
   INITIAL_BALANCE,
   MIN_FUTURE_SECONDS,
-  type Block,
   calculateMultiplier,
   createInitialState,
+  levelToPrice,
   placeBlock,
+  priceToLevel,
   updateBlocks,
 } from "@/lib/game-state";
+import type { Block } from "@/lib/game-state";
+import { findBarIndex, formatTradingDate, loadSpxHistory } from "@/lib/spx-data";
+import type { DailyBar } from "@/lib/spx-data";
 
 /** Visible time window for Liveline (seconds) */
 const CHART_WINDOW = 60;
@@ -31,19 +34,73 @@ const FUTURE_RATIO_DESKTOP = 0.35;
 const MOBILE_BREAKPOINT = 768;
 
 const mobileQuery =
-  typeof window !== "undefined" ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`) : null;
+  typeof window === "undefined" ? null : window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
-function getFutureRatio(): number {
-  return mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
-}
+const getFutureRatio = (): number =>
+  mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 /** Half a grid cell in ms */
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
-/** Fixed price range (half above + half below current price) */
-const PRICE_RANGE_HALF = 200;
-/** Half block height in price units */
-const HALF_BLOCK_H = BLOCK_PRICE_HEIGHT / 2;
+/**
+ * Rows always kept visible above and below the current price so bets have
+ * room. The range grows past this to fit whatever history is on screen —
+ * nothing is clipped, a 20% day just makes the rows shorter for a while.
+ */
+const MIN_HALF_ROWS = 10;
+/** Breathing room added above and below the fitted range, in rows */
+const RANGE_MARGIN_ROWS = 1;
 
-type OverlayDims = {
+interface LevelRange {
+  min: number;
+  max: number;
+}
+
+/** Vertical range that fits every tick in the visible window plus the minimum room around the current price */
+const fitRange = (
+  history: readonly { time: number; price: number }[],
+  now: number,
+  currentLevel: number,
+): LevelRange => {
+  let min = currentLevel - MIN_HALF_ROWS;
+  let max = currentLevel + MIN_HALF_ROWS;
+  const windowStart = now - CHART_WINDOW * 1000;
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const p = history[i];
+    if (p.time < windowStart) {
+      break;
+    }
+    const level = priceToLevel(p.price);
+    if (level < min) {
+      min = level;
+    }
+    if (level > max) {
+      max = level;
+    }
+  }
+  return { max: max + RANGE_MARGIN_ROWS, min: min - RANGE_MARGIN_ROWS };
+};
+/** Half block height in grid rows */
+const HALF_BLOCK_H = 0.5;
+/** Grid cells of history the chart shows before the first live tick */
+const HISTORY_DAYS = CHART_WINDOW / GRID_CELL_SECONDS;
+/** Leave at least this many trading days to play from a random start (~4 years) */
+const MIN_RUNWAY_DAYS = 1000;
+
+const formatPrice = (price: number): string => (price >= 100 ? price.toFixed(0) : price.toFixed(2));
+
+/** `?from=YYYY-MM-DD` picks the first trading day; otherwise a random one with runway left */
+const resolveStartIndex = (bars: DailyBar[]): number => {
+  const from = new URLSearchParams(window.location.search).get("from");
+  const requested = from ? findBarIndex(bars, from) : null;
+  if (requested !== null) {
+    return Math.max(requested, HISTORY_DAYS);
+  }
+  const last = Math.max(HISTORY_DAYS, bars.length - MIN_RUNWAY_DAYS);
+  return HISTORY_DAYS + Math.floor(Math.random() * (last - HISTORY_DAYS + 1));
+};
+
+type FeedStatus = "loading" | "live" | "error";
+
+interface OverlayDims {
   width: number;
   height: number;
   left: number;
@@ -53,45 +110,43 @@ type OverlayDims = {
   bottom: number;
   timeStart: number;
   timeEnd: number;
-  priceMin: number;
-  priceMax: number;
-};
+  levelMin: number;
+  levelMax: number;
+}
 
-function timeToX(time: number, dims: OverlayDims): number {
+const timeToX = (time: number, dims: OverlayDims): number => {
   const frac = (time - dims.timeStart) / (dims.timeEnd - dims.timeStart);
   return dims.left + frac * (dims.right - dims.left);
-}
+};
 
-function priceToY(price: number, dims: OverlayDims): number {
-  const frac = (price - dims.priceMax) / (dims.priceMin - dims.priceMax);
+const levelToY = (level: number, dims: OverlayDims): number => {
+  const frac = (level - dims.levelMax) / (dims.levelMin - dims.levelMax);
   return dims.top + frac * (dims.bottom - dims.top);
-}
+};
 
-function xToTime(x: number, dims: OverlayDims): number {
+const xToTime = (x: number, dims: OverlayDims): number => {
   const frac = (x - dims.left) / (dims.right - dims.left);
   return dims.timeStart + frac * (dims.timeEnd - dims.timeStart);
-}
+};
 
-function yToPrice(y: number, dims: OverlayDims): number {
+const yToLevel = (y: number, dims: OverlayDims): number => {
   const frac = (y - dims.top) / (dims.bottom - dims.top);
-  return dims.priceMax + frac * (dims.priceMin - dims.priceMax);
-}
+  return dims.levelMax + frac * (dims.levelMin - dims.levelMax);
+};
 
-function snapToGrid(price: number, time: number) {
+const snapToGrid = (level: number, time: number) => {
   const cellMs = GRID_CELL_SECONDS * 1000;
-  const snappedTime = Math.round(time / cellMs) * cellMs;
-  const snappedPrice = Math.round(price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
-  return { price: snappedPrice, time: snappedTime };
-}
+  return { level: Math.round(level), time: Math.round(time / cellMs) * cellMs };
+};
 
-function computeDims(
+const computeDims = (
   width: number,
   height: number,
   now: number,
-  priceMin: number,
-  priceMax: number,
+  levelMin: number,
+  levelMax: number,
   futureRatio: number,
-): OverlayDims {
+): OverlayDims => {
   const padTop = 0;
   const padBottom = 28;
   const padLeft = 2;
@@ -102,138 +157,55 @@ function computeDims(
   const futureSeconds = padRight * timePerPx;
 
   return {
-    width,
+    bottom: height - padBottom,
     height,
     left: padLeft,
+    levelMax,
+    levelMin,
     nowX: padLeft + chartWidth,
     right: width - 2,
-    top: padTop,
-    bottom: height - padBottom,
-    timeStart: now - CHART_WINDOW * 1000,
     timeEnd: now + futureSeconds * 1000,
-    priceMin,
-    priceMax,
+    timeStart: now - CHART_WINDOW * 1000,
+    top: padTop,
+    width,
   };
-}
+};
 
-type HoverState = {
+interface HoverState {
   x: number;
   y: number;
   currentPrice: number;
   balance: number;
-};
-
-function drawOverlay(
-  ctx: CanvasRenderingContext2D,
-  dims: OverlayDims,
-  blocks: Block[],
-  hover: HoverState | null,
-) {
-  ctx.clearRect(0, 0, dims.width, dims.height);
-
-  // "Now" dashed line
-  ctx.strokeStyle = "rgba(52, 211, 153, 0.4)";
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(dims.nowX, dims.top);
-  ctx.lineTo(dims.nowX, dims.height);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Grid lines in future zone — offset by half-cell so lines sit at block edges
-  const cellMs = GRID_CELL_SECONDS * 1000;
-  const firstGridTime = Math.ceil((dims.timeStart - HALF_CELL_MS) / cellMs) * cellMs + HALF_CELL_MS;
-
-  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
-  ctx.lineWidth = 1;
-  for (let t = firstGridTime; t <= dims.timeEnd; t += cellMs) {
-    const x = timeToX(t, dims);
-    if (x < dims.nowX - 2 || x > dims.right) continue;
-    ctx.beginPath();
-    ctx.moveTo(x, dims.top);
-    ctx.lineTo(x, dims.height);
-    ctx.stroke();
-  }
-
-  // Horizontal grid — offset by half so lines sit at block edges
-  const pxPerPrice = (dims.bottom - dims.top) / (dims.priceMax - dims.priceMin);
-  const extraPrice = pxPerPrice > 0 ? (dims.height - dims.bottom) / pxPerPrice : 0;
-  const gridPriceMin = dims.priceMin - extraPrice;
-
-  const firstGridPrice =
-    Math.ceil((gridPriceMin - HALF_BLOCK_H) / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT +
-    HALF_BLOCK_H;
-
-  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
-  for (let p = firstGridPrice; p <= dims.priceMax; p += BLOCK_PRICE_HEIGHT) {
-    const y = priceToY(p, dims);
-    if (y < dims.top || y > dims.height) continue;
-    const startX = Math.max(dims.nowX - 2, dims.left);
-    ctx.beginPath();
-    ctx.moveTo(startX, y);
-    ctx.lineTo(dims.right, y);
-    ctx.stroke();
-  }
-
-  // Blocks
-  for (const block of blocks) {
-    drawBlock(ctx, dims, block);
-  }
-
-  // Hover preview
-  if (hover) {
-    const snapped = snapToGrid(yToPrice(hover.y, dims), xToTime(hover.x, dims));
-
-    const isInFuture = snapped.time > Date.now() + MIN_FUTURE_SECONDS * 1000;
-    const isValid = isInFuture && hover.balance >= DEFAULT_BET;
-
-    const x1 = timeToX(snapped.time - HALF_CELL_MS, dims);
-    const x2 = timeToX(snapped.time + HALF_CELL_MS, dims);
-    const y1 = priceToY(snapped.price + HALF_BLOCK_H, dims);
-    const y2 = priceToY(snapped.price - HALF_BLOCK_H, dims);
-
-    ctx.fillStyle = isValid ? "rgba(250, 240, 50, 0.2)" : "rgba(248, 113, 113, 0.15)";
-    ctx.strokeStyle = isValid ? "rgba(250, 240, 50, 0.5)" : "rgba(248, 113, 113, 0.3)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 3]);
-    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-    ctx.setLineDash([]);
-
-    if (isValid) {
-      const mult = calculateMultiplier(hover.currentPrice, snapped.price);
-      ctx.fillStyle = "rgba(250, 240, 50, 0.9)";
-      ctx.font = "bold 11px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`$${DEFAULT_BET} · ${mult.toFixed(1)}x`, (x1 + x2) / 2, (y1 + y2) / 2);
-    }
-  }
 }
 
-function drawBlock(ctx: CanvasRenderingContext2D, dims: OverlayDims, block: Block) {
+const drawBlock = (ctx: CanvasRenderingContext2D, dims: OverlayDims, block: Block) => {
   const x1 = timeToX(block.targetTime - HALF_CELL_MS, dims);
   const x2 = timeToX(block.targetTime + HALF_CELL_MS, dims);
-  const y1 = priceToY(block.priceLevel + HALF_BLOCK_H, dims);
-  const y2 = priceToY(block.priceLevel - HALF_BLOCK_H, dims);
+  const y1 = levelToY(block.level + HALF_BLOCK_H, dims);
+  const y2 = levelToY(block.level - HALF_BLOCK_H, dims);
   const w = x2 - x1;
   const h = y2 - y1;
 
-  if (x2 < dims.left || x1 > dims.right) return;
+  if (x2 < dims.left || x1 > dims.right) {
+    return;
+  }
 
   // Fade out resolved blocks over 1s
   let alpha = 1;
   if (block.resolvedAt !== null) {
     const elapsed = Date.now() - block.resolvedAt;
     alpha = Math.max(0, 1 - elapsed / 1000);
-    if (alpha <= 0) return;
+    if (alpha <= 0) {
+      return;
+    }
   }
 
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  let fill: string, border: string, glow: string;
+  let border: string;
+  let fill: string;
+  let glow: string;
   if (block.touched || block.status === "won") {
     fill = "rgba(74, 222, 128, 0.9)";
     border = "rgba(74, 222, 128, 1)";
@@ -273,47 +245,145 @@ function drawBlock(ctx: CanvasRenderingContext2D, dims: OverlayDims, block: Bloc
   ctx.fillText(`${block.multiplier.toFixed(1)}x`, cx, cy + 7);
 
   ctx.restore();
-}
+};
 
-export function TradingChart() {
+const drawOverlay = (
+  ctx: CanvasRenderingContext2D,
+  dims: OverlayDims,
+  blocks: Block[],
+  hover: HoverState | null,
+) => {
+  ctx.clearRect(0, 0, dims.width, dims.height);
+
+  // "Now" dashed line
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.4)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(dims.nowX, dims.top);
+  ctx.lineTo(dims.nowX, dims.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Grid lines in future zone — offset by half-cell so lines sit at block edges
+  const cellMs = GRID_CELL_SECONDS * 1000;
+  const firstGridTime = Math.ceil((dims.timeStart - HALF_CELL_MS) / cellMs) * cellMs + HALF_CELL_MS;
+
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
+  ctx.lineWidth = 1;
+  for (let t = firstGridTime; t <= dims.timeEnd; t += cellMs) {
+    const x = timeToX(t, dims);
+    if (x < dims.nowX - 2 || x > dims.right) {
+      continue;
+    }
+    ctx.beginPath();
+    ctx.moveTo(x, dims.top);
+    ctx.lineTo(x, dims.height);
+    ctx.stroke();
+  }
+
+  // Horizontal grid — offset by half so lines sit at block edges
+  const pxPerLevel = (dims.bottom - dims.top) / (dims.levelMax - dims.levelMin);
+  const extraLevels = pxPerLevel > 0 ? (dims.height - dims.bottom) / pxPerLevel : 0;
+  const gridLevelMin = dims.levelMin - extraLevels;
+
+  const firstGridLevel = Math.ceil(gridLevelMin - HALF_BLOCK_H) + HALF_BLOCK_H;
+
+  ctx.strokeStyle = "rgba(52, 211, 153, 0.2)";
+  for (let level = firstGridLevel; level <= dims.levelMax; level += 1) {
+    const y = levelToY(level, dims);
+    if (y < dims.top || y > dims.height) {
+      continue;
+    }
+    const startX = Math.max(dims.nowX - 2, dims.left);
+    ctx.beginPath();
+    ctx.moveTo(startX, y);
+    ctx.lineTo(dims.right, y);
+    ctx.stroke();
+  }
+
+  // Blocks
+  for (const block of blocks) {
+    drawBlock(ctx, dims, block);
+  }
+
+  // Hover preview
+  if (hover) {
+    const snapped = snapToGrid(yToLevel(hover.y, dims), xToTime(hover.x, dims));
+
+    const isInFuture = snapped.time > Date.now() + MIN_FUTURE_SECONDS * 1000;
+    const isValid = isInFuture && hover.balance >= DEFAULT_BET;
+
+    const x1 = timeToX(snapped.time - HALF_CELL_MS, dims);
+    const x2 = timeToX(snapped.time + HALF_CELL_MS, dims);
+    const y1 = levelToY(snapped.level + HALF_BLOCK_H, dims);
+    const y2 = levelToY(snapped.level - HALF_BLOCK_H, dims);
+
+    ctx.fillStyle = isValid ? "rgba(250, 240, 50, 0.2)" : "rgba(248, 113, 113, 0.15)";
+    ctx.strokeStyle = isValid ? "rgba(250, 240, 50, 0.5)" : "rgba(248, 113, 113, 0.3)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.setLineDash([]);
+
+    if (isValid) {
+      const mult = calculateMultiplier(hover.currentPrice, levelToPrice(snapped.level));
+      ctx.fillStyle = "rgba(250, 240, 50, 0.9)";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`$${DEFAULT_BET} · ${mult.toFixed(1)}x`, (x1 + x2) / 2, (y1 + y2) / 2);
+    }
+  }
+};
+
+export const TradingChart = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const confettiLayerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<PriceEngine | null>(null);
+  const engineRef = useRef<ReplayEngine | null>(null);
   const stateRef = useRef(createInitialState());
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef(false);
   const lastPlacedCellRef = useRef<string | null>(null);
-  const rangeCenterRef = useRef(5200);
-  const targetCenterRef = useRef(5200);
+  const rangeRef = useRef<LevelRange>({ max: MIN_HALF_ROWS, min: -MIN_HALF_ROWS });
+  const targetRangeRef = useRef<LevelRange>({ max: MIN_HALF_ROWS, min: -MIN_HALF_ROWS });
   const animRef = useRef<number>(0);
-  const sizeRef = useRef({ width: 0, height: 0 });
+  const sizeRef = useRef({ height: 0, width: 0 });
   const prevUIRef = useRef({
     balance: INITIAL_BALANCE,
-    totalWins: 0,
-    totalLosses: 0,
     blockCount: 0,
+    totalLosses: 0,
+    totalWins: 0,
   });
 
+  const [feed, setFeed] = useState<FeedStatus>("loading");
   const [chartData, setChartData] = useState<LivelinePoint[]>([]);
-  const [liveValue, setLiveValue] = useState(5200);
+  const [livePrice, setLivePrice] = useState(0);
+  const [tradingDate, setTradingDate] = useState<number | null>(null);
   const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
   const [blockCount, setBlockCount] = useState(0);
   const [rightPad, setRightPad] = useState(200);
-  const [priceRange, setPriceRange] = useState({ min: 5000, max: 5400 });
+  const [levelRange, setLevelRange] = useState<LevelRange>({
+    max: MIN_HALF_ROWS,
+    min: -MIN_HALF_ROWS,
+  });
 
   // ResizeObserver for sizeRef and rightPad
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
+      const [entry] = entries;
       if (entry) {
         const { width, height } = entry.contentRect;
-        sizeRef.current = { width, height };
+        sizeRef.current = { height, width };
         setRightPad(Math.round(width * getFutureRatio()) || 200);
       }
     });
@@ -321,32 +391,65 @@ export function TradingChart() {
     return () => observer.disconnect();
   }, []);
 
-  // Initialize price engine — subscribe updates state + refs
+  // Load S&P history, then replay it — subscribe updates state + refs
   useEffect(() => {
-    const engine = new PriceEngine();
-    engineRef.current = engine;
+    const controller = new AbortController();
+    let engine: ReplayEngine | null = null;
+    let unsubscribe: (() => void) | null = null;
 
-    const unsubscribe = engine.subscribe((point) => {
-      setLiveValue(point.price);
-
-      targetCenterRef.current = Math.round(point.price / BLOCK_PRICE_HEIGHT) * BLOCK_PRICE_HEIGHT;
-
-      // Update game state on each tick (10/sec) instead of every rAF frame (60/sec)
-      const history = engine.getHistoryRaw();
-      stateRef.current = updateBlocks(stateRef.current, point.price, Date.now(), history);
-
-      const llData: LivelinePoint[] = [];
-      for (let i = 0; i < history.length; i++) {
-        const p = history[i]!;
-        llData.push({ time: p.time / 1000, value: p.price });
+    const run = async () => {
+      let bars: DailyBar[];
+      try {
+        bars = await loadSpxHistory(controller.signal);
+      } catch {
+        if (!controller.signal.aborted) {
+          setFeed("error");
+        }
+        return;
       }
-      setChartData(llData);
-    });
+      if (controller.signal.aborted) {
+        return;
+      }
 
-    engine.start();
+      const replay = new ReplayEngine(bars, resolveStartIndex(bars), {
+        dayMs: GRID_CELL_SECONDS * 1000,
+        historySeconds: CHART_WINDOW,
+      });
+      engine = replay;
+      engineRef.current = replay;
+
+      unsubscribe = replay.subscribe((point) => {
+        setLivePrice(point.price);
+        setTradingDate(replay.getCurrentBar().date);
+
+        // Update game state on each tick (10/sec) instead of every rAF frame (60/sec)
+        const history = replay.getHistoryRaw();
+        const now = Date.now();
+        stateRef.current = updateBlocks(stateRef.current, point.price, now, history);
+        targetRangeRef.current = fitRange(history, now, priceToLevel(point.price));
+
+        setChartData(history.map((p) => ({ time: p.time / 1000, value: priceToLevel(p.price) })));
+      });
+
+      replay.start();
+      const startRange = fitRange(
+        replay.getHistoryRaw(),
+        Date.now(),
+        priceToLevel(replay.getCurrentPrice()),
+      );
+      rangeRef.current = startRange;
+      targetRangeRef.current = startRange;
+      setLivePrice(replay.getCurrentPrice());
+      setTradingDate(replay.getCurrentBar().date);
+      setFeed("live");
+    };
+    run();
+
     return () => {
-      unsubscribe();
-      engine.stop();
+      controller.abort();
+      unsubscribe?.();
+      engine?.stop();
+      engineRef.current = null;
     };
   }, []);
 
@@ -383,13 +486,14 @@ export function TradingChart() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const now = Date.now();
-      const price = engineRef.current?.getCurrentPrice() ?? 5200;
+      const price = engineRef.current?.getCurrentPrice() ?? 0;
 
-      // Frame-rate-independent lerp for smooth grid panning
-      rangeCenterRef.current = lerp(rangeCenterRef.current, targetCenterRef.current, 0.04, dt);
-      const min = rangeCenterRef.current - PRICE_RANGE_HALF;
-      const max = rangeCenterRef.current + PRICE_RANGE_HALF;
-      setPriceRange((prev) => (prev.min === min && prev.max === max ? prev : { min, max }));
+      // Frame-rate-independent lerp for smooth grid panning and zooming
+      const target = targetRangeRef.current;
+      const min = lerp(rangeRef.current.min, target.min, 0.04, dt);
+      const max = lerp(rangeRef.current.max, target.max, 0.04, dt);
+      rangeRef.current = { max, min };
+      setLevelRange((prev) => (prev.min === min && prev.max === max ? prev : { max, min }));
 
       const next = stateRef.current;
 
@@ -419,7 +523,7 @@ export function TradingChart() {
         ctx,
         dims,
         next.blocks,
-        hover ? { ...hover, currentPrice: price, balance: next.balance } : null,
+        hover ? { ...hover, balance: next.balance, currentPrice: price } : null,
       );
 
       animRef.current = requestAnimationFrame(render);
@@ -435,41 +539,36 @@ export function TradingChart() {
     const interval = setInterval(() => {
       const next = stateRef.current;
       const prev = prevBlocksRef.current;
-      if (next.blocks === prev) return;
+      if (next.blocks === prev) {
+        return;
+      }
 
       const prevById = new Map(prev.map((b) => [b.id, b]));
       const confettiLayer = confettiLayerRef.current;
       const { width, height } = sizeRef.current;
-      const center = rangeCenterRef.current;
-      const dims = computeDims(
-        width,
-        height,
-        Date.now(),
-        center - PRICE_RANGE_HALF,
-        center + PRICE_RANGE_HALF,
-        getFutureRatio(),
-      );
+      const range = rangeRef.current;
+      const dims = computeDims(width, height, Date.now(), range.min, range.max, getFutureRatio());
 
       for (const b of next.blocks) {
         if (b.touched && !prevById.get(b.id)?.touched) {
           const count = 3 + Math.floor(Math.random() * 5);
           textBalloons([
             {
-              text: "💸".repeat(count),
-              fontSize: 80 + Math.floor(Math.random() * 60),
               color: "#000000",
+              fontSize: 80 + Math.floor(Math.random() * 60),
+              text: "💸".repeat(count),
             },
           ]);
           if (confettiLayer) {
-            fireConfetti(timeToX(b.targetTime, dims), priceToY(b.priceLevel, dims), {
-              particleCount: 12,
-              startVelocity: 8,
-              spread: 360,
+            fireConfetti(timeToX(b.targetTime, dims), levelToY(b.level, dims), {
               decay: 0.94,
-              gravity: 0.4,
-              size: 0.7,
               emojis: ["💰"],
+              gravity: 0.4,
               parent: confettiLayer,
+              particleCount: 12,
+              size: 0.7,
+              spread: 360,
+              startVelocity: 8,
             });
           }
         }
@@ -483,34 +582,32 @@ export function TradingChart() {
   const getClickDims = useCallback(() => {
     const { width, height } = sizeRef.current;
     const now = Date.now();
-    const center = rangeCenterRef.current;
-    return computeDims(
-      width,
-      height,
-      now,
-      center - PRICE_RANGE_HALF,
-      center + PRICE_RANGE_HALF,
-      getFutureRatio(),
-    );
+    const range = rangeRef.current;
+    return computeDims(width, height, now, range.min, range.max, getFutureRatio());
   }, []);
 
   const tryPlaceAt = useCallback(
     (x: number, y: number) => {
+      const engine = engineRef.current;
+      if (!engine) {
+        return;
+      }
       const dims = getClickDims();
-      const price = engineRef.current?.getCurrentPrice() ?? 5200;
-      const snapped = snapToGrid(yToPrice(y, dims), xToTime(x, dims));
-      const cellKey = `${snapped.price}:${snapped.time}`;
-      if (cellKey === lastPlacedCellRef.current) return;
+      const snapped = snapToGrid(yToLevel(y, dims), xToTime(x, dims));
+      const cellKey = `${snapped.level}:${snapped.time}`;
+      if (cellKey === lastPlacedCellRef.current) {
+        return;
+      }
       lastPlacedCellRef.current = cellKey;
       const prev = stateRef.current;
-      stateRef.current = placeBlock(prev, price, snapped.price, snapped.time);
+      stateRef.current = placeBlock(prev, engine.getCurrentPrice(), snapped.level, snapped.time);
       if (stateRef.current !== prev) {
         const confettiLayer = confettiLayerRef.current;
         if (confettiLayer) {
-          fireConfetti(timeToX(snapped.time, dims), priceToY(snapped.price, dims), {
+          fireConfetti(timeToX(snapped.time, dims), levelToY(snapped.level, dims), {
+            parent: confettiLayer,
             particleCount: 20,
             size: 0.6,
-            parent: confettiLayer,
           });
         }
       }
@@ -546,7 +643,9 @@ export function TradingChart() {
     e.currentTarget.releasePointerCapture(e.pointerId);
     draggingRef.current = false;
     lastPlacedCellRef.current = null;
-    if (e.pointerType !== "mouse") hoverRef.current = null;
+    if (e.pointerType !== "mouse") {
+      hoverRef.current = null;
+    }
   }, []);
 
   const resetPointerState = useCallback(() => {
@@ -567,9 +666,9 @@ export function TradingChart() {
     stateRef.current = createInitialState();
     prevUIRef.current = {
       balance: INITIAL_BALANCE,
-      totalWins: 0,
-      totalLosses: 0,
       blockCount: 0,
+      totalLosses: 0,
+      totalWins: 0,
     };
     setBalance(INITIAL_BALANCE);
     setWins(0);
@@ -579,7 +678,12 @@ export function TradingChart() {
 
   const isBusted = balance < DEFAULT_BET && blockCount === 0;
 
-  const { min: rangeMin, max: rangeMax } = priceRange;
+  const { min: rangeMin, max: rangeMax } = levelRange;
+
+  const formatAxisDate = useCallback((t: number) => {
+    const engine = engineRef.current;
+    return engine ? formatTradingDate(engine.barAt(t * 1000).date, "short") : "";
+  }, []);
 
   return (
     <div ref={containerRef} className="relative h-full w-full">
@@ -590,7 +694,9 @@ export function TradingChart() {
       <div className="absolute inset-0 z-10">
         <Liveline
           data={chartData}
-          value={liveValue}
+          value={priceToLevel(livePrice || 1)}
+          loading={feed === "loading"}
+          emptyText=""
           window={CHART_WINDOW}
           theme="dark"
           color="#34d399"
@@ -604,8 +710,9 @@ export function TradingChart() {
           lineWidth={2}
           minValue={rangeMin}
           maxValue={rangeMax}
-          formatValue={(v: number) => v.toFixed(2)}
-          padding={{ top: 0, right: rightPad, bottom: 28, left: 2 }}
+          formatValue={(v: number) => formatPrice(levelToPrice(v))}
+          formatTime={formatAxisDate}
+          padding={{ bottom: 28, left: 2, right: rightPad, top: 0 }}
         />
       </div>
 
@@ -627,12 +734,24 @@ export function TradingChart() {
       />
 
       {/* HUD */}
+      <div className="pointer-events-none absolute top-3 left-3 z-30 flex items-center gap-2 font-mono text-sm">
+        <span className="text-emerald-400/60">S&amp;P 500</span>
+        {tradingDate !== null && (
+          <span className="text-white/60 tabular-nums">{formatTradingDate(tradingDate)}</span>
+        )}
+      </div>
       <div className="pointer-events-none absolute top-3 right-3 z-30 flex items-center gap-3 font-mono text-sm">
-        <span className="text-emerald-400/60">{liveValue.toFixed(2)}</span>
+        <span className="text-emerald-400/60 tabular-nums">{livePrice.toFixed(2)}</span>
         <span className="text-emerald-300/50">{wins}W</span>
         <span className="text-red-400/50">{losses}L</span>
         <span className="font-bold tabular-nums">${balance.toFixed(0)}</span>
       </div>
+
+      {feed === "error" && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60">
+          <p className="font-mono text-sm text-red-400">Couldn&apos;t load S&amp;P 500 history.</p>
+        </div>
+      )}
 
       {isBusted && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60">
@@ -650,4 +769,4 @@ export function TradingChart() {
       )}
     </div>
   );
-}
+};

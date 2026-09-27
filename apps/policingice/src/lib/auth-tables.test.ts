@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { getAuthTables } from "better-auth/db";
-import { getTableColumns, is, Table } from "drizzle-orm";
+import { getColumns, is, Table } from "drizzle-orm";
 
 import * as drizzleSchema from "@/db/drizzle-schema";
 import { auth } from "./auth";
@@ -10,8 +10,7 @@ import { auth } from "./auth";
  * better-auth owns the shape of its tables; the Drizzle schema is a hand-written
  * mirror of them. Nothing else in the gate can catch a divergence — typecheck,
  * lint and build never touch a database, so a field the library requires and the
- * schema lacks stays green until the first real query fails in production. That
- * is exactly how better-auth 1.7's required `account.issuer` slipped through.
+ * schema lacks stays green until the first real query fails in production.
  *
  * The drizzle adapter resolves `schema[modelName]` and then `table[fieldName]`,
  * so both sides are matched on the *export key* and the *property name* — not on
@@ -44,24 +43,30 @@ for (const [key, authTable] of Object.entries(authTables)) {
 
     it("declares every field better-auth requires", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
-      const properties = new Set(Object.keys(getTableColumns(table)));
+      if (!table) {
+        return;
+      }
+      const properties = new Set(Object.keys(getColumns(table)));
       const missing = fieldNamesOf(authTable).filter((fieldName) => !properties.has(fieldName));
       assert.deepEqual(missing, []);
     });
 
     it("does not declare fields better-auth does not know about", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
+      if (!table) {
+        return;
+      }
       const known = new Set([...fieldNamesOf(authTable), "id"]);
-      const extra = Object.keys(getTableColumns(table)).filter((property) => !known.has(property));
+      const extra = Object.keys(getColumns(table)).filter((property) => !known.has(property));
       assert.deepEqual(extra, []);
     });
 
     it("matches better-auth on which fields are NOT NULL", () => {
       const table = drizzleTables.get(authTable.modelName);
-      if (!table) return;
-      const columns = getTableColumns(table);
+      if (!table) {
+        return;
+      }
+      const columns = getColumns(table);
       const mismatched = Object.entries(authTable.fields)
         .map(([fieldKey, field]) => ({
           fieldName: field.fieldName ?? fieldKey,
