@@ -152,8 +152,10 @@ const Page = () => (
       <Section id="connect" delay={1.1}>
         <SectionHeading id="connect">Connect</SectionHeading>
         <ConnectList />
-        <SubHeading id="around">Around this site</SubHeading>
-        <SiteNav />
+        <div className="sr-only">
+          <SubHeading id="around">Around this site</SubHeading>
+          <SiteNav />
+        </div>
       </Section>
     </div>
 
