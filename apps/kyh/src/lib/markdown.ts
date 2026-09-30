@@ -1,7 +1,9 @@
 import type { SiteRoute } from "@/lib/config";
 import type { ContentLink, PageContent } from "@/lib/page-content";
+import type { DocumentBlock } from "@/lib/page-document";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 import { connectLinks, projects, workHistory } from "@/lib/data";
+import { buildPageDocument } from "@/lib/page-document";
 
 /** Site-relative hrefs become absolute so the markdown stands on its own. */
 const resolveHref = (href: string) => (href.startsWith("/") ? absoluteUrl(href) : href);
@@ -12,29 +14,32 @@ const linkLine = (link: ContentLink) =>
 const routeLine = (route: SiteRoute) =>
   linkLine({ description: route.description, href: route.path, label: route.title });
 
-/** Paired with `ProsePage`, which renders the same content as HTML. */
-export const renderPageMarkdown = (page: PageContent) => {
-  const parts: string[] = [`# ${page.heading}`, ...page.intro];
-
-  for (const section of page.sections) {
-    parts.push(`## ${section.heading}`);
-    for (const block of section.blocks) {
-      if (block.kind === "text") {
-        parts.push(block.text);
-      }
-      if (block.kind === "subheading") {
-        parts.push(`### ${block.text}`);
-      }
-      if (block.kind === "links") {
-        parts.push(block.items.map(linkLine).join("\n"));
-      }
+const blockMarkdown = (block: DocumentBlock) => {
+  switch (block.kind) {
+    case "heading": {
+      return `${"#".repeat(block.level)} ${block.text}`;
+    }
+    case "paragraph": {
+      return block.text;
+    }
+    case "list": {
+      return block.items.map(linkLine).join("\n");
+    }
+    case "rule": {
+      return "---";
+    }
+    case "canonical": {
+      return `Canonical URL: ${block.url}`;
+    }
+    default: {
+      return block satisfies never;
     }
   }
-
-  parts.push(`---\n\nCanonical URL: ${absoluteUrl(page.path)}`);
-
-  return `${parts.join("\n\n")}\n`;
 };
+
+/** Paired with `MarkdownPage`, which renders the same document as HTML. */
+export const renderPageMarkdown = (page: PageContent) =>
+  `${buildPageDocument(page).map(blockMarkdown).join("\n\n")}\n`;
 
 export const buildHomeMarkdown = () => `# Kaiyu Hsu
 
