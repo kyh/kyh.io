@@ -68,11 +68,11 @@ const Block = ({ block }: { block: DocumentBlock }) => {
         </ul>
       );
     }
-    case "rule": {
-      return <hr className="bg-border mt-4 h-px border-0" />;
-    }
+    // The canonical footer orients agents reading bare markdown; in HTML the
+    // `<link rel="canonical">` already carries it.
+    case "rule":
     case "canonical": {
-      return <p className="text-foreground-faded">Canonical URL: {block.url}</p>;
+      return null;
     }
     default: {
       return block satisfies never;

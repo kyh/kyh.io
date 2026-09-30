@@ -28,6 +28,14 @@ const markdownText = (markdown: string) =>
     .replaceAll(/\[(?<label>[^\]]+)\]\([^)]+\)/gu, "$<label>")
     .replaceAll("`", "");
 
+/** The canonical footer is markdown-only; the HTML page omits it on purpose. */
+const CANONICAL_FOOTER = /\n---\n\nCanonical URL: \S+\n$/u;
+
+const withoutCanonicalFooter = (markdown: string) => {
+  assert.match(markdown, CANONICAL_FOOTER);
+  return markdown.replace(CANONICAL_FOOTER, "\n");
+};
+
 const lines = (text: string) =>
   text
     .split("\n")
@@ -37,7 +45,11 @@ const lines = (text: string) =>
 test("the /about HTML reads as the same text, in the same order, as its markdown", () => {
   const html = renderToStaticMarkup(createElement(MarkdownPage, { content: aboutContent }));
 
-  assert.deepEqual(lines(htmlText(html)), lines(markdownText(renderPageMarkdown(aboutContent))));
+  assert.deepEqual(
+    lines(htmlText(html)),
+    lines(markdownText(withoutCanonicalFooter(renderPageMarkdown(aboutContent)))),
+  );
+  assert.ok(!html.includes("Canonical URL"));
 });
 
 test("the /about HTML keeps markdown's heading outline", () => {
