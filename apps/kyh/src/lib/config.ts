@@ -28,7 +28,7 @@ export const siteRoutes: SiteRoute[] = [
     title: "Home",
   },
   {
-    description: "Long-form background: the roles, the research, and the work I take on.",
+    description: "Short bio: current role, past work, and side projects.",
     path: "/about",
     title: "About",
   },
@@ -38,13 +38,12 @@ export const siteRoutes: SiteRoute[] = [
     title: "Showcase",
   },
   {
-    description:
-      "Machine-readable files, the `npx kyh` CLI, and how an agent should read this site.",
+    description: "Machine-readable endpoints, content negotiation, and the `npx kyh` CLI.",
     path: "/agents",
     title: "For agents",
   },
   {
-    description: "Email and social channels, what to send, and what to expect back.",
+    description: "Email and social channels, and what to send.",
     path: "/contact",
     title: "Contact",
   },
