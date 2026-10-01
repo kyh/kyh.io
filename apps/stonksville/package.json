@@ -12,7 +12,7 @@
   "dependencies": {
     "@vercel/blob": "^2.8.0",
     "balloons-js": "^0.0.3",
-    "motion": "^13.4.0",
+    "motion": "^13.4.4",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
