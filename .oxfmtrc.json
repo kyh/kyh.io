@@ -10,7 +10,8 @@
     ".expo",
     ".wxt",
     ".output",
-    "out"
+    "out",
+    "apps/subway-narrator/vendor"
   ],
   "experimentalSortPackageJson": {}
 }

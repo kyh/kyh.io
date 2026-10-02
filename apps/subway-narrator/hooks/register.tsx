@@ -72,13 +72,20 @@ const playOpenai = async ($: EngineInterface, line: Line) => {
   }
   await update($, caption, () => line.text);
   const startedAt = await $.clock.now();
+  let isPlayed = false;
   try {
     await $.audio.play({ base64: audio, mime: "audio/mpeg" });
+    // A host with no player returns at once.
+    isPlayed = (await $.clock.now()) - startedAt > 300;
   } catch {
-    return false;
+    isPlayed = false;
   }
-  // A host with no player returns at once: leave the caption up instead.
-  return (await $.clock.now()) - startedAt > 300;
+  if (!isPlayed) {
+    // Stop paying for speech nobody hears; the system voice takes over.
+    openai.key = "";
+    $.ui.toast("subway-narrator: no audio player here, using the system voice");
+  }
+  return isPlayed;
 };
 
 const playSystem = async ($: EngineInterface, line: Line) => {
@@ -125,7 +132,13 @@ const sayNext = async ($: EngineInterface) => {
     return;
   }
   prefetch($);
-  const isHeard = await voice($, line);
+  let isHeard = false;
+  try {
+    isHeard = await voice($, line);
+  } catch {
+    // A failed line still keeps the queue moving.
+    isHeard = false;
+  }
   $.clock.after(isHeard ? 1 : readMs(line.text), () => {
     void sayNext($);
   });
@@ -240,8 +253,13 @@ export const register: Register = (on, options) => {
     const text = e.message.content
       .flatMap((block) => (block.type === "text" ? [String(block.text)] : []))
       .join("\n");
-    queue.push(...toSentences(text).map((sentence) => ({ text: sentence })));
-    queue.splice(0, Math.max(0, queue.length - MAX_QUEUE));
+    // A long reply is read from its start; lines past the cap are dropped.
+    const room = Math.max(0, MAX_QUEUE - queue.length);
+    queue.push(
+      ...toSentences(text)
+        .slice(0, room)
+        .map((sentence) => ({ text: sentence })),
+    );
     prefetch($);
     narrate($);
 

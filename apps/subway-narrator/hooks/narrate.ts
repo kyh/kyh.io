@@ -11,7 +11,7 @@ export const toSentences = (markdown: string): string[] => {
     .replaceAll(/`(?<code>[^`]*)`/gu, "$<code>")
     .replaceAll(/!\[[^\]]*\]\([^)]*\)/gu, "")
     .replaceAll(/\[(?<label>[^\]]+)\]\([^)]*\)/gu, "$<label>")
-    .replaceAll(/https?:\/\/\S+/gu, "a link")
+    .replaceAll(/https?:\/\/\S+?(?<end>[.,!?;:)]*)(?=\s|$)/gmu, "a link$<end>")
     .replaceAll(/^[ \t]*(?:\|?[ \t:|-]+\|[ \t:|-]*|[-*_]{3,}[ \t]*)$/gmu, "")
     .replaceAll(/[ \t]*\|[ \t]*/gu, ", ")
     .replaceAll(/^\s{0,3}(?:#{1,6}|>|[-*+]|\d+[.)])\s+/gmu, "")

@@ -13,8 +13,9 @@ pnpm dev:subway-narrator              # claude --plugin-dir apps/subway-narrator
 
 Or load it into any session: `claude --plugin-dir /path/to/apps/subway-narrator`.
 
-- `/subway` opens the pane. It opens by itself only when the terminal is at
-  least 144 columns wide.
+- `/subway` opens the pane. It also opens at session start, and Claude Code
+  only places a pane a mod opens unasked when the terminal is at least 144
+  columns wide (`$.ui.open` answers `isPlaced: false` below that).
 - `/subway-mute` turns the voice off and keeps the captions.
 - `/config` sets the voice (`ash` by default) and the model
   (`gpt-4o-mini-tts`, the only one that follows the narrator style).
@@ -34,7 +35,6 @@ the captions.
 
 ```sh
 pnpm -F @repo/subway-narrator test              # game + narration units
-pnpm -F @repo/subway-narrator typecheck         # pure modules and tests
+pnpm -F @repo/subway-narrator typecheck         # pure modules + tests, then the hooks against vendor/claude-code.d.ts
 pnpm -F @repo/subway-narrator validate          # what the engine will load
-pnpm -F @repo/subway-narrator typecheck:plugin  # hooks, after one load lays .claude-plugin/types
 ```

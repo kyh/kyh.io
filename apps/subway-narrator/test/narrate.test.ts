@@ -17,6 +17,13 @@ describe("toSentences", () => {
     ]);
   });
 
+  it("keeps the punctuation after a URL so sentences still split", () => {
+    assert.deepEqual(toSentences("See https://example.com/a. Next one (https://x.y/1)."), [
+      "See a link.",
+      "Next one (a link).",
+    ]);
+  });
+
   it("keeps non-Latin text and splits CJK sentences", () => {
     assert.deepEqual(toSentences("修好了。测试通过！\nГотово."), [
       "修好了。",

@@ -9,8 +9,7 @@
     "dev": "claude --plugin-dir .",
     "lint": "oxlint --report-unused-disable-directives",
     "test": "tsx --test \"test/*.test.ts\"",
-    "typecheck": "tsc --noEmit",
-    "typecheck:plugin": "tsc --noEmit -p tsconfig.plugin.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.plugin.json",
     "validate": "claude plugin validate ."
   },
   "devDependencies": {

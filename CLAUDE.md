@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator)
 ```
 
 ## Agent-driven development
@@ -130,10 +130,12 @@ Load it with `pnpm dev:subway-narrator` (`claude --plugin-dir apps/subway-narrat
   `voice` and `model` are pickers in `/config`.
 - `/subway` opens the pane (it opens unasked only at ≥144 columns),
   `/subway-mute` keeps captions without the voice.
-- `pnpm typecheck` covers the pure files (`hooks/game.ts`, `hooks/narrate.ts`)
-  and tests; `register.tsx` needs the engine's types, laid in the gitignored
-  `.claude-plugin/types/` on load, so check it with `pnpm -F
-@repo/subway-narrator typecheck:plugin` after one load, and `validate`.
+- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node
+  tests) and `tsconfig.plugin.json` (the hooks against
+  `vendor/claude-code.d.ts`, the engine's API types pinned from the Claude Code
+  version named on its first line). Refresh that file after a Claude Code
+  update from the copy the engine lays in the gitignored
+  `.claude-plugin/types/claude-code/index.d.ts` on load.
 
 **Key files**: `hooks/register.tsx` (hooks, speech, frame loop), `hooks/game.ts`
 (runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
