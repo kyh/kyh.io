@@ -56,7 +56,7 @@ export const speechRequest = (input: string, voice: string, model: string) => {
 export const SPEECH_SCRIPT = [
   'f="$(mktemp)" || exit 1',
   "trap 'rm -f \"$f\"' EXIT",
-  'curl -sS --fail -m 30 -o "$f" https://api.openai.com/v1/audio/speech ' +
+  'curl -sS --fail --connect-timeout 10 -m 30 -o "$f" https://api.openai.com/v1/audio/speech ' +
     '-H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" ' +
     "--data-binary @- || exit 1",
   "base64 < \"$f\" | tr -d '\\n'",

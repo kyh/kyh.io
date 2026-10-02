@@ -77,8 +77,11 @@ describe("SPEECH_SCRIPT", () => {
       {
         encoding: "utf-8",
         input: "{}",
+        timeout: 20_000,
       },
     );
+    // sh or curl missing, or the run timed out: say so instead of comparing nulls.
+    assert.equal(run.error, undefined, `could not run the script: ${String(run.error)}`);
     assert.notEqual(run.status, 0);
     assert.equal(run.stdout, "");
   });
