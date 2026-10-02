@@ -19,9 +19,9 @@ export const toSentences = (markdown: string): string[] => {
 
   return plain
     .split("\n")
-    .flatMap((line) => line.split(/(?<=[.!?])\s+/u))
+    .flatMap((line) => line.split(/(?<=[.!?])\s+|(?<=[。！？])/u))
     .map((s) => s.replaceAll(/^[\s,]+|[\s,]+$/gu, "").replaceAll(/\s+/gu, " "))
-    .filter((s) => /[a-z0-9]/iu.test(s))
+    .filter((s) => /[\p{L}\p{N}]/u.test(s))
     .map((s) => (s.length > MAX_LINE ? `${s.slice(0, MAX_LINE)}…` : s));
 };
 

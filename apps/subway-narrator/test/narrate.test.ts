@@ -17,6 +17,14 @@ describe("toSentences", () => {
     ]);
   });
 
+  it("keeps non-Latin text and splits CJK sentences", () => {
+    assert.deepEqual(toSentences("修好了。测试通过！\nГотово."), [
+      "修好了。",
+      "测试通过！",
+      "Готово.",
+    ]);
+  });
+
   it("drops table rules and lines with nothing to say", () => {
     assert.deepEqual(toSentences("| a | b |\n|---|---|\n| 1 | 2 |\n\n---\n"), ["a, b", "1, 2"]);
   });
