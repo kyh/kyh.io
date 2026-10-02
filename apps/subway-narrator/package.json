@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "dev": "claude --plugin-dir .",
+    "session": "claude --plugin-dir .",
     "lint": "oxlint --report-unused-disable-directives",
     "test": "tsx --test \"test/*.test.ts\"",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.plugin.json",
