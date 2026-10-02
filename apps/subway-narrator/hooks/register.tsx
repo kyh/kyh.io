@@ -71,21 +71,25 @@ const playOpenai = async ($: EngineInterface, line: Line) => {
     return false;
   }
   await update($, caption, () => line.text);
-  const startedAt = await $.clock.now();
-  let isPlayed = false;
   try {
     await $.audio.play({ base64: audio, mime: "audio/mpeg" });
-    // A host with no player returns at once.
-    isPlayed = (await $.clock.now()) - startedAt > 300;
+    return true;
   } catch {
-    isPlayed = false;
-  }
-  if (!isPlayed) {
     // Stop paying for speech nobody hears; the system voice takes over.
     openai.key = "";
-    $.ui.toast("subway-narrator: no audio player here, using the system voice");
+    $.ui.toast("subway-narrator: OpenAI audio would not play, using the system voice");
+    return false;
   }
-  return isPlayed;
+};
+
+// `$.audio.play` plays clips through afplay, so only macOS hears them.
+const canPlayClips = async ($: EngineInterface) => {
+  try {
+    const { stdout } = await $.process.run(["uname", "-s"]);
+    return stdout.trim() === "Darwin";
+  } catch {
+    return false;
+  }
 };
 
 const playSystem = async ($: EngineInterface, line: Line) => {
@@ -203,7 +207,11 @@ export const register: Register = (on, options) => {
       name: "subway-mute",
     });
     muted = (await $.store.get("isMuted")) === true;
-    openai.key = String(options.openaiApiKey ?? "") || ((await $.env.get("OPENAI_API_KEY")) ?? "");
+    const key = String(options.openaiApiKey ?? "") || ((await $.env.get("OPENAI_API_KEY")) ?? "");
+    openai.key = key && (await canPlayClips($)) ? key : "";
+    if (key && !openai.key) {
+      $.ui.toast("subway-narrator: OpenAI voice plays on macOS only, using the system voice");
+    }
     await update($, isMuted, () => muted);
     void $.ui.open({ id: PANE, title: TITLE });
     // oxlint-disable-next-line unicorn/no-array-method-this-argument -- $.clock.every is a timer, not Array#every
