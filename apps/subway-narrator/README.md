@@ -70,8 +70,9 @@ The mod looks for a key in this order:
 2. The `OPENAI_API_KEY` environment variable, from your shell or the `env`
    block above.
 
-With neither, or on a machine that can't play clips, it uses the system voice
-and shows a toast saying why.
+With neither, it uses the system voice; the status line under the game reads
+"system voice" instead of "openai ash". With a key on a machine that can't
+play clips, it does the same and also shows a toast saying why.
 
 ## Use it
 
