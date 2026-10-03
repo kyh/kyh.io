@@ -1,0 +1,42 @@
+{
+  "name": "subway-narrator",
+  "version": "0.1.0",
+  "description": "Subway Surfers-style runner pane that reads Claude's replies aloud with OpenAI text-to-speech while a turn runs",
+  "author": { "name": "Kaiyu Hsu" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "openaiApiKey": {
+      "type": "string",
+      "title": "OpenAI API key",
+      "description": "Used for narration. Empty: falls back to the OPENAI_API_KEY environment variable, then the system voice.",
+      "sensitive": true,
+      "default": ""
+    },
+    "voice": {
+      "type": "string",
+      "title": "Narrator voice",
+      "description": "OpenAI voice for the narration",
+      "options": [
+        "ash",
+        "alloy",
+        "ballad",
+        "coral",
+        "echo",
+        "fable",
+        "nova",
+        "onyx",
+        "sage",
+        "shimmer",
+        "verse"
+      ],
+      "default": "ash"
+    },
+    "model": {
+      "type": "string",
+      "title": "Speech model",
+      "description": "OpenAI speech model; only gpt-4o-mini-tts follows the narrator style",
+      "options": ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
+      "default": "gpt-4o-mini-tts"
+    }
+  }
+}

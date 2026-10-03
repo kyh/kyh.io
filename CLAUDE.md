@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/vis-ml, apps/policingice, apps/kyh)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator)
 ```
 
 ## Agent-driven development
@@ -112,6 +112,34 @@ Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
 ### stonksville (`apps/stonksville`)
 
 Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history, one trading day per 5s grid cell. The CSV lives in Vercel Blob, served by `/api/spx` (seeds itself from Yahoo Finance on first request, reads Yahoo directly without a store) and refreshed by a weekday Vercel Cron hitting `/api/cron/spx`. `src/lib/spx-source.ts` fetches and stores it; `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
+
+### subway-narrator (`apps/subway-narrator`)
+
+Claude Code mod (a plugin of function hooks, not a web app). Opens a pane with a
+self-playing Subway Surfers-style runner drawn into a terminal `Raster`, and
+reads Claude's replies aloud with OpenAI text-to-speech while a turn runs.
+Load it with `pnpm dev:subway-narrator` (`claude --plugin-dir apps/subway-narrator`).
+
+- Narration: `session.append` (main loop, `response` door) → `toSentences` →
+  queue; each line is synthesized by `curl` to `/v1/audio/speech` (base64 on
+  stdout, since the hooks sandbox reads process output as text) and played
+  with `$.audio.play`; the next two lines prefetch. Falls back to the system
+  voice (`$.audio.speak`), then captions only. Playback is macOS-only
+  (`afplay`).
+- Key: the `openaiApiKey` userConfig field (sensitive), else `OPENAI_API_KEY`.
+  `voice` and `model` are pickers in `/config`.
+- `/subway` opens the pane (it opens unasked only at ≥144 columns),
+  `/subway-mute` keeps captions without the voice.
+- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node
+  tests) and `tsconfig.plugin.json` (the hooks against
+  `vendor/claude-code.d.ts`, the engine's API types pinned from the Claude Code
+  version named on its first line). Refresh that file after a Claude Code
+  update from the copy the engine lays in the gitignored
+  `.claude-plugin/types/claude-code/index.d.ts` on load.
+
+**Key files**: `hooks/register.tsx` (hooks, speech, frame loop), `hooks/game.ts`
+(runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
+OpenAI request).
 
 ### tc, covid-19, vis-ml
 

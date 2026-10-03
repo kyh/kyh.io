@@ -18,6 +18,8 @@ export default defineConfig({
     ".conductor",
     ".cursor",
     ".superset",
+    // Claude Code's generated API types, vendored verbatim for typecheck.
+    "apps/subway-narrator/vendor",
   ],
   overrides: [{ files: nextApps, plugins: next.plugins, rules: next.rules }],
   rules: {

@@ -1,0 +1,7 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["hooks/game.ts", "hooks/narrate.ts", "test"]
+}

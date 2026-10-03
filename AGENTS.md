@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**kyh.io** is a personal pnpm + Turborepo monorepo of ten _independent_ apps — four Next.js, four Vite SPAs, one Bun/OpenTUI CLI, one Cloudflare Worker. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**kyh.io** is a personal pnpm + Turborepo monorepo of eleven _independent_ apps — four Next.js, four Vite SPAs, one Bun/OpenTUI CLI, one Cloudflare Worker, one Claude Code mod. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -9,7 +9,7 @@ pnpm install
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — eight of the ten apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:cli` additionally needs [Bun](https://bun.sh).
+That's the whole setup. There is no bootstrap script, no Docker, no local database — eight of the eleven apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:cli` additionally needs [Bun](https://bun.sh), and `pnpm dev:subway-narrator` the `claude` CLI.
 
 Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
 
@@ -40,7 +40,7 @@ pnpm verify       # typecheck · lint · format · test
 pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/vis-ml`, `apps/policingice` and `apps/kyh` — the only apps with tests. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh` and `apps/subway-narrator` — the only apps with tests. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
 **Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`); every rule is an error and `lint` fails on the first one. `no-await-in-loop` is the one deliberate override (sequential awaits are intentional). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
 
@@ -64,18 +64,19 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 ## Platform matrix
 
-| App           | Dev command            | Port                        | Agent-verifiable at runtime?                   |
-| ------------- | ---------------------- | --------------------------- | ---------------------------------------------- |
-| `kyh`         | `pnpm dev:kyh`         | 3000                        | **Yes** — headless, no config; has tests       |
-| `policingice` | `pnpm dev:policingice` | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)    |
-| `stonksville` | `pnpm dev:stonksville` | 3004                        | **Yes** — headless, no config                  |
-| `autoplay`    | `pnpm dev:autoplay`    | 3005                        | OFF AIR screen yes; live TV needs X + fal keys |
-| `kwadrants`   | `pnpm dev:kwadrants`   | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots       |
-| `tc`          | `pnpm dev:tc`          | 5173 (Vite, auto-increment) | **Yes**                                        |
-| `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                  |
-| `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task        |
-| `party`       | `pnpm dev:party`       | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build`   |
-| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY         |
+| App               | Dev command                | Port                        | Agent-verifiable at runtime?                           |
+| ----------------- | -------------------------- | --------------------------- | ------------------------------------------------------ |
+| `kyh`             | `pnpm dev:kyh`             | 3000                        | **Yes** — headless, no config; has tests               |
+| `policingice`     | `pnpm dev:policingice`     | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)            |
+| `stonksville`     | `pnpm dev:stonksville`     | 3004                        | **Yes** — headless, no config                          |
+| `autoplay`        | `pnpm dev:autoplay`        | 3005                        | OFF AIR screen yes; live TV needs X + fal keys         |
+| `kwadrants`       | `pnpm dev:kwadrants`       | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots               |
+| `tc`              | `pnpm dev:tc`              | 5173 (Vite, auto-increment) | **Yes**                                                |
+| `vis-ml`          | `pnpm dev:vis-ml`          | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
+| `covid-19`        | `pnpm dev:covid`           | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
+| `party`           | `pnpm dev:party`           | 8787 (`wrangler dev`)       | No — WebSocket server; `typecheck` + `build`           |
+| `cli`             | `pnpm dev:cli`             | —                           | No — Bun terminal UI, needs a real TTY                 |
+| `subway-narrator` | `pnpm dev:subway-narrator` | — (loads into `claude`)     | No — Claude Code pane; `test`, `typecheck`, `validate` |
 
 The Vite apps all default to 5173 and auto-increment when it's taken; read the dev log for the port actually chosen rather than assuming.
 
@@ -90,7 +91,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI
+- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI · `apps/subway-narrator` — Claude Code mod (function hooks plugin)
 - `packages/{typescript,eslint,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/eslint-config`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
