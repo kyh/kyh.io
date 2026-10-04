@@ -6,6 +6,6 @@
     },
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src"],
+  "include": ["src", "cloudflare.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
