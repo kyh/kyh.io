@@ -8,6 +8,8 @@ import { growthRate } from "utils/stats";
 
 import { DataFilter, SELECTIONS } from "./data-filter";
 
+const now = new Date();
+
 const selectionToLabels = {
   [SELECTIONS.time]: {
     days: 2,
@@ -96,7 +98,7 @@ export const Featured = ({
           label="First Case"
           pointClassname="bg-yellow-500"
           pointShadeClassname="bg-yellow-800"
-          value={differenceInDays(new Date(), firstDay && firstDay.date)}
+          value={differenceInDays(now, firstDay && firstDay.date)}
           suffix="days ago"
           isLoading={isLoading}
         />
