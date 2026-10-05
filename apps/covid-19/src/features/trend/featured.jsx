@@ -66,6 +66,9 @@ const selectionToLabels = {
   },
 };
 
+// Read once at module load, outside render: the dashboard is a page view, not a clock.
+const now = new Date();
+
 export const Featured = ({
   dailyData,
   selectedState,
@@ -96,7 +99,7 @@ export const Featured = ({
           label="First Case"
           pointClassname="bg-yellow-500"
           pointShadeClassname="bg-yellow-800"
-          value={differenceInDays(new Date(), firstDay && firstDay.date)}
+          value={differenceInDays(now, firstDay && firstDay.date)}
           suffix="days ago"
           isLoading={isLoading}
         />
