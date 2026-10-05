@@ -47,8 +47,8 @@ every score clears its bar, **not ready** when any score is 4 or less, and
 its subagents' included, into a ledger of edits and checks:
 
 - Checks: typecheck, lint and format (`static`); tests (`test`); builds
-  (`build`); driving the running app with a browser or a request to localhost
-  (`e2e`). Read through package scripts, task runners and wrappers: `pnpm -F x
+  (`build`); driving the running app with a browser or a request to
+  localhost, or loading a plugin into a real session (`e2e`). Read through package scripts, task runners and wrappers: `pnpm -F x
 test`, `turbo run lint`, `npx vitest`, `agent-browser open
 http://localhost:3000`.
 - Edits: Edit and Write, and edits from the shell: `sed -i`, heredocs and
@@ -137,7 +137,8 @@ One model call per `/score`, on your plan or API key. What it reads is capped:
 - Commands are recognized by name. A check under an unusual name shows as a
   command that ran; the grader still sees it.
 - The grader is a model: read the scores as a second reviewer's opinion with
-  reasons, not a measurement.
+  reasons, not a measurement. The same change scored twice can move a point,
+  or a risk level; the verdict and the reasons hold steadier than the numbers.
 
 ## Develop
 
@@ -158,6 +159,8 @@ After a Claude Code update, replace it with the copy Claude Code writes to
 | File                | Role                                                               |
 | ------------------- | ------------------------------------------------------------------ |
 | `hooks/register.ts` | The hooks: `/score`, the status line, reading the session          |
-| `hooks/evidence.ts` | Shell parsing, the ledger of edits and checks, freshness           |
+| `hooks/shell.ts`    | Command lines into commands and words: quotes, redirects, heredocs |
+| `hooks/commands.ts` | What each command means: the checks it runs, whether it edits      |
+| `hooks/evidence.ts` | The ledger of edits and checks, freshness, the status line         |
 | `hooks/grade.ts`    | The rubric, the grader's prompt, reading its answer, the scorecard |
 | `hooks/git.ts`      | The diff script                                                    |

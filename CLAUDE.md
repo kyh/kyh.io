@@ -166,7 +166,9 @@ Load it with `pnpm dev:scorecard` (`claude --plugin-dir apps/scorecard`).
   `*.test.ts` in the mod, so the node tests can't share the suffix.
 
 **Key files**: `hooks/register.ts` (hooks: `/score`, the status line),
-`hooks/evidence.ts` (shell parsing, the ledger, freshness), `hooks/grade.ts`
+`hooks/shell.ts` (command lines into commands and words), `hooks/commands.ts`
+(what each command means), `hooks/evidence.ts` (the ledger, freshness),
+`hooks/grade.ts`
 (the rubric, the prompt, parsing the answer, the verdict, the scorecard),
 `hooks/git.ts` (the diff script).
 

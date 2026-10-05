@@ -1,16 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  commandsOf,
-  ledgerOf,
-  ledgerText,
-  looksFailed,
-  stateOf,
-  statusOf,
-  usesOf,
-} from "../hooks/evidence";
-import type { Kind, Ledger, Row, Use } from "../hooks/evidence";
+import { ledgerOf, ledgerText, looksFailed, stateOf, statusOf, usesOf } from "../hooks/evidence";
+import type { Kind } from "../hooks/commands";
+import type { Ledger, Row, Use } from "../hooks/evidence";
 
 const ROOT = "/repo";
 
@@ -35,36 +28,6 @@ const countsAs = (command: string) => {
   return step === undefined ? "quiet" : { isEdit: step.isEdit, kinds: step.kinds.join("+") };
 };
 
-describe("commandsOf", () => {
-  it("splits at operators and keeps quoted words whole", () => {
-    assert.deepEqual(commandsOf(`cd "apps/my app" && pnpm test | tail -5; echo 'a && b'`), [
-      { op: "&&", words: ["cd", "apps/my app"] },
-      { op: "|", words: ["pnpm", "test"] },
-      { op: ";", words: ["tail", "-5"] },
-      { op: "", words: ["echo", "a && b"] },
-    ]);
-  });
-
-  it("drops heredoc bodies and stream duplications, and splits off redirections", () => {
-    assert.deepEqual(
-      commandsOf("cat > src/a.ts <<'EOF'\npnpm test && rm -rf /\nEOF\npnpm lint 2>&1"),
-      [
-        { op: "\n", words: ["cat", ">", "src/a.ts", "<<", "EOF"] },
-        { op: "", words: ["pnpm", "lint"] },
-      ],
-    );
-    assert.deepEqual(commandsOf("pnpm test 2> err.log"), [
-      { op: "", words: ["pnpm", "test", ">", "err.log"] },
-    ]);
-  });
-
-  it("joins continued lines and unescapes double quotes", () => {
-    assert.deepEqual(commandsOf('pnpm \\\n  test -- "say \\"hi\\""'), [
-      { op: "", words: ["pnpm", "test", "--", 'say "hi"'] },
-    ]);
-  });
-});
-
 describe("what a Bash call counts as", () => {
   it("reads checks through package managers, task runners and wrappers", () => {
     assert.deepEqual(countsAs("pnpm -F @repo/kyh test"), { isEdit: false, kinds: "test" });
@@ -84,6 +47,7 @@ describe("what a Bash call counts as", () => {
       kinds: "test",
     });
     assert.deepEqual(countsAs(`bash -lc "pnpm test"`), { isEdit: false, kinds: "test" });
+    assert.deepEqual(countsAs("env -u CI nice -n 5 pnpm test"), { isEdit: false, kinds: "test" });
   });
 
   it("counts driving the running app as end to end", () => {
@@ -96,6 +60,10 @@ describe("what a Bash call counts as", () => {
       kinds: "e2e",
     });
     assert.deepEqual(countsAs("npx playwright test"), { isEdit: false, kinds: "e2e" });
+    assert.deepEqual(countsAs('claude -p --plugin-dir apps/scorecard "/score"'), {
+      isEdit: false,
+      kinds: "e2e",
+    });
     assert.deepEqual(countsAs("curl -s https://example.com"), { isEdit: false, kinds: "" });
     assert.deepEqual(countsAs("npx playwright install"), { isEdit: false, kinds: "" });
   });
@@ -119,6 +87,12 @@ describe("what a Bash call counts as", () => {
     assert.deepEqual(countsAs("pnpm test > /tmp/test.log"), { isEdit: false, kinds: "test" });
     assert.deepEqual(countsAs("rm -rf /tmp/scratch"), { isEdit: false, kinds: "" });
     assert.deepEqual(countsAs("git checkout -b feature"), { isEdit: false, kinds: "" });
+    assert.deepEqual(countsAs("cd /tmp/scratch && git checkout -- ."), {
+      isEdit: false,
+      kinds: "",
+    });
+    assert.deepEqual(countsAs("git -C /tmp/scratch stash"), { isEdit: false, kinds: "" });
+    assert.deepEqual(countsAs("pnpm --dir /tmp/scratch add zod"), { isEdit: false, kinds: "" });
     assert.deepEqual(countsAs("pnpm install"), { isEdit: false, kinds: "" });
   });
 
@@ -134,6 +108,13 @@ describe("what a Bash call counts as", () => {
       isEdit: false,
       kinds: "",
     });
+  });
+
+  it("reads a heredoc as the script of the command it feeds, not of its neighbours", () => {
+    // `cat` writes the script out of the repository; `tsx` then runs it from a file.
+    const written = "cat > /tmp/x.ts <<'EOF'\nwriteFileSync('a', 'b')\nEOF\nnpx tsx /tmp/x.ts";
+    assert.deepEqual(countsAs(written), { isEdit: false, kinds: "" });
+    assert.deepEqual(countsAs("bash <<'EOF'\npnpm test\nEOF"), { isEdit: false, kinds: "test" });
   });
 
   it("leaves reads off the ledger", () => {
