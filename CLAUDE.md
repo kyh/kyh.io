@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator, apps/scorecard)
 ```
 
 ## Agent-driven development
@@ -140,6 +140,35 @@ Load it with `pnpm dev:subway-narrator` (`claude --plugin-dir apps/subway-narrat
 **Key files**: `hooks/register.tsx` (hooks, speech, frame loop), `hooks/game.ts`
 (runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
 OpenAI request).
+
+### scorecard (`apps/scorecard`)
+
+Claude Code mod. `/score` grades the session's work before it merges:
+confidence, idiomatic, simplicity and scope (0–10 each) and risk (low, medium,
+high), then a verdict (ready, fix first, not ready) and up to three fixes.
+Load it with `pnpm dev:scorecard` (`claude --plugin-dir apps/scorecard`).
+
+- Evidence is mechanical: the session's tool calls (subagents' included) make a
+  ledger of edits and checks. Bash commands are classified by what they run
+  (`pnpm test`, `tsc`, `agent-browser`, `sed -i`, heredoc and inline-script
+  writes); a check counts only if it passed after the last edit. The status
+  line shows it live: `verified: static ✓ · test stale · e2e –`.
+- The grader is one `$.model.complete` call with a fresh context, never the
+  session's own reasoning: the person's prompts, Claude's last reply (as
+  claims), the ledger, the diff against the default branch's merge base
+  (uncommitted and untracked files included, via a copy of the index) and the
+  CLAUDE.md, AGENTS.md and REVIEW.md files. It answers in fixed lines.
+- Risk sets the bar for confidence (low 7, medium 8, high 9); the other scores
+  need 7; any score of 4 or less is not ready. `claude -p --resume <id> "/score"`
+  exits 0 only when ready.
+- Tests: `test/*.spec.ts` run under node (`pnpm test`, CI); `test/*.test.ts`
+  under `claude plugin test` (`test:mod`, local). That runner loads every
+  `*.test.ts` in the mod, so the node tests can't share the suffix.
+
+**Key files**: `hooks/register.ts` (hooks: `/score`, the status line),
+`hooks/evidence.ts` (shell parsing, the ledger, freshness), `hooks/grade.ts`
+(the rubric, the prompt, parsing the answer, the verdict, the scorecard),
+`hooks/git.ts` (the diff script).
 
 ### tc, covid-19, vis-ml
 

@@ -1,0 +1,7 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["hooks/evidence.ts", "hooks/git.ts", "hooks/grade.ts", "test/*.spec.ts"]
+}
