@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^topo"],
-      "outputs": ["dist/**"]
+      "outputs": [".cloudflare/output/**"]
     },
     "dev": {
       "persistent": true

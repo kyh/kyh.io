@@ -2,11 +2,12 @@
   "name": "@repo/party",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "wrangler deploy --dry-run --outdir=dist",
-    "clean": "rm -rf .turbo node_modules .cache .wrangler dist",
-    "deploy": "wrangler deploy --name kyh-party",
-    "dev": "pnpm with-env wrangler dev",
+    "build": "cf build",
+    "clean": "rm -rf .turbo node_modules .cache .cloudflare .wrangler dist",
+    "deploy": "cf deploy",
+    "dev": "pnpm with-env cf dev",
     "lint": "oxlint --report-unused-disable-directives",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261004.1",
     "@kyh/tsconfig": "workspace:^",
+    "cf": "1.0.0-beta.12",
     "partyserver": "^0.5.10",
     "typescript": "catalog:",
     "wrangler": "^4.147.0"
