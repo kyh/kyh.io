@@ -1,60 +1,59 @@
 # @kyh/skills
 
-My Claude Code + Codex setup, distributed as an npm package. Installing it
-symlinks my skills and global instructions into the right global
+My Claude Code + Codex setup, distributed as an npm package. One command
+installs my skills and global instructions into the right global
 directories so they're available across every project.
 
-## Install
+## Install / update
 
 ```bash
-npm i -g @kyh/skills
+npx @kyh/skills@latest install
 ```
 
-The `postinstall` script links everything into place. To redo it manually:
+Same command for a fresh machine and for updates. `@latest` stops npx from
+reusing a cached older version.
 
 ```bash
-node "$(npm root -g)/@kyh/skills/scripts/link.mjs"
+npx @kyh/skills@latest install --dry-run   # print what would change
+npx @kyh/skills@latest check               # drift between installed skills and external-skills.json
 ```
 
-> **pnpm note:** pnpm blocks dependency build scripts by default, so
-> `postinstall` won't run unless you approve it (`pnpm approve-builds -g`) or
-> run the link script manually with the command above.
+Developing in this repo: `pnpm -F @kyh/skills install:local` installs from the
+working copy instead.
 
-### What gets linked
+### What gets installed
 
 Same model as [`npx skills`](https://github.com/vercel-labs/skills): a single
 canonical store at `~/.agents`, with non-universal agents symlinking into it.
 
-| Source (in this package)     | Target                          | Mechanism             |
-| ---------------------------- | ------------------------------- | --------------------- |
-| `skills/<name>/`             | `~/.agents/skills/<name>`       | symlink (canonical)   |
-| `~/.agents/skills/<name>`    | `~/.claude/skills/<name>`       | symlink               |
-| `~/.agents/agents/<name>.md` | `~/.claude/agents/<name>.md`    | symlink               |
-| `CLAUDE.md`                  | `~/.claude/CLAUDE.md`           | symlink               |
-| `mcp.json` → `mcpServers`    | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
+| Source (in this package)  | Target                          | Mechanism             |
+| ------------------------- | ------------------------------- | --------------------- |
+| `skills/<name>/`          | `~/.agents/skills/<name>`       | copy (canonical)      |
+| `~/.agents/skills/<name>` | `~/.claude/skills/<name>`       | symlink               |
+| `CLAUDE.md`               | `~/.claude/CLAUDE.md`           | copy                  |
+| `mcp.json` → `mcpServers` | `~/.claude.json` → `mcpServers` | merged (JSON sub-key) |
 
 **Universal agents** (codex, amp, opencode, goose, kimi) read `~/.agents`
-directly — nothing else to do. **Non-universal agents** (claude) get
-their own dirs symlinked to the canonical store.
+directly. **Non-universal agents** (claude) get their own dirs symlinked to the
+canonical store.
 
-Symlinks mean edits to the installed source show up everywhere immediately. If
-symlinks aren't permitted (e.g. Windows without developer mode), it falls back to
-copying. MCP servers are **merged** rather than symlinked (they live under a key
-inside `~/.claude.json`).
+Package files are copied, not symlinked: npx runs the package from a cache dir
+that gets pruned, so links into it would break. Edit skills and `CLAUDE.md`
+here, then reinstall; edits made to the installed copies are overwritten.
 
-Existing real files are never deleted: a clashing target is renamed to `*.bak`
-before linking.
+What was copied is recorded in `~/.agents/.kyh-skills.json`, so a skill dropped
+from the package is removed on the next install. If `~/.claude/CLAUDE.md` was
+edited locally since the last install, it is backed up to `*.bak` first. MCP
+servers are only added, never overwritten.
 
-### Flags / env
+### Env
 
-- `--dry-run` (or `KYH_SKILLS_DRY_RUN=1`) — print what would change, write nothing.
-- `KYH_SKILLS_NO_LINK=1` — skip linking entirely.
-- `KYH_SKILLS_FORCE=1` — link even when it's not a global install (a working copy, or yarn/pnpm global).
-- During postinstall, linking only runs for a global install (`npm i -g`); local/hoisted deps and CI are skipped.
+- `KYH_SKILLS_NO_EXTERNAL=1` — skip external skill repos.
+- `KYH_SKILLS_CONCURRENCY=N` — max repos installing at once (default: all).
 
 ## External skills
 
-On install, the postinstall also installs the exact skills listed per repo in
+On install, the CLI also installs the exact skills listed per repo in
 [`external-skills.json`](./external-skills.json) using the bundled `skills` CLI
 (`skills add <repo> -g -s <skill>... -y`; falls back to `npx skills` if
 unresolved), then removes any other skill the CLI installed from those repos.
@@ -65,12 +64,11 @@ removals sync too.
 - Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.
 - These install into the same canonical `~/.agents/skills`, so universal agents
   pick them up directly and Claude gets symlinks.
-- `unmanaged` lists hand-installed skills with no repo. `check:external` tolerates
+- `unmanaged` lists hand-installed skills with no repo. `check` tolerates
   them, but a fresh install won't recreate them.
 
-Add a skill: list it under its repo, then rerun the link script (or
-`npx skills add <repo> -s <skill> -g -y` and list it). `pnpm check:external`
-flags anything installed but unlisted, or listed but missing.
+Add a skill: list it under its repo, then reinstall. `check` flags anything
+installed but unlisted, or listed but missing.
 
 ### Not installable from a repo
 

@@ -1,8 +1,11 @@
 {
   "name": "@kyh/skills",
-  "version": "0.1.6",
-  "description": "Personal Claude Code + Codex skills, MCP servers, and global instructions. Symlinks into a canonical ~/.agents store (and ~/.claude) on install.",
+  "version": "0.2.0",
+  "description": "Personal Claude Code + Codex skills, MCP servers, and global instructions. `npx @kyh/skills install` copies them into a canonical ~/.agents store (and ~/.claude).",
   "license": "MIT",
+  "bin": {
+    "kyh-skills": "scripts/cli.mjs"
+  },
   "files": [
     "scripts",
     "skills",
@@ -15,8 +18,8 @@
     "access": "public"
   },
   "scripts": {
-    "postinstall": "node scripts/link.mjs",
-    "check:external": "node scripts/check-external-skills.mjs"
+    "install:local": "node scripts/cli.mjs install",
+    "check:external": "node scripts/cli.mjs check"
   },
   "dependencies": {
     "skills": "^1.7.0"
