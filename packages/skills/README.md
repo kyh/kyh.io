@@ -78,9 +78,8 @@ flags anything installed but unlisted, or listed but missing.
 
 ## Custom skills
 
-| Skill                | What it does                                                               |
-| -------------------- | -------------------------------------------------------------------------- |
-| `pr`                 | Commit, push, open PR, then fix bot reviews and failing checks until clean |
-| `simplify-lifecycle` | Full architecture sweep, loops until nothing left to simplify              |
-| `sync-conventions`   | Audit convention drift across all projects                                 |
-| `update-all`         | Bulk update all projects to latest, fix breakages, commit                  |
+| Skill              | What it does                                                               |
+| ------------------ | -------------------------------------------------------------------------- |
+| `pr`               | Commit, push, open PR, then fix bot reviews and failing checks until clean |
+| `sync-conventions` | Audit convention drift across all projects                                 |
+| `update-all`       | Bulk update all projects to latest, fix breakages, commit                  |
