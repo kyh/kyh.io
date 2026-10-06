@@ -60,25 +60,5 @@
       "wrangler"
     ]
   },
-  "unmanaged": [
-    "animations",
-    "codex-review",
-    "color",
-    "component-design",
-    "design-foundations",
-    "design-vocabulary",
-    "engineering-vocabulary",
-    "forms-and-inputs",
-    "marketing-pages",
-    "performance",
-    "surfaces",
-    "touch-and-accessibility",
-    "typography",
-    "ui-polish",
-    "ui-review",
-    "writing-skills",
-    "generate",
-    "image-to-threejs",
-    "synced"
-  ]
+  "unmanaged": ["generate", "image-to-threejs", "synced"]
 }
