@@ -599,6 +599,21 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
+  apps/scorecard:
+    devDependencies:
+      '@kyh/tsconfig':
+        specifier: workspace:^
+        version: link:../../packages/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
   apps/stonksville:
     dependencies:
       '@vercel/blob':

@@ -11,7 +11,7 @@
     ".wxt",
     ".output",
     "out",
-    "apps/subway-narrator/vendor"
+    "apps/*/vendor"
   ],
   "experimentalSortPackageJson": {}
 }

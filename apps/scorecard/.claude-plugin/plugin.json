@@ -1,0 +1,15 @@
+{
+  "name": "scorecard",
+  "version": "0.1.0",
+  "description": "/score grades a session's work on confidence, idiomatic, simplicity, scope and risk, from the evidence its tool calls left",
+  "author": { "name": "Kaiyu Hsu" },
+  "userConfig": {
+    "model": {
+      "type": "string",
+      "title": "Grader model",
+      "description": "The model /score asks. It reads the requests, the diff, the ledger of checks and the instruction files, never the session's own reasoning",
+      "options": ["opus", "sonnet", "haiku"],
+      "default": "opus"
+    }
+  }
+}
