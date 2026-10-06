@@ -60,19 +60,5 @@
       "wrangler"
     ]
   },
-  "unmanaged": [
-    "codex-review",
-    "design-vocabulary",
-    "engineering-vocabulary",
-    "forms-and-inputs",
-    "marketing-pages",
-    "performance",
-    "surfaces",
-    "touch-and-accessibility",
-    "ui-review",
-    "writing-skills",
-    "generate",
-    "image-to-threejs",
-    "synced"
-  ]
+  "unmanaged": ["generate", "image-to-threejs", "synced"]
 }
