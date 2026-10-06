@@ -127,9 +127,9 @@ Load it with `pnpm dev:mod-surfer` (`claude --plugin-dir apps/mod-surfer`).
   voice (`$.audio.speak`), then captions only. Playback is macOS-only
   (`afplay`).
 - Key: the `openaiApiKey` userConfig field (sensitive), else `OPENAI_API_KEY`.
-  `voice` and `model` are pickers in `/config`.
-- `/subway` opens the pane (it opens unasked only at ≥144 columns),
-  `/subway-mute` keeps captions without the voice.
+  `voice` and `model` are pickers in `/config`; `mute` keeps captions without
+  the voice. No slash commands: the pane opens on session start (drawn from
+  144 columns).
 - `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node
   tests) and `tsconfig.plugin.json` (the hooks against
   `vendor/claude-code.d.ts`, the engine's API types pinned from the Claude Code

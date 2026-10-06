@@ -14,9 +14,8 @@ captions underneath.
 - **An OpenAI API key** for the OpenAI voice. Without one, the system voice
   (`say` on macOS) reads instead.
 - **`curl`** on your `PATH`. It ships with macOS.
-- **A terminal at least 144 columns wide** for the pane to open on its own
-  (110 once you've opened it with `/subway` before). Narrower, open it with
-  `/subway`.
+- **A terminal at least 144 columns wide.** Narrower, the pane waits and
+  appears once you widen it.
 
 The mod has no npm dependencies at runtime, so you don't need to run
 `pnpm install` just to use it.
@@ -87,13 +86,6 @@ Start Claude Code with the mod loaded and send a prompt. While Claude works:
 When the turn ends, the game freezes on "waiting for Claude…" once the
 narration finishes.
 
-### Commands
-
-| Command        | What it does                                                               |
-| -------------- | -------------------------------------------------------------------------- |
-| `/subway`      | Opens the pane at any terminal width.                                      |
-| `/subway-mute` | Turns the voice off or back on. Captions stay. Remembered across sessions. |
-
 ### Settings
 
 Open `/config` and find **mod-surfer**:
@@ -102,6 +94,7 @@ Open `/config` and find **mod-surfer**:
 | -------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
 | Narrator voice | `ash`             | `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`, `verse` |
 | Speech model   | `gpt-4o-mini-tts` | `gpt-4o-mini-tts`, `tts-1`, `tts-1-hd`                                                         |
+| Mute narrator  | off               | on: captions only, no voice and no OpenAI requests                                             |
 
 Only `gpt-4o-mini-tts` follows the upbeat narrator style. The other two read
 in a flat voice.
@@ -132,14 +125,14 @@ You can also set them in `~/.claude/settings.json`:
 ## Cost
 
 Each sentence is a separate call to OpenAI's speech endpoint, billed by
-OpenAI per input character at the model's rate. Long replies cost more. Mute
-with `/subway-mute` to stop paying while keeping captions.
+OpenAI per input character at the model's rate. Long replies cost more. Turn on
+**Mute narrator** to stop paying while keeping captions.
 
 ## Troubleshooting
 
 | Symptom                                   | Cause and fix                                                                                 |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------- |
-| No pane                                   | The terminal is too narrow (see Requirements). Widen it or run `/subway`.                     |
+| No pane                                   | The terminal is too narrow (see Requirements). Widen it.                                      |
 | Toast: "OpenAI voice plays on macOS only" | You're not on macOS. The system voice or captions take over.                                  |
 | Toast: "OpenAI speech failed"             | The request failed. Check the key, your OpenAI quota, and network access to `api.openai.com`. |
 | Toast: "no speech synthesizer here"       | No system voice either. You get captions only.                                                |
@@ -160,9 +153,9 @@ pnpm -F @repo/mod-surfer validate   # what Claude Code will load
 After a Claude Code update, replace it with the copy Claude Code writes to
 `.claude-plugin/types/claude-code/index.d.ts` when it loads the mod.
 
-| File                         | Role                                                           |
-| ---------------------------- | -------------------------------------------------------------- |
-| `hooks/register.tsx`         | The hooks: pane, commands, narration queue, speech, frame loop |
-| `hooks/game.ts`              | Runner simulation, autopilot and drawing                       |
-| `hooks/narrate.ts`           | Markdown to sentences, and the OpenAI request                  |
-| `.claude-plugin/plugin.json` | Manifest and the `/config` options                             |
+| File                         | Role                                                 |
+| ---------------------------- | ---------------------------------------------------- |
+| `hooks/register.tsx`         | The hooks: pane, narration queue, speech, frame loop |
+| `hooks/game.ts`              | Runner simulation, autopilot and drawing             |
+| `hooks/narrate.ts`           | Markdown to sentences, and the OpenAI request        |
+| `.claude-plugin/plugin.json` | Manifest and the `/config` options                   |

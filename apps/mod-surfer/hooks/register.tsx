@@ -7,13 +7,12 @@ import { draw, encode, newGame, step } from "./game";
 import { SPEECH_SCRIPT, readMs, speechRequest, toSentences } from "./narrate";
 
 const PANE = "subway";
-const TITLE = "Subway Narrator";
+const TITLE = "Subway Clauders";
 const FRAME_MS = 66;
 const MAX_QUEUE = 30;
 
 const caption = atom({ key: "caption", plugin: "mod-surfer" } as const, "");
 const isRunning = atom({ key: "isRunning", plugin: "mod-surfer" } as const, false);
-const isMuted = atom({ key: "isMuted", plugin: "mod-surfer" } as const, false);
 
 // One line of narration and, once asked for, its mp3 as base64 (empty when
 // synthesis failed).
@@ -196,23 +195,14 @@ const statusOf = (isActive: boolean, isQuiet: boolean) => {
 export const register: Register = (on, options) => {
   openai.voice = String(options.voice ?? openai.voice);
   openai.model = String(options.model ?? openai.model);
+  muted = options.mute === true;
 
   on("session.start", async ($, e, next) => {
-    await $.command.register({
-      description: "Open the Subway Surfers narrator pane",
-      name: "subway",
-    });
-    await $.command.register({
-      description: "Toggle the narrator voice (captions stay)",
-      name: "subway-mute",
-    });
-    muted = (await $.store.get("isMuted")) === true;
     const key = String(options.openaiApiKey ?? "") || ((await $.env.get("OPENAI_API_KEY")) ?? "");
     openai.key = key && (await canPlayClips($)) ? key : "";
     if (key && !openai.key) {
       $.ui.toast("mod-surfer: OpenAI voice plays on macOS only, using the system voice");
     }
-    await update($, isMuted, () => muted);
     void $.ui.open({ id: PANE, title: TITLE });
     // oxlint-disable-next-line unicorn/no-array-method-this-argument -- $.clock.every is a timer, not Array#every
     $.clock.every(FRAME_MS, () => {
@@ -220,20 +210,6 @@ export const register: Register = (on, options) => {
     });
 
     return next(e);
-  });
-
-  on("command.run", { command: "subway" }, async ($) => {
-    await $.ui.open({ id: PANE, title: TITLE });
-
-    return { text: "Subway narrator opened." };
-  });
-
-  on("command.run", { command: "subway-mute" }, async ($) => {
-    muted = !muted;
-    await $.store.set("isMuted", muted);
-    await update($, isMuted, () => muted);
-
-    return { text: muted ? "Narrator muted; captions stay on." : "Narrator voice on." };
   });
 
   // A new prompt makes the rest of the last reply stale.
@@ -277,7 +253,7 @@ export const register: Register = (on, options) => {
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
     const line = await read($, caption);
     const isActive = await read($, isRunning);
-    const status = statusOf(isActive, await read($, isMuted));
+    const status = statusOf(isActive, muted);
 
     if (e.surface !== "terminal") {
       const { Box, Text } = $.ui.resolve(e);
