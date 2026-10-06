@@ -212,7 +212,36 @@ const forEachAgent = (fn) => {
 
 // --- canonical store: package -> ~/.agents -------------------------------------
 
+// Removes symlinks in `dir` that point into `owner` at something that no longer
+// exists — a skill or agent dropped from this package, or the ~/.claude mirror
+// of one. Links into anywhere else are left alone, even when broken: they
+// belong to another installer.
+const pruneDangling = (dir, owner) => {
+  if (!fs.existsSync(dir)) {
+    return;
+  }
+  for (const entry of fs.readdirSync(dir)) {
+    const link = path.join(dir, entry);
+    if (!isSymlink(link)) {
+      continue;
+    }
+    const target = path.resolve(dir, fs.readlinkSync(link));
+    if (fs.existsSync(target) || !target.startsWith(owner + path.sep)) {
+      continue;
+    }
+    const rel = link.replace(HOME, "~");
+    if (DRY) {
+      log(`would remove stale link ${rel}`);
+      continue;
+    }
+    fs.unlinkSync(link);
+    log(`removed stale link ${rel}`);
+  }
+};
+
 const linkCanonical = () => {
+  pruneDangling(path.join(AGENTS_DIR, "skills"), PKG_ROOT);
+  pruneDangling(path.join(AGENTS_DIR, "agents"), PKG_ROOT);
   forEachSkill((name, src) => place(src, path.join(AGENTS_DIR, "skills", name), "dir"));
   forEachAgent((name, src) => place(src, path.join(AGENTS_DIR, "agents", name), "file"));
 };
@@ -237,6 +266,8 @@ const mirror = (srcDir, destDir, type) => {
 };
 
 const linkClaude = () => {
+  pruneDangling(path.join(CLAUDE_DIR, "skills"), AGENTS_DIR);
+  pruneDangling(path.join(CLAUDE_DIR, "agents"), AGENTS_DIR);
   mirror(path.join(AGENTS_DIR, "skills"), path.join(CLAUDE_DIR, "skills"), "dir");
   mirror(path.join(AGENTS_DIR, "agents"), path.join(CLAUDE_DIR, "agents"), "file");
 };

@@ -79,15 +79,12 @@ flags anything installed but unlisted, or listed but missing.
 
 ## Custom skills
 
-| Skill                | What it does                                                          |
-| -------------------- | --------------------------------------------------------------------- |
-| `architect`          | Deep technical analysis, architecture decisions, code review          |
-| `librarian`          | Multi-repo codebase exploration, find patterns across GitHub/npm/PyPI |
-| `pr-lifecycle`       | Monitor PR for bot reviews, address feedback, push fixes              |
-| `push`               | Commit and push; creates PR if on branch                              |
-| `simplify-lifecycle` | Full architecture sweep, loops until nothing left to simplify         |
-| `sync-conventions`   | Audit convention drift across all projects                            |
-| `update-all`         | Bulk update all projects to latest, fix breakages, commit             |
+| Skill                | What it does                                                               |
+| -------------------- | -------------------------------------------------------------------------- |
+| `pr`                 | Commit, push, open PR, then fix bot reviews and failing checks until clean |
+| `simplify-lifecycle` | Full architecture sweep, loops until nothing left to simplify              |
+| `sync-conventions`   | Audit convention drift across all projects                                 |
+| `update-all`         | Bulk update all projects to latest, fix breakages, commit                  |
 
 ## Custom agents
 
@@ -95,5 +92,4 @@ flags anything installed but unlisted, or listed but missing.
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `frontend`  | Frontend dev agent with consolidated best practices (React, Next.js, design engineering, a11y). Uses browser automation to verify visual changes. |
 | `librarian` | Explore remote repos, find code patterns, understand library internals                                                                            |
-| `architect` | Deep technical analysis with extended thinking. Read-only.                                                                                        |
 | `review`    | Code review agent                                                                                                                                 |
