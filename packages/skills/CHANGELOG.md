@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 — 2026-10-05
+
+- external-skills.json: exact skills per repo instead of `-s '*'`; link.mjs prunes any other skill from a listed repo so every machine converges (removals sync)
+- external-skills.json: `unmanaged` for hand-installed skills; check:external checks per skill (unlisted / not installed / untracked)
+- curated set: drop turnstile-spin, sandbox-sdk, writing-great-skills; add sandbox-next, sandbox-stable, sandbox-migrate-to-next
+- update-all: Expo pins and real gates
+- CLAUDE.md: comments rule (minimal, only why)
+- lint on full ultracite presets; skills CLI ^1.7.0
+
 ## 0.1.5 — 2026-07-24
 
 - CLAUDE.md: idiomatic-first rule — follow language/framework conventions, look up current practice instead of writing from stale memory

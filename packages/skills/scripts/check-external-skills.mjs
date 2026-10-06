@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Drift check: every 3p skill installed locally (via the `skills` CLI) should be
-// reproducible by `external-skills.json`. The skills CLI records each install in
-// `~/.agents/.skill-lock.json` with its source repo — compare that against the
-// curated repo list so a fresh `npm i -g @kyh/skills` recreates what we run.
+// Drift check: the 3p skills installed locally (via the `skills` CLI) should be
+// exactly what `external-skills.json` lists. The skills CLI records each install
+// in `~/.agents/.skill-lock.json` with its source repo — compare that against the
+// curated per-repo lists so a fresh `npm i -g @kyh/skills` recreates what we run.
 //
 // The lock lives in the user's home dir, NOT the repo, so this only works on a
 // machine that has the skills installed. CI has no lock -> the check is skipped.
@@ -13,6 +13,7 @@
 // mirrors ~/.agents/skills -> ~/.claude/skills, so we catch those by name: a
 // skill Claude can see with no counterpart in the canonical store came from
 // somewhere this repo doesn't control, and a fresh install won't recreate it.
+// Ones we keep on purpose go under `unmanaged` in external-skills.json.
 //
 // Not every skill comes from a repo (e.g. `motion` = Motion AI Kit from
 // motion.dev). List those here so they don't trip the check.
@@ -41,22 +42,24 @@ try {
 }
 
 const ext = read(extPath);
-const listed = new Set(ext.repos);
+const listed = new Map(Object.entries(ext.skills ?? {}));
+const unmanaged = new Set(ext.unmanaged);
 
-const lockedRepos = new Set();
-const skipped = [];
-for (const [name, meta] of Object.entries(lock.skills ?? {})) {
-  if (NON_REPO.has(name)) {
-    skipped.push(name);
-    continue;
-  }
-  if (meta.source) {
-    lockedRepos.add(meta.source);
-  }
-}
+const installed = Object.entries(lock.skills ?? {}).filter(
+  ([name, meta]) => !NON_REPO.has(name) && meta.source,
+);
+const installedNames = new Set(installed.map(([name]) => name));
 
-const missing = [...lockedRepos].filter((r) => !listed.has(r)).toSorted();
-const dead = [...listed].filter((r) => !lockedRepos.has(r)).toSorted();
+const unlisted = installed
+  .filter(([name, meta]) => !listed.get(meta.source)?.includes(name))
+  .map(([name, meta]) => `${meta.source}: ${name}`)
+  .toSorted();
+
+const notInstalled = [...listed]
+  .flatMap(([repo, names]) =>
+    names.filter((n) => !installedNames.has(n)).map((n) => `${repo}: ${n}`),
+  )
+  .toSorted();
 
 // Compare names, not symlink-ness: `place()` copies instead of symlinking where
 // symlinks aren't permitted, so a real dir in ~/.claude is only drift when the
@@ -66,48 +69,37 @@ const skillNames = (dir) =>
 
 const canonical = new Set(skillNames(agentsSkills));
 const untracked = skillNames(claudeSkills)
-  .filter((n) => !canonical.has(n))
+  .filter((n) => !canonical.has(n) && !unmanaged.has(n))
   .toSorted();
 
-if (skipped.length) {
-  console.log(`note: skipped non-repo skills: ${skipped.join(", ")}`);
-}
+const report = (title, items) => {
+  if (items.length === 0) {
+    return;
+  }
+  console.error(`\n${title}`);
+  for (const item of items) {
+    console.error(`  - ${item}`);
+  }
+};
 
-if (missing.length) {
-  console.error("\nMISSING from external-skills.json (installed locally, not curated):");
-  for (const r of missing) {
-    console.error(`  - ${r}`);
-  }
-}
-if (untracked.length) {
-  console.error("\nUNTRACKED in ~/.claude/skills (not in ~/.agents, so not in the lock):");
-  for (const n of untracked) {
-    console.error(`  - ${n}`);
-  }
-}
-if (dead.length) {
-  console.warn("\nDEAD in external-skills.json (curated, but no installed skill came from it):");
-  for (const r of dead) {
-    console.warn(`  - ${r}`);
-  }
-}
+report("UNLISTED (installed locally, not in external-skills.json):", unlisted);
+report("NOT INSTALLED (listed in external-skills.json, missing locally):", notInstalled);
+report("UNTRACKED in ~/.claude/skills (not in ~/.agents, so not in the lock):", untracked);
 
-if (missing.length || untracked.length) {
+if (unlisted.length || notInstalled.length || untracked.length) {
   console.error("\nfail: external-skills.json is out of sync.");
-  if (missing.length) {
-    console.error("  - add the missing repos above.");
+  if (unlisted.length) {
+    console.error("  - list the skills you want to keep; `link.mjs` removes the rest.");
+  }
+  if (notInstalled.length) {
+    console.error("  - run `node scripts/link.mjs` to install them, or drop them from the list.");
   }
   if (untracked.length) {
     console.error(
-      "  - delete the untracked skills, then reinstall their repo with" +
-        " `npx skills add <repo> -g -s '*' -y` so they land in ~/.agents and the lock." +
-        " A DEAD entry above is often the repo they belong to.",
+      "  - reinstall them via `npx skills add <repo> -g -s <skill> -y` and list them," +
+        " or, if a skill has no repo, list it under `unmanaged`.",
     );
   }
   process.exit(1);
 }
-console.log(
-  dead.length
-    ? "\nok with warnings: no missing repos (dead entries above are advisory)."
-    : `\nok: external-skills.json matches all ${lockedRepos.size} locally installed source repos.`,
-);
+console.log(`ok: ${installed.length} skills from ${listed.size} repos match external-skills.json.`);

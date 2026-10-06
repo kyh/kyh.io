@@ -7,13 +7,14 @@
 //   2. Non-universal agents (claude) get their own dirs symlinked to the canonical
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
 //   3. CLAUDE.md -> ~/.claude/CLAUDE.md and mcp.json merged into ~/.claude.json.
-//   4. External skill repos in external-skills.json are installed globally with
-//      the bundled `skills` CLI (falls back to `npx skills`), all in parallel by
-//      default (throttle with KYH_SKILLS_CONCURRENCY; skip with
-//      KYH_SKILLS_NO_EXTERNAL=1).
+//   4. The exact skills listed per repo in external-skills.json are installed
+//      globally with the bundled `skills` CLI (falls back to `npx skills`), all
+//      repos in parallel by default (throttle with KYH_SKILLS_CONCURRENCY; skip
+//      with KYH_SKILLS_NO_EXTERNAL=1). Any other skill the CLI installed from
+//      those repos is then removed, so every machine converges on the list.
 //
-// Runs on `postinstall`. Idempotent, non-destructive (real files are backed up,
-// never deleted), falls back to copying when symlinks aren't permitted, and never
+// Runs on `postinstall`. Idempotent, non-destructive outside that prune (real
+// files are backed up, never deleted), falls back to copying when symlinks aren't permitted, and never
 // throws — a failed link must not break `npm install`.
 //
 // During postinstall, only links for a global install (`npm i -g`); local/hoisted
@@ -293,7 +294,7 @@ const mergeMcp = () => {
   log(`added mcpServers to ~/.claude.json: ${added.join(", ")}`);
 };
 
-// --- external skills: `skills add <repo> -g -s '*' -y` -------------------------
+// --- external skills: `skills add <repo> -g -s <skill>... -y`, then prune -------
 
 // Path to the bundled `skills` CLI, or null to fall back to `npx skills`.
 const skillsBin = () => {
@@ -311,25 +312,49 @@ const skillsBin = () => {
   return null;
 };
 
-// Installs one repo globally into the same ~/.agents canonical store. Uses the
-// bundled CLI directly (no npx resolution) when available.
-const addRepo = async (repo, bin) => {
-  const args = ["add", repo, "-g", "-s", "*", "-y"];
+// Runs the `skills` CLI against the global ~/.agents store. Uses the bundled CLI
+// directly (no npx resolution) when available.
+const runSkills = async (args, bin, okMessage) => {
   const [cmd, argv, useShell] = bin
     ? [process.execPath, [bin, ...args], false]
     : ["npx", ["-y", "skills", ...args], process.platform === "win32"];
-  // Parallel output would interleave; log per-repo status instead.
+  // Parallel output would interleave; log per-call status instead.
   const child = spawn(cmd, argv, { shell: useShell, stdio: "ignore" });
+  const label = `skills ${args.slice(0, 2).join(" ")}`;
   try {
     const [code] = await once(child, "close");
     if (code === 0) {
-      log(`added skills from ${repo}`);
+      log(okMessage);
     } else {
-      warn(`skills add ${repo} failed (exit ${code})`);
+      warn(`${label} failed (exit ${code})`);
     }
   } catch (error) {
-    warn(`skills add ${repo} failed: ${error.message}`);
+    warn(`${label} failed: ${error.message}`);
   }
+};
+
+const addRepo = ([repo, names], bin) =>
+  runSkills(
+    ["add", repo, "-g", ...names.flatMap((n) => ["-s", n]), "-y"],
+    bin,
+    `added ${names.length} skills from ${repo}`,
+  );
+
+// Skills the `skills` CLI installed from a curated repo that the manifest no
+// longer lists. Pruning only curated repos' skills leaves anything added from
+// elsewhere for check-external-skills to flag rather than silently deleting it.
+const unlistedSkills = (manifest) => {
+  let lock;
+  try {
+    lock = JSON.parse(fs.readFileSync(path.join(AGENTS_DIR, ".skill-lock.json"), "utf-8"));
+  } catch {
+    return [];
+  }
+  return Object.entries(lock.skills ?? {})
+    .filter(
+      ([name, meta]) => manifest.has(meta.source) && !manifest.get(meta.source).includes(name),
+    )
+    .map(([name]) => name);
 };
 
 // Runs `fn` over `items` with at most `limit` in flight.
@@ -355,25 +380,36 @@ const installExternalSkills = async () => {
     return;
   }
 
-  let repos;
+  let manifest;
   try {
-    ({ repos } = JSON.parse(fs.readFileSync(file, "utf-8")));
+    const { skills } = JSON.parse(fs.readFileSync(file, "utf-8"));
+    manifest = new Map(Object.entries(skills ?? {}));
   } catch (error) {
     return warn(`could not parse external-skills.json: ${error.message}`);
   }
-  if (!Array.isArray(repos)) {
-    return warn("external-skills.json: `repos` must be an array.");
+  const invalid = [...manifest].filter(([, names]) => !Array.isArray(names) || names.length === 0);
+  if (invalid.length) {
+    return warn(
+      `external-skills.json: each repo needs a non-empty skill list (${invalid.map(([r]) => r).join(", ")}).`,
+    );
   }
-  if (repos.length === 0) {
+  if (manifest.size === 0) {
     return;
   }
 
   // Default: run every repo at once (they're network-bound git clones). Throttle
   // with KYH_SKILLS_CONCURRENCY (e.g. on a slow link, or to avoid concurrent
   // writes to the shared ~/.agents lock).
-  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || repos.length);
+  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || manifest.size);
   if (DRY) {
-    return log(`would install external skills (concurrency ${limit}) from: ${repos.join(", ")}`);
+    log(
+      `would install external skills (concurrency ${limit}) from: ${[...manifest.keys()].join(", ")}`,
+    );
+    const stale = unlistedSkills(manifest);
+    if (stale.length) {
+      log(`would remove unlisted skills: ${stale.join(", ")}`);
+    }
+    return;
   }
 
   const bin = skillsBin();
@@ -390,8 +426,18 @@ const installExternalSkills = async () => {
     }
   }
 
-  log(`installing external skills from ${repos.length} repos (concurrency ${limit})…`);
-  await pool(repos, limit, (repo) => addRepo(repo, bin));
+  log(`installing external skills from ${manifest.size} repos (concurrency ${limit})…`);
+  await pool([...manifest], limit, (entry) => addRepo(entry, bin));
+
+  // Prune after the adds settle: the lock is only complete once they've all written.
+  const stale = unlistedSkills(manifest);
+  if (stale.length) {
+    await runSkills(
+      ["remove", ...stale, "-g", "-y"],
+      bin,
+      `removed unlisted skills: ${stale.join(", ")}`,
+    );
+  }
 };
 
 // --- main ----------------------------------------------------------------------

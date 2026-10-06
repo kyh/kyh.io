@@ -55,17 +55,23 @@ before linking.
 
 ## External skills
 
-On install, the postinstall also pulls every skill from a curated list of repos
-into the global space using the bundled `skills` CLI (`skills add <repo> -g -s '*'
--y`; falls back to `npx skills` if unresolved). The list lives in
-[`external-skills.json`](./external-skills.json) — edit it to curate.
+On install, the postinstall also installs the exact skills listed per repo in
+[`external-skills.json`](./external-skills.json) using the bundled `skills` CLI
+(`skills add <repo> -g -s <skill>... -y`; falls back to `npx skills` if
+unresolved), then removes any other skill the CLI installed from those repos.
+The file is the whole set: every machine that reinstalls converges on it, so
+removals sync too.
 
 - Repos install all in parallel by default; throttle with `KYH_SKILLS_CONCURRENCY`.
 - Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.
 - These install into the same canonical `~/.agents/skills`, so universal agents
   pick them up directly and Claude gets symlinks.
+- `unmanaged` lists hand-installed skills with no repo. `check:external` tolerates
+  them, but a fresh install won't recreate them.
 
-Cherry-pick a single skill manually: `npx skills add <repo>@<skill-name> -g -y`.
+Add a skill: list it under its repo, then rerun the link script (or
+`npx skills add <repo> -s <skill> -g -y` and list it). `pnpm check:external`
+flags anything installed but unlisted, or listed but missing.
 
 ### Not installable from a repo
 
