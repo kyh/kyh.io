@@ -8,12 +8,14 @@
     "clean": "git clean -xdf .cache .turbo node_modules",
     "session": "claude --plugin-dir .",
     "lint": "oxlint --report-unused-disable-directives",
-    "test": "tsx --test \"test/*.test.ts\"",
+    "test": "tsx --test \"test/*.spec.ts\"",
+    "test:mod": "claude plugin test .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.plugin.json",
     "validate": "claude plugin validate ."
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
+    "@repo/claude-code-types": "workspace:^",
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

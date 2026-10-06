@@ -11,7 +11,7 @@
     ".wxt",
     ".output",
     "out",
-    "apps/*/vendor"
+    "packages/claude-code-types/claude-code.d.ts"
   ],
   "experimentalSortPackageJson": {}
 }

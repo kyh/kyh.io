@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
+    "@repo/claude-code-types": "workspace:^",
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

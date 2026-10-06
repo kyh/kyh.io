@@ -6,8 +6,8 @@ captions underneath.
 
 ## Requirements
 
-- **Claude Code** with mod (function hooks plugin) support. Built and
-  type-checked against 2.1.287.
+- **Claude Code** with mod (function hooks plugin) support, at or past the
+  version `packages/claude-code-types` pins.
 - **macOS** to hear the OpenAI voice. Clips play through `afplay`. On Linux
   or Windows you get the system voice where one exists, otherwise captions
   only.
@@ -17,12 +17,12 @@ captions underneath.
 - **A terminal at least 144 columns wide.** Narrower, the pane waits and
   appears once you widen it.
 
-The mod has no npm dependencies at runtime, so you don't need to run
-`pnpm install` just to use it.
+## Set up
 
-## Install
+The mod has no npm dependencies at runtime: loading it is pointing Claude Code
+at this folder.
 
-### Try it for one session
+### One session
 
 From this repo:
 
@@ -31,17 +31,17 @@ export OPENAI_API_KEY=sk-...
 pnpm dev:mod-surfer
 ```
 
-That runs `claude --plugin-dir apps/mod-surfer`. From anywhere else, point
-at the folder directly:
+That runs `claude --plugin-dir apps/mod-surfer`. From anywhere else:
 
 ```sh
 claude --plugin-dir /path/to/kyh.io/apps/mod-surfer
 ```
 
-### Load it in every session
+### Every session
 
 Add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
-`~/.claude/settings.json`. Use an absolute path; `~` works.
+`~/.claude/settings.json` (an absolute path; `~` works). This is also how the
+desktop app loads it, since it takes no flags.
 
 ```json
 {
@@ -52,13 +52,12 @@ Add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
 }
 ```
 
-To load several folders, separate them with `:` (`;` on Windows). Claude Code
-reads this from your user settings only, never from a project's settings.
+Separate several folders with `:` (`;` on Windows). Claude Code reads this from
+your user settings only, never a project's.
 
-### Uninstall
+### Remove it
 
-Drop the `--plugin-dir` flag, or remove the path from
-`CLAUDE_CODE_PLUGIN_DIRS`.
+Drop the `--plugin-dir` flag, or the path from `CLAUDE_CODE_PLUGIN_DIRS`.
 
 ## Set your API key
 
@@ -67,7 +66,7 @@ The mod looks for a key in this order:
 1. The plugin's `openaiApiKey` option. It's marked sensitive, so Claude Code
    keeps it in secure storage and doesn't list it in `/config`.
 2. The `OPENAI_API_KEY` environment variable, from your shell or the `env`
-   block above.
+   block under Set up.
 
 With neither, it uses the system voice; the status line under the game reads
 "system voice" instead of "openai ash". With a key on a machine that can't
@@ -140,22 +139,36 @@ OpenAI per input character at the model's rate. Long replies cost more. Turn on
 
 ## Develop
 
-Claude Code watches a `--plugin-dir` folder in an interactive session, so
-saving a file in `hooks/` reloads the mod without restarting.
+Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
+file in `hooks/` reloads the mod without a restart.
 
 ```sh
-pnpm -F @repo/mod-surfer test       # runner and narration unit tests
-pnpm -F @repo/mod-surfer typecheck  # pure modules + tests, then the hooks against vendor/claude-code.d.ts
+pnpm -F @repo/mod-surfer test       # node: the runner and the narration lines
+pnpm -F @repo/mod-surfer test:mod   # claude plugin test: the hooks: the pane, the voice fallbacks, mute
+pnpm -F @repo/mod-surfer typecheck  # pure modules + node tests, then the hooks against the pinned API types
 pnpm -F @repo/mod-surfer validate   # what Claude Code will load
 ```
 
-`vendor/claude-code.d.ts` is a copy of Claude Code's generated API types.
-After a Claude Code update, replace it with the copy Claude Code writes to
-`.claude-plugin/types/claude-code/index.d.ts` when it loads the mod.
+Tests come in two kinds, split by suffix. `test/*.spec.ts` cover the pure
+modules under node and run in `pnpm test` and CI. `test/*.test.ts` run the
+hooks inside Claude Code's own test kit, with the engine beneath mocked
+(`claude-code/testing`); they need the `claude` CLI, so they're local only.
+`claude plugin test` loads every `*.test.ts` in the folder, which is why the
+node tests can't share the suffix.
 
-| File                         | Role                                                 |
-| ---------------------------- | ---------------------------------------------------- |
-| `hooks/register.tsx`         | The hooks: pane, narration queue, speech, frame loop |
-| `hooks/game.ts`              | Runner simulation, autopilot and drawing             |
-| `hooks/narrate.ts`           | Markdown to sentences, and the OpenAI request        |
-| `.claude-plugin/plugin.json` | Manifest and the `/config` options                   |
+The hooks type-check against `packages/claude-code-types`, the plugin API's
+declarations pinned from the Claude Code version on that file's first line.
+After a Claude Code update, refresh it from the copy the engine writes beside
+a mod each time it loads one:
+
+```sh
+cp apps/mod-surfer/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
+```
+
+| File                         | Role                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| `hooks/register.tsx`         | The hooks: pane, narration queue, speech, frame loop     |
+| `hooks/game.ts`              | Runner simulation, autopilot and drawing                 |
+| `hooks/narrate.ts`           | Markdown to sentences, and the OpenAI request            |
+| `types/index.d.ts`           | The `$.state` contract: the caption, whether a turn runs |
+| `.claude-plugin/plugin.json` | Manifest and the `/config` options                       |

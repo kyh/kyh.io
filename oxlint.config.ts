@@ -18,8 +18,8 @@ export default defineConfig({
     ".conductor",
     ".cursor",
     ".superset",
-    // Claude Code's generated API types, vendored verbatim for the mods' typecheck.
-    "apps/*/vendor",
+    // Claude Code's generated API types, pinned verbatim for the mods' typecheck.
+    "packages/claude-code-types/claude-code.d.ts",
   ],
   overrides: [{ files: nextApps, plugins: next.plugins, rules: next.rules }],
   rules: {

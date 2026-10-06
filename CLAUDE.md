@@ -115,10 +115,11 @@ Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replay
 
 ### mod-surfer (`apps/mod-surfer`)
 
-Claude Code mod (a plugin of function hooks, not a web app). Opens a pane with a
-self-playing Subway Surfers-style runner drawn into a terminal `Raster`, and
-reads Claude's replies aloud with OpenAI text-to-speech while a turn runs.
-Load it with `pnpm dev:mod-surfer` (`claude --plugin-dir apps/mod-surfer`).
+Claude Code mod (see Claude Code mods below). Opens the **Subway Clauders**
+pane, a self-playing Subway Surfers-style runner drawn into a terminal
+`Raster`, and reads Claude's replies aloud with OpenAI text-to-speech while a
+turn runs. No slash commands: the pane opens on session start (drawn from 144
+columns).
 
 - Narration: `session.append` (main loop, `response` door) → `toSentences` →
   queue; each line is synthesized by `curl` to `/v1/audio/speech` (base64 on
@@ -128,25 +129,18 @@ Load it with `pnpm dev:mod-surfer` (`claude --plugin-dir apps/mod-surfer`).
   (`afplay`).
 - Key: the `openaiApiKey` userConfig field (sensitive), else `OPENAI_API_KEY`.
   `voice` and `model` are pickers in `/config`; `mute` keeps captions without
-  the voice. No slash commands: the pane opens on session start (drawn from
-  144 columns).
-- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node
-  tests) and `tsconfig.plugin.json` (the hooks against
-  `vendor/claude-code.d.ts`, the engine's API types pinned from the Claude Code
-  version named on its first line). Refresh that file after a Claude Code
-  update from the copy the engine lays in the gitignored
-  `.claude-plugin/types/claude-code/index.d.ts` on load.
+  the voice.
 
 **Key files**: `hooks/register.tsx` (hooks, speech, frame loop), `hooks/game.ts`
 (runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
-OpenAI request).
+OpenAI request), `types/index.d.ts` (the `$.state` contract).
 
 ### mod-dev (`apps/mod-dev`)
 
-Claude Code mod. `/score` grades the session's work before it merges:
-confidence, idiomatic, simplicity and scope (0–10 each) and risk (low, medium,
-high), then a verdict (ready, fix first, not ready) and up to three fixes.
-Load it with `pnpm dev:mod-dev` (`claude --plugin-dir apps/mod-dev`).
+Claude Code mod (see Claude Code mods below). `/score` grades the session's
+work before it merges: confidence, idiomatic, simplicity and scope (0–10 each)
+and risk (low, medium, high), then a verdict (ready, fix first, not ready) and
+up to three fixes.
 
 - Evidence is mechanical: the session's tool calls (subagents' included) make a
   ledger of edits and checks. Bash commands are classified by what they run
@@ -161,16 +155,38 @@ Load it with `pnpm dev:mod-dev` (`claude --plugin-dir apps/mod-dev`).
 - Risk sets the bar for confidence (low 7, medium 8, high 9); the other scores
   need 7; any score of 4 or less is not ready. `claude -p --resume <id> "/score"`
   exits 0 only when ready.
-- Tests: `test/*.spec.ts` run under node (`pnpm test`, CI); `test/*.test.ts`
-  under `claude plugin test` (`test:mod`, local). That runner loads every
-  `*.test.ts` in the mod, so the node tests can't share the suffix.
 
 **Key files**: `hooks/register.ts` (hooks: `/score`, the status line),
 `hooks/shell.ts` (command lines into commands and words), `hooks/commands.ts`
 (what each command means), `hooks/evidence.ts` (the ledger, freshness),
-`hooks/grade.ts`
-(the rubric, the prompt, parsing the answer, the verdict, the scorecard),
-`hooks/git.ts` (the diff script).
+`hooks/grade.ts` (the rubric, the prompt, parsing the answer, the verdict, the
+scorecard), `hooks/git.ts` (the diff script).
+
+### Claude Code mods (`apps/mod-*`)
+
+Plugins of function hooks, not web apps. Both share one layout; keep it that
+way when adding a mod.
+
+- `.claude-plugin/plugin.json` (manifest, `userConfig`), `hooks/hooks.json`
+  naming one module, `hooks/register.ts(x)` holding only the hooks: the glue
+  between `$` and pure modules beside it (`hooks/*.ts`) that import nothing
+  from `claude-code`. A mod that keeps `$.state` declares it in
+  `types/index.d.ts`, named by the manifest's `types`.
+- Load: `pnpm dev:<mod>` (`claude --plugin-dir apps/<mod>`), or
+  `CLAUDE_CODE_PLUGIN_DIRS` in `~/.claude/settings.json` for every session and
+  the desktop app. An interactive session hot-reloads the folder on save.
+- Tests split by suffix. `test/*.spec.ts`: the pure modules under node
+  (`pnpm test`, CI). `test/*.test.ts`: the hooks under `claude plugin test`
+  with the engine mocked beneath (`test:mod`, local; needs `claude`). The kit
+  loads every `*.test.ts`, so node tests can't share the suffix.
+- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + specs,
+  node types) and `tsconfig.plugin.json` (hooks + `*.test.ts`, extending
+  `@repo/claude-code-types/tsconfig.json`). `validate` is
+  `claude plugin validate .`.
+- `packages/claude-code-types/claude-code.d.ts` is the plugin API pinned from
+  the Claude Code version on its first line, shared by every mod; lint and
+  format skip it. Refresh after an update from the copy the engine lays in a
+  loaded mod's gitignored `.claude-plugin/types/claude-code/index.d.ts`.
 
 ### tc, covid-19, vis-ml
 
@@ -178,4 +194,5 @@ Other project apps.
 
 ## Packages
 
-Shared configs and utilities in `packages/`.
+Shared configs and utilities in `packages/`. `claude-code-types` is the
+mods' pinned plugin API and hooks tsconfig (see Claude Code mods).
