@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Links this package into the agent ecosystem, the same way `npx skills` does:
 //
-//   1. Canonical store at ~/.agents — skills/<name> and agents/<name>.md are
-//      symlinked here from the package. "Universal" agents (codex, amp, opencode,
+//   1. Canonical store at ~/.agents — skills/<name> are symlinked here from the
+//      package. "Universal" agents (codex, amp, opencode,
 //      goose, kimi) read ~/.agents directly, so they need nothing further.
 //   2. Non-universal agents (claude) get their own dirs symlinked to the canonical
 //      store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>, etc.
@@ -200,16 +200,6 @@ const forEachSkill = (fn) => {
   }
 };
 
-const forEachAgent = (fn) => {
-  const src = path.join(PKG_ROOT, "agents");
-  if (!fs.existsSync(src)) {
-    return;
-  }
-  for (const name of dirents(src, "file").filter((f) => f.endsWith(".md"))) {
-    fn(name, path.join(src, name));
-  }
-};
-
 // --- canonical store: package -> ~/.agents -------------------------------------
 
 // Removes symlinks in `dir` that point into `owner` at something that no longer
@@ -241,13 +231,13 @@ const pruneDangling = (dir, owner) => {
 
 const linkCanonical = () => {
   pruneDangling(path.join(AGENTS_DIR, "skills"), PKG_ROOT);
+  // The package ships no agents, but an install of an older version may have linked some.
   pruneDangling(path.join(AGENTS_DIR, "agents"), PKG_ROOT);
   forEachSkill((name, src) => place(src, path.join(AGENTS_DIR, "skills", name), "dir"));
-  forEachAgent((name, src) => place(src, path.join(AGENTS_DIR, "agents", name), "file"));
 };
 
 // --- claude (non-universal): mirror the whole ~/.agents store -> ~/.claude ------
-// Covers both this package's skills/agents and any installed by `npx skills add`.
+// Covers both this package's skills and any installed by `npx skills add`.
 
 const mirror = (srcDir, destDir, type) => {
   if (!fs.existsSync(srcDir)) {

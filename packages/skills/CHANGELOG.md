@@ -5,7 +5,7 @@
 - external-skills.json: exact skills per repo instead of `-s '*'`; link.mjs prunes any other skill from a listed repo so every machine converges (removals sync)
 - external-skills.json: `unmanaged` for hand-installed skills; check:external checks per skill (unlisted / not installed / untracked)
 - pr: merge push + pr-lifecycle — commit, push, open PR, watch checks (`gh pr checks --watch`) and fix bot reviews until clean
-- drop architect + librarian skills (agents stay); drop frontend agent (pointed at missing skills)
+- drop architect + librarian skills (agents stay); drop all custom agents (architect, librarian, review, frontend)
 - link.mjs: remove stale links to skills/agents dropped from the package
 - curated set: drop turnstile-spin, sandbox-sdk, writing-great-skills; add sandbox-next, sandbox-stable, sandbox-migrate-to-next
 - update-all: Expo pins and real gates

@@ -1,7 +1,7 @@
 # @kyh/skills
 
 My Claude Code + Codex setup, distributed as an npm package. Installing it
-symlinks my skills, agents, and global instructions into the right global
+symlinks my skills and global instructions into the right global
 directories so they're available across every project.
 
 ## Install
@@ -28,7 +28,6 @@ canonical store at `~/.agents`, with non-universal agents symlinking into it.
 | Source (in this package)     | Target                          | Mechanism             |
 | ---------------------------- | ------------------------------- | --------------------- |
 | `skills/<name>/`             | `~/.agents/skills/<name>`       | symlink (canonical)   |
-| `agents/<name>.md`           | `~/.agents/agents/<name>.md`    | symlink (canonical)   |
 | `~/.agents/skills/<name>`    | `~/.claude/skills/<name>`       | symlink               |
 | `~/.agents/agents/<name>.md` | `~/.claude/agents/<name>.md`    | symlink               |
 | `CLAUDE.md`                  | `~/.claude/CLAUDE.md`           | symlink               |
@@ -85,11 +84,3 @@ flags anything installed but unlisted, or listed but missing.
 | `simplify-lifecycle` | Full architecture sweep, loops until nothing left to simplify              |
 | `sync-conventions`   | Audit convention drift across all projects                                 |
 | `update-all`         | Bulk update all projects to latest, fix breakages, commit                  |
-
-## Custom agents
-
-| Agent       | What it does                                                           |
-| ----------- | ---------------------------------------------------------------------- |
-| `architect` | Deep technical analysis with extended thinking. Read-only.             |
-| `librarian` | Explore remote repos, find code patterns, understand library internals |
-| `review`    | Code review agent                                                      |
