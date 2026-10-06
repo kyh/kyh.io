@@ -20,7 +20,7 @@ describe("DIFF_SCRIPT", () => {
   let repo = "";
 
   before(() => {
-    repo = mkdtempSync(path.join(tmpdir(), "scorecard-"));
+    repo = mkdtempSync(path.join(tmpdir(), "mod-dev-"));
     git(repo, "init", "-q", "-b", "main");
     writeFileSync(path.join(repo, "a.ts"), "export const a = 1;\n");
     git(repo, "add", "-A");
@@ -69,7 +69,7 @@ describe("DIFF_SCRIPT", () => {
   });
 
   it("has nothing to show on a clean tree", () => {
-    const clean = mkdtempSync(path.join(tmpdir(), "scorecard-"));
+    const clean = mkdtempSync(path.join(tmpdir(), "mod-dev-"));
     git(clean, "init", "-q", "-b", "main");
     writeFileSync(path.join(clean, "a.ts"), "1\n");
     git(clean, "add", "-A");
@@ -80,7 +80,7 @@ describe("DIFF_SCRIPT", () => {
   });
 
   it("exits 3 outside a repository", () => {
-    const outside = mkdtempSync(path.join(tmpdir(), "scorecard-"));
+    const outside = mkdtempSync(path.join(tmpdir(), "mod-dev-"));
     const { status } = run(outside);
     rmSync(outside, { force: true, recursive: true });
     assert.equal(status, 3);

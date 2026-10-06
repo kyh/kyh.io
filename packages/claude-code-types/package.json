@@ -1,0 +1,10 @@
+{
+  "name": "@repo/claude-code-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Claude Code plugin API's declarations, pinned, and the tsconfig the mods' hooks type-check with",
+  "files": [
+    "claude-code.d.ts",
+    "tsconfig.json"
+  ]
+}

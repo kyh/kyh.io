@@ -1,5 +1,5 @@
 {
-  "name": "scorecard",
+  "name": "mod-dev",
   "version": "0.1.0",
   "description": "/score grades a session's work on confidence, idiomatic, simplicity, scope and risk, from the evidence its tool calls left",
   "author": { "name": "Kaiyu Hsu" },

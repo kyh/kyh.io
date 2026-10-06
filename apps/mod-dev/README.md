@@ -1,4 +1,4 @@
-# scorecard
+# mod-dev
 
 A Claude Code mod. `/score` grades the work done in a session before it
 merges, and the status line under the prompt keeps the evidence in view while
@@ -67,31 +67,49 @@ a claim the ledger doesn't back counts against the work.
 
 ## Requirements
 
-- **Claude Code** with mod (function hooks plugin) support. Built and
-  type-checked against 2.1.289.
+- **Claude Code** with mod (function hooks plugin) support, at or past the
+  version `packages/claude-code-types` pins.
 - **git**. `/score` reads the change from it.
 
-The mod has no npm dependencies at runtime.
+## Set up
 
-## Install
+The mod has no npm dependencies at runtime: loading it is pointing Claude Code
+at this folder.
+
+### One session
 
 From this repo:
 
 ```sh
-pnpm dev:scorecard
+pnpm dev:mod-dev
 ```
 
-That runs `claude --plugin-dir apps/scorecard`. To load it in every session,
-add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
-`~/.claude/settings.json`:
+That runs `claude --plugin-dir apps/mod-dev`. From anywhere else:
+
+```sh
+claude --plugin-dir /path/to/kyh.io/apps/mod-dev
+```
+
+### Every session
+
+Add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
+`~/.claude/settings.json` (an absolute path; `~` works). This is also how the
+desktop app loads it, since it takes no flags.
 
 ```json
 {
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/scorecard"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-dev"
   }
 }
 ```
+
+Separate several folders with `:` (`;` on Windows). Claude Code reads this from
+your user settings only, never a project's.
+
+### Remove it
+
+Drop the `--plugin-dir` flag, or the path from `CLAUDE_CODE_PLUGIN_DIRS`.
 
 ## Use it
 
@@ -111,12 +129,12 @@ Build shows once one has run.
 Headless, `/score` is a gate: it exits 0 only when the verdict is ready.
 
 ```sh
-claude -p --resume <session-id> --plugin-dir apps/scorecard "/score"
+claude -p --resume <session-id> --plugin-dir apps/mod-dev "/score"
 ```
 
 ### Settings
 
-Open `/config` and find **scorecard**:
+Open `/config` and find **mod-dev**:
 
 | Setting      | Default | Options                   |
 | ------------ | ------- | ------------------------- |
@@ -140,21 +158,42 @@ One model call per `/score`, on your plan or API key. What it reads is capped:
   reasons, not a measurement. The same change scored twice can move a point,
   or a risk level; the verdict and the reasons hold steadier than the numbers.
 
+## Troubleshooting
+
+| Symptom                                 | Cause and fix                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| "Needs a git repository…"               | The session isn't in a git checkout. `/score` reads the change from git.             |
+| "Nothing to score: no changes against…" | The branch matches its base. Pass an older ref: `/score HEAD~1`.                     |
+| "…'s answer did not fit the scorecard"  | The grader answered off-format. Run `/score` again, or pick another grader model.    |
+| No `/score` command, no status line     | The mod didn't load. Start with `claude --debug` and look for lines with `mod-dev:`. |
+
 ## Develop
 
+Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
+file in `hooks/` reloads the mod without a restart.
+
 ```sh
-pnpm -F @repo/scorecard test       # node: the ledger, the grader's plumbing, the git script
-pnpm -F @repo/scorecard test:mod   # claude plugin test: the hooks against Claude Code itself
-pnpm -F @repo/scorecard typecheck  # pure modules + node tests, then the hooks against vendor/claude-code.d.ts
-pnpm -F @repo/scorecard validate   # what Claude Code will load
+pnpm -F @repo/mod-dev test       # node: the ledger, the grader's plumbing, the git script
+pnpm -F @repo/mod-dev test:mod   # claude plugin test: the hooks: /score and the status line
+pnpm -F @repo/mod-dev typecheck  # pure modules + node tests, then the hooks against the pinned API types
+pnpm -F @repo/mod-dev validate   # what Claude Code will load
 ```
 
-`claude plugin test` runs every `*.test.ts` in the mod in its own environment,
-without Node, so the node tests are named `*.spec.ts`.
+Tests come in two kinds, split by suffix. `test/*.spec.ts` cover the pure
+modules under node and run in `pnpm test` and CI. `test/*.test.ts` run the
+hooks inside Claude Code's own test kit, with the engine beneath mocked
+(`claude-code/testing`); they need the `claude` CLI, so they're local only.
+`claude plugin test` loads every `*.test.ts` in the folder, which is why the
+node tests can't share the suffix.
 
-`vendor/claude-code.d.ts` is a copy of Claude Code's generated API types.
-After a Claude Code update, replace it with the copy Claude Code writes to
-`.claude-plugin/types/claude-code/index.d.ts` when it loads the mod.
+The hooks type-check against `packages/claude-code-types`, the plugin API's
+declarations pinned from the Claude Code version on that file's first line.
+After a Claude Code update, refresh it from the copy the engine writes beside
+a mod each time it loads one:
+
+```sh
+cp apps/mod-dev/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
+```
 
 | File                | Role                                                               |
 | ------------------- | ------------------------------------------------------------------ |

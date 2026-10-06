@@ -1,0 +1,4 @@
+{
+  "extends": "@repo/claude-code-types/tsconfig.json",
+  "include": ["hooks", "types", "test/*.test.ts"]
+}

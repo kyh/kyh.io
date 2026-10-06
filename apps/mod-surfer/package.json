@@ -1,8 +1,8 @@
 {
-  "name": "@repo/scorecard",
+  "name": "@repo/mod-surfer",
   "version": "0.1.0",
   "private": true,
-  "description": "Claude Code mod: /score grades a session's work on confidence, idiomatic, simplicity, scope and risk",
+  "description": "Claude Code mod: a Subway Surfers-style runner pane narrating Claude's replies with OpenAI text-to-speech",
   "type": "module",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
+    "@repo/claude-code-types": "workspace:^",
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
