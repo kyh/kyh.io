@@ -1,4 +1,4 @@
-# scorecard
+# mod-dev
 
 A Claude Code mod. `/score` grades the work done in a session before it
 merges, and the status line under the prompt keeps the evidence in view while
@@ -78,17 +78,17 @@ The mod has no npm dependencies at runtime.
 From this repo:
 
 ```sh
-pnpm dev:scorecard
+pnpm dev:mod-dev
 ```
 
-That runs `claude --plugin-dir apps/scorecard`. To load it in every session,
+That runs `claude --plugin-dir apps/mod-dev`. To load it in every session,
 add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
 `~/.claude/settings.json`:
 
 ```json
 {
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/scorecard"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-dev"
   }
 }
 ```
@@ -111,12 +111,12 @@ Build shows once one has run.
 Headless, `/score` is a gate: it exits 0 only when the verdict is ready.
 
 ```sh
-claude -p --resume <session-id> --plugin-dir apps/scorecard "/score"
+claude -p --resume <session-id> --plugin-dir apps/mod-dev "/score"
 ```
 
 ### Settings
 
-Open `/config` and find **scorecard**:
+Open `/config` and find **mod-dev**:
 
 | Setting      | Default | Options                   |
 | ------------ | ------- | ------------------------- |
@@ -143,10 +143,10 @@ One model call per `/score`, on your plan or API key. What it reads is capped:
 ## Develop
 
 ```sh
-pnpm -F @repo/scorecard test       # node: the ledger, the grader's plumbing, the git script
-pnpm -F @repo/scorecard test:mod   # claude plugin test: the hooks against Claude Code itself
-pnpm -F @repo/scorecard typecheck  # pure modules + node tests, then the hooks against vendor/claude-code.d.ts
-pnpm -F @repo/scorecard validate   # what Claude Code will load
+pnpm -F @repo/mod-dev test       # node: the ledger, the grader's plumbing, the git script
+pnpm -F @repo/mod-dev test:mod   # claude plugin test: the hooks against Claude Code itself
+pnpm -F @repo/mod-dev typecheck  # pure modules + node tests, then the hooks against vendor/claude-code.d.ts
+pnpm -F @repo/mod-dev validate   # what Claude Code will load
 ```
 
 `claude plugin test` runs every `*.test.ts` in the mod in its own environment,

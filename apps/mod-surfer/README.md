@@ -1,4 +1,4 @@
-# subway-narrator
+# mod-surfer
 
 A Claude Code mod. While Claude works, a pane plays a self-running Subway
 Surfers-style runner, and an OpenAI voice reads Claude's replies aloud with
@@ -29,14 +29,14 @@ From this repo:
 
 ```sh
 export OPENAI_API_KEY=sk-...
-pnpm dev:subway-narrator
+pnpm dev:mod-surfer
 ```
 
-That runs `claude --plugin-dir apps/subway-narrator`. From anywhere else, point
+That runs `claude --plugin-dir apps/mod-surfer`. From anywhere else, point
 at the folder directly:
 
 ```sh
-claude --plugin-dir /path/to/kyh.io/apps/subway-narrator
+claude --plugin-dir /path/to/kyh.io/apps/mod-surfer
 ```
 
 ### Load it in every session
@@ -47,7 +47,7 @@ Add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
 ```json
 {
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/subway-narrator",
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-surfer",
     "OPENAI_API_KEY": "sk-..."
   }
 }
@@ -96,7 +96,7 @@ narration finishes.
 
 ### Settings
 
-Open `/config` and find **subway-narrator**:
+Open `/config` and find **mod-surfer**:
 
 | Setting        | Default           | Options                                                                                        |
 | -------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -111,7 +111,7 @@ You can also set them in `~/.claude/settings.json`:
 ```json
 {
   "pluginConfigs": {
-    "subway-narrator": { "options": { "voice": "nova" } }
+    "mod-surfer": { "options": { "voice": "nova" } }
   }
 }
 ```
@@ -143,7 +143,7 @@ with `/subway-mute` to stop paying while keeping captions.
 | Toast: "OpenAI voice plays on macOS only" | You're not on macOS. The system voice or captions take over.                                  |
 | Toast: "OpenAI speech failed"             | The request failed. Check the key, your OpenAI quota, and network access to `api.openai.com`. |
 | Toast: "no speech synthesizer here"       | No system voice either. You get captions only.                                                |
-| Nothing happens at all                    | Start with `claude --debug` and look for lines starting with `subway-narrator:`.              |
+| Nothing happens at all                    | Start with `claude --debug` and look for lines starting with `mod-surfer:`.                   |
 
 ## Develop
 
@@ -151,9 +151,9 @@ Claude Code watches a `--plugin-dir` folder in an interactive session, so
 saving a file in `hooks/` reloads the mod without restarting.
 
 ```sh
-pnpm -F @repo/subway-narrator test       # runner and narration unit tests
-pnpm -F @repo/subway-narrator typecheck  # pure modules + tests, then the hooks against vendor/claude-code.d.ts
-pnpm -F @repo/subway-narrator validate   # what Claude Code will load
+pnpm -F @repo/mod-surfer test       # runner and narration unit tests
+pnpm -F @repo/mod-surfer typecheck  # pure modules + tests, then the hooks against vendor/claude-code.d.ts
+pnpm -F @repo/mod-surfer validate   # what Claude Code will load
 ```
 
 `vendor/claude-code.d.ts` is a copy of Claude Code's generated API types.

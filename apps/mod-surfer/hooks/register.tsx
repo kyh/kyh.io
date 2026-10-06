@@ -11,9 +11,9 @@ const TITLE = "Subway Narrator";
 const FRAME_MS = 66;
 const MAX_QUEUE = 30;
 
-const caption = atom({ key: "caption", plugin: "subway-narrator" } as const, "");
-const isRunning = atom({ key: "isRunning", plugin: "subway-narrator" } as const, false);
-const isMuted = atom({ key: "isMuted", plugin: "subway-narrator" } as const, false);
+const caption = atom({ key: "caption", plugin: "mod-surfer" } as const, "");
+const isRunning = atom({ key: "isRunning", plugin: "mod-surfer" } as const, false);
+const isMuted = atom({ key: "isMuted", plugin: "mod-surfer" } as const, false);
 
 // One line of narration and, once asked for, its mp3 as base64 (empty when
 // synthesis failed).
@@ -67,7 +67,7 @@ const playOpenai = async ($: EngineInterface, line: Line) => {
   const audio = await synthesize($, line);
   if (!audio) {
     openai.key = "";
-    $.ui.toast("subway-narrator: OpenAI speech failed, using the system voice");
+    $.ui.toast("mod-surfer: OpenAI speech failed, using the system voice");
     return false;
   }
   await update($, caption, () => line.text);
@@ -77,7 +77,7 @@ const playOpenai = async ($: EngineInterface, line: Line) => {
   } catch {
     // Stop paying for speech nobody hears; the system voice takes over.
     openai.key = "";
-    $.ui.toast("subway-narrator: OpenAI audio would not play, using the system voice");
+    $.ui.toast("mod-surfer: OpenAI audio would not play, using the system voice");
     return false;
   }
 };
@@ -102,7 +102,7 @@ const playSystem = async ($: EngineInterface, line: Line) => {
     return true;
   } catch {
     canSpeak = false;
-    $.ui.toast("subway-narrator: no speech synthesizer here, captions only");
+    $.ui.toast("mod-surfer: no speech synthesizer here, captions only");
     return false;
   }
 };
@@ -210,7 +210,7 @@ export const register: Register = (on, options) => {
     const key = String(options.openaiApiKey ?? "") || ((await $.env.get("OPENAI_API_KEY")) ?? "");
     openai.key = key && (await canPlayClips($)) ? key : "";
     if (key && !openai.key) {
-      $.ui.toast("subway-narrator: OpenAI voice plays on macOS only, using the system voice");
+      $.ui.toast("mod-surfer: OpenAI voice plays on macOS only, using the system voice");
     }
     await update($, isMuted, () => muted);
     void $.ui.open({ id: PANE, title: TITLE });

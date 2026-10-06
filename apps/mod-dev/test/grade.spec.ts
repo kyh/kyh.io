@@ -15,7 +15,7 @@ import {
 import type { Grade } from "../hooks/grade";
 
 const ANSWER = `confidence: 6 | tests ran before the last two edits
-idiomatic: 8 | follows the subway-narrator layout
+idiomatic: 8 | follows the mod-surfer layout
 simplicity: 7 | evidence.ts packs the shell parser and the ledger together
 scope: 9 | both asks done
 risk: medium | touches the shared lint config
@@ -46,7 +46,7 @@ describe("parseGrade", () => {
       risk: { level: "medium", why: "touches the shared lint config" },
       scores: {
         confidence: { score: 6, why: "tests ran before the last two edits" },
-        idiomatic: { score: 8, why: "follows the subway-narrator layout" },
+        idiomatic: { score: 8, why: "follows the mod-surfer layout" },
         scope: { score: 9, why: "both asks done" },
         simplicity: { score: 7, why: "evidence.ts packs the shell parser and the ledger together" },
       },

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/subway-narrator",
+  "name": "@repo/mod-surfer",
   "version": "0.1.0",
   "private": true,
   "description": "Claude Code mod: a Subway Surfers-style runner pane narrating Claude's replies with OpenAI text-to-speech",

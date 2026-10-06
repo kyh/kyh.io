@@ -42,7 +42,7 @@ describe("what a Bash call counts as", () => {
     assert.deepEqual(countsAs("python -m pytest -x"), { isEdit: false, kinds: "test" });
     assert.deepEqual(countsAs("tsx --test 'test/*.spec.ts'"), { isEdit: false, kinds: "test" });
     assert.deepEqual(countsAs("go test ./..."), { isEdit: false, kinds: "test" });
-    assert.deepEqual(countsAs("claude plugin test apps/scorecard"), {
+    assert.deepEqual(countsAs("claude plugin test apps/mod-dev"), {
       isEdit: false,
       kinds: "test",
     });
@@ -60,7 +60,7 @@ describe("what a Bash call counts as", () => {
       kinds: "e2e",
     });
     assert.deepEqual(countsAs("npx playwright test"), { isEdit: false, kinds: "e2e" });
-    assert.deepEqual(countsAs('claude -p --plugin-dir apps/scorecard "/score"'), {
+    assert.deepEqual(countsAs('claude -p --plugin-dir apps/mod-dev "/score"'), {
       isEdit: false,
       kinds: "e2e",
     });

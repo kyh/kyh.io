@@ -12,7 +12,7 @@ pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/subway-narrator, apps/scorecard)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/mod-surfer, apps/mod-dev)
 ```
 
 ## Agent-driven development
@@ -113,12 +113,12 @@ Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
 
 Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history, one trading day per 5s grid cell. The CSV lives in Vercel Blob, served by `/api/spx` (seeds itself from Yahoo Finance on first request, reads Yahoo directly without a store) and refreshed by a weekday Vercel Cron hitting `/api/cron/spx`. `src/lib/spx-source.ts` fetches and stores it; `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
 
-### subway-narrator (`apps/subway-narrator`)
+### mod-surfer (`apps/mod-surfer`)
 
 Claude Code mod (a plugin of function hooks, not a web app). Opens a pane with a
 self-playing Subway Surfers-style runner drawn into a terminal `Raster`, and
 reads Claude's replies aloud with OpenAI text-to-speech while a turn runs.
-Load it with `pnpm dev:subway-narrator` (`claude --plugin-dir apps/subway-narrator`).
+Load it with `pnpm dev:mod-surfer` (`claude --plugin-dir apps/mod-surfer`).
 
 - Narration: `session.append` (main loop, `response` door) → `toSentences` →
   queue; each line is synthesized by `curl` to `/v1/audio/speech` (base64 on
@@ -141,12 +141,12 @@ Load it with `pnpm dev:subway-narrator` (`claude --plugin-dir apps/subway-narrat
 (runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
 OpenAI request).
 
-### scorecard (`apps/scorecard`)
+### mod-dev (`apps/mod-dev`)
 
 Claude Code mod. `/score` grades the session's work before it merges:
 confidence, idiomatic, simplicity and scope (0–10 each) and risk (low, medium,
 high), then a verdict (ready, fix first, not ready) and up to three fixes.
-Load it with `pnpm dev:scorecard` (`claude --plugin-dir apps/scorecard`).
+Load it with `pnpm dev:mod-dev` (`claude --plugin-dir apps/mod-dev`).
 
 - Evidence is mechanical: the session's tool calls (subagents' included) make a
   ledger of edits and checks. Bash commands are classified by what they run
