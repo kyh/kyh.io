@@ -75,6 +75,7 @@ flags anything installed but unlisted, or listed but missing.
 ### Not installable from a repo
 
 - **`motion`** — the [Motion AI Kit](https://motion.dev/docs/ai-kit). Proprietary (Motion+), not a GitHub/npm skill. Install it manually from motion.dev; `external-skills.json` can't reproduce it.
+  Its MCP server ships in `mcp.json` and reads the Motion+ token from `MOTION_TOKEN` — export it on each machine (kept in an untracked file such as `~/.secrets.zsh`); without it the server connects but its tools fail.
 
 ## Custom skills
 

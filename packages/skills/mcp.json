@@ -1,4 +1,12 @@
 {
-  "$comment": "MCP servers listed here merge into ~/.claude.json (mcpServers) on install and run in EVERY project once linked globally. Empty by design — only add a server you genuinely want everywhere; otherwise configure it per-project.",
-  "mcpServers": {}
+  "$comment": "MCP servers listed here merge into ~/.claude.json (mcpServers) on install and run in EVERY project once linked globally. Only add a server you genuinely want everywhere; otherwise configure it per-project. Never put secrets here (public repo + npm): reference an env var with ${VAR}, which Claude Code expands at connect time.",
+  "mcpServers": {
+    "motion": {
+      "command": "npx",
+      "args": ["-y", "https://api.motion.dev/registry.tgz?package=motion-studio-mcp&version=6.1.0"],
+      "env": {
+        "TOKEN": "${MOTION_TOKEN}"
+      }
+    }
+  }
 }

@@ -8,6 +8,7 @@
 - drop architect, librarian, simplify-lifecycle skills (agents stay); drop all custom agents (architect, librarian, review, frontend)
 - link.mjs: remove stale links to skills/agents dropped from the package
 - curated set: drop turnstile-spin, sandbox-sdk, writing-great-skills; add sandbox-next, sandbox-stable, sandbox-migrate-to-next
+- mcp.json: add motion MCP server (token via `${MOTION_TOKEN}`)
 - update-all: Expo pins and real gates
 - CLAUDE.md: comments rule (minimal, only why)
 - lint on full ultracite presets; skills CLI ^1.7.0
