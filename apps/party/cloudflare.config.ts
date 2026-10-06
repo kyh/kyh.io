@@ -14,5 +14,8 @@ export default defineConfig({
       KyhServer: exports.durableObject({ storage: "legacy-kv" }),
     },
     name: "kyh-party",
+    // cf sends no code_update_strategy, so the API restarts every live room on deploy; this is
+    // wrangler's default, which lets a room finish on the old code for up to 5 minutes
+    unsafe: { metadata: { code_update_strategy: { max_delay: 300, mode: "deferred" } } },
   },
 });
