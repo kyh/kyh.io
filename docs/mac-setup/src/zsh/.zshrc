@@ -285,3 +285,5 @@ branch() {
 
 # bun completions
 [ -s "/Users/kyh/.bun/_bun" ] && source "/Users/kyh/.bun/_bun"
+
+[[ -f ~/.secrets.zsh ]] && source ~/.secrets.zsh

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 — 2026-10-05
+
+- CLI: `npx @kyh/skills@latest install` installs and updates everything; `check` reports drift. Replaces the `npm i -g` postinstall
+- own skills + CLAUDE.md are copied (npx cache dirs are pruned, links would dangle); `~/.agents/.kyh-skills.json` records what was copied so dropped skills are removed and local CLAUDE.md edits get a .bak
+- old symlinks into a global install or working copy are replaced or removed
+- external-skills.json: exact skills per repo instead of `-s '*'`; link.mjs prunes any other skill from a listed repo so every machine converges (removals sync)
+- external-skills.json: `unmanaged` for hand-installed skills; check:external checks per skill (unlisted / not installed / untracked)
+- pr: merge push + pr-lifecycle — commit, push, open PR, watch checks (`gh pr checks --watch`) and fix bot reviews until clean
+- drop architect, librarian, simplify-lifecycle skills (agents stay); drop all custom agents (architect, librarian, review, frontend)
+- link.mjs: remove stale links to skills/agents dropped from the package
+- curated set: drop turnstile-spin, sandbox-sdk, writing-great-skills; add sandbox-next, sandbox-stable, sandbox-migrate-to-next
+- mcp.json: add motion MCP server (token via `${MOTION_TOKEN}`)
+- update-all: Expo pins and real gates
+- CLAUDE.md: comments rule (minimal, only why)
+- lint on full ultracite presets; skills CLI ^1.7.0
+
 ## 0.1.5 — 2026-07-24
 
 - CLAUDE.md: idiomatic-first rule — follow language/framework conventions, look up current practice instead of writing from stale memory

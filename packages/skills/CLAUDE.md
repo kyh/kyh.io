@@ -48,17 +48,3 @@ project. The patterns you establish will be copied. The corners
 you cut will be cut again.
 
 **Fight entropy. Leave the codebase better than you found it.**
-
-## Specialized Subagents
-
-### Frontend
-
-Invoke for: any frontend task — building components/pages, fixing UI bugs, reviewing frontend code, improving performance. Uses browser automation to verify visual changes.
-
-### Architect
-
-Invoke for: code review, architecture decisions, debugging analysis, refactor planning, second opinion.
-
-### Librarian
-
-Invoke for: understanding 3rd party libraries/packages, exploring remote repositories, discovering open source patterns.
