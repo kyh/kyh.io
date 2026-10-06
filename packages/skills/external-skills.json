@@ -61,11 +61,7 @@
     ]
   },
   "unmanaged": [
-    "animations",
     "codex-review",
-    "color",
-    "component-design",
-    "design-foundations",
     "design-vocabulary",
     "engineering-vocabulary",
     "forms-and-inputs",
@@ -73,8 +69,6 @@
     "performance",
     "surfaces",
     "touch-and-accessibility",
-    "typography",
-    "ui-polish",
     "ui-review",
     "writing-skills",
     "generate",
