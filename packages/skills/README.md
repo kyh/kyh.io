@@ -88,8 +88,8 @@ flags anything installed but unlisted, or listed but missing.
 
 ## Custom agents
 
-| Agent       | What it does                                                                                                                                      |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frontend`  | Frontend dev agent with consolidated best practices (React, Next.js, design engineering, a11y). Uses browser automation to verify visual changes. |
-| `librarian` | Explore remote repos, find code patterns, understand library internals                                                                            |
-| `review`    | Code review agent                                                                                                                                 |
+| Agent       | What it does                                                           |
+| ----------- | ---------------------------------------------------------------------- |
+| `architect` | Deep technical analysis with extended thinking. Read-only.             |
+| `librarian` | Explore remote repos, find code patterns, understand library internals |
+| `review`    | Code review agent                                                      |
