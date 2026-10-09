@@ -39,8 +39,9 @@ pnpm dev:cli
 launcher with platform-specific optional dependencies (`@kyh/cli-<os>-<arch>`),
 each containing a standalone bun-compiled binary with the Bun runtime and
 OpenTUI's native library embedded. Targets: darwin arm64/x64, linux
-arm64/x64 (glibc), win32 x64.
+arm64/x64 (glibc, and `-musl` for Alpine, which needs `apk add libstdc++` like
+every Bun binary there), win32 x64.
 
 `pnpm build` (`scripts/build.ts`) cross-compiles all targets and stages the
-six publish-ready packages in `dist/npm/`. Publishing happens from there via
+eight publish-ready packages in `dist/npm/`. Publishing happens from there via
 the repo `release` skill — `apps/cli` itself is private.

@@ -6,7 +6,11 @@
 
 const { spawnSync } = require("node:child_process");
 
-const packageName = `@kyh/cli-${process.platform}-${process.arch}`;
+// Linux has a glibc and a musl build. A diagnostic report names the glibc
+// runtime's version, and names none under musl (Alpine).
+const isMusl =
+  process.platform === "linux" && !process.report.getReport().header.glibcVersionRuntime;
+const packageName = `@kyh/cli-${process.platform}-${process.arch}${isMusl ? "-musl" : ""}`;
 const binName = process.platform === "win32" ? "kyh.exe" : "kyh";
 
 let binPath;
