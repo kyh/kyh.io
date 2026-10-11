@@ -1,6 +1,6 @@
 # kyh
 
-## Unreleased
+## 0.4.0 — 2026-10-10
 
 - Rebuilt on Ink + Node: one pure-JS package (Node ≥ 22), no Bun, no compiled binaries, no `@kyh/cli-*` platform packages
 - Gyroscope spins on its own; Ink has no mouse input, so drag-to-spin is gone
