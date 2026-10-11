@@ -83,7 +83,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Rules that matter
 
-- **oxlint + oxfmt, not ESLint + Prettier.** `packages/eslint` is a _published_ artifact (`@kyh/eslint-config`) that nothing in this repo consumes — don't "fix" the repo to use it.
+- **oxlint + oxfmt, not ESLint + Prettier.**
 - **No `any`, no non-null `!`, no `as` casts in new code.** Kebab-case filenames for TS/TSX. Make illegal states unrepresentable. Pre-existing `!` survive across the apps (mostly bounded index or `.has()`-guarded map reads) — don't add new ones; do delete one when you're already in the file.
 - **Dates render through a fixed time zone.** `apps/policingice/src/lib/format.ts` formats in UTC so server and client agree; never inline `toLocaleDateString()` in a server-rendered component. (`apps/kyh`'s PST clock is deliberate and client-only.)
 - **Server Actions own their invariants.** A policingice action reads current state from the database and derives the next one — it never trusts client-supplied "current" values. See `toggleIncidentStatus` in `src/lib/admin-action.ts`.
@@ -93,7 +93,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 ## Map
 
 - `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI · `apps/{mod-surfer,mod-dev}` — Claude Code mods (function hooks plugins)
-- `packages/{typescript,eslint,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/eslint-config`, `@kyh/skills`), not internal libraries
+- `packages/{typescript,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
 - `apps/policingice/src/lib/` — `auth.ts` (better-auth), `admin-action.ts` / `incident-action.ts` (Server Actions), `incident-query.ts` (`"use cache"` reads), `env.ts`, `format.ts`
