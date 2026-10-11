@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { draw, encode, newGame, step } from "../hooks/game";
+import { RAMP_LENGTH, RUNNER_D, TRAIN_LENGTH, newGame, step } from "../hooks/game";
 
 describe("runner", () => {
   it("the autopilot survives a long run and collects coins", () => {
@@ -18,19 +18,66 @@ describe("runner", () => {
       assert.ok(game.score > 1000);
       assert.ok(game.coins > 0);
       assert.ok(crashes < 5, `seed ${seed} crashed ${crashes} times`);
+      assert.equal(game.crashes, crashes);
+      assert.ok(game.jumps > 0 && game.landings >= game.jumps);
     }
   });
 
-  it("draws printable cells that encode to the raster size", () => {
+  it("a train alongside keeps its lane shut until its tail passes", () => {
     const game = newGame();
-    for (let i = 0; i < 100; i += 1) {
-      step(game, 0.066);
+    game.nextSpawn = Number.POSITIVE_INFINITY;
+    game.things.push({ color: 0, d: RUNNER_D - 1, hasRamp: false, kind: "train", lane: 0 });
+    for (let i = 0; i < 5; i += 1) {
+      step(game, 0.01);
+      assert.notEqual(game.lane, 0);
     }
-    const cells = draw(game, 40, 12);
-    assert.equal(cells.length, 40 * 12 * 3);
-    for (let i = 0; i < cells.length; i += 3) {
-      assert.ok((cells[i] ?? 0) > 31);
+    assert.equal(game.crash, 0);
+  });
+
+  it("drops a train once all of it is behind the runner", () => {
+    const game = newGame();
+    game.nextSpawn = Number.POSITIVE_INFINITY;
+    game.lane = 2;
+    game.x = 2;
+    const train = { color: 0, d: -0.5, hasRamp: false, kind: "train" as const, lane: 0 };
+    game.things.push(train);
+    step(game, 0.01);
+    assert.ok(game.things.includes(train));
+    train.d = -TRAIN_LENGTH - 0.9;
+    step(game, 0.05);
+    assert.ok(!game.things.includes(train));
+  });
+
+  it("runs up a ramp, along the roof, and drops off the end", () => {
+    const game = newGame();
+    game.nextSpawn = Number.POSITIVE_INFINITY;
+    game.things.push({
+      color: 0,
+      d: RUNNER_D + RAMP_LENGTH + 1,
+      hasRamp: true,
+      kind: "train",
+      lane: 1,
+    });
+    let highest = 0;
+    for (let i = 0; i < 40; i += 1) {
+      step(game, 0.033);
+      highest = Math.max(highest, game.roof);
     }
-    assert.equal(encode(cells), Buffer.from(cells.buffer).toString("base64"));
+    assert.equal(game.crash, 0);
+    assert.equal(highest, 1);
+    for (let i = 0; i < 60; i += 1) {
+      step(game, 0.033);
+    }
+    assert.equal(game.roof, 0);
+  });
+
+  it("a train's side is a wall, not a way up", () => {
+    const game = newGame();
+    game.nextSpawn = Number.POSITIVE_INFINITY;
+    game.lane = 0;
+    game.things.push({ color: 0, d: RUNNER_D - 1, hasRamp: false, kind: "train", lane: 1 });
+    step(game, 0.01);
+    assert.equal(game.roof, 0);
+    assert.ok(game.crash > 0);
   });
 });

@@ -116,10 +116,21 @@ Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replay
 ### mod-surfer (`apps/mod-surfer`)
 
 Claude Code mod (see Claude Code mods below). Opens the **Subway Clauders**
-pane, a self-playing Subway Surfers-style runner drawn into a terminal
-`Raster`, and reads Claude's replies aloud with OpenAI text-to-speech while a
-turn runs. No slash commands: the pane opens on session start (drawn from 144
-columns).
+pane, a self-playing Subway Surfers-style runner starring Clawd, and reads
+Claude's replies aloud with OpenAI text-to-speech while a turn runs. No slash
+commands: the pane opens on session start.
+
+- Picture: `world/` is a three.js game (procedural only, no model files)
+  rendered in the installed Chrome, headless, by `stream/stream.ts`
+  (`playwright-core` + Vite middleware), which the pane spawns with
+  `$.process.spawn` while it is drawn. The page posts each frame's RGBA; the
+  hooks poll `GET /frame` over a Unix socket (numbers in `x-` headers, cells
+  in the body: hooks can't import zod). kitty/Ghostty get an `Image` reading
+  an RGBA file; elsewhere quadrant `Raster` cells, and the world switches to
+  its coarse look (flat surfaces, nearer fog, bigger Clawd, no HUD). The
+  Chrome → Node copy of each frame bounds the frame rate, so frames are
+  sized to what the terminal shows (`frameSize`), and the page keeps one in
+  flight.
 
 - Narration: `session.append` (main loop, `response` door) → `toSentences` →
   queue; each line is synthesized by `curl` to `/v1/audio/speech` (base64 on
@@ -127,13 +138,19 @@ columns).
   with `$.audio.play`; the next two lines prefetch. Falls back to the system
   voice (`$.audio.speak`), then captions only. Playback is macOS-only
   (`afplay`).
+- Sound effects: the page counts coins, jumps and crashes into each
+  frame's headers; the hooks play a clip when a count rises
+  (`effectsBetween`), synthesized WAVs from `hooks/sfx.ts`. `sfx` in
+  `/config` turns them off.
 - Key: the `openaiApiKey` userConfig field (sensitive), else `OPENAI_API_KEY`.
   `voice` and `model` are pickers in `/config`; `mute` keeps captions without
   the voice.
 
-**Key files**: `hooks/register.tsx` (hooks, speech, frame loop), `hooks/game.ts`
-(runner simulation + autopilot + drawing), `hooks/narrate.ts` (markdown → lines,
-OpenAI request), `types/index.d.ts` (the `$.state` contract).
+**Key files**: `hooks/register.tsx` (hooks, speech, streamer, blits),
+`hooks/screen.ts` (socket, frame parsing), `hooks/game.ts` (runner simulation +
+autopilot, shared with the world), `hooks/narrate.ts` (markdown → lines, OpenAI
+request), `world/` (three.js scene; `vfx.ts` particles off game-state changes), `stream/` (Chrome driver, frame → RGBA or
+cells), `types/index.d.ts` (the `$.state` contract).
 
 ### mod-dev (`apps/mod-dev`)
 

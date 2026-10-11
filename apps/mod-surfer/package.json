@@ -10,14 +10,21 @@
     "lint": "oxlint --report-unused-disable-directives",
     "test": "tsx --test \"test/*.spec.ts\"",
     "test:mod": "claude plugin test .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.plugin.json",
-    "validate": "claude plugin validate ."
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.world.json && tsc --noEmit -p tsconfig.plugin.json",
+    "validate": "claude plugin validate .",
+    "world": "vite"
+  },
+  "dependencies": {
+    "playwright-core": "^1.63.0",
+    "three": "^0.186.1",
+    "tsx": "catalog:",
+    "vite": "catalog:"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
     "@repo/claude-code-types": "workspace:^",
     "@types/node": "catalog:",
-    "tsx": "catalog:",
+    "@types/three": "^0.186.0",
     "typescript": "catalog:"
   }
 }
