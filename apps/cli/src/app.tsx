@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 
+import packageJson from "../package.json" with { type: "json" };
+
 import { Comms } from "./components/comms";
 import { Directory } from "./components/directory";
 import { Footer } from "./components/footer";
@@ -13,7 +15,6 @@ import { useClock } from "./lib/hooks";
 import { color } from "./lib/theme";
 import { formatClock, formatUptime, openUrl, wrapText } from "./lib/utils";
 
-const VERSION = "0.2.0";
 const LEFT_WIDTH = 40;
 // The identity + status stack needs both room to the side and enough height to
 // render without the two panels overlapping; below either, go full-width.
@@ -161,7 +162,7 @@ export const App = () => {
       paddingLeft={1}
       paddingRight={1}
     >
-      <Header clock={formatClock(now)} version={VERSION} />
+      <Header clock={formatClock(now)} version={packageJson.version} />
 
       <box flexDirection="row" flexGrow={1} paddingTop={0}>
         {showLeft && (

@@ -1,5 +1,11 @@
 # kyh
 
+## 0.3.0 — 2026-10-10
+
+- musl builds for Alpine (`@kyh/cli-linux-{x64,arm64}-musl`); Linux builds resolve again on a clean install
+- contact email kai@kyh.io, pin www canonical
+- header shows the installed version instead of a hard-coded 0.2.0
+
 ## 0.2.0 — 2026-07-07
 
 - Ship as standalone bun-compiled binaries — Node-only install, no Bun/FFI needed (`@kyh/cli-<os>-<arch>` platform packages + launcher shim)
