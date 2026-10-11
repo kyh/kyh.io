@@ -1,6 +1,6 @@
 {
   "name": "@kyh/skills",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Personal Claude Code + Codex skills, MCP servers, and global instructions. `npx @kyh/skills install` copies them into a canonical ~/.agents store (and ~/.claude).",
   "license": "MIT",
   "bin": {

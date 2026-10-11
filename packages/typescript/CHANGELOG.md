@@ -1,5 +1,9 @@
 # @kyh/tsconfig
 
+## 1.3.0 — 2026-10-10
+
+- version bump to stay in lockstep with `@kyh/eslint-config@1.3.0`
+
 ## 1.2.0 — 2026-07-13
 
 - remove `internal-package.json` — workspace packages point exports at src, so its declaration-only emit was never resolved

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-10-10
+
+- drop hand-installed skills from unmanaged
+
 ## 0.2.0 — 2026-10-05
 
 - CLI: `npx @kyh/skills@latest install` installs and updates everything; `check` reports drift. Replaces the `npm i -g` postinstall

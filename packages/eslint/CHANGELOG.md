@@ -1,5 +1,9 @@
 # @kyh/eslint-config
 
+## 1.3.0 — 2026-10-10
+
+- lint on the full ultracite presets
+
 ## 1.2.0 — 2026-07-13
 
 - version bump to stay in lockstep with `@kyh/tsconfig@1.2.0`
