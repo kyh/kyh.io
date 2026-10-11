@@ -1,4 +1,4 @@
-import { TextAttributes } from "@opentui/core";
+import { Box, Text } from "ink";
 
 import type { ContactLink } from "../data/content";
 import { color } from "../lib/theme";
@@ -15,45 +15,45 @@ const LABEL_WIDTH = 12;
 
 export const Comms = ({ links, selectedIndex, innerWidth }: CommsProps) => (
   <Panel title="COMMS // UPLINK" bottomTitle="ENCRYPTED" flexGrow={1}>
-    <box flexDirection="column" paddingTop={1}>
-      <text fg={color.faint}>SELECT A CHANNEL TO ESTABLISH CONNECTION</text>
-      <box paddingTop={1} flexDirection="column">
+    <Box flexDirection="column" paddingTop={1}>
+      <Text color={color.faint}>SELECT A CHANNEL TO ESTABLISH CONNECTION</Text>
+      <Box paddingTop={1} flexDirection="column">
         {links.map((link, i) => {
           const selected = i === selectedIndex;
           const label = link.label.toUpperCase().padEnd(LABEL_WIDTH);
 
           if (selected) {
             return (
-              <box
+              <Box
                 key={link.label}
                 flexDirection="row"
                 width={innerWidth}
                 backgroundColor={color.accent}
               >
-                <text bg={color.accent} fg={color.black}>
+                <Text backgroundColor={color.accent} color={color.black}>
                   {"▶ "}
-                </text>
-                <text bg={color.accent} fg={color.black} attributes={TextAttributes.BOLD}>
+                </Text>
+                <Text backgroundColor={color.accent} color={color.black} bold>
                   {label}
-                </text>
-                <text bg={color.accent} fg={color.black}>
+                </Text>
+                <Text backgroundColor={color.accent} color={color.black}>
                   {pad(link.value, Math.max(0, innerWidth - LABEL_WIDTH - 2))}
-                </text>
-              </box>
+                </Text>
+              </Box>
             );
           }
 
           return (
-            <box key={link.label} flexDirection="row">
-              <text fg={color.ghost}>{"  "}</text>
-              <text fg={color.accentDim}>{label}</text>
-              <text fg={color.dim}>
+            <Box key={link.label} flexDirection="row">
+              <Text color={color.ghost}>{"  "}</Text>
+              <Text color={color.accentDim}>{label}</Text>
+              <Text color={color.dim}>
                 {pad(link.value, Math.max(0, innerWidth - LABEL_WIDTH - 2))}
-              </text>
-            </box>
+              </Text>
+            </Box>
           );
         })}
-      </box>
-    </box>
+      </Box>
+    </Box>
   </Panel>
 );

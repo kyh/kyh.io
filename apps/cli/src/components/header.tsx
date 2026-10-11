@@ -1,6 +1,6 @@
-import { TextAttributes } from "@opentui/core";
+import { Box, Text } from "ink";
 
-import { color, panelBorder } from "../lib/theme";
+import { color } from "../lib/theme";
 
 interface HeaderProps {
   clock: string;
@@ -10,34 +10,34 @@ interface HeaderProps {
 // Top system bar: identity on the left, live status + clock on the right,
 // sitting above a hairline divider.
 export const Header = ({ clock, version }: HeaderProps) => (
-  <box
+  <Box
     flexDirection="row"
     alignItems="center"
-    border={["bottom"]}
     borderStyle="single"
-    customBorderChars={panelBorder}
+    borderTop={false}
+    borderLeft={false}
+    borderRight={false}
     borderColor={color.border}
     paddingLeft={1}
     paddingRight={1}
-    paddingBottom={0}
   >
-    <text attributes={TextAttributes.BOLD} fg={color.accent}>
+    <Text bold color={color.accent}>
       KYH.IO
-    </text>
-    <text fg={color.faint}>{" // "}</text>
-    <text fg={color.dim}>PERSONAL TERMINAL</text>
-    <text fg={color.ghost}>{`  v${version}`}</text>
+    </Text>
+    <Text color={color.faint}>{" // "}</Text>
+    <Text color={color.dim}>PERSONAL TERMINAL</Text>
+    <Text color={color.ghost}>{`  v${version}`}</Text>
 
-    <box flexGrow={1} />
+    <Box flexGrow={1} />
 
-    <text fg={color.accent}>●</text>
-    <text fg={color.dim}> SYSTEM </text>
-    <text attributes={TextAttributes.BOLD} fg={color.accent}>
+    <Text color={color.accent}>●</Text>
+    <Text color={color.dim}> SYSTEM </Text>
+    <Text bold color={color.accent}>
       ONLINE
-    </text>
-    <text fg={color.faint}>{"   "}</text>
-    <text attributes={TextAttributes.BOLD} fg={color.text}>
+    </Text>
+    <Text color={color.faint}>{"   "}</Text>
+    <Text bold color={color.text}>
       {clock}
-    </text>
-  </box>
+    </Text>
+  </Box>
 );

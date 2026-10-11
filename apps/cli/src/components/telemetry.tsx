@@ -1,16 +1,18 @@
+import { Box } from "ink";
+
+import { Hedron } from "./hedron";
 import { Panel } from "./panel";
-import "./hedron";
 
 interface TelemetryProps {
   innerWidth: number;
   globeHeight: number;
 }
 
-// Framed dithered icosahedron for the left column — drag it to spin.
+// Framed dithered icosahedron for the left column.
 export const Telemetry = ({ innerWidth, globeHeight }: TelemetryProps) => (
-  <Panel title="GYROSCOPE" bottomTitle="⟲ DRAG">
-    <box flexDirection="column" alignItems="center">
-      <hedron width={innerWidth} height={globeHeight} />
-    </box>
+  <Panel title="GYROSCOPE" bottomTitle="⟲ SPIN">
+    <Box flexDirection="column" alignItems="center">
+      <Hedron width={innerWidth} height={globeHeight} />
+    </Box>
   </Panel>
 );

@@ -1,4 +1,4 @@
-import { TextAttributes } from "@opentui/core";
+import { Box, Text } from "ink";
 
 import { callsign, name, profile } from "../data/content";
 import { color } from "../lib/theme";
@@ -17,22 +17,22 @@ export const Identity = ({ hero, innerWidth }: IdentityProps) => {
 
   return (
     <Panel title="IDENTITY" flexGrow={1}>
-      <box flexDirection="column" paddingTop={1}>
-        <ascii-font text={callsign} font="block" color={color.accent} />
-        <box flexDirection="row" paddingTop={1}>
-          <text attributes={TextAttributes.BOLD} fg={color.text}>
+      <Box flexDirection="column" paddingTop={1}>
+        <Text color={color.accent}>{callsign.join("\n")}</Text>
+        <Box flexDirection="row" paddingTop={1}>
+          <Text bold color={color.text}>
             {name.toUpperCase()}
-          </text>
-        </box>
-        <text fg={color.dim}>{profile.role}</text>
-        <box paddingTop={1} flexDirection="column">
+          </Text>
+        </Box>
+        <Text color={color.dim}>{profile.role}</Text>
+        <Box paddingTop={1} flexDirection="column">
           {bioLines.map((line) => (
-            <text key={line} fg={color.faint}>
+            <Text key={line} color={color.faint}>
               {line}
-            </text>
+            </Text>
           ))}
-        </box>
-      </box>
+        </Box>
+      </Box>
     </Panel>
   );
 };

@@ -1,29 +1,38 @@
 {
   "name": "kyh",
   "version": "0.3.0",
-  "private": true,
   "description": "Personal CLI tool",
   "bin": {
-    "kyh": "./bin/kyh.cjs"
+    "kyh": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "bun scripts/build.ts",
-    "dev": "bun --watch src/index.tsx",
+    "build": "esbuild src/index.tsx --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/index.js --banner:js='#!/usr/bin/env node'",
+    "dev": "tsx watch src/index.tsx",
     "lint": "oxlint --report-unused-disable-directives",
     "clean": "rm -rf dist node_modules",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@opentui/core": "^0.5.14",
-    "@opentui/react": "^0.5.14",
+    "ink": "^8.0.0",
     "react": "catalog:"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
-    "@types/bun": "^1.4.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "esbuild": "^0.28.2",
+    "tsx": "catalog:",
     "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

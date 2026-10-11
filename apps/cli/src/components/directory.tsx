@@ -1,4 +1,4 @@
-import { TextAttributes } from "@opentui/core";
+import { Box, Text } from "ink";
 
 import type { Item } from "../data/content";
 import { color } from "../lib/theme";
@@ -63,30 +63,33 @@ const ItemRow = ({
   const fg = selected
     ? { desc: color.black, host: color.accentDim, idx: color.black, name: color.black }
     : { desc: color.dim, host: color.faint, idx: color.accentDim, name: color.text };
-  const bold = selected ? TextAttributes.BOLD : undefined;
 
   return (
-    <box flexDirection="row" width={innerWidth} backgroundColor={bg}>
-      <text bg={bg} fg={selected ? color.black : color.ghost}>
+    <Box flexDirection="row" width={innerWidth} backgroundColor={bg}>
+      <Text backgroundColor={bg} color={selected ? color.black : color.ghost}>
         {selected ? "▶ " : "  "}
-      </text>
-      <text bg={bg} fg={fg.idx} attributes={bold}>{`${String(index + 1).padStart(2, "0")} `}</text>
-      <text bg={bg} fg={fg.name} attributes={bold}>
+      </Text>
+      <Text
+        backgroundColor={bg}
+        color={fg.idx}
+        bold={selected}
+      >{`${String(index + 1).padStart(2, "0")} `}</Text>
+      <Text backgroundColor={bg} color={fg.name} bold={selected}>
         {pad(item.title, col.name)}
-      </text>
-      <text bg={bg}>{" ".repeat(GUT1)}</text>
-      <text bg={bg} fg={fg.desc}>
+      </Text>
+      <Text backgroundColor={bg}>{" ".repeat(GUT1)}</Text>
+      <Text backgroundColor={bg} color={fg.desc}>
         {pad(item.description, col.desc)}
-      </text>
+      </Text>
       {col.showHost && (
         <>
-          <text bg={bg}>{" ".repeat(GUT2)}</text>
-          <text bg={bg} fg={fg.host}>
+          <Text backgroundColor={bg}>{" ".repeat(GUT2)}</Text>
+          <Text backgroundColor={bg} color={fg.host}>
             {pad(truncate(hostFromUrl(item.url), col.host), col.host)}
-          </text>
+          </Text>
         </>
       )}
-    </box>
+    </Box>
   );
 };
 
@@ -136,32 +139,31 @@ export const Directory = ({ sections, selectedIndex, innerWidth, maxRows }: Dire
 
   return (
     <Panel title="DIRECTORY" bottomTitle={`${total} ENTRIES`} flexGrow={1}>
-      {/* column header */}
-      <box flexDirection="row">
-        <text fg={color.faint}>{" ".repeat(MARKER)}</text>
-        <text fg={color.faint}>{pad("#", IDX)}</text>
-        <text fg={color.faint}>{pad("NAME", col.name + GUT1)}</text>
-        <text fg={color.faint}>{pad("DESCRIPTION", col.desc)}</text>
+      <Box flexDirection="row">
+        <Text color={color.faint}>{" ".repeat(MARKER)}</Text>
+        <Text color={color.faint}>{pad("#", IDX)}</Text>
+        <Text color={color.faint}>{pad("NAME", col.name + GUT1)}</Text>
+        <Text color={color.faint}>{pad("DESCRIPTION", col.desc)}</Text>
         {col.showHost && (
-          <text fg={color.faint}>{`${" ".repeat(GUT2)}${pad("HOST", col.host)}`}</text>
+          <Text color={color.faint}>{`${" ".repeat(GUT2)}${pad("HOST", col.host)}`}</Text>
         )}
-      </box>
+      </Box>
 
-      <box flexDirection="column" flexGrow={1}>
-        <text fg={color.ghost}>{clippedTop ? "  ↑ more" : ""}</text>
+      <Box flexDirection="column" flexGrow={1}>
+        <Text color={color.ghost}>{clippedTop ? "  ↑ more" : " "}</Text>
 
         {rows.map((row) => {
           if (row.kind === "spacer") {
-            return <text key={`spacer-${row.label}`}> </text>;
+            return <Text key={`spacer-${row.label}`}> </Text>;
           }
           if (row.kind === "header") {
             return (
-              <box key={`section-${row.label}`} flexDirection="row">
-                <text fg={color.accentDim}>{`▸ ${row.label} `}</text>
-                <text fg={color.ghost}>
+              <Box key={`section-${row.label}`} flexDirection="row">
+                <Text color={color.accentDim}>{`▸ ${row.label} `}</Text>
+                <Text color={color.ghost}>
                   {"─".repeat(Math.max(0, innerWidth - row.label.length - 3))}
-                </text>
-              </box>
+                </Text>
+              </Box>
             );
           }
           return (
@@ -176,9 +178,9 @@ export const Directory = ({ sections, selectedIndex, innerWidth, maxRows }: Dire
           );
         })}
 
-        <box flexGrow={1} />
-        <text fg={color.ghost}>{clippedBottom ? "  ↓ more" : ""}</text>
-      </box>
+        <Box flexGrow={1} />
+        <Text color={color.ghost}>{clippedBottom ? "  ↓ more" : " "}</Text>
+      </Box>
     </Panel>
   );
 };

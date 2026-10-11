@@ -1,6 +1,7 @@
 import { Fragment } from "react";
+import { Box, Text } from "ink";
 
-import { color, panelBorder } from "../lib/theme";
+import { color } from "../lib/theme";
 import { truncate } from "../lib/utils";
 
 interface Key {
@@ -16,10 +17,10 @@ interface FooterProps {
 
 const KeyHint = ({ keys, label }: Key) => (
   <>
-    <text fg={color.faint}>[</text>
-    <text fg={color.accent}>{keys}</text>
-    <text fg={color.faint}>]</text>
-    <text fg={color.dim}>{` ${label}`}</text>
+    <Text color={color.faint}>[</Text>
+    <Text color={color.accent}>{keys}</Text>
+    <Text color={color.faint}>]</Text>
+    <Text color={color.dim}>{` ${label}`}</Text>
   </>
 );
 
@@ -35,32 +36,33 @@ const GAP = 2;
 export const Footer = ({ keys, target, width }: FooterProps) => {
   const keysWidth =
     keys.reduce((sum, k) => sum + hintWidth(k), 0) + SEP * Math.max(0, keys.length - 1);
-  // Budget the target against the actual keys width (+ padding) so it can never
-  // overflow into the keys or the right edge.
-  const targetBudget = width - 2 - keysWidth - GAP;
+  // Budget the target against the actual keys width (+ the app's and the bar's
+  // own horizontal padding) so it can never overflow into the keys or the right edge.
+  const targetBudget = width - 4 - keysWidth - GAP;
   const showTarget = Boolean(target) && targetBudget >= 16;
   const targetLabel = `TARGET ▸ ${target}`;
   return (
-    <box
+    <Box
       flexDirection="row"
       alignItems="center"
-      border={["top"]}
       borderStyle="single"
-      customBorderChars={panelBorder}
+      borderBottom={false}
+      borderLeft={false}
+      borderRight={false}
       borderColor={color.border}
       paddingLeft={1}
       paddingRight={1}
     >
       {keys.map((k, i) => (
         <Fragment key={k.keys}>
-          {i > 0 && <text fg={color.ghost}>{"   "}</text>}
+          {i > 0 && <Text color={color.ghost}>{"   "}</Text>}
           <KeyHint {...k} />
         </Fragment>
       ))}
-      <box flexGrow={1} />
+      <Box flexGrow={1} />
       {showTarget ? (
-        <text fg={color.accentDim}>{truncate(targetLabel, Math.max(0, targetBudget))}</text>
+        <Text color={color.accentDim}>{truncate(targetLabel, Math.max(0, targetBudget))}</Text>
       ) : null}
-    </box>
+    </Box>
   );
 };

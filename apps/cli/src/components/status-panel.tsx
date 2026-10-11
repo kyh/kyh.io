@@ -1,4 +1,4 @@
-import { TextAttributes } from "@opentui/core";
+import { Box, Text } from "ink";
 
 import { profile } from "../data/content";
 import { color } from "../lib/theme";
@@ -15,39 +15,39 @@ interface StatusPanelProps {
 const LABEL_WIDTH = 10;
 
 const Readout = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <box flexDirection="row">
-    <text fg={color.faint}>{label.padEnd(LABEL_WIDTH)}</text>
+  <Box flexDirection="row">
+    <Text color={color.faint}>{label.padEnd(LABEL_WIDTH)}</Text>
     {children}
-  </box>
+  </Box>
 );
 
 export const StatusPanel = ({ uptime, entries, online, innerWidth }: StatusPanelProps) => (
   <Panel title="STATUS">
-    <box flexDirection="column" paddingTop={1}>
+    <Box flexDirection="column" paddingTop={1}>
       <Readout label="UPTIME">
-        <text fg={color.text}>{uptime}</text>
+        <Text color={color.text}>{uptime}</Text>
       </Readout>
       <Readout label="LOCATION">
-        <text fg={color.dim}>{profile.location}</text>
+        <Text color={color.dim}>{profile.location}</Text>
       </Readout>
       <Readout label="CHANNEL">
-        <text fg={color.dim}>{profile.channel}</text>
+        <Text color={color.dim}>{profile.channel}</Text>
       </Readout>
       <Readout label="ENTRIES">
-        <text fg={color.dim}>{`${entries} INDEXED`}</text>
+        <Text color={color.dim}>{`${entries} INDEXED`}</Text>
       </Readout>
       <Readout label="LINK">
         <>
-          <text fg={online ? color.accent : color.dim}>{online ? "● " : "○ "}</text>
-          <text attributes={TextAttributes.BOLD} fg={online ? color.accent : color.dim}>
+          <Text color={online ? color.accent : color.dim}>{online ? "● " : "○ "}</Text>
+          <Text bold color={online ? color.accent : color.dim}>
             {online ? "SECURE" : "OFFLINE"}
-          </text>
+          </Text>
         </>
       </Readout>
-      <box flexDirection="row" paddingTop={1}>
-        <text fg={color.faint}>{"SIGNAL".padEnd(LABEL_WIDTH)}</text>
+      <Box flexDirection="row" paddingTop={1}>
+        <Text color={color.faint}>{"SIGNAL".padEnd(LABEL_WIDTH)}</Text>
         <Waves width={Math.max(0, innerWidth - LABEL_WIDTH)} height={2} />
-      </box>
-    </box>
+      </Box>
+    </Box>
   </Panel>
 );

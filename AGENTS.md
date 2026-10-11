@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**kyh.io** is a personal pnpm + Turborepo monorepo of twelve _independent_ apps — four Next.js, four Vite SPAs, one Bun/OpenTUI CLI, one Cloudflare Worker, two Claude Code mods. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**kyh.io** is a personal pnpm + Turborepo monorepo of twelve _independent_ apps — four Next.js, four Vite SPAs, one Ink CLI, one Cloudflare Worker, two Claude Code mods. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -9,7 +9,7 @@ pnpm install
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — nine of the twelve apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:cli` additionally needs [Bun](https://bun.sh), and `pnpm dev:mod-surfer` and `pnpm dev:mod-dev` the `claude` CLI.
+That's the whole setup. There is no bootstrap script, no Docker, no local database — nine of the twelve apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:mod-surfer` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
 
 Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
 
@@ -75,7 +75,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
 | `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
 | `party`       | `pnpm dev:party`       | 8787 (`cf dev`)             | No — WebSocket server; `typecheck` + `build`           |
-| `cli`         | `pnpm dev:cli`         | —                           | No — Bun terminal UI, needs a real TTY                 |
+| `cli`         | `pnpm dev:cli`         | —                           | No — Ink terminal UI, needs a real TTY                 |
 | `mod-surfer`  | `pnpm dev:mod-surfer`  | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
 | `mod-dev`     | `pnpm dev:mod-dev`     | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"` |
 
@@ -92,7 +92,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Bun + OpenTUI · `apps/{mod-surfer,mod-dev}` — Claude Code mods (function hooks plugins)
+- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Ink CLI (Node) · `apps/{mod-surfer,mod-dev}` — Claude Code mods (function hooks plugins)
 - `packages/{typescript,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
