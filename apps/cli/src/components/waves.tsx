@@ -1,6 +1,6 @@
 import { useMemo } from "react";
+import { Text, useAnimation } from "ink";
 
-import { useTick } from "../lib/hooks";
 import { renderWaves } from "../lib/ascii";
 import { color } from "../lib/theme";
 
@@ -13,8 +13,8 @@ interface WavesProps {
 
 // Animated interference/plasma strip used as a live "signal" readout.
 export const Waves = ({ width, height, fps = 12, fg = color.accentDim }: WavesProps) => {
-  const t = useTick(fps);
-  const frame = useMemo(() => renderWaves(width, height, t).join("\n"), [width, height, t]);
+  const { time } = useAnimation({ interval: Math.round(1000 / fps) });
+  const frame = useMemo(() => renderWaves(width, height, time).join("\n"), [width, height, time]);
 
-  return <text fg={fg}>{frame}</text>;
+  return <Text color={fg}>{frame}</Text>;
 };

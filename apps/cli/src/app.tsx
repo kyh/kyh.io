@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { Box, useApp, useInput, useWindowSize } from "ink";
 
 import packageJson from "../package.json" with { type: "json" };
 
@@ -44,76 +44,46 @@ export const App = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [contactIndex, setContactIndex] = useState(0);
-  const { width: termWidth, height: termHeight } = useTerminalDimensions();
+  const { columns: termWidth, rows: termHeight } = useWindowSize();
+  const { exit } = useApp();
   const { now, uptime } = useClock();
 
-  useKeyboard((key) => {
+  useInput((input, key) => {
+    const up = key.upArrow || input === "k";
+    const down = key.downArrow || input === "j";
+
     if (showContact) {
-      switch (key.name) {
-        case "up":
-        case "k": {
-          setContactIndex((i) => (i > 0 ? i - 1 : contactLinks.length - 1));
-          break;
+      if (up) {
+        setContactIndex((i) => (i > 0 ? i - 1 : contactLinks.length - 1));
+      } else if (down) {
+        setContactIndex((i) => (i < contactLinks.length - 1 ? i + 1 : 0));
+      } else if (key.return) {
+        const link = contactLinks[contactIndex];
+        if (link) {
+          openUrl(link.url);
         }
-        case "down":
-        case "j": {
-          setContactIndex((i) => (i < contactLinks.length - 1 ? i + 1 : 0));
-          break;
-        }
-        case "return": {
-          const link = contactLinks[contactIndex];
-          if (link) {
-            openUrl(link.url);
-          }
-          break;
-        }
-        case "escape":
-        case "c": {
-          setShowContact(false);
-          setContactIndex(0);
-          break;
-        }
-        case "q": {
-          process.exit(0);
-          break;
-        }
-        default: {
-          break;
-        }
+      } else if (key.escape || input === "c") {
+        setShowContact(false);
+        setContactIndex(0);
+      } else if (input === "q") {
+        exit();
       }
       return;
     }
 
-    switch (key.name) {
-      case "up":
-      case "k": {
-        setSelectedIndex((i) => (i > 0 ? i - 1 : allItems.length - 1));
-        break;
+    if (up) {
+      setSelectedIndex((i) => (i > 0 ? i - 1 : allItems.length - 1));
+    } else if (down) {
+      setSelectedIndex((i) => (i < allItems.length - 1 ? i + 1 : 0));
+    } else if (key.return) {
+      const item = allItems[selectedIndex];
+      if (item) {
+        openUrl(item.url);
       }
-      case "down":
-      case "j": {
-        setSelectedIndex((i) => (i < allItems.length - 1 ? i + 1 : 0));
-        break;
-      }
-      case "return": {
-        const item = allItems[selectedIndex];
-        if (item) {
-          openUrl(item.url);
-        }
-        break;
-      }
-      case "c": {
-        setShowContact(true);
-        break;
-      }
-      case "escape":
-      case "q": {
-        process.exit(0);
-        break;
-      }
-      default: {
-        break;
-      }
+    } else if (input === "c") {
+      setShowContact(true);
+    } else if (key.escape || input === "q") {
+      exit();
     }
   });
 
@@ -154,7 +124,7 @@ export const App = () => {
       ];
 
   return (
-    <box
+    <Box
       flexDirection="column"
       width={termWidth}
       height={termHeight}
@@ -164,9 +134,9 @@ export const App = () => {
     >
       <Header clock={formatClock(now)} version={packageJson.version} />
 
-      <box flexDirection="row" flexGrow={1} paddingTop={0}>
+      <Box flexDirection="row" flexGrow={1} paddingTop={0}>
         {showLeft && (
-          <box flexDirection="column" width={LEFT_WIDTH} paddingRight={1}>
+          <Box flexDirection="column" width={LEFT_WIDTH} paddingRight={1}>
             <Identity hero={heroText} innerWidth={leftInner} />
             {showGlobe && <Telemetry innerWidth={leftInner} globeHeight={globeHeight} />}
             <StatusPanel
@@ -175,7 +145,7 @@ export const App = () => {
               online
               innerWidth={leftInner}
             />
-          </box>
+          </Box>
         )}
 
         {showContact ? (
@@ -188,9 +158,9 @@ export const App = () => {
             maxRows={maxRows}
           />
         )}
-      </box>
+      </Box>
 
       <Footer keys={footerKeys} target={target} width={termWidth} />
-    </box>
+    </Box>
   );
 };

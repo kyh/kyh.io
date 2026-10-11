@@ -13,18 +13,12 @@ export const color = {
   text: "#E6E6E6",
 } as const;
 
-// Thin technical border set used for every panel. Single-line, squared corners
-// to match the Swiss/HUD reference frames.
+// Corners and edge for the panel rules Ink can't draw itself (a border with a
+// label bitten into it); the sides use Ink's matching `single` style.
 export const panelBorder = {
   bottomLeft: "└",
   bottomRight: "┘",
-  bottomT: "┴",
-  cross: "┼",
   horizontal: "─",
-  leftT: "├",
-  rightT: "┤",
   topLeft: "┌",
   topRight: "┐",
-  topT: "┬",
-  vertical: "│",
 } as const;
