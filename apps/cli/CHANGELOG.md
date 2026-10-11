@@ -1,5 +1,10 @@
 # kyh
 
+## Unreleased
+
+- Rebuilt on Ink + Node: one pure-JS package (Node ≥ 22), no Bun, no compiled binaries, no `@kyh/cli-*` platform packages
+- Gyroscope spins on its own; Ink has no mouse input, so drag-to-spin is gone
+
 ## 0.3.0 — 2026-10-10
 
 - musl builds for Alpine (`@kyh/cli-linux-{x64,arm64}-musl`); Linux builds resolve again on a clean install

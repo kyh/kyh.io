@@ -1,6 +1,6 @@
 # CLI
 
-Personal CLI tool built with [OpenTUI](https://git.new/create-tui) — a sci-fi
+Personal CLI tool built with [Ink](https://github.com/vadimdemedes/ink) — a sci-fi
 terminal dashboard (à la [edex-ui](https://github.com/GitSquared/edex-ui) /
 [dex-ui](https://github.com/seenaburns/dex-ui)) that presents projects, work,
 and contacts as a HUD of framed panels.
@@ -21,27 +21,20 @@ Keys: `↑↓`/`jk` navigate · `⏎` open · `C` comms · `Q`/`esc` quit.
 
 ## Stack
 
-- UI - [OpenTUI](https://git.new/create-tui) + [React](https://react.dev/)
-- Build - [Bun](https://bun.sh/) (`bun build --compile`)
+- UI - [Ink](https://github.com/vadimdemedes/ink) + [React](https://react.dev/)
+- Build - [esbuild](https://esbuild.github.io/) bundles `src/` into one ESM file
 
 ## Development
-
-Requires [Bun](https://bun.sh/) (OpenTUI's FFI only runs under the Bun runtime).
 
 ```bash
 pnpm install
 pnpm dev:cli
 ```
 
+`dev` runs `src/` directly under `tsx watch`. It needs a real TTY.
+
 ## Distribution
 
-`npx kyh` needs Node only — the published `kyh` package is a thin Node
-launcher with platform-specific optional dependencies (`@kyh/cli-<os>-<arch>`),
-each containing a standalone bun-compiled binary with the Bun runtime and
-OpenTUI's native library embedded. Targets: darwin arm64/x64, linux
-arm64/x64 (glibc, and `-musl` for Alpine, which needs `apk add libstdc++` like
-every Bun binary there), win32 x64.
-
-`pnpm build` (`scripts/build.ts`) cross-compiles all targets and stages the
-eight publish-ready packages in `dist/npm/`. Publishing happens from there via
-the repo `release` skill — `apps/cli` itself is private.
+`npx kyh` installs a single pure-JS package that needs Node ≥ 22.
+`pnpm build` writes `dist/index.js`, and `ink` and `react` install as ordinary
+dependencies. Publishing happens from `apps/cli` via the repo `release` skill.

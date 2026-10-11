@@ -15,7 +15,7 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 | [tc](apps/tc)                   | Total compensation calculator           | React, Visx, Vite               |
 | [covid-19](apps/covid-19)       | COVID-19 tracking dashboard             | React, D3, Vite                 |
 | [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | React, TypeScript, SVG, Vite    |
-| [cli](apps/cli)                 | Personal CLI tool                       | React, OpenTUI, Bun             |
+| [cli](apps/cli)                 | Personal CLI tool                       | React, Ink                      |
 | [party](apps/party)             | Real-time multiplayer server            | PartyServer, Cloudflare Workers |
 
 ## Packages

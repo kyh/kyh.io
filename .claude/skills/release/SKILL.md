@@ -17,7 +17,7 @@ Cut new npm versions of the publishable packages in this repo. Replaces the old 
   - **configs** → `@kyh/tsconfig` → `packages/typescript` → tag `@kyh/tsconfig@`
 - All are public (`publishConfig.access: "public"`).
 - Only `kyh` (the CLI) has a `build` script. `@kyh/skills` and `@kyh/tsconfig` publish files as-is — no build.
-- **cli is special**: `apps/cli/package.json` is `private: true` — it is never published directly. Its build (`bun scripts/build.ts`) bun-compiles standalone binaries and stages **8 publish-ready packages** in `apps/cli/dist/npm/`: seven platform packages (`@kyh/cli-darwin-arm64`, `@kyh/cli-darwin-x64`, `@kyh/cli-linux-arm64`, `@kyh/cli-linux-x64`, `@kyh/cli-linux-arm64-musl`, `@kyh/cli-linux-x64-musl`, `@kyh/cli-win32-x64`) plus the main `kyh` package (a Node launcher shim with exact-pinned `optionalDependencies` on the platform packages). All 8 share the version from `apps/cli/package.json`. Building requires bun and the other platforms' opentui packages in node_modules (`supportedArchitectures` in `pnpm-workspace.yaml` handles this — run `pnpm install` if platform packages are missing); the two musl ones are fetched by the build itself into `apps/cli/.cache/`, so they cost no install.
+- **cli** is one pure-JS package: `pnpm build` (esbuild) bundles `src/` into `apps/cli/dist/index.js` with `ink` and `react` left as runtime `dependencies`, and `files` limits the tarball to `dist/` + `CHANGELOG.md`. It publishes from `apps/cli` like the others.
 - Many internal apps (`@repo/*`) consume `@kyh/tsconfig` via the workspace catalog. Rolling a new version out to **other repos'** catalogs is a separate concern — see the global `publish-and-sync-packages` skill. This skill is npm-only and does not touch downstream consumers.
 - Current branch: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io rev-parse --abbrev-ref HEAD`
 - Working tree: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io status --short`
@@ -62,7 +62,7 @@ If the published `latest` is ahead of a local file (out-of-band publish), use th
 
 ### 3. Changelog
 
-For each remaining unit, prepend an entry to `<path>/CHANGELOG.md` (create if missing). Source bullets from `git log --pretty='- %s' ${LAST:+$LAST..}HEAD -- <path>`, dropping merge commits, prior `release:` commits, and pure dep bumps. Format:
+For each remaining unit, prepend an entry to `<path>/CHANGELOG.md` (create if missing; if it has a `## Unreleased` section, retitle that section instead and merge the new bullets into it). Source bullets from `git log --pretty='- %s' ${LAST:+$LAST..}HEAD -- <path>`, dropping merge commits, prior `release:` commits, and pure dep bumps. Format:
 
 ```markdown
 # Changelog
@@ -89,17 +89,12 @@ For each remaining unit, from each package's directory:
 pnpm publish --access public --no-git-checks
 ```
 
-- For **cli**, publish from the staged dirs instead (never from `apps/cli` itself — it's private). Platform packages first, main `kyh` last, so `kyh`'s optionalDependencies never point at unpublished versions:
-  ```
-  for d in apps/cli/dist/npm/cli-*; do (cd "$d" && npm publish --access public); done
-  (cd apps/cli/dist/npm/kyh && npm publish --access public)
-  ```
-  If any platform package is **brand-new to the registry** (first publish of that name), wait until `npm view <pkg> dist-tags` succeeds for all of them **before** publishing `kyh` — new-package creation can take minutes to propagate to npm's read endpoints, and during that window installs of the new `kyh` fail resolving its optionalDependencies. Re-publishes of existing packages propagate in seconds; no wait needed.
+- For **cli**, run `pnpm pack --dry-run` in `apps/cli` first: the tarball must hold only `dist/index.js`, `package.json`, `CHANGELOG.md`, `README.md` and `LICENSE`.
 - `--no-git-checks` because we commit + tag _after_ publish, so we never tag a commit for a publish that failed.
 
 ### 6. Verify
 
-`npm view <pkg> dist-tags` for each published package — confirm `latest` matches the new version. For **cli**, check `kyh` plus spot-check one platform package (`npm view @kyh/cli-darwin-arm64 dist-tags`). Registry can lag; retry once after `sleep 5` before flagging.
+`npm view <pkg> dist-tags` for each published package — confirm `latest` matches the new version. Registry can lag; retry once after `sleep 5` before flagging.
 
 ### 7. Commit, tag, push
 
@@ -131,7 +126,7 @@ git status --porcelain                    # must be empty
 
 If the tag is on the wrong commit and has **not** been pushed, `git tag -d` it, fix the commit, and re-tag. Once pushed, don't rewrite — cut the next patch instead.
 
-git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). **cli gets a single `kyh@<version>` tag** — the `@kyh/cli-*` platform packages are build artifacts of the same release, never tagged individually. Then:
+git accepts `@` in tag names (e.g. `@kyh/skills@0.2.0`). Then:
 
 ```
 git push --follow-tags origin <current-branch>
