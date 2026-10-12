@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
 import { formatCount } from "@/lib/format";
 import { standings } from "@/lib/standings";
 
-export const alt = "Clawders: Clawd meets surfing";
+export const alt = "Clawders: Keep Clawd running";
 export const contentType = "image/png";
 export const size = { height: 630, width: 1200 };
 export const revalidate = 300;
@@ -62,7 +62,7 @@ const OpengraphImage = async () => {
             padding: "10px 30px",
           }}
         >
-          Clawd meets surfing
+          Keep Clawd running
         </div>
       </div>
       {leader ? (

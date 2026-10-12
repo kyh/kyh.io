@@ -2,7 +2,7 @@
   "name": "@repo/mod-clawders-leaderboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Clawders leaderboard: takes mod-clawders's runs and lists each player's best, on Next.js and Turso",
+  "description": "Keep Clawd running",
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",

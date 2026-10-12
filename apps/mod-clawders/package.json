@@ -2,7 +2,7 @@
   "name": "@repo/mod-clawders",
   "version": "0.1.0",
   "private": true,
-  "description": "Claude Code mod: Clawders, an endless runner in a pane while Claude works, with a leaderboard of output tokens per run",
+  "description": "Keep Clawd running",
   "type": "module",
   "exports": {
     "./run": "./hooks/run.ts",

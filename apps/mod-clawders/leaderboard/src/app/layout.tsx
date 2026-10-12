@@ -8,7 +8,7 @@ import "./globals.css";
 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-const description = "Clawd meets surfing";
+const description = "Keep Clawd running";
 
 export const metadata: Metadata = {
   description,
