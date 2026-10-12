@@ -1,6 +1,6 @@
 {
   "name": "@repo/mod-clawders",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Claude Code mod: Clawders, an endless runner in a pane while Claude works, with a leaderboard of output tokens per run",
   "type": "module",
