@@ -1,4 +1,4 @@
-import { count, desc, eq, gt, sql } from "drizzle-orm";
+import { count, countDistinct, desc, eq, gt, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { run } from "@/db/schema";
@@ -25,6 +25,18 @@ export const standings = () =>
     .limit(LEADERBOARD_SIZE);
 
 export type Standing = Awaited<ReturnType<typeof standings>>[number];
+
+// Everything every run has come to, for the page's HUD.
+export const totals = async () => {
+  const [row] = await db
+    .select({
+      coins: sql<number>`coalesce(sum(${run.coins}), 0)`,
+      players: countDistinct(run.name),
+      tokens: sql<number>`coalesce(sum(${run.tokens}), 0)`,
+    })
+    .from(run);
+  return row ?? { coins: 0, players: 0, tokens: 0 };
+};
 
 // Saves the run; the answer is where its player now stands.
 export const saveRun = async (posted: Run) => {

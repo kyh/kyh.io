@@ -1,107 +1,496 @@
+/* The game's own palette: its sky, the HUD's navy, the coin, the track bed,
+   the tagged walls and the verges. */
 :root {
-  --bg: #10131f;
-  --panel: #1a1f3a;
-  --ink: #f4f1ea;
-  --dim: #8a90b0;
+  --sky-top: #7cc2ea;
+  --sky-low: #a9d9ed;
+  --navy: #1a1f3a;
+  --hud: rgb(24 34 74 / 0.55);
   --gold: #ffc61f;
-  --line: #2a3158;
+  --gold-deep: #c98a00;
+  --ballast: #6a5550;
+  --ballast-dark: #5c4945;
+  --tie: #9a5530;
+  --wall: #e8c9a0;
+  --wall-shade: #c9a57a;
+  --grass: #7cc95a;
+  --white: #fff;
+  --tag-pink: #ff3d7f;
+  --tag-cyan: #22d3ee;
+
+  --stroke: 0.12em;
+  --gutter: clamp(16px, 4vw, 40px);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  background: var(--sky-top);
+}
+
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
+  background: linear-gradient(var(--sky-top), var(--sky-low) 720px);
+  color: var(--navy);
   font:
-    16px/1.4 ui-monospace,
+    400 1.0625rem / 1.55 var(--font-body),
+    system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The game's numbers: white, chunky, outlined in navy. */
+.stroked {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  -webkit-text-stroke: var(--stroke) var(--navy);
+  paint-order: stroke fill;
+}
+
+/* The HUD, laid out as the game lays it out: score centered, coins right. */
+.hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 16px var(--gutter) 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin: 0;
+  padding: 0.18em 0.7em;
+  border-radius: 999px;
+  background: var(--hud);
+  color: var(--white);
+  font-family: var(--font-display), sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-stroke: 0.1em var(--navy);
+  paint-order: stroke fill;
+}
+
+.hud .pill {
+  font-size: clamp(1.25rem, 3.4vw, 1.9rem);
+}
+
+.hud .score {
+  grid-column: 2;
+}
+
+.hud .coins {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.coin {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spin {
+    animation: spin 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+}
+
+@keyframes spin {
+  0%,
+  55% {
+    transform: rotateY(0);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+/* Hero */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: clamp(32px, 7vw, 72px) var(--gutter) 0;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: clamp(3.5rem, 13vw, 8.5rem);
+  letter-spacing: 0.01em;
+  transform: rotate(-2deg);
+}
+
+.lede {
+  max-width: 34em;
+  margin: 28px 0 28px;
+  font-size: clamp(1.0625rem, 2.2vw, 1.25rem);
+  font-weight: 500;
+}
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 0.9375rem;
+  opacity: 0.8;
+}
+
+.command {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 8px 8px 18px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: var(--white);
+  text-align: left;
+}
+
+.command code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.command button {
+  flex: none;
+  min-width: 5.5em;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--navy);
+  font:
+    400 1rem var(--font-display),
+    sans-serif;
+  cursor: pointer;
+  box-shadow: inset 0 -3px 0 var(--gold-deep);
+}
+
+.command button:active {
+  box-shadow: inset 0 2px 0 var(--gold-deep);
+}
+
+/* The mod as it shows in Claude Code: a pane, the game, its status line. */
+.pane {
+  width: min(100%, 720px);
+  margin: clamp(40px, 7vw, 64px) 0 0;
+  overflow: hidden;
+  border: 2px solid var(--navy);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: #12141f;
+  text-align: left;
+}
+
+.pane-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 14px;
+  color: #c9cbd6;
+  font:
+    0.8125rem ui-monospace,
     SFMono-Regular,
     Menlo,
     monospace;
 }
 
-main {
+.pane-screen {
+  position: relative;
+}
+
+.pane-screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pane-hud {
+  position: absolute;
+  inset: 3% 3% auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  font-size: clamp(0.9rem, 3vw, 1.6rem);
+}
+
+.pane-hud .score {
+  grid-column: 2;
+}
+
+.pane-hud .coins {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.pane-status {
+  padding: 8px 14px 12px;
+  color: #9aa0b8;
+  font:
+    0.8125rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+
+.inner {
   max-width: 760px;
   margin: 0 auto;
-  padding: 48px 16px;
+  padding: clamp(48px, 8vw, 88px) var(--gutter);
 }
 
-h1 {
+.wall h2,
+.track h2 {
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+}
+
+.section-lede {
+  margin: 14px 0 28px;
+}
+
+/* The leaderboard rides on the track bed. */
+.track {
+  background:
+    radial-gradient(circle at 20% 30%, var(--ballast-dark) 1.5px, transparent 2px) 0 0 / 14px 14px,
+    radial-gradient(circle at 70% 80%, #7a645c 1.5px, transparent 2px) 0 0 / 18px 18px,
+    var(--ballast);
+  color: var(--white);
+  border-top: 12px solid var(--tie);
+}
+
+.board {
+  display: grid;
+  gap: 10px;
   margin: 0;
-  font:
-    900 clamp(28px, 7vw, 44px) / 1 "Arial Black",
-    Impact,
-    sans-serif;
-  letter-spacing: -0.02em;
+  padding: 0;
+  list-style: none;
 }
 
-p {
-  margin: 8px 0 32px;
-  color: var(--dim);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--panel);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-th,
-td {
-  padding: 12px 14px;
-  text-align: left;
-  border-bottom: 1px solid var(--line);
-}
-
-th {
-  color: var(--dim);
-  font-weight: 400;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-tr:last-child td {
-  border-bottom: 0;
-}
-
-.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+.board-row {
+  display: grid;
+  grid-template-columns: 2.4em 1fr auto;
+  grid-template-areas:
+    "rank name tokens"
+    "rank detail detail";
+  align-items: center;
+  column-gap: 14px;
+  padding: 12px 20px 12px 12px;
+  border-radius: 22px;
+  background: var(--hud);
 }
 
 .rank {
-  width: 3ch;
-  color: var(--dim);
+  grid-area: rank;
+  display: grid;
+  place-items: center;
+  width: 2.2em;
+  height: 2.2em;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  font-family: var(--font-display), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank .coin {
+  width: 2.2em;
+  height: 2.2em;
 }
 
 .name {
+  grid-area: name;
   overflow-wrap: anywhere;
+  font-weight: 600;
+  font-size: 1.125rem;
 }
 
 .tokens {
-  color: var(--gold);
-  font-weight: 700;
+  grid-area: tokens;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.375rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  -webkit-text-stroke: 0.1em var(--navy);
+  paint-order: stroke fill;
 }
 
-tbody tr:first-child .rank {
+.tokens small {
+  font-size: 0.6em;
+}
+
+.board-row:first-child .tokens {
   color: var(--gold);
+}
+
+.detail {
+  grid-area: detail;
+  display: flex;
+  gap: 16px;
+  font-size: 0.875rem;
+  opacity: 0.8;
 }
 
 .empty {
-  padding: 32px;
-  text-align: center;
-  color: var(--dim);
+  margin: 0;
+  padding: 28px;
+  border-radius: 22px;
+  background: var(--hud);
+  font-size: 1.125rem;
 }
 
-@media (max-width: 520px) {
-  th,
-  td {
-    padding: 10px 8px;
-    font-size: 14px;
+/* How to join, sprayed on the tagged wall. */
+.wall {
+  position: relative;
+  overflow: hidden;
+  border-top: 14px solid var(--wall-shade);
+  background: var(--wall);
+}
+
+/* Tags live in the wall's margins, never under the text. */
+.tag {
+  position: absolute;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(4rem, 9vw, 8rem);
+  line-height: 1;
+  opacity: 0.3;
+  writing-mode: vertical-rl;
+  -webkit-text-stroke: 0.06em #1f1630;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.tag-opus {
+  top: 12%;
+  right: max(8px, calc(50% - 380px - 1.4em));
+  color: var(--tag-cyan);
+  transform: rotate(4deg);
+}
+
+.tag-haiku {
+  bottom: 8%;
+  left: max(8px, calc(50% - 380px - 1.4em));
+  color: var(--tag-pink);
+  transform: rotate(176deg);
+}
+
+@media (max-width: 1080px) {
+  .tag {
+    display: none;
+  }
+}
+
+.wall .inner {
+  position: relative;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 36px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  position: relative;
+  padding-left: 64px;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: -4px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: inset 0 -4px 0 var(--gold-deep);
+  font:
+    1.375rem var(--font-display),
+    sans-serif;
+}
+
+.steps h3 {
+  margin: 0 0 10px;
+  font:
+    400 1.5rem var(--font-display),
+    sans-serif;
+}
+
+.steps p {
+  max-width: 36em;
+  margin: 12px 0 8px;
+}
+
+.steps .command {
+  margin-top: 8px;
+}
+
+.grass {
+  padding: 28px var(--gutter) 36px;
+  background: var(--grass);
+  border-top: 10px solid #5cbf3a;
+  text-align: center;
+  font-weight: 500;
+}
+
+.grass p {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .board-row {
+    grid-template-columns: 2.4em 1fr;
+    grid-template-areas:
+      "rank name"
+      "rank tokens"
+      "rank detail";
+  }
+
+  .tokens {
+    text-align: left;
+  }
+
+  .steps li {
+    padding-left: 0;
+    padding-top: 56px;
   }
 }
