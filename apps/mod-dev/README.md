@@ -49,11 +49,11 @@ its subagents' included, into a ledger of edits and checks:
 - Checks: typecheck, lint and format (`static`); tests (`test`); builds
   (`build`); driving the running app with a browser or a request to
   localhost, or loading a plugin into a real session (`e2e`). Read through package scripts, task runners and wrappers: `pnpm -F x
-test`, `turbo run lint`, `npx vitest`, `agent-browser open
-http://localhost:3000`.
+  test`, `turbo run lint`, `npx vitest`, `agent-browser open
+  http://localhost:3000`.
 - Edits: Edit and Write, and edits from the shell: `sed -i`, heredocs and
   redirects into the repository, inline scripts that write files, `git
-checkout`, fixers like `--fix` and `--write`.
+  checkout`, fixers like `--fix` and `--write`.
 - A check counts only if it ran after the last edit. Its exit status decides
   whether it passed, unless a pipe or `|| true` hides it; then its output is
   read for a failure summary (`2 failed`, `error TS2322`, `ELIFECYCLE`).
