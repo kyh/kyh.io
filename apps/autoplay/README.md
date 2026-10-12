@@ -179,7 +179,7 @@ first invalidates the other.
 - **Programming** (`POST /api/live`): resolves the channel for this viewer,
   picks the next item through its adapter, marks it aired, returns the prompt
   (`src/lib/prompt.ts` turns an item into a single continuous shot). `GET
-/api/session` returns the viewer's lineup; `/api/sources` adds a feed,
+  /api/session` returns the viewer's lineup; `/api/sources` adds a feed,
   removes a channel, or reorders them.
 - **Replay and the live tail** (`src/components/replay-screen.tsx`):
   `GET /api/replay` lists a channel's recorded sessions, newest first, each as
