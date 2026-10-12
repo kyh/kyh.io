@@ -156,8 +156,8 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
               </p>
               <Prompt text="what does it need?" />
               <p className="t-say">
-                <span className="t-dot">⏺</span> Google Chrome and Node.js. kitty or Ghostty draw
-                the real picture; other terminals get blocks. Start with{" "}
+                <span className="t-dot">⏺</span> macOS or Linux, with Google Chrome and Node.js.
+                kitty or Ghostty draw the real picture; other terminals get blocks. Start with{" "}
                 <code>CLAUDE_CODE_NO_FLICKER=1</code> so the pane docks on the right.
               </p>
               <Prompt text="how do I score?" />

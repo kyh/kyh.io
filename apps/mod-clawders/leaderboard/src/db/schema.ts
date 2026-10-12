@@ -11,8 +11,13 @@ export const run = sqliteTable(
       .$defaultFn(() => Date.now()),
     id: integer().primaryKey({ autoIncrement: true }),
     name: text().notNull(),
+    /** Who posted, for the rate limit: a hash of their IP and the day, never the IP. */
+    poster: text(),
     seconds: integer().notNull(),
     tokens: integer().notNull(),
   },
-  (table) => [index("run_name_tokens").on(table.name, table.tokens)],
+  (table) => [
+    index("run_name_tokens").on(table.name, table.tokens),
+    index("run_poster_ended").on(table.poster, table.endedAt),
+  ],
 );

@@ -1,4 +1,4 @@
-import { count, countDistinct, desc, eq, gt, sql } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, gt, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { run } from "@/db/schema";
@@ -40,9 +40,22 @@ export const totals = async () => {
 
 export type Totals = Awaited<ReturnType<typeof totals>>;
 
+const POSTS_PER_WINDOW = 20;
+const WINDOW_MS = 10 * 60 * 1000;
+
+// Whether this poster has room for another run: a finished run takes at least
+// the 5s grace, so 20 in 10 minutes is far past any real player.
+export const canPost = async (poster: string) => {
+  const [row] = await db
+    .select({ recent: count() })
+    .from(run)
+    .where(and(eq(run.poster, poster), gt(run.endedAt, Date.now() - WINDOW_MS)));
+  return (row?.recent ?? 0) < POSTS_PER_WINDOW;
+};
+
 // Saves the run; the answer is where its player now stands.
-export const saveRun = async (posted: Run) => {
-  await db.insert(run).values(posted);
+export const saveRun = async (posted: Run, poster: string) => {
+  await db.insert(run).values({ ...posted, poster });
   const bests = db
     .select({ best: best.as("best") })
     .from(run)

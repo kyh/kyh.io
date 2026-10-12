@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { formatDuration } from "../src/lib/format";
+import { posterOf } from "../src/lib/poster";
 import { runSchema } from "../src/lib/runs";
 
 const run = { coins: 12, name: "kai", seconds: 90, tokens: 4200 };
@@ -30,6 +31,22 @@ describe("leaderboard", () => {
     ]) {
       assert.equal(runSchema.safeParse(body).success, false, JSON.stringify(body));
     }
+  });
+
+  it("refuses more tokens than a run that long could write", () => {
+    assert.equal(runSchema.safeParse({ ...run, seconds: 10, tokens: 9000 }).success, true);
+    assert.equal(runSchema.safeParse({ ...run, seconds: 10, tokens: 9001 }).success, false);
+  });
+
+  it("knows a poster by a daily hash of their IP, never the IP", () => {
+    const day = new Date("2026-10-12T10:00:00Z");
+    const one = posterOf(new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }), day);
+    assert.equal(one, posterOf(new Headers({ "x-real-ip": "203.0.113.7" }), day));
+    assert.notEqual(
+      one,
+      posterOf(new Headers({ "x-real-ip": "203.0.113.7" }), new Date("2026-10-13")),
+    );
+    assert.ok(!one.includes("203.0.113.7"));
   });
 
   it("duration reads as the largest two units", () => {
