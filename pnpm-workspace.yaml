@@ -1,6 +1,6 @@
 packages:
   - apps/*
-  - apps/mod-surfer/leaderboard
+  - apps/mod-clawders/leaderboard
   - packages/*
 
 catalog:

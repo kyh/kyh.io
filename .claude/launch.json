@@ -8,9 +8,9 @@
       "port": 3000
     },
     {
-      "name": "surfer-world",
+      "name": "clawders-world",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["-F", "@repo/mod-surfer", "world"],
+      "runtimeArgs": ["-F", "@repo/mod-clawders", "world"],
       "port": 3015
     }
   ]

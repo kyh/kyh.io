@@ -6,9 +6,9 @@
   "description": "Kaiyu Hsu's Claude Code mods",
   "plugins": [
     {
-      "name": "mod-surfer",
-      "source": "./apps/mod-surfer",
-      "description": "Subway Surfers-style runner pane that runs while Claude works; each run's output tokens go to a shared leaderboard"
+      "name": "mod-clawders",
+      "source": "./apps/mod-clawders",
+      "description": "Clawders: an endless runner starring Clawd that runs in a pane while Claude works; each run's output tokens go to a shared leaderboard"
     }
   ]
 }

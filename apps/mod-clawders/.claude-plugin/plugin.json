@@ -1,0 +1,35 @@
+{
+  "name": "mod-clawders",
+  "version": "0.1.0",
+  "description": "Clawders: an endless runner starring Clawd that runs in a pane while Claude works; each run's output tokens go to a shared leaderboard",
+  "author": {
+    "name": "Kaiyu Hsu"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "leaderboard": {
+      "type": "boolean",
+      "title": "Post runs to the leaderboard",
+      "description": "Each finished run's output tokens, coins and length go up under your player name",
+      "default": true
+    },
+    "playerName": {
+      "type": "string",
+      "title": "Player name",
+      "description": "The name your runs go up under. Empty: your git user.name",
+      "default": ""
+    },
+    "leaderboardUrl": {
+      "type": "string",
+      "title": "Leaderboard URL",
+      "description": "Where runs are posted. Empty: runs are not posted",
+      "default": "https://clawders.kyh.io"
+    },
+    "sfx": {
+      "type": "boolean",
+      "title": "Sound effects",
+      "description": "Synthesized coin, jump and crash sounds while the game runs (macOS)",
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@repo/mod-clawders",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code mod: Clawders, an endless runner in a pane while Claude works, with a leaderboard of output tokens per run",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && vite build -c vite.stream.config.ts",
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "session": "pnpm build && claude --plugin-dir .",
+    "lint": "oxlint --report-unused-disable-directives",
+    "test": "tsx --test \"test/*.spec.ts\"",
+    "test:mod": "claude plugin test .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.world.json && tsc --noEmit -p tsconfig.plugin.json",
+    "validate": "claude plugin validate .",
+    "world": "vite"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@repo/claude-code-types": "workspace:^",
+    "@types/node": "catalog:",
+    "@types/three": "^0.186.0",
+    "three": "^0.186.1",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
