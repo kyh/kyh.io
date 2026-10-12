@@ -5,7 +5,7 @@
   },
   "include": [
     "hooks/game.ts",
-    "hooks/narrate.ts",
+    "hooks/run.ts",
     "hooks/screen.ts",
     "hooks/sfx.ts",
     "stream",

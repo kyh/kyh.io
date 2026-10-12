@@ -2,7 +2,7 @@
   "name": "@repo/mod-surfer",
   "version": "0.1.0",
   "private": true,
-  "description": "Claude Code mod: a Subway Surfers-style runner pane narrating Claude's replies with OpenAI text-to-speech",
+  "description": "Claude Code mod: a Subway Surfers-style runner pane that runs while Claude works, with a leaderboard of output tokens per run",
   "type": "module",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",

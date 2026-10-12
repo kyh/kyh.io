@@ -1,0 +1,29 @@
+{
+  "name": "@repo/mod-surfer-leaderboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Subway Clauders leaderboard: a Worker on D1 that takes mod-surfer's runs and lists each player's best",
+  "type": "module",
+  "scripts": {
+    "build": "cf build",
+    "clean": "git clean -xdf .cache .cloudflare .turbo .wrangler node_modules",
+    "deploy": "cf deploy",
+    "dev": "cf dev",
+    "lint": "oxlint --report-unused-disable-directives",
+    "migrate": "cf d1 migrations apply",
+    "test": "tsx --test \"test/*.spec.ts\"",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261004.1",
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "cf": "1.0.0-beta.12",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "^4.147.0"
+  }
+}

@@ -76,6 +76,20 @@ const config: NextConfig = {
         source: "/projects",
       },
     ]),
+  // clauders.kyh.io is mod-surfer's leaderboard, a Cloudflare Worker: kyh.io's
+  // DNS is on Vercel, so Cloudflare can't attach the domain to it directly.
+  rewrites: () =>
+    Promise.resolve({
+      afterFiles: [],
+      beforeFiles: [
+        {
+          destination: "https://subway-clauders.kyh.workers.dev/:path*",
+          has: [{ type: "host", value: "clauders.kyh.io" }],
+          source: "/:path*",
+        },
+      ],
+      fallback: [],
+    }),
 };
 
 export default config;

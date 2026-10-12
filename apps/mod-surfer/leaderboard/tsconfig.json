@@ -1,0 +1,7 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["src", "cloudflare.config.ts"]
+}

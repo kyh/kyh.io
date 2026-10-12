@@ -545,6 +545,34 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
+  apps/mod-surfer/leaderboard:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^5.20261004.1
+        version: 5.20261004.1
+      '@kyh/tsconfig':
+        specifier: workspace:^
+        version: link:../../../packages/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.4
+      cf:
+        specifier: 1.0.0-beta.12
+        version: 1.0.0-beta.12(@types/node@26.6.4)
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      wrangler:
+        specifier: ^4.147.0
+        version: 4.147.0(@cloudflare/workers-types@5.20261004.1)(@types/node@26.6.4)
+
   apps/party:
     devDependencies:
       '@cloudflare/workers-types':

@@ -32,5 +32,6 @@ export const middleware = (req: NextRequest) => {
 };
 
 export const config = {
-  matcher: "/",
+  // clauders.kyh.io's `/` is the leaderboard, rewritten in next.config.ts.
+  matcher: [{ missing: [{ type: "host", value: "clauders.kyh.io" }], source: "/" }],
 };

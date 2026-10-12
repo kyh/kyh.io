@@ -7,9 +7,20 @@ import type {
   Register,
 } from "claude-code";
 
-import type { Caption, Tally, View } from "../types";
+import type { View } from "../types";
 
-import { SPEECH_SCRIPT, readMs, speechRequest, toSentences } from "./narrate";
+import {
+  GRACE_MS,
+  addTokens,
+  endTurn,
+  idle,
+  isActive,
+  rankOf,
+  resultOf,
+  startTurn,
+  statusOf,
+} from "./run";
+import type { Result, Run } from "./run";
 import {
   drawsImages,
   effectsBetween,
@@ -28,23 +39,12 @@ const SCREEN = "game";
 const TITLE = "Subway Clauders";
 const FRAME_MS = 33;
 const TALLY_MS = 1000;
-const MAX_QUEUE = 30;
 const SFX_GAIN = 0.45;
 const LOG_MAX = 4000;
 
-const caption = atom({ key: "caption", plugin: "mod-surfer" } as const, "");
-const isRunning = atom({ key: "isRunning", plugin: "mod-surfer" } as const, false);
 const starting: View = { kind: "starting" };
 const view = atom({ key: "view", plugin: "mod-surfer" } as const, starting);
-const noTally: Tally = { coins: 0, score: 0 };
-const tally = atom({ key: "tally", plugin: "mod-surfer" } as const, noTally);
-
-// One line of narration and, once asked for, its mp3 as base64 (empty when
-// synthesis failed).
-interface Line {
-  text: Caption;
-  audio?: Promise<string>;
-}
+const status = atom({ key: "status", plugin: "mod-surfer" } as const, statusOf(idle, 0));
 
 // The streamer: headless Chrome drawing the world, one per open pane.
 type Streamer =
@@ -75,9 +75,15 @@ interface Screen {
   chimedAt: number;
 }
 
+interface Leaderboard {
+  url: string;
+  name: string;
+}
+
 // Frame-rate values live in the module: a reload starts a fresh run.
-const queue: Line[] = [];
-const openai = { key: "", model: "gpt-4o-mini-tts", voice: "ash" };
+let run: Run = idle;
+// Null when runs are not posted.
+let leaderboard: Leaderboard | null = null;
 const screen: Screen = {
   chimedAt: 0,
   heard: null,
@@ -96,59 +102,6 @@ interface Sfx {
   sounds: Record<Effect, string> | null;
 }
 const sfx: Sfx = { canPlay: false, isOn: true, sounds: null };
-let running = false;
-let muted = false;
-let speaking = false;
-let canSpeak = true;
-
-const runSpeech = async ($: EngineInterface, text: Caption) => {
-  try {
-    const { exitCode, stdout } = await $.process.run(["sh", "-c", SPEECH_SCRIPT], {
-      env: { OPENAI_API_KEY: openai.key },
-      stdin: speechRequest(text, openai.voice, openai.model),
-      timeoutMs: 40_000,
-    });
-    return exitCode === 0 ? stdout.trim() : "";
-  } catch {
-    return "";
-  }
-};
-
-const synthesize = ($: EngineInterface, line: Line) => {
-  line.audio ??= runSpeech($, line.text);
-  return line.audio;
-};
-
-// Synthesizes the next lines while the current one plays, so lines run on
-// without a request's wait between them.
-const prefetch = ($: EngineInterface) => {
-  if (!openai.key || muted) {
-    return;
-  }
-  for (const line of queue.slice(0, 2)) {
-    void synthesize($, line);
-  }
-};
-
-// Plays the line with OpenAI's voice; false when nothing could be played.
-const playOpenai = async ($: EngineInterface, line: Line) => {
-  const audio = await synthesize($, line);
-  if (!audio) {
-    openai.key = "";
-    $.ui.toast("mod-surfer: OpenAI speech failed, using the system voice");
-    return false;
-  }
-  await update($, caption, () => line.text);
-  try {
-    await $.audio.play({ base64: audio, mime: "audio/mpeg" });
-    return true;
-  } catch {
-    // Stop paying for speech nobody hears; the system voice takes over.
-    openai.key = "";
-    $.ui.toast("mod-surfer: OpenAI audio would not play, using the system voice");
-    return false;
-  }
-};
 
 // `$.audio.play` plays clips through afplay, so only macOS hears them.
 const canPlayClips = async ($: EngineInterface) => {
@@ -158,72 +111,6 @@ const canPlayClips = async ($: EngineInterface) => {
   } catch {
     return false;
   }
-};
-
-const playSystem = async ($: EngineInterface, line: Line) => {
-  await update($, caption, () => line.text);
-  if (!canSpeak) {
-    return false;
-  }
-  try {
-    await $.audio.speak(line.text);
-    return true;
-  } catch {
-    canSpeak = false;
-    $.ui.toast("mod-surfer: no speech synthesizer here, captions only");
-    return false;
-  }
-};
-
-// Whether the line was heard; when not, its caption still shows.
-const voice = async ($: EngineInterface, line: Line) => {
-  if (muted) {
-    await update($, caption, () => line.text);
-    return false;
-  }
-  if (openai.key) {
-    const isPlayed = await playOpenai($, line);
-    if (isPlayed || openai.key) {
-      return isPlayed;
-    }
-  }
-  return playSystem($, line);
-};
-
-// Says the next queued line, then schedules the one after it; a line nobody
-// heard stays up for as long as it takes to read.
-const sayNext = async ($: EngineInterface) => {
-  const line = queue.shift();
-  if (!line) {
-    speaking = false;
-    $.clock.after(1500, () => {
-      if (!speaking) {
-        void update($, caption, () => "");
-      }
-    });
-    return;
-  }
-  prefetch($);
-  let isHeard = false;
-  try {
-    isHeard = await voice($, line);
-  } catch {
-    // A failed line still keeps the queue moving.
-    isHeard = false;
-  }
-  $.clock.after(isHeard ? 1 : readMs(line.text), () => {
-    void sayNext($);
-  });
-};
-
-const narrate = ($: EngineInterface) => {
-  if (speaking) {
-    return;
-  }
-  speaking = true;
-  $.clock.after(1, () => {
-    void sayNext($);
-  });
 };
 
 const stopStreamer = async (streamer: Streamer) => {
@@ -395,7 +282,7 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
   hear($, frame);
   if (frame.frame - screen.talliedAt >= TALLY_MS / FRAME_MS) {
     screen.talliedAt = frame.frame;
-    await update($, tally, () => ({ coins: frame.coins, score: frame.score }));
+    await update($, status, () => statusOf(run, frame.coins));
   }
 };
 
@@ -407,7 +294,10 @@ const pull = async ($: EngineInterface) => {
   screen.isPulling = true;
   try {
     const since = screen.latest?.frame ?? -1;
-    const url = frameUrl(since, screen.mode, size.columns, size.rows, running || speaking);
+    const url = frameUrl(since, screen.mode, size.columns, size.rows, {
+      isActive: isActive(run),
+      tokens: run.kind === "idle" ? 0 : run.tokens,
+    });
     const response = await $.http.fetch(url, { socketPath: streamer.socketPath });
     const frame = response.status === 200 ? parseFrame(response.headers, response.text) : null;
     if (frame) {
@@ -420,31 +310,66 @@ const pull = async ($: EngineInterface) => {
   }
 };
 
-const statusOf = (isActive: boolean, isQuiet: boolean, { coins, score }: Tally) => {
-  const parts = [
-    isActive ? "● LIVE" : "○ idle",
-    `${String(Math.floor(score)).padStart(6, "0")} · ● ${coins}`,
-  ];
-  if (isQuiet) {
-    parts.push("muted");
-  } else {
-    parts.push(openai.key ? `openai ${openai.voice}` : "system voice");
+const setRun = async ($: EngineInterface, next: Run) => {
+  run = next;
+  await update($, status, () => statusOf(next, screen.latest?.coins ?? 0));
+};
+
+// The name runs go up under: the configured one, else git's.
+const playerName = async ($: EngineInterface, configured: string) => {
+  if (configured) {
+    return configured;
   }
-  return `${parts.join(" · ")}${speaking && !isQuiet ? " 🔊" : ""}`;
+  try {
+    const { exitCode, stdout } = await $.process.run(["git", "config", "user.name"]);
+    return exitCode === 0 && stdout.trim() ? stdout.trim() : "anonymous";
+  } catch {
+    return "anonymous";
+  }
+};
+
+const post = async ($: EngineInterface, target: Leaderboard, result: Omit<Result, "rank">) => {
+  try {
+    const { ok, text } = await $.http.fetch(new URL("/runs", target.url).href, {
+      body: JSON.stringify({ name: target.name, ...result }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    return ok ? rankOf(text) : null;
+  } catch {
+    return null;
+  }
+};
+
+// Ends the run once its grace has passed with no new prompt; the world starts
+// a fresh game when the next one begins.
+const finish = async ($: EngineInterface) => {
+  const result = resultOf(run, await $.clock.now(), screen.latest?.coins ?? 0);
+  if (!result) {
+    return;
+  }
+  await setRun($, { kind: "idle", last: { ...result, rank: null } });
+  if (!leaderboard) {
+    return;
+  }
+  const rank = await post($, leaderboard, result);
+  if (run.kind === "idle" && rank !== null) {
+    await setRun($, { kind: "idle", last: { ...result, rank } });
+  }
 };
 
 export const register: Register = (on, options) => {
-  openai.voice = String(options.voice ?? openai.voice);
-  openai.model = String(options.model ?? openai.model);
-  muted = options.mute === true;
   sfx.isOn = options.sfx !== false;
+  const leaderboardUrl = String(options.leaderboardUrl ?? "");
+  const isPosting = options.leaderboard !== false && leaderboardUrl.length > 0;
 
   on("session.start", async ($, e, next) => {
-    const key = String(options.openaiApiKey ?? "") || ((await $.env.get("OPENAI_API_KEY")) ?? "");
     sfx.canPlay = await canPlayClips($);
-    openai.key = key && sfx.canPlay ? key : "";
-    if (key && !openai.key) {
-      $.ui.toast("mod-surfer: OpenAI voice plays on macOS only, using the system voice");
+    if (isPosting) {
+      leaderboard = {
+        name: await playerName($, String(options.playerName ?? "")),
+        url: leaderboardUrl,
+      };
     }
     void $.ui.open({ id: PANE, title: TITLE });
     // oxlint-disable-next-line unicorn/no-array-method-this-argument -- $.clock.every is a timer, not Array#every
@@ -455,63 +380,44 @@ export const register: Register = (on, options) => {
     return next(e);
   });
 
-  // A new prompt makes the rest of the last reply stale.
-  on("prompt.submit", ($, e, next) => {
-    queue.length = 0;
-    return next(e);
-  });
-
   on("turn.start", async ($, e, next) => {
-    running = true;
-    await update($, isRunning, () => true);
+    await setRun($, startTurn(run, await $.clock.now()));
     return next(e);
   });
 
-  on("turn.complete", async ($, e, next) => {
-    running = false;
-    await update($, isRunning, () => false);
-    return next(e);
-  });
-
-  on("session.append", ($, e, next) => {
-    if (e.agentId || e.door !== "response" || e.message.role !== "assistant") {
-      return next(e);
+  // Subagents' steps count: the run is everything Claude spends while it lasts.
+  on("turn.step", async function* countTokens($, e, next) {
+    // oxlint-disable-next-line node/callback-return -- the usage arrives in what the chain returns
+    const result = yield* next(e);
+    if (result.usage) {
+      await setRun($, addTokens(run, result.usage.output_tokens));
     }
-    const text = e.message.content
-      .flatMap((block) => (block.type === "text" ? [String(block.text)] : []))
-      .join("\n");
-    // A long reply is read from its start; lines past the cap are dropped.
-    const room = Math.max(0, MAX_QUEUE - queue.length);
-    queue.push(
-      ...toSentences(text)
-        .slice(0, room)
-        .map((sentence) => ({ text: sentence })),
-    );
-    prefetch($);
-    narrate($);
+    return result;
+  });
 
+  // A subagent finishing is not Claude going quiet.
+  on("turn.complete", async ($, e, next) => {
+    if (!e.agentId) {
+      await setRun($, endTurn(run, await $.clock.now()));
+      $.clock.after(GRACE_MS, () => {
+        void finish($);
+      });
+    }
     return next(e);
   });
 
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
-    const line = await read($, caption);
-    const isActive = await read($, isRunning);
-    const status = statusOf(isActive, muted, await read($, tally));
+    const line = await read($, status);
 
     if (e.surface !== "terminal") {
-      const { Box, Text } = $.ui.resolve(e);
-      return (
-        <Box flexDirection="column">
-          <Text dimColor>{status}</Text>
-          <Text bold>{line || "…"}</Text>
-        </Box>
-      );
+      const { Text } = $.ui.resolve(e);
+      return <Text>{line}</Text>;
     }
 
     const { Box, Image, Raster, Text } = $.ui.resolve(e);
     const size = {
       columns: Math.max(20, Math.min(255, e.props.bodyColumns)),
-      rows: Math.max(8, Math.min(255, (e.viewport?.rows ?? 30) - 10)),
+      rows: Math.max(8, Math.min(255, (e.viewport?.rows ?? 30) - 8)),
     };
     screen.size = size;
     const before = await read($, view);
@@ -555,10 +461,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         {game}
-        <Text dimColor>{status}</Text>
-        <Text bold color="yellow" wrap="wrap">
-          {line || (isActive ? "…" : "Narration plays while Claude works.")}
-        </Text>
+        <Text dimColor>{line}</Text>
       </Box>
     );
   });

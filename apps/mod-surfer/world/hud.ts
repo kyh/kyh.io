@@ -1,5 +1,5 @@
 // The score over the picture, as Subway Surfers lays it out: the run's
-// score in a pill at the top, the coins top right. Painted on a canvas and
+// score (its output tokens) in a pill at the top, the coins top right. Painted on a canvas and
 // drawn last, over the bloom, so it stays crisp.
 import * as THREE from "three";
 
@@ -66,6 +66,9 @@ export const createHud = () => {
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
+      // WebGL2 allocates a texture's storage once, at its first size; without
+      // this the HUD is squeezed into the old size, off its corner.
+      texture.dispose();
     }
     ctx.clearRect(0, 0, width, height);
     const size = Math.round(Math.min(height * 0.065, width * 0.07));

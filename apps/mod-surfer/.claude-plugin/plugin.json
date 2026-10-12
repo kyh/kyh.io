@@ -1,50 +1,29 @@
 {
   "name": "mod-surfer",
   "version": "0.1.0",
-  "description": "Subway Surfers-style runner pane, rendered in three.js, that reads Claude's replies aloud with OpenAI text-to-speech while a turn runs",
+  "description": "Subway Surfers-style runner pane, rendered in three.js, that runs while Claude works; each run's output tokens go to a shared leaderboard",
   "author": {
     "name": "Kaiyu Hsu"
   },
   "types": "./types/index.d.ts",
   "userConfig": {
-    "openaiApiKey": {
+    "leaderboard": {
+      "type": "boolean",
+      "title": "Post runs to the leaderboard",
+      "description": "Each finished run's output tokens, coins and length go up under your player name",
+      "default": true
+    },
+    "playerName": {
       "type": "string",
-      "title": "OpenAI API key",
-      "description": "Used for narration. Empty: falls back to the OPENAI_API_KEY environment variable, then the system voice.",
-      "sensitive": true,
+      "title": "Player name",
+      "description": "The name your runs go up under. Empty: your git user.name",
       "default": ""
     },
-    "voice": {
+    "leaderboardUrl": {
       "type": "string",
-      "title": "Narrator voice",
-      "description": "OpenAI voice for the narration",
-      "options": [
-        "ash",
-        "alloy",
-        "ballad",
-        "coral",
-        "echo",
-        "fable",
-        "nova",
-        "onyx",
-        "sage",
-        "shimmer",
-        "verse"
-      ],
-      "default": "ash"
-    },
-    "model": {
-      "type": "string",
-      "title": "Speech model",
-      "description": "OpenAI speech model; only gpt-4o-mini-tts follows the narrator style",
-      "options": ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
-      "default": "gpt-4o-mini-tts"
-    },
-    "mute": {
-      "type": "boolean",
-      "title": "Mute narrator",
-      "description": "Captions only: no voice and no OpenAI requests",
-      "default": false
+      "title": "Leaderboard URL",
+      "description": "Where runs are posted. Empty: runs are not posted",
+      "default": "https://subway-clauders.kyh.workers.dev"
     },
     "sfx": {
       "type": "boolean",

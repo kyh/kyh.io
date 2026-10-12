@@ -7,7 +7,7 @@
 // The page draws; this process turns its pixels into what the terminal
 // takes: an RGBA file an Image reads (kitty, Ghostty), or Raster cells.
 //
-//   GET /frame?since=N&mode=image|cells&columns=C&rows=R&active=0|1
+//   GET /frame?since=N&mode=image|cells&columns=C&rows=R&active=0|1&tokens=T
 //     200, the frame's numbers in x- headers, its cells (if any) the body
 //     204 when no frame is newer than N
 //
@@ -32,6 +32,7 @@ interface Want {
   rows: number;
   mode: Mode;
   isActive: boolean;
+  tokens: number;
 }
 
 interface Latest {
@@ -40,7 +41,6 @@ interface Latest {
   height: number;
   columns: number;
   rows: number;
-  score: number;
   coins: number;
   jumps: number;
   crashes: number;
@@ -58,7 +58,7 @@ if (!imagePath || !socketPath) {
   process.exit(2);
 }
 
-const want: Want = { columns: 80, isActive: false, mode: "cells", rows: 24 };
+const want: Want = { columns: 80, isActive: false, mode: "cells", rows: 24, tokens: 0 };
 let latest: Latest | null = null;
 let lastAsked = Date.now();
 let browser: Browser | null = null;
@@ -96,7 +96,6 @@ const takeFrame = async (request: http.IncomingMessage, response: http.ServerRes
       coins: header(request, "x-coins"),
       crashes: header(request, "x-crashes"),
       jumps: header(request, "x-jumps"),
-      score: header(request, "x-score"),
     };
     latest = { cells, columns, frame, height, rows, width, ...tally };
     if (frame === 1) {
@@ -108,6 +107,7 @@ const takeFrame = async (request: http.IncomingMessage, response: http.ServerRes
   response.setHeader("x-height", size.height);
   response.setHeader("x-active", want.isActive ? "1" : "0");
   response.setHeader("x-mode", want.mode);
+  response.setHeader("x-tokens", want.tokens);
   response.end();
 };
 
@@ -128,6 +128,7 @@ const answer = (request: http.IncomingMessage, response: http.ServerResponse) =>
   }
   want.mode = url.searchParams.get("mode") === "image" ? "image" : "cells";
   want.isActive = url.searchParams.get("active") === "1";
+  want.tokens = Math.max(0, Math.floor(Number(url.searchParams.get("tokens")) || 0));
   const since = Number(url.searchParams.get("since") ?? -1);
   if (!latest || latest.frame <= since) {
     response.statusCode = 204;

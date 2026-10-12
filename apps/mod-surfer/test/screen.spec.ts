@@ -20,7 +20,6 @@ const HEADERS = {
   "x-height": "400",
   "x-jumps": "5",
   "x-rows": "24",
-  "x-score": "1500",
   "x-width": "560",
 };
 
@@ -57,8 +56,8 @@ describe("screen", () => {
 
   it("asks for a frame newer than the last", () => {
     assert.equal(
-      frameUrl(4, "cells", 80, 24, true),
-      "http://surfer/frame?since=4&mode=cells&columns=80&rows=24&active=1",
+      frameUrl(4, "cells", 80, 24, { isActive: true, tokens: 1200 }),
+      "http://surfer/frame?since=4&mode=cells&columns=80&rows=24&active=1&tokens=1200",
     );
   });
 
@@ -71,7 +70,6 @@ describe("screen", () => {
       height: 400,
       jumps: 5,
       rows: 24,
-      score: 1500,
       width: 560,
     });
     assert.equal(parseFrame(HEADERS, "AAAA")?.cells, "AAAA");
@@ -87,7 +85,6 @@ describe("screen", () => {
       height: 1,
       jumps: 0,
       rows: 1,
-      score: 0,
       width: 1,
     };
     assert.deepEqual(effectsBetween(null, base, 0).effects, []);

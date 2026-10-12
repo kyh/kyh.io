@@ -11,7 +11,6 @@ export interface Frame {
   height: number;
   columns: number;
   rows: number;
-  score: number;
   coins: number;
   jumps: number;
   crashes: number;
@@ -75,14 +74,21 @@ export const placementOf = (tmpDir: string | undefined, id: string) => {
 export const drawsImages = (term: string | undefined, termProgram: string | undefined) =>
   /kitty|ghostty/iu.test(term ?? "") || /ghostty/iu.test(termProgram ?? "");
 
+// What the world shows besides the picture: whether the run goes on, and its
+// tokens for the score.
+export interface Run {
+  isActive: boolean;
+  tokens: number;
+}
+
 export const frameUrl = (
   since: number,
   mode: Mode,
   columns: number,
   rows: number,
-  isActive: boolean,
+  { isActive, tokens }: Run,
 ) =>
-  `http://surfer/frame?since=${since}&mode=${mode}&columns=${columns}&rows=${rows}&active=${isActive ? 1 : 0}`;
+  `http://surfer/frame?since=${since}&mode=${mode}&columns=${columns}&rows=${rows}&active=${isActive ? 1 : 0}&tokens=${tokens}`;
 
 const count = (headers: Readonly<Record<string, string>>, name: string) => {
   const value = Number(headers[`x-${name}`] ?? Number.NaN);
@@ -103,7 +109,6 @@ export const parseFrame = (
     height: count(headers, "height"),
     jumps: count(headers, "jumps"),
     rows: count(headers, "rows"),
-    score: count(headers, "score"),
     width: count(headers, "width"),
   };
   if (Object.values(numbers).some((value) => Number.isNaN(value))) {

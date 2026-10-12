@@ -1,8 +1,10 @@
 # mod-surfer
 
 A Claude Code mod. While Claude works, a pane plays a self-running Subway
-Surfers-style runner starring Clawd, and an OpenAI voice reads Claude's
-replies aloud with captions underneath.
+Surfers-style runner starring Clawd. Each run scores the output tokens Claude
+spends before it goes quiet, and goes up on a shared leaderboard: who can keep
+Claude going the longest:
+<https://subway-clauders.kyh.workers.dev>.
 
 The game is a three.js world rendered in a headless Chrome and streamed into
 the pane. In kitty or Ghostty it is a real picture; in any other terminal
@@ -13,12 +15,6 @@ pixels a character, from the same frames.
 
 - **Claude Code** with mod (function hooks plugin) support, at or past the
   version `packages/claude-code-types` pins.
-- **macOS** to hear the OpenAI voice. Clips play through `afplay`. On Linux
-  or Windows you get the system voice where one exists, otherwise captions
-  only.
-- **An OpenAI API key** for the OpenAI voice. Without one, the system voice
-  (`say` on macOS) reads instead.
-- **`curl`** on your `PATH`. It ships with macOS.
 - **Google Chrome** installed. The game renders in it, headless, through
   `playwright-core`; nothing is downloaded.
 - **`pnpm install`** in this repo: the streamer runs on `tsx` and Vite from
@@ -36,7 +32,6 @@ Loading it is pointing Claude Code at this folder (after `pnpm install`).
 From this repo:
 
 ```sh
-export OPENAI_API_KEY=sk-...
 pnpm dev:mod-surfer
 ```
 
@@ -55,8 +50,7 @@ desktop app loads it, since it takes no flags.
 ```json
 {
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-surfer",
-    "OPENAI_API_KEY": "sk-..."
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-surfer"
   }
 }
 ```
@@ -68,37 +62,25 @@ your user settings only, never a project's.
 
 Drop the `--plugin-dir` flag, or the path from `CLAUDE_CODE_PLUGIN_DIRS`.
 
-## Set your API key
-
-The mod looks for a key in this order:
-
-1. The plugin's `openaiApiKey` option. It's marked sensitive, so Claude Code
-   keeps it in secure storage and doesn't list it in `/config`.
-2. The `OPENAI_API_KEY` environment variable, from your shell or the `env`
-   block under Set up.
-
-With neither, it uses the system voice; the status line under the game reads
-"system voice" instead of "openai ash". With a key on a machine that can't
-play clips, it does the same and also shows a toast saying why.
-
 ## Use it
 
-Start Claude Code with the mod loaded and send a prompt. While Claude works:
+Start Claude Code with the mod loaded and send a prompt. A run starts:
 
 - Clawd runs: dodging trains, jumping barriers, running up ramps onto train
   roofs and hopping roof to roof, collecting coins on the track and on top;
-- the score and coins show over the picture (in blocks, in the status line);
+- the run's output tokens show in the pill over the picture, the coins top
+  right (in blocks, in the status line under the game);
 - gold sparkles burst from each coin, dust kicks up where Clawd runs and lands,
   a crash throws sparks, and wind streaks rush past (pictures only);
-- each coin chimes and each jump and crash has its sound, synthesized
-  in code (no audio files), under the narration;
-- each sentence of the reply is read aloud and shown as a caption under the
-  game;
-- the status line under the game shows `● LIVE` or `○ idle`, and which voice
-  is reading.
+- each coin chimes and each jump and crash has its sound, synthesized in code
+  (no audio files; macOS only).
 
-When the turn ends and the narration finishes, Clawd stops, turns round and
-waves until the next prompt.
+Every token Claude generates counts, subagents' included. When Claude finishes,
+the status line reads `◐ prompt within 5s to keep the run`: send another
+prompt in time and the run carries on. Miss it and the run is over. Clawd
+stops, turns round and waves; the run (tokens, coins, how long Claude
+worked) goes to the leaderboard, and the status line shows where you stand.
+The next prompt starts a fresh game.
 
 Chrome starts when the pane is drawn and stops when it closes, so a closed
 pane costs nothing. The streamer also exits by itself if the session stops
@@ -108,56 +90,47 @@ asking for frames for 15 seconds.
 
 Open `/config` and find **mod-surfer**:
 
-| Setting        | Default           | Options                                                                                        |
-| -------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
-| Narrator voice | `ash`             | `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`, `verse` |
-| Speech model   | `gpt-4o-mini-tts` | `gpt-4o-mini-tts`, `tts-1`, `tts-1-hd`                                                         |
-| Mute narrator  | off               | on: captions only, no voice and no OpenAI requests                                             |
-| Sound effects  | on                | off: the game is silent; narration is unaffected                                               |
-
-Only `gpt-4o-mini-tts` follows the upbeat narrator style. The other two read
-in a flat voice.
+| Setting                      | Default        | Options                                                 |
+| ---------------------------- | -------------- | ------------------------------------------------------- |
+| Post runs to the leaderboard | on             | off: runs stay local                                    |
+| Player name                  | git user.name  | any name, up to 32 characters                           |
+| Leaderboard URL              | the shared one | another deployment of `leaderboard/`; empty: no posting |
+| Sound effects                | on             | off: the game is silent                                 |
 
 You can also set them in `~/.claude/settings.json`:
 
 ```json
 {
   "pluginConfigs": {
-    "mod-surfer": { "options": { "voice": "nova" } }
+    "mod-surfer": { "options": { "playerName": "kyh" } }
   }
 }
 ```
 
-## What gets read
+## Leaderboard
 
-- Only Claude's own replies in the main conversation. Subagents and tool
-  output aren't read.
-- Markdown is stripped. Code blocks become "(code omitted.)", links read as
-  their text, and bare URLs read as "a link".
-- Each sentence is one OpenAI request. The next two are fetched while the
-  current one plays, to keep gaps short.
-- A long reply is read from its start, up to 30 sentences. The rest is
-  dropped.
-- Sending a new prompt drops anything not yet read. A sentence that has
-  already started finishes.
+`leaderboard/` is a Cloudflare Worker on D1, its own workspace package
+(`@repo/mod-surfer-leaderboard`), all through the `cf` CLI. `POST /runs` takes
+`{ name, tokens, coins, seconds }` and answers the player's `rank`; `GET /`
+is the page, each player's best run by tokens; `GET /runs` the same as JSON.
 
-## Cost
+```sh
+pnpm dev:leaderboard                                          # cf dev on :8787, local D1
+pnpm deploy:leaderboard                                       # cf deploy
+pnpm -F @repo/mod-surfer-leaderboard migrate <database-id>    # apply leaderboard/migrations (add --local for dev)
+```
 
-Each sentence is a separate call to OpenAI's speech endpoint, billed by
-OpenAI per input character at the model's rate. Long replies cost more. Turn on
-**Mute narrator** to stop paying while keeping captions.
+Anyone can post, so names are trimmed and every number is bounded; there is
+no proof a run happened.
 
 ## Troubleshooting
 
-| Symptom                                   | Cause and fix                                                                                 |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
-| No pane                                   | The terminal is too narrow (see Requirements). Widen it.                                      |
-| Pane says ✗ and a reason                  | The streamer stopped: usually Chrome missing, or `pnpm install` not run.                      |
-| Blocky picture                            | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.                    |
-| Toast: "OpenAI voice plays on macOS only" | You're not on macOS. The system voice or captions take over.                                  |
-| Toast: "OpenAI speech failed"             | The request failed. Check the key, your OpenAI quota, and network access to `api.openai.com`. |
-| Toast: "no speech synthesizer here"       | No system voice either. You get captions only.                                                |
-| Nothing happens at all                    | Start with `claude --debug` and look for lines starting with `mod-surfer:`.                   |
+| Symptom                  | Cause and fix                                                               |
+| ------------------------ | --------------------------------------------------------------------------- |
+| No pane                  | The terminal is too narrow (see Requirements). Widen it.                    |
+| Pane says ✗ and a reason | The streamer stopped: usually Chrome missing, or `pnpm install` not run.    |
+| Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.  |
+| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-surfer:`. |
 
 ## Develop
 
@@ -166,8 +139,8 @@ file in `hooks/` reloads the mod without a restart.
 
 ```sh
 pnpm -F @repo/mod-surfer world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
-pnpm -F @repo/mod-surfer test       # node: the runner, frames, the streamer protocol, narration
-pnpm -F @repo/mod-surfer test:mod   # claude plugin test: the hooks: the pane, the voice fallbacks, mute
+pnpm -F @repo/mod-surfer test       # node: the runner, runs, frames, the streamer protocol
+pnpm -F @repo/mod-surfer test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
 pnpm -F @repo/mod-surfer typecheck  # pure modules + streamer, the world (DOM), then the hooks against the pinned API types
 pnpm -F @repo/mod-surfer validate   # what Claude Code will load
 ```
@@ -190,13 +163,14 @@ cp apps/mod-surfer/.claude-plugin/types/claude-code/index.d.ts packages/claude-c
 
 | File                         | Role                                                                              |
 | ---------------------------- | --------------------------------------------------------------------------------- |
-| `hooks/register.tsx`         | The hooks: pane, narration, speech, starting the streamer and blitting its frames |
+| `hooks/register.tsx`         | The hooks: pane, runs, posting, starting the streamer and blitting its frames     |
 | `hooks/screen.ts`            | The hooks' side of the streamer: socket, URL, parsing a frame                     |
 | `hooks/game.ts`              | Runner simulation and autopilot, shared with the world                            |
 | `hooks/sfx.ts`               | The sound effects, synthesized into WAVs                                          |
-| `hooks/narrate.ts`           | Markdown to sentences, and the OpenAI request                                     |
+| `hooks/run.ts`               | A run's state: tokens, the 5s grace, its result and status line                   |
 | `world/`                     | The three.js game: scene, Clawd, props, toon materials, HUD, particles (`vfx.ts`) |
 | `stream/stream.ts`           | Serves the world to headless Chrome, takes its frames, answers the hooks          |
 | `stream/frame.ts`            | Frame sizing, flipped RGBA for pictures, quadrant cells for blocks                |
-| `types/index.d.ts`           | The `$.state` contract: caption, turn running, what the pane shows, score         |
+| `types/index.d.ts`           | The `$.state` contract: what the pane shows, the status line                      |
 | `.claude-plugin/plugin.json` | Manifest and the `/config` options                                                |
+| `leaderboard/`               | The leaderboard Worker: D1 schema, run schema, page                               |

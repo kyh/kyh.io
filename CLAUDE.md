@@ -116,8 +116,8 @@ Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replay
 ### mod-surfer (`apps/mod-surfer`)
 
 Claude Code mod (see Claude Code mods below). Opens the **Subway Clauders**
-pane, a self-playing Subway Surfers-style runner starring Clawd, and reads
-Claude's replies aloud with OpenAI text-to-speech while a turn runs. No slash
+pane, a self-playing Subway Surfers-style runner starring Clawd that runs
+while Claude works, and posts each run to a shared leaderboard. No slash
 commands: the pane opens on session start.
 
 - Picture: `world/` is a three.js game (procedural only, no model files)
@@ -132,24 +132,27 @@ commands: the pane opens on session start.
   sized to what the terminal shows (`frameSize`), and the page keeps one in
   flight.
 
-- Narration: `session.append` (main loop, `response` door) → `toSentences` →
-  queue; each line is synthesized by `curl` to `/v1/audio/speech` (base64 on
-  stdout, since the hooks sandbox reads process output as text) and played
-  with `$.audio.play`; the next two lines prefetch. Falls back to the system
-  voice (`$.audio.speak`), then captions only. Playback is macOS-only
-  (`afplay`).
+- Runs (`hooks/run.ts`): `turn.start` starts or carries one, every
+  `turn.step`'s `output_tokens` (subagents' included) is its score, and the
+  main loop's `turn.complete` starts a 5s grace. A prompt within it carries
+  the run on; past it the run is over, the world freezes, and the next run
+  starts a fresh game. The hooks send `active` and `tokens` down with each
+  poll; the HUD pill shows the tokens.
+- Leaderboard: `leaderboard/` is its own workspace package
+  (`@repo/mod-surfer-leaderboard`; `cf dev` delegates to Vite in any package
+  that depends on it) — a Worker on D1 that takes `POST /runs` and lists each
+  player's best at `/`. The hooks post to `leaderboardUrl` under `playerName`
+  (else git's `user.name`); `leaderboard: false` stops posting. Anyone can
+  post, so the zod schema bounds every number.
 - Sound effects: the page counts coins, jumps and crashes into each
   frame's headers; the hooks play a clip when a count rises
   (`effectsBetween`), synthesized WAVs from `hooks/sfx.ts`. `sfx` in
   `/config` turns them off.
-- Key: the `openaiApiKey` userConfig field (sensitive), else `OPENAI_API_KEY`.
-  `voice` and `model` are pickers in `/config`; `mute` keeps captions without
-  the voice.
 
-**Key files**: `hooks/register.tsx` (hooks, speech, streamer, blits),
-`hooks/screen.ts` (socket, frame parsing), `hooks/game.ts` (runner simulation +
-autopilot, shared with the world), `hooks/narrate.ts` (markdown → lines, OpenAI
-request), `world/` (three.js scene; `vfx.ts` particles off game-state changes), `stream/` (Chrome driver, frame → RGBA or
+**Key files**: `hooks/register.tsx` (hooks, runs, streamer, blits),
+`hooks/run.ts` (run state, grace, status line), `hooks/screen.ts` (socket,
+frame parsing), `hooks/game.ts` (runner simulation + autopilot, shared with the
+world), `leaderboard/src/` (Worker, zod run schema, page), `world/` (three.js scene; `vfx.ts` particles off game-state changes), `stream/` (Chrome driver, frame → RGBA or
 cells), `types/index.d.ts` (the `$.state` contract).
 
 ### mod-dev (`apps/mod-dev`)

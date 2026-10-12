@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - apps/mod-surfer/leaderboard
   - packages/*
 
 catalog:

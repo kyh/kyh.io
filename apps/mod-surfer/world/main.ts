@@ -1,6 +1,7 @@
 // The page headless Chrome renders. Opened with `?stream`, each frame's
-// pixels go to the streamer, whose answer says how big to draw and whether
-// Claude is working; opened plainly (`pnpm world`), it runs full-window.
+// pixels go to the streamer, whose answer says how big to draw, whether the
+// run goes on and its tokens; opened plainly (`pnpm world`), it runs
+// full-window with the distance as its score.
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
@@ -16,6 +17,7 @@ interface Control {
   height: number;
   isActive: boolean;
   isCoarse: boolean;
+  tokens: number;
 }
 
 const IDLE_FRAME_MS = 250;
@@ -38,11 +40,14 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(world.scene, world.camera));
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
-const game = newGame(Math.floor(Math.random() * 1e6));
+const freshGame = () => newGame(Math.floor(Math.random() * 1e6));
+let game = freshGame();
+// Streamed, the world waits for the hooks to say a run is on.
 let control: Control = {
   height: innerHeight,
-  isActive: true,
+  isActive: !isStreamed,
   isCoarse: params.has("coarse"),
+  tokens: 0,
   width: innerWidth,
 };
 let pixels = new Uint8Array(0);
@@ -70,7 +75,6 @@ const send = async () => {
       "x-crashes": String(game.crashes),
       "x-height": String(control.height),
       "x-jumps": String(game.jumps),
-      "x-score": String(Math.floor(game.score)),
       "x-width": String(control.width),
     },
     method: "POST",
@@ -78,10 +82,16 @@ const send = async () => {
   const width = Number(response.headers.get("x-width"));
   const height = Number(response.headers.get("x-height"));
   if (width > 0 && height > 0) {
+    const isActive = response.headers.get("x-active") === "1";
+    // A run that stopped is over: the next one starts a fresh game.
+    if (isActive && !control.isActive) {
+      game = freshGame();
+    }
     control = {
       height,
-      isActive: response.headers.get("x-active") === "1",
+      isActive,
       isCoarse: response.headers.get("x-mode") === "cells",
+      tokens: Number(response.headers.get("x-tokens")) || 0,
       width,
     };
   }
@@ -126,7 +136,8 @@ const frame = async () => {
   composer.render(dt);
   // Blocks can't carry text this small; the pane's status line has the score.
   if (!control.isCoarse) {
-    hud.draw(control.width, control.height, Math.floor(game.score), game.coins);
+    const score = isStreamed ? control.tokens : Math.floor(game.score);
+    hud.draw(control.width, control.height, score, game.coins);
     renderer.autoClear = false;
     renderer.render(hud.scene, hud.camera);
     renderer.autoClear = true;

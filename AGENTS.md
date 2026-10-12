@@ -40,7 +40,7 @@ pnpm verify       # typecheck · lint · format · test
 pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/mod-surfer` and `apps/mod-dev` — the only apps with tests. The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/mod-surfer` (and its `leaderboard`) and `apps/mod-dev` — the only apps with tests. The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
 **Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`); every rule is an error and `lint` fails on the first one. `no-await-in-loop` is the one deliberate override (sequential awaits are intentional). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
 
@@ -75,6 +75,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
 | `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
 | `party`       | `pnpm dev:party`       | 8787 (`cf dev`)             | No — WebSocket server; `typecheck` + `build`           |
+| `leaderboard` | `pnpm dev:leaderboard` | 8787 (`cf dev`)             | **Yes** — curl `/runs`; local D1 needs its migration   |
 | `cli`         | `pnpm dev:cli`         | —                           | No — Ink terminal UI, needs a real TTY                 |
 | `mod-surfer`  | `pnpm dev:mod-surfer`  | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
 | `mod-dev`     | `pnpm dev:mod-dev`     | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"` |
