@@ -4,7 +4,7 @@ A Claude Code mod. While Claude works, a pane plays a self-running Subway
 Surfers-style runner starring Clawd. Each run scores the output tokens Claude
 spends before it goes quiet, and goes up on a shared leaderboard: who can keep
 Claude going the longest:
-<https://subway-clauders.kyh.workers.dev>.
+<https://clauders.kyh.io>.
 
 The game is a three.js world rendered in a headless Chrome and streamed into
 the pane. In kitty or Ghostty it is a real picture; in any other terminal

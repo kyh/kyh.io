@@ -23,7 +23,7 @@
       "type": "string",
       "title": "Leaderboard URL",
       "description": "Where runs are posted. Empty: runs are not posted",
-      "default": "https://subway-clauders.kyh.workers.dev"
+      "default": "https://clauders.kyh.io"
     },
     "sfx": {
       "type": "boolean",
