@@ -12,6 +12,8 @@ pixels a character, from the same frames.
 
 ## Requirements
 
+- **macOS or Linux.** Windows is not supported: the pane says so and stays
+  empty.
 - **Claude Code** with mod (function hooks plugin) support, at or past the
   version `packages/claude-code-types` pins.
 - **Google Chrome** installed. The game renders in it, headless; nothing is
@@ -57,9 +59,7 @@ Start Claude Code with the mod loaded and send a prompt. A run starts:
 - the run's output tokens show in the pill over the picture, the coins top
   right (in blocks, in the status line under the game);
 - gold sparkles burst from each coin, dust kicks up where Clawd runs and lands,
-  a crash throws sparks, and wind streaks rush past (pictures only);
-- each coin chimes and each jump and crash has its sound, synthesized in code
-  (no audio files; macOS only).
+  a crash throws sparks, and wind streaks rush past (pictures only).
 
 Every token Claude generates counts, subagents' included. When Claude finishes,
 the status line reads `◐ prompt within 5s to keep the run`: send another
@@ -72,6 +72,14 @@ Chrome starts when the pane is drawn and stops when it closes, so a closed
 pane costs nothing. The streamer also exits by itself if the session stops
 asking for frames for 15 seconds.
 
+### Your runs are public
+
+Each finished run goes to the public leaderboard at <https://clawders.kyh.io>
+under your **Player name**, which defaults to your git `user.name`. The status
+line under the game says where runs go whenever the game is idle, e.g.
+`○ idle · posting as kai to clawders.kyh.io`. Set a different name, or turn
+**Post runs to the leaderboard** off, in `/config`.
+
 ### Settings
 
 Open `/config` and find **mod-clawders**:
@@ -81,7 +89,6 @@ Open `/config` and find **mod-clawders**:
 | Post runs to the leaderboard | on             | off: runs stay local                                    |
 | Player name                  | git user.name  | any name, up to 32 characters                           |
 | Leaderboard URL              | the shared one | another deployment of `leaderboard/`; empty: no posting |
-| Sound effects                | on             | off: the game is silent                                 |
 
 You can also set them in `~/.claude/settings.json`:
 
@@ -119,6 +126,13 @@ no proof a run happened.
 | Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.                 |
 | Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-clawders:`.              |
 
+## Release
+
+Installed copies update only when `version` in `.claude-plugin/plugin.json`
+changes. To ship: rebuild (`pnpm -F @repo/mod-clawders build`), commit
+`dist/`, bump the version, push to `main`. CI fails if `dist/` doesn't match
+the source.
+
 ## Develop
 
 Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
@@ -154,7 +168,6 @@ cp apps/mod-clawders/.claude-plugin/types/claude-code/index.d.ts packages/claude
 | `hooks/register.tsx`         | The hooks: pane, runs, posting, starting the streamer and blitting its frames       |
 | `hooks/screen.ts`            | The hooks' side of the streamer: socket, URL, parsing a frame                       |
 | `hooks/game.ts`              | Runner simulation and autopilot, shared with the world                              |
-| `hooks/sfx.ts`               | The sound effects, synthesized into WAVs                                            |
 | `hooks/run.ts`               | A run's state: tokens, the 5s grace, its result and status line                     |
 | `world/`                     | The three.js game: scene, Clawd, props, toon materials, HUD, particles (`vfx.ts`)   |
 | `stream/stream.ts`           | Serves the world to headless Chrome, takes its frames, answers the hooks            |

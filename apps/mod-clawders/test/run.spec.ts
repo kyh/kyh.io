@@ -57,5 +57,10 @@ describe("run", () => {
       statusOf({ kind: "idle", last: { coins: 0, rank: 2, seconds: 9, tokens: 80 } }, 0),
       "○ idle · last run 80 tokens · #2 on the leaderboard",
     );
+    assert.equal(
+      statusOf(idle, 0, "posting as kai to clawders.kyh.io"),
+      "○ idle · a run starts with your next prompt · posting as kai to clawders.kyh.io",
+    );
+    assert.equal(statusOf(startTurn(idle, 0), 0, "runs stay local"), "● LIVE · 0 tokens · ● 0");
   });
 });

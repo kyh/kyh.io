@@ -43,8 +43,6 @@ interface Latest {
   columns: number;
   rows: number;
   coins: number;
-  jumps: number;
-  crashes: number;
   cells: string;
 }
 
@@ -96,8 +94,6 @@ const takeFrame = async (request: http.IncomingMessage, response: http.ServerRes
     }
     const tally = {
       coins: header(request, "x-coins"),
-      crashes: header(request, "x-crashes"),
-      jumps: header(request, "x-jumps"),
     };
     latest = { cells, columns, frame, height, rows, width, ...tally };
     if (frame === 1) {

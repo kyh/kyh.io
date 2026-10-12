@@ -31,7 +31,7 @@ export const mountWorld = (host: HTMLElement) => {
   frameId = requestAnimationFrame(loop);
 
   return {
-    coins: () => view.counts().coins,
+    coins: view.coins,
     dispose: () => {
       cancelAnimationFrame(frameId);
       observer.disconnect();

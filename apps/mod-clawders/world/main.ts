@@ -29,14 +29,11 @@ const send = async () => {
     pixels = new Uint8Array(width * height * 4);
   }
   view.gl.readPixels(0, 0, width, height, view.gl.RGBA, view.gl.UNSIGNED_BYTE, pixels);
-  const counts = view.counts();
   const response = await fetch("/frame", {
     body: pixels,
     headers: {
-      "x-coins": String(counts.coins),
-      "x-crashes": String(counts.crashes),
+      "x-coins": String(view.coins()),
       "x-height": String(height),
-      "x-jumps": String(counts.jumps),
       "x-width": String(width),
     },
     method: "POST",

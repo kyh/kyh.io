@@ -21,25 +21,14 @@ import {
   statusOf,
 } from "./run";
 import type { Result, Run } from "./run";
-import {
-  drawsImages,
-  effectsBetween,
-  frameUrl,
-  lastWords,
-  parseFrame,
-  placementOf,
-  countsOf,
-} from "./screen";
-import type { Counts, Frame, Mode } from "./screen";
-import { synthesizeEffects } from "./sfx";
-import type { Effect } from "./sfx";
+import { drawsImages, frameUrl, lastWords, parseFrame, placementOf } from "./screen";
+import type { Frame, Mode } from "./screen";
 
 const PANE = "clawders";
 const SCREEN = "game";
 const TITLE = "Clawders";
 const FRAME_MS = 33;
 const TALLY_MS = 1000;
-const SFX_GAIN = 0.45;
 const LOG_MAX = 4000;
 
 const starting: View = { kind: "starting" };
@@ -70,9 +59,6 @@ interface Screen {
   size: Size | null;
   streamer: Streamer;
   talliedAt: number;
-  // The run's counts as of the last frame shown, to hear what just happened.
-  heard: Counts | null;
-  chimedAt: number;
 }
 
 interface Leaderboard {
@@ -84,9 +70,12 @@ interface Leaderboard {
 let run: Run = idle;
 // Null when runs are not posted.
 let leaderboard: Leaderboard | null = null;
+
+const postingNote = () =>
+  leaderboard
+    ? `posting as ${leaderboard.name} to ${new URL(leaderboard.url).host}`
+    : "runs stay local";
 const screen: Screen = {
-  chimedAt: 0,
-  heard: null,
   isPulling: false,
   latest: null,
   mode: "cells",
@@ -95,24 +84,6 @@ const screen: Screen = {
   streamer: { kind: "off" },
   talliedAt: 0,
 };
-interface Sfx {
-  canPlay: boolean;
-  isOn: boolean;
-  // Synthesized on first use, then kept.
-  sounds: Record<Effect, string> | null;
-}
-const sfx: Sfx = { canPlay: false, isOn: true, sounds: null };
-
-// `$.audio.play` plays clips through afplay, so only macOS hears them.
-const canPlayClips = async ($: EngineInterface) => {
-  try {
-    const { stdout } = await $.process.run(["uname", "-s"]);
-    return stdout.trim() === "Darwin";
-  } catch {
-    return false;
-  }
-};
-
 const stopStreamer = async (streamer: Streamer) => {
   if (!("child" in streamer)) {
     return;
@@ -162,6 +133,14 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
 };
 
 const startStreamer = async ($: EngineInterface) => {
+  // The streamer answers over a Unix socket, which Windows does not give it.
+  if ((await $.env.get("OS")) === "Windows_NT") {
+    await update($, view, (): View => ({
+      kind: "failed",
+      reason: "Clawders runs on macOS and Linux",
+    }));
+    return;
+  }
   screen.streamer = { kind: "launching" };
   // oxlint-disable-next-line prefer-destructuring -- the engine reads $ from source and refuses any spelling but $.plugin.root
   const root = $.plugin.root;
@@ -199,7 +178,6 @@ const closeScreen = async ($: EngineInterface) => {
   screen.streamer = { kind: "off" };
   screen.mounted = null;
   screen.latest = null;
-  screen.heard = null;
   await stopStreamer(streamer);
   await update($, view, () => starting);
 };
@@ -226,27 +204,6 @@ const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
         requestId: PANE,
         rows: frame.rows,
       });
-
-const playEffect = async ($: EngineInterface, effect: Effect) => {
-  sfx.sounds ??= synthesizeEffects();
-  try {
-    await $.audio.play({ base64: sfx.sounds[effect], mime: "audio/wav" }, { gain: SFX_GAIN });
-  } catch {
-    // A missed effect is not worth a toast.
-  }
-};
-
-// Sounds what happened between the last frame shown and this one.
-const hear = ($: EngineInterface, frame: Frame) => {
-  const { chimedAt, effects } = effectsBetween(screen.heard, frame, screen.chimedAt);
-  screen.heard = countsOf(frame);
-  screen.chimedAt = chimedAt;
-  if (sfx.isOn && sfx.canPlay) {
-    for (const effect of effects) {
-      void playEffect($, effect);
-    }
-  }
-};
 
 // Puts a frame on screen: blitted onto what is mounted, or, when the pane
 // still shows something else, a redraw that mounts it.
@@ -281,10 +238,9 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
     await closeScreen($);
     return;
   }
-  hear($, frame);
   if (frame.frame - screen.talliedAt >= TALLY_MS / FRAME_MS) {
     screen.talliedAt = frame.frame;
-    await update($, status, () => statusOf(run, frame.coins));
+    await update($, status, () => statusOf(run, frame.coins, postingNote()));
   }
 };
 
@@ -314,7 +270,7 @@ const pull = async ($: EngineInterface) => {
 
 const setRun = async ($: EngineInterface, next: Run) => {
   run = next;
-  await update($, status, () => statusOf(next, screen.latest?.coins ?? 0));
+  await update($, status, () => statusOf(next, screen.latest?.coins ?? 0, postingNote()));
 };
 
 // The name runs go up under: the configured one, else git's.
@@ -361,18 +317,17 @@ const finish = async ($: EngineInterface) => {
 };
 
 export const register: Register = (on, options) => {
-  sfx.isOn = options.sfx !== false;
   const leaderboardUrl = String(options.leaderboardUrl ?? "");
   const isPosting = options.leaderboard !== false && leaderboardUrl.length > 0;
 
   on("session.start", async ($, e, next) => {
-    sfx.canPlay = await canPlayClips($);
     if (isPosting) {
       leaderboard = {
         name: await playerName($, String(options.playerName ?? "")),
         url: leaderboardUrl,
       };
     }
+    await update($, status, () => statusOf(run, 0, postingNote()));
     void $.ui.open({ id: PANE, title: TITLE });
     // oxlint-disable-next-line unicorn/no-array-method-this-argument -- $.clock.every is a timer, not Array#every
     $.clock.every(FRAME_MS, () => {

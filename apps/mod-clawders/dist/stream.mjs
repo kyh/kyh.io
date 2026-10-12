@@ -239,11 +239,7 @@ var takeFrame = async (request, response) => {
 			const words = toCells(rgba, width, height, columns, rows);
 			cells = Buffer.from(words.buffer, words.byteOffset, words.byteLength).toString("base64");
 		}
-		const tally = {
-			coins: header(request, "x-coins"),
-			crashes: header(request, "x-crashes"),
-			jumps: header(request, "x-jumps")
-		};
+		const tally = { coins: header(request, "x-coins") };
 		latest = {
 			cells,
 			columns,

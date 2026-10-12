@@ -1,24 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  drawsImages,
-  effectsBetween,
-  frameUrl,
-  lastWords,
-  parseFrame,
-  placementOf,
-} from "../hooks/screen";
-import type { Frame } from "../hooks/screen";
+import { drawsImages, frameUrl, lastWords, parseFrame, placementOf } from "../hooks/screen";
 import { flipRows, frameSize, toCells } from "../stream/frame";
 
 const HEADERS = {
   "x-coins": "3",
   "x-columns": "80",
-  "x-crashes": "1",
   "x-frame": "12",
   "x-height": "400",
-  "x-jumps": "5",
   "x-rows": "24",
   "x-width": "560",
 };
@@ -68,37 +58,13 @@ describe("screen", () => {
     assert.deepEqual(parseFrame(HEADERS, ""), {
       coins: 3,
       columns: 80,
-      crashes: 1,
       frame: 12,
       height: 400,
-      jumps: 5,
       rows: 24,
       width: 560,
     });
     assert.equal(parseFrame(HEADERS, "AAAA")?.cells, "AAAA");
     assert.equal(parseFrame({ ...HEADERS, "x-frame": "nope" }, ""), null);
-  });
-
-  it("sounds what changed since the last frame, a crash over all else", () => {
-    const base: Frame = {
-      coins: 0,
-      columns: 1,
-      crashes: 0,
-      frame: 10,
-      height: 1,
-      jumps: 0,
-      rows: 1,
-      width: 1,
-    };
-    assert.deepEqual(effectsBetween(null, base, 0).effects, []);
-    const later = { ...base, coins: 2, frame: 11, jumps: 1 };
-    assert.deepEqual(effectsBetween(base, later, 0), {
-      chimedAt: 11,
-      effects: ["jump", "coin"],
-    });
-    assert.deepEqual(effectsBetween(later, { ...later, coins: 3, frame: 12 }, 11).effects, []);
-    assert.deepEqual(effectsBetween(base, { ...later, crashes: 1 }, 0).effects, ["crash"]);
-    assert.deepEqual(effectsBetween(later, { ...base, frame: 1 }, 11).effects, []);
   });
 
   it("keeps a process's last words", () => {

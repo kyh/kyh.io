@@ -1,6 +1,6 @@
 {
   "name": "mod-clawders",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Clawd meets surfing",
   "author": {
     "name": "Kaiyu Hsu"
@@ -24,12 +24,6 @@
       "title": "Leaderboard URL",
       "description": "Where runs are posted. Empty: runs are not posted",
       "default": "https://clawders.kyh.io"
-    },
-    "sfx": {
-      "type": "boolean",
-      "title": "Sound effects",
-      "description": "Synthesized coin, jump and crash sounds while the game runs (macOS)",
-      "default": true
     }
   }
 }

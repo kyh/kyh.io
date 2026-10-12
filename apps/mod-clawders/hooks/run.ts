@@ -45,7 +45,10 @@ export const resultOf = (run: Run, now: number, coins: number): Omit<Result, "ra
 
 const tokensOf = (count: number) => `${count.toLocaleString("en-US")} tokens`;
 
-export const statusOf = (run: Run, coins: number) => {
+// `idleNote` follows the idle lines: where finished runs go, so nobody posts
+// to a public leaderboard without seeing it.
+export const statusOf = (run: Run, coins: number, idleNote = "") => {
+  const note = idleNote ? ` · ${idleNote}` : "";
   if (run.kind === "live") {
     return `● LIVE · ${tokensOf(run.tokens)} · ● ${coins}`;
   }
@@ -53,10 +56,10 @@ export const statusOf = (run: Run, coins: number) => {
     return `◐ prompt within ${GRACE_MS / 1000}s to keep the run · ${tokensOf(run.tokens)} · ● ${coins}`;
   }
   if (!run.last) {
-    return "○ idle · a run starts with your next prompt";
+    return `○ idle · a run starts with your next prompt${note}`;
   }
   const place = run.last.rank === null ? "" : ` · #${run.last.rank} on the leaderboard`;
-  return `○ idle · last run ${tokensOf(run.last.tokens)}${place}`;
+  return `○ idle · last run ${tokensOf(run.last.tokens)}${place}${note}`;
 };
 
 // The leaderboard's answer to a posted run: `{ "rank": n }`.

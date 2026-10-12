@@ -79,8 +79,8 @@ export const createView = ({ pixelRatio = 1, sizesCanvas = false } = {}) => {
 
   return {
     canvas: renderer.domElement,
-    // The run's counts so far, for whoever sounds or reports it.
-    counts: () => ({ coins: game.coins, crashes: game.crashes, jumps: game.jumps }),
+    // The run's coins so far, for whoever reports it.
+    coins: () => game.coins,
     dispose: () => renderer.dispose(),
     draw,
     gl: renderer.getContext(),
