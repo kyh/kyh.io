@@ -2,97 +2,54 @@
 // pixels go to the streamer, whose answer says how big to draw, whether the
 // run goes on and its tokens; opened plainly (`pnpm world`), it runs
 // full-window with the distance as its score.
-import * as THREE from "three";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-
-import { newGame, step } from "../hooks/game";
-import { createHud } from "./hud";
-import { createScene } from "./scene";
-
-interface Control {
-  width: number;
-  height: number;
-  isActive: boolean;
-  isCoarse: boolean;
-  tokens: number;
-}
+import { createView } from "./view";
+import type { Frame } from "./view";
 
 const IDLE_FRAME_MS = 250;
 const params = new URLSearchParams(location.search);
 const isStreamed = params.has("stream");
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(1);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.NeutralToneMapping;
-renderer.toneMappingExposure = 1.1;
-document.body.append(renderer.domElement);
-
-const world = createScene(renderer);
-const hud = createHud();
-// Only what glows (lamps, headlights, coins) crosses the threshold.
-const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.45, 0.4, 0.9);
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(world.scene, world.camera));
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
-const freshGame = () => newGame(Math.floor(Math.random() * 1e6));
-let game = freshGame();
+const view = createView({ sizesCanvas: !isStreamed });
+document.body.append(view.canvas);
 // Streamed, the world waits for the hooks to say a run is on.
-let control: Control = {
+let frame: Frame = {
   height: innerHeight,
   isActive: !isStreamed,
   isCoarse: params.has("coarse"),
-  tokens: 0,
+  score: isStreamed ? 0 : "distance",
   width: innerWidth,
 };
 let pixels = new Uint8Array(0);
 let isSending = false;
 
-const resize = (width: number, height: number) => {
-  const size = renderer.getSize(new THREE.Vector2());
-  if (size.x === width && size.y === height) {
-    return;
-  }
-  renderer.setSize(width, height, !isStreamed);
-  composer.setSize(width, height);
-  world.resize(width, height);
-  pixels = new Uint8Array(width * height * 4);
-};
-
-// Hands the frame just drawn to the streamer; its answer is the next control.
+// Hands the frame just drawn to the streamer; its answer is the next frame.
 const send = async () => {
-  const gl = renderer.getContext();
-  gl.readPixels(0, 0, control.width, control.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  const { height, width } = frame;
+  if (pixels.length !== width * height * 4) {
+    pixels = new Uint8Array(width * height * 4);
+  }
+  view.gl.readPixels(0, 0, width, height, view.gl.RGBA, view.gl.UNSIGNED_BYTE, pixels);
+  const counts = view.counts();
   const response = await fetch("/frame", {
     body: pixels,
     headers: {
-      "x-coins": String(game.coins),
-      "x-crashes": String(game.crashes),
-      "x-height": String(control.height),
-      "x-jumps": String(game.jumps),
-      "x-width": String(control.width),
+      "x-coins": String(counts.coins),
+      "x-crashes": String(counts.crashes),
+      "x-height": String(height),
+      "x-jumps": String(counts.jumps),
+      "x-width": String(width),
     },
     method: "POST",
   });
-  const width = Number(response.headers.get("x-width"));
-  const height = Number(response.headers.get("x-height"));
-  if (width > 0 && height > 0) {
-    const isActive = response.headers.get("x-active") === "1";
-    // A run that stopped is over: the next one starts a fresh game.
-    if (isActive && !control.isActive) {
-      game = freshGame();
-    }
-    control = {
-      height,
-      isActive,
+  const nextWidth = Number(response.headers.get("x-width"));
+  const nextHeight = Number(response.headers.get("x-height"));
+  if (nextWidth > 0 && nextHeight > 0) {
+    frame = {
+      height: nextHeight,
+      isActive: response.headers.get("x-active") === "1",
       isCoarse: response.headers.get("x-mode") === "cells",
-      tokens: Number(response.headers.get("x-tokens")) || 0,
-      width,
+      score: Number(response.headers.get("x-tokens")) || 0,
+      width: nextWidth,
     };
   }
 };
@@ -118,37 +75,21 @@ const pause = (ms: number) =>
   });
 
 let last = performance.now();
-const frame = async () => {
+const loop = async () => {
   const now = performance.now();
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   if (!isStreamed) {
-    control = { ...control, height: innerHeight, isActive: true, width: innerWidth };
+    frame = { ...frame, height: innerHeight, width: innerWidth };
   }
-  resize(control.width, control.height);
-  world.setCoarse(control.isCoarse);
-  // Bloom at a blocks render is a smear across half the pane.
-  bloom.enabled = !control.isCoarse;
-  if (control.isActive) {
-    step(game, dt);
-  }
-  world.update(game, dt, control.isActive);
-  composer.render(dt);
-  // Blocks can't carry text this small; the pane's status line has the score.
-  if (!control.isCoarse) {
-    const score = isStreamed ? control.tokens : Math.floor(game.score);
-    hud.draw(control.width, control.height, score, game.coins);
-    renderer.autoClear = false;
-    renderer.render(hud.scene, hud.camera);
-    renderer.autoClear = true;
-  }
+  view.draw(frame, dt);
   if (isStreamed && !isSending) {
     void sendOnce();
   }
-  if (isStreamed && !control.isActive) {
+  if (isStreamed && !frame.isActive) {
     await pause(IDLE_FRAME_MS);
   }
-  requestAnimationFrame(frame);
+  requestAnimationFrame(loop);
 };
 
-requestAnimationFrame(frame);
+requestAnimationFrame(loop);

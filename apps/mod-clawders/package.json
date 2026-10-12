@@ -4,6 +4,10 @@
   "private": true,
   "description": "Claude Code mod: Clawders, an endless runner in a pane while Claude works, with a leaderboard of output tokens per run",
   "type": "module",
+  "exports": {
+    "./run": "./hooks/run.ts",
+    "./world": "./world/mount.ts"
+  },
   "scripts": {
     "build": "vite build && vite build -c vite.stream.config.ts",
     "clean": "git clean -xdf .cache .turbo node_modules",
