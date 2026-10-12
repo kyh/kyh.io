@@ -121,9 +121,10 @@ while Claude works, and posts each run to a shared leaderboard. No slash
 commands: the pane opens on session start.
 
 - Picture: `world/` is a three.js game (procedural only, no model files)
-  rendered in the installed Chrome, headless, by `stream/stream.ts`
-  (`playwright-core` + Vite middleware), which the pane spawns with
-  `$.process.spawn` while it is drawn. The page posts each frame's RGBA; the
+  rendered in the installed Chrome, headless, by `stream/stream.ts`, which
+  the pane spawns with `$.process.spawn` while it is drawn. Chrome is spawned
+  directly (`stream/chrome.ts`, no driver) on a throwaway profile, with
+  `--remote-debugging-pipe` so it dies with the streamer even on SIGKILL. The page posts each frame's RGBA; the
   hooks poll `GET /frame` over a Unix socket (numbers in `x-` headers, cells
   in the body: hooks can't import zod). kitty/Ghostty get an `Image` reading
   an RGBA file; elsewhere quadrant `Raster` cells, and the world switches to
@@ -132,6 +133,13 @@ commands: the pane opens on session start.
   sized to what the terminal shows (`frameSize`), and the page keeps one in
   flight.
 
+- Ships built: `pnpm build` writes `dist/` (the world via `vite build`, the
+  streamer bundled to `dist/stream.mjs`, run with `node`), and `dist/` is
+  committed. An installed plugin gets no `node_modules` (Claude Code skips
+  pnpm lockfiles and `workspace:` deps), so the mod has no runtime
+  dependencies. Rebuild and commit after changing `world/` or `stream/`.
+  Users install from `.claude-plugin/marketplace.json` at the repo root
+  (marketplace `kyh`).
 - Runs (`hooks/run.ts`): `turn.start` starts or carries one, every
   `turn.step`'s `output_tokens` (subagents' included) is its score, and the
   main loop's `turn.complete` starts a 5s grace. A prompt within it carries
@@ -139,8 +147,9 @@ commands: the pane opens on session start.
   starts a fresh game. The hooks send `active` and `tokens` down with each
   poll; the HUD pill shows the tokens.
 - Leaderboard: `leaderboard/` is its own workspace package
-  (`@repo/mod-surfer-leaderboard`; `cf dev` delegates to Vite in any package
-  that depends on it) — a Worker on D1 that takes `POST /runs` and lists each
+  (`@repo/mod-surfer-leaderboard`), a Next.js app on Vercel at
+  `clauders.kyh.io` with its own Turso database (Drizzle; `db:push` is local,
+  `db:push-remote` production). It takes `POST /runs` and lists each
   player's best at `/`. The hooks post to `leaderboardUrl` under `playerName`
   (else git's `user.name`); `leaderboard: false` stops posting. Anyone can
   post, so the zod schema bounds every number.
@@ -152,8 +161,9 @@ commands: the pane opens on session start.
 **Key files**: `hooks/register.tsx` (hooks, runs, streamer, blits),
 `hooks/run.ts` (run state, grace, status line), `hooks/screen.ts` (socket,
 frame parsing), `hooks/game.ts` (runner simulation + autopilot, shared with the
-world), `leaderboard/src/` (Worker, zod run schema, page), `world/` (three.js scene; `vfx.ts` particles off game-state changes), `stream/` (Chrome driver, frame → RGBA or
-cells), `types/index.d.ts` (the `$.state` contract).
+world), `leaderboard/src/` (route, zod run schema, standings query, page),
+`world/` (three.js scene; `vfx.ts` particles off game-state changes),
+`stream/` (Chrome launch, world files, frame → RGBA or cells), `types/index.d.ts` (the `$.state` contract).
 
 ### mod-dev (`apps/mod-dev`)
 

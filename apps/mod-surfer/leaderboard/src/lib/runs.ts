@@ -19,8 +19,3 @@ export const runSchema = z.object({
 });
 
 export type Run = z.infer<typeof runSchema>;
-
-// A player's best run, as the leaderboard lists it.
-export interface Standing extends Run {
-  endedAt: number;
-}

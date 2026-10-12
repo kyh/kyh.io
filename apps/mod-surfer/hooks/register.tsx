@@ -177,8 +177,10 @@ const startStreamer = async ($: EngineInterface) => {
   );
   const child = $.process.spawn({
     argv: [
-      `${root}/node_modules/.bin/tsx`,
-      `${root}/stream/stream.ts`,
+      "node",
+      `${root}/dist/stream.mjs`,
+      "--world",
+      `${root}/dist/world`,
       "--socket",
       socketPath,
       "--image",

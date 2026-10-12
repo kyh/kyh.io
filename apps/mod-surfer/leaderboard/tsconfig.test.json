@@ -1,8 +1,0 @@
-{
-  "extends": "@kyh/tsconfig/base.json",
-  "compilerOptions": {
-    "types": ["node"],
-    "tsBuildInfoFile": "${configDir}/.cache/test.tsbuildinfo.json"
-  },
-  "include": ["src/page.ts", "src/runs.ts", "test"]
-}

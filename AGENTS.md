@@ -75,7 +75,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `vis-ml`      | `pnpm dev:vis-ml`      | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
 | `covid-19`    | `pnpm dev:covid`       | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
 | `party`       | `pnpm dev:party`       | 8787 (`cf dev`)             | No — WebSocket server; `typecheck` + `build`           |
-| `leaderboard` | `pnpm dev:leaderboard` | 8787 (`cf dev`)             | **Yes** — curl `/runs`; local D1 needs its migration   |
+| `leaderboard` | `pnpm dev:leaderboard` | 3016                        | **Yes** — `.env` from example + `db:push` (local file) |
 | `cli`         | `pnpm dev:cli`         | —                           | No — Ink terminal UI, needs a real TTY                 |
 | `mod-surfer`  | `pnpm dev:mod-surfer`  | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
 | `mod-dev`     | `pnpm dev:mod-dev`     | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"` |

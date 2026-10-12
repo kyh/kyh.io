@@ -1,0 +1,14 @@
+{
+  "name": "kyh",
+  "owner": {
+    "name": "Kaiyu Hsu"
+  },
+  "description": "Kaiyu Hsu's Claude Code mods",
+  "plugins": [
+    {
+      "name": "mod-surfer",
+      "source": "./apps/mod-surfer",
+      "description": "Subway Surfers-style runner pane that runs while Claude works; each run's output tokens go to a shared leaderboard"
+    }
+  ]
+}

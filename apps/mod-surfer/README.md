@@ -3,8 +3,7 @@
 A Claude Code mod. While Claude works, a pane plays a self-running Subway
 Surfers-style runner starring Clawd. Each run scores the output tokens Claude
 spends before it goes quiet, and goes up on a shared leaderboard: who can keep
-Claude going the longest:
-<https://clauders.kyh.io>.
+Claude going the longest, at <https://clauders.kyh.io>.
 
 The game is a three.js world rendered in a headless Chrome and streamed into
 the pane. In kitty or Ghostty it is a real picture; in any other terminal
@@ -15,52 +14,39 @@ pixels a character, from the same frames.
 
 - **Claude Code** with mod (function hooks plugin) support, at or past the
   version `packages/claude-code-types` pins.
-- **Google Chrome** installed. The game renders in it, headless, through
-  `playwright-core`; nothing is downloaded.
-- **`pnpm install`** in this repo: the streamer runs on `tsx` and Vite from
-  `node_modules`.
+- **Google Chrome** installed. The game renders in it, headless; nothing is
+  downloaded. Set `CHROME_PATH` if it lives somewhere unusual.
+- **Node.js** on your `PATH`: it runs the streamer (`dist/stream.mjs`). No
+  packages to install; the mod ships built.
 - **A wide terminal.** Start Claude Code with `CLAUDE_CODE_NO_FLICKER=1` so the
   pane docks on the right; otherwise it waits for room.
 - **kitty or Ghostty** for the sharp picture. Elsewhere you get blocks.
 
-## Set up
+## Install
 
-Loading it is pointing Claude Code at this folder (after `pnpm install`).
+In Claude Code:
 
-### One session
+```
+/plugin install mod-surfer --marketplace kyh/kyh.io
+```
 
-From this repo:
+Or from a shell:
 
 ```sh
-pnpm dev:mod-surfer
+claude plugin marketplace add kyh/kyh.io
+claude plugin install mod-surfer@kyh
 ```
 
-That runs `claude --plugin-dir apps/mod-surfer`. From anywhere else:
+`/plugin` disables or removes it. The marketplace is `.claude-plugin/marketplace.json`
+at the repo root.
 
-```sh
-claude --plugin-dir /path/to/kyh.io/apps/mod-surfer
-```
+### From a checkout
 
-### Every session
-
-Add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of
-`~/.claude/settings.json` (an absolute path; `~` works). This is also how the
-desktop app loads it, since it takes no flags.
-
-```json
-{
-  "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/code/kyh.io/apps/mod-surfer"
-  }
-}
-```
-
-Separate several folders with `:` (`;` on Windows). Claude Code reads this from
-your user settings only, never a project's.
-
-### Remove it
-
-Drop the `--plugin-dir` flag, or the path from `CLAUDE_CODE_PLUGIN_DIRS`.
+From this repo, `pnpm dev:mod-surfer` builds it and runs
+`claude --plugin-dir apps/mod-surfer`. To load the checkout in every session
+(the desktop app included, which takes no flags), add the folder to
+`CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`; run
+`pnpm -F @repo/mod-surfer build` after changing `world/` or `stream/`.
 
 ## Use it
 
@@ -109,15 +95,16 @@ You can also set them in `~/.claude/settings.json`:
 
 ## Leaderboard
 
-`leaderboard/` is a Cloudflare Worker on D1, its own workspace package
-(`@repo/mod-surfer-leaderboard`), all through the `cf` CLI. `POST /runs` takes
-`{ name, tokens, coins, seconds }` and answers the player's `rank`; `GET /`
-is the page, each player's best run by tokens; `GET /runs` the same as JSON.
+`leaderboard/` is a Next.js app on Vercel with its own Turso database, a
+workspace package of its own (`@repo/mod-surfer-leaderboard`). `POST /runs`
+takes `{ name, tokens, coins, seconds }` and answers the player's `rank`;
+`GET /` is the page, each player's best run by tokens; `GET /runs` the same as
+JSON.
 
 ```sh
-pnpm dev:leaderboard                                          # cf dev on :8787, local D1
-pnpm deploy:leaderboard                                       # cf deploy
-pnpm -F @repo/mod-surfer-leaderboard migrate <database-id>    # apply leaderboard/migrations (add --local for dev)
+cp apps/mod-surfer/leaderboard/.env.example apps/mod-surfer/leaderboard/.env
+pnpm -F @repo/mod-surfer-leaderboard db:push   # the local file database
+pnpm dev:leaderboard                           # :3016
 ```
 
 Anyone can post, so names are trimmed and every number is bounded; there is
@@ -125,12 +112,12 @@ no proof a run happened.
 
 ## Troubleshooting
 
-| Symptom                  | Cause and fix                                                               |
-| ------------------------ | --------------------------------------------------------------------------- |
-| No pane                  | The terminal is too narrow (see Requirements). Widen it.                    |
-| Pane says ✗ and a reason | The streamer stopped: usually Chrome missing, or `pnpm install` not run.    |
-| Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.  |
-| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-surfer:`. |
+| Symptom                  | Cause and fix                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| No pane                  | The terminal is too narrow (see Requirements). Widen it.                                   |
+| Pane says ✗ and a reason | The streamer stopped: usually Chrome not found (set `CHROME_PATH`) or no `node` on `PATH`. |
+| Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.                 |
+| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-surfer:`.                |
 
 ## Develop
 
@@ -138,6 +125,7 @@ Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
 file in `hooks/` reloads the mod without a restart.
 
 ```sh
+pnpm -F @repo/mod-surfer build      # dist/: the world for Chrome and the bundled streamer (commit it)
 pnpm -F @repo/mod-surfer world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
 pnpm -F @repo/mod-surfer test       # node: the runner, runs, frames, the streamer protocol
 pnpm -F @repo/mod-surfer test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
@@ -161,16 +149,19 @@ a mod each time it loads one:
 cp apps/mod-surfer/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
 ```
 
-| File                         | Role                                                                              |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| `hooks/register.tsx`         | The hooks: pane, runs, posting, starting the streamer and blitting its frames     |
-| `hooks/screen.ts`            | The hooks' side of the streamer: socket, URL, parsing a frame                     |
-| `hooks/game.ts`              | Runner simulation and autopilot, shared with the world                            |
-| `hooks/sfx.ts`               | The sound effects, synthesized into WAVs                                          |
-| `hooks/run.ts`               | A run's state: tokens, the 5s grace, its result and status line                   |
-| `world/`                     | The three.js game: scene, Clawd, props, toon materials, HUD, particles (`vfx.ts`) |
-| `stream/stream.ts`           | Serves the world to headless Chrome, takes its frames, answers the hooks          |
-| `stream/frame.ts`            | Frame sizing, flipped RGBA for pictures, quadrant cells for blocks                |
-| `types/index.d.ts`           | The `$.state` contract: what the pane shows, the status line                      |
-| `.claude-plugin/plugin.json` | Manifest and the `/config` options                                                |
-| `leaderboard/`               | The leaderboard Worker: D1 schema, run schema, page                               |
+| File                         | Role                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| `hooks/register.tsx`         | The hooks: pane, runs, posting, starting the streamer and blitting its frames       |
+| `hooks/screen.ts`            | The hooks' side of the streamer: socket, URL, parsing a frame                       |
+| `hooks/game.ts`              | Runner simulation and autopilot, shared with the world                              |
+| `hooks/sfx.ts`               | The sound effects, synthesized into WAVs                                            |
+| `hooks/run.ts`               | A run's state: tokens, the 5s grace, its result and status line                     |
+| `world/`                     | The three.js game: scene, Clawd, props, toon materials, HUD, particles (`vfx.ts`)   |
+| `stream/stream.ts`           | Serves the world to headless Chrome, takes its frames, answers the hooks            |
+| `stream/chrome.ts`           | Where Chrome is, and how it runs: headless, throwaway profile, tied to the streamer |
+| `stream/files.ts`            | The built world, served as files                                                    |
+| `dist/`                      | Built and committed: the world page and `stream.mjs`, so installs need no packages  |
+| `stream/frame.ts`            | Frame sizing, flipped RGBA for pictures, quadrant cells for blocks                  |
+| `types/index.d.ts`           | The `$.state` contract: what the pane shows, the status line                        |
+| `.claude-plugin/plugin.json` | Manifest and the `/config` options                                                  |
+| `leaderboard/`               | The leaderboard Worker: D1 schema, run schema, page                                 |

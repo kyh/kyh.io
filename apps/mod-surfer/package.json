@@ -5,8 +5,9 @@
   "description": "Claude Code mod: a Subway Surfers-style runner pane that runs while Claude works, with a leaderboard of output tokens per run",
   "type": "module",
   "scripts": {
+    "build": "vite build && vite build -c vite.stream.config.ts",
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "session": "claude --plugin-dir .",
+    "session": "pnpm build && claude --plugin-dir .",
     "lint": "oxlint --report-unused-disable-directives",
     "test": "tsx --test \"test/*.spec.ts\"",
     "test:mod": "claude plugin test .",
@@ -14,17 +15,14 @@
     "validate": "claude plugin validate .",
     "world": "vite"
   },
-  "dependencies": {
-    "playwright-core": "^1.63.0",
-    "three": "^0.186.1",
-    "tsx": "catalog:",
-    "vite": "catalog:"
-  },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
     "@repo/claude-code-types": "workspace:^",
     "@types/node": "catalog:",
     "@types/three": "^0.186.0",
-    "typescript": "catalog:"
+    "three": "^0.186.1",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

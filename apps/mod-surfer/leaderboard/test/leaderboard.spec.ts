@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { duration, renderLeaderboard } from "../src/page";
-import { runSchema } from "../src/runs";
+import { formatDuration } from "../src/lib/format";
+import { runSchema } from "../src/lib/runs";
 
 const run = { coins: 12, name: "kai", seconds: 90, tokens: 4200 };
 
@@ -33,21 +33,8 @@ describe("leaderboard", () => {
   });
 
   it("duration reads as the largest two units", () => {
-    assert.equal(duration(9), "9s");
-    assert.equal(duration(65), "1m 05s");
-    assert.equal(duration(3725), "1h 02m");
-  });
-
-  it("renderLeaderboard escapes names and ranks in order", () => {
-    const html = renderLeaderboard([
-      { ...run, endedAt: 0, name: "<b>me</b>", tokens: 9000 },
-      { ...run, endedAt: 0, name: "you" },
-    ]);
-    assert.ok(html.includes("&lt;b&gt;me&lt;/b&gt;"));
-    assert.ok(html.indexOf("9,000") < html.indexOf("4,200"));
-  });
-
-  it("renderLeaderboard says when there are no runs", () => {
-    assert.ok(renderLeaderboard([]).includes("No runs yet."));
+    assert.equal(formatDuration(9), "9s");
+    assert.equal(formatDuration(65), "1m 05s");
+    assert.equal(formatDuration(3725), "1h 02m");
   });
 });

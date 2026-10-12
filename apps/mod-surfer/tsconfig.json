@@ -10,6 +10,7 @@
     "hooks/sfx.ts",
     "stream",
     "test/*.spec.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vite.stream.config.ts"
   ]
 }

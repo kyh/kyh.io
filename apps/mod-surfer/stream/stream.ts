@@ -1,8 +1,8 @@
-// The frame source the mod's hooks spawn: serves the world through Vite to
-// a headless Chrome (the one installed, via playwright-core), takes each
-// frame the page posts, and answers the hooks over a Unix socket.
+// The frame source the mod's hooks spawn: serves the built world to the
+// installed Chrome, run headless, takes each frame the page posts, and
+// answers the hooks over a Unix socket. It runs bundled, as dist/stream.js.
 //
-//   tsx stream/stream.ts --socket <path> --image <path>
+//   node dist/stream.js --world <dir> --socket <path> --image <path>
 //
 // The page draws; this process turns its pixels into what the terminal
 // takes: an RGBA file an Image reads (kitty, Ghostty), or Raster cells.
@@ -13,16 +13,17 @@
 //
 // It prints `ready` once the first frame is in, and exits when the hooks
 // stop asking for a while, so a lost session never leaves Chrome running.
+import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import http from "node:http";
+import os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-import { chromium } from "playwright-core";
-import type { Browser } from "playwright-core";
-import { createServer } from "vite";
-
+import { chromeArgs, chromePaths } from "./chrome";
+import { assetPath, contentType } from "./files";
 import { flipRows, frameSize, toCells } from "./frame";
 
 type Mode = "image" | "cells";
@@ -50,18 +51,19 @@ interface Latest {
 const ABANDONED_MS = 15_000;
 
 const { values } = parseArgs({
-  options: { image: { type: "string" }, socket: { type: "string" } },
+  options: { image: { type: "string" }, socket: { type: "string" }, world: { type: "string" } },
 });
-const { image: imagePath, socket: socketPath } = values;
-if (!imagePath || !socketPath) {
-  process.stderr.write("usage: stream.ts --socket <path> --image <path>\n");
+const { image: imagePath, socket: socketPath, world: worldDir } = values;
+if (!imagePath || !socketPath || !worldDir) {
+  process.stderr.write("usage: stream.js --world <dir> --socket <path> --image <path>\n");
   process.exit(2);
 }
 
 const want: Want = { columns: 80, isActive: false, mode: "cells", rows: 24, tokens: 0 };
 let latest: Latest | null = null;
 let lastAsked = Date.now();
-let browser: Browser | null = null;
+let chrome: ChildProcess | null = null;
+const profileDir = mkdtempSync(path.join(os.tmpdir(), "mod-surfer-chrome-"));
 
 const readBody = async (request: http.IncomingMessage) => {
   const chunks: Buffer[] = [];
@@ -142,17 +144,22 @@ const answer = (request: http.IncomingMessage, response: http.ServerResponse) =>
   response.end(cells);
 };
 
-const vite = await createServer({
-  appType: "spa",
-  configFile: false,
-  logLevel: "error",
-  root: path.join(import.meta.dirname, "../world"),
-  server: { hmr: false, middlewareMode: true },
-});
+const world = path.resolve(worldDir);
+
+const serveWorld = (request: http.IncomingMessage, response: http.ServerResponse) => {
+  const file = assetPath(world, request.url ?? "/");
+  if (!file || !existsSync(file)) {
+    response.statusCode = 404;
+    response.end();
+    return;
+  }
+  response.setHeader("content-type", contentType(file));
+  response.end(readFileSync(file));
+};
 
 const page = http.createServer(async (request, response) => {
   if (request.method !== "POST" || request.url !== "/frame") {
-    vite.middlewares(request, response);
+    serveWorld(request, response);
     return;
   }
   try {
@@ -180,12 +187,13 @@ const shutdown = async (code: number) => {
   for (const file of [socketPath, imagePath, `${imagePath}.tmp`]) {
     rmSync(file, { force: true });
   }
-  try {
-    await browser?.close();
-  } catch {
-    // Chrome is gone already.
+  if (chrome && chrome.exitCode === null) {
+    // Its exit is ours now, not news to report.
+    chrome.removeAllListeners("exit");
+    chrome.kill();
+    await once(chrome, "exit");
   }
-  await vite.close();
+  rmSync(profileDir, { force: true, recursive: true });
   process.exit(code);
 };
 process.on("SIGTERM", async () => {
@@ -200,12 +208,18 @@ setInterval(async () => {
   }
 }, 1000);
 
-try {
-  browser = await chromium.launch({ channel: "chrome", headless: true });
-  const tab = await browser.newPage();
-  tab.on("pageerror", (error) => process.stderr.write(`page: ${error.message}\n`));
-  await tab.goto(`http://127.0.0.1:${port}/?stream`);
-} catch (error) {
-  process.stderr.write(`chrome: ${error instanceof Error ? error.message : String(error)}\n`);
+const executable = chromePaths(process.platform, process.env).find((file) => existsSync(file));
+if (executable) {
+  // Chrome talks to itself on stderr; its noise must not read as why the pane
+  // failed. Fds 3 and 4 are its debugging pipe (see chromeArgs).
+  chrome = spawn(executable, chromeArgs(profileDir, `http://127.0.0.1:${port}/?stream`), {
+    stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"],
+  });
+  chrome.once("exit", async (code) => {
+    process.stderr.write(`chrome: exited (${code ?? "signal"})\n`);
+    await shutdown(1);
+  });
+} else {
+  process.stderr.write("chrome: Google Chrome not found; set CHROME_PATH to its executable\n");
   await shutdown(1);
 }

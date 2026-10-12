@@ -21,7 +21,6 @@
     "dev:tc": "pnpm -F @repo/tc dev",
     "dev:vis-ml": "pnpm -F @repo/vis-ml dev",
     "deploy:party": "pnpm -F @repo/party deploy",
-    "deploy:leaderboard": "pnpm -F @repo/mod-surfer-leaderboard run deploy",
     "lint": "oxlint --report-unused-disable-directives",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

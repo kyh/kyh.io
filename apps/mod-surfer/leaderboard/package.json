@@ -2,28 +2,36 @@
   "name": "@repo/mod-surfer-leaderboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Subway Clauders leaderboard: a Worker on D1 that takes mod-surfer's runs and lists each player's best",
+  "description": "Subway Clauders leaderboard: takes mod-surfer's runs and lists each player's best, on Next.js and Turso",
   "type": "module",
   "scripts": {
-    "build": "cf build",
-    "clean": "git clean -xdf .cache .cloudflare .turbo .wrangler node_modules",
-    "deploy": "cf deploy",
-    "dev": "cf dev",
+    "build": "pnpm with-env next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "db:push": "pnpm with-env drizzle-kit push",
+    "db:push-remote": "dotenv -e .env.production.local -- sh -c 'drizzle-kit push --explain && printf \"Apply to the REMOTE database? [y/N] \" && read ok && [ \"$ok\" = y ] && drizzle-kit push'",
+    "db:studio": "pnpm with-env drizzle-kit studio",
+    "dev": "pnpm with-env next dev --turbopack -p 3016",
     "lint": "oxlint --report-unused-disable-directives",
-    "migrate": "cf d1 migrations apply",
+    "start": "pnpm with-env next start",
     "test": "tsx --test \"test/*.spec.ts\"",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e .env --"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "drizzle-kit": "1.0.0-rc.4",
+    "drizzle-orm": "1.0.0-rc.4",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261004.1",
     "@kyh/tsconfig": "workspace:^",
     "@types/node": "catalog:",
-    "cf": "1.0.0-beta.12",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:",
-    "wrangler": "^4.147.0"
+    "typescript": "catalog:"
   }
 }

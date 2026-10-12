@@ -1,7 +1,14 @@
 {
   "extends": "@kyh/tsconfig/base.json",
   "compilerOptions": {
-    "types": ["@cloudflare/workers-types"]
+    "lib": ["ES2023", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [{ "name": "next" }],
+    "module": "esnext"
   },
-  "include": ["src", "cloudflare.config.ts"]
+  "include": ["next.config.ts", "drizzle.config.ts", "src", "test", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
