@@ -62,7 +62,7 @@ const TranscriptLine = ({ line }: { line: Line }) => {
   if (line.kind === "diff") {
     return (
       <div className="t-diff">
-        <p className="t-removed">- {line.removed}</p>
+        {line.removed ? <p className="t-removed">- {line.removed}</p> : null}
         <p className="t-added">+ {line.added}</p>
       </div>
     );
@@ -76,6 +76,19 @@ const TranscriptLine = ({ line }: { line: Line }) => {
     </div>
   );
 };
+
+// The prompt box and the hint line under it, as Claude Code draws them.
+const Composer = ({ input }: { input: string }) => (
+  <div aria-hidden="true" className="composer">
+    <div className="input">
+      <span className="t-caret">❯</span> {input}
+      <span className="caret" />
+    </div>
+    <p className="t-hints">
+      <span className="t-clay">⏵⏵ auto mode on</span> (shift+tab to cycle) · esc to interrupt
+    </p>
+  </div>
+);
 
 // The mod at work: a Claude Code session on the left, the Clawders pane on
 // the right running the real game, both driven by one scripted loop.
@@ -134,21 +147,21 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
 
   return (
     <section aria-label="Clawders running beside Claude Code" className="demo">
-      <div className="terminal">
-        <fieldset className="welcome">
-          <legend>Clawders</legend>
-          <ClawdSprite />
-          <p>Keep Claude working. Every token Claude writes is a point.</p>
-        </fieldset>
+      <div className="terminal" id="terminal">
+        {isLeaderboardOpen ? (
+          <div className="board-view">
+            <Prompt text="/leaderboard" />
+            <Leaderboard standings={standings} totals={totals} />
+          </div>
+        ) : (
+          <>
+            <fieldset className="welcome">
+              <legend>Clawders</legend>
+              <ClawdSprite />
+              <p>Keep Claude working. Every token Claude writes is a point.</p>
+            </fieldset>
 
-        <div className="session" id="session">
-          {isLeaderboardOpen ? (
-            <>
-              <Prompt text="/leaderboard" />
-              <Leaderboard standings={standings} totals={totals} />
-            </>
-          ) : (
-            <>
+            <div className="session">
               <Prompt text="install it" />
               <CopyCommand command={INSTALL_COMMAND} />
               <p className="t-result">
@@ -166,45 +179,39 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
                 finishes, send the next prompt within 5 seconds or the run ends and goes on the
                 leaderboard.
               </p>
-            </>
-          )}
-        </div>
+            </div>
 
-        <div aria-hidden="true" className="live">
-          <div className="transcript">
-            {state.lines.map((line, index) => (
-              <TranscriptLine key={index} line={line} />
-            ))}
-          </div>
-          <p className="t-spinner">
-            {state.spinner ? (
-              <>
-                <span className="t-glyph">{glyph}</span>{" "}
-                <span className="t-verb">{state.spinner.verb}…</span>{" "}
-                <span className="t-dim">
-                  ({state.spinner.seconds}s · ↓ {formatTokens(state.spinner.tokens)} tokens · esc to
-                  interrupt)
-                </span>
-              </>
-            ) : (
-              " "
-            )}
-          </p>
-          <div className="input">
-            <span className="t-caret">❯</span> {state.input}
-            <span className="caret" />
-          </div>
-          <p className="t-hints">
-            <span className="t-clay">⏵⏵ auto mode on</span> (shift+tab to cycle) · esc to interrupt
-          </p>
-        </div>
+            <div aria-hidden="true" className="live">
+              <div className="transcript">
+                {state.lines.map((line, index) => (
+                  <TranscriptLine key={index} line={line} />
+                ))}
+              </div>
+              <p className="t-spinner">
+                {state.spinner ? (
+                  <>
+                    <span className="t-glyph">{glyph}</span>{" "}
+                    <span className="t-verb">{state.spinner.verb}…</span>{" "}
+                    <span className="t-dim">
+                      ({state.spinner.seconds}s · ↓ {formatTokens(state.spinner.tokens)} tokens ·
+                      esc to interrupt)
+                    </span>
+                  </>
+                ) : (
+                  " "
+                )}
+              </p>
+            </div>
+          </>
+        )}
+        <Composer input={isLeaderboardOpen ? "" : state.input} />
       </div>
 
       <div className="pane">
         <div className="pane-bar">
           <span>Clawders</span>
           <button
-            aria-controls="session"
+            aria-controls="terminal"
             aria-pressed={isLeaderboardOpen}
             className="pane-button"
             onClick={() => setIsLeaderboardOpen((isOpen) => !isOpen)}

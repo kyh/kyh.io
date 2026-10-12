@@ -216,6 +216,22 @@ code {
   white-space: pre;
 }
 
+/* /leaderboard's output, filling the terminal down to the prompt box. */
+.board-view {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.composer {
+  flex: none;
+}
+
 .input {
   margin-top: 8px;
   padding: 8px 2px;
@@ -369,20 +385,42 @@ code {
   color: var(--term-dim);
 }
 
+/* Phones: the game on the top third, the terminal below; the page itself
+   never scrolls, so the install steps scroll inside the terminal. */
 @media (max-width: 900px) {
   .demo {
     grid-template-columns: minmax(0, 1fr);
-    height: auto;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+    min-height: 0;
+    overflow: hidden;
   }
 
   .pane {
     grid-row: 1;
-    height: 62svh;
     border-left: 0;
     border-bottom: 1px solid var(--term-line);
   }
 
+  .pane-bar {
+    padding: 6px 12px;
+  }
+
+  .pane-status {
+    padding: 6px 12px 8px;
+  }
+
+  .terminal {
+    gap: 12px;
+    overflow: hidden;
+    padding: 12px;
+  }
+
+  .welcome {
+    padding: 6px 12px 10px;
+  }
+
   .live {
-    min-height: 340px;
+    flex-basis: 40%;
+    padding-top: 10px;
   }
 }
