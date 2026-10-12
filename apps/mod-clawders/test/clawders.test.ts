@@ -100,6 +100,19 @@ test(
   },
 );
 
+test("with nothing configured, posts to the shared leaderboard under git's name", async ($, on) => {
+  const { clock, posted } = world(on);
+  await $.session.start(start);
+  await turn($, 700);
+  await clock.advance(5000);
+  expect(posted).toEqual([
+    {
+      body: { coins: 0, name: "Kai", seconds: 0, tokens: 700 },
+      url: "https://clawders.kyh.io/runs",
+    },
+  ]);
+});
+
 test(
   "a prompt within the grace carries the run on",
   { options: { leaderboardUrl: LEADERBOARD, playerName: "kyh" } },
