@@ -150,7 +150,11 @@ commands: the pane opens on session start.
   (`@repo/mod-clawders-leaderboard`), a Next.js app on Vercel at
   `clawders.kyh.io` with its own Turso database (Drizzle; `db:push` is local,
   `db:push-remote` production). It takes `POST /runs` and lists each
-  player's best at `/`. The hooks post to `leaderboardUrl` under `playerName`
+  player's best at `/`, under a live demo: a scripted Claude Code session
+  (`src/lib/demo.ts`, a pure function of time) driving the real game, which
+  the site imports from the mod (`@repo/mod-clawders/world` → `world/mount.ts`;
+  `world/view.ts` is the drawing both it and the streamed page share) along
+  with `hooks/run.ts` for the status line. The hooks post to `leaderboardUrl` under `playerName`
   (else git's `user.name`); `leaderboard: false` stops posting. Anyone can
   post, so the zod schema bounds every number.
 - Sound effects: the page counts coins, jumps and crashes into each

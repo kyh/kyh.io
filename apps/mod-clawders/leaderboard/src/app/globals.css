@@ -14,8 +14,19 @@
   --wall-shade: #c9a57a;
   --grass: #7cc95a;
   --white: #fff;
-  --tag-pink: #ff3d7f;
-  --tag-cyan: #22d3ee;
+
+  /* Claude Code's terminal, as the demo draws it. */
+  --term: #121316;
+  --term-line: #2a2c33;
+  --term-ink: #e6e6e6;
+  --term-dim: #8b8e98;
+  /* Claude Code's terracotta, and its highlight for the working verb. */
+  --clay: #cd694a;
+  --clay-light: #e79475;
+  --prompt-row: #3a3a3a;
+  --ok: #4ea96f;
+  --removed: #4a1d22;
+  --added: #183d24;
 
   --stroke: 0.12em;
   --gutter: clamp(16px, 4vw, 40px);
@@ -26,12 +37,12 @@
 }
 
 html {
-  background: var(--sky-top);
+  background: var(--term);
 }
 
 body {
   margin: 0;
-  background: linear-gradient(var(--sky-top), var(--sky-low) 720px);
+  background: var(--ballast);
   color: var(--navy);
   font:
     400 1.0625rem / 1.55 var(--font-body),
@@ -77,202 +88,13 @@ code {
   paint-order: stroke fill;
 }
 
-/* The HUD, laid out as the game lays it out: score centered, coins right. */
-.hud {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 16px var(--gutter) 0;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35em;
-  margin: 0;
-  padding: 0.18em 0.7em;
-  border-radius: 999px;
-  background: var(--hud);
-  color: var(--white);
-  font-family: var(--font-display), sans-serif;
-  font-variant-numeric: tabular-nums;
-  -webkit-text-stroke: 0.1em var(--navy);
-  paint-order: stroke fill;
-}
-
-.hud .pill {
-  font-size: clamp(1.25rem, 3.4vw, 1.9rem);
-}
-
-.hud .score {
-  grid-column: 2;
-}
-
-.hud .coins {
-  grid-column: 3;
-  justify-self: end;
-}
-
-.coin {
-  width: 1.05em;
-  height: 1.05em;
-  flex: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .spin {
-    animation: spin 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-  }
-}
-
-@keyframes spin {
-  0%,
-  55% {
-    transform: rotateY(0);
-  }
-  100% {
-    transform: rotateY(360deg);
-  }
-}
-
-/* Hero */
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
-  max-width: 980px;
-  margin: 0 auto;
-  padding: clamp(32px, 7vw, 72px) var(--gutter) 0;
-  text-align: center;
-}
-
-.hero h1 {
-  font-size: clamp(3.5rem, 13vw, 8.5rem);
-  letter-spacing: 0.01em;
-  transform: rotate(-2deg);
-}
-
-.lede {
-  max-width: 34em;
-  margin: 28px 0 28px;
-  font-size: clamp(1.0625rem, 2.2vw, 1.25rem);
-  font-weight: 500;
-}
-
-.hint {
-  margin: 10px 0 0;
-  font-size: 0.9375rem;
-  opacity: 0.8;
-}
-
-.command {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: fit-content;
-  max-width: 100%;
-  padding: 8px 8px 8px 18px;
-  border-radius: 999px;
-  background: var(--navy);
-  color: var(--white);
-  text-align: left;
-}
-
-.command code {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
-}
-
-.command button {
-  flex: none;
-  min-width: 5.5em;
-  padding: 8px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--gold);
-  color: var(--navy);
-  font:
-    400 1rem var(--font-display),
-    sans-serif;
-  cursor: pointer;
-  box-shadow: inset 0 -3px 0 var(--gold-deep);
-}
-
-.command button:active {
-  box-shadow: inset 0 2px 0 var(--gold-deep);
-}
-
-/* The mod as it shows in Claude Code: a pane, the game, its status line. */
-.pane {
-  width: min(100%, 720px);
-  margin: clamp(40px, 7vw, 64px) 0 0;
-  overflow: hidden;
-  border: 2px solid var(--navy);
-  border-bottom: 0;
-  border-radius: 14px 14px 0 0;
-  background: #12141f;
-  text-align: left;
-}
-
-.pane-bar {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 14px;
-  color: #c9cbd6;
-  font:
-    0.8125rem ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
-}
-
-.pane-screen {
-  position: relative;
-}
-
-.pane-screen img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.pane-hud {
-  position: absolute;
-  inset: 3% 3% auto;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  font-size: clamp(0.9rem, 3vw, 1.6rem);
-}
-
-.pane-hud .score {
-  grid-column: 2;
-}
-
-.pane-hud .coins {
-  grid-column: 3;
-  justify-self: end;
-}
-
-.pane-status {
-  padding: 8px 14px 12px;
-  color: #9aa0b8;
-  font:
-    0.8125rem ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
-}
-
+/* The leaderboard rides on the track bed. */
 .inner {
   max-width: 760px;
   margin: 0 auto;
   padding: clamp(48px, 8vw, 88px) var(--gutter);
 }
 
-.wall h2,
 .track h2 {
   font-size: clamp(2.25rem, 6vw, 3.5rem);
 }
@@ -281,7 +103,6 @@ code {
   margin: 14px 0 28px;
 }
 
-/* The leaderboard rides on the track bed. */
 .track {
   background:
     radial-gradient(circle at 20% 30%, var(--ballast-dark) 1.5px, transparent 2px) 0 0 / 14px 14px,
@@ -370,100 +191,6 @@ code {
   font-size: 1.125rem;
 }
 
-/* How to join, sprayed on the tagged wall. */
-.wall {
-  position: relative;
-  overflow: hidden;
-  border-top: 14px solid var(--wall-shade);
-  background: var(--wall);
-}
-
-/* Tags live in the wall's margins, never under the text. */
-.tag {
-  position: absolute;
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(4rem, 9vw, 8rem);
-  line-height: 1;
-  opacity: 0.3;
-  writing-mode: vertical-rl;
-  -webkit-text-stroke: 0.06em #1f1630;
-  paint-order: stroke fill;
-  pointer-events: none;
-}
-
-.tag-opus {
-  top: 12%;
-  right: max(8px, calc(50% - 380px - 1.4em));
-  color: var(--tag-cyan);
-  transform: rotate(4deg);
-}
-
-.tag-haiku {
-  bottom: 8%;
-  left: max(8px, calc(50% - 380px - 1.4em));
-  color: var(--tag-pink);
-  transform: rotate(176deg);
-}
-
-@media (max-width: 1080px) {
-  .tag {
-    display: none;
-  }
-}
-
-.wall .inner {
-  position: relative;
-}
-
-.steps {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 36px;
-  margin: 32px 0 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: step;
-}
-
-.steps li {
-  position: relative;
-  padding-left: 64px;
-  counter-increment: step;
-}
-
-.steps li::before {
-  content: counter(step);
-  position: absolute;
-  top: -4px;
-  left: 0;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: inset 0 -4px 0 var(--gold-deep);
-  font:
-    1.375rem var(--font-display),
-    sans-serif;
-}
-
-.steps h3 {
-  margin: 0 0 10px;
-  font:
-    400 1.5rem var(--font-display),
-    sans-serif;
-}
-
-.steps p {
-  max-width: 36em;
-  margin: 12px 0 8px;
-}
-
-.steps .command {
-  margin-top: 8px;
-}
-
 .grass {
   padding: 28px var(--gutter) 36px;
   background: var(--grass);
@@ -488,9 +215,297 @@ code {
   .tokens {
     text-align: left;
   }
+}
 
-  .steps li {
-    padding-left: 0;
-    padding-top: 56px;
+/* The demo: Claude Code on the left, the Clawders pane on the right. */
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  height: 100svh;
+  min-height: 560px;
+  background: var(--term);
+  color: var(--term-ink);
+  font:
+    0.8125rem / 1.55 var(--font-mono),
+    ui-monospace,
+    monospace;
+}
+
+.demo p {
+  margin: 0;
+}
+
+.terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: clamp(16px, 2.5vw, 28px);
+}
+
+.welcome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 10px 16px 14px;
+  border: 1px solid var(--clay);
+  border-radius: 8px;
+}
+
+.welcome legend {
+  padding: 0 6px;
+  color: var(--clay);
+  font-weight: 700;
+}
+
+.sprite {
+  flex: none;
+  fill: var(--clay);
+  shape-rendering: crispEdges;
+}
+
+.session {
+  display: grid;
+  flex: 0 1 auto;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.session .t-prompt:not(:first-child) {
+  margin-top: 8px;
+}
+
+.t-prompt {
+  padding: 1px 0;
+  background: var(--prompt-row);
+  color: var(--white);
+}
+
+.t-caret {
+  color: #6e6e6e;
+}
+
+.t-dim {
+  color: var(--term-dim);
+}
+
+.t-clay {
+  color: var(--clay);
+}
+
+.t-dot {
+  color: var(--term-ink);
+}
+
+.t-ok {
+  color: var(--ok);
+}
+
+.t-result {
+  padding-left: 2ch;
+  color: var(--term-dim);
+}
+
+.t-say code {
+  color: var(--clay);
+}
+
+.live {
+  display: flex;
+  flex: 1 0 45%;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--term-line);
+  padding-top: 14px;
+}
+
+.transcript {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(transparent, #000 56px);
+}
+
+.t-note {
+  color: var(--clay);
+}
+
+.t-diff {
+  margin-left: 2ch;
+}
+
+.t-removed {
+  background: var(--removed);
+}
+
+.t-added {
+  background: var(--added);
+}
+
+.t-glyph {
+  display: inline-block;
+  width: 1ch;
+  color: var(--clay);
+}
+
+.t-verb {
+  color: var(--clay);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .t-verb {
+    background: linear-gradient(100deg, var(--clay) 43%, var(--clay-light) 50%, var(--clay) 57%) 0 0
+      / 200% 100%;
+    background-clip: text;
+    color: transparent;
+    animation: shine 2.8s linear infinite;
+  }
+}
+
+@keyframes shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.t-spinner {
+  min-height: 1.55em;
+  margin-top: 12px;
+  overflow: hidden;
+  color: var(--clay);
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.input {
+  margin-top: 8px;
+  padding: 8px 2px;
+  border-top: 1px solid var(--term-line);
+  border-bottom: 1px solid var(--term-line);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--term-ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .caret {
+    animation: blink 1s steps(1) infinite;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.t-hints {
+  margin-top: 6px;
+  color: var(--term-dim);
+  font-size: 0.8125rem;
+}
+
+/* A command to paste, with its copy button. */
+.command {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: calc(100% - 2ch);
+  margin-left: 2ch;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--term-line);
+  border-radius: 6px;
+  background: #1b1d22;
+}
+
+.command code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  color: var(--term-ink);
+  font: inherit;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.command button {
+  flex: none;
+  padding: 3px 10px;
+  border: 1px solid var(--clay);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--clay);
+  font: inherit;
+  cursor: pointer;
+}
+
+.command button:hover {
+  background: var(--clay);
+  color: var(--term);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--term-line);
+}
+
+.pane-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 14px;
+  color: var(--term-dim);
+}
+
+.pane-screen {
+  flex: 1;
+  min-height: 0;
+  background: var(--sky-top);
+}
+
+.pane-screen canvas {
+  display: block;
+}
+
+.pane-status {
+  padding: 8px 14px 12px;
+  color: var(--term-dim);
+}
+
+@media (max-width: 900px) {
+  .demo {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .pane {
+    grid-row: 1;
+    height: 62svh;
+    border-left: 0;
+    border-bottom: 1px solid var(--term-line);
+  }
+
+  .live {
+    min-height: 340px;
   }
 }

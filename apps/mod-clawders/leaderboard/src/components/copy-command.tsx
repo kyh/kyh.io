@@ -4,19 +4,24 @@ import { useState } from "react";
 
 // A command to paste into Claude Code or a shell, with a button that copies it.
 export const CopyCommand = ({ command }: { command: string }) => {
-  const [isCopied, setIsCopied] = useState(false);
+  const [label, setLabel] = useState<"Copy" | "Copied" | "Select it">("Copy");
 
   const copy = async () => {
-    await navigator.clipboard.writeText(command);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(command);
+      setLabel("Copied");
+    } catch {
+      // The page has no clipboard access (an iframe, a denied permission).
+      setLabel("Select it");
+    }
+    setTimeout(() => setLabel("Copy"), 1600);
   };
 
   return (
     <div className="command">
       <code>{command}</code>
       <button onClick={copy} type="button">
-        {isCopied ? "Copied" : "Copy"}
+        {label}
       </button>
     </div>
   );
