@@ -158,10 +158,13 @@ commands: the pane opens on session start.
   with `hooks/run.ts` for the status line. The hooks post to `leaderboardUrl` under `playerName`
   (else git's `user.name`); `leaderboard: false` stops posting. Anyone can
   post, so the zod schema bounds every number.
-- Sound effects: the page counts coins, jumps and crashes into each
-  frame's headers; the hooks play a clip when a count rises
-  (`effectsBetween`), synthesized WAVs from `hooks/sfx.ts`. `sfx` in
-  `/config` turns them off.
+- Release: installs update only when `.claude-plugin/plugin.json`'s
+  `version` changes; bump it to ship. CI rebuilds `dist/` and fails on a
+  diff. The idle status line always says where runs post (`posting as …`),
+  since the name defaults to git's `user.name`. `POST /runs` refuses more
+  than 500 tokens a second of run (plus a 4,000 head start) and more than 20
+  posts per IP (hashed with the day) in 10 minutes. Windows is refused in the
+  pane: the streamer needs a Unix socket.
 
 **Key files**: `hooks/register.tsx` (hooks, runs, streamer, blits),
 `hooks/run.ts` (run state, grace, status line), `hooks/screen.ts` (socket,
