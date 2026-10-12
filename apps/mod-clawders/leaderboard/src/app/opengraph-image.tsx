@@ -6,8 +6,7 @@ import { ImageResponse } from "next/og";
 import { formatCount } from "@/lib/format";
 import { standings } from "@/lib/standings";
 
-export const alt =
-  "Clawders: an endless runner for Claude Code, with a leaderboard of output tokens";
+export const alt = "Clawders: Clawd meets surfing";
 export const contentType = "image/png";
 export const size = { height: 630, width: 1200 };
 export const revalidate = 300;
@@ -63,7 +62,7 @@ const OpengraphImage = async () => {
             padding: "10px 30px",
           }}
         >
-          Keep Claude working. Every token is a point.
+          Clawd meets surfing
         </div>
       </div>
       {leader ? (

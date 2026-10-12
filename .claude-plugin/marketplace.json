@@ -8,7 +8,7 @@
     {
       "name": "mod-clawders",
       "source": "./apps/mod-clawders",
-      "description": "Clawders: an endless runner starring Clawd that runs in a pane while Claude works; each run's output tokens go to a shared leaderboard"
+      "description": "Clawd meets surfing"
     }
   ]
 }

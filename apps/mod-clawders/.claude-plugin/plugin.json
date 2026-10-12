@@ -1,7 +1,7 @@
 {
   "name": "mod-clawders",
   "version": "0.1.0",
-  "description": "Clawders: an endless runner starring Clawd that runs in a pane while Claude works; each run's output tokens go to a shared leaderboard",
+  "description": "Clawd meets surfing",
   "author": {
     "name": "Kaiyu Hsu"
   },

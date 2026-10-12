@@ -8,8 +8,7 @@ import "./globals.css";
 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-const description =
-  "An endless runner for Claude Code. Clawd runs while Claude works, and every output token is a point. See who kept Claude going the longest.";
+const description = "Clawd meets surfing";
 
 export const metadata: Metadata = {
   description,
