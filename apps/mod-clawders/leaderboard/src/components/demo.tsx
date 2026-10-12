@@ -5,10 +5,12 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { demoAt, formatTokens } from "@/lib/demo";
 import type { Line } from "@/lib/demo";
+import type { Standing, Totals } from "@/lib/standings";
 import { INSTALL_COMMAND } from "@/lib/site";
 
 import { ClawdSprite } from "./clawd-sprite";
 import { CopyCommand } from "./copy-command";
+import { Leaderboard } from "./leaderboard";
 
 const TICK_MS = 100;
 // With reduced motion the demo holds still on Claude mid-turn.
@@ -77,12 +79,13 @@ const TranscriptLine = ({ line }: { line: Line }) => {
 
 // The mod at work: a Claude Code session on the left, the Clawders pane on
 // the right running the real game, both driven by one scripted loop.
-export const Demo = () => {
+export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Totals }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
   const isStill = usePrefersReducedMotion();
   const [elapsed, setElapsed] = useState(0);
   const [coins, setCoins] = useState(0);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const time = isStill ? STILL_SECONDS : elapsed;
   const state = demoAt(time);
 
@@ -138,23 +141,33 @@ export const Demo = () => {
           <p>Keep Claude working. Every token Claude writes is a point.</p>
         </fieldset>
 
-        <div className="session">
-          <Prompt text="install it" />
-          <CopyCommand command={INSTALL_COMMAND} />
-          <p className="t-result">
-            ⎿ Paste that into Claude Code. The pane opens on your next session.
-          </p>
-          <Prompt text="what does it need?" />
-          <p className="t-say">
-            <span className="t-dot">⏺</span> Google Chrome and Node.js. kitty or Ghostty draw the
-            real picture; other terminals get blocks. Start with{" "}
-            <code>CLAUDE_CODE_NO_FLICKER=1</code> so the pane docks on the right.
-          </p>
-          <Prompt text="how do I score?" />
-          <p className="t-say">
-            <span className="t-dot">⏺</span> Every output token is a point. When Claude finishes,
-            send the next prompt within 5 seconds or the run ends and goes on the leaderboard below.
-          </p>
+        <div className="session" id="session">
+          {isLeaderboardOpen ? (
+            <>
+              <Prompt text="/leaderboard" />
+              <Leaderboard standings={standings} totals={totals} />
+            </>
+          ) : (
+            <>
+              <Prompt text="install it" />
+              <CopyCommand command={INSTALL_COMMAND} />
+              <p className="t-result">
+                ⎿ Paste that into Claude Code. The pane opens on your next session.
+              </p>
+              <Prompt text="what does it need?" />
+              <p className="t-say">
+                <span className="t-dot">⏺</span> Google Chrome and Node.js. kitty or Ghostty draw
+                the real picture; other terminals get blocks. Start with{" "}
+                <code>CLAUDE_CODE_NO_FLICKER=1</code> so the pane docks on the right.
+              </p>
+              <Prompt text="how do I score?" />
+              <p className="t-say">
+                <span className="t-dot">⏺</span> Every output token is a point. When Claude
+                finishes, send the next prompt within 5 seconds or the run ends and goes on the
+                leaderboard.
+              </p>
+            </>
+          )}
         </div>
 
         <div aria-hidden="true" className="live">
@@ -190,7 +203,15 @@ export const Demo = () => {
       <div className="pane">
         <div className="pane-bar">
           <span>Clawders</span>
-          <span aria-hidden="true">×</span>
+          <button
+            aria-controls="session"
+            aria-pressed={isLeaderboardOpen}
+            className="pane-button"
+            onClick={() => setIsLeaderboardOpen((isOpen) => !isOpen)}
+            type="button"
+          >
+            [Leaderboard]
+          </button>
         </div>
         <div className="pane-screen" ref={hostRef} />
         <p aria-live="off" className="pane-status">

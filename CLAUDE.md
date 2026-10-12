@@ -150,7 +150,8 @@ commands: the pane opens on session start.
   (`@repo/mod-clawders-leaderboard`), a Next.js app on Vercel at
   `clawders.kyh.io` with its own Turso database (Drizzle; `db:push` is local,
   `db:push-remote` production). It takes `POST /runs` and lists each
-  player's best at `/`, under a live demo: a scripted Claude Code session
+  player's best inside a live demo (the pane's `[Leaderboard]` prints it
+  in the terminal): a scripted Claude Code session
   (`src/lib/demo.ts`, a pure function of time) driving the real game, which
   the site imports from the mod (`@repo/mod-clawders/world` → `world/mount.ts`;
   `world/view.ts` is the drawing both it and the streamed page share) along

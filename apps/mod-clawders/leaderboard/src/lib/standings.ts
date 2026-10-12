@@ -38,6 +38,8 @@ export const totals = async () => {
   return row ?? { coins: 0, players: 0, tokens: 0 };
 };
 
+export type Totals = Awaited<ReturnType<typeof totals>>;
+
 // Saves the run; the answer is where its player now stands.
 export const saveRun = async (posted: Run) => {
   await db.insert(run).values(posted);

@@ -1,25 +1,11 @@
-/* The game's own palette: its sky, the HUD's navy, the coin, the track bed,
-   the tagged walls and the verges. */
+/* Claude Code's terminal, as the demo draws it, and the game's sky behind
+   the pane while the world loads. */
 :root {
-  --sky-top: #7cc2ea;
-  --sky-low: #a9d9ed;
-  --navy: #1a1f3a;
-  --hud: rgb(24 34 74 / 0.55);
-  --gold: #ffc61f;
-  --gold-deep: #c98a00;
-  --ballast: #6a5550;
-  --ballast-dark: #5c4945;
-  --tie: #9a5530;
-  --wall: #e8c9a0;
-  --wall-shade: #c9a57a;
-  --grass: #7cc95a;
-  --white: #fff;
-
-  /* Claude Code's terminal, as the demo draws it. */
   --term: #121316;
   --term-line: #2a2c33;
   --term-ink: #e6e6e6;
   --term-dim: #8b8e98;
+  --white: #fff;
   /* Claude Code's terracotta, and its highlight for the working verb. */
   --clay: #cd694a;
   --clay-light: #e79475;
@@ -27,45 +13,26 @@
   --ok: #4ea96f;
   --removed: #4a1d22;
   --added: #183d24;
-
-  --stroke: 0.12em;
-  --gutter: clamp(16px, 4vw, 40px);
+  --sky: #7cc2ea;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
+html,
+body {
+  margin: 0;
   background: var(--term);
 }
 
-body {
-  margin: 0;
-  background: var(--ballast);
-  color: var(--navy);
-  font:
-    400 1.0625rem / 1.55 var(--font-body),
-    system-ui,
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: inherit;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-
 :focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 3px;
-  border-radius: 6px;
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
+  font: inherit;
 }
 
 .visually-hidden {
@@ -75,146 +42,6 @@ code {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-/* The game's numbers: white, chunky, outlined in navy. */
-.stroked {
-  margin: 0;
-  color: var(--white);
-  font-family: var(--font-display), sans-serif;
-  font-weight: 400;
-  line-height: 1;
-  -webkit-text-stroke: var(--stroke) var(--navy);
-  paint-order: stroke fill;
-}
-
-/* The leaderboard rides on the track bed. */
-.inner {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: clamp(48px, 8vw, 88px) var(--gutter);
-}
-
-.track h2 {
-  font-size: clamp(2.25rem, 6vw, 3.5rem);
-}
-
-.section-lede {
-  margin: 14px 0 28px;
-}
-
-.track {
-  background:
-    radial-gradient(circle at 20% 30%, var(--ballast-dark) 1.5px, transparent 2px) 0 0 / 14px 14px,
-    radial-gradient(circle at 70% 80%, #7a645c 1.5px, transparent 2px) 0 0 / 18px 18px,
-    var(--ballast);
-  color: var(--white);
-  border-top: 12px solid var(--tie);
-}
-
-.board {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.board-row {
-  display: grid;
-  grid-template-columns: 2.4em 1fr auto;
-  grid-template-areas:
-    "rank name tokens"
-    "rank detail detail";
-  align-items: center;
-  column-gap: 14px;
-  padding: 12px 20px 12px 12px;
-  border-radius: 22px;
-  background: var(--hud);
-}
-
-.rank {
-  grid-area: rank;
-  display: grid;
-  place-items: center;
-  width: 2.2em;
-  height: 2.2em;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 0.12);
-  font-family: var(--font-display), sans-serif;
-  font-variant-numeric: tabular-nums;
-}
-
-.rank .coin {
-  width: 2.2em;
-  height: 2.2em;
-}
-
-.name {
-  grid-area: name;
-  overflow-wrap: anywhere;
-  font-weight: 600;
-  font-size: 1.125rem;
-}
-
-.tokens {
-  grid-area: tokens;
-  font-family: var(--font-display), sans-serif;
-  font-size: 1.375rem;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  -webkit-text-stroke: 0.1em var(--navy);
-  paint-order: stroke fill;
-}
-
-.tokens small {
-  font-size: 0.6em;
-}
-
-.board-row:first-child .tokens {
-  color: var(--gold);
-}
-
-.detail {
-  grid-area: detail;
-  display: flex;
-  gap: 16px;
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.empty {
-  margin: 0;
-  padding: 28px;
-  border-radius: 22px;
-  background: var(--hud);
-  font-size: 1.125rem;
-}
-
-.grass {
-  padding: 28px var(--gutter) 36px;
-  background: var(--grass);
-  border-top: 10px solid #5cbf3a;
-  text-align: center;
-  font-weight: 500;
-}
-
-.grass p {
-  margin: 0;
-}
-
-@media (max-width: 560px) {
-  .board-row {
-    grid-template-columns: 2.4em 1fr;
-    grid-template-areas:
-      "rank name"
-      "rank tokens"
-      "rank detail";
-  }
-
-  .tokens {
-    text-align: left;
-  }
 }
 
 /* The demo: Claude Code on the left, the Clawders pane on the right. */
@@ -477,10 +304,60 @@ code {
   color: var(--term-dim);
 }
 
+.pane-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--term-dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pane-button:hover,
+.pane-button[aria-pressed="true"] {
+  color: var(--clay);
+}
+
+/* The leaderboard printed as plain terminal columns, not a styled table. */
+.t-table {
+  width: calc(100% - 2ch);
+  margin-left: 2ch;
+  border-collapse: collapse;
+  font: inherit;
+}
+
+.t-table th,
+.t-table td {
+  padding: 0 2ch 0 0;
+  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.t-table th {
+  color: var(--term-dim);
+}
+
+.t-table .num {
+  text-align: right;
+}
+
+.t-table .name {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .t-table .extra {
+    display: none;
+  }
+}
+
 .pane-screen {
   flex: 1;
   min-height: 0;
-  background: var(--sky-top);
+  background: var(--sky);
 }
 
 .pane-screen canvas {
