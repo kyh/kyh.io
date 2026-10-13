@@ -175,30 +175,55 @@ world), `leaderboard/src/` (route, zod run schema, standings query, page),
 
 ### mod-dev (`apps/mod-dev`)
 
-Claude Code mod (see Claude Code mods below). `/score` grades the session's
-work before it merges: confidence, idiomatic, simplicity and scope (0–10 each)
-and risk (low, medium, high), then a verdict (ready, fix first, not ready) and
-up to three fixes.
+Claude Code mod (see Claude Code mods below). Holds Claude to one rule:
+never say a change is done before it's proven: verified after the last edit,
+run end to end where it runs, idiomatic to this codebase and its libraries'
+installed docs. `/score` shows the scorecard on demand.
 
 - Evidence is mechanical: the session's tool calls (subagents' included) make a
   ledger of edits and checks. Bash commands are classified by what they run
   (`pnpm test`, `tsc`, `agent-browser`, `sed -i`, heredoc and inline-script
-  writes); a check counts only if it passed after the last edit. The status
-  line shows it live: `verified: static ✓ · test stale · e2e –`.
-- The grader is one `$.model.complete` call with a fresh context, never the
-  session's own reasoning: the person's prompts, Claude's last reply (as
-  claims), the ledger, the diff against the default branch's merge base
-  (uncommitted and untracked files included, via a copy of the index) and the
-  CLAUDE.md, AGENTS.md and REVIEW.md files. It answers in fixed lines.
+  writes); a check counts only if it passed after the last edit.
+- Needs come from the nearest `package.json` of each edited file: `static`
+  where it has a typecheck or lint script, `test` where it has `test`, `e2e`
+  for a source file of a package that runs (`dev`, `start`, `session`,
+  `preview`). Docs need nothing. A check aimed at packages (`-F name`,
+  `workspace name`, `cd dir`) counts for those it names, and one aimed at
+  none for all; each kind shows its worst package. A check Claude can't run is waived
+  by a reply line `Unverified: <check> — <why>`; the reviewer judges the reason.
+- The gate (`classic.Stop`): Claude stopping with edits is sent back while a
+  needed check is missing, then while the reviewer finds it not ready, at most
+  3 times per prompt. A question to the person passes. The ship gate
+  (`classic.PreToolUse`) refuses `git push`, `gh pr create` and the GitHub
+  MCP's PR tool until the reviewer finds the change ready (a failed review holds
+  them too). `gate: false` turns
+  both off. The bar is told to Claude once, at `classic.SessionStart`.
+- The reviewer is `$.model.complete` with a fresh context, never the session's
+  reasoning, in two parts (`hooks/review.ts`, effects passed in as ports): a
+  looker on `lookModel` (sonnet) answers with `read:`, `grep:` and `list:`
+  lines (up to 8, 3 rounds) that the mod runs read-only inside the repo, then
+  the judge on `model` (opus) scores in one call. An e2e step counts only if it
+  reached the changed code. Every fix
+  must cite a source (`path:line`, an instruction file, a doc under
+  `node_modules`, a URL, or `ledger`); uncited fixes are dropped. A ready
+  change is reviewed once per diff and checks; a not-ready one again once
+  Claude answers it.
 - Risk sets the bar for confidence (low 7, medium 8, high 9); the other scores
   need 7; any score of 4 or less is not ready. `claude -p --resume <id> "/score"`
   exits 0 only when ready.
+- Shows: a band above the prompt (each needed check, the verdict and scores,
+  `[Details]`), a pane (`mod-dev`: scores as bars, the checks with their
+  commands, fixes with sources) and the status line.
 
-**Key files**: `hooks/register.ts` (hooks: `/score`, the status line),
-`hooks/shell.ts` (command lines into commands and words), `hooks/commands.ts`
-(what each command means), `hooks/evidence.ts` (the ledger, freshness),
-`hooks/grade.ts` (the rubric, the prompt, parsing the answer, the verdict, the
-scorecard), `hooks/git.ts` (the diff script).
+**Key files**: `hooks/register.tsx` (hooks: the gates, `/score`, band and pane
+layout), `hooks/proof.ts` (needs per package, which checks count for which,
+waivers, what the gate tells Claude), `hooks/review.ts` (the looker and the
+judge), `hooks/look.ts` (the looker's reads), `hooks/board.ts` (signs, colors,
+score rows, the status line), `hooks/grade.ts` (the rubric, the
+prompt, parsing the answer and its sources, the verdict, the scorecard),
+`hooks/evidence.ts` (the ledger, freshness), `hooks/commands.ts` (what each
+command means), `hooks/shell.ts` (command lines into words), `hooks/git.ts`
+(the diff script, fingerprints), `types/index.d.ts` (the `$.state` contract).
 
 ### Claude Code mods (`apps/mod-*`)
 

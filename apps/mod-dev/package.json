@@ -2,7 +2,7 @@
   "name": "@repo/mod-dev",
   "version": "0.1.0",
   "private": true,
-  "description": "Claude Code mod: /score grades a session's work on confidence, idiomatic, simplicity, scope and risk",
+  "description": "Claude Code mod: never says a change is done before it's proven: fresh checks, a reviewer that reads the codebase, /score",
   "type": "module",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
