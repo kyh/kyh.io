@@ -197,6 +197,9 @@ describe("checksOf", () => {
     assert.equal(countsFor("pnpm test", web, [web, webs]), true);
     assert.equal(countsFor("cd . && pnpm test", web, [web]), true);
     assert.equal(countsFor("cd .. && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd ../.. && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd ../ && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd - && pnpm test", web, [web]), true);
     assert.equal(countsFor("cd ~ && pnpm test", web, [web]), true);
     assert.equal(countsFor("cd /repo && pnpm test", web, [web]), true);
   });

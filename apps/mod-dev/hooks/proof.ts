@@ -93,18 +93,29 @@ const names = (command: string, { dir, name }: Package) =>
   new RegExp(`(?:^|[\\s='"])${escape(name)}(?:$|[\\s'"])`, "u").test(command) ||
   (dir !== "" && new RegExp(`(?:^|[\\s='"/])${escape(dir)}(?:$|[\\s'"/])`, "u").test(command));
 
-// A command aimed at some package: a workspace filter, a directory flag, or
-// a `cd` into a relative directory (`cd .`, `cd ..`, `cd ~` and absolute
-// paths aim nowhere in particular).
-const SCOPED =
-  /(?:^|\s)(?:-F|--filter|--dir|-C)(?:[\s=])|\bworkspace\s|(?:^|[\s;&|(])cd\s+(?!(?:\.{1,2}|~|-)(?:[\s;&|)]|$)|\/|$)/u;
+// A command aimed at some package by a workspace filter or a directory flag.
+const FILTERED = /(?:^|\s)(?:-F|--filter|--dir|-C)(?:[\s=])|\bworkspace\s/u;
+const CD = /(?:^|[\s;&|(])cd\s+(?<to>[^\s;&|)]+)/gu;
+
+// Whether a `cd` aims at a directory by name: `cd apps/kyh`, `cd ./x`, `cd
+// ../x`. One that only climbs (`cd ..`, `cd ../..`), goes home, back or to an
+// absolute path aims nowhere in particular.
+const cdsSomewhere = (command: string) =>
+  [...command.matchAll(CD)].some(({ groups = {} }) => {
+    const to = groups.to ?? "";
+    const isAnywhere = to.startsWith("/") || to.startsWith("~") || to === "-";
+    return (
+      !isAnywhere && to.split("/").some((part) => part !== "" && part !== "." && part !== "..")
+    );
+  });
+
+const isAimed = (command: string) => FILTERED.test(command) || cdsSomewhere(command);
 
 // Whether a check's command counts for a package: one aimed at packages
 // counts for those it names alone; one aimed at none (a root `pnpm test`, a
 // check run from where an earlier `cd` left it) counts for every package.
 export const countsFor = (command: string, pkg: Package, packages: readonly Package[]) =>
-  names(command, pkg) ||
-  (!SCOPED.test(command) && !packages.some((other) => names(command, other)));
+  names(command, pkg) || (!isAimed(command) && !packages.some((other) => names(command, other)));
 
 const UNVERIFIED =
   /^[\s>*_`-]*unverified[\s*_`:]*(?<kind>static|test|build|e2e)\b[\s*_`]*[—–:-]*\s*(?<why>.+)$/gimu;
