@@ -187,9 +187,9 @@ installed docs. `/score` shows the scorecard on demand.
 - Needs come from the nearest `package.json` of each edited file: `static`
   where it has a typecheck or lint script, `test` where it has `test`, `e2e`
   for a source file of a package that runs (`dev`, `start`, `session`,
-  `preview`). Docs need nothing. A check counts for the packages its command
-  names (`-F name`, `workspace name`, `cd dir`), or for all when it names
-  none; each kind shows its worst package. A check Claude can't run is waived
+  `preview`). Docs need nothing. A check aimed at packages (`-F name`,
+  `workspace name`, `cd dir`) counts for those it names, and one aimed at
+  none for all; each kind shows its worst package. A check Claude can't run is waived
   by a reply line `Unverified: <check> — <why>`; the reviewer judges the reason.
 - The gate (`classic.Stop`): Claude stopping with edits is sent back while a
   needed check is missing, then while the reviewer finds it not ready, at most

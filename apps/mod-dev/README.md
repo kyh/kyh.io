@@ -38,10 +38,11 @@ that runs (`dev`, `start`, `session` or `preview`). Docs and images need
 nothing. Commands are spelled for the repo's package manager: `pnpm -F
 @repo/kyh test`.
 
-**A check counts for the packages it ran for.** A command that names a
+**A check counts for the packages it ran for.** A command aimed at a
 package, by name (`pnpm -F @repo/kyh test`, `yarn workspace kyh test`) or by
-directory (`cd apps/kyh && …`), counts for that package alone. One that names
-none, like a root `pnpm test`, counts for all of them. When a change touches
+directory (`cd apps/kyh && …`), counts for the packages it names, and for
+none when it names another. One aimed at nothing, like a root `pnpm test`,
+counts for all of them. When a change touches
 two packages, each needs its own check, and the worst of them is what shows.
 
 **When a check can't run here** (a production database, no test login, a

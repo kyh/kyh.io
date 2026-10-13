@@ -93,11 +93,17 @@ const names = (command: string, { dir, name }: Package) =>
   new RegExp(`(?:^|[\\s='"])${escape(name)}(?:$|[\\s'"])`, "u").test(command) ||
   (dir !== "" && new RegExp(`(?:^|[\\s='"/])${escape(dir)}(?:$|[\\s'"/])`, "u").test(command));
 
-// Whether a check's command counts for a package: one that names packages
-// counts for those alone; one that names none (a root `pnpm test`, a check
-// run from inside the package) counts for every package.
+// A command aimed at some package: a workspace filter, a directory flag, or
+// a `cd` into a relative directory.
+const SCOPED =
+  /(?:^|\s)(?:-F|--filter|--dir|-C)(?:[\s=])|\bworkspace\s|(?:^|[\s;&|(])cd\s+(?![.~/]|$)/u;
+
+// Whether a check's command counts for a package: one aimed at packages
+// counts for those it names alone; one aimed at none (a root `pnpm test`, a
+// check run from where an earlier `cd` left it) counts for every package.
 export const countsFor = (command: string, pkg: Package, packages: readonly Package[]) =>
-  names(command, pkg) || !packages.some((other) => names(command, other));
+  names(command, pkg) ||
+  (!SCOPED.test(command) && !packages.some((other) => names(command, other)));
 
 const UNVERIFIED =
   /^[\s>*_`-]*unverified[\s*_`:]*(?<kind>static|test|build|e2e)\b[\s*_`]*[—–:-]*\s*(?<why>.+)$/gimu;
