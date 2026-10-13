@@ -5,7 +5,7 @@ Real-time multiplayer server powering kyh.io interactions.
 ## Stack
 
 - Runtime - [Cloudflare Workers](https://workers.cloudflare.com/)
-- WebSockets - [PartyServer](https://github.com/partykit/partyserver) (Durable Objects)
+- WebSockets - [PartyServer](https://github.com/cloudflare/partykit/tree/main/packages/partyserver) (Durable Objects)
 
 ## Development
 
