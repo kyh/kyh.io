@@ -284,6 +284,15 @@ export const projects: ProjectType[] = [
     type: "mini-app",
     url: "https://autoplay.kyh.io",
   },
+  {
+    description: "Keep Clawd running. An endless runner that plays while Claude Code works",
+    favicon: getPublicFaviconUrl("clawders.png"),
+    projectAssets: [],
+    slug: "clawders",
+    title: "Clawders",
+    type: "mini-app",
+    url: "https://clawders.kyh.io",
+  },
   // Templates
   {
     description: "An AI native starter kit to build, launch, and scale your next project",
