@@ -63,8 +63,8 @@ times per prompt; after that a toast says it's still not proven and the
 decision is yours.
 
 **Shipping.** `git push`, `gh pr create` and the GitHub MCP's pull request
-tool are refused until the reviewer finds the change ready. You can still push
-it yourself.
+tool are refused until the reviewer finds the change ready, or while a review
+fails. You can still push it yourself.
 
 **The bar.** At session start Claude is told the rule, including to find the
 precedent before writing and to name what it followed. The review is mostly

@@ -193,7 +193,8 @@ installed docs. `/score` shows the scorecard on demand.
   needed check is missing, then while the reviewer finds it not ready, at most
   3 times per prompt. A question to the person passes. The ship gate
   (`classic.PreToolUse`) refuses `git push`, `gh pr create` and the GitHub
-  MCP's PR tool until the reviewer finds the change ready. `gate: false` turns
+  MCP's PR tool until the reviewer finds the change ready (a failed review holds
+  them too). `gate: false` turns
   both off. The bar is told to Claude once, at `classic.SessionStart`.
 - The reviewer is `$.model.complete` with a fresh context, never the session's
   reasoning. It may answer with `read:`, `grep:` and `list:` lines (up to 8, 3

@@ -45,7 +45,7 @@ risk: low | a new file
 fix: export it from src/index.ts like the others | src/index.ts:3
 fix: make it nicer | taste`;
 
-const NOT_READY = ANSWER.replace("idiomatic: 8", "idiomatic: 6");
+const NOT_READY = `${ANSWER.replace("idiomatic: 8", "idiomatic: 6")}\nfix: tighten the name | src/index.ts:3`;
 
 // The root package: tests, no typecheck, and a dev server when `isApp`.
 const packageJson = (isApp: boolean) =>
@@ -270,7 +270,7 @@ test("the gate passes the reviewer's cited fixes back to Claude", async ($, on) 
   world(on, { answers: [NOT_READY] });
   const { block } = await $.classic.Stop(stop());
   expect(block).toBe(
-    "mod-dev: the reviewer says fix first (idiomatic 6 < 7). Fix these, then check again:\n1. export it from src/index.ts like the others (src/index.ts:3)\nIf a finding is wrong, say why in your reply instead; the reviewer reads it.",
+    "mod-dev: the reviewer says fix first (idiomatic 6 < 7). Fix these, then check again:\n1. export it from src/index.ts like the others (src/index.ts:3)\n2. tighten the name (src/index.ts:3)\nIf a finding is wrong, say why in your reply instead; the reviewer reads it.",
   );
 });
 
@@ -322,6 +322,21 @@ test("no push for a change the reviewer hasn't found ready", async ($, on) => {
   expect(shipped).toEqual(["git status"]);
 });
 
+test("the gate holds while a dev server runs in the background", async ($, on) => {
+  world(on, { isApp: true });
+  const server = { description: "pnpm dev", id: "b1", status: "running", type: "shell" };
+  const { block } = await $.classic.Stop({ ...stop(), background_tasks: [server] });
+  expect(block).toContain("mod-dev: this change isn't proven yet");
+});
+
+test("no push when the review fails", async ($, on) => {
+  const { shipped } = world(on, { answers: ["Looks good to me!"] });
+  const pushed = await $.tool.call({ command: "git push", tool: "Bash" });
+  expect(pushed.isError).toBe(true);
+  expect(pushed.text).toContain("mod-dev couldn't review the change, so it holds the push");
+  expect(shipped).toEqual([]);
+});
+
 test("a ready change pushes", async ($, on) => {
   const { shipped } = world(on);
   await $.tool.call({ command: "git push", tool: "Bash" });
@@ -363,5 +378,6 @@ for (const surface of ["terminal", "desktop"] as const) {
     expect(await pane.find({ text: "██████░░░░" })).toBeDefined();
     expect(await pane.find({ text: /no browser here/u })).toBeDefined();
     expect(await pane.find({ text: /↳ src\/index\.ts:3/u })).toBeDefined();
+    expect(await pane.find({ text: /2\. tighten the name/u })).toBeDefined();
   });
 }

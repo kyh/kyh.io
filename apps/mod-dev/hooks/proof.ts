@@ -121,6 +121,11 @@ export const checksOf = (
 export const gapsOf = (checks: readonly Check[]) =>
   checks.filter((check) => check.mark !== "pass" && check.mark !== "waived");
 
+// Whether Claude stopped to wait on work that will wake it (a subagent, a
+// workflow, a monitor). A background shell, a dev server say, wakes nothing.
+export const isWaitingOn = (tasks: readonly { type: string }[]) =>
+  tasks.some((task) => task.type !== "shell");
+
 // Whether Claude ended its turn on a question to the person: not a claim of
 // done, so nothing to hold it to yet.
 export const isAsking = (reply: string) =>

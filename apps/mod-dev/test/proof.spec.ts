@@ -9,6 +9,7 @@ import {
   gapText,
   gapsOf,
   isAsking,
+  isWaitingOn,
   managerOf,
   needsOf,
   packageFrom,
@@ -189,6 +190,12 @@ describe("what the gate says", () => {
       ),
       "mod-dev: the reviewer says fix first (idiomatic 6 < 7). Fix these, then check again:\n1. use the config helper (src/lib/config.ts:40)\nIf a finding is wrong, say why in your reply instead; the reviewer reads it.",
     );
+  });
+
+  it("waits on work that will wake Claude, never on a background shell", () => {
+    assert.equal(isWaitingOn([{ type: "shell" }]), false);
+    assert.equal(isWaitingOn([{ type: "shell" }, { type: "subagent" }]), true);
+    assert.equal(isWaitingOn([]), false);
   });
 
   it("lets a turn that ends on a question through", () => {

@@ -34,6 +34,7 @@ import {
   gapText,
   gapsOf,
   isAsking,
+  isWaitingOn,
   managerOf,
   needsOf,
   packageFrom,
@@ -247,13 +248,14 @@ const askReviewer = async ($: EngineInterface, model: string, root: string, pack
   }
 };
 
+// `said`: nothing to review (no change, no git); `failed`: the review failed.
 type Proof =
-  | { kind: "said"; text: string }
+  | { kind: "said" | "failed"; text: string }
   | { kind: "graded"; grade: Grade; checks: Check[]; card: string; isReady: boolean };
 
 const failed = async ($: EngineInterface, text: string): Promise<Proof> => {
   await update($, reviewAtom, (review): Review => ({ ...review, note: text, phase: "failed" }));
-  return { kind: "said", text };
+  return { kind: "failed", text };
 };
 
 // Has the reviewer read the change as it stands, unless it already has.
@@ -429,7 +431,7 @@ export const register: Register = (on, options) => {
   // needs passed after the last edit (or was said to be impossible here) and
   // the reviewer finds it ready. A block from beneath stands.
   on("classic.Stop", async ($, e, next) => {
-    const isWaiting = (e.background_tasks?.length ?? 0) > 0;
+    const isWaiting = isWaitingOn(e.background_tasks ?? []);
     const block =
       isGated && !isWaiting ? await blockOf($, model, e.last_assistant_message ?? "") : undefined;
     if (block === undefined) {
@@ -453,6 +455,9 @@ export const register: Register = (on, options) => {
       return next(e);
     }
     const proof = await prove($, model, {});
+    if (proof.kind === "failed") {
+      return { deny: `mod-dev couldn't review the change, so it holds the push: ${proof.text}` };
+    }
     if (proof.kind !== "graded" || proof.isReady) {
       return next(e);
     }
@@ -465,7 +470,7 @@ export const register: Register = (on, options) => {
   on("command.run", { command: "score" }, async ($, e) => {
     void $.ui.open({ id: PANE, title: "mod-dev" });
     const proof = await prove($, model, { isForced: true, ref: e.args.trim() });
-    if (proof.kind === "said") {
+    if (proof.kind !== "graded") {
       return { text: proof.text };
     }
     // A headless `claude -p "/score"` exits 0 only when ready.
@@ -576,7 +581,7 @@ export const register: Register = (on, options) => {
           <Box flexDirection="column">
             <Text bold>Fixes</Text>
             {grade.fixes.map(({ source, text }, i) => (
-              <Box key={source} flexDirection="column">
+              <Box key={String(i)} flexDirection="column">
                 <Text>
                   {i + 1}. {text}
                 </Text>
