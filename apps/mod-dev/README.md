@@ -1,75 +1,130 @@
 # mod-dev
 
-A Claude Code mod. `/score` grades the work done in a session before it
-merges, and the status line under the prompt keeps the evidence in view while
-Claude works.
+A Claude Code mod that holds Claude to one rule: **never say a change is done
+before it's proven.** Proven means checked after the last edit, run end to end
+where it runs, and done the way this codebase and its libraries' installed docs
+do it.
 
-For example, after Claude was asked to add `subtract` and rename `add` to
-`sum` without running the tests (the whys lightly trimmed):
+You don't call it. When Claude stops with an edited change, mod-dev checks the
+proof and has a separate reviewer read the change. If something's missing,
+Claude is sent back with what to do and where it says so. `/score` shows the
+scorecard whenever you want it.
 
-> **not ready** · confidence 3 < 9 for high risk
+For example, Claude was asked to add `src/health.ts` and stopped without
+running it. The gate sent it back:
+
+> mod-dev: the reviewer says not ready (confidence 4 < 7 for low risk). Fix these, then check again:
 >
-> |            | score           | why                                                                                                                   |
-> | ---------- | --------------- | --------------------------------------------------------------------------------------------------------------------- |
-> | confidence | `███░░░░░░░` 3  | Nothing was checked after the step-1 edit, and no search ran for importers of `add`, so `math.test.js` may now break. |
-> | idiomatic  | `████████░░` 8  | Pure arrow functions as the code requires; the test rule was skipped, but the user asked for no tests.                |
-> | simplicity | `██████████` 10 | Two one-line changes to `math.js`, nothing extra.                                                                     |
-> | scope      | `████████░░` 8  | `subtract` was added and `add` renamed, but the rename stops at `math.js`.                                            |
-> | risk       | high            | Renaming the exported `add` to `sum` changes the module's public API and breaks every importer still using `add`.     |
->
-> **Fixes**
->
-> 1. Search the repo for imports of `add` from math.js (at least `math.test.js`) and update them to `sum`, or keep `add` as an alias.
-> 2. Tell the user that `npm test` was skipped and that `math.test.js` may still reference `add`.
->
-> verified: static – · test – · e2e – · against main (0a45f16) · graded by opus
+> 1. Run `node --experimental-strip-types -e "import('./src/health.ts')…"` once approved and confirm it prints `ok` (ledger)
+> 2. Add `src/health.test.ts` that asserts `health() === 'ok'`, so the `node --test` script actually exercises it (package.json:1)
 
-It was right: `math.test.js` still imported `add`.
+Claude added the test, ran it, and said the import command still needed
+approval, on a line of its own: `Unverified: e2e — …`. The reviewer read that,
+accepted the reason, and let it stop.
 
-## What it checks
+## What it holds Claude to
 
-| Check      | The question                                              | Judged from                                                                        |
-| ---------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| confidence | Could this merge now without breaking anything?           | The ledger: which checks ran, whether they passed, and whether after the last edit |
-| idiomatic  | Does it follow this repo's conventions and written rules? | The diff, against `CLAUDE.md`, `AGENTS.md` and `REVIEW.md`                         |
-| simplicity | Could a reviewer who never saw the session follow it?     | The diff                                                                           |
-| scope      | Did it do what was asked, all of it and nothing else?     | Your prompts, and the files the session edited                                     |
-| risk       | How bad is it if this is wrong? Low, medium or high.      | The diff                                                                           |
+| Proof            | How it's shown                                                      | Checked by                   |
+| ---------------- | ------------------------------------------------------------------- | ---------------------------- |
+| Verified         | Typecheck/lint and tests pass after the last edit                   | The ledger of tool calls     |
+| End to end works | The change was driven for real: a browser, a request, a session     | The ledger                   |
+| Idiomatic        | It follows the code around it and the repo's written rules          | The reviewer, with citations |
+| Best practices   | Libraries used as their installed version documents; simple; scoped | The reviewer, with citations |
+
+**Which checks a change needs** comes from the nearest `package.json` of each
+edited file: `static` where it has a `typecheck`, `check`, `lint` or `tsc`
+script, `test` where it has `test`, and `e2e` for a source file in a package
+that runs (`dev`, `start`, `session` or `preview`). Docs and images need
+nothing. Commands are spelled for the repo's package manager: `pnpm -F
+@repo/kyh test`.
+
+**When a check can't run here** (a production database, no test login, a
+command that needs approval), Claude says so in its reply on a line of its
+own:
+
+```
+Unverified: e2e — the route needs the production database
+```
+
+The gate stops asking for that check, and the reviewer weighs the reason: a
+real constraint caps confidence at 8, an excuse counts as the check missing.
+
+## The gates
+
+**Stopping.** When Claude ends a turn with edits in the session:
+
+1. Every needed check must have passed after the last edit, or be marked
+   unverified. If not, Claude is sent back with the exact commands.
+2. Then the reviewer reads the change. If it isn't ready, Claude is sent back
+   with the reviewer's fixes, each with its source.
+
+A turn that ends on a question to you passes. Claude is sent back at most 3
+times per prompt; after that a toast says it's still not proven and the
+decision is yours.
+
+**Shipping.** `git push`, `gh pr create` and the GitHub MCP's pull request
+tool are refused until the reviewer finds the change ready. You can still push
+it yourself.
+
+**The bar.** At session start Claude is told the rule, including to find the
+precedent before writing and to name what it followed. The review is mostly
+confirmation when it does.
+
+## The reviewer
+
+A fresh model call that never sees the session's reasoning. It reads your
+prompts, Claude's last reply (as claims to check), the ledger, the checks and
+where they stand, the diff against the default branch's merge base
+(uncommitted and untracked files included) and the CLAUDE.md, AGENTS.md and
+REVIEW.md files.
+
+**It looks before it judges.** It can answer with `read:`, `grep:` and
+`list:` lines, up to 8 a round and 3 rounds. The mod runs them read-only,
+inside the repository (`git grep`, file reads, directory listings), and hands
+back what they show. It's told to read the files beside each change, grep for
+code that does the same kind of thing, and read the installed version's docs
+and types under `node_modules`.
+
+**Every fix cites a source.** A file and line of precedent
+(`src/lib/config.ts:40`), an instruction file (`CLAUDE.md`), a doc of the
+installed version (`node_modules/next/dist/docs/…`), a URL, or `ledger` for a
+missing check. A fix that cites nothing is dropped: the reviewer's taste
+doesn't block Claude. Precedent decides style and structure; the installed
+docs decide correctness and deprecations, even where the codebase does
+otherwise.
+
+| Score      | The question                                               |
+| ---------- | ---------------------------------------------------------- |
+| confidence | Could this merge now without breaking anything?            |
+| idiomatic  | Does it do things the way this codebase already does them? |
+| simplicity | Could a reviewer who never saw the session follow it?      |
+| scope      | Did it do what was asked, all of it and nothing else?      |
+| risk       | How bad is it if this is wrong? Low, medium or high.       |
 
 The first four score 0–10. Risk sets the bar for confidence: 7 for low, 8 for
 medium, 9 for high. The other scores need 7. The verdict is **ready** when
 every score clears its bar, **not ready** when any score is 4 or less, and
 **fix first** in between.
 
-## How it scores
+A ready change isn't reviewed again until the diff or its checks change. A
+not-ready one is reviewed again once Claude answers it: a fix, or a reason the
+finding is wrong.
 
-**The evidence is mechanical.** The mod reads the session's own tool calls,
-its subagents' included, into a ledger of edits and checks:
+## What you see
 
-- Checks: typecheck, lint and format (`static`); tests (`test`); builds
-  (`build`); driving the running app with a browser or a request to
-  localhost, or loading a plugin into a real session (`e2e`). Read through package scripts, task runners and wrappers: `pnpm -F x
-  test`, `turbo run lint`, `npx vitest`, `agent-browser open
-  http://localhost:3000`.
-- Edits: Edit and Write, and edits from the shell: `sed -i`, heredocs and
-  redirects into the repository, inline scripts that write files, `git
-  checkout`, fixers like `--fix` and `--write`.
-- A check counts only if it ran after the last edit. Its exit status decides
-  whether it passed, unless a pipe or `|| true` hides it; then its output is
-  read for a failure summary (`2 failed`, `error TS2322`, `ELIFECYCLE`).
-
-**The grader is a separate model call with a fresh context.** It reads your
-prompts, Claude's last reply (as claims to check), the ledger, the diff against
-the default branch's merge base (uncommitted and untracked files included,
-lockfiles left out of the patch) and the repo's instruction files. It never
-sees the session's own reasoning, so it can't be talked into a good score, and
-a claim the ledger doesn't back counts against the work.
+- **Above the prompt**, once something is edited: each needed check
+  (`✓` passed, `✗` failed, `↺` ran before the last edit, `–` never ran, `?`
+  unverified), the reviewer's verdict and its four scores, and `[Details]`.
+- **The pane** (`[Details]` or `/score`): the verdict and why, each score as a
+  bar with its reason, the checks with the commands that run them or the
+  reason they can't, and the fixes with their sources.
+- **The status line**: `verified: static ✓ · test ✓ · e2e – · ready`.
 
 ## Requirements
 
 - **Claude Code** with mod (function hooks plugin) support, at or past the
   version `packages/claude-code-types` pins.
-- **git**. `/score` reads the change from it.
+- **git**. The reviewer reads the change from it.
 
 ## Set up
 
@@ -113,18 +168,14 @@ Drop the `--plugin-dir` flag, or the path from `CLAUDE_CODE_PLUGIN_DIRS`.
 
 ## Use it
 
-| Command        | What it does                                                           |
-| -------------- | ---------------------------------------------------------------------- |
-| `/score`       | Grades everything since the merge base with `origin/HEAD` (or `main`). |
-| `/score <ref>` | Grades everything since `<ref>`: `/score HEAD~3`, `/score v1.2.0`.     |
+Nothing to do: the gates run on their own.
 
-The scorecard lands in the transcript, so Claude reads it too: ask it to work
-through the fixes, then `/score` again.
+| Command        | What it does                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| `/score`       | Reviews everything since the merge base with `origin/HEAD` (or `main`) now, and opens the pane. |
+| `/score <ref>` | Reviews everything since `<ref>`: `/score HEAD~3`, `/score v1.2.0`.                             |
 
-The status line shows where the checks stand for the code as it is now, once
-something is edited: `verified: static ✓ · test stale · e2e –`. `✓` passed
-after the last edit, `✗` failed after it, `stale` ran before it, `–` never ran.
-Build shows once one has run.
+The scorecard lands in the transcript too, so Claude reads it.
 
 Headless, `/score` is a gate: it exits 0 only when the verdict is ready.
 
@@ -136,15 +187,19 @@ claude -p --resume <session-id> --plugin-dir apps/mod-dev "/score"
 
 Open `/config` and find **mod-dev**:
 
-| Setting      | Default | Options                   |
-| ------------ | ------- | ------------------------- |
-| Grader model | `opus`  | `opus`, `sonnet`, `haiku` |
+| Setting              | Default | Options                   |
+| -------------------- | ------- | ------------------------- |
+| Reviewer model       | `opus`  | `opus`, `sonnet`, `haiku` |
+| Hold Claude to proof | on      | on, off: `/score` only    |
 
 ## Cost
 
-One model call per `/score`, on your plan or API key. What it reads is capped:
-150,000 characters of patch (small files whole, large and generated ones cut),
-40,000 of instruction files, the last 80 ledger steps.
+Model calls on your plan or API key: one review per change, plus one call per
+round of looking (up to 3). A ready change isn't reviewed again until it
+changes. What the reviewer reads is capped: 150,000 characters of patch
+(small files whole, large and generated ones cut), 40,000 of instruction
+files, the last 80 ledger steps, and per look 200 lines, 60 matches or 80
+entries.
 
 ## Limits
 
@@ -153,19 +208,24 @@ One model call per `/score`, on your plan or API key. What it reads is capped:
 - After a compaction the transcript holds less, so checks from before it drop
   off the ledger.
 - Commands are recognized by name. A check under an unusual name shows as a
-  command that ran; the grader still sees it.
-- The grader is a model: read the scores as a second reviewer's opinion with
+  command that ran; the reviewer still sees it.
+- Checks are counted for the session, not per package: a passing `pnpm test`
+  in one package counts for another the change touched.
+- `e2e` is required for any source file of a package that runs, a pure
+  helper's included. Claude can mark it unverified with a reason.
+- The reviewer is a model: read the scores as a second reviewer's opinion with
   reasons, not a measurement. The same change scored twice can move a point,
   or a risk level; the verdict and the reasons hold steadier than the numbers.
 
 ## Troubleshooting
 
-| Symptom                                 | Cause and fix                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------------ |
-| "Needs a git repository…"               | The session isn't in a git checkout. `/score` reads the change from git.             |
-| "Nothing to score: no changes against…" | The branch matches its base. Pass an older ref: `/score HEAD~1`.                     |
-| "…'s answer did not fit the scorecard"  | The grader answered off-format. Run `/score` again, or pick another grader model.    |
-| No `/score` command, no status line     | The mod didn't load. Start with `claude --debug` and look for lines with `mod-dev:`. |
+| Symptom                                 | Cause and fix                                                                             |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| "Needs a git repository…"               | The session isn't in a git checkout. `/score` reads the change from git.                  |
+| "Nothing to score: no changes against…" | The branch matches its base. Pass an older ref: `/score HEAD~1`.                          |
+| "…'s answer did not fit the scorecard"  | The reviewer answered off-format. Run `/score` again, or pick another model.              |
+| Claude keeps getting sent back          | After 3 times per prompt the gate lets go. Turn it off in `/config` to use `/score` only. |
+| No band, no status line                 | The mod didn't load. Start with `claude --debug` and look for lines with `mod-dev:`.      |
 
 ## Develop
 
@@ -173,8 +233,8 @@ Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
 file in `hooks/` reloads the mod without a restart.
 
 ```sh
-pnpm -F @repo/mod-dev test       # node: the ledger, the grader's plumbing, the git script
-pnpm -F @repo/mod-dev test:mod   # claude plugin test: the hooks: /score and the status line
+pnpm -F @repo/mod-dev test       # node: the ledger, needs and waivers, looks, the reviewer's plumbing, git
+pnpm -F @repo/mod-dev test:mod   # claude plugin test: the hooks: the gates, /score, the reviewer's looks, band, pane
 pnpm -F @repo/mod-dev typecheck  # pure modules + node tests, then the hooks against the pinned API types
 pnpm -F @repo/mod-dev validate   # what Claude Code will load
 ```
@@ -195,11 +255,14 @@ a mod each time it loads one:
 cp apps/mod-dev/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
 ```
 
-| File                | Role                                                               |
-| ------------------- | ------------------------------------------------------------------ |
-| `hooks/register.ts` | The hooks: `/score`, the status line, reading the session          |
-| `hooks/shell.ts`    | Command lines into commands and words: quotes, redirects, heredocs |
-| `hooks/commands.ts` | What each command means: the checks it runs, whether it edits      |
-| `hooks/evidence.ts` | The ledger of edits and checks, freshness, the status line         |
-| `hooks/grade.ts`    | The rubric, the grader's prompt, reading its answer, the scorecard |
-| `hooks/git.ts`      | The diff script                                                    |
+| File                 | Role                                                                            |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `hooks/register.tsx` | The hooks: the gates, `/score`, the reviewer's loop, band, pane, status         |
+| `hooks/proof.ts`     | What a change needs, waivers, what the gate tells Claude, the bar               |
+| `hooks/look.ts`      | The reviewer's reads: parsing them, keeping them in the repo, showing them      |
+| `hooks/grade.ts`     | The rubric, the prompt, reading the answer and its sources, the scorecard       |
+| `hooks/evidence.ts`  | The ledger of edits and checks, freshness, the status line                      |
+| `hooks/commands.ts`  | What each command means: the checks it runs, whether it edits                   |
+| `hooks/shell.ts`     | Command lines into commands and words: quotes, redirects, heredocs              |
+| `hooks/git.ts`       | The diff script, fingerprints                                                   |
+| `types/index.d.ts`   | The `$.state` contract: checks, the review, how often the gate sent Claude back |

@@ -46,3 +46,17 @@ export const parseDiff = (stdout: string): Diff => {
     stat: (at < 0 ? body : body.slice(0, at)).trim(),
   };
 };
+
+// A short hash of a text: a polynomial hash modulo the largest 32-bit prime.
+const PRIME = 4_294_967_291;
+
+export const hashOf = (text: string) => {
+  let hash = 0;
+  for (const char of text) {
+    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % PRIME;
+  }
+  return hash.toString(16).padStart(8, "0");
+};
+
+// A change's fingerprint: the same change is reviewed once.
+export const fingerprintOf = ({ base, patch, stat }: Diff) => hashOf(`${base}\n${stat}\n${patch}`);

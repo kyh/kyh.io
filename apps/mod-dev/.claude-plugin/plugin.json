@@ -1,15 +1,24 @@
 {
   "name": "mod-dev",
   "version": "0.1.0",
-  "description": "/score grades a session's work on confidence, idiomatic, simplicity, scope and risk, from the evidence its tool calls left",
-  "author": { "name": "Kaiyu Hsu" },
+  "description": "Holds Claude to one rule: never say a change is done before it's proven. Gates stopping and pushing on fresh checks and a reviewer that reads the codebase; /score shows the scorecard",
+  "author": {
+    "name": "Kaiyu Hsu"
+  },
+  "types": "./types/index.d.ts",
   "userConfig": {
     "model": {
       "type": "string",
-      "title": "Grader model",
-      "description": "The model /score asks. It reads the requests, the diff, the ledger of checks and the instruction files, never the session's own reasoning",
+      "title": "Reviewer model",
+      "description": "The model that reviews the change. It reads the requests, the diff, the ledger of checks, the instruction files and the repository itself, never the session's own reasoning",
       "options": ["opus", "sonnet", "haiku"],
       "default": "opus"
+    },
+    "gate": {
+      "type": "boolean",
+      "title": "Hold Claude to proof",
+      "description": "Send Claude back when it stops with an edited change that isn't proven, and refuse to push or open a pull request for one",
+      "default": true
     }
   }
 }

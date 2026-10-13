@@ -8,6 +8,8 @@
     "hooks/evidence.ts",
     "hooks/git.ts",
     "hooks/grade.ts",
+    "hooks/look.ts",
+    "hooks/proof.ts",
     "hooks/shell.ts",
     "test/*.spec.ts"
   ]

@@ -51,7 +51,12 @@ const FAILED = [
   /\bERR_PNPM_|\bELIFECYCLE\b|^npm ERR!/mu,
 ];
 
-const MARKS: Readonly<Record<State, string>> = { fail: "✗", none: "–", pass: "✓", stale: "stale" };
+export const MARKS: Readonly<Record<State, string>> = {
+  fail: "✗",
+  none: "–",
+  pass: "✓",
+  stale: "stale",
+};
 const MAX_STEPS = 80;
 
 export const looksFailed = (output: string) => FAILED.some((pattern) => pattern.test(output));

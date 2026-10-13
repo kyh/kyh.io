@@ -19,8 +19,12 @@ idiomatic: 8 | follows the mod-clawders layout
 simplicity: 7 | evidence.ts packs the shell parser and the ledger together
 scope: 9 | both asks done
 risk: medium | touches the shared lint config
-fix: rerun pnpm test after the last edit
-fix: split the shell parser out of evidence.ts`;
+fix: rerun pnpm test after the last edit | ledger
+fix: split the shell parser out of evidence.ts, as commands.ts stands apart | hooks/commands.ts:1
+fix: use a class here | best practice`;
+
+const sources = (fix: string) =>
+  parseGrade(`${ANSWER}\nfix: ${fix}`)?.fixes.map((one) => one.source);
 
 const grade = (
   scores: [number, number, number, number],
@@ -42,7 +46,13 @@ const grade = (
 describe("parseGrade", () => {
   it("reads one line per dimension, then the fixes", () => {
     assert.deepEqual(parseGrade(ANSWER), {
-      fixes: ["rerun pnpm test after the last edit", "split the shell parser out of evidence.ts"],
+      fixes: [
+        { source: "ledger", text: "rerun pnpm test after the last edit" },
+        {
+          source: "hooks/commands.ts:1",
+          text: "split the shell parser out of evidence.ts, as commands.ts stands apart",
+        },
+      ],
       risk: { level: "medium", why: "touches the shared lint config" },
       scores: {
         confidence: { score: 6, why: "tests ran before the last two edits" },
@@ -64,10 +74,30 @@ describe("parseGrade", () => {
     assert.deepEqual(parsed?.risk, { level: "high", why: "migration" });
   });
 
+  it("drops a fix that cites nothing checkable", () => {
+    assert.deepEqual(sources("x | `apps/kyh/src/lib/config.ts:40-52`"), [
+      "ledger",
+      "hooks/commands.ts:1",
+      "apps/kyh/src/lib/config.ts:40-52",
+    ]);
+    assert.equal(sources("x | CLAUDE.md")?.at(-1), "CLAUDE.md");
+    assert.equal(
+      sources("x | node_modules/next/dist/docs/01-app.md")?.at(-1),
+      "node_modules/next/dist/docs/01-app.md",
+    );
+    assert.equal(
+      sources("x | https://react.dev/reference/react/useEffect")?.at(-1),
+      "https://react.dev/reference/react/useEffect",
+    );
+    assert.equal(sources("x | ledger step 12")?.at(-1), "ledger step 12");
+    assert.equal(sources("x")?.length, 2);
+    assert.equal(sources("x | common sense")?.length, 2);
+  });
+
   it("refuses an answer missing a dimension, and keeps three fixes", () => {
     assert.equal(parseGrade(ANSWER.replace(/^scope.*$/mu, "")), undefined);
     assert.equal(parseGrade(ANSWER.replace("risk: medium", "risk: severe")), undefined);
-    assert.equal(parseGrade(`${ANSWER}\nfix: a\nfix: b`)?.fixes.length, 3);
+    assert.equal(parseGrade(`${ANSWER}\nfix: a | ledger\nfix: b | ledger`)?.fixes.length, 3);
     assert.deepEqual(parseGrade(ANSWER.replaceAll(/^fix: .*$/gmu, "fix: none"))?.fixes, []);
   });
 });
@@ -91,10 +121,17 @@ describe("verdictOf", () => {
 });
 
 describe("scorecardOf", () => {
-  it("draws the verdict, a row per dimension, the fixes and the footer", () => {
+  it("draws the verdict, a row per dimension, the fixes, the checks and the footer", () => {
     const parsed = parseGrade(ANSWER.replace("both asks done", "a | b"));
     assert.ok(parsed);
-    const card = scorecardOf(parsed, "verified: static ✓");
+    const card = scorecardOf(
+      parsed,
+      [
+        { hint: "pnpm -F x test", kind: "test", mark: "pass" },
+        { hint: "needs the production database", kind: "e2e", mark: "waived" },
+      ],
+      "verified: static ✓",
+    );
     assert.match(card, /^\*\*fix first\*\* · confidence 6 < 8 for medium risk\n/u);
     assert.match(
       card,
@@ -102,7 +139,14 @@ describe("scorecardOf", () => {
     );
     assert.match(card, /\| scope \| `█████████░` 9 \| a \\\| b \|/u);
     assert.match(card, /\| risk \| medium \| touches the shared lint config \|/u);
-    assert.match(card, /\*\*Fixes\*\*\n1\. rerun pnpm test after the last edit\n2\. split/u);
+    assert.match(
+      card,
+      /\*\*Fixes\*\*\n1\. rerun pnpm test after the last edit — `ledger`\n2\. split .* — `hooks\/commands\.ts:1`\n/u,
+    );
+    assert.match(
+      card,
+      /\*\*Needs\*\* test ✓ · e2e unverified\n- unverified e2e: needs the production database\n/u,
+    );
     assert.match(card, /\n\nverified: static ✓$/u);
   });
 });
@@ -128,6 +172,7 @@ describe("what the grader reads", () => {
   it("wraps each part in its own tag", () => {
     const prompt = promptOf({
       asks: asksOf(rows),
+      checks: [{ hint: "pnpm -F x test", kind: "test", mark: "stale" }],
       diff: {
         against: "origin/main",
         base: "abc",
@@ -141,6 +186,7 @@ describe("what the grader reads", () => {
     assert.match(prompt, /<requests>\n1\. Add a \/health route\n<\/requests>/u);
     assert.match(prompt, /<reply>\nAdded it\. Tests pass\.\n<\/reply>/u);
     assert.match(prompt, /<ledger>\nNo edits through tools in 0 tool calls\./u);
+    assert.match(prompt, /<checks>\ntest: stale \| pnpm -F x test\n<\/checks>/u);
     assert.match(
       prompt,
       /<diff against="origin\/main">\n x \| 1 \+\n\ndiff --git a\/x b\/x\n\+1\n\n<\/diff>/u,
