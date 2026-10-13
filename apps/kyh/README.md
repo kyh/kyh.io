@@ -9,7 +9,7 @@
 - Framework - [Next.js](https://nextjs.org/)
 - Physics - [Matter.js](https://brm.io/matter-js/)
 - Styling - [Tailwind CSS v4](https://tailwindcss.com)
-- Multiplayer - [PartySocket](https://docs.partykit.io/)
+- Multiplayer - [PartySocket](https://github.com/cloudflare/partykit/tree/main/packages/partysocket)
 - Hosting - [Vercel](https://vercel.com)
 
 ## Development
