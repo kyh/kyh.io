@@ -94,9 +94,10 @@ const names = (command: string, { dir, name }: Package) =>
   (dir !== "" && new RegExp(`(?:^|[\\s='"/])${escape(dir)}(?:$|[\\s'"/])`, "u").test(command));
 
 // A command aimed at some package: a workspace filter, a directory flag, or
-// a `cd` into a relative directory.
+// a `cd` into a relative directory (`cd .`, `cd ..`, `cd ~` and absolute
+// paths aim nowhere in particular).
 const SCOPED =
-  /(?:^|\s)(?:-F|--filter|--dir|-C)(?:[\s=])|\bworkspace\s|(?:^|[\s;&|(])cd\s+(?![.~/]|$)/u;
+  /(?:^|\s)(?:-F|--filter|--dir|-C)(?:[\s=])|\bworkspace\s|(?:^|[\s;&|(])cd\s+(?!(?:\.{1,2}|~|-)(?:[\s;&|)]|$)|\/|$)/u;
 
 // Whether a check's command counts for a package: one aimed at packages
 // counts for those it names alone; one aimed at none (a root `pnpm test`, a

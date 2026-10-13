@@ -190,9 +190,15 @@ describe("checksOf", () => {
     assert.equal(countsFor("pnpm -F @repo/other test", web, [web, webs]), false);
     assert.equal(countsFor("yarn workspace other test", web, [web]), false);
     assert.equal(countsFor("cd apps/other && pnpm test", web, [web]), false);
+    assert.equal(countsFor("cd ./apps/other && pnpm test", web, [web]), false);
+    assert.equal(countsFor("cd ../other && pnpm test", web, [web]), false);
+    assert.equal(countsFor("cd ./apps/web && pnpm test", web, [web, webs]), true);
     // One aimed at nothing counts for all.
     assert.equal(countsFor("pnpm test", web, [web, webs]), true);
     assert.equal(countsFor("cd . && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd .. && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd ~ && pnpm test", web, [web]), true);
+    assert.equal(countsFor("cd /repo && pnpm test", web, [web]), true);
   });
 
   it("takes Claude's word on a check it could not run, never over a pass", () => {
