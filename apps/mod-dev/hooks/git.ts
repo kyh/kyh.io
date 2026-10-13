@@ -27,7 +27,7 @@ else
 fi
 index="$(mktemp)" || exit 3
 trap 'rm -f "$index"' EXIT
-cp "$(git rev-parse --git-path index)" "$index" 2>/dev/null || rm -f "$index"
+cp -p "$(git rev-parse --git-path index)" "$index" 2>/dev/null || rm -f "$index"
 export GIT_INDEX_FILE="$index"
 git add -A >/dev/null 2>&1 || exit 3
 printf '%s\\n%s\\n' "$base" "$against"
