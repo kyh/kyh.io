@@ -187,8 +187,10 @@ installed docs. `/score` shows the scorecard on demand.
 - Needs come from the nearest `package.json` of each edited file: `static`
   where it has a typecheck or lint script, `test` where it has `test`, `e2e`
   for a source file of a package that runs (`dev`, `start`, `session`,
-  `preview`). Docs need nothing. A check Claude can't run is waived by a reply
-  line `Unverified: <check> — <why>`; the reviewer judges the reason.
+  `preview`). Docs need nothing. A check counts for the packages its command
+  names (`-F name`, `workspace name`, `cd dir`), or for all when it names
+  none; each kind shows its worst package. A check Claude can't run is waived
+  by a reply line `Unverified: <check> — <why>`; the reviewer judges the reason.
 - The gate (`classic.Stop`): Claude stopping with edits is sent back while a
   needed check is missing, then while the reviewer finds it not ready, at most
   3 times per prompt. A question to the person passes. The ship gate
@@ -197,8 +199,11 @@ installed docs. `/score` shows the scorecard on demand.
   them too). `gate: false` turns
   both off. The bar is told to Claude once, at `classic.SessionStart`.
 - The reviewer is `$.model.complete` with a fresh context, never the session's
-  reasoning. It may answer with `read:`, `grep:` and `list:` lines (up to 8, 3
-  rounds) that the mod runs read-only inside the repo, then scores. Every fix
+  reasoning, in two parts (`hooks/review.ts`, effects passed in as ports): a
+  looker on `lookModel` (sonnet) answers with `read:`, `grep:` and `list:`
+  lines (up to 8, 3 rounds) that the mod runs read-only inside the repo, then
+  the judge on `model` (opus) scores in one call. An e2e step counts only if it
+  reached the changed code. Every fix
   must cite a source (`path:line`, an instruction file, a doc under
   `node_modules`, a URL, or `ledger`); uncited fixes are dropped. A ready
   change is reviewed once per diff and checks; a not-ready one again once
@@ -210,9 +215,11 @@ installed docs. `/score` shows the scorecard on demand.
   `[Details]`), a pane (`mod-dev`: scores as bars, the checks with their
   commands, fixes with sources) and the status line.
 
-**Key files**: `hooks/register.tsx` (hooks: the gates, `/score`, band, pane,
-status), `hooks/proof.ts` (needs, waivers, what the gate tells Claude),
-`hooks/look.ts` (the reviewer's reads), `hooks/grade.ts` (the rubric, the
+**Key files**: `hooks/register.tsx` (hooks: the gates, `/score`, band and pane
+layout), `hooks/proof.ts` (needs per package, which checks count for which,
+waivers, what the gate tells Claude), `hooks/review.ts` (the looker and the
+judge), `hooks/look.ts` (the looker's reads), `hooks/board.ts` (signs, colors,
+score rows, the status line), `hooks/grade.ts` (the rubric, the
 prompt, parsing the answer and its sources, the verdict, the scorecard),
 `hooks/evidence.ts` (the ledger, freshness), `hooks/commands.ts` (what each
 command means), `hooks/shell.ts` (command lines into words), `hooks/git.ts`

@@ -118,5 +118,3 @@ export const lookedText = (round: number, results: readonly { look: Look; text: 
     ...results.map(({ look, text }) => `--- ${lookLabel(look)}\n${text}`),
     "</looked>",
   ].join("\n");
-
-export const LAST_ROUND = "That was your last look. Answer now with the scorecard lines.";

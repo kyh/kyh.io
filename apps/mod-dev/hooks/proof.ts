@@ -15,10 +15,11 @@ export interface Package {
   scripts: readonly string[];
 }
 
-// A check the change needs, and the commands that would run it.
+// A check one package needs for the change, and the command that runs it.
 export interface Need {
   kind: Kind;
-  commands: string[];
+  pkg: Package;
+  command: string;
 }
 
 export type Mark = State | "waived";
@@ -53,39 +54,50 @@ const run = (manager: string, pkg: Package, script: string) => {
   return pkg.dir === "" ? `${manager} run ${script}` : `cd ${pkg.dir} && ${manager} run ${script}`;
 };
 
-// The checks a change needs, from the package of each edited file: static and
-// test where the package has scripts for them, e2e where a source file
-// changed in a package that runs.
+// The checks a change needs, package by package: static and test where the
+// package has scripts for them, e2e where a source file changed in a package
+// that runs.
 export const needsOf = (
   files: readonly string[],
   packageOf: (file: string) => Package | undefined,
   manager: string,
 ): Need[] => {
-  const found = new Map<Kind, Set<string>>();
-  const need = (kind: Kind, command: string) => {
-    found.set(kind, (found.get(kind) ?? new Set()).add(command));
+  const found = new Map<string, Need>();
+  const need = (kind: Kind, pkg: Package, command: string) => {
+    found.set(`${kind} ${pkg.dir}`, { command, kind, pkg });
   };
   for (const file of files) {
     const pkg = INERT.test(file) ? undefined : packageOf(file);
     if (pkg !== undefined) {
       const lint = STATIC_SCRIPTS.find((script) => pkg.scripts.includes(script));
       if (lint !== undefined) {
-        need("static", run(manager, pkg, lint));
+        need("static", pkg, run(manager, pkg, lint));
       }
       if (pkg.scripts.includes("test")) {
-        need("test", run(manager, pkg, "test"));
+        need("test", pkg, run(manager, pkg, "test"));
       }
       const start = RUN_SCRIPTS.find((script) => pkg.scripts.includes(script));
       if (start !== undefined && !TEST_FILE.test(file)) {
-        need("e2e", `${run(manager, pkg, start)}, then drive the change`);
+        need("e2e", pkg, `${run(manager, pkg, start)}, then drive the change`);
       }
     }
   }
-  return ORDER.flatMap((kind) => {
-    const commands = found.get(kind);
-    return commands === undefined ? [] : [{ commands: [...commands], kind }];
-  });
+  return ORDER.flatMap((kind) => [...found.values()].filter((one) => one.kind === kind));
 };
+
+const escape = (text: string) => text.replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+
+// Whether a command names a package: by name (`pnpm -F @repo/kyh`, `yarn
+// workspace kyh`) or by directory (`cd apps/kyh`, `apps/kyh/test`).
+const names = (command: string, { dir, name }: Package) =>
+  new RegExp(`(?:^|[\\s='"])${escape(name)}(?:$|[\\s'"])`, "u").test(command) ||
+  (dir !== "" && new RegExp(`(?:^|[\\s='"/])${escape(dir)}(?:$|[\\s'"/])`, "u").test(command));
+
+// Whether a check's command counts for a package: one that names packages
+// counts for those alone; one that names none (a root `pnpm test`, a check
+// run from inside the package) counts for every package.
+export const countsFor = (command: string, pkg: Package, packages: readonly Package[]) =>
+  names(command, pkg) || !packages.some((other) => names(command, other));
 
 const UNVERIFIED =
   /^[\s>*_`-]*unverified[\s*_`:]*(?<kind>static|test|build|e2e)\b[\s*_`]*[—–:-]*\s*(?<why>.+)$/gimu;
@@ -103,20 +115,38 @@ export const unverifiedOf = (reply: string) => {
   return waived;
 };
 
-// Where each needed check stands for the code as it is now.
+// The worse of two states: a failure over a check never run, over a stale
+// one, over a pass.
+const WORST: readonly State[] = ["fail", "none", "stale", "pass"];
+
+// Where each kind of needed check stands for the code as it is now: the worst
+// of its packages', each counted from the checks that ran for that package.
 export const checksOf = (
   ledger: Ledger,
   needs: readonly Need[],
   waived: ReadonlyMap<Kind, string>,
-): Check[] =>
-  needs.map(({ commands, kind }) => {
-    const state = stateOf(ledger, kind);
+): Check[] => {
+  const packages = needs.map((one) => one.pkg);
+  return ORDER.flatMap((kind): Check[] => {
+    const ofKind = needs.filter((one) => one.kind === kind);
+    if (ofKind.length === 0) {
+      return [];
+    }
+    const states = ofKind.map(({ command, pkg }) => ({
+      command,
+      state: stateOf(ledger, kind, (step) => countsFor(step.label, pkg, packages)),
+    }));
+    const state = WORST.find((one) => states.some((each) => each.state === one)) ?? "pass";
     const why = waived.get(kind);
     if (state !== "pass" && why !== undefined) {
-      return { hint: why, kind, mark: "waived" };
+      return [{ hint: why, kind, mark: "waived" }];
     }
-    return { hint: commands.join("; "), kind, mark: state };
+    // The commands still to run, or all of them once every one passed.
+    const open = states.filter((each) => each.state !== "pass");
+    const hint = (open.length > 0 ? open : states).map((each) => each.command).join("; ");
+    return [{ hint, kind, mark: state }];
   });
+};
 
 export const gapsOf = (checks: readonly Check[]) =>
   checks.filter((check) => check.mark !== "pass" && check.mark !== "waived");
@@ -125,6 +155,14 @@ export const gapsOf = (checks: readonly Check[]) =>
 // workflow, a monitor). A background shell, a dev server say, wakes nothing.
 export const isWaitingOn = (tasks: readonly { type: string }[]) =>
   tasks.some((task) => task.type !== "shell");
+
+// A push or a pull request: where an unproven change would leave the session.
+const SHIP = /\bgit\s+(?:-C\s+\S+\s+)?push\b|\bgh\s+pr\s+create\b/u;
+const SHIP_TOOLS = new Set(["mcp__github__create_pull_request"]);
+
+// Whether a tool call ships the change: a Bash push or PR, or a PR tool.
+export const isShipping = (tool: string, command: string) =>
+  tool === "Bash" ? SHIP.test(command) : SHIP_TOOLS.has(tool);
 
 // Whether Claude ended its turn on a question to the person: not a claim of
 // done, so nothing to hold it to yet.

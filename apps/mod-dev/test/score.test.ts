@@ -76,8 +76,10 @@ const ran = (stdout: string, exitCode = 0) => ({
 });
 
 interface World {
-  // The reviewer's answers in order, the last one repeated.
+  // The judge's answers in order, the last one repeated.
   answers?: readonly string[];
+  // The looker's answers in order, then "done".
+  looks?: readonly string[];
   diff?: string;
   diffExit?: number;
   isApp?: boolean;
@@ -88,9 +90,18 @@ interface World {
 // one source file, the reviewer, and the tools a push would run.
 const world = (
   on: On,
-  { answers = [ANSWER], diff = DIFF, diffExit = 0, isApp = false, reply = REPLY }: World = {},
+  {
+    answers = [ANSWER],
+    diff = DIFF,
+    diffExit = 0,
+    isApp = false,
+    looks = [],
+    reply = REPLY,
+  }: World = {},
 ) => {
+  // What the judge and the looker were asked.
   const asked: ModelCompleteRequest[] = [];
+  const looked: ModelCompleteRequest[] = [];
   const read: string[] = [];
   const shipped: string[] = [];
   const statuses: (string | undefined)[] = [];
@@ -114,6 +125,11 @@ const world = (
       e.of === undefined ? [{ content: "Use pnpm.", dir: ROOT, name: "CLAUDE.md", parts: [] }] : [],
   }));
   on("model.complete", (_$, e) => {
+    if (String(e.system).startsWith("You prepare a code review.")) {
+      const text = looks[looked.length] ?? "done";
+      looked.push(e);
+      return { value: { isAnswered: true, text, usage: USAGE } };
+    }
     const text = answers[Math.min(asked.length, answers.length - 1)] ?? "";
     asked.push(e);
     return { value: { isAnswered: true, text, usage: USAGE } };
@@ -133,7 +149,7 @@ const world = (
   on("ui.open", () => ({ value: { isPlaced: true } }));
   on("classic.SessionStart", () => ({}));
   on("classic.Stop", () => ({}));
-  return { asked, read, shipped, statuses, toasts };
+  return { asked, looked, read, shipped, statuses, toasts };
 };
 
 const stop = (last_assistant_message = REPLY) => ({
@@ -142,7 +158,7 @@ const stop = (last_assistant_message = REPLY) => ({
 });
 
 test("/score has the reviewer read the change and answers with the scorecard", async ($, on) => {
-  const { asked, statuses } = world(on);
+  const { asked, looked, statuses } = world(on);
   const { exitCode, text } = await $.command.run(SCORE);
   expect(text).toContain("**ready**");
   expect(text).toContain("| confidence | `████████░░` 8 | pnpm test passed after the last edit |");
@@ -150,9 +166,10 @@ test("/score has the reviewer read the change and answers with the scorecard", a
   expect(text).not.toContain("make it nicer");
   expect(text).toContain("**Needs** test ✓");
   expect(text).toContain(
-    "verified: static – · test ✓ · e2e – · against origin/main (abc1234) · reviewed by opus",
+    "verified: static – · test ✓ · e2e – · against origin/main (abc1234) · reviewed by opus, read by sonnet",
   );
   expect(exitCode).toBe(0);
+  expect(looked.map((request) => request.model)).toEqual(["sonnet"]);
   expect(asked.length).toBe(1);
   expect(asked[0]?.model).toBe("opus");
   expect(asked[0]?.system).toContain("You review a coding agent's work before it merges.");
@@ -165,37 +182,41 @@ test("/score has the reviewer read the change and answers with the scorecard", a
   expect(statuses.at(-1)).toBe("verified: static – · test ✓ · e2e – · ready");
 });
 
-test("/score asks the model the config names", { options: { model: "sonnet" } }, async ($, on) => {
-  const { asked } = world(on);
-  await $.command.run(SCORE);
-  expect(asked[0]?.model).toBe("sonnet");
-});
+test(
+  "/score asks the models the config names",
+  { options: { lookModel: "haiku", model: "sonnet" } },
+  async ($, on) => {
+    const { asked, looked } = world(on);
+    await $.command.run(SCORE);
+    expect(asked[0]?.model).toBe("sonnet");
+    expect(looked[0]?.model).toBe("haiku");
+  },
+);
 
 test("the reviewer looks around the repository before it answers", async ($, on) => {
   const looks = "read: src/version.ts\ngrep: export const in src\nread: ../secrets.txt\nlist: /etc";
-  const { asked, read } = world(on, { answers: [looks, ANSWER] });
+  const { asked, looked, read } = world(on, { looks: [looks] });
   const { text } = await $.command.run(SCORE);
   expect(text).toContain("**ready**");
-  expect(asked.length).toBe(2);
-  const second = String(asked[1]?.prompt);
-  expect(second).toContain(`<answer round="1">\n${looks}\n</answer>`);
-  expect(second).toContain("--- read: src/version.ts\n    1  export const version = () => '1';");
-  expect(second).toContain("--- grep: export const in src\nsrc/version.ts:1:export const version");
-  expect(second).not.toContain("--- read: ../secrets.txt");
-  expect(second).not.toContain("--- list: /etc");
+  expect(looked.length).toBe(2);
+  expect(asked.length).toBe(1);
+  const judged = String(asked[0]?.prompt);
+  expect(judged).toContain("--- read: src/version.ts\n    1  export const version = () => '1';");
+  expect(judged).toContain("--- grep: export const in src\nsrc/version.ts:1:export const version");
+  expect(judged).not.toContain("--- read: ../secrets.txt");
+  expect(judged).not.toContain("--- list: /etc");
   expect(read).toContain(`${ROOT}/src/version.ts`);
   expect(read.some((path) => path.includes("secrets"))).toBe(false);
 });
 
-test("the reviewer answers after three rounds of looking", async ($, on) => {
+test("the reviewer stops looking after three rounds", async ($, on) => {
   const look = "read: src/version.ts";
-  const { asked } = world(on, { answers: [look, look, look, ANSWER] });
+  const { asked, looked } = world(on, { looks: [look, look, look, look] });
   const { text } = await $.command.run(SCORE);
   expect(text).toContain("**ready**");
-  expect(asked.length).toBe(4);
-  expect(String(asked[3]?.prompt)).toContain(
-    "That was your last look. Answer now with the scorecard lines.",
-  );
+  expect(looked.length).toBe(3);
+  expect(asked.length).toBe(1);
+  expect(String(asked[0]?.prompt)).toContain('<looked round="3">');
 });
 
 test("/score exits 1 when the work is not ready", async ($, on) => {

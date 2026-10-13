@@ -111,9 +111,13 @@ export const ledgerOf = (uses: readonly Use[], root: string): Ledger => {
 };
 
 // Where a kind of check stands for the code as it is now: the last one of
-// its kind, unless an edit came after it.
-export const stateOf = (ledger: Ledger, kind: Kind): State => {
-  const last = ledger.steps.findLast((step) => step.kinds.includes(kind));
+// its kind (of those `isFor` counts), unless an edit came after it.
+export const stateOf = (
+  ledger: Ledger,
+  kind: Kind,
+  isFor: (step: Step) => boolean = () => true,
+): State => {
+  const last = ledger.steps.findLast((step) => step.kinds.includes(kind) && isFor(step));
   if (last === undefined) {
     return "none";
   }

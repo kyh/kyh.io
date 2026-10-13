@@ -11,21 +11,10 @@ import type { Review } from "../types";
 import { ledgerOf, statusOf, usesOf } from "./evidence";
 import type { Ledger, Row, Use } from "./evidence";
 import { DIFF_SCRIPT, fingerprintOf, hashOf, parseDiff } from "./git";
-import {
-  DIMENSIONS,
-  SYSTEM,
-  asksOf,
-  bar,
-  checksLine,
-  fixLine,
-  parseGrade,
-  promptOf,
-  replyOf,
-  scorecardOf,
-  verdictOf,
-} from "./grade";
-import type { Grade, Instruction, Verdict } from "./grade";
-import { LAST_ROUND, MAX_ROUNDS, entriesOf, linesOf, lookedText, looksOf, matchesOf } from "./look";
+import { MARK_LOOK, VERDICT_COLOR, scoreRows, statusLine, verdictChip, verdictLine } from "./board";
+import { asksOf, checksLine, fixLine, promptOf, replyOf, scorecardOf, verdictOf } from "./grade";
+import type { Grade, Instruction } from "./grade";
+import { entriesOf, linesOf, matchesOf } from "./look";
 import type { Look } from "./look";
 import {
   BAR,
@@ -34,6 +23,7 @@ import {
   gapText,
   gapsOf,
   isAsking,
+  isShipping,
   isWaitingOn,
   managerOf,
   needsOf,
@@ -41,16 +31,15 @@ import {
   reviewText,
   unverifiedOf,
 } from "./proof";
-import type { Check, Mark, Package } from "./proof";
+import type { Check, Package } from "./proof";
+import { reviewChange } from "./review";
+import type { Models, Ports } from "./review";
 
 const INSTRUCTION_FILES = ["AGENTS.md", "CLAUDE.md", "REVIEW.md"];
 const MAX_DIRS = 30;
 // How many times the gate sends Claude back before it lets the person decide.
 const MAX_BLOCKS = 3;
 const PANE = "mod-dev";
-// A push or a pull request: where an unproven change would leave the session.
-const SHIP = /\bgit\s+(?:-C\s+\S+\s+)?push\b|\bgh\s+pr\s+create\b/u;
-const SHIP_TOOLS = new Set(["mcp__github__create_pull_request"]);
 
 const IDLE: Review = { fingerprint: "", note: "", phase: "idle", reasons: [], replied: "" };
 const checksAtom = atom({ key: "checks", plugin: "mod-dev" } as const, []);
@@ -142,17 +131,7 @@ const checksFor = async ($: EngineInterface, { ledger, root }: Session, reply: s
   return checks;
 };
 
-// The status line: what is verified, then the reviewer's verdict.
-const statusText = (ledger: Ledger, review: Review) => {
-  const status = statusOf(ledger);
-  if (status === undefined) {
-    return;
-  }
-  if (review.phase === "reviewing") {
-    return `${status} · reviewing…`;
-  }
-  return review.verdict === undefined ? status : `${status} · ${review.verdict}`;
-};
+const statusText = (ledger: Ledger, review: Review) => statusLine(statusOf(ledger), review);
 
 const showStatus = async ($: EngineInterface) => {
   const session = await readSession($);
@@ -214,39 +193,29 @@ const runLook = async ($: EngineInterface, root: string, look: Look) => {
   }
 };
 
-// The reviewer: a fresh model with none of the session's reasoning. It looks
-// around the repository for up to MAX_ROUNDS rounds, then answers.
-const askReviewer = async ($: EngineInterface, model: string, root: string, packet: string) => {
-  let prompt = packet;
-  for (let round = 1; ; round += 1) {
-    const answer = await $.model.complete({
-      effort: "high",
-      maxTokens: 16_000,
-      model,
-      prompt,
-      system: SYSTEM,
-      timeoutMs: 300_000,
-    });
-    if (!answer.isAnswered) {
-      return { error: `${model} gave no answer (${answer.reason}).` };
+// What the reviewer reaches through the session: model calls and reads.
+const portsOf = ($: EngineInterface, root: string): Ports => ({
+  complete: async ({ model, prompt, system }) => {
+    try {
+      const answer = await $.model.complete({
+        effort: "high",
+        maxTokens: 16_000,
+        model,
+        prompt,
+        system,
+        timeoutMs: 300_000,
+      });
+      return answer.isAnswered
+        ? { text: answer.text }
+        : { error: `${model} gave no answer (${answer.reason}).` };
+    } catch (error) {
+      return {
+        error: `Could not ask ${model}: ${error instanceof Error ? error.message : "refused"}`,
+      };
     }
-    const isAnswer = round > MAX_ROUNDS || parseGrade(answer.text) !== undefined;
-    const looks = isAnswer ? [] : looksOf(answer.text);
-    if (looks.length === 0) {
-      return { text: answer.text };
-    }
-    const results = [];
-    for (const look of looks) {
-      results.push({ look, text: await runLook($, root, look) });
-    }
-    prompt = [
-      prompt,
-      `<answer round="${round}">\n${answer.text}\n</answer>`,
-      lookedText(round, results),
-      ...(round === MAX_ROUNDS ? [LAST_ROUND] : []),
-    ].join("\n\n");
-  }
-};
+  },
+  look: (look) => runLook($, root, look),
+});
 
 // `said`: nothing to review (no change, no git); `failed`: the review failed.
 type Proof =
@@ -261,7 +230,7 @@ const failed = async ($: EngineInterface, text: string): Promise<Proof> => {
 // Has the reviewer read the change as it stands, unless it already has.
 const prove = async (
   $: EngineInterface,
-  model: string,
+  models: Models,
   { isForced = false, ref = "", reply }: { isForced?: boolean; ref?: string; reply?: string },
 ): Promise<Proof> => {
   const session = await readSession($);
@@ -283,7 +252,9 @@ const prove = async (
     };
   }
   const evidence = statusOf(ledger) ?? "no edits through tools this session";
-  const footer = `${evidence} · against ${diff.against} (${diff.base.slice(0, 7)}) · reviewed by ${model}`;
+  const { lookModel, model } = models;
+  const by = lookModel === model ? model : `${model}, read by ${lookModel}`;
+  const footer = `${evidence} · against ${diff.against} (${diff.base.slice(0, 7)}) · reviewed by ${by}`;
   const fingerprint = `${fingerprintOf(diff)} ${checksLine(checks)}`;
   const replied = hashOf(said);
   const last = await read($, reviewAtom);
@@ -304,44 +275,32 @@ const prove = async (
   });
   await update($, reviewAtom, (review): Review => ({ ...review, phase: "reviewing" }));
   $.ui.status(statusText(ledger, await read($, reviewAtom)));
-  try {
-    const answer = await askReviewer($, model, root, packet);
-    if (answer.error !== undefined) {
-      return await failed($, answer.error);
-    }
-    const grade = parseGrade(answer.text);
-    if (grade === undefined) {
-      return await failed(
-        $,
-        `${model}'s answer did not fit the scorecard:\n\n${answer.text.slice(0, 1500)}`,
-      );
-    }
-    const { reasons, verdict } = verdictOf(grade);
-    await update($, reviewAtom, (): Review => ({
-      fingerprint,
-      grade,
-      note: footer,
-      phase: "done",
-      reasons,
-      replied,
-      verdict,
-    }));
-    const card = scorecardOf(grade, checks, footer);
-    return { card, checks, grade, isReady: verdict === "ready", kind: "graded" };
-  } catch (error) {
-    return await failed(
-      $,
-      `Could not ask ${model}: ${error instanceof Error ? error.message : "refused"}`,
-    );
-  } finally {
+  const reviewed = await reviewChange(portsOf($, root), models, packet);
+  if ("error" in reviewed) {
+    const proof = await failed($, reviewed.error);
     $.ui.status(statusText(ledger, await read($, reviewAtom)));
+    return proof;
   }
+  const { grade } = reviewed;
+  const { reasons, verdict } = verdictOf(grade);
+  await update($, reviewAtom, (): Review => ({
+    fingerprint,
+    grade,
+    note: footer,
+    phase: "done",
+    reasons,
+    replied,
+    verdict,
+  }));
+  $.ui.status(statusText(ledger, await read($, reviewAtom)));
+  const card = scorecardOf(grade, checks, footer);
+  return { card, checks, grade, isReady: verdict === "ready", kind: "graded" };
 };
 
 // What sends Claude back from stopping: a needed check missing, else the
 // reviewer's fixes; nothing when it asks the person something, when nothing
 // was edited, or once it was sent back MAX_BLOCKS times since the last prompt.
-const blockOf = async ($: EngineInterface, model: string, reply: string) => {
+const blockOf = async ($: EngineInterface, models: Models, reply: string) => {
   if (isAsking(reply)) {
     return;
   }
@@ -357,7 +316,7 @@ const blockOf = async ($: EngineInterface, model: string, reply: string) => {
   if (gaps.length > 0) {
     return gapText(gaps);
   }
-  const proof = await prove($, model, { reply });
+  const proof = await prove($, models, { reply });
   if (proof.kind !== "graded" || proof.isReady) {
     return;
   }
@@ -365,29 +324,11 @@ const blockOf = async ($: EngineInterface, model: string, reply: string) => {
   return reviewText(verdict, reasons, proof.grade.fixes.map(fixLine));
 };
 
-const MARK_LOOK: Readonly<Record<Mark, { sign: string; color?: string }>> = {
-  fail: { color: "error", sign: "✗" },
-  none: { sign: "–" },
-  pass: { color: "success", sign: "✓" },
-  stale: { color: "warning", sign: "↺" },
-  waived: { color: "warning", sign: "?" },
-};
-
-const VERDICT_COLOR = {
-  "fix first": "warning",
-  "not ready": "error",
-  ready: "success",
-} as const satisfies Record<Verdict, string>;
-
-const scoreColor = (score: number) => {
-  if (score >= 7) {
-    return "success";
-  }
-  return score > 4 ? "warning" : "error";
-};
-
 export const register: Register = (on, options) => {
-  const model = String(options.model ?? "opus");
+  const models: Models = {
+    lookModel: String(options.lookModel ?? "sonnet"),
+    model: String(options.model ?? "opus"),
+  };
   const isGated = options.gate !== false;
 
   on("session.start", async ($, e, next) => {
@@ -433,7 +374,7 @@ export const register: Register = (on, options) => {
   on("classic.Stop", async ($, e, next) => {
     const isWaiting = isWaitingOn(e.background_tasks ?? []);
     const block =
-      isGated && !isWaiting ? await blockOf($, model, e.last_assistant_message ?? "") : undefined;
+      isGated && !isWaiting ? await blockOf($, models, e.last_assistant_message ?? "") : undefined;
     if (block === undefined) {
       return next(e);
     }
@@ -446,15 +387,14 @@ export const register: Register = (on, options) => {
   // The ship gate: no push or pull request for an edited change the reviewer
   // hasn't found ready.
   on("classic.PreToolUse", async ($, e, next) => {
-    const isShip = e.tool === "Bash" ? SHIP.test(e.command) : SHIP_TOOLS.has(e.tool);
-    if (!isGated || !isShip) {
+    if (!isGated || !isShipping(e.tool, e.tool === "Bash" ? e.command : "")) {
       return next(e);
     }
     const { ledger } = await readSession($);
     if (ledger.lastEdit === -1) {
       return next(e);
     }
-    const proof = await prove($, model, {});
+    const proof = await prove($, models, {});
     if (proof.kind === "failed") {
       return { deny: `mod-dev couldn't review the change, so it holds the push: ${proof.text}` };
     }
@@ -469,7 +409,7 @@ export const register: Register = (on, options) => {
 
   on("command.run", { command: "score" }, async ($, e) => {
     void $.ui.open({ id: PANE, title: "mod-dev" });
-    const proof = await prove($, model, { isForced: true, ref: e.args.trim() });
+    const proof = await prove($, models, { isForced: true, ref: e.args.trim() });
     if (proof.kind !== "graded") {
       return { text: proof.text };
     }
@@ -485,9 +425,6 @@ export const register: Register = (on, options) => {
       return next(e);
     }
     const { Box, Button, Text } = $.ui.resolve(e);
-    const scores = review.grade
-      ? DIMENSIONS.map((dimension) => review.grade?.scores[dimension].score ?? 0)
-      : [];
     return (
       <Box flexDirection="row" gap={2}>
         <Text bold>proof</Text>
@@ -498,9 +435,9 @@ export const register: Register = (on, options) => {
         ))}
         {review.phase === "reviewing" && <Text dimColor>reviewing…</Text>}
         {review.phase === "failed" && <Text color="error">review failed</Text>}
-        {review.phase === "done" && review.verdict && (
+        {review.phase === "done" && review.verdict && review.grade && (
           <Text color={VERDICT_COLOR[review.verdict]}>
-            ● {review.verdict} {scores.join("·")}
+            {verdictChip(review.verdict, review.grade)}
           </Text>
         )}
         <Button
@@ -527,33 +464,29 @@ export const register: Register = (on, options) => {
           {review.phase === "failed" && <Text color="error">{review.note}</Text>}
           {review.phase === "done" && review.verdict && (
             <Text bold color={VERDICT_COLOR[review.verdict]}>
-              ● {review.verdict}
-              {review.reasons.length > 0 ? ` · ${review.reasons.join("; ")}` : ""}
+              {verdictLine(review.verdict, review.reasons)}
             </Text>
           )}
           <Button
             key="again"
             label="Review again"
             onPress={() => {
-              void prove($, model, { isForced: true });
+              void prove($, models, { isForced: true });
             }}
           />
         </Box>
         {grade && (
           <Box flexDirection="column">
-            {DIMENSIONS.map((dimension) => {
-              const { score, why } = grade.scores[dimension];
-              return (
-                <Box key={dimension} flexDirection="row" gap={1}>
-                  <Text>{dimension.padEnd(10)}</Text>
-                  <Text color={scoreColor(score)}>{bar(score)}</Text>
-                  <Text bold>{String(score).padStart(2)}</Text>
-                  <Text dimColor wrap="truncate-end">
-                    {why}
-                  </Text>
-                </Box>
-              );
-            })}
+            {scoreRows(grade).map((row) => (
+              <Box key={row.label} flexDirection="row" gap={1}>
+                <Text>{row.label}</Text>
+                <Text color={row.color}>{row.bar}</Text>
+                <Text bold>{row.score}</Text>
+                <Text dimColor wrap="truncate-end">
+                  {row.why}
+                </Text>
+              </Box>
+            ))}
             <Box flexDirection="row" gap={1}>
               <Text>{"risk".padEnd(10)}</Text>
               <Text bold>{grade.risk.level}</Text>

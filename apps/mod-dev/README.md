@@ -38,6 +38,12 @@ that runs (`dev`, `start`, `session` or `preview`). Docs and images need
 nothing. Commands are spelled for the repo's package manager: `pnpm -F
 @repo/kyh test`.
 
+**A check counts for the packages it ran for.** A command that names a
+package, by name (`pnpm -F @repo/kyh test`, `yarn workspace kyh test`) or by
+directory (`cd apps/kyh && …`), counts for that package alone. One that names
+none, like a root `pnpm test`, counts for all of them. When a change touches
+two packages, each needs its own check, and the worst of them is what shows.
+
 **When a check can't run here** (a production database, no test login, a
 command that needs approval), Claude says so in its reply on a line of its
 own:
@@ -72,18 +78,25 @@ confirmation when it does.
 
 ## The reviewer
 
-A fresh model call that never sees the session's reasoning. It reads your
+Fresh model calls that never see the session's reasoning. The reviewer reads your
 prompts, Claude's last reply (as claims to check), the ledger, the checks and
 where they stand, the diff against the default branch's merge base
 (uncommitted and untracked files included) and the CLAUDE.md, AGENTS.md and
 REVIEW.md files.
 
-**It looks before it judges.** It can answer with `read:`, `grep:` and
-`list:` lines, up to 8 a round and 3 rounds. The mod runs them read-only,
-inside the repository (`git grep`, file reads, directory listings), and hands
-back what they show. It's told to read the files beside each change, grep for
-code that does the same kind of thing, and read the installed version's docs
-and types under `node_modules`.
+**It looks before it judges, on two models.** A cheaper looker (Sonnet by
+default) answers with `read:`, `grep:` and `list:` lines, up to 8 a round and
+3 rounds. The mod runs them read-only, inside the repository (`git grep`,
+file reads, directory listings). The looker is told to read the files beside
+each change, code that does the same kind of thing, the installed version's
+docs and types under `node_modules`, and whatever shows whether each e2e step
+reached the changed code. Then the judge (Opus by default) scores the change
+from the same material plus everything that was read, in one call. If looking
+fails, the judge still runs, on less.
+
+**An e2e step counts only if it reached the change.** A browser on another
+page, or a request to another route, proves nothing about this change, and
+the judge scores it that way.
 
 **Every fix cites a source.** A file and line of precedent
 (`src/lib/config.ts:40`), an instruction file (`CLAUDE.md`), a doc of the
@@ -187,15 +200,16 @@ claude -p --resume <session-id> --plugin-dir apps/mod-dev "/score"
 
 Open `/config` and find **mod-dev**:
 
-| Setting              | Default | Options                   |
-| -------------------- | ------- | ------------------------- |
-| Reviewer model       | `opus`  | `opus`, `sonnet`, `haiku` |
-| Hold Claude to proof | on      | on, off: `/score` only    |
+| Setting              | Default  | Options                   |
+| -------------------- | -------- | ------------------------- |
+| Reviewer model       | `opus`   | `opus`, `sonnet`, `haiku` |
+| Looking model        | `sonnet` | `opus`, `sonnet`, `haiku` |
+| Hold Claude to proof | on       | on, off: `/score` only    |
 
 ## Cost
 
-Model calls on your plan or API key: one review per change, plus one call per
-round of looking (up to 3). A ready change isn't reviewed again until it
+Model calls on your plan or API key, per review: up to 3 rounds of looking on
+the looking model and one call to judge on the reviewer model. A ready change isn't reviewed again until it
 changes. What the reviewer reads is capped: 150,000 characters of patch
 (small files whole, large and generated ones cut), 40,000 of instruction
 files, the last 80 ledger steps, and per look 200 lines, 60 matches or 80
@@ -209,8 +223,9 @@ entries.
   off the ledger.
 - Commands are recognized by name. A check under an unusual name shows as a
   command that ran; the reviewer still sees it.
-- Checks are counted for the session, not per package: a passing `pnpm test`
-  in one package counts for another the change touched.
+- A check counts for a package by its command line. A check run from inside
+  a package's directory, after a separate `cd`, names no package, so it
+  counts for all of them.
 - `e2e` is required for any source file of a package that runs, a pure
   helper's included. Claude can mark it unverified with a reason.
 - The reviewer is a model: read the scores as a second reviewer's opinion with
@@ -233,7 +248,7 @@ Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
 file in `hooks/` reloads the mod without a restart.
 
 ```sh
-pnpm -F @repo/mod-dev test       # node: the ledger, needs and waivers, looks, the reviewer's plumbing, git
+pnpm -F @repo/mod-dev test       # node: the ledger, needs and waivers, looks, the review loop, the board, git
 pnpm -F @repo/mod-dev test:mod   # claude plugin test: the hooks: the gates, /score, the reviewer's looks, band, pane
 pnpm -F @repo/mod-dev typecheck  # pure modules + node tests, then the hooks against the pinned API types
 pnpm -F @repo/mod-dev validate   # what Claude Code will load
@@ -255,14 +270,16 @@ a mod each time it loads one:
 cp apps/mod-dev/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
 ```
 
-| File                 | Role                                                                            |
-| -------------------- | ------------------------------------------------------------------------------- |
-| `hooks/register.tsx` | The hooks: the gates, `/score`, the reviewer's loop, band, pane, status         |
-| `hooks/proof.ts`     | What a change needs, waivers, what the gate tells Claude, the bar               |
-| `hooks/look.ts`      | The reviewer's reads: parsing them, keeping them in the repo, showing them      |
-| `hooks/grade.ts`     | The rubric, the prompt, reading the answer and its sources, the scorecard       |
-| `hooks/evidence.ts`  | The ledger of edits and checks, freshness, the status line                      |
-| `hooks/commands.ts`  | What each command means: the checks it runs, whether it edits                   |
-| `hooks/shell.ts`     | Command lines into commands and words: quotes, redirects, heredocs              |
-| `hooks/git.ts`       | The diff script, fingerprints                                                   |
-| `types/index.d.ts`   | The `$.state` contract: checks, the review, how often the gate sent Claude back |
+| File                 | Role                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| `hooks/register.tsx` | The hooks: the gates, `/score`, reading the session, band and pane layout                          |
+| `hooks/proof.ts`     | What a change needs per package, which checks count for which, waivers, what the gate tells Claude |
+| `hooks/review.ts`    | The review: the looker's rounds on one model, the judge on another                                 |
+| `hooks/look.ts`      | The looker's reads: parsing them, keeping them in the repo, showing them                           |
+| `hooks/board.ts`     | What the band, pane and status line show: signs, colors, score rows                                |
+| `hooks/grade.ts`     | The rubric, the prompt, reading the answer and its sources, the scorecard                          |
+| `hooks/evidence.ts`  | The ledger of edits and checks, freshness, the status line                                         |
+| `hooks/commands.ts`  | What each command means: the checks it runs, whether it edits                                      |
+| `hooks/shell.ts`     | Command lines into commands and words: quotes, redirects, heredocs                                 |
+| `hooks/git.ts`       | The diff script, fingerprints                                                                      |
+| `types/index.d.ts`   | The `$.state` contract: checks, the review, how often the gate sent Claude back                    |

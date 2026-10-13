@@ -5,10 +5,12 @@ import { ledgerOf } from "../hooks/evidence";
 import type { Use } from "../hooks/evidence";
 import {
   checksOf,
+  countsFor,
   dirsUp,
   gapText,
   gapsOf,
   isAsking,
+  isShipping,
   isWaitingOn,
   managerOf,
   needsOf,
@@ -58,12 +60,10 @@ describe("needsOf", () => {
     assert.deepEqual(
       needsOf(["apps/web/src/page.tsx", "packages/lib/index.ts"], packageOf, "pnpm"),
       [
-        {
-          commands: ["pnpm -F @repo/web typecheck", "pnpm -F @repo/lib typecheck"],
-          kind: "static",
-        },
-        { commands: ["pnpm -F @repo/web test"], kind: "test" },
-        { commands: ["pnpm -F @repo/web dev, then drive the change"], kind: "e2e" },
+        { command: "pnpm -F @repo/web typecheck", kind: "static", pkg: web },
+        { command: "pnpm -F @repo/lib typecheck", kind: "static", pkg: lib },
+        { command: "pnpm -F @repo/web test", kind: "test", pkg: web },
+        { command: "pnpm -F @repo/web dev, then drive the change", kind: "e2e", pkg: web },
       ],
     );
   });
@@ -78,12 +78,13 @@ describe("needsOf", () => {
 
   it("spells the commands for the repository's package manager", () => {
     const [need] = needsOf(["packages/lib/index.ts"], packageOf, "yarn");
-    assert.deepEqual(need?.commands, ["yarn workspace @repo/lib typecheck"]);
+    assert.equal(need?.command, "yarn workspace @repo/lib typecheck");
     const root: Package = { dir: "", name: "app", scripts: ["test"] };
-    assert.deepEqual(needsOf(["index.js"], () => root, "npm")[0]?.commands, ["npm run test"]);
-    assert.deepEqual(needsOf(["packages/lib/index.ts"], packageOf, "npm")[0]?.commands, [
+    assert.equal(needsOf(["index.js"], () => root, "npm")[0]?.command, "npm run test");
+    assert.equal(
+      needsOf(["packages/lib/index.ts"], packageOf, "npm")[0]?.command,
       "cd packages/lib && npm run typecheck",
-    ]);
+    );
   });
 });
 
@@ -135,6 +136,56 @@ describe("checksOf", () => {
         ["e2e", "none"],
       ],
     );
+  });
+
+  it("counts a check only for the packages it ran for", () => {
+    const both = needsOf(["apps/web/src/page.tsx", "packages/lib/index.ts"], packageOf, "pnpm");
+    const statics = (...commands: string[]) =>
+      checksOf(
+        ledgerOf(
+          [
+            write("apps/web/src/page.tsx"),
+            write("packages/lib/index.ts"),
+            ...commands.map((command) => bash(command)),
+          ],
+          ROOT,
+        ),
+        both,
+        new Map(),
+      ).find((check) => check.kind === "static");
+    assert.deepEqual(statics("pnpm -F @repo/web typecheck"), {
+      hint: "pnpm -F @repo/lib typecheck",
+      kind: "static",
+      mark: "none",
+    });
+    assert.equal(
+      statics("pnpm -F @repo/web typecheck", "cd packages/lib && pnpm typecheck")?.mark,
+      "pass",
+    );
+    // A root check names no package, so it counts for all of them.
+    assert.equal(statics("pnpm typecheck")?.mark, "pass");
+    // A failure in one package fails the kind, even when another passed.
+    const failed = checksOf(
+      ledgerOf(
+        [
+          write("apps/web/src/page.tsx"),
+          write("packages/lib/index.ts"),
+          bash("pnpm -F @repo/web typecheck"),
+          bash("pnpm -F @repo/lib typecheck", true),
+        ],
+        ROOT,
+      ),
+      both,
+      new Map(),
+    ).find((check) => check.kind === "static");
+    assert.equal(failed?.mark, "fail");
+  });
+
+  it("tells a package from one whose name or directory starts the same", () => {
+    const webs: Package = { dir: "apps/webs", name: "@repo/webs", scripts: ["typecheck"] };
+    assert.equal(countsFor("pnpm -F @repo/webs typecheck", web, [web, webs]), false);
+    assert.equal(countsFor("cd apps/webs && pnpm typecheck", web, [web, webs]), false);
+    assert.equal(countsFor("pnpm --filter=@repo/web typecheck", web, [web, webs]), true);
   });
 
   it("takes Claude's word on a check it could not run, never over a pass", () => {
@@ -190,6 +241,15 @@ describe("what the gate says", () => {
       ),
       "mod-dev: the reviewer says fix first (idiomatic 6 < 7). Fix these, then check again:\n1. use the config helper (src/lib/config.ts:40)\nIf a finding is wrong, say why in your reply instead; the reviewer reads it.",
     );
+  });
+
+  it("knows a push or a pull request when it sees one", () => {
+    assert.equal(isShipping("Bash", "git push -u origin HEAD"), true);
+    assert.equal(isShipping("Bash", "git -C apps/kyh push"), true);
+    assert.equal(isShipping("Bash", "gh pr create --fill"), true);
+    assert.equal(isShipping("Bash", "git status && git log"), false);
+    assert.equal(isShipping("mcp__github__create_pull_request", ""), true);
+    assert.equal(isShipping("Read", ""), false);
   });
 
   it("waits on work that will wake Claude, never on a background shell", () => {
