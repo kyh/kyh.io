@@ -185,8 +185,8 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
       ultracite:
-        specifier: ^7.12.4
-        version: 7.12.4(oxfmt@0.72.0)(oxlint@1.87.0)
+        specifier: ^8.0.0
+        version: 8.0.0(oxfmt@0.72.0)(oxlint@1.87.0)
 
   apps/autoplay:
     dependencies:
@@ -219,7 +219,7 @@ importers:
         version: 1.0.0-rc.4
       drizzle-orm:
         specifier: 1.0.0-rc.4
-        version: 1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5)
+        version: 1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5)
       fast-xml-parser:
         specifier: ^5.11.2
         version: 5.11.2
@@ -342,7 +342,7 @@ importers:
         version: 4.3.3
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 6.1.2(vite@8.3.4(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       postcss:
         specifier: 'catalog:'
         version: 8.5.29
@@ -400,7 +400,7 @@ importers:
         version: 4.0.7
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 6.1.2(vite@8.3.4(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       postcss:
         specifier: 'catalog:'
         version: 8.5.29
@@ -536,7 +536,7 @@ importers:
         version: 1.0.0-rc.4
       drizzle-orm:
         specifier: 1.0.0-rc.4
-        version: 1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5)
+        version: 1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5)
       next:
         specifier: 'catalog:'
         version: 16.4.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -603,7 +603,7 @@ importers:
         version: link:../../packages/typescript
       cf:
         specifier: 1.0.0-beta.12
-        version: 1.0.0-beta.12
+        version: 1.0.0-beta.12(@types/node@26.6.5)
       partyserver:
         specifier: ^0.5.10
         version: 0.5.10(@cloudflare/workers-types@5.20261011.1)
@@ -612,7 +612,7 @@ importers:
         version: 7.0.2
       wrangler:
         specifier: ^4.149.0
-        version: 4.149.0(@cloudflare/workers-types@5.20261011.1)
+        version: 4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5)
 
   apps/policingice:
     dependencies:
@@ -645,7 +645,7 @@ importers:
         version: 1.0.0-rc.4
       drizzle-orm:
         specifier: 1.0.0-rc.4
-        version: 1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5)
+        version: 1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5)
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.3.0)
@@ -825,7 +825,7 @@ importers:
         version: 4.0.7
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 6.1.2(vite@8.3.4(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       postcss:
         specifier: 'catalog:'
         version: 8.5.29
@@ -865,7 +865,7 @@ importers:
         version: 19.3.0(@types/react@19.3.0)
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 6.1.2(vite@8.3.4(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -4820,15 +4820,16 @@ packages:
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
 
-  ultracite@7.12.4:
-    resolution: {integrity: sha512-6jVEwaZBaytFm6XRoI3WGS2ZydrkrNvHTD0qTf7983ti2FlEWL1YcxnPaMaYuS6PkXqMhIK2XGr0cbsL4x5pQA==}
+  ultracite@8.0.0:
+    resolution: {integrity: sha512-52y2Zzp6ngUPJIjvcnoyM2p4qSDwOCzrWwHvKfxNcOdRRuhmrTLqzwMpGhnhz2LC2POEO8GV7EcggbwTRmHEdA==}
+    engines: {node: '>=22.18.0'}
     hasBin: true
     peerDependencies:
       '@biomejs/biome': ^2.5.0
       eslint: ^10.9.0
-      oxfmt: '>=0.59.0'
+      oxfmt: '>=0.71.0 <1'
       oxlint: ^1.86.0
-      prettier: ^3.0.0
+      prettier: ^3.5.3
       stylelint: ^17.0.0
     peerDependenciesMeta:
       '@biomejs/biome':
@@ -5177,7 +5178,7 @@ snapshots:
       '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
-      drizzle-orm: 1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5)
+      drizzle-orm: 1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5)
 
   '@better-auth/kysely-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(kysely@0.29.6)':
     dependencies:
@@ -5241,9 +5242,9 @@ snapshots:
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
-  '@cloudflare/runtime-types@0.1.7':
+  '@cloudflare/runtime-types@0.1.7(@types/node@26.6.5)':
     dependencies:
-      miniflare: 5.20261001.0-alpha
+      miniflare: 5.20261001.0-alpha(@types/node@26.6.5)
       workerd: 1.20261001.1
     transitivePeerDependencies:
       - '@types/node'
@@ -6580,7 +6581,7 @@ snapshots:
       d3-time-format: 4.1.0
       internmap: 2.0.3
 
-  '@vitejs/plugin-react@6.1.2(vite@8.3.4(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.1.2(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
@@ -6653,7 +6654,7 @@ snapshots:
       zod: 4.6.5
     optionalDependencies:
       drizzle-kit: 1.0.0-rc.4
-      drizzle-orm: 1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5)
+      drizzle-orm: 1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5)
       next: 16.4.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
@@ -6679,14 +6680,14 @@ snapshots:
 
   caniuse-lite@1.0.30001815: {}
 
-  cf@1.0.0-beta.12:
+  cf@1.0.0-beta.12(@types/node@26.6.5):
     dependencies:
       '@cloudflare/build-output-utils': 0.8.5
       '@cloudflare/codemods': 0.4.0
       '@cloudflare/config': 0.23.0
-      '@cloudflare/runtime-types': 0.1.7
+      '@cloudflare/runtime-types': 0.1.7(@types/node@26.6.5)
       blake3-wasm: 2.1.5
-      miniflare: 5.20260930.0-alpha
+      miniflare: 5.20260930.0-alpha(@types/node@26.6.5)
       minisearch: 7.2.0
     transitivePeerDependencies:
       - '@types/node'
@@ -6972,8 +6973,9 @@ snapshots:
       get-tsconfig: 4.14.3
       jiti: 2.7.0
 
-  drizzle-orm@1.0.0-rc.4(@libsql/client@0.18.0)(zod@4.6.5):
+  drizzle-orm@1.0.0-rc.4(@cloudflare/workers-types@5.20261011.1)(@libsql/client@0.18.0)(zod@4.6.5):
     optionalDependencies:
+      '@cloudflare/workers-types': 5.20261011.1
       '@libsql/client': 0.18.0
       zod: 4.6.5
 
@@ -7490,10 +7492,10 @@ snapshots:
 
   mini-svg-data-uri@1.4.4: {}
 
-  miniflare@5.20260930.0-alpha:
+  miniflare@5.20260930.0-alpha(@types/node@26.6.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
-      sharp: 0.35.4
+      sharp: 0.35.4(@types/node@26.6.5)
       undici: 7.29.1
       workerd: 1.20260930.2
       ws: 8.21.0
@@ -7503,10 +7505,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  miniflare@5.20261001.0-alpha:
+  miniflare@5.20261001.0-alpha(@types/node@26.6.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
-      sharp: 0.35.4
+      sharp: 0.35.4(@types/node@26.6.5)
       undici: 7.29.1
       workerd: 1.20261001.1
       ws: 8.21.0
@@ -7516,7 +7518,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  miniflare@5.20261006.1-alpha:
+  miniflare@5.20261006.1-alpha(@types/node@26.6.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.5(@types/node@26.6.5)
@@ -7978,7 +7980,7 @@ snapshots:
 
   set-cookie-parser@3.1.3: {}
 
-  sharp@0.35.4:
+  sharp@0.35.4(@types/node@26.6.5):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -8009,6 +8011,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.4
       '@img/sharp-win32-ia32': 0.35.4
       '@img/sharp-win32-x64': 0.35.4
+      '@types/node': 26.6.5
 
   sharp@0.35.5(@types/node@26.6.5):
     dependencies:
@@ -8199,7 +8202,7 @@ snapshots:
 
   ufo@1.6.4: {}
 
-  ultracite@7.12.4(oxfmt@0.72.0)(oxlint@1.87.0):
+  ultracite@8.0.0(oxfmt@0.72.0)(oxlint@1.87.0):
     dependencies:
       '@clack/prompts': 1.8.1
       cli-truncate: 6.1.1
@@ -8301,13 +8304,13 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20261006.1
       '@cloudflare/workerd-windows-64': 1.20261006.1
 
-  wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1):
+  wrangler@4.149.0(@cloudflare/workers-types@5.20261011.1)(@types/node@26.6.5):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261006.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.2
-      miniflare: 5.20261006.1-alpha
+      miniflare: 5.20261006.1-alpha(@types/node@26.6.5)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20261006.1
