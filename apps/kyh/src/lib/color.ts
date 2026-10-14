@@ -1,3 +1,5 @@
+import type { JsonValue } from "@vibedgames/multiplayer";
+
 const colors = {
   blue: {
     color: "hsl(206, 100%, 50%)",
@@ -37,9 +39,31 @@ const colors = {
   },
 };
 
-type Color = (typeof colors)[keyof typeof colors];
+type ColorName = keyof typeof colors;
+type Color = (typeof colors)[ColorName];
 
 const colorValues: Color[] = Object.values(colors);
+const COLOR_NAMES = Object.keys(colors).filter((name): name is ColorName => name in colors);
+
+/** A palette color by the name a visitor sent; anything else is no color. */
+export const colorNamed = (name: JsonValue | undefined): Color | null => {
+  const found = COLOR_NAMES.find((each) => each === name);
+  return found ? colors[found] : null;
+};
+
+let own: ColorName | null = null;
+
+/**
+ * This visitor's color for the page load, by name: their avatar, and how every
+ * room draws their cursor and chat. The party server picks a color per room
+ * connection, so the site says its own instead and every room agrees.
+ */
+export const ownColorName = (): ColorName => {
+  own ??= COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)] ?? "blue";
+  return own;
+};
+
+export const ownColor = (): Color => colors[ownColorName()];
 
 const sampleSize = <T>(array: T[], size: number): T[] => {
   const shuffled = [...array];

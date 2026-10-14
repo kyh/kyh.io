@@ -2,6 +2,8 @@
 // visitors say on their way out, other people's pointers and what they're
 // saying, and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.
+import { chatBackground } from "@/components/chat-bubble";
+
 const SVG = "http://www.w3.org/2000/svg";
 const ARROW =
   "M2.717 2.22918L15.9831 15.8743C16.5994 16.5083 16.1503 17.5714 15.2661 17.5714H9.35976C8.59988 17.5714 7.86831 17.8598 7.3128 18.3783L2.68232 22.7C2.0431 23.2966 1 22.8434 1 21.969V2.92626C1 2.02855 2.09122 1.58553 2.717 2.22918Z";
@@ -39,14 +41,13 @@ const showLine = (
     element.textContent = line.text;
   }
   element.dataset.typing = String(line.typing);
-  element.style.backgroundColor = line.typing ? look.hue : look.color;
-  element.style.color = line.typing ? "#111" : "#fff";
+  element.style.background = chatBackground(look.color, look.hue);
 };
 
 const makeLine = () => {
   const line = document.createElement("span");
   line.className =
-    "chat-bubble city-chat block w-max max-w-60 rounded-xl rounded-tl-sm px-2.5 py-1 font-mono text-xs leading-snug font-medium break-words shadow-sm";
+    "chat-bubble city-chat block w-max max-w-60 rounded-xl rounded-tl-sm px-2.5 py-1 font-mono text-xs leading-snug font-medium break-words text-[#111] shadow-sm";
   line.hidden = true;
   return line;
 };

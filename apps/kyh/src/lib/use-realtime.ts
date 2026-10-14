@@ -5,6 +5,7 @@ import { FixedRate, MultiplayerClient } from "@vibedgames/multiplayer";
 import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
 import { draftState, sayState, SHOW_MS } from "@/lib/chat";
+import { colorNamed, ownColor, ownColorName } from "@/lib/color";
 import { listenForChat } from "@/lib/chat-input";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 
@@ -39,11 +40,18 @@ const createRoom = (room: string) => {
   /** The page this visitor is on, as everyone should see it. */
   let page: string | null = null;
   // The client drops state written before it has joined, and a rejoin is a
-  // new player: so whenever its own state is missing the page, say it again.
+  // new player: so whenever its own state is missing the page or its color,
+  // say them again.
   const announce = () => {
     const self = client?.playerId ? client.players[client.playerId] : undefined;
-    if (client && self && page !== null && self.state?.pathname !== page) {
-      client.updateMyState({ pathname: page });
+    const look = ownColorName();
+    if (
+      client &&
+      self &&
+      page !== null &&
+      (self.state?.pathname !== page || self.state.look !== look)
+    ) {
+      client.updateMyState({ look, pathname: page });
     }
   };
   let others: PlayerMap = NONE;
@@ -57,11 +65,8 @@ const createRoom = (room: string) => {
     get client() {
       return client;
     },
-    /** This visitor's own colors, once the room has given them some. */
-    me: () => {
-      const self = client?.playerId ? client.players[client.playerId] : undefined;
-      return self?.color && self.hue ? { color: self.color, hue: self.hue } : null;
-    },
+    /** This visitor's own colors, once they're in the room. */
+    me: () => (client ? ownColor() : null),
     /** Milliseconds on the room's clock, so everyone agrees when a line comes down. */
     now: () => client?.serverNow() ?? Date.now(),
     /** Everyone else in the room, as the site draws them. */
@@ -72,9 +77,10 @@ const createRoom = (room: string) => {
         const next: PlayerMap = {};
         for (const [id, player] of Object.entries(snapshot?.players ?? {})) {
           if (id !== snapshot?.playerId && player.connected !== false) {
+            const look = colorNamed(player.state?.look);
             next[id] = {
-              color: player.color ?? "hsl(206, 100%, 50%)",
-              hue: player.hue ?? "hsl(208, 77.5%, 76.9%)",
+              color: look?.color ?? player.color ?? "hsl(206, 100%, 50%)",
+              hue: look?.hue ?? player.hue ?? "hsl(208, 77.5%, 76.9%)",
               id,
               state: player.state ?? {},
             };

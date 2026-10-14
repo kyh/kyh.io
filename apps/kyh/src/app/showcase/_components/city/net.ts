@@ -9,6 +9,7 @@ import { FixedRate, Interpolator, lerp, MultiplayerClient } from "@vibedgames/mu
 
 import type { Chat } from "@/lib/chat";
 import { draftState, readChat, sayState } from "@/lib/chat";
+import { colorNamed, ownColorName } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
 
@@ -95,6 +96,15 @@ const readPointer = (state: JsonRecord) => {
 const readHolding = (state: JsonRecord) =>
   String(state.h) === state.h && parseActorKey(state.h) ? state.h : null;
 
+/** A player's colors: the palette color they name, else the one the room gave them. */
+const lookOf = (state: JsonRecord, player: { color?: string; hue?: string }) => {
+  const named = colorNamed(state.look);
+  return {
+    color: named?.color ?? player.color ?? "hsl(206, 100%, 50%)",
+    hue: named?.hue ?? player.hue ?? "hsl(208, 77.5%, 76.9%)",
+  };
+};
+
 const lerpSpot = (a: Spot, b: Spot, k: number): Spot => ({
   x: lerp(a.x, b.x, k),
   y: lerp(a.y, b.y, k),
@@ -132,12 +142,6 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
   const live = () => client ?? null;
 
   return {
-    /** This player's own colors, once the room has given them some. */
-    get colors() {
-      const room = live();
-      const self = room?.playerId ? room.players[room.playerId] : undefined;
-      return self?.color && self.hue ? { color: self.color, hue: self.hue } : null;
-    },
     destroy: () => {
       client?.destroy();
       client = null;
@@ -216,9 +220,8 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
           others.push({
             at: sent ? (smooth.sample() ?? null) : null,
             chat: readChat(state, room?.serverNow() ?? Date.now()),
-            color: player.color ?? "hsl(206, 100%, 50%)",
+            ...lookOf(state, player),
             holding: readHolding(state),
-            hue: player.hue ?? "hsl(208, 77.5%, 76.9%)",
             id,
           });
         }
@@ -266,6 +269,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       if (sending.due(deltaMs)) {
         room.updateMyState({
           h: holding ?? "",
+          look: ownColorName(),
           on: pointer ? 1 : 0,
           t: Math.round(room.serverNow()),
           x: pointer ? Math.round(pointer.x * 1000) / 1000 : 0,

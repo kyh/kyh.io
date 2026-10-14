@@ -18,6 +18,7 @@ import { CURB_TOP } from "./draw-blocks";
 import { createNet } from "./net";
 import type { Line } from "./overlay";
 import { SHOW_MS } from "@/lib/chat";
+import { ownColor } from "@/lib/color";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
@@ -430,8 +431,7 @@ export const createLife = (options: LifeOptions) => {
       said = null;
     }
     const own = lineOf(draft, said?.text ?? null);
-    const look = net?.colors ?? { color: "hsl(206, 100%, 50%)", hue: "hsl(208, 77.5%, 76.9%)" };
-    overlay.mine(hand ? own : null, look, hand?.x ?? 0, hand?.y ?? 0);
+    overlay.mine(hand ? own : null, ownColor(), hand?.x ?? 0, hand?.y ?? 0);
   };
 
   /** Steps the town to `target`, taking up or putting up the room's snapshot. */
