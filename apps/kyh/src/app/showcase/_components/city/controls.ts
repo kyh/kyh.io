@@ -21,6 +21,8 @@ interface SpotlightPorts {
   now: () => number;
   /** The visitor took the camera; whatever was steering it lets go. */
   onTake: () => void;
+  /** The flyover took the camera, or let it go. */
+  onTour: (touring: boolean) => void;
   /** Reduced motion: the flyover never runs. */
   still: boolean;
 }
@@ -32,16 +34,22 @@ interface SpotlightPorts {
  * the camera be; only the visitor moving it stops the flyover, which starts
  * again once they've left it alone for IDLE_MS, unless they paused it.
  */
-export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
+export const createSpotlight = <T>({ now, onTake, onTour, still }: SpotlightPorts) => {
   let pin: T | null = null;
   let pointer: T | null = null;
   let passing: T | null = null;
   let touring = false;
   let paused = false;
   let idleSince = now();
+  const setTouring = (next: boolean) => {
+    if (touring !== next) {
+      touring = next;
+      onTour(next);
+    }
+  };
   const take = () => {
     idleSince = now();
-    touring = false;
+    setTouring(false);
     passing = null;
     onTake();
   };
@@ -88,7 +96,7 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
       if (touring || still) {
         return false;
       }
-      touring = true;
+      setTouring(true);
       return true;
     },
     /** The building under the mouse, or under a finger's first tap. */
@@ -209,16 +217,13 @@ export type KeyMove =
   | { kind: "zoom"; factor: number }
   | { kind: "turn"; by: 1 | -1 };
 
-const STEP = 60;
+/** Which way each arrow moves the view, in screen directions. */
 const KEY_PANS = new Map<string, readonly [number, number]>([
-  ["ArrowDown", [0, -STEP]],
-  ["ArrowLeft", [STEP, 0]],
-  ["ArrowRight", [-STEP, 0]],
-  ["ArrowUp", [0, STEP]],
+  ["ArrowDown", [0, -1]],
+  ["ArrowLeft", [1, 0]],
+  ["ArrowRight", [-1, 0]],
+  ["ArrowUp", [0, 1]],
 ]);
-
-/** Keys that move the view, so typing a line of chat can't start with one. */
-export const VIEW_KEYS: ReadonlySet<string> = new Set(["[", "]", "+", "=", "-"]);
 
 /** Arrows pan, + (or =) and - zoom, [ and ] turn; letters are for chat; any other key leaves the view be. */
 export const keyMove = (key: string): KeyMove | null => {

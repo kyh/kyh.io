@@ -4,11 +4,15 @@ import test from "node:test";
 import { createPresses, createSpotlight, IDLE_MS, isHover, keyMove } from "./controls";
 
 const spotlight = (options: { still?: boolean } = {}) => {
-  const clock = { now: 0, takes: 0 };
+  const tours: boolean[] = [];
+  const clock = { now: 0, takes: 0, tours };
   const lights = createSpotlight<string>({
     now: () => clock.now,
     onTake: () => {
       clock.takes += 1;
+    },
+    onTour: (touring) => {
+      clock.tours.push(touring);
     },
     still: options.still ?? false,
   });
@@ -168,8 +172,8 @@ test("two fingers pinch, and lifting them is no tap", () => {
 });
 
 test("arrows pan, plus and minus zoom, letters leave the view to chat", () => {
-  assert.deepEqual(keyMove("ArrowLeft"), { dx: 60, dy: 0, kind: "pan" });
-  assert.deepEqual(keyMove("ArrowUp"), { dx: 0, dy: 60, kind: "pan" });
+  assert.deepEqual(keyMove("ArrowLeft"), { dx: 1, dy: 0, kind: "pan" });
+  assert.deepEqual(keyMove("ArrowUp"), { dx: 0, dy: 1, kind: "pan" });
   assert.equal(keyMove("w"), null);
   assert.deepEqual(keyMove("="), { factor: 1.25, kind: "zoom" });
   assert.deepEqual(keyMove("-"), { factor: 0.8, kind: "zoom" });
@@ -191,4 +195,14 @@ test("a paused flyover stays paused until played", () => {
   lights.take();
   clock.now += IDLE_MS + 1;
   assert.equal(lights.idle(false), true);
+});
+
+test("the flyover says when it takes the camera and lets it go, once each", () => {
+  const { clock, lights } = spotlight();
+  lights.play();
+  lights.play();
+  lights.take();
+  lights.take();
+  lights.pause();
+  assert.deepEqual(clock.tours, [true, false]);
 });

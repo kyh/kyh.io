@@ -13,6 +13,7 @@ type City = Awaited<ReturnType<typeof loadCity>>;
 
 interface CityMount extends CityCallbacks {
   overlay: HTMLElement | null;
+  surface: HTMLElement;
   projects: CityProject[];
   theme: Theme;
   reducedMotion: boolean;
@@ -69,7 +70,7 @@ interface CityShowcaseProps {
 export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const pinLayerRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
@@ -82,7 +83,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
 
   useEffect(() => {
     const host = containerRef.current;
-    if (!host) {
+    const surface = rootRef.current;
+    if (!host || !surface) {
       return;
     }
     const urls = new Map(projects.map((project) => [project.slug, project.url]));
@@ -112,6 +114,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           overlay: overlayRef.current,
           projects,
           reducedMotion,
+          surface,
           theme: themeRef.current,
         });
         if (!isMounted) {
@@ -145,23 +148,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     cityRef.current?.setTheme(theme);
   }, [theme]);
 
-  // The pins sit above the canvas: a wheel or a mouse over an open card is
-  // still over the town, so it pans and points there too.
-  useEffect(() => {
-    const layer = pinLayerRef.current;
-    if (!layer) {
-      return;
-    }
-    const onWheel = (event: WheelEvent) => cityRef.current?.wheel(event);
-    const onPointerMove = (event: PointerEvent) => cityRef.current?.point(event);
-    layer.addEventListener("wheel", onWheel, { passive: false });
-    layer.addEventListener("pointermove", onPointerMove);
-    return () => {
-      layer.removeEventListener("wheel", onWheel);
-      layer.removeEventListener("pointermove", onPointerMove);
-    };
-  }, []);
-
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
       pinsRef.current.set(slug, element);
@@ -171,7 +157,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   };
 
   return (
-    <div className="city fixed inset-0 bg-[var(--city-sea)]">
+    <div ref={rootRef} className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
       {/* Visitors' lines and other people's pointers, under the pins so a lit card stays on top. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
@@ -179,10 +165,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <PinList projects={projects} />
       ) : (
         <MotionConfig reducedMotion="user">
-          <div
-            ref={pinLayerRef}
-            className="pointer-events-none absolute inset-0 isolate overflow-hidden"
-          >
+          <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
             {projects.map((project) => (
               <Pin
                 key={project.slug}

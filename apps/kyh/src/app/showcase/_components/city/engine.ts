@@ -15,11 +15,12 @@ import {
 
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
+import type { CityPlan } from "./plan";
 import type { Built } from "./render";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
-import { createPresses, createSpotlight, isHover, keyMove, VIEW_KEYS } from "./controls";
+import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
@@ -39,7 +40,6 @@ import { TOWN_VERSION } from "./world";
 const PIXELS_PER_UNIT = 64 / Math.SQRT2;
 const CAMERA_DISTANCE = 300;
 const MAX_ZOOM = 3.2;
-/** On the ground, the directions that move along the screen. */
 /** Ground directions that run right and up the screen, for a view toward the camera. */
 const screenAxes = (view: Vec3) => {
   const flat = Math.hypot(view[0], view[2]);
@@ -74,6 +74,11 @@ export interface CityOptions extends CityCallbacks {
   overlay: HTMLElement | null;
   /** Share the town with everyone else on the page; false keeps it to this browser. */
   shared: boolean;
+  /**
+   * The whole town as the pointer meets it, pins included: moves, wheels and
+   * leaving are heard here, presses only on the canvas so a pin's click stays its own.
+   */
+  surface: HTMLElement;
 }
 
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
@@ -81,11 +86,11 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 /** The town sketched for a view, keeping the faces of every view in `covers`. */
 const drawTown = (
+  plan: CityPlan,
   projects: readonly CityProject[],
   view: Vec3,
-  covers: readonly Vec3[] = [view],
+  covers: readonly Vec3[],
 ) => {
-  const plan = planCity(planEntries(projects));
   const sketch = createSketch(view, covers);
   drawGround(sketch, plan, createRandom(11));
   drawCountryside(sketch, plan);
@@ -93,7 +98,7 @@ const drawTown = (
     drawBlock(sketch, block);
   }
   const placed = drawLots(sketch, plan, projects);
-  return { placed, plan, sketch };
+  return { placed, sketch };
 };
 
 /** Where to look to frame a building from a view: lifted for its height. */
@@ -218,7 +223,6 @@ const createTownView = (
   return {
     animations,
     buildings,
-    builds,
     city,
     dispose: () => {
       for (const built of builds) {
@@ -261,32 +265,43 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
   let { theme } = options;
   const materials = createMaterials(theme);
-  // The first view's drawing also says where everything is; the others are
-  // sketched the first time the camera turns to them.
-  const firstTown = drawTown(options.projects, viewAt(0));
-  const { placed, plan } = firstTown;
-  const townViews = new Map<string, ReturnType<typeof createTownView>>();
-  const townViewFor = (key: string, view: Vec3, covers: readonly Vec3[]) => {
-    const existing = townViews.get(key);
+  const plan = planCity(planEntries(options.projects));
+  /**
+   * The town's drawings, by heading: whole quarter turns where the camera
+   * rests, halves for a turn between two, which keep every face either end
+   * sees. Only the ones near the camera are kept.
+   */
+  const townViews = new Map<number, ReturnType<typeof createTownView>>();
+  const drawTownAt = (at: number) => {
+    const covers = Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
+    return drawTown(plan, options.projects, viewAt(at), covers);
+  };
+  const townViewAt = (at: number, town = drawTownAt(at)) => {
+    const existing = townViews.get(at);
     if (existing) {
       return existing;
     }
-    const town = key === "0" ? firstTown : drawTown(options.projects, view, covers);
-    const created = createTownView(scene, materials, town, view, covers, options.reducedMotion);
+    const covers = Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
+    const created = createTownView(
+      scene,
+      materials,
+      town,
+      viewAt(at),
+      covers,
+      options.reducedMotion,
+    );
     created.show(false);
-    townViews.set(key, created);
+    townViews.set(at, created);
     return created;
   };
-  /** The town from a heading, as the camera rests there. */
-  const townViewAt = (at: number) => townViewFor(String(at), viewAt(at), [viewAt(at)]);
-  /** The town for a turn between `at` and the next heading: every face either end sees, shaded halfway. */
-  const turnViewAt = (at: number) =>
-    townViewFor(`${at}>`, viewAt(at + 0.5), [viewAt(at), viewAt(at + 1)]);
+  // The first view's drawing also says where every building is.
+  const firstTown = drawTownAt(0);
+  const { placed } = firstTown;
   /** How many quarter turns the camera has made round the town, and where it is mid-turn. */
   let heading = 0;
   let angle = 0;
-  let turning: { from: number; to: number; by: number; start: number } | null = null;
-  let shownTown = townViewAt(0);
+  let turning: { by: 1 | -1; start: number } | null = null;
+  let shownTown = townViewAt(0, firstTown);
   shownTown.show(true);
   // A soft ring of each building's own color round its lot while it's lit.
   const halo = createHalo();
@@ -397,9 +412,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     onTake: () => {
       goal = null;
     },
+    onTour: options.onTour,
     still: options.reducedMotion,
   });
   let shown: Placed | null = null;
+  // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
+  const paintedFor = new WeakMap<ReturnType<typeof createTownView>, string>();
+  const paintKey = () => `${theme}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -421,6 +440,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (shown) {
       shownTown.buildings.get(shown.project.slug)?.paint(theme, true);
     }
+    paintedFor.set(shownTown, paintKey());
     halo.show(
       shown && {
         rect: shown.lot,
@@ -433,6 +453,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
 
   const paintTown = (town: ReturnType<typeof createTownView>) => {
+    if (paintedFor.get(town) === paintKey()) {
+      return;
+    }
+    paintedFor.set(town, paintKey());
     town.city.paint(theme, false);
     for (const [slug, built] of town.buildings) {
       built.paint(theme, slug === shown?.project.slug);
@@ -598,16 +622,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const drawAhead = () => {
     const left = (heading + HEADINGS - 1) % HEADINGS;
     const right = (heading + 1) % HEADINGS;
-    const queue = [
-      () => turnViewAt(heading),
-      () => townViewAt(right),
-      () => turnViewAt(left),
-      () => townViewAt(left),
-    ];
+    const queue = [heading + 0.5, right, left + 0.5, left];
     const next = () => {
       const step = queue.shift();
-      if (step) {
-        paintTown(step());
+      if (step !== undefined) {
+        paintTown(townViewAt(step));
         ahead = window.setTimeout(next, 250);
       }
     };
@@ -620,6 +639,20 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     heading = to;
     angle = to;
     showTown(townViewAt(to));
+    // Keep what a turn either way needs; the rest is drawn again if the camera comes back.
+    const near = new Set([
+      to,
+      (to + 1) % HEADINGS,
+      (to + 3) % HEADINGS,
+      to + 0.5,
+      (to + 3.5) % HEADINGS,
+    ]);
+    for (const [at, town] of townViews) {
+      if (!near.has(at)) {
+        town.dispose();
+        townViews.delete(at);
+      }
+    }
     focusPoints = focusFor(viewAt(to));
     tour = tourFor(focusPoints);
     if (tour && spotlight.touring) {
@@ -630,19 +663,20 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     drawAhead();
   };
   /** Swing the camera a quarter turn round the point it looks at. */
+  const headingAfter = (by: number) => (((heading + by) % HEADINGS) + HEADINGS) % HEADINGS;
   const turn = (by: 1 | -1) => {
     if (turning) {
-      settle(turning.to);
+      settle(headingAfter(turning.by));
     }
-    const to = (((heading + by) % HEADINGS) + HEADINGS) % HEADINGS;
+    const to = headingAfter(by);
     if (options.reducedMotion) {
       settle(to);
       return;
     }
     // Sketch the far end now, so arriving there doesn't stall.
     paintTown(townViewAt(to));
-    showTown(turnViewAt(by === 1 ? heading : to));
-    turning = { by, from: heading, start: performance.now(), to };
+    showTown(townViewAt((by === 1 ? heading : to) + 0.5));
+    turning = { by, start: performance.now() };
   };
   /** Mid-turn: ease the camera round, and come to rest at the end. */
   const swing = (now: number) => {
@@ -651,10 +685,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     const t = clamp((now - turning.start) / TURN_MS, 0, 1);
     const eased = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
-    angle = turning.from + turning.by * eased;
+    angle = heading + turning.by * eased;
     place();
     if (t >= 1) {
-      settle(turning.to);
+      settle(headingAfter(turning.by));
     }
   };
   const onPointerMove = (event: PointerEvent) => {
@@ -719,12 +753,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const onPointerLeave = (event: PointerEvent) => {
     mouseAt = null;
-    // Onto a pin's card the pointer is still over the town, for everyone else too.
-    const { relatedTarget } = event;
-    const ontoPin =
-      relatedTarget instanceof Node &&
-      [...pins.values()].some((pin) => pin.contains(relatedTarget));
-    if (carrying === null && !ontoPin) {
+    if (carrying === null) {
       life.point(null);
       life.hand(null);
     }
@@ -775,7 +804,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     takeControl();
     if (move.kind === "pan") {
       event.preventDefault();
-      panKeys.set(event.key, { dx: Math.sign(move.dx), dy: Math.sign(move.dy) });
+      panKeys.set(event.key, { dx: move.dx, dy: move.dy });
       return;
     }
     view.zoom *= move.factor;
@@ -810,15 +839,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     repick();
   };
   canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("pointermove", onPointerMove);
+  options.surface.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointercancel", onPointerCancel);
-  canvas.addEventListener("pointerleave", onPointerLeave);
-  canvas.addEventListener("wheel", onWheel, { passive: false });
+  options.surface.addEventListener("pointerleave", onPointerLeave);
+  options.surface.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("dblclick", onDoubleClick);
   canvas.addEventListener("keydown", onKeyDown);
   // Typing anywhere chats; the keys that move the view don't start a line.
-  const stopChat = listenForChat({ onDraft: life.type, onSend: life.say, reserved: VIEW_KEYS });
+  const stopChat = listenForChat({
+    claims: (key) => keyMove(key) !== null,
+    onDraft: life.type,
+    onSend: life.say,
+  });
   canvas.addEventListener("keyup", onKeyUp);
   canvas.addEventListener("blur", onBlur);
 
@@ -911,7 +944,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const lit = (slug: string) => shown?.project.slug === slug;
   let frame = 0;
-  let touringSaid = false;
   const tick = (now: number) => {
     const elapsed = Math.max(0, now - clock.last) / 1000;
     clock.last = now;
@@ -921,10 +953,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const dt = Math.min(0.1, elapsed);
     clock.time += dt;
     resumeWhenIdle();
-    if (spotlight.touring !== touringSaid) {
-      touringSaid = spotlight.touring;
-      options.onTour(touringSaid);
-    }
     if (spotlight.touring) {
       followTour(Math.min(0.25, elapsed));
     } else {
@@ -957,11 +985,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       window.clearTimeout(ahead);
       observer.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
-      canvas.removeEventListener("pointermove", onPointerMove);
+      options.surface.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerCancel);
-      canvas.removeEventListener("pointerleave", onPointerLeave);
-      canvas.removeEventListener("wheel", onWheel);
+      options.surface.removeEventListener("pointerleave", onPointerLeave);
+      options.surface.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDoubleClick);
       canvas.removeEventListener("keydown", onKeyDown);
       canvas.removeEventListener("keyup", onKeyUp);
@@ -996,13 +1024,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       view.zoom = zoom;
       place();
     },
-    /** The mouse moving over the pins, which sit above the canvas: still a pointer in town. */
-    point: (event: PointerEvent) => {
-      if (isHover(event.pointerType, event.movementX, event.movementY)) {
-        life.point(spotAt(event.clientX, event.clientY));
-        life.hand(local(event.clientX, event.clientY));
-      }
-    },
     setPins: (next: Map<string, HTMLElement>) => {
       pins = next;
       pinStates.clear();
@@ -1028,8 +1049,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         refreshHover();
       }
     },
-    /** A wheel over the pins, which sit above the canvas: the canvas's own handling. */
-    wheel: onWheel,
   };
 };
 

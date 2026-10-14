@@ -4,8 +4,8 @@
 import { editDraft } from "@/lib/chat";
 
 interface ChatInputOptions {
-  /** Keys that do something else on this page, so they don't start a draft. */
-  reserved?: ReadonlySet<string>;
+  /** Whether a key does something else on this page, so it doesn't start a draft. */
+  claims?: (key: string) => boolean;
   onDraft: (draft: string | null) => void;
   onSend: (text: string) => void;
 }
@@ -17,7 +17,7 @@ const isField = (target: EventTarget | null) =>
   (target instanceof HTMLElement && target.isContentEditable);
 
 /** Listen for typing; returns the way to stop. */
-export const listenForChat = ({ reserved = new Set(), onDraft, onSend }: ChatInputOptions) => {
+export const listenForChat = ({ claims, onDraft, onSend }: ChatInputOptions) => {
   let draft: string | null = null;
   const close = () => {
     if (draft !== null) {
@@ -29,7 +29,7 @@ export const listenForChat = ({ reserved = new Set(), onDraft, onSend }: ChatInp
     if (event.isComposing || isField(event.target)) {
       return;
     }
-    const edit = editDraft(draft, event, reserved);
+    const edit = editDraft(draft, event, claims);
     if (!edit) {
       return;
     }

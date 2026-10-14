@@ -64,20 +64,20 @@ export const cleanLine = (text: string) =>
 
 /**
  * What a key press does to the draft (null while not typing). Any printable
- * key outside `reserved` starts one; once typing, every key is the draft's:
- * Enter sends, Escape drops it. Null means the key isn't chat's.
+ * key the page doesn't `claim` for itself starts one; once typing, every key
+ * is the draft's: Enter sends, Escape drops it. Null means the key isn't chat's.
  */
 export const editDraft = (
   draft: string | null,
   press: ChatKey,
-  reserved: ReadonlySet<string>,
+  claims: (key: string) => boolean = () => false,
 ): ChatEdit | null => {
   if (press.altKey || press.ctrlKey || press.metaKey) {
     return null;
   }
   const printable = characters(press.key).length === 1;
   if (draft === null) {
-    return printable && press.key !== " " && !reserved.has(press.key)
+    return printable && press.key !== " " && !claims(press.key)
       ? { draft: cleanLine(press.key), kind: "draft" }
       : null;
   }

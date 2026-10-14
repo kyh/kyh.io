@@ -75,6 +75,9 @@ export const windows = (sketch: Sketch, wall: Footprint, grid: WindowGrid) => {
     [grid.side, grid.skip],
     [opposite(grid.side), undefined],
   ] as const) {
+    if (!seesWall(sketch, side)) {
+      continue;
+    }
     for (let floor = 0; floor < grid.floors; floor += 1) {
       for (let column = 0; column < grid.columns; column += 1) {
         if (!(floor === 0 && column === skip)) {
