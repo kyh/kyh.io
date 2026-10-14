@@ -215,13 +215,12 @@ const KEY_PANS = new Map<string, readonly [number, number]>([
   ["ArrowLeft", [STEP, 0]],
   ["ArrowRight", [-STEP, 0]],
   ["ArrowUp", [0, STEP]],
-  ["a", [STEP, 0]],
-  ["d", [-STEP, 0]],
-  ["s", [0, -STEP]],
-  ["w", [0, STEP]],
 ]);
 
-/** Arrows and WASD pan, + (or =) and - zoom, [ and ] turn; any other key leaves the view be. */
+/** Keys that move the view, so typing a line of chat can't start with one. */
+export const VIEW_KEYS: ReadonlySet<string> = new Set(["[", "]", "+", "=", "-"]);
+
+/** Arrows pan, + (or =) and - zoom, [ and ] turn; letters are for chat; any other key leaves the view be. */
 export const keyMove = (key: string): KeyMove | null => {
   const pan = KEY_PANS.get(key);
   if (pan) {

@@ -18,7 +18,8 @@ import type { Theme } from "./palette";
 import type { Built } from "./render";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
-import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
+import { listenForChat } from "@/lib/chat-input";
+import { createPresses, createSpotlight, isHover, keyMove, VIEW_KEYS } from "./controls";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
@@ -659,6 +660,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const onPointerMove = (event: PointerEvent) => {
     if (event.pointerType === "mouse") {
       mouseAt = { x: event.clientX, y: event.clientY };
+      life.hand(local(event.clientX, event.clientY));
     }
     if (carrying === event.pointerId) {
       life.carry(spotAt(event.clientX, event.clientY));
@@ -724,6 +726,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       [...pins.values()].some((pin) => pin.contains(relatedTarget));
     if (carrying === null && !ontoPin) {
       life.point(null);
+      life.hand(null);
     }
     overActor = false;
     // A finger leaves as it lifts: what its tap lit stays lit.
@@ -814,6 +817,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("dblclick", onDoubleClick);
   canvas.addEventListener("keydown", onKeyDown);
+  // Typing anywhere chats; the keys that move the view don't start a line.
+  const stopChat = listenForChat({ onDraft: life.type, onSend: life.say, reserved: VIEW_KEYS });
   canvas.addEventListener("keyup", onKeyUp);
   canvas.addEventListener("blur", onBlur);
 
@@ -948,6 +953,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     dispose: () => {
       cancelAnimationFrame(frame);
       clearTimeout(warmUp);
+      stopChat();
       window.clearTimeout(ahead);
       observer.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
@@ -994,6 +1000,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     point: (event: PointerEvent) => {
       if (isHover(event.pointerType, event.movementX, event.movementY)) {
         life.point(spotAt(event.clientX, event.clientY));
+        life.hand(local(event.clientX, event.clientY));
       }
     },
     setPins: (next: Map<string, HTMLElement>) => {

@@ -167,9 +167,10 @@ test("two fingers pinch, and lifting them is no tap", () => {
   assert.equal(presses.count, 0);
 });
 
-test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", () => {
+test("arrows pan, plus and minus zoom, letters leave the view to chat", () => {
   assert.deepEqual(keyMove("ArrowLeft"), { dx: 60, dy: 0, kind: "pan" });
-  assert.deepEqual(keyMove("w"), { dx: 0, dy: 60, kind: "pan" });
+  assert.deepEqual(keyMove("ArrowUp"), { dx: 0, dy: 60, kind: "pan" });
+  assert.equal(keyMove("w"), null);
   assert.deepEqual(keyMove("="), { factor: 1.25, kind: "zoom" });
   assert.deepEqual(keyMove("-"), { factor: 0.8, kind: "zoom" });
   assert.deepEqual(keyMove("]"), { by: 1, kind: "turn" });

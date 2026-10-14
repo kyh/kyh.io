@@ -7,6 +7,8 @@
 import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
 import { FixedRate, Interpolator, lerp, MultiplayerClient } from "@vibedgames/multiplayer";
 
+import type { Chat } from "@/lib/chat";
+import { draftState, readChat, sayState } from "@/lib/chat";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
 
@@ -40,6 +42,7 @@ export interface Remote {
   /** Their pointer in the town, drawn a beat behind; null while it's off the town. */
   at: Spot | null;
   holding: string | null;
+  chat: Chat;
 }
 
 interface NetOptions {
@@ -129,6 +132,12 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
   const live = () => client ?? null;
 
   return {
+    /** This player's own colors, once the room has given them some. */
+    get colors() {
+      const room = live();
+      const self = room?.playerId ? room.players[room.playerId] : undefined;
+      return self?.color && self.hue ? { color: self.color, hue: self.hue } : null;
+    },
     destroy: () => {
       client?.destroy();
       client = null;
@@ -206,6 +215,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
           }
           others.push({
             at: sent ? (smooth.sample() ?? null) : null,
+            chat: readChat(state, room?.serverNow() ?? Date.now()),
             color: player.color ?? "hsl(206, 100%, 50%)",
             holding: readHolding(state),
             hue: player.hue ?? "hsl(208, 77.5%, 76.9%)",
@@ -220,6 +230,11 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       }
       return others;
     },
+    /** Send a line of chat, stamped on the room's clock. */
+    say: (text: string) => {
+      const room = live();
+      room?.updateMyState(sayState(text, room.serverNow()));
+    },
     /** The latest snapshot of the town the room holds, if any. */
     get snapshot() {
       const town = live()?.sharedState.town;
@@ -232,6 +247,10 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
     get synced() {
       const room = live();
       return room?.connectionStatus === "connected" && Number.isFinite(room.rtt);
+    },
+    /** What this player is typing, or null once they stop. */
+    type: (draft: string | null) => {
+      live()?.updateMyState(draftState(draft));
     },
     /** Each frame: send this player's pointer on a steady clock, and keep holds alive. */
     update: (deltaMs: number) => {

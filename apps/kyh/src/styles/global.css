@@ -551,6 +551,21 @@ button.link {
       scale: 0.86;
     }
   }
+
+  /* What a pointer's owner is saying, just below and right of the arrow. */
+  .city-pointer .city-chat {
+    position: absolute;
+    top: 20px;
+    left: 16px;
+  }
+
+  /* This visitor's own line, placed beside their mouse each frame. */
+  .city-mine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+  }
 }
 
 /* The city fills the window: no frosted header hazing its sky, no page scroll. */

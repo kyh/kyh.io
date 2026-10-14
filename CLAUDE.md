@@ -117,7 +117,11 @@ four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
 faces, while doors, signs and storefronts stay where they are in the world. A
 title-sequence flyover runs on load; only moving the camera stops it, the
-corner button pauses it, and it resumes after 30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
+corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
+(arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
+typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
+the rules for the town and the site-wide cursors alike: each visitor's draft and
+last line ride in their player state, so nothing accumulates. Dark mode is night. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored),
