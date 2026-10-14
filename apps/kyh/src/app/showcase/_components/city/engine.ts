@@ -557,13 +557,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // The browser took the gesture back (a system swipe, a long press): no tap.
     presses.cancel(event.pointerId);
   };
-  const onPointerLeave = () => {
+  const onPointerLeave = (event: PointerEvent) => {
     mouseAt = null;
     if (carrying === null) {
       life.point(null);
     }
     overActor = false;
-    spotlight.leave(presses.count > 0);
+    // A finger leaves as it lifts: what its tap lit stays lit.
+    if (event.pointerType !== "touch") {
+      spotlight.leave(presses.count > 0);
+    }
     refreshHover();
     updateCursor();
   };
@@ -779,6 +782,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     setTheme: (next: Theme) => {
       theme = next;
       applyTheme();
+    },
+    /** A finger on a closed pin: light its building, as a first tap on the building does. */
+    tap: (slug: string) => {
+      const entry = bySlug.get(slug);
+      if (entry) {
+        spotlight.tap(entry, "touch");
+        refreshHover();
+      }
     },
   };
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
 
 import type { CityProject } from "./city/draw-landmarks";
@@ -22,6 +23,8 @@ const loadCity = async (host: HTMLElement, mount: CityMount) => {
   const { createCity } = await import("./city/engine");
   return createCity(host, { ...mount, shared: true });
 };
+
+const CARD_LINGER_MS = 120;
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -62,10 +65,21 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     }
     const urls = new Map(projects.map((project) => [project.slug, project.url]));
     let isMounted = true;
+    // A card lingers a beat after its building goes dark, so a mouse crossing
+    // from the building onto its card doesn't close and reopen it.
+    let closing: ReturnType<typeof setTimeout> | undefined;
+    const show = (slug: string | null) => {
+      clearTimeout(closing);
+      if (slug) {
+        setLit(slug);
+      } else {
+        closing = setTimeout(() => setLit(null), CARD_LINGER_MS);
+      }
+    };
     const mount = async () => {
       try {
         const city = await loadCity(host, {
-          onHover: setLit,
+          onHover: show,
           onOpen: (slug) => {
             const url = urls.get(slug);
             if (url) {
@@ -98,6 +112,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     void mount();
     return () => {
       isMounted = false;
+      clearTimeout(closing);
       cityRef.current?.dispose();
       cityRef.current = null;
     };
@@ -124,18 +139,21 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       {status === "failed" ? (
         <PinList projects={projects} />
       ) : (
-        <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
-          {projects.map((project) => (
-            <Pin
-              key={project.slug}
-              ref={pinRef(project.slug)}
-              project={project}
-              isLit={lit === project.slug}
-              onHover={(slug) => cityRef.current?.hover(slug)}
-              onFocus={(slug) => cityRef.current?.focus(slug)}
-            />
-          ))}
-        </div>
+        <MotionConfig reducedMotion="user">
+          <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
+            {projects.map((project) => (
+              <Pin
+                key={project.slug}
+                ref={pinRef(project.slug)}
+                project={project}
+                isLit={lit === project.slug}
+                onHover={(slug) => cityRef.current?.hover(slug)}
+                onFocus={(slug) => cityRef.current?.focus(slug)}
+                onTap={(slug) => cityRef.current?.tap(slug)}
+              />
+            ))}
+          </div>
+        </MotionConfig>
       )}
       {status === "ready" && (
         <p className="city-panel absolute right-4 bottom-[calc(4vh+90px)] px-2.5 py-1 font-mono text-[11px] text-[var(--city-ink-soft)] sm:bottom-6">
