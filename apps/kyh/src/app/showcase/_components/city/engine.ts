@@ -589,6 +589,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // Taking the camera ends a scrub; scrolling on carries this one.
     const carried = scrub;
     takeControl();
+    // A focused pin would outrank what the scrub lights.
+    spotlight.pin(null);
     const from = tour.indexAt(tour.closest(view.x, view.z));
     scrub = carried ?? { at: from, since: 0, target: from };
     scrub.target += pixels / SCRUB_PX;
@@ -832,6 +834,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         refreshHover();
       }
     },
+    /** A wheel over the pins, which sit above the canvas: the canvas's own handling. */
+    wheel: onWheel,
   };
 };
 
