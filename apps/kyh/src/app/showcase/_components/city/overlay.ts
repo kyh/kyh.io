@@ -65,6 +65,31 @@ const makeBubble = (root: HTMLElement): Bubble => {
   return { element, icon, seen: true, text };
 };
 
+let pointersMade = 0;
+
+/** The avatar's gradient, light hue down to full color, for an arrow's fill. */
+const arrowGradient = (svg: SVGSVGElement) => {
+  pointersMade += 1;
+  const id = `city-pointer-${pointersMade}`;
+  const defs = document.createElementNS(SVG, "defs");
+  const gradient = document.createElementNS(SVG, "linearGradient");
+  gradient.id = id;
+  gradient.setAttribute("x2", "0");
+  gradient.setAttribute("y2", "1");
+  for (const [offset, stop] of [
+    ["0", "var(--pointer-hue)"],
+    ["1", "currentColor"],
+  ] as const) {
+    const element = document.createElementNS(SVG, "stop");
+    element.setAttribute("offset", offset);
+    element.style.stopColor = stop;
+    gradient.append(element);
+  }
+  defs.append(gradient);
+  svg.append(defs);
+  return `url(#${id})`;
+};
+
 const makePointer = (root: HTMLElement): Pointer => {
   const element = document.createElement("div");
   element.className = "city-pointer";
@@ -75,7 +100,7 @@ const makePointer = (root: HTMLElement): Pointer => {
   svg.setAttribute("aria-hidden", "true");
   const path = document.createElementNS(SVG, "path");
   path.setAttribute("d", ARROW);
-  path.setAttribute("fill", "currentColor");
+  path.setAttribute("fill", arrowGradient(svg));
   path.setAttribute("stroke", "var(--pointer-hue)");
   path.setAttribute("stroke-width", "2");
   svg.append(path);

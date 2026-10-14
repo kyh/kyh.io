@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import type { Chat } from "@/lib/chat";
 import { ChatBubble } from "@/components/chat-bubble";
 
@@ -16,6 +18,8 @@ interface CursorProps {
 const offset = 10;
 
 export const Cursor = ({ x, y, color, hue, chat, windowDimensions }: CursorProps) => {
+  // useId's punctuation isn't safe inside url(#…).
+  const gradient = `cursor-${useId().replaceAll(/[^\w-]/gu, "")}`;
   if (!x || !y) {
     return null;
   }
@@ -40,9 +44,15 @@ export const Cursor = ({ x, y, color, hue, chat, windowDimensions }: CursorProps
         style={{ color }}
         xmlns="http://www.w3.org/2000/svg"
       >
+        <defs>
+          <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={hue} />
+            <stop offset="1" stopColor={color} />
+          </linearGradient>
+        </defs>
         <path
           d="M2.717 2.22918L15.9831 15.8743C16.5994 16.5083 16.1503 17.5714 15.2661 17.5714H9.35976C8.59988 17.5714 7.86831 17.8598 7.3128 18.3783L2.68232 22.7C2.0431 23.2966 1 22.8434 1 21.969V2.92626C1 2.02855 2.09122 1.58553 2.717 2.22918Z"
-          fill={color}
+          fill={`url(#${gradient})`}
           stroke={hue}
           strokeWidth="2"
         />
