@@ -46,9 +46,8 @@ test("a line is one line of at most MAX_CHARS", () => {
 test("a sent line shows for SHOW_MS by the room's clock, then it's gone", () => {
   const state = sayState("hello", 10_000);
   assert.deepEqual(readChat(state, 10_000), {
-    said: "hello",
+    said: { text: "hello", until: 10_000 + SHOW_MS },
     typing: null,
-    until: 10_000 + SHOW_MS,
   });
   assert.equal(readChat(state, 10_000 + SHOW_MS).said, null);
   assert.equal(readChat({ typing: "hel" }, 0).typing, "hel");
