@@ -26,9 +26,6 @@ catalog:
 linkWorkspacePackages: true
 
 allowBuilds:
-  "@prisma/engines": true
   "@vercel/speed-insights": true
-  cbor-extract: true
   esbuild: true
-  prisma: true
   sharp: true

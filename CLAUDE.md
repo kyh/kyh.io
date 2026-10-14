@@ -114,8 +114,9 @@ shows, second opens). A title-sequence flyover runs on load and resumes after
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored),
-`landmarks-*.ts` (the buildings), `engine.ts` (camera, tour, hover, pins,
-input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and
+`landmarks-*.ts` (the buildings), `controls.ts` (which building is lit, when
+the flyover runs, tap vs drag vs pinch, the keys; pure, tested), `engine.ts`
+(camera, tour, pins, input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and
 `window.city.debug()` reports the town; headless Chromium needs
 `--use-angle=swiftshader,--enable-unsafe-swiftshader` for WebGL.
 

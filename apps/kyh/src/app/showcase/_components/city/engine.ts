@@ -18,6 +18,7 @@ import type { Theme } from "./palette";
 import type { Built } from "./render";
 import type { Sketch } from "./sketch";
 import { createAnimations } from "./animate";
+import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
@@ -37,14 +38,11 @@ import { TOWN_VERSION } from "./world";
 const PIXELS_PER_UNIT = 64 / Math.SQRT2;
 const CAMERA_DISTANCE = 300;
 const MAX_ZOOM = 3.2;
-const DRAG_THRESHOLD = 5;
 /** On the ground, the directions that move along the screen. */
 const SCREEN_RIGHT = new Vector3(Math.SQRT1_2, 0, -Math.SQRT1_2);
 const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
 /** The ground is foreshortened by the 30° elevation: it reads half as deep. */
 const FORESHORTEN = Math.sin(Math.PI / 6);
-/** Left alone this long, the flyover picks up again. */
-const IDLE_SECONDS = 30;
 /** How far above a roof its pin floats, in cells. */
 const PIN_LIFT = 0.3;
 
@@ -170,13 +168,6 @@ const edgeOf = (x: number, width: number) => {
   return x > width - 150 ? "end" : "center";
 };
 
-/** Who is lighting a building up, if anyone: the first of these wins. */
-interface Hovers {
-  pin: Placed | null;
-  pointer: Placed | null;
-  tour: Placed | null;
-}
-
 /** The last placement written to a pin, so a still camera writes nothing. */
 interface PinState {
   x: number;
@@ -251,7 +242,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let height = 1;
   const view = { x: 36, z: 38, zoom: 0.5 };
   let goal: { x: number; z: number; zoom: number } | null = null;
-  let touring = false;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
@@ -319,13 +309,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let carrying: number | null = null;
   let overActor = false;
 
-  // Hover: a pin (pointer or keyboard), the pointer on a building, or the
-  // flyover passing one. The first of those lights its building up.
-  const hoverBy: Hovers = {
-    pin: null,
-    pointer: null,
-    tour: null,
-  };
+  // What's lit, and whether the flyover has the camera: the rules are in controls.ts.
+  const spotlight = createSpotlight<Placed>({
+    now: () => performance.now(),
+    // The visitor has the camera: a glide to a focused building stops too.
+    onTake: () => {
+      goal = null;
+    },
+    still: options.reducedMotion,
+  });
   let shown: Placed | null = null;
   const updateCursor = () => {
     if (carrying !== null) {
@@ -333,11 +325,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     } else if (overActor) {
       canvas.style.cursor = "grab";
     } else {
-      canvas.style.cursor = hoverBy.pointer ? "pointer" : "";
+      canvas.style.cursor = spotlight.pointer ? "pointer" : "";
     }
   };
   const refreshHover = () => {
-    const next = hoverBy.pin ?? hoverBy.pointer ?? hoverBy.tour;
+    const next = spotlight.lit;
     if (next === shown) {
       return;
     }
@@ -373,24 +365,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   applyTheme();
 
-  let idleSince = performance.now();
-  const setTour = (playing: boolean, from: number | null = null) => {
-    if (playing === touring || !tour) {
-      return;
-    }
-    touring = playing;
-    if (playing) {
+  /** The flyover takes the camera, from `from` along its path or from the nearest point. */
+  const playTour = (from: number | null = null) => {
+    if (tour && spotlight.play()) {
       goal = null;
       tourAt = from ?? tour.closest(view.x, view.z);
-    } else {
-      hoverBy.tour = null;
-      refreshHover();
     }
   };
   const takeControl = () => {
-    idleSince = performance.now();
-    goal = null;
-    setTour(false);
+    spotlight.take();
+    refreshHover();
   };
 
   const raycaster = new Raycaster();
@@ -465,23 +449,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
 
-  const pointers = new Map<number, { x: number; y: number }>();
+  const presses = createPresses();
   /** Where the mouse last was over the town, to see what's under it after the camera moves. */
   let mouseAt: { x: number; y: number } | null = null;
-  let dragged = false;
-  let downAt = { x: 0, y: 0 };
-  let pinch = 0;
   /** Pick up whatever car or person is under the pointer; false if there's none to take. */
   const tryGrab = (event: PointerEvent) => {
     const at = local(event.clientX, event.clientY);
-    const key = pointers.size === 0 && event.button === 0 ? life.actorAt(at.x, at.y) : null;
+    const key = presses.count === 0 && event.button === 0 ? life.actorAt(at.x, at.y) : null;
     if (!key || !life.grab(key, spotAt(event.clientX, event.clientY))) {
       return false;
     }
     canvas.setPointerCapture(event.pointerId);
     carrying = event.pointerId;
-    takeControl();
-    hoverBy.pointer = null;
+    spotlight.grab();
     refreshHover();
     updateCursor();
     return true;
@@ -491,44 +471,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     canvas.setPointerCapture(event.pointerId);
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (pointers.size === 1) {
-      dragged = false;
-      downAt = { x: event.clientX, y: event.clientY };
-    } else {
-      const [a, b] = [...pointers.values()];
-      pinch = a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
-      dragged = true;
-    }
-  };
-  const onPinch = (event: PointerEvent, previous: { x: number; y: number }) => {
-    const [a, b] = [...pointers.values()];
-    if (!a || !b) {
-      return;
-    }
-    const spread = Math.hypot(a.x - b.x, a.y - b.y);
-    takeControl();
-    panBy((event.clientX - previous.x) / 2, (event.clientY - previous.y) / 2);
-    if (pinch > 0) {
-      zoomAt(spread / pinch, (a.x + b.x) / 2, (a.y + b.y) / 2);
-    }
-    pinch = spread;
+    presses.press(event.pointerId, event.clientX, event.clientY);
   };
   const onHoverMove = (event: PointerEvent) => {
-    // A move of nothing is the browser rechecking what's under a resting
-    // cursor, not a hover: the flyover keeps going.
-    if (event.pointerType !== "mouse" || (event.movementX === 0 && event.movementY === 0)) {
+    if (!isHover(event.pointerType, event.movementX, event.movementY)) {
       return;
     }
     life.point(spotAt(event.clientX, event.clientY));
     const at = local(event.clientX, event.clientY);
     overActor = life.actorAt(at.x, at.y) !== null;
-    const hit = pick(event.clientX, event.clientY);
-    if (hit) {
-      // Hovering a building holds the camera still so it can be read.
-      takeControl();
-    }
-    hoverBy.pointer = hit;
+    spotlight.hover(pick(event.clientX, event.clientY));
     refreshHover();
     updateCursor();
   };
@@ -540,7 +492,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const at = local(mouseAt.x, mouseAt.y);
     overActor = life.actorAt(at.x, at.y) !== null;
     life.point(spotAt(mouseAt.x, mouseAt.y));
-    hoverBy.pointer = pick(mouseAt.x, mouseAt.y);
+    spotlight.recheck(pick(mouseAt.x, mouseAt.y));
     refreshHover();
     updateCursor();
   };
@@ -554,39 +506,28 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       life.point(spot);
       return;
     }
-    const previous = pointers.get(event.pointerId);
-    if (!previous) {
+    if (!presses.has(event.pointerId)) {
       onHoverMove(event);
       return;
     }
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (pointers.size === 2) {
-      onPinch(event, previous);
+    const move = presses.move(event.pointerId, event.clientX, event.clientY);
+    if (!move) {
       return;
     }
-    if (
-      !dragged &&
-      Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y) > DRAG_THRESHOLD
-    ) {
-      dragged = true;
+    if (move.kind === "pinch" || move.started) {
       takeControl();
     }
-    if (dragged) {
-      panBy(event.clientX - previous.x, event.clientY - previous.y);
+    panBy(move.dx, move.dy);
+    if (move.kind === "pinch" && move.zoom !== null) {
+      zoomAt(move.zoom, move.at.x, move.at.y);
     }
   };
   const onTap = (event: PointerEvent) => {
-    const hit = pick(event.clientX, event.clientY);
-    takeControl();
-    if (!hit) {
-      hoverBy.pointer = null;
-    } else if (event.pointerType === "mouse" || hoverBy.pointer === hit) {
-      open(hit);
-    } else {
-      // A finger can't hover: the first tap shows the building, the second opens it.
-      hoverBy.pointer = hit;
-    }
+    const opened = spotlight.tap(pick(event.clientX, event.clientY), event.pointerType);
     refreshHover();
+    if (opened) {
+      open(opened);
+    }
   };
   /** Let go of what this pointer carries; true if it carried something. */
   const drop = (event: PointerEvent) => {
@@ -602,26 +543,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (drop(event)) {
       return;
     }
-    pointers.delete(event.pointerId);
-    if (pointers.size > 0) {
-      return;
-    }
-    if (!dragged && event.button === 0) {
+    const ended = presses.release(event.pointerId, event.button);
+    if (ended === "tap") {
       onTap(event);
-    } else if (dragged) {
+    } else if (ended === "drag") {
       repick();
     }
-    pinch = 0;
   };
   const onPointerCancel = (event: PointerEvent) => {
     if (drop(event)) {
       return;
     }
     // The browser took the gesture back (a system swipe, a long press): no tap.
-    pointers.delete(event.pointerId);
-    if (pointers.size === 0) {
-      pinch = 0;
-    }
+    presses.cancel(event.pointerId);
   };
   const onPointerLeave = () => {
     mouseAt = null;
@@ -629,10 +563,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       life.point(null);
     }
     overActor = false;
-    if (pointers.size === 0 && hoverBy.pointer) {
-      hoverBy.pointer = null;
-      refreshHover();
-    }
+    spotlight.leave(presses.count > 0);
+    refreshHover();
     updateCursor();
   };
   const onWheel = (event: WheelEvent) => {
@@ -650,33 +582,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       zoomAt(1.8, event.clientX, event.clientY);
     }
   };
-  const keyPan = new Map<string, [number, number]>([
-    ["ArrowDown", [0, -60]],
-    ["ArrowLeft", [60, 0]],
-    ["ArrowRight", [-60, 0]],
-    ["ArrowUp", [0, 60]],
-    ["a", [60, 0]],
-    ["d", [-60, 0]],
-    ["s", [0, -60]],
-    ["w", [0, 60]],
-  ]);
   const onKeyDown = (event: KeyboardEvent) => {
-    const pan = keyPan.get(event.key);
-    if (pan) {
-      event.preventDefault();
-      takeControl();
-      panBy(...pan);
-    } else if (event.key === "+" || event.key === "=") {
-      takeControl();
-      view.zoom *= 1.25;
-      place();
-    } else if (event.key === "-") {
-      takeControl();
-      view.zoom /= 1.25;
-      place();
-    } else {
+    const move = keyMove(event.key);
+    if (!move) {
       // A key that doesn't move the view leaves the hover to the tour.
       return;
+    }
+    takeControl();
+    if (move.kind === "pan") {
+      event.preventDefault();
+      panBy(move.dx, move.dy);
+    } else {
+      view.zoom *= move.factor;
+      place();
     }
     repick();
   };
@@ -745,7 +663,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     view.z += (point.z - view.z) * k;
     view.zoom += (tourZoom() - view.zoom) * ease(dt, 1.2);
     const slug = tour.stopNear(view.x, view.z, 2.2)?.slug;
-    hoverBy.tour = slug === undefined ? null : (bySlug.get(slug) ?? null);
+    spotlight.pass(slug === undefined ? null : (bySlug.get(slug) ?? null));
     refreshHover();
     place();
   };
@@ -775,10 +693,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       resize();
     }
   };
-  const resumeWhenIdle = (now: number) => {
-    const engaged = hoverBy.pin !== null || hoverBy.pointer !== null || pointers.size > 0;
-    if (!touring && !options.reducedMotion && !engaged && now - idleSince > IDLE_SECONDS * 1000) {
-      setTour(true);
+  const resumeWhenIdle = () => {
+    // A hand holding a car or a person is a press too: the flyover leaves the camera to it.
+    if (spotlight.idle(presses.count > 0 || carrying !== null)) {
+      playTour();
     }
   };
   const lit = (slug: string) => shown?.project.slug === slug;
@@ -791,8 +709,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // after a stall, so nothing teleports when a tab comes back.
     const dt = Math.min(0.1, elapsed);
     clock.time += dt;
-    resumeWhenIdle(now);
-    if (touring) {
+    resumeWhenIdle();
+    if (spotlight.touring) {
       followTour(Math.min(0.25, elapsed));
     } else {
       glide(Math.min(0.25, elapsed));
@@ -808,9 +726,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   frame = requestAnimationFrame(tick);
   // The opening shot: the whole island, then down to the first project and
   // across, left to right, the way the title sequence pans the valley.
-  if (!options.reducedMotion && tour) {
-    setTour(true, 0);
-  }
+  playTour(0);
 
   return {
     /** What the town is up to, for poking at in development. */
@@ -839,19 +755,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     focus: (slug: string) => {
       const entry = bySlug.get(slug);
       if (entry) {
-        takeControl();
-        hoverBy.pin = entry;
+        spotlight.pin(entry);
         refreshHover();
         goal = { ...framing(entry), zoom: Math.max(view.zoom, 1) };
       }
     },
     /** Light a building from its pin; null when the pointer leaves the pin. */
     hover: (slug: string | null) => {
-      const entry = slug === null ? null : (bySlug.get(slug) ?? null);
-      if (entry) {
-        takeControl();
-      }
-      hoverBy.pin = entry;
+      spotlight.pin(slug === null ? null : (bySlug.get(slug) ?? null));
       refreshHover();
     },
     look: (x: number, z: number, zoom: number) => {
