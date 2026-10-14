@@ -21,17 +21,13 @@ export const VIEW: Vec3 = [
 /** The quarter turns the camera can stand at round the town. */
 export const HEADINGS = 4;
 
-/** Toward the camera after `heading` quarter turns; 0 is `VIEW`. */
+/** Toward the camera after `heading` quarter turns, or part of one mid-turn; 0 is `VIEW`. */
 export const viewAt = (heading: number): Vec3 => {
-  const turns = ((heading % HEADINGS) + HEADINGS) % HEADINGS;
+  const angle = (heading * Math.PI) / 2;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
   const [x, y, z] = VIEW;
-  const turned: Vec3[] = [
-    [x, y, z],
-    [-z, y, x],
-    [-x, y, -z],
-    [z, y, -x],
-  ];
-  return turned[turns] ?? VIEW;
+  return [x * cos - z * sin, y, x * sin + z * cos];
 };
 
 export interface LineBatch {
@@ -62,8 +58,10 @@ export interface Sketch {
   signs: Sign[];
   screens: Screen[];
   parts: Part[];
-  /** Null for parts that turn: they keep every face and ink only creases. */
+  /** Toward the camera, for shading; null for parts that turn: they keep every face and ink only creases. */
   view: Vec3 | null;
+  /** The views whose faces it keeps: its own, or both ends of a turn between two. */
+  covers: readonly Vec3[];
 }
 
 export interface Triangle {
@@ -74,7 +72,11 @@ export interface Triangle {
   colors: Paint;
 }
 
-export const createSketch = (view: Vec3 | null = VIEW): Sketch => ({
+export const createSketch = (
+  view: Vec3 | null = VIEW,
+  covers: readonly Vec3[] = view ? [view] : [],
+): Sketch => ({
+  covers,
   faces: new Map(),
   lines: new Map(),
   parts: [],
@@ -111,7 +113,7 @@ export const faceAreas = (sketch: Sketch, areas = new Map<Token, number>()) => {
 };
 
 export const part = (sketch: Sketch, name: string, origin: Vec3, turns = false) => {
-  const child = createSketch(turns ? null : sketch.view);
+  const child = createSketch(turns ? null : sketch.view, sketch.covers);
   sketch.parts.push({ name, origin, sketch: child });
   return child;
 };
@@ -128,6 +130,10 @@ const cross = (a: Vec3, b: Vec3): Vec3 => [
   a[0] * b[1] - a[1] * b[0],
 ];
 const length = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
+
+/** Whether a face turned this way shows in any view the sketch covers. */
+const sees = (sketch: Sketch, normal: Vec3) =>
+  sketch.view === null || sketch.covers.some((view) => dot(normal, view) > 1e-4);
 
 const normalOf = (a: Vec3, b: Vec3, c: Vec3): Vec3 | null => {
   const n = cross(sub(b, a), sub(c, a));
@@ -368,7 +374,7 @@ export const solid = (
   for (const { a, b, c, colors } of triangles) {
     const normal = normalOf(a, b, c);
     if (normal) {
-      const isFront = sketch.view === null || dot(normal, sketch.view) > 1e-4;
+      const isFront = sees(sketch, normal);
       if (isFront) {
         pushTriangle(faceBatch(sketch, tokenFor(colors, normal, sketch.view ?? VIEW)), a, b, c);
       }
@@ -842,8 +848,7 @@ const OUTWARD: Record<Side, Vec3> = {
 };
 
 /** Whether a sketch's camera sees this wall; a sketch that turns sees them all. */
-export const seesWall = (sketch: Sketch, side: Side) =>
-  sketch.view === null || dot(OUTWARD[side], sketch.view) > 1e-4;
+export const seesWall = (sketch: Sketch, side: Side) => sees(sketch, OUTWARD[side]);
 
 interface WallSpec {
   x: number;

@@ -53,6 +53,8 @@ const FORESHORTEN = Math.sin(Math.PI / 6);
 const PIN_LIFT = 0.3;
 /** How fast held arrow keys pan the view, in CSS pixels a second. */
 const KEY_PAN_SPEED = 700;
+/** How long a quarter turn of the camera takes (ms). */
+const TURN_MS = 520;
 
 export interface CityCallbacks {
   /** The building showing its colors: hovered, focused, or passed by the flyover. */
@@ -76,9 +78,14 @@ export interface CityOptions extends CityCallbacks {
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const drawTown = (projects: readonly CityProject[], view: Vec3) => {
+/** The town sketched for a view, keeping the faces of every view in `covers`. */
+const drawTown = (
+  projects: readonly CityProject[],
+  view: Vec3,
+  covers: readonly Vec3[] = [view],
+) => {
   const plan = planCity(planEntries(projects));
-  const sketch = createSketch(view);
+  const sketch = createSketch(view, covers);
   drawGround(sketch, plan, createRandom(11));
   drawCountryside(sketch, plan);
   for (const block of plan.blocks) {
@@ -114,6 +121,7 @@ const createSky = (
   materials: ReturnType<typeof createMaterials>,
   still: boolean,
   view: Vec3,
+  covers: readonly Vec3[],
 ) => {
   const builds: Built[] = [];
   const add = (sketch: Sketch) => {
@@ -122,11 +130,15 @@ const createSky = (
     scene.add(built.group);
     return built;
   };
-  const blimp = add(drawBlimp("KYH.IO", view));
-  const balloons = [add(drawBalloon(0, view)), add(drawBalloon(1, view))];
+  const blimp = add(drawBlimp("KYH.IO", view, covers));
+  const balloons = [add(drawBalloon(0, view, covers)), add(drawBalloon(1, view, covers))];
   const boats = [add(drawBoat("white")), add(drawBoat("accentRed")), add(drawBoat("accentBlue"))];
   const ferry = add(drawFerry());
-  const drones = [add(drawDrone(view)), add(drawDrone(view)), add(drawDrone(view))];
+  const drones = [
+    add(drawDrone(view, covers)),
+    add(drawDrone(view, covers)),
+    add(drawDrone(view, covers)),
+  ];
   const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
   const update = (time: number, pier: { x: number; z: number; d: number } | null) => {
     const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
@@ -184,6 +196,7 @@ const createTownView = (
   materials: ReturnType<typeof createMaterials>,
   town: ReturnType<typeof drawTown>,
   view: Vec3,
+  covers: readonly Vec3[],
   still: boolean,
 ) => {
   const city = build(town.sketch, materials);
@@ -196,7 +209,7 @@ const createTownView = (
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !still });
-  const sky = createSky(scene, materials, still, view);
+  const sky = createSky(scene, materials, still, view, covers);
   const builds = [city, ...buildings.values(), ...sky.builds];
   for (const built of [city, ...buildings.values()]) {
     scene.add(built.group);
@@ -251,20 +264,29 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // sketched the first time the camera turns to them.
   const firstTown = drawTown(options.projects, viewAt(0));
   const { placed, plan } = firstTown;
-  const townViews = new Map<number, ReturnType<typeof createTownView>>();
-  const townViewAt = (at: number) => {
-    const existing = townViews.get(at);
+  const townViews = new Map<string, ReturnType<typeof createTownView>>();
+  const townViewFor = (key: string, view: Vec3, covers: readonly Vec3[]) => {
+    const existing = townViews.get(key);
     if (existing) {
       return existing;
     }
-    const town = at === 0 ? firstTown : drawTown(options.projects, viewAt(at));
-    const created = createTownView(scene, materials, town, viewAt(at), options.reducedMotion);
-    townViews.set(at, created);
+    const town = key === "0" ? firstTown : drawTown(options.projects, view, covers);
+    const created = createTownView(scene, materials, town, view, covers, options.reducedMotion);
+    created.show(false);
+    townViews.set(key, created);
     return created;
   };
-  /** How many quarter turns the camera has made round the town. */
+  /** The town from a heading, as the camera rests there. */
+  const townViewAt = (at: number) => townViewFor(String(at), viewAt(at), [viewAt(at)]);
+  /** The town for a turn between `at` and the next heading: every face either end sees, shaded halfway. */
+  const turnViewAt = (at: number) =>
+    townViewFor(`${at}>`, viewAt(at + 0.5), [viewAt(at), viewAt(at + 1)]);
+  /** How many quarter turns the camera has made round the town, and where it is mid-turn. */
   let heading = 0;
+  let angle = 0;
+  let turning: { from: number; to: number; by: number; start: number } | null = null;
   let shownTown = townViewAt(0);
+  shownTown.show(true);
   // A soft ring of each building's own color round its lot while it's lit.
   const halo = createHalo();
   scene.add(halo.mesh);
@@ -316,7 +338,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     camera.right = width / 2 / unit;
     camera.top = height / 2 / unit;
     camera.bottom = -height / 2 / unit;
-    const toward = viewAt(heading);
+    const toward = viewAt(angle);
     camera.position.set(
       view.x + toward[0] * CAMERA_DISTANCE,
       toward[1] * CAMERA_DISTANCE,
@@ -360,7 +382,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       projected.set(x, y, z).project(camera);
       return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
     },
-    view: () => viewAt(heading),
+    view: () => viewAt(angle),
   });
 
   /** The pointer carrying something, if one is; and whether the mouse is over something to carry. */
@@ -497,7 +519,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const panBy = (dx: number, dy: number) => {
     const unit = PIXELS_PER_UNIT * view.zoom;
-    const { right, up } = screenAxes(viewAt(heading));
+    const { right, up } = screenAxes(viewAt(angle));
     view.x -= (right.x * dx - (up.x * dy) / FORESHORTEN) / unit;
     view.z -= (right.z * dx - (up.z * dy) / FORESHORTEN) / unit;
     place();
@@ -562,26 +584,77 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     refreshHover();
     updateCursor();
   };
-  /** Swing the camera a quarter turn round the point it looks at; the town is sketched for each view. */
-  const turn = (by: number) => {
-    heading = (((heading + by) % HEADINGS) + HEADINGS) % HEADINGS;
+  /** Show one of the town's drawings, lit as the spotlight says. */
+  const showTown = (town: ReturnType<typeof createTownView>) => {
     shownTown.show(false);
-    const lit = shown;
-    shown = null;
-    shownTown = townViewAt(heading);
-    paintTown(shownTown);
-    shownTown.show(true);
-    focusPoints = focusFor(viewAt(heading));
+    shownTown = town;
+    paintTown(town);
+    town.show(true);
+  };
+  // Sketching a view takes a noticeable moment, so the ones a turn from here
+  // are drawn ahead, one at a time between frames, rather than when a key is pressed.
+  let ahead = 0;
+  const drawAhead = () => {
+    const left = (heading + HEADINGS - 1) % HEADINGS;
+    const right = (heading + 1) % HEADINGS;
+    const queue = [
+      () => turnViewAt(heading),
+      () => townViewAt(right),
+      () => turnViewAt(left),
+      () => townViewAt(left),
+    ];
+    const next = () => {
+      const step = queue.shift();
+      if (step) {
+        paintTown(step());
+        ahead = window.setTimeout(next, 250);
+      }
+    };
+    window.clearTimeout(ahead);
+    ahead = window.setTimeout(next, 250);
+  };
+  /** The camera comes to rest at `to`: its own drawing, and the flyover's path as it sees it. */
+  const settle = (to: number) => {
+    turning = null;
+    heading = to;
+    angle = to;
+    showTown(townViewAt(to));
+    focusPoints = focusFor(viewAt(to));
     tour = tourFor(focusPoints);
     if (tour && spotlight.touring) {
       tourAt = tour.closest(view.x, view.z);
     }
     place();
-    shown = lit;
-    if (shown) {
-      shownTown.buildings.get(shown.project.slug)?.paint(theme, true);
-    }
     repick();
+    drawAhead();
+  };
+  /** Swing the camera a quarter turn round the point it looks at. */
+  const turn = (by: 1 | -1) => {
+    if (turning) {
+      settle(turning.to);
+    }
+    const to = (((heading + by) % HEADINGS) + HEADINGS) % HEADINGS;
+    if (options.reducedMotion) {
+      settle(to);
+      return;
+    }
+    // Sketch the far end now, so arriving there doesn't stall.
+    paintTown(townViewAt(to));
+    showTown(turnViewAt(by === 1 ? heading : to));
+    turning = { by, from: heading, start: performance.now(), to };
+  };
+  /** Mid-turn: ease the camera round, and come to rest at the end. */
+  const swing = (now: number) => {
+    if (!turning) {
+      return;
+    }
+    const t = clamp((now - turning.start) / TURN_MS, 0, 1);
+    const eased = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+    angle = turning.from + turning.by * eased;
+    place();
+    if (t >= 1) {
+      settle(turning.to);
+    }
   };
   const onPointerMove = (event: PointerEvent) => {
     if (event.pointerType === "mouse") {
@@ -852,6 +925,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     } else {
       glide(Math.min(0.25, elapsed));
     }
+    swing(now);
     steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit);
@@ -865,12 +939,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The opening shot: the whole island, then down to the first project and
   // across, left to right, the way the title sequence pans the valley.
   playTour(0);
+  // Once the opening has settled in, start on the views a turn away.
+  const warmUp = setTimeout(drawAhead, 3000);
 
   return {
     /** What the town is up to, for poking at in development. */
     debug: () => life.debug(),
     dispose: () => {
       cancelAnimationFrame(frame);
+      clearTimeout(warmUp);
+      window.clearTimeout(ahead);
       observer.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
