@@ -33,6 +33,8 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
+/** How long a thing takes to come up into the hand (ms). */
+const PICKUP_MS = 120;
 /** The little hop a thing makes when it lands (ms). */
 const BOUNCE_MS = 340;
 /** The most lines up at once, and the zoom (CSS pixels a cell) they need to be readable. */
@@ -74,6 +76,9 @@ interface Lean {
   z: number;
   leanX: number;
   leanZ: number;
+  /** Where it was drawn when picked up, and when: it eases from there into the hand. */
+  from: Spot;
+  since: number;
 }
 
 export interface LifeOptions {
@@ -258,8 +263,10 @@ export const createLife = (options: LifeOptions) => {
   /** Where a thing hangs over the ground point a pointer is on, swinging as it moves. */
   const hang = (key: string, spot: Spot, out: Placement, dt: number) => {
     const lean = leans.get(key) ?? {
+      from: { x: out.x, y: out.y, z: out.z },
       leanX: 0,
       leanZ: 0,
+      since: performance.now(),
       x: spot.x,
       z: spot.z,
     };
@@ -274,9 +281,11 @@ export const createLife = (options: LifeOptions) => {
     leans.set(key, lean);
     const y = groundAt(spot.x, spot.z) + LIFT - 0.18;
     const along = (RAISE - y) / VIEW[1];
-    out.x = spot.x + VIEW[0] * along;
-    out.y = RAISE;
-    out.z = spot.z + VIEW[2] * along;
+    const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
+    const eased = 1 - (1 - rise) ** 3;
+    out.x = lean.from.x + (spot.x + VIEW[0] * along - lean.from.x) * eased;
+    out.y = lean.from.y + (RAISE - lean.from.y) * eased;
+    out.z = lean.from.z + (spot.z + VIEW[2] * along - lean.from.z) * eased;
     out.leanX = lean.leanX;
     out.leanZ = lean.leanZ;
     out.shown = true;
