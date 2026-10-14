@@ -14,8 +14,10 @@ import {
   line,
   loop,
   onWall,
+  opposite,
   pane,
   round,
+  seesWall,
   sub,
   wallLength,
 } from "./sketch";
@@ -62,23 +64,29 @@ export interface WindowGrid {
   skip?: number;
 }
 
+/** Rows of windows on a wall, and the same on the wall opposite, for the views from behind. */
 export const windows = (sketch: Sketch, wall: Footprint, grid: WindowGrid) => {
   const span = wallLength(wall, grid.side);
   const margin = grid.margin ?? 0.16;
   const width = grid.width ?? 0.12;
   const height = grid.height ?? 0.16;
   const floorHeight = grid.floorHeight ?? FLOOR;
-  for (let floor = 0; floor < grid.floors; floor += 1) {
-    for (let column = 0; column < grid.columns; column += 1) {
-      if (!(floor === 0 && column === grid.skip)) {
-        const along = margin + ((span - margin * 2) * (column + 0.5)) / grid.columns - width / 2;
-        const y = grid.y + floor * floorHeight;
-        pane(
-          sketch,
-          wall,
-          { along, h: height, side: grid.side, w: width, y },
-          glassFor(`${wall.x}:${wall.z}:${grid.side}:${floor}:${column}`),
-        );
+  for (const [side, skip] of [
+    [grid.side, grid.skip],
+    [opposite(grid.side), undefined],
+  ] as const) {
+    for (let floor = 0; floor < grid.floors; floor += 1) {
+      for (let column = 0; column < grid.columns; column += 1) {
+        if (!(floor === 0 && column === skip)) {
+          const along = margin + ((span - margin * 2) * (column + 0.5)) / grid.columns - width / 2;
+          const y = grid.y + floor * floorHeight;
+          pane(
+            sketch,
+            wall,
+            { along, h: height, side, w: width, y },
+            glassFor(`${wall.x}:${wall.z}:${side}:${floor}:${column}`),
+          );
+        }
       }
     }
   }
@@ -92,24 +100,28 @@ export const ribbons = (
   { y, floors, floorHeight = FLOOR }: { y: number; floors: number; floorHeight?: number },
 ) => {
   const span = wallLength(wall, side);
-  for (let floor = 0; floor < floors; floor += 1) {
-    const bottom = y + floor * floorHeight;
-    const top = bottom + floorHeight * 0.55;
-    pane(
-      sketch,
-      wall,
-      { along: 0.1, h: top - bottom, side, w: span - 0.2, y: bottom },
-      // Offices empty out at night: half the floors go dark.
-      glassFor(`${wall.x}:${wall.z}:${side}:${floor}`, 2),
-      "hair",
-    );
-    for (let along = 0.35; along < span - 0.2; along += 0.3) {
-      line(
-        sketch,
-        [onWall(wall, side, along, bottom, 0.006), onWall(wall, side, along, top, 0.006)],
-        "hair",
-        "inkSoft",
-      );
+  for (const facing of [side, opposite(side)]) {
+    if (seesWall(sketch, facing)) {
+      for (let floor = 0; floor < floors; floor += 1) {
+        const bottom = y + floor * floorHeight;
+        const top = bottom + floorHeight * 0.55;
+        pane(
+          sketch,
+          wall,
+          { along: 0.1, h: top - bottom, side: facing, w: span - 0.2, y: bottom },
+          // Offices empty out at night: half the floors go dark.
+          glassFor(`${wall.x}:${wall.z}:${facing}:${floor}`, 2),
+          "hair",
+        );
+        for (let along = 0.35; along < span - 0.2; along += 0.3) {
+          line(
+            sketch,
+            [onWall(wall, facing, along, bottom, 0.006), onWall(wall, facing, along, top, 0.006)],
+            "hair",
+            "inkSoft",
+          );
+        }
+      }
     }
   }
 };

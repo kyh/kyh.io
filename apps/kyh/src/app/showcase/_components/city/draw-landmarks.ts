@@ -99,7 +99,7 @@ export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly City
     const site = { ...lot, y: lot.size === "launch" ? 0 : CURB_TOP };
     const project = bySlug.get(lot.slug);
     if (project) {
-      const own = createSketch();
+      const own = createSketch(sketch.view);
       const draw = LANDMARKS.get(project.slug)?.draw;
       const bounds = draw
         ? draw(own, site, project.title)

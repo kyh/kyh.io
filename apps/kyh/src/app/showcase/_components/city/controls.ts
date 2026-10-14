@@ -204,7 +204,10 @@ export const createPresses = () => {
 };
 
 /** What a key does to the view. */
-export type KeyMove = { kind: "pan"; dx: number; dy: number } | { kind: "zoom"; factor: number };
+export type KeyMove =
+  | { kind: "pan"; dx: number; dy: number }
+  | { kind: "zoom"; factor: number }
+  | { kind: "turn"; by: 1 | -1 };
 
 const STEP = 60;
 const KEY_PANS = new Map<string, readonly [number, number]>([
@@ -218,11 +221,14 @@ const KEY_PANS = new Map<string, readonly [number, number]>([
   ["w", [0, STEP]],
 ]);
 
-/** Arrows and WASD pan, + (or =) and - zoom; any other key leaves the view be. */
+/** Arrows and WASD pan, + (or =) and - zoom, [ and ] turn; any other key leaves the view be. */
 export const keyMove = (key: string): KeyMove | null => {
   const pan = KEY_PANS.get(key);
   if (pan) {
     return { dx: pan[0], dy: pan[1], kind: "pan" };
+  }
+  if (key === "[" || key === "]") {
+    return { by: key === "]" ? 1 : -1, kind: "turn" };
   }
   if (key === "+" || key === "=") {
     return { factor: 1.25, kind: "zoom" };

@@ -111,10 +111,14 @@ colors, rings its lot in a soft band of its own color (`halo.ts`) and opens its
 icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
 or icon opens the card, a second tap or a tap on the card opens the project). A trackpad's
-two-finger scroll pans the town, as a drag does on touch; pinch zooms. A title-sequence flyover runs on load and resumes after
-30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
+two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `]`
+turn the camera a quarter turn. Each of the four views is its own sketch, drawn
+the first time the camera turns to it: walls carry windows on both opposite
+faces, while doors, signs and storefronts stay where they are in the world. A
+title-sequence flyover runs on load; only moving the camera stops it, the
+corner button pauses it, and it resumes after 30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
-`sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
+`sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored),
 `landmarks-*.ts` (the buildings), `controls.ts` (which building is lit, when
 the flyover runs, tap vs drag vs pinch, the keys; pure, tested), `engine.ts`

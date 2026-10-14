@@ -172,6 +172,8 @@ test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", (
   assert.deepEqual(keyMove("w"), { dx: 0, dy: 60, kind: "pan" });
   assert.deepEqual(keyMove("="), { factor: 1.25, kind: "zoom" });
   assert.deepEqual(keyMove("-"), { factor: 0.8, kind: "zoom" });
+  assert.deepEqual(keyMove("]"), { by: 1, kind: "turn" });
+  assert.deepEqual(keyMove("["), { by: -1, kind: "turn" });
   for (const key of ["Shift", "x", "1", "Tab", "Enter", " "]) {
     assert.equal(keyMove(key), null, key);
   }

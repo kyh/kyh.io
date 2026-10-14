@@ -21,8 +21,8 @@ export const BLIMP_HEADING = -Math.PI / 4;
 
 const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
 
-export const drawBlimp = (text: string): Sketch => {
-  const sketch = createSketch();
+export const drawBlimp = (text: string, view: Vec3): Sketch => {
+  const sketch = createSketch(view);
   const hull = ballTriangles({
     colors: paint("white", "white", "wallRight"),
     detail: 28,
@@ -103,8 +103,8 @@ const STRIPES = [
 ] as const;
 
 /** A balloon in vertical stripes: recolor every other band of a sphere. */
-export const drawBalloon = (stripe: number): Sketch => {
-  const sketch = createSketch();
+export const drawBalloon = (stripe: number, view: Vec3): Sketch => {
+  const sketch = createSketch(view);
   const [first, second] = STRIPES;
   const triangles: Triangle[] = ballTriangles({
     colors: first,
@@ -253,8 +253,8 @@ export const drawFerry = (): Sketch => {
 };
 
 /** A delivery drone: a body and four rotors, buzzing between the towers. */
-export const drawDrone = (): Sketch => {
-  const sketch = createSketch();
+export const drawDrone = (view: Vec3): Sketch => {
+  const sketch = createSketch(view);
   box(
     sketch,
     {

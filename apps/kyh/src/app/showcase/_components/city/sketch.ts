@@ -3,9 +3,9 @@
 // grid cells (x east, y up, z south), batched per color so the whole town
 // renders in a few dozen draw calls.
 //
-// The camera never turns, so which faces show and which edges outline a solid
-// are worked out once, here: faces turned away are dropped, and ink goes on
-// silhouettes (a visible face meets a hidden one), creases and open edges.
+// The camera turns only in quarter turns, and each view is sketched on its
+// own: faces turned away are dropped, and ink goes on silhouettes (a visible
+// face meets a hidden one), creases and open edges.
 import type { Paint, Token } from "./palette";
 
 export type Vec3 = readonly [x: number, y: number, z: number];
@@ -17,6 +17,22 @@ export const VIEW: Vec3 = [
   Math.sin(Math.PI / 6),
   Math.SQRT1_2 * Math.cos(Math.PI / 6),
 ];
+
+/** The quarter turns the camera can stand at round the town. */
+export const HEADINGS = 4;
+
+/** Toward the camera after `heading` quarter turns; 0 is `VIEW`. */
+export const viewAt = (heading: number): Vec3 => {
+  const turns = ((heading % HEADINGS) + HEADINGS) % HEADINGS;
+  const [x, y, z] = VIEW;
+  const turned: Vec3[] = [
+    [x, y, z],
+    [-z, y, x],
+    [-x, y, -z],
+    [z, y, -x],
+  ];
+  return turned[turns] ?? VIEW;
+};
 
 export interface LineBatch {
   token: Token;
@@ -54,7 +70,8 @@ export interface Triangle {
   a: Vec3;
   b: Vec3;
   c: Vec3;
-  token: Token;
+  /** Which of these it takes depends on how it faces the camera, so it's picked per view. */
+  colors: Paint;
 }
 
 export const createSketch = (view: Vec3 | null = VIEW): Sketch => ({
@@ -329,6 +346,14 @@ const isInked = (edge: EdgeRecord, creaseCos: number) => {
   return first !== undefined && second !== undefined && dot(first, second) < creaseCos;
 };
 
+/** Which token a face takes: flat tops, then faces on the camera's left (lit) or right (shade). */
+const tokenFor = (colors: Paint, normal: Vec3, view: Vec3): Token => {
+  if (normal[1] > 0.86) {
+    return colors.top;
+  }
+  return normal[0] * view[2] - normal[2] * view[0] <= 0 ? colors.left : colors.right;
+};
+
 /**
  * A closed solid from outward-wound triangles. Hidden faces are dropped and
  * ink traces the silhouette and every crease sharper than `crease` degrees.
@@ -340,12 +365,12 @@ export const solid = (
   crease = 38,
 ) => {
   const edges: EdgeMap = new Map();
-  for (const { a, b, c, token } of triangles) {
+  for (const { a, b, c, colors } of triangles) {
     const normal = normalOf(a, b, c);
     if (normal) {
       const isFront = sketch.view === null || dot(normal, sketch.view) > 1e-4;
       if (isFront) {
-        pushTriangle(faceBatch(sketch, token), a, b, c);
+        pushTriangle(faceBatch(sketch, tokenFor(colors, normal, sketch.view ?? VIEW)), a, b, c);
       }
       recordEdge(edges, a, b, normal, isFront);
       recordEdge(edges, b, c, normal, isFront);
@@ -366,14 +391,6 @@ export const solid = (
 // Building blocks. Each returns outward-wound triangles: pass several to one
 // `solid` call when they form one closed shape.
 
-/** Which token a face takes: flat tops, faces toward +z (lit) or +x (shade). */
-const tokenFor = (colors: Paint, outward: Vec3): Token => {
-  if (outward[1] > 0.86 * length(outward)) {
-    return colors.top;
-  }
-  return outward[2] >= outward[0] ? colors.left : colors.right;
-};
-
 /** A planar polygon, wound to face `outward`, split into triangles. */
 export const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint): Triangle[] => {
   const [first, second, third] = points;
@@ -386,12 +403,11 @@ export const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint): 
   if (!origin) {
     return [];
   }
-  const token = tokenFor(colors, outward);
   const triangles: Triangle[] = [];
   let previous: Vec3 | null = null;
   for (const point of rest) {
     if (previous) {
-      triangles.push({ a: origin, b: previous, c: point, token });
+      triangles.push({ a: origin, b: previous, c: point, colors });
     }
     previous = point;
   }
@@ -806,22 +822,49 @@ export const hip = (
 // Details that sit on a wall: windows, doors, signs. A wall is named by the
 // way it faces, and only the two the camera sees carry details.
 
-export type Side = "front" | "side";
+/** A building's walls: the front faces +z and the side +x, as the first view sees them; the back and far side face away. */
+export type Side = "front" | "side" | "back" | "farSide";
 
-/** A point on a building's visible wall: `along` runs left to right as seen. */
-export const onWall = (
-  spec: { x: number; z: number; w: number; d: number },
-  side: Side,
-  along: number,
-  y: number,
-  out = 0.004,
-): Vec3 =>
-  side === "front"
-    ? [spec.x + along, y, spec.z + spec.d + out]
-    : [spec.x + spec.w + out, y, spec.z + spec.d - along];
+const OPPOSITE: Record<Side, Side> = {
+  back: "front",
+  farSide: "side",
+  front: "back",
+  side: "farSide",
+};
+
+export const opposite = (side: Side) => OPPOSITE[side];
+
+const OUTWARD: Record<Side, Vec3> = {
+  back: [0, 0, -1],
+  farSide: [-1, 0, 0],
+  front: [0, 0, 1],
+  side: [1, 0, 0],
+};
+
+/** Whether a sketch's camera sees this wall; a sketch that turns sees them all. */
+export const seesWall = (sketch: Sketch, side: Side) =>
+  sketch.view === null || dot(OUTWARD[side], sketch.view) > 1e-4;
+
+interface WallSpec {
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+}
+
+const WALL_POINTS: Record<Side, (spec: WallSpec, along: number, y: number, out: number) => Vec3> = {
+  back: (spec, along, y, out) => [spec.x + spec.w - along, y, spec.z - out],
+  farSide: (spec, along, y, out) => [spec.x - out, y, spec.z + along],
+  front: (spec, along, y, out) => [spec.x + along, y, spec.z + spec.d + out],
+  side: (spec, along, y, out) => [spec.x + spec.w + out, y, spec.z + spec.d - along],
+};
+
+/** A point on a building's wall: `along` runs left to right, seen from outside. */
+export const onWall = (spec: WallSpec, side: Side, along: number, y: number, out = 0.004): Vec3 =>
+  WALL_POINTS[side](spec, along, y, out);
 
 export const wallLength = (spec: { w: number; d: number }, side: Side) =>
-  side === "front" ? spec.w : spec.d;
+  side === "front" || side === "back" ? spec.w : spec.d;
 
 export interface PaneSpec {
   side: Side;
@@ -840,6 +883,9 @@ export const pane = (
   weight: Weight | null = "hair",
   out = 0.004,
 ) => {
+  if (!seesWall(sketch, spec.side)) {
+    return;
+  }
   face(
     sketch,
     token,
@@ -952,4 +998,4 @@ export const mapTriangles = (
   triangles: readonly Triangle[],
   move: (point: Vec3) => Vec3,
 ): Triangle[] =>
-  triangles.map(({ a, b, c, token }) => ({ a: move(a), b: move(b), c: move(c), token }));
+  triangles.map(({ a, b, c, colors }) => ({ a: move(a), b: move(b), c: move(c), colors }));

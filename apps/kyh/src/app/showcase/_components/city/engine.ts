@@ -16,7 +16,7 @@ import {
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
 import type { Built } from "./render";
-import type { Sketch } from "./sketch";
+import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { drawBlock } from "./draw-blocks";
@@ -29,7 +29,7 @@ import { shade, signature } from "./palette";
 import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
-import { createSketch, faceAreas, VIEW } from "./sketch";
+import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
 import { TOWN_VERSION } from "./world";
@@ -39,8 +39,14 @@ const PIXELS_PER_UNIT = 64 / Math.SQRT2;
 const CAMERA_DISTANCE = 300;
 const MAX_ZOOM = 3.2;
 /** On the ground, the directions that move along the screen. */
-const SCREEN_RIGHT = new Vector3(Math.SQRT1_2, 0, -Math.SQRT1_2);
-const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
+/** Ground directions that run right and up the screen, for a view toward the camera. */
+const screenAxes = (view: Vec3) => {
+  const flat = Math.hypot(view[0], view[2]);
+  return {
+    right: { x: view[2] / flat, z: -view[0] / flat },
+    up: { x: -view[0] / flat, z: -view[2] / flat },
+  };
+};
 /** The ground is foreshortened by the 30° elevation: it reads half as deep. */
 const FORESHORTEN = Math.sin(Math.PI / 6);
 /** How far above a roof its pin floats, in cells. */
@@ -70,9 +76,9 @@ export interface CityOptions extends CityCallbacks {
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const drawTown = (projects: readonly CityProject[]) => {
+const drawTown = (projects: readonly CityProject[], view: Vec3) => {
   const plan = planCity(planEntries(projects));
-  const sketch = createSketch();
+  const sketch = createSketch(view);
   drawGround(sketch, plan, createRandom(11));
   drawCountryside(sketch, plan);
   for (const block of plan.blocks) {
@@ -82,14 +88,15 @@ const drawTown = (projects: readonly CityProject[]) => {
   return { placed, plan, sketch };
 };
 
-/** Where to look to frame a building: lifted for its height. */
-const framing = ({ bounds }: Placed) => {
+/** Where to look to frame a building from a view: lifted for its height. */
+const framing = ({ bounds }: Placed, view: Vec3) => {
   // Half the building's height on screen, laid back onto the ground, halved
   // again so short and tall buildings both sit near the middle.
   const lift = (bounds.h * Math.cos(Math.PI / 6)) / 2 / FORESHORTEN / 2;
+  const { up } = screenAxes(view);
   return {
-    x: bounds.x + bounds.w / 2 + SCREEN_UP.x * lift,
-    z: bounds.z + bounds.d / 2 + SCREEN_UP.z * lift,
+    x: bounds.x + bounds.w / 2 + up.x * lift,
+    z: bounds.z + bounds.d / 2 + up.z * lift,
   };
 };
 
@@ -102,7 +109,12 @@ const sea = (angle: number, rx: number, rz: number) => ({
   z: 36 - Math.cos(angle) * rx * Math.SQRT1_2 - Math.sin(angle) * rz * Math.SQRT1_2,
 });
 
-const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, still: boolean) => {
+const createSky = (
+  scene: Scene,
+  materials: ReturnType<typeof createMaterials>,
+  still: boolean,
+  view: Vec3,
+) => {
   const builds: Built[] = [];
   const add = (sketch: Sketch) => {
     const built = build(sketch, materials);
@@ -110,11 +122,11 @@ const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, 
     scene.add(built.group);
     return built;
   };
-  const blimp = add(drawBlimp("KYH.IO"));
-  const balloons = [add(drawBalloon(0)), add(drawBalloon(1))];
+  const blimp = add(drawBlimp("KYH.IO", view));
+  const balloons = [add(drawBalloon(0, view)), add(drawBalloon(1, view))];
   const boats = [add(drawBoat("white")), add(drawBoat("accentRed")), add(drawBoat("accentBlue"))];
   const ferry = add(drawFerry());
-  const drones = [add(drawDrone()), add(drawDrone()), add(drawDrone())];
+  const drones = [add(drawDrone(view)), add(drawDrone(view)), add(drawDrone(view))];
   const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
   const update = (time: number, pier: { x: number; z: number; d: number } | null) => {
     const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
@@ -163,6 +175,52 @@ const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, 
   return { builds, update };
 };
 
+/**
+ * The town as one quarter turn sees it: every face and line sketched for that
+ * view, the moving parts animated, and the sky over it. Only one is shown.
+ */
+const createTownView = (
+  scene: Scene,
+  materials: ReturnType<typeof createMaterials>,
+  town: ReturnType<typeof drawTown>,
+  view: Vec3,
+  still: boolean,
+) => {
+  const city = build(town.sketch, materials);
+  // Each project's building is built on its own, so it can light up alone.
+  const buildings = new Map(
+    town.placed.map((entry) => [entry.project.slug, build(entry.sketch, materials)] as const),
+  );
+  const rig = {
+    parts: new Map([city, ...buildings.values()].flatMap((built) => [...built.parts])),
+    screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
+  };
+  const animations = createAnimations(rig, { launches: !still });
+  const sky = createSky(scene, materials, still, view);
+  const builds = [city, ...buildings.values(), ...sky.builds];
+  for (const built of [city, ...buildings.values()]) {
+    scene.add(built.group);
+  }
+  return {
+    animations,
+    buildings,
+    builds,
+    city,
+    dispose: () => {
+      for (const built of builds) {
+        scene.remove(built.group);
+        built.dispose();
+      }
+    },
+    show: (shown: boolean) => {
+      for (const built of builds) {
+        built.group.visible = shown;
+      }
+    },
+    sky,
+  };
+};
+
 /** The last placement written to a pin, so a still camera writes nothing. */
 interface PinState {
   x: number;
@@ -181,7 +239,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
-    "A city of Kai's projects. Drag or scroll to look around, pinch to zoom, click a building to open it, and pick up cars and people to move them.",
+    "A city of Kai's projects. Drag or scroll to look around, pinch to zoom, [ and ] to turn, click a building to open it, and pick up cars and people to move them.",
   );
   container.append(canvas);
 
@@ -189,23 +247,24 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
   let { theme } = options;
   const materials = createMaterials(theme);
-  const { placed, plan, sketch } = drawTown(options.projects);
-  const city = build(sketch, materials);
-  scene.add(city.group);
-  // Each project's building is built on its own, so it can light up alone.
-  const buildings = new Map(
-    placed.map((entry) => {
-      const built = build(entry.sketch, materials);
-      scene.add(built.group);
-      return [entry, built] as const;
-    }),
-  );
-  const rig = {
-    parts: new Map([city, ...buildings.values()].flatMap((built) => [...built.parts])),
-    screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
+  // The first view's drawing also says where everything is; the others are
+  // sketched the first time the camera turns to them.
+  const firstTown = drawTown(options.projects, viewAt(0));
+  const { placed, plan } = firstTown;
+  const townViews = new Map<number, ReturnType<typeof createTownView>>();
+  const townViewAt = (at: number) => {
+    const existing = townViews.get(at);
+    if (existing) {
+      return existing;
+    }
+    const town = at === 0 ? firstTown : drawTown(options.projects, viewAt(at));
+    const created = createTownView(scene, materials, town, viewAt(at), options.reducedMotion);
+    townViews.set(at, created);
+    return created;
   };
-  const animations = createAnimations(rig, { launches: !options.reducedMotion });
-  const sky = createSky(scene, materials, options.reducedMotion);
+  /** How many quarter turns the camera has made round the town. */
+  let heading = 0;
+  let shownTown = townViewAt(0);
   // A soft ring of each building's own color round its lot while it's lit.
   const halo = createHalo();
   scene.add(halo.mesh);
@@ -223,14 +282,17 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     ),
     entry,
   }));
-  const focusPoints = placed.map((entry) => framing(entry));
-  const tour = createTour(
-    placed.map((entry, index) => ({
-      slug: entry.project.slug,
-      x: focusPoints[index]?.x ?? 36,
-      z: focusPoints[index]?.z ?? 36,
-    })),
-  );
+  const focusFor = (view: Vec3) => placed.map((entry) => framing(entry, view));
+  const tourFor = (points: readonly { x: number; z: number }[]) =>
+    createTour(
+      placed.map((entry, index) => ({
+        slug: entry.project.slug,
+        x: points[index]?.x ?? 36,
+        z: points[index]?.z ?? 36,
+      })),
+    );
+  let focusPoints = focusFor(viewAt(0));
+  let tour = tourFor(focusPoints);
 
   // The camera: where it looks, how close, and where it is easing to.
   let width = 1;
@@ -254,10 +316,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     camera.right = width / 2 / unit;
     camera.top = height / 2 / unit;
     camera.bottom = -height / 2 / unit;
+    const toward = viewAt(heading);
     camera.position.set(
-      view.x + VIEW[0] * CAMERA_DISTANCE,
-      VIEW[1] * CAMERA_DISTANCE,
-      view.z + VIEW[2] * CAMERA_DISTANCE,
+      view.x + toward[0] * CAMERA_DISTANCE,
+      toward[1] * CAMERA_DISTANCE,
+      view.z + toward[2] * CAMERA_DISTANCE,
     );
     camera.lookAt(view.x, 0, view.z);
     camera.updateProjectionMatrix();
@@ -297,6 +360,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       projected.set(x, y, z).project(camera);
       return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
     },
+    view: () => viewAt(heading),
   });
 
   /** The pointer carrying something, if one is; and whether the mouse is over something to carry. */
@@ -328,11 +392,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     if (shown) {
-      buildings.get(shown)?.paint(theme, false);
+      shownTown.buildings.get(shown.project.slug)?.paint(theme, false);
     }
     shown = next;
     if (shown) {
-      buildings.get(shown)?.paint(theme, true);
+      shownTown.buildings.get(shown.project.slug)?.paint(theme, true);
     }
     halo.show(
       shown && {
@@ -345,15 +409,20 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     options.onHover(shown?.project.slug ?? null);
   };
 
+  const paintTown = (town: ReturnType<typeof createTownView>) => {
+    town.city.paint(theme, false);
+    for (const [slug, built] of town.buildings) {
+      built.paint(theme, slug === shown?.project.slug);
+    }
+    for (const built of town.sky.builds) {
+      built.paint(theme, false);
+    }
+  };
   const applyTheme = () => {
     renderer.setClearColor(new Color(shade("sea", theme, false)));
     materials.setTheme(theme);
-    city.paint(theme, false);
-    for (const [entry, built] of buildings) {
-      built.paint(theme, entry === shown);
-    }
-    for (const built of sky.builds) {
-      built.paint(theme, false);
+    for (const town of townViews.values()) {
+      paintTown(town);
     }
     life.setTheme(theme);
   };
@@ -428,8 +497,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const panBy = (dx: number, dy: number) => {
     const unit = PIXELS_PER_UNIT * view.zoom;
-    view.x -= (SCREEN_RIGHT.x * dx - (SCREEN_UP.x * dy) / FORESHORTEN) / unit;
-    view.z -= (SCREEN_RIGHT.z * dx - (SCREEN_UP.z * dy) / FORESHORTEN) / unit;
+    const { right, up } = screenAxes(viewAt(heading));
+    view.x -= (right.x * dx - (up.x * dy) / FORESHORTEN) / unit;
+    view.z -= (right.z * dx - (up.z * dy) / FORESHORTEN) / unit;
     place();
   };
 
@@ -491,6 +561,27 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     spotlight.recheck(pick(mouseAt.x, mouseAt.y));
     refreshHover();
     updateCursor();
+  };
+  /** Swing the camera a quarter turn round the point it looks at; the town is sketched for each view. */
+  const turn = (by: number) => {
+    heading = (((heading + by) % HEADINGS) + HEADINGS) % HEADINGS;
+    shownTown.show(false);
+    const lit = shown;
+    shown = null;
+    shownTown = townViewAt(heading);
+    paintTown(shownTown);
+    shownTown.show(true);
+    focusPoints = focusFor(viewAt(heading));
+    tour = tourFor(focusPoints);
+    if (tour && spotlight.touring) {
+      tourAt = tour.closest(view.x, view.z);
+    }
+    place();
+    shown = lit;
+    if (shown) {
+      shownTown.buildings.get(shown.project.slug)?.paint(theme, true);
+    }
+    repick();
   };
   const onPointerMove = (event: PointerEvent) => {
     if (event.pointerType === "mouse") {
@@ -597,6 +688,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const move = keyMove(event.key);
     if (!move) {
       // A key that doesn't move the view leaves the hover to the tour.
+      return;
+    }
+    if (move.kind === "turn") {
+      if (!event.repeat) {
+        turn(move.by);
+      }
       return;
     }
     takeControl();
@@ -757,9 +854,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
-    animations.update(clock.time, lit);
+    shownTown.animations.update(clock.time, lit);
     halo.update(Math.min(0.25, elapsed), clock.time, theme);
-    sky.update(clock.time, plan.countryside.pier);
+    shownTown.sky.update(clock.time, plan.countryside.pier);
     renderer.render(scene, camera);
     placePins();
     frame = requestAnimationFrame(tick);
@@ -785,8 +882,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       canvas.removeEventListener("keydown", onKeyDown);
       canvas.removeEventListener("keyup", onKeyUp);
       canvas.removeEventListener("blur", onBlur);
-      for (const built of [city, ...buildings.values(), ...sky.builds]) {
-        built.dispose();
+      for (const town of townViews.values()) {
+        town.dispose();
       }
       halo.dispose();
       life.dispose();
@@ -800,7 +897,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       if (entry) {
         spotlight.pin(entry);
         takeControl();
-        goal = { ...framing(entry), zoom: Math.max(view.zoom, 1) };
+        goal = { ...framing(entry, viewAt(heading)), zoom: Math.max(view.zoom, 1) };
       }
     },
     /** Light a building from its pin; null when the pointer leaves the pin. */

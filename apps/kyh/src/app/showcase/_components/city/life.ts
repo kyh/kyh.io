@@ -11,12 +11,12 @@ import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
 import type { Theme } from "./palette";
 import type { CityPlan } from "./plan";
+import type { Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";
 import { CURB_TOP } from "./draw-blocks";
 import { createNet } from "./net";
 import { createOverlay } from "./overlay";
-import { VIEW } from "./sketch";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
 import { INSIDE, SAYING } from "./visitors";
@@ -94,6 +94,8 @@ export interface LifeOptions {
   toScreen: (x: number, y: number, z: number) => { x: number; y: number };
   /** CSS pixels per cell at the current zoom. */
   scale: () => number;
+  /** Toward the camera, which turns in quarter turns. */
+  view: () => Vec3;
   size: () => { width: number; height: number };
 }
 
@@ -282,10 +284,11 @@ export const createLife = (options: LifeOptions) => {
     const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
     const y = groundAt(spot.x, spot.z) + (LIFT - 0.18) * (1 - (1 - rise) ** 3);
     // Drawn up the view ray, clear of roofs, where it looks the same.
-    const along = (RAISE - y) / VIEW[1];
-    out.x = spot.x + VIEW[0] * along;
+    const toward = options.view();
+    const along = (RAISE - y) / toward[1];
+    out.x = spot.x + toward[0] * along;
     out.y = RAISE;
-    out.z = spot.z + VIEW[2] * along;
+    out.z = spot.z + toward[2] * along;
     out.leanX = lean.leanX;
     out.leanZ = lean.leanZ;
     out.shown = true;
