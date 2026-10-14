@@ -110,15 +110,17 @@ nearest free lot — with its favicon floating over the roof as a real link
 colors, rings its lot in a soft band of its own color (`halo.ts`) and opens its
 icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
-or icon opens the card, a second tap or a tap on the card opens the project). Scrolling steps
-from one project to the next in the flyover's order, by distance: every
-100px is one project (ctrl+wheel, i.e. a trackpad pinch, still zooms). A title-sequence flyover runs on load and resumes after
+or icon opens the card, a second tap or a tap on the card opens the project). Scrolling scrubs
+the flyover's path, counted in projects: every 100px is one, the nearest
+project lights as the camera passes, and when scrolling stops it settles on
+it (ctrl+wheel, i.e. a trackpad pinch, still zooms; `tour.ts` maps project
+index to path distance). A title-sequence flyover runs on load and resumes after
 30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored),
 `landmarks-*.ts` (the buildings), `controls.ts` (which building is lit, when
-the flyover runs, tap vs drag vs pinch, the wheel's steps, the keys; pure, tested), `engine.ts`
+the flyover runs, tap vs drag vs pinch, the keys; pure, tested), `engine.ts`
 (camera, tour, pins, input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and
 `window.city.debug()` reports the town; headless Chromium needs
 `--use-angle=swiftshader,--enable-unsafe-swiftshader` for WebGL.

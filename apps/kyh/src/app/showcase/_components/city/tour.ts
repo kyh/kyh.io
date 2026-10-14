@@ -21,11 +21,16 @@ export interface Tour {
   closest: (x: number, z: number) => number;
   /** The stop nearest a point, if one is close. */
   stopNear: (x: number, z: number, within: number) => Stop | null;
+  /** The stops in the order the path passes them. */
+  stops: readonly Stop[];
   /**
-   * The next stop along the flyover from `from` (dir 1) or the one before it
-   * (dir -1). From no stop, the one nearest the point.
+   * The path distance at a stop index: 2 is the third stop, 2.5 halfway on
+   * to the fourth, and past the last it carries on round the next lap. Lets
+   * scrolling count in projects, however far apart their buildings are.
    */
-  step: (from: string | null, dir: 1 | -1, x: number, z: number) => Stop;
+  along: (index: number) => number;
+  /** The stop index at a path distance: `along` turned round. */
+  indexAt: (s: number) => number;
 }
 
 const screenU = (stop: Stop) => stop.x - stop.z;
@@ -111,28 +116,45 @@ export const createTour = (stops: readonly Stop[]): Tour | null => {
     }
     return best;
   };
-  return {
-    at: sampleAt,
-    closest: (x, z) => {
-      let best = first;
-      let bestDistance = Infinity;
-      for (const sample of samples) {
-        const distance = Math.hypot(sample.x - x, sample.z - z);
-        if (distance < bestDistance) {
-          best = sample;
-          bestDistance = distance;
-        }
+  const closest = (x: number, z: number) => {
+    let best = first;
+    let bestDistance = Infinity;
+    for (const sample of samples) {
+      const distance = Math.hypot(sample.x - x, sample.z - z);
+      if (distance < bestDistance) {
+        best = sample;
+        bestDistance = distance;
       }
-      return best.s;
+    }
+    return best.s;
+  };
+  // The path starts at the first stop and passes each one at a segment's start.
+  const stopAt = ordered.map((_, index) => samples[index * STEPS]?.s ?? 0);
+  const along = (index: number) => {
+    const whole = Math.floor(index);
+    const lap = Math.floor(whole / count);
+    const from = whole - lap * count;
+    const start = stopAt[from] ?? 0;
+    const end = from + 1 < count ? (stopAt[from + 1] ?? length) : length;
+    return lap * length + start + (end - start) * (index - whole);
+  };
+  return {
+    along,
+    at: sampleAt,
+    closest,
+    indexAt: (s) => {
+      const lap = Math.floor(s / length);
+      const within = s - lap * length;
+      let from = 0;
+      while (from + 1 < count && (stopAt[from + 1] ?? length) <= within) {
+        from += 1;
+      }
+      const start = stopAt[from] ?? 0;
+      const end = from + 1 < count ? (stopAt[from + 1] ?? length) : length;
+      return lap * count + from + (within - start) / (end - start);
     },
     length,
-    step: (from, dir, x, z) => {
-      const index = ordered.findIndex((stop) => stop.slug === from);
-      if (index === -1) {
-        return stopNear(x, z, Infinity) ?? at(0);
-      }
-      return at(index + dir);
-    },
     stopNear,
+    stops: ordered,
   };
 };

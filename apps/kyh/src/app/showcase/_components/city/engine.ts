@@ -18,7 +18,7 @@ import type { Theme } from "./palette";
 import type { Built } from "./render";
 import type { Sketch } from "./sketch";
 import { createAnimations } from "./animate";
-import { createPresses, createSpotlight, createWheelSteps, isHover, keyMove } from "./controls";
+import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
@@ -45,6 +45,10 @@ const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
 const FORESHORTEN = Math.sin(Math.PI / 6);
 /** How far above a roof its pin floats, in cells. */
 const PIN_LIFT = 0.3;
+/** Scroll this far, in pixels, to scrub from one project to the next. */
+const SCRUB_PX = 100;
+/** Scrolling stopped this long ago: the scrub settles on the nearest project. */
+const SETTLE_MS = 160;
 
 export interface CityCallbacks {
   /** The building showing its colors: hovered, focused, or passed by the flyover. */
@@ -177,7 +181,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
-    "A city of Kai's projects. Drag to look around, scroll from project to project, pinch to zoom, click a building to open it, and pick up cars and people to move them.",
+    "A city of Kai's projects. Drag to look around, scroll to travel from project to project, pinch to zoom, click a building to open it, and pick up cars and people to move them.",
   );
   container.append(canvas);
 
@@ -233,6 +237,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let height = 1;
   const view = { x: 36, z: 38, zoom: 0.5 };
   let goal: { x: number; z: number; zoom: number } | null = null;
+  /**
+   * Scrolling scrubs the flyover's path, counted in projects: where the
+   * camera is along it, where scrolling has sent it, and when the wheel last
+   * turned.
+   */
+  let scrub: { at: number; target: number; since: number } | null = null;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
@@ -305,6 +315,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // The visitor has the camera: a glide to a focused building stops too.
     onTake: () => {
       goal = null;
+      scrub = null;
     },
     still: options.reducedMotion,
   });
@@ -560,19 +571,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     refreshHover();
     updateCursor();
   };
-  const wheelSteps = createWheelSteps(() => performance.now());
-  /** Glide to the next project along the flyover, or the one before, and light it. */
-  const stepTo = (dir: 1 | -1) => {
-    const stop = tour?.step(shown?.project.slug ?? null, dir, view.x, view.z);
-    const entry = stop ? bySlug.get(stop.slug) : undefined;
-    if (!entry) {
-      return;
-    }
-    spotlight.take();
-    spotlight.recheck(entry);
-    refreshHover();
-    goal = { ...framing(entry), zoom: Math.max(view.zoom, tourZoom()) };
-  };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
     if (event.ctrlKey) {
@@ -582,12 +580,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       repick();
       return;
     }
-    // Scrolling either way steps through the projects.
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    const steps = wheelSteps(event.deltaMode === 0 ? delta : delta * 40);
-    for (let step = 0; step < Math.abs(steps); step += 1) {
-      stepTo(steps > 0 ? 1 : -1);
+    if (!tour) {
+      return;
     }
+    // Scrolling either way scrubs the flyover, SCRUB_PX to a project.
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    const pixels = event.deltaMode === 0 ? delta : delta * 40;
+    // Taking the camera ends a scrub; scrolling on carries this one.
+    const carried = scrub;
+    takeControl();
+    const from = tour.indexAt(tour.closest(view.x, view.z));
+    scrub = carried ?? { at: from, since: 0, target: from };
+    scrub.target += pixels / SCRUB_PX;
+    scrub.since = performance.now();
   };
   const onDoubleClick = (event: MouseEvent) => {
     // A double click on a building already opened it, and one on a car made it
@@ -679,6 +684,31 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     refreshHover();
     place();
   };
+  /** Ride the path where scrolling sent it, lighting the nearest project; once scrolling stops, settle on it. */
+  const followScrub = (dt: number) => {
+    if (!scrub || !tour) {
+      return;
+    }
+    const settling = performance.now() - scrub.since > SETTLE_MS;
+    if (settling) {
+      scrub.target = Math.round(scrub.target);
+    }
+    scrub.at += (scrub.target - scrub.at) * ease(dt, 8);
+    const point = tour.at(tour.along(scrub.at));
+    view.x = point.x;
+    view.z = point.z;
+    const count = tour.stops.length;
+    const stop = tour.stops[((Math.round(scrub.at) % count) + count) % count];
+    const nearest = (stop && bySlug.get(stop.slug)) ?? null;
+    if (nearest !== spotlight.pointer) {
+      spotlight.recheck(nearest);
+      refreshHover();
+    }
+    place();
+    if (settling && Math.abs(scrub.target - scrub.at) < 0.002) {
+      scrub = null;
+    }
+  };
   const glide = (dt: number) => {
     if (!goal) {
       return;
@@ -724,6 +754,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     resumeWhenIdle();
     if (spotlight.touring) {
       followTour(Math.min(0.25, elapsed));
+    } else if (scrub) {
+      followScrub(Math.min(0.25, elapsed));
     } else {
       glide(Math.min(0.25, elapsed));
     }

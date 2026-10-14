@@ -207,33 +207,6 @@ export const createPresses = () => {
   };
 };
 
-/** Scroll this far, in pixels, for one step to the next project: about a wheel's notch. */
-export const WHEEL_STEP = 100;
-/** A pause this long forgets a half-made step, so a stray nudge later doesn't finish it. */
-export const WHEEL_FORGET_MS = 300;
-
-/**
- * Scrolling steps from one project to the next by distance, the way a
- * parallax page ties its scenes to how far you've scrolled: every
- * WHEEL_STEP pixels is one project, so a notch is one and a long swipe
- * crosses several. Returns how many to step, negative for back.
- */
-export const createWheelSteps = (now: () => number) => {
-  let sum = 0;
-  let last = -Infinity;
-  return (delta: number) => {
-    const at = now();
-    if (at - last > WHEEL_FORGET_MS) {
-      sum = 0;
-    }
-    last = at;
-    sum += delta;
-    const steps = Math.trunc(sum / WHEEL_STEP);
-    sum -= steps * WHEEL_STEP;
-    return steps;
-  };
-};
-
 /** What a key does to the view. */
 export type KeyMove = { kind: "pan"; dx: number; dy: number } | { kind: "zoom"; factor: number };
 

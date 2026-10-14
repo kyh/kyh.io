@@ -1,16 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  createPresses,
-  createSpotlight,
-  createWheelSteps,
-  IDLE_MS,
-  isHover,
-  keyMove,
-  WHEEL_FORGET_MS,
-  WHEEL_STEP,
-} from "./controls";
+import { createPresses, createSpotlight, IDLE_MS, isHover, keyMove } from "./controls";
 
 const spotlight = (options: { still?: boolean } = {}) => {
   const clock = { now: 0, takes: 0 };
@@ -200,28 +191,4 @@ test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", (
   for (const key of ["Shift", "x", "1", "Tab", "Enter", " "]) {
     assert.equal(keyMove(key), null, key);
   }
-});
-
-test("every WHEEL_STEP pixels scrolled is one step, either way", () => {
-  const clock = { now: 0 };
-  const steps = createWheelSteps(() => clock.now);
-  assert.equal(steps(WHEEL_STEP), 1);
-  assert.equal(steps(-WHEEL_STEP), -1);
-  // A long swipe crosses several, however its deltas are cut up.
-  let total = 0;
-  for (let i = 0; i < 25; i += 1) {
-    clock.now += 16;
-    total += steps(WHEEL_STEP / 5);
-  }
-  assert.equal(total, 5);
-});
-
-test("a pause forgets a half-made step", () => {
-  const clock = { now: 0 };
-  const steps = createWheelSteps(() => clock.now);
-  assert.equal(steps(WHEEL_STEP / 2), 0);
-  clock.now = WHEEL_FORGET_MS + 1;
-  assert.equal(steps(WHEEL_STEP / 2), 0);
-  clock.now += 10;
-  assert.equal(steps(WHEEL_STEP / 2), 1);
 });
