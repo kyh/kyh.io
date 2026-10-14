@@ -4,8 +4,9 @@ import { FixedRate, MultiplayerClient } from "@vibedgames/multiplayer";
 
 import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
+import type { Said } from "@/lib/chat";
 import { draftState, sayState, SHOW_MS } from "@/lib/chat";
-import { colorNamed, ownColor, ownColorName } from "@/lib/color";
+import { lookOf, ownColor, ownColorName } from "@/lib/color";
 import { listenForChat } from "@/lib/chat-input";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 
@@ -77,10 +78,8 @@ const createRoom = (room: string) => {
         const next: PlayerMap = {};
         for (const [id, player] of Object.entries(snapshot?.players ?? {})) {
           if (id !== snapshot?.playerId && player.connected !== false) {
-            const look = colorNamed(player.state?.look);
             next[id] = {
-              color: look?.color ?? player.color ?? "hsl(206, 100%, 50%)",
-              hue: look?.hue ?? player.hue ?? "hsl(208, 77.5%, 76.9%)",
+              ...lookOf(player.state, player),
               id,
               state: player.state ?? {},
             };
@@ -138,12 +137,6 @@ interface UseRealtimeProps {
   room: string;
   /** Whether typing here chats in this room; off where a page chats its own way. */
   chat: boolean;
-}
-
-/** This visitor's own line, as they see it until it comes down. */
-interface OwnLine {
-  text: string;
-  until: number;
 }
 
 export const useRealtime = ({ room, chat }: UseRealtimeProps) => {
@@ -204,7 +197,8 @@ export const useRealtime = ({ room, chat }: UseRealtimeProps) => {
   }, [shared]);
 
   const [draft, setDraft] = useState<string | null>(null);
-  const [said, setSaid] = useState<OwnLine | null>(null);
+  // This visitor's own line, as they see it until it comes down.
+  const [said, setSaid] = useState<Said | null>(null);
   useEffect(() => {
     if (!chat) {
       return;

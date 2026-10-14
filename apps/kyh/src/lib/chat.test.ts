@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { cleanLine, editDraft, MAX_CHARS, readChat, sayState, SHOW_MS } from "./chat";
+import { cleanLine, editDraft, lineOf, MAX_CHARS, readChat, sayState, SHOW_MS } from "./chat";
 
 const press = (
   key: string,
@@ -58,7 +58,18 @@ test("whatever arrives off the wire is cleaned or ignored", () => {
   assert.deepEqual(readChat({ said: 42, saidAt: "soon", typing: ["x"] }, 0), {
     said: null,
     typing: null,
-    until: null,
   });
-  assert.equal(readChat({ said: "a\nb", saidAt: 0 }, 1).said, "a b");
+  assert.equal(readChat({ said: "a\nb", saidAt: 0 }, 1).said?.text, "a b");
+});
+
+test("a draft shows over a sent line", () => {
+  assert.deepEqual(lineOf({ said: { text: "sent", until: 1 }, typing: "draft" }), {
+    text: "draft",
+    typing: true,
+  });
+  assert.deepEqual(lineOf({ said: { text: "sent", until: 1 }, typing: null }), {
+    text: "sent",
+    typing: false,
+  });
+  assert.equal(lineOf({ said: null, typing: null }), null);
 });

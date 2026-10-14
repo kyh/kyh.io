@@ -9,17 +9,32 @@ export const MAX_CHARS = 120;
 /** How long a sent line stays up (ms). */
 export const SHOW_MS = 6000;
 
+/** A sent line, and when it comes down. */
+export interface Said {
+  text: string;
+  until: number;
+}
+
 /** What a visitor is saying, as everyone else draws it. */
 export interface Chat {
   /** Their draft while they type; null when they aren't. */
   typing: string | null;
   /** Their last line, while it's still up. */
-  said: string | null;
-  /** When that line comes down, on the room's clock. */
-  until: number | null;
+  said: Said | null;
 }
 
-export const NO_CHAT: Chat = { said: null, typing: null, until: null };
+/** A line to draw beside a pointer: the draft while there is one, else the line still up. */
+export interface Line {
+  text: string;
+  typing: boolean;
+}
+
+export const lineOf = ({ typing, said }: Chat): Line | null => {
+  if (typing !== null) {
+    return { text: typing, typing: true };
+  }
+  return said ? { text: said.text, typing: false } : null;
+};
 
 /** The keys a press carries that chat cares about. */
 export interface ChatKey {
@@ -91,15 +106,30 @@ export const sayState = (text: string, now: number): JsonRecord => ({
 
 const asText = (value: JsonValue | undefined) => (String(value) === value ? value : "");
 
+/** A state's chat fields, cleaned once per state object: state is replaced, never changed, on each update. */
+const parsed = new WeakMap<
+  JsonRecord,
+  { typing: string | null; said: string; saidAt: number | null }
+>();
+
+const parse = (state: JsonRecord) => {
+  const cached = parsed.get(state);
+  if (cached) {
+    return cached;
+  }
+  const typing = cleanLine(asText(state.typing));
+  const fields = {
+    said: cleanLine(asText(state.said)),
+    saidAt: Number.isFinite(state.saidAt) ? Number(state.saidAt) : null,
+    typing: typing === "" ? null : typing,
+  };
+  parsed.set(state, fields);
+  return fields;
+};
+
 /** A visitor's chat from their state at `now` on the room's clock; anything off the wire is cleaned. */
 export const readChat = (state: JsonRecord, now: number): Chat => {
-  const typing = cleanLine(asText(state.typing));
-  const said = cleanLine(asText(state.said));
-  const saidAt = Number.isFinite(state.saidAt) ? Number(state.saidAt) : null;
+  const { typing, said, saidAt } = parse(state);
   const up = said !== "" && saidAt !== null && now >= saidAt - 1000 && now < saidAt + SHOW_MS;
-  return {
-    said: up ? said : null,
-    typing: typing === "" ? null : typing,
-    until: up && saidAt !== null ? saidAt + SHOW_MS : null,
-  };
+  return { said: up && saidAt !== null ? { text: said, until: saidAt + SHOW_MS } : null, typing };
 };

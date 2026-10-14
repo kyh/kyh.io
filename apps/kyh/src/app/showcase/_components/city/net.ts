@@ -9,7 +9,7 @@ import { FixedRate, Interpolator, lerp, MultiplayerClient } from "@vibedgames/mu
 
 import type { Chat } from "@/lib/chat";
 import { draftState, readChat, sayState } from "@/lib/chat";
-import { colorNamed, ownColorName } from "@/lib/color";
+import { lookOf, ownColorName } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
 
@@ -95,15 +95,6 @@ const readPointer = (state: JsonRecord) => {
 /** What a player says they're holding, if it names something in town. */
 const readHolding = (state: JsonRecord) =>
   String(state.h) === state.h && parseActorKey(state.h) ? state.h : null;
-
-/** A player's colors: the palette color they name, else the one the room gave them. */
-const lookOf = (state: JsonRecord, player: { color?: string; hue?: string }) => {
-  const named = colorNamed(state.look);
-  return {
-    color: named?.color ?? player.color ?? "hsl(206, 100%, 50%)",
-    hue: named?.hue ?? player.hue ?? "hsl(208, 77.5%, 76.9%)",
-  };
-};
 
 const lerpSpot = (a: Spot, b: Spot, k: number): Spot => ({
   x: lerp(a.x, b.x, k),

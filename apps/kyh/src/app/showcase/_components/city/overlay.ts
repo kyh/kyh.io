@@ -2,11 +2,11 @@
 // visitors say on their way out, other people's pointers and what they're
 // saying, and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.
-import { chatBackground } from "@/components/chat-bubble";
+import type { Line } from "@/lib/chat";
+import { CHAT_BUBBLE_CLASS, chatBackground } from "@/components/chat-bubble";
+import { CURSOR_ARROW } from "@/components/cursor";
 
 const SVG = "http://www.w3.org/2000/svg";
-const ARROW =
-  "M2.717 2.22918L15.9831 15.8743C16.5994 16.5083 16.1503 17.5714 15.2661 17.5714H9.35976C8.59988 17.5714 7.86831 17.8598 7.3128 18.3783L2.68232 22.7C2.0431 23.2966 1 22.8434 1 21.969V2.92626C1 2.02855 2.09122 1.58553 2.717 2.22918Z";
 
 interface Bubble {
   element: HTMLDivElement;
@@ -21,13 +21,7 @@ interface Pointer {
   seen: boolean;
 }
 
-/** A line of chat as the overlay draws it: what it says, and whether it's still being typed. */
-export interface Line {
-  text: string;
-  typing: boolean;
-}
-
-/** A chat bubble's look, as the site's own cursors draw it. */
+/** A chat bubble as the site's own cursors draw it; written only where it changed, as it's placed every frame. */
 const showLine = (
   element: HTMLSpanElement,
   line: Line | null,
@@ -40,14 +34,20 @@ const showLine = (
   if (element.textContent !== line.text) {
     element.textContent = line.text;
   }
-  element.dataset.typing = String(line.typing);
-  element.style.background = chatBackground(look.color, look.hue);
+  const typing = String(line.typing);
+  if (element.dataset.typing !== typing) {
+    element.dataset.typing = typing;
+  }
+  const background = chatBackground(look.color, look.hue);
+  if (element.dataset.background !== background) {
+    element.dataset.background = background;
+    element.style.background = background;
+  }
 };
 
 const makeLine = () => {
   const line = document.createElement("span");
-  line.className =
-    "chat-bubble city-chat block w-max max-w-60 rounded-xl rounded-tl-sm px-2.5 py-1 font-mono text-xs leading-snug font-medium break-words text-[#111] shadow-sm";
+  line.className = `${CHAT_BUBBLE_CLASS} city-chat`;
   line.hidden = true;
   return line;
 };
@@ -99,7 +99,7 @@ const makePointer = (root: HTMLElement): Pointer => {
   svg.setAttribute("viewBox", "0 0 18 24");
   svg.setAttribute("aria-hidden", "true");
   const path = document.createElementNS(SVG, "path");
-  path.setAttribute("d", ARROW);
+  path.setAttribute("d", CURSOR_ARROW);
   path.setAttribute("fill", arrowGradient(svg));
   path.setAttribute("stroke", "var(--pointer-hue)");
   path.setAttribute("stroke-width", "2");
@@ -161,7 +161,9 @@ export const createOverlay = (root: HTMLElement | null) => {
     /** This player's own line beside their mouse, or none. */
     mine: (line: Line | null, look: { color: string; hue: string }, x: number, y: number) => {
       showLine(mine, line, look);
-      mine.style.transform = `translate3d(${Math.round(x + 6)}px, ${Math.round(y + 10)}px, 0)`;
+      if (line) {
+        mine.style.transform = `translate3d(${Math.round(x + 6)}px, ${Math.round(y + 10)}px, 0)`;
+      }
     },
     /** Someone else's pointer, in their color, with what they're saying; grabbing while they hold something. */
     pointer: (

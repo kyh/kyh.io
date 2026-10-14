@@ -42,7 +42,6 @@ const colors = {
 type ColorName = keyof typeof colors;
 type Color = (typeof colors)[ColorName];
 
-const colorValues: Color[] = Object.values(colors);
 const COLOR_NAMES = Object.keys(colors).filter((name): name is ColorName => name in colors);
 
 /** A palette color by the name a visitor sent; anything else is no color. */
@@ -65,49 +64,14 @@ export const ownColorName = (): ColorName => {
 
 export const ownColor = (): Color => colors[ownColorName()];
 
-const sampleSize = <T>(array: T[], size: number): T[] => {
-  const shuffled = [...array];
-  const count = Math.min(size, array.length);
-  const lastIndex = array.length - 1;
-  for (let index = 0; index < count; index += 1) {
-    const rand = index + Math.floor(Math.random() * (lastIndex - index + 1));
-    const value = shuffled[rand];
-    const current = shuffled[index];
-    if (value !== undefined && current !== undefined) {
-      shuffled[rand] = current;
-      shuffled[index] = value;
-    }
-  }
-  return shuffled.slice(0, count);
+/** A visitor's colors: the palette color they name in their state, else the one their room gave them. */
+export const lookOf = (
+  state: { look?: JsonValue } | undefined,
+  player: { color?: string; hue?: string },
+): Color => {
+  const named = colorNamed(state?.look);
+  return {
+    color: named?.color ?? player.color ?? colors.blue.color,
+    hue: named?.hue ?? player.hue ?? colors.blue.hue,
+  };
 };
-
-const hashCode = (string?: string, mod?: number) => {
-  let hash = 0;
-  if (!string || string.length === 0) {
-    return hash;
-  }
-  for (let i = 0; i < string.length; i += 1) {
-    const chr = string.codePointAt(i) ?? 0;
-    // oxlint-disable-next-line no-bitwise, unicorn/prefer-math-trunc -- Java-style string hash; `| 0` wraps to int32, which Math.trunc does not
-    hash = ((hash << 5) - hash + chr) | 0;
-  }
-  if (mod) {
-    return Math.abs(hash % mod);
-  }
-  return hash;
-};
-
-export const getRandomColor = () => colorValues[Math.floor(Math.random() * colorValues.length)];
-
-export const getRandomUniqueColor = (currentColors: string[]) => {
-  const colorNames = colorValues.map((col) => col.color);
-  const uniqueColors = colorNames.filter((color: string) => !currentColors.includes(color));
-  const uniqueColor = uniqueColors[Math.floor(Math.random() * uniqueColors.length)];
-  const uniqueColorSet = colorValues.find((color) => color.color === uniqueColor);
-  return uniqueColorSet ?? getRandomColor();
-};
-
-export const getRandomColors = (qty: number) => sampleSize(colorValues, qty);
-
-export const getColorById = (id: string): Color =>
-  colorValues[hashCode(id, colorValues.length)] ?? colors.blue;

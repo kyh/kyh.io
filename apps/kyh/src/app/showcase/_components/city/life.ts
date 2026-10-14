@@ -16,8 +16,8 @@ import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";
 import { CURB_TOP } from "./draw-blocks";
 import { createNet } from "./net";
-import type { Line } from "./overlay";
-import { SHOW_MS } from "@/lib/chat";
+import type { Said } from "@/lib/chat";
+import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
@@ -106,14 +106,6 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const lerpAngle = (a: number, b: number, k: number) =>
   a + (((((b - a) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * k;
-
-/** A chat line to draw: the draft while there is one, else the line still up. */
-const lineOf = (typing: string | null, said: string | null): Line | null => {
-  if (typing !== null) {
-    return { text: typing, typing: true };
-  }
-  return said === null ? null : { text: said, typing: false };
-};
 
 /** A shadow's size for something this high off the ground: none on the ground. */
 const shadowFor = (height: number) => (height > 0.06 ? clamp(1 - height / 2.4, 0.35, 1) : 0);
@@ -408,7 +400,7 @@ export const createLife = (options: LifeOptions) => {
 
   /** This player's chat: their draft, their last line until it comes down, and where their mouse is. */
   let draft: string | null = null;
-  let said: { text: string; until: number } | null = null;
+  let said: Said | null = null;
   let hand: { x: number; y: number } | null = null;
 
   const point = (others: readonly Remote[]) => {
@@ -420,7 +412,7 @@ export const createLife = (options: LifeOptions) => {
           overlay.pointer(
             other.id,
             { ...other, holding: other.holding !== null },
-            lineOf(other.chat.typing, other.chat.said),
+            lineOf(other.chat),
             at.x,
             at.y,
           );
@@ -430,7 +422,7 @@ export const createLife = (options: LifeOptions) => {
     if (said && performance.now() >= said.until) {
       said = null;
     }
-    const own = lineOf(draft, said?.text ?? null);
+    const own = lineOf({ said, typing: draft });
     overlay.mine(hand ? own : null, ownColor(), hand?.x ?? 0, hand?.y ?? 0);
   };
 
