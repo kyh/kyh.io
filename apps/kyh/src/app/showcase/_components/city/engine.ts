@@ -588,9 +588,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const pixels = event.deltaMode === 0 ? delta : delta * 40;
     // Taking the camera ends a scrub; scrolling on carries this one.
     const carried = scrub;
-    takeControl();
-    // A focused pin would outrank what the scrub lights.
+    // A focused pin would outrank what the scrub lights: let it go before
+    // taking the camera, whose refresh then shows the change.
     spotlight.pin(null);
+    takeControl();
     const from = tour.indexAt(tour.closest(view.x, view.z));
     scrub = carried ?? { at: from, since: 0, target: from };
     scrub.target += pixels / SCRUB_PX;
