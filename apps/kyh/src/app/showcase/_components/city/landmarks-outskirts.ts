@@ -439,16 +439,17 @@ export const drawClawders: DrawLandmark = (sketch, site, title) => {
     },
     "hair",
   );
-  ground(sketch, "roofTerracotta", stadium(cx, cz, straight, radius + 0.45), y0 + 0.008, "fine");
-  ground(sketch, "lawn", stadium(cx, cz, straight, radius - 0.35), y0 + 0.012, "fine");
+  // Each layer clear of the one below: coplanar faces in one mesh flicker.
+  ground(sketch, "roofTerracotta", stadium(cx, cz, straight, radius + 0.45), y0 + 0.02, "fine");
+  ground(sketch, "lawn", stadium(cx, cz, straight, radius - 0.35), y0 + 0.03, "fine");
   for (const offset of [-0.15, 0.05, 0.25]) {
-    groundLoop(sketch, stadium(cx, cz, straight, radius + offset), y0 + 0.013, "hair", "white");
+    groundLoop(sketch, stadium(cx, cz, straight, radius + offset), y0 + 0.032, "hair", "white");
   }
   line(
     sketch,
     [
-      [cx, y0 + 0.014, cz + radius - 0.35],
-      [cx, y0 + 0.014, cz + radius + 0.45],
+      [cx, y0 + 0.034, cz + radius - 0.35],
+      [cx, y0 + 0.034, cz + radius + 0.45],
     ],
     "fine",
     "white",

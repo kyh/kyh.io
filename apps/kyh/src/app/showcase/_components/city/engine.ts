@@ -45,6 +45,8 @@ const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
 const FORESHORTEN = Math.sin(Math.PI / 6);
 /** How far above a roof its pin floats, in cells. */
 const PIN_LIFT = 0.3;
+/** How fast held arrow keys pan the view, in CSS pixels a second. */
+const KEY_PAN_SPEED = 700;
 
 export interface CityCallbacks {
   /** The building showing its colors: hovered, focused, or passed by the flyover. */
@@ -586,6 +588,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       zoomAt(1.8, event.clientX, event.clientY);
     }
   };
+  /** Pan keys held down, and how fast they're moving the view (CSS pixels a second). */
+  const panKeys = new Map<string, { dx: number; dy: number }>();
+  const keyPan = { x: 0, y: 0 };
   const onKeyDown = (event: KeyboardEvent) => {
     const move = keyMove(event.key);
     if (!move) {
@@ -595,11 +600,38 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     takeControl();
     if (move.kind === "pan") {
       event.preventDefault();
-      panBy(move.dx, move.dy);
-    } else {
-      view.zoom *= move.factor;
-      place();
+      panKeys.set(event.key, { dx: Math.sign(move.dx), dy: Math.sign(move.dy) });
+      return;
     }
+    view.zoom *= move.factor;
+    place();
+    repick();
+  };
+  const onKeyUp = (event: KeyboardEvent) => {
+    panKeys.delete(event.key);
+  };
+  const onBlur = () => {
+    panKeys.clear();
+  };
+  /** Glide while pan keys are held: speed up into it and coast to a stop, as a game camera does. */
+  const steerByKeys = (dt: number) => {
+    let dx = 0;
+    let dy = 0;
+    for (const pan of panKeys.values()) {
+      dx += pan.dx;
+      dy += pan.dy;
+    }
+    const length = Math.hypot(dx, dy);
+    const speed = length > 0 ? KEY_PAN_SPEED / length : 0;
+    const k = ease(dt, panKeys.size > 0 ? 10 : 7);
+    keyPan.x += (dx * speed - keyPan.x) * k;
+    keyPan.y += (dy * speed - keyPan.y) * k;
+    if (Math.hypot(keyPan.x, keyPan.y) < 4) {
+      keyPan.x = 0;
+      keyPan.y = 0;
+      return;
+    }
+    panBy(keyPan.x * dt, keyPan.y * dt);
     repick();
   };
   canvas.addEventListener("pointerdown", onPointerDown);
@@ -610,6 +642,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("dblclick", onDoubleClick);
   canvas.addEventListener("keydown", onKeyDown);
+  canvas.addEventListener("keyup", onKeyUp);
+  canvas.addEventListener("blur", onBlur);
 
   // Pins: the page's icon links, kept floating over their roofs.
   const pinStates = new Map<string, PinState>();
@@ -714,6 +748,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     } else {
       glide(Math.min(0.25, elapsed));
     }
+    steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
     animations.update(clock.time, lit);
     halo.update(Math.min(0.25, elapsed), clock.time, theme);
@@ -741,6 +776,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDoubleClick);
       canvas.removeEventListener("keydown", onKeyDown);
+      canvas.removeEventListener("keyup", onKeyUp);
+      canvas.removeEventListener("blur", onBlur);
       for (const built of [city, ...buildings.values(), ...sky.builds]) {
         built.dispose();
       }
