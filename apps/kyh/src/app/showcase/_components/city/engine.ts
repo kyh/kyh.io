@@ -24,7 +24,7 @@ import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
-import { createLife } from "./life";
+import { createLife, LIFT } from "./life";
 import { shade, signature } from "./palette";
 import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
@@ -390,6 +390,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const ground = groundAt(clientX, clientY);
     return { x: ground.x, y: 0, z: ground.z };
   };
+  // Something carried hangs LIFT over the ground: aim at that height so it
+  // sits under the pointer rather than floating above it.
+  const handPlane = new Plane(new Vector3(0, 1, 0), -LIFT);
+  /** Where a carried thing hangs under the pointer, as a spot in town. */
+  const handAt = (clientX: number, clientY: number) => {
+    aim(clientX, clientY);
+    const hand = raycaster.ray.intersectPlane(handPlane, new Vector3());
+    return hand ? { x: hand.x, y: LIFT, z: hand.z } : spotAt(clientX, clientY);
+  };
   /** A client point relative to the canvas. */
   const local = (clientX: number, clientY: number) => {
     const rect = canvas.getBoundingClientRect();
@@ -439,6 +448,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
 
+  /** The pins floating over the buildings, by slug. */
+  let pins = new Map<string, HTMLElement>();
   const presses = createPresses();
   /** Where the mouse last was over the town, to see what's under it after the camera moves. */
   let mouseAt: { x: number; y: number } | null = null;
@@ -446,7 +457,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const tryGrab = (event: PointerEvent) => {
     const at = local(event.clientX, event.clientY);
     const key = presses.count === 0 && event.button === 0 ? life.actorAt(at.x, at.y) : null;
-    if (!key || !life.grab(key, spotAt(event.clientX, event.clientY))) {
+    if (!key || !life.grab(key, handAt(event.clientX, event.clientY))) {
       return false;
     }
     canvas.setPointerCapture(event.pointerId);
@@ -491,7 +502,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       mouseAt = { x: event.clientX, y: event.clientY };
     }
     if (carrying === event.pointerId) {
-      const spot = spotAt(event.clientX, event.clientY);
+      const spot = handAt(event.clientX, event.clientY);
       life.carry(spot);
       life.point(spot);
       return;
@@ -549,7 +560,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const onPointerLeave = (event: PointerEvent) => {
     mouseAt = null;
-    if (carrying === null) {
+    // Onto a pin's card the pointer is still over the town, for everyone else too.
+    const { relatedTarget } = event;
+    const ontoPin =
+      relatedTarget instanceof Node &&
+      [...pins.values()].some((pin) => pin.contains(relatedTarget));
+    if (carrying === null && !ontoPin) {
       life.point(null);
     }
     overActor = false;
@@ -607,7 +623,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.addEventListener("keydown", onKeyDown);
 
   // Pins: the page's icon links, kept floating over their roofs.
-  let pins = new Map<string, HTMLElement>();
   const pinStates = new Map<string, PinState>();
   const anchor = new Vector3();
   const placePins = () => {
@@ -767,6 +782,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       view.zoom = zoom;
       place();
     },
+    /** The mouse moving over the pins, which sit above the canvas: still a pointer in town. */
+    point: (event: PointerEvent) => {
+      if (isHover(event.pointerType, event.movementX, event.movementY)) {
+        life.point(spotAt(event.clientX, event.clientY));
+      }
+    },
     setPins: (next: Map<string, HTMLElement>) => {
       pins = next;
       pinStates.clear();
@@ -783,6 +804,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         refreshHover();
       }
     },
+    /** A wheel over the pins, which sit above the canvas: the canvas's own handling. */
+    wheel: onWheel,
   };
 };
 

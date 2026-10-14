@@ -47,6 +47,7 @@ interface CityShowcaseProps {
 export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const pinLayerRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
@@ -120,6 +121,23 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     cityRef.current?.setTheme(theme);
   }, [theme]);
 
+  // The pins sit above the canvas: a wheel or a mouse over an open card is
+  // still over the town, so it pans and points there too.
+  useEffect(() => {
+    const layer = pinLayerRef.current;
+    if (!layer) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => cityRef.current?.wheel(event);
+    const onPointerMove = (event: PointerEvent) => cityRef.current?.point(event);
+    layer.addEventListener("wheel", onWheel, { passive: false });
+    layer.addEventListener("pointermove", onPointerMove);
+    return () => {
+      layer.removeEventListener("wheel", onWheel);
+      layer.removeEventListener("pointermove", onPointerMove);
+    };
+  }, []);
+
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
       pinsRef.current.set(slug, element);
@@ -137,7 +155,10 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <PinList projects={projects} />
       ) : (
         <MotionConfig reducedMotion="user">
-          <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
+          <div
+            ref={pinLayerRef}
+            className="pointer-events-none absolute inset-0 isolate overflow-hidden"
+          >
             {projects.map((project) => (
               <Pin
                 key={project.slug}

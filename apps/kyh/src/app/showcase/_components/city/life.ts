@@ -36,7 +36,9 @@ const CATCH_UP = 100;
 /** The little hop a thing makes when it lands (ms). */
 const BOUNCE_MS = 340;
 /** The most lines up at once, and the zoom (CSS pixels a cell) they need to be readable. */
-const SPEAKING = 5;
+const SPEAKING = 2;
+/** One visitor in this many says something on the way out. */
+const TALKATIVE = 3;
 const SPEAK_SCALE = 26;
 /** A snapshot this many ticks old is still worth catching up from. */
 const FRESH = 1200;
@@ -72,8 +74,6 @@ interface Lean {
   z: number;
   leanX: number;
   leanZ: number;
-  /** When it was picked up, to ease it up into the hand. */
-  since: number;
 }
 
 export interface LifeOptions {
@@ -260,7 +260,6 @@ export const createLife = (options: LifeOptions) => {
     const lean = leans.get(key) ?? {
       leanX: 0,
       leanZ: 0,
-      since: performance.now(),
       x: spot.x,
       z: spot.z,
     };
@@ -273,9 +272,7 @@ export const createLife = (options: LifeOptions) => {
     lean.x = spot.x;
     lean.z = spot.z;
     leans.set(key, lean);
-    // Up into the hand over a moment, rather than all at once.
-    const rise = clamp((performance.now() - lean.since) / 160, 0, 1);
-    const y = groundAt(spot.x, spot.z) + (LIFT - 0.18) * (1 - (1 - rise) ** 3);
+    const y = groundAt(spot.x, spot.z) + LIFT - 0.18;
     const along = (RAISE - y) / VIEW[1];
     out.x = spot.x + VIEW[0] * along;
     out.y = RAISE;
@@ -363,15 +360,15 @@ export const createLife = (options: LifeOptions) => {
     for (const [index, visitor] of world.visitors.entries()) {
       const age = tick - visitor.said;
       const spot = visitors[index];
-      if (spot?.shown && age >= 0 && age < SAYING) {
+      if (spot?.shown && visitor.quote % TALKATIVE === 0 && age >= 0 && age < SAYING) {
         const head = options.toScreen(spot.x, spot.y + 0.34, spot.z);
         if (head.x > -80 && head.x < width + 80 && head.y > -40 && head.y < height + 40) {
           lines.push({ age, index, x: head.x, y: head.y });
         }
       }
     }
-    // The newest few, so a busy street doesn't drown in chatter.
-    for (const line of lines.toSorted((a, b) => a.age - b.age).slice(0, SPEAKING)) {
+    // The oldest few: a line stays up until it's done rather than being cut off by a newer one.
+    for (const line of lines.toSorted((a, b) => b.age - a.age).slice(0, SPEAKING)) {
       const visitor = world.visitors[line.index];
       const door = visitor ? world.doors[visitor.door] : undefined;
       const project = door ? projects.get(door.slug) : undefined;
@@ -381,7 +378,6 @@ export const createLife = (options: LifeOptions) => {
           { icon: project.favicon, text: quoteFor(project.slug, project.kind, visitor.quote) },
           line.x,
           line.y,
-          Math.min(1, line.age / 6, (SAYING - line.age) / 14),
         );
       }
     }

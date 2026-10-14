@@ -65,14 +65,8 @@ export const createOverlay = (root: HTMLElement | null) => {
   const bubbles = new Map<number, Bubble>();
   const pointers = new Map<string, Pointer>();
   return {
-    /** A visitor's line, its tail on (x, y), fading by `opacity`. */
-    bubble: (
-      id: number,
-      line: { text: string; icon: string },
-      x: number,
-      y: number,
-      opacity: number,
-    ) => {
+    /** A visitor's line, its tail on (x, y). */
+    bubble: (id: number, line: { text: string; icon: string }, x: number, y: number) => {
       if (!root) {
         return;
       }
@@ -86,7 +80,6 @@ export const createOverlay = (root: HTMLElement | null) => {
         bubble.icon.src = line.icon;
       }
       bubble.element.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
-      bubble.element.style.opacity = opacity.toFixed(2);
     },
     dispose: () => {
       for (const { element } of [...bubbles.values(), ...pointers.values()]) {

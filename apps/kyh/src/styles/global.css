@@ -514,7 +514,7 @@ button.link {
     font-weight: 600;
     line-height: 1.25;
     translate: -50% calc(-100% - 8px);
-    will-change: transform, opacity;
+    will-change: transform;
 
     img {
       flex: none;
