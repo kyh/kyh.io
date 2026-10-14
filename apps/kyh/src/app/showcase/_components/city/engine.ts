@@ -1,6 +1,6 @@
 // The live city: renderer, camera, the drawn town and the loop that moves
-// it. It talks to React through a handful of callbacks and methods; nothing
-// in here knows about the page around it.
+// it. It talks to React through a few callbacks and methods; nothing in here
+// knows about the page around it.
 import {
   Box3,
   Color,
@@ -13,8 +13,6 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
-import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
@@ -26,11 +24,11 @@ import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
-import { PALETTE, paint } from "./palette";
+import { shade } from "./palette";
 import { inland, planCity } from "./plan";
 import { createRandom } from "./random";
 import { build, createMaterials } from "./render";
-import { createSketch, part, polygon, solid, VIEW } from "./sketch";
+import { createSketch, VIEW } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
 import { createCrowd, createTraffic } from "./traffic";
@@ -45,25 +43,22 @@ const SCREEN_RIGHT = new Vector3(Math.SQRT1_2, 0, -Math.SQRT1_2);
 const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
 /** The ground is foreshortened by the 30° elevation: it reads half as deep. */
 const FORESHORTEN = Math.sin(Math.PI / 6);
+/** Left alone this long, the flyover picks up again. */
+const IDLE_SECONDS = 30;
+/** How far above a roof its pin floats, in cells. */
+const PIN_LIFT = 0.3;
 
 export interface CityCallbacks {
+  /** The building showing its colors: hovered, focused, or passed by the flyover. */
   onHover: (slug: string | null) => void;
-  onSelect: (slug: string | null) => void;
-  onTour: (playing: boolean) => void;
-  /** The project the flyover is passing, if any. */
-  onPassing: (slug: string | null) => void;
+  /** A building was clicked: open its project. */
+  onOpen: (slug: string) => void;
 }
 
 export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
   theme: Theme;
   reducedMotion: boolean;
-}
-
-/** Room the page's own panels take, so focused buildings land beside them. */
-export interface Inset {
-  right: number;
-  bottom: number;
 }
 
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
@@ -81,84 +76,15 @@ const drawTown = (projects: readonly CityProject[]) => {
   return { placed, plan, sketch };
 };
 
-/** A down-pointing marker that bobs over the chosen building. */
-const drawMarker = (): Sketch => {
-  const sketch = createSketch();
-  const colors = paint("accentRed", "accentRed", "accentRed");
-  const tip: [number, number, number] = [0, 0, 0];
-  const ring: [number, number, number][] = [
-    [-0.22, 0.42, 0],
-    [0, 0.42, -0.22],
-    [0.22, 0.42, 0],
-    [0, 0.42, 0.22],
-  ];
-  const triangles = ring.flatMap((corner, index) => {
-    const next = ring[(index + 1) % ring.length] ?? corner;
-    const mid: [number, number, number] = [
-      (corner[0] + next[0]) / 2,
-      0.2,
-      (corner[2] + next[2]) / 2,
-    ];
-    return polygon([tip, corner, next], mid, colors);
-  });
-  solid(part(sketch, "marker", [0, 0, 0]), [...triangles, ...polygon(ring, [0, 1, 0], colors)]);
-  return sketch;
-};
-
-/** Where to look to frame a building: lifted for its height, nudged clear of the page's panels. */
-const framing = (placed: Placed, zoom: number, inset: Inset) => {
-  const { bounds } = placed;
-  // Half the building's height on screen, laid back onto the ground.
+/** Where to look to frame a building: lifted for its height. */
+const framing = ({ bounds }: Placed) => {
+  // Half the building's height on screen, laid back onto the ground, halved
+  // again so short and tall buildings both sit near the middle.
   const lift = (bounds.h * Math.cos(Math.PI / 6)) / 2 / FORESHORTEN / 2;
-  const unit = PIXELS_PER_UNIT * zoom;
-  const right = inset.right / 2 / unit;
-  const down = inset.bottom / 2 / unit / FORESHORTEN;
   return {
-    x: bounds.x + bounds.w / 2 + SCREEN_UP.x * (lift - down) + SCREEN_RIGHT.x * right,
-    z: bounds.z + bounds.d / 2 + SCREEN_UP.z * (lift - down) + SCREEN_RIGHT.z * right,
+    x: bounds.x + bounds.w / 2 + SCREEN_UP.x * lift,
+    z: bounds.z + bounds.d / 2 + SCREEN_UP.z * lift,
   };
-};
-
-const outlineGeometry = (placed: Placed | null) => {
-  const geometry = new LineSegmentsGeometry();
-  if (!placed) {
-    geometry.setPositions([0, -10, 0, 0, -10, 0]);
-    return geometry;
-  }
-  const { bounds } = placed;
-  const pad = 0.12;
-  const y = bounds.y + 0.03;
-  const x0 = bounds.x - pad;
-  const z0 = bounds.z - pad;
-  const x1 = bounds.x + bounds.w + pad;
-  const z1 = bounds.z + bounds.d + pad;
-  geometry.setPositions([
-    x0,
-    y,
-    z0,
-    x1,
-    y,
-    z0,
-    x1,
-    y,
-    z0,
-    x1,
-    y,
-    z1,
-    x1,
-    y,
-    z1,
-    x0,
-    y,
-    z1,
-    x0,
-    y,
-    z1,
-    x0,
-    y,
-    z0,
-  ]);
-  return geometry;
 };
 
 const BLIMP_HEIGHT = 7.5;
@@ -231,6 +157,28 @@ const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, 
   return { builds, update };
 };
 
+const edgeOf = (x: number, width: number) => {
+  if (x < 150) {
+    return "start";
+  }
+  return x > width - 150 ? "end" : "center";
+};
+
+/** Who is lighting a building up, if anyone: the first of these wins. */
+interface Hovers {
+  pin: Placed | null;
+  pointer: Placed | null;
+  tour: Placed | null;
+}
+
+/** The last placement written to a pin, so a still camera writes nothing. */
+interface PinState {
+  x: number;
+  y: number;
+  hidden: boolean;
+  lit: boolean;
+}
+
 export const createCity = (container: HTMLElement, options: CityOptions) => {
   const renderer = new WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -252,7 +200,19 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const { placed, plan, sketch } = drawTown(options.projects);
   const city = build(sketch, materials);
   scene.add(city.group);
-  const animations = createAnimations(city, { launches: !options.reducedMotion });
+  // Each project's building is built on its own, so it can light up alone.
+  const buildings = new Map(
+    placed.map((entry) => {
+      const built = build(entry.sketch, materials);
+      scene.add(built.group);
+      return [entry, built] as const;
+    }),
+  );
+  const rig = {
+    parts: new Map([city, ...buildings.values()].flatMap((built) => [...built.parts])),
+    screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
+  };
+  const animations = createAnimations(rig, { launches: !options.reducedMotion });
   const traffic = createTraffic(plan, 48);
   const crowd = createCrowd(plan, 180);
   const actors = createActors(traffic.cars, crowd.walkers, theme);
@@ -260,14 +220,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   actorGroup.add(...actors.meshes);
   scene.add(actorGroup);
   const sky = createSky(scene, materials, options.reducedMotion);
-  const marker = build(drawMarker(), materials);
-  marker.group.visible = false;
-  scene.add(marker.group);
-  const hoverLine = new LineSegments2(outlineGeometry(null), materials.line("accentBlue", "bold"));
-  const selectLine = new LineSegments2(outlineGeometry(null), materials.line("accentRed", "bold"));
-  hoverLine.renderOrder = 3;
-  selectLine.renderOrder = 3;
-  scene.add(hoverLine, selectLine);
 
   const bySlug = new Map(placed.map((entry) => [entry.project.slug, entry]));
   const boxes = placed.map((entry) => ({
@@ -281,7 +233,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     ),
     entry,
   }));
-  const focusPoints = placed.map((entry) => framing(entry, 1, { bottom: 0, right: 0 }));
+  const focusPoints = placed.map((entry) => framing(entry));
   const tour = createTour(
     placed.map((entry, index) => ({
       slug: entry.project.slug,
@@ -293,12 +245,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The camera: where it looks, how close, and where it is easing to.
   let width = 1;
   let height = 1;
-  let inset: Inset = { bottom: 0, right: 0 };
   const view = { x: 36, z: 38, zoom: 0.5 };
   let goal: { x: number; z: number; zoom: number } | null = null;
   let touring = false;
   let tourAt = 0;
-  let passing: string | null = null;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
   const tourZoom = () => clamp(Math.min(width, height * 1.6) / 1100, 0.7, 1.25);
@@ -322,6 +272,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     );
     camera.lookAt(view.x, 0, view.z);
     camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
     materials.setZoom(view.zoom);
   };
   const resize = () => {
@@ -338,18 +289,45 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   view.zoom = fitZoom();
   place();
 
+  // Hover: a pin (pointer or keyboard), the pointer on a building, or the
+  // flyover passing one. The first of those lights its building up.
+  const hoverBy: Hovers = {
+    pin: null,
+    pointer: null,
+    tour: null,
+  };
+  let shown: Placed | null = null;
+  const refreshHover = () => {
+    const next = hoverBy.pin ?? hoverBy.pointer ?? hoverBy.tour;
+    if (next === shown) {
+      return;
+    }
+    if (shown) {
+      buildings.get(shown)?.paint(theme, false);
+    }
+    shown = next;
+    if (shown) {
+      buildings.get(shown)?.paint(theme, true);
+    }
+    canvas.style.cursor = hoverBy.pointer ? "pointer" : "";
+    options.onHover(shown?.project.slug ?? null);
+  };
+
   const applyTheme = () => {
-    renderer.setClearColor(new Color(PALETTE.sea[theme]));
+    renderer.setClearColor(new Color(shade("sea", theme, false)));
     materials.setTheme(theme);
-    for (const built of [city, marker, ...sky.builds]) {
-      for (const { material, token } of built.signs) {
-        material.color.set(PALETTE[token][theme]);
-      }
+    city.paint(theme, false);
+    for (const [entry, built] of buildings) {
+      built.paint(theme, entry === shown);
+    }
+    for (const built of sky.builds) {
+      built.paint(theme, false);
     }
     actors.setTheme(theme);
   };
   applyTheme();
 
+  let idleSince = performance.now();
   const setTour = (playing: boolean, from: number | null = null) => {
     if (playing === touring || !tour) {
       return;
@@ -358,41 +336,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (playing) {
       goal = null;
       tourAt = from ?? tour.closest(view.x, view.z);
-    } else if (passing !== null) {
-      passing = null;
-      options.onPassing(null);
+    } else {
+      hoverBy.tour = null;
+      refreshHover();
     }
-    options.onTour(playing);
   };
-
-  // Selection and hover.
-  let hovered: Placed | null = null;
-  let selected: Placed | null = null;
-  const setHovered = (next: Placed | null) => {
-    if (next === hovered) {
-      return;
-    }
-    hovered = next;
-    hoverLine.geometry.dispose();
-    hoverLine.geometry = outlineGeometry(next === selected ? null : next);
-    canvas.style.cursor = next ? "pointer" : "";
-    options.onHover(next?.project.slug ?? null);
-  };
-  const select = (slug: string | null) => {
-    const next = slug === null ? null : (bySlug.get(slug) ?? null);
-    if (next === selected) {
-      return;
-    }
-    selected = next;
-    selectLine.geometry.dispose();
-    selectLine.geometry = outlineGeometry(next);
-    marker.group.visible = next !== null;
-    if (next) {
-      setTour(false);
-      const zoom = Math.max(view.zoom, 1.1);
-      goal = { ...framing(next, zoom, inset), zoom };
-    }
-    options.onSelect(next?.project.slug ?? null);
+  const takeControl = () => {
+    idleSince = performance.now();
+    goal = null;
+    setTour(false);
   };
 
   const raycaster = new Raycaster();
@@ -446,9 +398,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     view.z -= (SCREEN_RIGHT.z * dx - (SCREEN_UP.z * dy) / FORESHORTEN) / unit;
     place();
   };
-  const takeControl = () => {
-    goal = null;
-    setTour(false);
+
+  // Opening a project: one tab per click, even on a double click.
+  let openedAt = 0;
+  const open = (entry: Placed) => {
+    const now = performance.now();
+    if (now - openedAt > 800) {
+      openedAt = now;
+      options.onOpen(entry.project.slug);
+    }
   };
 
   const pointers = new Map<number, { x: number; y: number }>();
@@ -480,12 +438,22 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     pinch = spread;
   };
+  const onHoverMove = (event: PointerEvent) => {
+    if (event.pointerType !== "mouse") {
+      return;
+    }
+    const hit = pick(event.clientX, event.clientY);
+    if (hit) {
+      // Hovering a building holds the camera still so it can be read.
+      takeControl();
+    }
+    hoverBy.pointer = hit;
+    refreshHover();
+  };
   const onPointerMove = (event: PointerEvent) => {
     const previous = pointers.get(event.pointerId);
     if (!previous) {
-      if (event.pointerType === "mouse") {
-        setHovered(pick(event.clientX, event.clientY));
-      }
+      onHoverMove(event);
       return;
     }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -504,23 +472,33 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       panBy(event.clientX - previous.x, event.clientY - previous.y);
     }
   };
+  const onTap = (event: PointerEvent) => {
+    const hit = pick(event.clientX, event.clientY);
+    takeControl();
+    if (!hit) {
+      hoverBy.pointer = null;
+    } else if (event.pointerType === "mouse" || hoverBy.pointer === hit) {
+      open(hit);
+    } else {
+      // A finger can't hover: the first tap shows the building, the second opens it.
+      hoverBy.pointer = hit;
+    }
+    refreshHover();
+  };
   const onPointerUp = (event: PointerEvent) => {
     pointers.delete(event.pointerId);
     if (pointers.size > 0) {
       return;
     }
-    if (!dragged) {
-      const hit = pick(event.clientX, event.clientY);
-      select(hit?.project.slug ?? null);
-      if (!hit) {
-        takeControl();
-      }
+    if (!dragged && event.button === 0) {
+      onTap(event);
     }
     pinch = 0;
   };
   const onPointerLeave = () => {
-    if (pointers.size === 0) {
-      setHovered(null);
+    if (pointers.size === 0 && hoverBy.pointer) {
+      hoverBy.pointer = null;
+      refreshHover();
     }
   };
   const onWheel = (event: WheelEvent) => {
@@ -529,8 +507,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     zoomAt(Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015)), event.clientX, event.clientY);
   };
   const onDoubleClick = (event: MouseEvent) => {
-    takeControl();
-    zoomAt(1.8, event.clientX, event.clientY);
+    // A double click on a building already opened it; on open ground, zoom in.
+    if (!pick(event.clientX, event.clientY)) {
+      takeControl();
+      zoomAt(1.8, event.clientX, event.clientY);
+    }
   };
   const keyPan = new Map<string, [number, number]>([
     ["ArrowDown", [0, -60]],
@@ -556,8 +537,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       takeControl();
       view.zoom /= 1.25;
       place();
-    } else if (event.key === "Escape") {
-      select(null);
     }
   };
   canvas.addEventListener("pointerdown", onPointerDown);
@@ -568,6 +547,40 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("dblclick", onDoubleClick);
   canvas.addEventListener("keydown", onKeyDown);
+
+  // Pins: the page's icon links, kept floating over their roofs.
+  let pins = new Map<string, HTMLElement>();
+  const pinStates = new Map<string, PinState>();
+  const anchor = new Vector3();
+  const placePins = () => {
+    const scale = clamp(0.7 + view.zoom * 0.3, 0.75, 1.15).toFixed(3);
+    for (const [slug, element] of pins) {
+      const entry = bySlug.get(slug);
+      if (entry) {
+        const { bounds } = entry;
+        anchor
+          .set(bounds.x + bounds.w / 2, bounds.y + bounds.h + PIN_LIFT, bounds.z + bounds.d / 2)
+          .project(camera);
+        const x = Math.round(((anchor.x + 1) / 2) * width * 10) / 10;
+        const y = Math.round(((1 - anchor.y) / 2) * height * 10) / 10;
+        const hidden = x < -60 || x > width + 60 || y < -60 || y > height + 60;
+        const lit = entry === shown;
+        const last = pinStates.get(slug);
+        if (!last || last.x !== x || last.y !== y || last.hidden !== hidden || last.lit !== lit) {
+          pinStates.set(slug, { hidden, lit, x, y });
+          element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          // Nearer pins over farther ones, and the lit one over all.
+          element.style.zIndex = String(lit ? 100_000 : Math.round(y));
+          element.style.setProperty("--pin-scale", scale);
+          element.dataset.hidden = String(hidden);
+          // Cards open above the pin, or below it near the top of the screen,
+          // and lean away from the sides.
+          element.dataset.below = String(y < 190);
+          element.dataset.align = edgeOf(x, width);
+        }
+      }
+    }
+  };
 
   // The loop.
   const nearestStop = (x: number, z: number) => {
@@ -590,11 +603,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     view.x += (point.x - view.x) * k;
     view.z += (point.z - view.z) * k;
     view.zoom += (tourZoom() - view.zoom) * ease(dt, 1.2);
-    const slug = tour.stopNear(view.x, view.z, 2.2)?.slug ?? null;
-    if (slug !== passing) {
-      passing = slug;
-      options.onPassing(slug);
-    }
+    const slug = tour.stopNear(view.x, view.z, 2.2)?.slug;
+    hoverBy.tour = slug === undefined ? null : (bySlug.get(slug) ?? null);
+    refreshHover();
     place();
   };
   const glide = (dt: number) => {
@@ -623,6 +634,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       resize();
     }
   };
+  const resumeWhenIdle = (now: number) => {
+    const engaged = hoverBy.pin !== null || hoverBy.pointer !== null || pointers.size > 0;
+    if (!touring && !options.reducedMotion && !engaged && now - idleSince > IDLE_SECONDS * 1000) {
+      setTour(true);
+    }
+  };
+  const lit = (slug: string) => shown?.project.slug === slug;
   let frame = 0;
   const tick = (now: number) => {
     const elapsed = Math.max(0, now - clock.last) / 1000;
@@ -632,6 +650,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // after a stall, so nothing teleports when a tab comes back.
     const dt = Math.min(0.1, elapsed);
     clock.time += dt;
+    resumeWhenIdle(now);
     if (touring) {
       followTour(Math.min(0.25, elapsed));
     } else {
@@ -640,17 +659,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     traffic.step(dt);
     crowd.step(dt);
     actors.update();
-    animations.update(clock.time);
+    animations.update(clock.time, lit);
     sky.update(clock.time, plan.countryside.pier);
-    if (selected) {
-      const { bounds } = selected;
-      marker.group.position.set(
-        bounds.x + bounds.w / 2,
-        bounds.y + bounds.h + 0.45 + Math.abs(Math.sin(clock.time * 3)) * 0.18,
-        bounds.z + bounds.d / 2,
-      );
-    }
     renderer.render(scene, camera);
+    placePins();
     frame = requestAnimationFrame(tick);
   };
   frame = requestAnimationFrame(tick);
@@ -672,15 +684,32 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDoubleClick);
       canvas.removeEventListener("keydown", onKeyDown);
-      for (const built of [city, marker, ...sky.builds]) {
+      for (const built of [city, ...buildings.values(), ...sky.builds]) {
         built.dispose();
       }
-      hoverLine.geometry.dispose();
-      selectLine.geometry.dispose();
       actors.dispose();
       materials.dispose();
       renderer.dispose();
       canvas.remove();
+    },
+    /** Bring a building into view and light it, as when its pin is focused. */
+    focus: (slug: string) => {
+      const entry = bySlug.get(slug);
+      if (entry) {
+        takeControl();
+        hoverBy.pin = entry;
+        refreshHover();
+        goal = { ...framing(entry), zoom: Math.max(view.zoom, 1) };
+      }
+    },
+    /** Light a building from its pin; null when the pointer leaves the pin. */
+    hover: (slug: string | null) => {
+      const entry = slug === null ? null : (bySlug.get(slug) ?? null);
+      if (entry) {
+        takeControl();
+      }
+      hoverBy.pin = entry;
+      refreshHover();
     },
     look: (x: number, z: number, zoom: number) => {
       takeControl();
@@ -689,24 +718,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       view.zoom = zoom;
       place();
     },
-    /** Pull back to see the whole island. */
-    overview: () => {
-      takeControl();
-      goal = { x: 36, z: 38, zoom: fitZoom() };
-    },
-    select,
-    setInset: (next: Inset) => {
-      inset = next;
+    setPins: (next: Map<string, HTMLElement>) => {
+      pins = next;
+      pinStates.clear();
     },
     setTheme: (next: Theme) => {
       theme = next;
       applyTheme();
-    },
-    setTour: (playing: boolean) => setTour(playing),
-    zoomBy: (factor: number) => {
-      takeControl();
-      const rect = canvas.getBoundingClientRect();
-      zoomAt(factor, rect.left + width / 2, rect.top + height / 2);
     },
   };
 };

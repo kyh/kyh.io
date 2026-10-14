@@ -108,3 +108,21 @@ export const ACCENTS = [
   "accentPink",
   "accentOrange",
 ] as const satisfies readonly Token[];
+
+/** The same color as a grey of equal lightness (Rec. 601 luma, in sRGB). */
+export const greyOf = (hex: string) => {
+  const value = Number.parseInt(hex.slice(1), 16);
+  const r = Math.floor(value / 65_536) % 256;
+  const g = Math.floor(value / 256) % 256;
+  const b = value % 256;
+  const luma = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+  const channel = luma.toString(16).padStart(2, "0");
+  return `#${channel}${channel}${channel}`;
+};
+
+/**
+ * The city is drawn in greys; a building shows its colors only while it is
+ * hovered (or the flyover is passing it).
+ */
+export const shade = (token: Token, theme: Theme, colorful: boolean) =>
+  colorful ? PALETTE[token][theme] : greyOf(PALETTE[token][theme]);

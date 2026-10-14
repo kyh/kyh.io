@@ -1,7 +1,8 @@
-// Turns sketches into three.js objects. Faces become unlit meshes, one per
-// color, pushed back a hair so ink drawn on their edges wins the depth test;
-// ink becomes fat screen-space lines, one batch per color and weight. All
-// materials are shared and keyed by token, so the theme swaps in place.
+// Turns sketches into three.js objects. A sketch's faces become one unlit
+// mesh colored per vertex, pushed back a hair so ink drawn on their edges
+// wins the depth test; ink becomes fat screen-space lines, one batch per
+// color and weight. A built sketch repaints itself in place: in greys, or in
+// its true colors while hovered, by day or by night.
 import {
   BufferGeometry,
   CanvasTexture,
@@ -20,16 +21,15 @@ import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeome
 
 import type { Theme, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
-import { PALETTE } from "./palette";
+import { shade } from "./palette";
 
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
 export interface Materials {
-  face: (token: Token) => MeshBasicMaterial;
+  /** Every face in town: the colors live on the vertices. */
+  faces: MeshBasicMaterial;
   line: (token: Token, weight: Weight) => LineMaterial;
-  sign: (token: Token) => MeshBasicMaterial;
-  color: (token: Token) => Color;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
   dispose: () => void;
@@ -38,78 +38,42 @@ export interface Materials {
 export const createMaterials = (initial: Theme): Materials => {
   let theme = initial;
   let inkScale = 1;
-  const faces = new Map<Token, MeshBasicMaterial>();
+  const faces = new MeshBasicMaterial({
+    polygonOffset: true,
+    polygonOffsetFactor: 2,
+    polygonOffsetUnits: 2,
+    side: DoubleSide,
+    vertexColors: true,
+  });
   const lines = new Map<string, { material: LineMaterial; token: Token; weight: Weight }>();
-  const signs = new Map<Token, MeshBasicMaterial>();
-  const colorOf = (token: Token) => new Color(PALETTE[token][theme]);
-  const face = (token: Token) => {
-    const existing = faces.get(token);
-    if (existing) {
-      return existing;
-    }
-    const material = new MeshBasicMaterial({
-      color: colorOf(token),
-      polygonOffset: true,
-      polygonOffsetFactor: 2,
-      polygonOffsetUnits: 2,
-      side: DoubleSide,
-    });
-    faces.set(token, material);
-    return material;
-  };
   const line = (token: Token, weight: Weight) => {
     const key = `${token}|${weight}`;
     const existing = lines.get(key);
     if (existing) {
       return existing.material;
     }
+    // Ink stays grey even on a hovered building: the color is in the washes.
     const material = new LineMaterial({
       alphaToCoverage: true,
-      color: colorOf(token),
+      color: shade(token, theme, false),
       linewidth: WEIGHTS[weight] * inkScale,
     });
     lines.set(key, { material, token, weight });
     return material;
   };
-  const sign = (token: Token) => {
-    const existing = signs.get(token);
-    if (existing) {
-      return existing;
-    }
-    const material = new MeshBasicMaterial({
-      color: colorOf(token),
-      depthWrite: false,
-      side: DoubleSide,
-      transparent: true,
-    });
-    signs.set(token, material);
-    return material;
-  };
   return {
-    color: colorOf,
     dispose: () => {
-      for (const material of faces.values()) {
-        material.dispose();
-      }
+      faces.dispose();
       for (const { material } of lines.values()) {
         material.dispose();
       }
-      for (const material of signs.values()) {
-        material.dispose();
-      }
     },
-    face,
+    faces,
     line,
     setTheme: (next) => {
       theme = next;
-      for (const [token, material] of faces) {
-        material.color.set(PALETTE[token][theme]);
-      }
       for (const { material, token } of lines.values()) {
-        material.color.set(PALETTE[token][theme]);
-      }
-      for (const [token, material] of signs) {
-        material.color.set(PALETTE[token][theme]);
+        material.color.set(shade(token, theme, false));
       }
     },
     setZoom: (zoom) => {
@@ -120,7 +84,6 @@ export const createMaterials = (initial: Theme): Materials => {
         material.linewidth = WEIGHTS[weight] * inkScale;
       }
     },
-    sign,
   };
 };
 
@@ -161,7 +124,7 @@ const layoutSign = (
   return best;
 };
 
-/** White glyphs on a clear canvas; the material tints them to the theme. */
+/** White glyphs on a clear canvas; the material tints them. */
 const signTexture = (sign: Sign) => {
   const width = Math.hypot(...sign.across);
   const height = Math.hypot(...sign.up);
@@ -207,30 +170,6 @@ const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   return geometry;
 };
 
-const signMesh = (sign: Sign, materials: Materials) => {
-  const { origin, across, up } = sign;
-  const corner = (u: number, v: number) => [
-    origin[0] + across[0] * u + up[0] * v,
-    origin[1] + across[1] * u + up[1] * v,
-    origin[2] + across[2] * u + up[2] * v,
-  ];
-  const geometry = new BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new Float32BufferAttribute(
-      [...corner(0, 0), ...corner(1, 0), ...corner(1, 1), ...corner(0, 1)],
-      3,
-    ),
-  );
-  geometry.setAttribute("uv", new Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
-  geometry.setIndex([0, 1, 2, 0, 2, 3]);
-  const material = materials.sign(sign.token).clone();
-  material.map = signTexture(sign);
-  const mesh = new Mesh(geometry, material);
-  mesh.renderOrder = 2;
-  return mesh;
-};
-
 /** A picture the animations redraw: the TV on Autoplay's roof, a ticker. */
 export interface LiveScreen {
   canvas: HTMLCanvasElement;
@@ -259,44 +198,88 @@ const screenMesh = (screen: Screen) => {
   return { mesh, screen: { canvas, context, texture } };
 };
 
+/** Where a token's vertices sit in a face mesh, to repaint them. */
+interface Run {
+  token: Token;
+  start: number;
+  count: number;
+}
+
+interface Painter {
+  colors: Float32BufferAttribute;
+  runs: Run[];
+}
+
 export interface Built {
   group: Group;
   screens: Map<string, LiveScreen>;
   /** Named moving parts, found by the animations. */
   parts: Map<string, Group>;
-  /** Per-sign materials, tinted along with the theme. */
-  signs: { material: MeshBasicMaterial; token: Token }[];
+  paint: (theme: Theme, colorful: boolean) => void;
   dispose: () => void;
 }
 
-const buildInto = (sketch: Sketch, materials: Materials, built: Built, target: Group) => {
-  for (const [token, positions] of sketch.faces) {
-    if (positions.length > 0) {
-      const geometry = new BufferGeometry();
-      geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
-      target.add(new Mesh(geometry, materials.face(token)));
-    }
+interface Workshop {
+  materials: Materials;
+  built: Built;
+  painters: Painter[];
+  signs: { material: MeshBasicMaterial; token: Token }[];
+}
+
+const faceMesh = (sketch: Sketch, workshop: Workshop) => {
+  let vertices = 0;
+  for (const positions of sketch.faces.values()) {
+    vertices += positions.length / 3;
+  }
+  if (vertices === 0) {
+    return null;
+  }
+  const positions = new Float32Array(vertices * 3);
+  const runs: Run[] = [];
+  let start = 0;
+  for (const [token, coordinates] of sketch.faces) {
+    positions.set(coordinates, start * 3);
+    runs.push({ count: coordinates.length / 3, start, token });
+    start += coordinates.length / 3;
+  }
+  const colors = new Float32BufferAttribute(new Float32Array(vertices * 3), 3);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", colors);
+  workshop.painters.push({ colors, runs });
+  return new Mesh(geometry, workshop.materials.faces);
+};
+
+const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
+  const faces = faceMesh(sketch, workshop);
+  if (faces) {
+    target.add(faces);
   }
   for (const batch of sketch.lines.values()) {
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
-      const lines = new LineSegments2(geometry, materials.line(batch.token, batch.weight));
+      const lines = new LineSegments2(geometry, workshop.materials.line(batch.token, batch.weight));
       lines.renderOrder = 1;
       target.add(lines);
     }
   }
   for (const sign of sketch.signs) {
-    const mesh = signMesh(sign, materials);
-    if (mesh.material instanceof MeshBasicMaterial) {
-      built.signs.push({ material: mesh.material, token: sign.token });
-    }
+    const material = new MeshBasicMaterial({
+      depthWrite: false,
+      map: signTexture(sign),
+      side: DoubleSide,
+      transparent: true,
+    });
+    const mesh = new Mesh(quad(sign.origin, sign.across, sign.up), material);
+    mesh.renderOrder = 2;
+    workshop.signs.push({ material, token: sign.token });
     target.add(mesh);
   }
   for (const screen of sketch.screens) {
     const live = screenMesh(screen);
     if (live) {
-      built.screens.set(screen.name, live.screen);
+      workshop.built.screens.set(screen.name, live.screen);
       target.add(live.mesh);
     }
   }
@@ -304,14 +287,17 @@ const buildInto = (sketch: Sketch, materials: Materials, built: Built, target: G
     const group = new Group();
     group.position.set(...piece.origin);
     group.name = piece.name;
-    built.parts.set(piece.name, group);
-    buildInto(piece.sketch, materials, built, group);
+    workshop.built.parts.set(piece.name, group);
+    buildInto(piece.sketch, workshop, group);
     target.add(group);
   }
 };
 
 export const build = (sketch: Sketch, materials: Materials): Built => {
   const group = new Group();
+  const painters: Painter[] = [];
+  const signs: Workshop["signs"] = [];
+  const color = new Color();
   const built: Built = {
     dispose: () => {
       group.traverse((object) => {
@@ -319,7 +305,7 @@ export const build = (sketch: Sketch, materials: Materials): Built => {
           object.geometry.dispose();
         }
       });
-      for (const { material } of built.signs) {
+      for (const { material } of signs) {
         material.map?.dispose();
         material.dispose();
       }
@@ -328,10 +314,23 @@ export const build = (sketch: Sketch, materials: Materials): Built => {
       }
     },
     group,
+    paint: (theme, colorful) => {
+      for (const { colors, runs } of painters) {
+        for (const { token, start, count } of runs) {
+          color.set(shade(token, theme, colorful));
+          for (let vertex = start; vertex < start + count; vertex += 1) {
+            colors.setXYZ(vertex, color.r, color.g, color.b);
+          }
+        }
+        colors.needsUpdate = true;
+      }
+      for (const { material, token } of signs) {
+        material.color.set(shade(token, theme, colorful));
+      }
+    },
     parts: new Map(),
     screens: new Map(),
-    signs: [],
   };
-  buildInto(sketch, materials, built, group);
+  buildInto(sketch, { built, materials, painters, signs }, group);
   return built;
 };

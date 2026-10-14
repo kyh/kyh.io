@@ -15,7 +15,6 @@ const cityProjects: CityProject[] = projects.map((project) => ({
   description: project.description,
   favicon: project.favicon,
   kind: project.type,
-  media: null,
   slug: project.slug,
   title: project.title,
   url: project.url,
@@ -46,14 +45,23 @@ test("every project on the site has a building in town", () => {
 });
 
 test("every building is tall enough to click and carries its project's name", () => {
-  const { placed, sketch } = drawTown(cityProjects);
-  const signs = signsIn(sketch);
-  for (const { bounds, project } of placed) {
+  const { placed } = drawTown(cityProjects);
+  for (const { bounds, project, sketch } of placed) {
     assert.ok(
       bounds.w > 0.5 && bounds.d > 0.5 && bounds.h > 0.3,
       `${project.title} is too small to pick`,
     );
-    assert.ok(signs.includes(project.title.toUpperCase()), `${project.title} has no sign`);
+    assert.ok(
+      signsIn(sketch).includes(project.title.toUpperCase()),
+      `${project.title} has no sign`,
+    );
+  }
+});
+
+test("each building is drawn on its own, so it can light up alone", () => {
+  const { placed } = drawTown(cityProjects);
+  for (const { project, sketch } of placed) {
+    assert.ok(sketch.faces.size > 0, `${project.title} has no faces of its own`);
   }
 });
 
@@ -62,20 +70,23 @@ test("a project added tomorrow still gets a building with its name on it", () =>
     description: "Something new",
     favicon: "/assets/placeholder.png",
     kind: "mini-app",
-    media: null,
     slug: "brand-new-thing",
     title: "Brand New Thing",
     url: "https://example.com",
   };
-  const { placed, sketch } = drawTown([...cityProjects, newcomer]);
-  assert.ok(placed.some((entry) => entry.project.slug === newcomer.slug));
-  assert.ok(signsIn(sketch).includes("BRAND NEW THING"));
+  const { placed } = drawTown([...cityProjects, newcomer]);
+  const building = placed.find((entry) => entry.project.slug === newcomer.slug);
+  assert.ok(building);
+  assert.ok(signsIn(building.sketch).includes("BRAND NEW THING"));
 });
 
 test("the town draws as flat faces and ink, with nothing degenerate", () => {
-  const { sketch } = drawTown(cityProjects);
+  const { placed, sketch } = drawTown(cityProjects);
   let triangles = 0;
-  for (const positions of sketch.faces.values()) {
+  const faces = [sketch, ...placed.map((entry) => entry.sketch)].flatMap((each) => [
+    ...each.faces.values(),
+  ]);
+  for (const positions of faces) {
     assert.equal(positions.length % 9, 0);
     assert.ok(positions.every(Number.isFinite));
     triangles += positions.length / 9;

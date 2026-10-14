@@ -26,6 +26,7 @@ import {
   drawWatchHouse,
 } from "./landmarks-small";
 import { hashString } from "./random";
+import { createSketch } from "./sketch";
 
 export type ProjectKind = "venture" | "project" | "mini-app" | "template";
 
@@ -37,7 +38,6 @@ export interface CityProject {
   url: string;
   kind: ProjectKind;
   favicon: string;
-  media: { src: string; type: "image" | "video" } | null;
 }
 
 interface Landmark {
@@ -83,13 +83,15 @@ export const planEntries = (projects: readonly CityProject[]): PlanEntry[] =>
     };
   });
 
-/** A project's building, standing on its lot. */
+/** A project's building, standing on its lot, drawn on its own sketch so it can be lit up alone. */
 export interface Placed {
   project: CityProject;
   lot: Lot;
   bounds: Bounds;
+  sketch: Sketch;
 }
 
+/** Draws the unclaimed lots into `sketch`; each project's building gets a sketch of its own. */
 export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly CityProject[]) => {
   const bySlug = new Map(projects.map((project) => [project.slug, project]));
   const placed: Placed[] = [];
@@ -97,11 +99,12 @@ export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly City
     const site = { ...lot, y: lot.size === "launch" ? 0 : CURB_TOP };
     const project = bySlug.get(lot.slug);
     if (project) {
+      const own = createSketch();
       const draw = LANDMARKS.get(project.slug)?.draw;
       const bounds = draw
-        ? draw(sketch, site, project.title)
-        : drawGenericLot(sketch, site, lot.size, project.title, hashString(project.slug));
-      placed.push({ bounds, lot, project });
+        ? draw(own, site, project.title)
+        : drawGenericLot(own, site, lot.size, project.title, hashString(project.slug));
+      placed.push({ bounds, lot, project, sketch: own });
     } else if (lot.size === "template") {
       drawTemplateHouse(sketch, site, "");
     } else if (lot.size !== "launch") {

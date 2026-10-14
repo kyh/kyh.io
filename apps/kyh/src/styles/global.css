@@ -385,26 +385,26 @@ button.link {
   }
 }
 
-/* Showcase city: Inkline-style panels over the canvas. In the components
-   layer so Tailwind utilities on the same element can override them. */
+/* Showcase city: the pins and cards over the canvas, in the city's greys.
+   In the components layer so Tailwind utilities can override them. */
 @layer components {
   .city {
-    --city-paper: #f7f8f4;
-    --city-paper-hover: #eceee8;
-    --city-ink: #3d4943;
-    --city-ink-soft: #77817a;
-    --city-line: #c9cec4;
-    --city-shadow: #dfe2db;
-    --city-sea: #e2e9e6;
+    --city-paper: #f7f7f7;
+    --city-paper-hover: #ededed;
+    --city-ink: #454545;
+    --city-ink-soft: #7d7d7d;
+    --city-line: #cbcbcb;
+    --city-shadow: #e0e0e0;
+    --city-sea: #e7e7e7;
 
     [data-theme="dark"] & {
-      --city-paper: #1f2a30;
-      --city-paper-hover: #28343b;
-      --city-ink: #c9d6d0;
-      --city-ink-soft: #7d8d87;
-      --city-line: #34434b;
-      --city-shadow: #121a1f;
-      --city-sea: #0f181d;
+      --city-paper: #272727;
+      --city-paper-hover: #313131;
+      --city-ink: #d2d2d2;
+      --city-ink-soft: #888888;
+      --city-line: #3f3f3f;
+      --city-shadow: #181818;
+      --city-sea: #161616;
     }
   }
 
@@ -416,29 +416,90 @@ button.link {
     color: var(--city-ink);
   }
 
-  .city-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 32px;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: 5px;
-    color: var(--city-ink);
-    transition: background-color 0.15s ease-out;
+  /* A project's icon over its roof. The city moves the pin's origin to the
+     roof each frame; the body sits on it, the card above (or below) it. */
+  .city-pin {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
 
-    &:hover {
-      background: var(--city-paper-hover);
+    &[data-hidden="true"] {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  .city-pin-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%) scale(var(--pin-scale, 1));
+    transform-origin: 50% 100%;
+  }
+
+  .city-pin-icon {
+    display: block;
+    padding: 3px;
+    border: 1px solid var(--city-line);
+    border-radius: 9px;
+    background: var(--city-paper);
+    box-shadow: 0 2px 0 var(--city-shadow);
+    transition:
+      transform 0.15s ease-out,
+      border-color 0.15s ease-out;
+
+    /* Sized here: inside a shrink-to-fit pin, preflight's max-width: 100% would collapse it. */
+    img {
+      display: block;
+      width: 26px;
+      max-width: none;
+      height: 26px;
+      border-radius: 6px;
+    }
+
+    &:hover,
+    &:focus-visible,
+    [data-lit="true"] & {
+      border-color: var(--city-ink);
+      transform: translateY(-3px) scale(1.12);
     }
 
     &:focus-visible {
       outline: 2px solid var(--city-ink);
-      outline-offset: 1px;
+      outline-offset: 2px;
+    }
+  }
+
+  .city-pin-stem {
+    width: 1px;
+    height: 9px;
+    background: var(--city-ink);
+    opacity: 0.55;
+  }
+
+  .city-card {
+    position: absolute;
+    bottom: calc(56px * var(--pin-scale, 1));
+    left: 0;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 32px));
+    transform: translateX(-50%);
+
+    [data-below="true"] & {
+      top: 12px;
+      bottom: auto;
     }
 
-    &[aria-pressed="true"] {
-      background: var(--city-ink);
-      color: var(--city-paper);
+    [data-align="start"] & {
+      transform: translateX(-28px);
+    }
+
+    [data-align="end"] & {
+      transform: translateX(calc(-100% + 28px));
     }
   }
 }

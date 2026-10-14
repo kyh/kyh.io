@@ -15,7 +15,7 @@ import {
 
 import type { Theme, Token } from "./palette";
 import type { Car, Pose, Walker } from "./traffic";
-import { PALETTE } from "./palette";
+import { shade } from "./palette";
 
 const CAR_TOKENS: Token[] = [
   "white",
@@ -56,9 +56,9 @@ interface Layer {
 }
 
 export const createActors = (cars: readonly Car[], walkers: readonly Walker[], theme: Theme) => {
-  const ink = new MeshBasicMaterial({ color: PALETTE.ink[theme], side: BackSide });
+  const ink = new MeshBasicMaterial({ color: shade("ink", theme, false), side: BackSide });
   const tinted = new MeshBasicMaterial({ color: "#ffffff" });
-  const cabin = new MeshBasicMaterial({ color: PALETTE.glassDim[theme] });
+  const cabin = new MeshBasicMaterial({ color: shade("glassDim", theme, false) });
   const layers: Layer[] = [];
   const geometries: BufferGeometry[] = [];
   const layer = (
@@ -99,15 +99,15 @@ export const createActors = (cars: readonly Car[], walkers: readonly Walker[], t
     for (const { mesh, tokens } of layers) {
       if (tokens) {
         for (const [index, token] of tokens.entries()) {
-          mesh.setColorAt(index, color.set(PALETTE[token][next]));
+          mesh.setColorAt(index, color.set(shade(token, next, false)));
         }
         if (mesh.instanceColor) {
           mesh.instanceColor.needsUpdate = true;
         }
       }
     }
-    ink.color.set(PALETTE.ink[next]);
-    cabin.color.set(PALETTE.glassDim[next]);
+    ink.color.set(shade("ink", next, false));
+    cabin.color.set(shade("glassDim", next, false));
   };
   paintLayers(theme);
 
