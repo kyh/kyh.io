@@ -493,9 +493,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       mouseAt = { x: event.clientX, y: event.clientY };
     }
     if (carrying === event.pointerId) {
-      const spot = spotAt(event.clientX, event.clientY);
-      life.carry(spot);
-      life.point(spot);
+      life.carry(spotAt(event.clientX, event.clientY));
       return;
     }
     if (!presses.has(event.pointerId)) {
