@@ -466,6 +466,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
 
   const pointers = new Map<number, { x: number; y: number }>();
+  /** Where the mouse last was over the town, to see what's under it after the camera moves. */
+  let mouseAt: { x: number; y: number } | null = null;
   let dragged = false;
   let downAt = { x: 0, y: 0 };
   let pinch = 0;
@@ -530,7 +532,22 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     refreshHover();
     updateCursor();
   };
+  /** After a zoom or pan the mouse didn't make, light whatever is under it now. */
+  const repick = () => {
+    if (!mouseAt || carrying !== null) {
+      return;
+    }
+    const at = local(mouseAt.x, mouseAt.y);
+    overActor = life.actorAt(at.x, at.y) !== null;
+    life.point(spotAt(mouseAt.x, mouseAt.y));
+    hoverBy.pointer = pick(mouseAt.x, mouseAt.y);
+    refreshHover();
+    updateCursor();
+  };
   const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerType === "mouse") {
+      mouseAt = { x: event.clientX, y: event.clientY };
+    }
     if (carrying === event.pointerId) {
       const spot = spotAt(event.clientX, event.clientY);
       life.carry(spot);
@@ -591,6 +608,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     if (!dragged && event.button === 0) {
       onTap(event);
+    } else if (dragged) {
+      repick();
     }
     pinch = 0;
   };
@@ -605,6 +624,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   const onPointerLeave = () => {
+    mouseAt = null;
     if (carrying === null) {
       life.point(null);
     }
@@ -619,6 +639,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     event.preventDefault();
     takeControl();
     zoomAt(Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015)), event.clientX, event.clientY);
+    repick();
   };
   const onDoubleClick = (event: MouseEvent) => {
     // A double click on a building already opened it, and one on a car made it
@@ -654,6 +675,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       view.zoom /= 1.25;
       place();
     }
+    repick();
   };
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
