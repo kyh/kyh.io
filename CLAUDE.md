@@ -115,7 +115,9 @@ two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `
 turn the camera a quarter turn, swinging round over half a second. Each of the
 four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
-faces, while doors, signs and storefronts stay where they are in the world. A
+faces, while doors, signs and storefronts stay where they are in the world. On arrival the town grows out of the ground, from the island's middle
+outward (a vertex-shader rise every material in `render.ts` shares; pins wait
+for it). A
 title-sequence flyover runs on load; only moving the camera stops it, the
 corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the

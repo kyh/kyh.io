@@ -30,7 +30,7 @@ import { createLife } from "./life";
 import { shade, signature } from "./palette";
 import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
-import { build, createMaterials } from "./render";
+import { build, createMaterials, GROWN_S } from "./render";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
@@ -265,6 +265,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
   let { theme } = options;
   const materials = createMaterials(theme);
+  /** Seconds the town has spent growing out of the ground; null once it's up, or with reduced motion. */
+  let growing: number | null = options.reducedMotion ? null : 0;
+  if (growing === null) {
+    materials.setGrowth(GROWN_S);
+  }
   const plan = planCity(planEntries(options.projects));
   /**
    * The town's drawings, by heading: whole quarter turns where the camera
@@ -870,7 +875,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
           .project(camera);
         const x = Math.round(((anchor.x + 1) / 2) * width * 10) / 10;
         const y = Math.round(((1 - anchor.y) / 2) * height * 10) / 10;
-        const hidden = x < -60 || x > width + 60 || y < -60 || y > height + 60;
+        // Pins wait for their buildings to finish growing.
+        const hidden = growing !== null || x < -60 || x > width + 60 || y < -60 || y > height + 60;
         const lit = entry === shown;
         const last = pinStates.get(slug);
         if (!last || last.x !== x || last.y !== y || last.hidden !== hidden || last.lit !== lit) {
@@ -945,8 +951,21 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const lit = (slug: string) => shown?.project.slug === slug;
   let frame = 0;
+  // Counted in frames' time, a slow one (the first few, compiling shaders)
+  // capped, so the growing plays out whole instead of skipping ahead.
+  const grow = (elapsed: number) => {
+    if (growing === null) {
+      return;
+    }
+    growing += Math.min(elapsed, 0.05);
+    materials.setGrowth(growing);
+    if (growing >= GROWN_S) {
+      growing = null;
+    }
+  };
   const tick = (now: number) => {
     const elapsed = Math.max(0, now - clock.last) / 1000;
+    grow(elapsed);
     clock.last = now;
     adapt(elapsed);
     // The camera keeps real time; the town skips ahead no more than a beat

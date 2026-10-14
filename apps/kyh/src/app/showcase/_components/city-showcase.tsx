@@ -184,7 +184,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
       )}
       {status === "loading" && (
-        <p className="city-panel absolute bottom-[calc(4vh+90px)] left-1/2 -translate-x-1/2 px-3 py-1.5 font-mono text-xs text-[var(--city-ink-soft)]">
+        <p className="city-panel absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 font-mono text-xs text-[var(--city-ink-soft)]">
           drawing the city…
         </p>
       )}

@@ -2,7 +2,8 @@
 // mesh colored per vertex, pushed back a hair so ink drawn on their edges
 // wins the depth test; ink becomes fat screen-space lines, one batch per
 // color and weight. A built sketch repaints itself in place: in greys, or in
-// its true colors while hovered, by day or by night.
+// its true colors while hovered, by day or by night. Everything drawn with
+// these materials grows up out of the ground when the town first appears.
 import {
   BufferGeometry,
   CanvasTexture,
@@ -15,6 +16,7 @@ import {
   MeshBasicMaterial,
   SRGBColorSpace,
 } from "three";
+import type { Material, WebGLProgramParametersWithUniforms } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
@@ -26,6 +28,58 @@ import { shade } from "./palette";
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
+/** How long the town takes to grow out of the ground on arrival (s). */
+export const GROWN_S = 2.6;
+
+// Each point rises from the ground to its height, overshooting a touch and
+// settling, a moment after the point nearer the island's middle: the town
+// assembles outward. Things hung in the sky stay put, and nothing below the
+// ground moves.
+const GROW_GLSL = `
+uniform float growTime;
+vec4 grown(vec4 world) {
+  if (modelMatrix[3].y > 2.0 || world.y <= 0.0) {
+    return world;
+  }
+  float delay = length(world.xz - vec2(36.0)) * 0.034;
+  float t = clamp((growTime - delay) / 0.8, 0.0, 1.0);
+  float back = t - 1.0;
+  world.y *= 1.0 + 2.70158 * back * back * back + 1.70158 * back * back;
+  return world;
+}
+`;
+
+const MESH_PROJECTION = "#include <project_vertex>";
+const LINE_ENDS = [
+  "vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );",
+  "vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );",
+] as const;
+
+/** Rewrite a material's vertex shader so its points grow out of the ground as `growth` runs. */
+const growing = (shader: WebGLProgramParametersWithUniforms, growth: { value: number }) => {
+  shader.uniforms.growTime = growth;
+  let body = shader.vertexShader;
+  if (body.includes(MESH_PROJECTION)) {
+    body = body.replace(
+      MESH_PROJECTION,
+      `vec4 mvPosition = viewMatrix * grown(modelMatrix * vec4(transformed, 1.0));
+      gl_Position = projectionMatrix * mvPosition;`,
+    );
+  } else {
+    for (const end of LINE_ENDS) {
+      const name = end.includes("instanceStart") ? "instanceStart" : "instanceEnd";
+      body = body.replace(
+        end,
+        end.replace(
+          `modelViewMatrix * vec4( ${name}, 1.0 )`,
+          `viewMatrix * grown( modelMatrix * vec4( ${name}, 1.0 ) )`,
+        ),
+      );
+    }
+  }
+  shader.vertexShader = GROW_GLSL + body;
+};
+
 export interface Materials {
   /** Every face in town: the colors live on the vertices. */
   faces: MeshBasicMaterial;
@@ -33,19 +87,30 @@ export interface Materials {
   line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
+  /** Seconds into the town growing out of the ground; GROWN_S or more once it's up. */
+  setGrowth: (seconds: number) => void;
+  /** Make a material grow with the rest of the town. */
+  grows: <M extends Material>(material: M) => M;
   dispose: () => void;
 }
 
 export const createMaterials = (initial: Theme): Materials => {
   let theme = initial;
   let inkScale = 1;
-  const faces = new MeshBasicMaterial({
-    polygonOffset: true,
-    polygonOffsetFactor: 2,
-    polygonOffsetUnits: 2,
-    side: DoubleSide,
-    vertexColors: true,
-  });
+  const growth = { value: 0 };
+  const grows = <M extends Material>(material: M) => {
+    material.onBeforeCompile = (shader) => growing(shader, growth);
+    return material;
+  };
+  const faces = grows(
+    new MeshBasicMaterial({
+      polygonOffset: true,
+      polygonOffsetFactor: 2,
+      polygonOffsetUnits: 2,
+      side: DoubleSide,
+      vertexColors: true,
+    }),
+  );
   const lines = new Map<
     string,
     { material: LineMaterial; token: Token; weight: Weight; colorful: boolean }
@@ -57,11 +122,13 @@ export const createMaterials = (initial: Theme): Materials => {
       return existing.material;
     }
     // Ink stays grey even on a hovered building: the color is in the washes.
-    const material = new LineMaterial({
-      alphaToCoverage: true,
-      color: shade(token, theme, colorful),
-      linewidth: WEIGHTS[weight] * inkScale,
-    });
+    const material = grows(
+      new LineMaterial({
+        alphaToCoverage: true,
+        color: shade(token, theme, colorful),
+        linewidth: WEIGHTS[weight] * inkScale,
+      }),
+    );
     lines.set(key, { colorful, material, token, weight });
     return material;
   };
@@ -73,7 +140,11 @@ export const createMaterials = (initial: Theme): Materials => {
       }
     },
     faces,
+    grows,
     line,
+    setGrowth: (seconds) => {
+      growth.value = seconds;
+    },
     setTheme: (next) => {
       theme = next;
       for (const { colorful, material, token } of lines.values()) {
@@ -183,7 +254,7 @@ export interface LiveScreen {
 
 const SCREEN_HEIGHT_PX = 64;
 
-const screenMesh = (screen: Screen) => {
+const screenMesh = (screen: Screen, materials: Materials) => {
   const canvas = document.createElement("canvas");
   const aspect = Math.hypot(...screen.across) / Math.hypot(...screen.up);
   canvas.height = SCREEN_HEIGHT_PX;
@@ -196,7 +267,7 @@ const screenMesh = (screen: Screen) => {
   texture.colorSpace = SRGBColorSpace;
   const mesh = new Mesh(
     quad(screen.origin, screen.across, screen.up),
-    new MeshBasicMaterial({ map: texture, side: DoubleSide }),
+    materials.grows(new MeshBasicMaterial({ map: texture, side: DoubleSide })),
   );
   mesh.renderOrder = 2;
   return { mesh, screen: { canvas, context, texture } };
@@ -269,19 +340,21 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
     }
   }
   for (const sign of sketch.signs) {
-    const material = new MeshBasicMaterial({
-      depthWrite: false,
-      map: signTexture(sign),
-      side: DoubleSide,
-      transparent: true,
-    });
+    const material = workshop.materials.grows(
+      new MeshBasicMaterial({
+        depthWrite: false,
+        map: signTexture(sign),
+        side: DoubleSide,
+        transparent: true,
+      }),
+    );
     const mesh = new Mesh(quad(sign.origin, sign.across, sign.up), material);
     mesh.renderOrder = 2;
     workshop.signs.push({ material, token: sign.token });
     target.add(mesh);
   }
   for (const screen of sketch.screens) {
-    const live = screenMesh(screen);
+    const live = screenMesh(screen, workshop.materials);
     if (live) {
       workshop.built.screens.set(screen.name, live.screen);
       target.add(live.mesh);
