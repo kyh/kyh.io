@@ -83,6 +83,10 @@ test("actor keys name a car, a walker or a visitor", () => {
   assert.equal(parseActorKey("x9"), null);
   assert.equal(parseActorKey("c-1"), null);
   assert.equal(parseActorKey("c1.5"), null);
+  // One spelling each, so no wire key is another car under a second name.
+  for (const alias of ["c", "c01", "c1 ", " c1", "c0x1", "c1e0", "c-0"]) {
+    assert.equal(parseActorKey(alias), null, alias);
+  }
 });
 
 test("every project in a block has a front door onto its sidewalk", () => {

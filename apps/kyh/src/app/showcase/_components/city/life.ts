@@ -212,9 +212,14 @@ export const createLife = (options: LifeOptions) => {
               !air.has(key) &&
               world.isHeld(parsed.kind, parsed.index);
             if (stranded) {
-              // Its holder left without setting it down: it drops where it was.
+              // Its holder left without setting it down: it falls from under
+              // their hand (it's drawn up the view ray, clear of roofs), or
+              // from where it stood if their hand never showed.
+              const hand = leans.get(key);
               const spot = shown.get(key);
-              const from = spot ? { x: spot.x, y: spot.y, z: spot.z } : { x: 0, y: 0, z: 0 };
+              const from = hand
+                ? { x: hand.x, y: LIFT + groundAt(hand.x, hand.z), z: hand.z }
+                : { x: spot?.x ?? 0, y: spot?.y ?? 0, z: spot?.z ?? 0 };
               const landed = world.land(key, from.x, from.z, world.tick);
               if (landed) {
                 world.land(key, from.x, from.z, landingTick(from, landed.pose));

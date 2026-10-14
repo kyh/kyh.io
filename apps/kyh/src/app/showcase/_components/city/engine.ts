@@ -674,6 +674,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       takeControl();
       view.zoom /= 1.25;
       place();
+    } else {
+      // A key that doesn't move the view leaves the hover to the tour.
+      return;
     }
     repick();
   };

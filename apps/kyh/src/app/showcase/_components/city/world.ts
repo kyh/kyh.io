@@ -27,11 +27,12 @@ export const actorKey = (kind: ActorKind, index: number) => `${PREFIX[kind]}${in
 
 export const parseActorKey = (key: string): { kind: ActorKind; index: number } | null => {
   const index = Number(key.slice(1));
-  if (!Number.isInteger(index) || index < 0) {
+  const kind = KINDS.find((each) => PREFIX[each] === key[0]);
+  // Only as actorKey spells it: "c", "c01" and "c1 " name no one.
+  if (!kind || !Number.isInteger(index) || index < 0 || actorKey(kind, index) !== key) {
     return null;
   }
-  const kind = KINDS.find((each) => PREFIX[each] === key[0]);
-  return kind ? { index, kind } : null;
+  return { index, kind };
 };
 
 const numbers = (part: string) => (part === "" ? [] : part.split(",").map(Number));
