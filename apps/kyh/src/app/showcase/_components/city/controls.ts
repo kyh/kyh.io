@@ -29,13 +29,15 @@ interface SpotlightPorts {
  * Which building is lit, and whether the flyover has the camera. Three things
  * light a building and the first of them wins: a pin (hovered or focused),
  * the mouse over it, then the flyover passing it. The visitor taking the
- * camera stops the flyover; left alone for IDLE_MS, it starts again.
+ * camera stops the flyover; left alone for IDLE_MS, it starts again, unless
+ * the visitor paused it.
  */
 export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
   let pin: T | null = null;
   let pointer: T | null = null;
   let passing: T | null = null;
   let touring = false;
+  let paused = false;
   let idleSince = now();
   const take = () => {
     idleSince = now();
@@ -59,6 +61,7 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
     /** Whether the flyover should take the camera back: nothing hovered or pressed, for long enough. */
     idle: (pressed: boolean) =>
       !touring &&
+      !paused &&
       !still &&
       pin === null &&
       pointer === null &&
@@ -79,6 +82,11 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
         passing = entry;
       }
     },
+    /** The visitor stopped the flyover: it stays stopped until played again. */
+    pause: () => {
+      take();
+      paused = true;
+    },
     /** A pin hovered or focused, or null once it's left. Only arriving on one takes the camera. */
     pin: (entry: T | null) => {
       if (entry) {
@@ -88,6 +96,7 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
     },
     /** The flyover takes the camera; false if it already has it, or never runs. */
     play: () => {
+      paused = false;
       if (touring || still) {
         return false;
       }

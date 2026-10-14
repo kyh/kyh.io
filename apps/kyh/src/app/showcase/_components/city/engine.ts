@@ -53,6 +53,8 @@ export interface CityCallbacks {
   onHover: (slug: string | null) => void;
   /** A building was clicked: open its project. */
   onOpen: (slug: string) => void;
+  /** The flyover took the camera, or let it go. */
+  onTour: (touring: boolean) => void;
 }
 
 export interface CityOptions extends CityCallbacks {
@@ -734,6 +736,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const lit = (slug: string) => shown?.project.slug === slug;
   let frame = 0;
+  let touringSaid = false;
   const tick = (now: number) => {
     const elapsed = Math.max(0, now - clock.last) / 1000;
     clock.last = now;
@@ -743,6 +746,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const dt = Math.min(0.1, elapsed);
     clock.time += dt;
     resumeWhenIdle();
+    if (spotlight.touring !== touringSaid) {
+      touringSaid = spotlight.touring;
+      options.onTour(touringSaid);
+    }
     if (spotlight.touring) {
       followTour(Math.min(0.25, elapsed));
     } else {
@@ -827,6 +834,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       const entry = bySlug.get(slug);
       if (entry) {
         spotlight.tap(entry, "touch");
+        refreshHover();
+      }
+    },
+    /** Play the flyover, or pause it until it's played again. */
+    tour: (on: boolean) => {
+      if (on) {
+        playTour();
+      } else {
+        spotlight.pause();
         refreshHover();
       }
     },

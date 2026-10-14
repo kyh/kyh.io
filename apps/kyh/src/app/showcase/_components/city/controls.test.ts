@@ -192,3 +192,16 @@ test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", (
     assert.equal(keyMove(key), null, key);
   }
 });
+
+test("a paused flyover stays paused until played", () => {
+  const { clock, lights } = spotlight();
+  lights.play();
+  lights.pause();
+  assert.equal(lights.touring, false);
+  clock.now += IDLE_MS + 1;
+  assert.equal(lights.idle(false), false);
+  assert.equal(lights.play(), true);
+  lights.take();
+  clock.now += IDLE_MS + 1;
+  assert.equal(lights.idle(false), true);
+});

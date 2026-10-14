@@ -40,6 +40,28 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
+interface TourToggleProps {
+  touring: boolean;
+  onToggle: () => void;
+}
+
+const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
+  <button
+    type="button"
+    aria-label={touring ? "Pause the flyover" : "Play the flyover"}
+    className="city-panel absolute top-6 left-6 grid size-8 place-items-center text-[var(--city-ink-soft)] transition-colors hover:text-[var(--city-ink)]"
+    onClick={onToggle}
+  >
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+      {touring ? (
+        <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+      ) : (
+        <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+      )}
+    </svg>
+  </button>
+);
+
 interface CityShowcaseProps {
   projects: CityProject[];
 }
@@ -56,6 +78,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
+  const [touring, setTouring] = useState(false);
 
   useEffect(() => {
     const host = containerRef.current;
@@ -85,6 +108,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
               window.open(url, "_blank", "noopener,noreferrer");
             }
           },
+          onTour: setTouring,
           overlay: overlayRef.current,
           projects,
           reducedMotion,
@@ -172,6 +196,9 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
             ))}
           </div>
         </MotionConfig>
+      )}
+      {status === "ready" && !reducedMotion && (
+        <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
       )}
       {status === "loading" && (
         <p className="city-panel absolute bottom-[calc(4vh+90px)] left-1/2 -translate-x-1/2 px-3 py-1.5 font-mono text-xs text-[var(--city-ink-soft)]">
