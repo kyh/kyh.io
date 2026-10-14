@@ -111,8 +111,8 @@ colors, rings its lot in a soft band of its own color (`halo.ts`) and opens its
 icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
 or icon opens the card, a second tap or a tap on the card opens the project). Scrolling steps
-from one project to the next in the flyover's order (one step per flick;
-ctrl+wheel, i.e. a trackpad pinch, still zooms). A title-sequence flyover runs on load and resumes after
+from one project to the next in the flyover's order, by distance: every
+100px is one project (ctrl+wheel, i.e. a trackpad pinch, still zooms). A title-sequence flyover runs on load and resumes after
 30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),

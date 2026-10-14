@@ -8,7 +8,7 @@ import {
   IDLE_MS,
   isHover,
   keyMove,
-  WHEEL_REST_MS,
+  WHEEL_FORGET_MS,
   WHEEL_STEP,
 } from "./controls";
 
@@ -202,35 +202,26 @@ test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", (
   }
 });
 
-test("a notch of the wheel is one step, either way", () => {
+test("every WHEEL_STEP pixels scrolled is one step, either way", () => {
   const clock = { now: 0 };
   const steps = createWheelSteps(() => clock.now);
   assert.equal(steps(WHEEL_STEP), 1);
-  clock.now += WHEEL_REST_MS + 1;
   assert.equal(steps(-WHEEL_STEP), -1);
-});
-
-test("a trackpad's flick is one step, however long it glides", () => {
-  const clock = { now: 0 };
-  const steps = createWheelSteps(() => clock.now);
-  const results: number[] = [];
-  // Two seconds of momentum, a delta every 16ms.
-  for (let t = 0; t < 2000; t += 16) {
-    clock.now = t;
-    results.push(steps(12));
+  // A long swipe crosses several, however its deltas are cut up.
+  let total = 0;
+  for (let i = 0; i < 25; i += 1) {
+    clock.now += 16;
+    total += steps(WHEEL_STEP / 5);
   }
-  assert.equal(results.filter((dir) => dir !== 0).length, 1);
-  // Once it has run out and rested, the next flick steps again.
-  clock.now = 2000 + WHEEL_REST_MS + 1;
-  assert.equal(steps(WHEEL_STEP), 1);
+  assert.equal(total, 5);
 });
 
 test("a pause forgets a half-made step", () => {
   const clock = { now: 0 };
   const steps = createWheelSteps(() => clock.now);
   assert.equal(steps(WHEEL_STEP / 2), 0);
-  clock.now = 500;
+  clock.now = WHEEL_FORGET_MS + 1;
   assert.equal(steps(WHEEL_STEP / 2), 0);
-  clock.now = 510;
+  clock.now += 10;
   assert.equal(steps(WHEEL_STEP / 2), 1);
 });

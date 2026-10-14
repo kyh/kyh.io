@@ -207,40 +207,30 @@ export const createPresses = () => {
   };
 };
 
-/** Scroll this far, in pixels, for one step to the next project. */
-export const WHEEL_STEP = 40;
-/** After a step, the wheel rests this long: a trackpad's glide is one step, not ten. */
-export const WHEEL_REST_MS = 450;
+/** Scroll this far, in pixels, for one step to the next project: about a wheel's notch. */
+export const WHEEL_STEP = 100;
+/** A pause this long forgets a half-made step, so a stray nudge later doesn't finish it. */
+export const WHEEL_FORGET_MS = 300;
 
 /**
- * Scrolling steps from one project to the next: deltas add up to a step,
- * and the wheel then rests, swallowing what's left of the same flick. A
- * pause in scrolling forgets a half-made step.
+ * Scrolling steps from one project to the next by distance, the way a
+ * parallax page ties its scenes to how far you've scrolled: every
+ * WHEEL_STEP pixels is one project, so a notch is one and a long swipe
+ * crosses several. Returns how many to step, negative for back.
  */
 export const createWheelSteps = (now: () => number) => {
   let sum = 0;
   let last = -Infinity;
-  let stepped = -Infinity;
-  return (delta: number): 1 | -1 | 0 => {
+  return (delta: number) => {
     const at = now();
-    const resting = at - stepped < WHEEL_REST_MS;
-    if (resting || at - last > 200) {
+    if (at - last > WHEEL_FORGET_MS) {
       sum = 0;
     }
     last = at;
-    if (resting) {
-      // Still the flick that stepped: let it run out.
-      stepped = at;
-      return 0;
-    }
     sum += delta;
-    if (Math.abs(sum) < WHEEL_STEP) {
-      return 0;
-    }
-    stepped = at;
-    const dir = sum > 0 ? 1 : -1;
-    sum = 0;
-    return dir;
+    const steps = Math.trunc(sum / WHEEL_STEP);
+    sum -= steps * WHEEL_STEP;
+    return steps;
   };
 };
 

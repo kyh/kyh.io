@@ -584,9 +584,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     // Scrolling either way steps through the projects.
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    const dir = wheelSteps(event.deltaMode === 0 ? delta : delta * 40);
-    if (dir !== 0) {
-      stepTo(dir);
+    const steps = wheelSteps(event.deltaMode === 0 ? delta : delta * 40);
+    for (let step = 0; step < Math.abs(steps); step += 1) {
+      stepTo(steps > 0 ? 1 : -1);
     }
   };
   const onDoubleClick = (event: MouseEvent) => {
