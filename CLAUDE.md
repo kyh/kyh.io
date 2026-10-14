@@ -101,6 +101,20 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
+`/showcase` is a city of the projects: an isometric island drawn the way
+[Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
+(flat unlit faces, ink outlines, a fixed 30° camera), in three.js. Every
+project in `src/lib/data.ts` gets a building — a bespoke one when its slug is in
+`draw-landmarks.ts`, otherwise a generic one with its name on it on the nearest
+free lot — plus traffic, walkers, a blimp and a title-sequence flyover. Dark
+mode is night (windows lit). Code in `src/app/showcase/_components/city/`:
+`plan.ts` (island, roads, which lot each project gets; pure, tested),
+`sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
+`render.ts` (sketch → three.js), `landmarks-*.ts` (the buildings), `engine.ts`
+(camera, tour, picking, loop). In dev, `window.city.look(x, z, zoom)` moves the
+camera for agent-browser screenshots; headless Chromium needs
+`--use-angle=swiftshader,--enable-unsafe-swiftshader` for WebGL.
+
 ### party (`apps/party`)
 
 Real-time multiplayer server. PartyServer on Cloudflare Workers (Durable Objects).

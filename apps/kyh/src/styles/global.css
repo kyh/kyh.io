@@ -385,108 +385,70 @@ button.link {
   }
 }
 
-/* Radial line */
-.radial-line {
-  background-color: var(--body-color-faded);
-  height: 1px;
-  position: absolute;
-  transform-origin: 0px 0px;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  transition:
-    background-color 0.15s ease-out,
-    color 0.15s ease-out;
+/* Showcase city: Inkline-style panels over the canvas. In the components
+   layer so Tailwind utilities on the same element can override them. */
+@layer components {
+  .city {
+    --city-paper: #f7f8f4;
+    --city-paper-hover: #eceee8;
+    --city-ink: #3d4943;
+    --city-ink-soft: #77817a;
+    --city-line: #c9cec4;
+    --city-shadow: #dfe2db;
+    --city-sea: #e2e9e6;
 
-  &:focus-visible {
-    outline: 0;
-    [data-slot="meta"] {
-      opacity: 1 !important;
-      outline: 2px solid var(--body-color-highlighted);
-      outline-offset: 4px;
-      border-radius: 6px;
+    [data-theme="dark"] & {
+      --city-paper: #1f2a30;
+      --city-paper-hover: #28343b;
+      --city-ink: #c9d6d0;
+      --city-ink-soft: #7d8d87;
+      --city-line: #34434b;
+      --city-shadow: #121a1f;
+      --city-sea: #0f181d;
     }
   }
 
-  &[data-variant="large"] {
-    cursor: pointer;
-    &:after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      translate: -50% -50%;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      padding: 8px;
-      border-radius: 8px;
-    }
+  .city-panel {
+    background: var(--city-paper);
+    border: 1px solid var(--city-line);
+    border-radius: 8px;
+    box-shadow: 0 2px 0 var(--city-shadow);
+    color: var(--city-ink);
   }
 
-  &[data-hovered="true"],
-  &:focus-visible {
-    background: var(--body-color-highlighted);
-    color: var(--body-color-highlighted);
-  }
-}
-
-/* Radial back/footer buttons */
-.radial-back-button {
-  &::before {
-    content: "";
-    background-image: var(--arrow);
-    width: 14px;
-    height: 14px;
+  .city-button {
     display: inline-flex;
-    background-size: contain;
-    opacity: 0.5;
-    transition: opacity 0.15s ease-out;
-    transform: rotate(180deg);
-  }
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 9px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    color: var(--city-ink);
+    transition: background-color 0.15s ease-out;
 
-  &:hover::before,
-  &:focus-visible::before {
-    opacity: 1;
+    &:hover {
+      background: var(--city-paper-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--city-ink);
+      outline-offset: 1px;
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--city-ink);
+      color: var(--city-paper);
+    }
   }
 }
 
-.radial-footer {
-  button {
-    display: flex;
-    color: var(--body-color-faded);
-    gap: 4px;
-    align-items: center;
-    transition: color 0.15s ease-out;
+/* The city fills the window: no frosted header hazing its sky, no page scroll. */
+body:has(.city) {
+  overflow: hidden;
 
-    &::before {
-      content: "";
-      background-image: var(--arrow);
-      width: 14px;
-      height: 14px;
-      display: inline-flex;
-      background-size: contain;
-      opacity: 0.5;
-      transition: opacity 0.15s ease-out;
-    }
-
-    &:hover::before,
-    &:focus-visible::before {
-      opacity: 1;
-    }
-
-    &:first-child::before {
-      transform: rotate(180deg);
-    }
-
-    &:last-child {
-      flex-direction: row-reverse;
-    }
-
-    &:hover,
-    &:focus-visible {
-      color: var(--body-color-highlighted);
-    }
+  .blur-header {
+    display: none;
   }
 }
 
