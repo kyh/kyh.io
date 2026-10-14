@@ -448,6 +448,8 @@ button.link {
     border-radius: 9px;
     background: var(--city-paper);
     box-shadow: 0 2px 0 var(--city-shadow);
+    /* Grows up off its stem: the box only gains ground, so a hover never slips off it. */
+    transform-origin: 50% 100%;
     transition:
       transform 0.15s ease-out,
       border-color 0.15s ease-out;
@@ -465,7 +467,7 @@ button.link {
     &:focus-visible,
     [data-lit="true"] & {
       border-color: var(--city-ink);
-      transform: translateY(-3px) scale(1.12);
+      transform: scale(1.12);
     }
 
     &:focus-visible {

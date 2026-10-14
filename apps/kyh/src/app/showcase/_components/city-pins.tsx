@@ -55,8 +55,14 @@ export const Pin = ({ project, isLit, ref, onHover, onFocus }: PinProps) => (
         rel="noopener noreferrer"
         className="city-pin-icon pointer-events-auto"
         aria-label={`${project.title}, ${hostOf(project.url)}: ${project.description}`}
-        onMouseEnter={() => onHover(project.slug)}
-        onMouseLeave={() => onHover(null)}
+        onPointerMove={(event) => {
+          // Only a pointer that moves takes the icon: one gliding under a
+          // resting cursor during the flyover leaves the show running.
+          if (event.movementX !== 0 || event.movementY !== 0) {
+            onHover(project.slug);
+          }
+        }}
+        onPointerLeave={() => onHover(null)}
         onFocus={() => onFocus(project.slug)}
         onBlur={() => onHover(null)}
       >

@@ -490,7 +490,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     pinch = spread;
   };
   const onHoverMove = (event: PointerEvent) => {
-    if (event.pointerType !== "mouse") {
+    // A move of nothing is the browser rechecking what's under a resting
+    // cursor, not a hover: the flyover keeps going.
+    if (event.pointerType !== "mouse" || (event.movementX === 0 && event.movementY === 0)) {
       return;
     }
     const hit = pick(event.clientX, event.clientY);
@@ -546,6 +548,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     pinch = 0;
   };
+  const onPointerCancel = (event: PointerEvent) => {
+    // The browser took the gesture back (a system swipe, a long press): no tap.
+    pointers.delete(event.pointerId);
+    if (pointers.size === 0) {
+      pinch = 0;
+    }
+  };
   const onPointerLeave = () => {
     if (pointers.size === 0 && hoverBy.pointer) {
       hoverBy.pointer = null;
@@ -593,7 +602,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerUp);
+  canvas.addEventListener("pointercancel", onPointerCancel);
   canvas.addEventListener("pointerleave", onPointerLeave);
   canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("dblclick", onDoubleClick);
@@ -730,7 +739,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerCancel);
       canvas.removeEventListener("pointerleave", onPointerLeave);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDoubleClick);
