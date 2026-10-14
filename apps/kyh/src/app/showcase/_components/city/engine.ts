@@ -4,7 +4,6 @@
 import {
   Box3,
   Color,
-  Group,
   OrthographicCamera,
   Plane,
   Raycaster,
@@ -14,27 +13,25 @@ import {
   WebGLRenderer,
 } from "three";
 
-import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
-import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
-
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
 import type { Built } from "./render";
 import type { Sketch } from "./sketch";
-import { createActors } from "./actors";
 import { createAnimations } from "./animate";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
-import { shade } from "./palette";
+import { createHalo } from "./halo";
+import { createLife } from "./life";
+import { shade, signature } from "./palette";
 import { inland, planCity } from "./plan";
-import { createRandom } from "./random";
+import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
-import { createSketch, VIEW } from "./sketch";
+import { createSketch, faceAreas, VIEW } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
-import { createCrowd, createTraffic } from "./traffic";
+import { TOWN_VERSION } from "./world";
 
 /** CSS pixels per world unit at zoom 1: a cell's diamond is 64px wide. */
 const PIXELS_PER_UNIT = 64 / Math.SQRT2;
@@ -62,6 +59,12 @@ export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
   theme: Theme;
   reducedMotion: boolean;
+  /** Where visitors' lines and other people's pointers float. */
+  overlay: HTMLElement | null;
+  /** Share the town with everyone else on the page; false keeps it to this browser. */
+  shared: boolean;
+  /** How many people are in town, this one included. */
+  onPeople: (count: number) => void;
 }
 
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
@@ -167,49 +170,6 @@ const edgeOf = (x: number, width: number) => {
   return x > width - 150 ? "end" : "center";
 };
 
-/** A marquee round a lit building's lot, so even a white building reads as picked. */
-const lotOutline = (placed: Placed | null) => {
-  const geometry = new LineSegmentsGeometry();
-  if (!placed) {
-    geometry.setPositions([0, -10, 0, 0, -10, 0]);
-    return geometry;
-  }
-  const { lot, bounds } = placed;
-  const y = bounds.y + 0.02;
-  const x0 = lot.x + 0.12;
-  const z0 = lot.z + 0.12;
-  const x1 = lot.x + lot.w - 0.12;
-  const z1 = lot.z + lot.d - 0.12;
-  // Four sides, each a segment from one corner to the next.
-  geometry.setPositions([
-    x0,
-    y,
-    z0,
-    x1,
-    y,
-    z0,
-    x1,
-    y,
-    z0,
-    x1,
-    y,
-    z1,
-    x1,
-    y,
-    z1,
-    x0,
-    y,
-    z1,
-    x0,
-    y,
-    z1,
-    x0,
-    y,
-    z0,
-  ]);
-  return geometry;
-};
-
 /** Who is lighting a building up, if anyone: the first of these wins. */
 interface Hovers {
   pin: Placed | null;
@@ -235,7 +195,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
-    "A city of Kai's projects. Drag to look around, scroll to zoom, click a building to open it.",
+    "A city of Kai's projects. Drag to look around, scroll to zoom, click a building to open it, and pick up cars and people to move them.",
   );
   container.append(canvas);
 
@@ -259,16 +219,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !options.reducedMotion });
-  const traffic = createTraffic(plan, 48);
-  const crowd = createCrowd(plan, 180);
-  const actors = createActors(traffic.cars, crowd.walkers, theme);
-  const actorGroup = new Group();
-  actorGroup.add(...actors.meshes);
-  scene.add(actorGroup);
   const sky = createSky(scene, materials, options.reducedMotion);
-  const outline = new LineSegments2(lotOutline(null), materials.line("accentBlue", "bold", true));
-  outline.renderOrder = 3;
-  scene.add(outline);
+  // A soft ring of each building's own color round its lot while it's lit.
+  const halo = createHalo();
+  scene.add(halo.mesh);
+  const colors = new Map(placed.map((entry) => [entry, signature(faceAreas(entry.sketch))]));
 
   const bySlug = new Map(placed.map((entry) => [entry.project.slug, entry]));
   const boxes = placed.map((entry) => ({
@@ -338,6 +293,32 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   view.zoom = fitZoom();
   place();
 
+  // The town's life: its traffic, its people and their lines, what anyone
+  // picks up, shared with everyone in the room.
+  const projected = new Vector3();
+  const life = createLife({
+    onPeople: options.onPeople,
+    overlay: options.overlay,
+    placed,
+    plan,
+    // One room per version of the town, so a page from an older deploy never mixes in.
+    room: options.shared
+      ? `kyh-town-${TOWN_VERSION}-${hashString(options.projects.map((project) => project.slug).join(",")).toString(36)}`
+      : null,
+    scale: () => PIXELS_PER_UNIT * view.zoom,
+    scene,
+    size: () => ({ height, width }),
+    theme,
+    toScreen: (x, y, z) => {
+      projected.set(x, y, z).project(camera);
+      return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
+    },
+  });
+
+  /** The pointer carrying something, if one is; and whether the mouse is over something to carry. */
+  let carrying: number | null = null;
+  let overActor = false;
+
   // Hover: a pin (pointer or keyboard), the pointer on a building, or the
   // flyover passing one. The first of those lights its building up.
   const hoverBy: Hovers = {
@@ -346,6 +327,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     tour: null,
   };
   let shown: Placed | null = null;
+  const updateCursor = () => {
+    if (carrying !== null) {
+      canvas.style.cursor = "grabbing";
+    } else if (overActor) {
+      canvas.style.cursor = "grab";
+    } else {
+      canvas.style.cursor = hoverBy.pointer ? "pointer" : "";
+    }
+  };
   const refreshHover = () => {
     const next = hoverBy.pin ?? hoverBy.pointer ?? hoverBy.tour;
     if (next === shown) {
@@ -358,9 +348,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (shown) {
       buildings.get(shown)?.paint(theme, true);
     }
-    outline.geometry.dispose();
-    outline.geometry = lotOutline(shown);
-    canvas.style.cursor = hoverBy.pointer ? "pointer" : "";
+    halo.show(
+      shown && {
+        rect: shown.lot,
+        token: colors.get(shown) ?? "accentBlue",
+        y: shown.bounds.y,
+      },
+    );
+    updateCursor();
     options.onHover(shown?.project.slug ?? null);
   };
 
@@ -374,7 +369,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     for (const built of sky.builds) {
       built.paint(theme, false);
     }
-    actors.setTheme(theme);
+    life.setTheme(theme);
   };
   applyTheme();
 
@@ -415,6 +410,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     return (
       raycaster.ray.intersectPlane(groundPlane, new Vector3()) ?? new Vector3(view.x, 0, view.z)
     );
+  };
+  /** The ground point under the pointer, as a spot in town. */
+  const spotAt = (clientX: number, clientY: number) => {
+    const ground = groundAt(clientX, clientY);
+    return { x: ground.x, y: 0, z: ground.z };
+  };
+  /** A client point relative to the canvas. */
+  const local = (clientX: number, clientY: number) => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
   };
   const pick = (clientX: number, clientY: number) => {
     aim(clientX, clientY);
@@ -464,7 +469,25 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let dragged = false;
   let downAt = { x: 0, y: 0 };
   let pinch = 0;
+  /** Pick up whatever car or person is under the pointer; false if there's none to take. */
+  const tryGrab = (event: PointerEvent) => {
+    const at = local(event.clientX, event.clientY);
+    const key = pointers.size === 0 && event.button === 0 ? life.actorAt(at.x, at.y) : null;
+    if (!key || !life.grab(key, spotAt(event.clientX, event.clientY))) {
+      return false;
+    }
+    canvas.setPointerCapture(event.pointerId);
+    carrying = event.pointerId;
+    takeControl();
+    hoverBy.pointer = null;
+    refreshHover();
+    updateCursor();
+    return true;
+  };
   const onPointerDown = (event: PointerEvent) => {
+    if (carrying !== null || tryGrab(event)) {
+      return;
+    }
     canvas.setPointerCapture(event.pointerId);
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 1) {
@@ -495,6 +518,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (event.pointerType !== "mouse" || (event.movementX === 0 && event.movementY === 0)) {
       return;
     }
+    life.point(spotAt(event.clientX, event.clientY));
+    const at = local(event.clientX, event.clientY);
+    overActor = life.actorAt(at.x, at.y) !== null;
     const hit = pick(event.clientX, event.clientY);
     if (hit) {
       // Hovering a building holds the camera still so it can be read.
@@ -502,8 +528,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     hoverBy.pointer = hit;
     refreshHover();
+    updateCursor();
   };
   const onPointerMove = (event: PointerEvent) => {
+    if (carrying === event.pointerId) {
+      const spot = spotAt(event.clientX, event.clientY);
+      life.carry(spot);
+      life.point(spot);
+      return;
+    }
     const previous = pointers.get(event.pointerId);
     if (!previous) {
       onHoverMove(event);
@@ -538,7 +571,20 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     refreshHover();
   };
+  /** Let go of what this pointer carries; true if it carried something. */
+  const drop = (event: PointerEvent) => {
+    if (carrying !== event.pointerId) {
+      return false;
+    }
+    carrying = null;
+    life.letGo();
+    updateCursor();
+    return true;
+  };
   const onPointerUp = (event: PointerEvent) => {
+    if (drop(event)) {
+      return;
+    }
     pointers.delete(event.pointerId);
     if (pointers.size > 0) {
       return;
@@ -549,6 +595,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     pinch = 0;
   };
   const onPointerCancel = (event: PointerEvent) => {
+    if (drop(event)) {
+      return;
+    }
     // The browser took the gesture back (a system swipe, a long press): no tap.
     pointers.delete(event.pointerId);
     if (pointers.size === 0) {
@@ -556,10 +605,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   const onPointerLeave = () => {
+    if (carrying === null) {
+      life.point(null);
+    }
+    overActor = false;
     if (pointers.size === 0 && hoverBy.pointer) {
       hoverBy.pointer = null;
       refreshHover();
     }
+    updateCursor();
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
@@ -567,8 +621,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     zoomAt(Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015)), event.clientX, event.clientY);
   };
   const onDoubleClick = (event: MouseEvent) => {
-    // A double click on a building already opened it; on open ground, zoom in.
-    if (!pick(event.clientX, event.clientY)) {
+    // A double click on a building already opened it, and one on a car made it
+    // hop; on open ground, zoom in.
+    const at = local(event.clientX, event.clientY);
+    if (!pick(event.clientX, event.clientY) && !life.actorAt(at.x, at.y)) {
       takeControl();
       zoomAt(1.8, event.clientX, event.clientY);
     }
@@ -716,10 +772,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     } else {
       glide(Math.min(0.25, elapsed));
     }
-    traffic.step(dt);
-    crowd.step(dt);
-    actors.update();
+    life.update(Math.min(0.25, elapsed) * 1000);
     animations.update(clock.time, lit);
+    halo.update(Math.min(0.25, elapsed), clock.time, theme);
     sky.update(clock.time, plan.countryside.pier);
     renderer.render(scene, camera);
     placePins();
@@ -733,6 +788,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   }
 
   return {
+    /** What the town is up to, for poking at in development. */
+    debug: () => life.debug(),
     dispose: () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
@@ -747,8 +804,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       for (const built of [city, ...buildings.values(), ...sky.builds]) {
         built.dispose();
       }
-      outline.geometry.dispose();
-      actors.dispose();
+      halo.dispose();
+      life.dispose();
       materials.dispose();
       renderer.dispose();
       canvas.remove();

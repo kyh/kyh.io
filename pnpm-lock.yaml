@@ -431,6 +431,9 @@ importers:
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(next@16.4.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+      '@vibedgames/multiplayer':
+        specifier: 0.3.0
+        version: 0.3.0(react@19.3.0)
       cn:
         specifier: 'catalog:'
         version: 0.4.0
@@ -452,9 +455,6 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      partysocket:
-        specifier: ^1.3.0
-        version: 1.3.0(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -2965,6 +2965,14 @@ packages:
       vue:
         optional: true
       vue-router:
+        optional: true
+
+  '@vibedgames/multiplayer@0.3.0':
+    resolution: {integrity: sha512-p3EIGsZM1c/i3VHQie2SzuiDOnIM8QAaxZ2cL/yZQ1aUuYrSKF/uC2tuwGSKIT7kBookW+zytIlY725t9zxeEw==}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
         optional: true
 
   '@visx/axis@4.0.0':
@@ -6467,6 +6475,12 @@ snapshots:
   '@vercel/speed-insights@2.0.0(next@16.4.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)':
     optionalDependencies:
       next: 16.4.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
+
+  '@vibedgames/multiplayer@0.3.0(react@19.3.0)':
+    dependencies:
+      partysocket: 1.3.0(react@19.3.0)
+    optionalDependencies:
       react: 19.3.0
 
   '@visx/axis@4.0.0(@types/react@19.3.0)(react@19.3.0)':

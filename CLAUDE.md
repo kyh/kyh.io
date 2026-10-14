@@ -108,20 +108,39 @@ Every project in `src/lib/data.ts` gets a building — a bespoke one when its sl
 is in `draw-landmarks.ts`, otherwise a generic one with its name on it on the
 nearest free lot — with its favicon floating over the roof as a real link
 (`city-pins.tsx`). Hovering a building or its icon paints that building in its
-colors and shows its URL and description; clicking opens the project in a new
-tab (touch: first tap shows, second opens). A title-sequence flyover runs on
-load and resumes after 30s idle. Dark mode is night. Code in
-`src/app/showcase/_components/city/`: `plan.ts` (island, roads, which lot each
-project gets; pure, tested), `sketch.ts` (faces, silhouettes and ink worked out
-once for the fixed camera), `render.ts` (sketch → three.js; each building
-repaints itself grey or colored), `landmarks-*.ts` (the buildings), `engine.ts`
-(camera, tour, hover, pins, loop). In dev, `window.city.look(x, z, zoom)` moves
-the camera for agent-browser screenshots; headless Chromium needs
+colors, rings its lot in a soft band of its own color (`halo.ts`) and shows its
+URL and description; clicking opens the project in a new tab (touch: first tap
+shows, second opens). A title-sequence flyover runs on load and resumes after
+30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
+`plan.ts` (island, roads, which lot each project gets; pure, tested),
+`sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
+`render.ts` (sketch → three.js; each building repaints itself grey or colored),
+`landmarks-*.ts` (the buildings), `engine.ts` (camera, tour, hover, pins,
+input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and
+`window.city.debug()` reports the town; headless Chromium needs
 `--use-angle=swiftshader,--enable-unsafe-swiftshader` for WebGL.
+
+The ground is alive and shared. `world.ts` steps the cars, passers-by
+(`traffic.ts`) and visitors (`visitors.ts`: out of one project's door with a
+line from `quotes.ts`, along the sidewalks, into another) in fixed 20Hz ticks,
+each mover with its own random state, so every browser stepping the same
+snapshot gets the same town; pure and tested. `life.ts` draws it between
+ticks, floats the visitors' lines and other people's pointers (`overlay.ts`),
+and lets anyone pick up a car or a person and drop it on the nearest road or
+sidewalk. `net.ts` shares it in a room on the vibedgames party server
+(`src/lib/party.ts`): the host puts up a snapshot every 8s for joiners, a
+pick-up is a claim, a drop carries the mover's exact landed state, pointers go
+out at 15Hz, and everything off the wire is validated. With no server the town
+plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
+`TOWN_VERSION` whenever stepping or packing changes, or old and new pages
+desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
+same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 
 ### party (`apps/party`)
 
 Real-time multiplayer server. PartyServer on Cloudflare Workers (Durable Objects).
+Nothing in the repo connects to it any more: `apps/kyh`'s cursors and the
+showcase town use the shared vibedgames party server.
 
 ### policingice (`apps/policingice`)
 

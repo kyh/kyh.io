@@ -169,8 +169,8 @@ export const privacyContent: PageContent = {
             },
             {
               description:
-                "Your cursor position and current page, shared with other visitors. Held in memory, never stored.",
-              href: "https://github.com/kyh/kyh.io/tree/main/apps/party",
+                "Your cursor position and current page, and in the showcase town what you pick up, shared with other visitors through the vibedgames party server. Held in memory, never stored.",
+              href: "https://github.com/kyh/vibedgames/tree/main/apps/party",
               label: "Live cursors",
             },
           ],

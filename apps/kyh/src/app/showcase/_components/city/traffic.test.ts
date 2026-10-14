@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { planCity } from "./plan";
-import { createCrowd, createTraffic } from "./traffic";
+import { createCrowd, createTraffic, roadGraph, sidewalkGraph } from "./traffic";
 
 const plan = planCity([]);
 
@@ -32,10 +32,10 @@ const offRoad = (x: number, z: number) => {
 };
 
 test("cars stay in their lanes, through junctions and all", () => {
-  const traffic = createTraffic(plan, 30);
-  for (let step = 0; step < 600; step += 1) {
-    traffic.step(1 / 20);
+  const traffic = createTraffic(roadGraph(plan), 30);
+  for (let tick = 1; tick <= 600; tick += 1) {
     for (const car of traffic.cars) {
+      traffic.stepCar(car, tick);
       // A lane is a fifth of a cell off the middle; a turn cuts its corner.
       assert.ok(
         offRoad(car.pose.x, car.pose.z) < 0.36,
@@ -46,7 +46,7 @@ test("cars stay in their lanes, through junctions and all", () => {
 });
 
 test("people keep to the sidewalks and the crossings", () => {
-  const crowd = createCrowd(plan, 40);
+  const crowd = createCrowd(sidewalkGraph(plan), 40);
   const onBlock = (x: number, z: number) =>
     plan.blocks.some(
       (block) =>
@@ -55,9 +55,9 @@ test("people keep to the sidewalks and the crossings", () => {
         z >= block.z - 1.1 &&
         z <= block.z + block.d + 1.1,
     );
-  for (let step = 0; step < 600; step += 1) {
-    crowd.step(1 / 20);
+  for (let tick = 1; tick <= 600; tick += 1) {
     for (const walker of crowd.walkers) {
+      crowd.stepWalker(walker, tick);
       assert.ok(
         onBlock(walker.pose.x, walker.pose.z),
         `walker strayed to ${walker.pose.x}, ${walker.pose.z}`,

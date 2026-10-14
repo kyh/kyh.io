@@ -10,18 +10,14 @@ import { useRealtime } from "@/lib/use-realtime";
 const asCoordinate = (value: JsonValue | undefined) =>
   Number.isFinite(value) ? Number(value) : undefined;
 
-// const HOST = "http://localhost:8787";
-const HOST = "https://kyh-party.kyh.workers.dev";
-const PARTY = "kyh-server";
-const ROOM = "kyh";
+/** Everyone on the site, on the shared vibedgames party server. */
+const ROOM = "kyh-site";
+/** Pages that draw visitors themselves: the city puts pointers in the town, not on the screen. */
+const OWN_CURSORS = new Set(["/showcase"]);
 
 export const Multiplayer = () => {
   const pathname = usePathname();
-  const { players, windowDimensions } = useRealtime({
-    host: HOST,
-    party: PARTY,
-    room: ROOM,
-  });
+  const { players, windowDimensions } = useRealtime({ room: ROOM });
 
   // Only surface players that have announced themselves (sent a pathname). A
   // just-connected or mid-reconnect socket sits at empty state for a beat; the
@@ -30,7 +26,7 @@ export const Multiplayer = () => {
     Object.entries(players).filter(([, player]) => !!player.state.pathname),
   );
 
-  const cursors = Object.entries(present)
+  const cursors = Object.entries(OWN_CURSORS.has(pathname) ? {} : present)
     .filter(
       ([, player]) => !!player.state.x && !!player.state.y && player.state.pathname === pathname,
     )

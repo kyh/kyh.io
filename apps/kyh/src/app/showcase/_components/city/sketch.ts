@@ -66,6 +66,33 @@ export const createSketch = (view: Vec3 | null = VIEW): Sketch => ({
   view,
 });
 
+/** How much of the screen each color covers in a sketch, its parts included. */
+export const faceAreas = (sketch: Sketch, areas = new Map<Token, number>()) => {
+  for (const [token, positions] of sketch.faces) {
+    let area = 0;
+    for (let index = 0; index + 8 < positions.length; index += 9) {
+      const ax = (positions[index + 3] ?? 0) - (positions[index] ?? 0);
+      const ay = (positions[index + 4] ?? 0) - (positions[index + 1] ?? 0);
+      const az = (positions[index + 5] ?? 0) - (positions[index + 2] ?? 0);
+      const bx = (positions[index + 6] ?? 0) - (positions[index] ?? 0);
+      const by = (positions[index + 7] ?? 0) - (positions[index + 1] ?? 0);
+      const bz = (positions[index + 8] ?? 0) - (positions[index + 2] ?? 0);
+      // The triangle's area as the fixed camera sees it.
+      area +=
+        Math.abs(
+          (ay * bz - az * by) * VIEW[0] +
+            (az * bx - ax * bz) * VIEW[1] +
+            (ax * by - ay * bx) * VIEW[2],
+        ) / 2;
+    }
+    areas.set(token, (areas.get(token) ?? 0) + area);
+  }
+  for (const piece of sketch.parts) {
+    faceAreas(piece.sketch, areas);
+  }
+  return areas;
+};
+
 export const part = (sketch: Sketch, name: string, origin: Vec3, turns = false) => {
   const child = createSketch(turns ? null : sketch.view);
   sketch.parts.push({ name, origin, sketch: child });

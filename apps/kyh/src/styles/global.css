@@ -483,6 +483,65 @@ button.link {
     opacity: 0.55;
   }
 
+  /* A visitor's line on the way out of a project: its tail on their head. */
+  .city-bubble {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: max-content;
+    max-width: 210px;
+    padding: 4px 8px 4px 5px;
+    border: 1px solid var(--city-line);
+    border-radius: 10px;
+    background: var(--city-paper);
+    box-shadow: 0 2px 0 var(--city-shadow);
+    color: var(--city-ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.25;
+    translate: -50% calc(-100% - 8px);
+    will-change: transform, opacity;
+
+    img {
+      flex: none;
+      width: 14px;
+      max-width: none;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    &::after {
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      border-right: 1px solid var(--city-line);
+      border-bottom: 1px solid var(--city-line);
+      background: var(--city-paper);
+      content: "";
+      transform: translateX(-50%) rotate(45deg);
+    }
+  }
+
+  /* Someone else in town: their pointer, in their color, its tip on the spot they point at. */
+  .city-pointer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.18));
+    translate: -2px -2px;
+    will-change: transform;
+
+    &[data-holding="true"] svg {
+      scale: 0.86;
+    }
+  }
+
   .city-card {
     position: absolute;
     bottom: calc(56px * var(--pin-scale, 1));

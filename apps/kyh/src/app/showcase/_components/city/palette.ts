@@ -109,12 +109,60 @@ export const ACCENTS = [
   "accentOrange",
 ] as const satisfies readonly Token[];
 
+const channels = (hex: string) => {
+  const value = Number.parseInt(hex.slice(1), 16);
+  return [Math.floor(value / 65_536) % 256, Math.floor(value / 256) % 256, value % 256] as const;
+};
+
+/** The vivid accent each pastel belongs to. */
+const ACCENT_OF: Partial<Record<Token, Token>> = {
+  roofBlue: "accentBlue",
+  roofBlueShade: "accentBlue",
+  roofGreen: "accentGreen",
+  roofGreenShade: "accentGreen",
+  roofLilac: "accentPurple",
+  roofLilacShade: "accentPurple",
+  roofPink: "accentPink",
+  roofPinkShade: "accentPink",
+  roofTeal: "accentTeal",
+  roofTealShade: "accentTeal",
+  roofTerracotta: "accentOrange",
+  roofTerracottaShade: "accentOrange",
+  roofYellow: "accentYellow",
+  roofYellowShade: "accentYellow",
+};
+
+const VIVID: ReadonlySet<Token> = new Set<Token>(ACCENTS);
+
+/**
+ * A building's own color, for the glow round its lot: whichever accent its
+ * colored surfaces add up to most, weighted by how colorful each one is, so
+ * a big pastel roof beats a small red door and grey walls count for nothing.
+ */
+export const signature = (areas: ReadonlyMap<Token, number>): Token => {
+  const weights = new Map<Token, number>();
+  for (const [token, area] of areas) {
+    const [r, g, b] = channels(PALETTE[token].day);
+    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+    const accent = ACCENT_OF[token] ?? token;
+    if (chroma > 24 && VIVID.has(accent)) {
+      weights.set(accent, (weights.get(accent) ?? 0) + area * chroma);
+    }
+  }
+  let best: Token = "accentBlue";
+  let bestWeight = 0;
+  for (const [token, weight] of weights) {
+    if (weight > bestWeight) {
+      best = token;
+      bestWeight = weight;
+    }
+  }
+  return best;
+};
+
 /** The same color as a grey of equal lightness (Rec. 601 luma, in sRGB). */
 export const greyOf = (hex: string) => {
-  const value = Number.parseInt(hex.slice(1), 16);
-  const r = Math.floor(value / 65_536) % 256;
-  const g = Math.floor(value / 256) % 256;
-  const b = value % 256;
+  const [r, g, b] = channels(hex);
   const luma = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
   const channel = luma.toString(16).padStart(2, "0");
   return `#${channel}${channel}${channel}`;

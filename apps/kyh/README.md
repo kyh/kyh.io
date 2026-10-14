@@ -10,7 +10,7 @@
 - Physics - [Matter.js](https://brm.io/matter-js/)
 - 3D - [three.js](https://threejs.org/) (the `/showcase` city)
 - Styling - [Tailwind CSS v4](https://tailwindcss.com)
-- Multiplayer - [PartySocket](https://github.com/cloudflare/partykit/tree/main/packages/partysocket)
+- Multiplayer - [@vibedgames/multiplayer](https://github.com/kyh/vibedgames/tree/main/packages/multiplayer) on the shared vibedgames party server
 - Hosting - [Vercel](https://vercel.com)
 
 ## Development

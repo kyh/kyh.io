@@ -10,15 +10,17 @@ import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
 
-const loadCity = async (
-  host: HTMLElement,
-  projects: CityProject[],
-  theme: Theme,
-  reducedMotion: boolean,
-  callbacks: CityCallbacks,
-) => {
+interface CityMount extends CityCallbacks {
+  overlay: HTMLElement | null;
+  projects: CityProject[];
+  theme: Theme;
+  reducedMotion: boolean;
+  onPeople: (count: number) => void;
+}
+
+const loadCity = async (host: HTMLElement, mount: CityMount) => {
   const { createCity } = await import("./city/engine");
-  return createCity(host, { ...callbacks, projects, reducedMotion, theme });
+  return createCity(host, { ...mount, shared: true });
 };
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
@@ -42,6 +44,7 @@ interface CityShowcaseProps {
 
 export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
@@ -50,6 +53,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
+  const [people, setPeople] = useState(1);
 
   useEffect(() => {
     const host = containerRef.current;
@@ -60,7 +64,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     let isMounted = true;
     const mount = async () => {
       try {
-        const city = await loadCity(host, projects, themeRef.current, reducedMotion, {
+        const city = await loadCity(host, {
           onHover: setLit,
           onOpen: (slug) => {
             const url = urls.get(slug);
@@ -68,6 +72,11 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
               window.open(url, "_blank", "noopener,noreferrer");
             }
           },
+          onPeople: setPeople,
+          overlay: overlayRef.current,
+          projects,
+          reducedMotion,
+          theme: themeRef.current,
         });
         if (!isMounted) {
           city.dispose();
@@ -110,10 +119,12 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   return (
     <div className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
+      {/* Visitors' lines and other people's pointers, under the pins so a lit card stays on top. */}
+      <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {status === "failed" ? (
         <PinList projects={projects} />
       ) : (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
           {projects.map((project) => (
             <Pin
               key={project.slug}
@@ -125,6 +136,11 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
             />
           ))}
         </div>
+      )}
+      {status === "ready" && (
+        <p className="city-panel absolute right-4 bottom-[calc(4vh+90px)] px-2.5 py-1 font-mono text-[11px] text-[var(--city-ink-soft)] sm:bottom-6">
+          {people > 1 ? `${people} in town · ` : ""}pick up a car
+        </p>
       )}
       {status === "loading" && (
         <p className="city-panel absolute bottom-[calc(4vh+90px)] left-1/2 -translate-x-1/2 px-3 py-1.5 font-mono text-xs text-[var(--city-ink-soft)]">

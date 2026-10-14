@@ -40,6 +40,16 @@ export const createRandom = (seed: number): Random => {
   };
 };
 
+/**
+ * The same generator as plain numbers, for state that is saved and sent:
+ * each moving thing in town carries its own, so a snapshot of the town is
+ * the whole truth and every browser steps it the same way.
+ */
+export const seedOf = (seed: number) => Math.abs(Math.floor(seed)) % MODULUS || 1;
+export const advance = (state: number) => (state * MULTIPLIER) % MODULUS;
+/** A state's draw, uniform in [0, 1). */
+export const drawOf = (state: number) => (state - 1) / (MODULUS - 1);
+
 /** A stable number for a string, to seed per-building variety. */
 export const hashString = (text: string) => {
   let hash = 7;

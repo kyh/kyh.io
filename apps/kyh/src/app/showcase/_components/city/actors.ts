@@ -1,9 +1,11 @@
 // Cars and people, drawn as instances: one mesh per part for the whole
 // crowd, each outlined by a slightly larger copy drawn inside out in ink.
+// Whatever is up in the air (carried, or falling) gets a soft shadow below.
 import type { BufferGeometry } from "three";
 import {
   BackSide,
   BoxGeometry,
+  CircleGeometry,
   Color,
   InstancedMesh,
   Matrix4,
@@ -14,7 +16,6 @@ import {
 } from "three";
 
 import type { Theme, Token } from "./palette";
-import type { Car, Pose, Walker } from "./traffic";
 import { shade } from "./palette";
 
 const CAR_TOKENS: Token[] = [
@@ -43,6 +44,40 @@ const COAT_TOKENS: Token[] = [
 const SKIN_TOKENS: Token[] = ["skin", "skin", "skinDark"];
 /** How far an outline stands out from its shape, in cells. */
 const INK = 0.012;
+/** The most shadows drawn at once: one per thing in the air. */
+const SHADOWS = 24;
+
+/** Where and how one car or person is drawn this frame. */
+export interface Placement {
+  x: number;
+  y: number;
+  z: number;
+  heading: number;
+  /** Which way and how far (radians) its top leans, swinging from a hand. */
+  leanX: number;
+  leanZ: number;
+  /** False while it's inside a building. */
+  shown: boolean;
+  /** Its shadow on the ground, sized for how high it is; size 0 for none. */
+  shadowX: number;
+  shadowY: number;
+  shadowZ: number;
+  shadowSize: number;
+}
+
+export const placement = (): Placement => ({
+  heading: 0,
+  leanX: 0,
+  leanZ: 0,
+  shadowSize: 0,
+  shadowX: 0,
+  shadowY: 0,
+  shadowZ: 0,
+  shown: true,
+  x: 0,
+  y: 0,
+  z: 0,
+});
 
 const boxPair = (w: number, h: number, d: number, y: number, x = 0) => {
   const fill = new BoxGeometry(w, h, d).translate(x, y, 0);
@@ -55,10 +90,19 @@ interface Layer {
   tokens: Token[] | null;
 }
 
-export const createActors = (cars: readonly Car[], walkers: readonly Walker[], theme: Theme) => {
+export const createActors = (
+  counts: { cars: number; walkers: number; visitors: number },
+  theme: Theme,
+) => {
   const ink = new MeshBasicMaterial({ color: shade("ink", theme, false), side: BackSide });
   const tinted = new MeshBasicMaterial({ color: "#ffffff" });
   const cabin = new MeshBasicMaterial({ color: shade("glassDim", theme, false) });
+  const shadowMaterial = new MeshBasicMaterial({
+    color: "#000000",
+    depthWrite: false,
+    opacity: 0.16,
+    transparent: true,
+  });
   const layers: Layer[] = [];
   const geometries: BufferGeometry[] = [];
   const layer = (
@@ -76,24 +120,48 @@ export const createActors = (cars: readonly Car[], walkers: readonly Walker[], t
   };
   const [carBody, carBodyInk] = boxPair(0.38, 0.09, 0.19, 0.075);
   const [carTop, carTopInk] = boxPair(0.2, 0.07, 0.16, 0.15, -0.03);
-  const carColors = cars.map((_, index) => CAR_TOKENS[index % CAR_TOKENS.length] ?? "white");
+  const carColors = Array.from(
+    { length: counts.cars },
+    (_, index) => CAR_TOKENS[index % CAR_TOKENS.length] ?? "white",
+  );
   const carMeshes = [
-    layer(carBodyInk, ink, cars.length, null),
-    layer(carBody, tinted, cars.length, carColors),
-    layer(carTopInk, ink, cars.length, null),
-    layer(carTop, cabin, cars.length, null),
+    layer(carBodyInk, ink, counts.cars, null),
+    layer(carBody, tinted, counts.cars, carColors),
+    layer(carTopInk, ink, counts.cars, null),
+    layer(carTop, cabin, counts.cars, null),
   ];
   const [body, bodyInk] = boxPair(0.075, 0.15, 0.055, 0.1);
   const head = new SphereGeometry(0.036, 8, 6).translate(0, 0.22, 0);
   const headInk = new SphereGeometry(0.036 + INK, 8, 6).translate(0, 0.22, 0);
-  const coats = walkers.map((_, index) => COAT_TOKENS[(index * 7) % COAT_TOKENS.length] ?? "navy");
-  const skins = walkers.map((_, index) => SKIN_TOKENS[index % SKIN_TOKENS.length] ?? "skin");
-  const walkerMeshes = [
-    layer(bodyInk, ink, walkers.length, null),
-    layer(body, tinted, walkers.length, coats),
-    layer(headInk, ink, walkers.length, null),
-    layer(head, tinted, walkers.length, skins),
-  ];
+  const person = (count: number, offset: number) => {
+    const coats = Array.from(
+      { length: count },
+      (_, index) => COAT_TOKENS[((index + offset) * 7) % COAT_TOKENS.length] ?? "navy",
+    );
+    const skins = Array.from(
+      { length: count },
+      (_, index) => SKIN_TOKENS[(index + offset) % SKIN_TOKENS.length] ?? "skin",
+    );
+    // Each group gets its own geometry copies, so disposing one never frees another's.
+    return [
+      layer(bodyInk.clone(), ink, count, null),
+      layer(body.clone(), tinted, count, coats),
+      layer(headInk.clone(), ink, count, null),
+      layer(head.clone(), tinted, count, skins),
+    ];
+  };
+  const walkerMeshes = person(counts.walkers, 0);
+  const visitorMeshes = person(counts.visitors, 3);
+  for (const geometry of [body, bodyInk, head, headInk]) {
+    geometry.dispose();
+  }
+  const shadowGeometry = new CircleGeometry(0.15, 16).rotateX(-Math.PI / 2);
+  geometries.push(shadowGeometry);
+  const shadows = new InstancedMesh(shadowGeometry, shadowMaterial, SHADOWS);
+  shadows.count = 0;
+  shadows.frustumCulled = false;
+  shadows.renderOrder = 2;
+
   const paintLayers = (next: Theme) => {
     const color = new Color();
     for (const { mesh, tokens } of layers) {
@@ -108,33 +176,50 @@ export const createActors = (cars: readonly Car[], walkers: readonly Walker[], t
     }
     ink.color.set(shade("ink", next, false));
     cabin.color.set(shade("glassDim", next, false));
+    shadowMaterial.opacity = next === "night" ? 0.3 : 0.16;
   };
   paintLayers(theme);
 
   const matrix = new Matrix4();
   const position = new Vector3();
-  const rotation = new Quaternion();
-  const unit = new Vector3(1, 1, 1);
+  const yaw = new Quaternion();
+  const lean = new Quaternion();
+  const axis = new Vector3();
   const up = new Vector3(0, 1, 0);
-  const place = (
-    meshes: InstancedMesh[],
-    poses: readonly Pose[],
-    lift: (index: number) => number,
-  ) => {
-    for (const [index, pose] of poses.entries()) {
-      position.set(pose.x, lift(index), pose.z);
-      rotation.setFromAxisAngle(up, -pose.heading);
-      matrix.compose(position, rotation, unit);
+  const unit = new Vector3(1, 1, 1);
+  const none = new Vector3(0, 0, 0);
+  const shadowAt = new Vector3();
+  const shadowSize = new Vector3();
+  const flat = new Quaternion();
+  let shadowCount = 0;
+
+  const place = (meshes: InstancedMesh[], placements: readonly Placement[]) => {
+    for (const [index, spot] of placements.entries()) {
+      position.set(spot.x, spot.y, spot.z);
+      yaw.setFromAxisAngle(up, -spot.heading);
+      const tilt = Math.hypot(spot.leanX, spot.leanZ);
+      if (tilt > 1e-4) {
+        // Lean the top toward (leanX, leanZ): turn about the level axis across it.
+        lean.setFromAxisAngle(axis.set(spot.leanZ / tilt, 0, -spot.leanX / tilt), tilt);
+        yaw.premultiply(lean);
+      }
+      matrix.compose(position, yaw, spot.shown ? unit : none);
       for (const mesh of meshes) {
         mesh.setMatrixAt(index, matrix);
+      }
+      if (spot.shown && spot.shadowSize > 0 && shadowCount < SHADOWS) {
+        shadowAt.set(spot.shadowX, spot.shadowY + 0.006, spot.shadowZ);
+        shadowSize.set(spot.shadowSize, 1, spot.shadowSize);
+        matrix.compose(shadowAt, flat, shadowSize);
+        shadows.setMatrixAt(shadowCount, matrix);
+        shadowCount += 1;
       }
     }
     for (const mesh of meshes) {
       mesh.instanceMatrix.needsUpdate = true;
     }
   };
-  const carPoses = cars.map((car) => car.pose);
-  const walkerPoses = walkers.map((walker) => walker.pose);
+
   return {
     dispose: () => {
       for (const geometry of geometries) {
@@ -143,16 +228,21 @@ export const createActors = (cars: readonly Car[], walkers: readonly Walker[], t
       ink.dispose();
       tinted.dispose();
       cabin.dispose();
+      shadowMaterial.dispose();
     },
-    meshes: layers.map(({ mesh }) => mesh),
+    meshes: [...layers.map(({ mesh }) => mesh), shadows],
     setTheme: paintLayers,
-    update: () => {
-      place(carMeshes, carPoses, () => 0.012);
-      place(
-        walkerMeshes,
-        walkerPoses,
-        (index) => 0.04 + Math.abs(Math.sin(walkers[index]?.phase ?? 0)) * 0.014,
-      );
+    update: (
+      cars: readonly Placement[],
+      walkers: readonly Placement[],
+      visitors: readonly Placement[],
+    ) => {
+      shadowCount = 0;
+      place(carMeshes, cars);
+      place(walkerMeshes, walkers);
+      place(visitorMeshes, visitors);
+      shadows.count = shadowCount;
+      shadows.instanceMatrix.needsUpdate = true;
     },
   };
 };

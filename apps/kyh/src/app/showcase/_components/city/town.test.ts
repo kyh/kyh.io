@@ -7,9 +7,10 @@ import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
+import { ACCENTS, signature } from "./palette";
 import { planCity } from "./plan";
 import { createRandom } from "./random";
-import { createSketch } from "./sketch";
+import { createSketch, faceAreas } from "./sketch";
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   description: project.description,
@@ -63,6 +64,16 @@ test("each building is drawn on its own, so it can light up alone", () => {
   for (const { project, sketch } of placed) {
     assert.ok(sketch.faces.size > 0, `${project.title} has no faces of its own`);
   }
+});
+
+test("each building glows in a color of its own when it's lit", () => {
+  const { placed } = drawTown(cityProjects);
+  const accents: readonly string[] = ACCENTS;
+  const colors = placed.map(({ sketch }) => signature(faceAreas(sketch)));
+  for (const [index, color] of colors.entries()) {
+    assert.ok(accents.includes(color), `${placed[index]?.project.title} glows ${color}`);
+  }
+  assert.ok(new Set(colors).size >= 4, `only ${new Set(colors).size} colors across town`);
 });
 
 test("a project added tomorrow still gets a building with its name on it", () => {
