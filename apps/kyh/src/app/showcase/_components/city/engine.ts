@@ -398,6 +398,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       projected.set(x, y, z).project(camera);
       return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
     },
+    town: firstTown.sketch,
     view: () => viewAt(angle),
   });
 

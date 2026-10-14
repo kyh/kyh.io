@@ -11,7 +11,7 @@ import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
 import type { Theme } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Vec3 } from "./sketch";
+import type { Sketch, Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";
 import { CURB_TOP } from "./draw-blocks";
@@ -19,6 +19,7 @@ import { createNet } from "./net";
 import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
+import { createHeights } from "./heights";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
@@ -38,8 +39,8 @@ const TICK_MS = TICK * 1000;
 const CATCH_UP = 100;
 /** How far above the ground something held hangs. */
 const HANG = LIFT - 0.18;
-/** How long a thing takes to rise off the ground when picked up (ms). */
-const PICKUP_MS = 120;
+/** How far something picked up has to be carried, in cells, before it hangs at full height. */
+const LIFT_SPAN = 1.2;
 /** The little hop a thing makes when it lands (ms). */
 const BOUNCE_MS = 340;
 /** The most lines up at once, and the zoom (CSS pixels a cell) they need to be readable. */
@@ -64,11 +65,20 @@ interface Held {
   key: string;
   /** Its ground point: it hangs above it, casts its shadow on it, and lands on it. */
   spot: Spot;
+  /** How high it hangs: on the view ray through where it's seen, so it stays in the hand. */
+  altitude: number;
   /**
    * Where on screen it was grabbed, from the pointer, as ground points that
    * look the same: kept so it stays exactly where the hand took hold of it.
    */
   offset: { x: number; z: number };
+  /** Where it is on screen now, as a ground point. */
+  seen: { x: number; z: number };
+  /**
+   * How far off the ground it's come, 0 to 1: nothing when it's picked up,
+   * all of HANG once it's been carried LIFT_SPAN, so it rises as it's moved.
+   */
+  lift: number;
   samples: { t: number; x: number; z: number }[];
 }
 
@@ -86,9 +96,6 @@ interface Lean {
   z: number;
   leanX: number;
   leanZ: number;
-  /** Where its shadow was when it was picked up, and when: the shadow slides from there to under it. */
-  from: { x: number; z: number };
-  since: number;
 }
 
 export interface LifeOptions {
@@ -105,6 +112,8 @@ export interface LifeOptions {
   scale: () => number;
   /** Toward the camera, which turns in quarter turns. */
   view: () => Vec3;
+  /** The town's own drawing, besides the projects' buildings: what something held can hang over. */
+  town: Sketch;
   size: () => { width: number; height: number };
 }
 
@@ -180,6 +189,15 @@ export const createLife = (options: LifeOptions) => {
     )
       ? CURB_TOP
       : 0;
+  let surface: ((x: number, z: number) => number) | null = null;
+  /** The highest flat top under a point (a roof, a ledge, else the street), worked out on first use. */
+  const surfaceAt = (x: number, z: number) => {
+    surface ??= createHeights(
+      [options.town, ...options.placed.map((entry) => entry.sketch)],
+      groundAt,
+    );
+    return surface(x, z);
+  };
 
   let held: Held | null = null;
   /** What other people are holding: key → who. */
@@ -233,7 +251,7 @@ export const createLife = (options: LifeOptions) => {
               const hand = leans.get(key);
               const spot = shown.get(key);
               const from = hand
-                ? { x: hand.x, y: LIFT + groundAt(hand.x, hand.z), z: hand.z }
+                ? { x: hand.x, y: LIFT + surfaceAt(hand.x, hand.z), z: hand.z }
                 : { x: spot?.x ?? 0, y: spot?.y ?? 0, z: spot?.z ?? 0 };
               const landed = world.land(key, from.x, from.z, world.tick);
               if (landed) {
@@ -272,16 +290,9 @@ export const createLife = (options: LifeOptions) => {
     }
   };
 
-  /** Where a thing hangs over the ground point a pointer is on, swinging as it moves. */
-  const hang = (key: string, spot: Spot, out: Placement, dt: number) => {
-    const lean = leans.get(key) ?? {
-      from: { x: out.x, z: out.z },
-      leanX: 0,
-      leanZ: 0,
-      since: performance.now(),
-      x: spot.x,
-      z: spot.z,
-    };
+  /** A thing hanging at `altitude` over the ground point `spot`, swinging as it moves; its shadow straight below. */
+  const hang = (key: string, spot: Spot, altitude: number, out: Placement, dt: number) => {
+    const lean = leans.get(key) ?? { leanX: 0, leanZ: 0, x: spot.x, z: spot.z };
     const seconds = Math.max(dt, 1e-3);
     const vx = (spot.x - lean.x) / seconds;
     const vz = (spot.z - lean.z) / seconds;
@@ -291,7 +302,8 @@ export const createLife = (options: LifeOptions) => {
     lean.x = spot.x;
     lean.z = spot.z;
     leans.set(key, lean);
-    const y = groundAt(spot.x, spot.z) + HANG;
+    const floor = surfaceAt(spot.x, spot.z);
+    const y = Math.max(floor, altitude);
     // Drawn up the view ray, clear of roofs, where it looks the same.
     const toward = options.view();
     const along = (RAISE - y) / toward[1];
@@ -301,31 +313,37 @@ export const createLife = (options: LifeOptions) => {
     out.leanX = lean.leanX;
     out.leanZ = lean.leanZ;
     out.shown = true;
-    // It stays in the hand; lifting it shows in its shadow, sliding out from
-    // under where it stood to the ground beneath it, and spreading as it goes.
-    const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
-    const eased = 1 - (1 - rise) ** 3;
-    out.shadowX = lerp(lean.from.x, spot.x, eased);
-    out.shadowZ = lerp(lean.from.z, spot.z, eased);
-    out.shadowY = groundAt(out.shadowX, out.shadowZ);
-    out.shadowSize = shadowFor(HANG * eased);
+    out.shadowX = spot.x;
+    out.shadowZ = spot.z;
+    out.shadowY = floor;
+    out.shadowSize = shadowFor(y - floor);
   };
 
   /**
-   * The ground point something hangs over to look like it's at `seen`, a
-   * ground point on screen: up the view ray from it to hanging height.
+   * Where something hangs, `height` over whatever's below (a roof or the
+   * street), to look like it's at `seen`, a ground point on screen: the point
+   * up the view ray at that altitude, and the ground point under it. What's
+   * below depends on where that lands, so it's found twice; either way the
+   * thing stays on its point of the ray, so it never leaves the hand.
    */
-  const hangingOver = (seen: { x: number; z: number }): Spot => {
+  const hangingOver = (seen: { x: number; z: number }, height: number) => {
     const toward = options.view();
-    const up = (groundAt(seen.x, seen.z) + HANG) / toward[1];
-    return { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up };
+    let altitude = surfaceAt(seen.x, seen.z) + height;
+    let spot: Spot = { x: seen.x, y: 0, z: seen.z };
+    for (let pass = 0; pass < 2; pass += 1) {
+      const up = altitude / toward[1];
+      spot = { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up };
+      altitude = surfaceAt(spot.x, spot.z) + height;
+    }
+    const up = altitude / toward[1];
+    return { altitude, spot: { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up } };
   };
 
   /** A shadow straight under something falling. */
   const shadowUnder = (out: Placement) => {
     out.shadowX = out.x;
     out.shadowZ = out.z;
-    out.shadowY = groundAt(out.x, out.z);
+    out.shadowY = surfaceAt(out.x, out.z);
     out.shadowSize = shadowFor(out.y - out.shadowY);
   };
 
@@ -369,14 +387,14 @@ export const createLife = (options: LifeOptions) => {
   /** Draws one mover: carried, falling, or going about its way. */
   const draw = (key: string, last: Pose, pose: Pose, out: Placement, y: number, frame: Frame) => {
     if (held?.key === key) {
-      hang(key, held.spot, out, frame.dt);
+      hang(key, held.spot, held.altitude, out, frame.dt);
       return;
     }
     const owner = theirs.get(key);
     if (owner !== undefined) {
       const hand = frame.hands.get(owner);
       if (hand) {
-        hang(key, hand, out, frame.dt);
+        hang(key, hand, surfaceAt(hand.x, hand.z) + HANG, out, frame.dt);
       }
       return;
     }
@@ -512,7 +530,11 @@ export const createLife = (options: LifeOptions) => {
       if (!held) {
         return;
       }
-      held.spot = hangingOver({ x: spot.x + held.offset.x, z: spot.z + held.offset.z });
+      const seen = { x: spot.x + held.offset.x, z: spot.z + held.offset.z };
+      const moved = Math.hypot(seen.x - held.seen.x, seen.z - held.seen.z);
+      held.lift = Math.min(1, held.lift + moved / LIFT_SPAN);
+      held.seen = seen;
+      ({ altitude: held.altitude, spot: held.spot } = hangingOver(seen, HANG * held.lift));
       held.samples.push({ t: performance.now(), x: held.spot.x, z: held.spot.z });
       if (held.samples.length > 12) {
         held.samples.shift();
@@ -562,11 +584,14 @@ export const createLife = (options: LifeOptions) => {
         ? { x: at.x - (toward[0] * at.y) / toward[1], z: at.z - (toward[2] * at.y) / toward[1] }
         : spot;
       const offset = { x: seen.x - spot.x, z: seen.z - spot.z };
-      const ground = hangingOver(seen);
+      const { altitude, spot: ground } = hangingOver(seen, 0);
       held = {
+        altitude,
         key,
+        lift: 0,
         offset,
         samples: [{ t: performance.now(), x: ground.x, z: ground.z }],
+        seen,
         spot: ground,
       };
       world.hold(key);
@@ -587,7 +612,11 @@ export const createLife = (options: LifeOptions) => {
         return;
       }
       const { key } = held;
-      const spot = { x: held.spot.x, y: LIFT + groundAt(held.spot.x, held.spot.z), z: held.spot.z };
+      const spot = {
+        x: held.spot.x,
+        y: held.altitude,
+        z: held.spot.z,
+      };
       const velocity = velocityOf(held.samples);
       const speed = Math.hypot(velocity.x, velocity.z);
       const reach = Math.min(4, speed * 0.26);
