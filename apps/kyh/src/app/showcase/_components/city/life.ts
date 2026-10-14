@@ -36,6 +36,8 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
+/** How far above the ground something held hangs. */
+const HANG = LIFT - 0.18;
 /** How long a thing takes to rise off the ground when picked up (ms). */
 const PICKUP_MS = 120;
 /** The little hop a thing makes when it lands (ms). */
@@ -62,7 +64,10 @@ interface Held {
   key: string;
   /** Its ground point: it hangs above it, casts its shadow on it, and lands on it. */
   spot: Spot;
-  /** From the pointer's ground point to its own, kept from the grab so it doesn't jump to the pointer. */
+  /**
+   * Where on screen it was grabbed, from the pointer, as ground points that
+   * look the same: kept so it stays exactly where the hand took hold of it.
+   */
   offset: { x: number; z: number };
   samples: { t: number; x: number; z: number }[];
 }
@@ -81,7 +86,8 @@ interface Lean {
   z: number;
   leanX: number;
   leanZ: number;
-  /** When it was picked up: it rises off the ground from then. */
+  /** Where its shadow was when it was picked up, and when: the shadow slides from there to under it. */
+  from: { x: number; z: number };
   since: number;
 }
 
@@ -269,6 +275,7 @@ export const createLife = (options: LifeOptions) => {
   /** Where a thing hangs over the ground point a pointer is on, swinging as it moves. */
   const hang = (key: string, spot: Spot, out: Placement, dt: number) => {
     const lean = leans.get(key) ?? {
+      from: { x: out.x, z: out.z },
       leanX: 0,
       leanZ: 0,
       since: performance.now(),
@@ -284,8 +291,7 @@ export const createLife = (options: LifeOptions) => {
     lean.x = spot.x;
     lean.z = spot.z;
     leans.set(key, lean);
-    const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
-    const y = groundAt(spot.x, spot.z) + (LIFT - 0.18) * (1 - (1 - rise) ** 3);
+    const y = groundAt(spot.x, spot.z) + HANG;
     // Drawn up the view ray, clear of roofs, where it looks the same.
     const toward = options.view();
     const along = (RAISE - y) / toward[1];
@@ -295,10 +301,24 @@ export const createLife = (options: LifeOptions) => {
     out.leanX = lean.leanX;
     out.leanZ = lean.leanZ;
     out.shown = true;
-    out.shadowX = spot.x;
-    out.shadowZ = spot.z;
-    out.shadowY = groundAt(spot.x, spot.z);
-    out.shadowSize = shadowFor(y - out.shadowY);
+    // It stays in the hand; lifting it shows in its shadow, sliding out from
+    // under where it stood to the ground beneath it, and spreading as it goes.
+    const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
+    const eased = 1 - (1 - rise) ** 3;
+    out.shadowX = lerp(lean.from.x, spot.x, eased);
+    out.shadowZ = lerp(lean.from.z, spot.z, eased);
+    out.shadowY = groundAt(out.shadowX, out.shadowZ);
+    out.shadowSize = shadowFor(HANG * eased);
+  };
+
+  /**
+   * The ground point something hangs over to look like it's at `seen`, a
+   * ground point on screen: up the view ray from it to hanging height.
+   */
+  const hangingOver = (seen: { x: number; z: number }): Spot => {
+    const toward = options.view();
+    const up = (groundAt(seen.x, seen.z) + HANG) / toward[1];
+    return { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up };
   };
 
   /** A shadow straight under something falling. */
@@ -492,7 +512,7 @@ export const createLife = (options: LifeOptions) => {
       if (!held) {
         return;
       }
-      held.spot = { x: spot.x + held.offset.x, y: 0, z: spot.z + held.offset.z };
+      held.spot = hangingOver({ x: spot.x + held.offset.x, z: spot.z + held.offset.z });
       held.samples.push({ t: performance.now(), x: held.spot.x, z: held.spot.z });
       if (held.samples.length > 12) {
         held.samples.shift();
@@ -535,9 +555,14 @@ export const createLife = (options: LifeOptions) => {
         return false;
       }
       air.delete(key);
+      // Where it is on screen, as a ground point: down the view ray from where it's drawn.
       const at = shown.get(key);
-      const offset = at ? { x: at.x - spot.x, z: at.z - spot.z } : { x: 0, z: 0 };
-      const ground = { x: spot.x + offset.x, y: 0, z: spot.z + offset.z };
+      const toward = options.view();
+      const seen = at
+        ? { x: at.x - (toward[0] * at.y) / toward[1], z: at.z - (toward[2] * at.y) / toward[1] }
+        : spot;
+      const offset = { x: seen.x - spot.x, z: seen.z - spot.z };
+      const ground = hangingOver(seen);
       held = {
         key,
         offset,
