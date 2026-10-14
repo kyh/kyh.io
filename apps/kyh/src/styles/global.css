@@ -417,8 +417,11 @@ button.link {
   }
 
   /* A project's icon over its roof. The city moves the pin's origin to the
-     roof each frame; the body sits on it, the card above (or below) it. */
+     roof each frame; the stem stands on it, and the body sits on the stem: the
+     icon, which opens into the project's card while its building is lit. */
   .city-pin {
+    --pin-icon: calc(26px * var(--pin-scale, 1));
+    --pin-stem: calc(9px * var(--pin-scale, 1));
     position: absolute;
     top: 0;
     left: 0;
@@ -430,36 +433,39 @@ button.link {
     }
   }
 
-  .city-pin-body {
+  .city-pin-stem {
     position: absolute;
     bottom: 0;
+    left: -0.5px;
+    width: 1px;
+    height: var(--pin-stem);
+    background: var(--city-ink);
+    opacity: 0.55;
+  }
+
+  /* Centred on the stem, open or closed: the card goes with its building. */
+  .city-pin-body {
+    position: absolute;
+    bottom: var(--pin-stem);
     left: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateX(-50%) scale(var(--pin-scale, 1));
-    transform-origin: 50% 100%;
+    transform: translateX(-50%);
   }
 
   .city-pin-icon {
     display: block;
     padding: 3px;
     border: 1px solid var(--city-line);
-    border-radius: 9px;
     background: var(--city-paper);
     box-shadow: 0 2px 0 var(--city-shadow);
-    /* Grows up off its stem: the box only gains ground, so a hover never slips off it. */
-    transform-origin: 50% 100%;
-    transition:
-      transform 0.15s ease-out,
-      border-color 0.15s ease-out;
+    color: var(--city-ink);
+    transition: border-color 0.15s ease-out;
 
     /* Sized here: inside a shrink-to-fit pin, preflight's max-width: 100% would collapse it. */
     img {
       display: block;
-      width: 26px;
+      width: var(--pin-icon);
       max-width: none;
-      height: 26px;
+      height: var(--pin-icon);
       border-radius: 6px;
     }
 
@@ -467,20 +473,24 @@ button.link {
     &:focus-visible,
     [data-lit="true"] & {
       border-color: var(--city-ink);
-      transform: scale(1.12);
     }
 
     &:focus-visible {
       outline: 2px solid var(--city-ink);
       outline-offset: 2px;
     }
-  }
 
-  .city-pin-stem {
-    width: 1px;
-    height: 9px;
-    background: var(--city-ink);
-    opacity: 0.55;
+    [data-lit="true"] & {
+      width: max-content;
+      max-width: min(260px, calc(100vw - 32px));
+      padding: 10px 12px;
+
+      img {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+      }
+    }
   }
 
   /* A visitor's line on the way out of a project: its tail on their head. */
@@ -539,28 +549,6 @@ button.link {
 
     &[data-holding="true"] svg {
       scale: 0.86;
-    }
-  }
-
-  .city-card {
-    position: absolute;
-    bottom: calc(56px * var(--pin-scale, 1));
-    left: 0;
-    width: max-content;
-    max-width: min(260px, calc(100vw - 32px));
-    transform: translateX(-50%);
-
-    [data-below="true"] & {
-      top: 12px;
-      bottom: auto;
-    }
-
-    [data-align="start"] & {
-      transform: translateX(-28px);
-    }
-
-    [data-align="end"] & {
-      transform: translateX(calc(-100% + 28px));
     }
   }
 }

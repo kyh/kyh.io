@@ -50,3 +50,23 @@ test("the stop near the camera is the one it is passing", () => {
   assert.equal(tour?.stopNear(36.5, 36, 2)?.slug, "middle");
   assert.equal(tour?.stopNear(0, 0, 2), null);
 });
+
+test("scrolling counts in stops: each whole index is a stop, round and round", () => {
+  const tour = createTour(STOPS);
+  assert.ok(tour);
+  const count = tour.stops.length;
+  for (const [index, stop] of tour.stops.entries()) {
+    const at = tour.at(tour.along(index));
+    assert.ok(
+      Math.hypot(at.x - stop.x, at.z - stop.z) < 1e-6,
+      `${stop.slug} is not at index ${index}`,
+    );
+  }
+  for (const index of [0, 0.5, 1.25, count - 0.5, count + 2.75, -1.5]) {
+    assert.ok(Math.abs(tour.indexAt(tour.along(index)) - index) < 1e-9, `index ${index}`);
+    assert.ok(Math.abs(tour.along(index + count) - tour.along(index) - tour.length) < 1e-9);
+  }
+  // Halfway between two stops is halfway along the path between them.
+  const mid = tour.along(1.5);
+  assert.ok(Math.abs(mid - (tour.along(1) + tour.along(2)) / 2) < 1e-9);
+});

@@ -45,6 +45,10 @@ const SCREEN_UP = new Vector3(-Math.SQRT1_2, 0, -Math.SQRT1_2);
 const FORESHORTEN = Math.sin(Math.PI / 6);
 /** How far above a roof its pin floats, in cells. */
 const PIN_LIFT = 0.3;
+/** Scroll this far, in pixels, to scrub from one project to the next. */
+const SCRUB_PX = 100;
+/** Scrolling stopped this long ago: the scrub settles on the nearest project. */
+const SETTLE_MS = 160;
 
 export interface CityCallbacks {
   /** The building showing its colors: hovered, focused, or passed by the flyover. */
@@ -61,8 +65,6 @@ export interface CityOptions extends CityCallbacks {
   overlay: HTMLElement | null;
   /** Share the town with everyone else on the page; false keeps it to this browser. */
   shared: boolean;
-  /** How many people are in town, this one included. */
-  onPeople: (count: number) => void;
 }
 
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
@@ -161,13 +163,6 @@ const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, 
   return { builds, update };
 };
 
-const edgeOf = (x: number, width: number) => {
-  if (x < 150) {
-    return "start";
-  }
-  return x > width - 150 ? "end" : "center";
-};
-
 /** The last placement written to a pin, so a still camera writes nothing. */
 interface PinState {
   x: number;
@@ -186,7 +181,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
-    "A city of Kai's projects. Drag to look around, scroll to zoom, click a building to open it, and pick up cars and people to move them.",
+    "A city of Kai's projects. Drag to look around, scroll to travel from project to project, pinch to zoom, click a building to open it, and pick up cars and people to move them.",
   );
   container.append(canvas);
 
@@ -242,6 +237,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let height = 1;
   const view = { x: 36, z: 38, zoom: 0.5 };
   let goal: { x: number; z: number; zoom: number } | null = null;
+  /**
+   * Scrolling scrubs the flyover's path, counted in projects: where the
+   * camera is along it, where scrolling has sent it, and when the wheel last
+   * turned.
+   */
+  let scrub: { at: number; target: number; since: number } | null = null;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
@@ -287,7 +288,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // picks up, shared with everyone in the room.
   const projected = new Vector3();
   const life = createLife({
-    onPeople: options.onPeople,
     overlay: options.overlay,
     placed,
     plan,
@@ -315,6 +315,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // The visitor has the camera: a glide to a focused building stops too.
     onTake: () => {
       goal = null;
+      scrub = null;
     },
     still: options.reducedMotion,
   });
@@ -557,21 +558,44 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // The browser took the gesture back (a system swipe, a long press): no tap.
     presses.cancel(event.pointerId);
   };
-  const onPointerLeave = () => {
+  const onPointerLeave = (event: PointerEvent) => {
     mouseAt = null;
     if (carrying === null) {
       life.point(null);
     }
     overActor = false;
-    spotlight.leave(presses.count > 0);
+    // A finger leaves as it lifts: what its tap lit stays lit.
+    if (event.pointerType !== "touch") {
+      spotlight.leave(presses.count > 0);
+    }
     refreshHover();
     updateCursor();
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
+    if (event.ctrlKey) {
+      // A trackpad's pinch: zoom.
+      takeControl();
+      zoomAt(Math.exp(-event.deltaY * 0.01), event.clientX, event.clientY);
+      repick();
+      return;
+    }
+    if (!tour) {
+      return;
+    }
+    // Scrolling either way scrubs the flyover, SCRUB_PX to a project.
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    const pixels = event.deltaMode === 0 ? delta : delta * 40;
+    // Taking the camera ends a scrub; scrolling on carries this one.
+    const carried = scrub;
+    // A focused pin would outrank what the scrub lights: let it go before
+    // taking the camera, whose refresh then shows the change.
+    spotlight.pin(null);
     takeControl();
-    zoomAt(Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015)), event.clientX, event.clientY);
-    repick();
+    const from = tour.indexAt(tour.closest(view.x, view.z));
+    scrub = carried ?? { at: from, since: 0, target: from };
+    scrub.target += pixels / SCRUB_PX;
+    scrub.since = performance.now();
   };
   const onDoubleClick = (event: MouseEvent) => {
     // A double click on a building already opened it, and one on a car made it
@@ -632,10 +656,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
           element.style.zIndex = String(lit ? 100_000 : Math.round(y));
           element.style.setProperty("--pin-scale", scale);
           element.dataset.hidden = String(hidden);
-          // Cards open above the pin, or below it near the top of the screen,
-          // and lean away from the sides.
-          element.dataset.below = String(y < 190);
-          element.dataset.align = edgeOf(x, width);
         }
       }
     }
@@ -666,6 +686,31 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     spotlight.pass(slug === undefined ? null : (bySlug.get(slug) ?? null));
     refreshHover();
     place();
+  };
+  /** Ride the path where scrolling sent it, lighting the nearest project; once scrolling stops, settle on it. */
+  const followScrub = (dt: number) => {
+    if (!scrub || !tour) {
+      return;
+    }
+    const settling = performance.now() - scrub.since > SETTLE_MS;
+    if (settling) {
+      scrub.target = Math.round(scrub.target);
+    }
+    scrub.at += (scrub.target - scrub.at) * ease(dt, 8);
+    const point = tour.at(tour.along(scrub.at));
+    view.x = point.x;
+    view.z = point.z;
+    const count = tour.stops.length;
+    const stop = tour.stops[((Math.round(scrub.at) % count) + count) % count];
+    const nearest = (stop && bySlug.get(stop.slug)) ?? null;
+    if (nearest !== spotlight.pointer) {
+      spotlight.recheck(nearest);
+      refreshHover();
+    }
+    place();
+    if (settling && Math.abs(scrub.target - scrub.at) < 0.002) {
+      scrub = null;
+    }
   };
   const glide = (dt: number) => {
     if (!goal) {
@@ -712,6 +757,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     resumeWhenIdle();
     if (spotlight.touring) {
       followTour(Math.min(0.25, elapsed));
+    } else if (scrub) {
+      followScrub(Math.min(0.25, elapsed));
     } else {
       glide(Math.min(0.25, elapsed));
     }
@@ -780,6 +827,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       theme = next;
       applyTheme();
     },
+    /** A finger on a closed pin: light its building, as a first tap on the building does. */
+    tap: (slug: string) => {
+      const entry = bySlug.get(slug);
+      if (entry) {
+        spotlight.tap(entry, "touch");
+        refreshHover();
+      }
+    },
+    /** A wheel over the pins, which sit above the canvas: the canvas's own handling. */
+    wheel: onWheel,
   };
 };
 
