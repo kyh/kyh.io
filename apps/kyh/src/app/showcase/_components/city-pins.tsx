@@ -60,13 +60,14 @@ export const Pin = ({ project, isLit, ref, onHover, onFocus, onTap }: PinProps) 
             onHover(null);
           }
         }}
+        onPointerDown={(event) => {
+          // Read at the press: Safari reports a tap's click as a mouse's.
+          event.currentTarget.dataset.press = event.pointerType;
+        }}
         onClick={(event) => {
-          const { nativeEvent } = event;
-          if (
-            nativeEvent instanceof PointerEvent &&
-            nativeEvent.pointerType === "touch" &&
-            !isLit
-          ) {
+          // A keyboard's click (detail 0) always follows the link.
+          const isTouch = event.detail > 0 && event.currentTarget.dataset.press === "touch";
+          if (isTouch && !isLit) {
             event.preventDefault();
             onTap(project.slug);
           }
