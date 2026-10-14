@@ -61,8 +61,6 @@ export interface CityOptions extends CityCallbacks {
   overlay: HTMLElement | null;
   /** Share the town with everyone else on the page; false keeps it to this browser. */
   shared: boolean;
-  /** How many people are in town, this one included. */
-  onPeople: (count: number) => void;
 }
 
 const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
@@ -159,13 +157,6 @@ const createSky = (scene: Scene, materials: ReturnType<typeof createMaterials>, 
     }
   };
   return { builds, update };
-};
-
-const edgeOf = (x: number, width: number) => {
-  if (x < 150) {
-    return "start";
-  }
-  return x > width - 150 ? "end" : "center";
 };
 
 /** The last placement written to a pin, so a still camera writes nothing. */
@@ -287,7 +278,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // picks up, shared with everyone in the room.
   const projected = new Vector3();
   const life = createLife({
-    onPeople: options.onPeople,
     overlay: options.overlay,
     placed,
     plan,
@@ -635,10 +625,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
           element.style.zIndex = String(lit ? 100_000 : Math.round(y));
           element.style.setProperty("--pin-scale", scale);
           element.dataset.hidden = String(hidden);
-          // Cards open above the pin, or below it near the top of the screen,
-          // and lean away from the sides.
-          element.dataset.below = String(y < 190);
-          element.dataset.align = edgeOf(x, width);
         }
       }
     }

@@ -422,7 +422,6 @@ button.link {
   .city-pin {
     --pin-icon: calc(26px * var(--pin-scale, 1));
     --pin-stem: calc(9px * var(--pin-scale, 1));
-    --pin-half: calc(var(--pin-icon) / 2 + 4px);
     position: absolute;
     top: 0;
     left: 0;
@@ -444,26 +443,12 @@ button.link {
     opacity: 0.55;
   }
 
-  /* Centred on the stem; an open card leans away from the side of the screen
-     it's near, its icon kept over the stem, and opens downward near the top. */
+  /* Centred on the stem, open or closed: the card goes with its building. */
   .city-pin-body {
     position: absolute;
     bottom: var(--pin-stem);
     left: 0;
     transform: translateX(-50%);
-
-    [data-lit="true"][data-align="start"] > & {
-      transform: translateX(calc(-1 * var(--pin-half)));
-    }
-
-    [data-lit="true"][data-align="end"] > & {
-      transform: translateX(calc(-100% + var(--pin-half)));
-    }
-
-    [data-lit="true"][data-below="true"] > & {
-      top: calc(-1 * (var(--pin-stem) + var(--pin-icon) + 8px));
-      bottom: auto;
-    }
   }
 
   .city-pin-icon {

@@ -16,7 +16,6 @@ interface CityMount extends CityCallbacks {
   projects: CityProject[];
   theme: Theme;
   reducedMotion: boolean;
-  onPeople: (count: number) => void;
 }
 
 const loadCity = async (host: HTMLElement, mount: CityMount) => {
@@ -56,7 +55,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
-  const [people, setPeople] = useState(1);
 
   useEffect(() => {
     const host = containerRef.current;
@@ -86,7 +84,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
               window.open(url, "_blank", "noopener,noreferrer");
             }
           },
-          onPeople: setPeople,
           overlay: overlayRef.current,
           projects,
           reducedMotion,
@@ -154,11 +151,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
             ))}
           </div>
         </MotionConfig>
-      )}
-      {status === "ready" && (
-        <p className="city-panel absolute right-4 bottom-[calc(4vh+90px)] px-2.5 py-1 font-mono text-[11px] text-[var(--city-ink-soft)] sm:bottom-6">
-          {people > 1 ? `${people} in town · ` : ""}pick up a car
-        </p>
       )}
       {status === "loading" && (
         <p className="city-panel absolute bottom-[calc(4vh+90px)] left-1/2 -translate-x-1/2 px-3 py-1.5 font-mono text-xs text-[var(--city-ink-soft)]">

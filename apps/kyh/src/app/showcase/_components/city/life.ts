@@ -89,7 +89,6 @@ export interface LifeOptions {
   /** CSS pixels per cell at the current zoom. */
   scale: () => number;
   size: () => { width: number; height: number };
-  onPeople: (count: number) => void;
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -171,7 +170,6 @@ export const createLife = (options: LifeOptions) => {
   const air = new Map<string, Air>();
   const leans = new Map<string, Lean>();
   let adopted: string | null = null;
-  let people = 0;
   const born = performance.now();
   let settled = false;
 
@@ -482,7 +480,7 @@ export const createLife = (options: LifeOptions) => {
       me: net?.me ?? null,
       /** The whole town as text, as a snapshot carries it. */
       pack: () => world.pack(),
-      people,
+      people: net?.people ?? 1,
       /** Where a car or person is drawn on screen, by key. */
       screen: (key: string) => {
         const spot = shown.get(key);
@@ -571,11 +569,6 @@ export const createLife = (options: LifeOptions) => {
       speak(world.tick);
       point(others);
       overlay.end();
-      const count = net?.people ?? 1;
-      if (count !== people) {
-        people = count;
-        options.onPeople(count);
-      }
     },
   };
 };
