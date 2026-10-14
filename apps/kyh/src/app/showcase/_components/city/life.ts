@@ -33,7 +33,7 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
-/** How long a thing takes to come up into the hand (ms). */
+/** How long a thing takes to rise off the ground when picked up (ms). */
 const PICKUP_MS = 120;
 /** The little hop a thing makes when it lands (ms). */
 const BOUNCE_MS = 340;
@@ -57,8 +57,10 @@ interface Air {
 
 interface Held {
   key: string;
-  /** The ground point under the pointer: it hangs above it, and lands on it. */
+  /** Its ground point: it hangs above it, casts its shadow on it, and lands on it. */
   spot: Spot;
+  /** From the pointer's ground point to its own, kept from the grab so it doesn't jump to the pointer. */
+  offset: { x: number; z: number };
   samples: { t: number; x: number; z: number }[];
 }
 
@@ -76,8 +78,7 @@ interface Lean {
   z: number;
   leanX: number;
   leanZ: number;
-  /** Where it was drawn when picked up, and when: it eases from there into the hand. */
-  from: Spot;
+  /** When it was picked up: it rises off the ground from then. */
   since: number;
 }
 
@@ -263,7 +264,6 @@ export const createLife = (options: LifeOptions) => {
   /** Where a thing hangs over the ground point a pointer is on, swinging as it moves. */
   const hang = (key: string, spot: Spot, out: Placement, dt: number) => {
     const lean = leans.get(key) ?? {
-      from: { x: out.x, y: out.y, z: out.z },
       leanX: 0,
       leanZ: 0,
       since: performance.now(),
@@ -279,13 +279,13 @@ export const createLife = (options: LifeOptions) => {
     lean.x = spot.x;
     lean.z = spot.z;
     leans.set(key, lean);
-    const y = groundAt(spot.x, spot.z) + LIFT - 0.18;
-    const along = (RAISE - y) / VIEW[1];
     const rise = clamp((performance.now() - lean.since) / PICKUP_MS, 0, 1);
-    const eased = 1 - (1 - rise) ** 3;
-    out.x = lean.from.x + (spot.x + VIEW[0] * along - lean.from.x) * eased;
-    out.y = lean.from.y + (RAISE - lean.from.y) * eased;
-    out.z = lean.from.z + (spot.z + VIEW[2] * along - lean.from.z) * eased;
+    const y = groundAt(spot.x, spot.z) + (LIFT - 0.18) * (1 - (1 - rise) ** 3);
+    // Drawn up the view ray, clear of roofs, where it looks the same.
+    const along = (RAISE - y) / VIEW[1];
+    out.x = spot.x + VIEW[0] * along;
+    out.y = RAISE;
+    out.z = spot.z + VIEW[2] * along;
     out.leanX = lean.leanX;
     out.leanZ = lean.leanZ;
     out.shown = true;
@@ -470,9 +470,9 @@ export const createLife = (options: LifeOptions) => {
       if (!held) {
         return;
       }
-      held.spot = spot;
+      held.spot = { x: spot.x + held.offset.x, y: 0, z: spot.z + held.offset.z };
       const t = performance.now();
-      held.samples.push({ t, x: spot.x, z: spot.z });
+      held.samples.push({ t, x: held.spot.x, z: held.spot.z });
       if (held.samples.length > 12) {
         held.samples.shift();
       }
@@ -512,7 +512,15 @@ export const createLife = (options: LifeOptions) => {
         return false;
       }
       air.delete(key);
-      held = { key, samples: [{ t: performance.now(), x: spot.x, z: spot.z }], spot };
+      const at = shown.get(key);
+      const offset = at ? { x: at.x - spot.x, z: at.z - spot.z } : { x: 0, z: 0 };
+      const ground = { x: spot.x + offset.x, y: 0, z: spot.z + offset.z };
+      held = {
+        key,
+        offset,
+        samples: [{ t: performance.now(), x: ground.x, z: ground.z }],
+        spot: ground,
+      };
       world.hold(key);
       net?.hold(key);
       return true;
