@@ -6,17 +6,16 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 
 ## Apps
 
-| App                             | Description                             | Stack                           |
-| ------------------------------- | --------------------------------------- | ------------------------------- |
-| [kyh](apps/kyh)                 | Personal website                        | Next.js, Matter.js              |
-| [kwadrants](apps/kwadrants)     | 2x2 matrix canvas editor                | React, Konva, Vite              |
-| [policingice](apps/policingice) | Crowdsourced ICE incident documentation | Next.js, Drizzle, Turso         |
-| [stonksville](apps/stonksville) | Trading chart game                      | Next.js, Canvas                 |
-| [tc](apps/tc)                   | Total compensation calculator           | React, Visx, Vite               |
-| [covid-19](apps/covid-19)       | COVID-19 tracking dashboard             | React, D3, Vite                 |
-| [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | React, TypeScript, SVG, Vite    |
-| [cli](apps/cli)                 | Personal CLI tool                       | React, Ink                      |
-| [party](apps/party)             | Real-time multiplayer server            | PartyServer, Cloudflare Workers |
+| App                             | Description                             | Stack                        |
+| ------------------------------- | --------------------------------------- | ---------------------------- |
+| [kyh](apps/kyh)                 | Personal website                        | Next.js, Matter.js           |
+| [kwadrants](apps/kwadrants)     | 2x2 matrix canvas editor                | React, Konva, Vite           |
+| [policingice](apps/policingice) | Crowdsourced ICE incident documentation | Next.js, Drizzle, Turso      |
+| [stonksville](apps/stonksville) | Trading chart game                      | Next.js, Canvas              |
+| [tc](apps/tc)                   | Total compensation calculator           | React, Visx, Vite            |
+| [covid-19](apps/covid-19)       | COVID-19 tracking dashboard             | React, D3, Vite              |
+| [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | React, TypeScript, SVG, Vite |
+| [cli](apps/cli)                 | Personal CLI tool                       | React, Ink                   |
 
 ## Packages
 
@@ -37,4 +36,4 @@ pnpm typecheck    # typecheck all
 
 ## Deployment
 
-Apps auto-deploy via Vercel/Cloudflare Pages on push to `main`.
+Apps auto-deploy via Vercel on push to `main`.

@@ -385,108 +385,192 @@ button.link {
   }
 }
 
-/* Radial line */
-.radial-line {
-  background-color: var(--body-color-faded);
-  height: 1px;
-  position: absolute;
-  transform-origin: 0px 0px;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  transition:
-    background-color 0.15s ease-out,
-    color 0.15s ease-out;
+/* Showcase city: the pins and cards over the canvas, in the city's greys.
+   In the components layer so Tailwind utilities can override them. */
+@layer components {
+  .city {
+    --city-paper: #f7f7f7;
+    --city-paper-hover: #ededed;
+    --city-ink: #454545;
+    --city-ink-soft: #7d7d7d;
+    --city-line: #cbcbcb;
+    --city-shadow: #e0e0e0;
+    --city-sea: #e7e7e7;
 
-  &:focus-visible {
-    outline: 0;
-    [data-slot="meta"] {
-      opacity: 1 !important;
-      outline: 2px solid var(--body-color-highlighted);
-      outline-offset: 4px;
-      border-radius: 6px;
+    [data-theme="dark"] & {
+      --city-paper: #272727;
+      --city-paper-hover: #313131;
+      --city-ink: #d2d2d2;
+      --city-ink-soft: #888888;
+      --city-line: #3f3f3f;
+      --city-shadow: #181818;
+      --city-sea: #161616;
     }
   }
 
-  &[data-variant="large"] {
-    cursor: pointer;
-    &:after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      translate: -50% -50%;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      padding: 8px;
-      border-radius: 8px;
+  .city-panel {
+    background: var(--city-paper);
+    border: 1px solid var(--city-line);
+    border-radius: 8px;
+    box-shadow: 0 2px 0 var(--city-shadow);
+    color: var(--city-ink);
+  }
+
+  /* A project's icon over its roof. The city moves the pin's origin to the
+     roof each frame; the body sits on it, the card above (or below) it. */
+  .city-pin {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+
+    &[data-hidden="true"] {
+      opacity: 0;
+      pointer-events: none;
     }
   }
 
-  &[data-hovered="true"],
-  &:focus-visible {
-    background: var(--body-color-highlighted);
-    color: var(--body-color-highlighted);
-  }
-}
-
-/* Radial back/footer buttons */
-.radial-back-button {
-  &::before {
-    content: "";
-    background-image: var(--arrow);
-    width: 14px;
-    height: 14px;
-    display: inline-flex;
-    background-size: contain;
-    opacity: 0.5;
-    transition: opacity 0.15s ease-out;
-    transform: rotate(180deg);
-  }
-
-  &:hover::before,
-  &:focus-visible::before {
-    opacity: 1;
-  }
-}
-
-.radial-footer {
-  button {
+  .city-pin-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
     display: flex;
-    color: var(--body-color-faded);
-    gap: 4px;
+    flex-direction: column;
     align-items: center;
-    transition: color 0.15s ease-out;
+    transform: translateX(-50%) scale(var(--pin-scale, 1));
+    transform-origin: 50% 100%;
+  }
 
-    &::before {
-      content: "";
-      background-image: var(--arrow);
-      width: 14px;
-      height: 14px;
-      display: inline-flex;
-      background-size: contain;
-      opacity: 0.5;
-      transition: opacity 0.15s ease-out;
-    }
+  .city-pin-icon {
+    display: block;
+    padding: 3px;
+    border: 1px solid var(--city-line);
+    border-radius: 9px;
+    background: var(--city-paper);
+    box-shadow: 0 2px 0 var(--city-shadow);
+    /* Grows up off its stem: the box only gains ground, so a hover never slips off it. */
+    transform-origin: 50% 100%;
+    transition:
+      transform 0.15s ease-out,
+      border-color 0.15s ease-out;
 
-    &:hover::before,
-    &:focus-visible::before {
-      opacity: 1;
-    }
-
-    &:first-child::before {
-      transform: rotate(180deg);
-    }
-
-    &:last-child {
-      flex-direction: row-reverse;
+    /* Sized here: inside a shrink-to-fit pin, preflight's max-width: 100% would collapse it. */
+    img {
+      display: block;
+      width: 26px;
+      max-width: none;
+      height: 26px;
+      border-radius: 6px;
     }
 
     &:hover,
-    &:focus-visible {
-      color: var(--body-color-highlighted);
+    &:focus-visible,
+    [data-lit="true"] & {
+      border-color: var(--city-ink);
+      transform: scale(1.12);
     }
+
+    &:focus-visible {
+      outline: 2px solid var(--city-ink);
+      outline-offset: 2px;
+    }
+  }
+
+  .city-pin-stem {
+    width: 1px;
+    height: 9px;
+    background: var(--city-ink);
+    opacity: 0.55;
+  }
+
+  /* A visitor's line on the way out of a project: its tail on their head. */
+  .city-bubble {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: max-content;
+    max-width: 210px;
+    padding: 4px 8px 4px 5px;
+    border: 1px solid var(--city-line);
+    border-radius: 10px;
+    background: var(--city-paper);
+    box-shadow: 0 2px 0 var(--city-shadow);
+    color: var(--city-ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.25;
+    translate: -50% calc(-100% - 8px);
+    will-change: transform, opacity;
+
+    img {
+      flex: none;
+      width: 14px;
+      max-width: none;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    &::after {
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      border-right: 1px solid var(--city-line);
+      border-bottom: 1px solid var(--city-line);
+      background: var(--city-paper);
+      content: "";
+      transform: translateX(-50%) rotate(45deg);
+    }
+  }
+
+  /* Someone else in town: their pointer, in their color, its tip on the spot they point at. */
+  .city-pointer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.18));
+    translate: -2px -2px;
+    will-change: transform;
+
+    &[data-holding="true"] svg {
+      scale: 0.86;
+    }
+  }
+
+  .city-card {
+    position: absolute;
+    bottom: calc(56px * var(--pin-scale, 1));
+    left: 0;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 32px));
+    transform: translateX(-50%);
+
+    [data-below="true"] & {
+      top: 12px;
+      bottom: auto;
+    }
+
+    [data-align="start"] & {
+      transform: translateX(-28px);
+    }
+
+    [data-align="end"] & {
+      transform: translateX(calc(-100% + 28px));
+    }
+  }
+}
+
+/* The city fills the window: no frosted header hazing its sky, no page scroll. */
+body:has(.city) {
+  overflow: hidden;
+
+  .blur-header {
+    display: none;
   }
 }
 

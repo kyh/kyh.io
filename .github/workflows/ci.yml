@@ -41,8 +41,3 @@ jobs:
           pnpm -F @repo/mod-clawders build
           git diff --exit-code -- apps/mod-clawders/dist
           test -z "$(git status --porcelain -- apps/mod-clawders/dist)"
-
-      # Only party: Vercel builds the other apps on every PR, and party is the
-      # one target it never sees. Matches the build `verify:ci` adds.
-      - name: Build
-        run: pnpm turbo run build --filter=@repo/party...

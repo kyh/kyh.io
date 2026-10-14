@@ -37,14 +37,13 @@ Static gate — run before every commit:
 
 ```sh
 pnpm verify       # typecheck · lint · format · test
-pnpm verify:ci    # the above, plus the only build CI actually runs (apps/party)
 ```
 
 `typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/mod-clawders` (and its `leaderboard`) and `apps/mod-dev` — the only apps with tests. The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
 **Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`); every rule is an error and `lint` fails on the first one. `no-await-in-loop` is the one deliberate override (sequential awaits are intentional). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
 
-`verify` does not build. CI (`.github/workflows/deploy.yml`) builds and deploys only `apps/party` on pushes to `main` touching `apps/party/**`, via `cf build` then `cf deploy --prebuilt` — the build catches bundling failures `tsc --noEmit` cannot. Run `pnpm verify:ci` before touching that app. Everything else is local-only.
+`verify` does not build. CI (`.github/workflows/ci.yml`) runs the same four checks, then rebuilds `apps/mod-clawders/dist` and fails if it differs from what's committed; Vercel builds the web apps on every PR.
 
 Runtime — drive a real app with [agent-browser](https://github.com/vercel-labs/agent-browser) (installed globally; `npm i -g agent-browser && agent-browser install` if missing). `apps/kyh` is the safest surface: no database, no auth, no required keys — every route renders on a clone with no `.env` (verified by curling `/` and `/showcase` with the file moved aside).
 
@@ -74,7 +73,6 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `tc`           | `pnpm dev:tc`           | 5173 (Vite, auto-increment) | **Yes**                                                |
 | `vis-ml`       | `pnpm dev:vis-ml`       | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
 | `covid-19`     | `pnpm dev:covid`        | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
-| `party`        | `pnpm dev:party`        | 8787 (`cf dev`)             | No — WebSocket server; `typecheck` + `build`           |
 | `leaderboard`  | `pnpm dev:leaderboard`  | 3016                        | **Yes** — `.env` from example + `db:push` (local file) |
 | `cli`          | `pnpm dev:cli`          | —                           | No — Ink terminal UI, needs a real TTY                 |
 | `mod-clawders` | `pnpm dev:mod-clawders` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
@@ -93,7 +91,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/party` — Cloudflare Worker (PartyServer + Durable Objects) · `apps/cli` — Ink CLI (Node) · `apps/{mod-clawders,mod-dev}` — Claude Code mods (function hooks plugins)
+- `apps/{kyh,policingice,stonksville,autoplay}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/cli` — Ink CLI (Node) · `apps/{mod-clawders,mod-dev}` — Claude Code mods (function hooks plugins)
 - `packages/{typescript,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)

@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { usePartySocket } from "partysocket/react";
+import { FixedRate, MultiplayerClient } from "@vibedgames/multiplayer";
 
-import type { ClientMessage, PlayerMap, ServerMessage } from "@/lib/player";
+import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
+import type { PlayerMap } from "@/lib/player";
+import { PARTY, PARTY_HOST } from "@/lib/party";
 
-// ~30fps, good balance between smoothness and network
-const THROTTLE_MS = 32;
+// Pointers go out on a steady clock, smooth enough without flooding the room.
+const SEND_RATE = 30;
 
-interface useRealtimeProps {
-  host: string;
-  party: string;
-  room: string;
-}
+const NONE: PlayerMap = {};
 
 const subscribeToResize = (onStoreChange: () => void) => {
   window.addEventListener("resize", onStoreChange);
@@ -29,190 +27,155 @@ const getWindowDimensions = () => {
   return lastDimensions;
 };
 
-const useTrackWindow = () =>
-  useSyncExternalStore(subscribeToResize, getWindowDimensions, () => unmeasured);
-
-export const useRealtime = ({ host, party, room }: useRealtimeProps) => {
-  const socket = usePartySocket({ host, party, room });
-  const pathname = usePathname();
-  const [players, setPlayers] = useState<PlayerMap>({});
-  const windowDimensions = useTrackWindow();
-  const lastSendRef = useRef(0);
-  const pendingMessageRef = useRef<ClientMessage | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  // Throttled send that batches rapid updates
-  const sendThrottled = useCallback(
-    (message: ClientMessage) => {
-      pendingMessageRef.current = message;
-
-      const now = Date.now();
-      const timeSinceLastSend = now - lastSendRef.current;
-
-      if (timeSinceLastSend >= THROTTLE_MS) {
-        socket.send(JSON.stringify(message));
-        lastSendRef.current = now;
-        pendingMessageRef.current = null;
-      } else if (!rafRef.current) {
-        // Schedule send for remaining throttle time
-        rafRef.current = window.setTimeout(() => {
-          if (pendingMessageRef.current) {
-            socket.send(JSON.stringify(pendingMessageRef.current));
-            lastSendRef.current = Date.now();
-            pendingMessageRef.current = null;
-          }
-          rafRef.current = null;
-        }, THROTTLE_MS - timeSinceLastSend);
-      }
+/**
+ * One room per page load, opened by the first component that wants it and
+ * closed with the last. Created on subscribe, so never during a server render.
+ */
+const createRoom = (room: string) => {
+  let client: MultiplayerClient | null = null;
+  let users = 0;
+  /** The page this visitor is on, as everyone should see it. */
+  let page: string | null = null;
+  // The client drops state written before it has joined, and a rejoin is a
+  // new player: so whenever its own state is missing the page, say it again.
+  const announce = () => {
+    const self = client?.playerId ? client.players[client.playerId] : undefined;
+    if (client && self && page !== null && self.state?.pathname !== page) {
+      client.updateMyState({ pathname: page });
+    }
+  };
+  let others: PlayerMap = NONE;
+  let seen: MultiplayerSnapshot | null = null;
+  return {
+    /** Which page this visitor is on. */
+    at: (pathname: string) => {
+      page = pathname;
+      announce();
     },
-    [socket],
-  );
-
-  // Cleanup pending timeout on unmount
-  useEffect(
-    () => () => {
-      if (rafRef.current) {
-        clearTimeout(rafRef.current);
-      }
+    get client() {
+      return client;
     },
-    [],
-  );
-
-  useEffect(() => {
-    const onMessage = (evt: WebSocketEventMap["message"]) => {
-      // SAFETY: the only sender on this socket is our own party server
-      // (apps/party KyhServer), which emits ServerMessage JSON strings and
-      // nothing else.
-      const msg = JSON.parse(evt.data as string) as ServerMessage;
-      switch (msg.type) {
-        case "ping": {
-          // The server reaps connections it stops hearing from, so an idle
-          // visitor who never moves the mouse still has to answer.
-          const pong: ClientMessage = { type: "pong" };
-          socket.send(JSON.stringify(pong));
-          break;
-        }
-        case "sync": {
-          setPlayers({ ...msg.data.players });
-          break;
-        }
-        case "player_joined": {
-          setPlayers((prev) => ({ ...prev, [msg.data.id]: msg.data }));
-          break;
-        }
-        case "player_state": {
-          setPlayers((prev) => {
-            const player = prev[msg.data.id];
-            if (!player) {
-              return prev;
-            }
-            return {
-              ...prev,
-              [msg.data.id]: { ...player, state: { ...player.state, ...msg.data.state } },
+    /** Everyone else in the room, as the site draws them. */
+    others: () => {
+      const snapshot = client?.getSnapshot() ?? null;
+      if (snapshot !== seen) {
+        seen = snapshot;
+        const next: PlayerMap = {};
+        for (const [id, player] of Object.entries(snapshot?.players ?? {})) {
+          if (id !== snapshot?.playerId && player.connected !== false) {
+            next[id] = {
+              color: player.color ?? "hsl(206, 100%, 50%)",
+              hue: player.hue ?? "hsl(208, 77.5%, 76.9%)",
+              id,
+              state: player.state ?? {},
             };
-          });
-          break;
+          }
         }
-        case "player_left": {
-          setPlayers((prev) =>
-            Object.fromEntries(Object.entries(prev).filter(([id]) => id !== msg.data.id)),
-          );
-          break;
-        }
-        default: {
-          break;
-        }
+        others = next;
       }
-    };
-    socket.addEventListener("message", onMessage);
+      return others;
+    },
+    subscribe: (listener: () => void) => {
+      users += 1;
+      client ??= new MultiplayerClient({
+        fallbackMs: 10_000,
+        host: PARTY_HOST,
+        party: PARTY,
+        room,
+      });
+      const unsubscribe = client.subscribe(() => {
+        announce();
+        listener();
+      });
+      return () => {
+        unsubscribe();
+        users -= 1;
+        if (users === 0) {
+          client?.destroy();
+          client = null;
+          seen = null;
+          others = NONE;
+        }
+      };
+    },
+  };
+};
 
-    return () => {
-      socket.removeEventListener("message", onMessage);
-    };
-  }, [socket]);
+const rooms = new Map<string, ReturnType<typeof createRoom>>();
+const roomFor = (name: string) => {
+  let room = rooms.get(name);
+  if (!room) {
+    room = createRoom(name);
+    rooms.set(name, room);
+  }
+  return room;
+};
 
-  // Track mouse/touch position with throttling
+interface UseRealtimeProps {
+  room: string;
+}
+
+export const useRealtime = ({ room }: UseRealtimeProps) => {
+  const shared = roomFor(room);
+  const players = useSyncExternalStore(shared.subscribe, shared.others, () => NONE);
+  const windowDimensions = useSyncExternalStore(
+    subscribeToResize,
+    getWindowDimensions,
+    () => unmeasured,
+  );
+  const pathname = usePathname();
+  const pointer = useRef<JsonRecord | null>(null);
+
+  // Where this visitor is, sent on a steady clock while it changes.
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!windowDimensions.width || !windowDimensions.height) {
-        return;
-      }
-      const message: ClientMessage = {
-        data: {
-          pointer: "mouse",
-          x: e.clientX / windowDimensions.width,
-          y: e.clientY / windowDimensions.height,
-        },
-        type: "player_state_patch",
+    const onMouseMove = (event: MouseEvent) => {
+      pointer.current = {
+        pointer: "mouse",
+        x: event.clientX / window.innerWidth,
+        y: event.clientY / window.innerHeight,
       };
-      sendThrottled(message);
     };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!windowDimensions.width || !windowDimensions.height) {
-        return;
-      }
-      if (!e.touches[0]) {
-        return;
-      }
-      const message: ClientMessage = {
-        data: {
+    const onTouchMove = (event: TouchEvent) => {
+      const [touch] = event.touches;
+      if (touch) {
+        pointer.current = {
           pointer: "touch",
-          x: e.touches[0].clientX / windowDimensions.width,
-          y: e.touches[0].clientY / windowDimensions.height,
-        },
-        type: "player_state_patch",
-      };
-      sendThrottled(message);
+          x: touch.clientX / window.innerWidth,
+          y: touch.clientY / window.innerHeight,
+        };
+      }
     };
-
-    // touchend sends immediately (no throttle needed)
+    // A lifted finger leaves no cursor behind.
     const onTouchEnd = () => {
-      const message: ClientMessage = {
-        data: { x: null, y: null },
-        type: "player_state_patch",
-      };
-      socket.send(JSON.stringify(message));
+      pointer.current = { x: null, y: null };
     };
-
+    const rate = new FixedRate(SEND_RATE);
+    let last = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      if (rate.due(now - last) && pointer.current) {
+        shared.client?.updateMyState(pointer.current);
+        pointer.current = null;
+      }
+      last = now;
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("touchend", onTouchEnd);
-
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [socket, windowDimensions, sendThrottled]);
+  }, [shared]);
 
-  // partysocket reuses one socket object across reconnects, so a bare send on
-  // mount is never repeated. Each reconnect is a fresh connection server-side
-  // with empty state, and mousemove only ever patches x/y — so without
-  // re-announcing here, a reconnected player would keep a pathname-less state
-  // forever and their cursor could never render again for anyone.
+  // Which page they're on, said again whenever the room needs to hear it.
   useEffect(() => {
-    const announce = () => {
-      const message: ClientMessage = {
-        data: {
-          pathname,
-          x: 1,
-          y: 1,
-        },
-        type: "player_state_patch",
-      };
-      socket.send(JSON.stringify(message));
-    };
+    shared.at(pathname);
+  }, [shared, pathname]);
 
-    // While still connecting, the open handler covers it (and partysocket would
-    // queue the send anyway) — sending now as well would just duplicate the patch.
-    if (socket.readyState === WebSocket.OPEN) {
-      announce();
-    }
-    socket.addEventListener("open", announce);
-
-    return () => socket.removeEventListener("open", announce);
-  }, [socket, pathname]);
-
-  return { players, socket, windowDimensions };
+  return { players, windowDimensions };
 };

@@ -8,7 +8,6 @@ Personal monorepo. Uses pnpm workspaces + turborepo.
 pnpm dev:<app>     # dev server for specific app
 pnpm build         # build all
 pnpm verify        # typecheck · lint · format · test — run before committing
-pnpm verify:ci     # verify + the apps/party build CI runs
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
@@ -20,7 +19,7 @@ pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, ap
 `AGENTS.md` is the full workflow — read it first. The essentials:
 
 - **Setup**: `pnpm install`, then `pnpm dev:<app>`. No bootstrap script, no Docker. `pnpm dev:kyh` and `pnpm dev:policingice` both bind :3000, so run one at a time.
-- **Verify**: `pnpm verify` for the static gate (`verify:ci` adds the apps/party build CI runs); drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` and `apps/party` get `typecheck` + `build` only.
+- **Verify**: `pnpm verify` for the static gate; drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` gets `typecheck` + `build` only.
 - **`pnpm lint` is a clean gate.** `oxlint.config.ts` extends the ultracite presets (core, react, next, anti-slop); every rule is an error. Fix the code, don't add config overrides; a `// oxlint-disable-next-line rule -- why` needs a stated reason.
 - **policingice's database is remote production.** No local DB, no seed, no test login. Never run its `db:push`/`db:studio` or anything in `apps/policingice/scripts/`.
 
@@ -101,9 +100,41 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
-### party (`apps/party`)
+`/showcase` is a city of the projects: an isometric island drawn the way
+[Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
+(flat unlit faces, ink outlines, a fixed 30° camera), in three.js, all in greys.
+Every project in `src/lib/data.ts` gets a building — a bespoke one when its slug
+is in `draw-landmarks.ts`, otherwise a generic one with its name on it on the
+nearest free lot — with its favicon floating over the roof as a real link
+(`city-pins.tsx`). Hovering a building or its icon paints that building in its
+colors, rings its lot in a soft band of its own color (`halo.ts`) and shows its
+URL and description; clicking opens the project in a new tab (touch: first tap
+shows, second opens). A title-sequence flyover runs on load and resumes after
+30s idle. Dark mode is night. Code in `src/app/showcase/_components/city/`:
+`plan.ts` (island, roads, which lot each project gets; pure, tested),
+`sketch.ts` (faces, silhouettes and ink worked out once for the fixed camera),
+`render.ts` (sketch → three.js; each building repaints itself grey or colored),
+`landmarks-*.ts` (the buildings), `controls.ts` (which building is lit, when
+the flyover runs, tap vs drag vs pinch, the keys; pure, tested), `engine.ts`
+(camera, tour, pins, input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and
+`window.city.debug()` reports the town; headless Chromium needs
+`--use-angle=swiftshader,--enable-unsafe-swiftshader` for WebGL.
 
-Real-time multiplayer server. PartyServer on Cloudflare Workers (Durable Objects).
+The ground is alive and shared. `world.ts` steps the cars, passers-by
+(`traffic.ts`) and visitors (`visitors.ts`: out of one project's door with a
+line from `quotes.ts`, along the sidewalks, into another) in fixed 20Hz ticks,
+each mover with its own random state, so every browser stepping the same
+snapshot gets the same town; pure and tested. `life.ts` draws it between
+ticks, floats the visitors' lines and other people's pointers (`overlay.ts`),
+and lets anyone pick up a car or a person and drop it on the nearest road or
+sidewalk. `net.ts` shares it in a room on the vibedgames party server
+(`src/lib/party.ts`): the host puts up a snapshot every 8s for joiners, a
+pick-up is a claim, a drop carries the mover's exact landed state, pointers go
+out at 15Hz, and everything off the wire is validated. With no server the town
+plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
+`TOWN_VERSION` whenever stepping or packing changes, or old and new pages
+desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
+same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 
 ### policingice (`apps/policingice`)
 
