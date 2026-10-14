@@ -47,7 +47,6 @@ interface CityShowcaseProps {
 export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const pinLayerRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
@@ -121,18 +120,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     cityRef.current?.setTheme(theme);
   }, [theme]);
 
-  // The pins sit above the canvas, and an open card sits right under a
-  // resting cursor: its wheel scrubs the town too, not just the canvas's.
-  useEffect(() => {
-    const layer = pinLayerRef.current;
-    if (!layer) {
-      return;
-    }
-    const onWheel = (event: WheelEvent) => cityRef.current?.wheel(event);
-    layer.addEventListener("wheel", onWheel, { passive: false });
-    return () => layer.removeEventListener("wheel", onWheel);
-  }, []);
-
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
       pinsRef.current.set(slug, element);
@@ -150,10 +137,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <PinList projects={projects} />
       ) : (
         <MotionConfig reducedMotion="user">
-          <div
-            ref={pinLayerRef}
-            className="pointer-events-none absolute inset-0 isolate overflow-hidden"
-          >
+          <div className="pointer-events-none absolute inset-0 isolate overflow-hidden">
             {projects.map((project) => (
               <Pin
                 key={project.slug}
