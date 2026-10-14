@@ -21,6 +21,11 @@ export interface Tour {
   closest: (x: number, z: number) => number;
   /** The stop nearest a point, if one is close. */
   stopNear: (x: number, z: number, within: number) => Stop | null;
+  /**
+   * The next stop along the flyover from `from` (dir 1) or the one before it
+   * (dir -1). From no stop, the one nearest the point.
+   */
+  step: (from: string | null, dir: 1 | -1, x: number, z: number) => Stop;
 }
 
 const screenU = (stop: Stop) => stop.x - stop.z;
@@ -94,6 +99,18 @@ export const createTour = (stops: readonly Stop[]): Tour | null => {
     const t = span > 0 ? (wrapped - a.s) / span : 0;
     return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
   };
+  const stopNear = (x: number, z: number, within: number) => {
+    let best: Stop | null = null;
+    let bestDistance = within;
+    for (const stop of ordered) {
+      const distance = Math.hypot(stop.x - x, stop.z - z);
+      if (distance < bestDistance) {
+        best = stop;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  };
   return {
     at: sampleAt,
     closest: (x, z) => {
@@ -109,17 +126,13 @@ export const createTour = (stops: readonly Stop[]): Tour | null => {
       return best.s;
     },
     length,
-    stopNear: (x, z, within) => {
-      let best: Stop | null = null;
-      let bestDistance = within;
-      for (const stop of ordered) {
-        const distance = Math.hypot(stop.x - x, stop.z - z);
-        if (distance < bestDistance) {
-          best = stop;
-          bestDistance = distance;
-        }
+    step: (from, dir, x, z) => {
+      const index = ordered.findIndex((stop) => stop.slug === from);
+      if (index === -1) {
+        return stopNear(x, z, Infinity) ?? at(0);
       }
-      return best;
+      return at(index + dir);
     },
+    stopNear,
   };
 };

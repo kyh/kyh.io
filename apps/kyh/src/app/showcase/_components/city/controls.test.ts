@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createPresses, createSpotlight, IDLE_MS, isHover, keyMove } from "./controls";
+import {
+  createPresses,
+  createSpotlight,
+  createWheelSteps,
+  IDLE_MS,
+  isHover,
+  keyMove,
+  WHEEL_REST_MS,
+  WHEEL_STEP,
+} from "./controls";
 
 const spotlight = (options: { still?: boolean } = {}) => {
   const clock = { now: 0, takes: 0 };
@@ -191,4 +200,37 @@ test("arrows and WASD pan, plus and minus zoom, other keys leave the view be", (
   for (const key of ["Shift", "x", "1", "Tab", "Enter", " "]) {
     assert.equal(keyMove(key), null, key);
   }
+});
+
+test("a notch of the wheel is one step, either way", () => {
+  const clock = { now: 0 };
+  const steps = createWheelSteps(() => clock.now);
+  assert.equal(steps(WHEEL_STEP), 1);
+  clock.now += WHEEL_REST_MS + 1;
+  assert.equal(steps(-WHEEL_STEP), -1);
+});
+
+test("a trackpad's flick is one step, however long it glides", () => {
+  const clock = { now: 0 };
+  const steps = createWheelSteps(() => clock.now);
+  const results: number[] = [];
+  // Two seconds of momentum, a delta every 16ms.
+  for (let t = 0; t < 2000; t += 16) {
+    clock.now = t;
+    results.push(steps(12));
+  }
+  assert.equal(results.filter((dir) => dir !== 0).length, 1);
+  // Once it has run out and rested, the next flick steps again.
+  clock.now = 2000 + WHEEL_REST_MS + 1;
+  assert.equal(steps(WHEEL_STEP), 1);
+});
+
+test("a pause forgets a half-made step", () => {
+  const clock = { now: 0 };
+  const steps = createWheelSteps(() => clock.now);
+  assert.equal(steps(WHEEL_STEP / 2), 0);
+  clock.now = 500;
+  assert.equal(steps(WHEEL_STEP / 2), 0);
+  clock.now = 510;
+  assert.equal(steps(WHEEL_STEP / 2), 1);
 });

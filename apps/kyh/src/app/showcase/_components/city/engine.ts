@@ -18,7 +18,7 @@ import type { Theme } from "./palette";
 import type { Built } from "./render";
 import type { Sketch } from "./sketch";
 import { createAnimations } from "./animate";
-import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
+import { createPresses, createSpotlight, createWheelSteps, isHover, keyMove } from "./controls";
 import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
@@ -177,7 +177,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
-    "A city of Kai's projects. Drag to look around, scroll to zoom, click a building to open it, and pick up cars and people to move them.",
+    "A city of Kai's projects. Drag to look around, scroll from project to project, pinch to zoom, click a building to open it, and pick up cars and people to move them.",
   );
   container.append(canvas);
 
@@ -560,11 +560,34 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     refreshHover();
     updateCursor();
   };
+  const wheelSteps = createWheelSteps(() => performance.now());
+  /** Glide to the next project along the flyover, or the one before, and light it. */
+  const stepTo = (dir: 1 | -1) => {
+    const stop = tour?.step(shown?.project.slug ?? null, dir, view.x, view.z);
+    const entry = stop ? bySlug.get(stop.slug) : undefined;
+    if (!entry) {
+      return;
+    }
+    spotlight.take();
+    spotlight.recheck(entry);
+    refreshHover();
+    goal = { ...framing(entry), zoom: Math.max(view.zoom, tourZoom()) };
+  };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    takeControl();
-    zoomAt(Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015)), event.clientX, event.clientY);
-    repick();
+    if (event.ctrlKey) {
+      // A trackpad's pinch: zoom.
+      takeControl();
+      zoomAt(Math.exp(-event.deltaY * 0.01), event.clientX, event.clientY);
+      repick();
+      return;
+    }
+    // Scrolling either way steps through the projects.
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    const dir = wheelSteps(event.deltaMode === 0 ? delta : delta * 40);
+    if (dir !== 0) {
+      stepTo(dir);
+    }
   };
   const onDoubleClick = (event: MouseEvent) => {
     // A double click on a building already opened it, and one on a car made it

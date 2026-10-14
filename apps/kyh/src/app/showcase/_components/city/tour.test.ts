@@ -50,3 +50,14 @@ test("the stop near the camera is the one it is passing", () => {
   assert.equal(tour?.stopNear(36.5, 36, 2)?.slug, "middle");
   assert.equal(tour?.stopNear(0, 0, 2), null);
 });
+
+test("scrolling steps along the flyover's order, round the loop both ways", () => {
+  const tour = createTour(STOPS);
+  assert.ok(tour);
+  assert.equal(tour.step("near-left", 1, 0, 0).slug, "middle");
+  assert.equal(tour.step("near-left", -1, 0, 0).slug, "far-left");
+  assert.equal(tour.step("far-left", 1, 0, 0).slug, "near-left");
+  // From nothing lit, the stop nearest the camera.
+  assert.equal(tour.step(null, 1, 49, 41).slug, "near-right");
+  assert.equal(tour.step("gone", -1, 21, 29).slug, "far-left");
+});
