@@ -61,6 +61,7 @@ interface Held {
   spot: Spot;
   /** From the pointer's ground point to its own, kept from the grab so it doesn't jump to the pointer. */
   offset: { x: number; z: number };
+  samples: { t: number; x: number; z: number }[];
 }
 
 interface Frame {
@@ -107,6 +108,17 @@ const shadowFor = (height: number) => (height > 0.06 ? clamp(1 - height / 2.4, 0
 /** How long a thing let go at `from` takes to land at `to` (ms). */
 const flightOf = (from: Spot, to: Pose) =>
   Math.min(760, 360 + Math.hypot(to.x - from.x, to.z - from.z) * 55 + from.y * 60);
+
+/** Cells per second over the last moments of a carry. */
+const velocityOf = (samples: Held["samples"]) => {
+  const last = samples.at(-1);
+  const first = samples.find((sample) => last && last.t - sample.t < 140) ?? last;
+  if (!last || !first || last.t - first.t < 16) {
+    return { x: 0, z: 0 };
+  }
+  const seconds = (last.t - first.t) / 1000;
+  return { x: (last.x - first.x) / seconds, z: (last.z - first.z) / seconds };
+};
 
 const between = (last: Pose, pose: Pose, alpha: number, out: Placement, y: number) => {
   out.x = lerp(last.x, pose.x, alpha);
@@ -459,6 +471,10 @@ export const createLife = (options: LifeOptions) => {
         return;
       }
       held.spot = { x: spot.x + held.offset.x, y: 0, z: spot.z + held.offset.z };
+      held.samples.push({ t: performance.now(), x: held.spot.x, z: held.spot.z });
+      if (held.samples.length > 12) {
+        held.samples.shift();
+      }
       // Everyone else sees it where it is, so their view of it doesn't jump by the grab's offset.
       net?.point(held.spot);
     },
@@ -500,7 +516,12 @@ export const createLife = (options: LifeOptions) => {
       const at = shown.get(key);
       const offset = at ? { x: at.x - spot.x, z: at.z - spot.z } : { x: 0, z: 0 };
       const ground = { x: spot.x + offset.x, y: 0, z: spot.z + offset.z };
-      held = { key, offset, spot: ground };
+      held = {
+        key,
+        offset,
+        samples: [{ t: performance.now(), x: ground.x, z: ground.z }],
+        spot: ground,
+      };
       world.hold(key);
       net?.hold(key);
       net?.point(ground);
@@ -509,17 +530,23 @@ export const createLife = (options: LifeOptions) => {
     get holding() {
       return held?.key ?? null;
     },
-    /** Let go: it drops onto its shadow, or the nearest road or sidewalk to it. */
+    /** Let go: it flies on the way it was moving, and lands on the nearest road or sidewalk. */
     letGo: () => {
       if (!held) {
         return;
       }
       const { key } = held;
       const spot = { x: held.spot.x, y: LIFT + groundAt(held.spot.x, held.spot.z), z: held.spot.z };
+      const velocity = velocityOf(held.samples);
+      const speed = Math.hypot(velocity.x, velocity.z);
+      const reach = Math.min(4, speed * 0.26);
+      const toward =
+        speed > 0.01 ? { x: velocity.x / speed, z: velocity.z / speed } : { x: 0, z: 0 };
+      const target = { x: spot.x + toward.x * reach, z: spot.z + toward.z * reach };
       held = null;
       // Land it once to learn where, then again to wait out the fall from there.
-      const first = world.land(key, spot.x, spot.z, world.tick);
-      const landed = first && world.land(key, spot.x, spot.z, landingTick(spot, first.pose));
+      const first = world.land(key, target.x, target.z, world.tick);
+      const landed = first && world.land(key, target.x, target.z, landingTick(spot, first.pose));
       if (landed) {
         startFall(key, spot, landed.pose);
         net?.drop({ from: spot, key, state: landed.state });
