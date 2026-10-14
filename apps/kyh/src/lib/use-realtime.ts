@@ -1,9 +1,11 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { FixedRate, MultiplayerClient } from "@vibedgames/multiplayer";
 
 import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
+import { draftState, sayState, SHOW_MS } from "@/lib/chat";
+import { listenForChat } from "@/lib/chat-input";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 
 // Pointers go out on a steady clock, smooth enough without flooding the room.
@@ -55,6 +57,13 @@ const createRoom = (room: string) => {
     get client() {
       return client;
     },
+    /** This visitor's own colors, once the room has given them some. */
+    me: () => {
+      const self = client?.playerId ? client.players[client.playerId] : undefined;
+      return self?.color && self.hue ? { color: self.color, hue: self.hue } : null;
+    },
+    /** Milliseconds on the room's clock, so everyone agrees when a line comes down. */
+    now: () => client?.serverNow() ?? Date.now(),
     /** Everyone else in the room, as the site draws them. */
     others: () => {
       const snapshot = client?.getSnapshot() ?? null;
@@ -74,6 +83,10 @@ const createRoom = (room: string) => {
         others = next;
       }
       return others;
+    },
+    /** Send a line of chat. */
+    say: (text: string) => {
+      client?.updateMyState(sayState(text, client.serverNow()));
     },
     subscribe: (listener: () => void) => {
       users += 1;
@@ -98,6 +111,10 @@ const createRoom = (room: string) => {
         }
       };
     },
+    /** What this visitor is typing, or null once they stop. */
+    type: (draft: string | null) => {
+      client?.updateMyState(draftState(draft));
+    },
   };
 };
 
@@ -113,9 +130,17 @@ const roomFor = (name: string) => {
 
 interface UseRealtimeProps {
   room: string;
+  /** Whether typing here chats in this room; off where a page chats its own way. */
+  chat: boolean;
 }
 
-export const useRealtime = ({ room }: UseRealtimeProps) => {
+/** This visitor's own line, as they see it until it comes down. */
+interface OwnLine {
+  text: string;
+  until: number;
+}
+
+export const useRealtime = ({ room, chat }: UseRealtimeProps) => {
   const shared = roomFor(room);
   const players = useSyncExternalStore(shared.subscribe, shared.others, () => NONE);
   const windowDimensions = useSyncExternalStore(
@@ -172,10 +197,28 @@ export const useRealtime = ({ room }: UseRealtimeProps) => {
     };
   }, [shared]);
 
+  const [draft, setDraft] = useState<string | null>(null);
+  const [said, setSaid] = useState<OwnLine | null>(null);
+  useEffect(() => {
+    if (!chat) {
+      return;
+    }
+    return listenForChat({
+      onDraft: (next) => {
+        setDraft(next);
+        shared.type(next);
+      },
+      onSend: (text) => {
+        setSaid({ text, until: shared.now() + SHOW_MS });
+        shared.say(text);
+      },
+    });
+  }, [chat, shared]);
+
   // Which page they're on, said again whenever the room needs to hear it.
   useEffect(() => {
     shared.at(pathname);
   }, [shared, pathname]);
 
-  return { players, windowDimensions };
+  return { draft, me: shared.me(), now: shared.now, players, said, windowDimensions };
 };

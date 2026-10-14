@@ -719,3 +719,28 @@ body:has(.city) {
     animation: none !important;
   }
 }
+
+/* A line of chat beside a visitor's pointer. While it's being typed, a caret
+   blinks at its end. */
+.chat-bubble[data-typing="true"]::after {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 1px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  content: "";
+  animation: chat-caret 1s steps(1) infinite;
+}
+
+@keyframes chat-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-bubble[data-typing="true"]::after {
+    animation: none;
+  }
+}
