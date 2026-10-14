@@ -29,7 +29,8 @@ const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 export interface Materials {
   /** Every face in town: the colors live on the vertices. */
   faces: MeshBasicMaterial;
-  line: (token: Token, weight: Weight) => LineMaterial;
+  /** Ink is grey; `colorful` is for marks that are part of a hover, like the lot outline. */
+  line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
   dispose: () => void;
@@ -45,9 +46,12 @@ export const createMaterials = (initial: Theme): Materials => {
     side: DoubleSide,
     vertexColors: true,
   });
-  const lines = new Map<string, { material: LineMaterial; token: Token; weight: Weight }>();
-  const line = (token: Token, weight: Weight) => {
-    const key = `${token}|${weight}`;
+  const lines = new Map<
+    string,
+    { material: LineMaterial; token: Token; weight: Weight; colorful: boolean }
+  >();
+  const line = (token: Token, weight: Weight, colorful = false) => {
+    const key = `${token}|${weight}|${colorful}`;
     const existing = lines.get(key);
     if (existing) {
       return existing.material;
@@ -55,10 +59,10 @@ export const createMaterials = (initial: Theme): Materials => {
     // Ink stays grey even on a hovered building: the color is in the washes.
     const material = new LineMaterial({
       alphaToCoverage: true,
-      color: shade(token, theme, false),
+      color: shade(token, theme, colorful),
       linewidth: WEIGHTS[weight] * inkScale,
     });
-    lines.set(key, { material, token, weight });
+    lines.set(key, { colorful, material, token, weight });
     return material;
   };
   return {
@@ -72,8 +76,8 @@ export const createMaterials = (initial: Theme): Materials => {
     line,
     setTheme: (next) => {
       theme = next;
-      for (const { material, token } of lines.values()) {
-        material.color.set(shade(token, theme, false));
+      for (const { colorful, material, token } of lines.values()) {
+        material.color.set(shade(token, theme, colorful));
       }
     },
     setZoom: (zoom) => {

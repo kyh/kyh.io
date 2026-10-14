@@ -14,6 +14,9 @@ import {
   WebGLRenderer,
 } from "three";
 
+import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
 import type { Built } from "./render";
@@ -164,6 +167,49 @@ const edgeOf = (x: number, width: number) => {
   return x > width - 150 ? "end" : "center";
 };
 
+/** A marquee round a lit building's lot, so even a white building reads as picked. */
+const lotOutline = (placed: Placed | null) => {
+  const geometry = new LineSegmentsGeometry();
+  if (!placed) {
+    geometry.setPositions([0, -10, 0, 0, -10, 0]);
+    return geometry;
+  }
+  const { lot, bounds } = placed;
+  const y = bounds.y + 0.02;
+  const x0 = lot.x + 0.12;
+  const z0 = lot.z + 0.12;
+  const x1 = lot.x + lot.w - 0.12;
+  const z1 = lot.z + lot.d - 0.12;
+  // Four sides, each a segment from one corner to the next.
+  geometry.setPositions([
+    x0,
+    y,
+    z0,
+    x1,
+    y,
+    z0,
+    x1,
+    y,
+    z0,
+    x1,
+    y,
+    z1,
+    x1,
+    y,
+    z1,
+    x0,
+    y,
+    z1,
+    x0,
+    y,
+    z1,
+    x0,
+    y,
+    z0,
+  ]);
+  return geometry;
+};
+
 /** Who is lighting a building up, if anyone: the first of these wins. */
 interface Hovers {
   pin: Placed | null;
@@ -220,6 +266,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   actorGroup.add(...actors.meshes);
   scene.add(actorGroup);
   const sky = createSky(scene, materials, options.reducedMotion);
+  const outline = new LineSegments2(lotOutline(null), materials.line("accentBlue", "bold", true));
+  outline.renderOrder = 3;
+  scene.add(outline);
 
   const bySlug = new Map(placed.map((entry) => [entry.project.slug, entry]));
   const boxes = placed.map((entry) => ({
@@ -309,6 +358,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (shown) {
       buildings.get(shown)?.paint(theme, true);
     }
+    outline.geometry.dispose();
+    outline.geometry = lotOutline(shown);
     canvas.style.cursor = hoverBy.pointer ? "pointer" : "";
     options.onHover(shown?.project.slug ?? null);
   };
@@ -687,6 +738,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       for (const built of [city, ...buildings.values(), ...sky.builds]) {
         built.dispose();
       }
+      outline.geometry.dispose();
       actors.dispose();
       materials.dispose();
       renderer.dispose();
