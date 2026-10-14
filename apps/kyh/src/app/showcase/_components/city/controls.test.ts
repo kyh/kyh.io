@@ -28,18 +28,17 @@ test("a pin outranks the mouse, and the mouse outranks the flyover", () => {
   assert.equal(lights.lit, "stonksville");
 });
 
-test("the mouse on a building stops the flyover; on open ground it doesn't", () => {
+test("hovering lights a building but leaves the flyover flying", () => {
   const { clock, lights } = spotlight();
   lights.play();
   lights.pass("kwadrants");
   lights.hover(null);
-  assert.equal(lights.touring, true);
   assert.equal(lights.lit, "kwadrants");
-  assert.equal(clock.takes, 0);
   lights.hover("stonksville");
-  assert.equal(lights.touring, false);
-  assert.equal(lights.lit, "stonksville");
-  assert.equal(clock.takes, 1);
+  lights.pin("founding");
+  assert.equal(lights.touring, true);
+  assert.equal(lights.lit, "founding");
+  assert.equal(clock.takes, 0);
 });
 
 test("a resting cursor's recheck is no hover", () => {
@@ -78,7 +77,7 @@ test("a mouse tap opens at once; a finger shows first and opens on the second ta
   // A tap on open ground lets the building go.
   assert.equal(lights.tap(null, "touch"), null);
   assert.equal(lights.lit, null);
-  assert.equal(clock.takes, 4);
+  assert.equal(clock.takes, 0);
 });
 
 test("picking something up stops the flyover and lets go of the building under the hand", () => {
@@ -89,16 +88,6 @@ test("picking something up stops the flyover and lets go of the building under t
   lights.grab();
   assert.equal(lights.touring, false);
   assert.equal(lights.lit, null);
-});
-
-test("only arriving on a pin takes the camera", () => {
-  const { clock, lights } = spotlight();
-  lights.play();
-  lights.pin(null);
-  assert.equal(lights.touring, true);
-  lights.pin("founding");
-  assert.equal(lights.touring, false);
-  assert.equal(clock.takes, 1);
 });
 
 test("the flyover lights only what it passes while it runs", () => {
@@ -113,21 +102,16 @@ test("the flyover lights only what it passes while it runs", () => {
   assert.equal(lights.lit, null);
 });
 
-test("left alone, the flyover comes back, but not over a hover or a press", () => {
+test("left alone, the flyover comes back, hover or not, but not under a press", () => {
   const { clock, lights } = spotlight();
   lights.take();
   clock.now = IDLE_MS - 1;
   assert.equal(lights.idle(false), false);
   clock.now = IDLE_MS + 1;
   assert.equal(lights.idle(false), true);
-  // Something held down, or a building under the mouse, keeps the camera.
   assert.equal(lights.idle(true), false);
   lights.recheck("founding");
-  assert.equal(lights.idle(false), false);
-  lights.leave(false);
   lights.pin("founding");
-  lights.pin(null);
-  clock.now += IDLE_MS + 1;
   assert.equal(lights.idle(false), true);
   lights.play();
   assert.equal(lights.idle(false), false);

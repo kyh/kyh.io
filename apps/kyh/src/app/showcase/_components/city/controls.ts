@@ -28,9 +28,9 @@ interface SpotlightPorts {
 /**
  * Which building is lit, and whether the flyover has the camera. Three things
  * light a building and the first of them wins: a pin (hovered or focused),
- * the mouse over it, then the flyover passing it. The visitor taking the
- * camera stops the flyover; left alone for IDLE_MS, it starts again, unless
- * the visitor paused it.
+ * the mouse over it, then the flyover passing it. Lighting a building leaves
+ * the camera be; only the visitor moving it stops the flyover, which starts
+ * again once they've left it alone for IDLE_MS, unless they paused it.
  */
 export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
   let pin: T | null = null;
@@ -51,22 +51,13 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
       take();
       pointer = null;
     },
-    /** The mouse moved onto `hit`, or open ground. A building holds the camera still so it can be read. */
+    /** The mouse moved onto `hit`, or open ground. */
     hover: (hit: T | null) => {
-      if (hit) {
-        take();
-      }
       pointer = hit;
     },
-    /** Whether the flyover should take the camera back: nothing hovered or pressed, for long enough. */
+    /** Whether the flyover should take the camera back: nothing pressed, and the camera left alone long enough. */
     idle: (pressed: boolean) =>
-      !touring &&
-      !paused &&
-      !still &&
-      pin === null &&
-      pointer === null &&
-      !pressed &&
-      now() - idleSince > IDLE_MS,
+      !touring && !paused && !still && !pressed && now() - idleSince > IDLE_MS,
     /** The mouse left the town. A press still down keeps what it's on. */
     leave: (pressed: boolean) => {
       if (!pressed) {
@@ -87,11 +78,8 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
       take();
       paused = true;
     },
-    /** A pin hovered or focused, or null once it's left. Only arriving on one takes the camera. */
+    /** A pin hovered or focused, or null once it's left. */
     pin: (entry: T | null) => {
-      if (entry) {
-        take();
-      }
       pin = entry;
     },
     /** The flyover takes the camera; false if it already has it, or never runs. */
@@ -119,7 +107,6 @@ export const createSpotlight = <T>({ now, onTake, still }: SpotlightPorts) => {
      * and its second opens it.
      */
     tap: (hit: T | null, pointerType: string): T | null => {
-      take();
       if (hit && (pointerType === "mouse" || pointer === hit)) {
         return hit;
       }

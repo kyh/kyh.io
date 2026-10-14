@@ -799,7 +799,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       const entry = bySlug.get(slug);
       if (entry) {
         spotlight.pin(entry);
-        refreshHover();
+        takeControl();
         goal = { ...framing(entry), zoom: Math.max(view.zoom, 1) };
       }
     },
