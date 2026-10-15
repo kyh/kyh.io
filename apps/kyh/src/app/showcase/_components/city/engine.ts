@@ -624,6 +624,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const left = (heading + HEADINGS - 1) % HEADINGS;
     const right = (heading + 1) % HEADINGS;
     ahead = [heading + 0.5, right, left + 0.5, left];
+    // A view no longer a turn away is dropped half drawn: nothing of it is in
+    // the scene or on the GPU yet.
+    if (drafting && !ahead.includes(drafting.at)) {
+      drafting = null;
+    }
   };
   /** A frame's share of drawing ahead. */
   const draftAhead = () => {
