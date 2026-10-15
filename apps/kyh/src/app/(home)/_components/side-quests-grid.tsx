@@ -16,6 +16,8 @@ const longPressMs = 500;
 const moveTolerance = 8;
 const storageKey = "kyh:side-quests-order";
 const layoutSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
+// Layout moves are instant until the first reorder, so restoring the saved order on load doesn't spring.
+const restoreTransition = { ...layoutSpring, layout: { duration: 0 } };
 
 /** Saved keys still on the page, in their saved order, then any tile the save doesn't know. */
 const readOrder = (keys: string[]) => {
@@ -51,30 +53,22 @@ interface TileProps {
   tile: SortableTile;
   index: number;
   editing: boolean;
+  reordered: boolean;
   onLongPress: () => void;
   lockScroll: (locked: boolean) => void;
 }
 
-const Tile = ({ tile, index, editing, onLongPress, lockScroll }: TileProps) => {
+const Tile = ({ tile, index, editing, reordered, onLongPress, lockScroll }: TileProps) => {
   const controls = useDragControls();
-  const press = useRef<{ timer: number; x: number; y: number } | null>(null);
+  const press = useRef<{ stop: () => void } | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const cancelPress = () => {
-    if (press.current) {
-      clearTimeout(press.current.timer);
-      press.current = null;
-    }
+    press.current?.stop();
+    press.current = null;
   };
 
-  useEffect(
-    () => () => {
-      if (press.current) {
-        clearTimeout(press.current.timer);
-      }
-    },
-    [],
-  );
+  useEffect(() => () => press.current?.stop(), []);
 
   // Drag starts from a long press (or any press once editing), so the item
   // ignores its own pointer and the press hands the gesture to dragControls.
@@ -83,37 +77,40 @@ const Tile = ({ tile, index, editing, onLongPress, lockScroll }: TileProps) => {
       return;
     }
     const event = e.nativeEvent;
+    // The press is followed on the window: the pointer may leave the tile before it lifts.
+    const onUp = () => {
+      cancelPress();
+      lockScroll(false);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     if (editing) {
       lockScroll(true);
       controls.start(event);
       return;
     }
     cancelPress();
-    press.current = {
-      timer: window.setTimeout(() => {
-        press.current = null;
-        lockScroll(true);
-        onLongPress();
-        // Same press carries on into a drag, as on a home screen.
-        controls.start(event);
-      }, longPressMs),
-      x: e.clientX,
-      y: e.clientY,
+    const onMove = (m: PointerEvent) => {
+      if (Math.hypot(m.clientX - event.clientX, m.clientY - event.clientY) > moveTolerance) {
+        cancelPress();
+      }
     };
-  };
-
-  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const p = press.current;
-    if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > moveTolerance) {
+    const timer = window.setTimeout(() => {
       cancelPress();
-    }
-  };
-
-  const handlePointerEnd = () => {
-    cancelPress();
-    if (!dragging) {
-      lockScroll(false);
-    }
+      lockScroll(true);
+      onLongPress();
+      // Same press carries on into a drag, as on a home screen.
+      controls.start(event);
+    }, longPressMs);
+    window.addEventListener("pointermove", onMove);
+    press.current = {
+      stop: () => {
+        clearTimeout(timer);
+        window.removeEventListener("pointermove", onMove);
+      },
+    };
   };
 
   return (
@@ -128,16 +125,10 @@ const Tile = ({ tile, index, editing, onLongPress, lockScroll }: TileProps) => {
       dragControls={controls}
       dragMomentum={false}
       whileDrag={{ scale: 1.12 }}
-      transition={layoutSpring}
+      transition={reordered ? layoutSpring : restoreTransition}
       onDragStart={() => setDragging(true)}
-      onDragEnd={() => {
-        setDragging(false);
-        lockScroll(false);
-      }}
+      onDragEnd={() => setDragging(false)}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerEnd}
       onClickCapture={(e) => {
         // Editing: icons don't open; the press that started editing doesn't either.
         if (editing) {
@@ -245,6 +236,7 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
             tile={tile}
             index={index}
             editing={editing}
+            reordered={moved !== null}
             onLongPress={() => setEditing(true)}
             lockScroll={lockScroll}
           />
