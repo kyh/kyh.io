@@ -25,16 +25,19 @@
   --logo-dr: #ea4c89;
 
   /* Semantic colors */
-  --bg-color: var(--colors-gray300);
-  --bg-highlighted: var(--colors-gray0);
+  /* Backgrounds blend the light palette (100%) and the dark one (0%); the theme
+     sets the mix, and the toggle's brightness easter egg sets anything between. */
+  --light: 100%;
+  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--light), var(--colors-gray900));
+  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray1000));
   --body-color: var(--colors-gray900);
   --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray1000);
-  --border-color: var(--colors-gray200);
+  --border-color: color-mix(in oklab, var(--colors-gray200) var(--light), var(--colors-gray800));
   --link-color: var(--colors-gray900);
   --link-color-hover: var(--colors-gray1000);
-  --panel: white;
-  --dock-bg: rgba(15, 23, 42, 0.12);
+  --panel: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray950));
+  --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--light), rgba(71, 85, 105, 0.12));
   --dock-border-color: #e2e8f030;
 
   /* Misc */
@@ -45,44 +48,38 @@
 
 [data-theme="dark"] {
   --logo-gh: #ffffff;
-  --bg-color: var(--colors-gray900);
-  --bg-highlighted: var(--colors-gray1000);
+  --light: 0%;
   --body-color: var(--colors-gray300);
   --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray0);
-  --border-color: var(--colors-gray800);
   --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
-  --panel: var(--colors-gray950);
-  --dock-bg: rgba(71, 85, 105, 0.12);
   --dock-border-color: #1e293b80;
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* The theme toggle's brightness dial: backgrounds blend from the dark palette
-   (0%) to the light one (100%); text follows the theme, which flips at 50%. */
-html[data-dial] {
-  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--dial-light), var(--colors-gray900));
-  --bg-highlighted: color-mix(
-    in oklab,
-    var(--colors-gray0) var(--dial-light),
-    var(--colors-gray1000)
-  );
-  --border-color: color-mix(
-    in oklab,
-    var(--colors-gray200) var(--dial-light),
-    var(--colors-gray800)
-  );
-  --panel: color-mix(in oklab, var(--colors-gray0) var(--dial-light), var(--colors-gray950));
-  --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--dial-light), rgba(71, 85, 105, 0.12));
+/* The toggle's hue easter egg: Tailwind's slate in oklch, turned to --hue with
+   its faint chroma doubled so the tint reads. */
+html[data-hue] {
+  --colors-gray0: oklch(99.5% 0.008 var(--hue));
+  --colors-gray50: oklch(98.4% 0.006 var(--hue));
+  --colors-gray100: oklch(96.8% 0.014 var(--hue));
+  --colors-gray200: oklch(92.9% 0.026 var(--hue));
+  --colors-gray300: oklch(86.9% 0.044 var(--hue));
+  --colors-gray400: oklch(70.4% 0.08 var(--hue));
+  --colors-gray500: oklch(55.4% 0.092 var(--hue));
+  --colors-gray600: oklch(44.6% 0.086 var(--hue));
+  --colors-gray700: oklch(37.2% 0.088 var(--hue));
+  --colors-gray800: oklch(27.9% 0.082 var(--hue));
+  --colors-gray900: oklch(20.8% 0.084 var(--hue));
+  --colors-gray950: oklch(12.9% 0.084 var(--hue));
+  --colors-gray1000: oklch(7% 0.06 var(--hue));
 }
 
-/* The brightness slider, after DialKit's: on a dock tile's background, with
+/* The theme sliders, after DialKit's: on a dock tile's background, with
    tints of the text color, so it follows the theme and the slider itself. */
 .dial-slider {
   --dial-ink: var(--body-color);
-  --dial-tint: 7%;
-  --dial-tint-active: 11%;
   position: relative;
   height: 48px;
   overflow: hidden;
@@ -104,10 +101,6 @@ html[data-dial] {
 
 .dial-slider[data-spectrum][data-active]::before {
   opacity: 0.55;
-}
-
-.dial-slider[data-spectrum] .dial-slider-fill {
-  display: none;
 }
 
 /* The sliders take over the dock: two to it, as wide as the screen allows. */
@@ -135,7 +128,7 @@ html[data-dial] {
   position: absolute;
   inset: 0 auto 0 0;
   pointer-events: none;
-  background: color-mix(in srgb, var(--dial-ink) var(--dial-tint), transparent);
+  background: color-mix(in srgb, var(--dial-ink) 7%, transparent);
   transition: background 150ms;
 }
 
@@ -174,8 +167,8 @@ html[data-dial] {
   background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
 }
 
-.dial-slider[data-active] {
-  --dial-tint: var(--dial-tint-active);
+.dial-slider[data-active] .dial-slider-fill {
+  background: color-mix(in srgb, var(--dial-ink) 11%, transparent);
 }
 
 .dial-slider[data-active] .dial-slider-value {

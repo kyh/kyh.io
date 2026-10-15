@@ -21,15 +21,12 @@ const spring = { damping: 40, stiffness: 500 };
 
 const fractionAt = (clientX: number, rect: DOMRect) => (clientX - rect.left) / rect.width;
 
-const stretchAt = (clientX: number, { left, right }: DOMRect) => {
-  if (clientX < left) {
-    return rubberStretch(left - clientX, -1);
-  }
-  if (clientX > right) {
-    return rubberStretch(clientX - right, 1);
-  }
-  return 0;
-};
+// How far the pointer is past either end of the track, signed.
+const overshootOf = (clientX: number, { left, right }: DOMRect) =>
+  Math.min(0, clientX - left) + Math.max(0, clientX - right);
+
+/** idle, pressed (a click until it moves), or dragging. */
+type Hold = "idle" | "press" | "drag";
 
 const handleOpacityOf = ({
   active,
@@ -75,11 +72,9 @@ export const DialSlider = ({
   const input = useRef<HTMLInputElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const valueRef = useRef<HTMLSpanElement>(null);
-  const press = useRef<{ x: number; y: number; rect: DOMRect; click: boolean } | null>(null);
-  const emitted = useRef<number | null>(null);
+  const press = useRef<{ x: number; y: number; rect: DOMRect } | null>(null);
   const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-  const [dragging, setDragging] = useState(false);
+  const [hold, setHold] = useState<Hold>("idle");
   const [dodgeAt, setDodgeAt] = useState({ left: 30, right: 78 });
 
   const fill = useSpring(percentOf(value, range), spring);
@@ -94,23 +89,22 @@ export const DialSlider = ({
   const trackWidth = useTransform(stretch, (px) => `calc(100% + ${Math.abs(px)}px)`);
   const trackX = useTransform(stretch, (px) => Math.min(px, 0));
 
-  // Follow changes made elsewhere (a reset, a reload); our own already moved the fill.
-  useEffect(() => {
-    if (emitted.current !== value) {
-      fill.jump(percentOf(value, { max, min, step }));
-    }
-    emitted.current = null;
-  }, [fill, value, max, min, step]);
-
   useEffect(() => {
     if (focusOnMount) {
       input.current?.focus({ preventScroll: true });
     }
   }, [focusOnMount]);
 
-  const emit = (next: number) => {
-    emitted.current = next;
-    onChange(next);
+  // The fill follows the pointer or the key at once; the value only when it changes.
+  const moveTo = (next: number, animate = false) => {
+    if (animate) {
+      fill.set(percentOf(next, range));
+    } else {
+      fill.jump(percentOf(next, range));
+    }
+    if (next !== value) {
+      onChange(next);
+    }
   };
 
   // The handle fades back where it would cross the label or the value.
@@ -125,7 +119,8 @@ export const DialSlider = ({
   };
 
   const percent = percentOf(value, range);
-  const active = hovered || pressed;
+  const active = hovered || hold !== "idle";
+  const dragging = hold === "drag";
   const dodge = percent < dodgeAt.left || percent > dodgeAt.right;
 
   return (
@@ -146,12 +141,11 @@ export const DialSlider = ({
         input.current?.focus({ preventScroll: true });
         measure();
         press.current = {
-          click: true,
           rect: event.currentTarget.getBoundingClientRect(),
           x: event.clientX,
           y: event.clientY,
         };
-        setPressed(true);
+        setHold("press");
       }}
       onPointerMove={(event) => {
         const down = press.current;
@@ -159,40 +153,29 @@ export const DialSlider = ({
           return;
         }
         if (
-          down.click &&
-          Math.hypot(event.clientX - down.x, event.clientY - down.y) > CLICK_THRESHOLD
+          hold === "press" &&
+          Math.hypot(event.clientX - down.x, event.clientY - down.y) <= CLICK_THRESHOLD
         ) {
-          down.click = false;
-          setDragging(true);
-        }
-        if (down.click) {
           return;
         }
-        stretch.jump(stretchAt(event.clientX, down.rect));
-        const next = valueAt(fractionAt(event.clientX, down.rect), range);
-        fill.jump(percentOf(next, range));
-        emit(roundToStep(next, range));
+        setHold("drag");
+        stretch.jump(rubberStretch(overshootOf(event.clientX, down.rect)));
+        moveTo(roundToStep(valueAt(fractionAt(event.clientX, down.rect), range), range));
       }}
       onPointerUp={(event) => {
         const down = press.current;
-        if (down?.click) {
-          const next = roundToStep(
-            snapToDecile(valueAt(fractionAt(event.clientX, down.rect), range), range),
-            range,
-          );
-          fill.set(percentOf(next, range));
-          emit(next);
+        if (down && hold === "press") {
+          const at = valueAt(fractionAt(event.clientX, down.rect), range);
+          moveTo(roundToStep(snapToDecile(at, range), range), true);
         }
         stretch.set(0);
         press.current = null;
-        setPressed(false);
-        setDragging(false);
+        setHold("idle");
       }}
       onPointerCancel={() => {
         stretch.jump(0);
         press.current = null;
-        setPressed(false);
-        setDragging(false);
+        setHold("idle");
       }}
     >
       <input
@@ -205,16 +188,12 @@ export const DialSlider = ({
         max={max}
         step={step}
         value={value}
-        onChange={(event) => {
-          const next = event.currentTarget.valueAsNumber;
-          fill.jump(percentOf(next, range));
-          emit(next);
-        }}
+        onChange={(event) => moveTo(event.currentTarget.valueAsNumber)}
       />
       {hashMarks.map((left) => (
         <div key={left} className="dial-slider-hashmark" style={{ left: `${left}%` }} />
       ))}
-      <motion.div className="dial-slider-fill" style={{ width: fillWidth }} />
+      {!spectrum && <motion.div className="dial-slider-fill" style={{ width: fillWidth }} />}
       <motion.div
         className="dial-slider-handle"
         style={{ left: handleLeft, y: "-50%" }}

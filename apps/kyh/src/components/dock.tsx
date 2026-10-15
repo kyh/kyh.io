@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 
-import { releaseBrightness, ThemeDial } from "@/components/theme-dial";
+import { ThemeDial, useThemeDial } from "@/components/theme-dial";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { TAPS, tapStreak } from "@/lib/dial";
 
@@ -151,7 +151,7 @@ const DockItem = ({
 const GlassFilter = () => (
   <>
     <div
-      className="absolute inset-0 isolate z-0 overflow-hidden rounded-[20px] backdrop-blur-[8px]"
+      className="pointer-events-none absolute inset-0 isolate -z-10 overflow-hidden rounded-[20px] backdrop-blur-[8px]"
       style={{ filter: 'url("#glass-distortion")' }}
     />
     <svg style={{ display: "none", height: 0, width: 0 }}>
@@ -208,13 +208,19 @@ const GlassFilter = () => (
 );
 
 const morph = { bounce: 0.2, duration: 0.45, type: "spring" } as const;
+
 // Two modes, swapped like a toolbar's: the buttons live above the dock and the
 // sliders below, so opening rolls the buttons up and out as the sliders rise in,
 // and closing rolls it back down.
 const above = { opacity: 0, y: -56 };
 const below = { opacity: 0, y: 56 };
-const shown = { opacity: 1, y: 0 };
-const roll = (index = 0) => ({ ...morph, delay: index * 0.03 });
+const slideFrom = (from: typeof above, index = 0) => ({
+  animate: { opacity: 1, y: 0 },
+  exit: from,
+  initial: from,
+  layout: "position" as const,
+  transition: { ...morph, delay: index * 0.03 },
+});
 
 export const Dock = () => {
   const pathname = usePathname();
@@ -222,13 +228,15 @@ export const Dock = () => {
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
+  const dial = useThemeDial();
   const [dialOpen, setDialOpen] = useState(false);
   // The dock clips while the modes roll past, and only then: hover labels sit above it.
   const [switching, setSwitching] = useState(false);
-  const closeDial = useCallback(() => {
+  const switchDial = useCallback((open: boolean) => {
     setSwitching(true);
-    setDialOpen(false);
+    setDialOpen(open);
   }, []);
+  const closeDial = useCallback(() => switchDial(false), [switchDial]);
 
   const isLight = theme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
@@ -238,7 +246,7 @@ export const Dock = () => {
       <motion.nav
         layout
         transition={morph}
-        className={`pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${switching ? "overflow-hidden" : ""}`}
+        className={`pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${switching ? "overflow-hidden" : ""}`}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
@@ -249,15 +257,7 @@ export const Dock = () => {
         >
           {!dialOpen &&
             links.map(({ href, label, icon }, index) => (
-              <motion.div
-                key={href}
-                layout="position"
-                transition={roll(index)}
-                initial={above}
-                animate={shown}
-                exit={above}
-                className="relative z-[1]"
-              >
+              <motion.div key={href} {...slideFrom(above, index)}>
                 <Link
                   href={href}
                   aria-label={label}
@@ -280,40 +280,26 @@ export const Dock = () => {
               </motion.div>
             ))}
           {dialOpen ? (
-            <motion.div
-              key="dial"
-              layout="position"
-              transition={roll()}
-              initial={below}
-              animate={shown}
-              exit={below}
-              className="relative z-[1]"
-            >
-              <ThemeDial onClose={closeDial} />
+            <motion.div key="dial" {...slideFrom(below)}>
+              <ThemeDial {...dial} onClose={closeDial} />
             </motion.div>
           ) : (
             <motion.button
               key="toggle"
-              layout="position"
-              transition={roll(links.length)}
-              initial={above}
-              animate={shown}
-              exit={above}
-              // A transform paints an element as positioned, so it needs to sit above the glass.
-              className="relative z-[1]"
+              {...slideFrom(above, links.length)}
               type="button"
               aria-label={themeLabel}
               onClick={(event) => {
                 setTheme(isLight ? "dark" : "light");
-                releaseBrightness();
+                // A plain tap hands brightness back to the theme; the hue stays.
+                dial.setLight(null);
                 // Five quick taps open the dials.
                 taps.current = tapStreak(taps.current, event.timeStamp);
                 if (taps.current.length >= TAPS) {
                   taps.current = [];
                   setHovered(null);
                   mouseX.set(Infinity);
-                  setSwitching(true);
-                  setDialOpen(true);
+                  switchDial(true);
                 }
               }}
               onMouseEnter={() => setHovered("theme")}

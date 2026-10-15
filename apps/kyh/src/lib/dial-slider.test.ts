@@ -23,8 +23,10 @@ test("values round to the step", () => {
 });
 
 test("the track only gives past a dead zone, and never more than 8px", () => {
-  assert.equal(rubberStretch(20, 1), 0);
-  assert.ok(rubberStretch(100, 1) > 0);
-  assert.ok(rubberStretch(100, -1) < 0);
-  assert.equal(rubberStretch(10_000, 1), 8);
+  assert.equal(rubberStretch(20), 0);
+  assert.equal(rubberStretch(0), 0);
+  assert.ok(rubberStretch(100) > 0);
+  assert.ok(rubberStretch(-100) < 0);
+  assert.equal(rubberStretch(10_000), 8);
+  assert.equal(rubberStretch(-10_000), -8);
 });
