@@ -1,6 +1,6 @@
 packages:
   - apps/*
-  - apps/mod-commuting-clawders/leaderboard
+  - apps/commuting-clawders/mod
   - packages/*
 
 catalog:

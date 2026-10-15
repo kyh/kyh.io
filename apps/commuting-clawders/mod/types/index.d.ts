@@ -8,6 +8,6 @@ export type View =
 declare module "claude-code" {
   interface PluginState {
     // `status` is the line under the game: the run, its tokens and coins.
-    "mod-commuting-clawders": { view: View; status: string };
+    "commuting-clawders": { view: View; status: string };
   }
 }

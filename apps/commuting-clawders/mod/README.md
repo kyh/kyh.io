@@ -29,14 +29,14 @@ pixels a character, from the same frames.
 In Claude Code:
 
 ```
-/plugin install mod-commuting-clawders --marketplace kyh/kyh.io
+/plugin install commuting-clawders --marketplace kyh/kyh.io
 ```
 
 Or from a shell:
 
 ```sh
 claude plugin marketplace add kyh/kyh.io
-claude plugin install mod-commuting-clawders@kyh
+claude plugin install commuting-clawders@kyh
 ```
 
 `/plugin` disables or removes it. Installed it as `mod-clawders`? Remove that one
@@ -45,11 +45,11 @@ at the repo root.
 
 ### From a checkout
 
-From this repo, `pnpm dev:mod-commuting-clawders` builds it and runs
-`claude --plugin-dir apps/mod-commuting-clawders`. To load the checkout in every session
+From this repo, `pnpm dev:commuting-clawders-mod` builds it and runs
+`claude --plugin-dir apps/commuting-clawders/mod`. To load the checkout in every session
 (the desktop app included, which takes no flags), add the folder to
 `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`; run
-`pnpm -F @repo/mod-commuting-clawders build` after changing `world/` or `stream/`.
+`pnpm -F @repo/commuting-clawders-mod build` after changing `world/` or `stream/`.
 
 ## Use it
 
@@ -83,36 +83,37 @@ line under the game says where runs go whenever the game is idle, e.g.
 
 ### Settings
 
-Open `/config` and find **mod-commuting-clawders**:
+Open `/config` and find **commuting-clawders**:
 
-| Setting                      | Default        | Options                                                 |
-| ---------------------------- | -------------- | ------------------------------------------------------- |
-| Post runs to the leaderboard | on             | off: runs stay local                                    |
-| Player name                  | git user.name  | any name, up to 32 characters                           |
-| Leaderboard URL              | the shared one | another deployment of `leaderboard/`; empty: no posting |
+| Setting                      | Default        | Options                                           |
+| ---------------------------- | -------------- | ------------------------------------------------- |
+| Post runs to the leaderboard | on             | off: runs stay local                              |
+| Player name                  | git user.name  | any name, up to 32 characters                     |
+| Leaderboard URL              | the shared one | another deployment of the site; empty: no posting |
 
 You can also set them in `~/.claude/settings.json`:
 
 ```json
 {
   "pluginConfigs": {
-    "mod-commuting-clawders": { "options": { "playerName": "kyh" } }
+    "commuting-clawders": { "options": { "playerName": "kyh" } }
   }
 }
 ```
 
 ## Leaderboard
 
-`leaderboard/` is a Next.js app on Vercel with its own Turso database, a
-workspace package of its own (`@repo/mod-commuting-clawders-leaderboard`). `POST /runs`
+The leaderboard is the folder around this one, `apps/commuting-clawders`
+(`@repo/commuting-clawders`): a Next.js app on Vercel with its own Turso
+database. `POST /runs`
 takes `{ name, tokens, coins, seconds }` and answers the player's `rank`;
 `GET /` is the page, each player's best run by tokens; `GET /runs` the same as
 JSON.
 
 ```sh
-cp apps/mod-commuting-clawders/leaderboard/.env.example apps/mod-commuting-clawders/leaderboard/.env
-pnpm -F @repo/mod-commuting-clawders-leaderboard db:push   # the local file database
-pnpm dev:leaderboard                           # :3016
+cp apps/commuting-clawders/.env.example apps/commuting-clawders/.env
+pnpm -F @repo/commuting-clawders db:push   # the local file database
+pnpm dev:commuting-clawders                           # :3016
 ```
 
 Anyone can post, so names are trimmed and every number is bounded; there is
@@ -125,12 +126,12 @@ no proof a run happened.
 | No pane                  | The terminal is too narrow (see Requirements). Widen it.                                   |
 | Pane says ✗ and a reason | The streamer stopped: usually Chrome not found (set `CHROME_PATH`) or no `node` on `PATH`. |
 | Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.                 |
-| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-commuting-clawders:`.    |
+| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `commuting-clawders:`.        |
 
 ## Release
 
 Installed copies update only when `version` in `.claude-plugin/plugin.json`
-changes. To ship: rebuild (`pnpm -F @repo/mod-commuting-clawders build`), commit
+changes. To ship: rebuild (`pnpm -F @repo/commuting-clawders-mod build`), commit
 `dist/`, bump the version, push to `main`. CI fails if `dist/` doesn't match
 the source.
 
@@ -140,12 +141,12 @@ Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
 file in `hooks/` reloads the mod without a restart.
 
 ```sh
-pnpm -F @repo/mod-commuting-clawders build      # dist/: the world for Chrome and the bundled streamer (commit it)
-pnpm -F @repo/mod-commuting-clawders world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
-pnpm -F @repo/mod-commuting-clawders test       # node: the runner, runs, frames, the streamer protocol
-pnpm -F @repo/mod-commuting-clawders test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
-pnpm -F @repo/mod-commuting-clawders typecheck  # pure modules + streamer, the world (DOM), then the hooks against the pinned API types
-pnpm -F @repo/mod-commuting-clawders validate   # what Claude Code will load
+pnpm -F @repo/commuting-clawders-mod build      # dist/: the world for Chrome and the bundled streamer (commit it)
+pnpm -F @repo/commuting-clawders-mod world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
+pnpm -F @repo/commuting-clawders-mod test       # node: the runner, runs, frames, the streamer protocol
+pnpm -F @repo/commuting-clawders-mod test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
+pnpm -F @repo/commuting-clawders-mod typecheck  # pure modules + streamer, the world (DOM), then the hooks against the pinned API types
+pnpm -F @repo/commuting-clawders-mod validate   # what Claude Code will load
 ```
 
 Tests come in two kinds, split by suffix. `test/*.spec.ts` cover the pure
@@ -161,7 +162,7 @@ After a Claude Code update, refresh it from the copy the engine writes beside
 a mod each time it loads one:
 
 ```sh
-cp apps/mod-commuting-clawders/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
+cp apps/commuting-clawders/mod/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
 ```
 
 | File                         | Role                                                                                |
@@ -178,4 +179,4 @@ cp apps/mod-commuting-clawders/.claude-plugin/types/claude-code/index.d.ts packa
 | `dist/`                      | Built and committed: the world page and `stream.mjs`, so installs need no packages  |
 | `types/index.d.ts`           | The `$.state` contract: what the pane shows, the status line                        |
 | `.claude-plugin/plugin.json` | Manifest and the `/config` options                                                  |
-| `leaderboard/`               | The leaderboard: Next.js app, Turso schema, run schema, standings, page             |
+| `../`                        | The leaderboard: Next.js app, Turso schema, run schema, standings, page             |

@@ -1,8 +1,8 @@
 // The demo session the site plays beside the live game: prompts typed,
 // Claude working through them, the quiet gaps between. Everything on screen
 // is a pure function of the time into the loop, so it never drifts.
-import { addTokens, endTurn, idle, resultOf, startTurn } from "@repo/mod-commuting-clawders/run";
-import type { Run } from "@repo/mod-commuting-clawders/run";
+import { addTokens, endTurn, idle, resultOf, startTurn } from "@repo/commuting-clawders-mod/run";
+import type { Run } from "@repo/commuting-clawders-mod/run";
 
 export type Line =
   | { kind: "prompt"; text: string }

@@ -11,7 +11,7 @@ pnpm verify        # typecheck · lint · format · test — run before committi
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/mod-commuting-clawders, apps/mod-dev)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/commuting-clawders/mod, apps/mod-dev)
 ```
 
 ## Agent-driven development
@@ -166,9 +166,10 @@ Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
 
 Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history, one trading day per 5s grid cell. The CSV lives in Vercel Blob, served by `/api/spx` (seeds itself from Yahoo Finance on first request, reads Yahoo directly without a store) and refreshed by a weekday Vercel Cron hitting `/api/cron/spx`. `src/lib/spx-source.ts` fetches and stores it; `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
 
-### mod-commuting-clawders (`apps/mod-commuting-clawders`)
+### commuting-clawders (`apps/commuting-clawders`)
 
-Claude Code mod (see Claude Code mods below). Opens the **Commuting Clawders**
+The folder is the leaderboard site; `mod/` inside it is the Claude Code mod
+(see Claude Code mods below), and the paths below are the mod's. The mod opens the **Commuting Clawders**
 pane, a self-playing endless runner starring Clawd that runs while Claude
 works, and posts each run to a shared leaderboard. No slash
 commands: the pane opens on session start.
@@ -199,14 +200,14 @@ commands: the pane opens on session start.
   the run on; past it the run is over, the world freezes, and the next run
   starts a fresh game. The hooks send `active` and `tokens` down with each
   poll; the HUD pill shows the tokens.
-- Leaderboard: `leaderboard/` is its own workspace package
-  (`@repo/mod-commuting-clawders-leaderboard`), a Next.js app on Vercel at
+- Leaderboard: the site, `apps/commuting-clawders` itself
+  (`@repo/commuting-clawders`), a Next.js app on Vercel at
   `clawders.kyh.io` with its own Turso database (Drizzle; `db:push` is local,
   `db:push-remote` production). It takes `POST /runs` and lists each
   player's best inside a live demo (the pane's `[Leaderboard]` prints it
   in the terminal): a scripted Claude Code session
   (`src/lib/demo.ts`, a pure function of time) driving the real game, which
-  the site imports from the mod (`@repo/mod-commuting-clawders/world` → `world/mount.ts`;
+  the site imports from the mod (`@repo/commuting-clawders-mod/world` → `world/mount.ts`;
   `world/view.ts` is the drawing both it and the streamed page share) along
   with `hooks/run.ts` for the status line. The hooks post to `leaderboardUrl` under `playerName`
   (else git's `user.name`); `leaderboard: false` stops posting. Anyone can
@@ -222,7 +223,7 @@ commands: the pane opens on session start.
 **Key files**: `hooks/register.tsx` (hooks, runs, streamer, blits),
 `hooks/run.ts` (run state, grace, status line), `hooks/screen.ts` (socket,
 frame parsing), `hooks/game.ts` (runner simulation + autopilot, shared with the
-world), `leaderboard/src/` (route, zod run schema, standings query, page),
+world), the site's `src/` (route, zod run schema, standings query, page),
 `world/` (three.js scene; `vfx.ts` particles off game-state changes),
 `stream/` (Chrome launch, world files, frame → RGBA or cells), `types/index.d.ts` (the `$.state` contract).
 
@@ -278,7 +279,7 @@ prompt, parsing the answer and its sources, the verdict, the scorecard),
 command means), `hooks/shell.ts` (command lines into words), `hooks/git.ts`
 (the diff script, fingerprints), `types/index.d.ts` (the `$.state` contract).
 
-### Claude Code mods (`apps/mod-*`)
+### Claude Code mods (`apps/commuting-clawders/mod`, `apps/mod-dev`)
 
 Plugins of function hooks, not web apps. Both share one layout; keep it that
 way when adding a mod.

@@ -6,8 +6,8 @@
   "description": "Kaiyu Hsu's Claude Code mods",
   "plugins": [
     {
-      "name": "mod-commuting-clawders",
-      "source": "./apps/mod-commuting-clawders",
+      "name": "commuting-clawders",
+      "source": "./apps/commuting-clawders/mod",
       "description": "Keep Clawd running"
     }
   ]
