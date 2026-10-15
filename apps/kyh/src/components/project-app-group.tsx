@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
+
+import { SortableGrid } from "@/components/sortable-grid";
 
 // Types
 interface Point {
@@ -47,7 +49,7 @@ interface ProjectAppProps {
   showShadow?: boolean;
 }
 
-export const ProjectApp = ({
+const ProjectAppIcon = ({
   name,
   description,
   iconSrc,
@@ -74,6 +76,7 @@ export const ProjectApp = ({
       {...wrapperProps}
       className="ease relative flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
       data-slot="app"
+      draggable={false}
       onHoverStart={handleHoverStart}
       onHoverEnd={() => setIsHovered(false)}
     >
@@ -133,6 +136,9 @@ export const ProjectApp = ({
   );
 };
 
+/** An app's icon and name; memoized, so a grid reordering around it doesn't redraw it. */
+export const ProjectApp = memo(ProjectAppIcon);
+
 const OpenGridItem = ({
   item,
   idx,
@@ -187,7 +193,18 @@ const OpenGridItem = ({
   );
 };
 
-export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
+const keyOf = (item: ProjectAppItem) => item.key;
+
+interface ProjectAppGroupProps {
+  title: string;
+  /** In the order the folder shows them, in its preview and when open. */
+  items: ProjectAppItem[];
+  /** Apps were rearranged inside the open folder: the new order, by key. */
+  onDrop: (order: string[]) => void;
+  onHold?: (holding: boolean) => void;
+}
+
+const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const contentsId = useId();
   const folderRef = useRef<HTMLDivElement>(null);
@@ -217,33 +234,45 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
     }
   }, [isOpen]);
 
+  /** How far each open icon sits from the folder, for flying out of it and back. */
+  const measureOffsets = useCallback(
+    (from: Point) => {
+      const next: Record<string, Point> = {};
+      for (const item of items) {
+        const rect = itemRefs.current[item.key]?.getBoundingClientRect();
+        if (rect) {
+          next[item.key] = {
+            x: from.x - (rect.left + rect.width / 2),
+            y: from.y - (rect.top + rect.height / 2),
+          };
+        }
+      }
+      return next;
+    },
+    [items],
+  );
+
   useLayoutEffect(() => {
     if (!isOpen || !origin) {
       return;
     }
-
-    const frame = requestAnimationFrame(() => {
-      const next: Record<string, Point> = {};
-      for (const item of items) {
-        const el = itemRefs.current[item.key];
-        if (!el) {
-          continue;
-        }
-        const rect = el.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        next[item.key] = { x: origin.x - cx, y: origin.y - cy };
-      }
-      setItemOffsets(next);
-    });
-
+    const frame = requestAnimationFrame(() => setItemOffsets(measureOffsets(origin)));
     return () => cancelAnimationFrame(frame);
-  }, [isOpen, origin, items]);
+  }, [isOpen, origin, measureOffsets]);
+
+  // Icons may have been rearranged since the folder opened: measure again so
+  // each flies back from where it is now, then close on the next frame.
+  const close = () => {
+    if (origin) {
+      setItemOffsets(measureOffsets(origin));
+    }
+    requestAnimationFrame(() => setIsOpen(false));
+  };
 
   const offsetsReady = isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog.Root open={isOpen} onOpenChange={(open) => (open ? setIsOpen(true) : close())}>
       <MotionConfig transition={springTransition}>
         <div className="flex items-center justify-center" data-slot="app-group">
           <motion.div
@@ -311,7 +340,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                     }}
                   />
                 }
-                onClick={() => setIsOpen(false)}
+                onClick={close}
               />
               <Dialog.Popup
                 render={
@@ -341,11 +370,13 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                   <Dialog.Title>{title}</Dialog.Title>
                 </motion.div>
 
-                <div
+                <SortableGrid
+                  items={items}
+                  keyOf={keyOf}
+                  onDrop={onDrop}
+                  onHold={onHold}
                   className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
-                  data-slot="open-grid"
-                >
-                  {items.map((item, idx) => (
+                  renderTile={(item, idx) => (
                     <OpenGridItem
                       key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
                       item={item}
@@ -354,8 +385,8 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                       itemOffsets={itemOffsets}
                       offsetsReady={!!offsetsReady}
                     />
-                  ))}
-                </div>
+                  )}
+                />
               </Dialog.Popup>
             </Dialog.Portal>
           )}
@@ -364,3 +395,6 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
     </Dialog.Root>
   );
 };
+
+/** A folder of apps that opens over the page; memoized like ProjectApp. */
+export const ProjectAppGroup = memo(ProjectAppFolder);

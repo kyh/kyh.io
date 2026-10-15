@@ -100,6 +100,17 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
+The dock's theme toggle hides an easter egg: five quick taps roll the dock's
+buttons up and out and two sliders up in from below, like a toolbar switching
+modes (a press outside rolls it back): brightness and hue, both gone on reload.
+Brightness is `--light`, the mix every background token in `global.css` takes
+between the light and dark palettes (the theme sets 100% or 0%; the theme flips
+at 50%); hue is `--hue` under `html[data-hue]`, the slate greys retinted in
+oklch. `src/components/theme-dial.tsx` holds the state and the panel,
+`dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
+Base UI's Slider, and
+`src/lib/dial.ts` the tap streak.
+
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
 (flat unlit faces, ink outlines, a fixed 30° camera), in three.js, all in greys.
@@ -155,8 +166,26 @@ pick-up is a claim, a drop carries the mover's exact landed state, pointers go
 out at 15Hz, and everything off the wire is validated. With no server the town
 plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
 `TOWN_VERSION` whenever stepping or packing changes, or old and new pages
-desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
-same server, room `kyh-site`, and skip `/showcase`, which draws its own.
+desync in one room.
+
+The rest of the site shares one room, `kyh-site`, on the same server:
+`src/lib/site-room.ts` is the store (one client, no React; host-side features
+are a fixed slice table, since the host may be on any page), and
+`components/multiplayer/provider.tsx` opens it in `Providers` and exposes hooks
+(`usePlayers`, `useSelf`, `useChat`, `useRoomClock`, `useSharedOrder`), each
+subscribing to just what it reads. `components/multiplayer/cursors.tsx` draws
+everyone's pointers and chat, and skips `/showcase`, which draws its own.
+
+The homepage's side-quests grid and its folders are iOS home screens
+(`src/components/sortable-grid.tsx`, generic over items): long-press an icon and
+the grid wiggles, drag to reorder (motion's `Reorder` in `xy`), press elsewhere
+or Escape to stop. The grid owns the gesture and calls `onDrop` once on release.
+The order is shared in `kyh-site` while the room lives (`useSharedOrder`;
+`shared-order.ts` is the pure, tested part): a drop shows at once and sends the
+host a `reorder` intent, the host writes `orders` into shared state, and
+everyone reads it against their own tiles. A held tile ignores the room until
+it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
+`ProjectAppGroup` just takes ordered items and `onDrop`.
 
 Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one

@@ -2,7 +2,8 @@
 // typing and the last line they sent, with when. A visitor holds one draft and
 // one line, each replaced by the next and gone when they leave, so nothing
 // piles up; a line shows for SHOW_MS after it was sent, by the room's clock.
-import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
+import type { JsonRecord } from "@vibedgames/multiplayer";
+import { asText } from "@/lib/wire";
 
 /** The longest line, in characters. */
 export const MAX_CHARS = 120;
@@ -103,8 +104,6 @@ export const sayState = (text: string, now: number): JsonRecord => ({
   saidAt: Math.round(now),
   typing: "",
 });
-
-const asText = (value: JsonValue | undefined) => (String(value) === value ? value : "");
 
 /** A state's chat fields, cleaned once per state object: state is replaced, never changed, on each update. */
 const parsed = new WeakMap<

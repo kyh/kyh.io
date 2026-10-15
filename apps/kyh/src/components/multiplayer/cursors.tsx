@@ -9,13 +9,12 @@ import { Cursor } from "@/components/cursor";
 import type { JsonValue } from "@/lib/player";
 import type { Line } from "@/lib/chat";
 import { lineOf, readChat } from "@/lib/chat";
-import { useRealtime } from "@/lib/use-realtime";
+import { useWindowSize } from "@/lib/use-window-size";
+import { asFinite } from "@/lib/wire";
+import { useChat, usePlayers, useRoomClock, useSelf } from "./provider";
 
-const asCoordinate = (value: JsonValue | undefined) =>
-  Number.isFinite(value) ? Number(value) : undefined;
+const asCoordinate = (value: JsonValue | undefined) => asFinite(value) ?? undefined;
 
-/** Everyone on the site, on the shared vibedgames party server. */
-const ROOM = "kyh-site";
 /** Pages that draw visitors themselves: the city puts pointers in the town, not on the screen. */
 const OWN_CURSORS = new Set(["/showcase"]);
 
@@ -53,10 +52,11 @@ const OwnChat = ({ line, color, hue }: OwnChatProps) => {
 export const Multiplayer = () => {
   const pathname = usePathname();
   const ownsCursors = OWN_CURSORS.has(pathname);
-  const { draft, me, now, players, said, windowDimensions } = useRealtime({
-    chat: !ownsCursors,
-    room: ROOM,
-  });
+  const players = usePlayers();
+  const me = useSelf();
+  const now = useRoomClock();
+  const { draft, said } = useChat(!ownsCursors);
+  const windowDimensions = useWindowSize();
 
   // Only surface players that have announced themselves (sent a pathname). A
   // just-connected or mid-reconnect socket sits at empty state for a beat; the
