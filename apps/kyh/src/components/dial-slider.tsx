@@ -88,6 +88,10 @@ export const DialSlider = ({
   };
 
   const percent = percentOf(value, range);
+  // SAFETY: CSS custom properties are valid inline styles, but
+  // React.CSSProperties has no index signature for `--*` keys; the object
+  // holds nothing else.
+  const percentStyle = { "--dial-percent": percent } as React.CSSProperties;
 
   return (
     <motion.div style={{ width, x }}>
@@ -103,11 +107,12 @@ export const DialSlider = ({
         data-spectrum={spectrum || undefined}
         data-dodge={percent < dodgeAt.left || percent > dodgeAt.right || undefined}
         className="dial-slider dock-item"
+        style={percentStyle}
         onPointerEnter={(event) => measure(event.currentTarget)}
         onPointerDown={(event) => holdStretch(event.currentTarget.getBoundingClientRect())}
       >
         <Slider.Control className="absolute inset-0">
-          <Slider.Track className="h-full">
+          <Slider.Track className="dial-slider-track">
             {hashMarks.map((left) => (
               <div key={left} className="dial-slider-hashmark" style={{ left: `${left}%` }} />
             ))}

@@ -149,8 +149,20 @@ html[data-hue] {
     scale 250ms cubic-bezier(0.3, 1.4, 0.6, 1);
 }
 
-.dial-slider:not([data-spectrum]) .dial-slider-handle {
-  translate: -7px 0;
+.dial-slider-track {
+  height: 100%;
+  container-type: inline-size;
+}
+
+/* The bar rides the thumb, shifted into the fill on brightness, but stays
+   6px inside the track's ends: past them it's clipped. */
+.dial-slider-handle {
+  --at: calc(var(--dial-percent) * 1cqw);
+  translate: calc(clamp(6px, var(--at) + var(--dial-handle-shift, 0px), 100cqw - 6px) - var(--at)) 0;
+}
+
+.dial-slider:not([data-spectrum]) {
+  --dial-handle-shift: -7px;
 }
 
 /* Released, the fill and the handle glide to the value; dragged, they follow. */
@@ -228,10 +240,6 @@ html[data-hue] {
 .dial-slider[data-dodge]:is(:hover, [data-dragging], :has(:focus-visible)) .dial-slider-handle {
   opacity: 0.1;
   scale: 1 0.75;
-}
-
-.dial-slider[data-active] .dial-slider-value {
-  color: var(--dial-ink);
 }
 
 @theme inline {
