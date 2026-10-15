@@ -196,11 +196,7 @@ export const createActors = (
   let shadowCount = 0;
 
   const sized = new Vector3();
-  const place = (
-    meshes: InstancedMesh[],
-    placements: readonly Placement[],
-    size: (index: number) => number,
-  ) => {
+  const place = (meshes: InstancedMesh[], placements: readonly Placement[]) => {
     for (const [index, spot] of placements.entries()) {
       position.set(spot.x, spot.y, spot.z);
       yaw.setFromAxisAngle(up, -spot.heading);
@@ -210,12 +206,12 @@ export const createActors = (
         lean.setFromAxisAngle(axis.set(spot.leanZ / tilt, 0, -spot.leanX / tilt), tilt);
         yaw.premultiply(lean);
       }
-      const scale = spot.shown ? spot.size * size(index) : 0;
+      const scale = spot.shown ? spot.size : 0;
       matrix.compose(position, yaw, scale > 0 ? sized.setScalar(scale) : none);
       for (const mesh of meshes) {
         mesh.setMatrixAt(index, matrix);
       }
-      if (spot.shown && size(index) > 0 && spot.shadowSize > 0 && shadowCount < SHADOWS) {
+      if (scale > 0 && spot.shadowSize > 0 && shadowCount < SHADOWS) {
         shadowAt.set(spot.shadowX, spot.shadowY + 0.006, spot.shadowZ);
         shadowSize.set(spot.shadowSize, 1, spot.shadowSize);
         matrix.compose(shadowAt, flat, shadowSize);
@@ -240,17 +236,15 @@ export const createActors = (
     },
     meshes: [...layers.map(({ mesh }) => mesh), shadows],
     setTheme: paintLayers,
-    /** Places everyone; `size` scales each (by its place among all of them), for popping in. */
     update: (
       cars: readonly Placement[],
       walkers: readonly Placement[],
       visitors: readonly Placement[],
-      size: (index: number) => number = () => 1,
     ) => {
       shadowCount = 0;
-      place(carMeshes, cars, size);
-      place(walkerMeshes, walkers, (index) => size(cars.length + index));
-      place(visitorMeshes, visitors, (index) => size(cars.length + walkers.length + index));
+      place(carMeshes, cars);
+      place(walkerMeshes, walkers);
+      place(visitorMeshes, visitors);
       shadows.count = shadowCount;
       shadows.instanceMatrix.needsUpdate = true;
     },

@@ -380,3 +380,15 @@ export type Visitors = ReturnType<typeof createVisitors>;
 
 /** Whether someone is out in the street, rather than inside a building. */
 export const isOut = (visitor: Visitor) => visitor.mode !== INSIDE;
+
+/** How far from its door a visitor is full size, growing out of it or shrinking into it (cells). */
+const DOORWAY = 0.3;
+
+/** How big a visitor at `x, z` is drawn: full size, but shrinking into a door or growing out of one, never blinking. */
+export const doorwaySize = (visitor: Visitor, doors: readonly Door[], x: number, z: number) => {
+  const door = doors[visitor.mode === ENTERING ? visitor.target : visitor.door];
+  if (!door || (visitor.mode !== LEAVING && visitor.mode !== ENTERING)) {
+    return 1;
+  }
+  return Math.min(1, Math.hypot(x - door.x, z - door.z) / DOORWAY);
+};

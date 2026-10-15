@@ -11,7 +11,7 @@ import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
 import type { Theme } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Sketch, Vec3 } from "./sketch";
+import type { Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";
 import { CURB_TOP } from "./draw-blocks";
@@ -19,17 +19,16 @@ import { createNet } from "./net";
 import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
-import { createHeights } from "./heights";
-import { contains } from "./plan";
+import type { Ground, Held } from "./carry";
+import { carryTo, flightOf, HANG, LIFT, pickUp, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
-import { ENTERING, INSIDE, LEAVING, SAYING } from "./visitors";
+import { doorwaySize, INSIDE, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
 import { clamp, lerp } from "./ease";
 
 /** How high a carried thing hangs, in cells. */
-export const LIFT = 0.9;
 /**
  * Where a carried thing is drawn: slid up its own line of sight to above the
  * tallest roof. The camera is orthographic, so it shows in the same spot, but
@@ -39,15 +38,9 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
-/** How far from its door a visitor is full size, growing out of it or shrinking into it (cells). */
-const DOORWAY = 0.3;
 /** How long the town's cars and people take to all pop in once it opens, and each one (ms). */
 const OPENING = 700;
 const POP = 150;
-/** How far above the ground something held hangs. */
-const HANG = LIFT - 0.18;
-/** How far something picked up has to be carried, in cells, before it hangs at full height. */
-const LIFT_SPAN = 1.2;
 /** The little hop a thing makes when it lands (ms). */
 const BOUNCE_MS = 340;
 /** The most lines up at once, and the zoom (CSS pixels a cell) they need to be readable. */
@@ -66,27 +59,6 @@ interface Air {
   flight: number;
   leanX: number;
   leanZ: number;
-}
-
-interface Held {
-  key: string;
-  /** Its ground point: it hangs above it, casts its shadow on it, and lands on it. */
-  spot: Spot;
-  /** How high it hangs: on the view ray through where it's seen, so it stays in the hand. */
-  altitude: number;
-  /**
-   * Where on screen it was grabbed, from the pointer, as ground points that
-   * look the same: kept so it stays exactly where the hand took hold of it.
-   */
-  offset: { x: number; z: number };
-  /** Where it is on screen now, as a ground point. */
-  seen: { x: number; z: number };
-  /**
-   * How far off the ground it's come, 0 to 1: nothing when it's picked up,
-   * all of HANG once it's been carried LIFT_SPAN, so it rises as it's moved.
-   */
-  lift: number;
-  samples: { t: number; x: number; z: number }[];
 }
 
 interface Frame {
@@ -119,31 +91,13 @@ export interface LifeOptions {
   scale: () => number;
   /** Toward the camera, which turns in quarter turns. */
   view: () => Vec3;
-  /** The town's own drawing, besides the projects' buildings: what something held can hang over. */
-  town: Sketch;
+  /** How high what's underfoot is: a roof, a ledge, else the street. */
+  surfaceAt: (x: number, z: number) => number;
   size: () => { width: number; height: number };
 }
 
 const lerpAngle = (a: number, b: number, k: number) =>
   a + (((((b - a) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * k;
-
-/** A shadow's size for something this high off the ground: none on the ground. */
-const shadowFor = (height: number) => (height > 0.06 ? clamp(1 - height / 2.4, 0.35, 1) : 0);
-
-/** How long a thing let go at `from` takes to land at `to` (ms). */
-const flightOf = (from: Spot, to: Pose) =>
-  Math.min(760, 360 + Math.hypot(to.x - from.x, to.z - from.z) * 55 + from.y * 60);
-
-/** Cells per second over the last moments of a carry. */
-const velocityOf = (samples: Held["samples"]) => {
-  const last = samples.at(-1);
-  const first = samples.find((sample) => last && last.t - sample.t < 140) ?? last;
-  if (!last || !first || last.t - first.t < 16) {
-    return { x: 0, z: 0 };
-  }
-  const seconds = (last.t - first.t) / 1000;
-  return { x: (last.x - first.x) / seconds, z: (last.z - first.z) / seconds };
-};
 
 const between = (last: Pose, pose: Pose, alpha: number, out: Placement, y: number) => {
   out.x = lerp(last.x, pose.x, alpha);
@@ -173,17 +127,15 @@ export const createLife = (options: LifeOptions) => {
   const actors = createActors({ cars: CARS, visitors: VISITORS, walkers: WALKERS }, options.theme);
   group.add(...actors.meshes);
   options.scene.add(group);
-  /** Whether the town's open: its cars, passers-by and visitors only come out once it's built. */
-  let open = true;
-  /** When it opened, while they're still popping in, one after another as the trucks do. */
-  let openedAt: number | null = null;
-  const popIn = (index: number) => {
-    if (openedAt === null) {
-      return 1;
-    }
-    // Scattered over the first OPENING ms, each popping up over POP ms.
+  /**
+   * When the town opened to its cars, passers-by and visitors, who only come
+   * out once it's built; null while it's closed. They pop in one after another,
+   * as the trucks do, over the first OPENING ms.
+   */
+  let openedAt: number | null = Number.NEGATIVE_INFINITY;
+  const popIn = (index: number, now: number) => {
     const delay = (((index * 37) % 97) / 97) * (OPENING - POP);
-    return clamp((performance.now() - openedAt - delay) / POP, 0, 1);
+    return openedAt === null ? 0 : clamp((now - openedAt - delay) / POP, 0, 1);
   };
   const overlay = createOverlay(options.overlay);
   const cars = Array.from({ length: CARS }, placement);
@@ -200,18 +152,8 @@ export const createLife = (options: LifeOptions) => {
     shown.set(actorKey("visitor", index), spot);
   }
 
-  const groundAt = (x: number, z: number) =>
-    plan.blocks.some((block) => contains(block, x, z)) ? CURB_TOP : 0;
-  let surface: ((x: number, z: number) => number) | null = null;
-  /** The highest flat top under a point (a roof, a ledge, else the street), worked out on first use. */
-  const surfaceAt = (x: number, z: number) => {
-    surface ??= createHeights(
-      [options.town, ...options.placed.map((entry) => entry.sketch)],
-      groundAt,
-    );
-    return surface(x, z);
-  };
-
+  const { surfaceAt } = options;
+  const underfoot = (): Ground => ({ surfaceAt, view: options.view() });
   let held: Held | null = null;
   /** What other people are holding: key → who. */
   const theirs = new Map<string, string>();
@@ -332,26 +274,6 @@ export const createLife = (options: LifeOptions) => {
     out.shadowSize = shadowFor(y - floor);
   };
 
-  /**
-   * Where something hangs, `height` over whatever's below (a roof or the
-   * street), to look like it's at `seen`, a ground point on screen: the point
-   * up the view ray at that altitude, and the ground point under it. What's
-   * below depends on where that lands, so it's found twice; either way the
-   * thing stays on its point of the ray, so it never leaves the hand.
-   */
-  const hangingOver = (seen: { x: number; z: number }, height: number) => {
-    const toward = options.view();
-    let altitude = surfaceAt(seen.x, seen.z) + height;
-    let spot: Spot = { x: seen.x, y: 0, z: seen.z };
-    for (let pass = 0; pass < 2; pass += 1) {
-      const up = altitude / toward[1];
-      spot = { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up };
-      altitude = surfaceAt(spot.x, spot.z) + height;
-    }
-    const up = altitude / toward[1];
-    return { altitude, spot: { x: seen.x + toward[0] * up, y: 0, z: seen.z + toward[2] * up } };
-  };
-
   /** A shadow straight under something falling. */
   const shadowUnder = (out: Placement) => {
     out.shadowX = out.x;
@@ -418,7 +340,7 @@ export const createLife = (options: LifeOptions) => {
   /** The visitors with something to say, their lines over their heads. */
   const speak = (tick: number) => {
     // Too far out to read, the town keeps its talk to itself.
-    if (!open || options.scale() < SPEAK_SCALE) {
+    if (openedAt === null || options.scale() < SPEAK_SCALE) {
       return;
     }
     const { height, width } = options.size();
@@ -492,11 +414,13 @@ export const createLife = (options: LifeOptions) => {
   };
 
   const drawMovers = (frame: Frame) => {
+    const shownAt = performance.now();
     for (const [index, car] of world.cars.entries()) {
       const out = cars[index];
       if (out) {
         draw(KEYS.car[index] ?? "", car.last, car.pose, out, 0.012, frame);
         out.shown = settled;
+        out.size = popIn(index, shownAt);
       }
     }
     for (const [index, walker] of world.walkers.entries()) {
@@ -505,6 +429,7 @@ export const createLife = (options: LifeOptions) => {
         const bob = CURB_TOP + Math.abs(Math.sin(walker.phase)) * 0.014;
         draw(KEYS.walker[index] ?? "", walker.last, walker.pose, out, bob, frame);
         out.shown = settled;
+        out.size = popIn(CARS + index, shownAt);
       }
     }
     for (const [index, visitor] of world.visitors.entries()) {
@@ -515,11 +440,10 @@ export const createLife = (options: LifeOptions) => {
         draw(key, visitor.last, visitor.pose, out, bob, frame);
         const carried = held?.key === key || theirs.has(key);
         out.shown = settled && (visitor.mode !== INSIDE || carried);
-        // Through a doorway they shrink in, or grow out, rather than blink.
-        const door = world.doors[visitor.mode === ENTERING ? visitor.target : visitor.door];
-        const atDoor = (visitor.mode === LEAVING || visitor.mode === ENTERING) && !carried;
-        out.size =
-          atDoor && door ? clamp(Math.hypot(out.x - door.x, out.z - door.z) / DOORWAY, 0, 1) : 1;
+        out.size = carried
+          ? 1
+          : popIn(CARS + WALKERS + index, shownAt) *
+            doorwaySize(visitor, world.doors, out.x, out.z);
       }
     }
   };
@@ -527,7 +451,7 @@ export const createLife = (options: LifeOptions) => {
   return {
     /** The car or person under a screen point, if any is free to pick up. */
     actorAt: (x: number, y: number) => {
-      if (!open) {
+      if (openedAt === null) {
         return null;
       }
       const scale = options.scale();
@@ -552,15 +476,7 @@ export const createLife = (options: LifeOptions) => {
       if (!held) {
         return;
       }
-      const seen = { x: spot.x + held.offset.x, z: spot.z + held.offset.z };
-      const moved = Math.hypot(seen.x - held.seen.x, seen.z - held.seen.z);
-      held.lift = Math.min(1, held.lift + moved / LIFT_SPAN);
-      held.seen = seen;
-      ({ altitude: held.altitude, spot: held.spot } = hangingOver(seen, HANG * held.lift));
-      held.samples.push({ t: performance.now(), x: held.spot.x, z: held.spot.z });
-      if (held.samples.length > 12) {
-        held.samples.shift();
-      }
+      held = carryTo(underfoot(), held, spot, performance.now());
       // Everyone else sees it where it is, so their view of it doesn't jump by the grab's offset.
       net?.point(held.spot);
     },
@@ -599,26 +515,10 @@ export const createLife = (options: LifeOptions) => {
         return false;
       }
       air.delete(key);
-      // Where it is on screen, as a ground point: down the view ray from where it's drawn.
-      const at = shown.get(key);
-      const toward = options.view();
-      const seen = at
-        ? { x: at.x - (toward[0] * at.y) / toward[1], z: at.z - (toward[2] * at.y) / toward[1] }
-        : spot;
-      const offset = { x: seen.x - spot.x, z: seen.z - spot.z };
-      const { altitude, spot: ground } = hangingOver(seen, 0);
-      held = {
-        altitude,
-        key,
-        lift: 0,
-        offset,
-        samples: [{ t: performance.now(), x: ground.x, z: ground.z }],
-        seen,
-        spot: ground,
-      };
+      held = pickUp(underfoot(), key, shown.get(key), spot, performance.now());
       world.hold(key);
       net?.hold(key);
-      net?.point(ground);
+      net?.point(held.spot);
       return true;
     },
     /** Where this player's mouse is on screen, for their own line; null once it leaves. */
@@ -634,17 +534,7 @@ export const createLife = (options: LifeOptions) => {
         return;
       }
       const { key } = held;
-      const spot = {
-        x: held.spot.x,
-        y: held.altitude,
-        z: held.spot.z,
-      };
-      const velocity = velocityOf(held.samples);
-      const speed = Math.hypot(velocity.x, velocity.z);
-      const reach = Math.min(4, speed * 0.26);
-      const toward =
-        speed > 0.01 ? { x: velocity.x / speed, z: velocity.z / speed } : { x: 0, z: 0 };
-      const target = { x: spot.x + toward.x * reach, z: spot.z + toward.z * reach };
+      const { from: spot, toward: target } = throwOf(held);
       held = null;
       // Land it once to learn where, then again to wait out the fall from there.
       const first = world.land(key, target.x, target.z, world.tick);
@@ -667,9 +557,8 @@ export const createLife = (options: LifeOptions) => {
     },
     /** Opens the town to its cars, passers-by and visitors, or keeps them away while it's built. */
     setOpen: (next: boolean) => {
-      open = next;
-      group.visible = next;
       openedAt = next ? performance.now() : null;
+      group.visible = next;
     },
     setTheme: (theme: Theme) => actors.setTheme(theme),
     /** What this player is typing, or null once they stop. */
@@ -698,10 +587,7 @@ export const createLife = (options: LifeOptions) => {
         hands,
         time: performance.now(),
       });
-      actors.update(cars, walkers, visitors, popIn);
-      if (openedAt !== null && performance.now() - openedAt > OPENING) {
-        openedAt = null;
-      }
+      actors.update(cars, walkers, visitors);
       speak(world.tick);
       point(others);
       overlay.end();

@@ -20,19 +20,20 @@ import type { Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
-import { drawBlock } from "./draw-blocks";
+import { CURB_TOP, drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
 import { shade, signature } from "./palette";
-import { inland, planCity } from "./plan";
+import { CENTER, contains, inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
 import { ALL_BUILT, BUILT, createGrowth, raise } from "./grow";
 import type { StartAt } from "./grow";
+import { createHeights } from "./heights";
 import { createIntro } from "./intro";
 import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
@@ -331,6 +332,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The town's life: its traffic, its people and their lines, what anyone
   // picks up, shared with everyone in the room.
   const projected = new Vector3();
+  // How high what's underfoot is, for something carried: the town's flat tops, worked out
+  // from the first view's drawing (tops are the same from every side) the first time it's needed.
+  let heights: ((x: number, z: number) => number) | null = null;
+  const surfaceAt = (x: number, z: number) => {
+    heights ??= createHeights(
+      [firstTown.sketch, ...placed.map((entry) => entry.sketch)],
+      (px, pz) => (plan.blocks.some((block) => contains(block, px, pz)) ? CURB_TOP : 0),
+    );
+    return heights(x, z);
+  };
   const life = createLife({
     overlay: options.overlay,
     placed,
@@ -342,12 +353,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     scale: () => PIXELS_PER_UNIT * view.zoom,
     scene,
     size: () => ({ height, width }),
+    surfaceAt,
     theme,
     toScreen: (x, y, z) => {
       projected.set(x, y, z).project(camera);
       return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
     },
-    town: firstTown.sketch,
     view: () => viewAt(angle),
   });
 
@@ -928,6 +939,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (cleared) {
       packUp();
       drawAhead();
+      // Ready for the first pick-up, so it doesn't stall the hand.
+      surfaceAt(CENTER, CENTER);
     }
   };
   const tick = (now: number) => {
