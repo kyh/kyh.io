@@ -35,9 +35,13 @@ const handleOpacityOf = ({
   active,
   dodge,
   dragging,
-}: Record<"active" | "dodge" | "dragging", boolean>) => {
+  marker,
+}: Record<"active" | "dodge" | "dragging" | "marker", boolean>) => {
   if (!active) {
-    return 0;
+    if (!marker) {
+      return 0;
+    }
+    return dodge ? 0.25 : 0.7;
   }
   if (dodge) {
     return 0.1;
@@ -51,6 +55,8 @@ interface DialSliderProps extends Range {
   onChange: (value: number) => void;
   format?: (value: number) => string;
   focusOnMount?: boolean;
+  /** A hue slider: the track is the color wheel and a marker, not a fill, shows the value. */
+  spectrum?: boolean;
 }
 
 export const DialSlider = ({
@@ -62,6 +68,7 @@ export const DialSlider = ({
   step,
   format = String,
   focusOnMount = false,
+  spectrum = false,
 }: DialSliderProps) => {
   const range = { max, min, step };
   const track = useRef<HTMLDivElement>(null);
@@ -78,7 +85,12 @@ export const DialSlider = ({
   const fill = useSpring(percentOf(value, range), spring);
   const stretch = useSpring(0, spring);
   const fillWidth = useMotionTemplate`${fill}%`;
-  const handleLeft = useMotionTemplate`max(5px, calc(${fill}% - 9px))`;
+  // The handle rides just inside the fill's edge; a hue marker sits on its value.
+  const handleLeft = useTransform(fill, (percent) =>
+    spectrum
+      ? `clamp(5px, calc(${percent}% - 1.5px), calc(100% - 8px))`
+      : `max(5px, calc(${percent}% - 9px))`,
+  );
   const trackWidth = useTransform(stretch, (px) => `calc(100% + ${Math.abs(px)}px)`);
   const trackX = useTransform(stretch, (px) => Math.min(px, 0));
 
@@ -120,6 +132,7 @@ export const DialSlider = ({
     <motion.div
       ref={track}
       data-active={active || undefined}
+      data-spectrum={spectrum || undefined}
       className="dial-slider dock-item"
       style={{ width: trackWidth, x: trackX }}
       onPointerEnter={() => {
@@ -207,13 +220,13 @@ export const DialSlider = ({
         style={{ left: handleLeft, y: "-50%" }}
         initial={false}
         animate={{
-          opacity: handleOpacityOf({ active, dodge, dragging }),
-          scaleX: active ? 1 : 0.25,
+          opacity: handleOpacityOf({ active, dodge, dragging, marker: spectrum }),
+          scaleX: active || spectrum ? 1 : 0.25,
           scaleY: active && dodge ? 0.75 : 1,
         }}
         transition={{ damping: 22, stiffness: 400, type: "spring" }}
       />
-      <span ref={labelRef} className="dial-slider-label">
+      <span ref={labelRef} className="dial-slider-label max-[440px]:hidden">
         {label}
       </span>
       <span ref={valueRef} className={`dial-slider-value ${GeistMono.className}`}>

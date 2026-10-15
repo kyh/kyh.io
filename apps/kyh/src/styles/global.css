@@ -81,6 +81,8 @@ html[data-dial] {
    tints of the text color, so it follows the theme and the slider itself. */
 .dial-slider {
   --dial-ink: var(--body-color);
+  --dial-tint: 7%;
+  --dial-tint-active: 11%;
   position: relative;
   height: 48px;
   overflow: hidden;
@@ -88,6 +90,29 @@ html[data-dial] {
   cursor: pointer;
   user-select: none;
   touch-action: none;
+}
+
+/* The hue slider is the color wheel itself, faint until it's in hand. */
+.dial-slider[data-spectrum]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: linear-gradient(to right in oklch longer hue, oklch(72% 0.14 0), oklch(72% 0.14 0));
+  transition: opacity 150ms;
+}
+
+.dial-slider[data-spectrum][data-active]::before {
+  opacity: 0.55;
+}
+
+.dial-slider[data-spectrum] .dial-slider-fill {
+  display: none;
+}
+
+/* Two to a dock: as wide as fits beside the links, labels dropped below 440px. */
+.dial-slot {
+  width: clamp(96px, calc(50vw - 104px), 168px);
 }
 
 .dial-slider:has(input:focus-visible) {
@@ -110,7 +135,7 @@ html[data-dial] {
   position: absolute;
   inset: 0 auto 0 0;
   pointer-events: none;
-  background: color-mix(in srgb, var(--dial-ink) 7%, transparent);
+  background: color-mix(in srgb, var(--dial-ink) var(--dial-tint), transparent);
   transition: background 150ms;
 }
 
@@ -149,8 +174,8 @@ html[data-dial] {
   background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
 }
 
-.dial-slider[data-active] .dial-slider-fill {
-  background: color-mix(in srgb, var(--dial-ink) 11%, transparent);
+.dial-slider[data-active] {
+  --dial-tint: var(--dial-tint-active);
 }
 
 .dial-slider[data-active] .dial-slider-value {

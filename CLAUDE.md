@@ -101,8 +101,9 @@ canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
 The dock's theme toggle hides an easter egg: five quick taps blur it away into
-a brightness slider (backgrounds blend dark → light; the theme flips at 50%).
-`src/lib/dial.ts` is the pure part (tap streak, the CSS value, storage, the
+two sliders, brightness (backgrounds blend dark → light; the theme flips at
+50%) and hue (the slate greys retinted in oklch; its track is the color wheel).
+`src/lib/dial.ts` is the pure part (tap streak, the CSS vars, storage, the
 before-paint restore script); `src/components/theme-dial.tsx` the store and
 panel; `dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, after
 DialKit's; `html[data-dial]` in `global.css` the blend.
