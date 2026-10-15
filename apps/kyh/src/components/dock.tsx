@@ -246,7 +246,7 @@ export const Dock = () => {
       <motion.nav
         layout
         transition={morph}
-        className={`pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${switching ? "overflow-hidden" : ""}`}
+        className={`pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)] ${switching ? "overflow-hidden" : ""}`}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >

@@ -37,11 +37,16 @@
   --link-color: var(--colors-gray900);
   --link-color-hover: var(--colors-gray1000);
   --panel: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray950));
-  --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--light), rgba(71, 85, 105, 0.12));
-  --dock-border-color: #e2e8f030;
+  --dock-bg: color-mix(
+    in oklab,
+    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--light),
+    color-mix(in srgb, var(--colors-gray600) 12%, transparent)
+  );
+  --dock-border-color: color-mix(in srgb, var(--colors-gray200) 18.8%, transparent);
+  --dock-shadow: color-mix(in srgb, var(--colors-gray900) 12%, transparent);
 
   /* Misc */
-  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
   --colors-shadowLight: hsl(206 22% 7% / 35%);
   --colors-shadowDark: hsl(206 22% 7% / 20%);
 }
@@ -54,8 +59,7 @@
   --body-color-highlighted: var(--colors-gray0);
   --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
-  --dock-border-color: #1e293b80;
-  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
 }
 
 /* The toggle's hue easter egg: Tailwind's slate in oklch, turned to --hue with
@@ -866,11 +870,21 @@ body:has(.city) {
   margin-top: 0.25rem;
 
   & li {
+    position: relative;
     margin-bottom: 0.25rem;
-    background-image: var(--arrow);
-    background-position: 0 5px;
-    background-repeat: no-repeat;
     padding-left: 1.5rem;
+  }
+
+  /* The arrow is a mask, so it takes the link color, hue and all. */
+  & li::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    background: var(--link-color);
+    mask: var(--arrow) no-repeat;
   }
 }
 
