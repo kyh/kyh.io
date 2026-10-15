@@ -20,11 +20,13 @@ import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
 import { createHeights } from "./heights";
+import { contains } from "./plan";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
 import { ENTERING, INSIDE, LEAVING, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
+import { clamp, lerp } from "./ease";
 
 /** How high a carried thing hangs, in cells. */
 export const LIFT = 0.9;
@@ -122,8 +124,6 @@ export interface LifeOptions {
   size: () => { width: number; height: number };
 }
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const lerpAngle = (a: number, b: number, k: number) =>
   a + (((((b - a) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * k;
 
@@ -201,11 +201,7 @@ export const createLife = (options: LifeOptions) => {
   }
 
   const groundAt = (x: number, z: number) =>
-    plan.blocks.some(
-      (block) => x >= block.x && x <= block.x + block.w && z >= block.z && z <= block.z + block.d,
-    )
-      ? CURB_TOP
-      : 0;
+    plan.blocks.some((block) => contains(block, x, z)) ? CURB_TOP : 0;
   let surface: ((x: number, z: number) => number) | null = null;
   /** The highest flat top under a point (a roof, a ledge, else the street), worked out on first use. */
   const surfaceAt = (x: number, z: number) => {

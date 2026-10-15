@@ -37,6 +37,7 @@ import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
 import { TOWN_VERSION } from "./world";
+import { approach, clamp, easeInOut } from "./ease";
 
 /** CSS pixels per world unit at zoom 1: a cell's diamond is 64px wide. */
 const PIXELS_PER_UNIT = 64 / Math.SQRT2;
@@ -84,9 +85,6 @@ export interface CityOptions extends CityCallbacks {
    */
   surface: HTMLElement;
 }
-
-const ease = (dt: number, rate: number) => 1 - Math.exp(-dt * rate);
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** The town sketched for a view, keeping the faces of every view in `covers`. */
 const drawTown = (
@@ -718,7 +716,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     const t = clamp((now - turning.start) / TURN_MS, 0, 1);
-    const eased = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+    const eased = easeInOut(t);
     angle = heading + turning.by * eased;
     place();
     if (t >= 1) {
@@ -861,7 +859,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     const length = Math.hypot(dx, dy);
     const speed = length > 0 ? KEY_PAN_SPEED / length : 0;
-    const k = ease(dt, panKeys.size > 0 ? 10 : 7);
+    const k = approach(dt, panKeys.size > 0 ? 10 : 7);
     keyPan.x += (dx * speed - keyPan.x) * k;
     keyPan.y += (dy * speed - keyPan.y) * k;
     if (Math.hypot(keyPan.x, keyPan.y) < 4) {
@@ -936,10 +934,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const speed = 1.7 * (0.35 + 0.65 * clamp((near - 0.8) / 3.5, 0, 1));
     tourAt += speed * dt;
     const point = tour.at(tourAt);
-    const k = ease(dt, 2.2);
+    const k = approach(dt, 2.2);
     view.x += (point.x - view.x) * k;
     view.z += (point.z - view.z) * k;
-    view.zoom += (tourZoom() - view.zoom) * ease(dt, 1.2);
+    view.zoom += (tourZoom() - view.zoom) * approach(dt, 1.2);
     const slug = tour.stopNear(view.x, view.z, 2.2)?.slug;
     spotlight.pass(slug === undefined ? null : (bySlug.get(slug) ?? null));
     refreshHover();
@@ -949,7 +947,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (!goal) {
       return;
     }
-    const k = ease(dt, 4);
+    const k = approach(dt, 4);
     view.x += (goal.x - view.x) * k;
     view.z += (goal.z - view.z) * k;
     view.zoom += (goal.zoom - view.zoom) * k;
@@ -992,7 +990,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     if (!handsOn && growing < schedule.end) {
       // Pulling back, eased, in the zoom's own scale so it reads evenly.
       const k = clamp(growing / (schedule.end * 0.8), 0, 1);
-      const eased = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+      const eased = easeInOut(k);
       view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - eased) + Math.log(minZoom()) * eased);
       place();
     }

@@ -4,6 +4,7 @@
 // pace, so a tower takes longer than a cottage. Whatever stands on neither
 // (the countryside, the shore) follows by its distance from the middle.
 import type { CityPlan, Rect } from "./plan";
+import { CENTER, contains } from "./plan";
 import { createRandom } from "./random";
 
 /** Cells a building rises a second while it's going up. */
@@ -16,7 +17,6 @@ const GROUND_BROKEN = 1.4;
 export const PACK_UP = 0.8;
 /** Things a hair outside their lot (eaves, signs) still belong to it. */
 const MARGIN = 0.3;
-const MIDDLE = 36;
 
 /** A building site: a project's lot or the rest of a block; where, when work starts there, and how tall it gets. */
 export interface Site extends Rect {
@@ -34,14 +34,8 @@ export interface Schedule {
   end: number;
 }
 
-const contains = (rect: Rect, x: number, z: number, margin: number) =>
-  x >= rect.x - margin &&
-  x <= rect.x + rect.w + margin &&
-  z >= rect.z - margin &&
-  z <= rect.z + rect.d + margin;
-
 const distanceToMiddle = (rect: Rect) =>
-  Math.hypot(rect.x + rect.w / 2 - MIDDLE, rect.z + rect.d / 2 - MIDDLE);
+  Math.hypot(rect.x + rect.w / 2 - CENTER, rect.z + rect.d / 2 - CENTER);
 
 /**
  * The schedule for a town: its lots and blocks, in order out from the middle
@@ -80,7 +74,7 @@ export const createSchedule = (
   const lots = sites.filter((site) => site.kind === "lot");
   const blocks = sites.filter((site) => site.kind === "block");
   const outskirts = (x: number, z: number) =>
-    LEAD + Math.min(GROUND_BROKEN, Math.hypot(x - MIDDLE, z - MIDDLE) * 0.03);
+    LEAD + Math.min(GROUND_BROKEN, Math.hypot(x - CENTER, z - CENTER) * 0.03);
   const tallest = Math.max(4, ...sites.map((site) => site.top ?? 0));
   return {
     end: LEAD + GROUND_BROKEN + tallest / RISE + PACK_UP,

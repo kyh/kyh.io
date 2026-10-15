@@ -11,7 +11,8 @@ import type { Schedule, Site } from "./schedule";
 import type { Graph } from "./traffic";
 import { createRandom } from "./random";
 import { RISE } from "./schedule";
-import { LANE, nearestEdge, routeTo } from "./traffic";
+import { edgePoint, LANE, nearestEdge, pathTo, routeTo } from "./traffic";
+import { clamp01, easeInOut, shownBetween } from "./ease";
 
 /** How tall a building has to be to get one crane, and two. */
 const ONE_CRANE = 2.5;
@@ -120,9 +121,6 @@ export interface TruckPose {
   scale: number;
 }
 
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
-const easeInOut = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
-
 const routeOf = (points: Point[]): Route => {
   const at = [0];
   for (let index = 1; index < points.length; index += 1) {
@@ -149,27 +147,6 @@ const along = (route: Route, s: number) => {
     x: a.x + (b.x - a.x) * k,
     z: a.z + (b.z - a.z) * k,
   };
-};
-
-/** The nodes, by `via`, from `node` to wherever `via` leads. */
-const walk = (graph: Graph, via: readonly number[], node: number) => {
-  const nodes: Point[] = [];
-  const seen = new Set<number>();
-  let here = node;
-  // A route never loops, but `seen` makes sure of it.
-  while (!seen.has(here)) {
-    seen.add(here);
-    const spot = graph.nodes[here];
-    if (spot) {
-      nodes.push(spot);
-    }
-    const edge = graph.edges[via[here] ?? -1];
-    if (!edge) {
-      break;
-    }
-    here = edge.to;
-  }
-  return nodes;
 };
 
 /** A junction `HOPS` blocks from `node`, the `pick`th of those there are, other than `avoid`. */
@@ -235,31 +212,65 @@ export const truckPose = (truck: Truck, t: number): TruckPose => {
       truck.leave.length * easeInOut(clamp01((t - truck.leaves) / truck.driveOut)),
     );
   }
-  const scale = Math.min(clamp01((t - setOff) / POP), clamp01((gone - t) / POP));
+  const scale = shownBetween(t, setOff, gone, POP);
   return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };
 };
 
-/** Which way a truck's nose points, from its heading. */
-const facing = (heading: number) => ({ x: -Math.cos(heading), z: Math.sin(heading) });
+/** How often a truck's way is checked against the others' (s); a wait is a whole number of these. */
+const STEP = 0.05;
+const WAIT_STEPS = Math.round(WAIT_STEP / STEP);
+
+/** A truck's whole trip, sampled every STEP on a clock all trucks share, and the ground it covers. */
+interface Track {
+  /** The clock step of its first sample. */
+  first: number;
+  /** Where it is, and which way its nose points, at each step. */
+  at: { x: number; z: number; nx: number; nz: number }[];
+  box: { minX: number; maxX: number; minZ: number; maxZ: number };
+}
+
+const trackOf = (truck: Truck): Track => {
+  const first = Math.ceil((truck.parked - truck.driveIn) / STEP);
+  const last = Math.floor((truck.leaves + truck.driveOut) / STEP);
+  const at: Track["at"] = [];
+  const box = { maxX: -Infinity, maxZ: -Infinity, minX: Infinity, minZ: Infinity };
+  for (let step = first; step <= last; step += 1) {
+    const pose = truckPose(truck, step * STEP);
+    at.push({ nx: -Math.cos(pose.heading), nz: Math.sin(pose.heading), x: pose.x, z: pose.z });
+    box.minX = Math.min(box.minX, pose.x);
+    box.maxX = Math.max(box.maxX, pose.x);
+    box.minZ = Math.min(box.minZ, pose.z);
+    box.maxZ = Math.max(box.maxZ, pose.z);
+  }
+  return { at, box, first };
+};
 
 /**
- * Whether two trucks ever meet: in one lane, nearer than a truck's length;
- * across a junction, nearer than half of one. Passing in opposite lanes is fine.
+ * Whether a track, `shift` steps later, ever meets another: in one lane,
+ * nearer than a truck's length; across a junction, nearer than half of one.
+ * Passing in opposite lanes is fine.
  */
-const clash = (a: Truck, b: Truck) => {
-  const from = Math.max(a.parked - a.driveIn, b.parked - b.driveIn);
-  const until = Math.min(a.leaves + a.driveOut, b.leaves + b.driveOut);
-  for (let t = from; t <= until; t += 0.05) {
-    const p = truckPose(a, t);
-    const q = truckPose(b, t);
-    if (p.shown && q.shown) {
-      const nose = facing(p.heading);
-      const other = facing(q.heading);
+const meets = (a: Track, shift: number, b: Track) => {
+  if (
+    a.box.maxX + SPACING < b.box.minX ||
+    b.box.maxX + SPACING < a.box.minX ||
+    a.box.maxZ + SPACING < b.box.minZ ||
+    b.box.maxZ + SPACING < a.box.minZ
+  ) {
+    return false;
+  }
+  const start = a.first + shift;
+  const from = Math.max(start, b.first);
+  const until = Math.min(start + a.at.length, b.first + b.at.length);
+  for (let step = from; step < until; step += 1) {
+    const p = a.at[step - start];
+    const q = b.at[step - b.first];
+    if (p && q) {
       const dx = q.x - p.x;
       const dz = q.z - p.z;
-      const ahead = Math.abs(dx * nose.x + dz * nose.z);
-      const aside = Math.abs(dx * nose.z - dz * nose.x);
-      const parallel = Math.abs(nose.x * other.x + nose.z * other.z) > 0.7;
+      const ahead = Math.abs(dx * p.nx + dz * p.nz);
+      const aside = Math.abs(dx * p.nz - dz * p.nx);
+      const parallel = Math.abs(p.nx * q.nx + p.nz * q.nz) > 0.7;
       if (
         (parallel && aside < 0.3 && ahead < SPACING - 0.1) ||
         (!parallel && Math.hypot(dx, dz) < 0.7)
@@ -286,15 +297,15 @@ const truckCount = (site: Site, pick: number) => {
 
 /**
  * The trucks that serve a site, one after another, each to its own spot in a
- * lane beside it, by a way in and out (and a time) that meets no truck
- * already on the road; one that can't find one stays away.
+ * lane beside it, by a way in and out (and a time) that meets no truck already
+ * on the road, whose trips are `busy`; one that can't find one stays away.
  */
 const trucksFor = (
   graph: Graph,
   park: ReturnType<typeof createParking>,
   site: Site,
   pick: number,
-  others: readonly Truck[],
+  busy: Track[],
 ): Truck[] => {
   const near = nearestEdge(graph, site.x + site.w / 2, site.z + site.d / 2, LANE);
   const trucks: Truck[] = [];
@@ -304,40 +315,39 @@ const trucksFor = (
     if (!edge) {
       continue;
     }
-    const at = {
-      x: edge.ax + edge.dx * spot.s - edge.dz * LANE,
-      z: edge.az + edge.dz * spot.s + edge.dx * LANE,
-    };
-    const ways = Array.from({ length: DETOURS }, (_, detour) => {
+    const at = edgePoint(edge, spot.s, LANE);
+    const due = site.start - 0.25 + index * STAGGER;
+    const kind = (pick + index) % 3 === 1 ? "mixer" : "dump";
+    // Each way is tried as it is, then later and later: a wait slides its track along the clock.
+    const candidates = Array.from({ length: DETOURS }, (_, detour): Truck => {
       const way = pick * 3 + index + detour * 5;
       const entry = junctionNear(graph, edge.from, way);
       const exit = junctionNear(graph, edge.to, way + 1, entry);
-      const arrive = routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), at]);
-      const leave = routeOf([at, ...walk(graph, routeTo(graph, exit).via, edge.to)]);
-      return { arrive, leave };
-    });
-    const due = site.start - 0.25 + index * STAGGER;
-    const kind = (pick + index) % 3 === 1 ? "mixer" : "dump";
-    const truckBy = (way: (typeof ways)[number], wait: number): Truck => ({
-      ...way,
-      driveIn: driveTime(way.arrive),
-      driveOut: driveTime(way.leave),
-      kind,
-      leaves: due + wait + UNLOAD,
-      parked: due + wait,
-    });
-    let chosen: Truck | null = null;
-    for (let wait = 0; wait <= MOST_WAIT && !chosen; wait += WAIT_STEP) {
-      for (const way of ways) {
-        const truck = truckBy(way, wait);
-        if (!chosen && ![...others, ...trucks].some((other) => clash(truck, other))) {
-          chosen = truck;
-        }
-      }
-    }
+      const arrive = routeOf([...pathTo(graph, entry, edge.from), at]);
+      const leave = routeOf([at, ...pathTo(graph, edge.to, exit)]);
+      return {
+        arrive,
+        driveIn: driveTime(arrive),
+        driveOut: driveTime(leave),
+        kind,
+        leave,
+        leaves: due + UNLOAD,
+        parked: due,
+      };
+    }).map((truck) => ({ track: trackOf(truck), truck }));
+    const waits = Array.from({ length: Math.floor(MOST_WAIT / WAIT_STEP) + 1 }, (_, n) => n);
+    const clear = waits
+      .flatMap((n) => candidates.map((candidate) => ({ ...candidate, shift: n * WAIT_STEPS })))
+      .find(({ track, shift }) => !busy.some((other) => meets(track, shift, other)));
     // A truck with no clear way never comes: better one fewer than two on top of each other.
-    if (chosen) {
-      trucks.push(chosen);
+    if (clear) {
+      const wait = clear.shift * STEP;
+      trucks.push({
+        ...clear.truck,
+        leaves: clear.truck.leaves + wait,
+        parked: clear.truck.parked + wait,
+      });
+      busy.push({ ...clear.track, first: clear.track.first + clear.shift });
     }
   }
   return trucks;
@@ -365,10 +375,11 @@ const cranesFor = (site: Site, top: number, pick: number): Crane[] => {
 export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Works => {
   const works: Works = { cranes: [], end: 0, scaffolds: [], trucks: [], yards: [] };
   const park = createParking(graph);
+  const busy: Track[] = [];
   for (const [pick, site] of schedule.sites.entries()) {
     const top = site.top ?? 1;
     const done = site.start + top / RISE;
-    works.trucks.push(...trucksFor(graph, park, site, pick, works.trucks));
+    works.trucks.push(...trucksFor(graph, park, site, pick, busy));
     if (site.kind === "lot") {
       const rect = { d: site.d, w: site.w, x: site.x, z: site.z };
       works.yards.push({ ...rect, from: site.start - SETUP, until: done + CLEAR });
@@ -389,15 +400,11 @@ export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Work
 };
 
 /** How far a site's yard is up at `t`, 0 to 1. */
-export const yardShown = (yard: Yard, t: number) =>
-  Math.min(clamp01((t - yard.from) / POP), clamp01((yard.until - t) / POP));
+export const yardShown = (yard: Yard, t: number) => shownBetween(t, yard.from, yard.until, POP);
 
 /** A crane at `t`: going up a section at a time before work starts, working, coming down after. */
 export const cranePose = (crane: Crane, t: number): CranePose => {
-  const up = Math.min(
-    clamp01((t - (crane.start - ERECT)) / ERECT),
-    1 - clamp01((t - crane.done) / ERECT),
-  );
+  const up = shownBetween(t, crane.start - ERECT, crane.done + ERECT, ERECT);
   if (up <= 0) {
     return { jib: 0, mast: 0, reach: 0, shown: false };
   }

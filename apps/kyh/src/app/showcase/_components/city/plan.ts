@@ -10,7 +10,8 @@ const GRID = 72;
 const PERIOD = 7;
 const FIRST_ROAD = 4;
 const ROAD_LINES = Array.from({ length: 10 }, (_, index) => FIRST_ROAD + index * PERIOD);
-const CENTER = GRID / 2;
+/** The middle of the island: downtown. */
+export const CENTER = GRID / 2;
 /** The island's radii along the screen's width (u) and depth (v), in cells. */
 const RADIUS_U = 34.5;
 const RADIUS_V = 25.5;
@@ -23,6 +24,13 @@ export interface Rect {
   w: number;
   d: number;
 }
+
+/** Whether a point is on a rect, or within `margin` of it. */
+export const contains = (rect: Rect, x: number, z: number, margin = 0) =>
+  x >= rect.x - margin &&
+  x <= rect.x + rect.w + margin &&
+  z >= rect.z - margin &&
+  z <= rect.z + rect.d + margin;
 
 /** How big a lot a building needs. */
 export type LotSize = "large" | "half" | "quarter" | "template" | "launch";

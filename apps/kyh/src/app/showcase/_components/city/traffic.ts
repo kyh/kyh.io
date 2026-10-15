@@ -101,8 +101,22 @@ export const roadGraph = (plan: Pick<CityPlan, "junctions" | "roads">): Graph =>
   return graph;
 };
 
+interface Routes {
+  hops: number[];
+  via: number[];
+}
+
+// A graph never changes once built, so each target's routes are worked out once.
+const routesByGraph = new WeakMap<Graph, Map<number, Routes>>();
+
 /** Shortest hop counts to one node, and the edge to take from anywhere to get there. */
-export const routeTo = (graph: Graph, target: number) => {
+export const routeTo = (graph: Graph, target: number): Routes => {
+  const known = routesByGraph.get(graph) ?? new Map<number, Routes>();
+  routesByGraph.set(graph, known);
+  const cached = known.get(target);
+  if (cached) {
+    return cached;
+  }
   const into: number[][] = graph.nodes.map(() => []);
   for (const [index, edge] of graph.edges.entries()) {
     into[edge.to]?.push(index);
@@ -122,8 +136,38 @@ export const routeTo = (graph: Graph, target: number) => {
       }
     }
   }
-  return { hops, via };
+  const routes = { hops, via };
+  known.set(target, routes);
+  return routes;
 };
+
+/** The junctions along the shortest way from `from` to `to`, both ends included. */
+export const pathTo = (graph: Graph, from: number, to: number) => {
+  const { via } = routeTo(graph, to);
+  const points: { x: number; z: number }[] = [];
+  const seen = new Set<number>();
+  let here = from;
+  // A shortest route never loops, but `seen` makes sure of it.
+  while (!seen.has(here)) {
+    seen.add(here);
+    const spot = graph.nodes[here];
+    if (spot) {
+      points.push(spot);
+    }
+    const edge = graph.edges[via[here] ?? -1];
+    if (!edge) {
+      break;
+    }
+    here = edge.to;
+  }
+  return points;
+};
+
+/** A point `s` along an edge, `side` to its right (a lane, a sidewalk). */
+export const edgePoint = (edge: Edge, s: number, side = 0) => ({
+  x: edge.ax + edge.dx * s - edge.dz * side,
+  z: edge.az + edge.dz * s + edge.dx * side,
+});
 
 /** How far in from a block's edge its sidewalk runs, in cells. */
 export const SIDEWALK = 0.17;
@@ -189,9 +233,8 @@ export const nearestEdge = (graph: Graph, x: number, z: number, side = 0) => {
   let best = { distance: Infinity, edge: 0, s: 0 };
   for (const [index, edge] of graph.edges.entries()) {
     const s = Math.min(edge.length, Math.max(0, (x - edge.ax) * edge.dx + (z - edge.az) * edge.dz));
-    const px = edge.ax + edge.dx * s - edge.dz * side;
-    const pz = edge.az + edge.dz * s + edge.dx * side;
-    const distance = (px - x) ** 2 + (pz - z) ** 2;
+    const point = edgePoint(edge, s, side);
+    const distance = (point.x - x) ** 2 + (point.z - z) ** 2;
     if (distance < best.distance) {
       best = { distance, edge: index, s };
     }
@@ -220,10 +263,7 @@ export interface Car {
   last: Pose;
 }
 
-const lanePoint = (edge: Edge, s: number) => ({
-  x: edge.ax + edge.dx * s - edge.dz * LANE,
-  z: edge.az + edge.dz * s + edge.dx * LANE,
-});
+const lanePoint = (edge: Edge, s: number) => edgePoint(edge, s, LANE);
 
 const curve = (a: number, control: number, b: number, t: number) =>
   (1 - t) * (1 - t) * a + 2 * (1 - t) * t * control + t * t * b;
@@ -358,8 +398,9 @@ export const poseWalker = (graph: Graph, walker: Walker, settle: boolean) => {
   if (!edge) {
     return;
   }
-  walker.pose.x = edge.ax + edge.dx * walker.s - edge.dz * walker.offset;
-  walker.pose.z = edge.az + edge.dz * walker.s + edge.dx * walker.offset;
+  const point = edgePoint(edge, walker.s, walker.offset);
+  walker.pose.x = point.x;
+  walker.pose.z = point.z;
   walker.pose.heading = Math.atan2(edge.dz, edge.dx);
   if (settle) {
     walker.last = { ...walker.pose };
