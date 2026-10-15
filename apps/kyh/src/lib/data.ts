@@ -293,6 +293,16 @@ export const projects: ProjectType[] = [
     type: "mini-app",
     url: "https://clawders.kyh.io",
   },
+  {
+    description:
+      "An idle business sim where your employees are real AI agents. They write real code and ship real products",
+    favicon: getPublicFaviconUrl("idlebiz.png"),
+    projectAssets: [],
+    slug: "idlebiz",
+    title: "IdleBiz",
+    type: "mini-app",
+    url: "https://idlebiz.com",
+  },
   // Templates
   {
     description: "An AI native starter kit to build, launch, and scale your next project",
