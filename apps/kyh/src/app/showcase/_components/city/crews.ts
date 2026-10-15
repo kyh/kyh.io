@@ -23,8 +23,12 @@ const LOT_TRUCKS = 3;
 const BLOCK_TRUCKS = 1;
 /** How many blocks off a truck turns up, and drives off to. */
 const HOPS = 2;
-/** How long a truck's drive in and out each take (s). */
-const DRIVE = 0.7;
+/** How fast a truck drives (cells a second), and the shortest and longest a drive takes (s). */
+const SPEED = 6;
+const SHORTEST_DRIVE = 0.8;
+const LONGEST_DRIVE = 2.4;
+/** How far apart trucks park nose to tail in a lane, in cells: a truck's length and a gap. */
+const SPACING = 1.35;
 /** How long a truck stays to unload, and how far apart a site's trucks arrive (s). */
 const UNLOAD = 0.5;
 const STAGGER = 0.35;
@@ -77,6 +81,9 @@ export interface Truck {
   /** When it reaches its spot, and when it sets off again. */
   parked: number;
   leaves: number;
+  /** How long its drives in and out take (s). */
+  driveIn: number;
+  driveOut: number;
 }
 
 export interface Works {
@@ -84,6 +91,8 @@ export interface Works {
   scaffolds: Scaffold[];
   cranes: Crane[];
   trucks: Truck[];
+  /** When the last of it has gone (s). */
+  end: number;
 }
 
 export interface CranePose {
@@ -163,30 +172,79 @@ const junctionNear = (graph: Graph, node: number, pick: number, avoid = -1) => {
   return ring.length > 0 ? (ring[pick % ring.length] ?? node) : node;
 };
 
-/** The `count` trucks that serve a site, each to its own spot in the lane beside it, one after another. */
-const trucksFor = (graph: Graph, site: Site, count: number, pick: number): Truck[] => {
+const driveTime = (route: Route) =>
+  Math.min(LONGEST_DRIVE, Math.max(SHORTEST_DRIVE, route.length / SPEED));
+
+/**
+ * Parking along the town's lanes: each truck its own spot, nose to tail
+ * behind any already there, on the far side of the road once a lane's full.
+ */
+const createParking = (graph: Graph) => {
+  const taken = new Map<number, number[]>();
+  const reverseOf = (index: number) => {
+    const edge = graph.edges[index];
+    return graph.edges.findIndex((other) => other.from === edge?.to && other.to === edge.from);
+  };
+  /** A free spot as near `wanted` along edge `index` as there is, or on its reverse. */
+  return (index: number, wanted: number) => {
+    for (const [lane, near] of [
+      [index, wanted],
+      [reverseOf(index), (graph.edges[index]?.length ?? 0) - wanted],
+    ] as const) {
+      const edge = graph.edges[lane];
+      const used = taken.get(lane) ?? [];
+      if (edge) {
+        const tries = Math.ceil(edge.length / SPACING) * 2 + 1;
+        for (let step = 0; step < tries; step += 1) {
+          const s = near + (step % 2 === 0 ? 1 : -1) * Math.ceil(step / 2) * SPACING;
+          const free = used.every((other) => Math.abs(other - s) >= SPACING);
+          if (s >= 0.5 && s <= edge.length - 0.5 && free) {
+            taken.set(lane, [...used, s]);
+            return { edge: lane, s };
+          }
+        }
+      }
+    }
+    return { edge: index, s: wanted };
+  };
+};
+
+/** The `count` trucks that serve a site, one after another, each to its own spot in a lane beside it. */
+const trucksFor = (
+  graph: Graph,
+  park: ReturnType<typeof createParking>,
+  site: Site,
+  count: number,
+  pick: number,
+): Truck[] => {
   const near = nearestEdge(graph, site.x + site.w / 2, site.z + site.d / 2, LANE);
-  const edge = graph.edges[near.edge];
-  if (!edge) {
-    return [];
-  }
-  return Array.from({ length: count }, (_, index): Truck => {
-    const s = Math.min(edge.length - 0.3, Math.max(0.3, near.s + (index - (count - 1) / 2) * 0.8));
-    const park = {
-      x: edge.ax + edge.dx * s - edge.dz * LANE,
-      z: edge.az + edge.dz * s + edge.dx * LANE,
+  return Array.from({ length: count }, (_, index): Truck[] => {
+    const spot = park(near.edge, near.s);
+    const edge = graph.edges[spot.edge];
+    if (!edge) {
+      return [];
+    }
+    const at = {
+      x: edge.ax + edge.dx * spot.s - edge.dz * LANE,
+      z: edge.az + edge.dz * spot.s + edge.dx * LANE,
     };
     const entry = junctionNear(graph, edge.from, pick + index);
     const exit = junctionNear(graph, edge.to, pick + index + 1, entry);
-    const parked = Math.max(DRIVE, site.start - 0.25 + index * STAGGER);
-    return {
-      arrive: routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), park]),
-      kind: (pick + index) % 3 === 1 ? "mixer" : "dump",
-      leave: routeOf([park, ...walk(graph, routeTo(graph, exit).via, edge.to)]),
-      leaves: parked + UNLOAD,
-      parked,
-    };
-  });
+    const arrive = routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), at]);
+    const leave = routeOf([at, ...walk(graph, routeTo(graph, exit).via, edge.to)]);
+    const parked = site.start - 0.25 + index * STAGGER;
+    return [
+      {
+        arrive,
+        driveIn: driveTime(arrive),
+        driveOut: driveTime(leave),
+        kind: (pick + index) % 3 === 1 ? "mixer" : "dump",
+        leave,
+        leaves: parked + UNLOAD,
+        parked,
+      },
+    ];
+  }).flat();
 };
 
 /** The cranes beside a building: one at a corner, a second at the opposite one for a tall one. */
@@ -202,19 +260,20 @@ const cranesFor = (site: Site, top: number, pick: number): Crane[] => {
     aim: Math.atan2(-(cz - at.z), cx - at.x) + random.range(-0.45, 0.45),
     at,
     done: site.start + top / RISE,
-    mast: top + 1,
+    mast: top + 0.35,
     start: site.start,
   }));
 };
 
 /** Everything that builds the town: trucks for every site; a yard, scaffolding and cranes for the projects' buildings. */
 export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Works => {
-  const works: Works = { cranes: [], scaffolds: [], trucks: [], yards: [] };
+  const works: Works = { cranes: [], end: 0, scaffolds: [], trucks: [], yards: [] };
+  const park = createParking(graph);
   for (const [pick, site] of schedule.sites.entries()) {
     const top = site.top ?? 1;
     const done = site.start + top / RISE;
     works.trucks.push(
-      ...trucksFor(graph, site, site.kind === "lot" ? LOT_TRUCKS : BLOCK_TRUCKS, pick * 3),
+      ...trucksFor(graph, park, site, site.kind === "lot" ? LOT_TRUCKS : BLOCK_TRUCKS, pick * 3),
     );
     if (site.kind === "lot") {
       const rect = { d: site.d, w: site.w, x: site.x, z: site.z };
@@ -227,6 +286,11 @@ export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Work
       }
     }
   }
+  works.end = Math.max(
+    ...works.trucks.map((truck) => truck.leaves + truck.driveOut),
+    ...works.cranes.map((crane) => crane.done + ERECT),
+    ...works.yards.map((yard) => yard.until),
+  );
   return works;
 };
 
@@ -250,16 +314,22 @@ export const cranePose = (crane: Crane, t: number): CranePose => {
 
 /** A truck at `t`: driving in, parked, or driving off. */
 export const truckPose = (truck: Truck, t: number): TruckPose => {
-  const setOff = truck.parked - DRIVE;
-  const gone = truck.leaves + DRIVE;
+  const setOff = truck.parked - truck.driveIn;
+  const gone = truck.leaves + truck.driveOut;
   if (t < setOff || t > gone) {
     return { heading: 0, scale: 0, shown: false, x: 0, z: 0 };
   }
   let place = along(truck.arrive, truck.arrive.length);
   if (t < truck.parked) {
-    place = along(truck.arrive, truck.arrive.length * easeInOut(clamp01((t - setOff) / DRIVE)));
+    place = along(
+      truck.arrive,
+      truck.arrive.length * easeInOut(clamp01((t - setOff) / truck.driveIn)),
+    );
   } else if (t > truck.leaves) {
-    place = along(truck.leave, truck.leave.length * easeInOut(clamp01((t - truck.leaves) / DRIVE)));
+    place = along(
+      truck.leave,
+      truck.leave.length * easeInOut(clamp01((t - truck.leaves) / truck.driveOut)),
+    );
   }
   const scale = Math.min(clamp01((t - setOff) / POP), clamp01((gone - t) / POP));
   return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };

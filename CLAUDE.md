@@ -115,15 +115,15 @@ two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `
 turn the camera a quarter turn, swinging round over half a second. Each of the
 four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
-faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera holds on the whole island while the town is built, as
-in a sim game: `schedule.ts` gives every lot and block a start, from downtown
+faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera starts close on downtown and pulls back to the whole
+island while the town is built, as in a sim game: `schedule.ts` gives every lot and block a start, from downtown
 out; each building goes up a storey at a time from a slab (a vertex-shader
 rise every town material in `render.ts` shares, its start carried per vertex);
 each project's site is fenced with materials stacked, tower cranes go up
 beside the tall ones a section at a time (jibs on their building) and come down
 after, the building rises inside scaffolding drawn with the town's own
-materials, and dump trucks and mixers come and go by road to their own spots in
-the lane (`crews.ts` plans it, pure; `draw-crews.ts`; `sites.ts` puts it on screen);
+materials, and dump trucks and mixers come and go by road at a steady pace, parking nose
+to tail in the lanes (`crews.ts` plans it, pure; `draw-crews.ts`; `sites.ts` puts it on screen);
 pins wait for it, and then the title-sequence flyover zooms in. Only moving the camera stops the flyover, the
 corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the

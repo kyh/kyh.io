@@ -66,6 +66,8 @@ export const createSites = (
       }
       builds.length = 0;
     },
+    /** When the last truck's gone and the last crane's down (s). */
+    end: works.end,
     paint: (theme: Theme) => {
       for (const { built } of [...yards, ...cranes, ...trucks]) {
         built.paint(theme, true);

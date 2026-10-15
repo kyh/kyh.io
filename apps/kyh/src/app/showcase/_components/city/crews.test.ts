@@ -88,7 +88,7 @@ test("trucks drive the roads in one after another, each to its own spot, and on 
       const pose = truckPose(truck, t);
       assert.ok(pose.shown && onRoad(pose), `on the road at ${t}`);
     }
-    assert.equal(truckPose(truck, truck.leaves + 2).shown, false);
+    assert.equal(truckPose(truck, truck.leaves + truck.driveOut + 0.1).shown, false);
   }
 });
 
@@ -98,4 +98,21 @@ test("a yard is up from setup until its building's done", () => {
   assert.equal(yardShown(yard, yard.from - 0.1), 0);
   assert.equal(yardShown(yard, (yard.from + yard.until) / 2), 1);
   assert.equal(yardShown(yard, yard.until + 0.1), 0);
+});
+
+test("trucks park nose to tail, never on top of one another, even from sites sharing a road", () => {
+  const { trucks } = planWorks({ sites: [lot(1.2, 4), lot(1.3, 3, 21), block] }, GRAPH);
+  const spots = trucks.flatMap((truck) => truck.arrive.points.slice(-1));
+  for (const [index, a] of spots.entries()) {
+    for (const b of spots.slice(index + 1)) {
+      assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 1.2, "parked apart");
+    }
+  }
+});
+
+test("trucks drive at a steady pace: a longer way takes longer", () => {
+  const { trucks } = planWorks({ sites: [lot(1.2, 4), lot(1.3, 3, 21)] }, GRAPH);
+  for (const truck of trucks) {
+    assert.ok(truck.arrive.length / truck.driveIn <= 6.01 || truck.driveIn >= 2.4);
+  }
 });

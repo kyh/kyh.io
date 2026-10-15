@@ -9,7 +9,7 @@ import { createRandom } from "./random";
 /** Cells a building rises a second while it's going up. */
 export const RISE = 4;
 /** How long the first machines take to drive in before any ground is broken (s). */
-export const LEAD = 0.7;
+export const LEAD = 1;
 /** How long, from the first site to the last, the town takes to break ground (s). */
 const GROUND_BROKEN = 1.4;
 /** How long the last machines take to pack up and drive off once their building's up (s). */

@@ -70,19 +70,19 @@ export const drawTowerCrane = (mast: number): Sketch => {
     ]);
   }
   const jib = part(sketch, "jib", [0, 0.06 + mast, 0], true);
-  box(jib, { colors: BODY, d: 0.1, h: 0.1, w: 3, x: -0.7, y: 0, z: -0.05 });
-  box(jib, { colors: CONCRETE, d: 0.2, h: 0.2, w: 0.26, x: -0.72, y: -0.16, z: -0.1 });
+  box(jib, { colors: BODY, d: 0.1, h: 0.1, w: 2.4, x: -0.6, y: 0, z: -0.05 });
+  box(jib, { colors: CONCRETE, d: 0.2, h: 0.2, w: 0.26, x: -0.62, y: -0.16, z: -0.1 });
   box(jib, { colors: CAB, d: 0.14, h: 0.14, w: 0.16, x: 0.1, y: -0.14, z: 0.06 });
   box(jib, { colors: BODY, d: 0.06, h: 0.4, w: 0.06, x: -0.03, y: 0.1, z: -0.03 });
   line(jib, [
     [0, 0.5, 0],
-    [2.3, 0.1, 0],
+    [1.7, 0.1, 0],
   ]);
   line(jib, [
-    [1.8, 0, 0],
-    [1.8, -1.1, 0],
+    [1.4, 0, 0],
+    [1.4, -0.8, 0],
   ]);
-  box(jib, { colors: STEEL, d: 0.1, h: 0.08, w: 0.1, x: 1.75, y: -1.18, z: -0.05 });
+  box(jib, { colors: STEEL, d: 0.1, h: 0.08, w: 0.1, x: 1.35, y: -0.88, z: -0.05 });
   return sketch;
 };
 

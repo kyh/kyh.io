@@ -42,6 +42,8 @@ import { TOWN_VERSION } from "./world";
 const PIXELS_PER_UNIT = 64 / Math.SQRT2;
 const CAMERA_DISTANCE = 300;
 const MAX_ZOOM = 3.2;
+/** How close the camera starts while the town is built: on downtown's first sites. */
+const BUILD_CLOSE = 1.1;
 /** Ground directions that run right and up the screen, for a view toward the camera. */
 const screenAxes = (view: Vec3) => {
   const flat = Math.hypot(view[0], view[2]);
@@ -292,6 +294,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let growing: number | null = options.reducedMotion ? null : 0;
   // The building sites that put it up, there only while it's going up.
   let sites = growing === null ? null : createSites(scene, materials, fixed, schedule, plan);
+  /** When the town's up and every truck and crane has gone (s). */
+  const builtBy = Math.max(schedule.end, sites?.end ?? 0);
   const packUp = () => {
     sites?.dispose();
     sites = null;
@@ -353,8 +357,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The camera: where it looks, how close, and where it is easing to.
   let width = 1;
   let height = 1;
-  // Zoomed all the way out to start: the whole island, as it's built.
-  const view = { x: 36, z: 37, zoom: 0 };
+  // Close on downtown as the first ground's broken, pulling back to the whole island as it's built.
+  const view = { x: 36, z: 37, zoom: options.reducedMotion ? 0 : BUILD_CLOSE };
   let goal: { x: number; z: number; zoom: number } | null = null;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
@@ -981,7 +985,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     growing += Math.min(elapsed, 0.05);
     materials.setGrowth(growing);
     sites?.update(growing);
-    if (growing >= schedule.end) {
+    if (!handsOn) {
+      // Pulling back, eased, in the zoom's own scale so it reads evenly.
+      const k = clamp(growing / (builtBy * 0.8), 0, 1);
+      const eased = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+      view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - eased) + Math.log(minZoom()) * eased);
+      place();
+    }
+    if (growing >= builtBy) {
       growing = null;
       packUp();
       // Built: in from the whole island to the first project, unless the visitor has the camera.
