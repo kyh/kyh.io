@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
 
+import { discoverEgg } from "@/lib/easter-egg-store";
+
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Theme } from "./city/palette";
@@ -104,12 +106,14 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       try {
         const city = await loadCity(host, {
           onHover: show,
+          onLift: () => discoverEgg("lift"),
           onOpen: (slug) => {
             const url = urls.get(slug);
             if (url) {
               window.open(url, "_blank", "noopener,noreferrer");
             }
           },
+          onSay: () => discoverEgg("chat"),
           onTour: setTouring,
           overlay: overlayRef.current,
           projects,

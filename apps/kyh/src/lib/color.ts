@@ -1,5 +1,7 @@
 import type { JsonValue } from "@vibedgames/multiplayer";
 
+import { eggsComplete } from "@/lib/easter-egg-store";
+
 const colors = {
   blue: {
     color: "hsl(206, 100%, 50%)",
@@ -39,6 +41,12 @@ const colors = {
   },
 };
 
+/** The look for a visitor who has found every easter egg. */
+export const GOLD = {
+  color: "hsl(40, 96%, 48%)",
+  hue: "hsl(50, 100%, 78%)",
+};
+
 type ColorName = keyof typeof colors;
 type Color = (typeof colors)[ColorName];
 
@@ -64,11 +72,23 @@ export const ownColorName = (): ColorName => {
 
 export const ownColor = (): Color => colors[ownColorName()];
 
-/** A visitor's colors: the palette color they name in their state, else the one their room gave them. */
+/** How this visitor looks to themselves and everyone: gold once every easter egg is found. */
+export const ownLook = (): Color => (eggsComplete() ? GOLD : ownColor());
+
+/** What a room's state carries so everyone else draws this visitor gold. */
+export const ownEggs = () => (eggsComplete() ? "all" : null);
+
+/**
+ * A visitor's colors: gold once they've found every easter egg, else the
+ * palette color they name in their state, else the one their room gave them.
+ */
 export const lookOf = (
-  state: { look?: JsonValue } | undefined,
+  state: { look?: JsonValue; eggs?: JsonValue } | undefined,
   player: { color?: string; hue?: string },
 ): Color => {
+  if (state?.eggs === "all") {
+    return GOLD;
+  }
   const named = colorNamed(state?.look);
   return {
     color: named?.color ?? player.color ?? colors.blue.color,

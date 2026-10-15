@@ -6,8 +6,9 @@ import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
 import type { Said } from "@/lib/chat";
 import { draftState, sayState, SHOW_MS } from "@/lib/chat";
-import { lookOf, ownColor, ownColorName } from "@/lib/color";
+import { lookOf, ownColorName, ownEggs, ownLook } from "@/lib/color";
 import { listenForChat } from "@/lib/chat-input";
+import { discoverEgg, subscribeToEggs } from "@/lib/easter-egg-store";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 
 // Pointers go out on a steady clock, smooth enough without flooding the room.
@@ -41,18 +42,21 @@ const createRoom = (room: string) => {
   /** The page this visitor is on, as everyone should see it. */
   let page: string | null = null;
   // The client drops state written before it has joined, and a rejoin is a
-  // new player: so whenever its own state is missing the page or its color,
-  // say them again.
+  // new player: so whenever its own state is missing the page, its color or
+  // its easter eggs, say them again.
   const announce = () => {
     const self = client?.playerId ? client.players[client.playerId] : undefined;
     const look = ownColorName();
+    const eggs = ownEggs();
     if (
       client &&
       self &&
       page !== null &&
-      (self.state?.pathname !== page || self.state.look !== look)
+      (self.state?.pathname !== page ||
+        self.state.look !== look ||
+        (self.state.eggs ?? null) !== eggs)
     ) {
-      client.updateMyState({ look, pathname: page });
+      client.updateMyState({ eggs, look, pathname: page });
     }
   };
   let others: PlayerMap = NONE;
@@ -67,7 +71,7 @@ const createRoom = (room: string) => {
       return client;
     },
     /** This visitor's own colors, once they're in the room. */
-    me: () => (client ? ownColor() : null),
+    me: () => (client ? ownLook() : null),
     /** Milliseconds on the room's clock, so everyone agrees when a line comes down. */
     now: () => client?.serverNow() ?? Date.now(),
     /** Everyone else in the room, as the site draws them. */
@@ -105,8 +109,11 @@ const createRoom = (room: string) => {
         announce();
         listener();
       });
+      // Finding the last egg turns this visitor gold for everyone.
+      const unsubscribeEggs = subscribeToEggs(announce);
       return () => {
         unsubscribe();
+        unsubscribeEggs();
         users -= 1;
         if (users === 0) {
           client?.destroy();
@@ -211,6 +218,7 @@ export const useRealtime = ({ room, chat }: UseRealtimeProps) => {
       onSend: (text) => {
         setSaid({ text, until: shared.now() + SHOW_MS });
         shared.say(text);
+        discoverEgg("chat");
       },
     });
   }, [chat, shared]);

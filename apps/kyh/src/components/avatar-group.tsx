@@ -4,8 +4,9 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { PlayerMap } from "@/lib/player";
-import { ownColor } from "@/lib/color";
+import { GOLD, ownColor } from "@/lib/color";
 import { useIsHydrated } from "@/lib/use-hydrated";
+import { useEasterEggs } from "./easter-eggs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface AvatarGroupProps {
@@ -15,7 +16,12 @@ interface AvatarGroupProps {
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
   // Held back until hydration: a color picked per page load would mismatch SSR.
-  const color = useIsHydrated() ? ownColor() : null;
+  const hydrated = useIsHydrated();
+  const { complete, found, total } = useEasterEggs();
+  let color = null;
+  if (hydrated) {
+    color = complete ? GOLD : ownColor();
+  }
   const players = Object.entries(others).toSorted(([, p]) =>
     p.state.pathname === pathname ? -1 : 1,
   );
@@ -28,6 +34,11 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
           className="-mr-2 rounded-full shadow-md"
           style={{
             background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
+            // A gold halo once every easter egg is found.
+            boxShadow:
+              complete && hydrated
+                ? `0 0 0 2px var(--bg-color), 0 0 0 3.5px ${GOLD.color}, 0 0 12px ${GOLD.hue}`
+                : undefined,
             zIndex: players.length,
           }}
           initial={{ opacity: 0, scale: 0.8 }}
@@ -38,13 +49,18 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
         >
           <Tooltip placement="bottom-end">
             <TooltipTrigger
-              className="flex h-7 w-7"
+              className="flex h-7 w-7 items-center justify-center text-xs text-[#111]"
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
-              <span aria-hidden="true" />
+              <span aria-hidden="true">{complete && hydrated ? "✦" : null}</span>
             </TooltipTrigger>
             <TooltipContent className="px-2 py-0.5 text-xs">
               {onlyMe ? "You're the only one here 🥺" : "You"}
+              {found.length > 0 && hydrated && (
+                <span className="block text-[var(--body-color-faded)]">
+                  {complete ? "Every easter egg found" : `${found.length}/${total} easter eggs`}
+                </span>
+              )}
             </TooltipContent>
           </Tooltip>
         </motion.li>

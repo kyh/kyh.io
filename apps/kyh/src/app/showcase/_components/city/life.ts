@@ -18,7 +18,7 @@ import { CURB_TOP } from "./draw-blocks";
 import { createNet } from "./net";
 import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
-import { ownColor } from "@/lib/color";
+import { ownLook } from "@/lib/color";
 import type { Ground, Held } from "./carry";
 import { carryTo, flightOf, HANG, LIFT, pickUp, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
@@ -396,7 +396,7 @@ export const createLife = (options: LifeOptions) => {
       said = null;
     }
     const own = lineOf({ said, typing: draft });
-    overlay.mine(hand ? own : null, ownColor(), hand?.x ?? 0, hand?.y ?? 0);
+    overlay.mine(hand ? own : null, ownLook(), hand?.x ?? 0, hand?.y ?? 0);
   };
 
   /** Steps the town to `target`, taking up or putting up the room's snapshot. */
