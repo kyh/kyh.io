@@ -25,38 +25,222 @@
   --logo-dr: #ea4c89;
 
   /* Semantic colors */
-  --bg-color: var(--colors-gray300);
-  --bg-highlighted: var(--colors-gray0);
+  /* Backgrounds blend the light palette (100%) and the dark one (0%); the theme
+     sets the mix, and the toggle's brightness easter egg sets anything between. */
+  --light: 100%;
+  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--light), var(--colors-gray900));
+  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray1000));
   --body-color: var(--colors-gray900);
   --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray1000);
-  --border-color: var(--colors-gray200);
+  --border-color: color-mix(in oklab, var(--colors-gray200) var(--light), var(--colors-gray800));
   --link-color: var(--colors-gray900);
   --link-color-hover: var(--colors-gray1000);
-  --panel: white;
-  --dock-bg: rgba(15, 23, 42, 0.12);
-  --dock-border-color: #e2e8f030;
+  --panel: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray950));
+  --dock-bg: color-mix(
+    in oklab,
+    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--light),
+    color-mix(in srgb, var(--colors-gray600) 12%, transparent)
+  );
+  --dock-border-color: color-mix(in srgb, var(--colors-gray200) 18.8%, transparent);
+  --dock-shadow: color-mix(in srgb, var(--colors-gray900) 12%, transparent);
 
   /* Misc */
-  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
   --colors-shadowLight: hsl(206 22% 7% / 35%);
   --colors-shadowDark: hsl(206 22% 7% / 20%);
 }
 
 [data-theme="dark"] {
   --logo-gh: #ffffff;
-  --bg-color: var(--colors-gray900);
-  --bg-highlighted: var(--colors-gray1000);
+  --light: 0%;
   --body-color: var(--colors-gray300);
   --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray0);
-  --border-color: var(--colors-gray800);
   --link-color: var(--colors-gray300);
   --link-color-hover: var(--colors-gray0);
-  --panel: var(--colors-gray950);
-  --dock-bg: rgba(71, 85, 105, 0.12);
-  --dock-border-color: #1e293b80;
-  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
+}
+
+/* The toggle's hue easter egg: Tailwind's slate in oklch, turned to --hue with
+   its faint chroma doubled so the tint reads. */
+html[data-hue] {
+  --colors-gray0: oklch(99.5% 0.008 var(--hue));
+  --colors-gray50: oklch(98.4% 0.006 var(--hue));
+  --colors-gray100: oklch(96.8% 0.014 var(--hue));
+  --colors-gray200: oklch(92.9% 0.026 var(--hue));
+  --colors-gray300: oklch(86.9% 0.044 var(--hue));
+  --colors-gray400: oklch(70.4% 0.08 var(--hue));
+  --colors-gray500: oklch(55.4% 0.092 var(--hue));
+  --colors-gray600: oklch(44.6% 0.086 var(--hue));
+  --colors-gray700: oklch(37.2% 0.088 var(--hue));
+  --colors-gray800: oklch(27.9% 0.082 var(--hue));
+  --colors-gray900: oklch(20.8% 0.084 var(--hue));
+  --colors-gray950: oklch(12.9% 0.084 var(--hue));
+  --colors-gray1000: oklch(7% 0.06 var(--hue));
+}
+
+/* The theme sliders, after DialKit's, on Base UI's slider: on a dock tile's
+   background, in tints of the text color so they follow the theme. A slider is
+   "in hand" when hovered, dragged or focused from the keyboard. */
+.dial-slider {
+  --dial-ink: var(--body-color);
+  position: relative;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.dial-slider:has(:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--dial-ink) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* The hue slider is the color wheel itself, faint until it's in hand. */
+.dial-slider[data-spectrum]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: linear-gradient(to right in oklch longer hue, oklch(72% 0.14 0), oklch(72% 0.14 0));
+  transition: opacity 150ms;
+}
+
+/* The sliders take over the dock: two to it, as wide as the screen allows. */
+.dial-slot {
+  width: clamp(120px, calc(50vw - 36px), 200px);
+}
+
+.dial-slider-hashmark {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: background 200ms;
+}
+
+.dial-slider-fill {
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--dial-ink) 7%, transparent);
+  transition: background 150ms;
+}
+
+/* A container, so the handle can measure its ends in cqw. */
+.dial-slider-track {
+  height: 100%;
+  container-type: inline-size;
+}
+
+/* The thumb sits centered on the value; its bar is what shows. The bar rides
+   the thumb, shifted just inside the fill's edge on brightness, but stays 6px
+   inside the track's ends: past them it's clipped. */
+.dial-slider-thumb {
+  width: 3px;
+  height: 20px;
+}
+
+.dial-slider:not([data-spectrum]) {
+  --dial-handle-shift: -7px;
+}
+
+.dial-slider-handle {
+  --at: calc(var(--dial-percent) * 1cqw);
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dial-ink) 90%, transparent);
+  opacity: 0;
+  scale: 0.25 1;
+  transition:
+    opacity 150ms,
+    scale 250ms cubic-bezier(0.3, 1.4, 0.6, 1);
+  translate: calc(clamp(6px, var(--at) + var(--dial-handle-shift, 0px), 100cqw - 6px) - var(--at)) 0;
+}
+
+/* Released, the fill and the handle glide to the value; dragged, they follow. */
+.dial-slider:not([data-dragging]) .dial-slider-fill {
+  transition:
+    background 150ms,
+    width 250ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.dial-slider:not([data-dragging]) .dial-slider-thumb {
+  transition: inset-inline-start 250ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.dial-slider-label,
+.dial-slider-value {
+  position: absolute;
+  top: 50%;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  color: color-mix(in srgb, var(--dial-ink) 60%, transparent);
+  transition: color 150ms;
+}
+
+.dial-slider-label {
+  left: 10px;
+}
+
+.dial-slider-value {
+  right: 12px;
+}
+
+/* In hand: ticks, a stronger fill, the value in full, and the handle. */
+.dial-slider:is(:hover, [data-dragging], :has(:focus-visible)) {
+  & .dial-slider-hashmark {
+    background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
+  }
+
+  & .dial-slider-fill {
+    background: color-mix(in srgb, var(--dial-ink) 11%, transparent);
+  }
+
+  & .dial-slider-value {
+    color: var(--dial-ink);
+  }
+
+  &::before {
+    opacity: 0.55;
+  }
+}
+
+/* The handle, state by state, each overriding the one before: the hue marker
+   always shows (fainter over the text), in hand it comes up, dragged it's
+   solid, and in hand over the label or the value it fades back. */
+.dial-slider[data-spectrum] .dial-slider-handle {
+  opacity: 0.7;
+  scale: 1;
+}
+
+.dial-slider[data-spectrum][data-dodge] .dial-slider-handle {
+  opacity: 0.25;
+}
+
+.dial-slider:is(:hover, [data-dragging], :has(:focus-visible)) .dial-slider-handle {
+  opacity: 0.5;
+  scale: 1;
+}
+
+.dial-slider[data-dragging] .dial-slider-handle {
+  opacity: 0.9;
+}
+
+.dial-slider[data-dodge]:is(:hover, [data-dragging], :has(:focus-visible)) .dial-slider-handle {
+  opacity: 0.1;
+  scale: 1 0.75;
 }
 
 @theme inline {
@@ -683,11 +867,21 @@ body:has(.city) {
   margin-top: 0.25rem;
 
   & li {
+    position: relative;
     margin-bottom: 0.25rem;
-    background-image: var(--arrow);
-    background-position: 0 5px;
-    background-repeat: no-repeat;
     padding-left: 1.5rem;
+  }
+
+  /* The arrow is a mask, so it takes the link color, hue and all. */
+  & li::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    background: var(--link-color);
+    mask: var(--arrow) no-repeat;
   }
 }
 
