@@ -12,12 +12,13 @@ import {
 import { usePathname } from "next/navigation";
 import { FixedRate } from "@vibedgames/multiplayer";
 
-import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
+import type { JsonValue } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
 import type { Said } from "@/lib/chat";
 import type { SiteRoom } from "@/lib/site-room";
 import { SHOW_MS } from "@/lib/chat";
 import { listenForChat } from "@/lib/chat-input";
+import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import { readSharedOrder } from "@/lib/shared-order";
 import { createSiteRoom } from "@/lib/site-room";
 
@@ -45,48 +46,36 @@ const useSiteRoom = () => {
 /** Where this visitor's pointer is, sent on a steady clock while it changes. */
 const usePointerBroadcast = (room: SiteRoom) => {
   useEffect(() => {
-    let pointer: JsonRecord | null = null;
-    const onMouseMove = (event: MouseEvent) => {
-      pointer = {
-        pointer: "mouse",
-        x: event.clientX / window.innerWidth,
-        y: event.clientY / window.innerHeight,
-      };
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      const [touch] = event.touches;
-      if (touch) {
-        pointer = {
-          pointer: "touch",
-          x: touch.clientX / window.innerWidth,
-          y: touch.clientY / window.innerHeight,
-        };
-      }
-    };
-    // A lifted finger leaves no cursor behind.
-    const onTouchEnd = () => {
-      pointer = { x: null, y: null };
-    };
+    let moved = false;
+    const stop = subscribeToPointer(() => {
+      moved = true;
+    });
     const rate = new FixedRate(SEND_RATE);
     let last = performance.now();
     let frame = 0;
     const tick = (now: number) => {
-      if (rate.due(now - last) && pointer) {
-        room.point({ ...pointer, t: Math.round(room.now()) });
-        pointer = null;
+      const at = lastPointer();
+      if (rate.due(now - last) && moved && at) {
+        moved = false;
+        // A lifted finger leaves no cursor behind.
+        room.point(
+          pointerLifted()
+            ? { x: null, y: null }
+            : {
+                pointer: at.kind,
+                t: Math.round(room.now()),
+                x: at.x / window.innerWidth,
+                y: at.y / window.innerHeight,
+              },
+        );
       }
       last = now;
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("touchend", onTouchEnd);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
+      stop();
     };
   }, [room]);
 };

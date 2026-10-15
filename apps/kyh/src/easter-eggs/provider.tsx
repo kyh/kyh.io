@@ -19,16 +19,16 @@ import {
 } from "react";
 import { animate, motion, useReducedMotion } from "motion/react";
 
-import { chatBackground } from "@/components/chat-bubble";
 import { CURSOR_ARROW } from "@/components/cursor";
-import { GOLD, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
+import { lastPointer } from "@/lib/pointer";
+import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
 import type { Confetto, SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
 import { EASTER_EGGS, foundEggs, subscribeToEggs } from "./store";
 
 const TOTAL = EASTER_EGGS.length;
 
-const GOLD_BACKGROUND = chatBackground(GOLD.color, GOLD.hue);
+const GOLD_BACKGROUND = gradientOf(GOLD);
 
 /** The gold pointer arrow, the site's own cursor shape. */
 const GOLD_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -201,25 +201,8 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   const still = useReducedMotion() ?? false;
   const [bursts, setBursts] = useState<Burst[]>([]);
   const catcher = useRef<HTMLSpanElement | null>(null);
-  const pointer = useRef<Point>({ x: 0, y: 0 });
   // useId's punctuation isn't safe inside url(#…).
   const gradient = `egg-${useId().replaceAll(/[^\w-]/gu, "")}`;
-
-  // Where the pointer last was: the burst comes out of it. Captured, so the town's own handlers can't hide it.
-  useEffect(() => {
-    pointer.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const track = (event: PointerEvent) => {
-      pointer.current.x = event.clientX;
-      pointer.current.y = event.clientY;
-    };
-    const options = { capture: true, passive: true };
-    window.addEventListener("pointermove", track, options);
-    window.addEventListener("pointerdown", track, options);
-    return () => {
-      window.removeEventListener("pointermove", track, options);
-      window.removeEventListener("pointerdown", track, options);
-    };
-  }, []);
 
   /** The avatar catches an egg. */
   const pop = useCallback(() => {
@@ -242,7 +225,8 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       next += 1;
       const burst = {
         ...burstOf(),
-        from: { ...pointer.current },
+        // The burst comes out of the pointer, or the middle if it hasn't moved yet.
+        from: lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 },
         id: next,
         label:
           count === TOTAL ? "Every easter egg found!" : `Easter egg discovered! ${count}/${TOTAL}`,

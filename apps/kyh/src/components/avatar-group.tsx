@@ -6,8 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { PlayerMap } from "@/lib/player";
 import { EggCatcher, EggProgress, useEggsAwake } from "@/easter-eggs/provider";
-import { ownColor, subscribeToOwnColor } from "@/lib/color";
-import { chatBackground } from "./chat-bubble";
+import { gradientOf, ownColor, subscribeToOwnColor } from "@/lib/color";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface AvatarGroupProps {
@@ -45,7 +44,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               <EggCatcher>
                 <span
                   className="size-full rounded-full"
-                  style={{ background: color ? chatBackground(color.color, color.hue) : undefined }}
+                  style={{ background: color ? gradientOf(color) : undefined }}
                   aria-hidden="true"
                 />
               </EggCatcher>
@@ -69,7 +68,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               key={id}
               className="-mr-2 rounded-full shadow-md"
               style={{
-                background: `linear-gradient(${player.hue}, ${player.color})`,
+                background: gradientOf(player),
                 zIndex: players.length - index,
               }}
               initial={{ opacity: 0, scale: 0.8 }}

@@ -12,7 +12,7 @@ export const EASTER_EGGS = [
   "shapes",
   // Five quick taps on the theme toggle open the dials (components/dock.tsx).
   "dial",
-  // Long-press an icon and drag it somewhere new (components/sortable-grid.tsx).
+  // Long-press a Side Quests icon and drag it somewhere new (side-quests-grid.tsx).
   "reorder",
 ] as const;
 

@@ -175,6 +175,9 @@ are a fixed slice table, since the host may be on any page), and
 (`usePlayers`, `useSelf`, `useChat`, `useRoomClock`, `useSharedOrder`), each
 subscribing to just what it reads. `components/multiplayer/cursors.tsx` draws
 everyone's pointers and chat, and skips `/showcase`, which draws its own.
+Where this visitor's own pointer is lives in `src/lib/pointer.ts` (one set of
+window listeners for the page): the cursor sent to the room, their chat draft
+and the easter eggs' bursts all read it.
 
 The homepage's side-quests grid and its folders are iOS home screens
 (`src/components/sortable-grid.tsx`, generic over items): long-press an icon and

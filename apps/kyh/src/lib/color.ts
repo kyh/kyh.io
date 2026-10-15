@@ -72,6 +72,10 @@ export const ownColorName = (): ColorName => {
 
 export const ownColor = (): Color => colors[ownColorName()];
 
+/** A visitor's colors as a fill: light hue down to full color, behind dark text. */
+export const gradientOf = (look: { color: string; hue: string }) =>
+  `linear-gradient(${look.hue}, ${look.color})`;
+
 export const GOLD = colors.gold;
 
 /** Repaint this visitor; every room says their color again. */
