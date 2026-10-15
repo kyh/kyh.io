@@ -82,7 +82,11 @@ const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: Tile
     }
     const event = e.nativeEvent;
     // The press is followed on the window: the pointer may leave the tile before it lifts.
-    const onUp = () => {
+    // Only this press's pointer counts: a second finger lifting mustn't end it.
+    const onUp = (u: PointerEvent) => {
+      if (u.pointerId !== event.pointerId) {
+        return;
+      }
       cancelPress();
       lockScroll(false);
       window.removeEventListener("pointerup", onUp);
@@ -97,7 +101,10 @@ const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: Tile
     }
     cancelPress();
     const onMove = (m: PointerEvent) => {
-      if (Math.hypot(m.clientX - event.clientX, m.clientY - event.clientY) > moveTolerance) {
+      if (
+        m.pointerId === event.pointerId &&
+        Math.hypot(m.clientX - event.clientX, m.clientY - event.clientY) > moveTolerance
+      ) {
         cancelPress();
       }
     };
