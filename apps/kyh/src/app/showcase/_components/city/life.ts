@@ -23,7 +23,7 @@ import { createHeights } from "./heights";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
-import { INSIDE, SAYING } from "./visitors";
+import { ENTERING, INSIDE, LEAVING, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
 
 /** How high a carried thing hangs, in cells. */
@@ -37,6 +37,8 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
+/** How far from its door a visitor is full size, growing out of it or shrinking into it (cells). */
+const DOORWAY = 0.3;
 /** How long the town's cars and people take to all pop in once it opens, and each one (ms). */
 const OPENING = 700;
 const POP = 150;
@@ -515,7 +517,13 @@ export const createLife = (options: LifeOptions) => {
         const bob = CURB_TOP + Math.abs(Math.sin(visitor.phase)) * 0.014;
         const key = KEYS.visitor[index] ?? "";
         draw(key, visitor.last, visitor.pose, out, bob, frame);
-        out.shown = settled && (visitor.mode !== INSIDE || held?.key === key || theirs.has(key));
+        const carried = held?.key === key || theirs.has(key);
+        out.shown = settled && (visitor.mode !== INSIDE || carried);
+        // Through a doorway they shrink in, or grow out, rather than blink.
+        const door = world.doors[visitor.mode === ENTERING ? visitor.target : visitor.door];
+        const atDoor = (visitor.mode === LEAVING || visitor.mode === ENTERING) && !carried;
+        out.size =
+          atDoor && door ? clamp(Math.hypot(out.x - door.x, out.z - door.z) / DOORWAY, 0, 1) : 1;
       }
     }
   };

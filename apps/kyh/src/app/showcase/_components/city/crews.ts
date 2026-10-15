@@ -104,6 +104,8 @@ export interface CranePose {
   shown: boolean;
   /** How much of the mast is up, 0 to 1, in whole sections. */
   mast: number;
+  /** How far the jib has grown out from the top of the mast, 0 to 1. */
+  reach: number;
   /** Which way the jib points (radians about y, from +x). */
   jib: number;
 }
@@ -397,9 +399,11 @@ export const cranePose = (crane: Crane, t: number): CranePose => {
     1 - clamp01((t - crane.done) / ERECT),
   );
   if (up <= 0) {
-    return { jib: 0, mast: 0, shown: false };
+    return { jib: 0, mast: 0, reach: 0, shown: false };
   }
+  // The mast goes up first, a section at a time; then the jib grows out from its top.
   const sections = Math.max(3, Math.round(crane.mast / 0.6));
+  const mast = Math.ceil(clamp01(up / 0.8) * sections) / sections;
   const swing = Math.sin((t - crane.start) * 1.4 + crane.aim * 3) * 0.25;
-  return { jib: crane.aim + swing, mast: Math.ceil(up * sections) / sections, shown: true };
+  return { jib: crane.aim + swing, mast, reach: clamp01((up - 0.8) / 0.2), shown: true };
 };

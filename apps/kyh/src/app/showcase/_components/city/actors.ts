@@ -58,6 +58,8 @@ export interface Placement {
   leanZ: number;
   /** False while it's inside a building. */
   shown: boolean;
+  /** How big it's drawn, 0 to 1: things come and go by growing and shrinking, never by fading. */
+  size: number;
   /** Its shadow on the ground, sized for how high it is; size 0 for none. */
   shadowX: number;
   shadowY: number;
@@ -74,6 +76,7 @@ export const placement = (): Placement => ({
   shadowY: 0,
   shadowZ: 0,
   shown: true,
+  size: 1,
   x: 0,
   y: 0,
   z: 0,
@@ -207,7 +210,7 @@ export const createActors = (
         lean.setFromAxisAngle(axis.set(spot.leanZ / tilt, 0, -spot.leanX / tilt), tilt);
         yaw.premultiply(lean);
       }
-      const scale = spot.shown ? size(index) : 0;
+      const scale = spot.shown ? spot.size * size(index) : 0;
       matrix.compose(position, yaw, scale > 0 ? sized.setScalar(scale) : none);
       for (const mesh of meshes) {
         mesh.setMatrixAt(index, matrix);

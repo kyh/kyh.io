@@ -81,7 +81,7 @@ export const createSites = (
       for (const { built, work: yard } of yards) {
         const shown = yardShown(yard, t);
         built.group.visible = shown > 0;
-        built.group.scale.set(1, Math.max(0.001, shown), 1);
+        built.group.scale.setScalar(Math.max(0.001, shown));
       }
       for (const { built, work: scaffold } of scaffolds) {
         built.group.visible = t < scaffold.until;
@@ -92,7 +92,7 @@ export const createSites = (
         built.parts.get("mast")?.scale.set(1, Math.max(0.001, pose.mast), 1);
         const jib = built.parts.get("jib");
         if (jib) {
-          jib.visible = pose.mast >= 1;
+          jib.scale.setScalar(Math.max(0.001, pose.reach));
           jib.rotation.y = pose.jib;
         }
       }

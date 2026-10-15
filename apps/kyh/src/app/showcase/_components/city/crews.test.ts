@@ -64,7 +64,9 @@ test("a crane goes up a section at a time before work starts and comes down afte
   assert.equal(cranePose(crane, 0.5).shown, false);
   const rising = cranePose(crane, crane.start - 0.2);
   assert.ok(rising.shown && rising.mast > 0 && rising.mast < 1);
-  assert.equal(cranePose(crane, (crane.start + crane.done) / 2).mast, 1);
+  assert.equal(rising.reach, 0, "the jib waits for the mast");
+  const working = cranePose(crane, (crane.start + crane.done) / 2);
+  assert.deepEqual([working.mast, working.reach], [1, 1]);
   assert.equal(cranePose(crane, crane.done + 1).shown, false);
 });
 
