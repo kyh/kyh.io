@@ -58,11 +58,12 @@ interface TileProps {
   index: number;
   editing: boolean;
   onLongPress: () => void;
+  onHold: (holding: boolean) => void;
   lockScroll: (locked: boolean) => void;
   children: ReactNode;
 }
 
-const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: TileProps) => {
+const Tile = ({ value, index, editing, onLongPress, onHold, lockScroll, children }: TileProps) => {
   const controls = useDragControls();
   const press = useRef<{ stop: () => void } | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -83,20 +84,30 @@ const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: Tile
     const event = e.nativeEvent;
     // The press is followed on the window: the pointer may leave the tile before it lifts.
     // Only this press's pointer counts: a second finger lifting mustn't end it.
+    // From the moment a tile is picked up until it's let go, it's held: still or moving.
+    let holding = false;
+    const grab = () => {
+      holding = true;
+      onHold(true);
+      lockScroll(true);
+      controls.start(event);
+    };
     const onUp = (u: PointerEvent) => {
       if (u.pointerId !== event.pointerId) {
         return;
       }
       cancelPress();
       lockScroll(false);
+      if (holding) {
+        onHold(false);
+      }
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
     if (editing) {
-      lockScroll(true);
-      controls.start(event);
+      grab();
       return;
     }
     cancelPress();
@@ -110,10 +121,9 @@ const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: Tile
     };
     const timer = window.setTimeout(() => {
       cancelPress();
-      lockScroll(true);
       onLongPress();
       // Same press carries on into a drag, as on a home screen.
-      controls.start(event);
+      grab();
     }, longPressMs);
     window.addEventListener("pointermove", onMove);
     press.current = {
@@ -165,6 +175,8 @@ interface SortableGridProps {
   onReorder: (order: string[]) => void;
   editing: boolean;
   onEdit: () => void;
+  /** Whether this visitor is holding a tile, still or dragging. */
+  onHold: (holding: boolean) => void;
   className?: string;
   renderTile: (key: string, index: number) => ReactNode;
 }
@@ -174,6 +186,7 @@ export const SortableGrid = ({
   onReorder,
   editing,
   onEdit,
+  onHold,
   className,
   renderTile,
 }: SortableGridProps) => {
@@ -215,6 +228,7 @@ export const SortableGrid = ({
           index={index}
           editing={editing}
           onLongPress={onEdit}
+          onHold={onHold}
           lockScroll={lockScroll}
         >
           {renderTile(key, index)}

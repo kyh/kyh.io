@@ -158,6 +158,14 @@ plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
 desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
 same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 
+The homepage's side-quests grid and its folders are iOS home screens
+(`src/components/sortable-grid.tsx`): long-press an icon and the grid wiggles,
+drag to reorder (motion's `Reorder` in `xy`), press elsewhere or Escape to stop.
+The order is shared in `kyh-site` while the room lives (`use-shared-order.ts`,
+`shared-order.ts`, tested): a drop sends the host a `reorder` intent, the host
+writes `orders` into shared state, and everyone reads it against their own
+tiles. A held tile ignores the room until it's dropped.
+
 ### policingice (`apps/policingice`)
 
 Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { ProjectAppItem } from "@/components/project-app-group";
 import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
 import { SortableGrid, useEditMode } from "@/components/sortable-grid";
+import { useSharedOrder } from "@/lib/use-shared-order";
 
 export type SortableTile =
   | { key: string; kind: "app"; app: ProjectAppItem }
@@ -12,13 +13,15 @@ export type SortableTile =
 
 export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
   const byKey = useMemo(() => new Map(tiles.map((t) => [t.key, t])), [tiles]);
-  const [order, setOrder] = useState(() => tiles.map((t) => t.key));
+  const keys = useMemo(() => tiles.map((t) => t.key), [tiles]);
+  const { order, reorder, hold } = useSharedOrder("side-quests", keys);
   const [editing, setEditing] = useEditMode();
 
   return (
     <SortableGrid
       order={order}
-      onReorder={setOrder}
+      onReorder={reorder}
+      onHold={hold}
       editing={editing}
       onEdit={() => setEditing(true)}
       className="side-quests-grid"

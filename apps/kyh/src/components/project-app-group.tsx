@@ -7,6 +7,7 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
 
 import { SortableGrid, useEditMode } from "@/components/sortable-grid";
+import { useSharedOrder } from "@/lib/use-shared-order";
 
 // Types
 interface Point {
@@ -193,7 +194,8 @@ const OpenGridItem = ({
 export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const byKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
-  const [order, setOrder] = useState(() => items.map((item) => item.key));
+  const keys = useMemo(() => items.map((item) => item.key), [items]);
+  const { order, reorder, hold } = useSharedOrder(`folder:${title}`, keys);
   const [editing, setEditing] = useEditMode();
   // The folder's preview and grid both follow the visitor's order.
   const orderedItems = useMemo(() => order.flatMap((key) => byKey.get(key) ?? []), [order, byKey]);
@@ -359,7 +361,8 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
 
                 <SortableGrid
                   order={order}
-                  onReorder={setOrder}
+                  onReorder={reorder}
+                  onHold={hold}
                   editing={editing}
                   onEdit={() => setEditing(true)}
                   className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"

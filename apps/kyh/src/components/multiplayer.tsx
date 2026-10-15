@@ -9,13 +9,12 @@ import { Cursor } from "@/components/cursor";
 import type { JsonValue } from "@/lib/player";
 import type { Line } from "@/lib/chat";
 import { lineOf, readChat } from "@/lib/chat";
+import { SITE_ROOM } from "@/lib/party";
 import { useRealtime } from "@/lib/use-realtime";
 
 const asCoordinate = (value: JsonValue | undefined) =>
   Number.isFinite(value) ? Number(value) : undefined;
 
-/** Everyone on the site, on the shared vibedgames party server. */
-const ROOM = "kyh-site";
 /** Pages that draw visitors themselves: the city puts pointers in the town, not on the screen. */
 const OWN_CURSORS = new Set(["/showcase"]);
 
@@ -55,7 +54,7 @@ export const Multiplayer = () => {
   const ownsCursors = OWN_CURSORS.has(pathname);
   const { draft, me, now, players, said, windowDimensions } = useRealtime({
     chat: !ownsCursors,
-    room: ROOM,
+    room: SITE_ROOM,
   });
 
   // Only surface players that have announced themselves (sent a pathname). A

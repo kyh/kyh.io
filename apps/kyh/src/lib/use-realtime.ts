@@ -2,13 +2,15 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { FixedRate, MultiplayerClient } from "@vibedgames/multiplayer";
 
-import type { JsonRecord, MultiplayerSnapshot } from "@vibedgames/multiplayer";
+import type { JsonRecord, JsonValue, MultiplayerSnapshot } from "@vibedgames/multiplayer";
 import type { PlayerMap } from "@/lib/player";
 import type { Said } from "@/lib/chat";
 import { draftState, sayState, SHOW_MS } from "@/lib/chat";
 import { lookOf, ownColor, ownColorName } from "@/lib/color";
 import { listenForChat } from "@/lib/chat-input";
 import { PARTY, PARTY_HOST } from "@/lib/party";
+import type { ReorderIntent } from "@/lib/shared-order";
+import { applyReorder, parseReorder, REORDER } from "@/lib/shared-order";
 
 // Pointers go out on a steady clock, smooth enough without flooding the room.
 const SEND_RATE = 30;
@@ -55,6 +57,18 @@ const createRoom = (room: string) => {
       client.updateMyState({ look, pathname: page });
     }
   };
+  // The host writes reorders into the room's shared state; whoever is host
+  // when one arrives applies it, so the order outlives any one visitor.
+  const hostReorder = (event: string, payload: JsonValue, from: string) => {
+    const intent = event === REORDER ? parseReorder(payload) : null;
+    if (!client?.isHost || !intent) {
+      return;
+    }
+    const orders = applyReorder(client.sharedState.orders, intent, from);
+    if (orders) {
+      client.updateSharedState({ orders });
+    }
+  };
   let others: PlayerMap = NONE;
   let seen: MultiplayerSnapshot | null = null;
   return {
@@ -89,15 +103,22 @@ const createRoom = (room: string) => {
       }
       return others;
     },
+    /** Ask the host to put a grid in a new order for everyone. */
+    reorder: (intent: ReorderIntent) => {
+      client?.sendToHost(REORDER, { ...intent });
+    },
     /** Send a line of chat. */
     say: (text: string) => {
       client?.updateMyState(sayState(text, client.serverNow()));
     },
+    /** The room as it stands; the same object until something in it changes. */
+    snapshot: () => client?.getSnapshot() ?? null,
     subscribe: (listener: () => void) => {
       users += 1;
       client ??= new MultiplayerClient({
         fallbackMs: 10_000,
         host: PARTY_HOST,
+        onEvent: hostReorder,
         party: PARTY,
         room,
       });
@@ -124,7 +145,7 @@ const createRoom = (room: string) => {
 };
 
 const rooms = new Map<string, ReturnType<typeof createRoom>>();
-const roomFor = (name: string) => {
+export const roomFor = (name: string) => {
   let room = rooms.get(name);
   if (!room) {
     room = createRoom(name);
