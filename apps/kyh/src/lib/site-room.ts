@@ -10,7 +10,7 @@ import type { JsonRecord, JsonValue, MultiplayerSnapshot } from "@vibedgames/mul
 import type { PlayerMap } from "@/lib/player";
 import type { Drop } from "@/lib/shared-order";
 import { draftState, sayState } from "@/lib/chat";
-import { lookOf, ownColor, ownColorName } from "@/lib/color";
+import { lookOf, ownColor, ownColorName, subscribeToOwnColor } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { acceptOrder, hostReorder, ordersEntry, REORDER } from "@/lib/shared-order";
 
@@ -95,8 +95,11 @@ export const createSiteRoom = () => {
         room: SITE_ROOM,
       });
       const unsubscribe = client.subscribe(notify);
+      // A new color (every easter egg found) is said again at once.
+      const stopRepaint = subscribeToOwnColor(notify);
       return () => {
         unsubscribe();
+        stopRepaint();
         client?.destroy();
         client = null;
         notify();

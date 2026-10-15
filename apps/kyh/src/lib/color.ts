@@ -13,6 +13,11 @@ const colors = {
     color: "hsl(190, 95%, 39%)",
     hue: "hsl(189, 60.3%, 52.5%)",
   },
+  /** Earned, never dealt: every easter egg found (src/easter-eggs). */
+  gold: {
+    color: "hsl(40, 96%, 48%)",
+    hue: "hsl(50, 100%, 78%)",
+  },
   green: {
     color: "hsl(151, 55%, 41.5%)",
     hue: "hsl(146, 38.5%, 69%)",
@@ -57,12 +62,38 @@ let own: ColorName | null = null;
  * room draws their cursor and chat. The party server picks a color per room
  * connection, so the site says its own instead and every room agrees.
  */
+const DEALT = COLOR_NAMES.filter((name) => name !== "gold");
+const repaints = new Set<() => void>();
+
 export const ownColorName = (): ColorName => {
-  own ??= COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)] ?? "blue";
+  own ??= DEALT[Math.floor(Math.random() * DEALT.length)] ?? "blue";
   return own;
 };
 
 export const ownColor = (): Color => colors[ownColorName()];
+
+/** A visitor's colors as a fill: light hue down to full color, behind dark text. */
+export const gradientOf = (look: { color: string; hue: string }) =>
+  `linear-gradient(${look.hue}, ${look.color})`;
+
+export const GOLD = colors.gold;
+
+/** Repaint this visitor; every room says their color again. */
+export const setOwnColorName = (name: ColorName) => {
+  if (own !== name) {
+    own = name;
+    for (const repaint of repaints) {
+      repaint();
+    }
+  }
+};
+
+export const subscribeToOwnColor = (listener: () => void) => {
+  repaints.add(listener);
+  return () => {
+    repaints.delete(listener);
+  };
+};
 
 /** A visitor's colors: the palette color they name in their state, else the one their room gave them. */
 export const lookOf = (

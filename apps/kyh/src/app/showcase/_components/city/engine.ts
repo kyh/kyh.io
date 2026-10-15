@@ -21,6 +21,7 @@ import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
+import { discoverEgg } from "@/easter-eggs/store";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { CURB_TOP, drawBlock } from "./draw-blocks";
 import { countrysideSteps } from "./draw-countryside";
@@ -577,6 +578,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     spotlight.grab();
     refreshHover();
     updateCursor();
+    discoverEgg("lift");
     return true;
   };
   const onPointerDown = (event: PointerEvent) => {

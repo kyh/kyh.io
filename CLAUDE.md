@@ -175,6 +175,9 @@ are a fixed slice table, since the host may be on any page), and
 (`usePlayers`, `useSelf`, `useChat`, `useRoomClock`, `useSharedOrder`), each
 subscribing to just what it reads. `components/multiplayer/cursors.tsx` draws
 everyone's pointers and chat, and skips `/showcase`, which draws its own.
+Where this visitor's own pointer is lives in `src/lib/pointer.ts` (one set of
+window listeners for the page): the cursor sent to the room, their chat draft
+and the easter eggs' bursts all read it.
 
 The homepage's side-quests grid and its folders are iOS home screens
 (`src/components/sortable-grid.tsx`, generic over items): long-press an icon and
@@ -186,6 +189,23 @@ host a `reorder` intent, the host writes `orders` into shared state, and
 everyone reads it against their own tiles. A held tile ignores the room until
 it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
 `ProjectAppGroup` just takes ordered items and `onDrop`.
+
+Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
+are found (memory only: a refresh starts over); a find is one
+`discoverEgg(id)` where it hides: `city/engine.ts` (lift a car or person),
+`lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
+`dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
+icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
+hover, coarse pointer) hunts without the chat egg, since it has no keyboard
+(`huntedEggs`).
+`provider.tsx` celebrates each like a coin pickup: a label at the pointer,
+shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
+pops as each lands, and a fountain of confetti: paper that flutters and flips
+between its two sides, and sequins that drop, on one canvas that comes and goes
+with it (`confetti.ts`; the throw and the physics are `burst.ts`, pure, tested). Once the last egg of the last
+find lands the visitor's own color becomes `gold` (`setOwnColorName` in
+`lib/color.ts`), so their avatar, pointer, cursor, chat and town pointer go
+gold everywhere through the `look` they already share.
 
 ### policingice (`apps/policingice`)
 

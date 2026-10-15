@@ -4,6 +4,7 @@ import type { ProjectAppItem } from "@/components/project-app-group";
 import { useSharedOrder } from "@/components/multiplayer/provider";
 import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
 import { SortableGrid } from "@/components/sortable-grid";
+import { discoverEgg } from "@/easter-eggs/store";
 
 export type SortableTile =
   | { key: string; kind: "app"; app: ProjectAppItem }
@@ -11,6 +12,12 @@ export type SortableTile =
 
 const tileKey = (tile: SortableTile) => tile.key;
 const appKey = (app: ProjectAppItem) => app.key;
+
+/** Moving an icon is an easter egg. */
+const reordering = (drop: (order: string[]) => void) => (order: string[]) => {
+  drop(order);
+  discoverEgg("reorder");
+};
 
 /** A folder whose apps are in the order everyone on the site has them in. */
 const SharedFolder = ({
@@ -27,7 +34,7 @@ const SharedFolder = ({
     <ProjectAppGroup
       title={title}
       items={shared.items}
-      onDrop={shared.handleDrop}
+      onDrop={reordering(shared.handleDrop)}
       onHold={shared.handleHold}
     />
   );
@@ -40,7 +47,7 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
     <SortableGrid
       items={shared.items}
       keyOf={tileKey}
-      onDrop={shared.handleDrop}
+      onDrop={reordering(shared.handleDrop)}
       onHold={shared.handleHold}
       settling={shared.settling}
       className="side-quests-grid"

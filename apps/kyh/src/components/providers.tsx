@@ -2,6 +2,8 @@
 
 import { ThemeProvider } from "next-themes";
 
+import { EasterEggProvider } from "@/easter-eggs/provider";
+
 import { MultiplayerProvider } from "./multiplayer/provider";
 import { TooltipProvider } from "./tooltip";
 import { ViewportProvider } from "./viewport";
@@ -10,7 +12,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>
     <TooltipProvider>
       <ViewportProvider>
-        <MultiplayerProvider>{children}</MultiplayerProvider>
+        <MultiplayerProvider>
+          <EasterEggProvider>{children}</EasterEggProvider>
+        </MultiplayerProvider>
       </ViewportProvider>
     </TooltipProvider>
   </ThemeProvider>

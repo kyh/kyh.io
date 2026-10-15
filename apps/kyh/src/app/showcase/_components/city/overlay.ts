@@ -3,7 +3,8 @@
 // saying, and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.
 import type { Line } from "@/lib/chat";
-import { CHAT_BUBBLE_CLASS, chatBackground } from "@/components/chat-bubble";
+import { CHAT_BUBBLE_CLASS } from "@/components/chat-bubble";
+import { gradientOf } from "@/lib/color";
 import { CURSOR_ARROW } from "@/components/cursor";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -38,7 +39,7 @@ const showLine = (
   if (element.dataset.typing !== typing) {
     element.dataset.typing = typing;
   }
-  const background = chatBackground(look.color, look.hue);
+  const background = gradientOf(look);
   if (element.dataset.background !== background) {
     element.dataset.background = background;
     element.style.background = background;

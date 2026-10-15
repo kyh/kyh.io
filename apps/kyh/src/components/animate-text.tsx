@@ -38,11 +38,21 @@ const GLYPHS =
 
 const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
 
+// The first scramble's glyphs come from the text itself (a string hash over the
+// text, the letter and the slot), so the server and the browser draw the same ones.
+const glyphFor = (text: string, index: number, slot: number) => {
+  let hash = 7;
+  for (const char of `${text}:${index}:${slot}`) {
+    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2_147_483_647;
+  }
+  return GLYPHS[hash % GLYPHS.length] ?? "";
+};
+
 const generateChars = (text: string) =>
-  [...text].map(() => ({
-    char1: getRandomGlyph(),
-    char2: getRandomGlyph(),
-    char3: getRandomGlyph(),
+  [...text].map((_, index) => ({
+    char1: glyphFor(text, index, 1),
+    char2: glyphFor(text, index, 2),
+    char3: glyphFor(text, index, 3),
   }));
 
 type ScrambleTextProps = {

@@ -693,7 +693,6 @@ button.link {
     background: var(--city-paper);
     box-shadow: 0 2px 0 var(--city-shadow);
     color: var(--city-ink);
-    font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
     line-height: 1.25;

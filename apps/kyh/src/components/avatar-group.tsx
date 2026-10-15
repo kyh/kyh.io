@@ -1,11 +1,12 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { PlayerMap } from "@/lib/player";
-import { ownColor } from "@/lib/color";
-import { useIsHydrated } from "@/lib/use-hydrated";
+import { EggCatcher, EggProgress, useEggsAwake } from "@/easter-eggs/provider";
+import { gradientOf, ownColor, subscribeToOwnColor } from "@/lib/color";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface AvatarGroupProps {
@@ -14,8 +15,9 @@ interface AvatarGroupProps {
 
 export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
-  // Held back until hydration: a color picked per page load would mismatch SSR.
-  const color = useIsHydrated() ? ownColor() : null;
+  // None on the server: a color picked per page load would mismatch SSR.
+  const color = useSyncExternalStore(subscribeToOwnColor, ownColor, () => null);
+  const awake = useEggsAwake();
   const players = Object.entries(others).toSorted(([, p]) =>
     p.state.pathname === pathname ? -1 : 1,
   );
@@ -26,12 +28,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
       <AnimatePresence mode="popLayout">
         <motion.li
           className="-mr-2 rounded-full shadow-md"
-          style={{
-            background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
-            zIndex: players.length,
-          }}
+          style={{ zIndex: players.length }}
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: onlyMe ? 0.2 : 1, scale: 1 }}
+          // Alone it fades back, unless it's catching easter eggs or gone gold.
+          animate={{ opacity: onlyMe && !awake ? 0.2 : 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           layout
@@ -41,10 +41,17 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               className="flex h-7 w-7"
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
-              <span aria-hidden="true" />
+              <EggCatcher>
+                <span
+                  className="size-full rounded-full"
+                  style={{ background: color ? gradientOf(color) : undefined }}
+                  aria-hidden="true"
+                />
+              </EggCatcher>
             </TooltipTrigger>
             <TooltipContent className="px-2 py-0.5 text-xs">
               {onlyMe ? "You're the only one here 🥺" : "You"}
+              <EggProgress />
             </TooltipContent>
           </Tooltip>
         </motion.li>
@@ -61,7 +68,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               key={id}
               className="-mr-2 rounded-full shadow-md"
               style={{
-                background: `linear-gradient(${player.hue}, ${player.color})`,
+                background: gradientOf(player),
                 zIndex: players.length - index,
               }}
               initial={{ opacity: 0, scale: 0.8 }}

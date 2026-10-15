@@ -17,6 +17,7 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 
+import { discoverEgg } from "@/easter-eggs/store";
 import { tiltGravity } from "@/lib/tilt";
 
 const getRenderProps = (isLight: boolean) => ({
@@ -264,6 +265,7 @@ export const FigureCanvas = () => {
         });
         Composite.add(engineRef.current.world, body);
       }
+      discoverEgg("shapes");
     };
 
     // Click handler for desktop

@@ -10,6 +10,7 @@ import type { JsonValue } from "@/lib/player";
 import type { Line } from "@/lib/chat";
 import { lineOf, readChat } from "@/lib/chat";
 import { useWindowSize } from "@/lib/use-window-size";
+import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { asFinite } from "@/lib/wire";
 import { useChat, usePlayers, useRoomClock, useSelf } from "./provider";
 
@@ -27,16 +28,16 @@ interface OwnChatProps {
 /** This visitor's own line, following their mouse so they see what everyone else sees. */
 const OwnChat = ({ line, color, hue }: OwnChatProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const place = (event: MouseEvent) => {
-      ref.current?.style.setProperty(
-        "transform",
-        `translate(${event.clientX + 6}px, ${event.clientY + 10}px)`,
-      );
-    };
-    window.addEventListener("mousemove", place);
-    return () => window.removeEventListener("mousemove", place);
-  }, []);
+  useEffect(
+    () =>
+      subscribeToPointer(() => {
+        const at = lastPointer();
+        if (at?.kind === "mouse") {
+          ref.current?.style.setProperty("transform", `translate(${at.x + 6}px, ${at.y + 10}px)`);
+        }
+      }),
+    [],
+  );
   return (
     <div
       ref={ref}
@@ -97,6 +98,8 @@ export const Multiplayer = () => {
           key={id}
           x={asCoordinate(player.state.x)}
           y={asCoordinate(player.state.y)}
+          // A visitor on an older page sends no stamp: take theirs as it arrives.
+          t={asFinite(player.state.t) ?? now()}
           color={player.color}
           hue={player.hue}
           chat={chat}

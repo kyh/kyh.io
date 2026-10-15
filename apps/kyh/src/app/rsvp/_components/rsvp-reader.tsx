@@ -11,6 +11,7 @@ import {
   PauseIcon,
   PlayIcon,
 } from "@/components/icons";
+import { discoverEgg } from "@/easter-eggs/store";
 import { RSVP_CONTENT, RSVP_SETTINGS } from "./rsvp-config";
 import { cn } from "cn";
 
@@ -76,6 +77,11 @@ export const RSVPReader = () => {
     status: "countdown",
   });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Finding the speed reader is an easter egg.
+  useEffect(() => {
+    discoverEgg("speedread");
+  }, []);
 
   const currentIndex = getCurrentIndex(state, words.length);
   const currentWord = words[currentIndex] ?? "";
