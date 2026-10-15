@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { percentOf, roundToStep, rubberStretch, snapToDecile, valueAt } from "./dial-slider";
+import { percentOf, roundToStep, rubberStretch, snapToDecile } from "./dial-slider";
 
 const hue = { max: 360, min: 0, step: 1 };
 
-test("a fraction maps onto the range, clamped", () => {
-  assert.equal(valueAt(0.5, hue), 180);
-  assert.equal(valueAt(-1, hue), 0);
-  assert.equal(valueAt(2, hue), 360);
+test("a value's place along the track", () => {
   assert.equal(percentOf(90, hue), 25);
 });
 

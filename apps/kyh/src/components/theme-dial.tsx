@@ -84,7 +84,7 @@ export const ThemeDial = ({ light, hue, setLight, setHue, onClose }: ThemeDialPr
           step={1}
           value={hue ?? SLATE_HUE}
           spectrum
-          format={(degrees) => `${degrees}°`}
+          format={{ style: "unit", unit: "degree", unitDisplay: "narrow" }}
           onChange={setHue}
         />
       </div>

@@ -107,7 +107,8 @@ Brightness is `--light`, the mix every background token in `global.css` takes
 between the light and dark palettes (the theme sets 100% or 0%; the theme flips
 at 50%); hue is `--hue` under `html[data-hue]`, the slate greys retinted in
 oklch. `src/components/theme-dial.tsx` holds the state and the panel,
-`dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, after DialKit's, and
+`dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
+Base UI's Slider, and
 `src/lib/dial.ts` the tap streak.
 
 `/showcase` is a city of the projects: an isometric island drawn the way
