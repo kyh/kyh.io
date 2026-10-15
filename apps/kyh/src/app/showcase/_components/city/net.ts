@@ -9,7 +9,7 @@ import { FixedRate, Interpolator, lerp, MultiplayerClient } from "@vibedgames/mu
 
 import type { Chat } from "@/lib/chat";
 import { draftState, readChat, sayState } from "@/lib/chat";
-import { lookOf, ownColorName, ownEggs } from "@/lib/color";
+import { lookOf, ownColorName } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
 
@@ -259,7 +259,6 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       }
       if (sending.due(deltaMs)) {
         room.updateMyState({
-          eggs: ownEggs(),
           h: holding ?? "",
           look: ownColorName(),
           on: pointer ? 1 : 0,

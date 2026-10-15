@@ -1,7 +1,5 @@
 import type { JsonValue } from "@vibedgames/multiplayer";
 
-import { eggsComplete } from "@/lib/easter-egg-store";
-
 const colors = {
   blue: {
     color: "hsl(206, 100%, 50%)",
@@ -14,6 +12,11 @@ const colors = {
   cyan: {
     color: "hsl(190, 95%, 39%)",
     hue: "hsl(189, 60.3%, 52.5%)",
+  },
+  /** Earned, never dealt: every easter egg found (src/easter-eggs). */
+  gold: {
+    color: "hsl(40, 96%, 48%)",
+    hue: "hsl(50, 100%, 78%)",
   },
   green: {
     color: "hsl(151, 55%, 41.5%)",
@@ -41,12 +44,6 @@ const colors = {
   },
 };
 
-/** The look for a visitor who has found every easter egg. */
-export const GOLD = {
-  color: "hsl(40, 96%, 48%)",
-  hue: "hsl(50, 100%, 78%)",
-};
-
 type ColorName = keyof typeof colors;
 type Color = (typeof colors)[ColorName];
 
@@ -65,30 +62,40 @@ let own: ColorName | null = null;
  * room draws their cursor and chat. The party server picks a color per room
  * connection, so the site says its own instead and every room agrees.
  */
+const DEALT = COLOR_NAMES.filter((name) => name !== "gold");
+const repaints = new Set<() => void>();
+
 export const ownColorName = (): ColorName => {
-  own ??= COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)] ?? "blue";
+  own ??= DEALT[Math.floor(Math.random() * DEALT.length)] ?? "blue";
   return own;
 };
 
 export const ownColor = (): Color => colors[ownColorName()];
 
-/** How this visitor looks to themselves and everyone: gold once every easter egg is found. */
-export const ownLook = (): Color => (eggsComplete() ? GOLD : ownColor());
+export const GOLD = colors.gold;
 
-/** What a room's state carries so everyone else draws this visitor gold. */
-export const ownEggs = () => (eggsComplete() ? "all" : null);
+/** Repaint this visitor; every room says their color again. */
+export const setOwnColorName = (name: ColorName) => {
+  if (own !== name) {
+    own = name;
+    for (const repaint of repaints) {
+      repaint();
+    }
+  }
+};
 
-/**
- * A visitor's colors: gold once they've found every easter egg, else the
- * palette color they name in their state, else the one their room gave them.
- */
+export const subscribeToOwnColor = (listener: () => void) => {
+  repaints.add(listener);
+  return () => {
+    repaints.delete(listener);
+  };
+};
+
+/** A visitor's colors: the palette color they name in their state, else the one their room gave them. */
 export const lookOf = (
-  state: { look?: JsonValue; eggs?: JsonValue } | undefined,
+  state: { look?: JsonValue } | undefined,
   player: { color?: string; hue?: string },
 ): Color => {
-  if (state?.eggs === "all") {
-    return GOLD;
-  }
   const named = colorNamed(state?.look);
   return {
     color: named?.color ?? player.color ?? colors.blue.color,

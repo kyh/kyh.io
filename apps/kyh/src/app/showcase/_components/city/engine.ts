@@ -21,6 +21,7 @@ import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
+import { discoverEgg } from "@/easter-eggs/store";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { CURB_TOP, drawBlock } from "./draw-blocks";
 import { countrysideSteps } from "./draw-countryside";
@@ -79,10 +80,6 @@ export interface CityCallbacks {
   onOpen: (slug: string) => void;
   /** The flyover took the camera, or let it go. */
   onTour: (touring: boolean) => void;
-  /** A car or person was picked up. */
-  onLift: () => void;
-  /** A line of chat was sent. */
-  onSay: () => void;
 }
 
 export interface CityOptions extends CityCallbacks {
@@ -581,7 +578,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     spotlight.grab();
     refreshHover();
     updateCursor();
-    options.onLift();
+    discoverEgg("lift");
     return true;
   };
   const onPointerDown = (event: PointerEvent) => {
@@ -872,10 +869,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const stopChat = listenForChat({
     claims: (key) => keyMove(key) !== null,
     onDraft: life.type,
-    onSend: (text) => {
-      life.say(text);
-      options.onSay();
-    },
+    onSend: life.say,
   });
   canvas.addEventListener("keyup", onKeyUp, { signal });
   canvas.addEventListener("blur", onBlur, { signal });

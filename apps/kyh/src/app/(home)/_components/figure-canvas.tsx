@@ -17,7 +17,7 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 
-import { discoverEgg } from "@/lib/easter-egg-store";
+import { discoverEgg } from "@/easter-eggs/store";
 import { tiltGravity } from "@/lib/tilt";
 
 const getRenderProps = (isLight: boolean) => ({

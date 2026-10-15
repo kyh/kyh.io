@@ -2,7 +2,8 @@
 
 import { ThemeProvider } from "next-themes";
 
-import { EasterEggProvider } from "./easter-eggs";
+import { EasterEggProvider } from "@/easter-eggs/provider";
+
 import { TooltipProvider } from "./tooltip";
 import { ViewportProvider } from "./viewport";
 

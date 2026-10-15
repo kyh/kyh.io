@@ -2,6 +2,7 @@
 // ahead of every other (capture), that keeps each key for itself while a
 // draft is open so nothing underneath pans, plays or scrolls.
 import { editDraft } from "@/lib/chat";
+import { discoverEgg } from "@/easter-eggs/store";
 
 interface ChatInputOptions {
   /** Whether a key does something else on this page, so it doesn't start a draft. */
@@ -43,6 +44,7 @@ export const listenForChat = ({ claims, onDraft, onSend }: ChatInputOptions) => 
     close();
     if (edit.kind === "send") {
       onSend(edit.text);
+      discoverEgg("chat");
     }
   };
   window.addEventListener("keydown", onKeyDown, { capture: true });

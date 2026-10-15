@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { burstOf, EGGS_PER_FIND } from "./egg-burst";
+import { burstOf, EGGS_PER_FIND } from "./burst";
 
 const seeded = (seed: number) => {
   let state = seed;

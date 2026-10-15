@@ -1,18 +1,17 @@
 // What one find throws out of the cursor, like coins out of a block: a pop of
 // confetti, and a handful of eggs that spray out and then fly home to the
 // avatar. Pure, given a random source, so the shape of a burst is asserted.
+import { colorNamed, GOLD } from "@/lib/color";
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
 const CONFETTI = 28;
 
+// Mostly gold, flecked with the visitors' own colors.
 const COLORS = [
-  "hsl(40, 96%, 48%)",
-  "hsl(50, 100%, 70%)",
-  "hsl(336, 80%, 58%)",
-  "hsl(206, 100%, 50%)",
-  "hsl(151, 55%, 42%)",
-  "hsl(292, 45%, 51%)",
+  GOLD.color,
+  GOLD.hue,
+  ...["crimson", "blue", "green", "plum"].map((name) => colorNamed(name)?.color ?? GOLD.color),
 ];
 
 export interface Confetto {

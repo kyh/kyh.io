@@ -158,17 +158,16 @@ plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
 desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
 same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 
-Easter eggs: `src/lib/easter-eggs.ts` is the registry (pure, tested); add one
-there and call `discoverEgg(id)` (`easter-egg-store.ts`; memory only, a refresh starts over) where it
-hides — from React or the town's engine. `EasterEggProvider`
-(`components/easter-eggs.tsx`) celebrates each find like a coin pickup:
-confetti at the pointer, eggs (`egg-burst.ts`, pure, tested) spraying out and
-flying to the avatar (`data-own-avatar`), which pops as each lands. Once the
-last egg of the last find lands the visitor turns gold: their avatar, their own pointer (`data-eggs` on
-`<html>`, `global.css`), and, via `eggs: "all"` in room state read by
-`lookOf`, their cursor, chat and town pointer for everyone else. Today: lift a
-car or person in `/showcase`; send a chat line; tap the homepage's figure
-canvas to spawn shapes.
+Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
+are found (memory only: a refresh starts over); a find is one
+`discoverEgg(id)` where it hides: `city/engine.ts` (lift a car or person),
+`lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes).
+`provider.tsx` celebrates each like a coin pickup: confetti and a label at the
+pointer, eggs (`burst.ts`, pure, tested) spraying out and flying to the
+avatar's `EggCatcher`, which pops as each lands. Once the last egg of the last
+find lands the visitor's own color becomes `gold` (`setOwnColorName` in
+`lib/color.ts`), so their avatar, pointer, cursor, chat and town pointer go
+gold everywhere through the `look` they already share.
 
 ### policingice (`apps/policingice`)
 
