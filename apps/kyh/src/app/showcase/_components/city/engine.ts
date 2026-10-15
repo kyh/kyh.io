@@ -16,8 +16,7 @@ import {
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Built } from "./render";
-import type { Sketch, Vec3 } from "./sketch";
+import type { Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
@@ -32,9 +31,10 @@ import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
+import { createIntro } from "./intro";
 import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
-import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
+import { createSky } from "./sky-scene";
 import { createTour } from "./tour";
 import { TOWN_VERSION } from "./world";
 import { approach, clamp, easeInOut } from "./ease";
@@ -113,86 +113,6 @@ const framing = ({ bounds }: Placed, view: Vec3) => {
     x: bounds.x + bounds.w / 2 + up.x * lift,
     z: bounds.z + bounds.d / 2 + up.z * lift,
   };
-};
-
-const BLIMP_HEIGHT = 7.5;
-const BLIMP_SPAN = 76;
-
-/** A point on a tilted ellipse round the island, for boats. */
-const sea = (angle: number, rx: number, rz: number) => ({
-  x: 36 + Math.cos(angle) * rx * Math.SQRT1_2 - Math.sin(angle) * rz * Math.SQRT1_2,
-  z: 36 - Math.cos(angle) * rx * Math.SQRT1_2 - Math.sin(angle) * rz * Math.SQRT1_2,
-});
-
-const createSky = (
-  scene: Scene,
-  materials: ReturnType<typeof createMaterials>,
-  still: boolean,
-  view: Vec3,
-  covers: readonly Vec3[],
-) => {
-  const builds: Built[] = [];
-  const add = (sketch: Sketch) => {
-    const built = build(sketch, materials);
-    builds.push(built);
-    scene.add(built.group);
-    return built;
-  };
-  const blimp = add(drawBlimp("KYH.IO", view, covers));
-  const balloons = [add(drawBalloon(0, view, covers)), add(drawBalloon(1, view, covers))];
-  const boats = [add(drawBoat("white")), add(drawBoat("accentRed")), add(drawBoat("accentBlue"))];
-  const ferry = add(drawFerry());
-  const drones = [
-    add(drawDrone(view, covers)),
-    add(drawDrone(view, covers)),
-    add(drawDrone(view, covers)),
-  ];
-  const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
-  const update = (time: number, pier: { x: number; z: number; d: number } | null) => {
-    const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
-    blimp.group.position.set(
-      40 + heading.x * along,
-      BLIMP_HEIGHT + Math.sin(time * 0.5) * 0.15,
-      40 + heading.z * along,
-    );
-    for (const [index, balloon] of balloons.entries()) {
-      const angle = time * 0.03 + index * 2.6;
-      balloon.group.position.set(
-        36 + Math.cos(angle) * (16 + index * 6),
-        5 + index * 1.4 + Math.sin(time * 0.4 + index) * 0.5,
-        36 + Math.sin(angle) * (12 + index * 5),
-      );
-    }
-    for (const [index, boat] of boats.entries()) {
-      // Sail a wide loop round the island, nose along the way.
-      const direction = index % 2 === 0 ? 1 : -1;
-      const angle = time * (0.012 + index * 0.004) * direction + index * 2.1;
-      const rx = 42 + index * 2.5;
-      const rz = 33 + index * 2;
-      const here = sea(angle, rx, rz);
-      const ahead = sea(angle + direction * 0.01, rx, rz);
-      boat.group.position.set(here.x, Math.sin(time * 1.5 + index) * 0.02 - 0.03, here.z);
-      boat.group.rotation.y = -Math.atan2(ahead.z - here.z, ahead.x - here.x);
-    }
-    for (const [index, drone] of drones.entries()) {
-      // Figure-eights over downtown, each on its own beat.
-      const t = time * (0.16 + index * 0.05) + index * 2;
-      drone.group.position.set(
-        36 + Math.sin(t) * (5 + index * 2),
-        3.4 + index * 0.6 + Math.sin(t * 3) * 0.15,
-        35 + Math.sin(t * 2) * (3 + index),
-      );
-    }
-    if (pier) {
-      // The ferry shuttles from the pier's end out to sea and back.
-      const leg = (Math.sin(time * 0.06) + 1) / 2;
-      ferry.group.position.set(pier.x + 1, -0.02, pier.z + pier.d + 0.6 + leg * 9);
-      ferry.group.rotation.y = Math.cos(time * 0.06) > 0 ? -Math.PI / 2 : Math.PI / 2;
-    } else {
-      ferry.group.visible = false;
-    }
-  };
-  return { builds, update };
 };
 
 /**
@@ -288,16 +208,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   );
   const materials = createMaterials(theme, options.reducedMotion ? null : schedule.startAt);
   const fixed = createMaterials(theme);
-  /** Seconds the town has spent going up; null once it's built, or with reduced motion. */
-  let growing: number | null = options.reducedMotion ? null : 0;
   // The building sites that put it up, there only while it's going up.
-  let sites = growing === null ? null : createSites(scene, materials, fixed, schedule, plan);
-  /** When the town's up and every truck and crane has gone (s). */
-  const builtBy = Math.max(schedule.end, sites?.end ?? 0);
-  /** Whether the flyover has been sent off now the buildings are up. */
-  let toured = false;
-  /** The buildings are still going up (the last trucks may drive off after). */
-  const stillBuilding = () => growing !== null && growing < schedule.end;
+  let sites = options.reducedMotion ? null : createSites(scene, materials, fixed, schedule, plan);
+  const intro = createIntro({
+    built: schedule.end,
+    cleared: Math.max(schedule.end, sites?.end ?? 0),
+    still: options.reducedMotion,
+  });
   const packUp = () => {
     sites?.dispose();
     sites = null;
@@ -359,8 +276,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The camera: where it looks, how close, and where it is easing to.
   let width = 1;
   let height = 1;
-  // Close on downtown as the first ground's broken, pulling back to the whole island as it's built.
-  const view = { x: 36, z: 37, zoom: options.reducedMotion ? 0 : BUILD_CLOSE };
+  const view = { x: 36, z: 37, zoom: 1 };
   let goal: { x: number; z: number; zoom: number } | null = null;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
@@ -433,14 +349,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let overActor = false;
 
   // What's lit, and whether the flyover has the camera: the rules are in controls.ts.
-  /** The visitor took the camera while the town was going up: the flyover waits for idle instead. */
-  let handsOn = false;
   const spotlight = createSpotlight<Placed>({
     now: () => performance.now(),
     // The visitor has the camera: a glide to a focused building stops too.
     onTake: () => {
       goal = null;
-      handsOn = true;
+      intro.take();
     },
     onTour: options.onTour,
     still: options.reducedMotion,
@@ -870,22 +784,25 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     panBy(keyPan.x * dt, keyPan.y * dt);
     repick();
   };
-  canvas.addEventListener("pointerdown", onPointerDown);
-  options.surface.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerCancel);
-  options.surface.addEventListener("pointerleave", onPointerLeave);
-  options.surface.addEventListener("wheel", onWheel, { passive: false });
-  canvas.addEventListener("dblclick", onDoubleClick);
-  canvas.addEventListener("keydown", onKeyDown);
+  // Every listener the town adds goes when it does: one abort, nothing left behind.
+  const listening = new AbortController();
+  const { signal } = listening;
+  canvas.addEventListener("pointerdown", onPointerDown, { signal });
+  options.surface.addEventListener("pointermove", onPointerMove, { signal });
+  canvas.addEventListener("pointerup", onPointerUp, { signal });
+  canvas.addEventListener("pointercancel", onPointerCancel, { signal });
+  options.surface.addEventListener("pointerleave", onPointerLeave, { signal });
+  options.surface.addEventListener("wheel", onWheel, { passive: false, signal });
+  canvas.addEventListener("dblclick", onDoubleClick, { signal });
+  canvas.addEventListener("keydown", onKeyDown, { signal });
   // Typing anywhere chats; the keys that move the view don't start a line.
   const stopChat = listenForChat({
     claims: (key) => keyMove(key) !== null,
     onDraft: life.type,
     onSend: life.say,
   });
-  canvas.addEventListener("keyup", onKeyUp);
-  canvas.addEventListener("blur", onBlur);
+  canvas.addEventListener("keyup", onKeyUp, { signal });
+  canvas.addEventListener("blur", onBlur, { signal });
 
   // Pins: the page's icon links, kept floating over their roofs.
   const pinStates = new Map<string, PinState>();
@@ -902,7 +819,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         const x = Math.round(((anchor.x + 1) / 2) * width * 10) / 10;
         const y = Math.round(((1 - anchor.y) / 2) * height * 10) / 10;
         // Pins wait for their buildings to finish growing.
-        const hidden = stillBuilding() || x < -60 || x > width + 60 || y < -60 || y > height + 60;
+        const hidden =
+          intro.phase === "building" || x < -60 || x > width + 60 || y < -60 || y > height + 60;
         const lit = entry === shown;
         const last = pinStates.get(slug);
         if (!last || last.x !== x || last.y !== y || last.hidden !== hidden || last.lit !== lit) {
@@ -971,41 +889,39 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const resumeWhenIdle = () => {
     // A hand holding a car or a person is a press too: the flyover leaves the camera to it.
-    // While the town's still going up, the camera holds on the whole island.
-    if (!stillBuilding() && spotlight.idle(presses.count > 0 || carrying !== null)) {
+    // While the town's still going up the camera's the opening's: its clock runs on
+    // capped frame time, so on a slow or hidden page it can outlast the idle wait.
+    if (intro.phase !== "building" && spotlight.idle(presses.count > 0 || carrying !== null)) {
       playTour();
     }
   };
   const lit = (slug: string) => shown?.project.slug === slug;
   let frame = 0;
-  // Counted in frames' time, a slow one (the first few, compiling shaders)
-  // capped, so the growing plays out whole instead of skipping ahead.
+  /** A frame of the opening: the town goes up, the camera pulls back, then it opens and is cleared. */
   const grow = (elapsed: number) => {
-    if (growing === null) {
-      return;
+    const { opened, cleared } = intro.step(elapsed);
+    if (intro.clock !== null) {
+      materials.setGrowth(intro.clock);
+      sites?.update(intro.clock);
     }
-    growing += Math.min(elapsed, 0.05);
-    materials.setGrowth(growing);
-    sites?.update(growing);
-    if (!handsOn && growing < schedule.end) {
-      // Pulling back, eased, in the zoom's own scale so it reads evenly.
-      const k = clamp(growing / (schedule.end * 0.8), 0, 1);
-      const eased = easeInOut(k);
-      view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - eased) + Math.log(minZoom()) * eased);
+    const { pullBack } = intro;
+    if (pullBack !== null) {
+      // Eased in the zoom's own scale, so it reads evenly.
+      view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - pullBack) + Math.log(minZoom()) * pullBack);
       place();
     }
     // Built: in from the whole island to the first project, unless the visitor
     // has the camera, while the last trucks drive off.
-    if (growing >= schedule.end && !toured) {
-      toured = true;
+    if (opened) {
       life.setOpen(true);
-      if (!handsOn) {
+      if (!intro.taken) {
         playTour(0);
       }
     }
-    if (growing >= builtBy) {
-      growing = null;
+    // Cleared: the machines are gone, and the views a turn away can be drawn without a hitch.
+    if (cleared) {
       packUp();
+      drawAhead();
     }
   };
   const tick = (now: number) => {
@@ -1036,33 +952,25 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   frame = requestAnimationFrame(tick);
   // The opening shot: the whole island, then down to the first project and
   // across, left to right, the way the title sequence pans the valley.
-  if (growing === null) {
+  let warmUp = 0;
+  if (intro.phase === "done") {
     playTour(0);
+    // Once the opening shot has settled in, start on the views a turn away.
+    warmUp = window.setTimeout(drawAhead, 3000);
   } else {
     life.setOpen(false);
   }
-  // Once the opening has settled in, start on the views a turn away.
-  const warmUp = setTimeout(drawAhead, 3000);
 
   return {
     /** What the town is up to, for poking at in development. */
-    debug: () => ({ ...life.debug(), buildEnd: schedule.end, building: growing }),
+    debug: () => ({ ...life.debug(), intro: { clock: intro.clock, phase: intro.phase } }),
     dispose: () => {
       cancelAnimationFrame(frame);
-      clearTimeout(warmUp);
+      listening.abort();
+      window.clearTimeout(warmUp);
       stopChat();
       window.clearTimeout(ahead);
       observer.disconnect();
-      canvas.removeEventListener("pointerdown", onPointerDown);
-      options.surface.removeEventListener("pointermove", onPointerMove);
-      canvas.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("pointercancel", onPointerCancel);
-      options.surface.removeEventListener("pointerleave", onPointerLeave);
-      options.surface.removeEventListener("wheel", onWheel);
-      canvas.removeEventListener("dblclick", onDoubleClick);
-      canvas.removeEventListener("keydown", onKeyDown);
-      canvas.removeEventListener("keyup", onKeyUp);
-      canvas.removeEventListener("blur", onBlur);
       for (const town of townViews.values()) {
         town.dispose();
       }
