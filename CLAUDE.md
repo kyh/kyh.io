@@ -196,9 +196,11 @@ are found (memory only: a refresh starts over); a find is one
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
 `dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader).
-`provider.tsx` celebrates each like a coin pickup: confetti and a label at the
-pointer, eggs (`burst.ts`, pure, tested) spraying out and flying to the
-avatar's `EggCatcher`, which pops as each lands. Once the last egg of the last
+`provider.tsx` celebrates each like a coin pickup: a label at the pointer,
+shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
+pops as each lands, and a fountain of confetti: paper that flutters and flips
+between its two sides, and sequins that drop, on one canvas that comes and goes
+with it (`confetti.ts`; the throw and the physics are `burst.ts`, pure, tested). Once the last egg of the last
 find lands the visitor's own color becomes `gold` (`setOwnColorName` in
 `lib/color.ts`), so their avatar, pointer, cursor, chat and town pointer go
 gold everywhere through the `look` they already share.

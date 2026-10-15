@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { burstOf, EGGS_PER_FIND } from "./burst";
+import { burstOf, EGGS_PER_FIND, stepConfetto, throwConfetti } from "./burst";
 
 const seeded = (seed: number) => {
   let state = seed;
@@ -25,11 +25,32 @@ test("a find throws a set number of eggs, upward, landing one at a time", () => 
   assert.equal(new Set(delays).size, delays.length);
 });
 
-test("confetti pops up before it falls", () => {
-  const { confetti } = burstOf(seeded(3));
-  assert.ok(confetti.length > 0);
+test("confetti leaves the cursor upward, then settles into a slow fall", () => {
+  const random = seeded(3);
+  const confetti = throwConfetti(random);
+  assert.ok(confetti.some((bit) => bit.kind === "paper"));
+  assert.ok(confetti.some((bit) => bit.kind === "sequin"));
   for (const bit of confetti) {
-    assert.ok(bit.up < 0);
-    assert.ok(bit.fall > 0);
+    assert.ok(bit.vy < 0, "thrown up");
   }
+  for (let frame = 0; frame < 240; frame += 1) {
+    for (const bit of confetti) {
+      stepConfetto(bit, 1, random);
+    }
+  }
+  for (const bit of confetti) {
+    assert.ok(bit.vy > 0 && bit.vy <= 3, "falling, no faster than terminal");
+    assert.ok(bit.y > 0, "below where it started");
+  }
+});
+
+test("paper flips between its two sides as it falls", () => {
+  const random = seeded(5);
+  const [paper] = throwConfetti(random);
+  assert.ok(paper);
+  const sides = new Set<boolean>();
+  for (let frame = 0; frame < 200; frame += 1) {
+    sides.add(stepConfetto(paper, 1, random) > 0);
+  }
+  assert.equal(sides.size, 2);
 });

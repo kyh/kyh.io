@@ -5,26 +5,40 @@ import { colorNamed, GOLD } from "@/lib/color";
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
-const CONFETTI = 28;
+const PAPERS = 36;
+const SEQUINS = 18;
 
-// Mostly gold, flecked with the visitors' own colors.
-const COLORS = [
-  GOLD.color,
-  GOLD.hue,
-  ...["crimson", "blue", "green", "plum"].map((name) => colorNamed(name)?.color ?? GOLD.color),
-];
+// Mostly gold, flecked with the visitors' own colors. Paper shows its front
+// and its back as it flips, the color and its light tint.
+const SIDES = ["gold", "gold", "crimson", "blue", "green", "plum"].map((name) => {
+  const look = colorNamed(name) ?? GOLD;
+  return { back: look.hue, front: look.color };
+});
 
+/** One bit of confetti, in pixels from the cursor and pixels per frame (at 60fps). */
 export interface Confetto {
-  /** Where it ends up from the cursor, in pixels. */
+  kind: "paper" | "sequin";
   x: number;
-  /** How high it pops before it falls. */
-  up: number;
-  /** How far below the cursor it ends. */
-  fall: number;
-  rotate: number;
-  color: string;
-  wide: boolean;
+  y: number;
+  vx: number;
+  vy: number;
+  /** Paper's size, or a sequin's radius in `width`. */
+  width: number;
+  height: number;
+  rotation: number;
+  /** Where in its flutter it starts, so no two flip together. */
+  phase: number;
+  front: string;
+  back: string;
 }
+
+// Paper catches the air: light gravity, heavy drag, a slow terminal fall that
+// it flutters through. Sequins are beads: they drop fast and barely slow.
+const PHYSICS = {
+  paper: { drag: 0.075, gravity: 0.3 },
+  sequin: { drag: 0.02, gravity: 0.55 },
+} as const;
+const TERMINAL = 3;
 
 export interface SprayedEgg {
   /** Where the spray throws it, from the cursor, in pixels. */
@@ -37,19 +51,63 @@ export interface SprayedEgg {
 
 const between = (random: () => number, low: number, high: number) => low + random() * (high - low);
 
-export const burstOf = (random: () => number = Math.random) => {
-  const confetti: Confetto[] = Array.from({ length: CONFETTI }, (_, index) => {
-    const angle = (index / CONFETTI) * Math.PI * 2 + between(random, -0.2, 0.2);
-    const reach = between(random, 60, 130);
+/** A find's confetti: thrown up and out of the cursor in a fountain. */
+export const throwConfetti = (random: () => number = Math.random): Confetto[] => {
+  const side = () => SIDES[Math.floor(random() * SIDES.length)] ?? SIDES[0];
+  const papers = Array.from({ length: PAPERS }, (): Confetto => {
+    const { back, front } = side() ?? { back: GOLD.hue, front: GOLD.color };
     return {
-      color: COLORS[index % COLORS.length] ?? "gold",
-      fall: between(random, 80, 160),
-      rotate: between(random, -540, 540),
-      up: Math.min(0, Math.sin(angle) * reach) - between(random, 40, 90),
-      wide: random() > 0.5,
-      x: Math.cos(angle) * reach,
+      back,
+      front,
+      height: between(random, 8, 15),
+      kind: "paper",
+      phase: between(random, 0, 100),
+      rotation: between(random, 0, Math.PI * 2),
+      vx: between(random, -9, 9),
+      vy: -between(random, 7, 13),
+      width: between(random, 5, 9),
+      x: between(random, -6, 6),
+      y: 0,
     };
   });
+  const sequins = Array.from({ length: SEQUINS }, (): Confetto => {
+    const { front } = side() ?? { front: GOLD.color };
+    const radius = between(random, 1.5, 2.6);
+    return {
+      back: front,
+      front,
+      height: radius,
+      kind: "sequin",
+      phase: 0,
+      rotation: 0,
+      vx: between(random, -6, 6),
+      vy: -between(random, 9, 14),
+      width: radius,
+      x: between(random, -6, 6),
+      y: 0,
+    };
+  });
+  return [...papers, ...sequins];
+};
+
+/**
+ * Moves a bit of confetti on by `frames` (60ths of a second), in place: drag,
+ * gravity to a terminal fall, paper's sideways jitter. Returns how far round
+ * its flip it is, -1 to 1: the sign says which side faces out.
+ */
+export const stepConfetto = (bit: Confetto, frames: number, random: () => number = Math.random) => {
+  const { drag, gravity } = PHYSICS[bit.kind];
+  bit.vx -= bit.vx * Math.min(1, drag * frames);
+  bit.vy = Math.min(bit.vy + gravity * frames, TERMINAL);
+  if (bit.kind === "paper") {
+    bit.vx += (random() - 0.5) * frames;
+  }
+  bit.x += bit.vx * frames;
+  bit.y += bit.vy * frames;
+  return bit.kind === "paper" ? Math.cos((bit.y + bit.phase) * 0.09) : 1;
+};
+
+export const burstOf = (random: () => number = Math.random) => {
   // Eggs spray up and out in a fan, the way coins leave a block.
   const eggs: SprayedEgg[] = Array.from({ length: EGGS_PER_FIND }, (_, index) => {
     const angle = -Math.PI / 2 + ((index - (EGGS_PER_FIND - 1) / 2) / EGGS_PER_FIND) * Math.PI;
@@ -61,5 +119,5 @@ export const burstOf = (random: () => number = Math.random) => {
       y: Math.sin(angle) * reach,
     };
   });
-  return { confetti, eggs };
+  return { eggs };
 };

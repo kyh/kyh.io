@@ -1,6 +1,6 @@
 "use client";
 
-// Celebrates each find like a coin pickup: confetti and a label at the pointer,
+// Celebrates each find like a coin pickup: confetti (`confetti.ts`) and a label at the pointer,
 // eggs that spray out and fly home to the visitor's avatar (`EggCatcher`),
 // which pops as each lands. Once the last egg of the last find lands the
 // visitor's own color turns gold, so every room draws them gold too.
@@ -22,13 +22,17 @@ import { animate, motion, useReducedMotion } from "motion/react";
 import { CURSOR_ARROW } from "@/components/cursor";
 import { lastPointer } from "@/lib/pointer";
 import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
-import type { Confetto, SprayedEgg } from "./burst";
+import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
+import { throwConfettiAt } from "./confetti";
 import { EASTER_EGGS, foundEggs, subscribeToEggs } from "./store";
 
 const TOTAL = EASTER_EGGS.length;
 
 const GOLD_BACKGROUND = gradientOf(GOLD);
+/** The shadowed side of a golden egg. */
+const DEEP_GOLD = "hsl(34, 90%, 30%)";
+const EGG = "M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z";
 
 /** The gold pointer arrow, the site's own cursor shape. */
 const GOLD_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -45,7 +49,6 @@ interface Burst {
   label: string;
   from: Point;
   to: Point;
-  confetti: Confetto[];
   eggs: SprayedEgg[];
 }
 
@@ -115,7 +118,7 @@ interface BurstProps {
   onDone: (id: number) => void;
 }
 
-/** Confetti and the label pop at the pointer; the eggs spray out, then fly home one at a time. */
+/** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
 const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
@@ -136,26 +139,6 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
       >
         {burst.label}
       </motion.span>
-      {burst.confetti.map((bit, index) => (
-        <motion.span
-          key={index}
-          className="absolute -translate-1/2 rounded-[1px]"
-          style={{ background: bit.color, height: bit.wide ? 5 : 8, width: bit.wide ? 12 : 8 }}
-          initial={{ opacity: 1, rotate: 0, x: 0, y: 0 }}
-          animate={{
-            opacity: [1, 1, 0],
-            rotate: bit.rotate,
-            x: [0, bit.x * 0.7, bit.x],
-            y: [0, bit.up, bit.fall],
-          }}
-          transition={{
-            duration: 1.3,
-            ease: ["easeOut", "easeIn"],
-            opacity: { duration: 1.3, times: [0, 0.7, 1] },
-            times: [0, 0.35, 1],
-          }}
-        />
-      ))}
       {burst.eggs.map((egg, index) => (
         <motion.svg
           key={index}
@@ -181,11 +164,17 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
             }
           }}
         >
-          <path
-            d="M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z"
-            fill={`url(#${gradient})`}
-            stroke={GOLD.color}
-            strokeWidth="1.5"
+          {/* Lit from the top left: a deep rim, a body, and a gloss. */}
+          <path d={EGG} fill={`url(#${gradient})`} stroke={DEEP_GOLD} strokeWidth="0.75" />
+          <path d={EGG} fill={`url(#${gradient}-rim)`} />
+          <ellipse
+            cx="9.4"
+            cy="8.6"
+            rx="1.9"
+            ry="3"
+            fill="white"
+            opacity="0.85"
+            transform="rotate(-24 9.4 8.6)"
           />
         </motion.svg>
       ))}
@@ -238,10 +227,12 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
         : { x: window.innerWidth - 40, y: 40 };
       next += 1;
+      // The burst comes out of the pointer, or the middle if it hasn't moved yet.
+      const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      throwConfettiAt(from);
       const burst = {
         ...burstOf(),
-        // The burst comes out of the pointer, or the middle if it hasn't moved yet.
-        from: lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+        from,
         id: next,
         label:
           count === TOTAL ? "Every easter egg found!" : `Easter egg discovered! ${count}/${TOTAL}`,
@@ -292,10 +283,19 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
           aria-hidden="true"
         >
           <svg className="absolute size-0">
-            <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor={GOLD.hue} />
-              <stop offset="1" stopColor={GOLD.color} />
-            </linearGradient>
+            <defs>
+              <radialGradient id={gradient} cx="0.38" cy="0.34" r="0.75">
+                <stop offset="0" stopColor="#fffbe8" />
+                <stop offset="0.3" stopColor={GOLD.hue} />
+                <stop offset="0.75" stopColor={GOLD.color} />
+                <stop offset="1" stopColor={DEEP_GOLD} />
+              </radialGradient>
+              {/* Light bounced back up into the shadowed underside. */}
+              <radialGradient id={`${gradient}-rim`} cx="0.6" cy="1.05" r="0.45">
+                <stop offset="0" stopColor={GOLD.hue} stopOpacity="0.55" />
+                <stop offset="1" stopColor={GOLD.hue} stopOpacity="0" />
+              </radialGradient>
+            </defs>
           </svg>
           {bursts.map((burst) => (
             <BurstView
