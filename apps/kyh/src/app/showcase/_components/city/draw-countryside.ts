@@ -5,6 +5,8 @@ import type { Sketch, Vec3 } from "./sketch";
 import { tree } from "./draw-kit";
 import { paint, WALLS } from "./palette";
 import { ball, box, face, gable, line, part, round } from "./sketch";
+import type { Steps } from "./steps";
+import { finish } from "./steps";
 
 const CROPS: Record<Field["crop"], "field" | "fieldGreen" | "soil"> = {
   green: "fieldGreen",
@@ -234,27 +236,41 @@ const drawPier = (sketch: Sketch, pier: { x: number; z: number; w: number; d: nu
   });
 };
 
-export const drawCountryside = (sketch: Sketch, plan: CityPlan) => {
+/** The countryside a piece at a time, yielding between pieces. */
+export const countrysideSteps = function* countrysideSteps(
+  sketch: Sketch,
+  plan: CityPlan,
+): Steps<void> {
   const { countryside } = plan;
   for (const field of countryside.fields) {
     drawField(sketch, field);
+    yield;
   }
   for (const barn of countryside.barns) {
     drawBarn(sketch, barn);
+    yield;
   }
   for (const [index, spot] of countryside.windmills.entries()) {
     drawWindmill(sketch, spot, index);
+    yield;
   }
   for (const [index, spot] of countryside.turbines.entries()) {
     drawTurbine(sketch, spot, index);
+    yield;
   }
   if (countryside.lighthouse) {
     drawLighthouse(sketch, countryside.lighthouse);
+    yield;
   }
   if (countryside.pier) {
     drawPier(sketch, countryside.pier);
+    yield;
   }
   for (const spot of countryside.trees) {
     tree(sketch, spot, 0);
   }
 };
+
+/** The same, all at once. */
+export const drawCountryside = (sketch: Sketch, plan: CityPlan) =>
+  finish(countrysideSteps(sketch, plan));

@@ -13,22 +13,25 @@ import {
   WebGLRenderer,
 } from "three";
 
+import type { Object3D } from "three";
+
 import type { CityProject, Placed } from "./draw-landmarks";
 import type { Theme } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Vec3 } from "./sketch";
+import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
 import { CURB_TOP, drawBlock } from "./draw-blocks";
-import { drawCountryside } from "./draw-countryside";
+import { countrysideSteps } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
-import { drawLots, planEntries } from "./draw-landmarks";
+import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
 import { shade, signature } from "./palette";
 import { CENTER, contains, inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
+import type { Built } from "./render";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
 import { ALL_BUILT, BUILT, createGrowth, raise } from "./grow";
@@ -38,6 +41,8 @@ import { createIntro } from "./intro";
 import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { createSky } from "./sky-scene";
+import type { Steps } from "./steps";
+import { finish, runFor } from "./steps";
 import { createTour } from "./tour";
 import { TOWN_VERSION } from "./world";
 import { approach, clamp, easeInOut } from "./ease";
@@ -48,6 +53,8 @@ const CAMERA_DISTANCE = 300;
 const MAX_ZOOM = 3.2;
 /** How close the camera starts while the town is built: on downtown's first sites. */
 const BUILD_CLOSE = 1.1;
+/** How long a frame may spend drawing the views a turn away (ms). */
+const AHEAD_MS = 4;
 /** Ground directions that run right and up the screen, for a view toward the camera. */
 const screenAxes = (view: Vec3) => {
   const flat = Math.hypot(view[0], view[2]);
@@ -89,22 +96,37 @@ export interface CityOptions extends CityCallbacks {
   surface: HTMLElement;
 }
 
-/** The town sketched for a view, keeping the faces of every view in `covers`. */
-const drawTown = (
+/**
+ * The town sketched for a view, keeping the faces of every view in `covers`.
+ * @yields {void} between pieces, so it can be spread over frames.
+ */
+const sketchSteps = function* sketchSteps(
   plan: CityPlan,
   projects: readonly CityProject[],
   view: Vec3,
   covers: readonly Vec3[],
-) => {
+): Steps<Town> {
   const sketch = createSketch(view, covers);
   drawGround(sketch, plan, createRandom(11));
-  drawCountryside(sketch, plan);
+  yield;
+  yield* countrysideSteps(sketch, plan);
   for (const block of plan.blocks) {
     drawBlock(sketch, block);
+    yield;
   }
-  const placed = drawLots(sketch, plan, projects);
+  const placed = yield* lotSteps(sketch, plan, projects);
   return { placed, sketch };
 };
+
+/** The town as one view sketches it. */
+interface Town {
+  placed: Placed[];
+  sketch: Sketch;
+}
+
+/** The views a drawing keeps the faces of: its own, or both ends of a turn. */
+const coversAt = (at: number) =>
+  Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
 
 /** Where to look to frame a building from a view: lifted for its height. */
 const framing = ({ bounds }: Placed, view: Vec3) => {
@@ -121,24 +143,26 @@ const framing = ({ bounds }: Placed, view: Vec3) => {
 /**
  * The town as one quarter turn sees it: every face and line sketched for that
  * view, the moving parts animated, and the sky over it. Only one is shown.
+ * @yields {void} between buildings, so it can be spread over frames.
  */
-const createTownView = (
+const townViewSteps = function* townViewSteps(
   scene: Scene,
   materials: ReturnType<typeof createMaterials>,
-  town: ReturnType<typeof drawTown>,
+  town: Town,
   view: Vec3,
   covers: readonly Vec3[],
   /** When each part of it goes up; BUILT once the town's up. */
   startAt: StartAt,
   still: boolean,
-) => {
+) {
   const city = raise(build(town.sketch, materials), startAt);
+  yield;
   // Each project's building is built on its own, so it can light up alone.
-  const buildings = new Map(
-    town.placed.map(
-      (entry) => [entry.project.slug, raise(build(entry.sketch, materials), startAt)] as const,
-    ),
-  );
+  const buildings = new Map<string, Built>();
+  for (const entry of town.placed) {
+    buildings.set(entry.project.slug, raise(build(entry.sketch, materials), startAt));
+    yield;
+  }
   const rig = {
     parts: new Map([city, ...buildings.values()].flatMap((built) => [...built.parts])),
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
@@ -167,6 +191,8 @@ const createTownView = (
     sky,
   };
 };
+
+type TownView = ReturnType<typeof townViewSteps> extends Generator<unknown, infer T> ? T : never;
 
 /** The last placement written to a pin, so a still camera writes nothing. */
 interface PinState {
@@ -199,13 +225,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
    * rests, halves for a turn between two, which keep every face either end
    * sees. Only the ones near the camera are kept.
    */
-  const townViews = new Map<number, ReturnType<typeof createTownView>>();
-  const drawTownAt = (at: number) => {
-    const covers = Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
-    return drawTown(plan, options.projects, viewAt(at), covers);
-  };
+  const townViews = new Map<number, TownView>();
   // The first view's drawing also says where every building is, and how tall.
-  const firstTown = drawTownAt(0);
+  const firstTown = finish(sketchSteps(plan, options.projects, viewAt(0), coversAt(0)));
   const { placed } = firstTown;
   const schedule = createSchedule(
     plan,
@@ -227,18 +249,18 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     sites?.dispose();
     sites = null;
   };
-  const townViewAt = (at: number, town = drawTownAt(at)) => {
-    const existing = townViews.get(at);
-    if (existing) {
-      return existing;
-    }
-    const covers = Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
-    const created = createTownView(
+  /**
+   * Sketches and builds the town for a heading, and keeps it hidden.
+   * @yields {void} between pieces, so it can be spread over frames.
+   */
+  const townSteps = function* townSteps(at: number, sketched?: Town): Steps<TownView> {
+    const town = sketched ?? (yield* sketchSteps(plan, options.projects, viewAt(at), coversAt(at)));
+    const created = yield* townViewSteps(
       scene,
       materials,
       town,
       viewAt(at),
-      covers,
+      coversAt(at),
       // A view drawn once the town's up has nothing left to raise.
       intro.phase === "done" ? BUILT : schedule.startAt,
       options.reducedMotion,
@@ -246,6 +268,21 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     created.show(false);
     townViews.set(at, created);
     return created;
+  };
+  /** The view being drawn ahead, between frames. */
+  let drafting: { at: number; steps: Steps<TownView> } | null = null;
+  const townViewAt = (at: number, town?: Town) => {
+    const existing = townViews.get(at);
+    if (existing) {
+      return existing;
+    }
+    // Wanted now: whatever's left of it is drawn at once.
+    if (drafting?.at === at) {
+      const { steps } = drafting;
+      drafting = null;
+      return finish(steps);
+    }
+    return finish(townSteps(at, town));
   };
   /** How many quarter turns the camera has made round the town, and where it is mid-turn. */
   let heading = 0;
@@ -379,7 +416,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   });
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
-  const paintedFor = new WeakMap<ReturnType<typeof createTownView>, string>();
+  const paintedFor = new WeakMap<TownView, string>();
   const paintKey = () => `${theme}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
@@ -414,7 +451,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     options.onHover(shown?.project.slug ?? null);
   };
 
-  const paintTown = (town: ReturnType<typeof createTownView>) => {
+  const paintTown = (town: TownView) => {
     if (paintedFor.get(town) === paintKey()) {
       return;
     }
@@ -573,28 +610,37 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     updateCursor();
   };
   /** Show one of the town's drawings, lit as the spotlight says. */
-  const showTown = (town: ReturnType<typeof createTownView>) => {
+  const showTown = (town: TownView) => {
     shownTown.show(false);
     shownTown = town;
     paintTown(town);
     town.show(true);
   };
   // Sketching a view takes a noticeable moment, so the ones a turn from here
-  // are drawn ahead, one at a time between frames, rather than when a key is pressed.
-  let ahead = 0;
+  // are drawn ahead, a few milliseconds a frame, rather than when a key is
+  // pressed: drawn in one go they'd stall the flyover.
+  let ahead: number[] = [];
   const drawAhead = () => {
     const left = (heading + HEADINGS - 1) % HEADINGS;
     const right = (heading + 1) % HEADINGS;
-    const queue = [heading + 0.5, right, left + 0.5, left];
-    const next = () => {
-      const step = queue.shift();
-      if (step !== undefined) {
-        paintTown(townViewAt(step));
-        ahead = window.setTimeout(next, 250);
+    ahead = [heading + 0.5, right, left + 0.5, left];
+  };
+  /** A frame's share of drawing ahead. */
+  const draftAhead = () => {
+    while (!drafting) {
+      const at = ahead.shift();
+      if (at === undefined) {
+        return;
       }
-    };
-    window.clearTimeout(ahead);
-    ahead = window.setTimeout(next, 250);
+      if (!townViews.has(at)) {
+        drafting = { at, steps: townSteps(at) };
+      }
+    }
+    const done = runFor(drafting.steps, AHEAD_MS);
+    if (done) {
+      drafting = null;
+      paintTown(done.value);
+    }
   };
   /** The camera comes to rest at `to`: its own drawing, and the flyover's path as it sees it. */
   const settle = (to: number) => {
@@ -913,6 +959,28 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   const lit = (slug: string) => shown?.project.slug === slug;
+  /**
+   * The first frame also draws everything, hidden or off screen, unseen
+   * beneath the real frame, so nothing is first drawn mid-show: the cars and
+   * people as the town opens, the halo under the first building the flyover
+   * lights. Compiling shaders alone isn't enough; drivers finish the work at
+   * the first draw.
+   */
+  let warmed = false;
+  const drawEverything = () => {
+    warmed = true;
+    const kept: { object: Object3D; visible: boolean; frustumCulled: boolean }[] = [];
+    scene.traverse((object) => {
+      kept.push({ frustumCulled: object.frustumCulled, object, visible: object.visible });
+      object.visible = true;
+      object.frustumCulled = false;
+    });
+    renderer.render(scene, camera);
+    for (const { object, visible, frustumCulled } of kept) {
+      object.visible = visible;
+      object.frustumCulled = frustumCulled;
+    }
+  };
   let frame = 0;
   /** A frame of the opening: the town goes up, the camera pulls back, then it opens and is cleared. */
   const grow = (elapsed: number) => {
@@ -964,8 +1032,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     shownTown.animations.update(clock.time, lit);
     halo.update(Math.min(0.25, elapsed), clock.time, theme);
     shownTown.sky.update(clock.time, plan.countryside.pier);
+    if (!warmed) {
+      drawEverything();
+    }
     renderer.render(scene, camera);
     placePins();
+    draftAhead();
     frame = requestAnimationFrame(tick);
   };
   frame = requestAnimationFrame(tick);
@@ -988,7 +1060,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       listening.abort();
       window.clearTimeout(warmUp);
       stopChat();
-      window.clearTimeout(ahead);
       observer.disconnect();
       for (const town of townViews.values()) {
         town.dispose();
