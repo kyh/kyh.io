@@ -74,6 +74,7 @@ export const ProjectApp = ({
       {...wrapperProps}
       className="ease relative flex flex-col items-center gap-2 no-underline transition-transform duration-200 active:scale-95"
       data-slot="app"
+      draggable={false}
       onHoverStart={handleHoverStart}
       onHoverEnd={() => setIsHovered(false)}
     >

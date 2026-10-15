@@ -1,6 +1,7 @@
 import type { ProjectAppItem } from "@/components/project-app-group";
-import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
 import { projects } from "@/lib/data";
+import type { SortableTile } from "./side-quests-grid";
+import { SideQuestsGrid } from "./side-quests-grid";
 
 const projectsAndVentures = projects.filter((p) => p.type === "project" || p.type === "venture");
 
@@ -16,18 +17,10 @@ const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
   url: p.url,
 });
 
-export const SideQuests = () => (
-  <div className="side-quests-grid">
-    {projectsAndVentures.map((p) => (
-      <ProjectApp
-        key={p.slug}
-        name={p.title}
-        description={p.description}
-        iconSrc={p.favicon}
-        url={p.url}
-      />
-    ))}
-    <ProjectAppGroup title="Mini Apps" items={miniApps.map(toAppItem)} />
-    <ProjectAppGroup title="Templates" items={templates.map(toAppItem)} />
-  </div>
-);
+const tiles: SortableTile[] = [
+  ...projectsAndVentures.map((p) => ({ app: toAppItem(p), key: p.slug, kind: "app" as const })),
+  { items: miniApps.map(toAppItem), key: "group:mini-apps", kind: "group", title: "Mini Apps" },
+  { items: templates.map(toAppItem), key: "group:templates", kind: "group", title: "Templates" },
+];
+
+export const SideQuests = () => <SideQuestsGrid tiles={tiles} />;
