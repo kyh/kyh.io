@@ -47,7 +47,16 @@ export const createSiteRoom = () => {
       client.updateMyState({ look, pathname: page });
     }
   };
+  // The room's shared state as this visitor joined it: the client withholds
+  // its player id until it's in, so a new id is a fresh sync (or a rejoin).
+  let joinedAs: string | null = null;
+  let atJoin: JsonRecord | undefined;
   const notify = () => {
+    const id = client?.playerId ?? null;
+    if (id !== joinedAs) {
+      joinedAs = id;
+      atJoin = client?.sharedState;
+    }
     announce();
     for (const listener of listeners) {
       listener();
@@ -101,6 +110,9 @@ export const createSiteRoom = () => {
       client?.sendToHost(REORDER, { grid, n: dropped, order });
       notify();
     },
+    /** Whether `entry` is the grid's order as the room had it when this visitor joined. */
+    joinedWith: (grid: string, entry: JsonValue) =>
+      entry !== null && entry === ordersEntry(atJoin, grid),
     /** Milliseconds on the room's clock, so everyone agrees when a line comes down. */
     now: () => client?.serverNow() ?? Date.now(),
     /** A grid's order as this visitor should see it (raw: read it against the tiles). */

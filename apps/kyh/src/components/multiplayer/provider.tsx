@@ -169,5 +169,8 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
     return order.flatMap((key) => byKey.get(key) ?? []);
   }, [entry, items, keyOf]);
   const handleDrop = useCallback((order: string[]) => room.drop(grid, order), [room, grid]);
-  return { handleDrop, handleHold: setHeld, items: ordered };
+  // The order the room already had when this visitor arrived lands in place;
+  // only moves made since (anyone's drop) slide.
+  const settling = room.joinedWith(grid, entry);
+  return { handleDrop, handleHold: setHeld, items: ordered, settling };
 };

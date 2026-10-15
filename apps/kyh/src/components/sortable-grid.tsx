@@ -12,6 +12,8 @@ import { Reorder, useDragControls } from "motion/react";
 const longPressMs = 500;
 const moveTolerance = 8;
 const layoutSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
+/** Moves that aren't anyone's drop (an order arriving with the page) land in place. */
+const settleTransition = { ...layoutSpring, layout: { duration: 0 } };
 
 /** Editing (wiggling) until a press lands outside every tile, or Escape. */
 const useEditMode = () => {
@@ -64,13 +66,14 @@ interface TileProps {
   value: string;
   index: number;
   editing: boolean;
+  settling: boolean;
   onLongPress: () => void;
   /** Picked up (true) or let go (false). */
   onHold: (holding: boolean) => void;
   children: ReactNode;
 }
 
-const Tile = ({ value, index, editing, onLongPress, onHold, children }: TileProps) => {
+const Tile = ({ value, index, editing, settling, onLongPress, onHold, children }: TileProps) => {
   const controls = useDragControls();
   // One press at a time; aborting it takes down its timer and window listeners.
   const press = useRef<AbortController | null>(null);
@@ -148,7 +151,7 @@ const Tile = ({ value, index, editing, onLongPress, onHold, children }: TileProp
       dragControls={controls}
       dragMomentum={false}
       whileDrag={{ scale: 1.12 }}
-      transition={layoutSpring}
+      transition={settling ? settleTransition : layoutSpring}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
       onPointerDown={handlePointerDown}
@@ -179,8 +182,10 @@ interface SortableGridProps<T> {
   renderTile: (item: T, index: number) => ReactNode;
   /** A tile was let go after moving: the new order, by key. */
   onDrop: (order: string[]) => void;
-  /** A tile was picked up (true) or let go (false). */
+  /** The first tile was picked up (true), or the last let go (false). */
   onHold?: (holding: boolean) => void;
+  /** Lay out a new `items` order without animating it. */
+  settling?: boolean;
   className?: string;
 }
 
@@ -190,6 +195,7 @@ export const SortableGrid = <T,>({
   renderTile,
   onDrop,
   onHold,
+  settling = false,
   className,
 }: SortableGridProps<T>) => {
   const [editing, setEditing] = useEditMode();
@@ -198,6 +204,8 @@ export const SortableGrid = <T,>({
   const latest = useRef<string[] | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollLocked = useRef(false);
+  // Tiles held right now: with two fingers, the grid is let go with the last.
+  const holds = useRef(0);
 
   const byKey = new Map(items.map((item) => [keyOf(item), item]));
   const order = moving ?? items.map(keyOf);
@@ -223,6 +231,10 @@ export const SortableGrid = <T,>({
   };
 
   const hold = (holding: boolean) => {
+    holds.current = Math.max(0, holds.current + (holding ? 1 : -1));
+    if (holding ? holds.current > 1 : holds.current > 0) {
+      return;
+    }
     scrollLocked.current = holding;
     onHold?.(holding);
     const dropped = latest.current;
@@ -251,6 +263,7 @@ export const SortableGrid = <T,>({
             value={key}
             index={index}
             editing={editing}
+            settling={settling}
             onLongPress={() => setEditing(true)}
             onHold={hold}
           >

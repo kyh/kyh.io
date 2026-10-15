@@ -42,6 +42,7 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
       keyOf={tileKey}
       onDrop={shared.handleDrop}
       onHold={shared.handleHold}
+      settling={shared.settling}
       className="side-quests-grid"
       renderTile={(tile) =>
         tile.kind === "app" ? (
