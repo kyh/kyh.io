@@ -5,8 +5,8 @@ import { colorNamed, GOLD } from "@/lib/color";
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
-const PAPERS = 36;
-const SEQUINS = 18;
+const PAPERS = 24;
+const SEQUINS = 12;
 
 // Mostly gold, flecked with the visitors' own colors. Paper shows its front
 // and its back as it flips, the color and its light tint.
@@ -51,7 +51,7 @@ export interface SprayedEgg {
 
 const between = (random: () => number, low: number, high: number) => low + random() * (high - low);
 
-/** A find's confetti: thrown up and out of the cursor in a fountain. */
+/** A find's confetti: a small pop up and out of the cursor, about a hand high. */
 export const throwConfetti = (random: () => number = Math.random): Confetto[] => {
   const side = () => SIDES[Math.floor(random() * SIDES.length)] ?? SIDES[0];
   const papers = Array.from({ length: PAPERS }, (): Confetto => {
@@ -63,8 +63,8 @@ export const throwConfetti = (random: () => number = Math.random): Confetto[] =>
       kind: "paper",
       phase: between(random, 0, 100),
       rotation: between(random, 0, Math.PI * 2),
-      vx: between(random, -9, 9),
-      vy: -between(random, 7, 13),
+      vx: between(random, -5, 5),
+      vy: -between(random, 4.5, 7.5),
       width: between(random, 5, 9),
       x: between(random, -6, 6),
       y: 0,
@@ -80,8 +80,8 @@ export const throwConfetti = (random: () => number = Math.random): Confetto[] =>
       kind: "sequin",
       phase: 0,
       rotation: 0,
-      vx: between(random, -6, 6),
-      vy: -between(random, 9, 14),
+      vx: between(random, -3.5, 3.5),
+      vy: -between(random, 6, 9),
       width: radius,
       x: between(random, -6, 6),
       y: 0,

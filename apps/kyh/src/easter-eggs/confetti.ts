@@ -1,13 +1,13 @@
-// The confetti, drawn on one canvas over the page while any is in the air:
-// each find throws a fountain (`throwConfetti`) that `stepConfetto` moves on,
-// frame by frame. The canvas comes and goes with the confetti, so a page with
+// The confetti, drawn on one canvas over the page while any is in the air,
+// under the eggs and their label (z-60): each find throws a small fountain
+// (`throwConfetti`) that `stepConfetto` moves on, frame by frame. The canvas comes and goes with the confetti, so a page with
 // none has nothing over it.
 import type { Confetto } from "./burst";
 import { stepConfetto, throwConfetti } from "./burst";
 
 /** How long a fountain lasts, and the fade at its end, in ms. */
-const LIFE = 2800;
-const FADE = 700;
+const LIFE = 1600;
+const FADE = 500;
 
 interface Fountain {
   from: { x: number; y: number };
@@ -91,7 +91,7 @@ export const throwConfettiAt = (from: { x: number; y: number }) => {
   canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   canvas.style.cssText =
-    "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61";
+    "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:59";
   document.body.append(canvas);
   fit(canvas);
   last = now;
