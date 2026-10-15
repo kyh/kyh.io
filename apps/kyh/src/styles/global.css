@@ -59,6 +59,49 @@
   --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
+/* The theme toggle's brightness dial: backgrounds blend from the dark palette
+   (0%) to the light one (100%); text follows the theme, which flips at 50%. */
+html[data-dial] {
+  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--dial-light), var(--colors-gray900));
+  --bg-highlighted: color-mix(
+    in oklab,
+    var(--colors-gray0) var(--dial-light),
+    var(--colors-gray1000)
+  );
+  --border-color: color-mix(
+    in oklab,
+    var(--colors-gray200) var(--dial-light),
+    var(--colors-gray800)
+  );
+  --panel: color-mix(in oklab, var(--colors-gray0) var(--dial-light), var(--colors-gray950));
+  --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--dial-light), rgba(71, 85, 105, 0.12));
+}
+
+.dial-range {
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  cursor: pointer;
+  outline-offset: 4px;
+}
+
+.dial-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--panel);
+  border: 1.5px solid var(--body-color);
+}
+
+.dial-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--panel);
+  border: 1.5px solid var(--body-color);
+}
+
 @theme inline {
   --color-foreground: var(--body-color);
   --color-foreground-faded: var(--body-color-faded);

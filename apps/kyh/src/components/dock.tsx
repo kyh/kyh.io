@@ -1,13 +1,15 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 
+import { releaseBrightness, ThemeDial } from "@/components/theme-dial";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
+import { TAPS, tapStreak } from "@/lib/dial";
 
 const iconAttrs = {
   "aria-hidden": true,
@@ -205,19 +207,25 @@ const GlassFilter = () => (
   </>
 );
 
+const morph = { bounce: 0.25, duration: 0.45, type: "spring" } as const;
+
 export const Dock = () => {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
+  const taps = useRef<number[]>([]);
+  const [dialOpen, setDialOpen] = useState(false);
+  const closeDial = useCallback(() => setDialOpen(false), []);
 
   const isLight = theme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
-      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- pointer tracking only drives the magnification; every control inside is keyboard-reachable on its own */}
-      <nav
+      <motion.nav
+        layout
+        transition={morph}
         className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
@@ -245,19 +253,51 @@ export const Dock = () => {
             </DockItem>
           </Link>
         ))}
-        <button
-          type="button"
-          aria-label={themeLabel}
-          onClick={() => setTheme(isLight ? "dark" : "light")}
-          onMouseEnter={() => setHovered("theme")}
-          onMouseLeave={() => setHovered(null)}
-        >
-          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-            <ThemeToggleIcon isLight={isLight} />
-          </DockItem>
-        </button>
+        <AnimatePresence mode="popLayout" initial={false}>
+          {dialOpen ? (
+            <motion.div
+              key="dial"
+              layout
+              transition={morph}
+              initial={{ filter: "blur(4px)", opacity: 0, scale: 0.6 }}
+              animate={{ filter: "blur(0px)", opacity: 1, scale: 1 }}
+              exit={{ filter: "blur(4px)", opacity: 0, scale: 0.6 }}
+              className="relative z-[1]"
+            >
+              <ThemeDial onClose={closeDial} />
+            </motion.div>
+          ) : (
+            <motion.button
+              key="toggle"
+              layout
+              transition={morph}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6 }}
+              type="button"
+              aria-label={themeLabel}
+              onClick={(event) => {
+                setTheme(isLight ? "dark" : "light");
+                releaseBrightness();
+                // Five quick taps open the dials.
+                taps.current = tapStreak(taps.current, event.timeStamp);
+                if (taps.current.length >= TAPS) {
+                  taps.current = [];
+                  setHovered(null);
+                  setDialOpen(true);
+                }
+              }}
+              onMouseEnter={() => setHovered("theme")}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
+                <ThemeToggleIcon isLight={isLight} />
+              </DockItem>
+            </motion.button>
+          )}
+        </AnimatePresence>
         <GlassFilter />
-      </nav>
+      </motion.nav>
     </div>
   );
 };

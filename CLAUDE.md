@@ -100,6 +100,13 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
+The dock's theme toggle hides an easter egg: five quick taps morph it into two
+sliders, brightness (backgrounds blend dark → light, the theme flips at 50%) and
+hue (the slate greys retinted in oklch). `src/lib/dial.ts` is the pure part
+(tap streak, the CSS vars, storage, the before-paint restore script);
+`src/components/theme-dial.tsx` the sliders; `html[data-dial]` in `global.css`
+the blend.
+
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
 (flat unlit faces, ink outlines, a fixed 30° camera), in three.js, all in greys.
