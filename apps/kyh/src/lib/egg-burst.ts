@@ -4,7 +4,7 @@
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
-const CONFETTI = 18;
+const CONFETTI = 28;
 
 const COLORS = [
   "hsl(40, 96%, 48%)",
@@ -41,12 +41,12 @@ const between = (random: () => number, low: number, high: number) => low + rando
 export const burstOf = (random: () => number = Math.random) => {
   const confetti: Confetto[] = Array.from({ length: CONFETTI }, (_, index) => {
     const angle = (index / CONFETTI) * Math.PI * 2 + between(random, -0.2, 0.2);
-    const reach = between(random, 30, 70);
+    const reach = between(random, 60, 130);
     return {
       color: COLORS[index % COLORS.length] ?? "gold",
-      fall: between(random, 40, 90),
+      fall: between(random, 80, 160),
       rotate: between(random, -540, 540),
-      up: Math.min(0, Math.sin(angle) * reach) - between(random, 20, 50),
+      up: Math.min(0, Math.sin(angle) * reach) - between(random, 40, 90),
       wide: random() > 0.5,
       x: Math.cos(angle) * reach,
     };
@@ -54,7 +54,7 @@ export const burstOf = (random: () => number = Math.random) => {
   // Eggs spray up and out in a fan, the way coins leave a block.
   const eggs: SprayedEgg[] = Array.from({ length: EGGS_PER_FIND }, (_, index) => {
     const angle = -Math.PI / 2 + ((index - (EGGS_PER_FIND - 1) / 2) / EGGS_PER_FIND) * Math.PI;
-    const reach = between(random, 50, 80);
+    const reach = between(random, 90, 140);
     return {
       delay: index * 0.09,
       tilt: between(random, -30, 30),

@@ -47,6 +47,8 @@ interface Point {
 
 interface Burst {
   id: number;
+  /** What pops up at the pointer. */
+  label: string;
   from: Point;
   to: Point;
   confetti: Confetto[];
@@ -66,12 +68,12 @@ const avatarCenter = (): Point => {
 const pop = () => {
   const avatar = ownAvatar();
   if (avatar) {
-    animate(avatar, { scale: [1, 1.25, 1] }, { duration: 0.25, ease: "easeOut" });
+    animate(avatar, { scale: [1, 1.4, 1] }, { duration: 0.28, ease: "easeOut" });
   }
 };
 
 const GoldenEgg = () => (
-  <svg viewBox="0 0 24 24" className="size-4 drop-shadow-sm" aria-hidden="true">
+  <svg viewBox="0 0 24 24" className="size-7 drop-shadow-md" aria-hidden="true">
     <defs>
       <linearGradient id="egg-gold" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor={GOLD.hue} />
@@ -98,14 +100,29 @@ const BurstView = ({ burst, onDone }: BurstProps) => {
   const last = burst.eggs.length - 1;
   return (
     <div className="absolute" style={{ left: burst.from.x, top: burst.from.y }}>
+      <motion.span
+        className="absolute bottom-6 left-0 rounded-full px-3 py-1 font-mono text-sm font-semibold whitespace-nowrap text-[#111] shadow-lg"
+        style={{ background: `linear-gradient(${GOLD.hue}, ${GOLD.color})` }}
+        initial={{ opacity: 0, scale: 0.3, x: "-50%", y: 0 }}
+        animate={{
+          opacity: [0, 1, 1, 0],
+          scale: [0.3, 1.15, 1, 1],
+          x: "-50%",
+          y: [0, -20, -28, -52],
+        }}
+        // Done before the last egg lands, which ends the burst.
+        transition={{ duration: 1.35, ease: "easeOut", times: [0, 0.18, 0.75, 1] }}
+      >
+        {burst.label}
+      </motion.span>
       {burst.confetti.map((bit, index) => (
         <motion.span
           key={index}
           className="absolute -translate-1/2 rounded-[1px]"
           style={{
             background: bit.color,
-            height: bit.wide ? 3 : 5,
-            width: bit.wide ? 7 : 5,
+            height: bit.wide ? 5 : 8,
+            width: bit.wide ? 12 : 8,
           }}
           initial={{ opacity: 1, rotate: 0, x: 0, y: 0 }}
           animate={{
@@ -115,9 +132,9 @@ const BurstView = ({ burst, onDone }: BurstProps) => {
             y: [0, bit.up, bit.fall],
           }}
           transition={{
-            duration: 1.1,
+            duration: 1.3,
             ease: ["easeOut", "easeIn"],
-            opacity: { duration: 1.1, times: [0, 0.7, 1] },
+            opacity: { duration: 1.3, times: [0, 0.7, 1] },
             times: [0, 0.35, 1],
           }}
         />
@@ -129,13 +146,13 @@ const BurstView = ({ burst, onDone }: BurstProps) => {
           initial={{ rotate: 0, scale: 0.3, x: 0, y: 0 }}
           animate={{
             rotate: [0, egg.tilt, 0],
-            scale: [0.3, 1.2, 0.6],
+            scale: [0.3, 1.3, 0.5],
             x: [0, egg.x, home.x],
             y: [0, egg.y, home.y],
           }}
           transition={{
             delay: egg.delay,
-            duration: 0.95,
+            duration: 1.05,
             ease: ["easeOut", "easeIn"],
             times: [0, 0.35, 1],
           }}
@@ -183,8 +200,16 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
     let next = 0;
     return onDiscover(() => {
       const from = pointer.current ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      const count = getEggs().length;
+      const label =
+        count === EASTER_EGGS.length
+          ? "Every easter egg found!"
+          : `Easter egg discovered! ${count}/${EASTER_EGGS.length}`;
       next += 1;
-      setBursts((current) => [...current, { ...burstOf(), from, id: next, to: avatarCenter() }]);
+      setBursts((current) => [
+        ...current,
+        { ...burstOf(), from, id: next, label, to: avatarCenter() },
+      ]);
     });
   }, [still]);
 
