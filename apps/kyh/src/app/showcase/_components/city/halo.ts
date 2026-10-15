@@ -52,9 +52,9 @@ export const haloBand = (rect: Rect, y: number) => {
   return { glow, positions };
 };
 
-const bandGeometry = (rect: Rect | null, y: number): BufferGeometry => {
+const bandGeometry = (rect: Rect, y: number): BufferGeometry => {
   const geometry = new BufferGeometry();
-  const { glow, positions } = rect ? haloBand(rect, y) : { glow: [], positions: [] };
+  const { glow, positions } = haloBand(rect, y);
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   // White, fading out: the material carries the color, the vertices the glow.
   geometry.setAttribute(
@@ -79,7 +79,9 @@ export const createHalo = () => {
     transparent: true,
     vertexColors: true,
   });
-  const mesh = new Mesh(bandGeometry(null, 0), material);
+  // A real band from the start, unseen at opacity 0, so the engine's first
+  // frame can draw it once and the first lit building doesn't wait on its shader.
+  const mesh = new Mesh(bandGeometry({ d: 1, w: 1, x: 0, z: 0 }, 0), material);
   mesh.renderOrder = 3;
   mesh.visible = false;
   let token: Token = "accentBlue";

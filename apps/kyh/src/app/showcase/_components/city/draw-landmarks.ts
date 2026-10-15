@@ -28,6 +28,8 @@ import {
 } from "./landmarks-small";
 import { hashString } from "./random";
 import { createSketch } from "./sketch";
+import type { Steps } from "./steps";
+import { finish } from "./steps";
 
 export type ProjectKind = "venture" | "project" | "mini-app" | "template";
 
@@ -93,8 +95,15 @@ export interface Placed {
   sketch: Sketch;
 }
 
-/** Draws the unclaimed lots into `sketch`; each project's building gets a sketch of its own. */
-export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly CityProject[]) => {
+/**
+ * Draws the unclaimed lots into `sketch`, a lot at a time; each project's
+ * building gets a sketch of its own.
+ */
+export const lotSteps = function* lotSteps(
+  sketch: Sketch,
+  plan: CityPlan,
+  projects: readonly CityProject[],
+): Steps<Placed[]> {
   const bySlug = new Map(projects.map((project) => [project.slug, project]));
   const placed: Placed[] = [];
   for (const lot of plan.lots) {
@@ -112,6 +121,11 @@ export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly City
     } else if (lot.size !== "launch") {
       drawGenericLot(sketch, site, lot.size, "", hashString(`${lot.x}:${lot.z}`));
     }
+    yield;
   }
   return placed;
 };
+
+/** The same, all at once. */
+export const drawLots = (sketch: Sketch, plan: CityPlan, projects: readonly CityProject[]) =>
+  finish(lotSteps(sketch, plan, projects));
