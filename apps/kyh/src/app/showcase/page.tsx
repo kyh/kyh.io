@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const cityProjects: CityProject[] = projects.map((project) => ({
-  color: project.color,
+  colors: project.colors,
   description: project.description,
   favicon: project.favicon,
   kind: project.type,

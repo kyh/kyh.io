@@ -98,6 +98,21 @@ export const ROOFS = [
 
 export const ROOF_GRAY = paint("roofGray", "roofGray", "roofGrayShade");
 
+/** The tokens painted only on faces turned from the light, which take the shadow dots. */
+export const SHADE: ReadonlySet<Token> = new Set<Token>([
+  "pineShade",
+  "roofBlueShade",
+  "roofGrayShade",
+  "roofGreenShade",
+  "roofLilacShade",
+  "roofPinkShade",
+  "roofTealShade",
+  "roofTerracottaShade",
+  "roofYellowShade",
+  "treeShade",
+  "wallRight",
+]);
+
 export const ACCENTS = [
   "accentRed",
   "accentBlue",
@@ -114,52 +129,6 @@ const channels = (hex: string) => {
   return [Math.floor(value / 65_536) % 256, Math.floor(value / 256) % 256, value % 256] as const;
 };
 
-/** The vivid accent each pastel belongs to. */
-const ACCENT_OF: Partial<Record<Token, Token>> = {
-  roofBlue: "accentBlue",
-  roofBlueShade: "accentBlue",
-  roofGreen: "accentGreen",
-  roofGreenShade: "accentGreen",
-  roofLilac: "accentPurple",
-  roofLilacShade: "accentPurple",
-  roofPink: "accentPink",
-  roofPinkShade: "accentPink",
-  roofTeal: "accentTeal",
-  roofTealShade: "accentTeal",
-  roofTerracotta: "accentOrange",
-  roofTerracottaShade: "accentOrange",
-  roofYellow: "accentYellow",
-  roofYellowShade: "accentYellow",
-};
-
-const VIVID: ReadonlySet<Token> = new Set<Token>(ACCENTS);
-
-/**
- * A building's own color, for the glow round its lot: whichever accent its
- * colored surfaces add up to most, weighted by how colorful each one is, so
- * a big pastel roof beats a small red door and grey walls count for nothing.
- */
-export const signature = (areas: ReadonlyMap<Token, number>): Token => {
-  const weights = new Map<Token, number>();
-  for (const [token, area] of areas) {
-    const [r, g, b] = channels(PALETTE[token].day);
-    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
-    const accent = ACCENT_OF[token] ?? token;
-    if (chroma > 24 && VIVID.has(accent)) {
-      weights.set(accent, (weights.get(accent) ?? 0) + area * chroma);
-    }
-  }
-  let best: Token = "accentBlue";
-  let bestWeight = 0;
-  for (const [token, weight] of weights) {
-    if (weight > bestWeight) {
-      best = token;
-      bestWeight = weight;
-    }
-  }
-  return best;
-};
-
 /** The same color as a grey of equal lightness (Rec. 601 luma, in sRGB). */
 export const greyOf = (hex: string) => {
   const [r, g, b] = channels(hex);
@@ -171,7 +140,14 @@ export const greyOf = (hex: string) => {
 /** How a building's colors are turned toward its project's own. */
 export type Tint = (hex: string) => string;
 
-export const untinted: Tint = (hex) => hex;
+const untinted: Tint = (hex) => hex;
+
+/**
+ * The city is drawn in greys; a building shows its colors only while it is
+ * hovered (or the flyover is passing it).
+ */
+export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) =>
+  colorful ? tint(PALETTE[token][theme]) : greyOf(PALETTE[token][theme]);
 
 type Lab = readonly [number, number, number];
 
@@ -215,16 +191,20 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
     .join("")}`;
 };
 
-/** Below this an icon is black, white or grey: it has no hue to lend. */
+/** Below this a color is black, white or grey: it has no hue to lend or turn. */
 const NEUTRAL_CHROMA = 0.03;
+
+const chromaOf = (hex: string) => {
+  const [, a, b] = oklab(hex);
+  return Math.hypot(a, b);
+};
 
 /** The colored token covering the most of a building, weighted by how colorful it is. */
 export const dominant = (areas: ReadonlyMap<Token, number>): Token | null => {
   let best: Token | null = null;
   let bestWeight = 0;
   for (const [token, area] of areas) {
-    const [, a, b] = oklab(PALETTE[token].day);
-    const chroma = Math.hypot(a, b);
+    const chroma = chromaOf(PALETTE[token].day);
     if (chroma > NEUTRAL_CHROMA && area * chroma > bestWeight) {
       best = token;
       bestWeight = area * chroma;
@@ -233,54 +213,121 @@ export const dominant = (areas: ReadonlyMap<Token, number>): Token | null => {
   return best;
 };
 
-/**
- * Turns a building's colors so its main one lands on its project's color:
- * every hue rotates by the same angle and saturates by the same factor
- * (within reason), and lightness stays put and near-greys stay as they are, so pastel roofs stay pastel,
- * night stays night and a two-tone building keeps its contrast. A project
- * with a neutral icon keeps the colors it was drawn in.
- */
-export const brandTint = (main: Token | null, brand?: string): Tint => {
-  if (main === null || brand === undefined) {
-    return untinted;
-  }
-  const [, fromA, fromB] = oklab(PALETTE[main].day);
-  const [, toA, toB] = oklab(brand);
-  const toChroma = Math.hypot(toA, toB);
-  if (toChroma < NEUTRAL_CHROMA) {
-    return untinted;
-  }
+/** The turn and saturation that carry one color's hue onto another's. */
+const turnBetween = (from: string, to: string) => {
+  const [, fromA, fromB] = oklab(from);
+  const [, toA, toB] = oklab(to);
   const turn = Math.atan2(toB, toA) - Math.atan2(fromB, fromA);
-  const stretch = Math.min(1.5, Math.max(0.5, toChroma / Math.hypot(fromA, fromB)));
-  const cos = Math.cos(turn) * stretch;
-  const sin = Math.sin(turn) * stretch;
+  const stretch = Math.min(1.5, Math.max(0.5, Math.hypot(toA, toB) / Math.hypot(fromA, fromB)));
+  return { cos: Math.cos(turn) * stretch, sin: Math.sin(turn) * stretch };
+};
+
+const hueOf = (hex: string) => {
+  const [, a, b] = oklab(hex);
+  return Math.atan2(b, a);
+};
+
+const hueGap = (from: number, to: number) =>
+  Math.abs(Math.atan2(Math.sin(to - from), Math.cos(to - from)));
+
+/** Hues closer than this (about 35°) are one family: a roof, its shaded slope, its awning. */
+const FAMILY_GAP = 0.6;
+
+/**
+ * A building's colored tokens grouped into families of hue, the one covering
+ * most first, each named by its heaviest color.
+ */
+const familiesOf = (areas: ReadonlyMap<Token, number>) => {
+  const weighed = [...areas]
+    .map(([token, area]) => ({
+      hex: PALETTE[token].day,
+      weight: area * chromaOf(PALETTE[token].day),
+    }))
+    .filter(({ hex }) => chromaOf(hex) > NEUTRAL_CHROMA)
+    .toSorted((first, second) => second.weight - first.weight);
+  const families: { hex: string; hue: number }[] = [];
+  for (const { hex } of weighed) {
+    const hue = hueOf(hex);
+    if (!families.some((family) => hueGap(family.hue, hue) < FAMILY_GAP)) {
+      families.push({ hex, hue });
+    }
+  }
+  return families;
+};
+
+/**
+ * Turns a building's hue families onto its project's colors, the biggest onto
+ * the first, the next onto the second, and so on; families past the icon's
+ * colors turn with the biggest, keeping their offset from it, so a one-color
+ * icon still leaves a building more than one color. Lightness stays put and
+ * near-greys stay as they are, so pastel roofs stay pastel, shaded slopes
+ * stay shaded and night stays night.
+ */
+const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]): Tint => {
+  const families = familiesOf(areas);
+  const [main] = families;
+  const [first] = colors;
+  if (main === undefined || first === undefined) {
+    return untinted;
+  }
+  const mainTurn = { hue: main.hue, ...turnBetween(main.hex, first) };
+  const turns = families.map((family, index) => {
+    const onto = colors[index];
+    return onto
+      ? { hue: family.hue, ...turnBetween(family.hex, onto) }
+      : { ...mainTurn, hue: family.hue };
+  });
   return (hex) => {
     const [lightness, a, b] = oklab(hex);
     if (Math.hypot(a, b) < NEUTRAL_CHROMA) {
       return hex;
     }
+    const hue = Math.atan2(b, a);
+    let nearest = mainTurn;
+    for (const turn of turns) {
+      if (hueGap(turn.hue, hue) < hueGap(nearest.hue, hue)) {
+        nearest = turn;
+      }
+    }
+    const { cos, sin } = nearest;
     return fromOklab([lightness, a * cos - b * sin, a * sin + b * cos]);
   };
 };
 
-/**
- * The city is drawn in greys; a building shows its colors only while it is
- * hovered (or the flyover is passing it).
- */
-export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) =>
-  colorful ? tint(PALETTE[token][theme]) : greyOf(PALETTE[token][theme]);
-
-const LIGHTNESS: Record<Theme, readonly [number, number]> = {
+const GLOW_LIGHTNESS: Record<Theme, readonly [number, number]> = {
   day: [0.45, 0.72],
   night: [0.68, 0.85],
 };
+const GLOW_CHROMA = 0.1;
 
-/** A project's color as a glow on the ground: kept dark enough to show by day, light enough by night. */
-export const glowOf = (brand: string): Record<Theme, string> => {
-  const [lightness, a, b] = oklab(brand);
+/** A color as a glow on the ground: dark enough to show by day, light enough by night, never washed out. */
+const glowOf = (hex: string): Record<Theme, string> => {
+  const [lightness, a, b] = oklab(hex);
+  const chroma = Math.hypot(a, b);
+  const boost = chroma > 0 ? Math.max(1, GLOW_CHROMA / chroma) : 1;
   const at = (theme: Theme) => {
-    const [low, high] = LIGHTNESS[theme];
-    return fromOklab([Math.min(high, Math.max(low, lightness)), a, b]);
+    const [low, high] = GLOW_LIGHTNESS[theme];
+    return fromOklab([Math.min(high, Math.max(low, lightness)), a * boost, b * boost]);
   };
   return { day: at("day"), night: at("night") };
+};
+
+/** How a building looks lit: the tint it paints itself with, and the glow round its lot. */
+export interface Look {
+  tint: Tint;
+  glow: Record<Theme, string>;
+}
+
+/**
+ * A building lit in its project's colors: its own turned onto them, its lot
+ * ringed in the first. Without a colored icon to go by, it keeps the colors
+ * it was drawn in and glows in its main one.
+ */
+export const lookOf = (areas: ReadonlyMap<Token, number>, colors: readonly string[] = []): Look => {
+  const colored = colors.filter((hex) => chromaOf(hex) >= NEUTRAL_CHROMA);
+  const [first] = colored;
+  if (first === undefined) {
+    return { glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day), tint: untinted };
+  }
+  return { glow: glowOf(first), tint: turnOnto(areas, colored) };
 };

@@ -41,8 +41,8 @@ export interface CityProject {
   url: string;
   kind: ProjectKind;
   favicon: string;
-  /** Its own color, which its building takes on when lit. */
-  color?: string;
+  /** Its own colors, the main one first, which its building takes on when lit. */
+  colors?: readonly string[];
 }
 
 interface Landmark {

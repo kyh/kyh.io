@@ -7,7 +7,7 @@ import { drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
-import { ACCENTS, signature } from "./palette";
+import { dominant } from "./palette";
 import { planCity } from "./plan";
 import { createRandom } from "./random";
 import { createSketch, faceAreas } from "./sketch";
@@ -66,12 +66,11 @@ test("each building is drawn on its own, so it can light up alone", () => {
   }
 });
 
-test("each building glows in a color of its own when it's lit", () => {
+test("each building has a color of its own to light up in", () => {
   const { placed } = drawTown(cityProjects);
-  const accents: readonly string[] = ACCENTS;
-  const colors = placed.map(({ sketch }) => signature(faceAreas(sketch)));
+  const colors = placed.map(({ sketch }) => dominant(faceAreas(sketch)));
   for (const [index, color] of colors.entries()) {
-    assert.ok(accents.includes(color), `${placed[index]?.project.title} glows ${color}`);
+    assert.ok(color !== null, `${placed[index]?.project.title} is all grey`);
   }
   assert.ok(new Set(colors).size >= 4, `only ${new Set(colors).size} colors across town`);
 });

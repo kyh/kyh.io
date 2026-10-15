@@ -22,8 +22,8 @@ import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeome
 
 import type { Theme, Tint, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
-import { createShadowDots, inShadow } from "./dither";
-import { shade, untinted } from "./palette";
+import { SHADE, shade } from "./palette";
+import { createShadowDots } from "./shadow-dots";
 
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
@@ -275,7 +275,7 @@ const faceMesh = (sketch: Sketch, workshop: Workshop) => {
   }
   const shadow = new Float32Array(vertices);
   for (const { token, start: first, count } of runs) {
-    shadow.fill(inShadow(token) ? 1 : 0, first, first + count);
+    shadow.fill(SHADE.has(token) ? 1 : 0, first, first + count);
   }
   const colors = new Float32BufferAttribute(new Float32Array(vertices * 3), 3);
   const geometry = new BufferGeometry();
@@ -332,7 +332,7 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
 };
 
 /** `tint` turns its colors, when shown, toward its project's own. */
-export const build = (sketch: Sketch, materials: Materials, tint: Tint = untinted): Built => {
+export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];

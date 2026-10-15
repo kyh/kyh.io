@@ -3,16 +3,13 @@
 // of every building reads as printed while lit faces stay flat.
 import type { WebGLProgramParametersWithUniforms } from "three";
 
-import type { Theme, Token } from "./palette";
+import type { Theme } from "./palette";
 
 /** Dot size in CSS pixels. */
 const DOT = 2;
 
 /** How a dot changes the wash under it: darker by day, paler by night, as ink would. */
 const INK: Record<Theme, number> = { day: 0.8, night: 1.3 };
-
-/** The tokens only ever painted on faces turned from the light. */
-export const inShadow = (token: Token) => token === "wallRight" || token.endsWith("Shade");
 
 export const createShadowDots = (theme: Theme) => {
   const uniforms = {

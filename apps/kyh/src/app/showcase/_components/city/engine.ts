@@ -16,7 +16,7 @@ import {
 import type { Object3D } from "three";
 
 import type { CityProject, Placed } from "./draw-landmarks";
-import type { Theme, Tint } from "./palette";
+import type { Look, Theme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
@@ -29,7 +29,7 @@ import { drawGround } from "./draw-ground";
 import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
-import { brandTint, dominant, glowOf, PALETTE, shade, signature } from "./palette";
+import { lookOf, PALETTE, shade } from "./palette";
 import { CENTER, contains, inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
@@ -155,7 +155,7 @@ const townViewSteps = function* townViewSteps(
   /** When each part of it goes up; BUILT once the town's up. */
   startAt: StartAt,
   still: boolean,
-  tints: ReadonlyMap<string, Tint>,
+  looks: ReadonlyMap<string, Look>,
 ) {
   const city = raise(build(town.sketch, materials), startAt);
   yield;
@@ -164,7 +164,7 @@ const townViewSteps = function* townViewSteps(
   for (const entry of town.placed) {
     buildings.set(
       entry.project.slug,
-      raise(build(entry.sketch, materials, tints.get(entry.project.slug)), startAt),
+      raise(build(entry.sketch, materials, looks.get(entry.project.slug)?.tint), startAt),
     );
     yield;
   }
@@ -234,11 +234,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The first view's drawing also says where every building is, and how tall.
   const firstTown = finish(sketchSteps(plan, options.projects, viewAt(0), coversAt(0)));
   const { placed } = firstTown;
-  // Each building turns toward its project's color, and rings its lot in it.
-  const tints = new Map(
+  // Each building lights up in its project's colors, and rings its lot in them.
+  const looks = new Map(
     placed.map((entry) => [
       entry.project.slug,
-      brandTint(dominant(faceAreas(entry.sketch)), entry.project.color),
+      lookOf(faceAreas(entry.sketch), entry.project.colors),
     ]),
   );
 
@@ -277,7 +277,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       // A view drawn once the town's up has nothing left to raise.
       intro.phase === "done" ? BUILT : schedule.startAt,
       options.reducedMotion,
-      tints,
+      looks,
     );
     created.show(false);
     townViews.set(at, created);
@@ -307,15 +307,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // A soft ring of each building's own color round its lot while it's lit.
   const halo = createHalo();
   scene.add(halo.mesh);
-  const tones = new Map(
-    placed.map((entry) => {
-      const { color } = entry.project;
-      return [
-        entry,
-        color === undefined ? PALETTE[signature(faceAreas(entry.sketch))] : glowOf(color),
-      ];
-    }),
-  );
 
   const bySlug = new Map(placed.map((entry) => [entry.project.slug, entry]));
   const boxes = placed.map((entry) => ({
@@ -466,7 +457,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     halo.show(
       shown && {
         rect: shown.lot,
-        tone: tones.get(shown) ?? PALETTE.accentBlue,
+        tone: looks.get(shown.project.slug)?.glow ?? PALETTE.accentBlue,
         y: shown.bounds.y,
       },
     );
