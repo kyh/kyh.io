@@ -289,7 +289,7 @@ export const projects: ProjectType[] = [
     favicon: getPublicFaviconUrl("clawders.png"),
     projectAssets: [],
     slug: "clawders",
-    title: "Clawders",
+    title: "Commuting Clawders",
     type: "mini-app",
     url: "https://clawders.kyh.io",
   },

@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
 import { formatCount } from "@/lib/format";
 import { standings } from "@/lib/standings";
 
-export const alt = "Clawders: Keep Clawd running";
+export const alt = "Commuting Clawders: Keep Clawd running";
 export const contentType = "image/png";
 export const size = { height: 630, width: 1200 };
 export const revalidate = 300;
@@ -42,14 +42,17 @@ const OpengraphImage = async () => {
         <div
           style={{
             WebkitTextStroke: `18px ${NAVY}`,
+            alignItems: "center",
             color: "white",
+            display: "flex",
+            flexDirection: "column",
             fontFamily: "Titan One",
-            fontSize: 150,
             lineHeight: 1,
             transform: "rotate(-2deg)",
           }}
         >
-          Clawders
+          <span style={{ fontSize: 84 }}>Commuting</span>
+          <span style={{ fontSize: 150 }}>Clawders</span>
         </div>
         <div
           style={{

@@ -78,10 +78,10 @@ const turn = async ($: Engine, tokens: number) => {
   });
 };
 
-test("opens the Clawders pane when the session starts", async ($, on) => {
+test("opens the Commuting Clawders pane when the session starts", async ($, on) => {
   const { opened } = world(on);
   await $.session.start(start);
-  expect(opened).toEqual(["Clawders"]);
+  expect(opened).toEqual(["Commuting Clawders"]);
 });
 
 test(

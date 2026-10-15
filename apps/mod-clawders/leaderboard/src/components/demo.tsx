@@ -90,7 +90,7 @@ const Composer = ({ input }: { input: string }) => (
   </div>
 );
 
-// The mod at work: a Claude Code session on the left, the Clawders pane on
+// The mod at work: a Claude Code session on the left, the Commuting Clawders pane on
 // the right running the real game, both driven by one scripted loop.
 export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Totals }) => {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -146,7 +146,7 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
   const glyph = SPINNER[Math.floor(time * 6) % SPINNER.length];
 
   return (
-    <section aria-label="Clawders running beside Claude Code" className="demo">
+    <section aria-label="Commuting Clawders running beside Claude Code" className="demo">
       <div className="terminal" id="terminal">
         {isLeaderboardOpen ? (
           <div className="board-view">
@@ -156,7 +156,7 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
         ) : (
           <>
             <fieldset className="welcome">
-              <legend>Clawders</legend>
+              <legend>Commuting Clawders</legend>
               <ClawdSprite />
               <p>Keep Claude working. Every token Claude writes is a point.</p>
             </fieldset>
@@ -209,7 +209,7 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
 
       <div className="pane">
         <div className="pane-bar">
-          <span>Clawders</span>
+          <span>Commuting Clawders</span>
           <button
             aria-controls="terminal"
             aria-pressed={isLeaderboardOpen}

@@ -15,17 +15,17 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   openGraph: {
     description,
-    siteName: "Clawders",
-    title: "Clawders",
+    siteName: "Commuting Clawders",
+    title: "Commuting Clawders",
     type: "website",
     url: SITE_URL,
   },
-  title: "Clawders",
+  title: "Commuting Clawders",
   twitter: {
     card: "summary_large_image",
     creator: "@kaiyuhsu",
     description,
-    title: "Clawders",
+    title: "Commuting Clawders",
   },
 };
 

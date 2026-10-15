@@ -1,6 +1,6 @@
-# Clawders
+# Commuting Clawders
 
-A Claude Code mod. While Claude works, a pane plays Clawders, a self-running
+A Claude Code mod. While Claude works, a pane plays Commuting Clawders, a self-running
 endless runner starring Clawd. Each run scores the output tokens Claude
 spends before it goes quiet, and goes up on a shared leaderboard: who can keep
 Claude going the longest, at <https://clawders.kyh.io>.

@@ -168,7 +168,7 @@ Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replay
 
 ### mod-clawders (`apps/mod-clawders`)
 
-Claude Code mod (see Claude Code mods below). Opens the **Clawders**
+Claude Code mod (see Claude Code mods below). Opens the **Commuting Clawders**
 pane, a self-playing endless runner starring Clawd that runs while Claude
 works, and posts each run to a shared leaderboard. No slash
 commands: the pane opens on session start.

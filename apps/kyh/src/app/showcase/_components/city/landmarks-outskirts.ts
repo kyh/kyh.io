@@ -1,5 +1,5 @@
 // More big projects: Inteligir's round tower, the Dataembed stack,
-// Edgestories' observatory, the Clawders track and Init's launch pad.
+// Edgestories' observatory, the Commuting Clawders track and Init's launch pad.
 import type { DrawLandmark } from "./landmark";
 import type { Point2, Sketch, Vec3 } from "./sketch";
 import {
@@ -339,7 +339,7 @@ export const drawEdgestories: DrawLandmark = (sketch, site, title) => {
   return bounds(lab, y0, height + 1.2);
 };
 
-// Clawders: a running track where Clawd runs laps, forever.
+// Commuting Clawders: a running track where Clawd runs laps, forever.
 
 /** A stadium outline: two half circles joined by straights, along x. */
 export const stadium = (

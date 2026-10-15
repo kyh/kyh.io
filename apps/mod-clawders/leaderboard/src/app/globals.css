@@ -44,7 +44,7 @@ code {
   white-space: nowrap;
 }
 
-/* The demo: Claude Code on the left, the Clawders pane on the right. */
+/* The demo: Claude Code on the left, the Commuting Clawders pane on the right. */
 .demo {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);

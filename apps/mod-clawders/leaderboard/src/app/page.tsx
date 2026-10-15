@@ -7,7 +7,7 @@ const HomePage = async () => {
   const [rows, total] = await Promise.all([standings(), totals()]);
   return (
     <main>
-      <h1 className="visually-hidden">Clawders</h1>
+      <h1 className="visually-hidden">Commuting Clawders</h1>
       <Demo standings={rows} totals={total} />
     </main>
   );

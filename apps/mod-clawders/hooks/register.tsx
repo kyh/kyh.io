@@ -26,7 +26,7 @@ import type { Frame, Mode } from "./screen";
 
 const PANE = "clawders";
 const SCREEN = "game";
-const TITLE = "Clawders";
+const TITLE = "Commuting Clawders";
 const FRAME_MS = 33;
 const TALLY_MS = 1000;
 const LOG_MAX = 4000;
@@ -137,7 +137,7 @@ const startStreamer = async ($: EngineInterface) => {
   if ((await $.env.get("OS")) === "Windows_NT") {
     await update($, view, (): View => ({
       kind: "failed",
-      reason: "Clawders runs on macOS and Linux",
+      reason: "Commuting Clawders runs on macOS and Linux",
     }));
     return;
   }
@@ -390,14 +390,16 @@ export const register: Register = (on, options) => {
       sameSize(latest, size) &&
       streamer.kind === "live";
     let game = (
-      <Text dimColor>{shown.kind === "failed" ? `✗ ${shown.reason}` : "Starting Clawders…"}</Text>
+      <Text dimColor>
+        {shown.kind === "failed" ? `✗ ${shown.reason}` : "Starting Commuting Clawders…"}
+      </Text>
     );
     screen.mounted = null;
     if (isMountable && screen.mode === "image" && latest.cells === undefined) {
       screen.mounted = { ...size, mode: "image" };
       game = (
         <Image
-          alt="Clawders"
+          alt="Commuting Clawders"
           columns={size.columns}
           key={SCREEN}
           rows={size.rows}

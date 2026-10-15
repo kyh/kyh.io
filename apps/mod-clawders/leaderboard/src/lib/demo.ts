@@ -154,7 +154,7 @@ export const demoAt = (time: number): DemoState => {
         run = { kind: "idle", last: { ...result, rank: null } };
         lines.push({
           kind: "note",
-          text: `Clawders: run over at ${result.tokens.toLocaleString("en-US")} tokens, posted to the leaderboard`,
+          text: `Commuting Clawders: run over at ${result.tokens.toLocaleString("en-US")} tokens, posted to the leaderboard`,
         });
       }
     }
