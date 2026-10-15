@@ -222,11 +222,11 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
+    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex items-end justify-center">
       <motion.nav
         layout
         transition={morph}
-        className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
+        className={`pointer-events-auto relative flex items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${dialOpen ? "h-[94px]" : "h-[70px]"}`}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >

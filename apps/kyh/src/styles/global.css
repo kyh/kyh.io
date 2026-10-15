@@ -77,29 +77,90 @@ html[data-dial] {
   --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--dial-light), rgba(71, 85, 105, 0.12));
 }
 
-.dial-range {
-  appearance: none;
-  height: 6px;
-  border-radius: 9999px;
+/* The theme dials' slider, after DialKit's: tints of the text color, so it
+   follows the theme and the dial itself. */
+.dial-slider {
+  --dial-ink: var(--body-color);
+  position: relative;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 8px;
   cursor: pointer;
-  outline-offset: 4px;
+  user-select: none;
+  touch-action: none;
+  /* On the see-through dock, a mostly solid base keeps the page out of it. */
+  background: color-mix(
+    in srgb,
+    var(--dial-ink) 6%,
+    color-mix(in srgb, var(--panel) 80%, transparent)
+  );
 }
 
-.dial-range::-webkit-slider-thumb {
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 9999px;
-  background: var(--panel);
-  border: 1.5px solid var(--body-color);
+.dial-slider:has(input:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--dial-ink) 55%, transparent);
+  outline-offset: 2px;
 }
 
-.dial-range::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 9999px;
-  background: var(--panel);
-  border: 1.5px solid var(--body-color);
+.dial-slider-hashmark {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: background 200ms;
+}
+
+.dial-slider-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--dial-ink) 10%, transparent);
+  transition: background 150ms;
+}
+
+.dial-slider-handle {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 20px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--dial-ink) 90%, transparent);
+}
+
+.dial-slider-label,
+.dial-slider-value {
+  position: absolute;
+  top: 50%;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  color: color-mix(in srgb, var(--dial-ink) 60%, transparent);
+  transition: color 150ms;
+}
+
+.dial-slider-label {
+  left: 10px;
+}
+
+.dial-slider-value {
+  right: 12px;
+}
+
+.dial-slider[data-active] .dial-slider-hashmark {
+  background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
+}
+
+.dial-slider[data-active] .dial-slider-fill {
+  background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
+}
+
+.dial-slider[data-active] .dial-slider-value {
+  color: var(--dial-ink);
 }
 
 @theme inline {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 
+import { DialSlider } from "@/components/dial-slider";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import {
   DIAL_KEY,
@@ -77,22 +78,13 @@ export const releaseBrightness = () => {
   }
 };
 
-const hueTrack = `linear-gradient(to right, ${Array.from(
-  { length: 7 },
-  (_, i) => `oklch(70% 0.12 ${i * 60})`,
-).join(", ")})`;
-
-const brightnessTrack = "linear-gradient(to right, #020617, #f8fafc)";
-
 export const ThemeDial = ({ onClose }: { onClose: () => void }) => {
   const dial = useDial();
   const { resolvedTheme, setTheme } = useTheme();
-  const first = useRef<HTMLInputElement>(null);
   const light = dial.light ?? (resolvedTheme === "light" ? 100 : 0);
   const hue = dial.hue ?? SLATE_HUE;
 
   useEffect(() => {
-    first.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -103,7 +95,7 @@ export const ThemeDial = ({ onClose }: { onClose: () => void }) => {
   }, [onClose]);
 
   return (
-    <div className="flex h-12 items-center gap-3 px-1 text-[var(--body-color)]">
+    <div className="flex items-center gap-2.5 text-[var(--body-color)]">
       <button
         type="button"
         aria-label="Close the dials"
@@ -112,33 +104,29 @@ export const ThemeDial = ({ onClose }: { onClose: () => void }) => {
       >
         <ThemeToggleIcon isLight={light >= 50} />
       </button>
-      <div className="flex w-36 flex-col gap-3">
-        <input
-          ref={first}
-          type="range"
-          aria-label="Brightness"
-          className="dial-range"
+      <div className="flex w-52 flex-col gap-1.5">
+        <DialSlider
+          label="Brightness"
           min={0}
           max={100}
+          step={1}
           value={light}
-          style={{ background: brightnessTrack }}
-          onChange={(event) => {
-            const next = event.currentTarget.valueAsNumber;
+          focusOnMount
+          onChange={(next) => {
             setDial({ ...dial, light: next });
             if (themeOf(next) !== resolvedTheme) {
               setTheme(themeOf(next));
             }
           }}
         />
-        <input
-          type="range"
-          aria-label="Hue"
-          className="dial-range"
+        <DialSlider
+          label="Hue"
           min={0}
           max={360}
+          step={1}
           value={hue}
-          style={{ background: hueTrack }}
-          onChange={(event) => setDial({ ...dial, hue: event.currentTarget.valueAsNumber })}
+          format={(degrees) => `${degrees}°`}
+          onChange={(next) => setDial({ ...dial, hue: next })}
         />
       </div>
       <button
