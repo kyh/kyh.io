@@ -9,6 +9,7 @@ import { useTheme } from "next-themes";
 
 import { ThemeDial, useThemeDial } from "@/components/theme-dial";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
+import { discoverEgg } from "@/easter-eggs/store";
 import { TAPS, tapStreak } from "@/lib/dial";
 
 const iconAttrs = {
@@ -300,6 +301,7 @@ export const Dock = () => {
                   setHovered(null);
                   mouseX.set(Infinity);
                   switchDial(true);
+                  discoverEgg("dial");
                 }
               }}
               onMouseEnter={() => setHovered("theme")}

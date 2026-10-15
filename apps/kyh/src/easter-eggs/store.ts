@@ -10,6 +10,10 @@ export const EASTER_EGGS = [
   "chat",
   // Tap the homepage's figure canvas to drop shapes (figure-canvas.tsx).
   "shapes",
+  // Five quick taps on the theme toggle open the dials (components/dock.tsx).
+  "dial",
+  // Long-press an icon and drag it somewhere new (components/sortable-grid.tsx).
+  "reorder",
 ] as const;
 
 export type EasterEggId = (typeof EASTER_EGGS)[number];

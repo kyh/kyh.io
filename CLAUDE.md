@@ -190,7 +190,9 @@ it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
 Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car or person),
-`lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes).
+`lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
+`dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
+icon).
 `provider.tsx` celebrates each like a coin pickup: confetti and a label at the
 pointer, eggs (`burst.ts`, pure, tested) spraying out and flying to the
 avatar's `EggCatcher`, which pops as each lands. Once the last egg of the last
