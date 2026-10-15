@@ -77,23 +77,17 @@ html[data-dial] {
   --dock-bg: color-mix(in oklab, rgba(15, 23, 42, 0.12) var(--dial-light), rgba(71, 85, 105, 0.12));
 }
 
-/* The theme dials' slider, after DialKit's: tints of the text color, so it
-   follows the theme and the dial itself. */
+/* The brightness slider, after DialKit's: on a dock tile's background, with
+   tints of the text color, so it follows the theme and the slider itself. */
 .dial-slider {
   --dial-ink: var(--body-color);
   position: relative;
-  height: 32px;
+  height: 48px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   user-select: none;
   touch-action: none;
-  /* On the see-through dock, a mostly solid base keeps the page out of it. */
-  background: color-mix(
-    in srgb,
-    var(--dial-ink) 6%,
-    color-mix(in srgb, var(--panel) 80%, transparent)
-  );
 }
 
 .dial-slider:has(input:focus-visible) {
@@ -116,7 +110,7 @@ html[data-dial] {
   position: absolute;
   inset: 0 auto 0 0;
   pointer-events: none;
-  background: color-mix(in srgb, var(--dial-ink) 10%, transparent);
+  background: color-mix(in srgb, var(--dial-ink) 7%, transparent);
   transition: background 150ms;
 }
 
@@ -156,7 +150,7 @@ html[data-dial] {
 }
 
 .dial-slider[data-active] .dial-slider-fill {
-  background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
+  background: color-mix(in srgb, var(--dial-ink) 11%, transparent);
 }
 
 .dial-slider[data-active] .dial-slider-value {

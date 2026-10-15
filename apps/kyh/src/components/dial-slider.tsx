@@ -120,7 +120,7 @@ export const DialSlider = ({
     <motion.div
       ref={track}
       data-active={active || undefined}
-      className="dial-slider"
+      className="dial-slider dock-item"
       style={{ width: trackWidth, x: trackX }}
       onPointerEnter={() => {
         measure();

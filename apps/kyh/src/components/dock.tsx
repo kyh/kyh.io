@@ -208,6 +208,9 @@ const GlassFilter = () => (
 );
 
 const morph = { bounce: 0.25, duration: 0.45, type: "spring" } as const;
+// The toggle and the slider trade places: one scales down into a blur as the other scales up out of one.
+const swapOut = { filter: "blur(8px)", opacity: 0, scale: 0.6 };
+const swapIn = { filter: "blur(0px)", opacity: 1, scale: 1 };
 
 export const Dock = () => {
   const pathname = usePathname();
@@ -222,11 +225,11 @@ export const Dock = () => {
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (
-    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex items-end justify-center">
+    <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
       <motion.nav
         layout
         transition={morph}
-        className={`pointer-events-auto relative flex items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${dialOpen ? "h-[94px]" : "h-[70px]"}`}
+        className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
@@ -259,9 +262,9 @@ export const Dock = () => {
               key="dial"
               layout
               transition={morph}
-              initial={{ filter: "blur(4px)", opacity: 0, scale: 0.6 }}
-              animate={{ filter: "blur(0px)", opacity: 1, scale: 1 }}
-              exit={{ filter: "blur(4px)", opacity: 0, scale: 0.6 }}
+              initial={swapOut}
+              animate={swapIn}
+              exit={swapOut}
               className="relative z-[1]"
             >
               <ThemeDial onClose={closeDial} />
@@ -271,9 +274,11 @@ export const Dock = () => {
               key="toggle"
               layout
               transition={morph}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.6 }}
+              initial={swapOut}
+              animate={swapIn}
+              exit={swapOut}
+              // A filter paints an element as positioned, so it needs to sit above the glass.
+              className="relative z-[1]"
               type="button"
               aria-label={themeLabel}
               onClick={(event) => {
