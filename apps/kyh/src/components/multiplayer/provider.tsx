@@ -21,8 +21,10 @@ import { listenForChat } from "@/lib/chat-input";
 import { readSharedOrder } from "@/lib/shared-order";
 import { createSiteRoom } from "@/lib/site-room";
 
-// Pointers go out on a steady clock, smooth enough without flooding the room.
-const SEND_RATE = 30;
+// Pointers go out on a steady clock, stamped so each visitor's browser can
+// blend between them (components/cursor.tsx): smooth without flooding the room.
+// The town sends its pointers at the same rate (city/net.ts).
+const SEND_RATE = 15;
 
 const NONE: PlayerMap = {};
 const NO_ENTRY: JsonValue = null;
@@ -70,7 +72,7 @@ const usePointerBroadcast = (room: SiteRoom) => {
     let frame = 0;
     const tick = (now: number) => {
       if (rate.due(now - last) && pointer) {
-        room.point(pointer);
+        room.point({ ...pointer, t: Math.round(room.now()) });
         pointer = null;
       }
       last = now;

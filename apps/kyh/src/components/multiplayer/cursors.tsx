@@ -97,6 +97,8 @@ export const Multiplayer = () => {
           key={id}
           x={asCoordinate(player.state.x)}
           y={asCoordinate(player.state.y)}
+          // A visitor on an older page sends no stamp: take theirs as it arrives.
+          t={asFinite(player.state.t) ?? now()}
           color={player.color}
           hue={player.hue}
           chat={chat}
