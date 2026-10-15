@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
+
+import { SortableGrid, useEditMode, useStoredOrder } from "@/components/sortable-grid";
 
 // Types
 interface Point {
@@ -190,6 +192,12 @@ const OpenGridItem = ({
 
 export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const keys = useMemo(() => items.map((item) => item.key), [items]);
+  const byKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
+  const { order, reordered, setOrder } = useStoredOrder(`kyh:folder-order:${title}`, keys);
+  const [editing, setEditing] = useEditMode();
+  // The folder's preview and grid both follow the visitor's order.
+  const orderedItems = useMemo(() => order.flatMap((key) => byKey.get(key) ?? []), [order, byKey]);
   const contentsId = useId();
   const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<Point | null>(null);
@@ -244,7 +252,15 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
   const offsetsReady = isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          setEditing(false);
+        }
+      }}
+    >
       <MotionConfig transition={springTransition}>
         <div className="flex items-center justify-center" data-slot="app-group">
           <motion.div
@@ -265,7 +281,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 data-slot="folder-preview"
               >
                 <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" data-slot="folder-grid">
-                  {items.slice(0, 4).map((item) => (
+                  {orderedItems.slice(0, 4).map((item) => (
                     <div
                       key={item.key}
                       className="relative aspect-square overflow-hidden rounded ring-1 ring-black/3 dark:ring-white/15"
@@ -342,21 +358,27 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                   <Dialog.Title>{title}</Dialog.Title>
                 </motion.div>
 
-                <div
+                <SortableGrid
+                  order={order}
+                  reordered={reordered}
+                  onReorder={setOrder}
+                  editing={editing}
+                  onEdit={() => setEditing(true)}
                   className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
-                  data-slot="open-grid"
-                >
-                  {items.map((item, idx) => (
-                    <OpenGridItem
-                      key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
-                      item={item}
-                      idx={idx}
-                      registerRef={registerRef}
-                      itemOffsets={itemOffsets}
-                      offsetsReady={!!offsetsReady}
-                    />
-                  ))}
-                </div>
+                  renderTile={(key, idx) => {
+                    const item = byKey.get(key);
+                    return item ? (
+                      <OpenGridItem
+                        key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
+                        item={item}
+                        idx={idx}
+                        registerRef={registerRef}
+                        itemOffsets={itemOffsets}
+                        offsetsReady={!!offsetsReady}
+                      />
+                    ) : null;
+                  }}
+                />
               </Dialog.Popup>
             </Dialog.Portal>
           )}
