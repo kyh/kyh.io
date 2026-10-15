@@ -6,21 +6,9 @@ import { discover, isComplete, readFound } from "@/lib/easter-eggs";
 const KEY = "kyh:easter-eggs";
 const NONE: Found = [];
 
-/** The egg just found, for the toast; `at` tells two finds apart. */
-export interface Discovery {
-  id: EasterEggId;
-  at: number;
-}
-
-interface Snapshot {
-  found: Found;
-  latest: Discovery | null;
-}
-
-const EMPTY: Snapshot = { found: NONE, latest: null };
-
-let snapshot: Snapshot | null = null;
+let snapshot: Found | null = null;
 const listeners = new Set<() => void>();
+const finders = new Set<(id: EasterEggId) => void>();
 
 // Storage can throw (private windows, blocked site data): then eggs last the page load.
 const load = (): Found => {
@@ -39,19 +27,20 @@ const save = (found: Found) => {
   }
 };
 
-export const getEggs = (): Snapshot => {
-  snapshot ??= { found: load(), latest: null };
+/** This visitor's found eggs. */
+export const getEggs = (): Found => {
+  snapshot ??= load();
   return snapshot;
 };
 
-export const getServerEggs = (): Snapshot => EMPTY;
+export const getServerEggs = (): Found => NONE;
 
 export const subscribeToEggs = (listener: () => void) => {
   listeners.add(listener);
   // Another tab found one.
   const onStorage = (event: StorageEvent) => {
     if (event.key === KEY) {
-      snapshot = { found: load(), latest: getEggs().latest };
+      snapshot = load();
       listener();
     }
   };
@@ -62,19 +51,29 @@ export const subscribeToEggs = (listener: () => void) => {
   };
 };
 
-/** Found it: counted once, announced once. */
+/** Hear each new find as it happens (another tab's finds aren't celebrated here). */
+export const onDiscover = (finder: (id: EasterEggId) => void) => {
+  finders.add(finder);
+  return () => {
+    finders.delete(finder);
+  };
+};
+
+/** Found it: counted once, celebrated once. */
 export const discoverEgg = (id: EasterEggId) => {
-  const current = getEggs();
-  const { found, fresh } = discover(current.found, id);
+  const { found, fresh } = discover(getEggs(), id);
   if (!fresh) {
     return;
   }
   save(found);
-  snapshot = { found, latest: { at: Date.now(), id } };
+  snapshot = found;
+  for (const finder of finders) {
+    finder(id);
+  }
   for (const listener of listeners) {
     listener();
   }
 };
 
 /** Whether this visitor has found every egg; false through the server render. */
-export const eggsComplete = () => typeof window !== "undefined" && isComplete(getEggs().found);
+export const eggsComplete = () => typeof window !== "undefined" && isComplete(getEggs());

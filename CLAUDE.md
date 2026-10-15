@@ -161,8 +161,10 @@ same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 Easter eggs: `src/lib/easter-eggs.ts` is the registry (pure, tested); add one
 there and call `discoverEgg(id)` (`easter-egg-store.ts`, localStorage) where it
 hides — from React or the town's engine. `EasterEggProvider`
-(`components/easter-eggs.tsx`) toasts each find with the count. Finding all of
-them turns the visitor gold: their avatar, their own pointer (`data-eggs` on
+(`components/easter-eggs.tsx`) celebrates each find like a coin pickup:
+confetti at the pointer, eggs (`egg-burst.ts`, pure, tested) spraying out and
+flying to the avatar (`data-own-avatar`), which pops as each lands. Once the
+last egg of the last find lands the visitor turns gold: their avatar, their own pointer (`data-eggs` on
 `<html>`, `global.css`), and, via `eggs: "all"` in room state read by
 `lookOf`, their cursor, chat and town pointer for everyone else. Today: lift a
 car or person in `/showcase`; send a chat line.

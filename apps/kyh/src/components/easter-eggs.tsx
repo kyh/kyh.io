@@ -1,23 +1,37 @@
 "use client";
 
-import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  createContext,
+  use,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { animate, motion, useReducedMotion } from "motion/react";
 
-import type { Discovery } from "@/lib/easter-egg-store";
+import type { Confetto, SprayedEgg } from "@/lib/egg-burst";
 import type { Found } from "@/lib/easter-eggs";
 import { GOLD } from "@/lib/color";
-import { getEggs, getServerEggs, subscribeToEggs } from "@/lib/easter-egg-store";
-import { EASTER_EGGS, eggById, isComplete } from "@/lib/easter-eggs";
+import { burstOf } from "@/lib/egg-burst";
+import { getEggs, getServerEggs, onDiscover, subscribeToEggs } from "@/lib/easter-egg-store";
+import { EASTER_EGGS, isComplete } from "@/lib/easter-eggs";
 
-const SHOW_MS = 4000;
+/** The visitor's own avatar (`data-own-avatar`): where the eggs fly, and what pops as each lands. */
+const OWN_AVATAR = "[data-own-avatar]";
 
 interface EasterEggs {
   found: Found;
   total: number;
+  /** Every egg found, and the last of them landed. */
   complete: boolean;
+  /** Eggs are in the air, on their way to the avatar. */
+  catching: boolean;
 }
 
 const EasterEggContext = createContext<EasterEggs>({
+  catching: false,
   complete: false,
   found: [],
   total: EASTER_EGGS.length,
@@ -26,99 +40,157 @@ const EasterEggContext = createContext<EasterEggs>({
 /** This visitor's found eggs; find one with `discoverEgg(id)` from anywhere. */
 export const useEasterEggs = () => use(EasterEggContext);
 
-const Sparkle = ({ delay, x, y }: { delay: number; x: number; y: number }) => (
-  <motion.span
-    className="absolute top-1/2 left-1/2 size-1.5 rounded-full"
-    style={{ background: GOLD.color }}
-    initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
-    animate={{ opacity: 0, scale: 1, x, y }}
-    transition={{ delay, duration: 0.7, ease: "easeOut" }}
-    aria-hidden="true"
-  />
-);
-
-const BURST = Array.from({ length: 8 }, (_, index) => {
-  const angle = (index / 8) * Math.PI * 2;
-  return { delay: 0.15 + (index % 2) * 0.05, x: Math.cos(angle) * 26, y: Math.sin(angle) * 26 };
-});
-
-const Egg = ({ still }: { still: boolean }) => (
-  <span className="relative flex size-8 shrink-0 items-center justify-center">
-    <motion.svg
-      viewBox="0 0 24 24"
-      className="size-7"
-      initial={still ? false : { rotate: 0, scale: 0.4 }}
-      animate={still ? undefined : { rotate: [0, -14, 12, -8, 0], scale: 1 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="egg-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={GOLD.hue} />
-          <stop offset="1" stopColor={GOLD.color} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z"
-        fill="url(#egg-gold)"
-        stroke={GOLD.color}
-        strokeWidth="1"
-      />
-    </motion.svg>
-    {!still && BURST.map((spark) => <Sparkle key={`${spark.x},${spark.y}`} {...spark} />)}
-  </span>
-);
-
-interface ToastProps {
-  discovery: Discovery;
-  found: Found;
+interface Point {
+  x: number;
+  y: number;
 }
 
-const Toast = ({ discovery, found }: ToastProps) => {
-  const still = useReducedMotion() ?? false;
-  const egg = eggById(discovery.id);
-  const complete = isComplete(found);
+interface Burst {
+  id: number;
+  from: Point;
+  to: Point;
+  confetti: Confetto[];
+  eggs: SprayedEgg[];
+}
+
+const ownAvatar = () => document.querySelector<HTMLElement>(OWN_AVATAR);
+
+const avatarCenter = (): Point => {
+  const rect = ownAvatar()?.getBoundingClientRect();
+  return rect
+    ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+    : { x: window.innerWidth - 40, y: 40 };
+};
+
+/** The avatar catches an egg. */
+const pop = () => {
+  const avatar = ownAvatar();
+  if (avatar) {
+    animate(avatar, { scale: [1, 1.25, 1] }, { duration: 0.25, ease: "easeOut" });
+  }
+};
+
+const GoldenEgg = () => (
+  <svg viewBox="0 0 24 24" className="size-4 drop-shadow-sm" aria-hidden="true">
+    <defs>
+      <linearGradient id="egg-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor={GOLD.hue} />
+        <stop offset="1" stopColor={GOLD.color} />
+      </linearGradient>
+    </defs>
+    <path
+      d="M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z"
+      fill="url(#egg-gold)"
+      stroke="hsl(38, 90%, 36%)"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
+interface BurstProps {
+  burst: Burst;
+  onDone: (id: number) => void;
+}
+
+/** Confetti pops at the cursor; the eggs spray out, then fly home one at a time. */
+const BurstView = ({ burst, onDone }: BurstProps) => {
+  const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
+  const last = burst.eggs.length - 1;
   return (
-    <motion.output
-      className="pointer-events-none fixed top-6 left-1/2 z-50 flex items-center gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--panel)] py-2.5 pr-4 pl-3 text-sm shadow-lg"
-      initial={{ opacity: 0, scale: 0.9, x: "-50%", y: still ? 0 : -16 }}
-      animate={{ opacity: 1, scale: 1, x: "-50%", y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, x: "-50%", y: still ? 0 : -8 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-    >
-      <Egg still={still} />
-      <span className="flex flex-col">
-        <span className="font-medium text-[var(--body-color-highlighted)]">
-          {complete ? "Every easter egg found" : `Easter egg found: ${egg.name}`}
-        </span>
-        <span className="text-xs text-[var(--body-color-faded)]">
-          {complete ? "You've gone gold. Look at your cursor." : egg.note}
-        </span>
-      </span>
-      <span
-        className="ml-1 rounded-full px-2 py-0.5 font-mono text-xs font-medium text-[#111] tabular-nums"
-        style={{ background: `linear-gradient(${GOLD.hue}, ${GOLD.color})` }}
-      >
-        {found.length}/{EASTER_EGGS.length}
-      </span>
-    </motion.output>
+    <div className="absolute" style={{ left: burst.from.x, top: burst.from.y }}>
+      {burst.confetti.map((bit, index) => (
+        <motion.span
+          key={index}
+          className="absolute -translate-1/2 rounded-[1px]"
+          style={{
+            background: bit.color,
+            height: bit.wide ? 3 : 5,
+            width: bit.wide ? 7 : 5,
+          }}
+          initial={{ opacity: 1, rotate: 0, x: 0, y: 0 }}
+          animate={{
+            opacity: [1, 1, 0],
+            rotate: bit.rotate,
+            x: [0, bit.x * 0.7, bit.x],
+            y: [0, bit.up, bit.fall],
+          }}
+          transition={{
+            duration: 1.1,
+            ease: ["easeOut", "easeIn"],
+            opacity: { duration: 1.1, times: [0, 0.7, 1] },
+            times: [0, 0.35, 1],
+          }}
+        />
+      ))}
+      {burst.eggs.map((egg, index) => (
+        <motion.span
+          key={index}
+          className="absolute -translate-1/2"
+          initial={{ rotate: 0, scale: 0.3, x: 0, y: 0 }}
+          animate={{
+            rotate: [0, egg.tilt, 0],
+            scale: [0.3, 1.2, 0.6],
+            x: [0, egg.x, home.x],
+            y: [0, egg.y, home.y],
+          }}
+          transition={{
+            delay: egg.delay,
+            duration: 0.95,
+            ease: ["easeOut", "easeIn"],
+            times: [0, 0.35, 1],
+          }}
+          onAnimationComplete={() => {
+            pop();
+            if (index === last) {
+              onDone(burst.id);
+            }
+          }}
+        >
+          <GoldenEgg />
+        </motion.span>
+      ))}
+    </div>
   );
 };
 
-/** Keeps the found eggs, announces each new one, and turns the visitor gold once they're all found. */
+/**
+ * Keeps the found eggs and celebrates each new one like a coin pickup; turns
+ * the visitor gold once they're all found and the last egg has landed.
+ */
 export const EasterEggProvider = ({ children }: { children: React.ReactNode }) => {
-  const { found, latest } = useSyncExternalStore(subscribeToEggs, getEggs, getServerEggs);
-  const complete = isComplete(found);
-  // Each find shows until its time is up.
-  const [dismissed, setDismissed] = useState<number | null>(null);
-  const shown = latest && latest.at !== dismissed ? latest : null;
+  const found = useSyncExternalStore(subscribeToEggs, getEggs, getServerEggs);
+  const still = useReducedMotion() ?? false;
+  const [bursts, setBursts] = useState<Burst[]>([]);
+  const pointer = useRef<Point | null>(null);
+
+  // Where the pointer last was: the burst comes out of it. Captured, so the town's own handlers can't hide it.
   useEffect(() => {
-    if (!latest) {
-      return;
+    const track = (event: PointerEvent) => {
+      pointer.current = { x: event.clientX, y: event.clientY };
+    };
+    window.addEventListener("pointermove", track, { capture: true, passive: true });
+    window.addEventListener("pointerdown", track, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("pointermove", track, { capture: true });
+      window.removeEventListener("pointerdown", track, { capture: true });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (still) {
+      return onDiscover(pop);
     }
-    const timer = window.setTimeout(() => setDismissed(latest.at), SHOW_MS);
-    return () => window.clearTimeout(timer);
-  }, [latest]);
+    let next = 0;
+    return onDiscover(() => {
+      const from = pointer.current ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      next += 1;
+      setBursts((current) => [...current, { ...burstOf(), from, id: next, to: avatarCenter() }]);
+    });
+  }, [still]);
+
+  const done = (id: number) => setBursts((current) => current.filter((burst) => burst.id !== id));
+
+  const complete = isComplete(found) && bursts.length === 0;
 
   // The page-wide cursor turns gold (global.css).
   useEffect(() => {
@@ -129,14 +201,25 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, [complete]);
 
-  const value = useMemo(() => ({ complete, found, total: EASTER_EGGS.length }), [complete, found]);
+  const catching = bursts.length > 0;
+  const value = useMemo(
+    () => ({ catching, complete, found, total: EASTER_EGGS.length }),
+    [catching, complete, found],
+  );
 
   return (
     <EasterEggContext value={value}>
       {children}
-      <AnimatePresence>
-        {shown && <Toast key={shown.at} discovery={shown} found={found} />}
-      </AnimatePresence>
+      {catching && (
+        <div
+          className="pointer-events-none fixed inset-0 z-[60] overflow-hidden"
+          aria-hidden="true"
+        >
+          {bursts.map((burst) => (
+            <BurstView key={burst.id} burst={burst} onDone={done} />
+          ))}
+        </div>
+      )}
     </EasterEggContext>
   );
 };

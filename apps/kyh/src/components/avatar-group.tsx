@@ -17,7 +17,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
   const pathname = usePathname();
   // Held back until hydration: a color picked per page load would mismatch SSR.
   const hydrated = useIsHydrated();
-  const { complete, found, total } = useEasterEggs();
+  const { catching, complete, found, total } = useEasterEggs();
   let color = null;
   if (hydrated) {
     color = complete ? GOLD : ownColor();
@@ -32,17 +32,10 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
       <AnimatePresence mode="popLayout">
         <motion.li
           className="-mr-2 rounded-full shadow-md"
-          style={{
-            background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
-            // A gold halo once every easter egg is found.
-            boxShadow:
-              complete && hydrated
-                ? `0 0 0 2px var(--bg-color), 0 0 0 3.5px ${GOLD.color}, 0 0 12px ${GOLD.hue}`
-                : undefined,
-            zIndex: players.length,
-          }}
+          style={{ zIndex: players.length }}
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: onlyMe ? 0.2 : 1, scale: 1 }}
+          // Alone it fades back, unless it's catching eggs or gone gold.
+          animate={{ opacity: onlyMe && !catching && !complete ? 0.2 : 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           layout
@@ -52,7 +45,21 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
               className="flex h-7 w-7 items-center justify-center text-xs text-[#111]"
               aria-label={onlyMe ? "You're the only one here" : "You"}
             >
-              <span aria-hidden="true">{complete && hydrated ? "✦" : null}</span>
+              {/* Its own element, so the eggs can pop it without fighting the list's animation. */}
+              <span
+                data-own-avatar
+                className="flex size-full items-center justify-center rounded-full"
+                style={{
+                  background: color ? `linear-gradient(${color.hue}, ${color.color})` : undefined,
+                  // A gold halo once every easter egg is found.
+                  boxShadow: complete
+                    ? `0 0 0 2px var(--bg-color), 0 0 0 3.5px ${GOLD.color}, 0 0 12px ${GOLD.hue}`
+                    : undefined,
+                }}
+                aria-hidden="true"
+              >
+                {complete ? "✦" : null}
+              </span>
             </TooltipTrigger>
             <TooltipContent className="px-2 py-0.5 text-xs">
               {onlyMe ? "You're the only one here 🥺" : "You"}
