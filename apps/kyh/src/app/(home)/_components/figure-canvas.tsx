@@ -17,6 +17,8 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 
+import { tiltGravity } from "@/lib/tilt";
+
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
   lineWidth: 2,
@@ -33,6 +35,7 @@ const restrokeBodies = (bodies: Matter.Body[], isLight: boolean) => {
 
 const INITIAL_FIGURE_COUNT = 20;
 const CLICK_SPAWN_COUNT = 6;
+const TILT_SMOOTHING = 0.2;
 
 const createStaticFigure = (isLight: boolean, x: number, y: number) => {
   const render = getRenderProps(isLight);
@@ -116,13 +119,13 @@ export const FigureCanvas = () => {
   // Pause/resume physics based on visibility
   const pausePhysics = useCallback(() => {
     if (runnerRef.current) {
-      Runner.stop(runnerRef.current);
+      runnerRef.current.enabled = false;
     }
   }, []);
 
   const resumePhysics = useCallback(() => {
-    if (runnerRef.current && engineRef.current) {
-      Runner.run(runnerRef.current, engineRef.current);
+    if (runnerRef.current) {
+      runnerRef.current.enabled = true;
     }
   }, []);
 
@@ -208,7 +211,18 @@ export const FigureCanvas = () => {
       render: { visible: false },
     });
 
-    Composite.add(engine.world, [ground, bottomSensor]);
+    // Side walls keep tilted figures on screen
+    const wallHeight = height * 4;
+    const leftWall = Bodies.rectangle(-25, height - wallHeight / 2, 50, wallHeight, {
+      isStatic: true,
+      render: { visible: false },
+    });
+    const rightWall = Bodies.rectangle(width + 25, height - wallHeight / 2, 50, wallHeight, {
+      isStatic: true,
+      render: { visible: false },
+    });
+
+    Composite.add(engine.world, [ground, bottomSensor, leftWall, rightWall]);
 
     // Remove figures that fall off screen
     Events.on(engine, "collisionStart", ({ pairs }) => {
@@ -287,41 +301,43 @@ export const FigureCanvas = () => {
     canvas.addEventListener("click", handleClick);
     canvas.addEventListener("touchend", handleTouch);
 
-    // Device orientation for tilt-based gravity
+    // Device orientation for tilt-based gravity, low-pass filtered so sensor
+    // noise doesn't jitter the figures
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      if (!engineRef.current || e.gamma === null || e.beta === null) {
+      if (e.beta === null || e.gamma === null) {
         return;
       }
-
-      // gamma: left/right tilt (-90 to 90), mapped to -2..2
-      // beta: front/back tilt (-180 to 180), mapped to 0.5..2 so gravity
-      // always keeps some downward pull
-      const gravityX = (e.gamma / 90) * 2;
-      const gravityY = Math.max(0.5, Math.min(2, (e.beta / 90) * 2));
-
-      engine.gravity.x = gravityX;
-      engine.gravity.y = gravityY;
+      const target = tiltGravity(e.beta, e.gamma, screen.orientation?.angle ?? 0);
+      engine.gravity.x += (target.x - engine.gravity.x) * TILT_SMOOTHING;
+      engine.gravity.y += (target.y - engine.gravity.y) * TILT_SMOOTHING;
     };
 
-    // Request permission on iOS 13+
+    // iOS 13+ only grants orientation from inside a user gesture, so ask on
+    // the first tap; elsewhere listen straight away
+    let orientationRequested = false;
+    const needsPermission =
+      typeof DeviceOrientationEvent !== "undefined" &&
+      "requestPermission" in DeviceOrientationEvent;
     const requestOrientationPermission = async () => {
-      if ("DeviceOrientationEvent" in window && "requestPermission" in DeviceOrientationEvent) {
-        try {
-          // @ts-expect-error - requestPermission is iOS specific
-          const permission = await DeviceOrientationEvent.requestPermission();
-          if (permission === "granted") {
-            window.addEventListener("deviceorientation", handleOrientation);
-          }
-        } catch {
-          // Permission denied or error
+      if (orientationRequested) {
+        return;
+      }
+      orientationRequested = true;
+      try {
+        // @ts-expect-error - requestPermission is iOS specific
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === "granted") {
+          window.addEventListener("deviceorientation", handleOrientation);
         }
-      } else {
-        // Non-iOS or older browsers
-        window.addEventListener("deviceorientation", handleOrientation);
+      } catch {
+        // Permission denied or error
       }
     };
-
-    requestOrientationPermission();
+    if (needsPermission) {
+      canvas.addEventListener("touchend", requestOrientationPermission);
+    } else {
+      window.addEventListener("deviceorientation", handleOrientation);
+    }
 
     // Animate scale for newly spawned figures
     Events.on(engine, "afterUpdate", () => {
@@ -373,6 +389,7 @@ export const FigureCanvas = () => {
     return () => {
       canvas.removeEventListener("click", handleClick);
       canvas.removeEventListener("touchend", handleTouch);
+      canvas.removeEventListener("touchend", requestOrientationPermission);
       window.removeEventListener("deviceorientation", handleOrientation);
       Mouse.clearSourceEvents(mouse);
       Events.off(engine, "collisionStart");
