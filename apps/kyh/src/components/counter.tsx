@@ -1,7 +1,7 @@
 "use client";
 
 import type { Transition } from "motion/react";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 interface VerticalProps {
@@ -54,27 +54,24 @@ const sum = (values: number[]) => {
   return total;
 };
 
-const generateTextStats = () => {
+/** Letter widths in `font`, the one the counter is set in; nothing until it's known. */
+const generateTextStats = (font: string | null) => {
   const cache = new Map<string, number>();
   const fromCache = (letter: string) => cache.get(letter) ?? 0;
 
   // safety for nodejs/ssr
-  if (typeof document === "undefined") {
+  if (font === null || typeof document === "undefined") {
     return fromCache;
   }
 
-  let hasCalculatedFont = false;
   const context = document.createElement("canvas").getContext("2d");
   if (!context) {
     return fromCache;
   }
+  context.font = font;
 
   return (letter: string) => {
     if (!cache.has(letter)) {
-      if (!hasCalculatedFont) {
-        context.font = getComputedStyle(document.body).font;
-        hasCalculatedFont = true;
-      }
       cache.set(letter, (context.measureText(letter).width ?? 0) - 0.2);
     }
 
@@ -85,7 +82,13 @@ const generateTextStats = () => {
 const transition = { ease: "easeOut" } satisfies Transition;
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
-  const getTextStats = useMemo(() => generateTextStats(), []);
+  const [font, setFont] = useState<string | null>(null);
+  const measure = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      setFont(getComputedStyle(node).font);
+    }
+  }, []);
+  const getTextStats = useMemo(() => generateTextStats(font), [font]);
 
   const baseStyles = {
     height,
@@ -98,6 +101,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
 
   return (
     <motion.div
+      ref={measure}
       initial={{ width: totalWidth }}
       animate={{ width: totalWidth }}
       transition={transition}

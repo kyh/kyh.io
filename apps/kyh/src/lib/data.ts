@@ -250,7 +250,7 @@ export const projects: ProjectType[] = [
     url: "https://apps.apple.com/us/app/id1209391711",
   },
   {
-    colors: ["#f8e778", "#b0c8fa"],
+    colors: ["#f8e778"],
     description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
     favicon: getPublicFaviconUrl("policing-ice-1.png"),
     projectAssets: [],
@@ -269,7 +269,7 @@ export const projects: ProjectType[] = [
     url: "https://www.loremllm.com",
   },
   {
-    colors: ["#6dc354", "#9f614a"],
+    colors: ["#6dc354"],
     description:
       "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
     favicon: getPublicFaviconUrl("stonksville.png"),

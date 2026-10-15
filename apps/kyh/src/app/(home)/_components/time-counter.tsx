@@ -32,7 +32,7 @@ export const TimeCounter = () => {
   }, []);
 
   return (
-    <div className="text-foreground-faded flex h-4 items-center text-xs">
+    <div className="text-foreground-faded flex h-4 items-center font-mono text-xs tracking-tight">
       <Counter text={time} />
       {time && <span>&nbsp;&#183;&nbsp;SF</span>}
     </div>
