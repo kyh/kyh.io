@@ -101,7 +101,7 @@ const BurstView = ({ burst, onDone }: BurstProps) => {
   return (
     <div className="absolute" style={{ left: burst.from.x, top: burst.from.y }}>
       <motion.span
-        className="absolute bottom-6 left-0 rounded-full px-3 py-1 font-mono text-sm font-semibold whitespace-nowrap text-[#111] shadow-lg"
+        className="absolute bottom-6 left-0 rounded-full px-2.5 py-0.5 text-[0.95rem] leading-snug font-medium whitespace-nowrap text-[#111] shadow-lg"
         style={{ background: `linear-gradient(${GOLD.hue}, ${GOLD.color})` }}
         initial={{ opacity: 0, scale: 0.3, x: "-50%", y: 0 }}
         animate={{
