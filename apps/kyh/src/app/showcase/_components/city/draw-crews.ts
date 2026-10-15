@@ -5,6 +5,9 @@ import type { Sketch } from "./sketch";
 import { paint } from "./palette";
 import { box, createSketch, line, part } from "./sketch";
 
+/** How much larger than life the machines are drawn, so they read from the whole island's distance. */
+export const CREW_SCALE = 1.6;
+
 const BODY = paint("accentYellow", "accentYellow", "accentOrange");
 const STEEL = paint("roofGray", "roofGray", "roofGrayShade");
 const CAB = paint("white", "white", "wallRight");

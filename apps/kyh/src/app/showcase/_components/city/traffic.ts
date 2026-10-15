@@ -101,6 +101,30 @@ export const roadGraph = (plan: Pick<CityPlan, "junctions" | "roads">): Graph =>
   return graph;
 };
 
+/** Shortest hop counts to one node, and the edge to take from anywhere to get there. */
+export const routeTo = (graph: Graph, target: number) => {
+  const into: number[][] = graph.nodes.map(() => []);
+  for (const [index, edge] of graph.edges.entries()) {
+    into[edge.to]?.push(index);
+  }
+  const hops = graph.nodes.map(() => Infinity);
+  const via = graph.nodes.map(() => -1);
+  hops[target] = 0;
+  const queue = [target];
+  // The queue grows as it's walked: an array iterator reads the length each step.
+  for (const node of queue) {
+    for (const index of into[node] ?? []) {
+      const from = graph.edges[index]?.from ?? 0;
+      if (hops[from] === Infinity) {
+        hops[from] = (hops[node] ?? 0) + 1;
+        via[from] = index;
+        queue.push(from);
+      }
+    }
+  }
+  return { hops, via };
+};
+
 /** How far in from a block's edge its sidewalk runs, in cells. */
 export const SIDEWALK = 0.17;
 
