@@ -100,9 +100,9 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
-The dock's theme toggle hides an easter egg: five quick taps blur it away and
-slide the links off, and two sliders take over the dock (a press outside brings
-it back): brightness (backgrounds blend dark → light; the theme flips at
+The dock's theme toggle hides an easter egg: five quick taps roll the dock's
+buttons up and out and two sliders up in from below, like a toolbar switching
+modes (a press outside rolls it back): brightness (backgrounds blend dark → light; the theme flips at
 50%) and hue (the slate greys retinted in oklch; its track is the color wheel).
 `src/lib/dial.ts` is the pure part (tap streak, the CSS vars, storage, the
 before-paint restore script); `src/components/theme-dial.tsx` the store and

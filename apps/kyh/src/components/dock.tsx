@@ -207,12 +207,14 @@ const GlassFilter = () => (
   </>
 );
 
-const morph = { bounce: 0.25, duration: 0.45, type: "spring" } as const;
-// The toggle and the slider trade places: one scales down into a blur as the other scales up out of one.
-const swapOut = { filter: "blur(8px)", opacity: 0, scale: 0.6, x: 0 };
-const swapIn = { filter: "blur(0px)", opacity: 1, scale: 1, x: 0 };
-// The links make room for the sliders by sliding off to the left, the far one furthest.
-const slideOut = (index: number) => ({ ...swapOut, x: -24 * (links.length - index) });
+const morph = { bounce: 0.2, duration: 0.45, type: "spring" } as const;
+// Two modes, swapped like a toolbar's: the buttons live above the dock and the
+// sliders below, so opening rolls the buttons up and out as the sliders rise in,
+// and closing rolls it back down.
+const above = { opacity: 0, y: -56 };
+const below = { opacity: 0, y: 56 };
+const shown = { opacity: 1, y: 0 };
+const roll = (index = 0) => ({ ...morph, delay: index * 0.03 });
 
 export const Dock = () => {
   const pathname = usePathname();
@@ -221,7 +223,12 @@ export const Dock = () => {
   const [hovered, setHovered] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
   const [dialOpen, setDialOpen] = useState(false);
-  const closeDial = useCallback(() => setDialOpen(false), []);
+  // The dock clips while the modes roll past, and only then: hover labels sit above it.
+  const [switching, setSwitching] = useState(false);
+  const closeDial = useCallback(() => {
+    setSwitching(true);
+    setDialOpen(false);
+  }, []);
 
   const isLight = theme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
@@ -231,20 +238,24 @@ export const Dock = () => {
       <motion.nav
         layout
         transition={morph}
-        className="pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px]"
+        className={`pointer-events-auto relative flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[rgba(15,23,42,0.12)_0px_30px_60px_0px] ${switching ? "overflow-hidden" : ""}`}
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence
+          mode="popLayout"
+          initial={false}
+          onExitComplete={() => setSwitching(false)}
+        >
           {!dialOpen &&
             links.map(({ href, label, icon }, index) => (
               <motion.div
                 key={href}
-                layout
-                transition={morph}
-                initial={slideOut(index)}
-                animate={swapIn}
-                exit={slideOut(index)}
+                layout="position"
+                transition={roll(index)}
+                initial={above}
+                animate={shown}
+                exit={above}
                 className="relative z-[1]"
               >
                 <Link
@@ -271,11 +282,11 @@ export const Dock = () => {
           {dialOpen ? (
             <motion.div
               key="dial"
-              layout
-              transition={morph}
-              initial={swapOut}
-              animate={swapIn}
-              exit={swapOut}
+              layout="position"
+              transition={roll()}
+              initial={below}
+              animate={shown}
+              exit={below}
               className="relative z-[1]"
             >
               <ThemeDial onClose={closeDial} />
@@ -283,12 +294,12 @@ export const Dock = () => {
           ) : (
             <motion.button
               key="toggle"
-              layout
-              transition={morph}
-              initial={swapOut}
-              animate={swapIn}
-              exit={swapOut}
-              // A filter paints an element as positioned, so it needs to sit above the glass.
+              layout="position"
+              transition={roll(links.length)}
+              initial={above}
+              animate={shown}
+              exit={above}
+              // A transform paints an element as positioned, so it needs to sit above the glass.
               className="relative z-[1]"
               type="button"
               aria-label={themeLabel}
@@ -300,6 +311,8 @@ export const Dock = () => {
                 if (taps.current.length >= TAPS) {
                   taps.current = [];
                   setHovered(null);
+                  mouseX.set(Infinity);
+                  setSwitching(true);
                   setDialOpen(true);
                 }
               }}
