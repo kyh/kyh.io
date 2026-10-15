@@ -18,6 +18,7 @@ import {
   drawBank,
   drawClinic,
   drawGenericLot,
+  drawIdleBiz,
   drawKwadrants,
   drawPrintShop,
   drawStickerShop,
@@ -64,6 +65,7 @@ const LANDMARKS = new Map<string, Landmark>([
   ["kwadrants", { draw: drawKwadrants, home: "6,3:front", size: "half" }],
   ["keiko-and-friends", { draw: drawStickerShop, home: "6,4:sw", size: "quarter" }],
   ["loremllm", { draw: drawPrintShop, home: "6,4:se", size: "quarter" }],
+  ["idlebiz", { draw: drawIdleBiz, home: "6,4:ne", size: "quarter" }],
 ]);
 
 const SIZE_BY_KIND: Record<ProjectKind, LotSize> = {

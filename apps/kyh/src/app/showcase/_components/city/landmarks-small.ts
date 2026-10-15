@@ -698,6 +698,94 @@ export const drawPrintShop: DrawLandmark = (sketch, site, title) => {
   return bounds(shop, y0, height + 1.3);
 };
 
+// IdleBiz: a little office run by its computers, with a big beige one on the
+// roof keeping the books.
+
+const CASING = paint("white", "white", "wallRight");
+
+export const drawIdleBiz: DrawLandmark = (sketch, site, title) => {
+  const y0 = plaza(sketch, site);
+  const office = { d: 1.4, w: 1.9, x: site.x + 0.5, z: site.z + 0.55 };
+  const height = 2 * FLOOR + 0.08;
+  box(sketch, { ...office, colors: paint("top", "roofBlue", "roofBlueShade"), h: height, y: y0 });
+  storefront(sketch, office, "front", "accentBlue");
+  windows(sketch, office, { columns: 3, floors: 1, side: "front", y: y0 + FLOOR + 0.12 });
+  windows(sketch, office, { columns: 2, floors: 2, side: "side", y: y0 + 0.12 });
+  parapet(sketch, office, y0 + height);
+  const top = y0 + height;
+  // The computer: a deep CRT on a short neck and foot.
+  const foot = { d: 0.45, w: 0.7, x: office.x + 0.6, z: office.z + 0.45 };
+  box(sketch, { ...foot, colors: CASING, h: 0.06, y: top });
+  box(sketch, {
+    colors: CASING,
+    d: 0.2,
+    h: 0.12,
+    w: 0.24,
+    x: foot.x + 0.23,
+    y: top + 0.06,
+    z: foot.z + 0.12,
+  });
+  const crt = { d: 0.55, w: 1.5, x: office.x + 0.2, z: office.z + 0.35 };
+  const crtY = top + 0.18;
+  const crtH = 1;
+  box(sketch, {
+    colors: CASING,
+    d: 0.4,
+    h: 0.72,
+    w: 1.1,
+    x: crt.x + 0.2,
+    y: crtY + 0.14,
+    z: crt.z - 0.36,
+  });
+  box(sketch, { ...crt, colors: CASING, h: crtH, y: crtY });
+  const front = crt.z + crt.d + 0.004;
+  face(
+    sketch,
+    "screen",
+    [
+      [crt.x + 0.12, crtY + 0.18, front],
+      [crt.x + crt.w - 0.12, crtY + 0.18, front],
+      [crt.x + crt.w - 0.12, crtY + crtH - 0.1, front],
+      [crt.x + 0.12, crtY + crtH - 0.1, front],
+    ],
+    "fine",
+  );
+  sketch.screens.push({
+    across: [crt.w - 0.3, 0, 0],
+    name: "idlebiz:screen",
+    origin: [crt.x + 0.15, crtY + 0.21, front + 0.004],
+    up: [0, crtH - 0.34, 0],
+  });
+  box(
+    sketch,
+    {
+      colors: paint("accentGreen"),
+      d: 0.03,
+      h: 0.05,
+      w: 0.08,
+      x: crt.x + crt.w - 0.28,
+      y: crtY + 0.06,
+      z: crt.z + crt.d,
+    },
+    "hair",
+  );
+  board(
+    sketch,
+    { d: 0.1, w: 1.6, x: site.x + 0.5, z: site.z + site.d - 0.4 },
+    {
+      along: 0,
+      colors: paint("accentBlue"),
+      h: 0.27,
+      ink: "white",
+      side: "front",
+      text: title.toUpperCase(),
+      w: 1.6,
+      y: y0 + 0.04,
+    },
+  );
+  return bounds(office, y0, height + 1.2);
+};
+
 // The templates: the same house, forked five times, each with its own name.
 
 export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {

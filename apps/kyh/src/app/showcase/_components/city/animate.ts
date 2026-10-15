@@ -1,6 +1,6 @@
 // What the buildings do while you watch: the invader marches, letters drift
 // off and vanish, the dish scans, Clawd runs laps, a rocket goes up now and
-// then, the TV flips channels and the ticker only ever goes up.
+// then, the TV flips channels, and the ticker and the books only ever go up.
 import type { Group } from "three";
 
 import type { Built, LiveScreen } from "./render";
@@ -126,6 +126,44 @@ const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => 
   screen.texture.needsUpdate = true;
 };
 
+/** What the company's made so far: it only ever goes up. */
+const earnings = (time: number) => `$${Math.floor(1200 + time * 37).toLocaleString("en-US")}`;
+
+/** The computer on IdleBiz's roof: its own app window, the books ticking over. */
+const drawLedger = (screen: LiveScreen, time: number, colorful: boolean) => {
+  const { canvas, context } = screen;
+  const { width, height } = canvas;
+  const bar = height * 0.22;
+  context.fillStyle = tone("#ece7d8", colorful);
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = tone("#475079", colorful);
+  context.fillRect(0, 0, width, bar);
+  for (const [index, color] of ["#e0645a", "#ebb04a", "#5cb867"].entries()) {
+    context.fillStyle = tone(color, colorful);
+    context.beginPath();
+    context.arc(bar * (0.6 + index * 0.7), bar / 2, bar * 0.22, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.fillStyle = tone("#4280dd", colorful);
+  context.fillRect(width * 0.08, bar + height * 0.12, width * 0.84, height * 0.52);
+  context.font = `700 ${height * 0.3}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  context.textBaseline = "middle";
+  context.fillStyle = "#f4f4ef";
+  const text = earnings(time);
+  const textY = bar + height * 0.38;
+  context.fillText(text, width * 0.13, textY);
+  if (time % 1 < 0.5) {
+    const { width: textWidth } = context.measureText(text);
+    context.fillRect(
+      width * 0.13 + textWidth + 4,
+      textY - height * 0.12,
+      height * 0.1,
+      height * 0.24,
+    );
+  }
+  screen.texture.needsUpdate = true;
+};
+
 export interface Animations {
   /** `lit` says whether a project's building is showing its colors. */
   update: (time: number, lit: (slug: string) => boolean) => void;
@@ -152,7 +190,9 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
   const camera = built.parts.get("policing-ice:camera");
   const tv = built.screens.get("autoplay:screen");
   const ticker = built.screens.get("stonksville:ticker");
+  const ledger = built.screens.get("idlebiz:screen");
   let lastTv = -1;
+  let lastLedger = -1;
 
   const flyLetters = (time: number) => {
     for (const [index, letter] of letters.entries()) {
@@ -241,6 +281,11 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
       if (tv && tvFrame !== lastTv) {
         lastTv = tvFrame;
         drawTelevision(tv, time, lit("autoplay"));
+      }
+      const ledgerFrame = Math.floor(time * 4);
+      if (ledger && ledgerFrame !== lastLedger) {
+        lastLedger = ledgerFrame;
+        drawLedger(ledger, time, lit("idlebiz"));
       }
     },
   };
