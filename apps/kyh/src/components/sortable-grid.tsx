@@ -4,54 +4,12 @@ import type { PointerEvent as ReactPointerEvent, ReactNode, SyntheticEvent } fro
 import { useEffect, useRef, useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
 
-import { useIsHydrated } from "@/lib/use-hydrated";
-
 // An iOS-style home screen: long-press a tile and the grid wiggles, drag to
 // reorder (motion's Reorder in `xy`), press anywhere else or Escape to stop.
 
 const longPressMs = 500;
 const moveTolerance = 8;
 const layoutSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
-// Layout moves are instant until the first reorder, so restoring the saved order on load doesn't spring.
-const restoreTransition = { ...layoutSpring, layout: { duration: 0 } };
-
-/** Saved keys still on the page, in their saved order, then any tile the save doesn't know. */
-const readOrder = (storageKey: string, keys: string[]) => {
-  try {
-    const saved: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "null");
-    if (!Array.isArray(saved)) {
-      return keys;
-    }
-    const kept = saved.filter((k): k is string => typeof k === "string" && keys.includes(k));
-    return [...new Set([...kept, ...keys])];
-  } catch {
-    return keys;
-  }
-};
-
-const writeOrder = (storageKey: string, order: string[]) => {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(order));
-  } catch {
-    // Storage blocked: the order lasts until reload.
-  }
-};
-
-/** The visitor's order for `keys`, kept in localStorage under `storageKey`. */
-export const useStoredOrder = (storageKey: string, keys: string[]) => {
-  const hydrated = useIsHydrated();
-  // Null until the first reorder: the saved order (client only) or the page's.
-  const [moved, setMoved] = useState<string[] | null>(null);
-  const order = moved ?? (hydrated ? readOrder(storageKey, keys) : keys);
-
-  useEffect(() => {
-    if (moved) {
-      writeOrder(storageKey, moved);
-    }
-  }, [storageKey, moved]);
-
-  return { order, reordered: moved !== null, setOrder: setMoved };
-};
 
 /** Editing (wiggling) until a press lands outside every tile, or Escape. */
 export const useEditMode = () => {
@@ -99,21 +57,12 @@ interface TileProps {
   value: string;
   index: number;
   editing: boolean;
-  reordered: boolean;
   onLongPress: () => void;
   lockScroll: (locked: boolean) => void;
   children: ReactNode;
 }
 
-const Tile = ({
-  value,
-  index,
-  editing,
-  reordered,
-  onLongPress,
-  lockScroll,
-  children,
-}: TileProps) => {
+const Tile = ({ value, index, editing, onLongPress, lockScroll, children }: TileProps) => {
   const controls = useDragControls();
   const press = useRef<{ stop: () => void } | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -180,7 +129,7 @@ const Tile = ({
       dragControls={controls}
       dragMomentum={false}
       whileDrag={{ scale: 1.12 }}
-      transition={reordered ? layoutSpring : restoreTransition}
+      transition={layoutSpring}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
       onPointerDown={handlePointerDown}
@@ -206,7 +155,6 @@ const Tile = ({
 
 interface SortableGridProps {
   order: string[];
-  reordered: boolean;
   onReorder: (order: string[]) => void;
   editing: boolean;
   onEdit: () => void;
@@ -216,7 +164,6 @@ interface SortableGridProps {
 
 export const SortableGrid = ({
   order,
-  reordered,
   onReorder,
   editing,
   onEdit,
@@ -260,7 +207,6 @@ export const SortableGrid = ({
           value={key}
           index={index}
           editing={editing}
-          reordered={reordered}
           onLongPress={onEdit}
           lockScroll={lockScroll}
         >

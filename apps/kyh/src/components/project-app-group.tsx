@@ -6,7 +6,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
 
-import { SortableGrid, useEditMode, useStoredOrder } from "@/components/sortable-grid";
+import { SortableGrid, useEditMode } from "@/components/sortable-grid";
 
 // Types
 interface Point {
@@ -192,9 +192,8 @@ const OpenGridItem = ({
 
 export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const keys = useMemo(() => items.map((item) => item.key), [items]);
   const byKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
-  const { order, reordered, setOrder } = useStoredOrder(`kyh:folder-order:${title}`, keys);
+  const [order, setOrder] = useState(() => items.map((item) => item.key));
   const [editing, setEditing] = useEditMode();
   // The folder's preview and grid both follow the visitor's order.
   const orderedItems = useMemo(() => order.flatMap((key) => byKey.get(key) ?? []), [order, byKey]);
@@ -360,7 +359,6 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
 
                 <SortableGrid
                   order={order}
-                  reordered={reordered}
                   onReorder={setOrder}
                   editing={editing}
                   onEdit={() => setEditing(true)}
