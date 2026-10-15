@@ -211,18 +211,7 @@ export const FigureCanvas = () => {
       render: { visible: false },
     });
 
-    // Side walls keep tilted figures on screen
-    const wallHeight = height * 4;
-    const leftWall = Bodies.rectangle(-25, height - wallHeight / 2, 50, wallHeight, {
-      isStatic: true,
-      render: { visible: false },
-    });
-    const rightWall = Bodies.rectangle(width + 25, height - wallHeight / 2, 50, wallHeight, {
-      isStatic: true,
-      render: { visible: false },
-    });
-
-    Composite.add(engine.world, [ground, bottomSensor, leftWall, rightWall]);
+    Composite.add(engine.world, [ground, bottomSensor]);
 
     // Remove figures that fall off screen
     Events.on(engine, "collisionStart", ({ pairs }) => {
@@ -330,7 +319,8 @@ export const FigureCanvas = () => {
           window.addEventListener("deviceorientation", handleOrientation);
         }
       } catch {
-        // Permission denied or error
+        // Not taken as a user gesture (a scroll's touchend): ask on the next tap
+        orientationRequested = false;
       }
     };
     if (needsPermission) {
