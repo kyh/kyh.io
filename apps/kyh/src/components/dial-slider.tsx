@@ -226,7 +226,7 @@ export const DialSlider = ({
         }}
         transition={{ damping: 22, stiffness: 400, type: "spring" }}
       />
-      <span ref={labelRef} className="dial-slider-label max-[440px]:hidden">
+      <span ref={labelRef} className="dial-slider-label">
         {label}
       </span>
       <span ref={valueRef} className={`dial-slider-value ${GeistMono.className}`}>

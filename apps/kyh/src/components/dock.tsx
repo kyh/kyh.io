@@ -209,8 +209,10 @@ const GlassFilter = () => (
 
 const morph = { bounce: 0.25, duration: 0.45, type: "spring" } as const;
 // The toggle and the slider trade places: one scales down into a blur as the other scales up out of one.
-const swapOut = { filter: "blur(8px)", opacity: 0, scale: 0.6 };
-const swapIn = { filter: "blur(0px)", opacity: 1, scale: 1 };
+const swapOut = { filter: "blur(8px)", opacity: 0, scale: 0.6, x: 0 };
+const swapIn = { filter: "blur(0px)", opacity: 1, scale: 1, x: 0 };
+// The links make room for the sliders by sliding off to the left, the far one furthest.
+const slideOut = (index: number) => ({ ...swapOut, x: -24 * (links.length - index) });
 
 export const Dock = () => {
   const pathname = usePathname();
@@ -233,30 +235,39 @@ export const Dock = () => {
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
-        {links.map(({ href, label, icon }) => (
-          <Link
-            key={href}
-            href={href}
-            aria-label={label}
-            onClick={() => {
-              mouseX.set(Infinity);
-              setHovered(null);
-            }}
-            onMouseEnter={() => setHovered(href)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <DockItem
-              key={href}
-              label={label}
-              mouseX={mouseX}
-              active={pathname === href}
-              hovered={hovered === href}
-            >
-              {icon}
-            </DockItem>
-          </Link>
-        ))}
         <AnimatePresence mode="popLayout" initial={false}>
+          {!dialOpen &&
+            links.map(({ href, label, icon }, index) => (
+              <motion.div
+                key={href}
+                layout
+                transition={morph}
+                initial={slideOut(index)}
+                animate={swapIn}
+                exit={slideOut(index)}
+                className="relative z-[1]"
+              >
+                <Link
+                  href={href}
+                  aria-label={label}
+                  onClick={() => {
+                    mouseX.set(Infinity);
+                    setHovered(null);
+                  }}
+                  onMouseEnter={() => setHovered(href)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  <DockItem
+                    label={label}
+                    mouseX={mouseX}
+                    active={pathname === href}
+                    hovered={hovered === href}
+                  >
+                    {icon}
+                  </DockItem>
+                </Link>
+              </motion.div>
+            ))}
           {dialOpen ? (
             <motion.div
               key="dial"

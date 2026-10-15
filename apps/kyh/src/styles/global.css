@@ -110,9 +110,9 @@ html[data-dial] {
   display: none;
 }
 
-/* Two to a dock: as wide as fits beside the links, labels dropped below 440px. */
+/* The sliders take over the dock: two to it, as wide as the screen allows. */
 .dial-slot {
-  width: clamp(96px, calc(50vw - 104px), 168px);
+  width: clamp(120px, calc(50vw - 36px), 200px);
 }
 
 .dial-slider:has(input:focus-visible) {
