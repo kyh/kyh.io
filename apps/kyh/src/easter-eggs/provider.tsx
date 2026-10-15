@@ -25,9 +25,14 @@ import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } 
 import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
 import { throwConfettiAt } from "./confetti";
-import { EASTER_EGGS, foundEggs, subscribeToEggs } from "./store";
+import { foundEggs, huntedEggs, progressOf, subscribeToEggs } from "./store";
 
-const TOTAL = EASTER_EGGS.length;
+/** This visitor's hunt: a phone with no keyboard can't send a chat line. */
+const hunt = () =>
+  huntedEggs(
+    typeof window !== "undefined" &&
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches,
+  );
 
 const GOLD_BACKGROUND = gradientOf(GOLD);
 /** The shadowed side of a golden egg. */
@@ -54,6 +59,7 @@ interface Burst {
 
 interface EggsState {
   count: number;
+  total: number;
   /** Eggs are in the air, on their way to the avatar. */
   catching: boolean;
   /** Every egg found and landed: this visitor is gold. */
@@ -66,6 +72,7 @@ const EggsContext = createContext<EggsState>({
   catching: false,
   count: 0,
   gilded: false,
+  total: 0,
 });
 
 const isGold = () => ownColorName() === "gold";
@@ -100,13 +107,13 @@ export const EggCatcher = ({ children }: { children: React.ReactNode }) => {
 
 /** How far along the hunt is, for the avatar's tooltip. */
 export const EggProgress = () => {
-  const { count, gilded } = use(EggsContext);
+  const { count, gilded, total } = use(EggsContext);
   if (count === 0) {
     return null;
   }
   return (
     <span className="block text-[var(--body-color-faded)]">
-      {gilded ? "Every easter egg found" : `${count}/${TOTAL} easter eggs`}
+      {gilded ? "Every easter egg found" : `${count}/${total} easter eggs`}
     </span>
   );
 };
@@ -221,7 +228,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         return;
       }
       heard.current = foundEggs().length;
-      const count = foundEggs().length;
+      const { count, done, total } = progressOf(foundEggs(), hunt());
       const rect = catcher.current?.getBoundingClientRect();
       const to = rect
         ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
@@ -234,8 +241,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         ...burstOf(),
         from,
         id: next,
-        label:
-          count === TOTAL ? "Every easter egg found!" : `Easter egg discovered! ${count}/${TOTAL}`,
+        label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
         to,
       };
       setBursts((current) => [...current, burst]);
@@ -253,7 +259,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
-    if (found.length === TOTAL && !catching) {
+    if (progressOf(found, hunt()).done && !catching) {
       setOwnColorName("gold");
     }
   }, [found, catching]);
@@ -270,7 +276,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   }, [gilded]);
 
   const value = useMemo(
-    () => ({ catcher, catching, count: found.length, gilded }),
+    () => ({ catcher, catching, gilded, ...progressOf(found, hunt()) }),
     [catching, found, gilded],
   );
 

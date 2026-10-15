@@ -195,7 +195,9 @@ are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car or person),
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
 `dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
-icon), `rsvp-reader.tsx` (open the speed reader).
+icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
+hover, coarse pointer) hunts without the chat egg, since it has no keyboard
+(`huntedEggs`).
 `provider.tsx` celebrates each like a coin pickup: a label at the pointer,
 shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
 pops as each lands, and a fountain of confetti: paper that flutters and flips
