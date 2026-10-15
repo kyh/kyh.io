@@ -20,10 +20,16 @@ let canvas: HTMLCanvasElement | null = null;
 let frame = 0;
 let last = 0;
 
+// The bitmap is sized from the canvas's own box, not innerWidth or 100vh,
+// which differ on phones as the URL bar comes and goes: one CSS pixel on the
+// canvas is then one pixel of pointer position.
+let box = { height: 0, width: 0 };
 const fit = (target: HTMLCanvasElement) => {
   const ratio = window.devicePixelRatio || 1;
-  target.width = Math.round(window.innerWidth * ratio);
-  target.height = Math.round(window.innerHeight * ratio);
+  const { height, width } = target.getBoundingClientRect();
+  box = { height, width };
+  target.width = Math.round(width * ratio);
+  target.height = Math.round(height * ratio);
 };
 
 const draw = (
@@ -60,9 +66,9 @@ const tick = (now: number) => {
   const frames = Math.min(3, (now - last) / (1000 / 60));
   last = now;
   fountains = fountains.filter((fountain) => now - fountain.born < LIFE);
-  const ratio = window.devicePixelRatio || 1;
+  const ratio = box.width > 0 ? canvas.width / box.width : 1;
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  context.clearRect(0, 0, box.width, box.height);
   for (const fountain of fountains) {
     const left = LIFE - (now - fountain.born);
     draw(context, fountain, frames, Math.min(1, left / FADE));
@@ -85,9 +91,9 @@ export const throwConfettiAt = (from: { x: number; y: number }) => {
   canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   canvas.style.cssText =
-    "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:61";
-  fit(canvas);
+    "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61";
   document.body.append(canvas);
+  fit(canvas);
   last = now;
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(tick);
