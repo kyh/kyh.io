@@ -14,6 +14,11 @@ export const EASTER_EGGS = [
     name: "Say anything",
     note: "No text box needed: typing anywhere talks.",
   },
+  {
+    id: "shapes",
+    name: "Shape shifter",
+    note: "Tapping the empty space at the bottom of the homepage drops more shapes.",
+  },
 ] as const;
 
 export type EasterEgg = (typeof EASTER_EGGS)[number];

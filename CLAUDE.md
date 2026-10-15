@@ -167,7 +167,8 @@ flying to the avatar (`data-own-avatar`), which pops as each lands. Once the
 last egg of the last find lands the visitor turns gold: their avatar, their own pointer (`data-eggs` on
 `<html>`, `global.css`), and, via `eggs: "all"` in room state read by
 `lookOf`, their cursor, chat and town pointer for everyone else. Today: lift a
-car or person in `/showcase`; send a chat line.
+car or person in `/showcase`; send a chat line; tap the homepage's figure
+canvas to spawn shapes.
 
 ### policingice (`apps/policingice`)
 

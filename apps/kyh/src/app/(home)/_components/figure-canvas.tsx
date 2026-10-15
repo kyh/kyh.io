@@ -17,6 +17,8 @@ import {
 } from "matter-js";
 import { useTheme } from "next-themes";
 
+import { discoverEgg } from "@/lib/easter-egg-store";
+
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
   lineWidth: 2,
@@ -261,6 +263,7 @@ export const FigureCanvas = () => {
         });
         Composite.add(engineRef.current.world, body);
       }
+      discoverEgg("shapes");
     };
 
     // Click handler for desktop
