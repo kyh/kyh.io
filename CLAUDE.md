@@ -119,8 +119,11 @@ faces, while doors, signs and storefronts stay where they are in the world. On a
 in a sim game: `schedule.ts` gives every lot and block a start, from downtown
 out; each building goes up a storey at a time from a slab (a vertex-shader
 rise every town material in `render.ts` shares, its start carried per vertex);
-cranes and trucks (`crews.ts`, `draw-crews.ts`, drawn 1.6× life) drive the
-roads in to the lane beside their site, a crane's jib on its building, and drive off;
+each project's site is fenced with materials stacked, tower cranes go up
+beside the tall ones a section at a time (jibs on their building) and come down
+after, the building rises inside scaffolding drawn with the town's own
+materials, and dump trucks and mixers come and go by road to their own spots in
+the lane (`crews.ts` plans it, pure; `draw-crews.ts`; `sites.ts` puts it on screen);
 pins wait for it, and then the title-sequence flyover zooms in. Only moving the camera stops the flyover, the
 corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the

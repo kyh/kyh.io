@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { Junction, Road } from "./plan";
 import type { Site } from "./schedule";
-import { crewPose, planCrews } from "./crews";
+import { cranePose, planWorks, truckPose, yardShown } from "./crews";
 import { roadGraph } from "./traffic";
 
 // A 5×5 grid of junctions 8 cells apart: four blocks a side.
@@ -22,63 +22,80 @@ for (let i = 0; i < 5; i += 1) {
 }
 const GRAPH = roadGraph({ junctions, roads });
 
-const site = (start: number, top: number | null, x = 17): Site => ({
+const lot = (start: number, top: number, x = 17): Site => ({
   d: 4,
-  kind: top === null ? "block" : "lot",
+  kind: "lot",
   start,
   top,
   w: 4,
   x,
   z: 17,
 });
+const block: Site = { d: 6, kind: "block", start: 1.5, top: null, w: 6, x: 9, z: 9 };
 
 /** Whether a point lies on some road of the grid (give or take a lane). */
 const onRoad = ({ x, z }: { x: number; z: number }) =>
   Math.abs(x - Math.round(x / 8) * 8) < 0.3 || Math.abs(z - Math.round(z / 8) * 8) < 0.3;
 
-test("the tallest buildings get cranes, the other sites trucks", () => {
-  const crews = planCrews(
-    { sites: [site(1, 8), site(1.2, 2), site(1.4, null), site(1.6, 5)] },
-    GRAPH,
-  );
-  assert.deepEqual(
-    crews.map((crew) => crew.kind),
-    ["crane", "crane", "crane", "truck"],
-  );
-  assert.equal(crews[0]?.mast, 9);
+test("a site's size sets its crew: tall buildings get cranes and scaffolding, every site trucks", () => {
+  const works = planWorks({ sites: [lot(1, 6), lot(1.2, 3, 9), lot(1.4, 1, 25), block] }, GRAPH);
+  assert.equal(works.cranes.length, 3);
+  assert.equal(works.scaffolds.length, 2);
+  assert.equal(works.yards.length, 3);
+  assert.equal(works.trucks.length, 3 * 3 + 1);
+  assert.ok(works.trucks.some((truck) => truck.kind === "mixer"));
 });
 
-test("a crew drives the roads in, parks in the lane by its site, and drives on out", () => {
-  const [crane] = planCrews({ sites: [site(1.2, 4)] }, GRAPH);
+test("a crane goes up a section at a time before work starts and comes down after", () => {
+  const [crane] = planWorks({ sites: [lot(1.2, 4)] }, GRAPH).cranes;
   assert.ok(crane);
-  assert.ok(onRoad(crane.park));
-  assert.ok(crane.arrive.points.length > 2 && crane.leave.points.length > 2);
-  for (const t of [0.4, 0.8, 1.1, crane.done + 0.4, crane.done + 0.6]) {
-    const pose = crewPose(crane, t);
-    assert.ok(pose.shown, `shown at ${t}`);
-    assert.ok(onRoad(pose), `on the road at ${t}`);
-  }
-  const working = crewPose(crane, (crane.start + crane.done) / 2);
-  assert.deepEqual([working.x, working.z, working.mast], [crane.park.x, crane.park.z, 1]);
-  assert.equal(crewPose(crane, 0.1).shown, false);
-  assert.equal(crewPose(crane, crane.done + 2).shown, false);
+  assert.equal(cranePose(crane, 0.5).shown, false);
+  const rising = cranePose(crane, crane.start - 0.2);
+  assert.ok(rising.shown && rising.mast > 0 && rising.mast < 1);
+  assert.equal(cranePose(crane, (crane.start + crane.done) / 2).mast, 1);
+  assert.equal(cranePose(crane, crane.done + 1).shown, false);
 });
 
 test("a crane's jib points at the building it's raising, each a little its own way", () => {
-  const sites = [site(1.2, 6), site(1.3, 5, 9)];
-  const cranes = planCrews({ sites }, GRAPH);
-  for (const [index, crane] of cranes.entries()) {
-    const target = sites[index];
+  const sites = [lot(1.2, 6), lot(1.3, 5, 9)];
+  const { cranes } = planWorks({ sites }, GRAPH);
+  for (const crane of cranes) {
+    const target = sites.find((site) => crane.start === site.start);
     assert.ok(target);
-    const pose = crewPose(crane, (crane.start + crane.done) / 2);
-    const world = pose.jib + pose.heading;
+    const { jib } = cranePose(crane, (crane.start + crane.done) / 2);
     const toward = {
-      x: target.x + target.w / 2 - crane.park.x,
-      z: target.z + target.d / 2 - crane.park.z,
+      x: target.x + target.w / 2 - crane.at.x,
+      z: target.z + target.d / 2 - crane.at.z,
     };
     const facing =
-      (Math.cos(world) * toward.x - Math.sin(world) * toward.z) / Math.hypot(toward.x, toward.z);
-    assert.ok(facing > 0.6, `crane ${index} points at its site`);
+      (Math.cos(jib) * toward.x - Math.sin(jib) * toward.z) / Math.hypot(toward.x, toward.z);
+    assert.ok(facing > 0.6, "points at its site");
   }
-  assert.notEqual(cranes[0]?.aim, cranes[1]?.aim);
+  assert.equal(new Set(cranes.map((crane) => crane.aim)).size, cranes.length);
+});
+
+test("trucks drive the roads in one after another, each to its own spot, and on out", () => {
+  const { trucks } = planWorks({ sites: [lot(1.2, 4)] }, GRAPH);
+  const spots = trucks.map((truck) => truck.arrive.points.at(-1));
+  assert.equal(new Set(spots.map((spot) => `${spot?.x},${spot?.z}`)).size, trucks.length);
+  const parked = trucks.map((truck) => truck.parked);
+  assert.deepEqual(
+    parked,
+    parked.toSorted((a, b) => a - b),
+  );
+  for (const truck of trucks) {
+    for (const t of [truck.parked - 0.4, truck.parked, truck.leaves + 0.3]) {
+      const pose = truckPose(truck, t);
+      assert.ok(pose.shown && onRoad(pose), `on the road at ${t}`);
+    }
+    assert.equal(truckPose(truck, truck.leaves + 2).shown, false);
+  }
+});
+
+test("a yard is up from setup until its building's done", () => {
+  const [yard] = planWorks({ sites: [lot(1.2, 4)] }, GRAPH).yards;
+  assert.ok(yard);
+  assert.equal(yardShown(yard, yard.from - 0.1), 0);
+  assert.equal(yardShown(yard, (yard.from + yard.until) / 2), 1);
+  assert.equal(yardShown(yard, yard.until + 0.1), 0);
 });

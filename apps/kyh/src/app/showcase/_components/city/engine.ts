@@ -32,12 +32,10 @@ import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
-import { crewPose, planCrews } from "./crews";
-import { CREW_SCALE, drawCrane, drawTruck } from "./draw-crews";
+import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
-import { roadGraph } from "./traffic";
 import { TOWN_VERSION } from "./world";
 
 /** CSS pixels per world unit at zoom 1: a cell's diamond is 64px wide. */
@@ -292,37 +290,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const fixed = createMaterials(theme);
   /** Seconds the town has spent going up; null once it's built, or with reduced motion. */
   let growing: number | null = options.reducedMotion ? null : 0;
-  // The machines that build it, there only while it's going up.
-  let crews = (growing === null ? [] : planCrews(schedule, roadGraph(plan))).map((crew) => {
-    // Drawn larger than life so they read from the whole island's distance.
-    const mast = crew.mast / CREW_SCALE;
-    const built = build(crew.kind === "crane" ? drawCrane(mast) : drawTruck(), fixed);
-    built.group.visible = false;
-    scene.add(built.group);
-    return { built, crew, jib: built.parts.get("jib"), mast: built.parts.get("mast"), tall: mast };
-  });
-  /** Places each machine where it is in its work at `t` on the build clock. */
-  const work = (t: number) => {
-    for (const { built, crew, jib, mast, tall } of crews) {
-      const pose = crewPose(crew, t);
-      built.group.visible = pose.shown;
-      built.group.position.set(pose.x, 0, pose.z);
-      built.group.rotation.y = pose.heading;
-      built.group.scale.setScalar(CREW_SCALE * Math.max(0.001, pose.scale));
-      mast?.scale.set(1, Math.max(0.001, pose.mast), 1);
-      if (jib) {
-        jib.visible = pose.mast > 0.05;
-        jib.position.y = 0.22 + tall * pose.mast;
-        jib.rotation.y = pose.jib;
-      }
-    }
-  };
+  // The building sites that put it up, there only while it's going up.
+  let sites = growing === null ? null : createSites(scene, materials, fixed, schedule, plan);
   const packUp = () => {
-    for (const { built } of crews) {
-      scene.remove(built.group);
-      built.dispose();
-    }
-    crews = [];
+    sites?.dispose();
+    sites = null;
   };
   const townViewAt = (at: number, town = drawTownAt(at)) => {
     const existing = townViews.get(at);
@@ -524,9 +496,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     for (const town of townViews.values()) {
       paintTown(town);
     }
-    for (const { built } of crews) {
-      built.paint(theme, true);
-    }
+    sites?.paint(theme);
     life.setTheme(theme);
   };
   applyTheme();
@@ -1010,7 +980,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     growing += Math.min(elapsed, 0.05);
     materials.setGrowth(growing);
-    work(growing);
+    sites?.update(growing);
     if (growing >= schedule.end) {
       growing = null;
       packUp();

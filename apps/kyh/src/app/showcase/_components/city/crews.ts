@@ -1,29 +1,40 @@
-// The machines that build the town on arrival, as a sim game's would: each
-// turns up at a junction a couple of blocks off, drives the roads to the lane
-// beside its site, works while the building goes up (a crane raises its mast
-// and swings its jib; a truck waits by), then drives on and out the far side.
-// Pure: where a crew is and what it's doing is a function of the build clock.
+// The building sites that put the town up on arrival, as a sim game's would.
+// A site is fenced off with its materials stacked in a corner; tower cranes
+// go up beside it, a section at a time, before work starts, aim their jibs at
+// the building while it rises inside its scaffolding, and come down once it's
+// done. Trucks (dump trucks, cement mixers) come and go by road all the
+// while: each turns up at a junction a couple of blocks off, takes the
+// shortest roads to its own spot in the lane by the site, unloads and drives
+// on out. Pure: everything is a function of the build clock.
+import type { Rect } from "./plan";
 import type { Schedule, Site } from "./schedule";
 import type { Graph } from "./traffic";
-import { PACK_UP, RISE } from "./schedule";
 import { createRandom } from "./random";
+import { RISE } from "./schedule";
 import { LANE, nearestEdge, routeTo } from "./traffic";
 
-/** How many of the tallest buildings get a crane, and how many other sites a truck. */
-const CRANES = 4;
-const TRUCKS = 10;
-/** How many blocks off a crew turns up, and drives off to. */
+/** How tall a building has to be to get one crane, and two. */
+const ONE_CRANE = 2.5;
+const TWO_CRANES = 5;
+/** How tall a building has to be to go up inside scaffolding. */
+const SCAFFOLDED = 1.2;
+/** How many trucks a project's site and a street's block get. */
+const LOT_TRUCKS = 3;
+const BLOCK_TRUCKS = 1;
+/** How many blocks off a truck turns up, and drives off to. */
 const HOPS = 2;
-/** The latest a crew sets off for its site, before work starts there (s). */
-const ARRIVE = 1;
-/** How long a crane takes to raise or lower its mast (s). */
-const MAST = 0.3;
-/** How long a truck stays once it's dropped its load (s). */
-const UNLOAD = 0.7;
-/** How long a crew takes to appear at its junction, or vanish at the far one (s). */
+/** How long a truck's drive in and out each take (s). */
+const DRIVE = 0.7;
+/** How long a truck stays to unload, and how far apart a site's trucks arrive (s). */
+const UNLOAD = 0.5;
+const STAGGER = 0.35;
+/** How long a site takes to be fenced off before work starts, and to be cleared after (s). */
+const SETUP = 0.6;
+const CLEAR = 0.3;
+/** How long a crane takes to go up, and to come down (s). */
+const ERECT = 0.5;
+/** How long a truck or yard takes to appear, or vanish (s). */
 const POP = 0.15;
-/** How long the drive off takes (s). */
-const LEAVE = Math.min(PACK_UP, 0.5);
 
 interface Point {
   x: number;
@@ -37,40 +48,61 @@ interface Route {
   length: number;
 }
 
-export interface Crew {
-  kind: "crane" | "truck";
-  /** Where it parks to work: in the lane beside its site. */
-  park: Point;
-  /** In from a junction a couple of blocks off, and on out to another. */
-  arrive: Route;
-  leave: Route;
-  /** How tall a crane's mast stands: over the top of what it builds. */
+/** A fenced site with its materials stacked by: there from setup until it's cleared. */
+export interface Yard extends Rect {
+  from: number;
+  until: number;
+}
+
+/** Scaffolding round a building, as tall as it'll be; it rises as the building does. */
+export interface Scaffold extends Rect {
+  top: number;
+  until: number;
+}
+
+export interface Crane {
+  at: Point;
+  /** How tall its mast stands: over the top of what it builds. */
   mast: number;
-  /**
-   * Which way a crane's jib points (radians about y, from +x): at the
-   * building it's raising, give or take a little so no two cranes line up.
-   */
+  /** Which way its jib points (radians about y, from +x): at its building, give or take. */
   aim: number;
   start: number;
-  /** When its building's up and it packs up. */
   done: number;
 }
 
-export interface CrewPose {
+export interface Truck {
+  kind: "dump" | "mixer";
+  arrive: Route;
+  leave: Route;
+  /** When it reaches its spot, and when it sets off again. */
+  parked: number;
+  leaves: number;
+}
+
+export interface Works {
+  yards: Yard[];
+  scaffolds: Scaffold[];
+  cranes: Crane[];
+  trucks: Truck[];
+}
+
+export interface CranePose {
+  shown: boolean;
+  /** How much of the mast is up, 0 to 1, in whole sections. */
+  mast: number;
+  /** Which way the jib points (radians about y, from +x). */
+  jib: number;
+}
+
+export interface TruckPose {
   shown: boolean;
   x: number;
   z: number;
   /** Which way it faces, as a turn about y from nose-along -x (radians). */
   heading: number;
-  /** How far a crane's mast is up, 0 to 1. */
-  mast: number;
-  /** Which way a crane's jib points, turned from its heading (radians). */
-  jib: number;
   /** How far it's popped in, 0 to 1. */
   scale: number;
 }
-
-const HIDDEN: CrewPose = { heading: 0, jib: 0, mast: 0, scale: 0, shown: false, x: 0, z: 0 };
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
@@ -131,78 +163,104 @@ const junctionNear = (graph: Graph, node: number, pick: number, avoid = -1) => {
   return ring.length > 0 ? (ring[pick % ring.length] ?? node) : node;
 };
 
-const crewFor = (graph: Graph, site: Site, kind: Crew["kind"], pick: number): Crew => {
-  const random = createRandom(pick * 31 + 7);
-  const top = site.top ?? 2;
+/** The `count` trucks that serve a site, each to its own spot in the lane beside it, one after another. */
+const trucksFor = (graph: Graph, site: Site, count: number, pick: number): Truck[] => {
   const near = nearestEdge(graph, site.x + site.w / 2, site.z + site.d / 2, LANE);
   const edge = graph.edges[near.edge];
-  const park = edge
-    ? {
-        x: edge.ax + edge.dx * near.s - edge.dz * LANE,
-        z: edge.az + edge.dz * near.s + edge.dx * LANE,
-      }
-    : { x: site.x + site.w + 0.35, z: site.z + site.d / 2 };
-  const entry = edge ? junctionNear(graph, edge.from, pick) : -1;
-  const exit = edge ? junctionNear(graph, edge.to, pick + 1, entry) : -1;
-  const arrive = edge ? [...walk(graph, routeTo(graph, edge.from).via, entry), park] : [park];
-  const leave = edge ? [park, ...walk(graph, routeTo(graph, exit).via, edge.to)] : [park];
+  if (!edge) {
+    return [];
+  }
+  return Array.from({ length: count }, (_, index): Truck => {
+    const s = Math.min(edge.length - 0.3, Math.max(0.3, near.s + (index - (count - 1) / 2) * 0.8));
+    const park = {
+      x: edge.ax + edge.dx * s - edge.dz * LANE,
+      z: edge.az + edge.dz * s + edge.dx * LANE,
+    };
+    const entry = junctionNear(graph, edge.from, pick + index);
+    const exit = junctionNear(graph, edge.to, pick + index + 1, entry);
+    const parked = Math.max(DRIVE, site.start - 0.25 + index * STAGGER);
+    return {
+      arrive: routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), park]),
+      kind: (pick + index) % 3 === 1 ? "mixer" : "dump",
+      leave: routeOf([park, ...walk(graph, routeTo(graph, exit).via, edge.to)]),
+      leaves: parked + UNLOAD,
+      parked,
+    };
+  });
+};
+
+/** The cranes beside a building: one at a corner, a second at the opposite one for a tall one. */
+const cranesFor = (site: Site, top: number, pick: number): Crane[] => {
+  const random = createRandom(pick * 31 + 7);
+  const corners = [
+    { x: site.x - 0.35, z: site.z - 0.35 },
+    { x: site.x + site.w + 0.35, z: site.z + site.d + 0.35 },
+  ];
   const cx = site.x + site.w / 2;
   const cz = site.z + site.d / 2;
-  return {
-    aim: Math.atan2(-(cz - park.z), cx - park.x) + random.range(-0.45, 0.45),
-    arrive: routeOf(arrive),
-    done: kind === "crane" ? site.start + top / RISE : site.start + UNLOAD,
-    kind,
-    leave: routeOf(leave),
+  return corners.slice(0, top >= TWO_CRANES ? 2 : 1).map((at) => ({
+    aim: Math.atan2(-(cz - at.z), cx - at.x) + random.range(-0.45, 0.45),
+    at,
+    done: site.start + top / RISE,
     mast: top + 1,
-    park,
     start: site.start,
-  };
+  }));
 };
 
-/** Cranes for the tallest buildings, trucks spread over the other sites in the order they go up. */
-export const planCrews = (schedule: Pick<Schedule, "sites">, graph: Graph): Crew[] => {
-  const tallest = schedule.sites
-    .filter((site) => site.top !== null)
-    .toSorted((a, b) => (b.top ?? 0) - (a.top ?? 0))
-    .slice(0, CRANES);
-  const rest = schedule.sites.filter((site) => !tallest.includes(site));
-  const every = Math.max(1, Math.floor(rest.length / TRUCKS));
-  const trucks = rest.filter((_, index) => index % every === 0).slice(0, TRUCKS);
-  return [
-    ...tallest.map((site, index) => crewFor(graph, site, "crane", index)),
-    ...trucks.map((site, index) => crewFor(graph, site, "truck", index + CRANES)),
-  ];
+/** Everything that builds the town: trucks for every site; a yard, scaffolding and cranes for the projects' buildings. */
+export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Works => {
+  const works: Works = { cranes: [], scaffolds: [], trucks: [], yards: [] };
+  for (const [pick, site] of schedule.sites.entries()) {
+    const top = site.top ?? 1;
+    const done = site.start + top / RISE;
+    works.trucks.push(
+      ...trucksFor(graph, site, site.kind === "lot" ? LOT_TRUCKS : BLOCK_TRUCKS, pick * 3),
+    );
+    if (site.kind === "lot") {
+      const rect = { d: site.d, w: site.w, x: site.x, z: site.z };
+      works.yards.push({ ...rect, from: site.start - SETUP, until: done + CLEAR });
+      if (top >= SCAFFOLDED) {
+        works.scaffolds.push({ ...rect, top, until: done + CLEAR });
+      }
+      if (top >= ONE_CRANE) {
+        works.cranes.push(...cranesFor(site, top, pick));
+      }
+    }
+  }
+  return works;
 };
 
-/** Where a crew is and what it's doing at `t` on the build clock. */
-export const crewPose = (crew: Crew, t: number): CrewPose => {
-  const setOff = crew.start - Math.min(ARRIVE, crew.start);
-  const packed = crew.kind === "crane" ? crew.done + MAST : crew.done;
-  const gone = packed + LEAVE;
+/** How far a site's yard is up at `t`, 0 to 1. */
+export const yardShown = (yard: Yard, t: number) =>
+  Math.min(clamp01((t - yard.from) / POP), clamp01((yard.until - t) / POP));
+
+/** A crane at `t`: going up a section at a time before work starts, working, coming down after. */
+export const cranePose = (crane: Crane, t: number): CranePose => {
+  const up = Math.min(
+    clamp01((t - (crane.start - ERECT)) / ERECT),
+    1 - clamp01((t - crane.done) / ERECT),
+  );
+  if (up <= 0) {
+    return { jib: 0, mast: 0, shown: false };
+  }
+  const sections = Math.max(3, Math.round(crane.mast / 0.6));
+  const swing = Math.sin((t - crane.start) * 1.4 + crane.aim * 3) * 0.25;
+  return { jib: crane.aim + swing, mast: Math.ceil(up * sections) / sections, shown: true };
+};
+
+/** A truck at `t`: driving in, parked, or driving off. */
+export const truckPose = (truck: Truck, t: number): TruckPose => {
+  const setOff = truck.parked - DRIVE;
+  const gone = truck.leaves + DRIVE;
   if (t < setOff || t > gone) {
-    return HIDDEN;
+    return { heading: 0, scale: 0, shown: false, x: 0, z: 0 };
   }
-  const mast =
-    crew.kind === "crane"
-      ? Math.min(clamp01((t - (crew.start - MAST)) / MAST), 1 - clamp01((t - crew.done) / MAST))
-      : 0;
+  let place = along(truck.arrive, truck.arrive.length);
+  if (t < truck.parked) {
+    place = along(truck.arrive, truck.arrive.length * easeInOut(clamp01((t - setOff) / DRIVE)));
+  } else if (t > truck.leaves) {
+    place = along(truck.leave, truck.leave.length * easeInOut(clamp01((t - truck.leaves) / DRIVE)));
+  }
   const scale = Math.min(clamp01((t - setOff) / POP), clamp01((gone - t) / POP));
-  const swing = Math.sin((t - crew.start) * 1.4 + crew.aim * 3) * 0.25;
-  let place = along(crew.arrive, crew.arrive.length);
-  if (t < crew.start) {
-    const k = easeInOut(clamp01((t - setOff) / (crew.start - setOff - 0.05)));
-    place = along(crew.arrive, crew.arrive.length * k);
-  } else if (t > packed) {
-    place = along(crew.leave, crew.leave.length * easeInOut(clamp01((t - packed) / LEAVE)));
-  }
-  return {
-    heading: place.heading,
-    jib: crew.aim + swing - place.heading,
-    mast,
-    scale,
-    shown: true,
-    x: place.x,
-    z: place.z,
-  };
+  return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };
 };
