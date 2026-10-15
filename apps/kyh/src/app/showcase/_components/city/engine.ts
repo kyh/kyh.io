@@ -21,7 +21,7 @@ import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { createPresses, createSpotlight, isHover, keyMove } from "./controls";
-import { drawBlock } from "./draw-blocks";
+import { CURB_TOP, drawBlock } from "./draw-blocks";
 import { drawCountryside } from "./draw-countryside";
 import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
@@ -30,7 +30,10 @@ import { createLife } from "./life";
 import { shade, signature } from "./palette";
 import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
-import { build, createMaterials, GROWN_S } from "./render";
+import { build, createMaterials } from "./render";
+import { createSchedule } from "./schedule";
+import { crewPose, planCrews } from "./crews";
+import { drawCrane, drawTruck } from "./draw-crews";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 import { createTour } from "./tour";
@@ -200,6 +203,8 @@ const createSky = (
 const createTownView = (
   scene: Scene,
   materials: ReturnType<typeof createMaterials>,
+  /** For what never goes up: the sky over the town. */
+  fixed: ReturnType<typeof createMaterials>,
   town: ReturnType<typeof drawTown>,
   view: Vec3,
   covers: readonly Vec3[],
@@ -215,7 +220,7 @@ const createTownView = (
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !still });
-  const sky = createSky(scene, materials, still, view, covers);
+  const sky = createSky(scene, fixed, still, view, covers);
   const builds = [city, ...buildings.values(), ...sky.builds];
   for (const built of [city, ...buildings.values()]) {
     scene.add(built.group);
@@ -264,12 +269,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const scene = new Scene();
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
   let { theme } = options;
-  const materials = createMaterials(theme);
-  /** Seconds the town has spent growing out of the ground; null once it's up, or with reduced motion. */
-  let growing: number | null = options.reducedMotion ? null : 0;
-  if (growing === null) {
-    materials.setGrowth(GROWN_S);
-  }
   const plan = planCity(planEntries(options.projects));
   /**
    * The town's drawings, by heading: whole quarter turns where the camera
@@ -281,6 +280,45 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const covers = Number.isInteger(at) ? [viewAt(at)] : [viewAt(at - 0.5), viewAt(at + 0.5)];
     return drawTown(plan, options.projects, viewAt(at), covers);
   };
+  // The first view's drawing also says where every building is, and how tall.
+  const firstTown = drawTownAt(0);
+  const { placed } = firstTown;
+  const schedule = createSchedule(
+    plan,
+    new Map(placed.map((entry) => [entry.lot.slug, entry.bounds.y + entry.bounds.h])),
+  );
+  const materials = createMaterials(theme, options.reducedMotion ? null : schedule.startAt);
+  const fixed = createMaterials(theme);
+  /** Seconds the town has spent going up; null once it's built, or with reduced motion. */
+  let growing: number | null = options.reducedMotion ? null : 0;
+  // The machines that build it, there only while it's going up.
+  let crews = (growing === null ? [] : planCrews(schedule)).map((crew) => {
+    const built = build(crew.kind === "crane" ? drawCrane(crew.mast) : drawTruck(), fixed);
+    built.group.visible = false;
+    scene.add(built.group);
+    return { built, crew, jib: built.parts.get("jib"), mast: built.parts.get("mast") };
+  });
+  /** Places each machine where it is in its work at `t` on the build clock. */
+  const work = (t: number) => {
+    for (const { built, crew, jib, mast } of crews) {
+      const pose = crewPose(crew, t);
+      built.group.visible = pose.shown;
+      built.group.position.set(pose.x, CURB_TOP, pose.z);
+      mast?.scale.set(1, Math.max(0.001, pose.mast), 1);
+      if (jib) {
+        jib.visible = pose.mast > 0.05;
+        jib.position.y = 0.22 + crew.mast * pose.mast;
+        jib.rotation.y = pose.jib;
+      }
+    }
+  };
+  const packUp = () => {
+    for (const { built } of crews) {
+      scene.remove(built.group);
+      built.dispose();
+    }
+    crews = [];
+  };
   const townViewAt = (at: number, town = drawTownAt(at)) => {
     const existing = townViews.get(at);
     if (existing) {
@@ -290,6 +328,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const created = createTownView(
       scene,
       materials,
+      fixed,
       town,
       viewAt(at),
       covers,
@@ -299,9 +338,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     townViews.set(at, created);
     return created;
   };
-  // The first view's drawing also says where every building is.
-  const firstTown = drawTownAt(0);
-  const { placed } = firstTown;
   /** How many quarter turns the camera has made round the town, and where it is mid-turn. */
   let heading = 0;
   let angle = 0;
@@ -340,7 +376,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // The camera: where it looks, how close, and where it is easing to.
   let width = 1;
   let height = 1;
-  const view = { x: 36, z: 38, zoom: 0.5 };
+  // Zoomed all the way out to start: the whole island, as it's built.
+  const view = { x: 36, z: 37, zoom: 0 };
   let goal: { x: number; z: number; zoom: number } | null = null;
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
@@ -369,6 +406,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     materials.setZoom(view.zoom);
+    fixed.setZoom(view.zoom);
   };
   const resize = () => {
     width = Math.max(1, container.clientWidth);
@@ -412,11 +450,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let overActor = false;
 
   // What's lit, and whether the flyover has the camera: the rules are in controls.ts.
+  /** The visitor took the camera while the town was going up: the flyover waits for idle instead. */
+  let handsOn = false;
   const spotlight = createSpotlight<Placed>({
     now: () => performance.now(),
     // The visitor has the camera: a glide to a focused building stops too.
     onTake: () => {
       goal = null;
+      handsOn = true;
     },
     onTour: options.onTour,
     still: options.reducedMotion,
@@ -474,8 +515,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const applyTheme = () => {
     renderer.setClearColor(new Color(shade("sea", theme, false)));
     materials.setTheme(theme);
+    fixed.setTheme(theme);
     for (const town of townViews.values()) {
       paintTown(town);
+    }
+    for (const { built } of crews) {
+      built.paint(theme, true);
     }
     life.setTheme(theme);
   };
@@ -945,7 +990,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   const resumeWhenIdle = () => {
     // A hand holding a car or a person is a press too: the flyover leaves the camera to it.
-    if (spotlight.idle(presses.count > 0 || carrying !== null)) {
+    // While the town's still going up, the camera holds on the whole island.
+    if (growing === null && spotlight.idle(presses.count > 0 || carrying !== null)) {
       playTour();
     }
   };
@@ -959,8 +1005,14 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     growing += Math.min(elapsed, 0.05);
     materials.setGrowth(growing);
-    if (growing >= GROWN_S) {
+    work(growing);
+    if (growing >= schedule.end) {
       growing = null;
+      packUp();
+      // Built: in from the whole island to the first project, unless the visitor has the camera.
+      if (!handsOn) {
+        playTour(0);
+      }
     }
   };
   const tick = (now: number) => {
@@ -991,13 +1043,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   frame = requestAnimationFrame(tick);
   // The opening shot: the whole island, then down to the first project and
   // across, left to right, the way the title sequence pans the valley.
-  playTour(0);
+  if (growing === null) {
+    playTour(0);
+  }
   // Once the opening has settled in, start on the views a turn away.
   const warmUp = setTimeout(drawAhead, 3000);
 
   return {
     /** What the town is up to, for poking at in development. */
-    debug: () => life.debug(),
+    debug: () => ({ ...life.debug(), buildEnd: schedule.end, building: growing }),
     dispose: () => {
       cancelAnimationFrame(frame);
       clearTimeout(warmUp);
@@ -1019,7 +1073,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       }
       halo.dispose();
       life.dispose();
+      packUp();
       materials.dispose();
+      fixed.dispose();
       renderer.dispose();
       canvas.remove();
     },

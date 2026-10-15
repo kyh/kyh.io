@@ -11,6 +11,7 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Group,
+  InstancedBufferAttribute,
   LinearMipmapLinearFilter,
   Mesh,
   MeshBasicMaterial,
@@ -23,28 +24,33 @@ import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeome
 
 import type { Theme, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
+import { FLOOR } from "./draw-kit";
 import { shade } from "./palette";
+import { RISE } from "./schedule";
 
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
-/** How long the town takes to grow out of the ground on arrival (s). */
-export const GROWN_S = 2.6;
+/** The slab a building stands on before it goes up, just over the curb. */
+const FOOT = 0.05;
 
-// Each point rises from the ground to its height, overshooting a touch and
-// settling, a moment after the point nearer the island's middle: the town
-// assembles outward. Things hung in the sky stay put, and nothing below the
-// ground moves.
-const GROW_GLSL = `
+/** Where each thing being built starts going up, by its place in town (s). */
+export type StartAt = (x: number, z: number) => number;
+
+// Each building goes up from a slab on its lot, a storey at a time: the
+// storey being built rises into place, and everything above waits. Its start
+// rides on the geometry (`buildAt`), worked out by the town's schedule, so
+// one merged mesh still goes up building by building. The ground and anything
+// below it stay put; things that never go up (the sky) use materials without a schedule.
+const BUILD_GLSL = `
 uniform float growTime;
-vec4 grown(vec4 world) {
-  if (modelMatrix[3].y > 2.0 || world.y <= 0.0) {
+vec4 built(vec4 world, float at) {
+  if (world.y <= ${FOOT}) {
     return world;
   }
-  float delay = length(world.xz - vec2(36.0)) * 0.034;
-  float t = clamp((growTime - delay) / 0.8, 0.0, 1.0);
-  float back = t - 1.0;
-  world.y *= 1.0 + 2.70158 * back * back * back + 1.70158 * back * back;
+  float floors = max(0.0, (growTime - at) * ${RISE.toFixed(1)}) / ${FLOOR};
+  float level = (floor(floors) + smoothstep(0.45, 1.0, fract(floors))) * ${FLOOR};
+  world.y = min(world.y, max(level, ${FOOT}));
   return world;
 }
 `;
@@ -55,16 +61,16 @@ const LINE_ENDS = [
   "vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );",
 ] as const;
 
-/** Rewrite a material's vertex shader so its points grow out of the ground as `growth` runs. */
-const growing = (shader: WebGLProgramParametersWithUniforms, growth: { value: number }) => {
+/** Rewrite a material's vertex shader so its points go up as `growth` runs, each from its own start. */
+const building = (shader: WebGLProgramParametersWithUniforms, growth: { value: number }) => {
   shader.uniforms.growTime = growth;
   let body = shader.vertexShader;
   if (body.includes(MESH_PROJECTION)) {
-    body = body.replace(
+    body = `attribute float buildAt;\n${body.replace(
       MESH_PROJECTION,
-      `vec4 mvPosition = viewMatrix * grown(modelMatrix * vec4(transformed, 1.0));
+      `vec4 mvPosition = viewMatrix * built(modelMatrix * vec4(transformed, 1.0), buildAt);
       gl_Position = projectionMatrix * mvPosition;`,
-    );
+    )}`;
   } else {
     for (const end of LINE_ENDS) {
       const name = end.includes("instanceStart") ? "instanceStart" : "instanceEnd";
@@ -72,12 +78,13 @@ const growing = (shader: WebGLProgramParametersWithUniforms, growth: { value: nu
         end,
         end.replace(
           `modelViewMatrix * vec4( ${name}, 1.0 )`,
-          `viewMatrix * grown( modelMatrix * vec4( ${name}, 1.0 ) )`,
+          `viewMatrix * built( modelMatrix * vec4( ${name}, 1.0 ), instanceBuildAt )`,
         ),
       );
     }
+    body = `attribute float instanceBuildAt;\n${body}`;
   }
-  shader.vertexShader = GROW_GLSL + body;
+  shader.vertexShader = BUILD_GLSL + body;
 };
 
 export interface Materials {
@@ -87,19 +94,24 @@ export interface Materials {
   line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
-  /** Seconds into the town growing out of the ground; GROWN_S or more once it's up. */
+  /** Seconds into the town going up; its schedule's end or more once it's up. */
   setGrowth: (seconds: number) => void;
-  /** Make a material grow with the rest of the town. */
+  /** Make a material go up with the rest of the town. */
   grows: <M extends Material>(material: M) => M;
+  /** When each point drawn with these materials starts going up; null for things that never do. */
+  startAt: StartAt | null;
   dispose: () => void;
 }
 
-export const createMaterials = (initial: Theme): Materials => {
+/** Materials for the town; with `startAt`, all it draws goes up building by building as growth runs. */
+export const createMaterials = (initial: Theme, startAt: StartAt | null = null): Materials => {
   let theme = initial;
   let inkScale = 1;
   const growth = { value: 0 };
   const grows = <M extends Material>(material: M) => {
-    material.onBeforeCompile = (shader) => growing(shader, growth);
+    if (startAt) {
+      material.onBeforeCompile = (shader) => building(shader, growth);
+    }
     return material;
   };
   const faces = grows(
@@ -159,6 +171,7 @@ export const createMaterials = (initial: Theme): Materials => {
         material.linewidth = WEIGHTS[weight] * inkScale;
       }
     },
+    startAt,
   };
 };
 
@@ -226,6 +239,22 @@ const signTexture = (sign: Sign) => {
   return texture;
 };
 
+/** Every vertex of a run of triangles (or segments, `per` 2) gets the start of the thing it's part of, found at its middle. */
+const startsOf = (positions: ArrayLike<number>, per: number, startAt: StartAt, offset: Vec3) => {
+  const count = positions.length / 3 / per;
+  const starts = new Float32Array(count);
+  for (let index = 0; index < count; index += 1) {
+    let x = 0;
+    let z = 0;
+    for (let corner = 0; corner < per; corner += 1) {
+      x += positions[(index * per + corner) * 3] ?? 0;
+      z += positions[(index * per + corner) * 3 + 2] ?? 0;
+    }
+    starts[index] = startAt(x / per + offset[0], z / per + offset[2]);
+  }
+  return starts;
+};
+
 const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   const corner = (u: number, v: number) => [
     origin[0] + across[0] * u + up[0] * v,
@@ -245,6 +274,23 @@ const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   return geometry;
 };
 
+/** A flat board goes up with whatever it's fixed to: its whole quad starts with the point at its middle. */
+const boardOn = (
+  geometry: BufferGeometry,
+  { origin, across, up }: { origin: Vec3; across: Vec3; up: Vec3 },
+  materials: Materials,
+  offset: Vec3,
+) => {
+  if (materials.startAt) {
+    const start = materials.startAt(
+      origin[0] + (across[0] + up[0]) / 2 + offset[0],
+      origin[2] + (across[2] + up[2]) / 2 + offset[2],
+    );
+    geometry.setAttribute("buildAt", new Float32BufferAttribute([start, start, start, start], 1));
+  }
+  return geometry;
+};
+
 /** A picture the animations redraw: the TV on Autoplay's roof, a ticker. */
 export interface LiveScreen {
   canvas: HTMLCanvasElement;
@@ -254,7 +300,7 @@ export interface LiveScreen {
 
 const SCREEN_HEIGHT_PX = 64;
 
-const screenMesh = (screen: Screen, materials: Materials) => {
+const screenMesh = (screen: Screen, materials: Materials, offset: Vec3) => {
   const canvas = document.createElement("canvas");
   const aspect = Math.hypot(...screen.across) / Math.hypot(...screen.up);
   canvas.height = SCREEN_HEIGHT_PX;
@@ -266,7 +312,7 @@ const screenMesh = (screen: Screen, materials: Materials) => {
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   const mesh = new Mesh(
-    quad(screen.origin, screen.across, screen.up),
+    boardOn(quad(screen.origin, screen.across, screen.up), screen, materials, offset),
     materials.grows(new MeshBasicMaterial({ map: texture, side: DoubleSide })),
   );
   mesh.renderOrder = 2;
@@ -301,7 +347,7 @@ interface Workshop {
   signs: { material: MeshBasicMaterial; token: Token }[];
 }
 
-const faceMesh = (sketch: Sketch, workshop: Workshop) => {
+const faceMesh = (sketch: Sketch, workshop: Workshop, offset: Vec3) => {
   let vertices = 0;
   for (const positions of sketch.faces.values()) {
     vertices += positions.length / 3;
@@ -321,12 +367,27 @@ const faceMesh = (sketch: Sketch, workshop: Workshop) => {
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   geometry.setAttribute("color", colors);
+  const { startAt } = workshop.materials;
+  if (startAt) {
+    const perTriangle = startsOf(positions, 3, startAt, offset);
+    geometry.setAttribute(
+      "buildAt",
+      new Float32BufferAttribute(
+        Float32Array.from(
+          { length: vertices },
+          (_, vertex) => perTriangle[Math.floor(vertex / 3)] ?? 0,
+        ),
+        1,
+      ),
+    );
+  }
   workshop.painters.push({ colors, runs });
   return new Mesh(geometry, workshop.materials.faces);
 };
 
-const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
-  const faces = faceMesh(sketch, workshop);
+/** Builds a sketch into `target`, drawn `offset` from the town's origin (a moving part's own origin). */
+const buildInto = (sketch: Sketch, workshop: Workshop, target: Group, offset: Vec3 = [0, 0, 0]) => {
+  const faces = faceMesh(sketch, workshop, offset);
   if (faces) {
     target.add(faces);
   }
@@ -334,6 +395,13 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
+      const { startAt } = workshop.materials;
+      if (startAt) {
+        geometry.setAttribute(
+          "instanceBuildAt",
+          new InstancedBufferAttribute(startsOf(batch.positions, 2, startAt, offset), 1),
+        );
+      }
       const lines = new LineSegments2(geometry, workshop.materials.line(batch.token, batch.weight));
       lines.renderOrder = 1;
       target.add(lines);
@@ -348,13 +416,16 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
         transparent: true,
       }),
     );
-    const mesh = new Mesh(quad(sign.origin, sign.across, sign.up), material);
+    const mesh = new Mesh(
+      boardOn(quad(sign.origin, sign.across, sign.up), sign, workshop.materials, offset),
+      material,
+    );
     mesh.renderOrder = 2;
     workshop.signs.push({ material, token: sign.token });
     target.add(mesh);
   }
   for (const screen of sketch.screens) {
-    const live = screenMesh(screen, workshop.materials);
+    const live = screenMesh(screen, workshop.materials, offset);
     if (live) {
       workshop.built.screens.set(screen.name, live.screen);
       target.add(live.mesh);
@@ -365,7 +436,11 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
     group.position.set(...piece.origin);
     group.name = piece.name;
     workshop.built.parts.set(piece.name, group);
-    buildInto(piece.sketch, workshop, group);
+    buildInto(piece.sketch, workshop, group, [
+      offset[0] + piece.origin[0],
+      offset[1] + piece.origin[1],
+      offset[2] + piece.origin[2],
+    ]);
     target.add(group);
   }
 };
