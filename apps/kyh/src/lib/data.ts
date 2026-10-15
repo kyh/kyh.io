@@ -296,7 +296,7 @@ export const projects: ProjectType[] = [
   {
     description:
       "An idle business sim where your employees are real AI agents. They write real code and ship real products",
-    favicon: getPublicFaviconUrl("idlebiz.png"),
+    favicon: getPublicFaviconUrl("idlebiz-1.png"),
     projectAssets: [],
     slug: "idlebiz",
     title: "IdleBiz",
