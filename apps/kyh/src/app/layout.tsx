@@ -4,7 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GeistSans } from "geist/font/sans";
 
 import { Dock } from "@/components/dock";
-import { Multiplayer } from "@/components/multiplayer";
+import { Multiplayer } from "@/components/multiplayer/cursors";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/config";
 import { JsonLd } from "@/components/json-ld";

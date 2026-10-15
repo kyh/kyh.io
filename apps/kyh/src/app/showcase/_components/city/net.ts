@@ -12,6 +12,7 @@ import { draftState, readChat, sayState } from "@/lib/chat";
 import { lookOf, ownColorName } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
+import { asFinite, asRecord } from "@/lib/wire";
 
 /** How often whoever hosts the room puts up a snapshot of the town (ms). */
 const SNAPSHOT_EVERY = 8000;
@@ -54,11 +55,6 @@ interface NetOptions {
   onDrop: (drop: Drop) => void;
 }
 
-const finite = (value: JsonValue | undefined) => (Number.isFinite(value) ? Number(value) : null);
-
-const asRecord = (value: JsonValue | undefined) =>
-  value instanceof Object && !Array.isArray(value) ? value : null;
-
 /** A dropped thing from the wire, or null for anything a real client wouldn't send. */
 export const readDrop = (payload: JsonValue): Drop | null => {
   const record = asRecord(payload);
@@ -68,10 +64,10 @@ export const readDrop = (payload: JsonValue): Drop | null => {
   if (!record || !from || String(key) !== key || !parseActorKey(key) || !Array.isArray(state)) {
     return null;
   }
-  const numbers = state.map(finite);
-  const x = finite(from.x);
-  const y = finite(from.y);
-  const z = finite(from.z);
+  const numbers = state.map(asFinite);
+  const x = asFinite(from.x);
+  const y = asFinite(from.y);
+  const z = asFinite(from.z);
   if (numbers.length > 16 || x === null || y === null || z === null) {
     return null;
   }
@@ -81,10 +77,10 @@ export const readDrop = (payload: JsonValue): Drop | null => {
 
 /** A player's pointer from their state, and when they sent it; null while it's off the town. */
 const readPointer = (state: JsonRecord) => {
-  const t = finite(state.t);
-  const x = finite(state.x);
-  const y = finite(state.y);
-  const z = finite(state.z);
+  const t = asFinite(state.t);
+  const x = asFinite(state.x);
+  const y = asFinite(state.y);
+  const z = asFinite(state.z);
   if (state.on !== 1 || t === null || x === null || y === null || z === null) {
     return null;
   }

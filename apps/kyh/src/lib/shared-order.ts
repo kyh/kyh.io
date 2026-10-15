@@ -1,9 +1,12 @@
 // The order of a sortable grid (the homepage's side quests, each folder), shared
-// by everyone in the site's room for as long as the room lives. A drag sends the
+// by everyone in the site's room for as long as the room lives. A drop sends the
 // host a "reorder" intent; the host bounds it and writes it into shared state
 // under `orders`; every client reads it back against the tiles it actually has.
-// Everything here crossed a JSON wire, so nothing in it is trusted.
+// Everything here crossed a JSON wire, so nothing in it is trusted. Pure: the
+// room (site-room.ts) calls in, and the tests run without one.
 import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
+
+import { asRecord } from "@/lib/wire";
 
 export const REORDER = "reorder";
 
@@ -24,9 +27,6 @@ export interface ReorderIntent {
   order: string[];
   n: number;
 }
-
-const asRecord = (value: JsonValue | undefined) =>
-  value instanceof Object && !Array.isArray(value) ? value : null;
 
 /** Keys that would reach an object's prototype instead of naming a grid or tile. */
 const PROTOTYPE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
@@ -84,6 +84,15 @@ export const applyReorder = (
 };
 
 /**
+ * The host's side: the room's `orders` after a guest's raw intent, or null to
+ * leave them be (a malformed intent, or a room already full of grids).
+ */
+export const hostReorder = (orders: JsonValue | undefined, payload: JsonValue, from: string) => {
+  const intent = parseReorder(payload);
+  return intent ? applyReorder(orders, intent, from) : null;
+};
+
+/**
  * A grid's shared order laid over the tiles this page has: keys it doesn't
  * know are dropped, and tiles the room didn't mention keep their place at the end.
  */
@@ -106,3 +115,29 @@ export const readSharedOrder = (
 /** The grid's entry in the room's shared state. */
 export const ordersEntry = (shared: JsonRecord | undefined, grid: string) =>
   asRecord(shared?.orders)?.[grid];
+
+/** This visitor's latest drop on a grid, and the room's entry when they made it. */
+export interface Drop {
+  entry: JsonRecord;
+  base: JsonValue | undefined;
+}
+
+/**
+ * The entry a grid shows: this visitor's own drop until the room has moved
+ * past it, then the room's. The room has moved past it once its entry is
+ * anything but what it was at the drop, unless that's a late echo of one of
+ * this visitor's earlier drops. Returns one of its inputs, never a new object,
+ * so a store can hand it out as a stable snapshot.
+ */
+export const acceptOrder = (room: JsonValue | undefined, drop?: Drop) => {
+  if (!drop) {
+    return room;
+  }
+  if (room === drop.base) {
+    return drop.entry;
+  }
+  const record = asRecord(room);
+  const n = asCount(record?.n);
+  const stale = record?.by === drop.entry.by && n !== null && n < Number(drop.entry.n);
+  return stale ? drop.entry : room;
+};

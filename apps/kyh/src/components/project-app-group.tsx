@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
 
-import { SortableGrid, useEditMode } from "@/components/sortable-grid";
-import { useSharedOrder } from "@/lib/use-shared-order";
+import { SortableGrid } from "@/components/sortable-grid";
 
 // Types
 interface Point {
@@ -50,7 +49,7 @@ interface ProjectAppProps {
   showShadow?: boolean;
 }
 
-export const ProjectApp = ({
+const ProjectAppIcon = ({
   name,
   description,
   iconSrc,
@@ -137,6 +136,9 @@ export const ProjectApp = ({
   );
 };
 
+/** An app's icon and name; memoized, so a grid reordering around it doesn't redraw it. */
+export const ProjectApp = memo(ProjectAppIcon);
+
 const OpenGridItem = ({
   item,
   idx,
@@ -191,14 +193,19 @@ const OpenGridItem = ({
   );
 };
 
-export const ProjectAppGroup = ({ title, items }: { title: string; items: ProjectAppItem[] }) => {
+const keyOf = (item: ProjectAppItem) => item.key;
+
+interface ProjectAppGroupProps {
+  title: string;
+  /** In the order the folder shows them, in its preview and when open. */
+  items: ProjectAppItem[];
+  /** Apps were rearranged inside the open folder: the new order, by key. */
+  onDrop: (order: string[]) => void;
+  onHold?: (holding: boolean) => void;
+}
+
+const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const byKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
-  const keys = useMemo(() => items.map((item) => item.key), [items]);
-  const { order, reorder, hold } = useSharedOrder(`folder:${title}`, keys);
-  const [editing, setEditing] = useEditMode();
-  // The folder's preview and grid both follow the visitor's order.
-  const orderedItems = useMemo(() => order.flatMap((key) => byKey.get(key) ?? []), [order, byKey]);
   const contentsId = useId();
   const folderRef = useRef<HTMLDivElement>(null);
   const [origin, setOrigin] = useState<Point | null>(null);
@@ -227,41 +234,45 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
     }
   }, [isOpen]);
 
+  /** How far each open icon sits from the folder, for flying out of it and back. */
+  const measureOffsets = useCallback(
+    (from: Point) => {
+      const next: Record<string, Point> = {};
+      for (const item of items) {
+        const rect = itemRefs.current[item.key]?.getBoundingClientRect();
+        if (rect) {
+          next[item.key] = {
+            x: from.x - (rect.left + rect.width / 2),
+            y: from.y - (rect.top + rect.height / 2),
+          };
+        }
+      }
+      return next;
+    },
+    [items],
+  );
+
   useLayoutEffect(() => {
     if (!isOpen || !origin) {
       return;
     }
-
-    const frame = requestAnimationFrame(() => {
-      const next: Record<string, Point> = {};
-      for (const item of items) {
-        const el = itemRefs.current[item.key];
-        if (!el) {
-          continue;
-        }
-        const rect = el.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        next[item.key] = { x: origin.x - cx, y: origin.y - cy };
-      }
-      setItemOffsets(next);
-    });
-
+    const frame = requestAnimationFrame(() => setItemOffsets(measureOffsets(origin)));
     return () => cancelAnimationFrame(frame);
-  }, [isOpen, origin, items]);
+  }, [isOpen, origin, measureOffsets]);
+
+  // Icons may have been rearranged since the folder opened: measure again so
+  // each flies back from where it is now, then close on the next frame.
+  const close = () => {
+    if (origin) {
+      setItemOffsets(measureOffsets(origin));
+    }
+    requestAnimationFrame(() => setIsOpen(false));
+  };
 
   const offsetsReady = isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
-    <Dialog.Root
-      open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-          setEditing(false);
-        }
-      }}
-    >
+    <Dialog.Root open={isOpen} onOpenChange={(open) => (open ? setIsOpen(true) : close())}>
       <MotionConfig transition={springTransition}>
         <div className="flex items-center justify-center" data-slot="app-group">
           <motion.div
@@ -282,7 +293,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 data-slot="folder-preview"
               >
                 <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" data-slot="folder-grid">
-                  {orderedItems.slice(0, 4).map((item) => (
+                  {items.slice(0, 4).map((item) => (
                     <div
                       key={item.key}
                       className="relative aspect-square overflow-hidden rounded ring-1 ring-black/3 dark:ring-white/15"
@@ -329,7 +340,7 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                     }}
                   />
                 }
-                onClick={() => setIsOpen(false)}
+                onClick={close}
               />
               <Dialog.Popup
                 render={
@@ -360,25 +371,21 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
                 </motion.div>
 
                 <SortableGrid
-                  order={order}
-                  onReorder={reorder}
-                  onHold={hold}
-                  editing={editing}
-                  onEdit={() => setEditing(true)}
+                  items={items}
+                  keyOf={keyOf}
+                  onDrop={onDrop}
+                  onHold={onHold}
                   className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
-                  renderTile={(key, idx) => {
-                    const item = byKey.get(key);
-                    return item ? (
-                      <OpenGridItem
-                        key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
-                        item={item}
-                        idx={idx}
-                        registerRef={registerRef}
-                        itemOffsets={itemOffsets}
-                        offsetsReady={!!offsetsReady}
-                      />
-                    ) : null;
-                  }}
+                  renderTile={(item, idx) => (
+                    <OpenGridItem
+                      key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
+                      item={item}
+                      idx={idx}
+                      registerRef={registerRef}
+                      itemOffsets={itemOffsets}
+                      offsetsReady={!!offsetsReady}
+                    />
+                  )}
                 />
               </Dialog.Popup>
             </Dialog.Portal>
@@ -388,3 +395,6 @@ export const ProjectAppGroup = ({ title, items }: { title: string; items: Projec
     </Dialog.Root>
   );
 };
+
+/** A folder of apps that opens over the page; memoized like ProjectApp. */
+export const ProjectAppGroup = memo(ProjectAppFolder);

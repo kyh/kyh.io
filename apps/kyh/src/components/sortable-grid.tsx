@@ -6,13 +6,15 @@ import { Reorder, useDragControls } from "motion/react";
 
 // An iOS-style home screen: long-press a tile and the grid wiggles, drag to
 // reorder (motion's Reorder in `xy`), press anywhere else or Escape to stop.
+// The grid owns the gesture: it shows its own order while a tile is held and
+// hands the result to `onDrop` once, when the tile is let go.
 
 const longPressMs = 500;
 const moveTolerance = 8;
 const layoutSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
 
 /** Editing (wiggling) until a press lands outside every tile, or Escape. */
-export const useEditMode = () => {
+const useEditMode = () => {
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -49,7 +51,12 @@ const wiggleStyle = (index: number) =>
     "--wiggle-dir": index % 2 === 0 ? 1 : -1,
   }) as React.CSSProperties;
 
-/** React bubbles events out of portals (an open folder) to their React parents; a tile only answers its own DOM. */
+/**
+ * A folder's grid sits inside a tile of the grid around it, in a portal, and
+ * React bubbles portal events to their React parents: a tile only answers
+ * events from its own DOM, so pressing inside an open folder doesn't also
+ * press the folder's tile.
+ */
 const isOwn = (e: SyntheticEvent<HTMLElement>) =>
   e.target instanceof Node && e.currentTarget.contains(e.target);
 
@@ -58,80 +65,75 @@ interface TileProps {
   index: number;
   editing: boolean;
   onLongPress: () => void;
+  /** Picked up (true) or let go (false). */
   onHold: (holding: boolean) => void;
-  lockScroll: (locked: boolean) => void;
   children: ReactNode;
 }
 
-const Tile = ({ value, index, editing, onLongPress, onHold, lockScroll, children }: TileProps) => {
+const Tile = ({ value, index, editing, onLongPress, onHold, children }: TileProps) => {
   const controls = useDragControls();
-  const press = useRef<{ stop: () => void } | null>(null);
+  // One press at a time; aborting it takes down its timer and window listeners.
+  const press = useRef<AbortController | null>(null);
   const [dragging, setDragging] = useState(false);
 
-  const cancelPress = () => {
-    press.current?.stop();
-    press.current = null;
-  };
+  useEffect(() => () => press.current?.abort(), []);
 
-  useEffect(() => () => press.current?.stop(), []);
-
-  // Drag starts from a long press (or any press once editing), so the item
-  // ignores its own pointer and the press hands the gesture to dragControls.
+  // The tile ignores its own pointer (dragListener off): a long press, or any
+  // press once editing, picks it up and hands the gesture to dragControls.
+  // The press is followed on the window, since the pointer may leave the tile,
+  // and only its own pointer counts: a second finger lifting doesn't end it.
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || !isOwn(e)) {
       return;
     }
-    const event = e.nativeEvent;
-    // The press is followed on the window: the pointer may leave the tile before it lifts.
-    // Only this press's pointer counts: a second finger lifting mustn't end it.
-    // From the moment a tile is picked up until it's let go, it's held: still or moving.
-    let holding = false;
+    press.current?.abort();
+    const ac = new AbortController();
+    press.current = ac;
+    const { signal } = ac;
+    const down = e.nativeEvent;
+    const isThisPointer = (event: PointerEvent) => event.pointerId === down.pointerId;
+
+    let held = false;
+    let timer = 0;
     const grab = () => {
-      holding = true;
+      held = true;
       onHold(true);
-      lockScroll(true);
-      controls.start(event);
+      controls.start(down);
     };
-    const onUp = (u: PointerEvent) => {
-      if (u.pointerId !== event.pointerId) {
-        return;
-      }
-      cancelPress();
-      lockScroll(false);
-      if (holding) {
+    signal.addEventListener("abort", () => {
+      clearTimeout(timer);
+      if (held) {
         onHold(false);
       }
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
+    });
+    const release = (event: PointerEvent) => {
+      if (isThisPointer(event)) {
+        ac.abort();
+      }
     };
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
+    window.addEventListener("pointerup", release, { signal });
+    window.addEventListener("pointercancel", release, { signal });
+
     if (editing) {
       grab();
       return;
     }
-    cancelPress();
-    const onMove = (m: PointerEvent) => {
-      if (
-        m.pointerId === event.pointerId &&
-        Math.hypot(m.clientX - event.clientX, m.clientY - event.clientY) > moveTolerance
-      ) {
-        cancelPress();
-      }
-    };
-    const timer = window.setTimeout(() => {
-      cancelPress();
+    timer = window.setTimeout(() => {
       onLongPress();
       // Same press carries on into a drag, as on a home screen.
       grab();
     }, longPressMs);
-    window.addEventListener("pointermove", onMove);
-    press.current = {
-      stop: () => {
-        clearTimeout(timer);
-        window.removeEventListener("pointermove", onMove);
+    // Moving before the long press fires is a scroll or a swipe, not a pick-up.
+    window.addEventListener(
+      "pointermove",
+      (event) => {
+        const moved = Math.hypot(event.clientX - down.clientX, event.clientY - down.clientY);
+        if (isThisPointer(event) && !held && moved > moveTolerance) {
+          clearTimeout(timer);
+        }
       },
-    };
+      { signal },
+    );
   };
 
   return (
@@ -158,7 +160,8 @@ const Tile = ({ value, index, editing, onLongPress, onHold, lockScroll, children
         }
       }}
       onContextMenu={(e) => {
-        if ((editing || press.current) && isOwn(e)) {
+        const pressing = press.current && !press.current.signal.aborted;
+        if ((editing || pressing) && isOwn(e)) {
           e.preventDefault();
         }
       }}
@@ -170,30 +173,36 @@ const Tile = ({ value, index, editing, onLongPress, onHold, lockScroll, children
   );
 };
 
-interface SortableGridProps {
-  order: string[];
-  onReorder: (order: string[]) => void;
-  editing: boolean;
-  onEdit: () => void;
-  /** Whether this visitor is holding a tile, still or dragging. */
-  onHold: (holding: boolean) => void;
+interface SortableGridProps<T> {
+  items: T[];
+  keyOf: (item: T) => string;
+  renderTile: (item: T, index: number) => ReactNode;
+  /** A tile was let go after moving: the new order, by key. */
+  onDrop: (order: string[]) => void;
+  /** A tile was picked up (true) or let go (false). */
+  onHold?: (holding: boolean) => void;
   className?: string;
-  renderTile: (key: string, index: number) => ReactNode;
 }
 
-export const SortableGrid = ({
-  order,
-  onReorder,
-  editing,
-  onEdit,
+export const SortableGrid = <T,>({
+  items,
+  keyOf,
+  renderTile,
+  onDrop,
   onHold,
   className,
-  renderTile,
-}: SortableGridProps) => {
+}: SortableGridProps<T>) => {
+  const [editing, setEditing] = useEditMode();
+  // The order mid-gesture, until the tile is let go and it becomes `items`.
+  const [moving, setMoving] = useState<string[] | null>(null);
+  const latest = useRef<string[] | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollLocked = useRef(false);
 
-  // A finger held on a tile drags it, not the page.
+  const byKey = new Map(items.map((item) => [keyOf(item), item]));
+  const order = moving ?? items.map(keyOf);
+
+  // A finger holding a tile drags it, not the page.
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid) {
@@ -208,8 +217,21 @@ export const SortableGrid = ({
     return () => grid.removeEventListener("touchmove", onTouchMove);
   }, []);
 
-  const lockScroll = (locked: boolean) => {
-    scrollLocked.current = locked;
+  const reorder = (next: string[]) => {
+    latest.current = next;
+    setMoving(next);
+  };
+
+  const hold = (holding: boolean) => {
+    scrollLocked.current = holding;
+    onHold?.(holding);
+    const dropped = latest.current;
+    if (holding || !dropped) {
+      return;
+    }
+    latest.current = null;
+    setMoving(null);
+    onDrop(dropped);
   };
 
   return (
@@ -218,22 +240,24 @@ export const SortableGrid = ({
       ref={gridRef}
       axis="xy"
       values={order}
-      onReorder={onReorder}
+      onReorder={reorder}
       className={className}
     >
-      {order.map((key, index) => (
-        <Tile
-          key={key}
-          value={key}
-          index={index}
-          editing={editing}
-          onLongPress={onEdit}
-          onHold={onHold}
-          lockScroll={lockScroll}
-        >
-          {renderTile(key, index)}
-        </Tile>
-      ))}
+      {order.map((key, index) => {
+        const item = byKey.get(key);
+        return item === undefined ? null : (
+          <Tile
+            key={key}
+            value={key}
+            index={index}
+            editing={editing}
+            onLongPress={() => setEditing(true)}
+            onHold={hold}
+          >
+            {renderTile(item, index)}
+          </Tile>
+        );
+      })}
     </Reorder.Group>
   );
 };

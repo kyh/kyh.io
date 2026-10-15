@@ -155,16 +155,26 @@ pick-up is a claim, a drop carries the mover's exact landed state, pointers go
 out at 15Hz, and everything off the wire is validated. With no server the town
 plays alone. Rooms are named by `TOWN_VERSION` and the project slugs: bump
 `TOWN_VERSION` whenever stepping or packing changes, or old and new pages
-desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
-same server, room `kyh-site`, and skip `/showcase`, which draws its own.
+desync in one room.
+
+The rest of the site shares one room, `kyh-site`, on the same server:
+`src/lib/site-room.ts` is the store (one client, no React; host-side features
+are a fixed slice table, since the host may be on any page), and
+`components/multiplayer/provider.tsx` opens it in `Providers` and exposes hooks
+(`usePlayers`, `useSelf`, `useChat`, `useRoomClock`, `useSharedOrder`), each
+subscribing to just what it reads. `components/multiplayer/cursors.tsx` draws
+everyone's pointers and chat, and skips `/showcase`, which draws its own.
 
 The homepage's side-quests grid and its folders are iOS home screens
-(`src/components/sortable-grid.tsx`): long-press an icon and the grid wiggles,
-drag to reorder (motion's `Reorder` in `xy`), press elsewhere or Escape to stop.
-The order is shared in `kyh-site` while the room lives (`use-shared-order.ts`,
-`shared-order.ts`, tested): a drop sends the host a `reorder` intent, the host
-writes `orders` into shared state, and everyone reads it against their own
-tiles. A held tile ignores the room until it's dropped.
+(`src/components/sortable-grid.tsx`, generic over items): long-press an icon and
+the grid wiggles, drag to reorder (motion's `Reorder` in `xy`), press elsewhere
+or Escape to stop. The grid owns the gesture and calls `onDrop` once on release.
+The order is shared in `kyh-site` while the room lives (`useSharedOrder`;
+`shared-order.ts` is the pure, tested part): a drop shows at once and sends the
+host a `reorder` intent, the host writes `orders` into shared state, and
+everyone reads it against their own tiles. A held tile ignores the room until
+it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
+`ProjectAppGroup` just takes ordered items and `onDrop`.
 
 ### policingice (`apps/policingice`)
 

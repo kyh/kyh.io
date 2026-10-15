@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { applyReorder, ordersEntry, parseReorder, readSharedOrder } from "./shared-order";
+import {
+  acceptOrder,
+  applyReorder,
+  hostReorder,
+  ordersEntry,
+  parseReorder,
+  readSharedOrder,
+} from "./shared-order";
 
 test("a reorder intent parses only in the right shape", () => {
   assert.deepEqual(parseReorder({ grid: "side-quests", n: 3, order: ["a", "b"] }), {
@@ -81,4 +88,28 @@ test("a grid's entry is found under the room's orders", () => {
   assert.equal(ordersEntry({ orders: { home: entry } }, "home"), entry);
   assert.equal(ordersEntry({ orders: [] }, "home"), undefined);
   assert.equal(ordersEntry(undefined, "home"), undefined);
+});
+
+test("the host applies a raw intent, or leaves the room be", () => {
+  assert.deepEqual(hostReorder(undefined, { grid: "home", n: 1, order: ["a"] }, "p"), {
+    home: { by: "p", n: 1, order: ["a"] },
+  });
+  assert.equal(hostReorder(undefined, { grid: "home" }, "p"), null);
+});
+
+test("a visitor's own drop shows until the room moves past it", () => {
+  const base = { by: "other", n: 3, order: ["a", "b"] };
+  const mine = { by: "me", n: 2, order: ["b", "a"] };
+  const drop = { base, entry: mine };
+  // No drop: the room's entry, as is.
+  assert.equal(acceptOrder(base), base);
+  // The room hasn't heard yet: this visitor's drop.
+  assert.equal(acceptOrder(base, drop), mine);
+  // A late echo of an earlier drop of theirs is still behind it.
+  assert.equal(acceptOrder({ by: "me", n: 1, order: ["a", "b"] }, drop), mine);
+  // Its own echo, or anyone's newer drop, is the room moving on.
+  const echo = { by: "me", n: 2, order: ["b", "a"] };
+  assert.equal(acceptOrder(echo, drop), echo);
+  const theirs = { by: "other", n: 4, order: ["a", "b"] };
+  assert.equal(acceptOrder(theirs, drop), theirs);
 });
