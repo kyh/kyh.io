@@ -6,15 +6,19 @@ import { usePathname } from "next/navigation";
 import { AvatarGroup } from "@/components/avatar-group";
 import { ChatBubble } from "@/components/chat-bubble";
 import { Cursor } from "@/components/cursor";
-import type { JsonValue } from "@/lib/player";
+import type { PagePoint } from "@/lib/page-point";
+import type { Player } from "@/lib/player";
 import type { Line } from "@/lib/chat";
 import { lineOf, readChat } from "@/lib/chat";
-import { useWindowSize } from "@/lib/use-window-size";
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { asFinite } from "@/lib/wire";
 import { useChat, usePlayers, useRoomClock, useSelf } from "./provider";
 
-const asCoordinate = (value: JsonValue | undefined) => asFinite(value) ?? undefined;
+const pagePointOf = (state: Player["state"]): PagePoint | null => {
+  const fromCenter = asFinite(state.fromCenter);
+  const fromTop = asFinite(state.fromTop);
+  return fromCenter === null || fromTop === null ? null : { fromCenter, fromTop };
+};
 
 /** Pages that draw visitors themselves: the city puts pointers in the town, not on the screen. */
 const OWN_CURSORS = new Set(["/showcase"]);
@@ -57,7 +61,6 @@ export const Multiplayer = () => {
   const me = useSelf();
   const now = useRoomClock();
   const { draft, said } = useChat(!ownsCursors);
-  const windowDimensions = useWindowSize();
 
   // Only surface players that have announced themselves (sent a pathname). A
   // just-connected or mid-reconnect socket sits at empty state for a beat; the
@@ -67,11 +70,12 @@ export const Multiplayer = () => {
   );
 
   const at = now();
-  const visible = Object.entries(ownsCursors ? {} : present)
-    .filter(
-      ([, player]) => !!player.state.x && !!player.state.y && player.state.pathname === pathname,
-    )
-    .map(([id, player]) => ({ chat: readChat(player.state, at), id, player }));
+  const visible = Object.entries(ownsCursors ? {} : present).flatMap(([id, player]) => {
+    const point = pagePointOf(player.state);
+    return point && player.state.pathname === pathname
+      ? [{ chat: readChat(player.state, at), id, player, point }]
+      : [];
+  });
   const ownSaid = said && said.until > at ? said : null;
 
   // A line comes down by the clock, not by a change in the room: wake for the next one.
@@ -93,17 +97,15 @@ export const Multiplayer = () => {
       <div className="fixed top-6 right-6 z-[1]">
         <AvatarGroup others={present} />
       </div>
-      {visible.map(({ chat, id, player }) => (
+      {visible.map(({ chat, id, player, point }) => (
         <Cursor
           key={id}
-          x={asCoordinate(player.state.x)}
-          y={asCoordinate(player.state.y)}
+          at={point}
           // A visitor on an older page sends no stamp: take theirs as it arrives.
           t={asFinite(player.state.t) ?? now()}
           color={player.color}
           hue={player.hue}
           chat={chat}
-          windowDimensions={windowDimensions}
         />
       ))}
       {me && !ownsCursors && (

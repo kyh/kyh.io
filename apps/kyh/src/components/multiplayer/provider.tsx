@@ -18,6 +18,7 @@ import type { Said } from "@/lib/chat";
 import type { SiteRoom } from "@/lib/site-room";
 import { SHOW_MS } from "@/lib/chat";
 import { listenForChat } from "@/lib/chat-input";
+import { readViewport, toPage } from "@/lib/page-point";
 import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import { readSharedOrder } from "@/lib/shared-order";
 import { createSiteRoom } from "@/lib/site-room";
@@ -50,6 +51,11 @@ const usePointerBroadcast = (room: SiteRoom) => {
     const stop = subscribeToPointer(() => {
       moved = true;
     });
+    // Scrolling slides the page under a still pointer.
+    const onScroll = () => {
+      moved = true;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     const rate = new FixedRate(SEND_RATE);
     let last = performance.now();
     let frame = 0;
@@ -60,12 +66,11 @@ const usePointerBroadcast = (room: SiteRoom) => {
         // A lifted finger leaves no cursor behind.
         room.point(
           pointerLifted()
-            ? { x: null, y: null }
+            ? { fromCenter: null, fromTop: null }
             : {
+                ...toPage(at.x, at.y, readViewport()),
                 pointer: at.kind,
                 t: Math.round(room.now()),
-                x: at.x / window.innerWidth,
-                y: at.y / window.innerHeight,
               },
         );
       }
@@ -76,6 +81,7 @@ const usePointerBroadcast = (room: SiteRoom) => {
     return () => {
       cancelAnimationFrame(frame);
       stop();
+      window.removeEventListener("scroll", onScroll);
     };
   }, [room]);
 };
