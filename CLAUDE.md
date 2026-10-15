@@ -118,7 +118,8 @@ Every project in `src/lib/data.ts` gets a building — a bespoke one when its sl
 is in `draw-landmarks.ts`, otherwise a generic one with its name on it on the
 nearest free lot — with its favicon floating over the roof as a real link
 (`city-pins.tsx`). Hovering a building or its icon paints that building in its
-colors, rings its lot in a soft band of its own color (`halo.ts`) and opens its
+colors, turned in OKLab toward its project's own (`color` in `data.ts`, picked
+from its icon; `brandTint` in `palette.ts`), rings its lot in a soft band of its own color (`halo.ts`) and opens its
 icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
 or icon opens the card, a second tap or a tap on the card opens the project). A trackpad's
@@ -146,7 +147,7 @@ the rules for the town and the site-wide cursors alike: each visitor's draft and
 last line ride in their player state, so nothing accumulates. Dark mode is night. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
-`render.ts` (sketch → three.js; each building repaints itself grey or colored),
+`render.ts` (sketch → three.js; each building repaints itself grey or colored; shaded faces carry a fine dither of ink dots, `dither.ts`),
 `landmarks-*.ts` (the buildings), `controls.ts` (which building is lit, when
 the flyover runs, tap vs drag vs pinch, the keys; pure, tested), `engine.ts`
 (camera, tour, pins, input, loop). In dev, `window.city.look(x, z, zoom)` moves the camera and

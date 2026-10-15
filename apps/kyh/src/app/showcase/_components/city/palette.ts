@@ -168,9 +168,119 @@ export const greyOf = (hex: string) => {
   return `#${channel}${channel}${channel}`;
 };
 
+/** How a building's colors are turned toward its project's own. */
+export type Tint = (hex: string) => string;
+
+export const untinted: Tint = (hex) => hex;
+
+type Lab = readonly [number, number, number];
+
+const toLinear = (channel: number) =>
+  channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+
+const toGamma = (channel: number) =>
+  channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055;
+
+/** OKLab, where turning a hue keeps its lightness. */
+export const oklab = (hex: string): Lab => {
+  const [red, green, blue] = channels(hex);
+  const r = toLinear(red / 255);
+  const g = toLinear(green / 255);
+  const b = toLinear(blue / 255);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+};
+
+export const fromOklab = ([lightness, a, b]: Lab) => {
+  const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const rgb = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+  return `#${rgb
+    .map((channel) =>
+      Math.round(Math.min(1, Math.max(0, toGamma(Math.max(0, channel)))) * 255)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+};
+
+/** Below this an icon is black, white or grey: it has no hue to lend. */
+const NEUTRAL_CHROMA = 0.03;
+
+/** The colored token covering the most of a building, weighted by how colorful it is. */
+export const dominant = (areas: ReadonlyMap<Token, number>): Token | null => {
+  let best: Token | null = null;
+  let bestWeight = 0;
+  for (const [token, area] of areas) {
+    const [, a, b] = oklab(PALETTE[token].day);
+    const chroma = Math.hypot(a, b);
+    if (chroma > NEUTRAL_CHROMA && area * chroma > bestWeight) {
+      best = token;
+      bestWeight = area * chroma;
+    }
+  }
+  return best;
+};
+
+/**
+ * Turns a building's colors so its main one lands on its project's color:
+ * every hue rotates by the same angle and saturates by the same factor
+ * (within reason), and lightness stays put and near-greys stay as they are, so pastel roofs stay pastel,
+ * night stays night and a two-tone building keeps its contrast. A project
+ * with a neutral icon keeps the colors it was drawn in.
+ */
+export const brandTint = (main: Token | null, brand?: string): Tint => {
+  if (main === null || brand === undefined) {
+    return untinted;
+  }
+  const [, fromA, fromB] = oklab(PALETTE[main].day);
+  const [, toA, toB] = oklab(brand);
+  const toChroma = Math.hypot(toA, toB);
+  if (toChroma < NEUTRAL_CHROMA) {
+    return untinted;
+  }
+  const turn = Math.atan2(toB, toA) - Math.atan2(fromB, fromA);
+  const stretch = Math.min(1.5, Math.max(0.5, toChroma / Math.hypot(fromA, fromB)));
+  const cos = Math.cos(turn) * stretch;
+  const sin = Math.sin(turn) * stretch;
+  return (hex) => {
+    const [lightness, a, b] = oklab(hex);
+    if (Math.hypot(a, b) < NEUTRAL_CHROMA) {
+      return hex;
+    }
+    return fromOklab([lightness, a * cos - b * sin, a * sin + b * cos]);
+  };
+};
+
 /**
  * The city is drawn in greys; a building shows its colors only while it is
  * hovered (or the flyover is passing it).
  */
-export const shade = (token: Token, theme: Theme, colorful: boolean) =>
-  colorful ? PALETTE[token][theme] : greyOf(PALETTE[token][theme]);
+export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) =>
+  colorful ? tint(PALETTE[token][theme]) : greyOf(PALETTE[token][theme]);
+
+const LIGHTNESS: Record<Theme, readonly [number, number]> = {
+  day: [0.45, 0.72],
+  night: [0.68, 0.85],
+};
+
+/** A project's color as a glow on the ground: kept dark enough to show by day, light enough by night. */
+export const glowOf = (brand: string): Record<Theme, string> => {
+  const [lightness, a, b] = oklab(brand);
+  const at = (theme: Theme) => {
+    const [low, high] = LIGHTNESS[theme];
+    return fromOklab([Math.min(high, Math.max(low, lightness)), a, b]);
+  };
+  return { day: at("day"), night: at("night") };
+};

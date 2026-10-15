@@ -7,6 +7,8 @@ export interface ProjectType {
   description: string;
   url: string;
   favicon: string;
+  /** The color its icon is known by; absent when the icon is black and white. */
+  color?: string;
   projectAssets: ProjectAssetType[];
   type: "venture" | "project" | "mini-app" | "template";
 }
@@ -21,6 +23,7 @@ interface ProjectAssetType {
 
 export const projects: ProjectType[] = [
   {
+    color: "#862f48",
     description: "A game studio for your agent",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     projectAssets: [
@@ -50,6 +53,7 @@ export const projects: ProjectType[] = [
     url: "https://www.vibedgames.com",
   },
   {
+    color: "#5e6286",
     description: "Anonymous love letters 💌 written in disappearing ink",
     favicon: getPublicFaviconUrl("yourssincerely-c.png"),
     projectAssets: [
@@ -76,6 +80,7 @@ export const projects: ProjectType[] = [
     url: "https://www.yourssincerely.org",
   },
   {
+    color: "#8a6846",
     description: "A curated collection of components that spark joy",
     favicon: getPublicFaviconUrl("uicapsule-c.png"),
     projectAssets: [
@@ -128,6 +133,7 @@ export const projects: ProjectType[] = [
     url: "https://www.uicapsule.com",
   },
   {
+    color: "#13778f",
     description: "Initialize your technical team",
     favicon: getPublicFaviconUrl("founding-c.png"),
     projectAssets: [
@@ -157,6 +163,7 @@ export const projects: ProjectType[] = [
     url: "https://www.inteligir.com",
   },
   {
+    color: "#7c5c89",
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     favicon: getPublicFaviconUrl("dataembed-1-c.png"),
@@ -176,6 +183,7 @@ export const projects: ProjectType[] = [
     url: "https://www.dataembed.com",
   },
   {
+    color: "#58847b",
     description: "Research into the data between people",
     favicon: getPublicFaviconUrl("edgestories-1-c.png"),
     projectAssets: [],
@@ -186,6 +194,7 @@ export const projects: ProjectType[] = [
   },
   // Mini Apps
   {
+    color: "#207e56",
     description:
       "A simple tool to help you navigate tech startup compensation. None of these rosy numbers HR loves to give. No estimation brainwork required. Just fill in the numbers and hit the bank",
     favicon: getPublicFaviconUrl("tc-2.png"),
@@ -203,6 +212,7 @@ export const projects: ProjectType[] = [
     url: "https://tc.kyh.io",
   },
   {
+    color: "#6875f4",
     description: "A real-time dashboard visualizing global Covid-19 data and trends",
     favicon: getPublicFaviconUrl("covid-19-1.png"),
     projectAssets: [
@@ -223,6 +233,7 @@ export const projects: ProjectType[] = [
     url: "https://covid-19.kyh.io",
   },
   {
+    color: "#bd4d3e",
     description: "Cute sticker pack",
     favicon: getPublicFaviconUrl("keiko.png"),
     projectAssets: [
@@ -239,6 +250,7 @@ export const projects: ProjectType[] = [
     url: "https://apps.apple.com/us/app/id1209391711",
   },
   {
+    color: "#f8e778",
     description: "Documenting incidents of ICE overreach through crowdsourced video evidence",
     favicon: getPublicFaviconUrl("policing-ice-1.png"),
     projectAssets: [],
@@ -257,6 +269,7 @@ export const projects: ProjectType[] = [
     url: "https://www.loremllm.com",
   },
   {
+    color: "#6dc354",
     description:
       "Minute trading. Realtime trading game where you tap to bet on price up to 90 seconds ahead",
     favicon: getPublicFaviconUrl("stonksville.png"),
@@ -267,6 +280,7 @@ export const projects: ProjectType[] = [
     url: "https://www.stonksville.com",
   },
   {
+    color: "#1a2b50",
     description: "Everything lives in a 2x2 matrix",
     favicon: getPublicFaviconUrl("kwadrants-1.png"),
     projectAssets: [],
@@ -276,6 +290,7 @@ export const projects: ProjectType[] = [
     url: "https://www.kwadrants.com",
   },
   {
+    color: "#de35df",
     description: "Your feeds as live TV channels of AI-generated video",
     favicon: getPublicFaviconUrl("autoplay.png"),
     projectAssets: [],
@@ -285,6 +300,7 @@ export const projects: ProjectType[] = [
     url: "https://autoplay.kyh.io",
   },
   {
+    color: "#77c5f1",
     description: "Keep Clawd running. An endless runner that plays while Claude Code works",
     favicon: getPublicFaviconUrl("clawders.png"),
     projectAssets: [],
@@ -294,6 +310,7 @@ export const projects: ProjectType[] = [
     url: "https://clawders.kyh.io",
   },
   {
+    color: "#466cb0",
     description:
       "An idle business sim where your employees are real AI agents. They write real code and ship real products",
     favicon: getPublicFaviconUrl("idlebiz-2.png"),

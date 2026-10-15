@@ -20,9 +20,10 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 
-import type { Theme, Token } from "./palette";
+import type { Theme, Tint, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
-import { shade } from "./palette";
+import { createShadowDots, inShadow } from "./dither";
+import { shade, untinted } from "./palette";
 
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
@@ -34,6 +35,8 @@ export interface Materials {
   line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
+  /** The canvas's device pixels per CSS pixel, which the shadow dots are sized in. */
+  setPixelRatio: (ratio: number) => void;
   /** A material made for the town elsewhere (a sign, a screen), adapted like the rest. */
   adopt: <M extends Material>(material: M) => M;
   dispose: () => void;
@@ -59,6 +62,12 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
+  const dots = createShadowDots(theme);
+  const raised = faces.onBeforeCompile.bind(faces);
+  faces.onBeforeCompile = (shader, renderer) => {
+    raised(shader, renderer);
+    dots.patch(shader);
+  };
   const lines = new Map<
     string,
     { material: LineMaterial; token: Token; weight: Weight; colorful: boolean }
@@ -90,8 +99,10 @@ export const createMaterials = (
     },
     faces,
     line,
+    setPixelRatio: dots.setPixelRatio,
     setTheme: (next) => {
       theme = next;
+      dots.setTheme(next);
       for (const { colorful, material, token } of lines.values()) {
         material.color.set(shade(token, theme, colorful));
       }
@@ -262,10 +273,15 @@ const faceMesh = (sketch: Sketch, workshop: Workshop) => {
     runs.push({ count: coordinates.length / 3, start, token });
     start += coordinates.length / 3;
   }
+  const shadow = new Float32Array(vertices);
+  for (const { token, start: first, count } of runs) {
+    shadow.fill(inShadow(token) ? 1 : 0, first, first + count);
+  }
   const colors = new Float32BufferAttribute(new Float32Array(vertices * 3), 3);
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   geometry.setAttribute("color", colors);
+  geometry.setAttribute("shadow", new Float32BufferAttribute(shadow, 1));
   workshop.painters.push({ colors, runs });
   return new Mesh(geometry, workshop.materials.faces);
 };
@@ -315,7 +331,8 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   }
 };
 
-export const build = (sketch: Sketch, materials: Materials): Built => {
+/** `tint` turns its colors, when shown, toward its project's own. */
+export const build = (sketch: Sketch, materials: Materials, tint: Tint = untinted): Built => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];
@@ -339,7 +356,7 @@ export const build = (sketch: Sketch, materials: Materials): Built => {
     paint: (theme, colorful) => {
       for (const { colors, runs } of painters) {
         for (const { token, start, count } of runs) {
-          color.set(shade(token, theme, colorful));
+          color.set(shade(token, theme, colorful, tint));
           for (let vertex = start; vertex < start + count; vertex += 1) {
             colors.setXYZ(vertex, color.r, color.g, color.b);
           }
@@ -347,7 +364,7 @@ export const build = (sketch: Sketch, materials: Materials): Built => {
         colors.needsUpdate = true;
       }
       for (const { material, token } of signs) {
-        material.color.set(shade(token, theme, colorful));
+        material.color.set(shade(token, theme, colorful, tint));
       }
     },
     parts: new Map(),
