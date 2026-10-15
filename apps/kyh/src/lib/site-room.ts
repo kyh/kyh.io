@@ -105,7 +105,9 @@ export const createSiteRoom = () => {
     /** Put a grid in a new order: shown here at once, sent to the host for everyone. */
     drop: (grid: string, order: string[]) => {
       dropped += 1;
-      const entry: JsonRecord = { by: client?.playerId ?? "", n: dropped, order };
+      // Before the room has let this visitor in there's no player id yet; any
+      // name does, since only this visitor's own entries are compared by it.
+      const entry: JsonRecord = { by: client?.playerId ?? "self", n: dropped, order };
       drops.set(grid, { base: ordersEntry(client?.sharedState, grid), entry });
       client?.sendToHost(REORDER, { grid, n: dropped, order });
       notify();

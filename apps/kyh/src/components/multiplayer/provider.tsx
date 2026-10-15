@@ -149,19 +149,22 @@ export const useChat = (enabled: boolean) => {
 
 /**
  * `items` in the order everyone on the site has them in, with the two
- * callbacks a SortableGrid takes. While a tile is held, nothing from the room
- * reaches this grid (a re-render mid-drag throws off motion's layout
- * compensation and sets Reorder swapping back and forth); the latest lands
- * on release, after this visitor's own drop.
+ * callbacks a SortableGrid takes. While a tile is held, the grid shows the
+ * room's order as it was at pick-up and nothing newer reaches it (a re-render
+ * mid-drag throws off motion's layout compensation and sets Reorder swapping
+ * back and forth); the latest lands on release, after this visitor's own drop.
  */
 export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) => string) => {
   const room = useSiteRoom();
-  const [held, setHeld] = useState(false);
-  const entry = useSyncExternalStore(
+  // The room's entry as it stood when a tile was picked up; undefined when none is held.
+  const [heldAt, setHeldAt] = useState<JsonValue | undefined>();
+  const held = heldAt !== undefined;
+  const live = useSyncExternalStore(
     held ? ignore : room.subscribe,
     () => room.order(grid) ?? NO_ENTRY,
     () => NO_ENTRY,
   );
+  const entry = held ? heldAt : live;
   const ordered = useMemo(() => {
     const keys = items.map(keyOf);
     const order = readSharedOrder(entry, keys)?.order ?? keys;
@@ -169,8 +172,12 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
     return order.flatMap((key) => byKey.get(key) ?? []);
   }, [entry, items, keyOf]);
   const handleDrop = useCallback((order: string[]) => room.drop(grid, order), [room, grid]);
+  const handleHold = useCallback(
+    (holding: boolean) => setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined),
+    [room, grid],
+  );
   // The order the room already had when this visitor arrived lands in place;
   // only moves made since (anyone's drop) slide.
   const settling = room.joinedWith(grid, entry);
-  return { handleDrop, handleHold: setHeld, items: ordered, settling };
+  return { handleDrop, handleHold, items: ordered, settling };
 };
