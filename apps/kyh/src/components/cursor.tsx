@@ -3,20 +3,17 @@ import { Interpolator, lerp } from "@vibedgames/multiplayer";
 
 import type { Chat } from "@/lib/chat";
 import { lineOf } from "@/lib/chat";
+import type { PagePoint } from "@/lib/page-point";
+import { readViewport, toScreen } from "@/lib/page-point";
 import { ChatBubble } from "@/components/chat-bubble";
 
 interface CursorProps {
-  x?: number;
-  y?: number;
+  at: PagePoint;
   /** When the sender sent this spot, on the room's clock. */
   t: number;
   color?: string;
   hue?: string;
   chat: Chat;
-  windowDimensions: {
-    width: number;
-    height: number;
-  };
 }
 
 const offset = 10;
@@ -25,14 +22,9 @@ const offset = 10;
 export const CURSOR_ARROW =
   "M2.717 2.22918L15.9831 15.8743C16.5994 16.5083 16.1503 17.5714 15.2661 17.5714H9.35976C8.59988 17.5714 7.86831 17.8598 7.3128 18.3783L2.68232 22.7C2.0431 23.2966 1 22.8434 1 21.969V2.92626C1 2.02855 2.09122 1.58553 2.717 2.22918Z";
 
-interface Spot {
-  x: number;
-  y: number;
-}
-
-const lerpSpot = (a: Spot, b: Spot, k: number): Spot => ({
-  x: lerp(a.x, b.x, k),
-  y: lerp(a.y, b.y, k),
+const lerpPoint = (a: PagePoint, b: PagePoint, k: number): PagePoint => ({
+  fromCenter: lerp(a.fromCenter, b.fromCenter, k),
+  fromTop: lerp(a.fromTop, b.fromTop, k),
 });
 
 const cursorWidth = 18;
@@ -43,45 +35,42 @@ const HIDDEN = { transform: "translate(-100px, -100px)" };
  * blended between their updates (as the town's pointers are), so it glides at
  * any send rate; each frame moves it without a React render.
  */
-export const Cursor = ({ x, y, t, color, hue, chat, windowDimensions }: CursorProps) => {
+export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: CursorProps) => {
   // useId's punctuation isn't safe inside url(#…).
   const gradient = `cursor-${useId().replaceAll(/[^\w-]/gu, "")}`;
   const ref = useRef<HTMLDivElement>(null);
   // oxlint-disable-next-line react/hook-use-state -- made once per cursor and never replaced
-  const [smooth] = useState(() => new Interpolator<Spot>({ delayMs: 120, lerp: lerpSpot }));
+  const [smooth] = useState(
+    // Extrapolating past the last spot parks a pointer that stopped (or a page that jumped) beyond where it is.
+    () => new Interpolator<PagePoint>({ delayMs: 120, lerp: lerpPoint, maxExtrapolateMs: 0 }),
+  );
 
   useEffect(() => {
-    if (x && y) {
-      smooth.push(t, { x, y });
-    }
-  }, [smooth, t, x, y]);
+    smooth.push(t, { fromCenter, fromTop });
+  }, [smooth, t, fromCenter, fromTop]);
 
   useEffect(() => {
-    const { width, height } = windowDimensions;
     let frame = 0;
     const draw = () => {
-      const at = smooth.sample();
-      if (at && ref.current) {
-        const left = Math.min(at.x * width - offset, width - cursorWidth);
-        const top = at.y * height - offset;
-        ref.current.style.transform = `translate(${left}px, ${top}px)`;
+      const point = smooth.sample();
+      if (point && ref.current) {
+        const view = readViewport();
+        const { x, y } = toScreen(point, view);
+        const left = Math.max(0, Math.min(x - offset, view.width - cursorWidth));
+        ref.current.style.transform = `translate(${left}px, ${y - offset}px)`;
       }
       frame = requestAnimationFrame(draw);
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [smooth, windowDimensions]);
-
-  if (!x || !y) {
-    return null;
-  }
+  }, [smooth]);
 
   const line = lineOf(chat);
 
   return (
     <div
       ref={ref}
-      className="pointer-events-none absolute top-0 left-0 z-[1]"
+      className="pointer-events-none fixed top-0 left-0 z-[1]"
       // Off screen until the first frame places it; only that loop moves it after.
       style={HIDDEN}
       aria-hidden="true"
