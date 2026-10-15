@@ -25,7 +25,7 @@ const fractionAt = (clientX: number, rect: DOMRect) => (clientX - rect.left) / r
 const overshootOf = (clientX: number, { left, right }: DOMRect) =>
   Math.min(0, clientX - left) + Math.max(0, clientX - right);
 
-/** idle, pressed (a click until it moves), or dragging. */
+/** How it looks in hand: idle, pressed, or dragging. Pointer handlers decide click vs drag from the press itself. */
 type Hold = "idle" | "press" | "drag";
 
 const handleOpacityOf = ({
@@ -72,7 +72,7 @@ export const DialSlider = ({
   const input = useRef<HTMLInputElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const valueRef = useRef<HTMLSpanElement>(null);
-  const press = useRef<{ x: number; y: number; rect: DOMRect } | null>(null);
+  const press = useRef<{ x: number; y: number; rect: DOMRect; dragging: boolean } | null>(null);
   const [hovered, setHovered] = useState(false);
   const [hold, setHold] = useState<Hold>("idle");
   const [dodgeAt, setDodgeAt] = useState({ left: 30, right: 78 });
@@ -95,16 +95,14 @@ export const DialSlider = ({
     }
   }, [focusOnMount]);
 
-  // The fill follows the pointer or the key at once; the value only when it changes.
+  // The fill springs to a click and follows a drag or a key at once.
   const moveTo = (next: number, animate = false) => {
     if (animate) {
       fill.set(percentOf(next, range));
     } else {
       fill.jump(percentOf(next, range));
     }
-    if (next !== value) {
-      onChange(next);
-    }
+    onChange(next);
   };
 
   // The handle fades back where it would cross the label or the value.
@@ -141,6 +139,7 @@ export const DialSlider = ({
         input.current?.focus({ preventScroll: true });
         measure();
         press.current = {
+          dragging: false,
           rect: event.currentTarget.getBoundingClientRect(),
           x: event.clientX,
           y: event.clientY,
@@ -152,19 +151,19 @@ export const DialSlider = ({
         if (!down) {
           return;
         }
-        if (
-          hold === "press" &&
-          Math.hypot(event.clientX - down.x, event.clientY - down.y) <= CLICK_THRESHOLD
-        ) {
-          return;
+        if (!down.dragging) {
+          if (Math.hypot(event.clientX - down.x, event.clientY - down.y) <= CLICK_THRESHOLD) {
+            return;
+          }
+          down.dragging = true;
+          setHold("drag");
         }
-        setHold("drag");
         stretch.jump(rubberStretch(overshootOf(event.clientX, down.rect)));
         moveTo(roundToStep(valueAt(fractionAt(event.clientX, down.rect), range), range));
       }}
       onPointerUp={(event) => {
         const down = press.current;
-        if (down && hold === "press") {
+        if (down && !down.dragging) {
           const at = valueAt(fractionAt(event.clientX, down.rect), range);
           moveTo(roundToStep(snapToDecile(at, range), range), true);
         }
