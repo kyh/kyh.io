@@ -10,7 +10,7 @@ const Work = ({ work }: { work: WorkType }) => (
     </span>
     <span>{work.role}</span>
     <span>{work.company}</span>
-    <span className="text-right font-mono text-xs tracking-tight">{work.year}</span>
+    <span className="text-right text-xs tabular-nums">{work.year}</span>
   </a>
 );
 

@@ -43,7 +43,7 @@ export const Pin = ({ project, isLit, ref, onHover, onFocus, onTap }: PinProps) 
         href={project.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="city-pin-icon pointer-events-auto font-mono text-xs"
+        className="city-pin-icon pointer-events-auto text-xs"
         style={{ borderRadius: isLit ? 8 : 9 }}
         aria-label={`${project.title}, ${hostOf(project.url)}: ${project.description}`}
         onPointerMove={(event) => {
@@ -125,7 +125,7 @@ export const PinList = ({ projects }: { projects: CityProject[] }) => (
           href={project.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="city-panel flex items-start gap-2.5 px-3 py-2.5 font-mono text-xs transition-colors hover:bg-[var(--city-paper-hover)]"
+          className="city-panel flex items-start gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-[var(--city-paper-hover)]"
         >
           <Image
             src={project.favicon}
