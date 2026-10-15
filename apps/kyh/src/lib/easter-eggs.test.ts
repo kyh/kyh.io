@@ -1,14 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { discover, EASTER_EGGS, isComplete, readFound } from "./easter-eggs";
-
-test("stored eggs read back; junk, unknown ids and repeats are dropped", () => {
-  assert.deepEqual(readFound(null), []);
-  assert.deepEqual(readFound("not json"), []);
-  assert.deepEqual(readFound('{"lift":true}'), []);
-  assert.deepEqual(readFound('["chat","nope",3,"chat","lift"]'), ["chat", "lift"]);
-});
+import { discover, EASTER_EGGS, isComplete } from "./easter-eggs";
 
 test("finding an egg adds it once", () => {
   const first = discover([], "lift");

@@ -159,7 +159,7 @@ desync in one room. The site-wide cursors (`src/lib/use-realtime.ts`) use the
 same server, room `kyh-site`, and skip `/showcase`, which draws its own.
 
 Easter eggs: `src/lib/easter-eggs.ts` is the registry (pure, tested); add one
-there and call `discoverEgg(id)` (`easter-egg-store.ts`, localStorage) where it
+there and call `discoverEgg(id)` (`easter-egg-store.ts`; memory only, a refresh starts over) where it
 hides — from React or the town's engine. `EasterEggProvider`
 (`components/easter-eggs.tsx`) celebrates each find like a coin pickup:
 confetti at the pointer, eggs (`egg-burst.ts`, pure, tested) spraying out and
