@@ -37,13 +37,25 @@ const block: Site = { d: 6, kind: "block", start: 1.5, top: null, w: 6, x: 9, z:
 const onRoad = ({ x, z }: { x: number; z: number }) =>
   Math.abs(x - Math.round(x / 8) * 8) < 0.3 || Math.abs(z - Math.round(z / 8) * 8) < 0.3;
 
-test("a site's size sets its crew: tall buildings get cranes and scaffolding, every site trucks", () => {
-  const works = planWorks({ sites: [lot(1, 6), lot(1.2, 3, 9), lot(1.4, 1, 25), block] }, GRAPH);
+test("a site's size sets its crew: tall buildings get cranes and scaffolding, every site a few trucks", () => {
+  const sites = [lot(1, 6), lot(1.2, 3, 9), lot(1.4, 1, 25), block];
+  const works = planWorks({ sites }, GRAPH);
   assert.equal(works.cranes.length, 3);
   assert.equal(works.scaffolds.length, 2);
   assert.equal(works.yards.length, 3);
-  assert.equal(works.trucks.length, 3 * 3 + 1);
-  assert.ok(works.trucks.some((truck) => truck.kind === "mixer"));
+  assert.ok(works.trucks.length >= 1 && works.trucks.length <= 3 * 3 + 1);
+  assert.deepEqual(
+    planWorks({ sites }, GRAPH).trucks.length,
+    works.trucks.length,
+    "the same every time",
+  );
+});
+
+test("most sites get one truck, some two, a few three", () => {
+  const sites = Array.from({ length: 40 }, (_, index) => lot(1 + index * 0.5, 1, 17));
+  const counts = sites.map((_, index) => index);
+  const works = planWorks({ sites }, GRAPH);
+  assert.ok(works.trucks.length < counts.length * 2, "fewer than two a site on average");
 });
 
 test("a crane goes up a section at a time before work starts and comes down after", () => {
@@ -114,5 +126,25 @@ test("trucks drive at a steady pace: a longer way takes longer", () => {
   const { trucks } = planWorks({ sites: [lot(1.2, 4), lot(1.3, 3, 21)] }, GRAPH);
   for (const truck of trucks) {
     assert.ok(truck.arrive.length / truck.driveIn <= 6.01 || truck.driveIn >= 2.4);
+  }
+});
+
+test("no two trucks are ever on top of each other, parked or on the road", () => {
+  const sites = [
+    lot(1.2, 4),
+    lot(1.25, 3, 21),
+    lot(1.3, 2, 9),
+    block,
+    { ...block, start: 1.3, x: 17, z: 1 },
+  ];
+  const { trucks } = planWorks({ sites }, GRAPH);
+  const last = Math.max(...trucks.map((truck) => truck.leaves + truck.driveOut));
+  for (let t = 0; t <= last; t += 0.05) {
+    const shown = trucks.map((truck) => truckPose(truck, t)).filter((pose) => pose.shown);
+    for (const [index, a] of shown.entries()) {
+      for (const b of shown.slice(index + 1)) {
+        assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 0.3, `apart at ${t.toFixed(2)}`);
+      }
+    }
   }
 });

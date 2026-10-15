@@ -33,12 +33,19 @@ const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
 /** The slab a building stands on before it goes up, just over the curb. */
 const FOOT = 0.05;
+/**
+ * What's not built yet is pressed down onto what is, not flattened onto it:
+ * kept in order, a sliver deep, so the roof stays on top and no two faces
+ * share a plane and flicker.
+ */
+const SQUASH = "0.004";
 
 /** Where each thing being built starts going up, by its place in town (s). */
 export type StartAt = (x: number, z: number) => number;
 
 // Each building goes up from a slab on its lot, a storey at a time: the
-// storey being built rises into place, and everything above waits. Its start
+// storey being built rises into place, and everything above waits, pressed
+// flat on top of it. Its start
 // rides on the geometry (`buildAt`), worked out by the town's schedule, so
 // one merged mesh still goes up building by building. The ground and anything
 // below it stay put; things that never go up (the sky) use materials without a schedule.
@@ -50,7 +57,8 @@ vec4 built(vec4 world, float at) {
   }
   float floors = max(0.0, (growTime - at) * ${RISE.toFixed(1)}) / ${FLOOR};
   float level = (floor(floors) + smoothstep(0.45, 1.0, fract(floors))) * ${FLOOR};
-  world.y = min(world.y, max(level, ${FOOT}));
+  float built = max(level, ${FOOT});
+  world.y = world.y <= built ? world.y : built + (world.y - built) * ${SQUASH};
   return world;
 }
 `;

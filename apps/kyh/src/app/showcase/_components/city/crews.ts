@@ -18,9 +18,14 @@ const ONE_CRANE = 2.5;
 const TWO_CRANES = 5;
 /** How tall a building has to be to go up inside scaffolding. */
 const SCAFFOLDED = 1.2;
-/** How many trucks a project's site and a street's block get. */
-const LOT_TRUCKS = 3;
-const BLOCK_TRUCKS = 1;
+/** The odds of a project's site getting one, two or three trucks; a street's block gets one half the time. */
+const LOT_TRUCKS = [0.55, 0.3, 0.15] as const;
+const BLOCK_TRUCK = 0.5;
+/** How long a truck may wait to set off, so it never meets another on the road (s). */
+const MOST_WAIT = 2.5;
+const WAIT_STEP = 0.25;
+/** How many other ways in and out a truck may try before waiting. */
+const DETOURS = 3;
 /** How many blocks off a truck turns up, and drives off to. */
 const HOPS = 2;
 /** How fast a truck drives (cells a second), and the shortest and longest a drive takes (s). */
@@ -209,42 +214,131 @@ const createParking = (graph: Graph) => {
   };
 };
 
-/** The `count` trucks that serve a site, one after another, each to its own spot in a lane beside it. */
+/** A truck at `t`: driving in, parked, or driving off. */
+export const truckPose = (truck: Truck, t: number): TruckPose => {
+  const setOff = truck.parked - truck.driveIn;
+  const gone = truck.leaves + truck.driveOut;
+  if (t < setOff || t > gone) {
+    return { heading: 0, scale: 0, shown: false, x: 0, z: 0 };
+  }
+  let place = along(truck.arrive, truck.arrive.length);
+  if (t < truck.parked) {
+    place = along(
+      truck.arrive,
+      truck.arrive.length * easeInOut(clamp01((t - setOff) / truck.driveIn)),
+    );
+  } else if (t > truck.leaves) {
+    place = along(
+      truck.leave,
+      truck.leave.length * easeInOut(clamp01((t - truck.leaves) / truck.driveOut)),
+    );
+  }
+  const scale = Math.min(clamp01((t - setOff) / POP), clamp01((gone - t) / POP));
+  return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };
+};
+
+/** Which way a truck's nose points, from its heading. */
+const facing = (heading: number) => ({ x: -Math.cos(heading), z: Math.sin(heading) });
+
+/**
+ * Whether two trucks ever meet: in one lane, nearer than a truck's length;
+ * across a junction, nearer than half of one. Passing in opposite lanes is fine.
+ */
+const clash = (a: Truck, b: Truck) => {
+  const from = Math.max(a.parked - a.driveIn, b.parked - b.driveIn);
+  const until = Math.min(a.leaves + a.driveOut, b.leaves + b.driveOut);
+  for (let t = from; t <= until; t += 0.05) {
+    const p = truckPose(a, t);
+    const q = truckPose(b, t);
+    if (p.shown && q.shown) {
+      const nose = facing(p.heading);
+      const other = facing(q.heading);
+      const dx = q.x - p.x;
+      const dz = q.z - p.z;
+      const ahead = Math.abs(dx * nose.x + dz * nose.z);
+      const aside = Math.abs(dx * nose.z - dz * nose.x);
+      const parallel = Math.abs(nose.x * other.x + nose.z * other.z) > 0.7;
+      if (
+        (parallel && aside < 0.3 && ahead < SPACING - 0.1) ||
+        (!parallel && Math.hypot(dx, dz) < 0.7)
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+/** How many trucks a site gets: few, mostly. */
+const truckCount = (site: Site, pick: number) => {
+  const roll = createRandom(pick * 53 + 11).next();
+  if (site.kind === "block") {
+    return roll < BLOCK_TRUCK ? 1 : 0;
+  }
+  const [one, two] = LOT_TRUCKS;
+  if (roll < one) {
+    return 1;
+  }
+  return roll < one + two ? 2 : 3;
+};
+
+/**
+ * The trucks that serve a site, one after another, each to its own spot in a
+ * lane beside it, by a way in and out (and a time) that meets no truck
+ * already on the road; one that can't find one stays away.
+ */
 const trucksFor = (
   graph: Graph,
   park: ReturnType<typeof createParking>,
   site: Site,
-  count: number,
   pick: number,
+  others: readonly Truck[],
 ): Truck[] => {
   const near = nearestEdge(graph, site.x + site.w / 2, site.z + site.d / 2, LANE);
-  return Array.from({ length: count }, (_, index): Truck[] => {
+  const trucks: Truck[] = [];
+  for (let index = 0; index < truckCount(site, pick); index += 1) {
     const spot = park(near.edge, near.s);
     const edge = graph.edges[spot.edge];
     if (!edge) {
-      return [];
+      continue;
     }
     const at = {
       x: edge.ax + edge.dx * spot.s - edge.dz * LANE,
       z: edge.az + edge.dz * spot.s + edge.dx * LANE,
     };
-    const entry = junctionNear(graph, edge.from, pick + index);
-    const exit = junctionNear(graph, edge.to, pick + index + 1, entry);
-    const arrive = routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), at]);
-    const leave = routeOf([at, ...walk(graph, routeTo(graph, exit).via, edge.to)]);
-    const parked = site.start - 0.25 + index * STAGGER;
-    return [
-      {
-        arrive,
-        driveIn: driveTime(arrive),
-        driveOut: driveTime(leave),
-        kind: (pick + index) % 3 === 1 ? "mixer" : "dump",
-        leave,
-        leaves: parked + UNLOAD,
-        parked,
-      },
-    ];
-  }).flat();
+    const ways = Array.from({ length: DETOURS }, (_, detour) => {
+      const way = pick * 3 + index + detour * 5;
+      const entry = junctionNear(graph, edge.from, way);
+      const exit = junctionNear(graph, edge.to, way + 1, entry);
+      const arrive = routeOf([...walk(graph, routeTo(graph, edge.from).via, entry), at]);
+      const leave = routeOf([at, ...walk(graph, routeTo(graph, exit).via, edge.to)]);
+      return { arrive, leave };
+    });
+    const due = site.start - 0.25 + index * STAGGER;
+    const kind = (pick + index) % 3 === 1 ? "mixer" : "dump";
+    const truckBy = (way: (typeof ways)[number], wait: number): Truck => ({
+      ...way,
+      driveIn: driveTime(way.arrive),
+      driveOut: driveTime(way.leave),
+      kind,
+      leaves: due + wait + UNLOAD,
+      parked: due + wait,
+    });
+    let chosen: Truck | null = null;
+    for (let wait = 0; wait <= MOST_WAIT && !chosen; wait += WAIT_STEP) {
+      for (const way of ways) {
+        const truck = truckBy(way, wait);
+        if (!chosen && ![...others, ...trucks].some((other) => clash(truck, other))) {
+          chosen = truck;
+        }
+      }
+    }
+    // A truck with no clear way never comes: better one fewer than two on top of each other.
+    if (chosen) {
+      trucks.push(chosen);
+    }
+  }
+  return trucks;
 };
 
 /** The cranes beside a building: one at a corner, a second at the opposite one for a tall one. */
@@ -272,9 +366,7 @@ export const planWorks = (schedule: Pick<Schedule, "sites">, graph: Graph): Work
   for (const [pick, site] of schedule.sites.entries()) {
     const top = site.top ?? 1;
     const done = site.start + top / RISE;
-    works.trucks.push(
-      ...trucksFor(graph, park, site, site.kind === "lot" ? LOT_TRUCKS : BLOCK_TRUCKS, pick * 3),
-    );
+    works.trucks.push(...trucksFor(graph, park, site, pick, works.trucks));
     if (site.kind === "lot") {
       const rect = { d: site.d, w: site.w, x: site.x, z: site.z };
       works.yards.push({ ...rect, from: site.start - SETUP, until: done + CLEAR });
@@ -310,27 +402,4 @@ export const cranePose = (crane: Crane, t: number): CranePose => {
   const sections = Math.max(3, Math.round(crane.mast / 0.6));
   const swing = Math.sin((t - crane.start) * 1.4 + crane.aim * 3) * 0.25;
   return { jib: crane.aim + swing, mast: Math.ceil(up * sections) / sections, shown: true };
-};
-
-/** A truck at `t`: driving in, parked, or driving off. */
-export const truckPose = (truck: Truck, t: number): TruckPose => {
-  const setOff = truck.parked - truck.driveIn;
-  const gone = truck.leaves + truck.driveOut;
-  if (t < setOff || t > gone) {
-    return { heading: 0, scale: 0, shown: false, x: 0, z: 0 };
-  }
-  let place = along(truck.arrive, truck.arrive.length);
-  if (t < truck.parked) {
-    place = along(
-      truck.arrive,
-      truck.arrive.length * easeInOut(clamp01((t - setOff) / truck.driveIn)),
-    );
-  } else if (t > truck.leaves) {
-    place = along(
-      truck.leave,
-      truck.leave.length * easeInOut(clamp01((t - truck.leaves) / truck.driveOut)),
-    );
-  }
-  const scale = Math.min(clamp01((t - setOff) / POP), clamp01((gone - t) / POP));
-  return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };
 };

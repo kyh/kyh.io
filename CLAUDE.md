@@ -122,9 +122,11 @@ rise every town material in `render.ts` shares, its start carried per vertex);
 each project's site is fenced with materials stacked, tower cranes go up
 beside the tall ones a section at a time (jibs on their building) and come down
 after, the building rises inside scaffolding drawn with the town's own
-materials, and dump trucks and mixers come and go by road at a steady pace, parking nose
-to tail in the lanes (`crews.ts` plans it, pure; `draw-crews.ts`; `sites.ts` puts it on screen);
-pins wait for it, and then the title-sequence flyover zooms in. Only moving the camera stops the flyover, the
+materials, and a few dump trucks and mixers (one to three a site, seeded) come and go by
+road at a steady pace, parking nose to tail, each planned so it never meets
+another (a truck with no clear way stays away) (`crews.ts` plans it, pure; `draw-crews.ts`; `sites.ts` puts it on screen);
+pins wait for the buildings, and then the title-sequence flyover zooms in
+while the last trucks drive off. Only moving the camera stops the flyover, the
 corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds

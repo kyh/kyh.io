@@ -296,6 +296,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let sites = growing === null ? null : createSites(scene, materials, fixed, schedule, plan);
   /** When the town's up and every truck and crane has gone (s). */
   const builtBy = Math.max(schedule.end, sites?.end ?? 0);
+  /** Whether the flyover has been sent off now the buildings are up. */
+  let toured = false;
+  /** The buildings are still going up (the last trucks may drive off after). */
+  const stillBuilding = () => growing !== null && growing < schedule.end;
   const packUp = () => {
     sites?.dispose();
     sites = null;
@@ -900,7 +904,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         const x = Math.round(((anchor.x + 1) / 2) * width * 10) / 10;
         const y = Math.round(((1 - anchor.y) / 2) * height * 10) / 10;
         // Pins wait for their buildings to finish growing.
-        const hidden = growing !== null || x < -60 || x > width + 60 || y < -60 || y > height + 60;
+        const hidden = stillBuilding() || x < -60 || x > width + 60 || y < -60 || y > height + 60;
         const lit = entry === shown;
         const last = pinStates.get(slug);
         if (!last || last.x !== x || last.y !== y || last.hidden !== hidden || last.lit !== lit) {
@@ -970,7 +974,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const resumeWhenIdle = () => {
     // A hand holding a car or a person is a press too: the flyover leaves the camera to it.
     // While the town's still going up, the camera holds on the whole island.
-    if (growing === null && spotlight.idle(presses.count > 0 || carrying !== null)) {
+    if (!stillBuilding() && spotlight.idle(presses.count > 0 || carrying !== null)) {
       playTour();
     }
   };
@@ -985,20 +989,24 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     growing += Math.min(elapsed, 0.05);
     materials.setGrowth(growing);
     sites?.update(growing);
-    if (!handsOn) {
+    if (!handsOn && growing < schedule.end) {
       // Pulling back, eased, in the zoom's own scale so it reads evenly.
-      const k = clamp(growing / (builtBy * 0.8), 0, 1);
+      const k = clamp(growing / (schedule.end * 0.8), 0, 1);
       const eased = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
       view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - eased) + Math.log(minZoom()) * eased);
       place();
     }
-    if (growing >= builtBy) {
-      growing = null;
-      packUp();
-      // Built: in from the whole island to the first project, unless the visitor has the camera.
+    // Built: in from the whole island to the first project, unless the visitor
+    // has the camera, while the last trucks drive off.
+    if (growing >= schedule.end && !toured) {
+      toured = true;
       if (!handsOn) {
         playTour(0);
       }
+    }
+    if (growing >= builtBy) {
+      growing = null;
+      packUp();
     }
   };
   const tick = (now: number) => {
