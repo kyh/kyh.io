@@ -122,7 +122,7 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
   return (
     <div className="absolute" style={{ left: burst.from.x, top: burst.from.y }}>
       <motion.span
-        className="absolute bottom-6 left-0 rounded-full px-2.5 py-0.5 text-[0.95rem] leading-snug font-medium whitespace-nowrap text-[#111] shadow-lg"
+        className="absolute bottom-6 left-0 rounded-full px-2 py-0.5 text-xs leading-snug font-medium whitespace-nowrap text-[#111] shadow-lg"
         style={{ background: GOLD_BACKGROUND }}
         initial={{ opacity: 0, scale: 0.3, x: "-50%", y: 0 }}
         animate={{
@@ -211,12 +211,27 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, []);
 
+  // Finds celebrated so far: a page can find one as it mounts, before this
+  // provider's effects subscribe (children's effects run first).
+  const heard = useRef(0);
+
   useEffect(() => {
     if (still) {
-      return subscribeToEggs(pop);
+      const popNew = () => {
+        if (foundEggs().length > heard.current) {
+          heard.current = foundEggs().length;
+          pop();
+        }
+      };
+      popNew();
+      return subscribeToEggs(popNew);
     }
     let next = 0;
-    return subscribeToEggs(() => {
+    const celebrate = () => {
+      if (foundEggs().length <= heard.current) {
+        return;
+      }
+      heard.current = foundEggs().length;
       const count = foundEggs().length;
       const rect = catcher.current?.getBoundingClientRect();
       const to = rect
@@ -233,7 +248,9 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         to,
       };
       setBursts((current) => [...current, burst]);
-    });
+    };
+    celebrate();
+    return subscribeToEggs(celebrate);
   }, [still, pop]);
 
   const done = useCallback(

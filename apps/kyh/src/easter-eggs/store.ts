@@ -14,6 +14,8 @@ export const EASTER_EGGS = [
   "dial",
   // Long-press a Side Quests icon and drag it somewhere new (side-quests-grid.tsx).
   "reorder",
+  // Open the speed reader, /rsvp (app/rsvp/_components/rsvp-reader.tsx).
+  "speedread",
 ] as const;
 
 export type EasterEggId = (typeof EASTER_EGGS)[number];
