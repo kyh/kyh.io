@@ -405,5 +405,5 @@ export const cranePose = (crane: Crane, t: number): CranePose => {
   const sections = Math.max(3, Math.round(crane.mast / 0.6));
   const mast = Math.ceil(clamp01(up / 0.8) * sections) / sections;
   const swing = Math.sin((t - crane.start) * 1.4 + crane.aim * 3) * 0.25;
-  return { jib: crane.aim + swing, mast, reach: clamp01((up - 0.8) / 0.2), shown: true };
+  return { jib: crane.aim + swing, mast, reach: clamp01(up * 5 - 4), shown: true };
 };
