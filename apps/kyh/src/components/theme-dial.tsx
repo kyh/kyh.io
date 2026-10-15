@@ -19,9 +19,10 @@ import {
 import type { Dial } from "@/lib/dial";
 
 // The dial lives in localStorage (restoreScript applies it before paint) and
-// on <html>; this store is how React reads it back.
+// on <html>; this store is how React reads it back. Storage is read once: after
+// that memory leads, so a dial still works where storage is blocked.
 const listeners = new Set<() => void>();
-let current: { raw: string | null; dial: Dial } | null = null;
+let current: Dial | null = null;
 
 const stored = (key: string) => {
   try {
@@ -37,11 +38,8 @@ const subscribe = (listener: () => void) => {
 };
 
 const getDial = () => {
-  const raw = stored(DIAL_KEY);
-  if (current?.raw !== raw) {
-    current = { dial: readDial(raw), raw };
-  }
-  return current.dial;
+  current ??= readDial(stored(DIAL_KEY));
+  return current;
 };
 
 const getServerDial = () => NO_DIAL;
@@ -64,7 +62,7 @@ export const setDial = (dial: Dial) => {
   } catch {
     // Private mode: the dial still applies, it just won't be there next visit.
   }
-  current = { dial, raw: writeDial(dial) };
+  current = dial;
   for (const listener of listeners) {
     listener();
   }
