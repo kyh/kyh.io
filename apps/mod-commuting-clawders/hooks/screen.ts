@@ -20,7 +20,7 @@ const SOCKET_PATH_MAX = 100;
 // path is short enough for a socket, else /tmp.
 export const placementOf = (tmpDir: string | undefined, id: string) => {
   const base = (tmpDir ?? "").replace(/\/+$/u, "");
-  const name = `mod-clawders-${id}`;
+  const name = `mod-commuting-clawders-${id}`;
   const dir =
     base.startsWith("/") && `${base}/${name}.sock`.length <= SOCKET_PATH_MAX ? base : "/tmp";
   return { imagePath: `${dir}/${name}.rgba`, socketPath: `${dir}/${name}.sock` };

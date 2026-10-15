@@ -38,6 +38,6 @@ jobs:
       # stream/ without a rebuild would ship the old game.
       - name: Mod build is committed
         run: |
-          pnpm -F @repo/mod-clawders build
-          git diff --exit-code -- apps/mod-clawders/dist
-          test -z "$(git status --porcelain -- apps/mod-clawders/dist)"
+          pnpm -F @repo/mod-commuting-clawders build
+          git diff --exit-code -- apps/mod-commuting-clawders/dist
+          test -z "$(git status --porcelain -- apps/mod-commuting-clawders/dist)"

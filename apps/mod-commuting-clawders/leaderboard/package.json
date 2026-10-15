@@ -1,5 +1,5 @@
 {
-  "name": "@repo/mod-clawders-leaderboard",
+  "name": "@repo/mod-commuting-clawders-leaderboard",
   "version": "0.1.0",
   "private": true,
   "description": "Keep Clawd running",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
-    "@repo/mod-clawders": "workspace:^",
+    "@repo/mod-commuting-clawders": "workspace:^",
     "drizzle-kit": "1.0.0-rc.4",
     "drizzle-orm": "1.0.0-rc.4",
     "next": "catalog:",

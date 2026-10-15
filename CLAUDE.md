@@ -11,7 +11,7 @@ pnpm verify        # typecheck · lint · format · test — run before committi
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/mod-clawders, apps/mod-dev)
+pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/mod-commuting-clawders, apps/mod-dev)
 ```
 
 ## Agent-driven development
@@ -166,7 +166,7 @@ Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.
 
 Realtime trading chart game. Next.js, canvas-based candlestick rendering. Replays real S&P 500 daily history, one trading day per 5s grid cell. The CSV lives in Vercel Blob, served by `/api/spx` (seeds itself from Yahoo Finance on first request, reads Yahoo directly without a store) and refreshed by a weekday Vercel Cron hitting `/api/cron/spx`. `src/lib/spx-source.ts` fetches and stores it; `src/lib/price-engine.ts` synthesizes the intraday ticks; `src/lib/game-state.ts` keeps the grid in log-price rows.
 
-### mod-clawders (`apps/mod-clawders`)
+### mod-commuting-clawders (`apps/mod-commuting-clawders`)
 
 Claude Code mod (see Claude Code mods below). Opens the **Commuting Clawders**
 pane, a self-playing endless runner starring Clawd that runs while Claude
@@ -200,13 +200,13 @@ commands: the pane opens on session start.
   starts a fresh game. The hooks send `active` and `tokens` down with each
   poll; the HUD pill shows the tokens.
 - Leaderboard: `leaderboard/` is its own workspace package
-  (`@repo/mod-clawders-leaderboard`), a Next.js app on Vercel at
+  (`@repo/mod-commuting-clawders-leaderboard`), a Next.js app on Vercel at
   `clawders.kyh.io` with its own Turso database (Drizzle; `db:push` is local,
   `db:push-remote` production). It takes `POST /runs` and lists each
   player's best inside a live demo (the pane's `[Leaderboard]` prints it
   in the terminal): a scripted Claude Code session
   (`src/lib/demo.ts`, a pure function of time) driving the real game, which
-  the site imports from the mod (`@repo/mod-clawders/world` → `world/mount.ts`;
+  the site imports from the mod (`@repo/mod-commuting-clawders/world` → `world/mount.ts`;
   `world/view.ts` is the drawing both it and the streamed page share) along
   with `hooks/run.ts` for the status line. The hooks post to `leaderboardUrl` under `playerName`
   (else git's `user.name`); `leaderboard: false` stops posting. Anyone can

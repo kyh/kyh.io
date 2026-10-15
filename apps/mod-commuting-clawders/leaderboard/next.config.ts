@@ -4,7 +4,7 @@ const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   /** The demo runs the mod's own world, shipped as TypeScript source. */
-  transpilePackages: ["@repo/mod-clawders"],
+  transpilePackages: ["@repo/mod-commuting-clawders"],
 };
 
 export default config;

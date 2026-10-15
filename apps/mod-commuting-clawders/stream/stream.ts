@@ -61,7 +61,7 @@ const want: Want = { columns: 80, isActive: false, mode: "cells", rows: 24, toke
 let latest: Latest | null = null;
 let lastAsked = Date.now();
 let chrome: ChildProcess | null = null;
-const profileDir = mkdtempSync(path.join(os.tmpdir(), "mod-clawders-chrome-"));
+const profileDir = mkdtempSync(path.join(os.tmpdir(), "mod-commuting-clawders-chrome-"));
 
 const readBody = async (request: http.IncomingMessage) => {
   const chunks: Buffer[] = [];

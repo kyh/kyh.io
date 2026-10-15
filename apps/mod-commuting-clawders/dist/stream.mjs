@@ -216,7 +216,7 @@ var want = {
 var latest = null;
 var lastAsked = Date.now();
 var chrome = null;
-var profileDir = mkdtempSync(path.join(os.tmpdir(), "mod-clawders-chrome-"));
+var profileDir = mkdtempSync(path.join(os.tmpdir(), "mod-commuting-clawders-chrome-"));
 var readBody = async (request) => {
 	const chunks = [];
 	for await (const chunk of request) chunks.push(Buffer.from(chunk));

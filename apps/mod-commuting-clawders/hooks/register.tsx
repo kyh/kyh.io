@@ -32,8 +32,11 @@ const TALLY_MS = 1000;
 const LOG_MAX = 4000;
 
 const starting: View = { kind: "starting" };
-const view = atom({ key: "view", plugin: "mod-clawders" } as const, starting);
-const status = atom({ key: "status", plugin: "mod-clawders" } as const, statusOf(idle, 0));
+const view = atom({ key: "view", plugin: "mod-commuting-clawders" } as const, starting);
+const status = atom(
+  { key: "status", plugin: "mod-commuting-clawders" } as const,
+  statusOf(idle, 0),
+);
 
 // The streamer: headless Chrome drawing the world, one per open pane.
 type Streamer =
@@ -120,7 +123,7 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
     output += `\n${String(error)}`;
   }
   $.ui.log(
-    `mod-clawders streamer ended (${ending?.signal ?? ending?.code ?? "no start"}):\n${output}`,
+    `mod-commuting-clawders streamer ended (${ending?.signal ?? ending?.code ?? "no start"}):\n${output}`,
     { to: "debug" },
   );
   if (!("child" in screen.streamer) || screen.streamer.child !== streamer.child) {

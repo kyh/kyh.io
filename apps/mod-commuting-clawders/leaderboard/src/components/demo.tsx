@@ -1,6 +1,6 @@
 "use client";
 
-import { isActive, statusOf } from "@repo/mod-clawders/run";
+import { isActive, statusOf } from "@repo/mod-commuting-clawders/run";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { demoAt, formatTokens } from "@/lib/demo";
@@ -35,7 +35,7 @@ const usePrefersReducedMotion = () =>
 type World = Awaited<ReturnType<typeof loadWorld>>;
 
 const loadWorld = async (host: HTMLElement) => {
-  const { mountWorld } = await import("@repo/mod-clawders/world");
+  const { mountWorld } = await import("@repo/mod-commuting-clawders/world");
   return mountWorld(host);
 };
 

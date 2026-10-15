@@ -31,14 +31,14 @@ const readback = (rows: number[][]) => {
 describe("screen", () => {
   it("puts the socket in TMPDIR when the path fits, else /tmp", () => {
     assert.deepEqual(placementOf("/var/folders/xy/T/", "abc"), {
-      imagePath: "/var/folders/xy/T/mod-clawders-abc.rgba",
-      socketPath: "/var/folders/xy/T/mod-clawders-abc.sock",
+      imagePath: "/var/folders/xy/T/mod-commuting-clawders-abc.rgba",
+      socketPath: "/var/folders/xy/T/mod-commuting-clawders-abc.sock",
     });
     assert.equal(
       placementOf(`/${"d".repeat(120)}`, "abc").socketPath,
-      "/tmp/mod-clawders-abc.sock",
+      "/tmp/mod-commuting-clawders-abc.sock",
     );
-    assert.equal(placementOf(undefined, "abc").socketPath, "/tmp/mod-clawders-abc.sock");
+    assert.equal(placementOf(undefined, "abc").socketPath, "/tmp/mod-commuting-clawders-abc.sock");
   });
 
   it("draws pictures in kitty and Ghostty only", () => {

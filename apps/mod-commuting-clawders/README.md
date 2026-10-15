@@ -29,26 +29,27 @@ pixels a character, from the same frames.
 In Claude Code:
 
 ```
-/plugin install mod-clawders --marketplace kyh/kyh.io
+/plugin install mod-commuting-clawders --marketplace kyh/kyh.io
 ```
 
 Or from a shell:
 
 ```sh
 claude plugin marketplace add kyh/kyh.io
-claude plugin install mod-clawders@kyh
+claude plugin install mod-commuting-clawders@kyh
 ```
 
-`/plugin` disables or removes it. The marketplace is `.claude-plugin/marketplace.json`
+`/plugin` disables or removes it. Installed it as `mod-clawders`? Remove that one
+and install this; the old name gets no more updates. The marketplace is `.claude-plugin/marketplace.json`
 at the repo root.
 
 ### From a checkout
 
-From this repo, `pnpm dev:mod-clawders` builds it and runs
-`claude --plugin-dir apps/mod-clawders`. To load the checkout in every session
+From this repo, `pnpm dev:mod-commuting-clawders` builds it and runs
+`claude --plugin-dir apps/mod-commuting-clawders`. To load the checkout in every session
 (the desktop app included, which takes no flags), add the folder to
 `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`; run
-`pnpm -F @repo/mod-clawders build` after changing `world/` or `stream/`.
+`pnpm -F @repo/mod-commuting-clawders build` after changing `world/` or `stream/`.
 
 ## Use it
 
@@ -82,7 +83,7 @@ line under the game says where runs go whenever the game is idle, e.g.
 
 ### Settings
 
-Open `/config` and find **mod-clawders**:
+Open `/config` and find **mod-commuting-clawders**:
 
 | Setting                      | Default        | Options                                                 |
 | ---------------------------- | -------------- | ------------------------------------------------------- |
@@ -95,7 +96,7 @@ You can also set them in `~/.claude/settings.json`:
 ```json
 {
   "pluginConfigs": {
-    "mod-clawders": { "options": { "playerName": "kyh" } }
+    "mod-commuting-clawders": { "options": { "playerName": "kyh" } }
   }
 }
 ```
@@ -103,14 +104,14 @@ You can also set them in `~/.claude/settings.json`:
 ## Leaderboard
 
 `leaderboard/` is a Next.js app on Vercel with its own Turso database, a
-workspace package of its own (`@repo/mod-clawders-leaderboard`). `POST /runs`
+workspace package of its own (`@repo/mod-commuting-clawders-leaderboard`). `POST /runs`
 takes `{ name, tokens, coins, seconds }` and answers the player's `rank`;
 `GET /` is the page, each player's best run by tokens; `GET /runs` the same as
 JSON.
 
 ```sh
-cp apps/mod-clawders/leaderboard/.env.example apps/mod-clawders/leaderboard/.env
-pnpm -F @repo/mod-clawders-leaderboard db:push   # the local file database
+cp apps/mod-commuting-clawders/leaderboard/.env.example apps/mod-commuting-clawders/leaderboard/.env
+pnpm -F @repo/mod-commuting-clawders-leaderboard db:push   # the local file database
 pnpm dev:leaderboard                           # :3016
 ```
 
@@ -124,12 +125,12 @@ no proof a run happened.
 | No pane                  | The terminal is too narrow (see Requirements). Widen it.                                   |
 | Pane says ✗ and a reason | The streamer stopped: usually Chrome not found (set `CHROME_PATH`) or no `node` on `PATH`. |
 | Blocky picture           | Your terminal can't show pictures; use kitty or Ghostty for the sharp one.                 |
-| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-clawders:`.              |
+| Nothing happens at all   | Start with `claude --debug` and look for lines starting with `mod-commuting-clawders:`.    |
 
 ## Release
 
 Installed copies update only when `version` in `.claude-plugin/plugin.json`
-changes. To ship: rebuild (`pnpm -F @repo/mod-clawders build`), commit
+changes. To ship: rebuild (`pnpm -F @repo/mod-commuting-clawders build`), commit
 `dist/`, bump the version, push to `main`. CI fails if `dist/` doesn't match
 the source.
 
@@ -139,12 +140,12 @@ Claude Code watches a `--plugin-dir` folder in an interactive session: saving a
 file in `hooks/` reloads the mod without a restart.
 
 ```sh
-pnpm -F @repo/mod-clawders build      # dist/: the world for Chrome and the bundled streamer (commit it)
-pnpm -F @repo/mod-clawders world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
-pnpm -F @repo/mod-clawders test       # node: the runner, runs, frames, the streamer protocol
-pnpm -F @repo/mod-clawders test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
-pnpm -F @repo/mod-clawders typecheck  # pure modules + streamer, the world (DOM), then the hooks against the pinned API types
-pnpm -F @repo/mod-clawders validate   # what Claude Code will load
+pnpm -F @repo/mod-commuting-clawders build      # dist/: the world for Chrome and the bundled streamer (commit it)
+pnpm -F @repo/mod-commuting-clawders world      # the game alone in a browser, on :3015 (?coarse previews blocks mode)
+pnpm -F @repo/mod-commuting-clawders test       # node: the runner, runs, frames, the streamer protocol
+pnpm -F @repo/mod-commuting-clawders test:mod   # claude plugin test: the hooks: the pane, runs, the grace, posting
+pnpm -F @repo/mod-commuting-clawders typecheck  # pure modules + streamer, the world (DOM), then the hooks against the pinned API types
+pnpm -F @repo/mod-commuting-clawders validate   # what Claude Code will load
 ```
 
 Tests come in two kinds, split by suffix. `test/*.spec.ts` cover the pure
@@ -160,7 +161,7 @@ After a Claude Code update, refresh it from the copy the engine writes beside
 a mod each time it loads one:
 
 ```sh
-cp apps/mod-clawders/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
+cp apps/mod-commuting-clawders/.claude-plugin/types/claude-code/index.d.ts packages/claude-code-types/claude-code.d.ts
 ```
 
 | File                         | Role                                                                                |

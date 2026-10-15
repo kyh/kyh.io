@@ -502,7 +502,7 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
-  apps/mod-clawders:
+  apps/mod-commuting-clawders:
     devDependencies:
       '@kyh/tsconfig':
         specifier: workspace:^
@@ -529,12 +529,12 @@ importers:
         specifier: 'catalog:'
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  apps/mod-clawders/leaderboard:
+  apps/mod-commuting-clawders/leaderboard:
     dependencies:
       '@libsql/client':
         specifier: ^0.18.0
         version: 0.18.0
-      '@repo/mod-clawders':
+      '@repo/mod-commuting-clawders':
         specifier: workspace:^
         version: link:..
       drizzle-kit:

@@ -10,7 +10,7 @@
     {
       "name": "clawders-world",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["-F", "@repo/mod-clawders", "world"],
+      "runtimeArgs": ["-F", "@repo/mod-commuting-clawders", "world"],
       "port": 3015
     }
   ]
