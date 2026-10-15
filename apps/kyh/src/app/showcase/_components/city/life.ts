@@ -37,6 +37,9 @@ const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;
+/** How long the town's cars and people take to all pop in once it opens, and each one (ms). */
+const OPENING = 700;
+const POP = 150;
 /** How far above the ground something held hangs. */
 const HANG = LIFT - 0.18;
 /** How far something picked up has to be carried, in cells, before it hangs at full height. */
@@ -168,6 +171,18 @@ export const createLife = (options: LifeOptions) => {
   const actors = createActors({ cars: CARS, visitors: VISITORS, walkers: WALKERS }, options.theme);
   group.add(...actors.meshes);
   options.scene.add(group);
+  /** Whether the town's open: its cars, passers-by and visitors only come out once it's built. */
+  let open = true;
+  /** When it opened, while they're still popping in, one after another as the trucks do. */
+  let openedAt: number | null = null;
+  const popIn = (index: number) => {
+    if (openedAt === null) {
+      return 1;
+    }
+    // Scattered over the first OPENING ms, each popping up over POP ms.
+    const delay = (((index * 37) % 97) / 97) * (OPENING - POP);
+    return clamp((performance.now() - openedAt - delay) / POP, 0, 1);
+  };
   const overlay = createOverlay(options.overlay);
   const cars = Array.from({ length: CARS }, placement);
   const walkers = Array.from({ length: WALKERS }, placement);
@@ -405,7 +420,7 @@ export const createLife = (options: LifeOptions) => {
   /** The visitors with something to say, their lines over their heads. */
   const speak = (tick: number) => {
     // Too far out to read, the town keeps its talk to itself.
-    if (options.scale() < SPEAK_SCALE) {
+    if (!open || options.scale() < SPEAK_SCALE) {
       return;
     }
     const { height, width } = options.size();
@@ -508,6 +523,9 @@ export const createLife = (options: LifeOptions) => {
   return {
     /** The car or person under a screen point, if any is free to pick up. */
     actorAt: (x: number, y: number) => {
+      if (!open) {
+        return null;
+      }
       const scale = options.scale();
       let best: { key: string; distance: number } | null = null;
       for (const [key, spot] of shown) {
@@ -643,6 +661,12 @@ export const createLife = (options: LifeOptions) => {
       said = { text, until: performance.now() + SHOW_MS };
       net?.say(text);
     },
+    /** Opens the town to its cars, passers-by and visitors, or keeps them away while it's built. */
+    setOpen: (next: boolean) => {
+      open = next;
+      group.visible = next;
+      openedAt = next ? performance.now() : null;
+    },
     setTheme: (theme: Theme) => actors.setTheme(theme),
     /** What this player is typing, or null once they stop. */
     type: (next: string | null) => {
@@ -670,7 +694,10 @@ export const createLife = (options: LifeOptions) => {
         hands,
         time: performance.now(),
       });
-      actors.update(cars, walkers, visitors);
+      actors.update(cars, walkers, visitors, popIn);
+      if (openedAt !== null && performance.now() - openedAt > OPENING) {
+        openedAt = null;
+      }
       speak(world.tick);
       point(others);
       overlay.end();

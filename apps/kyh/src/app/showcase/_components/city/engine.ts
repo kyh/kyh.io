@@ -1000,6 +1000,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     // has the camera, while the last trucks drive off.
     if (growing >= schedule.end && !toured) {
       toured = true;
+      life.setOpen(true);
       if (!handsOn) {
         playTour(0);
       }
@@ -1039,6 +1040,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   // across, left to right, the way the title sequence pans the valley.
   if (growing === null) {
     playTour(0);
+  } else {
+    life.setOpen(false);
   }
   // Once the opening has settled in, start on the views a turn away.
   const warmUp = setTimeout(drawAhead, 3000);

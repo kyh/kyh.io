@@ -186,14 +186,18 @@ export const createActors = (
   const lean = new Quaternion();
   const axis = new Vector3();
   const up = new Vector3(0, 1, 0);
-  const unit = new Vector3(1, 1, 1);
   const none = new Vector3(0, 0, 0);
   const shadowAt = new Vector3();
   const shadowSize = new Vector3();
   const flat = new Quaternion();
   let shadowCount = 0;
 
-  const place = (meshes: InstancedMesh[], placements: readonly Placement[]) => {
+  const sized = new Vector3();
+  const place = (
+    meshes: InstancedMesh[],
+    placements: readonly Placement[],
+    size: (index: number) => number,
+  ) => {
     for (const [index, spot] of placements.entries()) {
       position.set(spot.x, spot.y, spot.z);
       yaw.setFromAxisAngle(up, -spot.heading);
@@ -203,11 +207,12 @@ export const createActors = (
         lean.setFromAxisAngle(axis.set(spot.leanZ / tilt, 0, -spot.leanX / tilt), tilt);
         yaw.premultiply(lean);
       }
-      matrix.compose(position, yaw, spot.shown ? unit : none);
+      const scale = spot.shown ? size(index) : 0;
+      matrix.compose(position, yaw, scale > 0 ? sized.setScalar(scale) : none);
       for (const mesh of meshes) {
         mesh.setMatrixAt(index, matrix);
       }
-      if (spot.shown && spot.shadowSize > 0 && shadowCount < SHADOWS) {
+      if (spot.shown && size(index) > 0 && spot.shadowSize > 0 && shadowCount < SHADOWS) {
         shadowAt.set(spot.shadowX, spot.shadowY + 0.006, spot.shadowZ);
         shadowSize.set(spot.shadowSize, 1, spot.shadowSize);
         matrix.compose(shadowAt, flat, shadowSize);
@@ -232,15 +237,17 @@ export const createActors = (
     },
     meshes: [...layers.map(({ mesh }) => mesh), shadows],
     setTheme: paintLayers,
+    /** Places everyone; `size` scales each (by its place among all of them), for popping in. */
     update: (
       cars: readonly Placement[],
       walkers: readonly Placement[],
       visitors: readonly Placement[],
+      size: (index: number) => number = () => 1,
     ) => {
       shadowCount = 0;
-      place(carMeshes, cars);
-      place(walkerMeshes, walkers);
-      place(visitorMeshes, visitors);
+      place(carMeshes, cars, size);
+      place(walkerMeshes, walkers, (index) => size(cars.length + index));
+      place(visitorMeshes, visitors, (index) => size(cars.length + walkers.length + index));
       shadows.count = shadowCount;
       shadows.instanceMatrix.needsUpdate = true;
     },
