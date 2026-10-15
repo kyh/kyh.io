@@ -120,7 +120,7 @@ in a sim game: `schedule.ts` gives every lot and block a start, from downtown
 out; each building goes up a storey at a time from a slab (a vertex-shader
 rise every town material in `render.ts` shares, its start carried per vertex);
 cranes and trucks (`crews.ts`, `draw-crews.ts`) drive in, work and drive off;
-pins wait for it, and then the flyover zooms in. title-sequence flyover runs on load; only moving the camera stops it, the
+pins wait for it, and then the title-sequence flyover zooms in. Only moving the camera stops the flyover, the
 corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
