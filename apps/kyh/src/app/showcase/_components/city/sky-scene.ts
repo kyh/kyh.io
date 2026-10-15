@@ -7,6 +7,7 @@ import { Vector3 } from "three";
 import type { Built, Materials } from "./render";
 import type { Sketch, Vec3 } from "./sketch";
 import { CENTER } from "./plan";
+import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 
@@ -28,7 +29,8 @@ export const createSky = (
 ) => {
   const builds: Built[] = [];
   const add = (sketch: Sketch) => {
-    const built = build(sketch, materials);
+    // The sky's there from the start: nothing in it goes up with the town.
+    const built = raise(build(sketch, materials), BUILT);
     builds.push(built);
     scene.add(built.group);
     return built;

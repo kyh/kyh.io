@@ -31,6 +31,8 @@ import { inland, planCity } from "./plan";
 import { createRandom, hashString } from "./random";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
+import { ALL_BUILT, BUILT, createGrowth, raise } from "./grow";
+import type { StartAt } from "./grow";
 import { createIntro } from "./intro";
 import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
@@ -122,24 +124,26 @@ const framing = ({ bounds }: Placed, view: Vec3) => {
 const createTownView = (
   scene: Scene,
   materials: ReturnType<typeof createMaterials>,
-  /** For what never goes up: the sky over the town. */
-  fixed: ReturnType<typeof createMaterials>,
   town: ReturnType<typeof drawTown>,
   view: Vec3,
   covers: readonly Vec3[],
+  /** When each part of it goes up; BUILT once the town's up. */
+  startAt: StartAt,
   still: boolean,
 ) => {
-  const city = build(town.sketch, materials);
+  const city = raise(build(town.sketch, materials), startAt);
   // Each project's building is built on its own, so it can light up alone.
   const buildings = new Map(
-    town.placed.map((entry) => [entry.project.slug, build(entry.sketch, materials)] as const),
+    town.placed.map(
+      (entry) => [entry.project.slug, raise(build(entry.sketch, materials), startAt)] as const,
+    ),
   );
   const rig = {
     parts: new Map([city, ...buildings.values()].flatMap((built) => [...built.parts])),
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !still });
-  const sky = createSky(scene, fixed, still, view, covers);
+  const sky = createSky(scene, materials, still, view, covers);
   const builds = [city, ...buildings.values(), ...sky.builds];
   for (const built of [city, ...buildings.values()]) {
     scene.add(built.group);
@@ -206,10 +210,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     plan,
     new Map(placed.map((entry) => [entry.lot.slug, entry.bounds.y + entry.bounds.h])),
   );
-  const materials = createMaterials(theme, options.reducedMotion ? null : schedule.startAt);
-  const fixed = createMaterials(theme);
+  const growth = createGrowth();
+  const materials = createMaterials(theme, growth.adapt);
+  if (options.reducedMotion) {
+    growth.set(ALL_BUILT);
+  }
   // The building sites that put it up, there only while it's going up.
-  let sites = options.reducedMotion ? null : createSites(scene, materials, fixed, schedule, plan);
+  let sites = options.reducedMotion ? null : createSites(scene, materials, schedule, plan);
   const intro = createIntro({
     built: schedule.end,
     cleared: Math.max(schedule.end, sites?.end ?? 0),
@@ -228,10 +235,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const created = createTownView(
       scene,
       materials,
-      fixed,
       town,
       viewAt(at),
       covers,
+      // A view drawn once the town's up has nothing left to raise.
+      intro.phase === "done" ? BUILT : schedule.startAt,
       options.reducedMotion,
     );
     created.show(false);
@@ -305,7 +313,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     materials.setZoom(view.zoom);
-    fixed.setZoom(view.zoom);
   };
   const resize = () => {
     width = Math.max(1, container.clientWidth);
@@ -412,7 +419,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const applyTheme = () => {
     renderer.setClearColor(new Color(shade("sea", theme, false)));
     materials.setTheme(theme);
-    fixed.setTheme(theme);
     for (const town of townViews.values()) {
       paintTown(town);
     }
@@ -901,7 +907,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const grow = (elapsed: number) => {
     const { opened, cleared } = intro.step(elapsed);
     if (intro.clock !== null) {
-      materials.setGrowth(intro.clock);
+      growth.set(intro.clock);
       sites?.update(intro.clock);
     }
     const { pullBack } = intro;
@@ -978,7 +984,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       life.dispose();
       packUp();
       materials.dispose();
-      fixed.dispose();
       renderer.dispose();
       canvas.remove();
     },

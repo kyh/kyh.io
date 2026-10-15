@@ -1,8 +1,7 @@
 // The building sites on screen while the town goes up: crews.ts plans them
 // and says what each part is doing; this puts the drawings in the scene and
-// moves them. Scaffolding draws with the town's own materials, so it rises
-// storey by storey with the building it's round; the machines and yards with
-// materials that never build.
+// moves them. Scaffolding goes up on its building's schedule, storey by storey
+// with it; the machines and yards are there whole from the start.
 import type { Scene } from "three";
 
 import type { Theme } from "./palette";
@@ -18,6 +17,7 @@ import {
   drawYard,
   TRUCK_SCALE,
 } from "./draw-crews";
+import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { roadGraph } from "./traffic";
 
@@ -29,7 +29,6 @@ interface Placed<T> {
 export const createSites = (
   scene: Scene,
   materials: Materials,
-  fixed: Materials,
   schedule: Schedule,
   plan: CityPlan,
 ) => {
@@ -42,20 +41,26 @@ export const createSites = (
     return { built, work };
   };
   const yards = works.yards.map((yard) => {
-    const placed = place(yard, build(drawYard(yard), fixed));
+    const placed = place(yard, raise(build(drawYard(yard), materials), BUILT));
     placed.built.group.position.set(yard.x + yard.w / 2, 0, yard.z + yard.d / 2);
     return placed;
   });
   const scaffolds = works.scaffolds.map((scaffold) =>
-    place(scaffold, build(drawScaffold(scaffold, scaffold.top), materials)),
+    place(
+      scaffold,
+      raise(build(drawScaffold(scaffold, scaffold.top), materials), schedule.startAt),
+    ),
   );
   const cranes = works.cranes.map((crane) => {
-    const placed = place(crane, build(drawTowerCrane(crane.mast), fixed));
+    const placed = place(crane, raise(build(drawTowerCrane(crane.mast), materials), BUILT));
     placed.built.group.position.set(crane.at.x, 0, crane.at.z);
     return placed;
   });
   const trucks = works.trucks.map((truck) =>
-    place(truck, build(truck.kind === "mixer" ? drawMixer() : drawDumpTruck(), fixed)),
+    place(
+      truck,
+      raise(build(truck.kind === "mixer" ? drawMixer() : drawDumpTruck(), materials), BUILT),
+    ),
   );
 
   return {

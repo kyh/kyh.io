@@ -2,8 +2,7 @@
 // mesh colored per vertex, pushed back a hair so ink drawn on their edges
 // wins the depth test; ink becomes fat screen-space lines, one batch per
 // color and weight. A built sketch repaints itself in place: in greys, or in
-// its true colors while hovered, by day or by night. Everything drawn with
-// these materials grows up out of the ground when the town first appears.
+// its true colors while hovered, by day or by night.
 import {
   BufferGeometry,
   CanvasTexture,
@@ -11,89 +10,22 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Group,
-  InstancedBufferAttribute,
   LinearMipmapLinearFilter,
   Mesh,
   MeshBasicMaterial,
   SRGBColorSpace,
 } from "three";
-import type { Material, WebGLProgramParametersWithUniforms } from "three";
+import type { Material } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 
 import type { Theme, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
-import { FLOOR } from "./draw-kit";
 import { shade } from "./palette";
-import { RISE } from "./schedule";
 
 /** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
-
-/** The slab a building stands on before it goes up, just over the curb. */
-const FOOT = 0.05;
-/**
- * What's not built yet is pressed down onto what is, not flattened onto it:
- * kept in order, a sliver deep, so the roof stays on top and no two faces
- * share a plane and flicker.
- */
-const SQUASH = "0.004";
-
-/** Where each thing being built starts going up, by its place in town (s). */
-export type StartAt = (x: number, z: number) => number;
-
-// Each building goes up from a slab on its lot, a storey at a time: the
-// storey being built rises into place, and everything above waits, pressed
-// flat on top of it. Its start
-// rides on the geometry (`buildAt`), worked out by the town's schedule, so
-// one merged mesh still goes up building by building. The ground and anything
-// below it stay put; things that never go up (the sky) use materials without a schedule.
-const BUILD_GLSL = `
-uniform float growTime;
-vec4 built(vec4 world, float at) {
-  if (world.y <= ${FOOT}) {
-    return world;
-  }
-  float floors = max(0.0, (growTime - at) * ${RISE.toFixed(1)}) / ${FLOOR};
-  float level = (floor(floors) + smoothstep(0.45, 1.0, fract(floors))) * ${FLOOR};
-  float built = max(level, ${FOOT});
-  world.y = world.y <= built ? world.y : built + (world.y - built) * ${SQUASH};
-  return world;
-}
-`;
-
-const MESH_PROJECTION = "#include <project_vertex>";
-const LINE_ENDS = [
-  "vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );",
-  "vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );",
-] as const;
-
-/** Rewrite a material's vertex shader so its points go up as `growth` runs, each from its own start. */
-const building = (shader: WebGLProgramParametersWithUniforms, growth: { value: number }) => {
-  shader.uniforms.growTime = growth;
-  let body = shader.vertexShader;
-  if (body.includes(MESH_PROJECTION)) {
-    body = `attribute float buildAt;\n${body.replace(
-      MESH_PROJECTION,
-      `vec4 mvPosition = viewMatrix * built(modelMatrix * vec4(transformed, 1.0), buildAt);
-      gl_Position = projectionMatrix * mvPosition;`,
-    )}`;
-  } else {
-    for (const end of LINE_ENDS) {
-      const name = end.includes("instanceStart") ? "instanceStart" : "instanceEnd";
-      body = body.replace(
-        end,
-        end.replace(
-          `modelViewMatrix * vec4( ${name}, 1.0 )`,
-          `viewMatrix * built( modelMatrix * vec4( ${name}, 1.0 ), instanceBuildAt )`,
-        ),
-      );
-    }
-    body = `attribute float instanceBuildAt;\n${body}`;
-  }
-  shader.vertexShader = BUILD_GLSL + body;
-};
 
 export interface Materials {
   /** Every face in town: the colors live on the vertices. */
@@ -102,27 +34,23 @@ export interface Materials {
   line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
   setTheme: (theme: Theme) => void;
   setZoom: (zoom: number) => void;
-  /** Seconds into the town going up; its schedule's end or more once it's up. */
-  setGrowth: (seconds: number) => void;
-  /** Make a material go up with the rest of the town. */
-  grows: <M extends Material>(material: M) => M;
-  /** When each point drawn with these materials starts going up; null for things that never do. */
-  startAt: StartAt | null;
+  /** A material made for the town elsewhere (a sign, a screen), adapted like the rest. */
+  adopt: <M extends Material>(material: M) => M;
   dispose: () => void;
 }
 
-/** Materials for the town; with `startAt`, all it draws goes up building by building as growth runs. */
-export const createMaterials = (initial: Theme, startAt: StartAt | null = null): Materials => {
+/** Materials for the town; `adapt` sees every one made, to change how it draws (grow.ts raises the town). */
+export const createMaterials = (
+  initial: Theme,
+  adapt?: (material: Material) => void,
+): Materials => {
   let theme = initial;
   let inkScale = 1;
-  const growth = { value: 0 };
-  const grows = <M extends Material>(material: M) => {
-    if (startAt) {
-      material.onBeforeCompile = (shader) => building(shader, growth);
-    }
+  const adopt = <M extends Material>(material: M) => {
+    adapt?.(material);
     return material;
   };
-  const faces = grows(
+  const faces = adopt(
     new MeshBasicMaterial({
       polygonOffset: true,
       polygonOffsetFactor: 2,
@@ -142,7 +70,7 @@ export const createMaterials = (initial: Theme, startAt: StartAt | null = null):
       return existing.material;
     }
     // Ink stays grey even on a hovered building: the color is in the washes.
-    const material = grows(
+    const material = adopt(
       new LineMaterial({
         alphaToCoverage: true,
         color: shade(token, theme, colorful),
@@ -153,6 +81,7 @@ export const createMaterials = (initial: Theme, startAt: StartAt | null = null):
     return material;
   };
   return {
+    adopt,
     dispose: () => {
       faces.dispose();
       for (const { material } of lines.values()) {
@@ -160,11 +89,7 @@ export const createMaterials = (initial: Theme, startAt: StartAt | null = null):
       }
     },
     faces,
-    grows,
     line,
-    setGrowth: (seconds) => {
-      growth.value = seconds;
-    },
     setTheme: (next) => {
       theme = next;
       for (const { colorful, material, token } of lines.values()) {
@@ -179,7 +104,6 @@ export const createMaterials = (initial: Theme, startAt: StartAt | null = null):
         material.linewidth = WEIGHTS[weight] * inkScale;
       }
     },
-    startAt,
   };
 };
 
@@ -247,22 +171,6 @@ const signTexture = (sign: Sign) => {
   return texture;
 };
 
-/** Every vertex of a run of triangles (or segments, `per` 2) gets the start of the thing it's part of, found at its middle. */
-const startsOf = (positions: ArrayLike<number>, per: number, startAt: StartAt, offset: Vec3) => {
-  const count = positions.length / 3 / per;
-  const starts = new Float32Array(count);
-  for (let index = 0; index < count; index += 1) {
-    let x = 0;
-    let z = 0;
-    for (let corner = 0; corner < per; corner += 1) {
-      x += positions[(index * per + corner) * 3] ?? 0;
-      z += positions[(index * per + corner) * 3 + 2] ?? 0;
-    }
-    starts[index] = startAt(x / per + offset[0], z / per + offset[2]);
-  }
-  return starts;
-};
-
 const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   const corner = (u: number, v: number) => [
     origin[0] + across[0] * u + up[0] * v,
@@ -282,23 +190,6 @@ const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   return geometry;
 };
 
-/** A flat board goes up with whatever it's fixed to: its whole quad starts with the point at its middle. */
-const boardOn = (
-  geometry: BufferGeometry,
-  { origin, across, up }: { origin: Vec3; across: Vec3; up: Vec3 },
-  materials: Materials,
-  offset: Vec3,
-) => {
-  if (materials.startAt) {
-    const start = materials.startAt(
-      origin[0] + (across[0] + up[0]) / 2 + offset[0],
-      origin[2] + (across[2] + up[2]) / 2 + offset[2],
-    );
-    geometry.setAttribute("buildAt", new Float32BufferAttribute([start, start, start, start], 1));
-  }
-  return geometry;
-};
-
 /** A picture the animations redraw: the TV on Autoplay's roof, a ticker. */
 export interface LiveScreen {
   canvas: HTMLCanvasElement;
@@ -308,7 +199,7 @@ export interface LiveScreen {
 
 const SCREEN_HEIGHT_PX = 64;
 
-const screenMesh = (screen: Screen, materials: Materials, offset: Vec3) => {
+const screenMesh = (screen: Screen, materials: Materials) => {
   const canvas = document.createElement("canvas");
   const aspect = Math.hypot(...screen.across) / Math.hypot(...screen.up);
   canvas.height = SCREEN_HEIGHT_PX;
@@ -320,8 +211,8 @@ const screenMesh = (screen: Screen, materials: Materials, offset: Vec3) => {
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   const mesh = new Mesh(
-    boardOn(quad(screen.origin, screen.across, screen.up), screen, materials, offset),
-    materials.grows(new MeshBasicMaterial({ map: texture, side: DoubleSide })),
+    quad(screen.origin, screen.across, screen.up),
+    materials.adopt(new MeshBasicMaterial({ map: texture, side: DoubleSide })),
   );
   mesh.renderOrder = 2;
   return { mesh, screen: { canvas, context, texture } };
@@ -355,7 +246,7 @@ interface Workshop {
   signs: { material: MeshBasicMaterial; token: Token }[];
 }
 
-const faceMesh = (sketch: Sketch, workshop: Workshop, offset: Vec3) => {
+const faceMesh = (sketch: Sketch, workshop: Workshop) => {
   let vertices = 0;
   for (const positions of sketch.faces.values()) {
     vertices += positions.length / 3;
@@ -375,27 +266,12 @@ const faceMesh = (sketch: Sketch, workshop: Workshop, offset: Vec3) => {
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   geometry.setAttribute("color", colors);
-  const { startAt } = workshop.materials;
-  if (startAt) {
-    const perTriangle = startsOf(positions, 3, startAt, offset);
-    geometry.setAttribute(
-      "buildAt",
-      new Float32BufferAttribute(
-        Float32Array.from(
-          { length: vertices },
-          (_, vertex) => perTriangle[Math.floor(vertex / 3)] ?? 0,
-        ),
-        1,
-      ),
-    );
-  }
   workshop.painters.push({ colors, runs });
   return new Mesh(geometry, workshop.materials.faces);
 };
 
-/** Builds a sketch into `target`, drawn `offset` from the town's origin (a moving part's own origin). */
-const buildInto = (sketch: Sketch, workshop: Workshop, target: Group, offset: Vec3 = [0, 0, 0]) => {
-  const faces = faceMesh(sketch, workshop, offset);
+const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
+  const faces = faceMesh(sketch, workshop);
   if (faces) {
     target.add(faces);
   }
@@ -403,20 +279,13 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group, offset: Ve
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
-      const { startAt } = workshop.materials;
-      if (startAt) {
-        geometry.setAttribute(
-          "instanceBuildAt",
-          new InstancedBufferAttribute(startsOf(batch.positions, 2, startAt, offset), 1),
-        );
-      }
       const lines = new LineSegments2(geometry, workshop.materials.line(batch.token, batch.weight));
       lines.renderOrder = 1;
       target.add(lines);
     }
   }
   for (const sign of sketch.signs) {
-    const material = workshop.materials.grows(
+    const material = workshop.materials.adopt(
       new MeshBasicMaterial({
         depthWrite: false,
         map: signTexture(sign),
@@ -424,16 +293,13 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group, offset: Ve
         transparent: true,
       }),
     );
-    const mesh = new Mesh(
-      boardOn(quad(sign.origin, sign.across, sign.up), sign, workshop.materials, offset),
-      material,
-    );
+    const mesh = new Mesh(quad(sign.origin, sign.across, sign.up), material);
     mesh.renderOrder = 2;
     workshop.signs.push({ material, token: sign.token });
     target.add(mesh);
   }
   for (const screen of sketch.screens) {
-    const live = screenMesh(screen, workshop.materials, offset);
+    const live = screenMesh(screen, workshop.materials);
     if (live) {
       workshop.built.screens.set(screen.name, live.screen);
       target.add(live.mesh);
@@ -444,11 +310,7 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group, offset: Ve
     group.position.set(...piece.origin);
     group.name = piece.name;
     workshop.built.parts.set(piece.name, group);
-    buildInto(piece.sketch, workshop, group, [
-      offset[0] + piece.origin[0],
-      offset[1] + piece.origin[1],
-      offset[2] + piece.origin[2],
-    ]);
+    buildInto(piece.sketch, workshop, group);
     target.add(group);
   }
 };
