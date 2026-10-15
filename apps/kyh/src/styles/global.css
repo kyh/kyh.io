@@ -900,6 +900,25 @@ body:has(.city) {
   }
 }
 
+/* Edit mode: long-press an icon and the grid wiggles, iOS style, until a click elsewhere. */
+[data-slot="tile"][data-editing] [data-slot="tile-wiggle"] {
+  animation: wiggle 0.28s ease-in-out infinite alternate;
+  animation-delay: var(--wiggle-delay, 0s);
+}
+
+[data-slot="tile"][data-dragging] [data-slot="tile-wiggle"] {
+  animation: none;
+}
+
+@keyframes wiggle {
+  from {
+    transform: rotate(calc(-1.5deg * var(--wiggle-dir, 1)));
+  }
+  to {
+    transform: rotate(calc(1.5deg * var(--wiggle-dir, 1)));
+  }
+}
+
 [data-slot="folder-trigger"],
 [data-slot="backdrop"],
 [data-slot="open-folder"],
