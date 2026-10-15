@@ -1,8 +1,8 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, useDragControls } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Reorder, useDragControls } from "motion/react";
 
 import type { ProjectAppItem } from "@/components/project-app-group";
 import { ProjectApp, ProjectAppGroup } from "@/components/project-app-group";
@@ -51,24 +51,11 @@ interface TileProps {
   tile: SortableTile;
   index: number;
   editing: boolean;
-  /** Changes only with a drag, so restoring the saved order on load doesn't animate. */
-  layoutDependency: unknown;
-  registerRef: (key: string, el: HTMLDivElement | null) => void;
   onLongPress: () => void;
-  onDragOver: (key: string, x: number, y: number) => void;
   lockScroll: (locked: boolean) => void;
 }
 
-const Tile = ({
-  tile,
-  index,
-  editing,
-  layoutDependency,
-  registerRef,
-  onLongPress,
-  onDragOver,
-  lockScroll,
-}: TileProps) => {
+const Tile = ({ tile, index, editing, onLongPress, lockScroll }: TileProps) => {
   const controls = useDragControls();
   const press = useRef<{ timer: number; x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -89,6 +76,8 @@ const Tile = ({
     [],
   );
 
+  // Drag starts from a long press (or any press once editing), so the item
+  // ignores its own pointer and the press hands the gesture to dragControls.
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) {
       return;
@@ -127,34 +116,20 @@ const Tile = ({
     }
   };
 
-  const setRef = useCallback(
-    (el: HTMLDivElement | null) => registerRef(tile.key, el),
-    [registerRef, tile.key],
-  );
-
   return (
-    <motion.div
-      ref={setRef}
+    <Reorder.Item
+      as="div"
+      value={tile.key}
       className="relative touch-manipulation select-none [-webkit-touch-callout:none]"
       data-slot="tile"
       data-editing={editing || undefined}
       data-dragging={dragging || undefined}
-      layout="position"
-      layoutDependency={layoutDependency}
-      transition={layoutSpring}
-      drag
-      dragControls={controls}
       dragListener={false}
-      dragSnapToOrigin
+      dragControls={controls}
       dragMomentum={false}
-      whileDrag={{ scale: 1.12, zIndex: 10 }}
-      style={{ zIndex: dragging ? 10 : undefined }}
+      whileDrag={{ scale: 1.12 }}
+      transition={layoutSpring}
       onDragStart={() => setDragging(true)}
-      onDrag={(e) => {
-        if ("clientX" in e) {
-          onDragOver(tile.key, e.clientX, e.clientY);
-        }
-      }}
       onDragEnd={() => {
         setDragging(false);
         lockScroll(false);
@@ -188,17 +163,16 @@ const Tile = ({
           <ProjectAppGroup title={tile.title} items={tile.items} />
         )}
       </div>
-    </motion.div>
+    </Reorder.Item>
   );
 };
 
 export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
   const hydrated = useIsHydrated();
-  // Null until the first drag: the saved order (client only) or the page's.
+  // Null until the first reorder: the saved order (client only) or the page's.
   const [moved, setMoved] = useState<string[] | null>(null);
   const [editing, setEditing] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
-  const tileRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollLocked = useRef(false);
 
   const keys = useMemo(() => tiles.map((t) => t.key), [tiles]);
@@ -210,14 +184,6 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
       writeOrder(moved);
     }
   }, [moved]);
-
-  const registerRef = useCallback((key: string, el: HTMLDivElement | null) => {
-    tileRefs.current[key] = el;
-  }, []);
-
-  const lockScroll = useCallback((locked: boolean) => {
-    scrollLocked.current = locked;
-  }, []);
 
   // A finger held on a tile drags it, not the page.
   useEffect(() => {
@@ -258,36 +224,19 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
     };
   }, [editing]);
 
-  const handleDragOver = useCallback(
-    (dragged: string, x: number, y: number) => {
-      const target = Object.entries(tileRefs.current).find(([key, el]) => {
-        if (key === dragged || !el) {
-          return false;
-        }
-        const r = el.getBoundingClientRect();
-        return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-      })?.[0];
-      if (!target) {
-        return;
-      }
-      setMoved((current) => {
-        const prev = current ?? readOrder(keys);
-        const from = prev.indexOf(dragged);
-        const to = prev.indexOf(target);
-        if (from === -1 || to === -1) {
-          return prev;
-        }
-        const next = [...prev];
-        next.splice(from, 1);
-        next.splice(to, 0, dragged);
-        return next;
-      });
-    },
-    [keys],
-  );
+  const lockScroll = (locked: boolean) => {
+    scrollLocked.current = locked;
+  };
 
   return (
-    <div ref={gridRef} className="side-quests-grid">
+    <Reorder.Group
+      as="div"
+      ref={gridRef}
+      axis="xy"
+      values={order}
+      onReorder={setMoved}
+      className="side-quests-grid"
+    >
       {order.map((key, index) => {
         const tile = byKey.get(key);
         return tile ? (
@@ -296,14 +245,11 @@ export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
             tile={tile}
             index={index}
             editing={editing}
-            layoutDependency={moved}
-            registerRef={registerRef}
             onLongPress={() => setEditing(true)}
-            onDragOver={handleDragOver}
             lockScroll={lockScroll}
           />
         ) : null;
       })}
-    </div>
+    </Reorder.Group>
   );
 };
