@@ -4,22 +4,18 @@ import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
-import type { PlayerMap } from "@/lib/player";
 import { EggCatcher, EggProgress, useEggsAwake } from "@/easter-eggs/provider";
 import { gradientOf, ownColor, subscribeToOwnColor } from "@/lib/color";
+import { useRoster } from "./multiplayer/provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
-interface AvatarGroupProps {
-  others: PlayerMap;
-}
-
-export const AvatarGroup = ({ others }: AvatarGroupProps) => {
+export const AvatarGroup = () => {
   const pathname = usePathname();
   // None on the server: a color picked per page load would mismatch SSR.
   const color = useSyncExternalStore(subscribeToOwnColor, ownColor, () => null);
   const awake = useEggsAwake();
-  const players = Object.entries(others).toSorted(([, p]) =>
-    p.state.pathname === pathname ? -1 : 1,
+  const players = useRoster().toSorted(
+    (a, b) => Number(b.pathname === pathname) - Number(a.pathname === pathname),
   );
   const onlyMe = players.length < 1;
 
@@ -55,8 +51,8 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
             </TooltipContent>
           </Tooltip>
         </motion.li>
-        {players.map(([id, player], index) => {
-          const anotherPage = player.state.pathname && player.state.pathname !== pathname;
+        {players.map((player, index) => {
+          const anotherPage = player.pathname !== pathname;
 
           let label = "Visitor";
           if (anotherPage) {
@@ -65,7 +61,7 @@ export const AvatarGroup = ({ others }: AvatarGroupProps) => {
 
           return (
             <motion.li
-              key={id}
+              key={player.id}
               className="-mr-2 rounded-full shadow-md"
               style={{
                 background: gradientOf(player),

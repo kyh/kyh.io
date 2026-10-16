@@ -13,6 +13,7 @@ import {
   Query,
   Render,
   Runner,
+  Sleeping,
   World,
 } from "matter-js";
 import { useTheme } from "next-themes";
@@ -37,6 +38,8 @@ const restrokeBodies = (bodies: Matter.Body[], isLight: boolean) => {
 const INITIAL_FIGURE_COUNT = 20;
 const CLICK_SPAWN_COUNT = 6;
 const TILT_SMOOTHING = 0.2;
+/** A gravity change this big wakes settled figures, which otherwise ignore it. */
+const TILT_WAKE = 0.01;
 
 const createStaticFigure = (isLight: boolean, x: number, y: number) => {
   const render = getRenderProps(isLight);
@@ -111,22 +114,25 @@ export const FigureCanvas = () => {
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
-  const renderRef = useRef<Render | null>(null);
   const runnerRef = useRef<Runner | null>(null);
   const bodiesRef = useRef<Matter.Body[]>([]);
   const animatingRef = useRef<AnimatingFigure[]>([]);
   const isVisibleRef = useRef(true);
 
-  // Pause/resume physics based on visibility
+  // Stopped, not just disabled, offscreen: a disabled runner still wakes every frame.
   const pausePhysics = useCallback(() => {
     if (runnerRef.current) {
-      runnerRef.current.enabled = false;
+      Runner.stop(runnerRef.current);
     }
   }, []);
 
   const resumePhysics = useCallback(() => {
-    if (runnerRef.current) {
-      runnerRef.current.enabled = true;
+    const runner = runnerRef.current;
+    const engine = engineRef.current;
+    if (runner && engine) {
+      // Running a running runner starts a second loop.
+      Runner.stop(runner);
+      Runner.run(runner, engine);
     }
   }, []);
 
@@ -163,7 +169,7 @@ export const FigureCanvas = () => {
     const height = 480;
     const isLight = resolvedTheme === "light";
 
-    const engine = Engine.create();
+    const engine = Engine.create({ enableSleeping: true });
     engineRef.current = engine;
 
     const render = Render.create({
@@ -177,7 +183,6 @@ export const FigureCanvas = () => {
         wireframes: false,
       },
     });
-    renderRef.current = render;
 
     // Mouse interaction for dragging
     const mouse = Mouse.create(render.canvas);
@@ -299,8 +304,15 @@ export const FigureCanvas = () => {
         return;
       }
       const target = tiltGravity(e.beta, e.gamma, screen.orientation?.angle ?? 0);
-      engine.gravity.x += (target.x - engine.gravity.x) * TILT_SMOOTHING;
-      engine.gravity.y += (target.y - engine.gravity.y) * TILT_SMOOTHING;
+      const dx = (target.x - engine.gravity.x) * TILT_SMOOTHING;
+      const dy = (target.y - engine.gravity.y) * TILT_SMOOTHING;
+      engine.gravity.x += dx;
+      engine.gravity.y += dy;
+      if (Math.hypot(dx, dy) > TILT_WAKE) {
+        for (const body of bodiesRef.current) {
+          Sleeping.set(body, false);
+        }
+      }
     };
 
     // iOS 13+ only grants orientation from inside a user gesture, so ask on
@@ -375,8 +387,21 @@ export const FigureCanvas = () => {
       }
     });
 
-    Render.run(render);
-    Runner.run(runner, engine);
+    // Drawn only while something moves: once the figures settle and sleep,
+    // the canvas holds its last frame instead of repainting every one.
+    let drawn = false;
+    Events.on(runner, "afterTick", () => {
+      const moving =
+        animatingRef.current.length > 0 || bodiesRef.current.some((body) => !body.isSleeping);
+      if (moving || !drawn) {
+        Render.world(render);
+        drawn = true;
+      }
+    });
+
+    if (isVisibleRef.current) {
+      Runner.run(runner, engine);
+    }
 
     return () => {
       canvas.removeEventListener("click", handleClick);
@@ -386,13 +411,9 @@ export const FigureCanvas = () => {
       Mouse.clearSourceEvents(mouse);
       Events.off(engine, "collisionStart");
       Events.off(engine, "afterUpdate");
-      if (renderRef.current) {
-        Render.stop(renderRef.current);
-        renderRef.current.canvas.remove();
-      }
-      if (runnerRef.current) {
-        Runner.stop(runnerRef.current);
-      }
+      Events.off(runner, "afterTick");
+      Runner.stop(runner);
+      canvas.remove();
       if (engineRef.current) {
         Engine.clear(engineRef.current);
       }

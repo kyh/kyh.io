@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 import { FixedRate } from "@vibedgames/multiplayer";
 
 import type { JsonValue } from "@vibedgames/multiplayer";
-import type { PlayerMap } from "@/lib/player";
+import type { PlayerMap, Visitor } from "@/lib/player";
 import type { Said } from "@/lib/chat";
 import type { SiteRoom } from "@/lib/site-room";
 import { SHOW_MS } from "@/lib/chat";
@@ -29,6 +29,7 @@ import { createSiteRoom } from "@/lib/site-room";
 const SEND_RATE = 15;
 
 const NONE: PlayerMap = {};
+const NO_ONE: Visitor[] = [];
 const NO_ENTRY: JsonValue = null;
 /** A subscription that never fires, for reads that should hold still. */
 // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
@@ -110,6 +111,12 @@ export const MultiplayerProvider = ({ children }: { children: React.ReactNode })
 export const usePlayers = () => {
   const room = useSiteRoom();
   return useSyncExternalStore(room.subscribe, room.others, () => NONE);
+};
+
+/** Everyone else on the site and the page they're on, unmoved by their pointers. */
+export const useRoster = () => {
+  const room = useSiteRoom();
+  return useSyncExternalStore(room.subscribe, room.roster, () => NO_ONE);
 };
 
 /** This visitor's own colors, once they're in the room. */

@@ -17,7 +17,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { animate, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 
 import { CURSOR_ARROW } from "@/components/cursor";
 import { lastPointer } from "@/lib/pointer";
@@ -125,32 +125,50 @@ interface BurstProps {
   onDone: (id: number) => void;
 }
 
+/** How long the label stands before it pops back out, in ms: gone before the last egg lands, which ends the burst. */
+const LABEL_HOLD = 900;
+
+/** The label bounces up out of the pointer, holds, then pops back in. */
+const BurstLabel = ({ label }: { label: string }) => {
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShown(false), LABEL_HOLD);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return (
+    <span className="absolute bottom-6 left-0 -translate-x-1/2">
+      <AnimatePresence>
+        {shown && (
+          <motion.span
+            className="block origin-bottom rounded-full px-2 py-0.5 text-xs leading-snug font-medium whitespace-nowrap text-[#111] shadow-lg"
+            style={{ background: GOLD_BACKGROUND }}
+            initial={{ scale: 0 }}
+            animate={{
+              scale: 1,
+              transition: { bounce: 0.5, type: "spring", visualDuration: 0.35 },
+            }}
+            exit={{ scale: 0, transition: { duration: 0.2, ease: "backIn" } }}
+          >
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+};
+
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
 const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
     <div className="absolute" style={{ left: burst.from.x, top: burst.from.y }}>
-      <motion.span
-        className="absolute bottom-6 left-0 rounded-full px-2 py-0.5 text-xs leading-snug font-medium whitespace-nowrap text-[#111] shadow-lg"
-        style={{ background: GOLD_BACKGROUND }}
-        initial={{ opacity: 0, scale: 0.3, x: "-50%", y: 0 }}
-        animate={{
-          opacity: [0, 1, 1, 0],
-          scale: [0.3, 1.15, 1, 1],
-          x: "-50%",
-          y: [0, -20, -28, -52],
-        }}
-        // Done before the last egg lands, which ends the burst.
-        transition={{ duration: 1.35, ease: "easeOut", times: [0, 0.18, 0.75, 1] }}
-      >
-        {burst.label}
-      </motion.span>
+      <BurstLabel label={burst.label} />
       {burst.eggs.map((egg, index) => (
         <motion.svg
           key={index}
           viewBox="0 0 24 24"
-          className="absolute size-7 -translate-1/2 drop-shadow-md"
+          className="absolute size-7 -translate-1/2"
           initial={{ rotate: 0, scale: 0.3, x: 0, y: 0 }}
           animate={{
             rotate: [0, egg.tilt, 0],
@@ -172,6 +190,7 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
           }}
         >
           {/* Lit from the top left: a deep rim, a body, and a gloss. */}
+          <path d={EGG} fill="black" opacity="0.2" transform="translate(0 1.5)" />
           <path d={EGG} fill={`url(#${gradient})`} stroke={DEEP_GOLD} strokeWidth="0.75" />
           <path d={EGG} fill={`url(#${gradient}-rim)`} />
           <ellipse

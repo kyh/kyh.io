@@ -13,3 +13,11 @@ export interface Player {
 }
 
 export type PlayerMap = Record<string, Player>;
+
+/** A visitor as the avatar row draws them: who, their colors, and which page they're on. */
+export interface Visitor {
+  id: string;
+  color: string;
+  hue: string;
+  pathname: string;
+}

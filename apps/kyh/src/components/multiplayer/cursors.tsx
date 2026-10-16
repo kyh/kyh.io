@@ -54,7 +54,8 @@ const OwnChat = ({ line, color, hue }: OwnChatProps) => {
   );
 };
 
-export const Multiplayer = () => {
+/** Everyone's pointers and chat: redrawn as often as anyone's pointer moves. */
+const Cursors = () => {
   const pathname = usePathname();
   const ownsCursors = OWN_CURSORS.has(pathname);
   const players = usePlayers();
@@ -62,15 +63,8 @@ export const Multiplayer = () => {
   const now = useRoomClock();
   const { draft, said } = useChat(!ownsCursors);
 
-  // Only surface players that have announced themselves (sent a pathname). A
-  // just-connected or mid-reconnect socket sits at empty state for a beat; the
-  // server reaps genuinely dead ones, but this keeps those blips off the UI.
-  const present = Object.fromEntries(
-    Object.entries(players).filter(([, player]) => !!player.state.pathname),
-  );
-
   const at = now();
-  const visible = Object.entries(ownsCursors ? {} : present).flatMap(([id, player]) => {
+  const visible = Object.entries(ownsCursors ? {} : players).flatMap(([id, player]) => {
     const point = pagePointOf(player.state);
     return point && player.state.pathname === pathname
       ? [{ chat: readChat(player.state, at), id, player, point }]
@@ -94,9 +88,6 @@ export const Multiplayer = () => {
 
   return (
     <>
-      <div className="fixed top-6 right-6 z-[1]">
-        <AvatarGroup others={present} />
-      </div>
       {visible.map(({ chat, id, player, point }) => (
         <Cursor
           key={id}
@@ -114,3 +105,13 @@ export const Multiplayer = () => {
     </>
   );
 };
+
+// The avatars sit outside the cursors so the pointers' traffic never reaches them.
+export const Multiplayer = () => (
+  <>
+    <div className="fixed top-6 right-6 z-[1]">
+      <AvatarGroup />
+    </div>
+    <Cursors />
+  </>
+);

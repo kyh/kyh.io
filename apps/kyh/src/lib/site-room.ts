@@ -7,16 +7,18 @@
 import { MultiplayerClient } from "@vibedgames/multiplayer";
 
 import type { JsonRecord, JsonValue, MultiplayerSnapshot } from "@vibedgames/multiplayer";
-import type { PlayerMap } from "@/lib/player";
+import type { PlayerMap, Visitor } from "@/lib/player";
 import type { Drop } from "@/lib/shared-order";
 import { draftState, sayState } from "@/lib/chat";
 import { lookOf, ownColor, ownColorName, subscribeToOwnColor } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
+import { asText } from "@/lib/wire";
 import { acceptOrder, hostReorder, ordersEntry, REORDER } from "@/lib/shared-order";
 
 export const SITE_ROOM = "kyh-site";
 
 const NONE: PlayerMap = {};
+const NO_ONE: Visitor[] = [];
 
 /**
  * What the host keeps in shared state for guests: an intent named `event`
@@ -75,9 +77,32 @@ export const createSiteRoom = () => {
 
   let others: PlayerMap = NONE;
   let seen: MultiplayerSnapshot | null = null;
+  // Pointers move the room 15 times a second a visitor; the roster changes
+  // only when someone comes, goes or changes page, so it's kept by its contents.
+  let roster: Visitor[] = NO_ONE;
+  let rosterKey = "";
   /** This visitor's latest drop per grid, shown until the room catches up. */
   const drops = new Map<string, Drop>();
   let dropped = 0;
+
+  const readOthers = () => {
+    const snapshot = client?.getSnapshot() ?? null;
+    if (snapshot !== seen) {
+      seen = snapshot;
+      const next: PlayerMap = {};
+      for (const [id, player] of Object.entries(snapshot?.players ?? {})) {
+        if (id !== snapshot?.playerId && player.connected !== false) {
+          next[id] = {
+            ...lookOf(player.state, player),
+            id,
+            state: player.state ?? {},
+          };
+        }
+      }
+      others = next;
+    }
+    return others;
+  };
 
   return {
     /** Which page this visitor is on. */
@@ -123,27 +148,32 @@ export const createSiteRoom = () => {
     /** A grid's order as this visitor should see it (raw: read it against the tiles). */
     order: (grid: string) => acceptOrder(ordersEntry(client?.sharedState, grid), drops.get(grid)),
     /** Everyone else in the room, as the site draws them. */
-    others: () => {
-      const snapshot = client?.getSnapshot() ?? null;
-      if (snapshot !== seen) {
-        seen = snapshot;
-        const next: PlayerMap = {};
-        for (const [id, player] of Object.entries(snapshot?.players ?? {})) {
-          if (id !== snapshot?.playerId && player.connected !== false) {
-            next[id] = {
-              ...lookOf(player.state, player),
-              id,
-              state: player.state ?? {},
-            };
-          }
-        }
-        others = next;
-      }
-      return others;
-    },
+    others: readOthers,
     /** Where this visitor's pointer is. */
     point: (state: JsonRecord) => {
       client?.updateMyState(state);
+    },
+    /**
+     * Everyone else who has said which page they're on (a just-connected or
+     * mid-reconnect socket sits at empty state for a beat), the same array
+     * until one of them comes, goes, or moves page.
+     */
+    roster: () => {
+      const next: Visitor[] = [];
+      for (const player of Object.values(readOthers())) {
+        const pathname = asText(player.state.pathname);
+        if (pathname) {
+          next.push({ color: player.color, hue: player.hue, id: player.id, pathname });
+        }
+      }
+      const key = next
+        .map(({ color, hue, id, pathname }) => `${id} ${color} ${hue} ${pathname}`)
+        .join("\n");
+      if (key !== rosterKey) {
+        rosterKey = key;
+        roster = next.length > 0 ? next : NO_ONE;
+      }
+      return roster;
     },
     /** Send a line of chat. */
     say: (text: string) => {
