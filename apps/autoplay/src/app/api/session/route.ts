@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 
 import type { SessionPayload } from "@/lib/api-contract";
 import { auth, getSession } from "@/lib/auth";
@@ -23,6 +23,9 @@ const googleFor = (owner: boolean): SessionPayload["google"] => {
 };
 
 export const GET = async (): Promise<NextResponse> => {
+  // Per request, always: without the auth keys nothing here reads the request,
+  // and the build would freeze the answer.
+  await connection();
   const session = await getSession();
   if (session !== null) {
     await ensureSources(session);

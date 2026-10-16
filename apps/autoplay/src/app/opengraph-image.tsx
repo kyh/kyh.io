@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -18,8 +19,17 @@ const sunkenBorder: CSSProperties = {
   boxShadow: "inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf",
 };
 
+// Cached, so the card prerenders: a file read alone keeps it from the build.
+// Bytes come back out of the cache as plain arrays, so the font goes in as base64.
+const fontData = async () => {
+  "use cache";
+  cacheLife("max");
+  const font = await readFile(path.join(process.cwd(), "src/app/geist-mono-bold.ttf"));
+  return font.toString("base64");
+};
+
 const OpenGraphImage = async () => {
-  const data = await readFile(path.join(process.cwd(), "src/app/geist-mono-bold.ttf"));
+  const data = Buffer.from(await fontData(), "base64");
   const owner = env.OWNER_X_USERNAME === undefined ? "public access" : `@${env.OWNER_X_USERNAME}`;
 
   return new ImageResponse(

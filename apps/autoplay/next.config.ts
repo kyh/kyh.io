@@ -6,6 +6,8 @@ const config: NextConfig = {
   /** X rejects "localhost" callbacks, so dev is browsed at 127.0.0.1 — which
       the dev server treats as cross-origin and blocks without this. */
   allowedDevOrigins: ["127.0.0.1"],
+  cacheComponents: true,
+  partialPrefetching: true,
 };
 
 export default config;

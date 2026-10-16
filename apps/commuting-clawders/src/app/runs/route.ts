@@ -1,10 +1,16 @@
+import { revalidateTag } from "next/cache";
+import { connection } from "next/server";
 import * as z from "zod/mini";
 
 import { posterOf } from "@/lib/poster";
 import { runSchema } from "@/lib/runs";
-import { canPost, saveRun, standings } from "@/lib/standings";
+import { BOARD_TAG, canPost, saveRun, standings } from "@/lib/standings";
 
-export const GET = async () => Response.json(await standings());
+// Live, never prerendered: the pane's [Leaderboard] prints what is there now.
+export const GET = async () => {
+  await connection();
+  return Response.json(await standings());
+};
 
 export const POST = async (request: Request) => {
   const parsed = runSchema.safeParse(await request.json().catch(() => null));
@@ -15,5 +21,7 @@ export const POST = async (request: Request) => {
   if (!(await canPost(poster))) {
     return Response.json({ error: "too many runs posted; try again later" }, { status: 429 });
   }
-  return Response.json({ rank: await saveRun(parsed.data, poster) }, { status: 201 });
+  const rank = await saveRun(parsed.data, poster);
+  revalidateTag(BOARD_TAG, "max");
+  return Response.json({ rank }, { status: 201 });
 };

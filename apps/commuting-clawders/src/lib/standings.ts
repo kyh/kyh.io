@@ -1,4 +1,5 @@
 import { and, count, countDistinct, desc, eq, gt, sql } from "drizzle-orm";
+import { cacheLife, cacheTag } from "next/cache";
 
 import { db } from "@/db/client";
 import { run } from "@/db/schema";
@@ -39,6 +40,19 @@ export const totals = async () => {
 };
 
 export type Totals = Awaited<ReturnType<typeof totals>>;
+
+/** Tag on the cached board; a posted run expires it. */
+export const BOARD_TAG = "board";
+
+// The page's read: cached, refreshed at most every 10s and
+// sooner once a run lands, so the page prerenders with the board in its shell.
+export const board = async () => {
+  "use cache";
+  cacheTag(BOARD_TAG);
+  cacheLife({ expire: 86_400, revalidate: 10 });
+  const [rows, total] = await Promise.all([standings(), totals()]);
+  return { rows, total };
+};
 
 const POSTS_PER_WINDOW = 20;
 const WINDOW_MS = 10 * 60 * 1000;

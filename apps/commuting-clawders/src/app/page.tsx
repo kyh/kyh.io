@@ -1,10 +1,8 @@
 import { Demo } from "@/components/demo";
-import { standings, totals } from "@/lib/standings";
-
-export const revalidate = 10;
+import { board } from "@/lib/standings";
 
 const HomePage = async () => {
-  const [rows, total] = await Promise.all([standings(), totals()]);
+  const { rows, total } = await board();
   return (
     <main>
       <h1 className="visually-hidden">Commuting Clawders</h1>
