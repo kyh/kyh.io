@@ -23,6 +23,10 @@ const getIncident = async (id: number) => {
   return incident ?? null;
 };
 
+// Statically rendered whole, so an unknown id answers 404: with partial
+// prefetching, a route that may stream starts its 200 before notFound() lands.
+export const ensureStatic = "navigation";
+
 export const generateStaticParams = async () => {
   const rows = await db
     .select({ id: incidents.id })

@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 import { fetchSpxCsv, hasBlobStore, readStoredCsv, storeCsv } from "@/lib/spx-source";
 
 // The CDN serves this for an hour and keeps serving a stale copy for a day
@@ -22,6 +24,8 @@ const fromYahoo = async (): Promise<string> => {
 
 /** S&P 500 daily history as CSV — from Blob, seeding it from Yahoo on the first request. */
 export const GET = async (): Promise<Response> => {
+  // Per request, never prerendered: the CDN headers above do the caching.
+  await connection();
   try {
     if (!hasBlobStore()) {
       return new Response(await fromYahoo(), { headers: CACHE_HEADERS });

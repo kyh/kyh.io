@@ -1,8 +1,5 @@
 import { buildHomeMarkdown } from "@/lib/markdown";
 
-// Pure content, no request input: prerender it so the CDN can cache it.
-export const dynamic = "force-static";
-
 export const GET = () =>
   new Response(buildHomeMarkdown(), {
     headers: {

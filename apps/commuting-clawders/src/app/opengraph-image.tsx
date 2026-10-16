@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { cacheLife } from "next/cache";
 import { ImageResponse } from "next/og";
 
 import { formatCount } from "@/lib/format";
@@ -9,24 +10,39 @@ import { standings } from "@/lib/standings";
 export const alt = "Commuting Clawders: Keep Clawd running";
 export const contentType = "image/png";
 export const size = { height: 630, width: 1200 };
-export const revalidate = 300;
 
 const NAVY = "#1a1f3a";
 
 const asset = (file: string) => readFile(path.join(process.cwd(), file));
 
-const OpengraphImage = async () => {
-  const [font, art, [leader]] = await Promise.all([
+// Cached, so the card prerenders: a file read alone keeps it from the build.
+// Bytes come back out of the cache as plain arrays, so the art goes in as base64.
+const assets = async () => {
+  "use cache";
+  cacheLife("max");
+  const [font, art] = await Promise.all([
     asset("src/assets/titan-one.ttf"),
     asset("public/share.jpg"),
-    standings(),
   ]);
+  return { art: art.toString("base64"), font: font.toString("base64") };
+};
+
+// The record holder, refreshed every five minutes: a share card needn't be live.
+const recordHolder = async () => {
+  "use cache";
+  cacheLife({ expire: 86_400, revalidate: 300 });
+  const [leader] = await standings();
+  return leader;
+};
+
+const OpengraphImage = async () => {
+  const [{ art, font }, leader] = await Promise.all([assets(), recordHolder()]);
   return new ImageResponse(
     <div style={{ display: "flex", height: "100%", position: "relative", width: "100%" }}>
       <img
         alt=""
         height={630}
-        src={`data:image/jpeg;base64,${art.toString("base64")}`}
+        src={`data:image/jpeg;base64,${art}`}
         style={{ objectFit: "cover", position: "absolute" }}
         width={1200}
       />
@@ -88,7 +104,12 @@ const OpengraphImage = async () => {
         </div>
       ) : null}
     </div>,
-    { ...size, fonts: [{ data: font, name: "Titan One", style: "normal", weight: 400 }] },
+    {
+      ...size,
+      fonts: [
+        { data: Buffer.from(font, "base64"), name: "Titan One", style: "normal", weight: 400 },
+      ],
+    },
   );
 };
 

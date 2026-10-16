@@ -63,8 +63,10 @@ const Cursors = () => {
   const now = useRoomClock();
   const { draft, said } = useChat(!ownsCursors);
 
-  const at = now();
-  const visible = Object.entries(ownsCursors ? {} : players).flatMap(([id, player]) => {
+  const others = Object.entries(ownsCursors ? {} : players);
+  // Read the clock only when something is up: the prerender has nobody, and no clock.
+  const at = others.length > 0 || said ? now() : 0;
+  const visible = others.flatMap(([id, player]) => {
     const point = pagePointOf(player.state);
     return point && player.state.pathname === pathname
       ? [{ chat: readChat(player.state, at), id, player, point }]
