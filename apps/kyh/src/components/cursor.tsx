@@ -27,7 +27,6 @@ const lerpPoint = (a: PagePoint, b: PagePoint, k: number): PagePoint => ({
   fromTop: lerp(a.fromTop, b.fromTop, k),
 });
 
-const cursorWidth = 18;
 const HIDDEN = { transform: "translate(-100px, -100px)" };
 
 /**
@@ -56,8 +55,7 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
       if (point && ref.current) {
         const view = readViewport();
         const { x, y } = toScreen(point, view);
-        const left = Math.max(0, Math.min(x - offset, view.width - cursorWidth));
-        ref.current.style.transform = `translate(${left}px, ${y - offset}px)`;
+        ref.current.style.transform = `translate(${x - offset}px, ${y - offset}px)`;
       }
       frame = requestAnimationFrame(draw);
     };

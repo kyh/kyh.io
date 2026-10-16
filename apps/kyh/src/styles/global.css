@@ -254,6 +254,11 @@ html[data-hue] {
   --color-panel: var(--panel);
 }
 
+/* Nothing fixed past the screen's edge (a visitor's chat bubble) may pan the page sideways. */
+html {
+  overflow-x: clip;
+}
+
 body {
   font-size: 0.95rem;
   line-height: 1.8;
