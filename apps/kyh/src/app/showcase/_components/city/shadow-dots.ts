@@ -6,10 +6,10 @@ import type { WebGLProgramParametersWithUniforms } from "three";
 import type { Theme } from "./palette";
 
 /** Dot size in CSS pixels. */
-const DOT = 3;
+const DOT = 2;
 
 /** How a dot changes the wash under it: darker by day, paler by night, as ink would. */
-const INK: Record<Theme, number> = { day: 0.66, night: 1.5 };
+const INK: Record<Theme, number> = { day: 0.8, night: 1.3 };
 
 export const createShadowDots = (theme: Theme) => {
   const uniforms = {
