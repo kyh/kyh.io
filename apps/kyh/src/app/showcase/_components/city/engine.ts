@@ -415,7 +415,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   });
 
   // Boats sail on this page's clock alone, the same in every view of the town.
-  const boats = createBoats();
+  const boats = createBoats(plan.countryside.pier);
   const underfoot = () => ({ surfaceAt, view: viewAt(angle) });
   /** The town's own time (s), and how the frames have been keeping up. */
   const clock = { last: performance.now(), slow: 0, time: 0 };
@@ -1097,7 +1097,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit);
     halo.update(Math.min(0.25, elapsed), clock.time, theme);
-    shownTown.sky.update(clock.time, plan.countryside.pier, boats.poses(clock.time));
+    shownTown.sky.update(clock.time, boats.poses(clock.time));
     if (!warmed) {
       drawEverything();
     }

@@ -21,10 +21,15 @@ export const BLIMP_HEADING = -Math.PI / 4;
 
 const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
 
+/**
+ * Where the blimp's shadow starts, by how far along it (nose +x): level along
+ * the back, sweeping up over the nose so its cap falls in shadow. Cut clean,
+ * triangle by triangle, where shading face by face leaves a ragged patch.
+ */
+const blimpShadowLine = (x: number) => 0.08 + 0.6 * Math.max(0, x - 0.55) ** 2;
+
 export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sketch => {
   const sketch = createSketch(view, covers);
-  // Lit above the equator, shaded below: one clean line along the hull, where
-  // shading face by face would leave a ragged patch on a curve.
   const hull = ballTriangles({
     colors: paint("white"),
     detail: 28,
@@ -33,11 +38,11 @@ export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sk
     x: 0,
     y: 0,
     z: 0,
-  }).map((triangle) =>
-    triangle.a[1] + triangle.b[1] + triangle.c[1] < 0
-      ? { ...triangle, colors: paint("whiteShade") }
-      : triangle,
-  );
+  }).map((triangle) => {
+    const x = (triangle.a[0] + triangle.b[0] + triangle.c[0]) / 3;
+    const y = (triangle.a[1] + triangle.b[1] + triangle.c[1]) / 3;
+    return y < blimpShadowLine(x) ? { ...triangle, colors: paint("whiteShade") } : triangle;
+  });
   solid(sketch, mapTriangles(hull, turn), "fine", 70);
   // Tail fins, a gondola, and a banner on the flank facing the camera.
   const fin = (points: Vec3[]) => face(sketch, "accentRed", points.map(turn), "fine");

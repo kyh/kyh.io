@@ -163,7 +163,7 @@ export const projects: ProjectType[] = [
     url: "https://www.inteligir.com",
   },
   {
-    colors: ["#4b2e6b"],
+    colors: ["#4b2e6b", "#6a3d9a", "#8e6bbf", "#b59ad8", "#5a3a7e", "#7d4fb0", "#3d2459"],
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     favicon: getPublicFaviconUrl("dataembed-1-c.png"),
@@ -233,7 +233,7 @@ export const projects: ProjectType[] = [
     url: "https://covid-19.kyh.io",
   },
   {
-    colors: ["#bd4d3e", "#efb15c"],
+    colors: ["#e8559a", "#f4a6c8"],
     description: "Cute sticker pack",
     favicon: getPublicFaviconUrl("keiko.png"),
     projectAssets: [

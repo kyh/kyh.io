@@ -1,6 +1,6 @@
 // The sky over the town and the boats round it, placed in the scene and kept
 // moving: the blimp crossing, balloons drifting, drones over downtown, sails
-// circling the island (boats.ts sails them) and the ferry off the pier. sky.ts
+// circling the island and the ferry off the pier (boats.ts sails both). sky.ts
 // draws them.
 import type { Scene } from "three";
 import { Vector3 } from "three";
@@ -41,11 +41,7 @@ export const createSky = (
     add(drawDrone(view, covers)),
   ];
   const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
-  const update = (
-    time: number,
-    pier: { x: number; z: number; d: number } | null,
-    poses: readonly BoatPose[],
-  ) => {
+  const update = (time: number, poses: readonly BoatPose[]) => {
     const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
     blimp.group.position.set(
       40 + heading.x * along,
@@ -60,8 +56,9 @@ export const createSky = (
         36 + Math.sin(angle) * (12 + index * 5),
       );
     }
-    for (const [index, boat] of boats.entries()) {
+    for (const [index, boat] of [...boats, ferry].entries()) {
       const pose = poses[index];
+      boat.group.visible = pose !== undefined;
       if (pose) {
         // In the hand, it's drawn up its line of sight, clear of the roofs.
         const up = pose.held ? (RAISE - pose.y) / view[1] : 0;
@@ -81,14 +78,6 @@ export const createSky = (
         3.4 + index * 0.6 + Math.sin(t * 3) * 0.15,
         35 + Math.sin(t * 2) * (3 + index),
       );
-    }
-    if (pier) {
-      // The ferry shuttles from the pier's end out to sea and back.
-      const leg = (Math.sin(time * 0.06) + 1) / 2;
-      ferry.group.position.set(pier.x + 1, -0.02, pier.z + pier.d + 0.6 + leg * 9);
-      ferry.group.rotation.y = Math.cos(time * 0.06) > 0 ? -Math.PI / 2 : Math.PI / 2;
-    } else {
-      ferry.group.visible = false;
     }
   };
   return { builds, update };

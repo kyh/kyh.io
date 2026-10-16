@@ -162,7 +162,7 @@ each mover with its own random state, so every browser stepping the same
 snapshot gets the same town; pure and tested. `life.ts` draws it between
 ticks, floats the visitors' lines and other people's pointers (`overlay.ts`),
 and lets anyone pick up a car or a person and drop it on the nearest road or
-sidewalk. The sailboats lift too (`boats.ts`), but only on this page: they sail
+sidewalk. The sailboats and the ferry lift too (`boats.ts`), but only on this page: they sail
 on its own clock, and one dropped on land goes back to its course. `net.ts` shares it in a room on the vibedgames party server
 (`src/lib/party.ts`): the host puts up a snapshot every 8s for joiners, a
 pick-up is a claim, a drop carries the mover's exact landed state, pointers go
