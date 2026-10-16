@@ -23,7 +23,7 @@ interface ProjectAssetType {
 
 export const projects: ProjectType[] = [
   {
-    colors: ["#8bac0f", "#306230", "#9bbc0f", "#0f380f"],
+    colors: ["#c1272d", "#8e1b20", "#e2474c", "#5c1014"],
     description: "A game studio for your agent",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     projectAssets: [
@@ -323,7 +323,6 @@ export const projects: ProjectType[] = [
   },
   // Templates
   {
-    colors: ["#d12f2f"],
     description: "An AI native starter kit to build, launch, and scale your next project",
     favicon: getPublicFaviconUrl("init.png"),
     projectAssets: [
