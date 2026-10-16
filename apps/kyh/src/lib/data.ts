@@ -23,7 +23,7 @@ interface ProjectAssetType {
 
 export const projects: ProjectType[] = [
   {
-    colors: ["#862f48", "#2c4d35"],
+    colors: ["#e76f51", "#e9c46a", "#2a9d8f"],
     description: "A game studio for your agent",
     favicon: getPublicFaviconUrl("vibedgames-c.png"),
     projectAssets: [
@@ -80,7 +80,7 @@ export const projects: ProjectType[] = [
     url: "https://www.yourssincerely.org",
   },
   {
-    colors: ["#8a6846"],
+    colors: ["#fe5c28"],
     description: "A curated collection of components that spark joy",
     favicon: getPublicFaviconUrl("uicapsule-c.png"),
     projectAssets: [
@@ -163,7 +163,7 @@ export const projects: ProjectType[] = [
     url: "https://www.inteligir.com",
   },
   {
-    colors: ["#7c5c89"],
+    colors: ["#4b2e6b"],
     description:
       "Search the web like a database. Query and transform scattered web information into structured datasets",
     favicon: getPublicFaviconUrl("dataembed-1-c.png"),
@@ -300,7 +300,7 @@ export const projects: ProjectType[] = [
     url: "https://autoplay.kyh.io",
   },
   {
-    colors: ["#77c5f1", "#f1a50e", "#e27337"],
+    colors: ["#d97757"],
     description: "Keep Clawd running. An endless runner that plays while Claude Code works",
     favicon: getPublicFaviconUrl("clawders.png"),
     projectAssets: [],
@@ -322,6 +322,7 @@ export const projects: ProjectType[] = [
   },
   // Templates
   {
+    colors: ["#d12f2f"],
     description: "An AI native starter kit to build, launch, and scale your next project",
     favicon: getPublicFaviconUrl("init.png"),
     projectAssets: [

@@ -20,7 +20,7 @@ import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
 import type { Ground, Held } from "./carry";
-import { carryTo, flightOf, HANG, LIFT, pickUp, shadowFor, throwOf } from "./carry";
+import { carryTo, flightOf, HANG, LIFT, pickUp, RAISE, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
 import { TICK } from "./traffic";
@@ -28,13 +28,6 @@ import { doorwaySize, INSIDE, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
 import { clamp, lerp } from "./ease";
 
-/** How high a carried thing hangs, in cells. */
-/**
- * Where a carried thing is drawn: slid up its own line of sight to above the
- * tallest roof. The camera is orthographic, so it shows in the same spot, but
- * no building stands in front of it.
- */
-const RAISE = 9;
 const TICK_MS = TICK * 1000;
 /** Ticks the town may fall behind and still catch up by stepping; past this it skips. */
 const CATCH_UP = 100;

@@ -162,7 +162,8 @@ each mover with its own random state, so every browser stepping the same
 snapshot gets the same town; pure and tested. `life.ts` draws it between
 ticks, floats the visitors' lines and other people's pointers (`overlay.ts`),
 and lets anyone pick up a car or a person and drop it on the nearest road or
-sidewalk. `net.ts` shares it in a room on the vibedgames party server
+sidewalk. The sailboats lift too (`boats.ts`), but only on this page: they sail
+on its own clock, and one dropped on land goes back to its course. `net.ts` shares it in a room on the vibedgames party server
 (`src/lib/party.ts`): the host puts up a snapshot every 8s for joiners, a
 pick-up is a claim, a drop carries the mover's exact landed state, pointers go
 out at 15Hz, and everything off the wire is validated. With no server the town
@@ -194,7 +195,7 @@ it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
 
 Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
-`discoverEgg(id)` where it hides: `city/engine.ts` (lift a car or person),
+`discoverEgg(id)` where it hides: `city/engine.ts` (lift a car, person or boat),
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
 `dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no

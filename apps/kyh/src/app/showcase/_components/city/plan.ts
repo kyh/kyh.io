@@ -102,6 +102,21 @@ export const inland = (x: number, z: number) => {
   return (reach(angle) - rho) * radius;
 };
 
+/** The nearest point no more than `offset` cells out to sea, straight back toward the middle. */
+export const withinReach = (x: number, z: number, offset: number): Point2 => {
+  const [u, v] = toScreenAxes(x, z);
+  const nu = u / RADIUS_U;
+  const nv = v / RADIUS_V;
+  const rho = Math.hypot(nu, nv);
+  const angle = Math.atan2(nv, nu);
+  const radius = Math.hypot(Math.cos(angle) * RADIUS_U, Math.sin(angle) * RADIUS_V);
+  const limit = reach(angle) + offset / radius;
+  if (rho <= limit) {
+    return [x, z];
+  }
+  return toGrid(u * (limit / rho), v * (limit / rho));
+};
+
 /** The coast, or a line `offset` cells out to sea (negative: inland). */
 export const coastline = (offset = 0, samples = 240): Point2[] =>
   Array.from({ length: samples }, (_, index) => {

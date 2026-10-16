@@ -30,7 +30,7 @@ import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
 import { lookOf, PALETTE, shade } from "./palette";
-import { CENTER, contains, inland, planCity } from "./plan";
+import { CENTER, contains, planCity, withinReach } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
 import { build, createMaterials } from "./render";
@@ -42,6 +42,7 @@ import { createIntro } from "./intro";
 import { createSites } from "./sites";
 import { createSketch, faceAreas, HEADINGS, viewAt } from "./sketch";
 import { createSky } from "./sky-scene";
+import { createBoats } from "./boats";
 import type { Steps } from "./steps";
 import { finish, runFor } from "./steps";
 import { createTour } from "./tour";
@@ -341,16 +342,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
   // The opening pulls back to most of the island, its shore off the edges, not all of it in a ring of sea.
-  const introZoom = () => Math.max(minZoom(), fitZoom() * 2);
+  const introZoom = () => Math.max(minZoom(), fitZoom() * 1.6);
   const tourZoom = () => clamp(Math.min(width, height * 1.6) / 1100, 0.7, 1.25);
 
   const place = () => {
     view.zoom = clamp(view.zoom, minZoom(), MAX_ZOOM);
-    // Keep the island in reach: the target may not wander far out to sea.
-    if (inland(view.x, view.z) < -4) {
-      view.x += (36 - view.x) * 0.06;
-      view.z += (36 - view.z) * 0.06;
-    }
+    // Keep the island in reach: the target stops a little out to sea and slides along the coast.
+    [view.x, view.z] = withinReach(view.x, view.z, 4);
     const unit = PIXELS_PER_UNIT * view.zoom;
     camera.left = -width / 2 / unit;
     camera.right = width / 2 / unit;
@@ -395,6 +393,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     );
     return heights(x, z);
   };
+  const toScreen = (x: number, y: number, z: number) => {
+    projected.set(x, y, z).project(camera);
+    return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
+  };
   const life = createLife({
     overlay: options.overlay,
     placed,
@@ -408,15 +410,18 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     size: () => ({ height, width }),
     surfaceAt,
     theme,
-    toScreen: (x, y, z) => {
-      projected.set(x, y, z).project(camera);
-      return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
-    },
+    toScreen,
     view: () => viewAt(angle),
   });
 
-  /** The pointer carrying something, if one is; and whether the mouse is over something to carry. */
-  let carrying: number | null = null;
+  // Boats sail on this page's clock alone, the same in every view of the town.
+  const boats = createBoats();
+  const underfoot = () => ({ surfaceAt, view: viewAt(angle) });
+  /** The town's own time (s), and how the frames have been keeping up. */
+  const clock = { last: performance.now(), slow: 0, time: 0 };
+
+  /** The pointer carrying something, and what, if one is; and whether the mouse is over something to carry. */
+  let carrying: { pointer: number; what: "actor" | "boat" } | null = null;
   let overActor = false;
 
   // What's lit, and whether the flyover has the camera: the rules are in controls.ts.
@@ -581,15 +586,44 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const presses = createPresses();
   /** Where the mouse last was over the town, to see what's under it after the camera moves. */
   let mouseAt: { x: number; y: number } | null = null;
-  /** Pick up whatever car or person is under the pointer; false if there's none to take. */
-  const tryGrab = (event: PointerEvent) => {
+  /** The boat under a screen point, if one's afloat there. */
+  const boatAt = (x: number, y: number) => {
+    const reach = Math.max(12, PIXELS_PER_UNIT * view.zoom * 0.5);
+    let best: { index: number; distance: number } | null = null;
+    for (const [index, pose] of boats.poses(clock.time).entries()) {
+      const at = toScreen(pose.x, pose.y + 0.4, pose.z);
+      const distance = Math.hypot(at.x - x, at.y - y);
+      if (!pose.held && distance < reach && (!best || distance < best.distance)) {
+        best = { distance, index };
+      }
+    }
+    return best?.index ?? null;
+  };
+  const canLift = (x: number, y: number) => life.actorAt(x, y) !== null || boatAt(x, y) !== null;
+  /** Take hold of the car, person or boat under the pointer, if there's one free. */
+  const grabAt = (event: PointerEvent) => {
     const at = local(event.clientX, event.clientY);
-    const key = presses.count === 0 && event.button === 0 ? life.actorAt(at.x, at.y) : null;
-    if (!key || !life.grab(key, spotAt(event.clientX, event.clientY))) {
+    const pointer = spotAt(event.clientX, event.clientY);
+    const key = life.actorAt(at.x, at.y);
+    if (key) {
+      return life.grab(key, pointer) ? "actor" : null;
+    }
+    const index = boatAt(at.x, at.y);
+    const pose = index === null ? undefined : boats.poses(clock.time)[index];
+    return index !== null &&
+      pose &&
+      boats.grab(index, pose, pointer, underfoot(), performance.now())
+      ? "boat"
+      : null;
+  };
+  /** Pick up whatever is under the pointer; false if there's none to take. */
+  const tryGrab = (event: PointerEvent) => {
+    const what = presses.count === 0 && event.button === 0 ? grabAt(event) : null;
+    if (!what) {
       return false;
     }
     canvas.setPointerCapture(event.pointerId);
-    carrying = event.pointerId;
+    carrying = { pointer: event.pointerId, what };
     spotlight.grab();
     refreshHover();
     updateCursor();
@@ -609,7 +643,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     life.point(spotAt(event.clientX, event.clientY));
     const at = local(event.clientX, event.clientY);
-    overActor = life.actorAt(at.x, at.y) !== null;
+    overActor = canLift(at.x, at.y);
     spotlight.hover(pick(event.clientX, event.clientY));
     refreshHover();
     updateCursor();
@@ -620,7 +654,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     const at = local(mouseAt.x, mouseAt.y);
-    overActor = life.actorAt(at.x, at.y) !== null;
+    overActor = canLift(at.x, at.y);
     life.point(spotAt(mouseAt.x, mouseAt.y));
     spotlight.recheck(pick(mouseAt.x, mouseAt.y));
     refreshHover();
@@ -727,8 +761,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       mouseAt = { x: event.clientX, y: event.clientY };
       life.hand(local(event.clientX, event.clientY));
     }
-    if (carrying === event.pointerId) {
-      life.carry(spotAt(event.clientX, event.clientY));
+    if (carrying?.pointer === event.pointerId) {
+      const pointer = spotAt(event.clientX, event.clientY);
+      if (carrying.what === "boat") {
+        boats.carry(pointer, underfoot(), performance.now());
+      } else {
+        life.carry(pointer);
+      }
       return;
     }
     if (!presses.has(event.pointerId)) {
@@ -756,11 +795,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   /** Let go of what this pointer carries; true if it carried something. */
   const drop = (event: PointerEvent) => {
-    if (carrying !== event.pointerId) {
+    if (carrying?.pointer !== event.pointerId) {
       return false;
     }
+    if (carrying.what === "boat") {
+      boats.letGo(clock.time);
+    } else {
+      life.letGo();
+    }
     carrying = null;
-    life.letGo();
     updateCursor();
     return true;
   };
@@ -962,7 +1005,6 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     place();
   };
-  const clock = { last: performance.now(), slow: 0, time: 0 };
   /** A weak GPU drawing at full density gets a lighter canvas instead of a slideshow. */
   const adapt = (elapsed: number) => {
     clock.slow = elapsed > 0.034 ? clock.slow + 1 : Math.max(0, clock.slow - 2);
@@ -1055,7 +1097,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit);
     halo.update(Math.min(0.25, elapsed), clock.time, theme);
-    shownTown.sky.update(clock.time, plan.countryside.pier);
+    shownTown.sky.update(clock.time, plan.countryside.pier, boats.poses(clock.time));
     if (!warmed) {
       drawEverything();
     }
@@ -1078,7 +1120,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
 
   return {
     /** What the town is up to, for poking at in development. */
-    debug: () => ({ ...life.debug(), intro: { clock: intro.clock, phase: intro.phase } }),
+    debug: () => ({
+      ...life.debug(),
+      /** Where each boat is drawn on screen. */
+      boats: boats.poses(clock.time).map((pose) => toScreen(pose.x, pose.y + 0.4, pose.z)),
+      intro: { clock: intro.clock, phase: intro.phase },
+    }),
     dispose: () => {
       cancelAnimationFrame(frame);
       listening.abort();

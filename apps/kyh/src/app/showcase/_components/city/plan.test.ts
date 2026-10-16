@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Lot, PlanEntry } from "./plan";
-import { inland, planCity } from "./plan";
+import { CENTER, inland, planCity, withinReach } from "./plan";
 
 const overlaps = (a: Lot, b: Lot) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.z < b.z + b.d && b.z < a.z + a.d;
@@ -93,4 +93,15 @@ test("every junction can be driven to from every other", () => {
     }
   }
   assert.equal(seen.size, junctions.length);
+});
+
+test("the view stops a few cells out to sea and is left alone short of it", () => {
+  assert.deepEqual(withinReach(CENTER, CENTER, 4), [CENTER, CENTER]);
+  for (let index = 0; index < 32; index += 1) {
+    const angle = (index / 32) * Math.PI * 2;
+    const [x, z] = withinReach(CENTER + Math.cos(angle) * 500, CENTER + Math.sin(angle) * 500, 4);
+    assert.ok(Math.abs(inland(x, z) + 4) < 1e-6, `(${x}, ${z}) is not on the limit`);
+    const [again, againZ] = withinReach(x, z, 4);
+    assert.ok(Math.hypot(again - x, againZ - z) < 1e-9, `(${x}, ${z}) moved again`);
+  }
 });

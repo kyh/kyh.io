@@ -1,24 +1,20 @@
 // The sky over the town and the boats round it, placed in the scene and kept
 // moving: the blimp crossing, balloons drifting, drones over downtown, sails
-// circling the island and the ferry off the pier. sky.ts draws them.
+// circling the island (boats.ts sails them) and the ferry off the pier. sky.ts
+// draws them.
 import type { Scene } from "three";
 import { Vector3 } from "three";
 
+import type { BoatPose } from "./boats";
 import type { Built, Materials } from "./render";
 import type { Sketch, Vec3 } from "./sketch";
-import { CENTER } from "./plan";
+import { RAISE } from "./carry";
 import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { BLIMP_HEADING, drawBalloon, drawBlimp, drawBoat, drawDrone, drawFerry } from "./sky";
 
 const BLIMP_HEIGHT = 7.5;
 const BLIMP_SPAN = 76;
-
-/** A point on a tilted ellipse round the island, for boats. */
-const sea = (angle: number, rx: number, rz: number) => ({
-  x: CENTER + Math.cos(angle) * rx * Math.SQRT1_2 - Math.sin(angle) * rz * Math.SQRT1_2,
-  z: CENTER - Math.cos(angle) * rx * Math.SQRT1_2 - Math.sin(angle) * rz * Math.SQRT1_2,
-});
 
 export const createSky = (
   scene: Scene,
@@ -45,7 +41,11 @@ export const createSky = (
     add(drawDrone(view, covers)),
   ];
   const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
-  const update = (time: number, pier: { x: number; z: number; d: number } | null) => {
+  const update = (
+    time: number,
+    pier: { x: number; z: number; d: number } | null,
+    poses: readonly BoatPose[],
+  ) => {
     const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
     blimp.group.position.set(
       40 + heading.x * along,
@@ -61,15 +61,17 @@ export const createSky = (
       );
     }
     for (const [index, boat] of boats.entries()) {
-      // Sail a wide loop round the island, nose along the way.
-      const direction = index % 2 === 0 ? 1 : -1;
-      const angle = time * (0.012 + index * 0.004) * direction + index * 2.1;
-      const rx = 42 + index * 2.5;
-      const rz = 33 + index * 2;
-      const here = sea(angle, rx, rz);
-      const ahead = sea(angle + direction * 0.01, rx, rz);
-      boat.group.position.set(here.x, Math.sin(time * 1.5 + index) * 0.02 - 0.03, here.z);
-      boat.group.rotation.y = -Math.atan2(ahead.z - here.z, ahead.x - here.x);
+      const pose = poses[index];
+      if (pose) {
+        // In the hand, it's drawn up its line of sight, clear of the roofs.
+        const up = pose.held ? (RAISE - pose.y) / view[1] : 0;
+        boat.group.position.set(
+          pose.x + view[0] * up,
+          pose.y + view[1] * up,
+          pose.z + view[2] * up,
+        );
+        boat.group.rotation.y = pose.heading;
+      }
     }
     for (const [index, drone] of drones.entries()) {
       // Figure-eights over downtown, each on its own beat.

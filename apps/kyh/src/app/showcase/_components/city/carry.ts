@@ -11,6 +11,12 @@ import { clamp } from "./ease";
 export const LIFT = 0.9;
 /** How far above what's under it something carried hangs once it's lifted. */
 export const HANG = LIFT - 0.18;
+/**
+ * Where a carried thing is drawn: slid up its own line of sight to above the
+ * tallest roof. The camera is orthographic, so it shows in the same spot, but
+ * no building stands in front of it.
+ */
+export const RAISE = 9;
 /** How far something has to be carried, in cells, before it hangs at full height. */
 const LIFT_SPAN = 1.2;
 /** How many of a carry's last moves its throw is read from. */
