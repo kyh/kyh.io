@@ -340,6 +340,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let tourAt = 0;
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
+  // The opening pulls back to most of the island, its shore off the edges, not all of it in a ring of sea.
+  const introZoom = () => Math.max(minZoom(), fitZoom() * 1.25);
   const tourZoom = () => clamp(Math.min(width, height * 1.6) / 1100, 0.7, 1.25);
 
   const place = () => {
@@ -1012,10 +1014,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const { pullBack } = intro;
     if (pullBack !== null) {
       // Eased in the zoom's own scale, so it reads evenly.
-      view.zoom = Math.exp(Math.log(BUILD_CLOSE) * (1 - pullBack) + Math.log(minZoom()) * pullBack);
+      view.zoom = Math.exp(
+        Math.log(BUILD_CLOSE) * (1 - pullBack) + Math.log(introZoom()) * pullBack,
+      );
       place();
     }
-    // Built: in from the whole island to the first project, unless the visitor
+    // Built: in from most of the island to the first project, unless the visitor
     // has the camera, while the last trucks drive off.
     if (opened) {
       life.setOpen(true);
@@ -1061,7 +1065,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     frame = requestAnimationFrame(tick);
   };
   frame = requestAnimationFrame(tick);
-  // The opening shot: the whole island, then down to the first project and
+  // The opening shot: most of the island, then down to the first project and
   // across, left to right, the way the title sequence pans the valley.
   let warmUp = 0;
   if (intro.phase === "done") {

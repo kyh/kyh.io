@@ -128,7 +128,7 @@ two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `
 turn the camera a quarter turn, swinging round over half a second. Each of the
 four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
-faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera starts close on downtown and pulls back to the whole
+faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera starts close on downtown and pulls back to most of the
 island while the town is built, as in a sim game: `schedule.ts` gives every lot and block a start, from downtown
 out; each building goes up a storey at a time from a slab (a vertex-shader
 rise every town material in `render.ts` shares, its start carried per vertex);
