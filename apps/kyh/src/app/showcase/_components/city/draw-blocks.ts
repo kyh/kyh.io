@@ -508,6 +508,9 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
   }
 };
 
+/** A plaza stall's footprint. */
+const KIOSK = { d: 0.6, w: 0.8 };
+
 const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
   const area = inset(block, 0.15);
   box(
@@ -528,7 +531,7 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
     [area.x + 0.4, area.z + area.d - 1, "accentTeal"],
   ];
   for (const [x, z, awning] of stalls) {
-    const kiosk = { d: 0.6, w: 0.8, x, z };
+    const kiosk = { ...KIOSK, x, z };
     box(sketch, { colors: WALLS, d: kiosk.d, h: 0.32, w: kiosk.w, x, y: CURB_TOP + 0.015, z });
     storefront(sketch, kiosk, "front", awning);
     box(
@@ -552,7 +555,16 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
     [-1.9, 1.9],
     [1.9, 1.9],
   ]) {
-    tree(sketch, { kind: "round", size: 1.2, x: cx + (dx ?? 0), z: cz + (dz ?? 0) }, CURB_TOP);
+    const x = cx + (dx ?? 0);
+    const z = cz + (dz ?? 0);
+    // A small square's corners are the kiosks' already: no tree grows through a roof.
+    const onStall = stalls.some(
+      ([sx, sz]) =>
+        x > sx - 0.5 && x < sx + KIOSK.w + 0.5 && z > sz - 0.5 && z < sz + KIOSK.d + 0.5,
+    );
+    if (!onStall) {
+      tree(sketch, { kind: "round", size: 1.2, x, z }, CURB_TOP);
+    }
   }
   for (const [dx, dz] of [
     [-1.2, 0],

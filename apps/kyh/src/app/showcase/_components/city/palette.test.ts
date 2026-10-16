@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Token } from "./palette";
-import { dominant, fromOklab, lookOf, oklab, PALETTE } from "./palette";
+import { dominant, fromOklab, lookOf, oklab, PALETTE, shade } from "./palette";
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
@@ -83,4 +83,14 @@ test("a grey icon turns a building's colors to darker greys and leaves its greys
   assert.equal(tint(PALETTE.wallRight.day), PALETTE.wallRight.day, "greyed a grey");
   const [, glowA, glowB] = oklab(lookOf(areasOf([["roofBlue", 10]]), ["#2b2d2e"]).glow.day);
   assert.ok(Math.hypot(glowA, glowB) < 0.005, "glows in a color");
+});
+
+test("a lit building's trees stay green and take none of its colors", () => {
+  const areas = areasOf([
+    ["tree", 100],
+    ["roofBlue", 10],
+  ]);
+  const { tint } = lookOf(areas, ["#de35df", "#f1a50e"]);
+  assert.equal(shade("tree", "day", true, tint), PALETTE.tree.day);
+  assert.ok(hueGap(tint(PALETTE.roofBlue.day), "#de35df") < 0.05, "a tree took the main color");
 });

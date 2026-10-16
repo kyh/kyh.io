@@ -149,8 +149,15 @@ const untinted: Tint = (hex) => hex;
  * The city is drawn in greys; a building shows its colors only while it is
  * hovered (or the flyover is passing it).
  */
-export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) =>
-  colorful ? tint(PALETTE[token][theme]) : greyOf(PALETTE[token][theme]);
+/** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
+const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
+
+export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) => {
+  if (!colorful) {
+    return greyOf(PALETTE[token][theme]);
+  }
+  return FOLIAGE.has(token) ? PALETTE[token][theme] : tint(PALETTE[token][theme]);
+};
 
 type Lab = readonly [number, number, number];
 
@@ -242,6 +249,7 @@ const FAMILY_GAP = 0.6;
  */
 const familiesOf = (areas: ReadonlyMap<Token, number>) => {
   const weighed = [...areas]
+    .filter(([token]) => !FOLIAGE.has(token))
     .map(([token, area]) => ({
       hex: PALETTE[token].day,
       weight: area * chromaOf(PALETTE[token].day),
