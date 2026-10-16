@@ -65,6 +65,8 @@ export const PALETTE = {
   water: { day: "#d9e6ea", night: "#13232b" },
   wave: { day: "#c4d3cf", night: "#22343c" },
   white: { day: "#fbfbf8", night: "#d9e0dc" },
+  /** White turned from the light that stays white by night, for round things a dark wall shade would hole. */
+  whiteShade: { day: "#dfe2db", night: "#b2bbb7" },
 } as const;
 
 export type Token = keyof typeof PALETTE;
@@ -111,6 +113,7 @@ export const SHADE: ReadonlySet<Token> = new Set<Token>([
   "roofYellowShade",
   "treeShade",
   "wallRight",
+  "whiteShade",
 ]);
 
 export const ACCENTS = [

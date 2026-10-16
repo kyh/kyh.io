@@ -24,7 +24,7 @@ const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
 export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sketch => {
   const sketch = createSketch(view, covers);
   const hull = ballTriangles({
-    colors: paint("white", "white", "wallRight"),
+    colors: paint("white", "white", "whiteShade"),
     detail: 28,
     r: 0.62,
     rx: 2.6,
