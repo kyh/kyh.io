@@ -341,7 +341,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const fitZoom = () => Math.min(width / (84 * PIXELS_PER_UNIT), height / (34 * PIXELS_PER_UNIT));
   const minZoom = () => Math.max(0.2, fitZoom() * 0.9);
   // The opening pulls back to most of the island, its shore off the edges, not all of it in a ring of sea.
-  const introZoom = () => Math.max(minZoom(), fitZoom() * 1.25);
+  const introZoom = () => Math.max(minZoom(), fitZoom() * 2);
   const tourZoom = () => clamp(Math.min(width, height * 1.6) / 1100, 0.7, 1.25);
 
   const place = () => {
