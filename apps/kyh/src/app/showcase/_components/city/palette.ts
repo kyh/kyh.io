@@ -323,14 +323,17 @@ export interface Look {
 }
 
 /**
- * Paints everything grey, darkened toward `grey`: each face keeps its place
- * between light and shade, scaled into the grey's range, so a black icon's
- * building reads as charcoal rather than as white walls with a dark roof.
+ * Turns a building's colors to greys, darkened toward `grey`, as turnOnto
+ * turns them onto a hue: what's grey already stays as it is, and each colored
+ * face keeps its place between light and shade, scaled into the grey's range.
  */
 const greyedTo = (grey: string): Tint => {
   const [target] = oklab(grey);
   const scale = Math.min(1, target + 0.25);
-  return (hex) => fromOklab([oklab(hex)[0] * scale, 0, 0]);
+  return (hex) => {
+    const [lightness, a, b] = oklab(hex);
+    return Math.hypot(a, b) < NEUTRAL_CHROMA ? hex : fromOklab([lightness * scale, 0, 0]);
+  };
 };
 
 /**

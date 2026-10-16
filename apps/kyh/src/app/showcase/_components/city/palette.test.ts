@@ -75,12 +75,12 @@ test("a glow shows on the ground by day and by night", () => {
   assert.ok(Math.hypot(a, b) >= 0.099, "a pastel roof's glow isn't washed out");
 });
 
-test("a grey icon paints its building in greys, darker, light and shade kept", () => {
+test("a grey icon turns a building's colors to darker greys and leaves its greys", () => {
   const { tint } = lookOf(areasOf([["roofBlue", 10]]), ["#2b2d2e"]);
   const [lightness, a, b] = oklab(tint(PALETTE.roofBlue.day));
   assert.ok(Math.hypot(a, b) < 0.005, "still has a hue");
   assert.ok(lightness < oklab(PALETTE.roofBlue.day)[0], "not darkened");
-  assert.ok(oklab(tint(PALETTE.wallRight.day))[0] < oklab(tint(PALETTE.white.day))[0]);
+  assert.equal(tint(PALETTE.wallRight.day), PALETTE.wallRight.day, "greyed a grey");
   const [, glowA, glowB] = oklab(lookOf(areasOf([["roofBlue", 10]]), ["#2b2d2e"]).glow.day);
   assert.ok(Math.hypot(glowA, glowB) < 0.005, "glows in a color");
 });
