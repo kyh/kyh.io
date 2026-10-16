@@ -23,15 +23,21 @@ const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
 
 export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sketch => {
   const sketch = createSketch(view, covers);
+  // Lit above the equator, shaded below: one clean line along the hull, where
+  // shading face by face would leave a ragged patch on a curve.
   const hull = ballTriangles({
-    colors: paint("white", "white", "whiteShade"),
+    colors: paint("white"),
     detail: 28,
     r: 0.62,
     rx: 2.6,
     x: 0,
     y: 0,
     z: 0,
-  });
+  }).map((triangle) =>
+    triangle.a[1] + triangle.b[1] + triangle.c[1] < 0
+      ? { ...triangle, colors: paint("whiteShade") }
+      : triangle,
+  );
   solid(sketch, mapTriangles(hull, turn), "fine", 70);
   // Tail fins, a gondola, and a banner on the flank facing the camera.
   const fin = (points: Vec3[]) => face(sketch, "accentRed", points.map(turn), "fine");
