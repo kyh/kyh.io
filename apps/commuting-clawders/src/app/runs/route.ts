@@ -22,6 +22,6 @@ export const POST = async (request: Request) => {
     return Response.json({ error: "too many runs posted; try again later" }, { status: 429 });
   }
   const rank = await saveRun(parsed.data, poster);
-  revalidateTag(BOARD_TAG, "max");
+  revalidateTag(BOARD_TAG, { expire: 0 });
   return Response.json({ rank }, { status: 201 });
 };
