@@ -51,10 +51,9 @@ test("a one-color icon still leaves a building more than one hue", () => {
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), tint(PALETTE.accentOrange.day)) > 1);
 });
 
-test("greys stay grey and a neutral icon leaves the building as drawn", () => {
+test("greys stay grey and no colors leave the building as drawn", () => {
   const areas = areasOf([["roofBlue", 10]]);
   assert.equal(lookOf(areas, ["#de35df"]).tint(PALETTE.wallLeft.day), PALETTE.wallLeft.day);
-  assert.equal(lookOf(areas, ["#2e2e2e"]).tint(PALETTE.roofBlue.day), PALETTE.roofBlue.day);
   assert.equal(lookOf(areas).tint(PALETTE.roofBlue.day), PALETTE.roofBlue.day);
 });
 
@@ -74,4 +73,14 @@ test("a glow shows on the ground by day and by night", () => {
   assert.ok(oklab(lookOf(areas, ["#1a2b50"]).glow.night)[0] >= 0.679);
   const [, a, b] = oklab(lookOf(areas).glow.day);
   assert.ok(Math.hypot(a, b) >= 0.099, "a pastel roof's glow isn't washed out");
+});
+
+test("a grey icon paints its building in greys, darker, light and shade kept", () => {
+  const { tint } = lookOf(areasOf([["roofBlue", 10]]), ["#2b2d2e"]);
+  const [lightness, a, b] = oklab(tint(PALETTE.roofBlue.day));
+  assert.ok(Math.hypot(a, b) < 0.005, "still has a hue");
+  assert.ok(lightness < oklab(PALETTE.roofBlue.day)[0], "not darkened");
+  assert.ok(oklab(tint(PALETTE.wallRight.day))[0] < oklab(tint(PALETTE.white.day))[0]);
+  const [, glowA, glowB] = oklab(lookOf(areasOf([["roofBlue", 10]]), ["#2b2d2e"]).glow.day);
+  assert.ok(Math.hypot(glowA, glowB) < 0.005, "glows in a color");
 });

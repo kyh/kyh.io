@@ -307,7 +307,8 @@ const GLOW_CHROMA = 0.1;
 const glowOf = (hex: string): Record<Theme, string> => {
   const [lightness, a, b] = oklab(hex);
   const chroma = Math.hypot(a, b);
-  const boost = chroma > 0 ? Math.max(1, GLOW_CHROMA / chroma) : 1;
+  // A grey's faint hue, boosted, would glow in a color it doesn't have.
+  const boost = chroma >= NEUTRAL_CHROMA ? Math.max(1, GLOW_CHROMA / chroma) : 0;
   const at = (theme: Theme) => {
     const [low, high] = GLOW_LIGHTNESS[theme];
     return fromOklab([Math.min(high, Math.max(low, lightness)), a * boost, b * boost]);
@@ -322,13 +323,29 @@ export interface Look {
 }
 
 /**
+ * Paints everything grey, darkened toward `grey`: each face keeps its place
+ * between light and shade, scaled into the grey's range, so a black icon's
+ * building reads as charcoal rather than as white walls with a dark roof.
+ */
+const greyedTo = (grey: string): Tint => {
+  const [target] = oklab(grey);
+  const scale = Math.min(1, target + 0.25);
+  return (hex) => fromOklab([oklab(hex)[0] * scale, 0, 0]);
+};
+
+/**
  * A building lit in its project's colors: its own turned onto them, its lot
- * ringed in the first. Without a colored icon to go by, it keeps the colors
- * it was drawn in and glows in its main one.
+ * ringed in the first. An icon known only by a grey paints it in that grey.
+ * Without colors to go by, it keeps the colors it was drawn in and glows in
+ * its main one.
  */
 export const lookOf = (areas: ReadonlyMap<Token, number>, colors: readonly string[] = []): Look => {
   const colored = colors.filter((hex) => chromaOf(hex) >= NEUTRAL_CHROMA);
   const [first] = colored;
+  const [grey] = colors;
+  if (first === undefined && grey !== undefined) {
+    return { glow: glowOf(grey), tint: greyedTo(grey) };
+  }
   if (first === undefined) {
     return { glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day), tint: untinted };
   }

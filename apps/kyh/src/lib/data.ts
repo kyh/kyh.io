@@ -7,7 +7,7 @@ export interface ProjectType {
   description: string;
   url: string;
   favicon: string;
-  /** The colors its icon is known by, the main one first; absent when the icon is black and white. */
+  /** The colors its icon is known by, the main one first; a grey alone for a black and white icon. */
   colors?: readonly string[];
   projectAssets: ProjectAssetType[];
   type: "venture" | "project" | "mini-app" | "template";
@@ -154,6 +154,7 @@ export const projects: ProjectType[] = [
     url: "https://www.founding.so",
   },
   {
+    colors: ["#2b2d2e"],
     description: "An artificially intelligent operating system",
     favicon: getPublicFaviconUrl("inteligir-c.png"),
     projectAssets: [],
