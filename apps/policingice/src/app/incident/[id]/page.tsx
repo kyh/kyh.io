@@ -41,7 +41,12 @@ export const generateStaticParams = async () => {
 
 const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-  const incident = await getIncident(Math.trunc(Number(id)));
+  // A non-numeric id would reach the query as NaN and fail it: answer 404 instead.
+  const incidentId = Number(id);
+  if (!Number.isSafeInteger(incidentId) || incidentId <= 0) {
+    notFound();
+  }
+  const incident = await getIncident(incidentId);
   if (!incident) {
     notFound();
   }
