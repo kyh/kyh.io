@@ -92,6 +92,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const [lit, setLit] = useState<string | null>(null);
   const [touring, setTouring] = useState(false);
 
+  // Not `body:has(.city)`: cacheComponents keeps this route mounted, hidden,
+  // after leaving it, and only effects learn that it has gone.
+  useEffect(() => {
+    document.body.dataset.city = "";
+    return () => {
+      delete document.body.dataset.city;
+    };
+  }, []);
+
   useEffect(() => {
     const host = containerRef.current;
     const surface = rootRef.current;

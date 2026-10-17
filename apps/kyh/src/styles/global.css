@@ -801,7 +801,7 @@ button.link {
 }
 
 /* The city fills the window: no frosted header hazing its sky, no page scroll. */
-body:has(.city) {
+body[data-city] {
   overflow: hidden;
 
   .blur-header {
