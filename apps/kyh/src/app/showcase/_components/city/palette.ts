@@ -1,6 +1,7 @@
 // Every color in the city, by day (ink on paper, after Inkline Town) and by
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
+import { contrastOf, FLIP, shadeOf } from "@/lib/brightness";
 import { SLATE_HUE } from "@/lib/dial";
 
 export const PALETTE = {
@@ -202,8 +203,38 @@ export interface Scheme {
   hue: number | null;
 }
 
+// Schemes by value, so a dial moving back and forth finds the colors it
+// already worked out; a long sweep through every hue starts the shelf over.
+const schemes = new Map<string, Scheme>();
+const SCHEMES_KEPT = 512;
+
+/** The one scheme for this light and hue. */
+export const schemeAt = (light: number, hue: number | null): Scheme => {
+  const key = `${light}|${hue}`;
+  let scheme = schemes.get(key);
+  if (!scheme) {
+    if (schemes.size >= SCHEMES_KEPT) {
+      schemes.clear();
+    }
+    scheme = { hue, light };
+    schemes.set(key, scheme);
+  }
+  return scheme;
+};
+
 /** Day or night, for what flips rather than fades: past halfway, as the site's theme does. */
-export const timeOf = ({ light }: Scheme): Theme => (light >= 0.5 ? "day" : "night");
+export const timeOf = ({ light }: Scheme): Theme => (light >= FLIP ? "day" : "night");
+
+/**
+ * The ink, as the site's text: at the theme's own end, its color; nearer the
+ * flip, toward black by day and white by night (soft ink toward the ink), so
+ * the lines hold against grounds that have dimmed or brightened.
+ */
+const INK_POLES: Partial<Record<Token, Record<Theme, string>>> = {
+  ink: { day: "#000000", night: "#ffffff" },
+  inkSoft: { day: PALETTE.ink.day, night: PALETTE.ink.night },
+  signText: { day: "#000000", night: "#ffffff" },
+};
 
 /** `from` turned `amount` of the way to `to`, in OKLab as the site's color-mix is. */
 export const mixHex = (from: string, to: string, amount: number) => {
@@ -241,7 +272,7 @@ export const greyIn = (hex: string, { light, hue }: Scheme) => {
   if (hue !== null) {
     return slateOf(hex, hue, SLATE_CHROMA * 2);
   }
-  return light >= 1 ? greyOf(hex) : slateOf(hex, SLATE_HUE, SLATE_CHROMA * (1 - light));
+  return light >= 1 ? greyOf(hex) : slateOf(hex, SLATE_HUE, SLATE_CHROMA * (1 - shadeOf(light)));
 };
 
 // A scheme's colors, worked out once per token: a repaint while the dial
@@ -268,11 +299,19 @@ const remembered = (
   return hex;
 };
 
-/** A token's color in the scheme: its night and day mixed by how light it is. */
+/**
+ * A token's color in the scheme, by the site's curves (brightness.ts): grounds
+ * mixed from night to day by the shade, ink held to the contrast.
+ */
 export const colorIn = (token: Token, scheme: Scheme) =>
-  remembered(colorsIn, scheme, token, () =>
-    mixHex(PALETTE[token].night, PALETTE[token].day, scheme.light),
-  );
+  remembered(colorsIn, scheme, token, () => {
+    const poles = INK_POLES[token];
+    if (poles) {
+      const time = timeOf(scheme);
+      return mixHex(poles[time], PALETTE[token][time], contrastOf(scheme.light));
+    }
+    return mixHex(PALETTE[token].night, PALETTE[token].day, shadeOf(scheme.light));
+  });
 
 /**
  * The city is drawn in greys; a building shows its colors only while it is

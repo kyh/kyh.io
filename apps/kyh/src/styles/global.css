@@ -30,7 +30,7 @@
      Each theme keeps its backgrounds off the mid-greys (--shade: neither goes
      more than about a third of the way toward the other), and its text runs to black or white as the flip at 50% nears
      (--contrast: 100% at the theme's end, 0% at the flip), so every brightness
-     reads. */
+     reads. lib/brightness.ts is the same pair of curves for the showcase's town. */
   --light: 100%;
   --shade: calc(34% + var(--light) * 0.66);
   --contrast: clamp(0%, (var(--light) - 50%) * 2, 100%);
@@ -600,20 +600,29 @@ button.link {
     --city-day-line: #cbcbcb;
     --city-day-shadow: #e0e0e0;
     --city-day-sea: #e7e7e7;
-    --city-ink: #454545;
-    --city-ink-soft: #7d7d7d;
+    --city-theme-ink: #454545;
+    --city-theme-ink-soft: #7d7d7d;
+    --city-ink-pole: var(--colors-gray1000);
 
-    /* Grounds and lines mix toward night's slate with the brightness, as the
-       site's backgrounds and borders do; ink flips with the theme, as text does. */
-    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--light), var(--colors-gray800));
+    /* Grounds and lines mix toward night's slate by --shade, as the site's
+       backgrounds and borders do; ink keeps the theme's own by --contrast and
+       runs to black or white toward the flip, as text does. The town's canvas
+       takes the same curves (lib/brightness.ts). */
+    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--shade), var(--colors-gray800));
     --city-paper-hover: color-mix(
       in oklab,
-      var(--city-day-paper-hover) var(--light),
+      var(--city-day-paper-hover) var(--shade),
       color-mix(in oklab, var(--colors-gray800), var(--colors-gray700))
     );
-    --city-line: color-mix(in oklab, var(--city-day-line) var(--light), var(--colors-gray700));
-    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--light), var(--colors-gray900));
-    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--light), var(--colors-gray900));
+    --city-line: color-mix(in oklab, var(--city-day-line) var(--shade), var(--colors-gray700));
+    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--shade), var(--colors-gray900));
+    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--shade), var(--colors-gray900));
+    --city-ink: color-mix(in oklab, var(--city-theme-ink) var(--contrast), var(--city-ink-pole));
+    --city-ink-soft: color-mix(
+      in oklab,
+      var(--city-theme-ink-soft) var(--contrast),
+      var(--city-theme-ink)
+    );
 
     html[data-hue] & {
       --city-day-paper: var(--colors-gray50);
@@ -621,13 +630,14 @@ button.link {
       --city-day-line: var(--colors-gray300);
       --city-day-shadow: var(--colors-gray200);
       --city-day-sea: var(--colors-gray200);
-      --city-ink: var(--colors-gray700);
-      --city-ink-soft: var(--colors-gray500);
+      --city-theme-ink: var(--colors-gray700);
+      --city-theme-ink-soft: var(--colors-gray500);
     }
 
     html[data-theme="dark"] & {
-      --city-ink: var(--colors-gray300);
-      --city-ink-soft: var(--colors-gray400);
+      --city-theme-ink: var(--colors-gray300);
+      --city-theme-ink-soft: var(--colors-gray400);
+      --city-ink-pole: var(--colors-gray0);
     }
   }
 
