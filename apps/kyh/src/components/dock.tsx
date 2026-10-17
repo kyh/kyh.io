@@ -7,10 +7,11 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 
-import { ThemeDial, useThemeDial } from "@/components/theme-dial";
+import { ThemeDial } from "@/components/theme-dial";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { discoverEgg } from "@/easter-eggs/store";
 import { TAPS, tapStreak } from "@/lib/dial";
+import { setLight } from "@/lib/dial-state";
 
 const iconAttrs = {
   "aria-hidden": true,
@@ -229,7 +230,6 @@ export const Dock = () => {
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
-  const dial = useThemeDial();
   const [dialOpen, setDialOpen] = useState(false);
   // The dock clips while the modes roll past, and only then: hover labels sit above it.
   const [switching, setSwitching] = useState(false);
@@ -282,7 +282,7 @@ export const Dock = () => {
             ))}
           {dialOpen ? (
             <motion.div key="dial" {...slideFrom(below)}>
-              <ThemeDial {...dial} onClose={closeDial} />
+              <ThemeDial onClose={closeDial} />
             </motion.div>
           ) : (
             <motion.button
@@ -293,7 +293,7 @@ export const Dock = () => {
               onClick={(event) => {
                 setTheme(isLight ? "dark" : "light");
                 // A plain tap hands brightness back to the theme; the hue stays.
-                dial.setLight(null);
+                setLight(null);
                 // Five quick taps open the dials.
                 taps.current = tapStreak(taps.current, event.timeStamp);
                 if (taps.current.length >= TAPS) {

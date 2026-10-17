@@ -15,7 +15,7 @@ import {
   Vector3,
 } from "three";
 
-import type { Theme, Token } from "./palette";
+import type { Scheme, Token } from "./palette";
 import { shade } from "./palette";
 
 const CAR_TOKENS: Token[] = [
@@ -95,11 +95,11 @@ interface Layer {
 
 export const createActors = (
   counts: { cars: number; walkers: number; visitors: number },
-  theme: Theme,
+  scheme: Scheme,
 ) => {
-  const ink = new MeshBasicMaterial({ color: shade("ink", theme, false), side: BackSide });
+  const ink = new MeshBasicMaterial({ color: shade("ink", scheme, false), side: BackSide });
   const tinted = new MeshBasicMaterial({ color: "#ffffff" });
-  const cabin = new MeshBasicMaterial({ color: shade("glassDim", theme, false) });
+  const cabin = new MeshBasicMaterial({ color: shade("glassDim", scheme, false) });
   const shadowMaterial = new MeshBasicMaterial({
     color: "#000000",
     depthWrite: false,
@@ -165,7 +165,7 @@ export const createActors = (
   shadows.frustumCulled = false;
   shadows.renderOrder = 2;
 
-  const paintLayers = (next: Theme) => {
+  const paintLayers = (next: Scheme) => {
     const color = new Color();
     for (const { mesh, tokens } of layers) {
       if (tokens) {
@@ -179,9 +179,9 @@ export const createActors = (
     }
     ink.color.set(shade("ink", next, false));
     cabin.color.set(shade("glassDim", next, false));
-    shadowMaterial.opacity = next === "night" ? 0.3 : 0.16;
+    shadowMaterial.opacity = next.theme === "night" ? 0.3 : 0.16;
   };
-  paintLayers(theme);
+  paintLayers(scheme);
 
   const matrix = new Matrix4();
   const position = new Vector3();
@@ -235,7 +235,7 @@ export const createActors = (
       shadowMaterial.dispose();
     },
     meshes: [...layers.map(({ mesh }) => mesh), shadows],
-    setTheme: paintLayers,
+    setScheme: paintLayers,
     update: (
       cars: readonly Placement[],
       walkers: readonly Placement[],

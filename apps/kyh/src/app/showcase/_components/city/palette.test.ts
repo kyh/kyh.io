@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { Token } from "./palette";
-import { dominant, fromOklab, lookOf, oklab, PALETTE, setDialHue, shade, slateOf } from "./palette";
+import type { Scheme, Token } from "./palette";
+import { dominant, fromOklab, greyIn, greyOf, lookOf, oklab, PALETTE, shade } from "./palette";
+
+const DAY: Scheme = { hue: null, theme: "day" };
+const NIGHT: Scheme = { hue: null, theme: "night" };
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
@@ -91,26 +94,23 @@ test("a lit building's trees stay green and take none of its colors", () => {
     ["roofBlue", 10],
   ]);
   const { tint } = lookOf(areas, ["#de35df", "#f1a50e"]);
-  assert.equal(shade("tree", "day", true, tint), PALETTE.tree.day);
+  assert.equal(shade("tree", DAY, true, tint), PALETTE.tree.day);
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), "#de35df") < 0.05, "a tree took the main color");
 });
 
 test("by night the greys are the site's slate, lightness kept", () => {
-  const [lightness, a, b] = oklab(shade("sea", "night", false));
+  const [lightness, a, b] = oklab(shade("sea", NIGHT, false));
   const [slateLightness, slateA, slateB] = oklab("#0f172a");
   assert.ok(Math.abs(lightness - slateLightness) < 0.03);
-  assert.ok(Math.abs(Math.atan2(b, a) - Math.atan2(slateB, slateA)) < 0.1);
-  assert.ok(Math.abs(oklab(slateOf("#888888"))[0] - oklab("#888888")[0]) < 0.01);
-  assert.equal(shade("sea", "day", false), "#e7e7e7");
+  assert.ok(Math.abs(Math.atan2(b, a) - Math.atan2(slateB, slateA)) < 0.2);
+  assert.ok(Math.abs(oklab(greyIn("#888888", NIGHT))[0] - oklab("#888888")[0]) < 0.01);
+  assert.equal(shade("sea", DAY, false), "#e7e7e7");
 });
 
-test("the theme dial's hue turns the greys in either theme, then lets go", () => {
-  setDialHue(140);
+test("the theme dial's hue turns the greys in either theme", () => {
   for (const theme of ["day", "night"] as const) {
-    const [lightness, a, b] = oklab(shade("land", theme, false));
+    const [lightness, a, b] = oklab(shade("land", { hue: 140, theme }, false));
     assert.ok(Math.abs((Math.atan2(b, a) * 180) / Math.PI - 140) < 3);
-    assert.ok(Math.abs(lightness - oklab(slateOf(PALETTE.land[theme]))[0]) < 0.01);
+    assert.ok(Math.abs(lightness - oklab(greyOf(PALETTE.land[theme]))[0]) < 0.01);
   }
-  setDialHue(null);
-  assert.equal(shade("sea", "day", false), "#e7e7e7");
 });

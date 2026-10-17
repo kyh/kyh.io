@@ -9,7 +9,7 @@ import { Group } from "three";
 import type { Placement } from "./actors";
 import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
-import type { Theme } from "./palette";
+import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
@@ -74,7 +74,7 @@ export interface LifeOptions {
   scene: Scene;
   plan: CityPlan;
   placed: readonly Placed[];
-  theme: Theme;
+  scheme: Scheme;
   overlay: HTMLElement | null;
   /** The room to share the town in; null keeps it to this browser. */
   room: string | null;
@@ -117,7 +117,7 @@ export const createLife = (options: LifeOptions) => {
   );
   const projects = new Map(placed.map((entry) => [entry.project.slug, entry.project]));
   const group = new Group();
-  const actors = createActors({ cars: CARS, visitors: VISITORS, walkers: WALKERS }, options.theme);
+  const actors = createActors({ cars: CARS, visitors: VISITORS, walkers: WALKERS }, options.scheme);
   group.add(...actors.meshes);
   options.scene.add(group);
   /**
@@ -553,7 +553,7 @@ export const createLife = (options: LifeOptions) => {
       openedAt = next ? performance.now() : null;
       group.visible = next;
     },
-    setTheme: (theme: Theme) => actors.setTheme(theme),
+    setScheme: (scheme: Scheme) => actors.setScheme(scheme),
     /** What this player is typing, or null once they stop. */
     type: (next: string | null) => {
       draft = next;

@@ -586,37 +586,26 @@ button.link {
     --city-shadow: #e0e0e0;
     --city-sea: #e7e7e7;
 
-    /* By night the greys are the site's slate (slateOf in palette.ts). */
-    [data-theme="dark"] & {
-      --city-paper: #1d273c;
-      --city-paper-hover: #273147;
-      --city-ink: #cbd2e2;
-      --city-ink-soft: #7c88a2;
-      --city-line: #343f56;
-      --city-shadow: #0e172b;
-      --city-sea: #0d1529;
-    }
-
-    /* The theme dial's hue turns the greys in either theme, as it does the
-       site's (slateOf with the dial's hue in palette.ts). */
+    /* Once the dial's hue is moved, and always by night, the greys are the
+       site's own tokens, so they follow the hue as the site does. */
     html[data-hue] & {
-      --city-paper: oklch(97.6% 0.008 var(--hue));
-      --city-paper-hover: oklch(94.6% 0.018 var(--hue));
-      --city-ink: oklch(39% 0.084 var(--hue));
-      --city-ink-soft: oklch(59% 0.084 var(--hue));
-      --city-line: oklch(84.2% 0.053 var(--hue));
-      --city-shadow: oklch(90.7% 0.031 var(--hue));
-      --city-sea: oklch(92.8% 0.024 var(--hue));
+      --city-paper: var(--colors-gray50);
+      --city-paper-hover: var(--colors-gray100);
+      --city-ink: var(--colors-gray700);
+      --city-ink-soft: var(--colors-gray500);
+      --city-line: var(--colors-gray300);
+      --city-shadow: var(--colors-gray200);
+      --city-sea: var(--colors-gray200);
     }
 
-    html[data-hue][data-theme="dark"] & {
-      --city-paper: oklch(27.3% 0.084 var(--hue));
-      --city-paper-hover: oklch(31.3% 0.084 var(--hue));
-      --city-ink: oklch(86.4% 0.046 var(--hue));
-      --city-ink-soft: oklch(62.7% 0.084 var(--hue));
-      --city-line: oklch(36.8% 0.084 var(--hue));
-      --city-shadow: oklch(20.9% 0.084 var(--hue));
-      --city-sea: oklch(20% 0.084 var(--hue));
+    html[data-theme="dark"] & {
+      --city-paper: var(--colors-gray800);
+      --city-paper-hover: color-mix(in oklab, var(--colors-gray800), var(--colors-gray700));
+      --city-ink: var(--colors-gray300);
+      --city-ink-soft: var(--colors-gray400);
+      --city-line: var(--colors-gray700);
+      --city-shadow: var(--colors-gray900);
+      --city-sea: var(--colors-gray900);
     }
   }
 

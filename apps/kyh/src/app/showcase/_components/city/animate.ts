@@ -4,7 +4,8 @@
 import type { Group } from "three";
 
 import type { Built, LiveScreen } from "./render";
-import { greyOf } from "./palette";
+import type { Scheme, Tint } from "./palette";
+import { greyIn } from "./palette";
 import { TRACK } from "./landmarks-outskirts";
 
 const LAUNCH_PERIOD = 46;
@@ -15,8 +16,9 @@ const GONE = 43;
 /** The moving parts and screens of every built sketch, by name. */
 export type Rig = Pick<Built, "parts" | "screens">;
 
-/** Screens are grey too, until their building is lit. */
-const tone = (hex: string, colorful: boolean) => (colorful ? hex : greyOf(hex));
+/** Screens are grey too, as the rest of the town is, until their building is lit. */
+const toneFor = (colorful: boolean, scheme: Scheme): Tint =>
+  colorful ? (hex) => hex : (hex) => greyIn(hex, scheme);
 
 const family = (built: Rig, prefix: string) =>
   [...built.parts.entries()]
@@ -55,13 +57,13 @@ const aroundTrack = (s: number, radius: number) => {
 const TICKER =
   "KYH ▲ 13.37%   STONKS ▲ 420.69   VIBE ▲ 9.99%   INIT ▲ 1.00   LOREM ▲ 4.04%   YOLO ▲ 88.8%   ";
 
-const drawTicker = (screen: LiveScreen, time: number, colorful: boolean) => {
+const drawTicker = (screen: LiveScreen, time: number, tone: Tint) => {
   const { canvas, context } = screen;
-  context.fillStyle = tone("#13201a", colorful);
+  context.fillStyle = tone("#13201a");
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.font = `700 ${canvas.height * 0.62}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   context.textBaseline = "middle";
-  context.fillStyle = tone("#6fe39a", colorful);
+  context.fillStyle = tone("#6fe39a");
   const { width } = context.measureText(TICKER);
   const offset = (time * 46) % width;
   for (let x = -offset; x < canvas.width; x += width) {
@@ -72,7 +74,7 @@ const drawTicker = (screen: LiveScreen, time: number, colorful: boolean) => {
 
 const BARS = ["#e9e9e2", "#e9d64a", "#4fc6c4", "#5fc461", "#c75fc4", "#d9534f", "#4f62d9"];
 
-const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => {
+const drawTelevision = (screen: LiveScreen, time: number, tone: Tint) => {
   const { canvas, context } = screen;
   const { width, height } = canvas;
   const channel = Math.floor(time / 3) % 3;
@@ -87,7 +89,7 @@ const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => 
     }
   } else if (channel === 1) {
     for (const [index, color] of BARS.entries()) {
-      context.fillStyle = tone(color, colorful);
+      context.fillStyle = tone(color);
       context.fillRect((index * width) / BARS.length, 0, width / BARS.length + 1, height);
     }
     context.fillStyle = "#111";
@@ -100,11 +102,11 @@ const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => 
   } else {
     // Whatever the feed is dreaming up: a sun over rolling hills.
     const sky = context.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, tone("#ffb27a", colorful));
-    sky.addColorStop(1, tone("#ffe7a8", colorful));
+    sky.addColorStop(0, tone("#ffb27a"));
+    sky.addColorStop(1, tone("#ffe7a8"));
     context.fillStyle = sky;
     context.fillRect(0, 0, width, height);
-    context.fillStyle = tone("#fff6d8", colorful);
+    context.fillStyle = tone("#fff6d8");
     context.beginPath();
     context.arc(
       width * 0.5,
@@ -114,7 +116,7 @@ const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => 
       Math.PI * 2,
     );
     context.fill();
-    context.fillStyle = tone("#4f8f6a", colorful);
+    context.fillStyle = tone("#4f8f6a");
     context.beginPath();
     context.moveTo(0, height);
     for (let x = 0; x <= width; x += 4) {
@@ -130,21 +132,21 @@ const drawTelevision = (screen: LiveScreen, time: number, colorful: boolean) => 
 const earnings = (time: number) => `$${Math.floor(1200 + time * 37).toLocaleString("en-US")}`;
 
 /** The computer on IdleBiz's roof: its own app window, the books ticking over. */
-const drawLedger = (screen: LiveScreen, time: number, colorful: boolean) => {
+const drawLedger = (screen: LiveScreen, time: number, tone: Tint) => {
   const { canvas, context } = screen;
   const { width, height } = canvas;
   const bar = height * 0.22;
-  context.fillStyle = tone("#ece7d8", colorful);
+  context.fillStyle = tone("#ece7d8");
   context.fillRect(0, 0, width, height);
-  context.fillStyle = tone("#475079", colorful);
+  context.fillStyle = tone("#475079");
   context.fillRect(0, 0, width, bar);
   for (const [index, color] of ["#e0645a", "#ebb04a", "#5cb867"].entries()) {
-    context.fillStyle = tone(color, colorful);
+    context.fillStyle = tone(color);
     context.beginPath();
     context.arc(bar * (0.6 + index * 0.7), bar / 2, bar * 0.22, 0, Math.PI * 2);
     context.fill();
   }
-  context.fillStyle = tone("#4280dd", colorful);
+  context.fillStyle = tone("#4280dd");
   context.fillRect(width * 0.08, bar + height * 0.12, width * 0.84, height * 0.52);
   context.font = `700 ${height * 0.3}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   context.textBaseline = "middle";
@@ -166,7 +168,7 @@ const drawLedger = (screen: LiveScreen, time: number, colorful: boolean) => {
 
 export interface Animations {
   /** `lit` says whether a project's building is showing its colors. */
-  update: (time: number, lit: (slug: string) => boolean) => void;
+  update: (time: number, lit: (slug: string) => boolean, scheme: Scheme) => void;
 }
 
 const base = (groups: readonly Group[]) => groups.map((group) => group.position.clone());
@@ -244,7 +246,7 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
   };
 
   return {
-    update: (time, lit) => {
+    update: (time, lit, scheme) => {
       const frame = Math.floor(time / 0.6) % 2;
       for (const [index, group] of frames.entries()) {
         group.visible = index === frame;
@@ -274,18 +276,18 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
         camera.rotation.y = Math.sin(time * 0.45) * 1.1 + 2;
       }
       if (ticker) {
-        drawTicker(ticker, time, lit("stonksville"));
+        drawTicker(ticker, time, toneFor(lit("stonksville"), scheme));
       }
       // The TV refreshes at broadcast-ish rates, not every frame.
       const tvFrame = Math.floor(time * 12);
       if (tv && tvFrame !== lastTv) {
         lastTv = tvFrame;
-        drawTelevision(tv, time, lit("autoplay"));
+        drawTelevision(tv, time, toneFor(lit("autoplay"), scheme));
       }
       const ledgerFrame = Math.floor(time * 4);
       if (ledger && ledgerFrame !== lastLedger) {
         lastLedger = ledgerFrame;
-        drawLedger(ledger, time, lit("idlebiz"));
+        drawLedger(ledger, time, toneFor(lit("idlebiz"), scheme));
       }
     },
   };

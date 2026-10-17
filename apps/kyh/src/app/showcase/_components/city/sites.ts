@@ -4,7 +4,7 @@
 // with it; the machines and yards are there whole from the start.
 import type { Scene } from "three";
 
-import type { Theme } from "./palette";
+import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Built, Materials } from "./render";
 import type { Schedule } from "./schedule";
@@ -73,12 +73,12 @@ export const createSites = (
     },
     /** When the last truck's gone and the last crane's down (s). */
     end: works.end,
-    paint: (theme: Theme) => {
+    paint: (scheme: Scheme) => {
       for (const { built } of [...yards, ...cranes, ...trucks]) {
-        built.paint(theme, true);
+        built.paint(scheme, true);
       }
       for (const { built } of scaffolds) {
-        built.paint(theme, false);
+        built.paint(scheme, false);
       }
     },
     /** Everything where it is in its work at `t` on the build clock. */

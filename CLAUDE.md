@@ -106,7 +106,7 @@ modes (a press outside rolls it back): brightness and hue, both gone on reload.
 Brightness is `--light`, the mix every background token in `global.css` takes
 between the light and dark palettes (the theme sets 100% or 0%; the theme flips
 at 50%); hue is `--hue` under `html[data-hue]`, the slate greys retinted in
-oklch. `src/components/theme-dial.tsx` holds the state and the panel,
+oklch. `src/lib/dial-state.ts` holds the state (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
 `dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
 Base UI's Slider, and
 `src/lib/dial.ts` the tap streak.
@@ -145,7 +145,7 @@ corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night, its greys turned to the site's slate (`slateOf`); the theme dial's hue turns the city's greys too, in either theme. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. The town's greys are the site's (`greyIn` in `palette.ts`, from a `Scheme`: day or night and the dial's hue): plain by day, slate by night, turned to the dial's hue in either theme; the pins and cards take the site's grey tokens. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),

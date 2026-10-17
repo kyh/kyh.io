@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Hourglass } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
 
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
-import type { Theme } from "./city/palette";
+import type { Scheme } from "./city/palette";
+import { useThemeDial } from "@/components/theme-dial";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -16,8 +17,7 @@ interface CityMount extends CityCallbacks {
   overlay: HTMLElement | null;
   surface: HTMLElement;
   projects: CityProject[];
-  theme: Theme;
-  hue: number | null;
+  scheme: Scheme;
   reducedMotion: boolean;
 }
 
@@ -42,24 +42,6 @@ const usePrefersReducedMotion = () =>
     () => matchMedia(REDUCED_MOTION).matches,
     () => false,
   );
-
-// The theme dial's hue lives on <html> (data-hue, --hue) while it's moved.
-const subscribeHue = (onChange: () => void) => {
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, {
-    attributeFilter: ["data-hue", "style"],
-    attributes: true,
-  });
-  return () => observer.disconnect();
-};
-
-const readHue = () => {
-  const root = document.documentElement;
-  const hue = root.style.getPropertyValue("--hue");
-  return root.dataset.hue === undefined || hue === "" ? null : Number(hue);
-};
-
-const useDialHue = () => useSyncExternalStore(subscribeHue, readHue, () => null);
 
 interface TourToggleProps {
   touring: boolean;
@@ -94,10 +76,12 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
-  const theme: Theme = resolvedTheme === "dark" ? "night" : "day";
-  const themeRef = useRef(theme);
-  const hue = useDialHue();
-  const hueRef = useRef(hue);
+  const { hue } = useThemeDial();
+  const scheme = useMemo<Scheme>(
+    () => ({ hue, theme: resolvedTheme === "dark" ? "night" : "day" }),
+    [hue, resolvedTheme],
+  );
+  const schemeRef = useRef(scheme);
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -125,7 +109,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     const mount = async () => {
       try {
         const city = await loadCity(host, {
-          hue: hueRef.current,
           onHover: show,
           onOpen: (slug) => {
             const url = urls.get(slug);
@@ -137,8 +120,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           overlay: overlayRef.current,
           projects,
           reducedMotion,
+          scheme: schemeRef.current,
           surface,
-          theme: themeRef.current,
         });
         if (!isMounted) {
           city.dispose();
@@ -167,14 +150,9 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   }, [projects, reducedMotion]);
 
   useEffect(() => {
-    themeRef.current = theme;
-    cityRef.current?.setTheme(theme);
-  }, [theme]);
-
-  useEffect(() => {
-    hueRef.current = hue;
-    cityRef.current?.setHue(hue);
-  }, [hue]);
+    schemeRef.current = scheme;
+    cityRef.current?.setScheme(scheme);
+  }, [scheme]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {

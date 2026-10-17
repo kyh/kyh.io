@@ -1,6 +1,8 @@
 // Every color in the city, by day (ink on paper, after Inkline Town) and by
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
+import { SLATE_HUE } from "@/lib/dial";
+
 export const PALETTE = {
   accentBlue: { day: "#4f78c4", night: "#7aa5ff" },
   accentGreen: { day: "#57a06b", night: "#7fd69a" },
@@ -187,23 +189,23 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
     .join("")}`;
 };
 
-/**
- * The city is drawn in greys; a building shows its colors only while it is
- * hovered (or the flyover is passing it).
- */
 /** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
-/** Tailwind's slate in OKLCH (its darks): the hue the site's dark greys lean, and how far. */
-const SLATE_HUE = 265;
+/** How the city is drawn: by day or night, and the theme dial's hue once it's moved. */
+export interface Scheme {
+  theme: Theme;
+  hue: number | null;
+}
+
+/** Slate's chroma in its darks; it fades toward white. */
 const SLATE_CHROMA = 0.042;
 
 /**
- * A grey of the same lightness, turned to slate, as the site's dark mode is,
- * or to another hue (OKLCH degrees). Slate keeps its tint through the darks
- * and fades it toward white.
+ * A grey of the same lightness, turned to `hue` (OKLCH degrees) as Tailwind's
+ * slate is: its tint kept through the darks and faded toward white.
  */
-export const slateOf = (hex: string, hue = SLATE_HUE, chroma = SLATE_CHROMA) => {
+export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
   const [lightness] = oklab(greyOf(hex));
   const amount = chroma * Math.min(1, (1 - lightness) / 0.25);
   const angle = (hue * Math.PI) / 180;
@@ -211,24 +213,27 @@ export const slateOf = (hex: string, hue = SLATE_HUE, chroma = SLATE_CHROMA) => 
 };
 
 /**
- * The theme dial's hue, null until it's moved. The site then turns its greys
- * to it in either theme, chroma doubled so the tint reads (global.css), and so
- * does the city. Set by the engine; one city is drawn at a time.
+ * A color as the city's greys show it, the way the site draws its own greys:
+ * plain by day, slate by night, and turned to the dial's hue in either theme,
+ * chroma doubled so the tint reads (global.css).
  */
-let dialHue: number | null = null;
-
-export const setDialHue = (hue: number | null) => {
-  dialHue = hue;
+export const greyIn = (hex: string, { theme, hue }: Scheme) => {
+  if (hue !== null) {
+    return slateOf(hex, hue, SLATE_CHROMA * 2);
+  }
+  return theme === "night" ? slateOf(hex, SLATE_HUE) : greyOf(hex);
 };
 
-export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) => {
+/**
+ * The city is drawn in greys; a building shows its colors only while it is
+ * hovered (or the flyover is passing it).
+ */
+export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
+  const hex = PALETTE[token][scheme.theme];
   if (!colorful) {
-    if (dialHue !== null) {
-      return slateOf(PALETTE[token][theme], dialHue, SLATE_CHROMA * 2);
-    }
-    return theme === "night" ? slateOf(PALETTE[token].night) : greyOf(PALETTE[token].day);
+    return greyIn(hex, scheme);
   }
-  return FOLIAGE.has(token) ? PALETTE[token][theme] : tint(PALETTE[token][theme]);
+  return FOLIAGE.has(token) ? hex : tint(hex);
 };
 
 /** Below this a color is black, white or grey: it has no hue to lend or turn. */
