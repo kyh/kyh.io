@@ -1,7 +1,7 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
@@ -224,9 +224,19 @@ const slideFrom = (from: typeof above, index = 0) => ({
   transition: { ...morph, delay: index * 0.03 },
 });
 
+const subscribeNever = () => () => {
+  // Hydration happens once; there's nothing to unsubscribe from.
+};
+
 export const Dock = () => {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  // The server can't know the theme, so the toggle shows one only once hydrated.
+  const hydrated = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  );
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
@@ -239,7 +249,7 @@ export const Dock = () => {
   }, []);
   const closeDial = useCallback(() => switchDial(false), [switchDial]);
 
-  const isLight = theme === "light";
+  const isLight = hydrated && resolvedTheme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
 
   return (

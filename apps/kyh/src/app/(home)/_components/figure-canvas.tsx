@@ -29,12 +29,6 @@ const getRenderProps = (isLight: boolean) => ({
 
 const isEventListener = (value: unknown): value is EventListener => typeof value === "function";
 
-const restrokeBodies = (bodies: Matter.Body[], isLight: boolean) => {
-  for (const body of bodies) {
-    body.render.strokeStyle = isLight ? "black" : "white";
-  }
-};
-
 const INITIAL_FIGURE_COUNT = 20;
 const CLICK_SPAWN_COUNT = 6;
 const TILT_SMOOTHING = 0.2;
@@ -118,6 +112,9 @@ export const FigureCanvas = () => {
   const bodiesRef = useRef<Matter.Body[]>([]);
   const animatingRef = useRef<AnimatingFigure[]>([]);
   const isVisibleRef = useRef(true);
+  const isLightRef = useRef(resolvedTheme === "light");
+  // The canvas repaints only while something moves; a theme change marks the settled frame stale.
+  const staleRef = useRef(true);
 
   // Stopped, not just disabled, offscreen: a disabled runner still wakes every frame.
   const pausePhysics = useCallback(() => {
@@ -167,7 +164,6 @@ export const FigureCanvas = () => {
 
     const width = containerRef.current.offsetWidth;
     const height = 480;
-    const isLight = resolvedTheme === "light";
 
     const engine = Engine.create({ enableSleeping: true });
     engineRef.current = engine;
@@ -238,7 +234,7 @@ export const FigureCanvas = () => {
     for (let i = 0; i < INITIAL_FIGURE_COUNT; i += 1) {
       const x = centerX + Common.random(-120, 120);
       const y = Common.random(height - 150, height - 50);
-      const figure = createStaticFigure(isLight, x, y);
+      const figure = createStaticFigure(isLightRef.current, x, y);
       bodiesRef.current.push(figure);
       Composite.add(engine.world, figure);
     }
@@ -260,7 +256,7 @@ export const FigureCanvas = () => {
 
       const count = Math.floor(Common.random(CLICK_SPAWN_COUNT, CLICK_SPAWN_COUNT + 2));
       for (let i = 0; i < count; i += 1) {
-        const { body, targetScale } = createClickFigure(isLight, x, y);
+        const { body, targetScale } = createClickFigure(isLightRef.current, x, y);
         bodiesRef.current.push(body);
         animatingRef.current.push({
           body,
@@ -375,6 +371,7 @@ export const FigureCanvas = () => {
     const FADE_START = 180;
     const FADE_END = 50;
     Events.on(engine, "afterUpdate", () => {
+      const isLight = isLightRef.current;
       for (const body of bodiesRef.current) {
         const { y } = body.position;
         if (y < FADE_START) {
@@ -389,13 +386,13 @@ export const FigureCanvas = () => {
 
     // Drawn only while something moves: once the figures settle and sleep,
     // the canvas holds its last frame instead of repainting every one.
-    let drawn = false;
+    staleRef.current = true;
     Events.on(runner, "afterTick", () => {
       const moving =
         animatingRef.current.length > 0 || bodiesRef.current.some((body) => !body.isSleeping);
-      if (moving || !drawn) {
+      if (moving || staleRef.current) {
         Render.world(render);
-        drawn = true;
+        staleRef.current = false;
       }
     });
 
@@ -420,11 +417,12 @@ export const FigureCanvas = () => {
       bodiesRef.current = [];
       animatingRef.current = [];
     };
-  }, [resolvedTheme]);
+  }, []);
 
-  // Update colors on theme change
+  // Restroked by the fade on the next tick, so the figures a visitor spawned survive the switch.
   useEffect(() => {
-    restrokeBodies(bodiesRef.current, resolvedTheme === "light");
+    isLightRef.current = resolvedTheme === "light";
+    staleRef.current = true;
   }, [resolvedTheme]);
 
   return (
