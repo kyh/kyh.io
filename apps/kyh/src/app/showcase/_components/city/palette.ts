@@ -192,11 +192,31 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
 /** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
-/** How the city is drawn: by day or night, and the theme dial's hue once it's moved. */
+/**
+ * How the city is drawn, as the site's theme and dial say: how light it is
+ * (night 0 … day 1, the theme's own end until the dial's brightness moves)
+ * and the dial's hue once it's moved.
+ */
 export interface Scheme {
-  theme: Theme;
+  light: number;
   hue: number | null;
 }
+
+/** Day or night, for what flips rather than fades: past halfway, as the site's theme does. */
+export const timeOf = ({ light }: Scheme): Theme => (light >= 0.5 ? "day" : "night");
+
+/** `from` turned `amount` of the way to `to`, in OKLab as the site's color-mix is. */
+export const mixHex = (from: string, to: string, amount: number) => {
+  if (amount <= 0) {
+    return from;
+  }
+  if (amount >= 1) {
+    return to;
+  }
+  const [l1, a1, b1] = oklab(from);
+  const [l2, a2, b2] = oklab(to);
+  return fromOklab([l1 + (l2 - l1) * amount, a1 + (a2 - a1) * amount, b1 + (b2 - b1) * amount]);
+};
 
 /** Slate's chroma in its darks; it fades toward white. */
 const SLATE_CHROMA = 0.042;
@@ -214,25 +234,55 @@ export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
 
 /**
  * A color as the city's greys show it, the way the site draws its own greys:
- * plain by day, slate by night, and turned to the dial's hue in either theme,
- * chroma doubled so the tint reads (global.css).
+ * plain by day, slate as it darkens, and turned to the dial's hue at any
+ * light, chroma doubled so the tint reads (global.css).
  */
-export const greyIn = (hex: string, { theme, hue }: Scheme) => {
+export const greyIn = (hex: string, { light, hue }: Scheme) => {
   if (hue !== null) {
     return slateOf(hex, hue, SLATE_CHROMA * 2);
   }
-  return theme === "night" ? slateOf(hex, SLATE_HUE) : greyOf(hex);
+  return light >= 1 ? greyOf(hex) : slateOf(hex, SLATE_HUE, SLATE_CHROMA * (1 - light));
 };
+
+// A scheme's colors, worked out once per token: a repaint while the dial
+// moves is a lookup per run of faces, not two trips through OKLab.
+const colorsIn = new WeakMap<Scheme, Map<Token, string>>();
+const greysIn = new WeakMap<Scheme, Map<Token, string>>();
+
+const remembered = (
+  memo: WeakMap<Scheme, Map<Token, string>>,
+  scheme: Scheme,
+  token: Token,
+  work: () => string,
+) => {
+  let colors = memo.get(scheme);
+  if (!colors) {
+    colors = new Map();
+    memo.set(scheme, colors);
+  }
+  let hex = colors.get(token);
+  if (hex === undefined) {
+    hex = work();
+    colors.set(token, hex);
+  }
+  return hex;
+};
+
+/** A token's color in the scheme: its night and day mixed by how light it is. */
+export const colorIn = (token: Token, scheme: Scheme) =>
+  remembered(colorsIn, scheme, token, () =>
+    mixHex(PALETTE[token].night, PALETTE[token].day, scheme.light),
+  );
 
 /**
  * The city is drawn in greys; a building shows its colors only while it is
  * hovered (or the flyover is passing it).
  */
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
-  const hex = PALETTE[token][scheme.theme];
   if (!colorful) {
-    return greyIn(hex, scheme);
+    return remembered(greysIn, scheme, token, () => greyIn(colorIn(token, scheme), scheme));
   }
+  const hex = colorIn(token, scheme);
   return FOLIAGE.has(token) ? hex : tint(hex);
 };
 

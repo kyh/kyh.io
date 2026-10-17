@@ -29,7 +29,7 @@ import { drawGround } from "./draw-ground";
 import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
-import { lookOf, PALETTE, shade } from "./palette";
+import { lookOf, PALETTE, shade, timeOf } from "./palette";
 import { CENTER, contains, planCity, withinReach } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
@@ -225,6 +225,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const scene = new Scene();
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
   let { scheme } = options;
+  /** A scheme waiting for the next frame. */
+  let nextScheme: Scheme | null = null;
   const plan = planCity(planEntries(options.projects));
   /**
    * The town's drawings, by heading: whole quarter turns where the camera
@@ -438,7 +440,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
   const paintedFor = new WeakMap<TownView, string>();
-  const paintKey = () => `${scheme.theme}|${scheme.hue}|${shown?.project.slug ?? ""}`;
+  const paintKey = () => `${scheme.light}|${scheme.hue}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -485,12 +487,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       built.paint(scheme, false);
     }
   };
+  // Only the drawing on screen is repainted: the others catch up when shown (showTown).
   const applyScheme = () => {
     renderer.setClearColor(new Color(shade("sea", scheme, false)));
     materials.setScheme(scheme);
-    for (const town of townViews.values()) {
-      paintTown(town);
-    }
+    paintTown(shownTown);
     sites?.paint(scheme);
     life.setScheme(scheme);
   };
@@ -1078,6 +1079,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   const tick = (now: number) => {
+    if (nextScheme) {
+      scheme = nextScheme;
+      nextScheme = null;
+      applyScheme();
+    }
     const elapsed = Math.max(0, now - clock.last) / 1000;
     grow(elapsed);
     clock.last = now;
@@ -1096,7 +1102,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit, scheme);
-    halo.update(Math.min(0.25, elapsed), clock.time, scheme.theme);
+    halo.update(Math.min(0.25, elapsed), clock.time, timeOf(scheme));
     shownTown.sky.update(clock.time, boats.poses(clock.time));
     if (!warmed) {
       drawEverything();
@@ -1167,10 +1173,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       pins = next;
       pinStates.clear();
     },
-    /** Day or night and the dial's hue: every grey in town is repainted. */
+    /** How light and what hue: repainted on the next frame, however often the dial moves before it. */
     setScheme: (next: Scheme) => {
-      scheme = next;
-      applyScheme();
+      nextScheme = next;
     },
     /** A finger on a closed pin: light its building, as a first tap on the building does. */
     tap: (slug: string) => {

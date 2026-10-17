@@ -145,7 +145,7 @@ corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night. The town's greys are the site's (`greyIn` in `palette.ts`, from a `Scheme`: day or night and the dial's hue): plain by day, slate by night, turned to the dial's hue in either theme; the pins and cards take the site's grey tokens. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. The town follows the theme dial like the site: a `Scheme` (`palette.ts`) is how light it is and the dial's hue; each color is its night and day mixed in OKLab by the light (`colorIn`), and the greys are plain by day, slate as it darkens, turned to the hue once it's moved (`greyIn`), worked out once per scheme. The showcase hears the dial by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. The pins and cards mix the site's grey tokens by `--light`. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),

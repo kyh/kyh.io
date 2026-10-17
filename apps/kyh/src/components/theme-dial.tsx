@@ -8,7 +8,7 @@ import { SLATE_HUE, themeOf } from "@/lib/dial";
 import { dialState, setHue, setLight, subscribeDial, UNMOVED } from "@/lib/dial-state";
 
 /** Brightness (0 dark … 100 light) and hue, each null until moved; they last until reload. */
-export const useThemeDial = () => useSyncExternalStore(subscribeDial, dialState, () => UNMOVED);
+const useThemeDial = () => useSyncExternalStore(subscribeDial, dialState, () => UNMOVED);
 
 interface ThemeDialProps {
   onClose: () => void;

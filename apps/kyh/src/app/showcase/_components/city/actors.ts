@@ -179,7 +179,8 @@ export const createActors = (
     }
     ink.color.set(shade("ink", next, false));
     cabin.color.set(shade("glassDim", next, false));
-    shadowMaterial.opacity = next.theme === "night" ? 0.3 : 0.16;
+    // Shadows fall softer as the light comes up.
+    shadowMaterial.opacity = 0.3 - 0.14 * next.light;
   };
   paintLayers(scheme);
 

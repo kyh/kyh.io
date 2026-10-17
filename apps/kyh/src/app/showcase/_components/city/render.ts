@@ -62,7 +62,7 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
-  const dots = createShadowDots(scheme.theme);
+  const dots = createShadowDots(scheme.light);
   const raised = faces.onBeforeCompile.bind(faces);
   faces.onBeforeCompile = (shader, renderer) => {
     raised(shader, renderer);
@@ -102,7 +102,7 @@ export const createMaterials = (
     setPixelRatio: dots.setPixelRatio,
     setScheme: (next) => {
       scheme = next;
-      dots.setTheme(next.theme);
+      dots.setLight(next.light);
       for (const { colorful, material, token } of lines.values()) {
         material.color.set(shade(token, scheme, colorful));
       }

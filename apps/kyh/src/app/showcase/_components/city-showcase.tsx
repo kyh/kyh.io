@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Hourglass } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
@@ -8,7 +8,8 @@ import { useTheme } from "next-themes";
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
-import { useThemeDial } from "@/components/theme-dial";
+import type { DialState } from "@/lib/dial-state";
+import { dialState, subscribeDial } from "@/lib/dial-state";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -43,6 +44,14 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
+/** How light and what hue the city is: the theme's own end until the dial's brightness moves. */
+const schemeOf = (resolvedTheme: string | undefined, { light, hue }: DialState): Scheme => {
+  if (light !== null) {
+    return { hue, light: light / 100 };
+  }
+  return { hue, light: resolvedTheme === "dark" ? 0 : 1 };
+};
+
 interface TourToggleProps {
   touring: boolean;
   onToggle: () => void;
@@ -76,12 +85,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
-  const { hue } = useThemeDial();
-  const scheme = useMemo<Scheme>(
-    () => ({ hue, theme: resolvedTheme === "dark" ? "night" : "day" }),
-    [hue, resolvedTheme],
-  );
-  const schemeRef = useRef(scheme);
+  const schemeRef = useRef(schemeOf(resolvedTheme, dialState()));
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -128,6 +132,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           return;
         }
         cityRef.current = city;
+        // The theme or the dial may have moved while the city loaded.
+        city.setScheme(schemeRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
         if (process.env.NODE_ENV === "development") {
@@ -149,10 +155,16 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     };
   }, [projects, reducedMotion]);
 
+  // The dial moves many times a second: it reaches the city by subscription,
+  // not a render of the page.
   useEffect(() => {
-    schemeRef.current = scheme;
-    cityRef.current?.setScheme(scheme);
-  }, [scheme]);
+    const update = () => {
+      schemeRef.current = schemeOf(resolvedTheme, dialState());
+      cityRef.current?.setScheme(schemeRef.current);
+    };
+    update();
+    return subscribeDial(update);
+  }, [resolvedTheme]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
@@ -192,7 +204,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       {status === "loading" && (
         <output
           aria-label="Loading the city"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[loader-in_300ms_ease-out_600ms_forwards] text-[var(--city-ink-soft)] opacity-0"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--city-ink-soft)]"
         >
           <Hourglass
             aria-hidden="true"

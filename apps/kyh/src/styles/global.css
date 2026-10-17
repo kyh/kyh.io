@@ -578,34 +578,40 @@ button.link {
    In the components layer so Tailwind utilities can override them. */
 @layer components {
   .city {
-    --city-paper: #f7f7f7;
-    --city-paper-hover: #ededed;
+    /* Day's greys: plain, as the town's are, until the dial's hue moves; then the site's. */
+    --city-day-paper: #f7f7f7;
+    --city-day-paper-hover: #ededed;
+    --city-day-line: #cbcbcb;
+    --city-day-shadow: #e0e0e0;
+    --city-day-sea: #e7e7e7;
     --city-ink: #454545;
     --city-ink-soft: #7d7d7d;
-    --city-line: #cbcbcb;
-    --city-shadow: #e0e0e0;
-    --city-sea: #e7e7e7;
 
-    /* Once the dial's hue is moved, and always by night, the greys are the
-       site's own tokens, so they follow the hue as the site does. */
+    /* Grounds and lines mix toward night's slate with the brightness, as the
+       site's backgrounds and borders do; ink flips with the theme, as text does. */
+    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--light), var(--colors-gray800));
+    --city-paper-hover: color-mix(
+      in oklab,
+      var(--city-day-paper-hover) var(--light),
+      color-mix(in oklab, var(--colors-gray800), var(--colors-gray700))
+    );
+    --city-line: color-mix(in oklab, var(--city-day-line) var(--light), var(--colors-gray700));
+    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--light), var(--colors-gray900));
+    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--light), var(--colors-gray900));
+
     html[data-hue] & {
-      --city-paper: var(--colors-gray50);
-      --city-paper-hover: var(--colors-gray100);
+      --city-day-paper: var(--colors-gray50);
+      --city-day-paper-hover: var(--colors-gray100);
+      --city-day-line: var(--colors-gray300);
+      --city-day-shadow: var(--colors-gray200);
+      --city-day-sea: var(--colors-gray200);
       --city-ink: var(--colors-gray700);
       --city-ink-soft: var(--colors-gray500);
-      --city-line: var(--colors-gray300);
-      --city-shadow: var(--colors-gray200);
-      --city-sea: var(--colors-gray200);
     }
 
     html[data-theme="dark"] & {
-      --city-paper: var(--colors-gray800);
-      --city-paper-hover: color-mix(in oklab, var(--colors-gray800), var(--colors-gray700));
       --city-ink: var(--colors-gray300);
       --city-ink-soft: var(--colors-gray400);
-      --city-line: var(--colors-gray700);
-      --city-shadow: var(--colors-gray900);
-      --city-sea: var(--colors-gray900);
     }
   }
 
@@ -977,13 +983,7 @@ body:has(.city) {
   animation: chat-caret 1s steps(1) infinite;
 }
 
-/* The showcase's loader: shown only if the city is slow, the hourglass rests, then turns over. */
-@keyframes loader-in {
-  to {
-    opacity: 1;
-  }
-}
-
+/* The showcase's loader: the hourglass rests, then turns over. */
 @keyframes hourglass-turn {
   0%,
   70% {
