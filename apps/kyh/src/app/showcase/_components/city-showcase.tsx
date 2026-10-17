@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Hourglass } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
 
@@ -184,9 +185,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
       )}
       {status === "loading" && (
-        <p className="city-panel absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 text-xs text-[var(--city-ink-soft)]">
-          drawing the city…
-        </p>
+        <output
+          aria-label="Loading the city"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--city-ink-soft)]"
+        >
+          <Hourglass
+            aria-hidden="true"
+            className="size-5 animate-[hourglass-turn_1.6s_ease-in-out_infinite] motion-reduce:animate-none"
+          />
+        </output>
       )}
     </div>
   );

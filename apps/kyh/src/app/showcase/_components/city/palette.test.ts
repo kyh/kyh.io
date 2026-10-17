@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Token } from "./palette";
-import { dominant, fromOklab, lookOf, oklab, PALETTE, shade } from "./palette";
+import { dominant, fromOklab, lookOf, oklab, PALETTE, shade, slateOf } from "./palette";
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
@@ -93,4 +93,13 @@ test("a lit building's trees stay green and take none of its colors", () => {
   const { tint } = lookOf(areas, ["#de35df", "#f1a50e"]);
   assert.equal(shade("tree", "day", true, tint), PALETTE.tree.day);
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), "#de35df") < 0.05, "a tree took the main color");
+});
+
+test("by night the greys are the site's slate, lightness kept", () => {
+  const [lightness, a, b] = oklab(shade("sea", "night", false));
+  const [slateLightness, slateA, slateB] = oklab("#0f172a");
+  assert.ok(Math.abs(lightness - slateLightness) < 0.03);
+  assert.ok(Math.abs(Math.atan2(b, a) - Math.atan2(slateB, slateA)) < 0.1);
+  assert.ok(Math.abs(oklab(slateOf("#888888"))[0] - oklab("#888888")[0]) < 0.01);
+  assert.equal(shade("sea", "day", false), "#e7e7e7");
 });

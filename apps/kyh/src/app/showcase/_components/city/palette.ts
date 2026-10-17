@@ -145,20 +145,6 @@ export type Tint = (hex: string) => string;
 
 const untinted: Tint = (hex) => hex;
 
-/**
- * The city is drawn in greys; a building shows its colors only while it is
- * hovered (or the flyover is passing it).
- */
-/** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
-const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
-
-export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) => {
-  if (!colorful) {
-    return greyOf(PALETTE[token][theme]);
-  }
-  return FOLIAGE.has(token) ? PALETTE[token][theme] : tint(PALETTE[token][theme]);
-};
-
 type Lab = readonly [number, number, number];
 
 const toLinear = (channel: number) =>
@@ -199,6 +185,32 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
         .padStart(2, "0"),
     )
     .join("")}`;
+};
+
+/**
+ * The city is drawn in greys; a building shows its colors only while it is
+ * hovered (or the flyover is passing it).
+ */
+/** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
+const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
+
+/** Tailwind's slate in OKLab: the hue the site's dark greys lean, and how far. */
+const SLATE_HUE = (265 * Math.PI) / 180;
+const SLATE_CHROMA = 0.042;
+
+/** A grey of the same lightness, turned to the site's slate, as its dark mode is. */
+export const slateOf = (hex: string) => {
+  const [lightness] = oklab(greyOf(hex));
+  // Slate keeps its tint through the darks and fades it toward white.
+  const chroma = SLATE_CHROMA * Math.min(1, (1 - lightness) / 0.25);
+  return fromOklab([lightness, chroma * Math.cos(SLATE_HUE), chroma * Math.sin(SLATE_HUE)]);
+};
+
+export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) => {
+  if (!colorful) {
+    return theme === "night" ? slateOf(PALETTE[token].night) : greyOf(PALETTE[token].day);
+  }
+  return FOLIAGE.has(token) ? PALETTE[token][theme] : tint(PALETTE[token][theme]);
 };
 
 /** Below this a color is black, white or grey: it has no hue to lend or turn. */
