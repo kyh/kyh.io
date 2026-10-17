@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Hourglass } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import { useTheme } from "next-themes";
 
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
-import type { Theme } from "./city/palette";
+import type { Scheme } from "./city/palette";
+import type { DialState } from "@/lib/dial-state";
+import { dialState, subscribeDial } from "@/lib/dial-state";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -15,7 +18,7 @@ interface CityMount extends CityCallbacks {
   overlay: HTMLElement | null;
   surface: HTMLElement;
   projects: CityProject[];
-  theme: Theme;
+  scheme: Scheme;
   reducedMotion: boolean;
 }
 
@@ -40,6 +43,14 @@ const usePrefersReducedMotion = () =>
     () => matchMedia(REDUCED_MOTION).matches,
     () => false,
   );
+
+/** How light and what hue the city is: the theme's own end until the dial's brightness moves. */
+const schemeOf = (resolvedTheme: string | undefined, { light, hue }: DialState): Scheme => {
+  if (light !== null) {
+    return { hue, light: light / 100 };
+  }
+  return { hue, light: resolvedTheme === "dark" ? 0 : 1 };
+};
 
 interface TourToggleProps {
   touring: boolean;
@@ -74,8 +85,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
-  const theme: Theme = resolvedTheme === "dark" ? "night" : "day";
-  const themeRef = useRef(theme);
+  const schemeRef = useRef(schemeOf(resolvedTheme, dialState()));
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -114,14 +124,16 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           overlay: overlayRef.current,
           projects,
           reducedMotion,
+          scheme: schemeRef.current,
           surface,
-          theme: themeRef.current,
         });
         if (!isMounted) {
           city.dispose();
           return;
         }
         cityRef.current = city;
+        // The theme or the dial may have moved while the city loaded.
+        city.setScheme(schemeRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
         if (process.env.NODE_ENV === "development") {
@@ -143,10 +155,16 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     };
   }, [projects, reducedMotion]);
 
+  // The dial moves many times a second: it reaches the city by subscription,
+  // not a render of the page.
   useEffect(() => {
-    themeRef.current = theme;
-    cityRef.current?.setTheme(theme);
-  }, [theme]);
+    const update = () => {
+      schemeRef.current = schemeOf(resolvedTheme, dialState());
+      cityRef.current?.setScheme(schemeRef.current);
+    };
+    update();
+    return subscribeDial(update);
+  }, [resolvedTheme]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
@@ -184,9 +202,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
       )}
       {status === "loading" && (
-        <p className="city-panel absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 text-xs text-[var(--city-ink-soft)]">
-          drawing the city…
-        </p>
+        <output
+          aria-label="Loading the city"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--city-ink-soft)]"
+        >
+          <Hourglass
+            aria-hidden="true"
+            className="size-5 animate-[hourglass-turn_1.6s_ease-in-out_infinite] motion-reduce:animate-none"
+          />
+        </output>
       )}
     </div>
   );

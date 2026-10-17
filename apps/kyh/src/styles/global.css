@@ -578,22 +578,40 @@ button.link {
    In the components layer so Tailwind utilities can override them. */
 @layer components {
   .city {
-    --city-paper: #f7f7f7;
-    --city-paper-hover: #ededed;
+    /* Day's greys: plain, as the town's are, until the dial's hue moves; then the site's. */
+    --city-day-paper: #f7f7f7;
+    --city-day-paper-hover: #ededed;
+    --city-day-line: #cbcbcb;
+    --city-day-shadow: #e0e0e0;
+    --city-day-sea: #e7e7e7;
     --city-ink: #454545;
     --city-ink-soft: #7d7d7d;
-    --city-line: #cbcbcb;
-    --city-shadow: #e0e0e0;
-    --city-sea: #e7e7e7;
 
-    [data-theme="dark"] & {
-      --city-paper: #272727;
-      --city-paper-hover: #313131;
-      --city-ink: #d2d2d2;
-      --city-ink-soft: #888888;
-      --city-line: #3f3f3f;
-      --city-shadow: #181818;
-      --city-sea: #161616;
+    /* Grounds and lines mix toward night's slate with the brightness, as the
+       site's backgrounds and borders do; ink flips with the theme, as text does. */
+    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--light), var(--colors-gray800));
+    --city-paper-hover: color-mix(
+      in oklab,
+      var(--city-day-paper-hover) var(--light),
+      color-mix(in oklab, var(--colors-gray800), var(--colors-gray700))
+    );
+    --city-line: color-mix(in oklab, var(--city-day-line) var(--light), var(--colors-gray700));
+    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--light), var(--colors-gray900));
+    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--light), var(--colors-gray900));
+
+    html[data-hue] & {
+      --city-day-paper: var(--colors-gray50);
+      --city-day-paper-hover: var(--colors-gray100);
+      --city-day-line: var(--colors-gray300);
+      --city-day-shadow: var(--colors-gray200);
+      --city-day-sea: var(--colors-gray200);
+      --city-ink: var(--colors-gray700);
+      --city-ink-soft: var(--colors-gray500);
+    }
+
+    html[data-theme="dark"] & {
+      --city-ink: var(--colors-gray300);
+      --city-ink-soft: var(--colors-gray400);
     }
   }
 
@@ -963,6 +981,17 @@ body:has(.city) {
   vertical-align: text-bottom;
   content: "";
   animation: chat-caret 1s steps(1) infinite;
+}
+
+/* The showcase's loader: the hourglass rests, then turns over. */
+@keyframes hourglass-turn {
+  0%,
+  70% {
+    rotate: 0deg;
+  }
+  100% {
+    rotate: 180deg;
+  }
 }
 
 @keyframes chat-caret {

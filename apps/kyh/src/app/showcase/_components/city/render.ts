@@ -20,7 +20,7 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 
-import type { Theme, Tint, Token } from "./palette";
+import type { Scheme, Tint, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
 import { SHADE, shade } from "./palette";
 import { createShadowDots } from "./shadow-dots";
@@ -33,7 +33,7 @@ export interface Materials {
   faces: MeshBasicMaterial;
   /** Ink is grey; `colorful` is for marks that are part of a hover, like the lot outline. */
   line: (token: Token, weight: Weight, colorful?: boolean) => LineMaterial;
-  setTheme: (theme: Theme) => void;
+  setScheme: (scheme: Scheme) => void;
   setZoom: (zoom: number) => void;
   /** The canvas's device pixels per CSS pixel, which the shadow dots are sized in. */
   setPixelRatio: (ratio: number) => void;
@@ -44,10 +44,10 @@ export interface Materials {
 
 /** Materials for the town; `adapt` sees every one made, to change how it draws (grow.ts raises the town). */
 export const createMaterials = (
-  initial: Theme,
+  initial: Scheme,
   adapt?: (material: Material) => void,
 ): Materials => {
-  let theme = initial;
+  let scheme = initial;
   let inkScale = 1;
   const adopt = <M extends Material>(material: M) => {
     adapt?.(material);
@@ -62,7 +62,7 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
-  const dots = createShadowDots(theme);
+  const dots = createShadowDots(scheme.light);
   const raised = faces.onBeforeCompile.bind(faces);
   faces.onBeforeCompile = (shader, renderer) => {
     raised(shader, renderer);
@@ -82,7 +82,7 @@ export const createMaterials = (
     const material = adopt(
       new LineMaterial({
         alphaToCoverage: true,
-        color: shade(token, theme, colorful),
+        color: shade(token, scheme, colorful),
         linewidth: WEIGHTS[weight] * inkScale,
       }),
     );
@@ -100,11 +100,11 @@ export const createMaterials = (
     faces,
     line,
     setPixelRatio: dots.setPixelRatio,
-    setTheme: (next) => {
-      theme = next;
-      dots.setTheme(next);
+    setScheme: (next) => {
+      scheme = next;
+      dots.setLight(next.light);
       for (const { colorful, material, token } of lines.values()) {
-        material.color.set(shade(token, theme, colorful));
+        material.color.set(shade(token, scheme, colorful));
       }
     },
     setZoom: (zoom) => {
@@ -246,7 +246,7 @@ export interface Built {
   screens: Map<string, LiveScreen>;
   /** Named moving parts, found by the animations. */
   parts: Map<string, Group>;
-  paint: (theme: Theme, colorful: boolean) => void;
+  paint: (scheme: Scheme, colorful: boolean) => void;
   dispose: () => void;
 }
 
@@ -353,10 +353,10 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
       }
     },
     group,
-    paint: (theme, colorful) => {
+    paint: (scheme, colorful) => {
       for (const { colors, runs } of painters) {
         for (const { token, start, count } of runs) {
-          color.set(shade(token, theme, colorful, tint));
+          color.set(shade(token, scheme, colorful, tint));
           for (let vertex = start; vertex < start + count; vertex += 1) {
             colors.setXYZ(vertex, color.r, color.g, color.b);
           }
@@ -364,7 +364,7 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
         colors.needsUpdate = true;
       }
       for (const { material, token } of signs) {
-        material.color.set(shade(token, theme, colorful, tint));
+        material.color.set(shade(token, scheme, colorful, tint));
       }
     },
     parts: new Map(),

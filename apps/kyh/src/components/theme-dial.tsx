@@ -1,41 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 
 import { DialSlider } from "@/components/dial-slider";
 import { SLATE_HUE, themeOf } from "@/lib/dial";
-
-// Sets a custom property on <html>, or clears it for null.
-const setRootVar = (name: string, value: string | null) => {
-  const { style } = document.documentElement;
-  if (value === null) {
-    style.removeProperty(name);
-  } else {
-    style.setProperty(name, value);
-  }
-};
+import { dialState, setHue, setLight, subscribeDial, UNMOVED } from "@/lib/dial-state";
 
 /** Brightness (0 dark … 100 light) and hue, each null until moved; they last until reload. */
-export const useThemeDial = () => {
-  const [light, setLight] = useState<number | null>(null);
-  const [hue, setHue] = useState<number | null>(null);
+const useThemeDial = () => useSyncExternalStore(subscribeDial, dialState, () => UNMOVED);
 
-  useEffect(() => setRootVar("--light", light === null ? null : `${light}%`), [light]);
-  useEffect(() => {
-    setRootVar("--hue", hue === null ? null : String(hue));
-    document.documentElement.toggleAttribute("data-hue", hue !== null);
-  }, [hue]);
-
-  return { hue, light, setHue, setLight };
-};
-
-interface ThemeDialProps extends ReturnType<typeof useThemeDial> {
+interface ThemeDialProps {
   onClose: () => void;
 }
 
 /** The sliders the toggle turns into; Escape or a press anywhere else turns them back. */
-export const ThemeDial = ({ light, hue, setLight, setHue, onClose }: ThemeDialProps) => {
+export const ThemeDial = ({ onClose }: ThemeDialProps) => {
+  const { light, hue } = useThemeDial();
   const { resolvedTheme, setTheme } = useTheme();
   const root = useRef<HTMLDivElement>(null);
 

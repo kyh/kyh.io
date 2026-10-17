@@ -1,0 +1,53 @@
+// The theme dial's brightness and hue, for the page: null until moved, gone on
+// reload. One store, so whatever follows them (the dock's sliders, the
+// showcase's city) reads the same values; each is written onto <html> too,
+// where global.css takes it.
+
+export interface DialState {
+  /** Brightness, dark 0 … light 100. */
+  light: number | null;
+  /** Hue in OKLCH degrees. */
+  hue: number | null;
+}
+
+export const UNMOVED: DialState = { hue: null, light: null };
+
+let state = UNMOVED;
+const listeners = new Set<() => void>();
+
+// Sets a custom property on <html>, or clears it for null.
+const setRootVar = (name: string, value: string | null) => {
+  const { style } = document.documentElement;
+  if (value === null) {
+    style.removeProperty(name);
+  } else {
+    style.setProperty(name, value);
+  }
+};
+
+const update = (next: Partial<DialState>) => {
+  state = { ...state, ...next };
+  for (const listener of listeners) {
+    listener();
+  }
+};
+
+export const setLight = (light: number | null) => {
+  setRootVar("--light", light === null ? null : `${light}%`);
+  update({ light });
+};
+
+export const setHue = (hue: number | null) => {
+  setRootVar("--hue", hue === null ? null : String(hue));
+  document.documentElement.toggleAttribute("data-hue", hue !== null);
+  update({ hue });
+};
+
+export const dialState = () => state;
+
+export const subscribeDial = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};

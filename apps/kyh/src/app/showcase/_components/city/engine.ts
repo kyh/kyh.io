@@ -16,7 +16,7 @@ import {
 import type { Object3D } from "three";
 
 import type { CityProject, Placed } from "./draw-landmarks";
-import type { Look, Theme } from "./palette";
+import type { Look, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
 import { createAnimations } from "./animate";
@@ -29,7 +29,7 @@ import { drawGround } from "./draw-ground";
 import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
-import { lookOf, PALETTE, shade } from "./palette";
+import { lookOf, PALETTE, shade, timeOf } from "./palette";
 import { CENTER, contains, planCity, withinReach } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
@@ -85,7 +85,7 @@ export interface CityCallbacks {
 
 export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
-  theme: Theme;
+  scheme: Scheme;
   reducedMotion: boolean;
   /** Where visitors' lines and other people's pointers float. */
   overlay: HTMLElement | null;
@@ -224,7 +224,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
 
   const scene = new Scene();
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
-  let { theme } = options;
+  let { scheme } = options;
+  /** A scheme waiting for the next frame. */
+  let nextScheme: Scheme | null = null;
   const plan = planCity(planEntries(options.projects));
   /**
    * The town's drawings, by heading: whole quarter turns where the camera
@@ -248,7 +250,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     new Map(placed.map((entry) => [entry.lot.slug, entry.bounds.y + entry.bounds.h])),
   );
   const growth = createGrowth();
-  const materials = createMaterials(theme, growth.adapt);
+  const materials = createMaterials(scheme, growth.adapt);
   if (options.reducedMotion) {
     growth.set(ALL_BUILT);
   }
@@ -407,9 +409,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       : null,
     scale: () => PIXELS_PER_UNIT * view.zoom,
     scene,
+    scheme,
     size: () => ({ height, width }),
     surfaceAt,
-    theme,
     toScreen,
     view: () => viewAt(angle),
   });
@@ -438,7 +440,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
   const paintedFor = new WeakMap<TownView, string>();
-  const paintKey = () => `${theme}|${shown?.project.slug ?? ""}`;
+  const paintKey = () => `${scheme.light}|${scheme.hue}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -454,11 +456,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     if (shown) {
-      shownTown.buildings.get(shown.project.slug)?.paint(theme, false);
+      shownTown.buildings.get(shown.project.slug)?.paint(scheme, false);
     }
     shown = next;
     if (shown) {
-      shownTown.buildings.get(shown.project.slug)?.paint(theme, true);
+      shownTown.buildings.get(shown.project.slug)?.paint(scheme, true);
     }
     paintedFor.set(shownTown, paintKey());
     halo.show(
@@ -477,24 +479,23 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     paintedFor.set(town, paintKey());
-    town.city.paint(theme, false);
+    town.city.paint(scheme, false);
     for (const [slug, built] of town.buildings) {
-      built.paint(theme, slug === shown?.project.slug);
+      built.paint(scheme, slug === shown?.project.slug);
     }
     for (const built of town.sky.builds) {
-      built.paint(theme, false);
+      built.paint(scheme, false);
     }
   };
-  const applyTheme = () => {
-    renderer.setClearColor(new Color(shade("sea", theme, false)));
-    materials.setTheme(theme);
-    for (const town of townViews.values()) {
-      paintTown(town);
-    }
-    sites?.paint(theme);
-    life.setTheme(theme);
+  // Only the drawing on screen is repainted: the others catch up when shown (showTown).
+  const applyScheme = () => {
+    renderer.setClearColor(new Color(shade("sea", scheme, false)));
+    materials.setScheme(scheme);
+    paintTown(shownTown);
+    sites?.paint(scheme);
+    life.setScheme(scheme);
   };
-  applyTheme();
+  applyScheme();
 
   /** The flyover takes the camera, from `from` along its path or from the nearest point. */
   const playTour = (from: number | null = null) => {
@@ -1078,6 +1079,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   const tick = (now: number) => {
+    if (nextScheme) {
+      scheme = nextScheme;
+      nextScheme = null;
+      applyScheme();
+    }
     const elapsed = Math.max(0, now - clock.last) / 1000;
     grow(elapsed);
     clock.last = now;
@@ -1095,8 +1101,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     swing(now);
     steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
-    shownTown.animations.update(clock.time, lit);
-    halo.update(Math.min(0.25, elapsed), clock.time, theme);
+    shownTown.animations.update(clock.time, lit, scheme);
+    halo.update(Math.min(0.25, elapsed), clock.time, timeOf(scheme));
     shownTown.sky.update(clock.time, boats.poses(clock.time));
     if (!warmed) {
       drawEverything();
@@ -1167,9 +1173,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       pins = next;
       pinStates.clear();
     },
-    setTheme: (next: Theme) => {
-      theme = next;
-      applyTheme();
+    /** How light and what hue: repainted on the next frame, however often the dial moves before it. */
+    setScheme: (next: Scheme) => {
+      nextScheme = next;
     },
     /** A finger on a closed pin: light its building, as a first tap on the building does. */
     tap: (slug: string) => {
