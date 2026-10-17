@@ -73,7 +73,6 @@
     var(--colors-gray300)
   );
   --body-color-highlighted: var(--colors-gray0);
-  --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray0);
   --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
 }
@@ -479,30 +478,6 @@ button.link {
   background-color: var(--panel);
 }
 
-.multi-tooltip {
-  display: grid;
-  grid-template-columns: auto auto;
-
-  & img,
-  & video {
-    width: 320px;
-    height: 240px;
-
-    @media screen and (max-width: 600px) {
-      max-height: 150px;
-      width: auto;
-    }
-  }
-
-  &.aspect-ratio-16-9 {
-    & img,
-    & video {
-      width: 320px;
-      height: 180px;
-    }
-  }
-}
-
 /* Social SVG hover fills */
 .social-github,
 .social-dribbble,
@@ -565,28 +540,6 @@ button.link {
   & > * {
     opacity: 0;
     animation: animateSectionIn 0.6s forwards ease-out;
-  }
-}
-
-/* Timeline */
-.timeline {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 6px;
-  height: 100%;
-  pointer-events: none;
-
-  @media screen and (max-width: 600px) {
-    display: none;
-  }
-
-  .timeline-path {
-    stroke: var(--colors-gray400);
-
-    [data-theme="dark"] & {
-      stroke: var(--colors-gray700);
-    }
   }
 }
 
@@ -846,17 +799,6 @@ body[data-city] {
   }
 }
 
-@keyframes animateIn {
-  from {
-    opacity: 0;
-    transform: translateX(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
 /* List row item (work life, connect) */
 .list-row {
   display: grid;
@@ -951,8 +893,7 @@ body[data-city] {
 
 [data-slot="folder-trigger"],
 [data-slot="backdrop"],
-[data-slot="open-folder"],
-[data-slot="open-item"] {
+[data-slot="open-folder"] {
   @media (prefers-reduced-motion: reduce) {
     transform: none !important;
   }
