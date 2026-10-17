@@ -504,7 +504,7 @@ button.link {
 }
 
 /* Social SVG hover fills */
-.social-git,
+.social-github,
 .social-dribbble,
 .social-twitter,
 .social-linkedin {
@@ -514,7 +514,7 @@ button.link {
   }
 }
 
-.social-git {
+.social-github {
   &:hover path,
   &:focus-visible path {
     fill: var(--logo-gh);
@@ -872,10 +872,6 @@ body[data-city] {
   grid-template-columns: 20px 120px 1fr auto;
   font-size: 0.9em;
 
-  & svg {
-    transition: color 0.15s ease-out;
-  }
-
   &:hover {
     background-color: var(--color-background-hover);
     color: var(--body-color-highlighted);
@@ -887,20 +883,6 @@ body[data-city] {
 
   & img {
     filter: grayscale(100%);
-  }
-
-  /* Social brand colors on hover */
-  &.social-github:hover svg {
-    color: var(--logo-gh);
-  }
-  &.social-twitter:hover svg {
-    color: var(--logo-tw);
-  }
-  &.social-linkedin:hover svg {
-    color: var(--logo-in);
-  }
-  &.social-dribbble:hover svg {
-    color: var(--logo-dr);
   }
 }
 
