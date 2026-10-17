@@ -26,20 +26,30 @@
 
   /* Semantic colors */
   /* Backgrounds blend the light palette (100%) and the dark one (0%); the theme
-     sets the mix, and the toggle's brightness easter egg sets anything between. */
+     sets --light, and the toggle's brightness easter egg sets anything between.
+     Each theme keeps its backgrounds off the mid-greys (--shade: neither goes
+     more than about a third of the way toward the other), and its text runs to black or white as the flip at 50% nears
+     (--contrast: 100% at the theme's end, 0% at the flip), so every brightness
+     reads. */
   --light: 100%;
-  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--light), var(--colors-gray900));
-  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray1000));
-  --body-color: var(--colors-gray900);
-  --body-color-faded: var(--colors-gray500);
+  --shade: calc(34% + var(--light) * 0.66);
+  --contrast: clamp(0%, (var(--light) - 50%) * 2, 100%);
+  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--shade), var(--colors-gray900));
+  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray1000));
+  --body-color: color-mix(in oklab, var(--colors-gray900) var(--contrast), var(--colors-gray1000));
+  --body-color-faded: color-mix(
+    in oklab,
+    var(--colors-gray500) var(--contrast),
+    var(--colors-gray700)
+  );
   --body-color-highlighted: var(--colors-gray1000);
-  --border-color: color-mix(in oklab, var(--colors-gray200) var(--light), var(--colors-gray800));
-  --link-color: var(--colors-gray900);
+  --border-color: color-mix(in oklab, var(--colors-gray200) var(--shade), var(--colors-gray800));
+  --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray1000);
-  --panel: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray950));
+  --panel: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray950));
   --dock-bg: color-mix(
     in oklab,
-    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--light),
+    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--shade),
     color-mix(in srgb, var(--colors-gray600) 12%, transparent)
   );
   --dock-border-color: color-mix(in srgb, var(--colors-gray200) 18.8%, transparent);
@@ -54,10 +64,16 @@
 [data-theme="dark"] {
   --logo-gh: #ffffff;
   --light: 0%;
-  --body-color: var(--colors-gray300);
-  --body-color-faded: var(--colors-gray500);
+  --shade: calc(var(--light) * 0.73);
+  --contrast: clamp(0%, (50% - var(--light)) * 2, 100%);
+  --body-color: color-mix(in oklab, var(--colors-gray300) var(--contrast), var(--colors-gray0));
+  --body-color-faded: color-mix(
+    in oklab,
+    var(--colors-gray500) var(--contrast),
+    var(--colors-gray300)
+  );
   --body-color-highlighted: var(--colors-gray0);
-  --link-color: var(--colors-gray300);
+  --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray0);
   --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
 }

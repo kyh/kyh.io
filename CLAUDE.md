@@ -103,9 +103,10 @@ the homepage site nav and the 404 recovery links at once.
 The dock's theme toggle hides an easter egg: five quick taps roll the dock's
 buttons up and out and two sliders up in from below, like a toolbar switching
 modes (a press outside rolls it back): brightness and hue, both gone on reload.
-Brightness is `--light`, the mix every background token in `global.css` takes
-between the light and dark palettes (the theme sets 100% or 0%; the theme flips
-at 50%); hue is `--hue` under `html[data-hue]`, the slate greys retinted in
+Brightness is `--light` (the theme sets 100% or 0%; the theme flips at 50%):
+in `global.css` each theme eases its backgrounds between the palettes but keeps
+them off the mid-greys (`--shade`), and its text runs to black or white as the
+flip nears (`--contrast`), so text holds 6.5:1 at any brightness; hue is `--hue` under `html[data-hue]`, the slate greys retinted in
 oklch. `src/lib/dial-state.ts` holds the state (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
 `dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
 Base UI's Slider, and
