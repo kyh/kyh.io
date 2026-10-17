@@ -26,20 +26,30 @@
 
   /* Semantic colors */
   /* Backgrounds blend the light palette (100%) and the dark one (0%); the theme
-     sets the mix, and the toggle's brightness easter egg sets anything between. */
+     sets --light, and the toggle's brightness easter egg sets anything between.
+     Each theme keeps its backgrounds off the mid-greys (--shade: neither goes
+     more than about a third of the way toward the other), and its text runs to black or white as the flip at 50% nears
+     (--contrast: 100% at the theme's end, 0% at the flip), so every brightness
+     reads. lib/brightness.ts is the same pair of curves for the showcase's town. */
   --light: 100%;
-  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--light), var(--colors-gray900));
-  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray1000));
-  --body-color: var(--colors-gray900);
-  --body-color-faded: var(--colors-gray500);
+  --shade: calc(34% + var(--light) * 0.66);
+  --contrast: clamp(0%, (var(--light) - 50%) * 2, 100%);
+  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--shade), var(--colors-gray900));
+  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray1000));
+  --body-color: color-mix(in oklab, var(--colors-gray900) var(--contrast), var(--colors-gray1000));
+  --body-color-faded: color-mix(
+    in oklab,
+    var(--colors-gray500) var(--contrast),
+    var(--colors-gray700)
+  );
   --body-color-highlighted: var(--colors-gray1000);
-  --border-color: color-mix(in oklab, var(--colors-gray200) var(--light), var(--colors-gray800));
-  --link-color: var(--colors-gray900);
+  --border-color: color-mix(in oklab, var(--colors-gray200) var(--shade), var(--colors-gray800));
+  --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray1000);
-  --panel: color-mix(in oklab, var(--colors-gray0) var(--light), var(--colors-gray950));
+  --panel: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray950));
   --dock-bg: color-mix(
     in oklab,
-    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--light),
+    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--shade),
     color-mix(in srgb, var(--colors-gray600) 12%, transparent)
   );
   --dock-border-color: color-mix(in srgb, var(--colors-gray200) 18.8%, transparent);
@@ -54,10 +64,16 @@
 [data-theme="dark"] {
   --logo-gh: #ffffff;
   --light: 0%;
-  --body-color: var(--colors-gray300);
-  --body-color-faded: var(--colors-gray500);
+  --shade: calc(var(--light) * 0.73);
+  --contrast: clamp(0%, (50% - var(--light)) * 2, 100%);
+  --body-color: color-mix(in oklab, var(--colors-gray300) var(--contrast), var(--colors-gray0));
+  --body-color-faded: color-mix(
+    in oklab,
+    var(--colors-gray500) var(--contrast),
+    var(--colors-gray300)
+  );
   --body-color-highlighted: var(--colors-gray0);
-  --link-color: var(--colors-gray300);
+  --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray0);
   --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
 }
@@ -584,20 +600,29 @@ button.link {
     --city-day-line: #cbcbcb;
     --city-day-shadow: #e0e0e0;
     --city-day-sea: #e7e7e7;
-    --city-ink: #454545;
-    --city-ink-soft: #7d7d7d;
+    --city-theme-ink: #454545;
+    --city-theme-ink-soft: #7d7d7d;
+    --city-ink-pole: var(--colors-gray1000);
 
-    /* Grounds and lines mix toward night's slate with the brightness, as the
-       site's backgrounds and borders do; ink flips with the theme, as text does. */
-    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--light), var(--colors-gray800));
+    /* Grounds and lines mix toward night's slate by --shade, as the site's
+       backgrounds and borders do; ink keeps the theme's own by --contrast and
+       runs to black or white toward the flip, as text does. The town's canvas
+       takes the same curves (lib/brightness.ts). */
+    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--shade), var(--colors-gray800));
     --city-paper-hover: color-mix(
       in oklab,
-      var(--city-day-paper-hover) var(--light),
+      var(--city-day-paper-hover) var(--shade),
       color-mix(in oklab, var(--colors-gray800), var(--colors-gray700))
     );
-    --city-line: color-mix(in oklab, var(--city-day-line) var(--light), var(--colors-gray700));
-    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--light), var(--colors-gray900));
-    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--light), var(--colors-gray900));
+    --city-line: color-mix(in oklab, var(--city-day-line) var(--shade), var(--colors-gray700));
+    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--shade), var(--colors-gray900));
+    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--shade), var(--colors-gray900));
+    --city-ink: color-mix(in oklab, var(--city-theme-ink) var(--contrast), var(--city-ink-pole));
+    --city-ink-soft: color-mix(
+      in oklab,
+      var(--city-theme-ink-soft) var(--contrast),
+      var(--city-theme-ink)
+    );
 
     html[data-hue] & {
       --city-day-paper: var(--colors-gray50);
@@ -605,13 +630,14 @@ button.link {
       --city-day-line: var(--colors-gray300);
       --city-day-shadow: var(--colors-gray200);
       --city-day-sea: var(--colors-gray200);
-      --city-ink: var(--colors-gray700);
-      --city-ink-soft: var(--colors-gray500);
+      --city-theme-ink: var(--colors-gray700);
+      --city-theme-ink-soft: var(--colors-gray500);
     }
 
     html[data-theme="dark"] & {
-      --city-ink: var(--colors-gray300);
-      --city-ink-soft: var(--colors-gray400);
+      --city-theme-ink: var(--colors-gray300);
+      --city-theme-ink-soft: var(--colors-gray400);
+      --city-ink-pole: var(--colors-gray0);
     }
   }
 

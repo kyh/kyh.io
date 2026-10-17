@@ -11,6 +11,7 @@ import {
   lookOf,
   oklab,
   PALETTE,
+  schemeAt,
   shade,
   timeOf,
 } from "./palette";
@@ -130,12 +131,34 @@ test("the theme dial's hue turns the greys at any light", () => {
 test("brightness mixes night into day, each end exactly the theme's own", () => {
   assert.equal(colorIn("land", DAY), PALETTE.land.day);
   assert.equal(colorIn("land", NIGHT), PALETTE.land.night);
-  const [half] = oklab(colorIn("land", { hue: null, light: 0.5 }));
-  const [day] = oklab(PALETTE.land.day);
-  const [night] = oklab(PALETTE.land.night);
-  assert.ok(Math.abs(half - (day + night) / 2) < 0.01);
+  assert.equal(colorIn("ink", DAY), PALETTE.ink.day);
+  assert.equal(colorIn("ink", NIGHT), PALETTE.ink.night);
   assert.equal(timeOf({ hue: null, light: 0.5 }), "day");
   assert.equal(timeOf({ hue: null, light: 0.49 }), "night");
+});
+
+test("the grounds skip the mid-greys at the flip, as the site's do", () => {
+  const [day] = oklab(PALETTE.land.day);
+  const [night] = oklab(PALETTE.land.night);
+  const [justDay] = oklab(colorIn("land", { hue: null, light: 0.5 }));
+  const [justNight] = oklab(colorIn("land", { hue: null, light: 0.49 }));
+  const middle = (day + night) / 2;
+  assert.ok(justDay > middle + 0.1);
+  assert.ok(justNight < middle - 0.05);
+});
+
+test("ink keeps its distance from the ground at any brightness", () => {
+  for (let light = 0; light <= 1; light += 0.05) {
+    const scheme: Scheme = { hue: null, light };
+    const [ground] = oklab(colorIn("land", scheme));
+    const [ink] = oklab(colorIn("ink", scheme));
+    assert.ok(Math.abs(ground - ink) > 0.4, `light ${light}`);
+  }
+});
+
+test("a scheme is one object per light and hue", () => {
+  assert.equal(schemeAt(0.3, null), schemeAt(0.3, null));
+  assert.notEqual(schemeAt(0.3, null), schemeAt(0.3, 140));
 });
 
 const greyChroma = (light: number) => {

@@ -331,12 +331,29 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   }
 };
 
+// Parsed colors by hex: a repaint while the dial moves sets every run of
+// faces, and parsing the same few dozen strings for each is most of its cost.
+// The shelf starts over once a long sweep has filled it.
+const parsed = new Map<string, Color>();
+const PARSED_KEPT = 4096;
+
+const colorOf = (hex: string) => {
+  let color = parsed.get(hex);
+  if (!color) {
+    if (parsed.size >= PARSED_KEPT) {
+      parsed.clear();
+    }
+    color = new Color(hex);
+    parsed.set(hex, color);
+  }
+  return color;
+};
+
 /** `tint` turns its colors, when shown, toward its project's own. */
 export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];
-  const color = new Color();
   const built: Built = {
     dispose: () => {
       group.traverse((object) => {
@@ -355,10 +372,13 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
     group,
     paint: (scheme, colorful) => {
       for (const { colors, runs } of painters) {
+        const { array } = colors;
         for (const { token, start, count } of runs) {
-          color.set(shade(token, scheme, colorful, tint));
-          for (let vertex = start; vertex < start + count; vertex += 1) {
-            colors.setXYZ(vertex, color.r, color.g, color.b);
+          const { r, g, b } = colorOf(shade(token, scheme, colorful, tint));
+          for (let at = start * 3, end = (start + count) * 3; at < end; at += 3) {
+            array[at] = r;
+            array[at + 1] = g;
+            array[at + 2] = b;
           }
         }
         colors.needsUpdate = true;

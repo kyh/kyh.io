@@ -3,6 +3,8 @@
 // showcase's city) reads the same values; each is written onto <html> too,
 // where global.css takes it.
 
+import { themeOf } from "./dial";
+
 export interface DialState {
   /** Brightness, dark 0 … light 100. */
   light: number | null;
@@ -34,6 +36,14 @@ const update = (next: Partial<DialState>) => {
 
 export const setLight = (light: number | null) => {
   setRootVar("--light", light === null ? null : `${light}%`);
+  if (light !== null) {
+    // The theme flips in the same frame as the brightness, not a render
+    // later: global.css reads both together. next-themes writes the same when
+    // it catches up.
+    const theme = themeOf(light);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  }
   update({ light });
 };
 

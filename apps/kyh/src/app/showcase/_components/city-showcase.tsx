@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
+import { schemeAt } from "./city/palette";
 import type { DialState } from "@/lib/dial-state";
 import { dialState, subscribeDial } from "@/lib/dial-state";
 import { Pin, PinList } from "./city-pins";
@@ -47,9 +48,9 @@ const usePrefersReducedMotion = () =>
 /** How light and what hue the city is: the theme's own end until the dial's brightness moves. */
 const schemeOf = (resolvedTheme: string | undefined, { light, hue }: DialState): Scheme => {
   if (light !== null) {
-    return { hue, light: light / 100 };
+    return schemeAt(light / 100, hue);
   }
-  return { hue, light: resolvedTheme === "dark" ? 0 : 1 };
+  return schemeAt(resolvedTheme === "dark" ? 0 : 1, hue);
 };
 
 interface TourToggleProps {
