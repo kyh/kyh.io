@@ -29,7 +29,7 @@ import { drawGround } from "./draw-ground";
 import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
-import { lookOf, PALETTE, shade } from "./palette";
+import { lookOf, PALETTE, setDialHue, shade } from "./palette";
 import { CENTER, contains, planCity, withinReach } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
@@ -86,6 +86,8 @@ export interface CityCallbacks {
 export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
   theme: Theme;
+  /** The theme dial's hue, or null for the theme's own greys. */
+  hue: number | null;
   reducedMotion: boolean;
   /** Where visitors' lines and other people's pointers float. */
   overlay: HTMLElement | null;
@@ -224,7 +226,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
 
   const scene = new Scene();
   const camera = new OrthographicCamera(-1, 1, 1, -1, 1, CAMERA_DISTANCE * 2);
-  let { theme } = options;
+  let { theme, hue } = options;
+  setDialHue(hue);
   const plan = planCity(planEntries(options.projects));
   /**
    * The town's drawings, by heading: whole quarter turns where the camera
@@ -438,7 +441,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
   const paintedFor = new WeakMap<TownView, string>();
-  const paintKey = () => `${theme}|${shown?.project.slug ?? ""}`;
+  const paintKey = () => `${theme}|${hue}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -1162,6 +1165,11 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       view.z = z;
       view.zoom = zoom;
       place();
+    },
+    setHue: (next: number | null) => {
+      hue = next;
+      setDialHue(hue);
+      applyTheme();
     },
     setPins: (next: Map<string, HTMLElement>) => {
       pins = next;

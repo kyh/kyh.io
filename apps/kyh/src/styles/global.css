@@ -596,6 +596,28 @@ button.link {
       --city-shadow: #0e172b;
       --city-sea: #0d1529;
     }
+
+    /* The theme dial's hue turns the greys in either theme, as it does the
+       site's (slateOf with the dial's hue in palette.ts). */
+    html[data-hue] & {
+      --city-paper: oklch(97.6% 0.008 var(--hue));
+      --city-paper-hover: oklch(94.6% 0.018 var(--hue));
+      --city-ink: oklch(39% 0.084 var(--hue));
+      --city-ink-soft: oklch(59% 0.084 var(--hue));
+      --city-line: oklch(84.2% 0.053 var(--hue));
+      --city-shadow: oklch(90.7% 0.031 var(--hue));
+      --city-sea: oklch(92.8% 0.024 var(--hue));
+    }
+
+    html[data-hue][data-theme="dark"] & {
+      --city-paper: oklch(27.3% 0.084 var(--hue));
+      --city-paper-hover: oklch(31.3% 0.084 var(--hue));
+      --city-ink: oklch(86.4% 0.046 var(--hue));
+      --city-ink-soft: oklch(62.7% 0.084 var(--hue));
+      --city-line: oklch(36.8% 0.084 var(--hue));
+      --city-shadow: oklch(20.9% 0.084 var(--hue));
+      --city-sea: oklch(20% 0.084 var(--hue));
+    }
   }
 
   .city-panel {
@@ -966,7 +988,13 @@ body:has(.city) {
   animation: chat-caret 1s steps(1) infinite;
 }
 
-/* The showcase's loader: the hourglass rests, then turns over. */
+/* The showcase's loader: shown only if the city is slow, the hourglass rests, then turns over. */
+@keyframes loader-in {
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes hourglass-turn {
   0%,
   70% {

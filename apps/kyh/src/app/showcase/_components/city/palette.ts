@@ -194,20 +194,38 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
 /** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
-/** Tailwind's slate in OKLab: the hue the site's dark greys lean, and how far. */
-const SLATE_HUE = (265 * Math.PI) / 180;
+/** Tailwind's slate in OKLCH (its darks): the hue the site's dark greys lean, and how far. */
+const SLATE_HUE = 265;
 const SLATE_CHROMA = 0.042;
 
-/** A grey of the same lightness, turned to the site's slate, as its dark mode is. */
-export const slateOf = (hex: string) => {
+/**
+ * A grey of the same lightness, turned to slate, as the site's dark mode is,
+ * or to another hue (OKLCH degrees). Slate keeps its tint through the darks
+ * and fades it toward white.
+ */
+export const slateOf = (hex: string, hue = SLATE_HUE, chroma = SLATE_CHROMA) => {
   const [lightness] = oklab(greyOf(hex));
-  // Slate keeps its tint through the darks and fades it toward white.
-  const chroma = SLATE_CHROMA * Math.min(1, (1 - lightness) / 0.25);
-  return fromOklab([lightness, chroma * Math.cos(SLATE_HUE), chroma * Math.sin(SLATE_HUE)]);
+  const amount = chroma * Math.min(1, (1 - lightness) / 0.25);
+  const angle = (hue * Math.PI) / 180;
+  return fromOklab([lightness, amount * Math.cos(angle), amount * Math.sin(angle)]);
+};
+
+/**
+ * The theme dial's hue, null until it's moved. The site then turns its greys
+ * to it in either theme, chroma doubled so the tint reads (global.css), and so
+ * does the city. Set by the engine; one city is drawn at a time.
+ */
+let dialHue: number | null = null;
+
+export const setDialHue = (hue: number | null) => {
+  dialHue = hue;
 };
 
 export const shade = (token: Token, theme: Theme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
+    if (dialHue !== null) {
+      return slateOf(PALETTE[token][theme], dialHue, SLATE_CHROMA * 2);
+    }
     return theme === "night" ? slateOf(PALETTE[token].night) : greyOf(PALETTE[token].day);
   }
   return FOLIAGE.has(token) ? PALETTE[token][theme] : tint(PALETTE[token][theme]);

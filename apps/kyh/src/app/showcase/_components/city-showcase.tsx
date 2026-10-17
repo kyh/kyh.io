@@ -17,6 +17,7 @@ interface CityMount extends CityCallbacks {
   surface: HTMLElement;
   projects: CityProject[];
   theme: Theme;
+  hue: number | null;
   reducedMotion: boolean;
 }
 
@@ -41,6 +42,24 @@ const usePrefersReducedMotion = () =>
     () => matchMedia(REDUCED_MOTION).matches,
     () => false,
   );
+
+// The theme dial's hue lives on <html> (data-hue, --hue) while it's moved.
+const subscribeHue = (onChange: () => void) => {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributeFilter: ["data-hue", "style"],
+    attributes: true,
+  });
+  return () => observer.disconnect();
+};
+
+const readHue = () => {
+  const root = document.documentElement;
+  const hue = root.style.getPropertyValue("--hue");
+  return root.dataset.hue === undefined || hue === "" ? null : Number(hue);
+};
+
+const useDialHue = () => useSyncExternalStore(subscribeHue, readHue, () => null);
 
 interface TourToggleProps {
   touring: boolean;
@@ -77,6 +96,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const { resolvedTheme } = useTheme();
   const theme: Theme = resolvedTheme === "dark" ? "night" : "day";
   const themeRef = useRef(theme);
+  const hue = useDialHue();
+  const hueRef = useRef(hue);
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -104,6 +125,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     const mount = async () => {
       try {
         const city = await loadCity(host, {
+          hue: hueRef.current,
           onHover: show,
           onOpen: (slug) => {
             const url = urls.get(slug);
@@ -149,6 +171,11 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     cityRef.current?.setTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    hueRef.current = hue;
+    cityRef.current?.setHue(hue);
+  }, [hue]);
+
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
       pinsRef.current.set(slug, element);
@@ -187,7 +214,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       {status === "loading" && (
         <output
           aria-label="Loading the city"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--city-ink-soft)]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-[loader-in_300ms_ease-out_600ms_forwards] text-[var(--city-ink-soft)] opacity-0"
         >
           <Hourglass
             aria-hidden="true"

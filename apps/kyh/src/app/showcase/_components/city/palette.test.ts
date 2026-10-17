@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Token } from "./palette";
-import { dominant, fromOklab, lookOf, oklab, PALETTE, shade, slateOf } from "./palette";
+import { dominant, fromOklab, lookOf, oklab, PALETTE, setDialHue, shade, slateOf } from "./palette";
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
@@ -101,5 +101,16 @@ test("by night the greys are the site's slate, lightness kept", () => {
   assert.ok(Math.abs(lightness - slateLightness) < 0.03);
   assert.ok(Math.abs(Math.atan2(b, a) - Math.atan2(slateB, slateA)) < 0.1);
   assert.ok(Math.abs(oklab(slateOf("#888888"))[0] - oklab("#888888")[0]) < 0.01);
+  assert.equal(shade("sea", "day", false), "#e7e7e7");
+});
+
+test("the theme dial's hue turns the greys in either theme, then lets go", () => {
+  setDialHue(140);
+  for (const theme of ["day", "night"] as const) {
+    const [lightness, a, b] = oklab(shade("land", theme, false));
+    assert.ok(Math.abs((Math.atan2(b, a) * 180) / Math.PI - 140) < 3);
+    assert.ok(Math.abs(lightness - oklab(slateOf(PALETTE.land[theme]))[0]) < 0.01);
+  }
+  setDialHue(null);
   assert.equal(shade("sea", "day", false), "#e7e7e7");
 });
