@@ -206,7 +206,9 @@ hover, coarse pointer) hunts without the chat egg, since it has no keyboard
 (`huntedEggs`).
 `provider.tsx` celebrates each like a coin pickup: a label at the pointer,
 shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
-pops as each lands, and a fountain of confetti: paper that flutters and flips
+pops as each lands (what flies is the theme's: `themes.ts` picks by the calendar,
+bats over Halloween week, unless `chooseEggTheme` picks one; each theme draws
+its piece in `pieces.tsx` and colors its confetti), and a fountain of confetti: paper that flutters and flips
 between its two sides, and sequins that drop, on one canvas that comes and goes
 with it (`confetti.ts`; the throw and the physics are `burst.ts`, pure, tested). Once the last egg of the last
 find lands the visitor's own color becomes `gold` (`setOwnColorName` in

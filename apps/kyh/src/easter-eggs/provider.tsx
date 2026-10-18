@@ -1,12 +1,13 @@
 "use client";
 
 // Celebrates each find like a coin pickup: confetti (`confetti.ts`) and a label at the pointer,
-// eggs that spray out and fly home to the visitor's avatar (`EggCatcher`),
+// eggs (bats over Halloween: the theme's pieces, `themes.ts`) that spray out and fly home to the visitor's avatar (`EggCatcher`),
 // which pops as each lands. Once the last egg of the last find lands the
 // visitor's own color turns gold, so every room draws them gold too.
 import type { RefObject } from "react";
 import {
   createContext,
+  Fragment,
   memo,
   use,
   useCallback,
@@ -25,7 +26,10 @@ import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } 
 import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
 import { throwConfettiAt } from "./confetti";
+import { PIECES } from "./pieces";
 import { foundEggs, huntedEggs, progressOf, subscribeToEggs } from "./store";
+import type { EggThemeId } from "./themes";
+import { currentEggTheme, EGG_THEMES } from "./themes";
 
 /** This visitor's hunt: a phone with no keyboard can't send a chat line. */
 const hunt = () =>
@@ -35,9 +39,6 @@ const hunt = () =>
   );
 
 const GOLD_BACKGROUND = gradientOf(GOLD);
-/** The shadowed side of a golden egg. */
-const DEEP_GOLD = "hsl(34, 90%, 30%)";
-const EGG = "M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z";
 
 /** The gold pointer arrow, the site's own cursor shape. */
 const GOLD_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -55,6 +56,8 @@ interface Burst {
   from: Point;
   to: Point;
   eggs: SprayedEgg[];
+  /** What it throws, fixed at the find so a switch mid-flight doesn't swap them. */
+  theme: EggThemeId;
 }
 
 interface EggsState {
@@ -159,6 +162,7 @@ const BurstLabel = ({ label }: { label: string }) => {
 
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
 const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
+  const art = PIECES[burst.theme];
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
@@ -189,19 +193,7 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
             }
           }}
         >
-          {/* Lit from the top left: a deep rim, a body, and a gloss. */}
-          <path d={EGG} fill="black" opacity="0.2" transform="translate(0 1.5)" />
-          <path d={EGG} fill={`url(#${gradient})`} stroke={DEEP_GOLD} strokeWidth="0.75" />
-          <path d={EGG} fill={`url(#${gradient}-rim)`} />
-          <ellipse
-            cx="9.4"
-            cy="8.6"
-            rx="1.9"
-            ry="3"
-            fill="white"
-            opacity="0.85"
-            transform="rotate(-24 9.4 8.6)"
-          />
+          {art.piece(`${gradient}-${burst.theme}`)}
         </motion.svg>
       ))}
     </div>
@@ -255,12 +247,14 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       next += 1;
       // The burst comes out of the pointer, or the middle if it hasn't moved yet.
       const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-      throwConfettiAt(from);
+      const theme = currentEggTheme();
+      throwConfettiAt(from, EGG_THEMES[theme].confetti);
       const burst = {
         ...burstOf(),
         from,
         id: next,
         label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
+        theme,
         to,
       };
       setBursts((current) => [...current, burst]);
@@ -275,6 +269,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   );
 
   const catching = bursts.length > 0;
+  const themes = [...new Set(bursts.map((burst) => burst.theme))];
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
@@ -309,17 +304,9 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         >
           <svg className="absolute size-0">
             <defs>
-              <radialGradient id={gradient} cx="0.38" cy="0.34" r="0.75">
-                <stop offset="0" stopColor="#fffbe8" />
-                <stop offset="0.3" stopColor={GOLD.hue} />
-                <stop offset="0.75" stopColor={GOLD.color} />
-                <stop offset="1" stopColor={DEEP_GOLD} />
-              </radialGradient>
-              {/* Light bounced back up into the shadowed underside. */}
-              <radialGradient id={`${gradient}-rim`} cx="0.6" cy="1.05" r="0.45">
-                <stop offset="0" stopColor={GOLD.hue} stopOpacity="0.55" />
-                <stop offset="1" stopColor={GOLD.hue} stopOpacity="0" />
-              </radialGradient>
+              {themes.map((theme) => (
+                <Fragment key={theme}>{PIECES[theme].defs(`${gradient}-${theme}`)}</Fragment>
+              ))}
             </defs>
           </svg>
           {bursts.map((burst) => (
