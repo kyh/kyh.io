@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "cn": "catalog:",
-    "konva": "^10.7.1",
+    "konva": "^10.9.0",
     "lucide-react": "catalog:",
-    "motion": "^14.1.0",
+    "motion": "^14.3.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-konva": "^19.3.0"
+    "react-konva": "^19.3.2"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
