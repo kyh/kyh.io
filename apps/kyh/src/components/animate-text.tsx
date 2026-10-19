@@ -1,5 +1,7 @@
 "use client";
 
+import { chineseGlyph } from "@/lib/chinese";
+
 export interface AnimateSectionProps<C> {
   children: React.ReactNode;
   className?: string;
@@ -48,12 +50,17 @@ const glyphFor = (text: string, index: number, slot: number) => {
   return GLYPHS[hash % GLYPHS.length] ?? "";
 };
 
+// A heading with a Chinese translation holds each letter on its character, so
+// the wave reads the translation; any other scrambles through glyphs.
 const generateChars = (text: string) =>
-  [...text].map((_, index) => ({
-    char1: glyphFor(text, index, 1),
-    char2: glyphFor(text, index, 2),
-    char3: glyphFor(text, index, 3),
-  }));
+  [...text].map((_, index) => {
+    const chinese = chineseGlyph(text, index);
+    return {
+      char1: chinese ?? glyphFor(text, index, 1),
+      char2: chinese ?? glyphFor(text, index, 2),
+      char3: chinese ?? glyphFor(text, index, 3),
+    };
+  });
 
 type ScrambleTextProps = {
   children: string;
@@ -81,11 +88,13 @@ export const ScrambleText = ({
       return;
     }
 
-    // Update CSS vars with new random chars
-    for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
-      el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
-      el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
-      el.style.setProperty("--char-3", `"${getRandomGlyph()}"`);
+    // Update CSS vars with new random chars; a translation replays as it is
+    if (chineseGlyph(text, 0) === undefined) {
+      for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
+        el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
+        el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
+        el.style.setProperty("--char-3", `"${getRandomGlyph()}"`);
+      }
     }
 
     // Restart animation by removing and re-adding class; reading offsetWidth
@@ -97,7 +106,11 @@ export const ScrambleText = ({
 
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span data-scramble className={trigger === "hover" ? "" : "scramble"} aria-hidden>
+      <span
+        data-scramble={chineseGlyph(text, 0) === undefined ? "" : "chinese"}
+        className={trigger === "hover" ? "" : "scramble"}
+        aria-hidden
+      >
         {[...text].map((char, index) => {
           // SAFETY: CSS custom properties are valid inline styles, but
           // React.CSSProperties has no index signature for `--*` keys; the
