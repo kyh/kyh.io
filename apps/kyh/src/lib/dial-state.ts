@@ -1,18 +1,16 @@
-// The theme dial's brightness and hue, for the page: null until moved, gone on
-// reload. One store, so whatever follows them (the dock's sliders, the
-// showcase's city) reads the same values; each is written onto <html> too,
-// where global.css takes it.
+// The theme dial's brightness, for the page: null until moved, gone on reload.
+// One store, so whatever follows it (the dock's slider, the showcase's city)
+// reads the same value; it's written onto <html> too, where global.css takes
+// it. The dial's other half, the season, keeps its own store (src/seasons).
 
 import { themeOf } from "./dial";
 
 export interface DialState {
   /** Brightness, dark 0 … light 100. */
   light: number | null;
-  /** Hue in OKLCH degrees. */
-  hue: number | null;
 }
 
-export const UNMOVED: DialState = { hue: null, light: null };
+export const UNMOVED: DialState = { light: null };
 
 let state = UNMOVED;
 const listeners = new Set<() => void>();
@@ -45,12 +43,6 @@ export const setLight = (light: number | null) => {
     document.documentElement.style.colorScheme = theme;
   }
   update({ light });
-};
-
-export const setHue = (hue: number | null) => {
-  setRootVar("--hue", hue === null ? null : String(hue));
-  document.documentElement.toggleAttribute("data-hue", hue !== null);
-  update({ hue });
 };
 
 export const dialState = () => state;

@@ -29,8 +29,6 @@ interface DialSliderProps extends Range {
   onChange: (value: number) => void;
   format?: Intl.NumberFormatOptions;
   focusOnMount?: boolean;
-  /** A hue slider: the track is the color wheel and a marker, not a fill, shows the value. */
-  spectrum?: boolean;
 }
 
 export const DialSlider = ({
@@ -42,7 +40,6 @@ export const DialSlider = ({
   step,
   format,
   focusOnMount = false,
-  spectrum = false,
 }: DialSliderProps) => {
   const range = { max, min, step };
   const input = useRef<HTMLInputElement>(null);
@@ -104,7 +101,6 @@ export const DialSlider = ({
         onValueChange={(next, { reason }) =>
           onChange(reason === "track-press" ? roundToStep(snapToDecile(next, range), range) : next)
         }
-        data-spectrum={spectrum || undefined}
         data-dodge={percent < dodgeAt.left || percent > dodgeAt.right || undefined}
         className="dial-slider dock-item"
         style={percentStyle}
@@ -116,7 +112,7 @@ export const DialSlider = ({
             {hashMarks.map((left) => (
               <div key={left} className="dial-slider-hashmark" style={{ left: `${left}%` }} />
             ))}
-            {!spectrum && <Slider.Indicator className="dial-slider-fill" />}
+            <Slider.Indicator className="dial-slider-fill" />
             <Slider.Thumb className="dial-slider-thumb" inputRef={input}>
               <span className="dial-slider-handle" />
             </Slider.Thumb>

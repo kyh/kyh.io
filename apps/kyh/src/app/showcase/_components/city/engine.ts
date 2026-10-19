@@ -440,7 +440,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
   const paintedFor = new WeakMap<TownView, string>();
-  const paintKey = () => `${scheme.light}|${scheme.hue}|${shown?.project.slug ?? ""}`;
+  const paintKey = () =>
+    `${scheme.light}|${scheme.tint?.hue}|${scheme.tint?.chroma}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -1173,7 +1174,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       pins = next;
       pinStates.clear();
     },
-    /** How light and what hue: repainted on the next frame, however often the dial moves before it. */
+    /** How light and how tinted: repainted on the next frame, however often the dial moves before it. */
     setScheme: (next: Scheme) => {
       nextScheme = next;
     },

@@ -101,18 +101,33 @@ canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
 The dock's theme toggle hides an easter egg: five quick taps roll the dock's
-buttons up and out and two sliders up in from below, like a toolbar switching
-modes (a press outside rolls it back): brightness and hue, both gone on reload.
+buttons up and out and the theme dial up in from below, like a toolbar switching
+modes (a press outside rolls it back): a brightness slider and the season
+picker, both gone on reload.
 Brightness is `--light` (the theme sets 100% or 0%; the theme flips at 50%):
 in `global.css` each theme eases its backgrounds between the palettes but keeps
 them off the mid-greys (`--shade`), and its text runs to black or white as the
 flip nears (`--contrast`), so text holds 6.5:1 at any brightness. `src/lib/brightness.ts`
 is the same two curves for the showcase's town (a test holds them to the CSS),
-and `dial-state.ts` flips `data-theme` in the same frame as `--light`; hue is `--hue` under `html[data-hue]`, the slate greys retinted in
-oklch. `src/lib/dial-state.ts` holds the state (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
+and `dial-state.ts` flips `data-theme` in the same frame as `--light`.
+`src/lib/dial-state.ts` holds the brightness (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
 `dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
-Base UI's Slider, and
+Base UI's Slider, `season-select.tsx` the picker (Base UI's Select), and
 `src/lib/dial.ts` the tap streak.
+
+Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
+(`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
+computus, the 4th Thursday, a Lunar New Year table), its grey tint (an OKLCH
+hue and a chroma as a multiple of slate's), its piece as data (`art.ts`:
+paths and gradients, drawn by `piece.tsx`), its confetti, and how the piece
+drifts over the showcase (`drift.tsx`: falls, rises or flits, CSS-animated).
+Adding a theme is adding an entry. The calendar picks today's (first listed
+wins an overlap); the picker overrides it for the page load (`store.ts`).
+The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
+(`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
+no tint and keeps the hex slate. `script.ts` paints the calendar's season from
+`<head>` before first paint (its windows worked out ahead for 2026–2036; a test
+holds it to the store's painting day by day).
 
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
@@ -148,7 +163,7 @@ corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night. The town follows the theme dial like the site: a `Scheme` (`palette.ts`) is how light it is and the dial's hue; each color is its night and day mixed in OKLab by the light (`colorIn`), and the greys are plain by day, slate as it darkens, turned to the hue once it's moved (`greyIn`), worked out once per scheme. The showcase hears the dial by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. The pins and cards mix the site's grey tokens by `--light`. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. The town follows the theme dial like the site: a `Scheme` (`palette.ts`) is how light it is and the season's tint; each color is its night and day mixed in OKLab by the light (`colorIn`), and the greys are plain by day, slate as it darkens, turned to the season's hue when it has one (`greyIn`), worked out once per scheme. The season's piece drifts over the town (`SeasonDrift`). The showcase hears the dial and the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. The pins and cards mix the site's grey tokens by `--light`. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),
@@ -206,9 +221,8 @@ hover, coarse pointer) hunts without the chat egg, since it has no keyboard
 (`huntedEggs`).
 `provider.tsx` celebrates each like a coin pickup: a label at the pointer,
 shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
-pops as each lands (what flies is the theme's: `themes.ts` picks by the calendar,
-bats over Halloween week, unless `chooseEggTheme` picks one; each theme draws
-its piece in `pieces.tsx` and colors its confetti), and a fountain of confetti: paper that flutters and flips
+pops as each lands (what flies is the season's piece: bats over Halloween,
+snowflakes at Christmas, in the season's confetti), and a fountain of confetti: paper that flutters and flips
 between its two sides, and sequins that drop, on one canvas that comes and goes
 with it (`confetti.ts`; the throw and the physics are `burst.ts`, pure, tested). Once the last egg of the last
 find lands the visitor's own color becomes `gold` (`setOwnColorName` in

@@ -302,7 +302,7 @@ export const Dock = () => {
               aria-label={themeLabel}
               onClick={(event) => {
                 setTheme(isLight ? "dark" : "light");
-                // A plain tap hands brightness back to the theme; the hue stays.
+                // A plain tap hands brightness back to the theme; the season stays.
                 setLight(null);
                 // Five quick taps open the dials.
                 taps.current = tapStreak(taps.current, event.timeStamp);

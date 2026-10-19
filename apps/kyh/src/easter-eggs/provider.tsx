@@ -1,18 +1,17 @@
 "use client";
 
 // Celebrates each find like a coin pickup: confetti (`confetti.ts`) and a label at the pointer,
-// eggs (bats over Halloween: the theme's pieces, `themes.ts`) that spray out and fly home to the visitor's avatar (`EggCatcher`),
+// eggs (or the season's pieces, src/seasons: bats over Halloween) that spray
+// out and fly home to the visitor's avatar (`EggCatcher`),
 // which pops as each lands. Once the last egg of the last find lands the
 // visitor's own color turns gold, so every room draws them gold too.
 import type { RefObject } from "react";
 import {
   createContext,
-  Fragment,
   memo,
   use,
   useCallback,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -21,15 +20,16 @@ import {
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 
 import { CURSOR_ARROW } from "@/components/cursor";
+import { PieceDefs, PieceLayers, usePieceId } from "@/seasons/piece";
+import type { SeasonId } from "@/seasons/seasons";
+import { seasonOf } from "@/seasons/seasons";
+import { currentSeason } from "@/seasons/store";
 import { lastPointer } from "@/lib/pointer";
 import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
 import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
 import { throwConfettiAt } from "./confetti";
-import { PIECES } from "./pieces";
 import { foundEggs, huntedEggs, progressOf, subscribeToEggs } from "./store";
-import type { EggThemeId } from "./themes";
-import { currentEggTheme, EGG_THEMES } from "./themes";
 
 /** This visitor's hunt: a phone with no keyboard can't send a chat line. */
 const hunt = () =>
@@ -57,7 +57,7 @@ interface Burst {
   to: Point;
   eggs: SprayedEgg[];
   /** What it throws, fixed at the find so a switch mid-flight doesn't swap them. */
-  theme: EggThemeId;
+  season: SeasonId;
 }
 
 interface EggsState {
@@ -123,7 +123,8 @@ export const EggProgress = () => {
 
 interface BurstProps {
   burst: Burst;
-  gradient: string;
+  /** The id the pieces' gradients are under, per season. */
+  pieceId: string;
   onLand: () => void;
   onDone: (id: number) => void;
 }
@@ -161,8 +162,8 @@ const BurstLabel = ({ label }: { label: string }) => {
 };
 
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
-const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
-  const art = PIECES[burst.theme];
+const BurstPieces = ({ burst, pieceId, onLand, onDone }: BurstProps) => {
+  const { art } = seasonOf(burst.season);
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
@@ -193,7 +194,7 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
             }
           }}
         >
-          {art.piece(`${gradient}-${burst.theme}`)}
+          <PieceLayers art={art} id={`${pieceId}-${burst.season}`} />
         </motion.svg>
       ))}
     </div>
@@ -208,8 +209,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   const still = useReducedMotion() ?? false;
   const [bursts, setBursts] = useState<Burst[]>([]);
   const catcher = useRef<HTMLSpanElement | null>(null);
-  // useId's punctuation isn't safe inside url(#…).
-  const gradient = `egg-${useId().replaceAll(/[^\w-]/gu, "")}`;
+  const pieceId = usePieceId();
 
   /** The avatar catches an egg. */
   const pop = useCallback(() => {
@@ -247,14 +247,14 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       next += 1;
       // The burst comes out of the pointer, or the middle if it hasn't moved yet.
       const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-      const theme = currentEggTheme();
-      throwConfettiAt(from, EGG_THEMES[theme].confetti);
+      const season = currentSeason();
+      throwConfettiAt(from, seasonOf(season).confetti);
       const burst = {
         ...burstOf(),
         from,
         id: next,
         label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
-        theme,
+        season,
         to,
       };
       setBursts((current) => [...current, burst]);
@@ -269,7 +269,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   );
 
   const catching = bursts.length > 0;
-  const themes = [...new Set(bursts.map((burst) => burst.theme))];
+  const seasons = [...new Set(bursts.map((burst) => burst.season))];
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
@@ -304,19 +304,13 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         >
           <svg className="absolute size-0">
             <defs>
-              {themes.map((theme) => (
-                <Fragment key={theme}>{PIECES[theme].defs(`${gradient}-${theme}`)}</Fragment>
+              {seasons.map((season) => (
+                <PieceDefs key={season} art={seasonOf(season).art} id={`${pieceId}-${season}`} />
               ))}
             </defs>
           </svg>
           {bursts.map((burst) => (
-            <BurstView
-              key={burst.id}
-              burst={burst}
-              gradient={gradient}
-              onLand={pop}
-              onDone={done}
-            />
+            <BurstView key={burst.id} burst={burst} pieceId={pieceId} onLand={pop} onDone={done} />
           ))}
         </div>
       )}

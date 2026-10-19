@@ -2,7 +2,7 @@
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
 import { contrastOf, FLIP, shadeOf } from "@/lib/brightness";
-import { SLATE_HUE } from "@/lib/dial";
+import type { GreyTint } from "@/seasons/seasons";
 
 export const PALETTE = {
   accentBlue: { day: "#4f78c4", night: "#7aa5ff" },
@@ -194,29 +194,29 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
 /**
- * How the city is drawn, as the site's theme and dial say: how light it is
- * (night 0 … day 1, the theme's own end until the dial's brightness moves)
- * and the dial's hue once it's moved.
+ * How the city is drawn, as the site's theme, dial and season say: how light
+ * it is (night 0 … day 1, the theme's own end until the dial's brightness
+ * moves) and how the season turns the greys, if it does.
  */
 export interface Scheme {
   light: number;
-  hue: number | null;
+  tint: GreyTint | null;
 }
 
 // Schemes by value, so a dial moving back and forth finds the colors it
-// already worked out; a long sweep through every hue starts the shelf over.
+// already worked out; the shelf starts over if it ever fills.
 const schemes = new Map<string, Scheme>();
 const SCHEMES_KEPT = 512;
 
-/** The one scheme for this light and hue. */
-export const schemeAt = (light: number, hue: number | null): Scheme => {
-  const key = `${light}|${hue}`;
+/** The one scheme for this light and tint. */
+export const schemeAt = (light: number, tint: GreyTint | null): Scheme => {
+  const key = `${light}|${tint?.hue}|${tint?.chroma}`;
   let scheme = schemes.get(key);
   if (!scheme) {
     if (schemes.size >= SCHEMES_KEPT) {
       schemes.clear();
     }
-    scheme = { hue, light };
+    scheme = { light, tint };
     schemes.set(key, scheme);
   }
   return scheme;
@@ -249,7 +249,8 @@ export const mixHex = (from: string, to: string, amount: number) => {
   return fromOklab([l1 + (l2 - l1) * amount, a1 + (a2 - a1) * amount, b1 + (b2 - b1) * amount]);
 };
 
-/** Slate's chroma in its darks; it fades toward white. */
+/** Slate's hue and its chroma in its darks; the chroma fades toward white. */
+const SLATE_HUE = 257;
 const SLATE_CHROMA = 0.042;
 
 /**
@@ -265,12 +266,12 @@ export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
 
 /**
  * A color as the city's greys show it, the way the site draws its own greys:
- * plain by day, slate as it darkens, and turned to the dial's hue at any
- * light, chroma doubled so the tint reads (global.css).
+ * plain by day, slate as it darkens, and turned by the season's tint at any
+ * light (global.css).
  */
-export const greyIn = (hex: string, { light, hue }: Scheme) => {
-  if (hue !== null) {
-    return slateOf(hex, hue, SLATE_CHROMA * 2);
+export const greyIn = (hex: string, { light, tint }: Scheme) => {
+  if (tint) {
+    return slateOf(hex, tint.hue, SLATE_CHROMA * tint.chroma);
   }
   return light >= 1 ? greyOf(hex) : slateOf(hex, SLATE_HUE, SLATE_CHROMA * (1 - shadeOf(light)));
 };

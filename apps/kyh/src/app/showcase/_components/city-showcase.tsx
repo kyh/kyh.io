@@ -11,6 +11,10 @@ import type { Scheme } from "./city/palette";
 import { schemeAt } from "./city/palette";
 import type { DialState } from "@/lib/dial-state";
 import { dialState, subscribeDial } from "@/lib/dial-state";
+import { SeasonDrift } from "@/seasons/drift";
+import type { SeasonId } from "@/seasons/seasons";
+import { DEFAULT_SEASON, seasonOf } from "@/seasons/seasons";
+import { currentSeason, subscribeToSeason } from "@/seasons/store";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -45,12 +49,17 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-/** How light and what hue the city is: the theme's own end until the dial's brightness moves. */
-const schemeOf = (resolvedTheme: string | undefined, { light, hue }: DialState): Scheme => {
+/** How light the city is (the theme's own end until the dial's brightness moves) and how the season tints it. */
+const schemeOf = (
+  resolvedTheme: string | undefined,
+  { light }: DialState,
+  season: SeasonId,
+): Scheme => {
+  const { tint } = seasonOf(season);
   if (light !== null) {
-    return schemeAt(light / 100, hue);
+    return schemeAt(light / 100, tint);
   }
-  return schemeAt(resolvedTheme === "dark" ? 0 : 1, hue);
+  return schemeAt(resolvedTheme === "dark" ? 0 : 1, tint);
 };
 
 interface TourToggleProps {
@@ -86,7 +95,9 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
   const { resolvedTheme } = useTheme();
-  const schemeRef = useRef(schemeOf(resolvedTheme, dialState()));
+  // The season needs the visitor's date, which a render (on the server too)
+  // can't read: the city starts in the default's and takes theirs on mount.
+  const schemeRef = useRef(schemeOf(resolvedTheme, dialState(), DEFAULT_SEASON));
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -142,7 +153,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           return;
         }
         cityRef.current = city;
-        // The theme or the dial may have moved while the city loaded.
+        // The theme, the dial or the season may have moved while the city loaded.
         city.setScheme(schemeRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
@@ -166,14 +177,19 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   }, [projects, reducedMotion]);
 
   // The dial moves many times a second: it reaches the city by subscription,
-  // not a render of the page.
+  // not a render of the page, and so does the season.
   useEffect(() => {
     const update = () => {
-      schemeRef.current = schemeOf(resolvedTheme, dialState());
+      schemeRef.current = schemeOf(resolvedTheme, dialState(), currentSeason());
       cityRef.current?.setScheme(schemeRef.current);
     };
     update();
-    return subscribeDial(update);
+    const stopDial = subscribeDial(update);
+    const stopSeason = subscribeToSeason(update);
+    return () => {
+      stopDial();
+      stopSeason();
+    };
   }, [resolvedTheme]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
@@ -187,6 +203,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   return (
     <div ref={rootRef} className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
+      <SeasonDrift />
       {/* Visitors' lines and other people's pointers, under the pins so a lit card stays on top. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {status === "failed" ? (

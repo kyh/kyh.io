@@ -4,38 +4,45 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 
 import { DialSlider } from "@/components/dial-slider";
-import { SLATE_HUE, themeOf } from "@/lib/dial";
-import { dialState, setHue, setLight, subscribeDial, UNMOVED } from "@/lib/dial-state";
+import { SeasonSelect } from "@/components/season-select";
+import { themeOf } from "@/lib/dial";
+import { dialState, setLight, subscribeDial, UNMOVED } from "@/lib/dial-state";
 
-/** Brightness (0 dark … 100 light) and hue, each null until moved; they last until reload. */
+/** Brightness (0 dark … 100 light), null until moved; it lasts until reload. */
 const useThemeDial = () => useSyncExternalStore(subscribeDial, dialState, () => UNMOVED);
 
 interface ThemeDialProps {
   onClose: () => void;
 }
 
-/** The sliders the toggle turns into; Escape or a press anywhere else turns them back. */
+/** What the toggle turns into, brightness and the season; Escape or a press anywhere else turns it back. */
 export const ThemeDial = ({ onClose }: ThemeDialProps) => {
-  const { light, hue } = useThemeDial();
+  const { light } = useThemeDial();
   const { resolvedTheme, setTheme } = useTheme();
   const root = useRef<HTMLDivElement>(null);
+  // While the season list is open, Escape and outside presses close the list,
+  // not the dial: heard in the capture phase, ahead of the list closing.
+  const picking = useRef(false);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !picking.current) {
         onClose();
       }
     };
     const onPointer = (event: PointerEvent) => {
-      if (!(event.target instanceof Node && root.current?.contains(event.target))) {
+      if (
+        !picking.current &&
+        !(event.target instanceof Node && root.current?.contains(event.target))
+      ) {
         onClose();
       }
     };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("pointerdown", onPointer, true);
     return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("pointerdown", onPointer, true);
     };
   }, [onClose]);
 
@@ -58,15 +65,10 @@ export const ThemeDial = ({ onClose }: ThemeDialProps) => {
         />
       </div>
       <div className="dial-slot">
-        <DialSlider
-          label="Hue"
-          min={0}
-          max={360}
-          step={1}
-          value={hue ?? SLATE_HUE}
-          spectrum
-          format={{ style: "unit", unit: "degree", unitDisplay: "narrow" }}
-          onChange={setHue}
+        <SeasonSelect
+          onOpenChange={(open) => {
+            picking.current = open;
+          }}
         />
       </div>
     </div>

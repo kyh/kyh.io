@@ -6,6 +6,7 @@ import { GeistSans } from "geist/font/sans";
 import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer/cursors";
 import { Providers } from "@/components/providers";
+import { SeasonScript } from "@/components/season-script";
 import { siteConfig } from "@/lib/config";
 import { JsonLd } from "@/components/json-ld";
 
@@ -79,6 +80,9 @@ export const metadata: Metadata = {
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
+    <head>
+      <SeasonScript />
+    </head>
     <body>
       <JsonLd />
       <Providers>

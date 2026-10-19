@@ -44,7 +44,7 @@ const twoBoxes = () => {
   box(sketch, { colors: WALLS, d: 1, h: 1, w: 1, x: 2, y: 0, z: 2 });
   const piece = part(sketch, "piece", [10, 1, 2]);
   box(piece, { colors: WALLS, d: 0.5, h: 0.5, w: 0.5, x: 0, y: 0, z: 0 });
-  return build(sketch, createMaterials({ hue: null, light: 1 }));
+  return build(sketch, createMaterials({ light: 1, tint: null }));
 };
 
 test("every face and ink line is stamped with the start of where it stands, a part by its place in town", () => {
