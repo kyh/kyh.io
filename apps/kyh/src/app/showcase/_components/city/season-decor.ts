@@ -379,24 +379,22 @@ const lanternPost = (sketch: Sketch, x: number, z: number, height = 0.36) => {
   lantern(sketch, x + 0.07, GROUND + height - 0.07, z);
 };
 
-/** A burst of fireworks in the sky above a spot. */
+/** A burst of fireworks in the sky above a spot: rays out every way from a point. */
 const fireworks = (sketch: Sketch, x: number, z: number, random: Random) => {
-  const center: Vec3 = [x, GROUND + random.range(1.7, 2.3), z];
+  const center: Vec3 = [x, GROUND + random.range(1.4, 1.9), z];
   const token = random.pick(["accentRed", "accentYellow", "accentBlue", "accentPink"] as const);
-  for (let ray = 0; ray < 14; ray += 1) {
-    const angle = (ray / 14) * Math.PI * 2;
-    const tilt = random.range(-0.5, 0.5);
-    const direction: Vec3 = [
-      Math.cos(angle),
-      Math.sin(angle) * 0.9 + tilt * 0.2,
-      Math.sin(angle + tilt) * 0.6,
+  for (let ray = 0; ray < 24; ray += 1) {
+    // Spread evenly round the sphere: the golden angle, height by height.
+    const up = 1 - ((ray + 0.5) / 24) * 2;
+    const across = Math.sqrt(1 - up * up);
+    const turn = ray * 2.399963;
+    const reach = random.range(0.26, 0.36);
+    const at = (along: number): Vec3 => [
+      center[0] + Math.cos(turn) * across * along,
+      center[1] + up * along,
+      center[2] + Math.sin(turn) * across * along,
     ];
-    const at = (reach: number): Vec3 => [
-      center[0] + direction[0] * reach,
-      center[1] + direction[1] * reach,
-      center[2] + direction[2] * reach,
-    ];
-    line(sketch, [at(0.12), at(0.34)], "fine", token);
+    line(sketch, [at(reach * 0.35), at(reach)], "fine", token);
   }
 };
 
