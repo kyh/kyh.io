@@ -26,7 +26,6 @@
     "matter-js": "^0.20.0",
     "motion": "^14.3.0",
     "next": "catalog:",
-    "next-themes": "^0.4.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "three": "^0.186.1"

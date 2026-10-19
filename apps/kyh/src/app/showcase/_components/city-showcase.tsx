@@ -3,15 +3,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Hourglass } from "lucide-react";
 import { MotionConfig } from "motion/react";
-import { useTheme } from "next-themes";
 
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
 import { schemeAt } from "./city/palette";
-import type { SeasonId } from "@/seasons/seasons";
-import { DEFAULT_SEASON } from "@/seasons/seasons";
-import { currentSeason, subscribeToSeason } from "@/seasons/store";
+import type { Theme } from "@/seasons/store";
+import { currentTheme, subscribeToTheme } from "@/seasons/store";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -47,8 +45,8 @@ const usePrefersReducedMotion = () =>
   );
 
 /** The city by day or night, as the site's theme is, in the season's look. */
-const schemeOf = (resolvedTheme: string | undefined, season: SeasonId): Scheme =>
-  schemeAt(resolvedTheme === "dark" ? "night" : "day", season);
+const schemeOf = ({ mode, season }: Theme): Scheme =>
+  schemeAt(mode === "dark" ? "night" : "day", season);
 
 interface TourToggleProps {
   touring: boolean;
@@ -82,10 +80,10 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
-  const { resolvedTheme } = useTheme();
-  // The season needs the visitor's date, which a render (on the server too)
-  // can't read: the city starts in the default's and takes theirs on mount.
-  const schemeRef = useRef(schemeOf(resolvedTheme, DEFAULT_SEASON));
+  // The theme needs the visitor's date and their light or dark, which a render
+  // (on the server too) can't read: the city starts in the default's and
+  // takes theirs on mount.
+  const schemeRef = useRef(schemeAt("day", "classic"));
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -164,15 +162,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     };
   }, [projects, reducedMotion]);
 
-  // The season reaches the city by subscription, not a render of the page.
+  // The theme reaches the city by subscription, not a render of the page.
   useEffect(() => {
     const update = () => {
-      schemeRef.current = schemeOf(resolvedTheme, currentSeason());
+      schemeRef.current = schemeOf(currentTheme());
       cityRef.current?.setScheme(schemeRef.current);
     };
     update();
-    return subscribeToSeason(update);
-  }, [resolvedTheme]);
+    return subscribeToTheme(update);
+  }, []);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {

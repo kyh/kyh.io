@@ -1,8 +1,8 @@
-// The site's seasonal themes, each whole in one entry: the days it runs, how
-// it turns the site's greys, the piece an easter-egg find throws (`art.ts`),
-// its confetti, and what falls across every page (snow, leaves) if anything.
-// The calendar picks one for today, unless the seasons blooming out of the
-// theme toggle have (`store.ts`).
+// The site's seasonal themes, each whole in one entry: the days it runs,
+// whether it's light or dark, how it turns the site's greys, the piece an
+// easter-egg find throws (`art.ts`), its confetti, and what falls across every
+// page (snow, leaves) if anything. The calendar picks one for today, unless
+// the themes menu round the theme toggle has (`store.ts`).
 // Adding a theme is adding an entry here, and its decorations for the
 // showcase's town (city/season-decor.ts, keyed by season so none is missed).
 // Pure.
@@ -18,6 +18,9 @@ export interface GreyTint {
   chroma: number;
 }
 
+/** The site's two color schemes, which every theme is one of. */
+export type Mode = "light" | "dark";
+
 /** What falls across every page: snow drifting down, or leaves tumbling. */
 export type Drift = "snow" | "leaves";
 
@@ -29,10 +32,12 @@ export interface ConfettiSide {
 
 export interface Season {
   id: string;
-  /** In the seasons menu. */
+  /** In the themes menu. */
   name: string;
   /** The days it runs in a year; the default season has none, and runs when no other does. */
   days?: (year: number) => Window | null;
+  /** Light or dark, whatever the visitor's own is; null (the default season) keeps theirs. */
+  mode: Mode | null;
   /** Null keeps the site's own slate. */
   tint: GreyTint | null;
   /** What an easter-egg find throws, and what falls across the page if the season has `drift`. */
@@ -313,6 +318,7 @@ export const SEASONS = [
     confetti: named("gold", "gold", "crimson", "blue", "green", "plum"),
     drift: null,
     id: "classic",
+    mode: null,
     name: "Classic",
     tint: null,
   },
@@ -330,6 +336,7 @@ export const SEASONS = [
     },
     drift: null,
     id: "lunarNewYear",
+    mode: "dark",
     name: "Lunar New Year",
     tint: { chroma: 2.5, hue: 25 },
   },
@@ -343,6 +350,7 @@ export const SEASONS = [
     days: (year) => span(year, [2, 10], [2, 14]),
     drift: null,
     id: "valentines",
+    mode: "light",
     name: "Valentine's Day",
     tint: { chroma: 2, hue: 350 },
   },
@@ -352,6 +360,7 @@ export const SEASONS = [
     days: (year) => span(year, [3, 14], [3, 17]),
     drift: null,
     id: "stPatricks",
+    mode: "light",
     name: "St. Patrick's Day",
     tint: { chroma: 2, hue: 140 },
   },
@@ -368,6 +377,7 @@ export const SEASONS = [
     days: (year) => around(easterSunday(year), 2, 1),
     drift: null,
     id: "easter",
+    mode: "light",
     name: "Easter",
     tint: { chroma: 1.5, hue: 320 },
   },
@@ -381,6 +391,7 @@ export const SEASONS = [
     days: (year) => span(year, [10, 25], [10, 31]),
     drift: null,
     id: "halloween",
+    mode: "dark",
     name: "Halloween",
     tint: { chroma: 2.5, hue: 295 },
   },
@@ -395,6 +406,7 @@ export const SEASONS = [
     days: (year) => around(nthWeekday(year, 11, 4, 4), 3, 3),
     drift: "leaves",
     id: "thanksgiving",
+    mode: "light",
     name: "Thanksgiving",
     tint: { chroma: 2, hue: 60 },
   },
@@ -409,6 +421,7 @@ export const SEASONS = [
     days: (year) => span(year, [12, 15], [12, 26]),
     drift: "snow",
     id: "christmas",
+    mode: "dark",
     name: "Christmas",
     tint: { chroma: 2, hue: 165 },
   },

@@ -1,85 +1,104 @@
+import { useId } from "react";
 import { motion } from "motion/react";
+
+import { PieceIcon } from "@/seasons/piece";
+import { seasonOf } from "@/seasons/seasons";
+import type { ThemeId } from "@/seasons/store";
 
 interface ThemeToggleIconProps {
   isLight: boolean;
 }
 
-export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => (
-  <svg
-    viewBox="0 0 18 18"
-    width="100%"
-    height="100%"
-    style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
-    className="overflow-visible transition-transform duration-500 ease-in-out"
-    aria-hidden="true"
-  >
-    <mask id="moon-mask-main-nav">
-      <rect x="0" y="0" width="18" height="18" fill="#FFF" />
+export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
+  // One mask per icon: the themes menu draws a sun and a moon beside the toggle's own.
+  const mask = `moon-mask-${useId().replaceAll(/[^\w-]/gu, "")}`;
+  return (
+    <svg
+      viewBox="0 0 18 18"
+      width="100%"
+      height="100%"
+      style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
+      className="overflow-visible transition-transform duration-500 ease-in-out"
+      aria-hidden="true"
+    >
+      <mask id={mask}>
+        <rect x="0" y="0" width="18" height="18" fill="#FFF" />
+        <motion.circle
+          cy="2"
+          r="8"
+          fill="black"
+          initial={false}
+          animate={{ cx: isLight ? 25 : 10 }}
+        />
+      </mask>
       <motion.circle
-        cy="2"
-        r="8"
-        fill="black"
-        initial={false}
-        animate={{ cx: isLight ? 25 : 10 }}
-      />
-    </mask>
-    <motion.circle
-      cx="9"
-      cy="9"
-      r="8"
-      fill="currentColor"
-      mask="url(#moon-mask-main-nav)"
-      initial={false}
-      animate={{ r: isLight ? 5 : 8 }}
-    />
-    <g>
-      <motion.circle
-        cx="17"
+        cx="9"
         cy="9"
-        r="1.5"
+        r="8"
         fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
+        mask={`url(#${mask})`}
+        initial={false}
+        animate={{ r: isLight ? 5 : 8 }}
       />
-      <motion.circle
-        cx="13"
-        cy="15.928203230275509"
-        r="1.5"
-        fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
-        transition={{ delay: isLight ? 0.05 : 0 }}
-      />
-      <motion.circle
-        cx="5.000000000000002"
-        cy="15.92820323027551"
-        r="1.5"
-        fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
-        transition={{ delay: isLight ? 0.1 : 0 }}
-      />
-      <motion.circle
-        cx="1"
-        cy="9.000000000000002"
-        r="1.5"
-        fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
-        transition={{ delay: isLight ? 0.15 : 0 }}
-      />
-      <motion.circle
-        cx="4.9999999999999964"
-        cy="2.071796769724492"
-        r="1.5"
-        fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
-        transition={{ delay: isLight ? 0.2 : 0 }}
-      />
-      <motion.circle
-        cx="13"
-        cy="2.0717967697244912"
-        r="1.5"
-        fill="currentColor"
-        animate={{ scale: isLight ? 1 : 0 }}
-        transition={{ delay: isLight ? 0.25 : 0 }}
-      />
-    </g>
-  </svg>
-);
+      <g>
+        <motion.circle
+          cx="17"
+          cy="9"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+        />
+        <motion.circle
+          cx="13"
+          cy="15.928203230275509"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+          transition={{ delay: isLight ? 0.05 : 0 }}
+        />
+        <motion.circle
+          cx="5.000000000000002"
+          cy="15.92820323027551"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+          transition={{ delay: isLight ? 0.1 : 0 }}
+        />
+        <motion.circle
+          cx="1"
+          cy="9.000000000000002"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+          transition={{ delay: isLight ? 0.15 : 0 }}
+        />
+        <motion.circle
+          cx="4.9999999999999964"
+          cy="2.071796769724492"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+          transition={{ delay: isLight ? 0.2 : 0 }}
+        />
+        <motion.circle
+          cx="13"
+          cy="2.0717967697244912"
+          r="1.5"
+          fill="currentColor"
+          animate={{ scale: isLight ? 1 : 0 }}
+          transition={{ delay: isLight ? 0.25 : 0 }}
+        />
+      </g>
+    </svg>
+  );
+};
+
+/** A theme's icon: the sun or moon for plain light or dark, else its season's piece. */
+export const ThemeIcon = ({ id, className }: { id: ThemeId; className?: string }) =>
+  id === "light" || id === "dark" ? (
+    <span className={className}>
+      <ThemeToggleIcon isLight={id === "light"} />
+    </span>
+  ) : (
+    <PieceIcon art={seasonOf(id).art} className={className} />
+  );

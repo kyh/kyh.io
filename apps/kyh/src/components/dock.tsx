@@ -1,19 +1,19 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useTheme } from "next-themes";
 
 import { SeasonBloom } from "@/components/season-bloom";
-import { ThemeToggleIcon } from "@/components/theme-toggle";
+import { ThemeIcon } from "@/components/theme-toggle";
 import { discoverEgg } from "@/easter-eggs/store";
-import { TAPS, tapStreak } from "@/lib/dial";
-import { PieceIcon } from "@/seasons/piece";
-import { seasonOf } from "@/seasons/seasons";
-import { useSeason } from "@/seasons/store";
+import { DEFAULT_SEASON } from "@/seasons/seasons";
+import { ownMode, themeIdOf, toggleTheme, useTheme } from "@/seasons/store";
+
+/** How long the theme toggle is held down to bloom the themes round it (ms). */
+const HOLD_MS = 450;
 
 const iconAttrs = {
   "aria-hidden": true,
@@ -211,25 +211,14 @@ const GlassFilter = () => (
   </>
 );
 
-const subscribeNever = () => () => {
-  // Hydration happens once; there's nothing to unsubscribe from.
-};
-
 export const Dock = () => {
   const pathname = usePathname();
-  const { resolvedTheme, setTheme } = useTheme();
-  // The server can't know the theme, so the toggle shows one only once hydrated.
-  const hydrated = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  );
+  const theme = useTheme();
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
-  const taps = useRef<number[]>([]);
   const toggle = useRef<HTMLButtonElement>(null);
   const [blooming, setBlooming] = useState(false);
-  // A press on the toggle while the seasons are open closes them, and only that.
+  // A press on the toggle while the themes are open closes them, and only that.
   const closedByToggle = useRef(false);
   const onBloomChange = useCallback((open: boolean, event: Event | undefined) => {
     closedByToggle.current =
@@ -237,11 +226,31 @@ export const Dock = () => {
     setBlooming(open);
   }, []);
 
-  const season = useSeason();
+  // A tap is light or dark; held down, the toggle blooms the themes, and the
+  // release that ends the hold isn't a tap.
+  const holding = useRef<number>(0);
+  const held = useRef(false);
+  const bloom = () => {
+    setHovered(null);
+    setBlooming(true);
+    discoverEgg("bloom");
+  };
+  const press = () => {
+    held.current = false;
+    window.clearTimeout(holding.current);
+    holding.current = window.setTimeout(() => {
+      held.current = true;
+      bloom();
+    }, HOLD_MS);
+  };
+  const release = () => window.clearTimeout(holding.current);
 
-  const isLight = hydrated && resolvedTheme === "light";
-  const themeLabel = blooming ? "Close seasons" : `Switch to ${isLight ? "dark" : "light"} mode`;
-  // The dock holds still while the seasons are out round the toggle.
+  const plain = theme.season === DEFAULT_SEASON;
+  // A season's tap goes back to the visitor's own light or dark.
+  const themeLabel = plain
+    ? `Switch to ${theme.mode === "light" ? "dark" : "light"} mode`
+    : `Back to ${ownMode()} mode`;
+  // The dock holds still while the themes are out over the toggle.
   const follow = (x: number) => {
     if (!blooming) {
       mouseX.set(x);
@@ -283,40 +292,47 @@ export const Dock = () => {
           aria-label={themeLabel}
           aria-haspopup="menu"
           aria-expanded={blooming}
-          onClick={(event) => {
-            if (closedByToggle.current) {
+          className="transition-transform duration-300 select-none active:scale-90 [-webkit-touch-callout:none]"
+          onPointerDown={(event) => {
+            if (event.button === 0) {
+              press();
+            }
+          }}
+          onPointerUp={release}
+          onPointerLeave={release}
+          onPointerCancel={release}
+          // A long press on touch would open the browser's own menu.
+          onContextMenu={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            // The keyboard's way to the themes, as a menu button opens with an arrow.
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              bloom();
+            }
+          }}
+          onClick={() => {
+            if (held.current || closedByToggle.current) {
+              held.current = false;
               closedByToggle.current = false;
               return;
             }
-            setTheme(isLight ? "dark" : "light");
-            // Five quick taps bloom the seasons out of the toggle.
-            taps.current = tapStreak(taps.current, event.timeStamp);
-            if (taps.current.length >= TAPS) {
-              taps.current = [];
-              setHovered(null);
-              setBlooming(true);
-              discoverEgg("bloom");
-            }
+            toggleTheme();
           }}
           onMouseEnter={() => setHovered("theme")}
           onMouseLeave={() => setHovered(null)}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme" && !blooming}>
-            {/* While the seasons are out, the toggle is their hub and wears the one picked. */}
+            {/* Light and dark morph into each other; a season pops in wearing its piece. */}
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={blooming ? season : "theme"}
+                key={plain ? "plain" : theme.season}
                 className="flex size-full items-center justify-center"
                 initial={{ opacity: 0, rotate: -40, scale: 0.4 }}
-                animate={{ opacity: 1, rotate: 0, scale: blooming ? 1.25 : 1 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
                 transition={{ damping: 22, stiffness: 420, type: "spring" }}
               >
-                {blooming ? (
-                  <PieceIcon art={seasonOf(season).art} className="size-full" />
-                ) : (
-                  <ThemeToggleIcon isLight={isLight} />
-                )}
+                <ThemeIcon id={themeIdOf(theme)} className="block size-full" />
               </motion.span>
             </AnimatePresence>
           </DockItem>

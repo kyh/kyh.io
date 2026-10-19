@@ -10,7 +10,7 @@ export const EASTER_EGGS = [
   "chat",
   // Tap the homepage's figure canvas to drop shapes (figure-canvas.tsx).
   "shapes",
-  // Five quick taps on the theme toggle bloom out the seasons (components/dock.tsx).
+  // Hold the theme toggle down and the themes bloom over it (components/dock.tsx).
   "bloom",
   // Long-press a Side Quests icon and drag it somewhere new (side-quests-grid.tsx).
   "reorder",

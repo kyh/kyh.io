@@ -100,15 +100,23 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
-The dock's theme toggle hides an easter egg: five quick taps bloom the seasons
-round it as a radial menu (`src/components/season-bloom.tsx`): the toggle stays
-put as the hub, wearing the season picked, and a wedge per season fans out over
-the top one after another (each clipped to its slice, so the slice takes the
-pointer), the name of the one under the pointer above them. The dock stops
-magnifying while it's open. It's Base UI's Menu (radio items, focus, arrow keys
-and typing a name, dismissal; pressing the toggle only closes it); picking one
-keeps it open so the page can be tried in each, and the pick is gone on
-reload. `src/lib/dial.ts` is the tap streak.
+The site has one set of themes: plain Light and Dark, and each season, which
+brings its own light or dark (Halloween, Christmas and Lunar New Year are
+dark). `src/seasons/store.ts` owns it (no next-themes): the calendar's season
+for today unless the menu picked another (gone on reload), else the
+visitor's own light or dark, kept in localStorage (`theme`) or their
+system's. It paints `data-theme` (what global.css and Tailwind's `dark:`
+read), `color-scheme` and the season's tint on `<html>` (`paint.ts`). The
+dock's theme toggle wears the theme's icon: a tap flips light and dark, or
+takes a season back to the visitor's own; held down (or ArrowUp), it blooms
+the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
+a solid disc that springs from the button (nudged up off the bottom), a wedge
+per theme clipped to its slice so the slice takes the pointer, unfolding one
+after another round a hub that wears the one under the pointer, its name over
+the top. The dock stops magnifying while it's open. It's Base UI's Menu
+(radio items, focus, arrow keys and typing a name, dismissal; the hub or the
+toggle closes it); picking a theme keeps it open so the page can be tried in
+each.
 
 Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
 (`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
@@ -133,12 +141,13 @@ scheme's season changes without redrawing the town. And its `emote`: what the
 town's people now and then send up (hearts at Valentine's), floated over their
 heads by `life.ts`.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
-wins an overlap); the seasons menu overrides it for the page load (`store.ts`).
+wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
 (`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
-no tint and keeps the hex slate. `script.ts` paints the calendar's season from
-`<head>` before first paint (its windows worked out ahead for 2026–2036; a test
-holds it to the store's painting day by day).
+no tint and keeps the hex slate. `script.ts` paints the theme from `<head>`
+before first paint, the calendar's season with its light or dark else the
+visitor's (its windows worked out ahead for 2026–2036; a test holds it to the
+store's painting day by day).
 
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
@@ -226,7 +235,7 @@ Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car, person or boat),
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
-`dock.tsx` (five taps bloom out the seasons), `side-quests-grid.tsx` (move an
+`dock.tsx` (hold the theme toggle), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
 hover, coarse pointer) hunts without the chat egg, since it has no keyboard
 (`huntedEggs`).

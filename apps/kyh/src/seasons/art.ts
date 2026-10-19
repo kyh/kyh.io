@@ -1,6 +1,6 @@
 // A season's piece as data: layers of paths in a 24×24 box, filled with
 // colors or the piece's own gradients. `piece.tsx` draws it, wherever it
-// shows: the easter-egg bursts, the seasons menu, the snow falling. Pure.
+// shows: the easter-egg bursts, the themes menu, the snow falling. Pure.
 
 /** A gradient stop: where along it, the color, and how opaque. */
 export type Stop = readonly [offset: number, color: string, opacity?: number];

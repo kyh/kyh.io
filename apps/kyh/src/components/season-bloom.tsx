@@ -5,42 +5,44 @@ import { useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
+import { ThemeIcon } from "@/components/theme-toggle";
 import { point } from "@/seasons/art";
-import { PieceIcon } from "@/seasons/piece";
-import type { SeasonId } from "@/seasons/seasons";
-import { seasonOf, SEASONS } from "@/seasons/seasons";
-import { chooseSeason, useSeason } from "@/seasons/store";
+import { DEFAULT_SEASON, seasonOf, SEASONS } from "@/seasons/seasons";
+import type { ThemeId } from "@/seasons/store";
+import { chooseTheme, themeIdOf, useTheme } from "@/seasons/store";
 
-// The seasons, blooming out of the theme toggle as a radial menu: the toggle
-// stays where it is as the hub (showing the season picked), and a wedge per
-// season fans out round it over the top, one after another, each with its
-// piece, the name of the one under the pointer above them. Base UI's Menu
-// does the focus, the keys (arrows, typing a name) and the dismissing;
-// picking a season keeps the menu open, so the page can be tried in each.
+// The themes, blooming over the theme toggle (held down) as a radial menu: a
+// solid disc that springs from the button, a wedge per theme unfolding round
+// it one after another, and a hub wearing the one under the pointer (or in
+// use), its name over the top. Base UI's Menu does the focus, the keys
+// (arrows, typing a name) and the dismissing; picking a theme keeps the menu
+// open, so the page can be tried in each.
 
-/** The wedges' inner and outer radius, and how far out each piece sits (px), round the toggle's middle. */
-const INNER = 42;
-const OUTER = 120;
-const ORBIT = (INNER + OUTER) / 2 + 1;
-const SIZE = OUTER * 2;
-const CENTER = OUTER;
-/** How much of the turn the wedges fan over, centered on straight up, and each one's share less a hairline (degrees). */
-const ARC = 220;
-const SPAN = ARC / SEASONS.length;
-const GAP = 1;
-const PIECE = 26;
+/** The themes round the ring, clockwise from the top: plain light and dark, then each season. */
+const RING: readonly { id: ThemeId; name: string }[] = [
+  { id: "light", name: "Light" },
+  { id: "dark", name: "Dark" },
+  ...SEASONS.filter(({ id }) => id !== DEFAULT_SEASON).map(({ id, name }) => ({ id, name })),
+];
+
+/** The disc's size, the hub's radius, and how far out each theme's icon sits (px). */
+const SIZE = 196;
+const CENTER = SIZE / 2;
+const HUB = 38;
+const ORBIT = (HUB + CENTER) / 2;
+const PIECE = 24;
+const SPAN = 360 / RING.length;
 
 const radians = (degrees: number) => (degrees * Math.PI) / 180;
 const on = (radius: number, angle: number) =>
   point(CENTER + radius * Math.cos(angle), CENTER + radius * Math.sin(angle));
 
-/** Each season's wedge, left to right over the top: its outline and where its piece sits. */
-const WEDGES = SEASONS.map((_, index) => {
-  const start = -90 - ARC / 2 + index * SPAN;
-  const middle = radians(start + SPAN / 2);
-  const from = radians(start + GAP);
-  const to = radians(start + SPAN - GAP);
-  const d = `M${on(OUTER, from)}A${OUTER} ${OUTER} 0 0 1 ${on(OUTER, to)}L${on(INNER, to)}A${INNER} ${INNER} 0 0 0 ${on(INNER, from)}Z`;
+/** Each theme's wedge, edge to edge round the hub: its outline and where its icon sits. */
+const WEDGES = RING.map((_, index) => {
+  const start = radians(-90 - SPAN / 2 + index * SPAN);
+  const end = start + radians(SPAN);
+  const middle = start + radians(SPAN / 2);
+  const d = `M${on(CENTER, start)}A${CENTER} ${CENTER} 0 0 1 ${on(CENTER, end)}L${on(HUB, end)}A${HUB} ${HUB} 0 0 0 ${on(HUB, start)}Z`;
   return {
     clip: `path("${d}")`,
     d,
@@ -49,21 +51,39 @@ const WEDGES = SEASONS.map((_, index) => {
   };
 });
 
-const UNFOLD = { damping: 24, stiffness: 380, type: "spring" } as const;
+const POP = { damping: 26, stiffness: 380, type: "spring" } as const;
+
+/** The least room the disc keeps from the screen's edges (px). */
+const EDGE = 12;
+
+/**
+ * How far above the toggle's middle the disc's must sit to stay on screen:
+ * centered on it where there's room, nudged up off the bottom where not.
+ */
+const liftOver = (toggle: HTMLElement | null) => {
+  if (!toggle) {
+    return 0;
+  }
+  const { bottom, top } = toggle.getBoundingClientRect();
+  return Math.max(0, (top + bottom) / 2 + CENTER + EDGE - window.innerHeight);
+};
+
+const nameOf = (id: ThemeId) =>
+  RING.find((theme) => theme.id === id)?.name ?? seasonOf(DEFAULT_SEASON).name;
 
 interface SeasonBloomProps {
-  /** The theme toggle it blooms round and returns focus to. */
+  /** The theme toggle it blooms over and returns focus to. */
   anchor: RefObject<HTMLElement | null>;
   open: boolean;
   onOpenChange: (open: boolean, event: Event | undefined) => void;
 }
 
 export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) => {
-  const season = useSeason();
+  const current = themeIdOf(useTheme());
   const still = useReducedMotion() ?? false;
-  /** The season under the pointer or keyboard, named over the wedges. */
-  const [lit, setLit] = useState<SeasonId | null>(null);
-  const { name } = seasonOf(lit ?? season);
+  /** The theme under the pointer or keyboard, shown in the hub. */
+  const [lit, setLit] = useState<ThemeId | null>(null);
+  const shown = lit ?? current;
   return (
     <Menu.Root
       open={open}
@@ -73,16 +93,16 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
       <AnimatePresence>
         {open && (
           <Menu.Portal keepMounted>
-            {/* Centered on the toggle, whatever the dock has made of its size. */}
             <Menu.Positioner
               anchor={anchor}
               positionMethod="fixed"
               side="top"
               sideOffset={({ anchor: toggle, positioner }) =>
-                -(toggle.height + positioner.height) / 2
+                liftOver(anchor.current) - (toggle.height + positioner.height) / 2
               }
-              collisionAvoidance={{ align: "none", fallbackAxisSide: "none", side: "none" }}
-              className="pointer-events-none z-20 outline-none"
+              collisionPadding={EDGE}
+              collisionAvoidance={{ align: "shift", fallbackAxisSide: "none", side: "none" }}
+              className="z-20 outline-none"
             >
               <Menu.Popup
                 aria-label="Theme"
@@ -91,34 +111,35 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                 style={{ height: SIZE, width: SIZE }}
                 render={
                   <motion.div
-                    initial={{ opacity: 1 }}
+                    initial={still ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     exit={still ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
-                    transition={{ duration: 0.18 }}
+                    transition={still ? { duration: 0.15 } : POP}
                   />
                 }
               >
-                <Menu.RadioGroup value={season} onValueChange={(id: SeasonId) => chooseSeason(id)}>
-                  {SEASONS.map((each, index) => {
+                <Menu.RadioGroup value={current} onValueChange={(id: ThemeId) => chooseTheme(id)}>
+                  {RING.map(({ id, name }, index) => {
                     const wedge = WEDGES[index];
                     return (
                       wedge && (
                         <Menu.RadioItem
-                          key={each.id}
-                          value={each.id}
-                          label={each.name}
-                          aria-label={each.name}
+                          key={id}
+                          value={id}
+                          label={name}
+                          aria-label={name}
                           className="season-bloom-wedge"
                           style={{ clipPath: wedge.clip }}
-                          onFocus={() => setLit(each.id)}
+                          onFocus={() => setLit(id)}
                           onBlur={() => setLit(null)}
                           render={
                             <motion.div
                               initial={
-                                still ? { opacity: 0 } : { opacity: 0, rotate: -24, scale: 0.45 }
+                                still ? { opacity: 0 } : { opacity: 0, rotate: -20, scale: 0.6 }
                               }
                               animate={{ opacity: 1, rotate: 0, scale: 1 }}
                               transition={
-                                still ? { duration: 0.15 } : { ...UNFOLD, delay: index * 0.03 }
+                                still ? { duration: 0.15 } : { ...POP, delay: index * 0.025 }
                               }
                             />
                           }
@@ -135,23 +156,45 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                             className="season-bloom-piece"
                             style={{ left: wedge.left, top: wedge.top }}
                           >
-                            <PieceIcon art={each.art} className="size-full" />
+                            <ThemeIcon id={id} className="block size-full" />
                           </span>
                         </Menu.RadioItem>
                       )
                     );
                   })}
                 </Menu.RadioGroup>
+                {/* The hub, the toggle's stand-in: wearing the theme, and closing the menu when pressed. */}
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label="Close themes"
+                  className="season-bloom-hub"
+                  style={{ inset: CENTER - HUB }}
+                  onClick={(event) => onOpenChange(false, event.nativeEvent)}
+                >
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={shown}
+                      className="block size-8"
+                      initial={{ opacity: 0, scale: still ? 1 : 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <ThemeIcon id={shown} className="block size-full" />
+                    </motion.span>
+                  </AnimatePresence>
+                </button>
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
-                    key={name}
+                    key={shown}
                     className="season-bloom-name"
                     initial={{ opacity: 0, y: still ? 0 : 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: still ? 0 : -4 }}
                     transition={{ duration: 0.15 }}
                   >
-                    {name}
+                    {nameOf(shown)}
                   </motion.span>
                 </AnimatePresence>
               </Menu.Popup>

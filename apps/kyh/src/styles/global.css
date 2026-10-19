@@ -345,13 +345,14 @@ button.link {
   }
 }
 
-/* The seasons blooming round the theme toggle (components/season-bloom.tsx):
-   a box centered on the toggle that takes no pointer itself, so the toggle
-   shows and presses through its middle; a wedge per season clipped to its
-   slice of the arc (the slice is what takes the pointer); the name of the one
-   under the pointer over the top. */
+/* The themes blooming over the theme toggle (components/season-bloom.tsx): a
+   solid disc springing from the button (Base UI's --transform-origin), a
+   wedge per theme clipped to its slice (so the slice is what takes the
+   pointer), edge to edge round a hub that wears the theme, and the name of
+   the one under the pointer over the top. */
 .season-bloom {
   position: relative;
+  transform-origin: var(--transform-origin);
   outline: none;
   filter: drop-shadow(0 10px 18px var(--colors-shadowDark));
 }
@@ -362,7 +363,6 @@ button.link {
   inset: 0;
   outline: none;
   cursor: pointer;
-  pointer-events: auto;
 
   &[data-checked] {
     --wedge: color-mix(in srgb, var(--panel), var(--body-color) 12%);
@@ -389,8 +389,20 @@ button.link {
 
 .season-bloom-piece {
   position: absolute;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
+  color: var(--body-color);
+}
+
+.season-bloom-hub {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background-color: var(--panel);
+  color: var(--body-color);
+  cursor: pointer;
 }
 
 .season-bloom-name {
