@@ -1,6 +1,6 @@
 "use client";
 
-import { chineseGlyph } from "@/lib/chinese";
+import { zhuyinGlyph } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
   children: React.ReactNode;
@@ -50,15 +50,15 @@ const glyphFor = (text: string, index: number, slot: number) => {
   return GLYPHS[hash % GLYPHS.length] ?? "";
 };
 
-// A heading with a Chinese translation holds each letter on its character, so
-// the wave reads the translation; any other scrambles through glyphs.
+// A heading with a translation holds each letter on its zhuyin symbol, so
+// the wave spells the Chinese aloud; any other scrambles through glyphs.
 const generateChars = (text: string) =>
   [...text].map((_, index) => {
-    const chinese = chineseGlyph(text, index);
+    const zhuyin = zhuyinGlyph(text, index);
     return {
-      char1: chinese ?? glyphFor(text, index, 1),
-      char2: chinese ?? glyphFor(text, index, 2),
-      char3: chinese ?? glyphFor(text, index, 3),
+      char1: zhuyin ?? glyphFor(text, index, 1),
+      char2: zhuyin ?? glyphFor(text, index, 2),
+      char3: zhuyin ?? glyphFor(text, index, 3),
     };
   });
 
@@ -89,7 +89,7 @@ export const ScrambleText = ({
     }
 
     // Update CSS vars with new random chars; a translation replays as it is
-    if (chineseGlyph(text, 0) === undefined) {
+    if (zhuyinGlyph(text, 0) === undefined) {
       for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
         el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
         el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
@@ -107,7 +107,7 @@ export const ScrambleText = ({
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
       <span
-        data-scramble={chineseGlyph(text, 0) === undefined ? "" : "chinese"}
+        data-scramble={zhuyinGlyph(text, 0) === undefined ? "" : "zhuyin"}
         className={trigger === "hover" ? "" : "scramble"}
         aria-hidden
       >

@@ -535,10 +535,10 @@ button.link {
   animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
 }
 
-/* A translated heading flashes Chinese characters, shrunk to a letter's width
+/* A translated heading flashes its zhuyin, shrunk to a letter's width
    so neighbours don't run into each other. */
-[data-scramble="chinese"].scramble > span::after {
-  animation-name: flash-chinese;
+[data-scramble="zhuyin"].scramble > span::after {
+  animation-name: flash-zhuyin;
 }
 
 /* Animate section */
@@ -796,25 +796,25 @@ body[data-city] {
   }
 }
 
-@keyframes flash-chinese {
+@keyframes flash-zhuyin {
   0%,
   20% {
     content: "_";
   }
   40% {
     content: var(--char-1);
-    font-size: 0.6em;
-    line-height: 1.8;
+    font-size: 0.75em;
+    line-height: 1.45;
   }
   60% {
     content: var(--char-2);
-    font-size: 0.6em;
-    line-height: 1.8;
+    font-size: 0.75em;
+    line-height: 1.45;
   }
   80% {
     content: var(--char-3);
-    font-size: 0.6em;
-    line-height: 1.8;
+    font-size: 0.75em;
+    line-height: 1.45;
   }
 }
 
