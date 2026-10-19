@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { ThemeIcon } from "@/components/theme-icon";
 import { point } from "@/seasons/art";
-import type { SeasonId } from "@/seasons/seasons";
+import type { Mode, SeasonId } from "@/seasons/seasons";
 import { SEASONS } from "@/seasons/seasons";
 import { chooseTheme, useTheme } from "@/seasons/store";
 
@@ -70,6 +70,8 @@ const liftOver = (toggle: HTMLElement | null) => {
 
 interface WedgesProps {
   season: SeasonId;
+  /** The visitor's own light or dark, which plain light or dark goes back to. */
+  own: Mode;
   still: boolean;
   /** Whether the keyboard is what's moving through the themes, so its focus is the visitor's doing. */
   keyed: RefObject<boolean>;
@@ -78,7 +80,7 @@ interface WedgesProps {
 }
 
 /** The ring of themes; kept apart from the hub, so lighting one doesn't redraw them all. */
-const WedgeRing = ({ season, still, keyed, light }: WedgesProps) => (
+const WedgeRing = ({ season, own, still, keyed, light }: WedgesProps) => (
   <Menu.RadioGroup value={season} onValueChange={(id: SeasonId) => chooseTheme(id)}>
     {RING.map(({ clip, d, id, index, left, name, top }) => (
       <Menu.RadioItem
@@ -117,8 +119,8 @@ const WedgeRing = ({ season, still, keyed, light }: WedgesProps) => (
           <path d={d} />
         </svg>
         <span className="season-bloom-piece" style={{ left, top }}>
-          {/* Plain light or dark shows the light. */}
-          <ThemeIcon theme={{ mode: "light", season: id }} look="piece" />
+          {/* Plain light or dark shows the sun or moon it goes back to. */}
+          <ThemeIcon theme={{ mode: own, season: id }} look="piece" />
         </span>
       </Menu.RadioItem>
     ))}
@@ -134,7 +136,7 @@ interface SeasonBloomProps {
 }
 
 export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) => {
-  const { mode, season } = useTheme();
+  const { own, season } = useTheme();
   const still = useReducedMotion() ?? false;
   /** The theme under the pointer or keyboard, shown in the hub. */
   const [lit, setLit] = useState<SeasonId | null>(null);
@@ -190,7 +192,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                   />
                 }
               >
-                <Wedges season={season} still={still} keyed={keyed} light={light} />
+                <Wedges season={season} own={own} still={still} keyed={keyed} light={light} />
                 {/* The hub, the toggle's stand-in: wearing the theme, and closing the menu when pressed. */}
                 <button
                   type="button"
@@ -209,7 +211,8 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                       exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <ThemeIcon theme={{ mode, season: shown }} look="glyph" />
+                      {/* Plain light or dark as the visitor has it, which it is or goes back to. */}
+                      <ThemeIcon theme={{ mode: own, season: shown }} look="glyph" />
                     </motion.span>
                   </AnimatePresence>
                 </button>

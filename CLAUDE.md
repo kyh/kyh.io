@@ -121,12 +121,12 @@ dock's theme toggle wears the theme's icon: a tap flips light and dark, or
 takes a season back to the visitor's own; held down (or ArrowUp), it blooms
 the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
 a solid disc that springs from the button (nudged up off the bottom), a wedge
-per season (plain light or dark is one, showing the sun: it goes back to the
-visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
+per season (plain light or dark is one, wearing the sun or moon it goes back
+to: the visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
 after another round a hub that wears the one under the pointer (names go to
 assistive tech and typeahead only, not on screen). The disc covers the
-toggle, so the toggle can't be pressed while it's open. The dock stops
-magnifying while it's open. It's Base UI's Menu
+toggle, so the toggle can't be pressed while it's open. The dock settles back
+to rest as it opens and stops magnifying while it's open. It's Base UI's Menu
 (radio items, focus, arrow keys and typing a name, dismissal; the hub closes
 it); picking a theme closes it. A hold's release is no tap: the dock keeps
 whether the press was a hold until the next one, and a finger's lift sends no

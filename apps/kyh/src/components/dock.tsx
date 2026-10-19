@@ -212,6 +212,8 @@ export const Dock = () => {
   const held = useRef(false);
   const bloom = () => {
     setHovered(null);
+    // The dock settles back to rest under the themes, the toggle at its own size.
+    mouseX.set(Infinity);
     setBlooming(true);
     discoverEgg("bloom");
   };
