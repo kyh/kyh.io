@@ -1,17 +1,15 @@
-import { useId } from "react";
 import { motion } from "motion/react";
 
+import { iconAttrs } from "@/components/icons";
+import { useSvgId } from "@/lib/svg-id";
 import { PieceIcon } from "@/seasons/piece";
 import { seasonOf } from "@/seasons/seasons";
-import type { ThemeId } from "@/seasons/store";
+import type { Theme } from "@/seasons/store";
 
-interface ThemeToggleIconProps {
-  isLight: boolean;
-}
-
-export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
+/** The sun or the moon, morphing into each other. */
+const SunMoon = ({ isLight }: { isLight: boolean }) => {
   // One mask per icon: the themes menu draws a sun and a moon beside the toggle's own.
-  const mask = `moon-mask-${useId().replaceAll(/[^\w-]/gu, "")}`;
+  const mask = useSvgId("moon-mask");
   return (
     <svg
       viewBox="0 0 18 18"
@@ -94,35 +92,25 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
 };
 
 interface ThemeIconProps {
-  id: ThemeId;
+  theme: Pick<Theme, "mode" | "season">;
   /** A season as its line glyph, to sit with the dock's icons, or as its colored piece. */
   look: "glyph" | "piece";
-  className?: string;
 }
 
-/** A theme's icon: the sun or moon for plain light or dark, else its season's glyph or piece. */
-export const ThemeIcon = ({ id, look, className }: ThemeIconProps) => {
-  if (id === "light" || id === "dark") {
+/** A theme's icon, filling its box: its season's glyph or piece, or (the default season) the sun or moon. */
+export const ThemeIcon = ({ theme: { mode, season }, look }: ThemeIconProps) => {
+  const { art, glyph } = seasonOf(season);
+  if (glyph === null) {
     return (
-      <span className={className}>
-        <ThemeToggleIcon isLight={id === "light"} />
+      <span className="block size-full">
+        <SunMoon isLight={mode === "light"} />
       </span>
     );
   }
-  const { art, glyph } = seasonOf(id);
   return look === "piece" ? (
-    <PieceIcon art={art} className={className} />
+    <PieceIcon art={art} className="block size-full" />
   ) : (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
+    <svg {...iconAttrs} className="block size-full">
       <path d={glyph} />
     </svg>
   );

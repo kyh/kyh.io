@@ -2,7 +2,7 @@
 // confetti, and a handful of eggs (or the season's pieces, src/seasons) that
 // spray out and then fly home to the avatar. Pure, given a random source, so the shape of a burst is asserted.
 import type { ConfettiSide } from "@/seasons/seasons";
-import { seasonOf } from "@/seasons/seasons";
+import { DEFAULT_SEASON, seasonOf } from "@/seasons/seasons";
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
@@ -51,7 +51,7 @@ const between = (random: () => number, low: number, high: number) => low + rando
  */
 export const throwConfetti = (
   random: () => number = Math.random,
-  sides: readonly ConfettiSide[] = seasonOf("classic").confetti,
+  sides: readonly ConfettiSide[] = seasonOf(DEFAULT_SEASON).confetti,
 ): Confetto[] => {
   const side = (): ConfettiSide =>
     sides[Math.floor(random() * sides.length)] ?? { back: "white", front: "white" };

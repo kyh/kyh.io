@@ -17,12 +17,11 @@ export const dayOf = (year: number, month: number, day: number, offset = 0) =>
 export const dateOf = (key: number) =>
   new Date(Math.floor(key / 10_000), (Math.floor(key / 100) % 100) - 1, key % 100);
 
-/** From one date to another in the same year, or past New Year when `to` comes first. */
-export const span = (year: number, from: [number, number], to: [number, number]): Window => {
-  const start = dayOf(year, ...from);
-  const end = dayOf(year, ...to);
-  return [start, end < start ? dayOf(year + 1, ...to) : end];
-};
+/** From one date (month, day) to a later one in the same year. */
+export const span = (year: number, from: [number, number], to: [number, number]): Window => [
+  dayOf(year, ...from),
+  dayOf(year, ...to),
+];
 
 /** Some days either side of one date. */
 export const around = (center: number, before: number, after: number): Window => {

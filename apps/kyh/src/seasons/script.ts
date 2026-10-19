@@ -11,13 +11,12 @@ const FIRST_YEAR = 2026;
 const LAST_YEAR = 2036;
 
 /**
- * Every season's windows touching some years, flat as [from, to, season index,
- * …], first season first so the first match runs. The year before is in too,
- * for a window that runs on past its December 31st.
+ * Every season's windows in some years, flat as [from, to, season index, …],
+ * first season first so the first match runs.
  */
-export const windowsBetween = (first: number, last: number) =>
+const windowsBetween = (first: number, last: number) =>
   SEASONS.flatMap((season, index) =>
-    Array.from({ length: last - first + 2 }, (_, offset) => windowIn(season, first - 1 + offset))
+    Array.from({ length: last - first + 1 }, (_, offset) => windowIn(season, first + offset))
       .filter((days) => days !== null)
       .flatMap(([from, to]) => [from, to, index]),
   );

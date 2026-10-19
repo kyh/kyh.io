@@ -1,14 +1,14 @@
 "use client";
 
 import type { RefObject } from "react";
-import { useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import { ThemeIcon } from "@/components/theme-toggle";
+import { ThemeIcon } from "@/components/theme-icon";
 import { point } from "@/seasons/art";
 import type { SeasonId } from "@/seasons/seasons";
-import { DEFAULT_SEASON, SEASONS } from "@/seasons/seasons";
+import { SEASONS } from "@/seasons/seasons";
 import { chooseTheme, useTheme } from "@/seasons/store";
 
 // The themes, blooming over the theme toggle (held down) as a radial menu: a
@@ -18,30 +18,24 @@ import { chooseTheme, useTheme } from "@/seasons/store";
 // Base UI's Menu does the focus, the keys (arrows, typing a name) and the
 // dismissing; picking a theme closes it.
 
-/**
- * The themes round the ring, clockwise from the top: plain light or dark (the
- * default season, the visitor's own, which the toggle's tap flips), then each
- * season.
- */
-const RING = SEASONS.map(({ id, name }) => ({
-  id,
-  name: id === DEFAULT_SEASON ? "Light / Dark" : name,
-}));
-
 /** The disc's size, the hub's radius, and how far out each theme's icon sits (px). */
 const SIZE = 196;
 const CENTER = SIZE / 2;
 const HUB = 38;
 const ORBIT = (HUB + CENTER) / 2;
 const PIECE = 24;
-const SPAN = 360 / RING.length;
+const SPAN = 360 / SEASONS.length;
 
 const radians = (degrees: number) => (degrees * Math.PI) / 180;
 const on = (radius: number, angle: number) =>
   point(CENTER + radius * Math.cos(angle), CENTER + radius * Math.sin(angle));
 
-/** Each theme's wedge, edge to edge round the hub: its outline and where its icon sits. */
-const WEDGES = RING.map((_, index) => {
+/**
+ * The themes round the ring, clockwise from the top (plain light or dark, then
+ * each season), each a wedge edge to edge round the hub: its outline and where
+ * its icon sits.
+ */
+const RING = SEASONS.map(({ id, name }, index) => {
   const start = radians(-90 - SPAN / 2 + index * SPAN);
   const end = start + radians(SPAN);
   const middle = start + radians(SPAN / 2);
@@ -49,7 +43,10 @@ const WEDGES = RING.map((_, index) => {
   return {
     clip: `path("${d}")`,
     d,
+    id,
+    index,
     left: CENTER + ORBIT * Math.cos(middle) - PIECE / 2,
+    name,
     top: CENTER + ORBIT * Math.sin(middle) - PIECE / 2,
   };
 });
@@ -71,11 +68,69 @@ const liftOver = (toggle: HTMLElement | null) => {
   return Math.max(0, (top + bottom) / 2 + CENTER + EDGE - window.innerHeight);
 };
 
+interface WedgesProps {
+  season: SeasonId;
+  still: boolean;
+  /** Whether the keyboard is what's moving through the themes, so its focus is the visitor's doing. */
+  keyed: RefObject<boolean>;
+  /** Lights a theme in the hub as it comes under the pointer or focus, or puts it out as it leaves. */
+  light: (id: SeasonId, under: boolean) => void;
+}
+
+/** The ring of themes; kept apart from the hub, so lighting one doesn't redraw them all. */
+const WedgeRing = ({ season, still, keyed, light }: WedgesProps) => (
+  <Menu.RadioGroup value={season} onValueChange={(id: SeasonId) => chooseTheme(id)}>
+    {RING.map(({ clip, d, id, index, left, name, top }) => (
+      <Menu.RadioItem
+        key={id}
+        value={id}
+        label={name}
+        aria-label={name}
+        closeOnClick
+        className="season-bloom-wedge"
+        style={{ clipPath: clip }}
+        // Shown in the hub: the theme a mouse moves onto, or the keyboard's. Not
+        // one that merely opened under a still pointer, or that Base UI focuses
+        // on opening: neither is the visitor's doing.
+        onPointerMove={(event) => {
+          if (event.pointerType === "mouse") {
+            light(id, true);
+          }
+        }}
+        onPointerLeave={() => light(id, false)}
+        onFocus={() => {
+          if (keyed.current) {
+            light(id, true);
+          }
+        }}
+        onBlur={() => light(id, false)}
+        render={
+          <motion.div
+            initial={still ? { opacity: 0 } : { opacity: 0, rotate: -20, scale: 0.6 }}
+            animate={{ opacity: 1, rotate: 0, scale: 1 }}
+            transition={still ? { duration: 0.15 } : { ...POP, delay: index * 0.025 }}
+          />
+        }
+      >
+        {/* Its face and edge: the clip leaves the inner half of the stroke, a hairline. */}
+        <svg className="season-bloom-face" viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
+          <path d={d} />
+        </svg>
+        <span className="season-bloom-piece" style={{ left, top }}>
+          {/* Plain light or dark shows the light. */}
+          <ThemeIcon theme={{ mode: "light", season: id }} look="piece" />
+        </span>
+      </Menu.RadioItem>
+    ))}
+  </Menu.RadioGroup>
+);
+const Wedges = memo(WedgeRing);
+
 interface SeasonBloomProps {
-  /** The theme toggle it blooms over and returns focus to. */
+  /** The theme toggle it blooms over (covering it, so it can't be pressed while open) and returns focus to. */
   anchor: RefObject<HTMLElement | null>;
   open: boolean;
-  onOpenChange: (open: boolean, event: Event | undefined) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) => {
@@ -83,8 +138,14 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
   const still = useReducedMotion() ?? false;
   /** The theme under the pointer or keyboard, shown in the hub. */
   const [lit, setLit] = useState<SeasonId | null>(null);
+  const light = useCallback((id: SeasonId, under: boolean) => {
+    if (under) {
+      setLit(id);
+    } else {
+      setLit((was) => (was === id ? null : was));
+    }
+  }, []);
   const shown = lit ?? season;
-  /** Whether the keyboard is what's moving through the themes, so its focus is the visitor's doing. */
   const keyed = useRef(false);
   return (
     <Menu.Root
@@ -93,7 +154,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
       // Hover is CSS's, for a real pointer: highlighting on mouse events would light the
       // wedge the browser's after-touch mouse events land on when the finger lifts.
       highlightItemOnHover={false}
-      onOpenChange={(next, { event }) => onOpenChange(next, event)}
+      onOpenChange={onOpenChange}
     >
       <AnimatePresence>
         {open && (
@@ -129,70 +190,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                   />
                 }
               >
-                <Menu.RadioGroup value={season} onValueChange={(id: SeasonId) => chooseTheme(id)}>
-                  {RING.map(({ id, name }, index) => {
-                    const wedge = WEDGES[index];
-                    return (
-                      wedge && (
-                        <Menu.RadioItem
-                          key={id}
-                          value={id}
-                          label={name}
-                          aria-label={name}
-                          closeOnClick
-                          className="season-bloom-wedge"
-                          style={{ clipPath: wedge.clip }}
-                          // Shown in the hub: the theme a mouse moves onto, or the keyboard's.
-                          // Not one that merely opened under a still pointer, or that Base UI
-                          // focuses on opening: neither is the visitor's doing.
-                          onPointerMove={(event) => {
-                            if (event.pointerType === "mouse") {
-                              setLit(id);
-                            }
-                          }}
-                          onPointerLeave={() => setLit((was) => (was === id ? null : was))}
-                          onFocus={() => {
-                            if (keyed.current) {
-                              setLit(id);
-                            }
-                          }}
-                          onBlur={() => setLit((was) => (was === id ? null : was))}
-                          render={
-                            <motion.div
-                              initial={
-                                still ? { opacity: 0 } : { opacity: 0, rotate: -20, scale: 0.6 }
-                              }
-                              animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                              transition={
-                                still ? { duration: 0.15 } : { ...POP, delay: index * 0.025 }
-                              }
-                            />
-                          }
-                        >
-                          {/* Its face and edge: the clip leaves the inner half of the stroke, a hairline. */}
-                          <svg
-                            className="season-bloom-face"
-                            viewBox={`0 0 ${SIZE} ${SIZE}`}
-                            aria-hidden="true"
-                          >
-                            <path d={wedge.d} />
-                          </svg>
-                          <span
-                            className="season-bloom-piece"
-                            style={{ left: wedge.left, top: wedge.top }}
-                          >
-                            {/* Plain light or dark shows the light. */}
-                            <ThemeIcon
-                              id={id === DEFAULT_SEASON ? "light" : id}
-                              look="piece"
-                              className="block size-full"
-                            />
-                          </span>
-                        </Menu.RadioItem>
-                      )
-                    );
-                  })}
-                </Menu.RadioGroup>
+                <Wedges season={season} still={still} keyed={keyed} light={light} />
                 {/* The hub, the toggle's stand-in: wearing the theme, and closing the menu when pressed. */}
                 <button
                   type="button"
@@ -200,7 +198,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                   aria-label="Close themes"
                   className="season-bloom-hub"
                   style={{ inset: CENTER - HUB }}
-                  onClick={(event) => onOpenChange(false, event.nativeEvent)}
+                  onClick={() => onOpenChange(false)}
                 >
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span
@@ -211,12 +209,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                       exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      {/* The toggle's stand-in: plain light or dark as it is now. */}
-                      <ThemeIcon
-                        id={shown === DEFAULT_SEASON ? mode : shown}
-                        look="glyph"
-                        className="block size-full"
-                      />
+                      <ThemeIcon theme={{ mode, season: shown }} look="glyph" />
                     </motion.span>
                   </AnimatePresence>
                 </button>

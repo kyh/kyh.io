@@ -2,9 +2,11 @@
 // whether it's light or dark, how it turns the site's greys, the piece an
 // easter-egg find throws (`art.ts`), its confetti, and what falls across every
 // page (snow, leaves) if anything. The calendar picks one for today, unless
-// the themes menu round the theme toggle has (`store.ts`).
-// Adding a theme is adding an entry here, and its decorations for the
-// showcase's town (city/season-decor.ts, keyed by season so none is missed).
+// the themes menu round the theme toggle has (`store.ts`). The default season
+// is plain light or dark, the visitor's own.
+// Adding a theme is adding an entry here, and its look and decorations for
+// the showcase's town (`SEASON_LOOKS` in city/palette.ts, `DECOR` in
+// city/season-decor.ts, each keyed by season so none is missed).
 // Pure.
 import { colorNamed, GOLD } from "@/lib/color";
 import type { Art } from "./art";
@@ -32,7 +34,7 @@ export interface ConfettiSide {
 
 export interface Season {
   id: string;
-  /** In the themes menu. */
+  /** In the themes menu (to assistive tech and typing). */
   name: string;
   /** The days it runs in a year; the default season has none, and runs when no other does. */
   days?: (year: number) => Window | null;
@@ -42,8 +44,8 @@ export interface Season {
   tint: GreyTint | null;
   /** What an easter-egg find throws, and what falls across the page if the season has `drift`. */
   art: Art;
-  /** Its icon as a line drawing in the 24×24 box, stroked as the dock's other icons are. */
-  glyph: string;
+  /** Its icon as a line drawing in the 24×24 box, stroked as the dock's other icons are; null (the default season) wears the sun or moon. */
+  glyph: string | null;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
 }
@@ -260,6 +262,10 @@ const LANTERN = {
   ],
 } satisfies Art;
 
+/** The maple leaf's outline, for its piece and its glyph alike. */
+const MAPLE_OUTLINE =
+  "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4Z";
+
 const MAPLE_LEAF = {
   gradients: {
     body: {
@@ -276,7 +282,7 @@ const MAPLE_LEAF = {
   layers: [
     { d: "M12 14v8", stroke: "#7a3b12", strokeWidth: 1.1 },
     {
-      d: "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4Z",
+      d: MAPLE_OUTLINE,
       gradient: "body",
       shadow: true,
       stroke: "#7a2a0a",
@@ -291,19 +297,26 @@ const MAPLE_LEAF = {
   ],
 } satisfies Art;
 
-// Six arms, each with a pair of branches near the tip and a pair near the middle.
-const SNOWFLAKE_PATH = Array.from({ length: 6 }, (_, arm) => {
-  const angle = ((arm * 60 - 90) * Math.PI) / 180;
-  const along = (reach: number) =>
-    [12 + reach * Math.cos(angle), 12 + reach * Math.sin(angle)] as const;
-  const branch = (reach: number, length: number) => {
-    const [x, y] = along(reach);
-    const tip = (side: number) =>
-      point(x + length * Math.cos(angle + side * 0.75), y + length * Math.sin(angle + side * 0.75));
-    return `M${tip(-1)}L${point(x, y)}L${tip(1)}`;
-  };
-  return `M12 12L${point(...along(9.5))}${branch(6.4, 2.8)}${branch(3.6, 1.8)}`;
-}).join("");
+/** Six arms out from the middle, each with a pair of branches at every `[how far out, how long, how wide (radians)]`. */
+const snowflake = (
+  branches: readonly (readonly [reach: number, length: number, spread: number])[],
+) =>
+  Array.from({ length: 6 }, (_, arm) => {
+    const angle = ((arm * 60 - 90) * Math.PI) / 180;
+    const out = (x: number, y: number, reach: number, turn = 0) =>
+      [x + reach * Math.cos(angle + turn), y + reach * Math.sin(angle + turn)] as const;
+    const pairs = branches.map(([reach, length, spread]) => {
+      const [x, y] = out(12, 12, reach);
+      return `M${point(...out(x, y, length, -spread))}L${point(x, y)}L${point(...out(x, y, length, spread))}`;
+    });
+    return `M12 12L${point(...out(12, 12, 9.5))}${pairs.join("")}`;
+  }).join("");
+
+// A pair of branches near the tip and a pair near the middle.
+const SNOWFLAKE_PATH = snowflake([
+  [6.4, 2.8, 0.75],
+  [3.6, 1.8, 0.75],
+]);
 
 const SNOWFLAKE = {
   layers: [
@@ -330,19 +343,10 @@ const batHalf = (side: -1 | 1) => {
 };
 const BAT_GLYPH = batHalf(-1) + batHalf(1);
 
-const MAPLE_GLYPH =
-  "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4ZM12 16.6V22";
+const MAPLE_GLYPH = `${MAPLE_OUTLINE}M12 16.6V22`;
 
-/** Six arms, a pair of branches on each. */
-const SNOWFLAKE_GLYPH = Array.from({ length: 6 }, (_, arm) => {
-  const angle = ((arm * 60 - 90) * Math.PI) / 180;
-  const along = (reach: number) =>
-    [12 + reach * Math.cos(angle), 12 + reach * Math.sin(angle)] as const;
-  const [x, y] = along(6);
-  const tip = (side: number) =>
-    point(x + 2.6 * Math.cos(angle + side * 0.8), y + 2.6 * Math.sin(angle + side * 0.8));
-  return `M12 12L${point(...along(9.5))}M${tip(-1)}L${point(x, y)}L${tip(1)}`;
-}).join("");
+/** A pair of branches on each arm. */
+const SNOWFLAKE_GLYPH = snowflake([[6, 2.6, 0.8]]);
 
 /** In calendar order; where two overlap, the one listed first runs. */
 export const SEASONS = [
@@ -350,10 +354,10 @@ export const SEASONS = [
     art: GOLDEN_EGG,
     confetti: named("gold", "gold", "crimson", "blue", "green", "plum"),
     drift: null,
-    glyph: EGG,
+    glyph: null,
     id: "classic",
     mode: null,
-    name: "Classic",
+    name: "Light / Dark",
     tint: null,
   },
   {
@@ -478,15 +482,12 @@ export const seasonOf = (id: SeasonId): Season =>
 /** A season's days in a year, if it has any then. */
 export const windowIn = (season: Season, year: number) => season.days?.(year) ?? null;
 
-/** The season the calendar picks for a day: the first whose days it is, else the default. */
+/** The season the calendar picks for a day: the first whose days it is, else the default. No season's days run past December 31st. */
 export const seasonOn = (date: Date): SeasonId => {
   const key = dayKey(date);
-  const year = date.getFullYear();
-  // Last year's window too, for one that runs on past December 31st.
-  const runs = (season: Season) =>
-    [year - 1, year].some((each) => {
-      const days = windowIn(season, each);
-      return days !== null && key >= days[0] && key <= days[1];
-    });
+  const runs = (season: Season) => {
+    const days = windowIn(season, date.getFullYear());
+    return days !== null && key >= days[0] && key <= days[1];
+  };
   return SEASONS.find(runs)?.id ?? DEFAULT_SEASON;
 };

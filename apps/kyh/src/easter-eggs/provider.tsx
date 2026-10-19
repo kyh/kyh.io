@@ -20,11 +20,12 @@ import {
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 
 import { CURSOR_ARROW } from "@/components/cursor";
-import { PieceDefs, PieceLayers, usePieceId } from "@/seasons/piece";
+import { PieceDefs, PieceLayers } from "@/seasons/piece";
 import type { SeasonId } from "@/seasons/seasons";
 import { seasonOf } from "@/seasons/seasons";
 import { currentSeason } from "@/seasons/store";
 import { lastPointer } from "@/lib/pointer";
+import { useSvgId } from "@/lib/svg-id";
 import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
 import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
@@ -209,7 +210,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   const still = useReducedMotion() ?? false;
   const [bursts, setBursts] = useState<Burst[]>([]);
   const catcher = useRef<HTMLSpanElement | null>(null);
-  const pieceId = usePieceId();
+  const pieceId = useSvgId("piece");
 
   /** The avatar catches an egg. */
   const pop = useCallback(() => {

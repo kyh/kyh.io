@@ -336,8 +336,8 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
 };
 
 // Parsed colors by hex: a repaint sets every run of faces, and parsing the
-// same few dozen strings for each is most of its cost. The shelf starts over
-// once a long sweep has filled it.
+// same few dozen strings for each is most of its cost. Capped, though every
+// scheme's and every project's colors fit many times over.
 const parsed = new Map<string, Color>();
 const PARSED_KEPT = 4096;
 

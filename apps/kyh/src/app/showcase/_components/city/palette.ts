@@ -103,13 +103,18 @@ export const paint = (top: Token, left: Token = top, right: Token = left): Paint
 export const WALLS = paint("top", "wallLeft", "wallRight");
 
 /** Pastel roofs, each a lit and a shaded slope. */
-export const ROOFS = [
+export const PASTEL_ROOFS = [
   paint("roofPink", "roofPink", "roofPinkShade"),
   paint("roofBlue", "roofBlue", "roofBlueShade"),
   paint("roofGreen", "roofGreen", "roofGreenShade"),
   paint("roofYellow", "roofYellow", "roofYellowShade"),
   paint("roofTeal", "roofTeal", "roofTealShade"),
   paint("roofLilac", "roofLilac", "roofLilacShade"),
+] as const;
+
+/** The pastels and terracotta. */
+export const ROOFS = [
+  ...PASTEL_ROOFS,
   paint("roofTerracotta", "roofTerracotta", "roofTerracottaShade"),
 ] as const;
 
@@ -226,27 +231,9 @@ export interface SeasonLook {
 
 const SNOW = { day: "#fbfcfd", night: "#b4c0cc" };
 const SNOW_SHADE = { day: "#e2e9f0", night: "#97a4b1" };
-const PASTEL_ROOFS: readonly Token[] = [
-  "roofBlue",
-  "roofBlueShade",
-  "roofGreen",
-  "roofGreenShade",
-  "roofLilac",
-  "roofLilacShade",
-  "roofPink",
-  "roofPinkShade",
-  "roofTeal",
-  "roofTealShade",
-  "roofYellow",
-  "roofYellowShade",
-];
-const ROOF_TOKENS: readonly Token[] = [
-  ...PASTEL_ROOFS,
-  "roofGray",
-  "roofGrayShade",
-  "roofTerracotta",
-  "roofTerracottaShade",
-];
+/** A roof's two slopes' tokens, for each roof. */
+const slopesOf = (roofs: readonly Paint[]) => roofs.flatMap(({ right, top }) => [top, right]);
+const ROOF_TOKENS = slopesOf([...ROOFS, ROOF_GRAY]);
 
 /**
  * Everything a snowfall settles on: roofs, the flat tops, the grounds and the
@@ -278,7 +265,7 @@ export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
   christmas: snowfall(),
   classic: {},
   // Pastel roofs stay pastel while the rest of the town is grey.
-  easter: { vivid: new Set(PASTEL_ROOFS) },
+  easter: { vivid: new Set(slopesOf(PASTEL_ROOFS)) },
   // Every window lit pumpkin orange after dark.
   halloween: {
     repaint: {
@@ -317,32 +304,6 @@ export interface Scheme {
   season: SeasonId;
 }
 
-const schemes = new Map<string, Scheme>();
-
-/** The one scheme for a time and season. */
-export const schemeAt = (time: Theme, season: SeasonId): Scheme => {
-  const key = `${time}|${season}`;
-  let scheme = schemes.get(key);
-  if (!scheme) {
-    scheme = { season, time };
-    schemes.set(key, scheme);
-  }
-  return scheme;
-};
-
-/** `from` turned `amount` of the way to `to`, in OKLab as the site's color-mix is. */
-export const mixHex = (from: string, to: string, amount: number) => {
-  if (amount <= 0) {
-    return from;
-  }
-  if (amount >= 1) {
-    return to;
-  }
-  const [l1, a1, b1] = oklab(from);
-  const [l2, a2, b2] = oklab(to);
-  return fromOklab([l1 + (l2 - l1) * amount, a1 + (a2 - a1) * amount, b1 + (b2 - b1) * amount]);
-};
-
 /** Slate's hue and its chroma in its darks; the chroma fades toward white. */
 const SLATE_HUE = 257;
 const SLATE_CHROMA = 0.042;
@@ -371,28 +332,9 @@ export const greyIn = (hex: string, { season, time }: Scheme) => {
   return time === "day" ? greyOf(hex) : slateOf(hex, SLATE_HUE);
 };
 
-// A scheme's colors, worked out once per token: a repaint is a lookup per run
-// of faces, not two trips through OKLab.
-const greysIn = new WeakMap<Scheme, Map<Token, string>>();
-
-const remembered = (
-  memo: WeakMap<Scheme, Map<Token, string>>,
-  scheme: Scheme,
-  token: Token,
-  work: () => string,
-) => {
-  let colors = memo.get(scheme);
-  if (!colors) {
-    colors = new Map();
-    memo.set(scheme, colors);
-  }
-  let hex = colors.get(token);
-  if (hex === undefined) {
-    hex = work();
-    colors.set(token, hex);
-  }
-  return hex;
-};
+// Each scheme's greys, worked out once per token: a repaint is a lookup per
+// run of faces, not two trips through OKLab.
+const greys = new Map<string, string>();
 
 /** A token's color in the scheme: the season's repaint of it, else its own, by day or night. */
 export const colorIn = (token: Token, { season, time }: Scheme) =>
@@ -408,7 +350,13 @@ export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tin
     if (SEASON_LOOKS[scheme.season].vivid?.has(token)) {
       return colorIn(token, scheme);
     }
-    return remembered(greysIn, scheme, token, () => greyIn(colorIn(token, scheme), scheme));
+    const key = `${scheme.time}|${scheme.season}|${token}`;
+    let grey = greys.get(key);
+    if (grey === undefined) {
+      grey = greyIn(colorIn(token, scheme), scheme);
+      greys.set(key, grey);
+    }
+    return grey;
   }
   const hex = colorIn(token, scheme);
   return FOLIAGE.has(token) ? hex : tint(hex);

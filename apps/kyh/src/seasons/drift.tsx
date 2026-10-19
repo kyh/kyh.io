@@ -7,8 +7,9 @@
 // gets none.
 import { useReducedMotion } from "motion/react";
 
+import { useSvgId } from "@/lib/svg-id";
 import type { Drift } from "./seasons";
-import { PieceDefs, PieceLayers, usePieceId } from "./piece";
+import { PieceDefs, PieceLayers } from "./piece";
 import { seasonOf } from "./seasons";
 import { useSeason } from "./store";
 
@@ -55,7 +56,7 @@ const LAYOUTS: Record<Drift, Piece[]> = { leaves: layoutOf("leaves"), snow: layo
 export const SeasonDrift = () => {
   const { art, drift } = seasonOf(useSeason());
   const still = useReducedMotion();
-  const id = usePieceId();
+  const id = useSvgId("piece");
   if (drift === null || still) {
     return null;
   }

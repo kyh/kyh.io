@@ -106,7 +106,8 @@ dark). `src/seasons/store.ts` owns it (no next-themes): the calendar's season
 for today unless the menu picked another (gone on reload), else the
 visitor's own light or dark, kept in localStorage (`theme`) or their
 system's. It paints `data-theme` (what global.css and Tailwind's `dark:`
-read), `color-scheme` and the season's tint on `<html>` (`paint.ts`). The
+read), `color-scheme` and the season's tint on `<html>` (`paint.ts`), once
+it's first subscribed to and on every change. The
 dock's theme toggle wears the theme's icon: a tap flips light and dark, or
 takes a season back to the visitor's own; held down (or ArrowUp), it blooms
 the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
@@ -114,11 +115,16 @@ a solid disc that springs from the button (nudged up off the bottom), a wedge
 per season (plain light or dark is one, showing the sun: it goes back to the
 visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
 after another round a hub that wears the one under the pointer (names go to
-assistive tech and typeahead only, not on screen). The dock stops magnifying while it's open. It's Base UI's Menu
-(radio items, focus, arrow keys and typing a name, dismissal; the hub or the
-toggle closes it); picking a theme closes it. The toggle and the hub wear a
-season's `glyph` (a line icon drawn to the dock's 2px stroke); the wedges its
-colored piece.
+assistive tech and typeahead only, not on screen). The disc covers the
+toggle, so the toggle can't be pressed while it's open. The dock stops
+magnifying while it's open. It's Base UI's Menu
+(radio items, focus, arrow keys and typing a name, dismissal; the hub closes
+it); picking a theme closes it. A hold's release is no tap: the dock keeps
+whether the press was a hold until the next one, and a finger's lift sends no
+click (its `touchend` is cancelled). `ThemeIcon` (`theme-icon.tsx`) draws a
+theme: the toggle and the hub wear a season's `glyph` (a line icon drawn to the
+dock's 2px stroke, `iconAttrs`), the wedges its colored piece, and the default
+season (named "Light / Dark", no glyph) the sun or moon.
 
 Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
 (`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
@@ -138,18 +144,22 @@ pumpkins by the doors and graves in the gardens at Halloween, snowmen and
 decorated trees at Christmas, and so on, on four kinds of open spot (porches,
 gardens, the pond's shore, the square and the ball courts; `houseCells`,
 `parkOf` and `plazaOf` in `draw-blocks.ts` say where they are); they're a
-drawing of their own per view, in color over the grey town, swapped when the
-scheme's season changes without redrawing the town. And its `emote`: what the
+drawing of their own per view, in color over the grey town, drawn a few spots
+at a time (`decorSteps`), and redrawn without redrawing the town when the
+season changes: at once for the view on screen, and a few milliseconds a frame
+for the others kept (`draftAhead` in `engine.ts`). And its `emote`: what the
 town's people now and then send up (hearts at Valentine's), floated over their
 heads by `life.ts`.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
 (`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
-no tint and keeps the hex slate. `script.ts` paints the theme from `<head>`
-before first paint, the calendar's season with its light or dark else the
-visitor's (its windows worked out ahead for 2026–2036; a test holds it to the
-store's painting day by day).
+no tint and keeps the hex slate. `script.ts` (put in `<head>` by
+`season-script.tsx`) paints the theme before first paint, the calendar's season
+with its light or dark else the visitor's (its windows worked out ahead for
+2026–2036; a test holds it to the store's painting day by day). No season's
+days run past December 31st: the calendar looks only in the day's own year (a
+test holds every season to it).
 
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
@@ -185,7 +195,7 @@ corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night. A `Scheme` (`palette.ts`) is day or night and the season: each color is the season's repaint of its token or its own (`colorIn`), and the greys are plain by day, slate by night, turned to the season's hue when it has one (`greyIn`), worked out once per scheme. The showcase hears the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. A `Scheme` (`palette.ts`) is day or night and the season: each color is the season's repaint of its token or its own (`colorIn`), and the greys are plain by day, slate by night, turned to the season's hue when it has one (`greyIn`), worked out once per time, season and token. The showcase hears the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),

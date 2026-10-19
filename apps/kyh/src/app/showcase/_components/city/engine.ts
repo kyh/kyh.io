@@ -16,6 +16,7 @@ import {
 import type { Object3D } from "three";
 
 import type { CityProject, Placed } from "./draw-landmarks";
+import type { SeasonId } from "@/seasons/seasons";
 import type { Look, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
@@ -35,7 +36,7 @@ import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
-import { drawDecor } from "./season-decor";
+import { decorSteps as drawDecorSteps } from "./season-decor";
 import { ALL_BUILT, BUILT, createGrowth, raise } from "./grow";
 import type { StartAt } from "./grow";
 import { createHeights } from "./heights";
@@ -153,14 +154,12 @@ const townViewSteps = function* townViewSteps(
   scene: Scene,
   materials: ReturnType<typeof createMaterials>,
   town: Town,
-  view: Vec3,
-  covers: readonly Vec3[],
+  /** Its heading. */
+  at: number,
   /** When each part of it goes up; BUILT once the town's up. */
   startAt: StartAt,
   still: boolean,
   looks: ReadonlyMap<string, Look>,
-  /** The season's decorations, made once the view is drawn so they're the season's then. */
-  decorate: () => Built | null,
 ) {
   const city = raise(build(town.sketch, materials), startAt);
   yield;
@@ -178,31 +177,38 @@ const townViewSteps = function* townViewSteps(
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !still });
-  const sky = createSky(scene, materials, still, view, covers);
+  const sky = createSky(scene, materials, still, viewAt(at), coversAt(at));
   const builds = [city, ...buildings.values(), ...sky.builds];
   for (const built of [city, ...buildings.values()]) {
     scene.add(built.group);
   }
   let decor: Built | null = null;
+  let decorSeason: SeasonId | null = null;
   let visible = true;
-  const setDecor = (next: Built | null) => {
+  /** Dress it for a season: its decorations (or none). */
+  const setDecor = (next: Built | null, season: SeasonId | null) => {
     if (decor) {
       scene.remove(decor.group);
       decor.dispose();
     }
     decor = next;
+    decorSeason = season;
     if (decor) {
       decor.group.visible = visible;
       scene.add(decor.group);
     }
   };
-  setDecor(decorate());
   return {
     animations,
+    at,
     buildings,
     city,
+    /** The season its decorations are for; null before it's dressed. */
+    get decorSeason() {
+      return decorSeason;
+    },
     dispose: () => {
-      setDecor(null);
+      setDecor(null, null);
       for (const built of builds) {
         scene.remove(built.group);
         built.dispose();
@@ -210,7 +216,6 @@ const townViewSteps = function* townViewSteps(
     },
     /** The season's decorations, in color, as the town is painted. */
     paintDecor: (scheme: Scheme) => decor?.paint(scheme, true),
-    /** Swap the decorations for another season's (or none). */
     setDecor,
     show: (shown: boolean) => {
       visible = shown;
@@ -294,18 +299,28 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   // A view drawn once the town's up has nothing left to raise.
   const startNow = () => (intro.phase === "done" ? BUILT : schedule.startAt);
-  let { season } = options.scheme;
-  /** The season's decorations as a view sees them, painted and ready to show; none for a season without. */
-  const decorFor = (at: number) => {
+  /**
+   * The season's decorations as a view sees them, painted as the town is; none
+   * for a season without.
+   * @yields {void} every few spots, so it can be spread over frames.
+   */
+  const decorSteps = function* decorSteps(at: number, season: SeasonId): Steps<Built | null> {
     const sketch = createSketch(viewAt(at), coversAt(at));
-    drawDecor(sketch, plan, season);
+    yield* drawDecorSteps(sketch, plan, season);
     if (sketch.faces.size === 0 && sketch.lines.size === 0) {
       return null;
     }
     // Their own colors, ink and all: a rainbow is its bands.
-    const built = raise(build(sketch, materials, undefined, true), startNow());
-    built.paint(scheme, true);
-    return built;
+    return raise(build(sketch, materials, undefined, true), startNow());
+  };
+  /**
+   * Dresses a kept drawing for the season in play.
+   * @yields {void} every few spots, so it can be spread over frames.
+   */
+  const redressSteps = function* redressSteps(town: TownView): Steps<TownView> {
+    const { season } = scheme;
+    town.setDecor(yield* decorSteps(town.at, season), season);
+    return town;
   };
   /**
    * Sketches and builds the town for a heading, and keeps it hidden.
@@ -317,31 +332,27 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       scene,
       materials,
       town,
-      viewAt(at),
-      coversAt(at),
+      at,
       startNow(),
       options.reducedMotion,
       looks,
-      () => decorFor(at),
     );
+    // Hidden before it's dressed, which takes frames: unpainted, it'd show over the town.
     created.show(false);
+    yield* redressSteps(created);
     townViews.set(at, created);
     return created;
   };
   /** The view being drawn ahead, between frames. */
   let drafting: { at: number; steps: Steps<TownView> } | null = null;
   const townViewAt = (at: number, town?: Town) => {
-    const existing = townViews.get(at);
-    if (existing) {
-      return existing;
-    }
-    // Wanted now: whatever's left of it is drawn at once.
+    // Wanted now: whatever's left of drawing (or dressing) it is done at once.
     if (drafting?.at === at) {
       const { steps } = drafting;
       drafting = null;
       return finish(steps);
     }
-    return finish(townSteps(at, town));
+    return townViews.get(at) ?? finish(townSteps(at, town));
   };
   /** How many quarter turns the camera has made round the town, and where it is mid-turn. */
   let heading = 0;
@@ -522,6 +533,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       return;
     }
     paintedFor.set(town, paintKey());
+    // Dressed for another season (one picked since it was drawn): redressed now it's to be seen.
+    if (town.decorSeason !== scheme.season) {
+      finish(redressSteps(town));
+    }
     town.city.paint(scheme, false);
     town.paintDecor(scheme);
     for (const [slug, built] of town.buildings) {
@@ -532,14 +547,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
   };
   // Only the drawing on screen is repainted: the others catch up when shown (showTown).
+  // Another season redresses the drawing on screen at once (paintTown), and
+  // the others kept a few milliseconds a frame (draftAhead).
   const applyScheme = () => {
-    if (scheme.season !== season) {
-      // Another season's decorations, in every drawing of the town kept.
-      ({ season } = scheme);
-      for (const [at, town] of townViews) {
-        town.setDecor(decorFor(at));
-      }
-    }
     renderer.setClearColor(new Color(shade("sea", scheme, false)));
     materials.setScheme(scheme);
     paintTown(shownTown);
@@ -738,11 +748,20 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     while (!drafting) {
       const at = ahead.shift();
       if (at === undefined) {
-        return;
+        break;
       }
       if (!townViews.has(at)) {
         drafting = { at, steps: townSteps(at) };
       }
+    }
+    // Then the drawings kept from before another season was picked.
+    for (const town of townViews.values()) {
+      if (!drafting && town.decorSeason !== scheme.season) {
+        drafting = { at: town.at, steps: redressSteps(town) };
+      }
+    }
+    if (!drafting) {
+      return;
     }
     const done = runFor(drafting.steps, AHEAD_MS);
     if (done) {

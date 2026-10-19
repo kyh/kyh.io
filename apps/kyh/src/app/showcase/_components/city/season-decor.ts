@@ -12,12 +12,16 @@ import type { Paint, Token } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Random } from "./random";
 import type { Sketch, Vec3 } from "./sketch";
+import type { Steps } from "./steps";
 import type { HouseSpec } from "./draw-blocks";
-import { CURB_TOP, doorstep, houseCells, parkOf, plazaOf } from "./draw-blocks";
-import { FLOOR } from "./draw-kit";
-import { paint, ROOFS } from "./palette";
+import { CURB_TOP, doorstep, eavesOf, houseCells, parkOf, plazaOf } from "./draw-blocks";
+import { paint, PASTEL_ROOFS } from "./palette";
 import { createRandom, hashString } from "./random";
 import { ball, box, line, round } from "./sketch";
+import { finish } from "./steps";
+
+/** How many spots are decorated between steps, when drawn over frames. */
+const SPOTS_A_STEP = 12;
 
 /** Where a decoration stands: on the block, a hair above the lawns and paving. */
 const GROUND = CURB_TOP + 0.012;
@@ -218,8 +222,9 @@ const christmasTree = (sketch: Sketch, x: number, z: number, random: Random, siz
       z,
     });
   }
-  // Baubles round the lower two tiers, and a star on top.
-  for (let index = 0; index < 8; index += 1) {
+  // Baubles round the lower two tiers (none on a porch's little tree, where
+  // they'd be specks), and a star on top.
+  for (let index = 0; index < (size < 1 ? 0 : 8); index += 1) {
     const tier = index % 2 === 0 ? tiers[0] : tiers[1];
     const angle = random.range(0, Math.PI * 2);
     const reach = tier.r * size * 0.62;
@@ -383,9 +388,6 @@ const lanternPost = (sketch: Sketch, x: number, z: number, height = 0.36) => {
   lantern(sketch, x + 0.07, GROUND + height - 0.07, z);
 };
 
-/** The height of a cottage's eaves, where its roof starts (`house` in draw-blocks.ts). */
-const eavesOf = ({ floors }: HouseSpec) => CURB_TOP + 0.03 + floors * FLOOR + 0.06;
-
 /** A string of bulbs hung all the way round a cottage's eaves, sagging between them, the colors in turn. */
 const eaveLights = (sketch: Sketch, house: HouseSpec, colors: readonly Token[]) => {
   const top = eavesOf(house) - 0.01;
@@ -444,11 +446,9 @@ export interface Emote {
  * what its people send up (life.ts floats it); a kind it leaves out stays bare.
  */
 export interface Decor extends Partial<Record<Kind, Prop>> {
-  house?: (sketch: Sketch, house: HouseSpec, random: Random) => void;
+  house?: (sketch: Sketch, house: HouseSpec) => void;
   emote?: Emote;
 }
-
-const PASTELS = ROOFS.slice(0, 6);
 
 /** Every season's decorations: keyed by season, so a new one isn't missed. */
 export const DECOR: Record<SeasonId, Decor> = {
@@ -465,17 +465,17 @@ export const DECOR: Record<SeasonId, Decor> = {
   },
   classic: {},
   easter: {
-    porch: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTELS)),
-    shore: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTELS)),
+    porch: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
+    shore: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
     square: (sketch, x, z, random) => {
-      egg(sketch, x, z, random.pick(PASTELS), 3.2);
-      egg(sketch, x + 0.22, z + 0.1, random.pick(PASTELS));
-      egg(sketch, x - 0.2, z + 0.14, random.pick(PASTELS));
+      egg(sketch, x, z, random.pick(PASTEL_ROOFS), 3.2);
+      egg(sketch, x + 0.22, z + 0.1, random.pick(PASTEL_ROOFS));
+      egg(sketch, x - 0.2, z + 0.14, random.pick(PASTEL_ROOFS));
     },
     yard: (sketch, x, z, random) => {
-      egg(sketch, x, z, random.pick(PASTELS));
-      egg(sketch, x + 0.12, z + 0.06, random.pick(PASTELS));
-      egg(sketch, x - 0.05, z + 0.13, random.pick(PASTELS));
+      egg(sketch, x, z, random.pick(PASTEL_ROOFS));
+      egg(sketch, x + 0.12, z + 0.06, random.pick(PASTEL_ROOFS));
+      egg(sketch, x - 0.05, z + 0.13, random.pick(PASTEL_ROOFS));
     },
   },
   halloween: {
@@ -562,8 +562,13 @@ export const DECOR: Record<SeasonId, Decor> = {
 /**
  * The season's decorations, drawn into a sketch: the same ones in every view,
  * since each kind of spot gets its own stream of chances.
+ * @yields {void} every few spots, so it can be spread over frames.
  */
-export const drawDecor = (sketch: Sketch, plan: CityPlan, season: SeasonId) => {
+export const decorSteps = function* decorSteps(
+  sketch: Sketch,
+  plan: CityPlan,
+  season: SeasonId,
+): Steps<void> {
   const decor = DECOR[season];
   const spots = openSpots(plan);
   for (const kind of KINDS) {
@@ -572,14 +577,24 @@ export const drawDecor = (sketch: Sketch, plan: CityPlan, season: SeasonId) => {
       continue;
     }
     const random = createRandom(hashString(`${season}:${kind}`));
-    for (const [x, z] of spots[kind]) {
+    for (const [index, [x, z]] of spots[kind].entries()) {
       prop(sketch, x, z, random);
+      if (index % SPOTS_A_STEP === SPOTS_A_STEP - 1) {
+        yield;
+      }
     }
+    yield;
   }
   if (decor.house) {
-    const random = createRandom(hashString(`${season}:house`));
-    for (const house of spots.houses) {
-      decor.house(sketch, house, random);
+    for (const [index, house] of spots.houses.entries()) {
+      decor.house(sketch, house);
+      if (index % SPOTS_A_STEP === SPOTS_A_STEP - 1) {
+        yield;
+      }
     }
   }
 };
+
+/** The same, all at once. */
+export const drawDecor = (sketch: Sketch, plan: CityPlan, season: SeasonId) =>
+  finish(decorSteps(sketch, plan, season));

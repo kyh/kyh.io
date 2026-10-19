@@ -1,14 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { DEFAULT_SEASON, SEASONS, seasonOf, seasonOn } from "./seasons";
+import { DEFAULT_SEASON, SEASONS, seasonOn } from "./seasons";
 import {
   calendarSeason,
   chooseTheme,
   currentSeason,
   currentTheme,
   subscribeToTheme,
-  themeIdOf,
   toggleTheme,
 } from "./store";
 
@@ -31,37 +30,22 @@ test("the calendar's season plays until another is chosen, and choosing it again
   chooseTheme(calendarSeason());
 });
 
-test("a season brings its own light or dark; plain light or dark is the visitor's", () => {
+test("a season brings its own light or dark; plain light or dark is the visitor's, which a tap flips", () => {
   chooseTheme("halloween");
-  assert.deepEqual(currentTheme(), { mode: "dark", season: "halloween" });
-  assert.equal(themeIdOf(currentTheme()), "halloween");
-  chooseTheme("dark");
-  assert.deepEqual(currentTheme(), { mode: "dark", season: DEFAULT_SEASON });
-  assert.equal(themeIdOf(currentTheme()), "dark");
-  chooseTheme("light");
-  assert.equal(currentTheme().mode, "light");
-  chooseTheme(calendarSeason());
-});
-
-test("a tap flips plain light or dark, and takes a season back to plain", () => {
-  chooseTheme("light");
+  assert.deepEqual(currentTheme(), { mode: "dark", own: "light", season: "halloween" });
+  // A tap takes a season back to plain, as the visitor had it.
   toggleTheme();
-  assert.equal(themeIdOf(currentTheme()), "dark");
+  assert.deepEqual(currentTheme(), { mode: "light", own: "light", season: DEFAULT_SEASON });
   toggleTheme();
-  assert.equal(themeIdOf(currentTheme()), "light");
-  chooseTheme("christmas");
+  assert.deepEqual(currentTheme(), { mode: "dark", own: "dark", season: DEFAULT_SEASON });
+  chooseTheme("easter");
+  assert.deepEqual(currentTheme(), { mode: "light", own: "dark", season: "easter" });
   toggleTheme();
-  assert.equal(themeIdOf(currentTheme()), "light");
+  assert.equal(currentTheme().mode, "dark");
+  toggleTheme();
   chooseTheme(calendarSeason());
 });
 
 test("a theme is the same object until it changes, as a snapshot must be", () => {
   assert.equal(currentTheme(), currentTheme());
-});
-
-test("every season but the default brings its own light or dark", () => {
-  for (const { id, mode } of SEASONS) {
-    assert.equal(mode === null, id === DEFAULT_SEASON, id);
-  }
-  assert.equal(seasonOf("halloween").mode, "dark");
 });

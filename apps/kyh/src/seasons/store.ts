@@ -16,10 +16,9 @@ import { DEFAULT_SEASON, seasonOf, seasonOn } from "./seasons";
 export interface Theme {
   season: SeasonId;
   mode: Mode;
+  /** The visitor's own light or dark, which a season's may override and the toggle goes back to. */
+  own: Mode;
 }
-
-/** What the themes menu offers: plain light or dark, or a season (the default season is plain). */
-export type ThemeId = Mode | SeasonId;
 
 let chosen: SeasonId | null = null;
 // The calendar's answer, worked out once a day rather than on every read.
@@ -52,7 +51,7 @@ const storedMode = (): Mode | null => {
 };
 
 /** The visitor's own light or dark: what they last picked, else their system's. */
-export const ownMode = (): Mode => {
+const ownMode = (): Mode => {
   if (typeof window === "undefined") {
     return own?.mode ?? "light";
   }
@@ -63,77 +62,60 @@ export const ownMode = (): Mode => {
 
 // One object per theme, so a snapshot is the same object until the theme changes.
 const themes = new Map<string, Theme>();
-const themeAt = (season: SeasonId, mode: Mode) => {
-  const key = `${season}|${mode}`;
+const themeAt = (season: SeasonId, visitor: Mode) => {
+  const key = `${season}|${visitor}`;
   let theme = themes.get(key);
   if (!theme) {
-    theme = { mode, season };
+    theme = { mode: seasonOf(season).mode ?? visitor, own: visitor, season };
     themes.set(key, theme);
   }
   return theme;
 };
 
-export const currentTheme = (): Theme => {
-  const season = currentSeason();
-  return themeAt(season, seasonOf(season).mode ?? ownMode());
-};
+export const currentTheme = (): Theme => themeAt(currentSeason(), ownMode());
 
-/** The menu's name for a theme: its season, or plain light or dark. */
-export const themeIdOf = ({ mode, season }: Theme): ThemeId =>
-  season === DEFAULT_SEASON ? mode : season;
+const paint = () => {
+  const { mode, season } = currentTheme();
+  paintTheme(document.documentElement, season, mode);
+};
 
 const changed = () => {
   if (typeof document !== "undefined") {
-    const { mode, season } = currentTheme();
-    paintTheme(document.documentElement, season, mode);
+    paint();
   }
   for (const listener of listeners) {
     listener();
   }
 };
 
-const keepMode = (mode: Mode) => {
-  own = { mode };
-  try {
-    localStorage.setItem(MODE_KEY, mode);
-  } catch {
-    // Kept for this page load only.
-  }
-};
-
-/** Leaves the season for plain light or dark, over the calendar's if it has one. */
-const plain = () => {
-  chosen = calendarSeason() === DEFAULT_SEASON ? null : DEFAULT_SEASON;
-};
-
-/** Picks a theme: a season over the calendar's (picking the calendar's own hands it back), or plain light or dark, which the visitor keeps. */
-export const chooseTheme = (id: ThemeId) => {
-  if (id === "light" || id === "dark") {
-    plain();
-    keepMode(id);
-  } else if (id === DEFAULT_SEASON) {
-    plain();
-  } else {
-    chosen = id === calendarSeason() ? null : id;
-  }
+/** Picks a season over the calendar's; picking the calendar's own hands it back, and the default is plain light or dark. */
+export const chooseTheme = (id: SeasonId) => {
+  chosen = id === calendarSeason() ? null : id;
   changed();
 };
 
-/** The toggle's tap: plain light or dark flips; a season goes back to plain light or dark. */
+/** The toggle's tap: plain light or dark flips, and the visitor keeps it; a season goes back to plain. */
 export const toggleTheme = () => {
   const { mode, season } = currentTheme();
-  if (season === DEFAULT_SEASON) {
-    keepMode(mode === "light" ? "dark" : "light");
-  } else {
-    plain();
+  if (season !== DEFAULT_SEASON) {
+    chooseTheme(DEFAULT_SEASON);
+    return;
+  }
+  const flipped = mode === "light" ? "dark" : "light";
+  own = { mode: flipped };
+  try {
+    localStorage.setItem(MODE_KEY, flipped);
+  } catch {
+    // Kept for this page load only.
   }
   changed();
 };
 
 export const subscribeToTheme = (listener: () => void) => {
   if (listeners.size === 0 && typeof window !== "undefined") {
+    // The head script painted the page if it could; this paints it either way.
+    paint();
     // Following the system, the theme turns when it does.
-    ownMode();
     system?.addEventListener("change", changed);
   }
   listeners.add(listener);

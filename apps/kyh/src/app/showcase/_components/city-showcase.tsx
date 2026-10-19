@@ -7,7 +7,7 @@ import { MotionConfig } from "motion/react";
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
-import { schemeAt } from "./city/palette";
+import { DEFAULT_SEASON } from "@/seasons/seasons";
 import type { Theme } from "@/seasons/store";
 import { currentTheme, subscribeToTheme } from "@/seasons/store";
 import { Pin, PinList } from "./city-pins";
@@ -45,8 +45,10 @@ const usePrefersReducedMotion = () =>
   );
 
 /** The city by day or night, as the site's theme is, in the season's look. */
-const schemeOf = ({ mode, season }: Theme): Scheme =>
-  schemeAt(mode === "dark" ? "night" : "day", season);
+const schemeOf = ({ mode, season }: Theme): Scheme => ({
+  season,
+  time: mode === "dark" ? "night" : "day",
+});
 
 interface TourToggleProps {
   touring: boolean;
@@ -83,7 +85,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   // The theme needs the visitor's date and their light or dark, which a render
   // (on the server too) can't read: the city starts in the default's and
   // takes theirs on mount.
-  const schemeRef = useRef(schemeAt("day", "classic"));
+  const schemeRef = useRef<Scheme>({ season: DEFAULT_SEASON, time: "day" });
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -96,6 +98,17 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     return () => {
       delete document.body.dataset.city;
     };
+  }, []);
+
+  // The theme reaches the city by subscription, not a render of the page;
+  // first, so the city is built in it.
+  useEffect(() => {
+    const update = () => {
+      schemeRef.current = schemeOf(currentTheme());
+      cityRef.current?.setScheme(schemeRef.current);
+    };
+    update();
+    return subscribeToTheme(update);
   }, []);
 
   useEffect(() => {
@@ -161,16 +174,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       cityRef.current = null;
     };
   }, [projects, reducedMotion]);
-
-  // The theme reaches the city by subscription, not a render of the page.
-  useEffect(() => {
-    const update = () => {
-      schemeRef.current = schemeOf(currentTheme());
-      cityRef.current?.setScheme(schemeRef.current);
-    };
-    update();
-    return subscribeToTheme(update);
-  }, []);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {

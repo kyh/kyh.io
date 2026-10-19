@@ -6,7 +6,7 @@ import { GeistSans } from "geist/font/sans";
 import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer/cursors";
 import { Providers } from "@/components/providers";
-import { SeasonScript } from "@/components/season-script";
+import { SeasonScript } from "@/seasons/season-script";
 import { SeasonDrift } from "@/seasons/drift";
 import { siteConfig } from "@/lib/config";
 import { JsonLd } from "@/components/json-ld";

@@ -19,9 +19,8 @@ test("a day is yyyymmdd, and rolls over months and years", () => {
   assert.equal(dayKey(dateOf(20_280_229)), 20_280_229);
 });
 
-test("a span past New Year ends in the next year", () => {
+test("a span runs from one date to another in its year", () => {
   assert.deepEqual(span(2026, [10, 25], [10, 31]), [20_261_025, 20_261_031]);
-  assert.deepEqual(span(2026, [12, 30], [1, 2]), [20_261_230, 20_270_102]);
 });
 
 test("days around a date cross into other months", () => {

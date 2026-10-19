@@ -3,12 +3,8 @@
 // Draws a season's piece (`art.ts`) in a 24×24 <svg>: its gradients once, in
 // <defs> under an id, and its layers wherever it shows, filling from them. A
 // page showing many of one piece (a burst, the drift) shares one set of defs.
-import { useId } from "react";
-
+import { useSvgId } from "@/lib/svg-id";
 import type { Art, Gradient, Layer } from "./art";
-
-/** An id for a piece's gradients: useId's punctuation isn't safe inside url(#…). */
-export const usePieceId = () => `piece-${useId().replaceAll(/[^\w-]/gu, "")}`;
 
 const Stops = ({ gradient }: { gradient: Gradient }) =>
   gradient.stops.map(([offset, color, opacity]) => (
@@ -101,7 +97,7 @@ export const PieceLayers = ({ art, id }: { art: Art; id: string }) => (
 
 /** One piece on its own, gradients and all: an icon. */
 export const PieceIcon = ({ art, className }: { art: Art; className?: string }) => {
-  const id = usePieceId();
+  const id = useSvgId("piece");
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <defs>

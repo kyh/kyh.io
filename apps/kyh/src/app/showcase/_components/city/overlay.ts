@@ -8,6 +8,7 @@ import type { Emote } from "./season-decor";
 import { CHAT_BUBBLE_CLASS } from "@/components/chat-bubble";
 import { gradientOf } from "@/lib/color";
 import { CURSOR_ARROW } from "@/components/cursor";
+import { clamp01, lerp } from "./ease";
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -196,10 +197,10 @@ export const createOverlay = (root: HTMLElement | null) => {
         puff.path.setAttribute("d", emote.d);
         puff.path.setAttribute("fill", emote.fill);
       }
-      const size = Math.min(1, age / 0.15);
+      const size = lerp(0.4, 1, clamp01(age / 0.15));
       const sway = Math.sin(age * Math.PI * 2) * SWAY;
       puff.element.style.opacity = String(Math.min(1, (1 - age) / 0.35));
-      puff.element.style.transform = `translate3d(${(x + sway).toFixed(1)}px, ${(y - age * RISE).toFixed(1)}px, 0) scale(${(0.4 + size * 0.6).toFixed(2)})`;
+      puff.element.style.transform = `translate3d(${(x + sway).toFixed(1)}px, ${(y - age * RISE).toFixed(1)}px, 0) scale(${size.toFixed(2)})`;
     },
     /** Takes away whatever this frame didn't place. */
     end: () => {

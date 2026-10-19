@@ -1,4 +1,4 @@
-import { seasonScript } from "@/seasons/script";
+import { seasonScript } from "./script";
 
 const script = seasonScript();
 

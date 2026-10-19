@@ -25,7 +25,7 @@ import {
 } from "./draw-kit";
 import { ACCENTS, paint, ROOF_GRAY, ROOFS, WALLS } from "./palette";
 import { createRandom } from "./random";
-import { ball, box, ellipse, face, gable, ground, hip, round } from "./sketch";
+import { ball, box, ellipse, face, gable, ground, hip, onWall, round } from "./sketch";
 
 export const CURB_TOP = 0.04;
 const LAWN = paint("lawn", "lawn", "lawn");
@@ -42,6 +42,12 @@ export interface HouseSpec extends Footprint {
   awning: Token;
   seed: number;
 }
+
+/** How far along its wall a cottage's door starts. */
+const doorAlong = ({ d, front, w }: HouseSpec) => (front === "front" ? w * 0.38 : d * 0.4);
+
+/** The height of a cottage's eaves, where its roof starts. */
+export const eavesOf = ({ floors }: HouseSpec) => CURB_TOP + 0.03 + floors * FLOOR + 0.06;
 
 /** An Inkline cottage: walls, a pitched roof, a door and a few windows. */
 export const house = (sketch: Sketch, spec: HouseSpec) => {
@@ -64,7 +70,7 @@ export const house = (sketch: Sketch, spec: HouseSpec) => {
     rise: Math.min(spec.w, spec.d) * 0.36,
     w: spec.w,
     x: spec.x,
-    y: CURB_TOP + 0.03 + height,
+    y: eavesOf(spec),
     z: spec.z,
   };
   if (spec.hipped) {
@@ -78,8 +84,7 @@ export const house = (sketch: Sketch, spec: HouseSpec) => {
     box(sketch, { colors: WALLS, d: 0.1, h: roof.rise + 0.12, w: 0.1, x: cx, y: roof.y, z: cz });
   }
   const walls = { ...spec };
-  const doorAlong = spec.front === "front" ? spec.w * 0.38 : spec.d * 0.4;
-  door(sketch, walls, { along: doorAlong, awning: spec.awning, side: spec.front });
+  door(sketch, walls, { along: doorAlong(spec), awning: spec.awning, side: spec.front });
   for (const side of ["front", "side"] satisfies Side[]) {
     const span = side === "front" ? spec.w : spec.d;
     windows(sketch, walls, {
@@ -153,11 +158,11 @@ export const houseCells = (block: Block, random: Random = createRandom(block.see
   return cells;
 };
 
-/** Where a cottage's door is, on the ground just out from its wall. */
-export const doorstep = ({ d, front, w, x, z }: HouseSpec) =>
-  front === "front"
-    ? { x: x + w * 0.38 + 0.08, z: z + d + 0.12 }
-    : { x: x + w + 0.12, z: z + d * 0.4 + 0.08 };
+/** Where a cottage's door is, on the ground just out from its wall (the middle of its 0.16 door). */
+export const doorstep = (spec: HouseSpec) => {
+  const [x, , z] = onWall(spec, spec.front, doorAlong(spec) + 0.08, 0, 0.12);
+  return { x, z };
+};
 
 /** Twelve cottages around the block's edge, gardens and trees inside. */
 const drawHouses = (sketch: Sketch, block: Block, random: Random) => {

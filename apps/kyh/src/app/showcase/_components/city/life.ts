@@ -380,7 +380,8 @@ export const createLife = (options: LifeOptions) => {
   const emoteIn = (scheme: Scheme) => (options.still ? null : (DECOR[scheme.season].emote ?? null));
   /** What the season has people send up, if anything, and who is sending one up since when. */
   let emote: Emote | null = emoteIn(options.scheme);
-  let puffs: { born: number; id: number; key: string }[] = [];
+  // Oldest first.
+  const puffs: { born: number; id: number; key: string }[] = [];
   let puffsMade = 0;
   let nextPuff = 0;
   const people = [...KEYS.walker, ...KEYS.visitor];
@@ -388,10 +389,12 @@ export const createLife = (options: LifeOptions) => {
   /** Now and then someone on screen sends up the season's emote, which rises from their head. */
   const send = (time: number) => {
     if (!emote || openedAt === null || options.scale() < EMOTE_SCALE) {
-      puffs = [];
+      puffs.length = 0;
       return;
     }
-    puffs = puffs.filter((puff) => time - puff.born < EMOTE_MS);
+    while (puffs[0] && time - puffs[0].born >= EMOTE_MS) {
+      puffs.shift();
+    }
     if (time >= nextPuff && puffs.length < EMOTING) {
       nextPuff = time + EMOTE_EVERY_MS * (0.5 + Math.random());
       const { height, width } = options.size();

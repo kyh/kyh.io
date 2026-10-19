@@ -1,38 +1,20 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
+import { iconAttrs } from "@/components/icons";
 import { SeasonBloom } from "@/components/season-bloom";
-import { ThemeIcon } from "@/components/theme-toggle";
+import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
 import { DEFAULT_SEASON } from "@/seasons/seasons";
-import { ownMode, themeIdOf, toggleTheme, useTheme } from "@/seasons/store";
+import { toggleTheme, useTheme } from "@/seasons/store";
 
 /** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
-
-/** Stops an event before anything on the page sees it. */
-const swallow = (event: Event) => {
-  event.stopPropagation();
-  event.preventDefault();
-};
-
-const iconAttrs = {
-  "aria-hidden": true,
-  fill: "none",
-  height: "100%",
-  stroke: "currentColor",
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  strokeWidth: "2",
-  viewBox: "0 0 24 24",
-  width: "100%",
-  xmlns: "http://www.w3.org/2000/svg",
-};
 
 const links = [
   {
@@ -224,17 +206,9 @@ export const Dock = () => {
   const [hovered, setHovered] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const [blooming, setBlooming] = useState(false);
-  // A press on the toggle while the themes are open closes them, and only that.
-  const closedByToggle = useRef(false);
-  const onBloomChange = useCallback((open: boolean, event: Event | undefined) => {
-    closedByToggle.current =
-      !open && event?.target instanceof Node && Boolean(toggle.current?.contains(event.target));
-    setBlooming(open);
-  }, []);
-
   // A tap is light or dark; held down, the toggle blooms the themes, and the
-  // release that ends the hold isn't a tap.
-  const holding = useRef<number>(0);
+  // release that ends the hold is no tap (whether it was is kept until the next press).
+  const holding = useRef(0);
   const held = useRef(false);
   const bloom = () => {
     setHovered(null);
@@ -249,23 +223,13 @@ export const Dock = () => {
       bloom();
     }, HOLD_MS);
   };
-  // The release that ends a hold is no tap and no pick, whatever it lands on:
-  // on touch, the click goes to the wedge that has opened under the finger.
-  const release = () => {
-    window.clearTimeout(holding.current);
-    if (!held.current) {
-      return;
-    }
-    held.current = false;
-    window.addEventListener("click", swallow, { capture: true, once: true });
-    window.setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 600);
-  };
+  const release = () => window.clearTimeout(holding.current);
 
   const plain = theme.season === DEFAULT_SEASON;
   // A season's tap goes back to the visitor's own light or dark.
   const themeLabel = plain
     ? `Switch to ${theme.mode === "light" ? "dark" : "light"} mode`
-    : `Back to ${ownMode()} mode`;
+    : `Back to ${theme.own} mode`;
   // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
   const hover = (event: React.PointerEvent, item: string) => {
     if (event.pointerType === "mouse" && !blooming) {
@@ -326,9 +290,18 @@ export const Dock = () => {
             setHovered(null);
           }}
           onPointerCancel={release}
+          // A finger lifting off a hold sends no click, which would land on the
+          // theme opened under it. (A mouse's lands on no theme: it was pressed
+          // on the toggle and released over the menu, so it goes to what holds both.)
+          onTouchEnd={(event) => {
+            if (held.current) {
+              event.preventDefault();
+            }
+          }}
           // A long press on touch would open the browser's own menu.
           onContextMenu={(event) => event.preventDefault()}
           onKeyDown={(event) => {
+            held.current = false;
             // The keyboard's way to the themes, as a menu button opens with an arrow.
             if (event.key === "ArrowUp") {
               event.preventDefault();
@@ -336,16 +309,14 @@ export const Dock = () => {
             }
           }}
           onClick={() => {
-            if (closedByToggle.current) {
-              closedByToggle.current = false;
-              return;
+            if (!held.current) {
+              toggleTheme();
             }
-            toggleTheme();
           }}
           onPointerEnter={(event) => hover(event, "theme")}
         >
-          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme" && !blooming}>
-            {/* Light and dark morph into each other; a season pops in wearing its piece. */}
+          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
+            {/* Light and dark morph into each other; a season pops in wearing its glyph. */}
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={plain ? "plain" : theme.season}
@@ -355,12 +326,12 @@ export const Dock = () => {
                 exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
                 transition={{ damping: 22, stiffness: 420, type: "spring" }}
               >
-                <ThemeIcon id={themeIdOf(theme)} look="glyph" className="block size-full" />
+                <ThemeIcon theme={theme} look="glyph" />
               </motion.span>
             </AnimatePresence>
           </DockItem>
         </button>
-        <SeasonBloom anchor={toggle} open={blooming} onOpenChange={onBloomChange} />
+        <SeasonBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
         <GlassFilter />
       </motion.nav>
     </div>
