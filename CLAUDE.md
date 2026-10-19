@@ -111,7 +111,8 @@ dock's theme toggle wears the theme's icon: a tap flips light and dark, or
 takes a season back to the visitor's own; held down (or ArrowUp), it blooms
 the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
 a solid disc that springs from the button (nudged up off the bottom), a wedge
-per theme clipped to its slice so the slice takes the pointer, unfolding one
+per season (plain light or dark is one, showing the sun: it goes back to the
+visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
 after another round a hub that wears the one under the pointer, its name over
 the top. The dock stops magnifying while it's open. It's Base UI's Menu
 (radio items, focus, arrow keys and typing a name, dismissal; the hub or the

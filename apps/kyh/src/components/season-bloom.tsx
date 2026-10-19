@@ -7,9 +7,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { ThemeIcon } from "@/components/theme-toggle";
 import { point } from "@/seasons/art";
-import { DEFAULT_SEASON, seasonOf, SEASONS } from "@/seasons/seasons";
-import type { ThemeId } from "@/seasons/store";
-import { chooseTheme, themeIdOf, useTheme } from "@/seasons/store";
+import type { SeasonId } from "@/seasons/seasons";
+import { DEFAULT_SEASON, SEASONS } from "@/seasons/seasons";
+import { chooseTheme, useTheme } from "@/seasons/store";
 
 // The themes, blooming over the theme toggle (held down) as a radial menu: a
 // solid disc that springs from the button, a wedge per theme unfolding round
@@ -17,12 +17,15 @@ import { chooseTheme, themeIdOf, useTheme } from "@/seasons/store";
 // use), its name over the top. Base UI's Menu does the focus, the keys
 // (arrows, typing a name) and the dismissing; picking a theme closes it.
 
-/** The themes round the ring, clockwise from the top: plain light and dark, then each season. */
-const RING: readonly { id: ThemeId; name: string }[] = [
-  { id: "light", name: "Light" },
-  { id: "dark", name: "Dark" },
-  ...SEASONS.filter(({ id }) => id !== DEFAULT_SEASON).map(({ id, name }) => ({ id, name })),
-];
+/**
+ * The themes round the ring, clockwise from the top: plain light or dark (the
+ * default season, the visitor's own, which the toggle's tap flips), then each
+ * season.
+ */
+const RING = SEASONS.map(({ id, name }) => ({
+  id,
+  name: id === DEFAULT_SEASON ? "Light / Dark" : name,
+}));
 
 /** The disc's size, the hub's radius, and how far out each theme's icon sits (px). */
 const SIZE = 196;
@@ -67,8 +70,7 @@ const liftOver = (toggle: HTMLElement | null) => {
   return Math.max(0, (top + bottom) / 2 + CENTER + EDGE - window.innerHeight);
 };
 
-const nameOf = (id: ThemeId) =>
-  RING.find((theme) => theme.id === id)?.name ?? seasonOf(DEFAULT_SEASON).name;
+const nameOf = (id: SeasonId) => RING.find((theme) => theme.id === id)?.name;
 
 interface SeasonBloomProps {
   /** The theme toggle it blooms over and returns focus to. */
@@ -78,11 +80,11 @@ interface SeasonBloomProps {
 }
 
 export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) => {
-  const current = themeIdOf(useTheme());
+  const { mode, season } = useTheme();
   const still = useReducedMotion() ?? false;
   /** The theme under the pointer or keyboard, shown in the hub. */
-  const [lit, setLit] = useState<ThemeId | null>(null);
-  const shown = lit ?? current;
+  const [lit, setLit] = useState<SeasonId | null>(null);
+  const shown = lit ?? season;
   /** Whether the keyboard is what's moving through the themes, so its focus is the visitor's doing. */
   const keyed = useRef(false);
   return (
@@ -128,7 +130,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                   />
                 }
               >
-                <Menu.RadioGroup value={current} onValueChange={(id: ThemeId) => chooseTheme(id)}>
+                <Menu.RadioGroup value={season} onValueChange={(id: SeasonId) => chooseTheme(id)}>
                   {RING.map(({ id, name }, index) => {
                     const wedge = WEDGES[index];
                     return (
@@ -180,7 +182,12 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                             className="season-bloom-piece"
                             style={{ left: wedge.left, top: wedge.top }}
                           >
-                            <ThemeIcon id={id} look="piece" className="block size-full" />
+                            {/* Plain light or dark shows the light. */}
+                            <ThemeIcon
+                              id={id === DEFAULT_SEASON ? "light" : id}
+                              look="piece"
+                              className="block size-full"
+                            />
                           </span>
                         </Menu.RadioItem>
                       )
@@ -205,7 +212,12 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                       exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <ThemeIcon id={shown} look="glyph" className="block size-full" />
+                      {/* The toggle's stand-in: plain light or dark as it is now. */}
+                      <ThemeIcon
+                        id={shown === DEFAULT_SEASON ? mode : shown}
+                        look="glyph"
+                        className="block size-full"
+                      />
                     </motion.span>
                   </AnimatePresence>
                 </button>
