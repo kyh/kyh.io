@@ -1,7 +1,7 @@
 // The island itself: a pale shallows halo, a beach, the land, waves on the
 // sea, and the road grid with its curbed blocks.
 import type { CityPlan, Junction, Rect } from "./plan";
-import type { Random } from "./random";
+import type { Random } from "@/lib/random";
 import type { Sketch, Vec3 } from "./sketch";
 import { paint } from "./palette";
 import { coastline, inland } from "./plan";

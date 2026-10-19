@@ -9,7 +9,7 @@ import { drawGround } from "./draw-ground";
 import { drawLots, planEntries } from "./draw-landmarks";
 import { dominant } from "./palette";
 import { planCity } from "./plan";
-import { createRandom } from "./random";
+import { createRandom } from "@/lib/random";
 import { createSketch, faceAreas } from "./sketch";
 
 const cityProjects: CityProject[] = projects.map((project) => ({

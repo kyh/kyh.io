@@ -5,7 +5,7 @@ import type { Paint, Token } from "./palette";
 import type { Tree } from "./plan";
 import type { Point2, Side, Sketch, Vec3, Weight } from "./sketch";
 import { paint, WALLS } from "./palette";
-import { hashString } from "./random";
+import { hashString } from "@/lib/random";
 import {
   ball,
   box,

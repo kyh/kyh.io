@@ -3,7 +3,7 @@
 import type { Footprint } from "./draw-kit";
 import type { Paint, Token } from "./palette";
 import type { Block } from "./plan";
-import type { Random } from "./random";
+import type { Random } from "@/lib/random";
 import type { Side, Sketch } from "./sketch";
 import {
   bench,
@@ -24,7 +24,7 @@ import {
   windows,
 } from "./draw-kit";
 import { ACCENTS, paint, ROOF_GRAY, ROOFS, WALLS } from "./palette";
-import { createRandom } from "./random";
+import { createRandom } from "@/lib/random";
 import { ball, box, ellipse, face, gable, ground, hip, round } from "./sketch";
 
 export const CURB_TOP = 0.04;

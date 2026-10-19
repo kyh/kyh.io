@@ -1,6 +1,6 @@
 "use client";
 
-import { createRandom, hashString } from "@/app/showcase/_components/city/random";
+import { createRandom, hashString } from "@/lib/random";
 import { scrambleGlyphs } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {

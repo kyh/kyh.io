@@ -1,5 +1,6 @@
 // Park–Miller minimal standard generator: deterministic across runs and
-// machines, so the city is the same town on every visit.
+// machines, so the city is the same town on every visit and the headings
+// scramble the same on the server as in the browser.
 const MODULUS = 2_147_483_647;
 const MULTIPLIER = 48_271;
 

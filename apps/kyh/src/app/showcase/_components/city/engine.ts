@@ -31,7 +31,7 @@ import { createHalo } from "./halo";
 import { createLife } from "./life";
 import { lookOf, PALETTE, shade, timeOf } from "./palette";
 import { CENTER, contains, planCity, withinReach } from "./plan";
-import { createRandom, hashString } from "./random";
+import { createRandom, hashString } from "@/lib/random";
 import type { Built } from "./render";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";

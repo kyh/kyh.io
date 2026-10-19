@@ -24,7 +24,7 @@ import {
 import { bounds } from "./landmark";
 import { PLAZA, plaza } from "./landmarks-large";
 import { ACCENTS, paint, ROOF_GRAY, ROOFS, WALLS } from "./palette";
-import { createRandom, hashString } from "./random";
+import { createRandom, hashString } from "@/lib/random";
 import { ball, box, ellipse, extrude, face, gable, line, part, round } from "./sketch";
 
 const METAL = paint("metal", "metal", "metalDark");
