@@ -9,7 +9,7 @@ test("a heading's letters spell its Chinese in order, repeating", () => {
 });
 
 test("a heading without a translation has no glyphs", () => {
-  assert.equal(chineseGlyph("Kaiyu Hsu", 0), undefined);
+  assert.equal(chineseGlyph("Untranslated", 0), undefined);
 });
 
 test("every translation is plain Chinese characters", () => {

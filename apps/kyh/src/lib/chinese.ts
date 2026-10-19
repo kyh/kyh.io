@@ -5,14 +5,15 @@
  * here scrambles through random zhuyin instead.
  */
 export const CHINESE = new Map([
-  ["About Kaiyu Hsu", "關於我"],
+  ["About Kaiyu Hsu", "關於徐開宇"],
   ["Agent resources for kyh.io", "代理資源"],
   ["Channels", "管道"],
   ["Connect", "聯絡"],
-  ["Contact Kaiyu Hsu", "聯絡我"],
+  ["Contact Kaiyu Hsu", "聯絡徐開宇"],
   ["Elsewhere", "其他地方"],
   ["Endpoints", "端點"],
   ["Highlights", "精選"],
+  ["Kaiyu Hsu", "徐開宇"],
   ["Other Activities", "其他活動"],
   ["Outside work", "工作之外"],
   ["Privacy", "隱私"],
