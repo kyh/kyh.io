@@ -522,17 +522,13 @@ button.link {
   position: relative;
   color: transparent;
   &::after {
-    content: attr(data-char);
+    content: attr(data-glyph);
     position: absolute;
     display: inline-block;
     inset: 0;
     color: canvastext;
     pointer-events: none;
   }
-}
-
-[data-scramble].scramble > span::after {
-  animation: flash 0.28s calc(var(--index, 0) * 0.05s) steps(1, end);
 }
 
 /* Animate section */
@@ -774,27 +770,6 @@ body[data-city] {
   }
 }
 
-@keyframes flash {
-  0% {
-    content: "_";
-  }
-  16.67% {
-    content: var(--char-1);
-  }
-  33.33% {
-    content: var(--char-2);
-  }
-  50% {
-    content: var(--char-3);
-  }
-  66.67% {
-    content: var(--char-4);
-  }
-  83.33% {
-    content: var(--char-5);
-  }
-}
-
 @keyframes animateSectionIn {
   from {
     opacity: 0;
@@ -917,10 +892,6 @@ body[data-city] {
   .animate-section > * {
     animation: none !important;
     opacity: 1 !important;
-  }
-
-  .scramble > span::after {
-    animation: none !important;
   }
 }
 

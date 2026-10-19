@@ -1,9 +1,8 @@
 /**
  * What each scrambled heading says in Chinese (traditional, as in Taiwan),
  * spelled in zhuyin with its tones. While a heading scrambles, its letters
- * flash these symbols in order, repeating, so the wave sweeping across reads
- * the heading aloud. Spaces only split syllables here; they don't flash. A
- * heading missing here scrambles through random zhuyin instead.
+ * churn through the symbols of its own spelling. Spaces only split syllables
+ * here; they don't flash. A heading missing here churns through all of zhuyin.
  */
 export const ZHUYIN = new Map([
   // 關於徐開宇
@@ -49,37 +48,8 @@ export const GLYPHS = [
   ..."ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
 ];
 
-/** How many glyphs each letter flashes through before it shows; `flash` in global.css has a keyframe for each. */
-export const FRAMES = 5;
-
-const spellingOf = (text: string) =>
-  [...(ZHUYIN.get(text) ?? "")].filter((symbol) => symbol !== " ");
-
-/** The symbol letter `index` of `text` spells, or undefined without a translation. */
-export const zhuyinGlyph = (text: string, index: number) => {
-  const symbols = spellingOf(text);
-  return symbols.length > 0 ? symbols[index % symbols.length] : undefined;
-};
-
-/**
- * The glyphs letter `index` flashes, in order. A translated heading churns
- * through its own spelling and lands each letter on its symbol; any other
- * churns through all of zhuyin. `roll` gives a number in [0, 1) per frame.
- */
-export const scrambleGlyphs = (text: string, index: number, roll: (frame: number) => number) => {
-  const spelled = zhuyinGlyph(text, index);
-  const pool = spelled === undefined ? GLYPHS : [...new Set(spellingOf(text))];
-  const glyphs: string[] = [];
-  for (let frame = 0; frame < FRAMES; frame += 1) {
-    if (frame === FRAMES - 1 && spelled !== undefined) {
-      glyphs.push(spelled);
-      break;
-    }
-    // No glyph twice in a row (the landing symbol included), or the letter seems to stall.
-    const next = frame === FRAMES - 2 ? spelled : undefined;
-    const pick = Math.floor(roll(frame) * pool.length) % pool.length;
-    const fromPick = [...pool.slice(pick), ...pool.slice(0, pick)];
-    glyphs.push(fromPick.find((glyph) => glyph !== glyphs.at(-1) && glyph !== next) ?? "");
-  }
-  return glyphs;
+/** What `text` scrambles through: the symbols of its own spelling, or all of zhuyin without one. */
+export const scrambleChars = (text: string) => {
+  const spelling = [...(ZHUYIN.get(text) ?? "")].filter((symbol) => symbol !== " ");
+  return spelling.length > 0 ? [...new Set(spelling)] : GLYPHS;
 };

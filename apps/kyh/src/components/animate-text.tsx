@@ -1,7 +1,11 @@
 "use client";
 
-import { createRandom, hashString } from "@/lib/random";
-import { scrambleGlyphs } from "@/lib/zhuyin";
+import { motionValue, stagger } from "motion";
+import { scrambleText } from "motion-plus-dom";
+import type { ScrambleTextControls } from "motion-plus-dom";
+import { useCallback, useEffect, useRef } from "react";
+
+import { scrambleChars } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
   children: React.ReactNode;
@@ -36,19 +40,11 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-// The first scramble's glyphs roll from the text itself (a generator seeded by
-// the text and the letter), so the server and the browser draw the same ones.
-const seededRoll = (text: string, index: number) => {
-  const random = createRandom(hashString(`${text}:${index}`));
-  // Nearby seeds start close together; a few draws pull them apart.
-  for (let draw = 0; draw < 3; draw += 1) {
-    random.next();
-  }
-  return random.next;
-};
-
-const glyphVars = (glyphs: string[]) =>
-  Object.fromEntries(glyphs.map((glyph, frame) => [`--char-${frame + 1}`, `"${glyph}"`]));
+// Every letter scrambles at once, swapping glyphs every INTERVAL, then they
+// settle left to right: the first after HOLD, each next STAGGER later.
+const INTERVAL = 0.05;
+const HOLD = 0.2;
+const STAGGER = 0.05;
 
 type ScrambleTextProps = {
   children: string;
@@ -65,49 +61,53 @@ export const ScrambleText = ({
   ...props
 }: ScrambleTextProps) => {
   const text = children;
+  const lettersRef = useRef<HTMLSpanElement>(null);
+  const runRef = useRef<{ controls: ScrambleTextControls; unsubscribe: () => void }>(null);
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
-    if (trigger === "load") {
+  // Motion's scrambleText writes the scrambled string to a motion value; each
+  // letter draws its glyph over itself, so the heading never changes width.
+  const play = useCallback(() => {
+    const letters = lettersRef.current?.querySelectorAll<HTMLSpanElement>("span[data-char]");
+    if (!letters || globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
-    const span = e.currentTarget.querySelector<HTMLSpanElement>("[data-scramble]");
-    if (!span) {
-      return;
-    }
-
-    // Roll new glyphs for this pass
-    for (const [index, el] of span.querySelectorAll<HTMLSpanElement>("span[data-char]").entries()) {
-      for (const [name, value] of Object.entries(
-        glyphVars(scrambleGlyphs(text, index, Math.random)),
-      )) {
-        el.style.setProperty(name, value);
+    runRef.current?.controls.stop();
+    runRef.current?.unsubscribe();
+    const shown = motionValue(text);
+    const unsubscribe = shown.on("change", (value) => {
+      for (const [index, glyph] of [...value].entries()) {
+        const letter = letters[index];
+        if (letter) {
+          letter.dataset.glyph = glyph;
+        }
       }
-    }
+    });
+    const controls = scrambleText(shown, {
+      chars: scrambleChars(text),
+      duration: stagger(STAGGER, { startDelay: HOLD }),
+      interval: INTERVAL,
+    });
+    runRef.current = { controls, unsubscribe };
+  }, [text]);
 
-    // Restart animation by removing and re-adding class; reading offsetWidth
-    // forces the reflow that makes the browser notice the removal
-    span.classList.remove("scramble");
-    void span.offsetWidth;
-    span.classList.add("scramble");
-  };
+  useEffect(() => {
+    if (trigger !== "hover") {
+      play();
+    }
+    return () => {
+      runRef.current?.controls.stop();
+      runRef.current?.unsubscribe();
+    };
+  }, [play, trigger]);
 
   return (
-    <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span data-scramble className={trigger === "hover" ? "" : "scramble"} aria-hidden>
-        {[...text].map((char, index) => {
-          // SAFETY: CSS custom properties are valid inline styles, but
-          // React.CSSProperties has no index signature for `--*` keys; the
-          // object holds nothing else.
-          const charStyle = {
-            ...glyphVars(scrambleGlyphs(text, index, seededRoll(text, index))),
-            "--index": index,
-          } as React.CSSProperties;
-          return (
-            <span key={index} data-char={char} style={charStyle}>
-              {char}
-            </span>
-          );
-        })}
+    <Element className={className} onMouseEnter={trigger === "load" ? undefined : play} {...props}>
+      <span ref={lettersRef} data-scramble aria-hidden>
+        {[...text].map((char, index) => (
+          <span key={index} data-char={char} data-glyph={char}>
+            {char}
+          </span>
+        ))}
       </span>
       <span className="sr-only">{text}</span>
     </Element>
