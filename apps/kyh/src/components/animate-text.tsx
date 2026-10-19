@@ -35,8 +35,7 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-const GLYPHS =
-  "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ0123456789±!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const GLYPHS = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ";
 
 const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
 
@@ -106,11 +105,7 @@ export const ScrambleText = ({
 
   return (
     <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span
-        data-scramble={zhuyinGlyph(text, 0) === undefined ? "" : "zhuyin"}
-        className={trigger === "hover" ? "" : "scramble"}
-        aria-hidden
-      >
+      <span data-scramble className={trigger === "hover" ? "" : "scramble"} aria-hidden>
         {[...text].map((char, index) => {
           // SAFETY: CSS custom properties are valid inline styles, but
           // React.CSSProperties has no index signature for `--*` keys; the
