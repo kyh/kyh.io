@@ -10,7 +10,7 @@
 import { useSyncExternalStore } from "react";
 
 import { dayKey } from "./calendar";
-import { MODE_KEY, paintTheme } from "./paint";
+import { BAR_SELECTOR, MODE_KEY, paintTheme } from "./paint";
 import type { Mode, SeasonId } from "./seasons";
 import { DEFAULT_SEASON, seasonOf, seasonOn } from "./seasons";
 
@@ -55,6 +55,8 @@ const storedMode = (): Mode | null => {
   }
 };
 
+const systemMode = (): Mode => (system?.matches ? "dark" : "light");
+
 /** The visitor's own light or dark: what they last picked, else their system's. */
 const ownMode = (): Mode => {
   if (typeof window === "undefined") {
@@ -62,7 +64,7 @@ const ownMode = (): Mode => {
   }
   own ??= { mode: storedMode() };
   system ??= window.matchMedia("(prefers-color-scheme: dark)");
-  return own.mode ?? (system.matches ? "dark" : "light");
+  return own.mode ?? systemMode();
 };
 
 // One object per theme, so a snapshot is the same object until the theme changes.
@@ -78,6 +80,17 @@ const themeAt = (season: SeasonId, visitor: Mode) => {
 };
 
 export const currentTheme = (): Theme => themeAt(currentSeason(), ownMode());
+
+/** <html> and the browser's bar, its meta made if the head script didn't make it. */
+const page = () => {
+  let bar = document.querySelector<HTMLMetaElement>(BAR_SELECTOR);
+  if (!bar) {
+    bar = document.createElement("meta");
+    bar.name = "theme-color";
+    document.head.prepend(bar);
+  }
+  return { bar, root: document.documentElement };
+};
 
 /** What a theme shows on <html>. */
 const shownAs = ({ mode, season }: Theme) => `${season}|${mode}`;
@@ -104,7 +117,7 @@ const paint = (change: boolean) => {
   }
   painted = shownAs(theme);
   const { mode, season } = theme;
-  const repaint = () => paintTheme(document.documentElement, season, mode);
+  const repaint = () => paintTheme(page(), season, mode);
   if (change) {
     withoutTransitions(repaint);
   } else {
@@ -143,7 +156,7 @@ export const chooseTheme = (id: SeasonId) => {
   changed();
 };
 
-/** The toggle's tap: plain light or dark flips, and the visitor keeps it; a season goes back to plain. */
+/** The toggle's tap: plain light or dark flips and is kept, unless it's the system's again; a season goes back to plain. */
 export const toggleTheme = () => {
   const { mode, season } = currentTheme();
   if (season !== DEFAULT_SEASON) {
@@ -151,9 +164,16 @@ export const toggleTheme = () => {
     return;
   }
   const flipped = mode === "light" ? "dark" : "light";
-  own = { mode: flipped };
+  // Flipped back to their system's, they follow the system again, as they did
+  // before they picked (next-themes' "system").
+  const kept = flipped === systemMode() ? null : flipped;
+  own = { mode: kept };
   try {
-    localStorage.setItem(MODE_KEY, flipped);
+    if (kept) {
+      localStorage.setItem(MODE_KEY, kept);
+    } else {
+      localStorage.removeItem(MODE_KEY);
+    }
   } catch {
     // Kept for this page load only.
   }

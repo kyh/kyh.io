@@ -49,3 +49,29 @@ test("a season brings its own light or dark; plain light or dark is the visitor'
 test("a theme is the same object until it changes, as a snapshot must be", () => {
   assert.equal(currentTheme(), currentTheme());
 });
+
+test("a tap back to the system's own light or dark forgets the pick, so the theme follows the system again", () => {
+  const kept = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => kept.get(key) ?? null,
+    removeItem: (key: string) => kept.delete(key),
+    setItem: (key: string, value: string) => kept.set(key, value),
+  };
+  Object.assign(globalThis, { localStorage: storage });
+  try {
+    chooseTheme(DEFAULT_SEASON);
+    // Without a window the system is light.
+    if (currentTheme().mode === "dark") {
+      toggleTheme();
+    }
+    toggleTheme();
+    assert.equal(currentTheme().mode, "dark");
+    assert.equal(kept.get("theme"), "dark");
+    toggleTheme();
+    assert.equal(currentTheme().mode, "light");
+    assert.equal(kept.has("theme"), false);
+  } finally {
+    Reflect.deleteProperty(globalThis, "localStorage");
+    chooseTheme(calendarSeason());
+  }
+});

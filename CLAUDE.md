@@ -105,8 +105,12 @@ brings its own light or dark (Halloween, Christmas and Lunar New Year are
 dark). `src/seasons/store.ts` owns it (no next-themes): the calendar's season
 for today unless the menu picked another (gone on reload), else the
 visitor's own light or dark, kept in localStorage (`theme`) or their
-system's. It paints `data-theme` (what global.css and Tailwind's `dark:`
-read), `color-scheme` and the season's tint on `<html>` (`paint.ts`), once
+system's; a tap back to the system's own light or dark forgets the pick, so it
+follows the system again (next-themes' "system"). It paints `data-theme` (what
+global.css and Tailwind's `dark:` read), `color-scheme` and the season's tint
+on `<html>`, and the mobile browser's bar (`<meta name="theme-color">`) in the
+page's own background, `--bg-highlighted`, tinted as the season tints it
+(`paint.ts`; a test holds `barColor` to global.css), once
 it's first subscribed to and on every change that shows, with transitions held
 still for the repaint so nothing fades in at its own pace (the toggle's sun and
 moon turn by motion, not CSS). While subscribed it follows the system's light
@@ -160,7 +164,8 @@ wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
 (`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
 no tint and keeps the hex slate. `script.ts` (put in `<head>` by
-`season-script.tsx`) paints the theme before first paint, the calendar's season
+`season-script.tsx`) paints the theme and the bar (making its meta) before
+first paint, the calendar's season
 with its light or dark else the visitor's (its windows worked out ahead for
 2026–2036; a test holds it to the store's painting day by day). No season's
 days run past December 31st: the calendar looks only in the day's own year (a
