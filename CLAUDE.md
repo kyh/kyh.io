@@ -101,11 +101,13 @@ canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
 The dock's theme toggle hides an easter egg: five quick taps bloom the seasons
-out of it (`src/components/season-bloom.tsx`, after beui's Bloom Menu): a panel
-springs from the button, its grid opens from the middle like an iris and the
-seasons come up from the center out. It's Base UI's Menu (radio items, focus,
-keys, dismissal); picking one keeps it open so the page can be tried in each,
-and the pick is gone on reload. `src/lib/dial.ts` is the tap streak.
+out of it as a radial menu (`src/components/season-bloom.tsx`): a disc springs
+from the button and turns into place, each season a wedge clipped to its slice
+of the ring (the slice takes the pointer) with its piece flying out from the
+middle, and the hub names the season under the pointer. It's Base UI's Menu
+(radio items, focus, arrow keys and typing a name, dismissal); picking one
+keeps it open so the page can be tried in each, and the pick is gone on
+reload. `src/lib/dial.ts` is the tap streak.
 
 Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
 (`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
