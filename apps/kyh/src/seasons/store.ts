@@ -5,7 +5,8 @@
 // system's). One store, so whatever follows it (the toggle, the menu, the
 // bursts, the drift, the showcase) reads the same theme; it's painted onto
 // <html> too (`paint.ts`). Before the page runs, `script.ts` paints the
-// calendar's.
+// calendar's. While subscribed, it follows the system's light or dark, the
+// visitor's pick in another tab, and the calendar into a new day.
 import { useSyncExternalStore } from "react";
 
 import { dayKey } from "./calendar";
@@ -27,6 +28,10 @@ let today = { key: 0, season: DEFAULT_SEASON };
 let own: { mode: Mode | null } | null = null;
 let system: MediaQueryList | null = null;
 const listeners = new Set<() => void>();
+/** The season and light or dark on <html>, so a change that doesn't show isn't repainted. */
+let painted = "";
+/** The window and document listeners, while anything is subscribed. */
+let listening: AbortController | null = null;
 
 /** The calendar's season for today. */
 export const calendarSeason = () => {
@@ -74,17 +79,61 @@ const themeAt = (season: SeasonId, visitor: Mode) => {
 
 export const currentTheme = (): Theme => themeAt(currentSeason(), ownMode());
 
-const paint = () => {
-  const { mode, season } = currentTheme();
-  paintTheme(document.documentElement, season, mode);
+/** What a theme shows on <html>. */
+const shownAs = ({ mode, season }: Theme) => `${season}|${mode}`;
+
+/**
+ * Runs a repaint with every transition held still, so nothing fades from the
+ * old colors at its own pace (a link's border a beat behind its text).
+ */
+const withoutTransitions = (repaint: () => void) => {
+  const still = document.createElement("style");
+  still.textContent = "*,*::before,*::after{transition:none!important}";
+  document.head.append(still);
+  repaint();
+  // Reading a style applies the repaint while transitions are off.
+  getComputedStyle(document.body).getPropertyValue("color");
+  setTimeout(() => still.remove(), 1);
+};
+
+/** Paints the theme in play on <html>, if it isn't there already; a change is painted without transitions. */
+const paint = (change: boolean) => {
+  const theme = currentTheme();
+  if (shownAs(theme) === painted) {
+    return;
+  }
+  painted = shownAs(theme);
+  const { mode, season } = theme;
+  const repaint = () => paintTheme(document.documentElement, season, mode);
+  if (change) {
+    withoutTransitions(repaint);
+  } else {
+    repaint();
+  }
 };
 
 const changed = () => {
   if (typeof document !== "undefined") {
-    paint();
+    paint(true);
   }
   for (const listener of listeners) {
     listener();
+  }
+};
+
+/** The visitor's light or dark, picked in another tab. */
+const onStorage = (event: StorageEvent) => {
+  // A null key is storage cleared.
+  if (event.key === MODE_KEY || event.key === null) {
+    own = { mode: storedMode() };
+    changed();
+  }
+};
+
+/** A tab left open into another day takes up that day's season when it's next looked at. */
+const onVisible = () => {
+  if (document.visibilityState === "visible" && shownAs(currentTheme()) !== painted) {
+    changed();
   }
 };
 
@@ -114,15 +163,20 @@ export const toggleTheme = () => {
 export const subscribeToTheme = (listener: () => void) => {
   if (listeners.size === 0 && typeof window !== "undefined") {
     // The head script painted the page if it could; this paints it either way.
-    paint();
+    paint(false);
+    listening = new AbortController();
+    const { signal } = listening;
     // Following the system, the theme turns when it does.
-    system?.addEventListener("change", changed);
+    system?.addEventListener("change", changed, { signal });
+    window.addEventListener("storage", onStorage, { signal });
+    document.addEventListener("visibilitychange", onVisible, { signal });
   }
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
     if (listeners.size === 0) {
-      system?.removeEventListener("change", changed);
+      listening?.abort();
+      listening = null;
     }
   };
 };

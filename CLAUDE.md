@@ -107,7 +107,12 @@ for today unless the menu picked another (gone on reload), else the
 visitor's own light or dark, kept in localStorage (`theme`) or their
 system's. It paints `data-theme` (what global.css and Tailwind's `dark:`
 read), `color-scheme` and the season's tint on `<html>` (`paint.ts`), once
-it's first subscribed to and on every change. The
+it's first subscribed to and on every change that shows, with transitions held
+still for the repaint so nothing fades in at its own pace (the toggle's sun and
+moon turn by motion, not CSS). While subscribed it follows the system's light
+or dark, a pick in another tab (`storage`), and the calendar into a new day
+when the tab is next looked at (`visibilitychange`); a season picked in the
+menu stays in its tab. The
 dock's theme toggle wears the theme's icon: a tap flips light and dark, or
 takes a season back to the visitor's own; held down (or ArrowUp), it blooms
 the themes as a radial menu over itself (`src/components/season-bloom.tsx`):

@@ -11,12 +11,15 @@ const SunMoon = ({ isLight }: { isLight: boolean }) => {
   // One mask per icon: the themes menu draws a sun and a moon beside the toggle's own.
   const mask = useSvgId("moon-mask");
   return (
-    <svg
+    // Turned by motion, not a CSS transition: the store holds those still while it repaints.
+    <motion.svg
       viewBox="0 0 18 18"
       width="100%"
       height="100%"
-      style={{ transform: isLight ? "rotate(90deg)" : "rotate(40deg)" }}
-      className="overflow-visible transition-transform duration-500 ease-in-out"
+      className="overflow-visible"
+      initial={false}
+      animate={{ rotate: isLight ? 90 : 40 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
       aria-hidden="true"
     >
       <mask id={mask}>
@@ -87,7 +90,7 @@ const SunMoon = ({ isLight }: { isLight: boolean }) => {
           transition={{ delay: isLight ? 0.25 : 0 }}
         />
       </g>
-    </svg>
+    </motion.svg>
   );
 };
 
