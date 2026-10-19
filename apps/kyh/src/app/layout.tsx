@@ -7,6 +7,7 @@ import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer/cursors";
 import { Providers } from "@/components/providers";
 import { SeasonScript } from "@/components/season-script";
+import { SeasonDrift } from "@/seasons/drift";
 import { siteConfig } from "@/lib/config";
 import { JsonLd } from "@/components/json-ld";
 
@@ -87,6 +88,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
       <JsonLd />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
+        <SeasonDrift />
         <Multiplayer />
         <Dock />
         {children}

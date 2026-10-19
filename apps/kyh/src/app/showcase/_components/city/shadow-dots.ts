@@ -3,22 +3,18 @@
 // of every building reads as printed while lit faces stay flat.
 import type { WebGLProgramParametersWithUniforms } from "three";
 
-import { shadeOf } from "@/lib/brightness";
+import type { Theme } from "./palette";
 
 /** Dot size in CSS pixels. */
 const DOT = 2;
 
 /** How a dot changes the wash under it: darker by day, paler by night, as ink would. */
-const DAY_INK = 0.8;
-const NIGHT_INK = 1.3;
+const INK: Record<Theme, number> = { day: 0.8, night: 1.3 };
 
-/** The ink at `light` (night 0 … day 1), between the two as the grounds are (brightness.ts). */
-const inkAt = (light: number) => NIGHT_INK + (DAY_INK - NIGHT_INK) * shadeOf(light);
-
-export const createShadowDots = (light: number) => {
+export const createShadowDots = (time: Theme) => {
   const uniforms = {
     dotCell: { value: DOT },
-    dotInk: { value: inkAt(light) },
+    dotInk: { value: INK[time] },
   };
   return {
     patch: (shader: WebGLProgramParametersWithUniforms) => {
@@ -36,11 +32,11 @@ export const createShadowDots = (light: number) => {
         }`,
       )}`;
     },
-    setLight: (next: number) => {
-      uniforms.dotInk.value = inkAt(next);
-    },
     setPixelRatio: (ratio: number) => {
       uniforms.dotCell.value = Math.max(1, Math.round(DOT * ratio));
+    },
+    setTime: (next: Theme) => {
+      uniforms.dotInk.value = INK[next];
     },
   };
 };

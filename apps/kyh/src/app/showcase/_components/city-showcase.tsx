@@ -9,11 +9,8 @@ import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
 import { schemeAt } from "./city/palette";
-import type { DialState } from "@/lib/dial-state";
-import { dialState, subscribeDial } from "@/lib/dial-state";
-import { SeasonDrift } from "@/seasons/drift";
 import type { SeasonId } from "@/seasons/seasons";
-import { DEFAULT_SEASON, seasonOf } from "@/seasons/seasons";
+import { DEFAULT_SEASON } from "@/seasons/seasons";
 import { currentSeason, subscribeToSeason } from "@/seasons/store";
 import { Pin, PinList } from "./city-pins";
 
@@ -24,7 +21,6 @@ interface CityMount extends CityCallbacks {
   surface: HTMLElement;
   projects: CityProject[];
   scheme: Scheme;
-  season: SeasonId;
   reducedMotion: boolean;
 }
 
@@ -50,18 +46,9 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-/** How light the city is (the theme's own end until the dial's brightness moves) and how the season tints it. */
-const schemeOf = (
-  resolvedTheme: string | undefined,
-  { light }: DialState,
-  season: SeasonId,
-): Scheme => {
-  const { tint } = seasonOf(season);
-  if (light !== null) {
-    return schemeAt(light / 100, tint);
-  }
-  return schemeAt(resolvedTheme === "dark" ? 0 : 1, tint);
-};
+/** The city by day or night, as the site's theme is, in the season's look. */
+const schemeOf = (resolvedTheme: string | undefined, season: SeasonId): Scheme =>
+  schemeAt(resolvedTheme === "dark" ? "night" : "day", season);
 
 interface TourToggleProps {
   touring: boolean;
@@ -98,7 +85,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const { resolvedTheme } = useTheme();
   // The season needs the visitor's date, which a render (on the server too)
   // can't read: the city starts in the default's and takes theirs on mount.
-  const schemeRef = useRef(schemeOf(resolvedTheme, dialState(), DEFAULT_SEASON));
+  const schemeRef = useRef(schemeOf(resolvedTheme, DEFAULT_SEASON));
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -147,7 +134,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           projects,
           reducedMotion,
           scheme: schemeRef.current,
-          season: currentSeason(),
           surface,
         });
         if (!isMounted) {
@@ -155,9 +141,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           return;
         }
         cityRef.current = city;
-        // The theme, the dial or the season may have moved while the city loaded.
+        // The theme or the season may have changed while the city loaded.
         city.setScheme(schemeRef.current);
-        city.setSeason(currentSeason());
         city.setPins(pinsRef.current);
         setStatus("ready");
         if (process.env.NODE_ENV === "development") {
@@ -179,30 +164,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     };
   }, [projects, reducedMotion]);
 
-  // The dial moves many times a second: it reaches the city by subscription,
-  // not a render of the page, and so does the season.
+  // The season reaches the city by subscription, not a render of the page.
   useEffect(() => {
     const update = () => {
-      schemeRef.current = schemeOf(resolvedTheme, dialState(), currentSeason());
+      schemeRef.current = schemeOf(resolvedTheme, currentSeason());
       cityRef.current?.setScheme(schemeRef.current);
     };
     update();
-    const stopDial = subscribeDial(update);
-    const stopSeason = subscribeToSeason(update);
-    return () => {
-      stopDial();
-      stopSeason();
-    };
+    return subscribeToSeason(update);
   }, [resolvedTheme]);
-
-  // The season's decorations, put out in the town as it changes.
-  useEffect(
-    () =>
-      subscribeToSeason(() => {
-        cityRef.current?.setSeason(currentSeason());
-      }),
-    [],
-  );
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
@@ -215,7 +185,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   return (
     <div ref={rootRef} className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
-      <SeasonDrift />
       {/* Visitors' lines and other people's pointers, under the pins so a lit card stays on top. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {status === "failed" ? (

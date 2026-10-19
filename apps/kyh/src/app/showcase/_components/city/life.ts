@@ -1,5 +1,6 @@
 // The town's life: everything moving on the ground, drawn smoothly between
-// ticks; the visitors' lines over their heads; cars and people you can pick
+// ticks; the visitors' lines over their heads, and whatever the season has
+// people send up (hearts at Valentine's); cars and people you can pick
 // up, carry and drop; and, through the room, everyone else doing the same.
 // The engine hands over pointer positions in the town and a way to put town
 // points on screen; this draws the rest.
@@ -11,6 +12,7 @@ import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
 import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
+import type { Emote } from "./season-decor";
 import type { Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";
@@ -23,6 +25,7 @@ import type { Ground, Held } from "./carry";
 import { carryTo, flightOf, HANG, LIFT, pickUp, RAISE, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
+import { DECOR } from "./season-decor";
 import { TICK } from "./traffic";
 import { doorwaySize, INSIDE, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
@@ -41,6 +44,14 @@ const SPEAKING = 2;
 /** One visitor in this many says something on the way out. */
 const TALKATIVE = 3;
 const SPEAK_SCALE = 26;
+/**
+ * How long an emote takes to rise and fade (ms), about how often someone
+ * sends one up, the most up at once, and the zoom they need to be seen.
+ */
+const EMOTE_MS = 2200;
+const EMOTE_EVERY_MS = 500;
+const EMOTING = 6;
+const EMOTE_SCALE = 14;
 /** A snapshot this many ticks old is still worth catching up from. */
 const FRESH = 1200;
 
@@ -76,6 +87,8 @@ export interface LifeOptions {
   placed: readonly Placed[];
   scheme: Scheme;
   overlay: HTMLElement | null;
+  /** No emotes rising, for a visitor who'd rather not see motion. */
+  still: boolean;
   /** The room to share the town in; null keeps it to this browser. */
   room: string | null;
   /** A town point on screen, in CSS pixels from the canvas's corner. */
@@ -364,6 +377,47 @@ export const createLife = (options: LifeOptions) => {
     }
   };
 
+  const emoteIn = (scheme: Scheme) => (options.still ? null : (DECOR[scheme.season].emote ?? null));
+  /** What the season has people send up, if anything, and who is sending one up since when. */
+  let emote: Emote | null = emoteIn(options.scheme);
+  let puffs: { born: number; id: number; key: string }[] = [];
+  let puffsMade = 0;
+  let nextPuff = 0;
+  const people = [...KEYS.walker, ...KEYS.visitor];
+
+  /** Now and then someone on screen sends up the season's emote, which rises from their head. */
+  const send = (time: number) => {
+    if (!emote || openedAt === null || options.scale() < EMOTE_SCALE) {
+      puffs = [];
+      return;
+    }
+    puffs = puffs.filter((puff) => time - puff.born < EMOTE_MS);
+    if (time >= nextPuff && puffs.length < EMOTING) {
+      nextPuff = time + EMOTE_EVERY_MS * (0.5 + Math.random());
+      const { height, width } = options.size();
+      const seen = people.filter((key) => {
+        const spot = shown.get(key);
+        if (!spot?.shown || puffs.some((puff) => puff.key === key)) {
+          return false;
+        }
+        const at = options.toScreen(spot.x, spot.y, spot.z);
+        return at.x > 0 && at.x < width && at.y > 0 && at.y < height;
+      });
+      const key = seen[Math.floor(Math.random() * seen.length)];
+      if (key !== undefined) {
+        puffsMade += 1;
+        puffs.push({ born: time, id: puffsMade, key });
+      }
+    }
+    for (const puff of puffs) {
+      const spot = shown.get(puff.key);
+      if (spot?.shown) {
+        const head = options.toScreen(spot.x, spot.y + 0.28, spot.z);
+        overlay.emote(puff.id, emote, head.x, head.y, (time - puff.born) / EMOTE_MS);
+      }
+    }
+  };
+
   /** This player's chat: their draft, their last line until it comes down, and where their mouse is. */
   let draft: string | null = null;
   let said: Said | null = null;
@@ -553,7 +607,10 @@ export const createLife = (options: LifeOptions) => {
       openedAt = next ? performance.now() : null;
       group.visible = next;
     },
-    setScheme: (scheme: Scheme) => actors.setScheme(scheme),
+    setScheme: (scheme: Scheme) => {
+      actors.setScheme(scheme);
+      emote = emoteIn(scheme);
+    },
     /** What this player is typing, or null once they stop. */
     type: (next: string | null) => {
       draft = next;
@@ -582,6 +639,7 @@ export const createLife = (options: LifeOptions) => {
       });
       actors.update(cars, walkers, visitors);
       speak(world.tick);
+      send(performance.now());
       point(others);
       overlay.end();
     },

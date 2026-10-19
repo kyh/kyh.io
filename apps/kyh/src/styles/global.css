@@ -25,33 +25,16 @@
   --logo-dr: #ea4c89;
 
   /* Semantic colors */
-  /* Backgrounds blend the light palette (100%) and the dark one (0%); the theme
-     sets --light, and the toggle's brightness easter egg sets anything between.
-     Each theme keeps its backgrounds off the mid-greys (--shade: neither goes
-     more than about a third of the way toward the other), and its text runs to black or white as the flip at 50% nears
-     (--contrast: 100% at the theme's end, 0% at the flip), so every brightness
-     reads. lib/brightness.ts is the same pair of curves for the showcase's town. */
-  --light: 100%;
-  --shade: calc(34% + var(--light) * 0.66);
-  --contrast: clamp(0%, (var(--light) - 50%) * 2, 100%);
-  --bg-color: color-mix(in oklab, var(--colors-gray300) var(--shade), var(--colors-gray900));
-  --bg-highlighted: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray1000));
-  --body-color: color-mix(in oklab, var(--colors-gray900) var(--contrast), var(--colors-gray1000));
-  --body-color-faded: color-mix(
-    in oklab,
-    var(--colors-gray500) var(--contrast),
-    var(--colors-gray700)
-  );
+  --bg-color: var(--colors-gray300);
+  --bg-highlighted: var(--colors-gray0);
+  --body-color: var(--colors-gray900);
+  --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray1000);
-  --border-color: color-mix(in oklab, var(--colors-gray200) var(--shade), var(--colors-gray800));
+  --border-color: var(--colors-gray200);
   --link-color: var(--body-color);
   --link-color-hover: var(--colors-gray1000);
-  --panel: color-mix(in oklab, var(--colors-gray0) var(--shade), var(--colors-gray950));
-  --dock-bg: color-mix(
-    in oklab,
-    color-mix(in srgb, var(--colors-gray900) 12%, transparent) var(--shade),
-    color-mix(in srgb, var(--colors-gray600) 12%, transparent)
-  );
+  --panel: var(--colors-gray0);
+  --dock-bg: color-mix(in srgb, var(--colors-gray900) 12%, transparent);
   --dock-border-color: color-mix(in srgb, var(--colors-gray200) 18.8%, transparent);
   --dock-shadow: color-mix(in srgb, var(--colors-gray900) 12%, transparent);
 
@@ -63,16 +46,14 @@
 
 [data-theme="dark"] {
   --logo-gh: #ffffff;
-  --light: 0%;
-  --shade: calc(var(--light) * 0.73);
-  --contrast: clamp(0%, (50% - var(--light)) * 2, 100%);
-  --body-color: color-mix(in oklab, var(--colors-gray300) var(--contrast), var(--colors-gray0));
-  --body-color-faded: color-mix(
-    in oklab,
-    var(--colors-gray500) var(--contrast),
-    var(--colors-gray300)
-  );
+  --bg-color: var(--colors-gray900);
+  --bg-highlighted: var(--colors-gray1000);
+  --body-color: var(--colors-gray300);
+  --body-color-faded: var(--colors-gray500);
   --body-color-highlighted: var(--colors-gray0);
+  --border-color: var(--colors-gray800);
+  --panel: var(--colors-gray950);
+  --dock-bg: color-mix(in srgb, var(--colors-gray600) 12%, transparent);
   --link-color-hover: var(--colors-gray0);
   --dock-border-color: color-mix(in srgb, var(--colors-gray800) 50%, transparent);
 }
@@ -95,271 +76,40 @@ html[data-season] {
   --colors-gray1000: oklch(7% calc(0.03 * var(--season-chroma)) var(--season-hue));
 }
 
-/* The theme dial's controls, after DialKit's, on Base UI's slider and select:
-   on a dock tile's background, in tints of the text color so they follow the
-   theme. A control is "in hand" when hovered, dragged or focused from the
-   keyboard. */
-.dial-slider,
-.dial-select {
-  --dial-ink: var(--body-color);
+/* A layer of a season's piece that swings like a beating wing (src/seasons/art.ts):
+   about its pivot, in the piece's own 24×24 units, foreshortened as it rises. */
+.piece-swing {
+  transform-box: view-box;
+  transform-origin: var(--swing-x) var(--swing-y);
+  animation: piece-swing 0.24s ease-in-out infinite alternate;
 }
 
-.dial-slider {
-  position: relative;
-  height: 48px;
-  overflow: hidden;
-  border-radius: 12px;
-  cursor: pointer;
-  user-select: none;
-  touch-action: none;
-}
-
-.dial-slider:has(:focus-visible) {
-  outline: 2px solid color-mix(in srgb, var(--dial-ink) 55%, transparent);
-  outline-offset: 2px;
-}
-
-/* The dial takes over the dock: two controls to it, as wide as the screen allows. */
-.dial-slot {
-  width: clamp(120px, calc(50vw - 36px), 200px);
-}
-
-.dial-slider-hashmark {
-  position: absolute;
-  top: 50%;
-  width: 1px;
-  height: 8px;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  transition: background 200ms;
-}
-
-.dial-slider-fill {
-  top: 0;
-  bottom: 0;
-  pointer-events: none;
-  background: color-mix(in srgb, var(--dial-ink) 7%, transparent);
-  transition: background 150ms;
-}
-
-/* A container, so the handle can measure its ends in cqw. */
-.dial-slider-track {
-  height: 100%;
-  container-type: inline-size;
-}
-
-/* The thumb sits centered on the value; its bar is what shows. The bar rides
-   the thumb, shifted just inside the fill's edge, but stays 6px inside the
-   track's ends: past them it's clipped. */
-.dial-slider-thumb {
-  width: 3px;
-  height: 20px;
-}
-
-.dial-slider-handle {
-  --at: calc(var(--dial-percent) * 1cqw);
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--dial-ink) 90%, transparent);
-  opacity: 0;
-  scale: 0.25 1;
-  transition:
-    opacity 150ms,
-    scale 250ms cubic-bezier(0.3, 1.4, 0.6, 1);
-  translate: calc(clamp(6px, var(--at) - 7px, 100cqw - 6px) - var(--at)) 0;
-}
-
-/* Released, the fill and the handle glide to the value; dragged, they follow. */
-.dial-slider:not([data-dragging]) .dial-slider-fill {
-  transition:
-    background 150ms,
-    width 250ms cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.dial-slider:not([data-dragging]) .dial-slider-thumb {
-  transition: inset-inline-start 250ms cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.dial-slider-label,
-.dial-slider-value {
-  position: absolute;
-  top: 50%;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  pointer-events: none;
-  transform: translateY(-50%);
-  color: color-mix(in srgb, var(--dial-ink) 60%, transparent);
-  transition: color 150ms;
-}
-
-.dial-slider-label {
-  left: 10px;
-}
-
-.dial-slider-value {
-  right: 12px;
-}
-
-/* In hand: ticks, a stronger fill, the value in full, and the handle. */
-.dial-slider:is(:hover, [data-dragging], :has(:focus-visible)) {
-  & .dial-slider-hashmark {
-    background: color-mix(in srgb, var(--dial-ink) 15%, transparent);
+@keyframes piece-swing {
+  from {
+    rotate: var(--swing-from);
+    scale: 0.8 1;
   }
-
-  & .dial-slider-fill {
-    background: color-mix(in srgb, var(--dial-ink) 11%, transparent);
-  }
-
-  & .dial-slider-value {
-    color: var(--dial-ink);
+  to {
+    rotate: var(--swing-to);
   }
 }
 
-/* The handle, state by state, each overriding the one before: in hand it comes
-   up, dragged it's solid, and in hand over the label or the value it fades
-   back. */
-.dial-slider:is(:hover, [data-dragging], :has(:focus-visible)) .dial-slider-handle {
-  opacity: 0.5;
-  scale: 1;
-}
-
-.dial-slider[data-dragging] .dial-slider-handle {
-  opacity: 0.9;
-}
-
-.dial-slider[data-dodge]:is(:hover, [data-dragging], :has(:focus-visible)) .dial-slider-handle {
-  opacity: 0.1;
-  scale: 1 0.75;
-}
-
-/* The season picker: a tile like the slider's, the label left and the season
-   right, opening a list of them above the dock. */
-.dial-select {
-  display: flex;
-  width: 100%;
-  height: 48px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 12px 0 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  container-type: inline-size;
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dial-ink) 55%, transparent);
-    outline-offset: 2px;
-  }
-}
-
-.dial-select-label {
-  color: color-mix(in srgb, var(--dial-ink) 60%, transparent);
-  transition: color 150ms;
-}
-
-.dial-select-value {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-  color: color-mix(in srgb, var(--dial-ink) 60%, transparent);
-  transition: color 150ms;
-}
-
-.dial-select-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* On a narrow dock, the season shows by its piece alone. */
-@container (width < 150px) {
-  .dial-select-name {
-    display: none;
-  }
-}
-
-.dial-select:is(:hover, [data-popup-open], :focus-visible) .dial-select-value {
-  color: var(--dial-ink);
-}
-
-.dial-select-popup {
-  min-width: max(var(--anchor-width), 220px);
-  max-height: var(--available-height);
-  overflow-y: auto;
-  padding: 4px;
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  background: var(--panel);
-  box-shadow: 0 16px 40px 0 var(--dock-shadow);
-  color: var(--body-color);
-  transform-origin: var(--transform-origin);
-  transition:
-    opacity 150ms,
-    scale 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
-
-  &[data-starting-style],
-  &[data-ending-style] {
-    opacity: 0;
-    scale: 0.96;
-  }
-}
-
-.dial-select-item {
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  outline: none;
-  user-select: none;
-
-  &[data-highlighted] {
-    background: color-mix(in srgb, var(--body-color) 8%, transparent);
-  }
-
-  &[data-selected] {
-    font-weight: 600;
-  }
-}
-
-.dial-select-days {
-  font-size: 11px;
-  color: var(--body-color-faded);
-}
-
-/* A season's piece that beats like a wing (src/seasons/art.ts). */
-.piece-flap {
-  transform-box: fill-box;
-  transform-origin: 50% 25%;
-  animation: piece-flap 0.24s ease-in-out infinite;
-}
-
-@keyframes piece-flap {
-  50% {
-    scale: 1 0.3;
-  }
-}
-
-/* The season's pieces drifting over the showcase's town (src/seasons/drift.tsx):
-   each one crosses the screen, swaying (or bobbing, flitting across) as it
-   goes, on transforms alone. */
+/* What falls across every page in a season that has it (src/seasons/drift.tsx):
+   each piece falls the height of the screen, swaying as it goes (leaves
+   tumble, turning over), on transforms alone, under the dock and the cursors. */
 .season-drift {
-  position: absolute;
+  --snow: #dce7f3;
+  --snow-edge: rgb(96 128 168 / 35%);
+  position: fixed;
   inset: 0;
+  z-index: 5;
   overflow: hidden;
   pointer-events: none;
+
+  [data-theme="dark"] & {
+    --snow: #f3f7ff;
+    --snow-edge: rgb(255 255 255 / 20%);
+  }
 }
 
 .season-drift-piece {
@@ -368,18 +118,8 @@ html[data-season] {
   left: var(--drift-x);
   width: var(--drift-size);
   height: var(--drift-size);
-  opacity: 0.85;
+  opacity: 0.9;
   animation: drift-fall var(--drift-duration) linear var(--drift-delay) infinite;
-
-  [data-drift="rise"] & {
-    animation-name: drift-rise;
-  }
-
-  [data-drift="flit"] & {
-    top: var(--drift-x);
-    left: 0;
-    animation-name: drift-flit;
-  }
 }
 
 .season-drift-sway {
@@ -390,9 +130,16 @@ html[data-season] {
   animation: drift-sway calc(var(--drift-duration) / 4) ease-in-out var(--drift-delay) infinite
     alternate;
 
-  [data-drift="flit"] & {
-    animation-name: drift-bob;
+  [data-drift="leaves"] & {
+    animation-name: drift-tumble;
+    animation-duration: calc(var(--drift-duration) / 5);
   }
+}
+
+.season-drift-dot {
+  border-radius: 50%;
+  background: var(--snow);
+  box-shadow: 0 0 0 0.5px var(--snow-edge);
 }
 
 @keyframes drift-fall {
@@ -401,24 +148,6 @@ html[data-season] {
   }
   to {
     translate: 0 110vh;
-  }
-}
-
-@keyframes drift-rise {
-  from {
-    translate: 0 110vh;
-  }
-  to {
-    translate: 0 -10vh;
-  }
-}
-
-@keyframes drift-flit {
-  from {
-    translate: -10vw 0;
-  }
-  to {
-    translate: 110vw 0;
   }
 }
 
@@ -433,17 +162,25 @@ html[data-season] {
   }
 }
 
-@keyframes drift-bob {
+/* A leaf turns over as it swings: its width runs through zero to its back. */
+@keyframes drift-tumble {
   from {
-    translate: 0 calc(var(--drift-sway) * -1);
+    translate: calc(var(--drift-sway) * -1) 0;
+    rotate: -40deg;
+    scale: 1 1;
+  }
+  50% {
+    scale: -0.4 1;
   }
   to {
-    translate: 0 var(--drift-sway);
+    translate: var(--drift-sway) 0;
+    rotate: 50deg;
+    scale: 1 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .piece-flap {
+  .piece-swing {
     animation: none;
   }
 }
@@ -608,6 +345,67 @@ button.link {
   }
 }
 
+/* The seasons blooming out of the theme toggle (components/season-bloom.tsx):
+   a panel that springs from the button (Base UI's --transform-origin), a grid
+   of seasons, the one in use ringed. */
+.season-bloom {
+  transform-origin: var(--transform-origin);
+  border: 1px solid var(--border-color);
+  border-radius: 22px;
+  background-color: var(--panel);
+  box-shadow:
+    var(--colors-shadowLight) 0px 10px 38px -10px,
+    var(--colors-shadowDark) 0px 10px 20px -15px;
+  overflow: hidden;
+  outline: none;
+}
+
+.season-bloom-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 4.5rem);
+  gap: 2px;
+  padding: 6px;
+}
+
+.season-bloom-item {
+  display: grid;
+  place-items: center;
+  height: 4.75rem;
+  border-radius: 16px;
+  color: var(--body-color-faded);
+  outline: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  &[data-highlighted] {
+    background-color: color-mix(in srgb, var(--bg-color) 55%, transparent);
+    color: var(--body-color);
+  }
+
+  &[data-checked] {
+    box-shadow: inset 0 0 0 1.5px var(--border-color);
+    color: var(--body-color-highlighted);
+  }
+}
+
+.season-bloom-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.season-bloom-name {
+  max-width: 4rem;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  text-wrap: balance;
+}
+
 .tooltip-line {
   --mask-background: #ffffff;
   --fade-stop: 90%;
@@ -737,50 +535,34 @@ button.link {
    In the components layer so Tailwind utilities can override them. */
 @layer components {
   .city {
-    /* Day's greys: plain, as the town's are, unless a season tints them; then the site's. */
-    --city-day-paper: #f7f7f7;
-    --city-day-paper-hover: #ededed;
-    --city-day-line: #cbcbcb;
-    --city-day-shadow: #e0e0e0;
-    --city-day-sea: #e7e7e7;
-    --city-theme-ink: #454545;
-    --city-theme-ink-soft: #7d7d7d;
-    --city-ink-pole: var(--colors-gray1000);
-
-    /* Grounds and lines mix toward night's slate by --shade, as the site's
-       backgrounds and borders do; ink keeps the theme's own by --contrast and
-       runs to black or white toward the flip, as text does. The town's canvas
-       takes the same curves (lib/brightness.ts). */
-    --city-paper: color-mix(in oklab, var(--city-day-paper) var(--shade), var(--colors-gray800));
-    --city-paper-hover: color-mix(
-      in oklab,
-      var(--city-day-paper-hover) var(--shade),
-      color-mix(in oklab, var(--colors-gray800), var(--colors-gray700))
-    );
-    --city-line: color-mix(in oklab, var(--city-day-line) var(--shade), var(--colors-gray700));
-    --city-shadow: color-mix(in oklab, var(--city-day-shadow) var(--shade), var(--colors-gray900));
-    --city-sea: color-mix(in oklab, var(--city-day-sea) var(--shade), var(--colors-gray900));
-    --city-ink: color-mix(in oklab, var(--city-theme-ink) var(--contrast), var(--city-ink-pole));
-    --city-ink-soft: color-mix(
-      in oklab,
-      var(--city-theme-ink-soft) var(--contrast),
-      var(--city-theme-ink)
-    );
+    /* Day's greys: plain, as the town's are, unless a season tints them; then
+       the site's. Night's are the site's slate. */
+    --city-paper: #f7f7f7;
+    --city-paper-hover: #ededed;
+    --city-line: #cbcbcb;
+    --city-shadow: #e0e0e0;
+    --city-sea: #e7e7e7;
+    --city-ink: #454545;
+    --city-ink-soft: #7d7d7d;
 
     html[data-season] & {
-      --city-day-paper: var(--colors-gray50);
-      --city-day-paper-hover: var(--colors-gray100);
-      --city-day-line: var(--colors-gray300);
-      --city-day-shadow: var(--colors-gray200);
-      --city-day-sea: var(--colors-gray200);
-      --city-theme-ink: var(--colors-gray700);
-      --city-theme-ink-soft: var(--colors-gray500);
+      --city-paper: var(--colors-gray50);
+      --city-paper-hover: var(--colors-gray100);
+      --city-line: var(--colors-gray300);
+      --city-shadow: var(--colors-gray200);
+      --city-sea: var(--colors-gray200);
+      --city-ink: var(--colors-gray700);
+      --city-ink-soft: var(--colors-gray500);
     }
 
     html[data-theme="dark"] & {
-      --city-theme-ink: var(--colors-gray300);
-      --city-theme-ink-soft: var(--colors-gray400);
-      --city-ink-pole: var(--colors-gray0);
+      --city-paper: var(--colors-gray800);
+      --city-paper-hover: color-mix(in oklab, var(--colors-gray800), var(--colors-gray700));
+      --city-line: var(--colors-gray700);
+      --city-shadow: var(--colors-gray900);
+      --city-sea: var(--colors-gray900);
+      --city-ink: var(--colors-gray300);
+      --city-ink-soft: var(--colors-gray400);
     }
   }
 
@@ -910,6 +692,24 @@ button.link {
       background: var(--city-paper);
       content: "";
       transform: translateX(-50%) rotate(45deg);
+    }
+  }
+
+  /* What the season has someone send up (a heart at Valentine's): centered on
+     their head, then risen and faded each frame (overlay.ts). */
+  .city-emote {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 16px;
+    height: 16px;
+    filter: drop-shadow(0 1px 0 var(--city-shadow));
+    will-change: transform, opacity;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
     }
   }
 

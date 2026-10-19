@@ -1,7 +1,8 @@
 // The site's seasonal themes, each whole in one entry: the days it runs, how
 // it turns the site's greys, the piece an easter-egg find throws (`art.ts`),
-// its confetti, and how that piece drifts over the showcase's town. The
-// calendar picks one for today, unless the theme dial has (`store.ts`).
+// its confetti, and what falls across every page (snow, leaves) if anything.
+// The calendar picks one for today, unless the seasons blooming out of the
+// theme toggle have (`store.ts`).
 // Adding a theme is adding an entry here, and its decorations for the
 // showcase's town (city/season-decor.ts, keyed by season so none is missed).
 // Pure.
@@ -17,8 +18,8 @@ export interface GreyTint {
   chroma: number;
 }
 
-/** How a season's piece crosses the showcase: snow falls, lanterns rise, bats flit across. */
-export type Drift = "fall" | "rise" | "flit";
+/** What falls across every page: snow drifting down, or leaves tumbling. */
+export type Drift = "snow" | "leaves";
 
 /** One side of a bit of confetti and its flip side. */
 export interface ConfettiSide {
@@ -28,13 +29,13 @@ export interface ConfettiSide {
 
 export interface Season {
   id: string;
-  /** In the theme picker. */
+  /** In the seasons menu. */
   name: string;
   /** The days it runs in a year; the default season has none, and runs when no other does. */
   days?: (year: number) => Window | null;
   /** Null keeps the site's own slate. */
   tint: GreyTint | null;
-  /** What an easter-egg find throws, and what drifts over the showcase. */
+  /** What an easter-egg find throws, and what falls across the page if the season has `drift`. */
   art: Art;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
@@ -110,41 +111,42 @@ const PAINTED_EGG = {
 } satisfies Art;
 
 const NIGHT = "hsl(270, 30%, 8%)";
-/** A moonlit edge, so a bat still shows against the night. */
-const MOONLIT = "hsl(270, 45%, 78%)";
+/** A faint moonlit edge, so a bat still shows against the night. */
+const MOONLIT = "hsl(270 45% 78% / 0.75)";
 
+/**
+ * A bat's wing on one side (-1 left, 1 right), `x` measured out from the
+ * body: a curved leading edge out to a pointed tip, and a trailing edge
+ * scalloped between the fingers. It beats about its shoulder, high above
+ * the body and then just below it.
+ */
+const batWing = (side: -1 | 1) => {
+  const at = (x: number, y: number) => point(12 + side * x, y);
+  return {
+    d: `M${at(1.1, 10.2)}C${at(2.4, 8.6)} ${at(4.2, 7.4)} ${at(6.4, 7)}C${at(8.6, 7.4)} ${at(10.2, 8.4)} ${at(11.6, 10.9)}Q${at(10.1, 10.2)} ${at(9.2, 12.6)}Q${at(7.5, 11.4)} ${at(6, 13.6)}Q${at(3.8, 12.2)} ${at(1.4, 14.4)}Z`,
+    fill: NIGHT,
+    stroke: MOONLIT,
+    strokeWidth: 0.4,
+    swing: { at: [12 + side * 1.2, 11.4], from: side * -32, to: side * 16 },
+  } as const;
+};
+
+/** The body, and the head and its ears wound the same way so they fill as one. */
+const BAT_BODY = `${ellipse(12, 13.2, 1.8, 2.9)}M13.6 9 13.5 6.2l-1.1 1.7h-.8l-1.1-1.7-.1 2.8a1.9 1.9 0 1 0 3.2 0Z`;
+
+// A flat silhouette, after a cartoon bat: ears up, wings beating.
 const BAT = {
-  gradients: {
-    body: {
-      from: [0, 0],
-      kind: "linear",
-      stops: [
-        [0, "hsl(270, 22%, 28%)"],
-        [1, NIGHT],
-      ],
-      to: [0, 1],
-    },
-  },
   layers: [
-    {
-      d: "M12 11C10 8.5 6 7 1.5 8.5c1.5 1 1.7 2.5 1.3 4.3 1.4-.8 2.8-.5 3.5.8 1-1 2.5-.8 3.3.4.8-1 1.6-1 2.4-.5ZM12 11c2-2.5 6-4 10.5-2.5-1.5 1-1.7 2.5-1.3 4.3-1.4-.8-2.8-.5-3.5.8-1-1-2.5-.8-3.3.4-.8-1-1.6-1-2.4-.5Z",
-      flap: true,
-      gradient: "body",
-      shadow: true,
-      stroke: MOONLIT,
-      strokeWidth: 0.6,
-    },
-    {
-      d: `${ellipse(12, 13.4, 2.1, 3.4)}M10.4 8.8 10.6 6l1 1.8h.8l1-1.8.2 2.8a2 2 0 1 1-3.2 0Z`,
-      gradient: "body",
-      stroke: MOONLIT,
-      strokeWidth: 0.6,
-    },
-    { d: `${circle(11.25, 9.9, 0.5)}${circle(12.75, 9.9, 0.5)}`, fill: "hsl(30, 100%, 60%)" },
+    batWing(-1),
+    batWing(1),
+    // Its edge, then the body over it, so the seam where head meets body is hidden.
+    { d: BAT_BODY, stroke: MOONLIT, strokeWidth: 0.8 },
+    { d: BAT_BODY, fill: NIGHT },
   ],
 } satisfies Art;
 
-const HEART =
+/** A heart, for a piece or anything else drawn in its 24×24 box. */
+export const HEART =
   "M12 21s-8.5-5.3-8.5-11.2A4.8 4.8 0 0 1 12 6.6a4.8 4.8 0 0 1 8.5 3.2C20.5 15.7 12 21 12 21Z";
 
 const CANDY_HEART = {
@@ -251,36 +253,6 @@ const LANTERN = {
   ],
 } satisfies Art;
 
-const SPARKLE = {
-  gradients: {
-    body: {
-      at: [0.5, 0.5],
-      kind: "radial",
-      r: 0.55,
-      stops: [
-        [0, "#ffffff"],
-        [0.3, "#fff3b0"],
-        [1, "#d9a21b"],
-      ],
-    },
-  },
-  layers: [
-    {
-      d: "M12 2.5c.7 5 2.3 8.1 9.5 9.5-7.2 1.4-8.8 4.5-9.5 9.5-.7-5-2.3-8.1-9.5-9.5 7.2-1.4 8.8-4.5 9.5-9.5Z",
-      gradient: "body",
-      shadow: true,
-      stroke: "#a87a10",
-      strokeWidth: 0.5,
-    },
-    {
-      d: "M19 2.6l.5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5Z",
-      fill: "#fff3b0",
-      stroke: "#a87a10",
-      strokeWidth: 0.3,
-    },
-  ],
-} satisfies Art;
-
 const MAPLE_LEAF = {
   gradients: {
     body: {
@@ -345,19 +317,6 @@ export const SEASONS = [
     tint: null,
   },
   {
-    art: SPARKLE,
-    confetti: [
-      ...named("gold", "gold"),
-      { back: "#ffffff", front: "#d1d5db" },
-      { back: "#4b5563", front: "#111827" },
-    ],
-    days: (year) => span(year, [12, 30], [1, 2]),
-    drift: "fall",
-    id: "newYear",
-    name: "New Year",
-    tint: { chroma: 1.5, hue: 90 },
-  },
-  {
     art: LANTERN,
     confetti: [
       { back: "#ff8a80", front: "#e11d2e" },
@@ -369,7 +328,7 @@ export const SEASONS = [
       const first = lunarNewYear(year);
       return first === null ? null : around(first, 1, 6);
     },
-    drift: "rise",
+    drift: null,
     id: "lunarNewYear",
     name: "Lunar New Year",
     tint: { chroma: 2.5, hue: 25 },
@@ -382,7 +341,7 @@ export const SEASONS = [
       { back: "#ffe4ec", front: "#ffffff" },
     ],
     days: (year) => span(year, [2, 10], [2, 14]),
-    drift: "rise",
+    drift: null,
     id: "valentines",
     name: "Valentine's Day",
     tint: { chroma: 2, hue: 350 },
@@ -391,7 +350,7 @@ export const SEASONS = [
     art: SHAMROCK,
     confetti: [{ back: "#86efac", front: "#15803d" }, ...named("green", "green", "gold")],
     days: (year) => span(year, [3, 14], [3, 17]),
-    drift: "fall",
+    drift: null,
     id: "stPatricks",
     name: "St. Patrick's Day",
     tint: { chroma: 2, hue: 140 },
@@ -420,7 +379,7 @@ export const SEASONS = [
     ],
     // The week up to Halloween.
     days: (year) => span(year, [10, 25], [10, 31]),
-    drift: "flit",
+    drift: null,
     id: "halloween",
     name: "Halloween",
     tint: { chroma: 2.5, hue: 295 },
@@ -434,7 +393,7 @@ export const SEASONS = [
     ],
     // Thanksgiving week, Monday to Sunday.
     days: (year) => around(nthWeekday(year, 11, 4, 4), 3, 3),
-    drift: "fall",
+    drift: "leaves",
     id: "thanksgiving",
     name: "Thanksgiving",
     tint: { chroma: 2, hue: 60 },
@@ -448,7 +407,7 @@ export const SEASONS = [
       ...named("gold"),
     ],
     days: (year) => span(year, [12, 15], [12, 26]),
-    drift: "fall",
+    drift: "snow",
     id: "christmas",
     name: "Christmas",
     tint: { chroma: 2, hue: 165 },
@@ -469,7 +428,7 @@ export const windowIn = (season: Season, year: number) => season.days?.(year) ??
 export const seasonOn = (date: Date): SeasonId => {
   const key = dayKey(date);
   const year = date.getFullYear();
-  // Last year's window too: New Year runs on past January 1st.
+  // Last year's window too, for one that runs on past December 31st.
   const runs = (season: Season) =>
     [year - 1, year].some((each) => {
       const days = windowIn(season, each);

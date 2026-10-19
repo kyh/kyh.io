@@ -10,8 +10,8 @@ const LAST_YEAR = 2036;
 
 /**
  * Every season's windows touching some years, flat as [from, to, season index,
- * …], first season first so the first match runs. The year before is in too:
- * its New Year runs into the first.
+ * …], first season first so the first match runs. The year before is in too,
+ * for a window that runs on past its December 31st.
  */
 export const windowsBetween = (first: number, last: number) =>
   SEASONS.flatMap((season, index) =>

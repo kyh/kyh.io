@@ -7,8 +7,7 @@ import { DEFAULT_SEASON, SEASONS, seasonOn } from "./seasons";
 const on = (year: number, month: number, day: number) => seasonOn(new Date(year, month - 1, day));
 
 test("the calendar picks each holiday's season, and the default between them", () => {
-  assert.equal(on(2026, 1, 1), "newYear");
-  assert.equal(on(2027, 1, 2), "newYear");
+  assert.equal(on(2026, 1, 1), DEFAULT_SEASON);
   assert.equal(on(2026, 2, 17), "lunarNewYear");
   assert.equal(on(2026, 2, 14), "valentines");
   assert.equal(on(2026, 3, 17), "stPatricks");

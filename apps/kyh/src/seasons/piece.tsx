@@ -45,15 +45,32 @@ export const PieceDefs = ({ art, id }: { art: Art; id: string }) =>
 const fillOf = (layer: Layer, id: string) =>
   layer.gradient === undefined ? (layer.fill ?? "none") : `url(#${id}-${layer.gradient})`;
 
+/** A swinging layer's class and the pivot and angles its animation reads (global.css). */
+const swingOf = ({ swing }: Layer) => {
+  if (swing === undefined) {
+    return {};
+  }
+  // SAFETY: CSS custom properties are valid inline styles, but
+  // React.CSSProperties has no index signature for `--*` keys; the object
+  // holds nothing else.
+  const style = {
+    "--swing-from": `${swing.from}deg`,
+    "--swing-to": `${swing.to}deg`,
+    "--swing-x": `${swing.at[0]}px`,
+    "--swing-y": `${swing.at[1]}px`,
+  } as React.CSSProperties;
+  return { className: "piece-swing", style };
+};
+
 const PieceLayer = ({ layer, id }: { layer: Layer; id: string }) => {
-  const flap = layer.flap ? "piece-flap" : undefined;
+  const swing = swingOf(layer);
   const filled = layer.gradient !== undefined || layer.fill !== undefined;
   return (
     <>
       {layer.shadow && (
         <path
           d={layer.d}
-          className={flap}
+          {...swing}
           fill={filled ? "black" : "none"}
           stroke={layer.stroke && "black"}
           strokeWidth={layer.strokeWidth}
@@ -63,7 +80,7 @@ const PieceLayer = ({ layer, id }: { layer: Layer; id: string }) => {
       )}
       <path
         d={layer.d}
-        className={flap}
+        {...swing}
         fill={fillOf(layer, id)}
         stroke={layer.stroke}
         strokeWidth={layer.strokeWidth}

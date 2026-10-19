@@ -1,37 +1,56 @@
 "use client";
 
-// The season's piece drifting over the showcase's town: snow falling, lanterns
-// rising, bats flitting across. Each piece is CSS-animated (global.css), so
-// the drift costs the compositor and not the page; a season without a drift,
-// or a visitor who'd rather not see motion, gets none.
+// What falls across every page in a season that has it: snow at Christmas, a
+// few flakes drawn and the rest soft dots, and tumbling leaves at
+// Thanksgiving. Each piece is CSS-animated (global.css), so the fall costs
+// the compositor and not the page; a visitor who'd rather not see motion
+// gets none.
 import { useReducedMotion } from "motion/react";
 
+import type { Drift } from "./seasons";
 import { PieceDefs, PieceLayers, usePieceId } from "./piece";
 import { seasonOf } from "./seasons";
 import { useSeason } from "./store";
 
-const PIECES = 14;
+interface Piece {
+  delay: number;
+  duration: number;
+  size: number;
+  sway: number;
+  x: number;
+  /** The season's piece drawn, or (snow only) a plain dot. */
+  drawn: boolean;
+}
 
-// Where each piece drifts, how big, how fast and how far it sways: seeded, so
-// it's the same every visit.
-const LAYOUT = (() => {
-  let state = 7;
-  const random = () => {
+const seeded = (seed: number) => {
+  let state = seed;
+  return () => {
     state = (state * 16_807) % 2_147_483_647;
     return state / 2_147_483_647;
   };
-  return Array.from({ length: PIECES }, () => {
-    const duration = 10 + random() * 9;
+};
+
+// Where each piece falls, how big, how fast and how far it sways: seeded, so
+// it's the same every visit.
+const layoutOf = (drift: Drift): Piece[] => {
+  const random = seeded(drift === "snow" ? 7 : 11);
+  const count = drift === "snow" ? 48 : 16;
+  return Array.from({ length: count }, (_, index) => {
+    const drawn = drift === "leaves" || index % 5 === 0;
+    const duration = drawn ? 11 + random() * 8 : 8 + random() * 10;
     return {
-      // A negative delay starts each piece partway along, so the town opens mid-drift.
+      // A negative delay starts each piece partway down, so the page opens mid-fall.
       delay: -random() * duration,
+      drawn,
       duration,
-      size: 14 + random() * 14,
-      sway: 10 + random() * 26,
+      size: drawn ? 14 + random() * 12 : 3 + random() * 4,
+      sway: 12 + random() * 30,
       x: random() * 100,
     };
   });
-})();
+};
+
+const LAYOUTS: Record<Drift, Piece[]> = { leaves: layoutOf("leaves"), snow: layoutOf("snow") };
 
 export const SeasonDrift = () => {
   const { art, drift } = seasonOf(useSeason());
@@ -47,7 +66,7 @@ export const SeasonDrift = () => {
           <PieceDefs art={art} id={id} />
         </defs>
       </svg>
-      {LAYOUT.map(({ delay, duration, size, sway, x }, index) => {
+      {LAYOUTS[drift].map(({ delay, drawn, duration, size, sway, x }, index) => {
         // SAFETY: CSS custom properties are valid inline styles, but
         // React.CSSProperties has no index signature for `--*` keys; the
         // object holds nothing else.
@@ -60,9 +79,13 @@ export const SeasonDrift = () => {
         } as React.CSSProperties;
         return (
           <span key={index} className="season-drift-piece" style={style}>
-            <svg viewBox="0 0 24 24" className="season-drift-sway">
-              <PieceLayers art={art} id={id} />
-            </svg>
+            {drawn ? (
+              <svg viewBox="0 0 24 24" className="season-drift-sway">
+                <PieceLayers art={art} id={id} />
+              </svg>
+            ) : (
+              <span className="season-drift-sway season-drift-dot" />
+            )}
           </span>
         );
       })}

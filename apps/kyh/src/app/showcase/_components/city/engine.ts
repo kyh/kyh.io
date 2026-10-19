@@ -19,7 +19,6 @@ import type { CityProject, Placed } from "./draw-landmarks";
 import type { Look, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
-import type { SeasonId } from "@/seasons/seasons";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { discoverEgg } from "@/easter-eggs/store";
@@ -30,7 +29,7 @@ import { drawGround } from "./draw-ground";
 import { lotSteps, planEntries } from "./draw-landmarks";
 import { createHalo } from "./halo";
 import { createLife } from "./life";
-import { lookOf, PALETTE, shade, timeOf } from "./palette";
+import { lookOf, PALETTE, shade } from "./palette";
 import { CENTER, contains, planCity, withinReach } from "./plan";
 import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
@@ -87,9 +86,8 @@ export interface CityCallbacks {
 
 export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
+  /** Day or night, and the season, whose decorations the town puts out (season-decor.ts). */
   scheme: Scheme;
-  /** Whose decorations the town puts out (season-decor.ts). */
-  season: SeasonId;
   reducedMotion: boolean;
   /** Where visitors' lines and other people's pointers float. */
   overlay: HTMLElement | null;
@@ -296,7 +294,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   // A view drawn once the town's up has nothing left to raise.
   const startNow = () => (intro.phase === "done" ? BUILT : schedule.startAt);
-  let { season } = options;
+  let { season } = options.scheme;
   /** The season's decorations as a view sees them, painted and ready to show; none for a season without. */
   const decorFor = (at: number) => {
     const sketch = createSketch(viewAt(at), coversAt(at));
@@ -455,6 +453,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     scene,
     scheme,
     size: () => ({ height, width }),
+    still: options.reducedMotion,
     surfaceAt,
     toScreen,
     view: () => viewAt(angle),
@@ -484,8 +483,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   let shown: Placed | null = null;
   // Repainting rewrites every vertex color, so each drawing remembers what it was last painted for.
   const paintedFor = new WeakMap<TownView, string>();
-  const paintKey = () =>
-    `${scheme.light}|${scheme.tint?.hue}|${scheme.tint?.chroma}|${shown?.project.slug ?? ""}`;
+  const paintKey = () => `${scheme.time}|${scheme.season}|${shown?.project.slug ?? ""}`;
   const updateCursor = () => {
     if (carrying !== null) {
       canvas.style.cursor = "grabbing";
@@ -535,6 +533,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   };
   // Only the drawing on screen is repainted: the others catch up when shown (showTown).
   const applyScheme = () => {
+    if (scheme.season !== season) {
+      // Another season's decorations, in every drawing of the town kept.
+      ({ season } = scheme);
+      for (const [at, town] of townViews) {
+        town.setDecor(decorFor(at));
+      }
+    }
     renderer.setClearColor(new Color(shade("sea", scheme, false)));
     materials.setScheme(scheme);
     paintTown(shownTown);
@@ -1148,7 +1153,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     steerByKeys(Math.min(0.1, elapsed));
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit, scheme);
-    halo.update(Math.min(0.25, elapsed), clock.time, timeOf(scheme));
+    halo.update(Math.min(0.25, elapsed), clock.time, scheme.time);
     shownTown.sky.update(clock.time, boats.poses(clock.time));
     if (!warmed) {
       drawEverything();
@@ -1219,19 +1224,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       pins = next;
       pinStates.clear();
     },
-    /** How light and how tinted: repainted on the next frame, however often the dial moves before it. */
+    /** Day or night, and the season's look: repainted on the next frame. */
     setScheme: (next: Scheme) => {
       nextScheme = next;
-    },
-    /** Put out another season's decorations, in every drawing of the town kept. */
-    setSeason: (next: SeasonId) => {
-      if (next === season) {
-        return;
-      }
-      season = next;
-      for (const [at, town] of townViews) {
-        town.setDecor(decorFor(at));
-      }
     },
     /** A finger on a closed pin: light its building, as a first tap on the building does. */
     tap: (slug: string) => {

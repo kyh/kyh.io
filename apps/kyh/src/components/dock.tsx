@@ -7,11 +7,10 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 
-import { ThemeDial } from "@/components/theme-dial";
+import { SeasonBloom } from "@/components/season-bloom";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { discoverEgg } from "@/easter-eggs/store";
 import { TAPS, tapStreak } from "@/lib/dial";
-import { setLight } from "@/lib/dial-state";
 
 const iconAttrs = {
   "aria-hidden": true,
@@ -209,21 +208,6 @@ const GlassFilter = () => (
   </>
 );
 
-const morph = { bounce: 0.2, duration: 0.45, type: "spring" } as const;
-
-// Two modes, swapped like a toolbar's: the buttons live above the dock and the
-// sliders below, so opening rolls the buttons up and out as the sliders rise in,
-// and closing rolls it back down.
-const above = { opacity: 0, y: -56 };
-const below = { opacity: 0, y: 56 };
-const slideFrom = (from: typeof above, index = 0) => ({
-  animate: { opacity: 1, y: 0 },
-  exit: from,
-  initial: from,
-  layout: "position" as const,
-  transition: { ...morph, delay: index * 0.03 },
-});
-
 const subscribeNever = () => () => {
   // Hydration happens once; there's nothing to unsubscribe from.
 };
@@ -240,14 +224,15 @@ export const Dock = () => {
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
   const taps = useRef<number[]>([]);
-  const [dialOpen, setDialOpen] = useState(false);
-  // The dock clips while the modes roll past, and only then: hover labels sit above it.
-  const [switching, setSwitching] = useState(false);
-  const switchDial = useCallback((open: boolean) => {
-    setSwitching(true);
-    setDialOpen(open);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const [blooming, setBlooming] = useState(false);
+  // A press on the toggle while the seasons are open closes them, and only that.
+  const closedByToggle = useRef(false);
+  const onBloomChange = useCallback((open: boolean, event: Event | undefined) => {
+    closedByToggle.current =
+      !open && event?.target instanceof Node && Boolean(toggle.current?.contains(event.target));
+    setBlooming(open);
   }, []);
-  const closeDial = useCallback(() => switchDial(false), [switchDial]);
 
   const isLight = hydrated && resolvedTheme === "light";
   const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
@@ -255,74 +240,62 @@ export const Dock = () => {
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
       <motion.nav
-        layout
-        transition={morph}
-        className={`pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)] ${switching ? "overflow-hidden" : ""}`}
+        className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
         onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
         onMouseLeave={() => mouseX.set(Infinity)}
       >
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          onExitComplete={() => setSwitching(false)}
-        >
-          {!dialOpen &&
-            links.map(({ href, label, icon }, index) => (
-              <motion.div key={href} {...slideFrom(above, index)}>
-                <Link
-                  href={href}
-                  aria-label={label}
-                  onClick={() => {
-                    mouseX.set(Infinity);
-                    setHovered(null);
-                  }}
-                  onMouseEnter={() => setHovered(href)}
-                  onMouseLeave={() => setHovered(null)}
-                >
-                  <DockItem
-                    label={label}
-                    mouseX={mouseX}
-                    active={pathname === href}
-                    hovered={hovered === href}
-                  >
-                    {icon}
-                  </DockItem>
-                </Link>
-              </motion.div>
-            ))}
-          {dialOpen ? (
-            <motion.div key="dial" {...slideFrom(below)}>
-              <ThemeDial onClose={closeDial} />
-            </motion.div>
-          ) : (
-            <motion.button
-              key="toggle"
-              {...slideFrom(above, links.length)}
-              type="button"
-              aria-label={themeLabel}
-              onClick={(event) => {
-                setTheme(isLight ? "dark" : "light");
-                // A plain tap hands brightness back to the theme; the season stays.
-                setLight(null);
-                // Five quick taps open the dials.
-                taps.current = tapStreak(taps.current, event.timeStamp);
-                if (taps.current.length >= TAPS) {
-                  taps.current = [];
-                  setHovered(null);
-                  mouseX.set(Infinity);
-                  switchDial(true);
-                  discoverEgg("dial");
-                }
-              }}
-              onMouseEnter={() => setHovered("theme")}
-              onMouseLeave={() => setHovered(null)}
+        {links.map(({ href, label, icon }) => (
+          <Link
+            key={href}
+            href={href}
+            aria-label={label}
+            onClick={() => {
+              mouseX.set(Infinity);
+              setHovered(null);
+            }}
+            onMouseEnter={() => setHovered(href)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <DockItem
+              label={label}
+              mouseX={mouseX}
+              active={pathname === href}
+              hovered={hovered === href}
             >
-              <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-                <ThemeToggleIcon isLight={isLight} />
-              </DockItem>
-            </motion.button>
-          )}
-        </AnimatePresence>
+              {icon}
+            </DockItem>
+          </Link>
+        ))}
+        <button
+          ref={toggle}
+          type="button"
+          aria-label={themeLabel}
+          aria-haspopup="menu"
+          aria-expanded={blooming}
+          onClick={(event) => {
+            if (closedByToggle.current) {
+              closedByToggle.current = false;
+              return;
+            }
+            setTheme(isLight ? "dark" : "light");
+            // Five quick taps bloom the seasons out of the toggle.
+            taps.current = tapStreak(taps.current, event.timeStamp);
+            if (taps.current.length >= TAPS) {
+              taps.current = [];
+              setHovered(null);
+              mouseX.set(Infinity);
+              setBlooming(true);
+              discoverEgg("bloom");
+            }
+          }}
+          onMouseEnter={() => setHovered("theme")}
+          onMouseLeave={() => setHovered(null)}
+        >
+          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme" && !blooming}>
+            <ThemeToggleIcon isLight={isLight} />
+          </DockItem>
+        </button>
+        <SeasonBloom anchor={toggle} open={blooming} onOpenChange={onBloomChange} />
         <GlassFilter />
       </motion.nav>
     </div>

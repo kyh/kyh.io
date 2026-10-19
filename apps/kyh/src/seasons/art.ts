@@ -1,6 +1,6 @@
 // A season's piece as data: layers of paths in a 24×24 box, filled with
 // colors or the piece's own gradients. `piece.tsx` draws it, wherever it
-// shows: the easter-egg bursts, the theme picker, the showcase's drift. Pure.
+// shows: the easter-egg bursts, the seasons menu, the snow falling. Pure.
 
 /** A gradient stop: where along it, the color, and how opaque. */
 export type Stop = readonly [offset: number, color: string, opacity?: number];
@@ -26,8 +26,15 @@ export interface Layer {
   opacity?: number;
   /** Drawn again beneath it, dark and dropped a little: its shadow. */
   shadow?: boolean;
-  /** Beats from its top, like a wing. */
-  flap?: boolean;
+  /** Swings about a point (in the box) from one angle to another and back, as a wing beats. */
+  swing?: Swing;
+}
+
+/** Degrees, clockwise. */
+export interface Swing {
+  at: readonly [number, number];
+  from: number;
+  to: number;
 }
 
 export interface Art {

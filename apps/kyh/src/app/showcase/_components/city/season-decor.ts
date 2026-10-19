@@ -7,11 +7,14 @@
 // (engine.ts), and shown in color: the town is grey, its decorations aren't.
 // Pure.
 import type { SeasonId } from "@/seasons/seasons";
+import { HEART } from "@/seasons/seasons";
 import type { Paint, Token } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Random } from "./random";
 import type { Sketch, Vec3 } from "./sketch";
+import type { HouseSpec } from "./draw-blocks";
 import { CURB_TOP, doorstep, houseCells, parkOf, plazaOf } from "./draw-blocks";
+import { FLOOR } from "./draw-kit";
 import { paint, ROOFS } from "./palette";
 import { createRandom, hashString } from "./random";
 import { ball, box, line, round } from "./sketch";
@@ -31,19 +34,20 @@ const KINDS = ["porch", "yard", "shore", "square"] as const;
 
 type Kind = (typeof KINDS)[number];
 
-/** The open places, by kind, the same in every view. */
-export type Spots = Record<Kind, Spot[]>;
+/** The open places, by kind, and the cottages themselves, the same in every view. */
+export type Spots = Record<Kind, Spot[]> & { houses: HouseSpec[] };
 
 const distance = ([ax, az]: Spot, [bx, bz]: Spot) => Math.hypot(ax - bx, az - bz);
 
 const spotsIn = (plan: CityPlan): Spots => {
-  const spots: Spots = { porch: [], shore: [], square: [], yard: [] };
+  const spots: Spots = { houses: [], porch: [], shore: [], square: [], yard: [] };
   for (const block of plan.blocks) {
     if (block.use === "houses") {
       for (const cell of houseCells(block)) {
         if ("house" in cell) {
           const { x, z } = doorstep(cell.house);
           spots.porch.push([x, z]);
+          spots.houses.push(cell.house);
           continue;
         }
         const { bush, lot, tree } = cell;
@@ -379,36 +383,78 @@ const lanternPost = (sketch: Sketch, x: number, z: number, height = 0.36) => {
   lantern(sketch, x + 0.07, GROUND + height - 0.07, z);
 };
 
-/** A burst of fireworks in the sky above a spot: rays out every way from a point. */
-const fireworks = (sketch: Sketch, x: number, z: number, random: Random) => {
-  const center: Vec3 = [x, GROUND + random.range(1.4, 1.9), z];
-  const token = random.pick(["accentRed", "accentYellow", "accentBlue", "accentPink"] as const);
-  for (let ray = 0; ray < 24; ray += 1) {
-    // Spread evenly round the sphere: the golden angle, height by height.
-    const up = 1 - ((ray + 0.5) / 24) * 2;
-    const across = Math.sqrt(1 - up * up);
-    const turn = ray * 2.399963;
-    const reach = random.range(0.26, 0.36);
-    const at = (along: number): Vec3 => [
-      center[0] + Math.cos(turn) * across * along,
-      center[1] + up * along,
-      center[2] + Math.sin(turn) * across * along,
-    ];
-    line(sketch, [at(reach * 0.35), at(reach)], "fine", token);
+/** The height of a cottage's eaves, where its roof starts (`house` in draw-blocks.ts). */
+const eavesOf = ({ floors }: HouseSpec) => CURB_TOP + 0.03 + floors * FLOOR + 0.06;
+
+/** A string of bulbs hung all the way round a cottage's eaves, sagging between them, the colors in turn. */
+const eaveLights = (sketch: Sketch, house: HouseSpec, colors: readonly Token[]) => {
+  const top = eavesOf(house) - 0.01;
+  const out = 0.03;
+  const { d, w, x, z } = house;
+  const corners: Spot[] = [
+    [x - out, z - out],
+    [x + w + out, z - out],
+    [x + w + out, z + d + out],
+    [x - out, z + d + out],
+  ];
+  let bulb = 0;
+  for (const [index, [ax, az]] of corners.entries()) {
+    const [bx, bz] = corners[(index + 1) % corners.length] ?? [ax, az];
+    const spans = Math.max(2, Math.round(Math.hypot(bx - ax, bz - az) / 0.09));
+    const wire: Vec3[] = [];
+    for (let step = 0; step <= spans * 2; step += 1) {
+      const along = step / (spans * 2);
+      // Every other point is a bulb, hanging where the wire sags lowest.
+      const hanging = step % 2 === 1;
+      const at: Vec3 = [
+        ax + (bx - ax) * along,
+        top - (hanging ? 0.022 : 0),
+        az + (bz - az) * along,
+      ];
+      wire.push(at);
+      if (hanging) {
+        const token = colors[bulb % colors.length] ?? "gold";
+        bulb += 1;
+        line(
+          sketch,
+          [
+            [at[0], at[1] - 0.004, at[2]],
+            [at[0], at[1] - 0.024, at[2]],
+          ],
+          "bold",
+          token,
+        );
+      }
+    }
+    line(sketch, wire, "hair");
   }
 };
 
 /** Something a season puts at one spot. */
 type Prop = (sketch: Sketch, x: number, z: number, random: Random) => void;
 
-/** What a season puts out, by kind of spot; a kind it leaves out stays bare. */
-export type Decor = Partial<Record<Kind, Prop>>;
+/** What rises now and then from the town's people: a path in a 24×24 box, and its fill. */
+export interface Emote {
+  d: string;
+  fill: string;
+}
+
+/**
+ * What a season puts out, by kind of spot, what it does to each cottage, and
+ * what its people send up (life.ts floats it); a kind it leaves out stays bare.
+ */
+export interface Decor extends Partial<Record<Kind, Prop>> {
+  house?: (sketch: Sketch, house: HouseSpec, random: Random) => void;
+  emote?: Emote;
+}
 
 const PASTELS = ROOFS.slice(0, 6);
 
 /** Every season's decorations: keyed by season, so a new one isn't missed. */
 export const DECOR: Record<SeasonId, Decor> = {
   christmas: {
+    house: (sketch, house) =>
+      eaveLights(sketch, house, ["festiveRed", "gold", "festiveGreen", "accentBlue"]),
     porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
     square: (sketch, x, z, random) => {
       christmasTree(sketch, x, z, random, 1.25);
@@ -433,6 +479,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   halloween: {
+    house: (sketch, house) => eaveLights(sketch, house, ["pumpkin", "accentPurple"]),
     porch: (sketch, x, z, random) => {
       pumpkin(sketch, x, z);
       if (random.chance(0.5)) {
@@ -452,6 +499,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   lunarNewYear: {
+    house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "festiveRed", "gold"]),
     porch: (sketch, x, z) => lanternPost(sketch, x, z),
     shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
     square: (sketch, x, z) => {
@@ -459,15 +507,8 @@ export const DECOR: Record<SeasonId, Decor> = {
       lantern(sketch, x + 0.1, GROUND + 0.25, z + 0.08, 1.6);
     },
   },
-  newYear: {
-    square: fireworks,
-    yard: (sketch, x, z, random) => {
-      if (random.chance(0.4)) {
-        balloon(sketch, x, z, 0.32, GOLD);
-      }
-    },
-  },
   stPatricks: {
+    house: (sketch, house) => eaveLights(sketch, house, ["festiveGreen", "gold"]),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.4)) {
         potOfGold(sketch, x, z);
@@ -497,6 +538,8 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   valentines: {
+    emote: { d: HEART, fill: "#ff4f7b" },
+    house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "accentPink", "white"]),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.6)) {
         balloon(sketch, x, z, 0.3, random.pick([RED, paint("accentPink")]));
@@ -531,6 +574,12 @@ export const drawDecor = (sketch: Sketch, plan: CityPlan, season: SeasonId) => {
     const random = createRandom(hashString(`${season}:${kind}`));
     for (const [x, z] of spots[kind]) {
       prop(sketch, x, z, random);
+    }
+  }
+  if (decor.house) {
+    const random = createRandom(hashString(`${season}:house`));
+    for (const house of spots.houses) {
+      decor.house(sketch, house, random);
     }
   }
 };

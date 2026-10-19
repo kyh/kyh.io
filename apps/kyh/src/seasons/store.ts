@@ -1,7 +1,7 @@
 // The season in play, for the page load: the calendar's for today, unless
-// the theme dial has picked another (gone on reload, like the dial's
-// brightness). One store, so whatever follows it (the dial, the bursts, the
-// showcase) reads the same season; its tint is written onto <html> too
+// the seasons menu has picked another (gone on reload). One store, so
+// whatever follows it (the menu, the bursts, the drift, the showcase) reads
+// the same season; its tint is written onto <html> too
 // (`paint.ts`). Before the page runs, `script.ts` paints the calendar's.
 import { useSyncExternalStore } from "react";
 

@@ -100,37 +100,37 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
-The dock's theme toggle hides an easter egg: five quick taps roll the dock's
-buttons up and out and the theme dial up in from below, like a toolbar switching
-modes (a press outside rolls it back): a brightness slider and the season
-picker, both gone on reload.
-Brightness is `--light` (the theme sets 100% or 0%; the theme flips at 50%):
-in `global.css` each theme eases its backgrounds between the palettes but keeps
-them off the mid-greys (`--shade`), and its text runs to black or white as the
-flip nears (`--contrast`), so text holds 6.5:1 at any brightness. `src/lib/brightness.ts`
-is the same two curves for the showcase's town (a test holds them to the CSS),
-and `dial-state.ts` flips `data-theme` in the same frame as `--light`.
-`src/lib/dial-state.ts` holds the brightness (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
-`dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
-Base UI's Slider, `season-select.tsx` the picker (Base UI's Select), and
-`src/lib/dial.ts` the tap streak.
+The dock's theme toggle hides an easter egg: five quick taps bloom the seasons
+out of it (`src/components/season-bloom.tsx`, after beui's Bloom Menu): a panel
+springs from the button, its grid opens from the middle like an iris and the
+seasons come up from the center out. It's Base UI's Menu (radio items, focus,
+keys, dismissal); picking one keeps it open so the page can be tried in each,
+and the pick is gone on reload. `src/lib/dial.ts` is the tap streak.
 
 Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
 (`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
 computus, the 4th Thursday, a Lunar New Year table), its grey tint (an OKLCH
 hue and a chroma as a multiple of slate's), its piece as data (`art.ts`:
-paths and gradients, drawn by `piece.tsx`), its confetti, and how the piece
-drifts over the showcase (`drift.tsx`: falls, rises or flits, CSS-animated).
-The town puts out the season's decorations too (`city/season-decor.ts`,
-`DECOR` keyed by season, so a new one won't compile without its entry):
-pumpkins by the cottages' doors and graves in the gardens at Halloween,
-snowmen and decorated trees on the square at Christmas, and so on, on four
-kinds of open spot (porches, gardens, the pond's shore, the square and the
-ball courts; `houseCells`, `parkOf` and `plazaOf` in `draw-blocks.ts` say
-where they are). They're a drawing of their own per view, in color over the
-grey town, swapped by `city.setSeason` without redrawing the town.
+paths and gradients, drawn by `piece.tsx`; a layer can `swing` about a
+point, as the bat's wings beat), its confetti, and what falls across every
+page (`drift`, `drift.tsx`, CSS-animated): snow at Christmas, leaves at
+Thanksgiving, nothing in the rest.
+The town dresses for it in three places, each keyed by season so a new one
+won't compile without its entry. Its look (`SEASON_LOOKS` in `city/palette.ts`)
+repaints tokens and keeps some in color in the grey town: snow on the roofs,
+grounds and trees at Christmas, the trees turned at Thanksgiving, windows lit
+orange at Halloween, pastel roofs at Easter. Its decorations
+(`city/season-decor.ts`, `DECOR`): lights strung along every cottage's eaves,
+pumpkins by the doors and graves in the gardens at Halloween, snowmen and
+decorated trees at Christmas, and so on, on four kinds of open spot (porches,
+gardens, the pond's shore, the square and the ball courts; `houseCells`,
+`parkOf` and `plazaOf` in `draw-blocks.ts` say where they are); they're a
+drawing of their own per view, in color over the grey town, swapped when the
+scheme's season changes without redrawing the town. And its `emote`: what the
+town's people now and then send up (hearts at Valentine's), floated over their
+heads by `life.ts`.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
-wins an overlap); the picker overrides it for the page load (`store.ts`).
+wins an overlap); the seasons menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
 (`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
 no tint and keeps the hex slate. `script.ts` paints the calendar's season from
@@ -171,7 +171,7 @@ corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night. The town follows the theme dial like the site: a `Scheme` (`palette.ts`) is how light it is and the season's tint; each color is its night and day mixed in OKLab by the light (`colorIn`), and the greys are plain by day, slate as it darkens, turned to the season's hue when it has one (`greyIn`), worked out once per scheme. The season's piece drifts over the town (`SeasonDrift`). The showcase hears the dial and the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. The pins and cards mix the site's grey tokens by `--light`. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. A `Scheme` (`palette.ts`) is day or night and the season: each color is the season's repaint of its token or its own (`colorIn`), and the greys are plain by day, slate by night, turned to the season's hue when it has one (`greyIn`), worked out once per scheme. The showcase hears the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),
@@ -223,7 +223,7 @@ Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car, person or boat),
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
-`dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
+`dock.tsx` (five taps bloom out the seasons), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
 hover, coarse pointer) hunts without the chat egg, since it has no keyboard
 (`huntedEggs`).

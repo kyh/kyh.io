@@ -62,7 +62,7 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
-  const dots = createShadowDots(scheme.light);
+  const dots = createShadowDots(scheme.time);
   const raised = faces.onBeforeCompile.bind(faces);
   faces.onBeforeCompile = (shader, renderer) => {
     raised(shader, renderer);
@@ -102,7 +102,7 @@ export const createMaterials = (
     setPixelRatio: dots.setPixelRatio,
     setScheme: (next) => {
       scheme = next;
-      dots.setLight(next.light);
+      dots.setTime(next.time);
       for (const { colorful, material, token } of lines.values()) {
         material.color.set(shade(token, scheme, colorful));
       }
@@ -335,9 +335,9 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   }
 };
 
-// Parsed colors by hex: a repaint while the dial moves sets every run of
-// faces, and parsing the same few dozen strings for each is most of its cost.
-// The shelf starts over once a long sweep has filled it.
+// Parsed colors by hex: a repaint sets every run of faces, and parsing the
+// same few dozen strings for each is most of its cost. The shelf starts over
+// once a long sweep has filled it.
 const parsed = new Map<string, Color>();
 const PARSED_KEPT = 4096;
 
