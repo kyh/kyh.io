@@ -1,6 +1,7 @@
 "use client";
 
-import { zhuyinGlyph } from "@/lib/zhuyin";
+import { createRandom, hashString } from "@/app/showcase/_components/city/random";
+import { scrambleGlyphs } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
   children: React.ReactNode;
@@ -35,31 +36,19 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-const GLYPHS = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ";
-
-const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
-
-// The first scramble's glyphs come from the text itself (a string hash over the
-// text, the letter and the slot), so the server and the browser draw the same ones.
-const glyphFor = (text: string, index: number, slot: number) => {
-  let hash = 7;
-  for (const char of `${text}:${index}:${slot}`) {
-    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2_147_483_647;
+// The first scramble's glyphs roll from the text itself (a generator seeded by
+// the text and the letter), so the server and the browser draw the same ones.
+const seededRoll = (text: string, index: number) => {
+  const random = createRandom(hashString(`${text}:${index}`));
+  // Nearby seeds start close together; a few draws pull them apart.
+  for (let draw = 0; draw < 3; draw += 1) {
+    random.next();
   }
-  return GLYPHS[hash % GLYPHS.length] ?? "";
+  return random.next;
 };
 
-// A heading with a translation holds each letter on its zhuyin symbol, so
-// the wave spells the Chinese aloud; any other scrambles through glyphs.
-const generateChars = (text: string) =>
-  [...text].map((_, index) => {
-    const zhuyin = zhuyinGlyph(text, index);
-    return {
-      char1: zhuyin ?? glyphFor(text, index, 1),
-      char2: zhuyin ?? glyphFor(text, index, 2),
-      char3: zhuyin ?? glyphFor(text, index, 3),
-    };
-  });
+const glyphVars = (glyphs: string[]) =>
+  Object.fromEntries(glyphs.map((glyph, frame) => [`--char-${frame + 1}`, `"${glyph}"`]));
 
 type ScrambleTextProps = {
   children: string;
@@ -76,7 +65,6 @@ export const ScrambleText = ({
   ...props
 }: ScrambleTextProps) => {
   const text = children;
-  const chars = generateChars(text);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     if (trigger === "load") {
@@ -87,12 +75,12 @@ export const ScrambleText = ({
       return;
     }
 
-    // Update CSS vars with new random chars; a translation replays as it is
-    if (zhuyinGlyph(text, 0) === undefined) {
-      for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
-        el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
-        el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
-        el.style.setProperty("--char-3", `"${getRandomGlyph()}"`);
+    // Roll new glyphs for this pass
+    for (const [index, el] of span.querySelectorAll<HTMLSpanElement>("span[data-char]").entries()) {
+      for (const [name, value] of Object.entries(
+        glyphVars(scrambleGlyphs(text, index, Math.random)),
+      )) {
+        el.style.setProperty(name, value);
       }
     }
 
@@ -111,9 +99,7 @@ export const ScrambleText = ({
           // React.CSSProperties has no index signature for `--*` keys; the
           // object holds nothing else.
           const charStyle = {
-            "--char-1": `"${chars[index]?.char1}"`,
-            "--char-2": `"${chars[index]?.char2}"`,
-            "--char-3": `"${chars[index]?.char3}"`,
+            ...glyphVars(scrambleGlyphs(text, index, seededRoll(text, index))),
             "--index": index,
           } as React.CSSProperties;
           return (

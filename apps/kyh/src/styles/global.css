@@ -532,7 +532,7 @@ button.link {
 }
 
 [data-scramble].scramble > span::after {
-  animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
+  animation: flash 0.28s calc(var(--index, 0) * 0.05s) steps(1, end);
 }
 
 /* Animate section */
@@ -775,18 +775,23 @@ body[data-city] {
 }
 
 @keyframes flash {
-  0%,
-  20% {
+  0% {
     content: "_";
   }
-  40% {
+  16.67% {
     content: var(--char-1);
   }
-  60% {
+  33.33% {
     content: var(--char-2);
   }
-  80% {
+  50% {
     content: var(--char-3);
+  }
+  66.67% {
+    content: var(--char-4);
+  }
+  83.33% {
+    content: var(--char-5);
   }
 }
 
