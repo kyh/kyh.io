@@ -345,57 +345,67 @@ button.link {
   }
 }
 
-/* The seasons blooming out of the theme toggle (components/season-bloom.tsx):
-   a disc that springs from the button (Base UI's --transform-origin), a wedge
-   per season clipped to its slice of the ring (so the slice is what takes the
-   pointer), the hub naming the season under it. */
+/* The seasons blooming round the theme toggle (components/season-bloom.tsx):
+   a box centered on the toggle that takes no pointer itself, so the toggle
+   shows and presses through its middle; a wedge per season clipped to its
+   slice of the arc (the slice is what takes the pointer); the name of the one
+   under the pointer over the top. */
 .season-bloom {
   position: relative;
-  transform-origin: var(--transform-origin);
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  background-color: var(--panel);
-  box-shadow:
-    var(--colors-shadowLight) 0px 10px 38px -10px,
-    var(--colors-shadowDark) 0px 10px 20px -15px;
   outline: none;
+  filter: drop-shadow(0 10px 18px var(--colors-shadowDark));
 }
 
 .season-bloom-wedge {
+  --wedge: color-mix(in srgb, var(--panel), var(--body-color) 5%);
   position: absolute;
   inset: 0;
-  background-color: color-mix(in srgb, var(--body-color) 4%, transparent);
   outline: none;
   cursor: pointer;
-  transition: background-color 0.15s;
+  pointer-events: auto;
 
   &[data-checked] {
-    background-color: color-mix(in srgb, var(--body-color) 9%, transparent);
+    --wedge: color-mix(in srgb, var(--panel), var(--body-color) 12%);
   }
 
   &[data-highlighted] {
-    background-color: color-mix(in srgb, var(--body-color) 16%, transparent);
+    --wedge: color-mix(in srgb, var(--panel), var(--body-color) 20%);
+  }
+}
+
+.season-bloom-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  path {
+    fill: var(--wedge);
+    stroke: var(--border-color);
+    stroke-width: 2;
+    transition: fill 0.15s;
   }
 }
 
 .season-bloom-piece {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 
-.season-bloom-hub {
+.season-bloom-name {
   position: absolute;
-  display: grid;
-  place-items: center;
-  padding: 0 6px;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--panel);
   color: var(--body-color);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.2;
-  text-align: center;
-  text-wrap: balance;
-  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .tooltip-line {

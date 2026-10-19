@@ -11,6 +11,9 @@ import { SeasonBloom } from "@/components/season-bloom";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { discoverEgg } from "@/easter-eggs/store";
 import { TAPS, tapStreak } from "@/lib/dial";
+import { PieceIcon } from "@/seasons/piece";
+import { seasonOf } from "@/seasons/seasons";
+import { useSeason } from "@/seasons/store";
 
 const iconAttrs = {
   "aria-hidden": true,
@@ -234,15 +237,23 @@ export const Dock = () => {
     setBlooming(open);
   }, []);
 
+  const season = useSeason();
+
   const isLight = hydrated && resolvedTheme === "light";
-  const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
+  const themeLabel = blooming ? "Close seasons" : `Switch to ${isLight ? "dark" : "light"} mode`;
+  // The dock holds still while the seasons are out round the toggle.
+  const follow = (x: number) => {
+    if (!blooming) {
+      mouseX.set(x);
+    }
+  };
 
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
       <motion.nav
         className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
-        onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
-        onMouseLeave={() => mouseX.set(Infinity)}
+        onMouseMove={(event) => follow(event.nativeEvent.x)}
+        onMouseLeave={() => follow(Infinity)}
       >
         {links.map(({ href, label, icon }) => (
           <Link
@@ -253,7 +264,7 @@ export const Dock = () => {
               mouseX.set(Infinity);
               setHovered(null);
             }}
-            onMouseEnter={() => setHovered(href)}
+            onMouseEnter={() => setHovered(blooming ? null : href)}
             onMouseLeave={() => setHovered(null)}
           >
             <DockItem
@@ -283,7 +294,6 @@ export const Dock = () => {
             if (taps.current.length >= TAPS) {
               taps.current = [];
               setHovered(null);
-              mouseX.set(Infinity);
               setBlooming(true);
               discoverEgg("bloom");
             }
@@ -292,7 +302,23 @@ export const Dock = () => {
           onMouseLeave={() => setHovered(null)}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme" && !blooming}>
-            <ThemeToggleIcon isLight={isLight} />
+            {/* While the seasons are out, the toggle is their hub and wears the one picked. */}
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={blooming ? season : "theme"}
+                className="flex size-full items-center justify-center"
+                initial={{ opacity: 0, rotate: -40, scale: 0.4 }}
+                animate={{ opacity: 1, rotate: 0, scale: blooming ? 1.25 : 1 }}
+                exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
+                transition={{ damping: 22, stiffness: 420, type: "spring" }}
+              >
+                {blooming ? (
+                  <PieceIcon art={seasonOf(season).art} className="size-full" />
+                ) : (
+                  <ThemeToggleIcon isLight={isLight} />
+                )}
+              </motion.span>
+            </AnimatePresence>
           </DockItem>
         </button>
         <SeasonBloom anchor={toggle} open={blooming} onOpenChange={onBloomChange} />

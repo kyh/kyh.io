@@ -101,11 +101,12 @@ canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
 The dock's theme toggle hides an easter egg: five quick taps bloom the seasons
-out of it as a radial menu (`src/components/season-bloom.tsx`): a disc springs
-from the button and turns into place, each season a wedge clipped to its slice
-of the ring (the slice takes the pointer) with its piece flying out from the
-middle, and the hub names the season under the pointer. It's Base UI's Menu
-(radio items, focus, arrow keys and typing a name, dismissal); picking one
+round it as a radial menu (`src/components/season-bloom.tsx`): the toggle stays
+put as the hub, wearing the season picked, and a wedge per season fans out over
+the top one after another (each clipped to its slice, so the slice takes the
+pointer), the name of the one under the pointer above them. The dock stops
+magnifying while it's open. It's Base UI's Menu (radio items, focus, arrow keys
+and typing a name, dismissal; pressing the toggle only closes it); picking one
 keeps it open so the page can be tried in each, and the pick is gone on
 reload. `src/lib/dial.ts` is the tap streak.
 
