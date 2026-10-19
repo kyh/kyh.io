@@ -115,15 +115,16 @@ per theme clipped to its slice so the slice takes the pointer, unfolding one
 after another round a hub that wears the one under the pointer, its name over
 the top. The dock stops magnifying while it's open. It's Base UI's Menu
 (radio items, focus, arrow keys and typing a name, dismissal; the hub or the
-toggle closes it); picking a theme keeps it open so the page can be tried in
-each.
+toggle closes it); picking a theme closes it. The toggle and the hub wear a
+season's `glyph` (a line icon drawn to the dock's 2px stroke); the wedges its
+colored piece.
 
 Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
 (`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
 computus, the 4th Thursday, a Lunar New Year table), its grey tint (an OKLCH
 hue and a chroma as a multiple of slate's), its piece as data (`art.ts`:
 paths and gradients, drawn by `piece.tsx`; a layer can `swing` about a
-point, as the bat's wings beat), its confetti, and what falls across every
+point, as the bat's wings beat) and its line `glyph`, its confetti, and what falls across every
 page (`drift`, `drift.tsx`, CSS-animated): snow at Christmas, leaves at
 Thanksgiving, nothing in the rest.
 The town dresses for it in three places, each keyed by season so a new one
