@@ -252,6 +252,7 @@ export interface Built {
 
 interface Workshop {
   materials: Materials;
+  colorfulInk: boolean;
   built: Built;
   painters: Painter[];
   signs: { material: MeshBasicMaterial; token: Token }[];
@@ -295,7 +296,10 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
-      const lines = new LineSegments2(geometry, workshop.materials.line(batch.token, batch.weight));
+      const lines = new LineSegments2(
+        geometry,
+        workshop.materials.line(batch.token, batch.weight, workshop.colorfulInk),
+      );
       lines.renderOrder = 1;
       target.add(lines);
     }
@@ -349,8 +353,17 @@ const colorOf = (hex: string) => {
   return color;
 };
 
-/** `tint` turns its colors, when shown, toward its project's own. */
-export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built => {
+/**
+ * `tint` turns its colors, when shown, toward its project's own. Ink is grey
+ * unless `colorfulInk`, for drawings whose lines are colors of their own (the
+ * season's rainbow).
+ */
+export const build = (
+  sketch: Sketch,
+  materials: Materials,
+  tint?: Tint,
+  colorfulInk = false,
+): Built => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];
@@ -390,6 +403,6 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
     parts: new Map(),
     screens: new Map(),
   };
-  buildInto(sketch, { built, materials, painters, signs }, group);
+  buildInto(sketch, { built, colorfulInk, materials, painters, signs }, group);
   return built;
 };

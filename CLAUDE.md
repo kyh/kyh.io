@@ -121,7 +121,15 @@ computus, the 4th Thursday, a Lunar New Year table), its grey tint (an OKLCH
 hue and a chroma as a multiple of slate's), its piece as data (`art.ts`:
 paths and gradients, drawn by `piece.tsx`), its confetti, and how the piece
 drifts over the showcase (`drift.tsx`: falls, rises or flits, CSS-animated).
-Adding a theme is adding an entry. The calendar picks today's (first listed
+The town puts out the season's decorations too (`city/season-decor.ts`,
+`DECOR` keyed by season, so a new one won't compile without its entry):
+pumpkins by the cottages' doors and graves in the gardens at Halloween,
+snowmen and decorated trees on the square at Christmas, and so on, on four
+kinds of open spot (porches, gardens, the pond's shore, the square and the
+ball courts; `houseCells`, `parkOf` and `plazaOf` in `draw-blocks.ts` say
+where they are). They're a drawing of their own per view, in color over the
+grey town, swapped by `city.setSeason` without redrawing the town.
+Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the picker overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
 (`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has

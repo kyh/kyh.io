@@ -19,6 +19,7 @@ import type { CityProject, Placed } from "./draw-landmarks";
 import type { Look, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
+import type { SeasonId } from "@/seasons/seasons";
 import { createAnimations } from "./animate";
 import { listenForChat } from "@/lib/chat-input";
 import { discoverEgg } from "@/easter-eggs/store";
@@ -35,6 +36,7 @@ import { createRandom, hashString } from "./random";
 import type { Built } from "./render";
 import { build, createMaterials } from "./render";
 import { createSchedule } from "./schedule";
+import { drawDecor } from "./season-decor";
 import { ALL_BUILT, BUILT, createGrowth, raise } from "./grow";
 import type { StartAt } from "./grow";
 import { createHeights } from "./heights";
@@ -86,6 +88,8 @@ export interface CityCallbacks {
 export interface CityOptions extends CityCallbacks {
   projects: CityProject[];
   scheme: Scheme;
+  /** Whose decorations the town puts out (season-decor.ts). */
+  season: SeasonId;
   reducedMotion: boolean;
   /** Where visitors' lines and other people's pointers float. */
   overlay: HTMLElement | null;
@@ -157,6 +161,8 @@ const townViewSteps = function* townViewSteps(
   startAt: StartAt,
   still: boolean,
   looks: ReadonlyMap<string, Look>,
+  /** The season's decorations, made once the view is drawn so they're the season's then. */
+  decorate: () => Built | null,
 ) {
   const city = raise(build(town.sketch, materials), startAt);
   yield;
@@ -179,19 +185,42 @@ const townViewSteps = function* townViewSteps(
   for (const built of [city, ...buildings.values()]) {
     scene.add(built.group);
   }
+  let decor: Built | null = null;
+  let visible = true;
+  const setDecor = (next: Built | null) => {
+    if (decor) {
+      scene.remove(decor.group);
+      decor.dispose();
+    }
+    decor = next;
+    if (decor) {
+      decor.group.visible = visible;
+      scene.add(decor.group);
+    }
+  };
+  setDecor(decorate());
   return {
     animations,
     buildings,
     city,
     dispose: () => {
+      setDecor(null);
       for (const built of builds) {
         scene.remove(built.group);
         built.dispose();
       }
     },
+    /** The season's decorations, in color, as the town is painted. */
+    paintDecor: (scheme: Scheme) => decor?.paint(scheme, true),
+    /** Swap the decorations for another season's (or none). */
+    setDecor,
     show: (shown: boolean) => {
+      visible = shown;
       for (const built of builds) {
         built.group.visible = shown;
+      }
+      if (decor) {
+        decor.group.visible = shown;
       }
     },
     sky,
@@ -265,6 +294,21 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     sites?.dispose();
     sites = null;
   };
+  // A view drawn once the town's up has nothing left to raise.
+  const startNow = () => (intro.phase === "done" ? BUILT : schedule.startAt);
+  let { season } = options;
+  /** The season's decorations as a view sees them, painted and ready to show; none for a season without. */
+  const decorFor = (at: number) => {
+    const sketch = createSketch(viewAt(at), coversAt(at));
+    drawDecor(sketch, plan, season);
+    if (sketch.faces.size === 0 && sketch.lines.size === 0) {
+      return null;
+    }
+    // Their own colors, ink and all: a rainbow is its bands.
+    const built = raise(build(sketch, materials, undefined, true), startNow());
+    built.paint(scheme, true);
+    return built;
+  };
   /**
    * Sketches and builds the town for a heading, and keeps it hidden.
    * @yields {void} between pieces, so it can be spread over frames.
@@ -277,10 +321,10 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       town,
       viewAt(at),
       coversAt(at),
-      // A view drawn once the town's up has nothing left to raise.
-      intro.phase === "done" ? BUILT : schedule.startAt,
+      startNow(),
       options.reducedMotion,
       looks,
+      () => decorFor(at),
     );
     created.show(false);
     townViews.set(at, created);
@@ -481,6 +525,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     }
     paintedFor.set(town, paintKey());
     town.city.paint(scheme, false);
+    town.paintDecor(scheme);
     for (const [slug, built] of town.buildings) {
       built.paint(scheme, slug === shown?.project.slug);
     }
@@ -1177,6 +1222,16 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     /** How light and how tinted: repainted on the next frame, however often the dial moves before it. */
     setScheme: (next: Scheme) => {
       nextScheme = next;
+    },
+    /** Put out another season's decorations, in every drawing of the town kept. */
+    setSeason: (next: SeasonId) => {
+      if (next === season) {
+        return;
+      }
+      season = next;
+      for (const [at, town] of townViews) {
+        town.setDecor(decorFor(at));
+      }
     },
     /** A finger on a closed pin: light its building, as a first tap on the building does. */
     tap: (slug: string) => {

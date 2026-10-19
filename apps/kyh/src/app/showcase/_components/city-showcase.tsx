@@ -24,6 +24,7 @@ interface CityMount extends CityCallbacks {
   surface: HTMLElement;
   projects: CityProject[];
   scheme: Scheme;
+  season: SeasonId;
   reducedMotion: boolean;
 }
 
@@ -146,6 +147,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           projects,
           reducedMotion,
           scheme: schemeRef.current,
+          season: currentSeason(),
           surface,
         });
         if (!isMounted) {
@@ -155,6 +157,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
         cityRef.current = city;
         // The theme, the dial or the season may have moved while the city loaded.
         city.setScheme(schemeRef.current);
+        city.setSeason(currentSeason());
         city.setPins(pinsRef.current);
         setStatus("ready");
         if (process.env.NODE_ENV === "development") {
@@ -191,6 +194,15 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       stopSeason();
     };
   }, [resolvedTheme]);
+
+  // The season's decorations, put out in the town as it changes.
+  useEffect(
+    () =>
+      subscribeToSeason(() => {
+        cityRef.current?.setSeason(currentSeason());
+      }),
+    [],
+  );
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {

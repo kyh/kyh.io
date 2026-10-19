@@ -2,7 +2,9 @@
 // it turns the site's greys, the piece an easter-egg find throws (`art.ts`),
 // its confetti, and how that piece drifts over the showcase's town. The
 // calendar picks one for today, unless the theme dial has (`store.ts`).
-// Adding a theme is adding an entry here. Pure.
+// Adding a theme is adding an entry here, and its decorations for the
+// showcase's town (city/season-decor.ts, keyed by season so none is missed).
+// Pure.
 import { colorNamed, GOLD } from "@/lib/color";
 import type { Art } from "./art";
 import { circle, ellipse, placed, point } from "./art";

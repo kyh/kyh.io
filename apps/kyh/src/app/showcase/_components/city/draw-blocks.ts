@@ -2,7 +2,7 @@
 // and a square, each drawn to fill one six-by-six block.
 import type { Footprint } from "./draw-kit";
 import type { Paint, Token } from "./palette";
-import type { Block } from "./plan";
+import type { Block, Tree } from "./plan";
 import type { Random } from "./random";
 import type { Side, Sketch } from "./sketch";
 import {
@@ -111,10 +111,20 @@ const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side)
   };
 };
 
-/** Twelve cottages around the block's edge, gardens and trees inside. */
-const drawHouses = (sketch: Sketch, block: Block, random: Random) => {
+/** One of a houses block's sixteen cells: a cottage, or a lawn with its tree and maybe a bush. */
+export type HouseCell =
+  | { lot: Footprint; house: HouseSpec }
+  | { lot: Footprint; tree: Tree; bush: readonly [number, number] | null };
+
+/**
+ * A houses block laid out: cottages round the edge, lawns inside (and where
+ * an edge lot was left open). Pure, from the block's own random stream, so
+ * whatever else needs the layout (the season's decorations) gets the same one.
+ */
+export const houseCells = (block: Block, random: Random = createRandom(block.seed)) => {
   const area = inset(block, 0.25);
   const cell = area.w / 4;
+  const cells: HouseCell[] = [];
   for (let row = 0; row < 4; row += 1) {
     for (let column = 0; column < 4; column += 1) {
       const lot = { d: cell, w: cell, x: area.x + column * cell, z: area.z + row * cell };
@@ -122,38 +132,56 @@ const drawHouses = (sketch: Sketch, block: Block, random: Random) => {
       if (edge && random.chance(0.94)) {
         const ridge = row === 0 || row === 3 ? "x" : "z";
         const front: Side = column === 3 && row !== 3 ? "side" : "front";
-        house(sketch, houseLot(random, lot, ridge, front));
+        cells.push({ house: houseLot(random, lot, ridge, front), lot });
       } else {
-        ground(
-          sketch,
-          "lawn",
-          [
-            [lot.x + 0.05, lot.z + 0.05],
-            [lot.x + lot.w - 0.05, lot.z + 0.05],
-            [lot.x + lot.w - 0.05, lot.z + lot.d - 0.05],
-            [lot.x + 0.05, lot.z + lot.d - 0.05],
-          ],
-          CURB_TOP + 0.005,
-          "hair",
-        );
-        tree(
-          sketch,
-          {
-            kind: random.pick(["round", "round", "pine", "poplar"]),
-            size: random.range(0.9, 1.3),
-            x: lot.x + random.range(0.35, lot.w - 0.35),
-            z: lot.z + random.range(0.35, lot.d - 0.35),
-          },
-          CURB_TOP,
-        );
-        if (random.chance(0.5)) {
-          bush(
-            sketch,
-            lot.x + random.range(0.2, lot.w - 0.2),
-            lot.z + random.range(0.2, lot.d - 0.2),
-          );
-        }
+        const planted: Tree = {
+          kind: random.pick(["round", "round", "pine", "poplar"]),
+          size: random.range(0.9, 1.3),
+          x: lot.x + random.range(0.35, lot.w - 0.35),
+          z: lot.z + random.range(0.35, lot.d - 0.35),
+        };
+        const shrub = random.chance(0.5)
+          ? ([
+              lot.x + random.range(0.2, lot.w - 0.2),
+              lot.z + random.range(0.2, lot.d - 0.2),
+            ] as const)
+          : null;
+        cells.push({ bush: shrub, lot, tree: planted });
       }
+    }
+  }
+  return cells;
+};
+
+/** Where a cottage's door is, on the ground just out from its wall. */
+export const doorstep = ({ d, front, w, x, z }: HouseSpec) =>
+  front === "front"
+    ? { x: x + w * 0.38 + 0.08, z: z + d + 0.12 }
+    : { x: x + w + 0.12, z: z + d * 0.4 + 0.08 };
+
+/** Twelve cottages around the block's edge, gardens and trees inside. */
+const drawHouses = (sketch: Sketch, block: Block, random: Random) => {
+  for (const cell of houseCells(block, random)) {
+    if ("house" in cell) {
+      house(sketch, cell.house);
+      continue;
+    }
+    const { lot } = cell;
+    ground(
+      sketch,
+      "lawn",
+      [
+        [lot.x + 0.05, lot.z + 0.05],
+        [lot.x + lot.w - 0.05, lot.z + 0.05],
+        [lot.x + lot.w - 0.05, lot.z + lot.d - 0.05],
+        [lot.x + 0.05, lot.z + lot.d - 0.05],
+      ],
+      CURB_TOP + 0.005,
+      "hair",
+    );
+    tree(sketch, cell.tree, CURB_TOP);
+    if (cell.bush) {
+      bush(sketch, ...cell.bush);
     }
   }
 };
@@ -420,15 +448,27 @@ const scatterTrees = (
   }
 };
 
-const drawPark = (sketch: Sketch, block: Block, random: Random) => {
+/** A park laid out: which of its three styles, and where its pond and its ball court would be. */
+export const parkOf = (block: Block) => {
   const area = inset(block, 0.18);
-  drawLawn(sketch, area);
   const cx = area.x + area.w / 2;
   const cz = area.z + area.d / 2;
-  const style = block.seed % 3;
+  return {
+    area,
+    court: { d: 1.6, w: 2.8, x: area.x + 0.4, z: area.z + area.d - 2.1 },
+    cx,
+    cz,
+    pond: { rx: 1.5, rz: 1.05, x: cx - 0.3, z: cz + 0.2 },
+    style: block.seed % 3,
+  };
+};
+
+const drawPark = (sketch: Sketch, block: Block, random: Random) => {
+  const { area, court, cx, cz, pond, style } = parkOf(block);
+  drawLawn(sketch, area);
   if (style === 0) {
     // A pond with a curving shore.
-    const shore = ellipse(1.5, 1.05, 22, cx - 0.3, cz + 0.2);
+    const shore = ellipse(pond.rx, pond.rz, 22, pond.x, pond.z);
     ground(sketch, "water", shore, CURB_TOP + 0.02, "fine");
     pathStrip(sketch, { d: 0.3, w: area.w, x: area.x, z: area.z + 0.5 });
     scatterTrees(
@@ -465,7 +505,6 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
     lamp(sketch, cx - 0.5, cz - 0.5);
   } else {
     // A ball court and a meadow.
-    const court = { d: 1.6, w: 2.8, x: area.x + 0.4, z: area.z + area.d - 2.1 };
     box(
       sketch,
       {
@@ -511,15 +550,19 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
 /** A plaza stall's footprint. */
 const KIOSK = { d: 0.6, w: 0.8 };
 
-const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
+/** A square's paving and its middle, where the fountain is. */
+export const plazaOf = (block: Block) => {
   const area = inset(block, 0.15);
+  return { area, cx: area.x + area.w / 2, cz: area.z + area.d / 2 };
+};
+
+const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
+  const { area, cx, cz } = plazaOf(block);
   box(
     sketch,
     { colors: PAVING, d: area.d, h: 0.015, w: area.w, x: area.x, y: CURB_TOP, z: area.z },
     "hair",
   );
-  const cx = area.x + area.w / 2;
-  const cz = area.z + area.d / 2;
   for (let ring = 1; ring <= 3; ring += 1) {
     groundLoop(sketch, ellipse(ring * 0.75, ring * 0.75, 28, cx, cz), CURB_TOP + 0.02);
   }
