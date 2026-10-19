@@ -113,8 +113,8 @@ the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
 a solid disc that springs from the button (nudged up off the bottom), a wedge
 per season (plain light or dark is one, showing the sun: it goes back to the
 visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
-after another round a hub that wears the one under the pointer, its name over
-the top. The dock stops magnifying while it's open. It's Base UI's Menu
+after another round a hub that wears the one under the pointer (names go to
+assistive tech and typeahead only, not on screen). The dock stops magnifying while it's open. It's Base UI's Menu
 (radio items, focus, arrow keys and typing a name, dismissal; the hub or the
 toggle closes it); picking a theme closes it. The toggle and the hub wear a
 season's `glyph` (a line icon drawn to the dock's 2px stroke); the wedges its

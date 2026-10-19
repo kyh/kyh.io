@@ -11,11 +11,13 @@ interface ChatInputOptions {
   onSend: (text: string) => void;
 }
 
+/** Where typing already means something: a field, or a menu or list that jumps to what's typed. */
 const isField = (target: EventTarget | null) =>
   target instanceof HTMLInputElement ||
   target instanceof HTMLTextAreaElement ||
   target instanceof HTMLSelectElement ||
-  (target instanceof HTMLElement && target.isContentEditable);
+  (target instanceof HTMLElement &&
+    (target.isContentEditable || target.closest('[role="menu"], [role="listbox"]') !== null));
 
 /** Listen for typing; returns the way to stop. */
 export const listenForChat = ({ claims, onDraft, onSend }: ChatInputOptions) => {

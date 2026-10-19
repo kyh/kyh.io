@@ -348,8 +348,7 @@ button.link {
 /* The themes blooming over the theme toggle (components/season-bloom.tsx): a
    solid disc springing from the button (Base UI's --transform-origin), a
    wedge per theme clipped to its slice (so the slice is what takes the
-   pointer), edge to edge round a hub that wears the theme, and the name of
-   the one under the pointer over the top. */
+   pointer), edge to edge round a hub that wears the theme. */
 .season-bloom {
   position: relative;
   transform-origin: var(--transform-origin);
@@ -412,21 +411,6 @@ button.link {
   background-color: var(--panel);
   color: var(--body-color);
   cursor: pointer;
-}
-
-.season-bloom-name {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  translate: -50% 0;
-  padding: 2px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: var(--panel);
-  color: var(--body-color);
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: nowrap;
 }
 
 .tooltip-line {

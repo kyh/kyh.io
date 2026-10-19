@@ -14,8 +14,9 @@ import { chooseTheme, useTheme } from "@/seasons/store";
 // The themes, blooming over the theme toggle (held down) as a radial menu: a
 // solid disc that springs from the button, a wedge per theme unfolding round
 // it one after another, and a hub wearing the one under the pointer (or in
-// use), its name over the top. Base UI's Menu does the focus, the keys
-// (arrows, typing a name) and the dismissing; picking a theme closes it.
+// use). Names aren't shown, only given to assistive tech and to typing one.
+// Base UI's Menu does the focus, the keys (arrows, typing a name) and the
+// dismissing; picking a theme closes it.
 
 /**
  * The themes round the ring, clockwise from the top: plain light or dark (the
@@ -69,8 +70,6 @@ const liftOver = (toggle: HTMLElement | null) => {
   const { bottom, top } = toggle.getBoundingClientRect();
   return Math.max(0, (top + bottom) / 2 + CENTER + EDGE - window.innerHeight);
 };
-
-const nameOf = (id: SeasonId) => RING.find((theme) => theme.id === id)?.name;
 
 interface SeasonBloomProps {
   /** The theme toggle it blooms over and returns focus to. */
@@ -221,18 +220,6 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                     </motion.span>
                   </AnimatePresence>
                 </button>
-                <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.span
-                    key={shown}
-                    className="season-bloom-name"
-                    initial={{ opacity: 0, y: still ? 0 : 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: still ? 0 : -4 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {nameOf(shown)}
-                  </motion.span>
-                </AnimatePresence>
               </Menu.Popup>
             </Menu.Positioner>
           </Menu.Portal>
