@@ -42,6 +42,8 @@ export interface Season {
   tint: GreyTint | null;
   /** What an easter-egg find throws, and what falls across the page if the season has `drift`. */
   art: Art;
+  /** Its icon as a line drawing in the 24×24 box, stroked as the dock's other icons are. */
+  glyph: string;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
 }
@@ -311,12 +313,44 @@ const SNOWFLAKE = {
   ],
 } satisfies Art;
 
+// The seasons' line icons, for the theme toggle: drawn to the dock's own
+// icons' stroke (2, round), so each reads as one of them.
+
+/** The lantern: hung from a hook, a rib down its middle, a tassel below. */
+const LANTERN_GLYPH = `M12 2v3.6${ellipse(12, 12, 8.4, 6.4)}${ellipse(12, 12, 3.2, 6.4)}M12 18.4V22`;
+
+/** The shamrock: three leaves, a size up from the piece's, on a curling stem. */
+const GLYPH_LEAF = LEAF.map(([x, y]) => [x * 1.3, y * 1.3] as const);
+const SHAMROCK_GLYPH = `${[180, -60, 60].map((angle) => placed(GLYPH_LEAF, [12, 10], angle)).join("")}M12 10.6c.4 4 1.8 7.4 4 10`;
+
+/** A bat's half (-1 left, 1 right), from between its ears round the wing to its tail. */
+const batHalf = (side: -1 | 1) => {
+  const at = (x: number, y: number) => point(12 + side * x, y);
+  return `M${at(0, 7.6)}L${at(1.4, 4.6)}L${at(2, 8)}Q${at(2.4, 8.8)} ${at(2.8, 9.6)}C${at(4.6, 6.8)} ${at(8, 5.8)} ${at(10.6, 7.4)}Q${at(9.2, 8.8)} ${at(8.6, 11.6)}Q${at(7, 10.2)} ${at(5.6, 12.6)}Q${at(4.2, 11.6)} ${at(3, 13.4)}Q${at(2, 16.4)} ${at(0, 18.4)}`;
+};
+const BAT_GLYPH = batHalf(-1) + batHalf(1);
+
+const MAPLE_GLYPH =
+  "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4ZM12 16.6V22";
+
+/** Six arms, a pair of branches on each. */
+const SNOWFLAKE_GLYPH = Array.from({ length: 6 }, (_, arm) => {
+  const angle = ((arm * 60 - 90) * Math.PI) / 180;
+  const along = (reach: number) =>
+    [12 + reach * Math.cos(angle), 12 + reach * Math.sin(angle)] as const;
+  const [x, y] = along(6);
+  const tip = (side: number) =>
+    point(x + 2.6 * Math.cos(angle + side * 0.8), y + 2.6 * Math.sin(angle + side * 0.8));
+  return `M12 12L${point(...along(9.5))}M${tip(-1)}L${point(x, y)}L${tip(1)}`;
+}).join("");
+
 /** In calendar order; where two overlap, the one listed first runs. */
 export const SEASONS = [
   {
     art: GOLDEN_EGG,
     confetti: named("gold", "gold", "crimson", "blue", "green", "plum"),
     drift: null,
+    glyph: EGG,
     id: "classic",
     mode: null,
     name: "Classic",
@@ -335,6 +369,7 @@ export const SEASONS = [
       return first === null ? null : around(first, 1, 6);
     },
     drift: null,
+    glyph: LANTERN_GLYPH,
     id: "lunarNewYear",
     mode: "dark",
     name: "Lunar New Year",
@@ -349,6 +384,7 @@ export const SEASONS = [
     ],
     days: (year) => span(year, [2, 10], [2, 14]),
     drift: null,
+    glyph: HEART,
     id: "valentines",
     mode: "light",
     name: "Valentine's Day",
@@ -359,6 +395,7 @@ export const SEASONS = [
     confetti: [{ back: "#86efac", front: "#15803d" }, ...named("green", "green", "gold")],
     days: (year) => span(year, [3, 14], [3, 17]),
     drift: null,
+    glyph: SHAMROCK_GLYPH,
     id: "stPatricks",
     mode: "light",
     name: "St. Patrick's Day",
@@ -376,6 +413,7 @@ export const SEASONS = [
     // Good Friday to Easter Monday.
     days: (year) => around(easterSunday(year), 2, 1),
     drift: null,
+    glyph: EGG,
     id: "easter",
     mode: "light",
     name: "Easter",
@@ -390,6 +428,7 @@ export const SEASONS = [
     // The week up to Halloween.
     days: (year) => span(year, [10, 25], [10, 31]),
     drift: null,
+    glyph: BAT_GLYPH,
     id: "halloween",
     mode: "dark",
     name: "Halloween",
@@ -405,6 +444,7 @@ export const SEASONS = [
     // Thanksgiving week, Monday to Sunday.
     days: (year) => around(nthWeekday(year, 11, 4, 4), 3, 3),
     drift: "leaves",
+    glyph: MAPLE_GLYPH,
     id: "thanksgiving",
     mode: "light",
     name: "Thanksgiving",
@@ -420,6 +460,7 @@ export const SEASONS = [
     ],
     days: (year) => span(year, [12, 15], [12, 26]),
     drift: "snow",
+    glyph: SNOWFLAKE_GLYPH,
     id: "christmas",
     mode: "dark",
     name: "Christmas",

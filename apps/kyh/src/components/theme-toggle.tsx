@@ -93,12 +93,37 @@ export const ThemeToggleIcon = ({ isLight }: ThemeToggleIconProps) => {
   );
 };
 
-/** A theme's icon: the sun or moon for plain light or dark, else its season's piece. */
-export const ThemeIcon = ({ id, className }: { id: ThemeId; className?: string }) =>
-  id === "light" || id === "dark" ? (
-    <span className={className}>
-      <ThemeToggleIcon isLight={id === "light"} />
-    </span>
+interface ThemeIconProps {
+  id: ThemeId;
+  /** A season as its line glyph, to sit with the dock's icons, or as its colored piece. */
+  look: "glyph" | "piece";
+  className?: string;
+}
+
+/** A theme's icon: the sun or moon for plain light or dark, else its season's glyph or piece. */
+export const ThemeIcon = ({ id, look, className }: ThemeIconProps) => {
+  if (id === "light" || id === "dark") {
+    return (
+      <span className={className}>
+        <ThemeToggleIcon isLight={id === "light"} />
+      </span>
+    );
+  }
+  const { art, glyph } = seasonOf(id);
+  return look === "piece" ? (
+    <PieceIcon art={art} className={className} />
   ) : (
-    <PieceIcon art={seasonOf(id).art} className={className} />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d={glyph} />
+    </svg>
   );
+};

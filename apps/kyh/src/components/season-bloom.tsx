@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
@@ -15,8 +15,7 @@ import { chooseTheme, themeIdOf, useTheme } from "@/seasons/store";
 // solid disc that springs from the button, a wedge per theme unfolding round
 // it one after another, and a hub wearing the one under the pointer (or in
 // use), its name over the top. Base UI's Menu does the focus, the keys
-// (arrows, typing a name) and the dismissing; picking a theme keeps the menu
-// open, so the page can be tried in each.
+// (arrows, typing a name) and the dismissing; picking a theme closes it.
 
 /** The themes round the ring, clockwise from the top: plain light and dark, then each season. */
 const RING: readonly { id: ThemeId; name: string }[] = [
@@ -84,10 +83,15 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
   /** The theme under the pointer or keyboard, shown in the hub. */
   const [lit, setLit] = useState<ThemeId | null>(null);
   const shown = lit ?? current;
+  /** Whether the keyboard is what's moving through the themes, so its focus is the visitor's doing. */
+  const keyed = useRef(false);
   return (
     <Menu.Root
       open={open}
       modal={false}
+      // Hover is CSS's, for a real pointer: highlighting on mouse events would light the
+      // wedge the browser's after-touch mouse events land on when the finger lifts.
+      highlightItemOnHover={false}
       onOpenChange={(next, { event }) => onOpenChange(next, event)}
     >
       <AnimatePresence>
@@ -107,6 +111,12 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
               <Menu.Popup
                 aria-label="Theme"
                 className="season-bloom"
+                onKeyDown={() => {
+                  keyed.current = true;
+                }}
+                onPointerDown={() => {
+                  keyed.current = false;
+                }}
                 finalFocus={anchor}
                 style={{ height: SIZE, width: SIZE }}
                 render={
@@ -128,10 +138,24 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                           value={id}
                           label={name}
                           aria-label={name}
+                          closeOnClick
                           className="season-bloom-wedge"
                           style={{ clipPath: wedge.clip }}
-                          onFocus={() => setLit(id)}
-                          onBlur={() => setLit(null)}
+                          // Shown in the hub: the theme a mouse moves onto, or the keyboard's.
+                          // Not one that merely opened under a still pointer, or that Base UI
+                          // focuses on opening: neither is the visitor's doing.
+                          onPointerMove={(event) => {
+                            if (event.pointerType === "mouse") {
+                              setLit(id);
+                            }
+                          }}
+                          onPointerLeave={() => setLit((was) => (was === id ? null : was))}
+                          onFocus={() => {
+                            if (keyed.current) {
+                              setLit(id);
+                            }
+                          }}
+                          onBlur={() => setLit((was) => (was === id ? null : was))}
                           render={
                             <motion.div
                               initial={
@@ -156,7 +180,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                             className="season-bloom-piece"
                             style={{ left: wedge.left, top: wedge.top }}
                           >
-                            <ThemeIcon id={id} className="block size-full" />
+                            <ThemeIcon id={id} look="piece" className="block size-full" />
                           </span>
                         </Menu.RadioItem>
                       )
@@ -181,7 +205,7 @@ export const SeasonBloom = ({ anchor, open, onOpenChange }: SeasonBloomProps) =>
                       exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <ThemeIcon id={shown} className="block size-full" />
+                      <ThemeIcon id={shown} look="glyph" className="block size-full" />
                     </motion.span>
                   </AnimatePresence>
                 </button>

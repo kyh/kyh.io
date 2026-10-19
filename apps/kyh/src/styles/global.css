@@ -354,6 +354,9 @@ button.link {
   position: relative;
   transform-origin: var(--transform-origin);
   outline: none;
+  /* A finger still down from the hold mustn't select the names or call up the browser's menu. */
+  user-select: none;
+  -webkit-touch-callout: none;
   filter: drop-shadow(0 10px 18px var(--colors-shadowDark));
 }
 
@@ -370,6 +373,12 @@ button.link {
 
   &[data-highlighted] {
     --wedge: color-mix(in srgb, var(--panel), var(--body-color) 20%);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      --wedge: color-mix(in srgb, var(--panel), var(--body-color) 20%);
+    }
   }
 }
 

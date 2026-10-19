@@ -15,6 +15,12 @@ import { ownMode, themeIdOf, toggleTheme, useTheme } from "@/seasons/store";
 /** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
 
+/** Stops an event before anything on the page sees it. */
+const swallow = (event: Event) => {
+  event.stopPropagation();
+  event.preventDefault();
+};
+
 const iconAttrs = {
   "aria-hidden": true,
   fill: "none",
@@ -243,13 +249,29 @@ export const Dock = () => {
       bloom();
     }, HOLD_MS);
   };
-  const release = () => window.clearTimeout(holding.current);
+  // The release that ends a hold is no tap and no pick, whatever it lands on:
+  // on touch, the click goes to the wedge that has opened under the finger.
+  const release = () => {
+    window.clearTimeout(holding.current);
+    if (!held.current) {
+      return;
+    }
+    held.current = false;
+    window.addEventListener("click", swallow, { capture: true, once: true });
+    window.setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 600);
+  };
 
   const plain = theme.season === DEFAULT_SEASON;
   // A season's tap goes back to the visitor's own light or dark.
   const themeLabel = plain
     ? `Switch to ${theme.mode === "light" ? "dark" : "light"} mode`
     : `Back to ${ownMode()} mode`;
+  // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
+  const hover = (event: React.PointerEvent, item: string) => {
+    if (event.pointerType === "mouse" && !blooming) {
+      setHovered(item);
+    }
+  };
   // The dock holds still while the themes are out over the toggle.
   const follow = (x: number) => {
     if (!blooming) {
@@ -273,8 +295,8 @@ export const Dock = () => {
               mouseX.set(Infinity);
               setHovered(null);
             }}
-            onMouseEnter={() => setHovered(blooming ? null : href)}
-            onMouseLeave={() => setHovered(null)}
+            onPointerEnter={(event) => hover(event, href)}
+            onPointerLeave={() => setHovered(null)}
           >
             <DockItem
               label={label}
@@ -299,7 +321,10 @@ export const Dock = () => {
             }
           }}
           onPointerUp={release}
-          onPointerLeave={release}
+          onPointerLeave={() => {
+            release();
+            setHovered(null);
+          }}
           onPointerCancel={release}
           // A long press on touch would open the browser's own menu.
           onContextMenu={(event) => event.preventDefault()}
@@ -311,15 +336,13 @@ export const Dock = () => {
             }
           }}
           onClick={() => {
-            if (held.current || closedByToggle.current) {
-              held.current = false;
+            if (closedByToggle.current) {
               closedByToggle.current = false;
               return;
             }
             toggleTheme();
           }}
-          onMouseEnter={() => setHovered("theme")}
-          onMouseLeave={() => setHovered(null)}
+          onPointerEnter={(event) => hover(event, "theme")}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme" && !blooming}>
             {/* Light and dark morph into each other; a season pops in wearing its piece. */}
@@ -332,7 +355,7 @@ export const Dock = () => {
                 exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
                 transition={{ damping: 22, stiffness: 420, type: "spring" }}
               >
-                <ThemeIcon id={themeIdOf(theme)} className="block size-full" />
+                <ThemeIcon id={themeIdOf(theme)} look="glyph" className="block size-full" />
               </motion.span>
             </AnimatePresence>
           </DockItem>
