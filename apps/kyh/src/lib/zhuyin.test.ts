@@ -2,10 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { prosePages } from "./page-content";
-import { GLYPHS, ZHUYIN, scrambleChars } from "./zhuyin";
+import { GLYPHS, ZHUYIN, readingOf, scrambleChars } from "./zhuyin";
 
 test("a translated heading scrambles through its own spelling, each symbol once", () => {
   assert.deepEqual(scrambleChars("Kaiyu Hsu"), ["ㄒ", "ㄩ", "ㄎ", "ㄞ"]);
+});
+
+test("a heading reads out in zhuyin without its tones", () => {
+  assert.equal(readingOf("Kaiyu Hsu"), "ㄒㄩ ㄎㄞ ㄩ");
+  assert.equal(readingOf("Untranslated"), "");
 });
 
 test("an untranslated heading scrambles through all of zhuyin", () => {
