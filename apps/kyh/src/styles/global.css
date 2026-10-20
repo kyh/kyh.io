@@ -536,12 +536,12 @@ button.link {
   }
 }
 
-/* Zhuyin is full-width: each noise glyph is squeezed to about a letter's
-   width, so a scrambling heading stays close to its settled width. */
+/* Zhuyin is full-width: each noise glyph is squeezed to three quarters,
+   so a scrambling heading stays near its settled width without thinning. */
 [data-scramble] [data-noise] {
   display: inline-block;
-  width: 0.55em;
-  transform: scaleX(0.55);
+  width: 0.75em;
+  transform: scaleX(0.75);
   transform-origin: left;
 }
 
