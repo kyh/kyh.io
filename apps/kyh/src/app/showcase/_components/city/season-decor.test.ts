@@ -4,11 +4,12 @@ import test from "node:test";
 import type { CityProject } from "./draw-landmarks";
 import { projects } from "@/lib/data";
 import { SEASONS } from "@/seasons/seasons";
-import { houseCells, parkOf } from "./draw-blocks";
+import { drawBlimp } from "./blimp";
+import { houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { planEntries } from "./draw-landmarks";
 import { planCity } from "./plan";
 import { DECOR, drawDecor, openSpots } from "./season-decor";
-import { createSketch } from "./sketch";
+import { createSketch, viewAt } from "./sketch";
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   description: project.description,
@@ -92,5 +93,32 @@ test("the shore spots ring the pond, out of the water", () => {
       .find((pond) => Math.hypot((x - pond.x) / pond.rx, (z - pond.z) / pond.rz) < 1.3);
     assert.ok(near, "by a pond");
     assert.ok(Math.hypot((x - near.x) / near.rx, (z - near.z) / near.rz) > 1, "in the water");
+  }
+});
+
+test("the square's fountain is the one spot for a season's giant piece", () => {
+  const squares = plan.blocks.filter((block) => block.use === "plaza");
+  assert.deepEqual(
+    openSpots(plan).centerpiece,
+    squares.map((block) => {
+      const { cx, cz } = plazaOf(block);
+      return [cx, cz];
+    }),
+  );
+});
+
+test("every season's blimp and flyer draw something in every view", () => {
+  for (let heading = 0; heading < 4; heading += 1) {
+    const view = viewAt(heading);
+    for (const { id } of SEASONS) {
+      const { blimp, flyer } = DECOR[id];
+      if (blimp) {
+        const sketch = drawBlimp(blimp, view, [view]);
+        assert.ok(sketch.faces.size > 0 && sketch.signs.length === 1, id);
+      }
+      if (flyer) {
+        assert.ok(flyer(view, [view]).faces.size > 0, id);
+      }
+    }
   }
 });

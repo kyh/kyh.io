@@ -1,8 +1,9 @@
 // The sky over the town and the boats round it, placed in the scene and kept
 // moving: the blimp crossing, balloons drifting, drones over downtown, sails
 // circling the island and the ferry off the pier (boats.ts sails both). sky.ts
-// draws them. The blimp is dressed for the season: its greeting in its colors
-// (`blimp` in DECOR), else the site's name in grey.
+// draws them, and blimp.ts the blimp. The season dresses the sky (DECOR): the
+// blimp in its greeting, colors, lights and hat, else the site's name in grey,
+// and what else it flies across (Santa's sleigh, a witch on her broom).
 import type { Scene } from "three";
 import { Vector3 } from "three";
 
@@ -10,24 +11,20 @@ import type { SeasonId } from "@/seasons/seasons";
 import type { BoatPose } from "./boats";
 import type { Scheme } from "./palette";
 import type { Built, Materials } from "./render";
-import type { BlimpLook } from "./sky";
+import type { BlimpLook } from "./blimp";
+import type { Flyer } from "./sky";
 import type { Sketch, Vec3 } from "./sketch";
+import { BLIMP_HEADING, drawBlimp, PLAIN_BLIMP } from "./blimp";
 import { RAISE } from "./carry";
 import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { DECOR } from "./season-decor";
-import {
-  BLIMP_HEADING,
-  drawBalloon,
-  drawBlimp,
-  drawBoat,
-  drawDrone,
-  drawFerry,
-  PLAIN_BLIMP,
-} from "./sky";
+import { drawBalloon, drawBoat, drawDrone, drawFerry, FLYER_HEADING } from "./sky";
 
 const BLIMP_HEIGHT = 7.5;
 const BLIMP_SPAN = 76;
+const FLYER_HEIGHT = 9.5;
+const FLYER_SPAN = 90;
 
 export const createSky = (
   scene: Scene,
@@ -50,8 +47,13 @@ export const createSky = (
     builds.push(built);
     return built;
   };
-  /** The blimp as it's dressed; none until the first season. */
+  // What the season dresses: the blimp and what else it flies; none until the first season.
   let blimp: { built: Built; look: BlimpLook } | null = null;
+  let flyer: { built: Built; draw: Flyer } | null = null;
+  const undraw = (built: Built) => {
+    scene.remove(built.group);
+    built.dispose();
+  };
   const balloons = [add(drawBalloon(0, view, covers)), add(drawBalloon(1, view, covers))];
   const boats = [add(drawBoat("white")), add(drawBoat("accentRed")), add(drawBoat("accentBlue"))];
   const ferry = add(drawFerry());
@@ -61,12 +63,19 @@ export const createSky = (
     add(drawDrone(view, covers)),
   ];
   const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
+  const flyerHeading = new Vector3(Math.cos(FLYER_HEADING), 0, Math.sin(FLYER_HEADING));
   const update = (time: number, poses: readonly BoatPose[]) => {
     const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
     blimp?.built.group.position.set(
       40 + heading.x * along,
       BLIMP_HEIGHT + Math.sin(time * 0.5) * 0.15,
       40 + heading.z * along,
+    );
+    const across = still ? 6 : (((time * 1.2) % FLYER_SPAN) / FLYER_SPAN - 0.5) * FLYER_SPAN;
+    flyer?.built.group.position.set(
+      34 + flyerHeading.x * across,
+      FLYER_HEIGHT + Math.sin(time * 1.3) * 0.25,
+      34 + flyerHeading.z * across,
     );
     for (const [index, balloon] of balloons.entries()) {
       const angle = time * 0.03 + index * 2.6;
@@ -100,33 +109,38 @@ export const createSky = (
       );
     }
   };
-  const all = () => (blimp ? [...builds, blimp.built] : builds);
+  const all = () => [...builds, ...(blimp ? [blimp.built] : []), ...(flyer ? [flyer.built] : [])];
   return {
     dispose: () => {
       for (const built of all()) {
-        scene.remove(built.group);
-        built.dispose();
+        undraw(built);
       }
       blimp = null;
+      flyer = null;
     },
-    /** Redraws the blimp for a season, if it doesn't already wear its look. */
+    /** Dresses the sky for a season, redrawing only what it changes. */
     dress: (season: SeasonId) => {
-      const look = DECOR[season].blimp ?? PLAIN_BLIMP;
-      if (blimp?.look === look) {
-        return;
+      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer } = DECOR[season];
+      if (blimp?.look !== look) {
+        if (blimp) {
+          undraw(blimp.built);
+        }
+        blimp = { built: draw(drawBlimp(look, view, covers)), look };
       }
-      if (blimp) {
-        scene.remove(blimp.built.group);
-        blimp.built.dispose();
+      if (flyer?.draw !== drawFlyer) {
+        if (flyer) {
+          undraw(flyer.built);
+        }
+        flyer = drawFlyer ? { built: draw(drawFlyer(view, covers)), draw: drawFlyer } : null;
       }
-      blimp = { built: draw(drawBlimp(look, view, covers)), look };
     },
-    /** Grey as the town, but a season's blimp, in its colors as its decorations are. */
+    /** Grey as the town, but what a season dresses in its colors, as its decorations are. */
     paint: (scheme: Scheme) => {
       for (const built of builds) {
         built.paint(scheme, false);
       }
       blimp?.built.paint(scheme, blimp.look !== PLAIN_BLIMP);
+      flyer?.built.paint(scheme, true);
     },
     show: (shown: boolean) => {
       visible = shown;

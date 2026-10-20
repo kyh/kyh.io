@@ -918,7 +918,7 @@ const inFrame = (frame: Frame, [a, b]: Point2): Vec3 =>
  * A slab cut to any outline in a frame and pushed out along `depth`: hearts,
  * arrows, speech bubbles, boards. The outline may be wound either way.
  */
-const extrudeTriangles = (
+export const extrudeTriangles = (
   outline: readonly Point2[],
   frame: Frame,
   depth: Vec3,
@@ -1004,3 +1004,22 @@ export const mapTriangles = (
   move: (point: Vec3) => Vec3,
 ): Triangle[] =>
   triangles.map(({ a, b, c, colors }) => ({ a: move(a), b: move(b), c: move(c), colors }));
+
+/** A round rod from one point to another, at any slant: bones, broomsticks. */
+export const rodTriangles = (
+  from: Vec3,
+  to: Vec3,
+  r: number,
+  colors: Paint,
+  segments = 6,
+): Triangle[] => {
+  const h = length(sub(to, from));
+  const along = scale(sub(to, from), 1 / h);
+  // Two directions square to it, for the rod's round.
+  const square = cross(Math.abs(along[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], along);
+  const side = scale(square, 1 / length(square));
+  const other = cross(along, side);
+  return mapTriangles(roundTriangles({ colors, h, r, segments, x: 0, z: 0 }), ([x, y, z]) =>
+    add(from, add(scale(side, x), add(scale(along, y), scale(other, z)))),
+  );
+};

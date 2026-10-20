@@ -150,17 +150,22 @@ grounds and trees at Christmas, the trees turned at Thanksgiving, windows lit
 orange at Halloween, pastel roofs at Easter. Its decorations
 (`city/season-decor.ts`, `DECOR`): lights strung along every cottage's eaves,
 pumpkins by the doors and graves in the gardens at Halloween, snowmen and
-decorated trees at Christmas, and so on, on four kinds of open spot (porches,
-gardens, the pond's shore, the square and the ball courts; `houseCells`,
+decorated trees at Christmas, and so on, on five kinds of open spot (porches,
+gardens, the pond's shore, the square and the ball courts, and the square's
+fountain for one giant piece: the town's tree at Christmas, a waving skeleton
+at Halloween, a painted egg at Easter, a heart at Valentine's; `houseCells`,
 `parkOf` and `plazaOf` in `draw-blocks.ts` say where they are); they're a
 drawing of their own per view, in color over the grey town, drawn a few spots
 at a time (`decorSteps`), and redrawn without redrawing the town when the
 season changes: at once for the view on screen, and a few milliseconds a frame
 for the others kept (`draftAhead` in `engine.ts`). And its `emote`: what the
 town's people now and then send up (hearts at Valentine's), floated over their
-heads by `life.ts`. And its `blimp`: the greeting the blimp trails in the
-season's colors ("BOO!" at Halloween), redrawn with the decorations
-(`sky-scene.ts`); a day without a season flies the site's name in grey.
+heads by `life.ts`. And its sky: the blimp's `blimp` look, its greeting in the
+season's colors ("BOO!" at Halloween), the season's lights along its back and
+a hat or trim (`blimp.ts`: a Santa hat, a witch's hat, bunny ears, lanterns),
+and a `flyer` crossing higher up the other way (Santa's sleigh, a witch on her
+broom; `sky.ts`), both redrawn with the decorations (`sky-scene.ts`); a day
+without a season flies the site's name in grey.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`

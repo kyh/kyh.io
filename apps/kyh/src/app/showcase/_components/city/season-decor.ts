@@ -1,24 +1,40 @@
 // What the town puts out for the season (src/seasons): jack-o'-lanterns on
 // the porches and graves in the gardens at Halloween, snowmen and trees on
-// the square at Christmas. Each season decorates four kinds of spot the town
+// the square at Christmas. Each season decorates five kinds of spot the town
 // leaves open: beside the cottages' doors, a garden's open corner, round the
-// pond, and the square and the ball courts. Drawn into a sketch of their own
-// per view, so a season change swaps them without redrawing the town
-// (engine.ts), and shown in color: the town is grey, its decorations aren't.
-// Pure.
+// pond, the square and the ball courts, and the square's middle, for one
+// giant piece (the town's tree at Christmas, a skeleton at Halloween). Drawn
+// into a sketch of their own per view, so a season change swaps them without
+// redrawing the town (engine.ts), and shown in color: the town is grey, its
+// decorations aren't. What it does to the sky (the blimp's look, what flies
+// over) is here too, drawn by blimp.ts and sky.ts. Pure.
 import type { Random } from "@/lib/random";
 import type { SeasonId } from "@/seasons/seasons";
 import { createRandom, hashString } from "@/lib/random";
 import { HEART } from "@/seasons/seasons";
 import type { Paint, Token } from "./palette";
 import type { CityPlan } from "./plan";
-import type { BlimpLook } from "./sky";
-import type { Sketch, Vec3 } from "./sketch";
+import type { BlimpLook } from "./blimp";
+import type { Flyer } from "./sky";
+import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
 import type { Steps } from "./steps";
 import type { HouseSpec } from "./draw-blocks";
+import { bunnyEars, heartCrest, lanterns, santaHat, topHat, witchHat } from "./blimp";
 import { CURB_TOP, doorstep, eavesOf, houseCells, parkOf, plazaOf } from "./draw-blocks";
+import { cutout, heart } from "./draw-kit";
 import { paint, PASTEL_ROOFS } from "./palette";
-import { ball, box, line, round } from "./sketch";
+import { drawSleigh, drawWitch } from "./sky";
+import {
+  ball,
+  ballTriangles,
+  box,
+  extrude,
+  line,
+  mapTriangles,
+  rodTriangles,
+  round,
+  solid,
+} from "./sketch";
 import { finish } from "./steps";
 
 /** How many spots are decorated between steps, when drawn over frames. */
@@ -32,10 +48,11 @@ type Spot = readonly [x: number, z: number];
 /**
  * The kinds of open place a season can decorate: beside each cottage's door
  * (porch), a garden's corner furthest from its tree and bush (yard), round
- * the pond between the water and the trees (shore), and the square round its
- * fountain and the ball courts, with room for something big (square).
+ * the pond between the water and the trees (shore), the square round its
+ * fountain and the ball courts, with room for something big (square), and the
+ * square's fountain, for the season's one giant piece (centerpiece).
  */
-const KINDS = ["porch", "yard", "shore", "square"] as const;
+const KINDS = ["porch", "yard", "shore", "square", "centerpiece"] as const;
 
 type Kind = (typeof KINDS)[number];
 
@@ -45,7 +62,14 @@ export type Spots = Record<Kind, Spot[]> & { houses: HouseSpec[] };
 const distance = ([ax, az]: Spot, [bx, bz]: Spot) => Math.hypot(ax - bx, az - bz);
 
 const spotsIn = (plan: CityPlan): Spots => {
-  const spots: Spots = { houses: [], porch: [], shore: [], square: [], yard: [] };
+  const spots: Spots = {
+    centerpiece: [],
+    houses: [],
+    porch: [],
+    shore: [],
+    square: [],
+    yard: [],
+  };
   for (const block of plan.blocks) {
     if (block.use === "houses") {
       for (const cell of houseCells(block)) {
@@ -72,6 +96,7 @@ const spotsIn = (plan: CityPlan): Spots => {
     } else if (block.use === "plaza") {
       // The diagonals between the fountain and the corner trees, clear of the lamps.
       const { cx, cz } = plazaOf(block);
+      spots.centerpiece.push([cx, cz]);
       for (const [dx, dz] of [
         [-1, -1],
         [1, -1],
@@ -433,6 +458,235 @@ const eaveLights = (sketch: Sketch, house: HouseSpec, colors: readonly Token[]) 
   }
 };
 
+/** The rim of the square's fountain, which a centerpiece stands in. */
+const BASIN = CURB_TOP + 0.1;
+
+const BLUE = paint("accentBlue");
+const STAR: readonly Point2[] = Array.from({ length: 10 }, (_, index) => {
+  const angle = Math.PI / 2 + (index / 10) * Math.PI * 2;
+  const reach = index % 2 === 0 ? 1 : 0.42;
+  return [Math.cos(angle) * reach, Math.sin(angle) * reach];
+});
+
+/**
+ * The town's tree, standing in the square's fountain: five tiers hung with
+ * baubles and strung with lights round each, a gold star on top, presents
+ * round its foot.
+ */
+const townTree = (sketch: Sketch, x: number, z: number, random: Random) => {
+  round(sketch, { colors: STEM, h: 0.3, r: 0.12, segments: 10, x, y: BASIN, z });
+  const tiers = [
+    { h: 0.55, r: 0.85, y: 0.3 },
+    { h: 0.5, r: 0.7, y: 0.6 },
+    { h: 0.45, r: 0.55, y: 0.88 },
+    { h: 0.4, r: 0.4, y: 1.13 },
+    { h: 0.36, r: 0.26, y: 1.36 },
+  ] as const;
+  for (const tier of tiers) {
+    round(sketch, {
+      colors: GREEN,
+      h: tier.h,
+      r: tier.r,
+      segments: 16,
+      top: 0,
+      x,
+      y: BASIN + tier.y,
+      z,
+    });
+  }
+  const colors = [RED, GOLD, BLUE, SNOW] as const;
+  for (const [index, tier] of tiers.entries()) {
+    // Lights round the tier's hem.
+    const bulbs = Math.round(tier.r * 18);
+    for (let bulb = 0; bulb < bulbs; bulb += 1) {
+      const angle = (bulb / bulbs) * Math.PI * 2 + index;
+      ball(sketch, {
+        colors: colors[(bulb + index) % colors.length] ?? GOLD,
+        detail: 5,
+        r: 0.026,
+        x: x + Math.cos(angle) * tier.r * 0.96,
+        y: BASIN + tier.y + 0.03,
+        z: z + Math.sin(angle) * tier.r * 0.96,
+      });
+    }
+    // Baubles up its sides.
+    for (let bauble = 0; bauble < 6; bauble += 1) {
+      const up = random.range(0.2, 0.65);
+      const angle = random.range(0, Math.PI * 2);
+      const reach = tier.r * (1 - up) + 0.02;
+      ball(sketch, {
+        colors: random.pick([RED, GOLD, BLUE]),
+        detail: 6,
+        r: 0.045,
+        x: x + Math.cos(angle) * reach,
+        y: BASIN + tier.y + tier.h * up,
+        z: z + Math.sin(angle) * reach,
+      });
+    }
+  }
+  // A star, its faces to the views on either side.
+  const size = 0.17;
+  extrude(
+    sketch,
+    STAR.map(([u, v]) => [u * size, v * size] satisfies Point2),
+    { origin: [x, BASIN + 1.86, z - 0.025], u: [1, 0, 0], v: [0, 1, 0] },
+    [0, 0, 0.05],
+    GOLD,
+  );
+  for (let index = 0; index < 7; index += 1) {
+    const angle = (index / 7) * Math.PI * 2 + random.range(-0.2, 0.2);
+    const reach = random.range(0.95, 1.1);
+    present(
+      sketch,
+      x + Math.cos(angle) * reach,
+      z + Math.sin(angle) * reach,
+      random.pick([RED, GREEN, BLUE, paint("accentPurple")]),
+      random.range(1.2, 1.7),
+    );
+  }
+};
+
+const BONE = paint("white", "white", "whiteShade");
+
+/**
+ * A giant skeleton, twice a cottage's height, standing beside the square's
+ * fountain facing the way the town is first seen, one hand up in a wave.
+ */
+const giantSkeleton = (sketch: Sketch, cx: number, cz: number) => {
+  const x = cx - 1.7;
+  const z = cz;
+  // Its own frame: across its shoulders, up, and the way it faces.
+  const at = ([u, y, w]: Vec3): Vec3 => [
+    x + (u + w) * Math.SQRT1_2,
+    GROUND + y,
+    z + (w - u) * Math.SQRT1_2,
+  ];
+  const bone = (from: Vec3, to: Vec3, r: number) =>
+    solid(sketch, rodTriangles(at(from), at(to), r, BONE));
+  const knob = (triangles: readonly Triangle[]) =>
+    solid(sketch, mapTriangles(triangles, at), "fine", 70);
+  // Skull, jaw, sockets and nose.
+  knob(ballTriangles({ colors: BONE, detail: 12, r: 0.17, ry: 1.1, x: 0, y: 2, z: 0.02 }));
+  knob(
+    ballTriangles({ colors: BONE, detail: 8, r: 0.11, rx: 0.95, ry: 0.6, x: 0, y: 1.85, z: 0.06 }),
+  );
+  for (const u of [-0.065, 0.065]) {
+    knob(ballTriangles({ colors: IRON, detail: 6, r: 0.048, x: u, y: 2.03, z: 0.15 }));
+  }
+  knob(ballTriangles({ colors: IRON, detail: 5, r: 0.024, x: 0, y: 1.95, z: 0.175 }));
+  // Neck, spine, collarbones and breastbone.
+  bone([0, 1.68, -0.02], [0, 1.82, 0], 0.035);
+  bone([0, 1, -0.04], [0, 1.7, -0.04], 0.04);
+  bone([-0.27, 1.67, 0], [0.27, 1.67, 0], 0.03);
+  bone([0, 1.6, 0.13], [0, 1.3, 0.12], 0.026);
+  // Ribs: each curls from the spine round the side to the breastbone, dipping as it goes.
+  for (let rib = 0; rib < 5; rib += 1) {
+    const y = 1.58 - rib * 0.085;
+    const wide = 0.2 - Math.abs(rib - 1.5) * 0.012;
+    for (const side of [-1, 1]) {
+      const points = Array.from({ length: 7 }, (_, step): Vec3 => {
+        const angle = -Math.PI / 2 + (step / 6) * (Math.PI - 0.3);
+        return [side * Math.cos(angle) * wide, y - (step / 6) * 0.06, Math.sin(angle) * 0.14];
+      });
+      for (const [index, from] of points.entries()) {
+        const to = points[index + 1];
+        if (to) {
+          bone(from, to, 0.02);
+        }
+      }
+    }
+  }
+  knob(ballTriangles({ colors: BONE, detail: 10, r: 0.18, ry: 0.45, rz: 0.55, x: 0, y: 1, z: 0 }));
+  // Legs, knees and feet.
+  for (const side of [-1, 1]) {
+    const hip: Vec3 = [side * 0.1, 0.98, 0];
+    const knee: Vec3 = [side * 0.12, 0.53, 0.03];
+    const ankle: Vec3 = [side * 0.12, 0.08, 0];
+    bone(hip, knee, 0.045);
+    bone(knee, ankle, 0.04);
+    knob(ballTriangles({ colors: BONE, detail: 6, r: 0.055, x: knee[0], y: knee[1], z: knee[2] }));
+    knob(
+      ballTriangles({
+        colors: BONE,
+        detail: 6,
+        r: 0.06,
+        ry: 0.5,
+        rz: 1.6,
+        x: side * 0.13,
+        y: 0.04,
+        z: 0.08,
+      }),
+    );
+  }
+  // One arm hanging, the other raised in a wave.
+  for (const [shoulder, elbow, wrist] of [
+    [
+      [-0.27, 1.66, 0],
+      [-0.36, 1.28, 0],
+      [-0.4, 0.96, 0.06],
+    ],
+    [
+      [0.27, 1.66, 0],
+      [0.52, 1.78, 0.05],
+      [0.58, 2.1, 0.08],
+    ],
+  ] satisfies [Vec3, Vec3, Vec3][]) {
+    bone(shoulder, elbow, 0.038);
+    bone(elbow, wrist, 0.032);
+    knob(
+      ballTriangles({ colors: BONE, detail: 6, r: 0.045, x: elbow[0], y: elbow[1], z: elbow[2] }),
+    );
+    const hand: Vec3 = [
+      wrist[0] + (wrist[0] - elbow[0]) * 0.25,
+      wrist[1] + (wrist[1] - elbow[1]) * 0.25,
+      wrist[2],
+    ];
+    knob(
+      ballTriangles({
+        colors: BONE,
+        detail: 6,
+        r: 0.06,
+        ry: 1.3,
+        x: hand[0],
+        y: hand[1],
+        z: hand[2],
+      }),
+    );
+  }
+};
+
+/** A giant painted egg standing in the square's fountain, in bands of color. */
+const giantEgg = (sketch: Sketch, x: number, z: number) => {
+  const r = 0.38;
+  const bands: readonly Token[] = ["accentPink", "accentYellow", "accentTeal", "accentPurple"];
+  const triangles = ballTriangles({
+    colors: SNOW,
+    detail: 16,
+    r,
+    ry: 1.35,
+    x,
+    y: BASIN + r * 1.35,
+    z,
+  });
+  solid(
+    sketch,
+    triangles.map((triangle) => {
+      const y = (triangle.a[1] + triangle.b[1] + triangle.c[1]) / 3 - BASIN;
+      const band = Math.floor((y / (r * 2.7)) * 7);
+      const token = band % 2 === 1 ? bands[Math.floor(band / 2) % bands.length] : undefined;
+      return token ? { ...triangle, colors: paint(token) } : triangle;
+    }),
+    "fine",
+    70,
+  );
+};
+
+/** A big red heart standing in the square's fountain. */
+const fountainHeart = (sketch: Sketch, x: number, z: number) => {
+  const size = 0.6;
+  cutout(sketch, heart(size), [x, BASIN + size, z - 0.06], RED, 0.12);
+};
+
 /** Something a season puts at one spot. */
 type Prop = (sketch: Sketch, x: number, z: number, random: Random) => void;
 
@@ -444,21 +698,41 @@ export interface Emote {
 
 /**
  * What a season puts out, by kind of spot, what it does to each cottage, what
- * its people send up (life.ts floats it), and what the blimp trails
- * (sky-scene.ts flies it); a kind it leaves out stays bare.
+ * its people send up (life.ts floats it), how the blimp looks, and what else
+ * flies over (sky-scene.ts flies both); a kind it leaves out stays bare.
  */
 export interface Decor extends Partial<Record<Kind, Prop>> {
   house?: (sketch: Sketch, house: HouseSpec) => void;
   emote?: Emote;
   blimp?: BlimpLook;
+  flyer?: Flyer;
 }
+
+/** Each season's string of lights, on the cottages' eaves and the blimp's back alike. */
+const LIGHTS = {
+  christmas: ["festiveRed", "gold", "festiveGreen", "accentBlue"],
+  easter: ["accentPink", "accentYellow", "accentTeal", "accentPurple"],
+  halloween: ["pumpkin", "accentPurple"],
+  lunarNewYear: ["festiveRed", "festiveRed", "gold"],
+  stPatricks: ["festiveGreen", "gold"],
+  thanksgiving: ["pumpkin", "gold", "festiveRed"],
+  valentines: ["festiveRed", "accentPink", "white"],
+} as const satisfies Partial<Record<SeasonId, readonly Token[]>>;
 
 /** Every season's decorations: keyed by season, so a new one isn't missed. */
 export const DECOR: Record<SeasonId, Decor> = {
   christmas: {
-    blimp: { banner: "festiveRed", fins: "festiveGreen", lettering: "white", text: "HO HO HO" },
-    house: (sketch, house) =>
-      eaveLights(sketch, house, ["festiveRed", "gold", "festiveGreen", "accentBlue"]),
+    blimp: {
+      banner: "festiveRed",
+      fins: "festiveGreen",
+      lettering: "white",
+      lights: LIGHTS.christmas,
+      text: "HO HO HO",
+      trim: santaHat,
+    },
+    centerpiece: townTree,
+    flyer: drawSleigh,
+    house: (sketch, house) => eaveLights(sketch, house, LIGHTS.christmas),
     porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
     square: (sketch, x, z, random) => {
       christmasTree(sketch, x, z, random, 1.25);
@@ -469,7 +743,15 @@ export const DECOR: Record<SeasonId, Decor> = {
   },
   classic: {},
   easter: {
-    blimp: { banner: "accentPurple", fins: "accentPink", lettering: "white", text: "HAPPY EASTER" },
+    blimp: {
+      banner: "accentPurple",
+      fins: "accentPink",
+      lettering: "white",
+      lights: LIGHTS.easter,
+      text: "HAPPY EASTER",
+      trim: bunnyEars,
+    },
+    centerpiece: giantEgg,
     porch: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
     shore: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
     square: (sketch, x, z, random) => {
@@ -484,8 +766,17 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   halloween: {
-    blimp: { banner: "pumpkin", fins: "accentPurple", lettering: "screen", text: "BOO!" },
-    house: (sketch, house) => eaveLights(sketch, house, ["pumpkin", "accentPurple"]),
+    blimp: {
+      banner: "pumpkin",
+      fins: "accentPurple",
+      lettering: "screen",
+      lights: LIGHTS.halloween,
+      text: "BOO!",
+      trim: witchHat,
+    },
+    centerpiece: giantSkeleton,
+    flyer: drawWitch,
+    house: (sketch, house) => eaveLights(sketch, house, LIGHTS.halloween),
     porch: (sketch, x, z, random) => {
       pumpkin(sketch, x, z);
       if (random.chance(0.5)) {
@@ -505,8 +796,15 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   lunarNewYear: {
-    blimp: { banner: "festiveRed", fins: "gold", lettering: "white", text: "HAPPY NEW YEAR" },
-    house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "festiveRed", "gold"]),
+    blimp: {
+      banner: "festiveRed",
+      fins: "gold",
+      lettering: "white",
+      lights: LIGHTS.lunarNewYear,
+      text: "HAPPY NEW YEAR",
+      trim: lanterns,
+    },
+    house: (sketch, house) => eaveLights(sketch, house, LIGHTS.lunarNewYear),
     porch: (sketch, x, z) => lanternPost(sketch, x, z),
     shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
     square: (sketch, x, z) => {
@@ -515,8 +813,15 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   stPatricks: {
-    blimp: { banner: "festiveGreen", fins: "gold", lettering: "gold", text: "LUCKY" },
-    house: (sketch, house) => eaveLights(sketch, house, ["festiveGreen", "gold"]),
+    blimp: {
+      banner: "festiveGreen",
+      fins: "gold",
+      lettering: "gold",
+      lights: LIGHTS.stPatricks,
+      text: "LUCKY",
+      trim: topHat("festiveGreen", "screen"),
+    },
+    house: (sketch, house) => eaveLights(sketch, house, LIGHTS.stPatricks),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.4)) {
         potOfGold(sketch, x, z);
@@ -528,7 +833,14 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   thanksgiving: {
-    blimp: { banner: "pumpkin", fins: "festiveRed", lettering: "white", text: "GIVE THANKS" },
+    blimp: {
+      banner: "pumpkin",
+      fins: "festiveRed",
+      lettering: "white",
+      lights: LIGHTS.thanksgiving,
+      text: "GIVE THANKS",
+      trim: topHat("screen", "screen"),
+    },
     porch: (sketch, x, z) => {
       pumpkin(sketch, x, z);
       pumpkin(sketch, x - 0.09, z + 0.05, 0.6);
@@ -547,9 +859,17 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   valentines: {
-    blimp: { banner: "accentPink", fins: "festiveRed", lettering: "white", text: "BE MINE" },
+    blimp: {
+      banner: "accentPink",
+      fins: "festiveRed",
+      lettering: "white",
+      lights: LIGHTS.valentines,
+      text: "BE MINE",
+      trim: heartCrest,
+    },
+    centerpiece: fountainHeart,
     emote: { d: HEART, fill: "#ff4f7b" },
-    house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "accentPink", "white"]),
+    house: (sketch, house) => eaveLights(sketch, house, LIGHTS.valentines),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.6)) {
         balloon(sketch, x, z, 0.3, random.pick([RED, paint("accentPink")]));
