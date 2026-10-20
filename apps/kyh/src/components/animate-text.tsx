@@ -1,5 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useRef } from "react";
+
+import { scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
 import { scrambleChars } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
@@ -35,27 +38,12 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-const pick = (glyphs: string[], roll: number) => glyphs[roll % glyphs.length] ?? "";
-
-const getRandomGlyph = (glyphs: string[]) =>
-  pick(glyphs, Math.floor(Math.random() * glyphs.length));
-
-// The first scramble's glyphs come from the text itself (a string hash over the
-// text, the letter and the slot), so the server and the browser draw the same ones.
-const glyphFor = (text: string, index: number, slot: number) => {
-  let hash = 7;
-  for (const char of `${text}:${index}:${slot}`) {
-    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2_147_483_647;
+const stop = (timer: React.RefObject<ReturnType<typeof setInterval> | null>) => {
+  if (timer.current) {
+    clearInterval(timer.current);
+    timer.current = null;
   }
-  return pick(scrambleChars(text), hash);
 };
-
-const generateChars = (text: string) =>
-  [...text].map((_, index) => ({
-    char1: glyphFor(text, index, 1),
-    char2: glyphFor(text, index, 2),
-    char3: glyphFor(text, index, 3),
-  }));
 
 type ScrambleTextProps = {
   children: string;
@@ -72,51 +60,56 @@ export const ScrambleText = ({
   ...props
 }: ScrambleTextProps) => {
   const text = children;
-  const chars = generateChars(text);
+  const shownRef = useRef<HTMLSpanElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval>>(null);
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
-    if (trigger === "load") {
+  // Each tick writes the next frame straight into the shown span; screen
+  // readers get the plain text beside it. While it plays, the heading holds
+  // its width, so it never slips out from under the pointer and replays.
+  const play = useCallback(() => {
+    const shown = shownRef.current;
+    const heading = shown?.parentElement;
+    if (
+      !shown ||
+      !heading ||
+      timerRef.current ||
+      globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       return;
     }
-    const span = e.currentTarget.querySelector<HTMLSpanElement>("[data-scramble]");
-    if (!span) {
-      return;
-    }
-
-    // Update CSS vars with new random chars
+    heading.style.minWidth = `${heading.offsetWidth}px`;
     const glyphs = scrambleChars(text);
-    for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
-      el.style.setProperty("--char-1", `"${getRandomGlyph(glyphs)}"`);
-      el.style.setProperty("--char-2", `"${getRandomGlyph(glyphs)}"`);
-      el.style.setProperty("--char-3", `"${getRandomGlyph(glyphs)}"`);
-    }
+    const last = scrambleTicks(text);
+    let tick = 0;
+    shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
+    timerRef.current = setInterval(() => {
+      tick += 1;
+      shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
+      if (tick >= last) {
+        stop(timerRef);
+        heading.style.minWidth = "";
+      }
+    }, TICK_MS);
+  }, [text]);
 
-    // Restart animation by removing and re-adding class; reading offsetWidth
-    // forces the reflow that makes the browser notice the removal
-    span.classList.remove("scramble");
-    void span.offsetWidth;
-    span.classList.add("scramble");
-  };
+  useEffect(() => {
+    if (trigger !== "hover") {
+      play();
+    }
+    const shown = shownRef.current;
+    return () => {
+      stop(timerRef);
+      if (shown) {
+        shown.textContent = text;
+        shown.parentElement?.style.removeProperty("min-width");
+      }
+    };
+  }, [play, text, trigger]);
 
   return (
-    <Element className={className} onMouseEnter={handleMouseEnter} {...props}>
-      <span data-scramble className={trigger === "hover" ? "" : "scramble"} aria-hidden>
-        {[...text].map((char, index) => {
-          // SAFETY: CSS custom properties are valid inline styles, but
-          // React.CSSProperties has no index signature for `--*` keys; the
-          // object holds nothing else.
-          const charStyle = {
-            "--char-1": `"${chars[index]?.char1}"`,
-            "--char-2": `"${chars[index]?.char2}"`,
-            "--char-3": `"${chars[index]?.char3}"`,
-            "--index": index,
-          } as React.CSSProperties;
-          return (
-            <span key={index} data-char={char} style={charStyle}>
-              {char}
-            </span>
-          );
-        })}
+    <Element className={className} onMouseEnter={trigger === "load" ? undefined : play} {...props}>
+      <span ref={shownRef} data-scramble aria-hidden>
+        {text}
       </span>
       <span className="sr-only">{text}</span>
     </Element>

@@ -517,22 +517,10 @@ button.link {
   }
 }
 
-/* Scramble text animation */
-[data-scramble] > span {
-  position: relative;
-  color: transparent;
-  &::after {
-    content: attr(data-char);
-    position: absolute;
-    display: inline-block;
-    inset: 0;
-    color: canvastext;
-    pointer-events: none;
-  }
-}
-
-[data-scramble].scramble > span::after {
-  animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
+/* Scramble text: a zero-width space holds the line while the text types
+   itself out from nothing. */
+[data-scramble]::after {
+  content: "\200b";
 }
 
 /* Animate section */
@@ -774,22 +762,6 @@ body[data-city] {
   }
 }
 
-@keyframes flash {
-  0%,
-  20% {
-    content: "_";
-  }
-  40% {
-    content: var(--char-1);
-  }
-  60% {
-    content: var(--char-2);
-  }
-  80% {
-    content: var(--char-3);
-  }
-}
-
 @keyframes animateSectionIn {
   from {
     opacity: 0;
@@ -912,10 +884,6 @@ body[data-city] {
   .animate-section > * {
     animation: none !important;
     opacity: 1 !important;
-  }
-
-  .scramble > span::after {
-    animation: none !important;
   }
 }
 
