@@ -523,6 +523,15 @@ button.link {
   content: "\200b";
 }
 
+/* Zhuyin is full-width: each noise glyph is squeezed to about a letter's
+   width, so a scrambling heading stays close to its settled width. */
+[data-scramble] [data-noise] {
+  display: inline-block;
+  width: 0.55em;
+  transform: scaleX(0.55);
+  transform-origin: left;
+}
+
 /* Animate section */
 .animate-section {
   & > * {

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import { scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
+import type { Cell } from "@/lib/scramble";
+import { CURSOR, scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
 import { scrambleChars } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
@@ -38,6 +39,27 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
+// Settled letters and the cursor go in as plain text; each noise glyph gets a
+// span that condenses it to a letter's width (zhuyin is full-width).
+const paint = (shown: HTMLElement, cells: Cell[]) => {
+  const nodes: (Node | string)[] = [];
+  let run = "";
+  for (const cell of cells) {
+    if (cell.settled || cell.glyph === CURSOR) {
+      run += cell.glyph;
+    } else {
+      nodes.push(run);
+      run = "";
+      const noise = document.createElement("span");
+      noise.dataset.noise = "";
+      noise.textContent = cell.glyph;
+      nodes.push(noise);
+    }
+  }
+  nodes.push(run);
+  shown.replaceChildren(...nodes);
+};
+
 const stop = (timer: React.RefObject<ReturnType<typeof setInterval> | null>) => {
   if (timer.current) {
     clearInterval(timer.current);
@@ -62,6 +84,9 @@ export const ScrambleText = ({
   const text = children;
   const shownRef = useRef<HTMLSpanElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+  // Repainting under the pointer makes Chrome fire mouseenter again with no
+  // mouseleave between, so only an enter after a leave counts as a hover.
+  const insideRef = useRef(false);
 
   // Each tick writes the next frame straight into the shown span; screen
   // readers get the plain text beside it. While it plays, the heading holds
@@ -81,10 +106,10 @@ export const ScrambleText = ({
     const glyphs = scrambleChars(text);
     const last = scrambleTicks(text);
     let tick = 0;
-    shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
+    paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
     timerRef.current = setInterval(() => {
       tick += 1;
-      shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
+      paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
       if (tick >= last) {
         stop(timerRef);
         heading.style.minWidth = "";
@@ -107,7 +132,23 @@ export const ScrambleText = ({
   }, [play, text, trigger]);
 
   return (
-    <Element className={className} onMouseEnter={trigger === "load" ? undefined : play} {...props}>
+    <Element
+      className={className}
+      onMouseEnter={
+        trigger === "load"
+          ? undefined
+          : () => {
+              if (!insideRef.current) {
+                insideRef.current = true;
+                play();
+              }
+            }
+      }
+      onMouseLeave={() => {
+        insideRef.current = false;
+      }}
+      {...props}
+    >
       <span ref={shownRef} data-scramble aria-hidden>
         {text}
       </span>
