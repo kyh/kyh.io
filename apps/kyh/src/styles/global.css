@@ -517,8 +517,13 @@ button.link {
   }
 }
 
-/* Scramble text: a zero-width space holds the line while the text types
-   itself out from nothing. */
+/* Scramble text. Full-width zhuyin noise can run past the settled width; one
+   line keeps a heading from wrapping mid-scramble (html clips the overflow). */
+[data-scramble] {
+  white-space: nowrap;
+}
+
+/* A zero-width space holds the line while the text types itself out. */
 [data-scramble]::after {
   content: "\200b";
 }
