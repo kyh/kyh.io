@@ -9,7 +9,7 @@
 import type { Rect } from "./plan";
 import type { Schedule, Site } from "./schedule";
 import type { Graph } from "./traffic";
-import { createRandom } from "./random";
+import { createRandom } from "@/lib/random";
 import { RISE } from "./schedule";
 import { edgePoint, LANE, nearestEdge, pathTo, routeTo } from "./traffic";
 import { clamp01, easeInOut, shownBetween } from "./ease";

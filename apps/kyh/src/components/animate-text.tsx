@@ -1,5 +1,7 @@
 "use client";
 
+import { scrambleChars } from "@/lib/zhuyin";
+
 export interface AnimateSectionProps<C> {
   children: React.ReactNode;
   className?: string;
@@ -33,10 +35,10 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-const GLYPHS =
-  "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ0123456789±!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const pick = (glyphs: string[], roll: number) => glyphs[roll % glyphs.length] ?? "";
 
-const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)] ?? "";
+const getRandomGlyph = (glyphs: string[]) =>
+  pick(glyphs, Math.floor(Math.random() * glyphs.length));
 
 // The first scramble's glyphs come from the text itself (a string hash over the
 // text, the letter and the slot), so the server and the browser draw the same ones.
@@ -45,7 +47,7 @@ const glyphFor = (text: string, index: number, slot: number) => {
   for (const char of `${text}:${index}:${slot}`) {
     hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2_147_483_647;
   }
-  return GLYPHS[hash % GLYPHS.length] ?? "";
+  return pick(scrambleChars(text), hash);
 };
 
 const generateChars = (text: string) =>
@@ -82,10 +84,11 @@ export const ScrambleText = ({
     }
 
     // Update CSS vars with new random chars
+    const glyphs = scrambleChars(text);
     for (const el of span.querySelectorAll<HTMLSpanElement>("span[data-char]")) {
-      el.style.setProperty("--char-1", `"${getRandomGlyph()}"`);
-      el.style.setProperty("--char-2", `"${getRandomGlyph()}"`);
-      el.style.setProperty("--char-3", `"${getRandomGlyph()}"`);
+      el.style.setProperty("--char-1", `"${getRandomGlyph(glyphs)}"`);
+      el.style.setProperty("--char-2", `"${getRandomGlyph(glyphs)}"`);
+      el.style.setProperty("--char-3", `"${getRandomGlyph(glyphs)}"`);
     }
 
     // Restart animation by removing and re-adding class; reading offsetWidth

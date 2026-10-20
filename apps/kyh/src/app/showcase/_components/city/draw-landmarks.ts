@@ -26,7 +26,7 @@ import {
   drawTemplateHouse,
   drawWatchHouse,
 } from "./landmarks-small";
-import { hashString } from "./random";
+import { hashString } from "@/lib/random";
 import { createSketch } from "./sketch";
 import type { Steps } from "./steps";
 import { finish } from "./steps";

@@ -2,7 +2,7 @@
 // the island's coast, the road grid, what each block holds, and which lot
 // each project's building stands on. Pure data, no drawing, so it can be
 // tested without a browser.
-import { createRandom, hashString } from "./random";
+import { createRandom, hashString } from "@/lib/random";
 
 /** Cells along each side of the square the island lies in. */
 const GRID = 72;

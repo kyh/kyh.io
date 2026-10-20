@@ -6,18 +6,18 @@
 // per view, so a season change swaps them without redrawing the town
 // (engine.ts), and shown in color: the town is grey, its decorations aren't.
 // Pure.
+import type { Random } from "@/lib/random";
 import type { SeasonId } from "@/seasons/seasons";
+import { createRandom, hashString } from "@/lib/random";
 import { HEART } from "@/seasons/seasons";
 import type { Paint, Token } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Random } from "./random";
 import type { BlimpLook } from "./sky";
 import type { Sketch, Vec3 } from "./sketch";
 import type { Steps } from "./steps";
 import type { HouseSpec } from "./draw-blocks";
 import { CURB_TOP, doorstep, eavesOf, houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { paint, PASTEL_ROOFS } from "./palette";
-import { createRandom, hashString } from "./random";
 import { ball, box, line, round } from "./sketch";
 import { finish } from "./steps";
 
