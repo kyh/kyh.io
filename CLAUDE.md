@@ -153,7 +153,8 @@ pumpkins by the doors and graves in the gardens at Halloween, snowmen and
 decorated trees at Christmas, and so on, on five kinds of open spot (porches,
 gardens, the pond's shore, the square and the ball courts, and the square's
 fountain for one giant piece: the town's tree at Christmas, a waving skeleton
-at Halloween, a painted egg at Easter, a heart at Valentine's; `houseCells`,
+at Halloween, a painted egg at Easter, a heart at Valentine's, a lantern gate
+at Lunar New Year, a shamrock at St. Patrick's, a turkey at Thanksgiving; `houseCells`,
 `parkOf` and `plazaOf` in `draw-blocks.ts` say where they are); they're a
 drawing of their own per view, in color over the grey town, drawn a few spots
 at a time (`decorSteps`), and redrawn without redrawing the town when the
@@ -165,7 +166,9 @@ season's colors ("BOO!" at Halloween), the season's lights along its back and
 a hat or trim (`blimp.ts`: a Santa hat, a witch's hat, bunny ears, lanterns),
 and a `flyer` crossing higher up the other way (Santa's sleigh, a witch on her
 broom; `sky.ts`), both redrawn with the decorations (`sky-scene.ts`); a day
-without a season flies the site's name in grey.
+without a season flies the site's name in grey. The blimp and the flyer turn
+with the camera (each view draws them a quarter turn on, and they swing with
+it mid-turn), so they always cross the screen and the banner always faces it.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
@@ -192,7 +195,8 @@ icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
 or icon opens the card, a second tap or a tap on the card opens the project). A trackpad's
 two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `]`
-turn the camera a quarter turn, swinging round over half a second. Each of the
+(or the turn button in the top-left corner, `turn` on the engine) turn the
+camera a quarter turn, swinging round over half a second. Each of the
 four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
 faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera starts close on downtown and pulls back to most of the
@@ -208,7 +212,7 @@ another (a truck with no clear way stays away) (`crews.ts` plans it, pure; `draw
 pins, cars and people wait for the buildings (the town's own traffic pops in
 once it's open), and then the title-sequence flyover zooms in while the last
 trucks drive off. Only moving the camera stops the flyover, the
-corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
+corner's play button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and

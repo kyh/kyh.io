@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Hourglass } from "lucide-react";
+import { Hourglass, RotateCcw } from "lucide-react";
 import { MotionConfig } from "motion/react";
 
 import type { CityProject } from "./city/draw-landmarks";
@@ -55,11 +55,14 @@ interface TourToggleProps {
   onToggle: () => void;
 }
 
+const PANEL_BUTTON =
+  "city-panel grid size-8 place-items-center text-[var(--city-ink-soft)] transition-colors hover:text-[var(--city-ink)]";
+
 const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
   <button
     type="button"
     aria-label={touring ? "Pause the flyover" : "Play the flyover"}
-    className="city-panel absolute top-6 left-6 grid size-8 place-items-center text-[var(--city-ink-soft)] transition-colors hover:text-[var(--city-ink)]"
+    className={PANEL_BUTTON}
     onClick={onToggle}
   >
     <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -69,6 +72,13 @@ const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
         <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
       )}
     </svg>
+  </button>
+);
+
+/** Turns the town a quarter turn, as `]` does. */
+const TurnButton = ({ onTurn }: { onTurn: () => void }) => (
+  <button type="button" aria-label="Turn the town" className={PANEL_BUTTON} onClick={onTurn}>
+    <RotateCcw aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
   </button>
 );
 
@@ -207,8 +217,13 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           </div>
         </MotionConfig>
       )}
-      {status === "ready" && !reducedMotion && (
-        <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
+      {status === "ready" && (
+        <div className="absolute top-6 left-6 flex gap-2">
+          {!reducedMotion && (
+            <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
+          )}
+          <TurnButton onTurn={() => cityRef.current?.turn(1)} />
+        </div>
       )}
       {status === "loading" && (
         <output

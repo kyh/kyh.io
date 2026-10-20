@@ -5,7 +5,6 @@
 // blimp in its greeting, colors, lights and hat, else the site's name in grey,
 // and what else it flies across (Santa's sleigh, a witch on her broom).
 import type { Scene } from "three";
-import { Vector3 } from "three";
 
 import type { SeasonId } from "@/seasons/seasons";
 import type { BoatPose } from "./boats";
@@ -19,6 +18,7 @@ import { RAISE } from "./carry";
 import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { DECOR } from "./season-decor";
+import { viewAt } from "./sketch";
 import { drawBalloon, drawBoat, drawDrone, drawFerry, FLYER_HEADING } from "./sky";
 
 const BLIMP_HEIGHT = 7.5;
@@ -26,13 +26,29 @@ const BLIMP_SPAN = 76;
 const FLYER_HEIGHT = 9.5;
 const FLYER_SPAN = 90;
 
+/**
+ * What a quarter turn of the camera does to a heading. The blimp and the
+ * flyer turn with the camera, so they cross the screen the same way in every
+ * view and the blimp's banner always faces it.
+ */
+const turnedBy = (heading: number, turns: number) => heading + (turns * Math.PI) / 2;
+
+/** Where a flyer is, crossing the sky through a point on a heading. */
+const across = (center: number, heading: number, along: number, y: number): Vec3 => [
+  center + Math.cos(heading) * along,
+  y,
+  center + Math.sin(heading) * along,
+];
+
 export const createSky = (
   scene: Scene,
   materials: Materials,
   still: boolean,
-  view: Vec3,
+  /** The view it's drawn for, in quarter turns. */
+  at: number,
   covers: readonly Vec3[],
 ) => {
+  const view = viewAt(at);
   let visible = true;
   const draw = (sketch: Sketch) => {
     // The sky's there from the start: nothing in it goes up with the town.
@@ -62,21 +78,22 @@ export const createSky = (
     add(drawDrone(view, covers)),
     add(drawDrone(view, covers)),
   ];
-  const heading = new Vector3(Math.cos(BLIMP_HEADING), 0, Math.sin(BLIMP_HEADING));
-  const flyerHeading = new Vector3(Math.cos(FLYER_HEADING), 0, Math.sin(FLYER_HEADING));
-  const update = (time: number, poses: readonly BoatPose[]) => {
-    const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
-    blimp?.built.group.position.set(
-      40 + heading.x * along,
-      BLIMP_HEIGHT + Math.sin(time * 0.5) * 0.15,
-      40 + heading.z * along,
-    );
-    const across = still ? 6 : (((time * 1.2) % FLYER_SPAN) / FLYER_SPAN - 0.5) * FLYER_SPAN;
-    flyer?.built.group.position.set(
-      34 + flyerHeading.x * across,
-      FLYER_HEIGHT + Math.sin(time * 1.3) * 0.25,
-      34 + flyerHeading.z * across,
-    );
+  /** Moves it all on to a moment; `camera` is where the camera's turned to, in quarter turns, maybe mid-turn. */
+  const update = (time: number, poses: readonly BoatPose[], camera: number) => {
+    // Drawn for this view, swung round with the camera as it turns.
+    const swing = (-(camera - at) * Math.PI) / 2;
+    if (blimp) {
+      const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
+      const bob = BLIMP_HEIGHT + Math.sin(time * 0.5) * 0.15;
+      blimp.built.group.position.set(...across(40, turnedBy(BLIMP_HEADING, camera), along, bob));
+      blimp.built.group.rotation.y = swing;
+    }
+    if (flyer) {
+      const along = still ? 6 : (((time * 1.2) % FLYER_SPAN) / FLYER_SPAN - 0.5) * FLYER_SPAN;
+      const bob = FLYER_HEIGHT + Math.sin(time * 1.3) * 0.25;
+      flyer.built.group.position.set(...across(34, turnedBy(FLYER_HEADING, camera), along, bob));
+      flyer.built.group.rotation.y = swing;
+    }
     for (const [index, balloon] of balloons.entries()) {
       const angle = time * 0.03 + index * 2.6;
       balloon.group.position.set(
@@ -125,13 +142,18 @@ export const createSky = (
         if (blimp) {
           undraw(blimp.built);
         }
-        blimp = { built: draw(drawBlimp(look, view, covers)), look };
+        blimp = {
+          built: draw(drawBlimp(look, turnedBy(BLIMP_HEADING, at), view, covers)),
+          look,
+        };
       }
       if (flyer?.draw !== drawFlyer) {
         if (flyer) {
           undraw(flyer.built);
         }
-        flyer = drawFlyer ? { built: draw(drawFlyer(view, covers)), draw: drawFlyer } : null;
+        flyer = drawFlyer
+          ? { built: draw(drawFlyer(turnedBy(FLYER_HEADING, at), view, covers)), draw: drawFlyer }
+          : null;
       }
     },
     /** Grey as the town, but what a season dresses in its colors, as its decorations are. */

@@ -177,7 +177,7 @@ const townViewSteps = function* townViewSteps(
     screens: new Map([city, ...buildings.values()].flatMap((built) => [...built.screens])),
   };
   const animations = createAnimations(rig, { launches: !still });
-  const sky = createSky(scene, materials, still, viewAt(at), coversAt(at));
+  const sky = createSky(scene, materials, still, at, coversAt(at));
   const builds = [city, ...buildings.values()];
   for (const built of builds) {
     scene.add(built.group);
@@ -1174,7 +1174,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     life.update(Math.min(0.25, elapsed) * 1000);
     shownTown.animations.update(clock.time, lit, scheme);
     halo.update(Math.min(0.25, elapsed), clock.time, scheme.time);
-    shownTown.sky.update(clock.time, boats.poses(clock.time));
+    shownTown.sky.update(clock.time, boats.poses(clock.time), angle);
     if (!warmed) {
       drawEverything();
     }
@@ -1265,6 +1265,8 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
         refreshHover();
       }
     },
+    /** Swing the camera a quarter turn, as `]` (1) or `[` (-1) does. */
+    turn,
   };
 };
 

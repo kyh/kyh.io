@@ -4,7 +4,7 @@
 // a sketch and then only moved, so its baked outline stays true.
 import type { Token } from "./palette";
 import type { Point2, Sketch, Triangle, Vec3, Weight } from "./sketch";
-import { BLIMP_HEADING } from "./blimp";
+import { BLIMP_HEADING, headedTo } from "./blimp";
 import { paint } from "./palette";
 import {
   ballTriangles,
@@ -233,33 +233,34 @@ export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
 /** Santa's sleigh and the witch fly the other way from the blimp, so they show their flank too. */
 export const FLYER_HEADING = BLIMP_HEADING + Math.PI;
 
-/** Something a season flies across the sky, drawn whole for its view. */
-export type Flyer = (view: Vec3, covers: readonly Vec3[]) => Sketch;
+/** Something a season flies across the sky, on a heading, drawn whole for its view. */
+export type Flyer = (heading: number, view: Vec3, covers: readonly Vec3[]) => Sketch;
 
-/** A flyer's own frame (nose along +x) scaled up to be seen from the street, turned onto its heading. */
-const flying = ([x, y, z]: Vec3) =>
-  rotate([x * 1.6, y * 1.6, z * 1.6], [0, 0, 0], "y", -FLYER_HEADING);
-
-const solidFlying = (sketch: Sketch, triangles: readonly Triangle[]) =>
-  solid(sketch, mapTriangles(triangles, flying));
-
-const lineFlying = (
-  sketch: Sketch,
-  points: readonly Vec3[],
-  weight: Weight = "fine",
-  token?: Token,
-) => line(sketch, points.map(flying), weight, token);
+/**
+ * A sketch for a flyer, drawn in its own frame (nose along +x): scaled up to be
+ * seen from the street and turned onto its heading.
+ */
+const flyerSketch = (heading: number, view: Vec3, covers: readonly Vec3[]) => {
+  const sketch = createSketch(view, covers);
+  const turn = headedTo(heading);
+  const place = ([x, y, z]: Vec3) => turn([x * 1.6, y * 1.6, z * 1.6]);
+  return {
+    line: (points: readonly Vec3[], weight: Weight = "fine", token?: Token) =>
+      line(sketch, points.map(place), weight, token),
+    sketch,
+    solid: (triangles: readonly Triangle[]) => solid(sketch, mapTriangles(triangles, place)),
+  };
+};
 
 const SLEIGH_RED = paint("festiveRed", "festiveRed", "festiveRedShade");
 const FUR = paint("white", "white", "whiteShade");
 const DEER = paint("skinDark");
 
 /** Santa in his sleigh with his sack, four reindeer ahead, the lead one's nose red. */
-export const drawSleigh: Flyer = (view, covers) => {
-  const sketch = createSketch(view, covers);
+export const drawSleigh: Flyer = (heading, view, covers) => {
+  const { line: lineFlying, sketch, solid: solidFlying } = flyerSketch(heading, view, covers);
   for (const z of [-0.13, 0.13]) {
     lineFlying(
-      sketch,
       [
         [-0.34, 0, z],
         [0.24, 0, z],
@@ -271,39 +272,30 @@ export const drawSleigh: Flyer = (view, covers) => {
       "gold",
     );
     for (const x of [-0.2, 0.15]) {
-      lineFlying(sketch, [
+      lineFlying([
         [x, 0, z],
         [x, 0.07, z],
       ]);
     }
   }
   solidFlying(
-    sketch,
     boxTriangles({ colors: SLEIGH_RED, d: 0.28, h: 0.16, w: 0.5, x: -0.3, y: 0.07, z: -0.14 }),
   );
   solidFlying(
-    sketch,
     boxTriangles({ colors: SLEIGH_RED, d: 0.28, h: 0.3, w: 0.08, x: -0.32, y: 0.07, z: -0.14 }),
   );
   solidFlying(
-    sketch,
     ballTriangles({ colors: paint("hay"), detail: 10, r: 0.11, ry: 0.9, x: -0.2, y: 0.32, z: 0 }),
   );
   solidFlying(
-    sketch,
     ballTriangles({ colors: SLEIGH_RED, detail: 10, r: 0.1, ry: 1.05, x: 0, y: 0.32, z: 0 }),
   );
   solidFlying(
-    sketch,
     ballTriangles({ colors: paint("skin"), detail: 8, r: 0.068, x: 0.01, y: 0.47, z: 0 }),
   );
-  solidFlying(
-    sketch,
-    ballTriangles({ colors: FUR, detail: 8, r: 0.06, ry: 1.1, x: 0.06, y: 0.42, z: 0 }),
-  );
+  solidFlying(ballTriangles({ colors: FUR, detail: 8, r: 0.06, ry: 1.1, x: 0.06, y: 0.42, z: 0 }));
   const hat: Vec3 = [-0.01, 0.52, 0];
   solidFlying(
-    sketch,
     mapTriangles(
       roundTriangles({
         colors: SLEIGH_RED,
@@ -319,45 +311,37 @@ export const drawSleigh: Flyer = (view, covers) => {
     ),
   );
   const pom = rotate([hat[0], hat[1] + 0.12, 0], hat, "z", 0.6);
-  solidFlying(
-    sketch,
-    ballTriangles({ colors: FUR, detail: 6, r: 0.022, x: pom[0], y: pom[1], z: 0 }),
-  );
+  solidFlying(ballTriangles({ colors: FUR, detail: 6, r: 0.022, x: pom[0], y: pom[1], z: 0 }));
   for (const [x, lead] of [
     [0.72, false],
     [1.12, true],
   ] as const) {
     for (const z of [-0.1, 0.1]) {
+      solidFlying(ballTriangles({ colors: DEER, detail: 10, r: 0.075, rx: 1.7, x, y: 0.13, z }));
+      solidFlying(rodTriangles([x + 0.09, 0.15, z], [x + 0.15, 0.21, z], 0.026, DEER));
       solidFlying(
-        sketch,
-        ballTriangles({ colors: DEER, detail: 10, r: 0.075, rx: 1.7, x, y: 0.13, z }),
-      );
-      solidFlying(sketch, rodTriangles([x + 0.09, 0.15, z], [x + 0.15, 0.21, z], 0.026, DEER));
-      solidFlying(
-        sketch,
         ballTriangles({ colors: DEER, detail: 8, r: 0.042, rx: 1.3, x: x + 0.17, y: 0.22, z }),
       );
       // Mid-gallop: forelegs reaching, hind legs kicked back.
-      lineFlying(sketch, [
+      lineFlying([
         [x + 0.08, 0.09, z],
         [x + 0.18, 0.03, z],
       ]);
-      lineFlying(sketch, [
+      lineFlying([
         [x - 0.08, 0.09, z],
         [x - 0.2, 0.04, z],
       ]);
-      lineFlying(sketch, [
+      lineFlying([
         [x + 0.16, 0.25, z],
         [x + 0.13, 0.33, z],
         [x + 0.09, 0.36, z],
       ]);
-      lineFlying(sketch, [
+      lineFlying([
         [x + 0.14, 0.3, z],
         [x + 0.2, 0.35, z],
       ]);
       if (lead && z > 0) {
         solidFlying(
-          sketch,
           ballTriangles({
             colors: paint("festiveRed"),
             detail: 6,
@@ -372,7 +356,6 @@ export const drawSleigh: Flyer = (view, covers) => {
   }
   for (const z of [-0.1, 0.1]) {
     lineFlying(
-      sketch,
       [
         [0.24, 0.2, z * 0.6],
         [0.82, 0.17, z],
@@ -388,12 +371,11 @@ const ROBE = paint("accentPurple");
 const BLACK = paint("screen");
 
 /** A witch on her broomstick, her cat riding behind. */
-export const drawWitch: Flyer = (view, covers) => {
-  const sketch = createSketch(view, covers);
-  solidFlying(sketch, rodTriangles([-0.42, 0, 0], [0.5, 0.04, 0], 0.022, DEER));
+export const drawWitch: Flyer = (heading, view, covers) => {
+  const { sketch, solid: solidFlying } = flyerSketch(heading, view, covers);
+  solidFlying(rodTriangles([-0.42, 0, 0], [0.5, 0.04, 0], 0.022, DEER));
   // The bristles flare from the stick's tail.
   solidFlying(
-    sketch,
     mapTriangles(
       roundTriangles({
         colors: paint("hay"),
@@ -412,7 +394,6 @@ export const drawWitch: Flyer = (view, covers) => {
   );
   const seat: Vec3 = [0.02, 0.02, 0];
   solidFlying(
-    sketch,
     mapTriangles(
       roundTriangles({
         colors: ROBE,
@@ -428,17 +409,15 @@ export const drawWitch: Flyer = (view, covers) => {
     ),
   );
   solidFlying(
-    sketch,
     ballTriangles({ colors: paint("accentGreen"), detail: 8, r: 0.07, x: 0.13, y: 0.44, z: 0 }),
   );
   // Her arms reach down to the stick.
   for (const z of [-0.06, 0.06]) {
-    solidFlying(sketch, rodTriangles([0.08, 0.32, z], [0.3, 0.06, z * 0.5], 0.026, ROBE));
+    solidFlying(rodTriangles([0.08, 0.32, z], [0.3, 0.06, z * 0.5], 0.026, ROBE));
   }
   const brim: Vec3 = [0.11, 0.51, 0];
   const tilt = (point: Vec3) => rotate(point, brim, "z", 0.35);
   solidFlying(
-    sketch,
     mapTriangles(
       roundTriangles({
         colors: BLACK,
@@ -453,7 +432,6 @@ export const drawWitch: Flyer = (view, covers) => {
     ),
   );
   solidFlying(
-    sketch,
     mapTriangles(
       roundTriangles({
         colors: BLACK,
@@ -470,16 +448,11 @@ export const drawWitch: Flyer = (view, covers) => {
   );
   // The cat, ears up.
   solidFlying(
-    sketch,
     ballTriangles({ colors: BLACK, detail: 8, r: 0.05, rx: 1.3, x: -0.27, y: 0.06, z: 0 }),
   );
-  solidFlying(
-    sketch,
-    ballTriangles({ colors: BLACK, detail: 8, r: 0.035, x: -0.21, y: 0.12, z: 0 }),
-  );
+  solidFlying(ballTriangles({ colors: BLACK, detail: 8, r: 0.035, x: -0.21, y: 0.12, z: 0 }));
   for (const z of [-0.018, 0.018]) {
     solidFlying(
-      sketch,
       roundTriangles({
         colors: BLACK,
         h: 0.035,

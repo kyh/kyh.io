@@ -28,11 +28,14 @@ import {
   ball,
   ballTriangles,
   box,
+  boxTriangles,
   extrude,
   line,
   mapTriangles,
   rodTriangles,
+  rotate,
   round,
+  roundTriangles,
   solid,
 } from "./sketch";
 import { finish } from "./steps";
@@ -549,18 +552,19 @@ const townTree = (sketch: Sketch, x: number, z: number, random: Random) => {
 const BONE = paint("white", "white", "whiteShade");
 
 /**
+ * A giant piece's own frame, standing at a point and facing the way the town
+ * is first seen: across it (u), up from the ground (y), and toward the camera (w).
+ */
+const facing =
+  (x: number, z: number) =>
+  ([u, y, w]: Vec3): Vec3 => [x + (u + w) * Math.SQRT1_2, GROUND + y, z + (w - u) * Math.SQRT1_2];
+
+/**
  * A giant skeleton, twice a cottage's height, standing beside the square's
  * fountain facing the way the town is first seen, one hand up in a wave.
  */
 const giantSkeleton = (sketch: Sketch, cx: number, cz: number) => {
-  const x = cx - 1.7;
-  const z = cz;
-  // Its own frame: across its shoulders, up, and the way it faces.
-  const at = ([u, y, w]: Vec3): Vec3 => [
-    x + (u + w) * Math.SQRT1_2,
-    GROUND + y,
-    z + (w - u) * Math.SQRT1_2,
-  ];
+  const at = facing(cx - 1.7, cz);
   const bone = (from: Vec3, to: Vec3, r: number) =>
     solid(sketch, rodTriangles(at(from), at(to), r, BONE));
   const knob = (triangles: readonly Triangle[]) =>
@@ -653,6 +657,182 @@ const giantSkeleton = (sketch: Sketch, cx: number, cz: number) => {
       }),
     );
   }
+};
+
+/**
+ * A red gate over the square's fountain, its beam's ends swept up, a big
+ * lantern hung from the middle and two small ones from the lower beam.
+ */
+const lanternGate = (sketch: Sketch, cx: number, cz: number) => {
+  const at = facing(cx, cz);
+  const rod = (from: Vec3, to: Vec3, r: number, colors: Paint) =>
+    solid(sketch, rodTriangles(at(from), at(to), r, colors));
+  for (const side of [-1, 1]) {
+    rod([side * 0.95, 0, 0], [side * 0.95, 1.95, 0], 0.07, RED);
+    rod([side * 1.25, 1.9, 0], [side * 1.4, 2.02, 0], 0.06, RED);
+  }
+  rod([-1.25, 1.9, 0], [1.25, 1.9, 0], 0.08, RED);
+  rod([-0.95, 1.6, 0], [0.95, 1.6, 0], 0.05, GOLD);
+  solid(
+    sketch,
+    mapTriangles(
+      boxTriangles({ colors: GOLD, d: 0.06, h: 0.2, w: 0.4, x: -0.2, y: 1.65, z: -0.03 }),
+      at,
+    ),
+  );
+  // The big lantern, ribbed in gold.
+  const y = 1.12;
+  const r = 0.32;
+  line(sketch, [at([0, 1.86, 0]), at([0, y + r * 0.8, 0])], "fine");
+  solid(
+    sketch,
+    mapTriangles(ballTriangles({ colors: RED, detail: 14, r, ry: 0.85, x: 0, y, z: 0 }), at),
+    "fine",
+    70,
+  );
+  for (const cap of [y + r * 0.8, y - r * 0.8 - 0.05]) {
+    solid(
+      sketch,
+      mapTriangles(
+        roundTriangles({ colors: GOLD, h: 0.05, r: 0.13, segments: 10, x: 0, y: cap, z: 0 }),
+        at,
+      ),
+    );
+  }
+  for (const turn of [-0.6, 0, 0.6]) {
+    const rib = Array.from({ length: 9 }, (_, step): Vec3 => {
+      const lat = -Math.PI / 2 + (step / 8) * Math.PI;
+      const reach = Math.cos(lat) * r * 1.01;
+      return at([Math.sin(turn) * reach, y + Math.sin(lat) * r * 0.85, Math.cos(turn) * reach]);
+    });
+    line(sketch, rib, "hair", "gold");
+  }
+  line(sketch, [at([0, y - r * 0.8 - 0.05, 0]), at([0, y - r * 1.7, 0])], "bold", "festiveRed");
+  for (const u of [-0.6, 0.6]) {
+    const [x, ly, z] = at([u, 1.32, 0]);
+    line(sketch, [at([u, 1.58, 0]), at([u, 1.4, 0])], "fine");
+    lantern(sketch, x, ly, z, 1.6);
+  }
+};
+
+/** Three heart leaves round a point, tips in. */
+const SHAMROCK: readonly (readonly Point2[])[] = [90, 210, 330].map((degrees) => {
+  const size = 0.45;
+  const turn = ((degrees - 90) * Math.PI) / 180;
+  return heart(size).map(([u, v]): Point2 => {
+    const up = v + size;
+    return [u * Math.cos(turn) - up * Math.sin(turn), u * Math.sin(turn) + up * Math.cos(turn)];
+  });
+});
+
+/** A giant shamrock standing in the square's fountain, gold coins wished into the water round it. */
+const giantShamrock = (sketch: Sketch, x: number, z: number, random: Random) => {
+  const at = facing(x, z);
+  const middle = 1.35;
+  const stem = BASIN - GROUND;
+  solid(sketch, rodTriangles(at([0, stem, 0]), at([0.12, 0.75, 0]), 0.05, GREEN));
+  solid(sketch, rodTriangles(at([0.12, 0.75, 0]), at([0, middle, 0]), 0.05, GREEN));
+  // Flat leaves, faced the way the town is first seen, a hand's depth thick.
+  const thick = 0.1;
+  const out: Vec3 = [Math.SQRT1_2 * thick, 0, Math.SQRT1_2 * thick];
+  const [ox, oy, oz] = at([0, middle, 0]);
+  for (const leaf of SHAMROCK) {
+    extrude(
+      sketch,
+      leaf,
+      {
+        origin: [ox - out[0] / 2, oy, oz - out[2] / 2],
+        u: [Math.SQRT1_2, 0, -Math.SQRT1_2],
+        v: [0, 1, 0],
+      },
+      out,
+      GREEN,
+    );
+  }
+  for (let coin = 0; coin < 9; coin += 1) {
+    const angle = random.range(0, Math.PI * 2);
+    const reach = random.range(0.2, 0.45);
+    round(
+      sketch,
+      {
+        colors: GOLD,
+        h: 0.012,
+        r: 0.045,
+        segments: 8,
+        x: x + Math.cos(angle) * reach,
+        y: BASIN + 0.004,
+        z: z + Math.sin(angle) * reach,
+      },
+      "hair",
+    );
+  }
+};
+
+/** A giant turkey beside the square's fountain, its tail fanned out behind it. */
+const giantTurkey = (sketch: Sketch, cx: number, cz: number) => {
+  const at = facing(cx - 1.7, cz);
+  const plump = (triangles: readonly Triangle[]) =>
+    solid(sketch, mapTriangles(triangles, at), "fine", 70);
+  const feathers = [RED, PUMPKIN, GOLD, paint("skinDark")] as const;
+  const fan: Vec3 = [0, 0.78, -0.32];
+  for (let index = 0; index < 11; index += 1) {
+    const tilt = -1.4 + (index / 10) * 2.8;
+    const feather = ballTriangles({
+      colors: feathers[index % feathers.length] ?? GOLD,
+      detail: 10,
+      r: 0.1,
+      ry: 4.6,
+      rz: 0.3,
+      x: 0,
+      y: 0.46,
+      z: 0,
+    });
+    plump(
+      mapTriangles(feather, (point) => {
+        const [u, y, w] = rotate(point, [0, 0, 0], "z", tilt);
+        // Each a little in front of the one outside it, so the fan overlaps.
+        return [fan[0] + u, fan[1] + y, fan[2] + w - Math.abs(tilt) * 0.03];
+      }),
+    );
+  }
+  const BROWN = paint("skinDark", "skinDark", "trunk");
+  plump(
+    ballTriangles({ colors: BROWN, detail: 14, r: 0.42, ry: 0.95, rz: 1.1, x: 0, y: 0.66, z: 0 }),
+  );
+  for (const side of [-1, 1]) {
+    plump(
+      ballTriangles({
+        colors: paint("trunk"),
+        detail: 10,
+        r: 0.22,
+        rx: 0.45,
+        ry: 0.75,
+        rz: 1.5,
+        x: side * 0.38,
+        y: 0.66,
+        z: 0.02,
+      }),
+    );
+    solid(
+      sketch,
+      rodTriangles(at([side * 0.13, 0.32, 0.05]), at([side * 0.15, 0, 0.1]), 0.035, GOLD),
+    );
+  }
+  solid(sketch, rodTriangles(at([0, 0.9, 0.3]), at([0, 1.24, 0.4]), 0.075, BROWN));
+  plump(ballTriangles({ colors: paint("skin"), detail: 10, r: 0.12, x: 0, y: 1.32, z: 0.43 }));
+  plump(ballTriangles({ colors: RED, detail: 8, r: 0.05, ry: 1.9, x: 0.04, y: 1.2, z: 0.5 }));
+  for (const u of [-0.055, 0.055]) {
+    plump(ballTriangles({ colors: IRON, detail: 5, r: 0.022, x: u, y: 1.36, z: 0.53 }));
+  }
+  plump(
+    mapTriangles(
+      roundTriangles({ colors: GOLD, h: 0.12, r: 0.045, segments: 8, top: 0, x: 0, z: 0 }),
+      (point) => {
+        const [u, y, w] = rotate(point, [0, 0, 0], "x", Math.PI / 2);
+        return [u, y + 1.3, w + 0.53];
+      },
+    ),
+  );
 };
 
 /** A giant painted egg standing in the square's fountain, in bands of color. */
@@ -804,6 +984,7 @@ export const DECOR: Record<SeasonId, Decor> = {
       text: "HAPPY NEW YEAR",
       trim: lanterns,
     },
+    centerpiece: lanternGate,
     house: (sketch, house) => eaveLights(sketch, house, LIGHTS.lunarNewYear),
     porch: (sketch, x, z) => lanternPost(sketch, x, z),
     shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
@@ -821,6 +1002,7 @@ export const DECOR: Record<SeasonId, Decor> = {
       text: "LUCKY",
       trim: topHat("festiveGreen", "screen"),
     },
+    centerpiece: giantShamrock,
     house: (sketch, house) => eaveLights(sketch, house, LIGHTS.stPatricks),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.4)) {
@@ -841,6 +1023,7 @@ export const DECOR: Record<SeasonId, Decor> = {
       text: "GIVE THANKS",
       trim: topHat("screen", "screen"),
     },
+    centerpiece: giantTurkey,
     porch: (sketch, x, z) => {
       pumpkin(sketch, x, z);
       pumpkin(sketch, x - 0.09, z + 0.05, 0.6);

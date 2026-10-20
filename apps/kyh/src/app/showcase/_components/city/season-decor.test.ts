@@ -4,7 +4,7 @@ import test from "node:test";
 import type { CityProject } from "./draw-landmarks";
 import { projects } from "@/lib/data";
 import { SEASONS } from "@/seasons/seasons";
-import { drawBlimp } from "./blimp";
+import { BLIMP_HEADING, drawBlimp } from "./blimp";
 import { houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { planEntries } from "./draw-landmarks";
 import { planCity } from "./plan";
@@ -113,11 +113,11 @@ test("every season's blimp and flyer draw something in every view", () => {
     for (const { id } of SEASONS) {
       const { blimp, flyer } = DECOR[id];
       if (blimp) {
-        const sketch = drawBlimp(blimp, view, [view]);
+        const sketch = drawBlimp(blimp, BLIMP_HEADING + (heading * Math.PI) / 2, view, [view]);
         assert.ok(sketch.faces.size > 0 && sketch.signs.length === 1, id);
       }
       if (flyer) {
-        assert.ok(flyer(view, [view]).faces.size > 0, id);
+        assert.ok(flyer((heading * Math.PI) / 2, view, [view]).faces.size > 0, id);
       }
     }
   }

@@ -20,10 +20,15 @@ import {
   solid,
 } from "./sketch";
 
-/** The blimp flies along the screen's width, so it shows its flank. */
+/**
+ * The blimp flies along the screen's width, so it shows its flank: this way in
+ * the first view, and turned with the camera in the others (sky-scene.ts).
+ */
 export const BLIMP_HEADING = -Math.PI / 4;
 
-const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
+/** Turns a point drawn nose along +x onto a heading. */
+export const headedTo = (heading: number) => (point: Vec3) =>
+  rotate(point, [0, 0, 0], "y", -heading);
 
 /** The hull's radius, and its length as a multiple of it. */
 const HULL_R = 0.62;
@@ -71,7 +76,7 @@ const solidIn = (sketch: Sketch, place: (point: Vec3) => Vec3, triangles: readon
   solid(sketch, mapTriangles(triangles, place));
 
 /** A bulb on its back every so often from tail to nose, on a wire. */
-const backLights = (sketch: Sketch, colors: readonly Token[]) => {
+const backLights = (sketch: Sketch, turn: (point: Vec3) => Vec3, colors: readonly Token[]) => {
   const bulbs = 15;
   const wire: Vec3[] = [];
   for (let index = 0; index < bulbs; index += 1) {
@@ -265,10 +270,12 @@ export const lanterns: Trim = (sketch, place) => {
 
 export const drawBlimp = (
   { banner, fins, lettering, lights, text, trim }: BlimpLook,
+  heading: number,
   view: Vec3,
   covers: readonly Vec3[],
 ): Sketch => {
   const sketch = createSketch(view, covers);
+  const turn = headedTo(heading);
   const hull = ballTriangles({
     colors: paint("white"),
     detail: 28,
@@ -345,7 +352,7 @@ export const drawBlimp = (
     up: [0, height - 0.08, 0],
   });
   if (lights) {
-    backLights(sketch, lights);
+    backLights(sketch, turn, lights);
   }
   trim?.(sketch, turn);
   return sketch;
