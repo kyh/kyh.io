@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import type { Cell } from "@/lib/scramble";
 import { scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
 import { scrambleChars } from "@/lib/zhuyin";
 
@@ -37,10 +36,6 @@ export const AnimateSection = <C extends React.ElementType>({
       </Element>
     </div>
   );
-};
-
-const paint = (shown: HTMLElement, cells: Cell[]) => {
-  shown.textContent = cells.map((cell) => cell.glyph).join("");
 };
 
 const stop = (timer: React.RefObject<ReturnType<typeof setInterval> | null>) => {
@@ -90,11 +85,11 @@ export const ScrambleText = ({
     let tick = 0;
     // The first frame replaces the text in the same task that unhides it, so
     // an on-load heading never shows whole before it types out.
-    paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
+    shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
     delete shown.dataset.pending;
     timerRef.current = setInterval(() => {
       tick += 1;
-      paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
+      shown.textContent = scrambleFrame(text, tick, glyphs, Math.random);
       if (tick >= last) {
         stop(timerRef);
         heading.style.minWidth = "";
