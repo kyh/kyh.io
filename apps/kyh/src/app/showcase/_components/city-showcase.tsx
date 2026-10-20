@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Hourglass } from "lucide-react";
+import { Hourglass, RotateCcw } from "lucide-react";
 import { MotionConfig } from "motion/react";
-import { useTheme } from "next-themes";
 
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
 import type { Scheme } from "./city/palette";
-import { schemeAt } from "./city/palette";
-import type { DialState } from "@/lib/dial-state";
-import { dialState, subscribeDial } from "@/lib/dial-state";
+import { DEFAULT_SEASON } from "@/seasons/seasons";
+import type { Theme } from "@/seasons/store";
+import { currentTheme, subscribeToTheme } from "@/seasons/store";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -45,24 +44,25 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-/** How light and what hue the city is: the theme's own end until the dial's brightness moves. */
-const schemeOf = (resolvedTheme: string | undefined, { light, hue }: DialState): Scheme => {
-  if (light !== null) {
-    return schemeAt(light / 100, hue);
-  }
-  return schemeAt(resolvedTheme === "dark" ? 0 : 1, hue);
-};
+/** The city by day or night, as the site's theme is, in the season's look. */
+const schemeOf = ({ mode, season }: Theme): Scheme => ({
+  season,
+  time: mode === "dark" ? "night" : "day",
+});
 
 interface TourToggleProps {
   touring: boolean;
   onToggle: () => void;
 }
 
+const PANEL_BUTTON =
+  "city-panel grid size-8 place-items-center text-[var(--city-ink-soft)] transition-colors hover:text-[var(--city-ink)]";
+
 const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
   <button
     type="button"
     aria-label={touring ? "Pause the flyover" : "Play the flyover"}
-    className="city-panel absolute top-6 left-6 grid size-8 place-items-center text-[var(--city-ink-soft)] transition-colors hover:text-[var(--city-ink)]"
+    className={PANEL_BUTTON}
     onClick={onToggle}
   >
     <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -72,6 +72,13 @@ const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
         <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
       )}
     </svg>
+  </button>
+);
+
+/** Turns the town a quarter turn, as `]` does. */
+const TurnButton = ({ onTurn }: { onTurn: () => void }) => (
+  <button type="button" aria-label="Turn the town" className={PANEL_BUTTON} onClick={onTurn}>
+    <RotateCcw aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
   </button>
 );
 
@@ -85,8 +92,10 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
-  const { resolvedTheme } = useTheme();
-  const schemeRef = useRef(schemeOf(resolvedTheme, dialState()));
+  // The theme needs the visitor's date and their light or dark, which a render
+  // (on the server too) can't read: the city starts in the default's and
+  // takes theirs on mount.
+  const schemeRef = useRef<Scheme>({ season: DEFAULT_SEASON, time: "day" });
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -99,6 +108,17 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     return () => {
       delete document.body.dataset.city;
     };
+  }, []);
+
+  // The theme reaches the city by subscription, not a render of the page;
+  // first, so the city is built in it.
+  useEffect(() => {
+    const update = () => {
+      schemeRef.current = schemeOf(currentTheme());
+      cityRef.current?.setScheme(schemeRef.current);
+    };
+    update();
+    return subscribeToTheme(update);
   }, []);
 
   useEffect(() => {
@@ -142,7 +162,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           return;
         }
         cityRef.current = city;
-        // The theme or the dial may have moved while the city loaded.
+        // The theme or the season may have changed while the city loaded.
         city.setScheme(schemeRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
@@ -164,17 +184,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
       cityRef.current = null;
     };
   }, [projects, reducedMotion]);
-
-  // The dial moves many times a second: it reaches the city by subscription,
-  // not a render of the page.
-  useEffect(() => {
-    const update = () => {
-      schemeRef.current = schemeOf(resolvedTheme, dialState());
-      cityRef.current?.setScheme(schemeRef.current);
-    };
-    update();
-    return subscribeDial(update);
-  }, [resolvedTheme]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {
     if (element) {
@@ -208,8 +217,13 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           </div>
         </MotionConfig>
       )}
-      {status === "ready" && !reducedMotion && (
-        <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
+      {status === "ready" && (
+        <div className="absolute top-6 left-6 flex gap-2">
+          {!reducedMotion && (
+            <TourToggle touring={touring} onToggle={() => cityRef.current?.tour(!touring)} />
+          )}
+          <TurnButton onTurn={() => cityRef.current?.turn(1)} />
+        </div>
       )}
       {status === "loading" && (
         <output

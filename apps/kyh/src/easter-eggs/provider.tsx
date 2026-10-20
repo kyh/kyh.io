@@ -1,7 +1,8 @@
 "use client";
 
 // Celebrates each find like a coin pickup: confetti (`confetti.ts`) and a label at the pointer,
-// eggs that spray out and fly home to the visitor's avatar (`EggCatcher`),
+// eggs (or the season's pieces, src/seasons: bats over Halloween) that spray
+// out and fly home to the visitor's avatar (`EggCatcher`),
 // which pops as each lands. Once the last egg of the last find lands the
 // visitor's own color turns gold, so every room draws them gold too.
 import type { RefObject } from "react";
@@ -11,7 +12,6 @@ import {
   use,
   useCallback,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -20,7 +20,12 @@ import {
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 
 import { CURSOR_ARROW } from "@/components/cursor";
+import { PieceDefs, PieceLayers } from "@/seasons/piece";
+import type { SeasonId } from "@/seasons/seasons";
+import { seasonOf } from "@/seasons/seasons";
+import { currentSeason } from "@/seasons/store";
 import { lastPointer } from "@/lib/pointer";
+import { useSvgId } from "@/lib/svg-id";
 import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
 import type { SprayedEgg } from "./burst";
 import { burstOf } from "./burst";
@@ -35,9 +40,6 @@ const hunt = () =>
   );
 
 const GOLD_BACKGROUND = gradientOf(GOLD);
-/** The shadowed side of a golden egg. */
-const DEEP_GOLD = "hsl(34, 90%, 30%)";
-const EGG = "M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z";
 
 /** The gold pointer arrow, the site's own cursor shape. */
 const GOLD_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -55,6 +57,8 @@ interface Burst {
   from: Point;
   to: Point;
   eggs: SprayedEgg[];
+  /** What it throws, fixed at the find so a switch mid-flight doesn't swap them. */
+  season: SeasonId;
 }
 
 interface EggsState {
@@ -120,7 +124,8 @@ export const EggProgress = () => {
 
 interface BurstProps {
   burst: Burst;
-  gradient: string;
+  /** The id the pieces' gradients are under, per season. */
+  pieceId: string;
   onLand: () => void;
   onDone: (id: number) => void;
 }
@@ -158,7 +163,8 @@ const BurstLabel = ({ label }: { label: string }) => {
 };
 
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
-const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
+const BurstPieces = ({ burst, pieceId, onLand, onDone }: BurstProps) => {
+  const { art } = seasonOf(burst.season);
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
@@ -189,19 +195,7 @@ const BurstPieces = ({ burst, gradient, onLand, onDone }: BurstProps) => {
             }
           }}
         >
-          {/* Lit from the top left: a deep rim, a body, and a gloss. */}
-          <path d={EGG} fill="black" opacity="0.2" transform="translate(0 1.5)" />
-          <path d={EGG} fill={`url(#${gradient})`} stroke={DEEP_GOLD} strokeWidth="0.75" />
-          <path d={EGG} fill={`url(#${gradient}-rim)`} />
-          <ellipse
-            cx="9.4"
-            cy="8.6"
-            rx="1.9"
-            ry="3"
-            fill="white"
-            opacity="0.85"
-            transform="rotate(-24 9.4 8.6)"
-          />
+          <PieceLayers art={art} id={`${pieceId}-${burst.season}`} />
         </motion.svg>
       ))}
     </div>
@@ -216,8 +210,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   const still = useReducedMotion() ?? false;
   const [bursts, setBursts] = useState<Burst[]>([]);
   const catcher = useRef<HTMLSpanElement | null>(null);
-  // useId's punctuation isn't safe inside url(#…).
-  const gradient = `egg-${useId().replaceAll(/[^\w-]/gu, "")}`;
+  const pieceId = useSvgId("piece");
 
   /** The avatar catches an egg. */
   const pop = useCallback(() => {
@@ -255,12 +248,14 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       next += 1;
       // The burst comes out of the pointer, or the middle if it hasn't moved yet.
       const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-      throwConfettiAt(from);
+      const season = currentSeason();
+      throwConfettiAt(from, seasonOf(season).confetti);
       const burst = {
         ...burstOf(),
         from,
         id: next,
         label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
+        season,
         to,
       };
       setBursts((current) => [...current, burst]);
@@ -275,6 +270,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   );
 
   const catching = bursts.length > 0;
+  const seasons = [...new Set(bursts.map((burst) => burst.season))];
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
@@ -309,27 +305,13 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         >
           <svg className="absolute size-0">
             <defs>
-              <radialGradient id={gradient} cx="0.38" cy="0.34" r="0.75">
-                <stop offset="0" stopColor="#fffbe8" />
-                <stop offset="0.3" stopColor={GOLD.hue} />
-                <stop offset="0.75" stopColor={GOLD.color} />
-                <stop offset="1" stopColor={DEEP_GOLD} />
-              </radialGradient>
-              {/* Light bounced back up into the shadowed underside. */}
-              <radialGradient id={`${gradient}-rim`} cx="0.6" cy="1.05" r="0.45">
-                <stop offset="0" stopColor={GOLD.hue} stopOpacity="0.55" />
-                <stop offset="1" stopColor={GOLD.hue} stopOpacity="0" />
-              </radialGradient>
+              {seasons.map((season) => (
+                <PieceDefs key={season} art={seasonOf(season).art} id={`${pieceId}-${season}`} />
+              ))}
             </defs>
           </svg>
           {bursts.map((burst) => (
-            <BurstView
-              key={burst.id}
-              burst={burst}
-              gradient={gradient}
-              onLand={pop}
-              onDone={done}
-            />
+            <BurstView key={burst.id} burst={burst} pieceId={pieceId} onLand={pop} onDone={done} />
           ))}
         </div>
       )}

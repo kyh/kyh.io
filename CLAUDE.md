@@ -100,19 +100,95 @@ unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
 the homepage site nav and the 404 recovery links at once.
 
-The dock's theme toggle hides an easter egg: five quick taps roll the dock's
-buttons up and out and two sliders up in from below, like a toolbar switching
-modes (a press outside rolls it back): brightness and hue, both gone on reload.
-Brightness is `--light` (the theme sets 100% or 0%; the theme flips at 50%):
-in `global.css` each theme eases its backgrounds between the palettes but keeps
-them off the mid-greys (`--shade`), and its text runs to black or white as the
-flip nears (`--contrast`), so text holds 6.5:1 at any brightness. `src/lib/brightness.ts`
-is the same two curves for the showcase's town (a test holds them to the CSS),
-and `dial-state.ts` flips `data-theme` in the same frame as `--light`; hue is `--hue` under `html[data-hue]`, the slate greys retinted in
-oklch. `src/lib/dial-state.ts` holds the state (one store for the page, so the showcase follows it too), `src/components/theme-dial.tsx` the panel,
-`dial-slider.tsx` (+ `src/lib/dial-slider.ts`) the slider, DialKit's look on
-Base UI's Slider, and
-`src/lib/dial.ts` the tap streak.
+The site has one set of themes: plain Light and Dark, and each season, which
+brings its own light or dark (Halloween, Christmas and Lunar New Year are
+dark). `src/seasons/store.ts` owns it (no next-themes): the calendar's season
+for today unless the menu picked another (gone on reload), else the
+visitor's own light or dark, kept in localStorage (`theme`) or their
+system's; a tap back to the system's own light or dark forgets the pick, so it
+follows the system again (next-themes' "system"). It paints `data-theme` (what
+global.css and Tailwind's `dark:` read), `color-scheme` and the season's tint
+on `<html>`, and the mobile browser's bar (`<meta name="theme-color">`) in the
+page's own background, `--bg-highlighted`, tinted as the season tints it
+(`paint.ts`; a test holds `barColor` to global.css), once
+it's first subscribed to and on every change that shows, with transitions held
+still for the repaint so nothing fades in at its own pace (the toggle's sun and
+moon turn by motion, not CSS). While subscribed it follows the system's light
+or dark, a pick in another tab (`storage`), and the calendar into a new day
+when the tab is next looked at (`visibilitychange`); a season picked in the
+menu stays in its tab. The
+dock's theme toggle wears the theme's icon: a tap flips light and dark, or
+takes a season back to the visitor's own; held down (or ArrowUp), it blooms
+the themes as a radial menu over itself (`src/components/season-bloom.tsx`):
+a solid disc that springs from the button (nudged up off the bottom), a wedge
+per season (plain light or dark is one, wearing the sun or moon it goes back
+to: the visitor's own) clipped to its slice so the slice takes the pointer, unfolding one
+after another round a hub that wears the one under the pointer (names go to
+assistive tech and typeahead only, not on screen). The disc covers the
+toggle, so the toggle can't be pressed while it's open. The dock settles back
+to rest as it opens and stops magnifying while it's open. It's Base UI's Menu
+(radio items, focus, arrow keys and typing a name, dismissal; the hub closes
+it); picking a theme closes it. A hold's release is no tap: the dock keeps
+whether the press was a hold until the next one, and a finger's lift sends no
+click (its `touchend` is cancelled). `ThemeIcon` (`theme-icon.tsx`) draws a
+theme: the toggle and the hub wear a season's `glyph` (a line icon drawn to the
+dock's 2px stroke, `iconAttrs`), the wedges its colored piece, and the default
+season (named "Light / Dark", no glyph) the sun or moon.
+
+Seasonal themes live in `src/seasons/`, each whole in one entry of `SEASONS`
+(`seasons.ts`): the days it runs (`calendar.ts`: fixed dates, Easter's
+computus, the 4th Thursday, a Lunar New Year table), its grey tint (an OKLCH
+hue and a chroma as a multiple of slate's), its piece as data (`art.ts`:
+paths and gradients, drawn by `piece.tsx`; a layer can `swing` about a
+point, as the bat's wings beat) and its line `glyph`, its confetti, and what falls across every
+page (`drift`, `drift.tsx`, CSS-animated): snow at Christmas, leaves at
+Thanksgiving, nothing in the rest.
+The town dresses for it in two tables, each keyed by season so a new one
+won't compile without its entry. Its look (`SEASON_LOOKS` in `city/palette.ts`)
+repaints tokens, which stay in color in the grey town, and can keep others in
+their own colors (`vivid`): snow on the roofs, grounds and trees at Christmas,
+the trees turned at Thanksgiving, windows lit orange at Halloween, pastel roofs
+at Easter. Its dress (`DECOR` in `city/season-decor.ts`) is everything else:
+
+- props on five kinds of open spot (`city/open-spots.ts`, worked out from the
+  layout `houseCells`, `parkOf` and `plazaOf` in `draw-blocks.ts` draw):
+  porches, gardens, the pond's shore, the square and the ball courts, drawn by
+  `decor-props.ts` (pumpkins by the doors and graves in the gardens at
+  Halloween, snowmen and decorated trees at Christmas, and so on), and the
+  square's fountain (`BASIN`) for one giant piece (`decor-giants.ts`): the
+  town's tree at Christmas, a waving skeleton at Halloween, a painted egg at
+  Easter, a heart at Valentine's, a lantern gate at Lunar New Year, a shamrock
+  at St. Patrick's, a turkey at Thanksgiving;
+- its `lights`, strung round every cottage's eaves and along the blimp's back;
+- its `emote`: what the town's people now and then send up (hearts at
+  Valentine's), floated over their heads by `life.ts` (`Emote` in `overlay.ts`);
+- its sky: the blimp's `blimp` look, its greeting in the season's colors
+  ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
+  which Santa and the witch wear too), and a `flyer` crossing higher up the
+  other way (Santa's sleigh, a witch on her broom; `sky.ts`). A day without a
+  season flies the site's name in grey. The blimp and the flyer turn with the
+  camera (each view draws them a quarter turn on, and they swing with it
+  mid-turn), so they always cross the screen and the banner always faces it.
+
+Each view of the town is dressed for the season by its decorations
+(`decor-scene.ts`, a drawing of their own, drawn a few spots at a time) and its
+sky (`sky-scene.ts`), in color over the grey town, and redressed without
+redrawing the town when the season changes: at once for the view on screen,
+and a few milliseconds a frame for the others kept (`draftAhead` in
+`engine.ts`). The giant pieces, blimp trims and flyers draw through
+`placed` (`sketch.ts`): one pen that moves every point into a frame, turned
+onto a heading (`headedTo`, `FLANK_ON`), scaled or stood somewhere.
+Adding a theme is adding an entry to each. The calendar picks today's (first listed
+wins an overlap); the themes menu overrides it for the page load (`store.ts`).
+The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`
+(`paint.ts`), where `global.css` retints Tailwind's slate in oklch; Classic has
+no tint and keeps the hex slate. `script.ts` (put in `<head>` by
+`season-script.tsx`) paints the theme and the bar (making its meta) before
+first paint, the calendar's season
+with its light or dark else the visitor's (its windows worked out ahead for
+2026–2036; a test holds it to the store's painting day by day). No season's
+days run past December 31st: the calendar looks only in the day's own year (a
+test holds every season to it).
 
 `/showcase` is a city of the projects: an isometric island drawn the way
 [Inkline Town](https://github.com/SandroMaglione/inkline-town) draws its town
@@ -128,7 +204,8 @@ icon into a card with its URL and description (a motion `layout` morph);
 clicking opens the project in a new tab (touch: the first tap on the building
 or icon opens the card, a second tap or a tap on the card opens the project). A trackpad's
 two-finger scroll pans the town, as a drag does on touch; pinch zooms; `[` and `]`
-turn the camera a quarter turn, swinging round over half a second. Each of the
+(or the turn button in the top-left corner, `turn` on the engine) turn the
+camera a quarter turn, swinging round over half a second. Each of the
 four views is its own sketch, and so is each turn between two (every face either
 end sees); the ones a turn away are drawn ahead in the background: walls carry windows on both opposite
 faces, while doors, signs and storefronts stay where they are in the world. On arrival the camera starts close on downtown and pulls back to most of the
@@ -144,11 +221,11 @@ another (a truck with no clear way stays away) (`crews.ts` plans it, pure; `draw
 pins, cars and people wait for the buildings (the town's own traffic pops in
 once it's open), and then the title-sequence flyover zooms in while the last
 trucks drive off. Only moving the camera stops the flyover, the
-corner button pauses it, and it resumes after 30s idle. Typing anywhere chats
+corner's play button pauses it, and it resumes after 30s idle. Typing anywhere chats
 (arrows pan; letters are chat's, so there's no WASD): the draft shows beside the
 typer's pointer and Enter sends a line that stays up 6s. `src/lib/chat.ts` holds
 the rules for the town and the site-wide cursors alike: each visitor's draft and
-last line ride in their player state, so nothing accumulates. Dark mode is night. The town follows the theme dial like the site: a `Scheme` (`palette.ts`) is how light it is and the dial's hue; each color is its night and day mixed in OKLab by the light (`colorIn`), and the greys are plain by day, slate as it darkens, turned to the hue once it's moved (`greyIn`), worked out once per scheme. The showcase hears the dial by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. The pins and cards mix the site's grey tokens by `--light`. Code in `src/app/showcase/_components/city/`:
+last line ride in their player state, so nothing accumulates. Dark mode is night. A `Scheme` (`palette.ts`) is day or night and the season: each color is the season's repaint of its token or its own (`colorIn`), and the greys are plain by day, slate by night, turned to the season's hue when it has one (`greyIn`), worked out once per time, season and token. The showcase hears the season by subscription, not a render, and the engine repaints the drawing on screen at most once a frame. Code in `src/app/showcase/_components/city/`:
 `plan.ts` (island, roads, which lot each project gets; pure, tested),
 `sketch.ts` (faces, silhouettes and ink worked out per view; shading follows the camera),
 `render.ts` (sketch → three.js; each building repaints itself grey or colored; faces in `SHADE` carry a fine dither of ink dots, `shadow-dots.ts`),
@@ -200,13 +277,14 @@ Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car, person or boat),
 `lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
-`dock.tsx` (five taps open the theme dials), `side-quests-grid.tsx` (move an
+`dock.tsx` (hold the theme toggle), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
 hover, coarse pointer) hunts without the chat egg, since it has no keyboard
 (`huntedEggs`).
 `provider.tsx` celebrates each like a coin pickup: a label at the pointer,
 shaded golden eggs spraying out and flying to the avatar's `EggCatcher`, which
-pops as each lands, and a fountain of confetti: paper that flutters and flips
+pops as each lands (what flies is the season's piece: bats over Halloween,
+snowflakes at Christmas, in the season's confetti), and a fountain of confetti: paper that flutters and flips
 between its two sides, and sequins that drop, on one canvas that comes and goes
 with it (`confetti.ts`; the throw and the physics are `burst.ts`, pure, tested). Once the last egg of the last
 find lands the visitor's own color becomes `gold` (`setOwnColorName` in

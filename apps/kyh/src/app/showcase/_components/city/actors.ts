@@ -15,7 +15,6 @@ import {
   Vector3,
 } from "three";
 
-import { shadeOf } from "@/lib/brightness";
 import type { Scheme, Token } from "./palette";
 import { shade } from "./palette";
 
@@ -180,8 +179,8 @@ export const createActors = (
     }
     ink.color.set(shade("ink", next, false));
     cabin.color.set(shade("glassDim", next, false));
-    // Shadows fall softer as the light comes up.
-    shadowMaterial.opacity = 0.3 - 0.14 * shadeOf(next.light);
+    // Shadows fall softer by day.
+    shadowMaterial.opacity = next.time === "day" ? 0.16 : 0.3;
   };
   paintLayers(scheme);
 

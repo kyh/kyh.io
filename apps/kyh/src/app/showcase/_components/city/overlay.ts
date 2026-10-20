@@ -1,18 +1,32 @@
 // What floats over the town in HTML rather than in the drawing: the lines
-// visitors say on their way out, other people's pointers and what they're
-// saying, and this player's own line. Placed fresh every frame; whatever a
+// visitors say on their way out, what the season has people send up (a
+// heart at Valentine's), other people's pointers and what they're saying,
+// and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.
 import type { Line } from "@/lib/chat";
 import { CHAT_BUBBLE_CLASS } from "@/components/chat-bubble";
 import { gradientOf } from "@/lib/color";
 import { CURSOR_ARROW } from "@/components/cursor";
+import { clamp01, lerp } from "./ease";
 
 const SVG = "http://www.w3.org/2000/svg";
+
+/** What rises now and then from the town's people: a path in a 24×24 box, and its fill. */
+export interface Emote {
+  d: string;
+  fill: string;
+}
 
 interface Bubble {
   element: HTMLDivElement;
   text: HTMLSpanElement;
   icon: HTMLImageElement;
+  seen: boolean;
+}
+
+interface Puff {
+  element: HTMLDivElement;
+  path: SVGPathElement;
   seen: boolean;
 }
 
@@ -65,6 +79,23 @@ const makeBubble = (root: HTMLElement): Bubble => {
   root.append(element);
   return { element, icon, seen: true, text };
 };
+
+const makePuff = (root: HTMLElement): Puff => {
+  const element = document.createElement("div");
+  element.className = "city-emote";
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(SVG, "path");
+  svg.append(path);
+  element.append(svg);
+  root.append(element);
+  return { element, path, seen: true };
+};
+
+/** How far an emote rises over its life (px), and how far it sways either side. */
+const RISE = 34;
+const SWAY = 5;
 
 let pointersMade = 0;
 
@@ -125,6 +156,7 @@ const sweep = <K, T extends { element: HTMLElement; seen: boolean }>(items: Map<
 
 export const createOverlay = (root: HTMLElement | null) => {
   const bubbles = new Map<number, Bubble>();
+  const puffs = new Map<number, Puff>();
   const pointers = new Map<string, Pointer>();
   const mine = makeLine();
   mine.classList.add("city-mine");
@@ -147,16 +179,38 @@ export const createOverlay = (root: HTMLElement | null) => {
       bubble.element.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
     },
     dispose: () => {
-      for (const { element } of [...bubbles.values(), ...pointers.values()]) {
+      for (const { element } of [...bubbles.values(), ...puffs.values(), ...pointers.values()]) {
         element.remove();
       }
       mine.remove();
       bubbles.clear();
+      puffs.clear();
       pointers.clear();
+    },
+    /**
+     * An emote `age` of the way (0 to 1) through its life, rising from (x, y):
+     * it pops up, sways as it climbs, and fades out.
+     */
+    emote: (id: number, emote: Emote, x: number, y: number, age: number) => {
+      if (!root) {
+        return;
+      }
+      const puff = puffs.get(id) ?? makePuff(root);
+      puffs.set(id, puff);
+      puff.seen = true;
+      if (puff.path.getAttribute("d") !== emote.d) {
+        puff.path.setAttribute("d", emote.d);
+        puff.path.setAttribute("fill", emote.fill);
+      }
+      const size = lerp(0.4, 1, clamp01(age / 0.15));
+      const sway = Math.sin(age * Math.PI * 2) * SWAY;
+      puff.element.style.opacity = String(Math.min(1, (1 - age) / 0.35));
+      puff.element.style.transform = `translate3d(${(x + sway).toFixed(1)}px, ${(y - age * RISE).toFixed(1)}px, 0) scale(${size.toFixed(2)})`;
     },
     /** Takes away whatever this frame didn't place. */
     end: () => {
       sweep(bubbles);
+      sweep(puffs);
       sweep(pointers);
     },
     /** This player's own line beside their mouse, or none. */

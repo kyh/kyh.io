@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Interpolator, lerp } from "@vibedgames/multiplayer";
 
 import type { Chat } from "@/lib/chat";
 import { lineOf } from "@/lib/chat";
 import type { PagePoint } from "@/lib/page-point";
 import { readViewport, toScreen } from "@/lib/page-point";
+import { useSvgId } from "@/lib/svg-id";
 import { ChatBubble } from "@/components/chat-bubble";
 
 interface CursorProps {
@@ -35,8 +36,7 @@ const HIDDEN = { transform: "translate(-100px, -100px)" };
  * any send rate; each frame moves it without a React render.
  */
 export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: CursorProps) => {
-  // useId's punctuation isn't safe inside url(#…).
-  const gradient = `cursor-${useId().replaceAll(/[^\w-]/gu, "")}`;
+  const gradient = useSvgId("cursor");
   const ref = useRef<HTMLDivElement>(null);
   // oxlint-disable-next-line react/hook-use-state -- made once per cursor and never replaced
   const [smooth] = useState(

@@ -1,30 +1,20 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useTheme } from "next-themes";
 
-import { ThemeDial } from "@/components/theme-dial";
-import { ThemeToggleIcon } from "@/components/theme-toggle";
+import { iconAttrs } from "@/components/icons";
+import { SeasonBloom } from "@/components/season-bloom";
+import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
-import { TAPS, tapStreak } from "@/lib/dial";
-import { setLight } from "@/lib/dial-state";
+import { DEFAULT_SEASON } from "@/seasons/seasons";
+import { toggleTheme, useTheme } from "@/seasons/store";
 
-const iconAttrs = {
-  "aria-hidden": true,
-  fill: "none",
-  height: "100%",
-  stroke: "currentColor",
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  strokeWidth: "2",
-  viewBox: "0 0 24 24",
-  width: "100%",
-  xmlns: "http://www.w3.org/2000/svg",
-};
+/** How long the theme toggle is held down to bloom the themes round it (ms). */
+const HOLD_MS = 450;
 
 const links = [
   {
@@ -209,122 +199,144 @@ const GlassFilter = () => (
   </>
 );
 
-const morph = { bounce: 0.2, duration: 0.45, type: "spring" } as const;
-
-// Two modes, swapped like a toolbar's: the buttons live above the dock and the
-// sliders below, so opening rolls the buttons up and out as the sliders rise in,
-// and closing rolls it back down.
-const above = { opacity: 0, y: -56 };
-const below = { opacity: 0, y: 56 };
-const slideFrom = (from: typeof above, index = 0) => ({
-  animate: { opacity: 1, y: 0 },
-  exit: from,
-  initial: from,
-  layout: "position" as const,
-  transition: { ...morph, delay: index * 0.03 },
-});
-
-const subscribeNever = () => () => {
-  // Hydration happens once; there's nothing to unsubscribe from.
-};
-
 export const Dock = () => {
   const pathname = usePathname();
-  const { resolvedTheme, setTheme } = useTheme();
-  // The server can't know the theme, so the toggle shows one only once hydrated.
-  const hydrated = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  );
+  const theme = useTheme();
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
-  const taps = useRef<number[]>([]);
-  const [dialOpen, setDialOpen] = useState(false);
-  // The dock clips while the modes roll past, and only then: hover labels sit above it.
-  const [switching, setSwitching] = useState(false);
-  const switchDial = useCallback((open: boolean) => {
-    setSwitching(true);
-    setDialOpen(open);
-  }, []);
-  const closeDial = useCallback(() => switchDial(false), [switchDial]);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const [blooming, setBlooming] = useState(false);
+  // A tap is light or dark; held down, the toggle blooms the themes, and the
+  // release that ends the hold is no tap (whether it was is kept until the next press).
+  const holding = useRef(0);
+  const held = useRef(false);
+  const bloom = () => {
+    setHovered(null);
+    // The dock settles back to rest under the themes, the toggle at its own size.
+    mouseX.set(Infinity);
+    setBlooming(true);
+    discoverEgg("bloom");
+  };
+  const press = () => {
+    held.current = false;
+    window.clearTimeout(holding.current);
+    holding.current = window.setTimeout(() => {
+      held.current = true;
+      bloom();
+    }, HOLD_MS);
+  };
+  const release = () => window.clearTimeout(holding.current);
 
-  const isLight = hydrated && resolvedTheme === "light";
-  const themeLabel = `Switch to ${isLight ? "dark" : "light"} mode`;
+  const plain = theme.season === DEFAULT_SEASON;
+  // A season's tap goes back to the visitor's own light or dark.
+  const themeLabel = plain
+    ? `Switch to ${theme.mode === "light" ? "dark" : "light"} mode`
+    : `Back to ${theme.own} mode`;
+  // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
+  const hover = (event: React.PointerEvent, item: string) => {
+    if (event.pointerType === "mouse" && !blooming) {
+      setHovered(item);
+    }
+  };
+  // The dock holds still while the themes are out over the toggle.
+  const follow = (x: number) => {
+    if (!blooming) {
+      mouseX.set(x);
+    }
+  };
 
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
-      <motion.nav
-        layout
-        transition={morph}
-        className={`pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)] ${switching ? "overflow-hidden" : ""}`}
-        onMouseMove={(event) => mouseX.set(event.nativeEvent.x)}
-        onMouseLeave={() => mouseX.set(Infinity)}
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the pointer only magnifies the icons under it; nothing is activated by it */}
+      <nav
+        className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
+        onMouseMove={(event) => follow(event.nativeEvent.x)}
+        onMouseLeave={() => follow(Infinity)}
       >
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          onExitComplete={() => setSwitching(false)}
-        >
-          {!dialOpen &&
-            links.map(({ href, label, icon }, index) => (
-              <motion.div key={href} {...slideFrom(above, index)}>
-                <Link
-                  href={href}
-                  aria-label={label}
-                  onClick={() => {
-                    mouseX.set(Infinity);
-                    setHovered(null);
-                  }}
-                  onMouseEnter={() => setHovered(href)}
-                  onMouseLeave={() => setHovered(null)}
-                >
-                  <DockItem
-                    label={label}
-                    mouseX={mouseX}
-                    active={pathname === href}
-                    hovered={hovered === href}
-                  >
-                    {icon}
-                  </DockItem>
-                </Link>
-              </motion.div>
-            ))}
-          {dialOpen ? (
-            <motion.div key="dial" {...slideFrom(below)}>
-              <ThemeDial onClose={closeDial} />
-            </motion.div>
-          ) : (
-            <motion.button
-              key="toggle"
-              {...slideFrom(above, links.length)}
-              type="button"
-              aria-label={themeLabel}
-              onClick={(event) => {
-                setTheme(isLight ? "dark" : "light");
-                // A plain tap hands brightness back to the theme; the hue stays.
-                setLight(null);
-                // Five quick taps open the dials.
-                taps.current = tapStreak(taps.current, event.timeStamp);
-                if (taps.current.length >= TAPS) {
-                  taps.current = [];
-                  setHovered(null);
-                  mouseX.set(Infinity);
-                  switchDial(true);
-                  discoverEgg("dial");
-                }
-              }}
-              onMouseEnter={() => setHovered("theme")}
-              onMouseLeave={() => setHovered(null)}
+        {links.map(({ href, label, icon }) => (
+          <Link
+            key={href}
+            href={href}
+            aria-label={label}
+            onClick={() => {
+              mouseX.set(Infinity);
+              setHovered(null);
+            }}
+            onPointerEnter={(event) => hover(event, href)}
+            onPointerLeave={() => setHovered(null)}
+          >
+            <DockItem
+              label={label}
+              mouseX={mouseX}
+              active={pathname === href}
+              hovered={hovered === href}
             >
-              <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-                <ThemeToggleIcon isLight={isLight} />
-              </DockItem>
-            </motion.button>
-          )}
-        </AnimatePresence>
+              {icon}
+            </DockItem>
+          </Link>
+        ))}
+        <button
+          ref={toggle}
+          type="button"
+          aria-label={themeLabel}
+          aria-haspopup="menu"
+          aria-expanded={blooming}
+          className="transition-transform duration-300 select-none active:scale-90 [-webkit-touch-callout:none]"
+          onPointerDown={(event) => {
+            if (event.button === 0) {
+              press();
+            }
+          }}
+          onPointerUp={release}
+          onPointerLeave={() => {
+            release();
+            setHovered(null);
+          }}
+          onPointerCancel={release}
+          // A finger lifting off a hold sends no click, which would land on the
+          // theme opened under it. (A mouse's lands on no theme: it was pressed
+          // on the toggle and released over the menu, so it goes to what holds both.)
+          onTouchEnd={(event) => {
+            if (held.current) {
+              event.preventDefault();
+            }
+          }}
+          // A long press on touch would open the browser's own menu.
+          onContextMenu={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            held.current = false;
+            // The keyboard's way to the themes, as a menu button opens with an arrow.
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              bloom();
+            }
+          }}
+          onClick={() => {
+            if (!held.current) {
+              toggleTheme();
+            }
+          }}
+          onPointerEnter={(event) => hover(event, "theme")}
+        >
+          <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
+            {/* Light and dark morph into each other; a season pops in wearing its glyph. */}
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={plain ? "plain" : theme.season}
+                className="flex size-full items-center justify-center"
+                initial={{ opacity: 0, rotate: -40, scale: 0.4 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
+                transition={{ damping: 22, stiffness: 420, type: "spring" }}
+              >
+                <ThemeIcon theme={theme} look="glyph" />
+              </motion.span>
+            </AnimatePresence>
+          </DockItem>
+        </button>
+        <SeasonBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
         <GlassFilter />
-      </motion.nav>
+      </nav>
     </div>
   );
 };

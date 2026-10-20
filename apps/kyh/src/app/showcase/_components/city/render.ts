@@ -62,7 +62,7 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
-  const dots = createShadowDots(scheme.light);
+  const dots = createShadowDots(scheme.time);
   const raised = faces.onBeforeCompile.bind(faces);
   faces.onBeforeCompile = (shader, renderer) => {
     raised(shader, renderer);
@@ -78,7 +78,6 @@ export const createMaterials = (
     if (existing) {
       return existing.material;
     }
-    // Ink stays grey even on a hovered building: the color is in the washes.
     const material = adopt(
       new LineMaterial({
         alphaToCoverage: true,
@@ -102,7 +101,7 @@ export const createMaterials = (
     setPixelRatio: dots.setPixelRatio,
     setScheme: (next) => {
       scheme = next;
-      dots.setLight(next.light);
+      dots.setTime(next.time);
       for (const { colorful, material, token } of lines.values()) {
         material.color.set(shade(token, scheme, colorful));
       }
@@ -252,6 +251,7 @@ export interface Built {
 
 interface Workshop {
   materials: Materials;
+  lines: { segments: LineSegments2; token: Token; weight: Weight }[];
   built: Built;
   painters: Painter[];
   signs: { material: MeshBasicMaterial; token: Token }[];
@@ -295,9 +295,13 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
-      const lines = new LineSegments2(geometry, workshop.materials.line(batch.token, batch.weight));
-      lines.renderOrder = 1;
-      target.add(lines);
+      const segments = new LineSegments2(
+        geometry,
+        workshop.materials.line(batch.token, batch.weight),
+      );
+      segments.renderOrder = 1;
+      workshop.lines.push({ segments, token: batch.token, weight: batch.weight });
+      target.add(segments);
     }
   }
   for (const sign of sketch.signs) {
@@ -331,29 +335,29 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   }
 };
 
-// Parsed colors by hex: a repaint while the dial moves sets every run of
-// faces, and parsing the same few dozen strings for each is most of its cost.
-// The shelf starts over once a long sweep has filled it.
+// Parsed colors by hex: a repaint sets every run of faces, and parsing the
+// same few dozen strings for each is most of its cost. Every scheme's and
+// every project's colors are a few hundred at most.
 const parsed = new Map<string, Color>();
-const PARSED_KEPT = 4096;
 
 const colorOf = (hex: string) => {
   let color = parsed.get(hex);
   if (!color) {
-    if (parsed.size >= PARSED_KEPT) {
-      parsed.clear();
-    }
     color = new Color(hex);
     parsed.set(hex, color);
   }
   return color;
 };
 
+/** Lines that stay grey even in color: the color is in the washes. */
+const INK: ReadonlySet<Token> = new Set<Token>(["ink", "inkSoft"]);
+
 /** `tint` turns its colors, when shown, toward its project's own. */
 export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];
+  const lines: Workshop["lines"] = [];
   const built: Built = {
     dispose: () => {
       group.traverse((object) => {
@@ -386,10 +390,18 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
       for (const { material, token } of signs) {
         material.color.set(shade(token, scheme, colorful, tint));
       }
+      // A line in a color of its own (the rainbow's bands, the sleigh's runners) shows it.
+      for (const line of lines) {
+        line.segments.material = materials.line(
+          line.token,
+          line.weight,
+          colorful && !INK.has(line.token),
+        );
+      }
     },
     parts: new Map(),
     screens: new Map(),
   };
-  buildInto(sketch, { built, materials, painters, signs }, group);
+  buildInto(sketch, { built, lines, materials, painters, signs }, group);
   return built;
 };

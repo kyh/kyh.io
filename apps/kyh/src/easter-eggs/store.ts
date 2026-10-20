@@ -10,8 +10,8 @@ export const EASTER_EGGS = [
   "chat",
   // Tap the homepage's figure canvas to drop shapes (figure-canvas.tsx).
   "shapes",
-  // Five quick taps on the theme toggle open the dials (components/dock.tsx).
-  "dial",
+  // Hold the theme toggle down and the themes bloom over it (components/dock.tsx).
+  "bloom",
   // Long-press a Side Quests icon and drag it somewhere new (side-quests-grid.tsx).
   "reorder",
   // Open the speed reader, /rsvp (app/rsvp/_components/rsvp-reader.tsx).

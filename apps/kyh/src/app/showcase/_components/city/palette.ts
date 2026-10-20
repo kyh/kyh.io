@@ -1,8 +1,8 @@
 // Every color in the city, by day (ink on paper, after Inkline Town) and by
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
-import { contrastOf, FLIP, shadeOf } from "@/lib/brightness";
-import { SLATE_HUE } from "@/lib/dial";
+import type { SeasonId } from "@/seasons/seasons";
+import { seasonOf } from "@/seasons/seasons";
 
 export const PALETTE = {
   accentBlue: { day: "#4f78c4", night: "#7aa5ff" },
@@ -14,11 +14,19 @@ export const PALETTE = {
   accentTeal: { day: "#3f9c97", night: "#5fd0c8" },
   accentYellow: { day: "#e9b949", night: "#ffd166" },
   door: { day: "#8f9891", night: "#3a4a4f" },
+  festiveGreen: { day: "#3f8f55", night: "#4fae68" },
+  festiveGreenShade: { day: "#327447", night: "#3d8c53" },
+  festiveRed: { day: "#d93a3a", night: "#ff5a52" },
+  festiveRedShade: { day: "#b52d2f", night: "#d9443f" },
   field: { day: "#efe5c4", night: "#2b2a22" },
   fieldGreen: { day: "#dce6c8", night: "#1f2b22" },
   flame: { day: "#f3a64a", night: "#ffb057" },
   glass: { day: "#dbe6ea", night: "#f1c76f" },
   glassDim: { day: "#dbe6ea", night: "#34434b" },
+  gold: { day: "#e8b22e", night: "#ffc94a" },
+  goldShade: { day: "#c8941c", night: "#d9a636" },
+  hay: { day: "#ecd27a", night: "#a08944" },
+  hayShade: { day: "#d9bb5c", night: "#857036" },
   hedge: { day: "#c3d2ae", night: "#1f3229" },
   ink: { day: "#3d4943", night: "#a9bab3" },
   inkSoft: { day: "#a3aba4", night: "#4f605a" },
@@ -32,6 +40,8 @@ export const PALETTE = {
   pine: { day: "#bfcfb0", night: "#21362d" },
   pineShade: { day: "#a9bd9a", night: "#1a2c25" },
   plate: { day: "#f6f7f3", night: "#212c32" },
+  pumpkin: { day: "#f08c2e", night: "#ff9d42" },
+  pumpkinShade: { day: "#d6731c", night: "#d97a26" },
   road: { day: "#e2e4de", night: "#263238" },
   roadMark: { day: "#c3c8c0", night: "#46555b" },
   roofBlue: { day: "#c2d0e4", night: "#34425a" },
@@ -59,6 +69,8 @@ export const PALETTE = {
   skin: { day: "#e6c2a4", night: "#a88a73" },
   skinDark: { day: "#b88a68", night: "#7c5f4a" },
   soil: { day: "#e3dbc8", night: "#2a2722" },
+  stone: { day: "#c9ced1", night: "#6a7780" },
+  stoneShade: { day: "#b1b7bb", night: "#56626a" },
   top: { day: "#f7f8f4", night: "#2d3a41" },
   tree: { day: "#cbd8ba", night: "#253a31" },
   treeShade: { day: "#b9c9a6", night: "#1d3029" },
@@ -91,21 +103,38 @@ export const paint = (top: Token, left: Token = top, right: Token = left): Paint
 export const WALLS = paint("top", "wallLeft", "wallRight");
 
 /** Pastel roofs, each a lit and a shaded slope. */
-export const ROOFS = [
+export const PASTEL_ROOFS = [
   paint("roofPink", "roofPink", "roofPinkShade"),
   paint("roofBlue", "roofBlue", "roofBlueShade"),
   paint("roofGreen", "roofGreen", "roofGreenShade"),
   paint("roofYellow", "roofYellow", "roofYellowShade"),
   paint("roofTeal", "roofTeal", "roofTealShade"),
   paint("roofLilac", "roofLilac", "roofLilacShade"),
+] as const;
+
+/** The pastels and terracotta. */
+export const ROOFS = [
+  ...PASTEL_ROOFS,
   paint("roofTerracotta", "roofTerracotta", "roofTerracottaShade"),
 ] as const;
 
 export const ROOF_GRAY = paint("roofGray", "roofGray", "roofGrayShade");
 
+// The colors the season's decorations, the blimp and what flies with it share.
+export const RED = paint("festiveRed", "festiveRed", "festiveRedShade");
+export const GREEN = paint("festiveGreen", "festiveGreen", "festiveGreenShade");
+export const GOLD = paint("gold", "gold", "goldShade");
+export const WHITE = paint("white", "white", "whiteShade");
+export const BLACK = paint("screen");
+
 /** The tokens painted only on faces turned from the light, which take the shadow dots. */
 export const SHADE: ReadonlySet<Token> = new Set<Token>([
+  "festiveGreenShade",
+  "festiveRedShade",
+  "goldShade",
+  "hayShade",
   "pineShade",
+  "pumpkinShade",
   "roofBlueShade",
   "roofGrayShade",
   "roofGreenShade",
@@ -114,6 +143,7 @@ export const SHADE: ReadonlySet<Token> = new Set<Token>([
   "roofTealShade",
   "roofTerracottaShade",
   "roofYellowShade",
+  "stoneShade",
   "treeShade",
   "wallRight",
   "whiteShade",
@@ -193,63 +223,89 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
 /** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
+/** A season's colors for some tokens, by day and by night. */
+type Repaint = Partial<Record<Token, Record<Theme, string>>>;
+
 /**
- * How the city is drawn, as the site's theme and dial say: how light it is
- * (night 0 … day 1, the theme's own end until the dial's brightness moves)
- * and the dial's hue once it's moved.
+ * How a season dresses the town itself: the colors some of its tokens take
+ * (snow on the roofs and lawns at Christmas, the trees turned at Thanksgiving),
+ * which stay in color while the rest of the town is grey, as do any `vivid`
+ * tokens it keeps in their own colors.
  */
-export interface Scheme {
-  light: number;
-  hue: number | null;
+export interface SeasonLook {
+  repaint?: Repaint;
+  vivid?: ReadonlySet<Token>;
 }
 
-// Schemes by value, so a dial moving back and forth finds the colors it
-// already worked out; a long sweep through every hue starts the shelf over.
-const schemes = new Map<string, Scheme>();
-const SCHEMES_KEPT = 512;
-
-/** The one scheme for this light and hue. */
-export const schemeAt = (light: number, hue: number | null): Scheme => {
-  const key = `${light}|${hue}`;
-  let scheme = schemes.get(key);
-  if (!scheme) {
-    if (schemes.size >= SCHEMES_KEPT) {
-      schemes.clear();
-    }
-    scheme = { hue, light };
-    schemes.set(key, scheme);
-  }
-  return scheme;
-};
-
-/** Day or night, for what flips rather than fades: past halfway, as the site's theme does. */
-export const timeOf = ({ light }: Scheme): Theme => (light >= FLIP ? "day" : "night");
+const SNOW = { day: "#fbfcfd", night: "#b4c0cc" };
+const SNOW_SHADE = { day: "#e2e9f0", night: "#97a4b1" };
+/** A roof's two slopes' tokens, for each roof. */
+const slopesOf = (roofs: readonly Paint[]) => roofs.flatMap(({ right, top }) => [top, right]);
+const ROOF_TOKENS = slopesOf([...ROOFS, ROOF_GRAY]);
 
 /**
- * The ink, as the site's text: at the theme's own end, its color; nearer the
- * flip, toward black by day and white by night (soft ink toward the ink), so
- * the lines hold against grounds that have dimmed or brightened.
+ * Everything a snowfall settles on: roofs, the flat tops, the grounds and the
+ * trees' crowns, white in the grey town rather than turned to the season's hue.
  */
-const INK_POLES: Partial<Record<Token, Record<Theme, string>>> = {
-  ink: { day: "#000000", night: "#ffffff" },
-  inkSoft: { day: PALETTE.ink.day, night: PALETTE.ink.night },
-  signText: { day: "#000000", night: "#ffffff" },
+const snowfall = (): Repaint => {
+  const repaint: Repaint = {
+    hedge: SNOW_SHADE,
+    pine: { day: "#e9f0ea", night: "#a3b2a8" },
+    pineShade: { day: "#c9d8cc", night: "#7f9086" },
+    tree: { day: "#eef3ee", night: "#a8b6ad" },
+    treeShade: { day: "#cfdccf", night: "#84958a" },
+  };
+  for (const token of ["field", "fieldGreen", "land", "lawn", "sand", "top"] as const) {
+    repaint[token] = SNOW;
+  }
+  for (const token of ROOF_TOKENS) {
+    repaint[token] = token.endsWith("Shade") ? SNOW_SHADE : SNOW;
+  }
+  return repaint;
 };
 
-/** `from` turned `amount` of the way to `to`, in OKLab as the site's color-mix is. */
-export const mixHex = (from: string, to: string, amount: number) => {
-  if (amount <= 0) {
-    return from;
-  }
-  if (amount >= 1) {
-    return to;
-  }
-  const [l1, a1, b1] = oklab(from);
-  const [l2, a2, b2] = oklab(to);
-  return fromOklab([l1 + (l2 - l1) * amount, a1 + (a2 - a1) * amount, b1 + (b2 - b1) * amount]);
+/** Every season's look, keyed by season so a new one isn't missed. */
+export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
+  christmas: { repaint: snowfall() },
+  classic: {},
+  // Pastel roofs stay pastel while the rest of the town is grey.
+  easter: { vivid: new Set(slopesOf(PASTEL_ROOFS)) },
+  // Every window lit pumpkin orange after dark.
+  halloween: {
+    repaint: {
+      glass: { day: "#dbe6ea", night: "#ff9a3c" },
+      glassDim: { day: "#dbe6ea", night: "#d9661f" },
+    },
+  },
+  lunarNewYear: {
+    repaint: { glass: { day: "#dbe6ea", night: "#ff7a5c" } },
+  },
+  stPatricks: {
+    repaint: {
+      fieldGreen: { day: "#bfe3a8", night: "#24502c" },
+      hedge: { day: "#9fd08a", night: "#2b5a30" },
+      lawn: { day: "#c9eab4", night: "#1f4a28" },
+    },
+  },
+  // The trees turned: maples orange and red, pines left green.
+  thanksgiving: {
+    repaint: {
+      hedge: { day: "#e3b35c", night: "#7a5a24" },
+      tree: { day: "#f0a85a", night: "#9a5522" },
+      treeShade: { day: "#dd7f3c", night: "#7e3f18" },
+    },
+  },
+  valentines: { vivid: new Set<Token>(["roofPink", "roofPinkShade"]) },
 };
 
-/** Slate's chroma in its darks; it fades toward white. */
+/** How the city is drawn: by day or by night, as the site's theme says, in the season's look. */
+export interface Scheme {
+  time: Theme;
+  season: SeasonId;
+}
+
+/** Slate's hue and its chroma in its darks; the chroma fades toward white. */
+const SLATE_HUE = 257;
 const SLATE_CHROMA = 0.042;
 
 /**
@@ -265,53 +321,24 @@ export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
 
 /**
  * A color as the city's greys show it, the way the site draws its own greys:
- * plain by day, slate as it darkens, and turned to the dial's hue at any
- * light, chroma doubled so the tint reads (global.css).
+ * plain by day, slate by night, and turned by the season's tint at either
+ * (global.css).
  */
-export const greyIn = (hex: string, { light, hue }: Scheme) => {
-  if (hue !== null) {
-    return slateOf(hex, hue, SLATE_CHROMA * 2);
+export const greyIn = (hex: string, { season, time }: Scheme) => {
+  const { tint } = seasonOf(season);
+  if (tint) {
+    return slateOf(hex, tint.hue, SLATE_CHROMA * tint.chroma);
   }
-  return light >= 1 ? greyOf(hex) : slateOf(hex, SLATE_HUE, SLATE_CHROMA * (1 - shadeOf(light)));
+  return time === "day" ? greyOf(hex) : slateOf(hex, SLATE_HUE);
 };
 
-// A scheme's colors, worked out once per token: a repaint while the dial
-// moves is a lookup per run of faces, not two trips through OKLab.
-const colorsIn = new WeakMap<Scheme, Map<Token, string>>();
-const greysIn = new WeakMap<Scheme, Map<Token, string>>();
+// Each scheme's greys, worked out once per token: a repaint is a lookup per
+// run of faces, not two trips through OKLab.
+const greys = new Map<string, string>();
 
-const remembered = (
-  memo: WeakMap<Scheme, Map<Token, string>>,
-  scheme: Scheme,
-  token: Token,
-  work: () => string,
-) => {
-  let colors = memo.get(scheme);
-  if (!colors) {
-    colors = new Map();
-    memo.set(scheme, colors);
-  }
-  let hex = colors.get(token);
-  if (hex === undefined) {
-    hex = work();
-    colors.set(token, hex);
-  }
-  return hex;
-};
-
-/**
- * A token's color in the scheme, by the site's curves (brightness.ts): grounds
- * mixed from night to day by the shade, ink held to the contrast.
- */
-export const colorIn = (token: Token, scheme: Scheme) =>
-  remembered(colorsIn, scheme, token, () => {
-    const poles = INK_POLES[token];
-    if (poles) {
-      const time = timeOf(scheme);
-      return mixHex(poles[time], PALETTE[token][time], contrastOf(scheme.light));
-    }
-    return mixHex(PALETTE[token].night, PALETTE[token].day, shadeOf(scheme.light));
-  });
+/** A token's color in the scheme: the season's repaint of it, else its own, by day or night. */
+export const colorIn = (token: Token, { season, time }: Scheme) =>
+  (SEASON_LOOKS[season].repaint?.[token] ?? PALETTE[token])[time];
 
 /**
  * The city is drawn in greys; a building shows its colors only while it is
@@ -319,7 +346,18 @@ export const colorIn = (token: Token, scheme: Scheme) =>
  */
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
-    return remembered(greysIn, scheme, token, () => greyIn(colorIn(token, scheme), scheme));
+    // The season's own colors stay in color in the grey town.
+    const { repaint, vivid } = SEASON_LOOKS[scheme.season];
+    if (repaint?.[token] || vivid?.has(token)) {
+      return colorIn(token, scheme);
+    }
+    const key = `${scheme.time}|${scheme.season}|${token}`;
+    let grey = greys.get(key);
+    if (grey === undefined) {
+      grey = greyIn(colorIn(token, scheme), scheme);
+      greys.set(key, grey);
+    }
+    return grey;
   }
   const hex = colorIn(token, scheme);
   return FOLIAGE.has(token) ? hex : tint(hex);

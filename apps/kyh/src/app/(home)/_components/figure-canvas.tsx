@@ -16,10 +16,9 @@ import {
   Sleeping,
   World,
 } from "matter-js";
-import { useTheme } from "next-themes";
-
 import { discoverEgg } from "@/easter-eggs/store";
 import { tiltGravity } from "@/lib/tilt";
+import { useTheme } from "@/seasons/store";
 
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
@@ -105,14 +104,14 @@ interface AnimatingFigure {
 }
 
 export const FigureCanvas = () => {
-  const { resolvedTheme } = useTheme();
+  const { mode } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const runnerRef = useRef<Runner | null>(null);
   const bodiesRef = useRef<Matter.Body[]>([]);
   const animatingRef = useRef<AnimatingFigure[]>([]);
   const isVisibleRef = useRef(true);
-  const isLightRef = useRef(resolvedTheme === "light");
+  const isLightRef = useRef(mode === "light");
   // The canvas repaints only while something moves; a theme change marks the settled frame stale.
   const staleRef = useRef(true);
 
@@ -421,9 +420,9 @@ export const FigureCanvas = () => {
 
   // Restroked by the fade on the next tick, so the figures a visitor spawned survive the switch.
   useEffect(() => {
-    isLightRef.current = resolvedTheme === "light";
+    isLightRef.current = mode === "light";
     staleRef.current = true;
-  }, [resolvedTheme]);
+  }, [mode]);
 
   return (
     <div

@@ -1,3 +1,17 @@
+/** A line icon in the dock's style: 24×24, a 2px round stroke in the text's color. */
+export const iconAttrs = {
+  "aria-hidden": true,
+  fill: "none",
+  height: "100%",
+  stroke: "currentColor",
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  strokeWidth: "2",
+  viewBox: "0 0 24 24",
+  width: "100%",
+  xmlns: "http://www.w3.org/2000/svg",
+};
+
 export const Logo = () => (
   <svg viewBox="0 0 1026 1026" className="size-8" aria-hidden="true">
     <g fill="none" fillRule="evenodd">
