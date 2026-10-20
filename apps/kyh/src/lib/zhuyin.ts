@@ -1,8 +1,9 @@
 /**
  * What each scrambled heading says in Chinese (traditional, as in Taiwan),
- * spelled in zhuyin with its tones. While a heading scrambles, its letters
- * churn through the symbols of its own spelling. Spaces only split syllables
- * here; they don't flash. A heading missing here churns through all of zhuyin.
+ * spelled in zhuyin with its tones. A heading's scramble churns through the
+ * letters of that spelling and lands on its reading (tones dropped) just
+ * ahead of the settling letters. A heading missing here churns through all
+ * of zhuyin.
  */
 export const ZHUYIN = new Map([
   // 關於徐開宇
@@ -48,8 +49,11 @@ export const GLYPHS = [
   ..."ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
 ];
 
-/** What `text` scrambles through: the symbols of its own spelling, or all of zhuyin without one. */
+/** `text` read out in zhuyin without its tones, or "" when it has no translation. */
+export const readingOf = (text: string) => (ZHUYIN.get(text) ?? "").replaceAll(/[ˊˇˋ˙]/gu, "");
+
+/** What `text` scrambles through: the letters of its own spelling, or all of zhuyin without one. */
 export const scrambleChars = (text: string) => {
-  const spelling = [...(ZHUYIN.get(text) ?? "")].filter((symbol) => symbol !== " ");
+  const spelling = [...readingOf(text)].filter((symbol) => symbol !== " ");
   return spelling.length > 0 ? [...new Set(spelling)] : GLYPHS;
 };

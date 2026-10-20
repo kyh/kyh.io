@@ -511,22 +511,28 @@ button.link {
   }
 }
 
-/* Scramble text animation */
-[data-scramble] > span {
-  position: relative;
-  color: transparent;
-  &::after {
-    content: attr(data-char);
-    position: absolute;
-    display: inline-block;
-    inset: 0;
-    color: canvastext;
-    pointer-events: none;
-  }
+/* Scramble text. Full-width zhuyin noise can run past the settled width; one
+   line keeps a heading from wrapping mid-scramble (html clips the overflow). */
+[data-scramble] {
+  white-space: nowrap;
 }
 
-[data-scramble].scramble > span::after {
-  animation: flash 0.23s calc(var(--index, 0) * 0.05s) steps(1, end);
+/* A zero-width space holds the line while the text types itself out. */
+[data-scramble]::after {
+  content: "\200b";
+}
+
+/* An on-load heading waits hidden for its first frame, so it never shows whole
+   and then blanks before typing out. Without script it shows after 1.5s. */
+[data-scramble][data-pending] {
+  visibility: hidden;
+  animation: scramble-fallback 0s 1.5s forwards;
+}
+
+@keyframes scramble-fallback {
+  to {
+    visibility: visible;
+  }
 }
 
 /* Animate section */
@@ -770,22 +776,6 @@ body[data-city] {
   }
 }
 
-@keyframes flash {
-  0%,
-  20% {
-    content: "_";
-  }
-  40% {
-    content: var(--char-1);
-  }
-  60% {
-    content: var(--char-2);
-  }
-  80% {
-    content: var(--char-3);
-  }
-}
-
 @keyframes animateSectionIn {
   from {
     opacity: 0;
@@ -910,8 +900,8 @@ body[data-city] {
     opacity: 1 !important;
   }
 
-  .scramble > span::after {
-    animation: none !important;
+  [data-scramble][data-pending] {
+    visibility: visible;
   }
 }
 
