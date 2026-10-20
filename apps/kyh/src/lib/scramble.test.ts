@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { LAG, scrambleFrame, scrambleTicks } from "./scramble";
+import { LAG, SPELL, scrambleFrame, scrambleTicks } from "./scramble";
 
 const noise = ["#"];
 const frame = (text: string, tick: number, reading = "") =>
@@ -24,14 +24,17 @@ test("the text is whole once every letter has settled, and stays so", () => {
   assert.equal(frame("ab cd", scrambleTicks("ab cd") + 5), "ab cd");
 });
 
-test("the band ahead of the settled text spells the reading, then noise", () => {
-  assert.equal(frame("ab cd", 5, "xy z"), "xy z#");
+test("each glyph scrambles SPELL ticks, then lands on its letter of the reading", () => {
+  assert.equal(frame("ab cd", SPELL, "xy z"), "## ##");
+  assert.equal(frame("abc d", SPELL, "xy z"), "## ##");
+  assert.equal(frame("ab cd", SPELL + 2, "xy z"), "xy ##");
+  assert.equal(frame("ab cd", SPELL + 5, "xy z"), "xy z#");
   assert.equal(frame("ab cd", LAG + 2, "xy z"), "ab z#");
 });
 
 test("a reading longer than the text shows whole until the text settles over it", () => {
   assert.equal(scrambleTicks("ab", "wxyz"), 4 + LAG);
-  assert.equal(frame("ab", 4, "wxyz"), "wxyz");
+  assert.equal(frame("ab", SPELL + 4, "wxyz"), "wxyz");
   assert.equal(frame("ab", LAG + 3, "wxyz"), "abz");
   assert.equal(frame("ab", scrambleTicks("ab", "wxyz"), "wxyz"), "ab");
 });
