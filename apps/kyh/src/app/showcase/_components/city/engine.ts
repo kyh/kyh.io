@@ -340,11 +340,12 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       options.reducedMotion,
       looks,
     );
-    // Hidden before it's dressed, which takes frames: unpainted, it'd show over the town.
-    created.show(false);
-    yield* redressSteps(created);
+    // Kept once it's in the scene, so a draft dropped while it's dressed isn't
+    // lost there; one left undressed is dressed when it's wanted (paintTown).
+    // Hidden meanwhile: unpainted, it'd show over the town.
     townViews.set(at, created);
-    return created;
+    created.show(false);
+    return yield* redressSteps(created);
   };
   /** The view being drawn ahead, between frames. */
   let drafting: { at: number; steps: Steps<TownView> } | null = null;
@@ -739,7 +740,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const right = (heading + 1) % HEADINGS;
     ahead = [heading + 0.5, right, left + 0.5, left];
     // A view no longer a turn away is dropped half drawn: nothing of it is in
-    // the scene or on the GPU yet.
+    // the scene or on the GPU until it's built, and once built it's kept.
     if (drafting && !ahead.includes(drafting.at)) {
       drafting = null;
     }
