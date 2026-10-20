@@ -5,7 +5,7 @@
 // state, so every browser sees the same person leave the same door.
 import type { Graph, Pose } from "./traffic";
 import type { Block, Rect } from "./plan";
-import { advance, drawOf } from "./random";
+import { advance, drawOf } from "@/lib/random";
 import { cornerId, moverSeed, nearestEdge, routeTo, TICK } from "./traffic";
 
 /** A project's front door, and the stretch of sidewalk it opens onto. */

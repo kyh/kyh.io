@@ -5,7 +5,7 @@
 // (the countryside, the shore) follows by its distance from the middle.
 import type { CityPlan, Rect } from "./plan";
 import { CENTER, contains } from "./plan";
-import { createRandom } from "./random";
+import { createRandom } from "@/lib/random";
 
 /** Cells a building rises a second while it's going up. */
 export const RISE = 4;

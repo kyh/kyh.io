@@ -4,7 +4,7 @@
 // and walker carries its own random state, so a snapshot of them is the whole
 // town, and any browser stepping it from there gets the same town.
 import type { CityPlan } from "./plan";
-import { advance, drawOf, seedOf } from "./random";
+import { advance, drawOf, seedOf } from "@/lib/random";
 
 /** Seconds in one step of the town. */
 export const TICK = 1 / 20;
