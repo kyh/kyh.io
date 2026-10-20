@@ -4,7 +4,7 @@
  * the real letters settle left to right LAG ticks behind, so a band of noise
  * rides ahead of the settled text until the last letter lands. Spaces stay put.
  */
-export const TICK_MS = 33;
+export const TICK_MS = 50;
 export const LAG = 10;
 export const CURSOR = "_";
 

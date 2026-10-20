@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import type { Cell } from "@/lib/scramble";
-import { CURSOR, scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
+import { scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
 import { scrambleChars } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
@@ -39,25 +39,8 @@ export const AnimateSection = <C extends React.ElementType>({
   );
 };
 
-// Settled letters and the cursor go in as plain text; each noise glyph gets a
-// span that condenses it to a letter's width (zhuyin is full-width).
 const paint = (shown: HTMLElement, cells: Cell[]) => {
-  const nodes: (Node | string)[] = [];
-  let run = "";
-  for (const cell of cells) {
-    if (cell.settled || cell.glyph === CURSOR) {
-      run += cell.glyph;
-    } else {
-      nodes.push(run);
-      run = "";
-      const noise = document.createElement("span");
-      noise.dataset.noise = "";
-      noise.textContent = cell.glyph;
-      nodes.push(noise);
-    }
-  }
-  nodes.push(run);
-  shown.replaceChildren(...nodes);
+  shown.textContent = cells.map((cell) => cell.glyph).join("");
 };
 
 const stop = (timer: React.RefObject<ReturnType<typeof setInterval> | null>) => {
