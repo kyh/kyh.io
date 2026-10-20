@@ -11,6 +11,7 @@ import { HEART } from "@/seasons/seasons";
 import type { Paint, Token } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Random } from "./random";
+import type { BlimpLook } from "./sky";
 import type { Sketch, Vec3 } from "./sketch";
 import type { Steps } from "./steps";
 import type { HouseSpec } from "./draw-blocks";
@@ -442,17 +443,20 @@ export interface Emote {
 }
 
 /**
- * What a season puts out, by kind of spot, what it does to each cottage, and
- * what its people send up (life.ts floats it); a kind it leaves out stays bare.
+ * What a season puts out, by kind of spot, what it does to each cottage, what
+ * its people send up (life.ts floats it), and what the blimp trails
+ * (sky-scene.ts flies it); a kind it leaves out stays bare.
  */
 export interface Decor extends Partial<Record<Kind, Prop>> {
   house?: (sketch: Sketch, house: HouseSpec) => void;
   emote?: Emote;
+  blimp?: BlimpLook;
 }
 
 /** Every season's decorations: keyed by season, so a new one isn't missed. */
 export const DECOR: Record<SeasonId, Decor> = {
   christmas: {
+    blimp: { banner: "festiveRed", fins: "festiveGreen", lettering: "white", text: "HO HO HO" },
     house: (sketch, house) =>
       eaveLights(sketch, house, ["festiveRed", "gold", "festiveGreen", "accentBlue"]),
     porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
@@ -465,6 +469,7 @@ export const DECOR: Record<SeasonId, Decor> = {
   },
   classic: {},
   easter: {
+    blimp: { banner: "accentPurple", fins: "accentPink", lettering: "white", text: "HAPPY EASTER" },
     porch: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
     shore: (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS)),
     square: (sketch, x, z, random) => {
@@ -479,6 +484,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   halloween: {
+    blimp: { banner: "pumpkin", fins: "accentPurple", lettering: "screen", text: "BOO!" },
     house: (sketch, house) => eaveLights(sketch, house, ["pumpkin", "accentPurple"]),
     porch: (sketch, x, z, random) => {
       pumpkin(sketch, x, z);
@@ -499,6 +505,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   lunarNewYear: {
+    blimp: { banner: "festiveRed", fins: "gold", lettering: "white", text: "HAPPY NEW YEAR" },
     house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "festiveRed", "gold"]),
     porch: (sketch, x, z) => lanternPost(sketch, x, z),
     shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
@@ -508,6 +515,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   stPatricks: {
+    blimp: { banner: "festiveGreen", fins: "gold", lettering: "gold", text: "LUCKY" },
     house: (sketch, house) => eaveLights(sketch, house, ["festiveGreen", "gold"]),
     porch: (sketch, x, z, random) => {
       if (random.chance(0.4)) {
@@ -520,6 +528,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   thanksgiving: {
+    blimp: { banner: "pumpkin", fins: "festiveRed", lettering: "white", text: "GIVE THANKS" },
     porch: (sketch, x, z) => {
       pumpkin(sketch, x, z);
       pumpkin(sketch, x - 0.09, z + 0.05, 0.6);
@@ -538,6 +547,7 @@ export const DECOR: Record<SeasonId, Decor> = {
     },
   },
   valentines: {
+    blimp: { banner: "accentPink", fins: "festiveRed", lettering: "white", text: "BE MINE" },
     emote: { d: HEART, fill: "#ff4f7b" },
     house: (sketch, house) => eaveLights(sketch, house, ["festiveRed", "accentPink", "white"]),
     porch: (sketch, x, z, random) => {

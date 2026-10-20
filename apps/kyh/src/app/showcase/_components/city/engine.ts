@@ -178,8 +178,8 @@ const townViewSteps = function* townViewSteps(
   };
   const animations = createAnimations(rig, { launches: !still });
   const sky = createSky(scene, materials, still, viewAt(at), coversAt(at));
-  const builds = [city, ...buildings.values(), ...sky.builds];
-  for (const built of [city, ...buildings.values()]) {
+  const builds = [city, ...buildings.values()];
+  for (const built of builds) {
     scene.add(built.group);
   }
   let decor: Built | null = null;
@@ -213,6 +213,7 @@ const townViewSteps = function* townViewSteps(
         scene.remove(built.group);
         built.dispose();
       }
+      sky.dispose();
     },
     /** The season's decorations, in color, as the town is painted. */
     paintDecor: (scheme: Scheme) => decor?.paint(scheme, true),
@@ -225,6 +226,7 @@ const townViewSteps = function* townViewSteps(
       if (decor) {
         decor.group.visible = shown;
       }
+      sky.show(shown);
     },
     sky,
   };
@@ -314,12 +316,13 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     return raise(build(sketch, materials, undefined, true), startNow());
   };
   /**
-   * Dresses a kept drawing for the season in play.
+   * Dresses a kept drawing for the season in play: its decorations and its blimp.
    * @yields {void} every few spots, so it can be spread over frames.
    */
   const redressSteps = function* redressSteps(town: TownView): Steps<TownView> {
     const { season } = scheme;
     town.setDecor(yield* decorSteps(town.at, season), season);
+    town.sky.dress(season);
     return town;
   };
   /**
@@ -542,9 +545,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     for (const [slug, built] of town.buildings) {
       built.paint(scheme, slug === shown?.project.slug);
     }
-    for (const built of town.sky.builds) {
-      built.paint(scheme, false);
-    }
+    town.sky.paint(scheme);
   };
   // Only the drawing on screen is repainted: the others catch up when shown (showTown).
   // Another season redresses the drawing on screen at once (paintTown), and

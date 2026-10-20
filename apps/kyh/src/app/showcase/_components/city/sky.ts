@@ -1,6 +1,8 @@
-// What moves over and around the town: a blimp trailing the site's name,
-// hot-air balloons, and boats sailing round the island. Each is drawn once
-// as a sketch and then only moved, so its baked outline stays true.
+// What moves over and around the town: a blimp trailing the site's name (or
+// the season's greeting), hot-air balloons, and boats sailing round the
+// island. Each is drawn once as a sketch and then only moved, so its baked
+// outline stays true.
+import type { Token } from "./palette";
 import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
 import { paint } from "./palette";
 import {
@@ -28,7 +30,27 @@ const turn = (point: Vec3) => rotate(point, [0, 0, 0], "y", -BLIMP_HEADING);
  */
 const blimpShadowLine = (x: number) => 0.08 + 0.6 * Math.max(0, x - 0.55) ** 2;
 
-export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sketch => {
+/** What the blimp's banner says, and the colors of its banner, fins and lettering. */
+export interface BlimpLook {
+  text: string;
+  banner: Token;
+  fins: Token;
+  lettering: Token;
+}
+
+/** The site's own blimp, for a day without a season. */
+export const PLAIN_BLIMP: BlimpLook = {
+  banner: "accentRed",
+  fins: "accentRed",
+  lettering: "white",
+  text: "KYH.IO",
+};
+
+export const drawBlimp = (
+  { banner, fins, lettering, text }: BlimpLook,
+  view: Vec3,
+  covers: readonly Vec3[],
+): Sketch => {
   const sketch = createSketch(view, covers);
   const hull = ballTriangles({
     colors: paint("white"),
@@ -45,7 +67,7 @@ export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sk
   });
   solid(sketch, mapTriangles(hull, turn), "fine", 70);
   // Tail fins, a gondola, and a banner on the flank facing the camera.
-  const fin = (points: Vec3[]) => face(sketch, "accentRed", points.map(turn), "fine");
+  const fin = (points: Vec3[]) => face(sketch, fins, points.map(turn), "fine");
   fin([
     [-1.3, 0.1, 0],
     [-1.75, 0.62, 0],
@@ -85,7 +107,7 @@ export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sk
   ];
   face(
     sketch,
-    "accentRed",
+    banner,
     [
       corner(-width / 2, -height / 2),
       corner(width / 2, -height / 2),
@@ -102,7 +124,7 @@ export const drawBlimp = (text: string, view: Vec3, covers: readonly Vec3[]): Sk
       centre[2] - along[2] * (width / 2 - 0.1) + out[2] * 0.012,
     ],
     text,
-    token: "white",
+    token: lettering,
     up: [0, height - 0.08, 0],
   });
   return sketch;

@@ -158,7 +158,9 @@ at a time (`decorSteps`), and redrawn without redrawing the town when the
 season changes: at once for the view on screen, and a few milliseconds a frame
 for the others kept (`draftAhead` in `engine.ts`). And its `emote`: what the
 town's people now and then send up (hearts at Valentine's), floated over their
-heads by `life.ts`.
+heads by `life.ts`. And its `blimp`: the greeting the blimp trails in the
+season's colors ("BOO!" at Halloween), redrawn with the decorations
+(`sky-scene.ts`); a day without a season flies the site's name in grey.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`

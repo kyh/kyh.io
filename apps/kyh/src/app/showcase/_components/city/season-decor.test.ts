@@ -33,6 +33,8 @@ test("every season but the default puts something out, and the default nothing",
     const drawn = sketch.faces.size + sketch.lines.size;
     assert.equal(drawn > 0, id !== "classic", id);
     assert.equal(Object.keys(DECOR[id]).length > 0, id !== "classic", id);
+    // The default flies the site's own blimp.
+    assert.equal(DECOR[id].blimp !== undefined, id !== "classic", id);
   }
 });
 
