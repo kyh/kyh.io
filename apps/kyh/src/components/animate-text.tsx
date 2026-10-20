@@ -94,19 +94,21 @@ export const ScrambleText = ({
   const play = useCallback(() => {
     const shown = shownRef.current;
     const heading = shown?.parentElement;
-    if (
-      !shown ||
-      !heading ||
-      timerRef.current ||
-      globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (!shown || !heading || timerRef.current) {
+      return;
+    }
+    if (globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      delete shown.dataset.pending;
       return;
     }
     heading.style.minWidth = `${heading.offsetWidth}px`;
     const glyphs = scrambleChars(text);
     const last = scrambleTicks(text);
     let tick = 0;
+    // The first frame replaces the text in the same task that unhides it, so
+    // an on-load heading never shows whole before it types out.
     paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
+    delete shown.dataset.pending;
     timerRef.current = setInterval(() => {
       tick += 1;
       paint(shown, scrambleFrame(text, tick, glyphs, Math.random));
@@ -149,7 +151,12 @@ export const ScrambleText = ({
       }}
       {...props}
     >
-      <span ref={shownRef} data-scramble aria-hidden>
+      <span
+        ref={shownRef}
+        data-scramble
+        data-pending={trigger === "hover" ? undefined : ""}
+        aria-hidden
+      >
         {text}
       </span>
       <span className="sr-only">{text}</span>

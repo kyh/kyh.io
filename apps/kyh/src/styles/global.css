@@ -523,6 +523,19 @@ button.link {
   content: "\200b";
 }
 
+/* An on-load heading waits hidden for its first frame, so it never shows whole
+   and then blanks before typing out. Without script it shows after 1.5s. */
+[data-scramble][data-pending] {
+  visibility: hidden;
+  animation: scramble-fallback 0s 1.5s forwards;
+}
+
+@keyframes scramble-fallback {
+  to {
+    visibility: visible;
+  }
+}
+
 /* Zhuyin is full-width: each noise glyph is squeezed to about a letter's
    width, so a scrambling heading stays close to its settled width. */
 [data-scramble] [data-noise] {
@@ -893,6 +906,10 @@ body[data-city] {
   .animate-section > * {
     animation: none !important;
     opacity: 1 !important;
+  }
+
+  [data-scramble][data-pending] {
+    visibility: visible;
   }
 }
 
