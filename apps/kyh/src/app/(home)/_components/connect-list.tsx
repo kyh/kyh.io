@@ -1,4 +1,5 @@
 import { DribbbleIcon, GitHubIcon, LinkedInIcon, TwitterIcon } from "@/components/icons";
+import { rowStyle } from "@/components/section";
 import type { SocialKind } from "@/lib/data";
 import { connectLinks } from "@/lib/data";
 
@@ -11,7 +12,7 @@ const icons = {
 
 export const ConnectList = () => (
   <div className="-mx-2 mt-1 flex flex-col">
-    {connectLinks.map((link) => {
+    {connectLinks.map((link, row) => {
       const Icon = icons[link.social];
       return (
         <a
@@ -20,6 +21,7 @@ export const ConnectList = () => (
           target="_blank"
           rel="noopener noreferrer"
           className={`list-row social-${link.social}`}
+          style={rowStyle(row)}
         >
           <Icon />
           <span>{link.label}</span>

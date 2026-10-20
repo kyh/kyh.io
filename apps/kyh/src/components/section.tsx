@@ -23,6 +23,15 @@ export const SectionHeading = ({ children, id }: { children: string; id?: string
   </div>
 );
 
+// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
+// has no index signature for `--*` keys; every other key is an ordinary style.
+const sectionStyle = (delay: number) =>
+  ({ "--section-delay": `${delay}s`, animationDelay: `${delay}s` }) as React.CSSProperties;
+
+/** A `.list-row`'s place in its list: rows fade in one after another. */
+// SAFETY: as above; the object holds one `--*` custom property and nothing else.
+export const rowStyle = (row: number) => ({ "--row": row }) as React.CSSProperties;
+
 interface SectionProps {
   children: React.ReactNode;
   className?: string;
@@ -38,7 +47,7 @@ export const Section = ({ children, className, id, delay = 0 }: SectionProps) =>
 
   return (
     <div className="animate-section">
-      <section id={id} className={combinedClasses} style={{ animationDelay: `${delay}s` }}>
+      <section id={id} className={combinedClasses} style={sectionStyle(delay)}>
         {children}
       </section>
     </div>

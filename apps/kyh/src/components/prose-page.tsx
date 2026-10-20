@@ -4,10 +4,10 @@ import NextLink from "next/link";
 
 import { ScrambleText } from "@/components/animate-text";
 import { ProseText } from "@/components/prose-text";
-import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
+import { rowStyle, Section, SectionHeading, Separator, SubHeading } from "@/components/section";
 import type { ContentLink, PageContent } from "@/lib/page-content";
 
-const LinkRow = ({ link }: { link: ContentLink }) => {
+const LinkRow = ({ link, row }: { link: ContentLink; row: number }) => {
   const isInternal = link.href.startsWith("/");
   const body = (
     <>
@@ -20,7 +20,7 @@ const LinkRow = ({ link }: { link: ContentLink }) => {
 
   if (isInternal) {
     return (
-      <NextLink href={link.href} className="list-row list-row-plain">
+      <NextLink href={link.href} className="list-row list-row-plain" style={rowStyle(row)}>
         {body}
       </NextLink>
     );
@@ -32,6 +32,7 @@ const LinkRow = ({ link }: { link: ContentLink }) => {
       target="_blank"
       rel="noopener noreferrer"
       className="list-row list-row-plain"
+      style={rowStyle(row)}
     >
       {body}
     </a>
@@ -72,8 +73,8 @@ export const ProsePage = ({ content }: { content: PageContent }) => (
               if (block.kind === "links") {
                 return (
                   <div key={key} className="-mx-2 flex flex-col">
-                    {block.items.map((item) => (
-                      <LinkRow key={item.href} link={item} />
+                    {block.items.map((item, row) => (
+                      <LinkRow key={item.href} link={item} row={row} />
                     ))}
                   </div>
                 );

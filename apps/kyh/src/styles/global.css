@@ -800,16 +800,18 @@ body[data-city] {
 }
 
 /* List row item (work life, connect) */
+/* Rows fade in one after another once their section starts (0.3s linear,
+   0.1s apart), and hover fills at once, both or nothing: rauno.me/projects. */
 .list-row {
+  opacity: 0;
+  animation: animateSectionIn 0.3s linear forwards;
+  animation-delay: calc(var(--section-delay, 0s) + var(--row, 0) * 0.1s);
   display: grid;
   align-items: center;
   width: 100%;
   padding: 4px 8px;
   gap: 16px;
   border-radius: 6px;
-  transition:
-    background-color 0.15s ease-out,
-    color 0.15s ease-out;
   color: var(--body-color-faded);
   grid-template-columns: 20px 120px 1fr auto;
   font-size: 0.9em;
@@ -909,7 +911,8 @@ body[data-city] {
     transition-duration: 0.01ms !important;
   }
 
-  .animate-section > * {
+  .animate-section > *,
+  .list-row {
     animation: none !important;
     opacity: 1 !important;
   }
