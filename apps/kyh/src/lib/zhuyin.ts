@@ -48,8 +48,8 @@ export const GLYPHS = [
   ..."ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
 ];
 
-/** What `text` scrambles through: the symbols of its own spelling, or all of zhuyin without one. */
+/** What `text` scrambles through: the letters of its own spelling (no tone marks), or all of zhuyin without one. */
 export const scrambleChars = (text: string) => {
-  const spelling = [...(ZHUYIN.get(text) ?? "")].filter((symbol) => symbol !== " ");
+  const spelling = [...(ZHUYIN.get(text) ?? "")].filter((symbol) => !" ˊˇˋ˙".includes(symbol));
   return spelling.length > 0 ? [...new Set(spelling)] : GLYPHS;
 };

@@ -5,7 +5,7 @@ import { prosePages } from "./page-content";
 import { GLYPHS, ZHUYIN, scrambleChars } from "./zhuyin";
 
 test("a translated heading scrambles through its own spelling, each symbol once", () => {
-  assert.deepEqual(scrambleChars("Kaiyu Hsu"), ["ㄒ", "ㄩ", "ˊ", "ㄎ", "ㄞ", "ˇ"]);
+  assert.deepEqual(scrambleChars("Kaiyu Hsu"), ["ㄒ", "ㄩ", "ㄎ", "ㄞ"]);
 });
 
 test("an untranslated heading scrambles through all of zhuyin", () => {
