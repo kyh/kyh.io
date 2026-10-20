@@ -1,61 +1,39 @@
 /**
  * The heading scramble, after rauno.me/projects: the text types itself out one
- * glyph a tick, every glyph not yet settled rerolls each tick, and the real
- * letters settle left to right LAG ticks behind, so a band of noise rides
- * ahead of the settled text until the last letter lands. Spaces stay put.
- * A heading with a reading types that out first, holds it HOLD ticks, then
- * types itself out over it, left to right.
+ * glyph a tick and the real letters settle left to right LAG ticks behind. The
+ * band ahead of the settled text spells the heading's reading, glyph for
+ * glyph; past the end of the reading it rerolls noise each tick. Spaces stay
+ * put.
  */
 export const TICK_MS = 50;
 export const LAG = 10;
-export const HOLD = 6;
 
-const lettersOf = (text: string) => [...text].filter((char) => char !== " ").length;
+const widthOf = (text: string, reading: string) => Math.max([...text].length, [...reading].length);
 
-/** How many ticks `text` takes to settle completely. */
-export const scrambleTicks = (text: string) => lettersOf(text) + LAG;
+/** How many ticks `text` takes to settle completely over `reading`. */
+export const scrambleTicks = (text: string, reading = "") => widthOf(text, reading) + LAG;
 
-/** `text` as it shows `tick` ticks in, drawing unsettled glyphs from `glyphs`. */
+/** `text` as it shows `tick` ticks in: settled letters, then its reading, then noise from `glyphs`. */
 export const scrambleFrame = (
-  text: string,
-  tick: number,
-  glyphs: readonly string[],
-  random: () => number,
-) => {
-  let typed = 0;
-  let frame = "";
-  for (const char of text) {
-    if (typed >= tick) {
-      break;
-    }
-    if (char === " ") {
-      frame += char;
-    } else {
-      frame += typed < tick - LAG ? char : (glyphs[Math.floor(random() * glyphs.length)] ?? char);
-      typed += 1;
-    }
-  }
-  return frame;
-};
-
-const readingTicks = (reading: string) => (reading ? scrambleTicks(reading) + HOLD : 0);
-
-/** How many ticks `text` takes to settle after its `reading`. */
-export const translateTicks = (text: string, reading: string) =>
-  readingTicks(reading) + scrambleTicks(text);
-
-/** `reading` typing out and holding, then `text` typing out over what's left of it. */
-export const translateFrame = (
   text: string,
   reading: string,
   tick: number,
   glyphs: readonly string[],
   random: () => number,
 ) => {
-  const read = readingTicks(reading);
-  if (tick < read) {
-    return scrambleFrame(reading, tick, glyphs, random);
+  const letters = [...text];
+  const spelled = [...reading];
+  const end = Math.min(tick, widthOf(text, reading));
+  let frame = "";
+  for (let index = 0; index < end; index += 1) {
+    const letter = letters[index] ?? "";
+    if (index < tick - LAG) {
+      frame += letter;
+    } else if (index < spelled.length) {
+      frame += spelled[index];
+    } else {
+      frame += letter === " " ? letter : (glyphs[Math.floor(random() * glyphs.length)] ?? letter);
+    }
   }
-  const head = scrambleFrame(text, tick - read, glyphs, random);
-  return head + [...reading].slice([...head].length).join("");
+  return frame;
 };

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-import { TICK_MS, translateFrame, translateTicks } from "@/lib/scramble";
+import { scrambleFrame, scrambleTicks, TICK_MS } from "@/lib/scramble";
 import { readingOf, scrambleChars } from "@/lib/zhuyin";
 
 export interface AnimateSectionProps<C> {
@@ -82,15 +82,15 @@ export const ScrambleText = ({
     heading.style.minWidth = `${heading.offsetWidth}px`;
     const glyphs = scrambleChars(text);
     const reading = readingOf(text);
-    const last = translateTicks(text, reading);
+    const last = scrambleTicks(text, reading);
     let tick = 0;
     // The first frame replaces the text in the same task that unhides it, so
     // an on-load heading never shows whole before it types out.
-    shown.textContent = translateFrame(text, reading, tick, glyphs, Math.random);
+    shown.textContent = scrambleFrame(text, reading, tick, glyphs, Math.random);
     delete shown.dataset.pending;
     timerRef.current = setInterval(() => {
       tick += 1;
-      shown.textContent = translateFrame(text, reading, tick, glyphs, Math.random);
+      shown.textContent = scrambleFrame(text, reading, tick, glyphs, Math.random);
       if (tick >= last) {
         stop(timerRef);
         heading.style.minWidth = "";

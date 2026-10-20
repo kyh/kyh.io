@@ -1,8 +1,9 @@
 /**
  * What each scrambled heading says in Chinese (traditional, as in Taiwan),
- * spelled in zhuyin with its tones. A heading scrambles out its reading
- * (tones dropped) before itself, churning through the letters of its own
- * spelling. A heading missing here churns through all of zhuyin.
+ * spelled in zhuyin with its tones. A heading's scramble spells its reading
+ * (tones dropped) just ahead of the settling letters, and churns through the
+ * letters of that spelling past its end. A heading missing here churns
+ * through all of zhuyin.
  */
 export const ZHUYIN = new Map([
   // 關於徐開宇
