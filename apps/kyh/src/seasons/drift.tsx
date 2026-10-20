@@ -7,6 +7,7 @@
 // gets none.
 import { useReducedMotion } from "motion/react";
 
+import { createRandom } from "@/lib/random";
 import { useSvgId } from "@/lib/svg-id";
 import type { Drift } from "./seasons";
 import { PieceDefs, PieceLayers } from "./piece";
@@ -23,30 +24,22 @@ interface Piece {
   drawn: boolean;
 }
 
-const seeded = (seed: number) => {
-  let state = seed;
-  return () => {
-    state = (state * 16_807) % 2_147_483_647;
-    return state / 2_147_483_647;
-  };
-};
-
 // Where each piece falls, how big, how fast and how far it sways: seeded, so
 // it's the same every visit.
 const layoutOf = (drift: Drift): Piece[] => {
-  const random = seeded(drift === "snow" ? 7 : 11);
+  const random = createRandom(drift === "snow" ? 7 : 11);
   const count = drift === "snow" ? 48 : 16;
   return Array.from({ length: count }, (_, index) => {
     const drawn = drift === "leaves" || index % 5 === 0;
-    const duration = drawn ? 11 + random() * 8 : 8 + random() * 10;
+    const duration = drawn ? random.range(11, 19) : random.range(8, 18);
     return {
       // A negative delay starts each piece partway down, so the page opens mid-fall.
-      delay: -random() * duration,
+      delay: -random.range(0, duration),
       drawn,
       duration,
-      size: drawn ? 14 + random() * 12 : 3 + random() * 4,
-      sway: 12 + random() * 30,
-      x: random() * 100,
+      size: drawn ? random.range(14, 26) : random.range(3, 7),
+      sway: random.range(12, 42),
+      x: random.range(0, 100),
     };
   });
 };

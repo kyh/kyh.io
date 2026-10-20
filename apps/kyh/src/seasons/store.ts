@@ -24,8 +24,8 @@ export interface Theme {
 let chosen: SeasonId | null = null;
 // The calendar's answer, worked out once a day rather than on every read.
 let today = { key: 0, season: DEFAULT_SEASON };
-/** The visitor's own light or dark once read: what they last picked, or null to follow their system. */
-let own: { mode: Mode | null } | null = null;
+/** The visitor's own light or dark: what they last picked, null to follow their system, undefined until read. */
+let picked: Mode | null | undefined;
 let system: MediaQueryList | null = null;
 const listeners = new Set<() => void>();
 /** The season and light or dark on <html>, so a change that doesn't show isn't repainted. */
@@ -60,11 +60,13 @@ const systemMode = (): Mode => (system?.matches ? "dark" : "light");
 /** The visitor's own light or dark: what they last picked, else their system's. */
 const ownMode = (): Mode => {
   if (typeof window === "undefined") {
-    return own?.mode ?? "light";
+    return picked ?? "light";
   }
-  own ??= { mode: storedMode() };
+  if (picked === undefined) {
+    picked = storedMode();
+  }
   system ??= window.matchMedia("(prefers-color-scheme: dark)");
-  return own.mode ?? systemMode();
+  return picked ?? systemMode();
 };
 
 // One object per theme, so a snapshot is the same object until the theme changes.
@@ -138,7 +140,7 @@ const changed = () => {
 const onStorage = (event: StorageEvent) => {
   // A null key is storage cleared.
   if (event.key === MODE_KEY || event.key === null) {
-    own = { mode: storedMode() };
+    picked = storedMode();
     changed();
   }
 };
@@ -167,7 +169,7 @@ export const toggleTheme = () => {
   // Flipped back to their system's, they follow the system again, as they did
   // before they picked (next-themes' "system").
   const kept = flipped === systemMode() ? null : flipped;
-  own = { mode: kept };
+  picked = kept;
   try {
     if (kept) {
       localStorage.setItem(MODE_KEY, kept);

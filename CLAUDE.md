@@ -143,32 +143,41 @@ paths and gradients, drawn by `piece.tsx`; a layer can `swing` about a
 point, as the bat's wings beat) and its line `glyph`, its confetti, and what falls across every
 page (`drift`, `drift.tsx`, CSS-animated): snow at Christmas, leaves at
 Thanksgiving, nothing in the rest.
-The town dresses for it in three places, each keyed by season so a new one
+The town dresses for it in two tables, each keyed by season so a new one
 won't compile without its entry. Its look (`SEASON_LOOKS` in `city/palette.ts`)
-repaints tokens and keeps some in color in the grey town: snow on the roofs,
-grounds and trees at Christmas, the trees turned at Thanksgiving, windows lit
-orange at Halloween, pastel roofs at Easter. Its decorations
-(`city/season-decor.ts`, `DECOR`): lights strung along every cottage's eaves,
-pumpkins by the doors and graves in the gardens at Halloween, snowmen and
-decorated trees at Christmas, and so on, on five kinds of open spot (porches,
-gardens, the pond's shore, the square and the ball courts, and the square's
-fountain for one giant piece: the town's tree at Christmas, a waving skeleton
-at Halloween, a painted egg at Easter, a heart at Valentine's, a lantern gate
-at Lunar New Year, a shamrock at St. Patrick's, a turkey at Thanksgiving; `houseCells`,
-`parkOf` and `plazaOf` in `draw-blocks.ts` say where they are); they're a
-drawing of their own per view, in color over the grey town, drawn a few spots
-at a time (`decorSteps`), and redrawn without redrawing the town when the
-season changes: at once for the view on screen, and a few milliseconds a frame
-for the others kept (`draftAhead` in `engine.ts`). And its `emote`: what the
-town's people now and then send up (hearts at Valentine's), floated over their
-heads by `life.ts`. And its sky: the blimp's `blimp` look, its greeting in the
-season's colors ("BOO!" at Halloween), the season's lights along its back and
-a hat or trim (`blimp.ts`: a Santa hat, a witch's hat, bunny ears, lanterns),
-and a `flyer` crossing higher up the other way (Santa's sleigh, a witch on her
-broom; `sky.ts`), both redrawn with the decorations (`sky-scene.ts`); a day
-without a season flies the site's name in grey. The blimp and the flyer turn
-with the camera (each view draws them a quarter turn on, and they swing with
-it mid-turn), so they always cross the screen and the banner always faces it.
+repaints tokens, which stay in color in the grey town, and can keep others in
+their own colors (`vivid`): snow on the roofs, grounds and trees at Christmas,
+the trees turned at Thanksgiving, windows lit orange at Halloween, pastel roofs
+at Easter. Its dress (`DECOR` in `city/season-decor.ts`) is everything else:
+
+- props on five kinds of open spot (`city/open-spots.ts`, worked out from the
+  layout `houseCells`, `parkOf` and `plazaOf` in `draw-blocks.ts` draw):
+  porches, gardens, the pond's shore, the square and the ball courts, drawn by
+  `decor-props.ts` (pumpkins by the doors and graves in the gardens at
+  Halloween, snowmen and decorated trees at Christmas, and so on), and the
+  square's fountain (`BASIN`) for one giant piece (`decor-giants.ts`): the
+  town's tree at Christmas, a waving skeleton at Halloween, a painted egg at
+  Easter, a heart at Valentine's, a lantern gate at Lunar New Year, a shamrock
+  at St. Patrick's, a turkey at Thanksgiving;
+- its `lights`, strung round every cottage's eaves and along the blimp's back;
+- its `emote`: what the town's people now and then send up (hearts at
+  Valentine's), floated over their heads by `life.ts` (`Emote` in `overlay.ts`);
+- its sky: the blimp's `blimp` look, its greeting in the season's colors
+  ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
+  which Santa and the witch wear too), and a `flyer` crossing higher up the
+  other way (Santa's sleigh, a witch on her broom; `sky.ts`). A day without a
+  season flies the site's name in grey. The blimp and the flyer turn with the
+  camera (each view draws them a quarter turn on, and they swing with it
+  mid-turn), so they always cross the screen and the banner always faces it.
+
+Each view of the town is dressed for the season by its decorations
+(`decor-scene.ts`, a drawing of their own, drawn a few spots at a time) and its
+sky (`sky-scene.ts`), in color over the grey town, and redressed without
+redrawing the town when the season changes: at once for the view on screen,
+and a few milliseconds a frame for the others kept (`draftAhead` in
+`engine.ts`). The giant pieces, blimp trims and flyers draw through
+`placed` (`sketch.ts`): one pen that moves every point into a frame, turned
+onto a heading (`headedTo`, `FLANK_ON`), scaled or stood somewhere.
 Adding a theme is adding an entry to each. The calendar picks today's (first listed
 wins an overlap); the themes menu overrides it for the page load (`store.ts`).
 The tint is `data-season`, `--season-hue` and `--season-chroma` on `<html>`

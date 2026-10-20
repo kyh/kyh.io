@@ -13,32 +13,67 @@ import type { Built, Materials } from "./render";
 import type { BlimpLook } from "./blimp";
 import type { Flyer } from "./sky";
 import type { Sketch, Vec3 } from "./sketch";
-import { BLIMP_HEADING, drawBlimp, PLAIN_BLIMP } from "./blimp";
+import { drawBlimp, PLAIN_BLIMP } from "./blimp";
 import { RAISE } from "./carry";
 import { BUILT, raise } from "./grow";
 import { build } from "./render";
 import { DECOR } from "./season-decor";
-import { viewAt } from "./sketch";
+import { FLANK_ON, viewAt } from "./sketch";
 import { drawBalloon, drawBoat, drawDrone, drawFerry, FLYER_HEADING } from "./sky";
 
-const BLIMP_HEIGHT = 7.5;
-const BLIMP_SPAN = 76;
-const FLYER_HEIGHT = 9.5;
-const FLYER_SPAN = 90;
-
 /**
- * What a quarter turn of the camera does to a heading. The blimp and the
- * flyer turn with the camera, so they cross the screen the same way in every
- * view and the blimp's banner always faces it.
+ * A path across the sky for what the season dresses there. It turns with the
+ * camera, so it crosses the screen the same way in every view and the blimp's
+ * banner always faces it.
  */
+interface Crossing {
+  /** Its heading in the first view. */
+  heading: number;
+  /** It crosses over (center, center). */
+  center: number;
+  height: number;
+  /** How far it goes before it comes round again, and how fast. */
+  span: number;
+  speed: number;
+  /** Where along it it hangs when motion is reduced. */
+  still: number;
+  /** How far it bobs, and how fast. */
+  bob: number;
+  rate: number;
+}
+
+const BLIMP_CROSSING: Crossing = {
+  bob: 0.15,
+  center: 40,
+  heading: FLANK_ON,
+  height: 7.5,
+  rate: 0.5,
+  span: 76,
+  speed: 0.65,
+  still: -8,
+};
+
+const FLYER_CROSSING: Crossing = {
+  bob: 0.25,
+  center: 34,
+  heading: FLYER_HEADING,
+  height: 9.5,
+  rate: 1.3,
+  span: 90,
+  speed: 1.2,
+  still: 6,
+};
+
+/** What a number of quarter turns of the camera does to a heading. */
 const turnedBy = (heading: number, turns: number) => heading + (turns * Math.PI) / 2;
 
-/** Where a flyer is, crossing the sky through a point on a heading. */
-const across = (center: number, heading: number, along: number, y: number): Vec3 => [
-  center + Math.cos(heading) * along,
-  y,
-  center + Math.sin(heading) * along,
-];
+/** Something the season dresses in the sky: drawn from `key`, kept until the key changes. */
+interface Dressed {
+  built: Built;
+  key: BlimpLook | Flyer | undefined;
+  colorful: boolean;
+  crossing: Crossing;
+}
 
 export const createSky = (
   scene: Scene,
@@ -64,11 +99,29 @@ export const createSky = (
     return built;
   };
   // What the season dresses: the blimp and what else it flies; none until the first season.
-  let blimp: { built: Built; look: BlimpLook } | null = null;
-  let flyer: { built: Built; draw: Flyer } | null = null;
+  let blimp: Dressed | null = null;
+  let flyer: Dressed | null = null;
   const undraw = (built: Built) => {
     scene.remove(built.group);
     built.dispose();
+  };
+  /** Redraws one of them for a season, unless it's drawn from the same thing already. */
+  const redress = (
+    dressed: Dressed | null,
+    key: BlimpLook | Flyer | undefined,
+    crossing: Crossing,
+    sketchOn: ((heading: number) => Sketch) | null,
+    colorful: boolean,
+  ): Dressed | null => {
+    if (dressed?.key === key) {
+      return dressed;
+    }
+    if (dressed) {
+      undraw(dressed.built);
+    }
+    return sketchOn
+      ? { built: draw(sketchOn(turnedBy(crossing.heading, at))), colorful, crossing, key }
+      : null;
   };
   const balloons = [add(drawBalloon(0, view, covers)), add(drawBalloon(1, view, covers))];
   const boats = [add(drawBoat("white")), add(drawBoat("accentRed")), add(drawBoat("accentBlue"))];
@@ -80,19 +133,21 @@ export const createSky = (
   ];
   /** Moves it all on to a moment; `camera` is where the camera's turned to, in quarter turns, maybe mid-turn. */
   const update = (time: number, poses: readonly BoatPose[], camera: number) => {
-    // Drawn for this view, swung round with the camera as it turns.
-    const swing = (-(camera - at) * Math.PI) / 2;
-    if (blimp) {
-      const along = still ? -8 : (((time * 0.65) % BLIMP_SPAN) / BLIMP_SPAN - 0.5) * BLIMP_SPAN;
-      const bob = BLIMP_HEIGHT + Math.sin(time * 0.5) * 0.15;
-      blimp.built.group.position.set(...across(40, turnedBy(BLIMP_HEADING, camera), along, bob));
-      blimp.built.group.rotation.y = swing;
-    }
-    if (flyer) {
-      const along = still ? 6 : (((time * 1.2) % FLYER_SPAN) / FLYER_SPAN - 0.5) * FLYER_SPAN;
-      const bob = FLYER_HEIGHT + Math.sin(time * 1.3) * 0.25;
-      flyer.built.group.position.set(...across(34, turnedBy(FLYER_HEADING, camera), along, bob));
-      flyer.built.group.rotation.y = swing;
+    for (const dressed of [blimp, flyer]) {
+      if (dressed) {
+        const { bob, center, heading, height, rate, span, speed } = dressed.crossing;
+        const along = still
+          ? dressed.crossing.still
+          : (((time * speed) % span) / span - 0.5) * span;
+        const now = turnedBy(heading, camera);
+        dressed.built.group.position.set(
+          center + Math.cos(now) * along,
+          height + Math.sin(time * rate) * bob,
+          center + Math.sin(now) * along,
+        );
+        // Drawn for this view, swung round with the camera as it turns.
+        dressed.built.group.rotation.y = (-(camera - at) * Math.PI) / 2;
+      }
     }
     for (const [index, balloon] of balloons.entries()) {
       const angle = time * 0.03 + index * 2.6;
@@ -137,32 +192,30 @@ export const createSky = (
     },
     /** Dresses the sky for a season, redrawing only what it changes. */
     dress: (season: SeasonId) => {
-      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer } = DECOR[season];
-      if (blimp?.look !== look) {
-        if (blimp) {
-          undraw(blimp.built);
-        }
-        blimp = {
-          built: draw(drawBlimp(look, turnedBy(BLIMP_HEADING, at), view, covers)),
-          look,
-        };
-      }
-      if (flyer?.draw !== drawFlyer) {
-        if (flyer) {
-          undraw(flyer.built);
-        }
-        flyer = drawFlyer
-          ? { built: draw(drawFlyer(turnedBy(FLYER_HEADING, at), view, covers)), draw: drawFlyer }
-          : null;
-      }
+      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer, lights } = DECOR[season];
+      blimp = redress(
+        blimp,
+        look,
+        BLIMP_CROSSING,
+        (heading) => drawBlimp({ heading, lights, look }, view, covers),
+        look !== PLAIN_BLIMP,
+      );
+      flyer = redress(
+        flyer,
+        drawFlyer,
+        FLYER_CROSSING,
+        drawFlyer ? (heading) => drawFlyer(heading, view, covers) : null,
+        true,
+      );
     },
     /** Grey as the town, but what a season dresses in its colors, as its decorations are. */
     paint: (scheme: Scheme) => {
       for (const built of builds) {
         built.paint(scheme, false);
       }
-      blimp?.built.paint(scheme, blimp.look !== PLAIN_BLIMP);
-      flyer?.built.paint(scheme, true);
+      for (const dressed of [blimp, flyer]) {
+        dressed?.built.paint(scheme, dressed.colorful);
+      }
     },
     show: (shown: boolean) => {
       visible = shown;

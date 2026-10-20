@@ -12,7 +12,7 @@ import type { Placed } from "./draw-landmarks";
 import type { Drop, Remote, Spot } from "./net";
 import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
-import type { Emote } from "./season-decor";
+import type { Emote } from "./overlay";
 import type { Vec3 } from "./sketch";
 import type { Pose } from "./traffic";
 import { createActors, placement } from "./actors";

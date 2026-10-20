@@ -4,13 +4,18 @@
 // and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.
 import type { Line } from "@/lib/chat";
-import type { Emote } from "./season-decor";
 import { CHAT_BUBBLE_CLASS } from "@/components/chat-bubble";
 import { gradientOf } from "@/lib/color";
 import { CURSOR_ARROW } from "@/components/cursor";
 import { clamp01, lerp } from "./ease";
 
 const SVG = "http://www.w3.org/2000/svg";
+
+/** What rises now and then from the town's people: a path in a 24×24 box, and its fill. */
+export interface Emote {
+  d: string;
+  fill: string;
+}
 
 interface Bubble {
   element: HTMLDivElement;

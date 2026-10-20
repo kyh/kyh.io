@@ -1006,20 +1006,53 @@ export const mapTriangles = (
   triangles.map(({ a, b, c, colors }) => ({ a: move(a), b: move(b), c: move(c), colors }));
 
 /** A round rod from one point to another, at any slant: bones, broomsticks. */
-export const rodTriangles = (
-  from: Vec3,
-  to: Vec3,
-  r: number,
-  colors: Paint,
-  segments = 6,
-): Triangle[] => {
+export const rodTriangles = (from: Vec3, to: Vec3, r: number, colors: Paint): Triangle[] => {
   const h = length(sub(to, from));
   const along = scale(sub(to, from), 1 / h);
   // Two directions square to it, for the rod's round.
   const square = cross(Math.abs(along[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], along);
   const side = scale(square, 1 / length(square));
   const other = cross(along, side);
-  return mapTriangles(roundTriangles({ colors, h, r, segments, x: 0, z: 0 }), ([x, y, z]) =>
+  return mapTriangles(roundTriangles({ colors, h, r, segments: 6, x: 0, z: 0 }), ([x, y, z]) =>
     add(from, add(scale(side, x), add(scale(along, y), scale(other, z)))),
   );
+};
+
+/** The heading (radians round y, nose along +x) that shows a thing's +z flank to the first view. */
+export const FLANK_ON = -Math.PI / 4;
+
+/** Turns a point drawn nose along +x onto a heading. */
+export const headedTo = (heading: number) => (point: Vec3) =>
+  rotate(point, [0, 0, 0], "y", -heading);
+
+/**
+ * Draws into a sketch through `place`, which moves every point drawn: a frame
+ * turned onto a heading, scaled, or stood somewhere in the town.
+ */
+export interface Placed {
+  ball: (spec: BallSpec, weight?: Weight) => void;
+  line: (points: readonly Vec3[], weight?: Weight, token?: Token) => void;
+  /** The same sketch, through `move` first: a part placed within the whole. */
+  moved: (move: (point: Vec3) => Vec3) => Placed;
+  place: (point: Vec3) => Vec3;
+  rod: (from: Vec3, to: Vec3, r: number, colors: Paint) => void;
+  round: (spec: RoundSpec, weight?: Weight) => void;
+  sketch: Sketch;
+  solid: (triangles: readonly Triangle[], weight?: Weight, crease?: number) => void;
+}
+
+export const placed = (sketch: Sketch, place: (point: Vec3) => Vec3 = (point) => point): Placed => {
+  const solidOf = (triangles: readonly Triangle[], weight: Weight = "fine", crease?: number) =>
+    solid(sketch, mapTriangles(triangles, place), weight, crease);
+  return {
+    ball: (spec, weight = "fine") => solidOf(ballTriangles(spec), weight, 70),
+    line: (points, weight = "fine", token = "ink") =>
+      line(sketch, points.map(place), weight, token),
+    moved: (move) => placed(sketch, (point) => place(move(point))),
+    place,
+    rod: (from, to, r, colors) => solidOf(rodTriangles(from, to, r, colors)),
+    round: (spec, weight = "fine") => solidOf(roundTriangles(spec), weight),
+    sketch,
+    solid: solidOf,
+  };
 };

@@ -120,6 +120,13 @@ export const ROOFS = [
 
 export const ROOF_GRAY = paint("roofGray", "roofGray", "roofGrayShade");
 
+// The colors the season's decorations, the blimp and what flies with it share.
+export const RED = paint("festiveRed", "festiveRed", "festiveRedShade");
+export const GREEN = paint("festiveGreen", "festiveGreen", "festiveGreenShade");
+export const GOLD = paint("gold", "gold", "goldShade");
+export const WHITE = paint("white", "white", "whiteShade");
+export const BLACK = paint("screen");
+
 /** The tokens painted only on faces turned from the light, which take the shadow dots. */
 export const SHADE: ReadonlySet<Token> = new Set<Token>([
   "festiveGreenShade",
@@ -222,7 +229,8 @@ type Repaint = Partial<Record<Token, Record<Theme, string>>>;
 /**
  * How a season dresses the town itself: the colors some of its tokens take
  * (snow on the roofs and lawns at Christmas, the trees turned at Thanksgiving),
- * and which of them stay in color while the rest of the town is grey.
+ * which stay in color while the rest of the town is grey, as do any `vivid`
+ * tokens it keeps in their own colors.
  */
 export interface SeasonLook {
   repaint?: Repaint;
@@ -239,30 +247,26 @@ const ROOF_TOKENS = slopesOf([...ROOFS, ROOF_GRAY]);
  * Everything a snowfall settles on: roofs, the flat tops, the grounds and the
  * trees' crowns, white in the grey town rather than turned to the season's hue.
  */
-const snowfall = (): SeasonLook => {
-  const repaint: Repaint = {};
-  const vivid = new Set<Token>();
-  const settle = (token: Token, color: Record<Theme, string>) => {
-    repaint[token] = color;
-    vivid.add(token);
+const snowfall = (): Repaint => {
+  const repaint: Repaint = {
+    hedge: SNOW_SHADE,
+    pine: { day: "#e9f0ea", night: "#a3b2a8" },
+    pineShade: { day: "#c9d8cc", night: "#7f9086" },
+    tree: { day: "#eef3ee", night: "#a8b6ad" },
+    treeShade: { day: "#cfdccf", night: "#84958a" },
   };
   for (const token of ["field", "fieldGreen", "land", "lawn", "sand", "top"] as const) {
-    settle(token, SNOW);
+    repaint[token] = SNOW;
   }
   for (const token of ROOF_TOKENS) {
-    settle(token, token.endsWith("Shade") ? SNOW_SHADE : SNOW);
+    repaint[token] = token.endsWith("Shade") ? SNOW_SHADE : SNOW;
   }
-  settle("hedge", SNOW_SHADE);
-  settle("pine", { day: "#e9f0ea", night: "#a3b2a8" });
-  settle("pineShade", { day: "#c9d8cc", night: "#7f9086" });
-  settle("tree", { day: "#eef3ee", night: "#a8b6ad" });
-  settle("treeShade", { day: "#cfdccf", night: "#84958a" });
-  return { repaint, vivid };
+  return repaint;
 };
 
 /** Every season's look, keyed by season so a new one isn't missed. */
 export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
-  christmas: snowfall(),
+  christmas: { repaint: snowfall() },
   classic: {},
   // Pastel roofs stay pastel while the rest of the town is grey.
   easter: { vivid: new Set(slopesOf(PASTEL_ROOFS)) },
@@ -272,11 +276,9 @@ export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
       glass: { day: "#dbe6ea", night: "#ff9a3c" },
       glassDim: { day: "#dbe6ea", night: "#d9661f" },
     },
-    vivid: new Set<Token>(["glass", "glassDim"]),
   },
   lunarNewYear: {
     repaint: { glass: { day: "#dbe6ea", night: "#ff7a5c" } },
-    vivid: new Set<Token>(["glass"]),
   },
   stPatricks: {
     repaint: {
@@ -284,7 +286,6 @@ export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
       hedge: { day: "#9fd08a", night: "#2b5a30" },
       lawn: { day: "#c9eab4", night: "#1f4a28" },
     },
-    vivid: new Set<Token>(["fieldGreen", "hedge", "lawn"]),
   },
   // The trees turned: maples orange and red, pines left green.
   thanksgiving: {
@@ -293,7 +294,6 @@ export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
       tree: { day: "#f0a85a", night: "#9a5522" },
       treeShade: { day: "#dd7f3c", night: "#7e3f18" },
     },
-    vivid: new Set<Token>(["hedge", "tree", "treeShade"]),
   },
   valentines: { vivid: new Set<Token>(["roofPink", "roofPinkShade"]) },
 };
@@ -346,8 +346,9 @@ export const colorIn = (token: Token, { season, time }: Scheme) =>
  */
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
-    // The season's vivid tokens keep their color in the grey town.
-    if (SEASON_LOOKS[scheme.season].vivid?.has(token)) {
+    // The season's own colors stay in color in the grey town.
+    const { repaint, vivid } = SEASON_LOOKS[scheme.season];
+    if (repaint?.[token] || vivid?.has(token)) {
       return colorIn(token, scheme);
     }
     const key = `${scheme.time}|${scheme.season}|${token}`;

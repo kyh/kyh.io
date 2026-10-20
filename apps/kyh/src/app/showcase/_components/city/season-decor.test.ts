@@ -4,12 +4,14 @@ import test from "node:test";
 import type { CityProject } from "./draw-landmarks";
 import { projects } from "@/lib/data";
 import { SEASONS } from "@/seasons/seasons";
-import { BLIMP_HEADING, drawBlimp } from "./blimp";
+import { drawBlimp } from "./blimp";
 import { houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { planEntries } from "./draw-landmarks";
 import { planCity } from "./plan";
-import { DECOR, drawDecor, openSpots } from "./season-decor";
-import { createSketch, viewAt } from "./sketch";
+import { openSpots } from "./open-spots";
+import { DECOR, decorSteps } from "./season-decor";
+import { createSketch, FLANK_ON, viewAt } from "./sketch";
+import { finish } from "./steps";
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   description: project.description,
@@ -24,7 +26,7 @@ const plan = planCity(planEntries(cityProjects));
 
 const decorated = (season: (typeof SEASONS)[number]["id"]) => {
   const sketch = createSketch();
-  drawDecor(sketch, plan, season);
+  finish(decorSteps(sketch, plan, season));
   return sketch;
 };
 
@@ -111,9 +113,10 @@ test("every season's blimp and flyer draw something in every view", () => {
   for (let heading = 0; heading < 4; heading += 1) {
     const view = viewAt(heading);
     for (const { id } of SEASONS) {
-      const { blimp, flyer } = DECOR[id];
+      const { blimp, flyer, lights } = DECOR[id];
       if (blimp) {
-        const sketch = drawBlimp(blimp, BLIMP_HEADING + (heading * Math.PI) / 2, view, [view]);
+        const turned = FLANK_ON + (heading * Math.PI) / 2;
+        const sketch = drawBlimp({ heading: turned, lights, look: blimp }, view, [view]);
         assert.ok(sketch.faces.size > 0 && sketch.signs.length === 1, id);
       }
       if (flyer) {

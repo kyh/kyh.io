@@ -117,7 +117,7 @@ const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side)
 };
 
 /** One of a houses block's sixteen cells: a cottage, or a lawn with its tree and maybe a bush. */
-export type HouseCell =
+type HouseCell =
   | { lot: Footprint; house: HouseSpec }
   | { lot: Footprint; tree: Tree; bush: readonly [number, number] | null };
 
@@ -126,7 +126,8 @@ export type HouseCell =
  * an edge lot was left open). Pure, from the block's own random stream, so
  * whatever else needs the layout (the season's decorations) gets the same one.
  */
-export const houseCells = (block: Block, random: Random = createRandom(block.seed)) => {
+export const houseCells = (block: Block) => {
+  const random = createRandom(block.seed);
   const area = inset(block, 0.25);
   const cell = area.w / 4;
   const cells: HouseCell[] = [];
@@ -165,8 +166,8 @@ export const doorstep = (spec: HouseSpec) => {
 };
 
 /** Twelve cottages around the block's edge, gardens and trees inside. */
-const drawHouses = (sketch: Sketch, block: Block, random: Random) => {
-  for (const cell of houseCells(block, random)) {
+const drawHouses = (sketch: Sketch, block: Block) => {
+  for (const cell of houseCells(block)) {
     if ("house" in cell) {
       house(sketch, cell.house);
       continue;
@@ -407,6 +408,9 @@ const pathStrip = (sketch: Sketch, rect: Footprint) => {
   );
 };
 
+/** The rim of a fountain's basin, which the season's giant piece stands in. */
+export const BASIN = CURB_TOP + 0.1;
+
 const fountain = (sketch: Sketch, x: number, z: number, radius = 0.55) => {
   round(sketch, {
     colors: paint("paving", "wallLeft", "wallRight"),
@@ -419,10 +423,10 @@ const fountain = (sketch: Sketch, x: number, z: number, radius = 0.55) => {
   });
   round(
     sketch,
-    { colors: paint("water"), h: 0.004, r: radius - 0.08, segments: 20, x, y: CURB_TOP + 0.1, z },
+    { colors: paint("water"), h: 0.004, r: radius - 0.08, segments: 20, x, y: BASIN, z },
     "hair",
   );
-  round(sketch, { colors: WALLS, h: 0.22, r: 0.08, segments: 10, x, y: CURB_TOP + 0.1, z });
+  round(sketch, { colors: WALLS, h: 0.22, r: 0.08, segments: 10, x, y: BASIN, z });
   ball(sketch, { colors: paint("water"), detail: 10, r: 0.13, ry: 0.6, x, y: CURB_TOP + 0.36, z });
 };
 

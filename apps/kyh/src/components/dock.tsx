@@ -247,7 +247,8 @@ export const Dock = () => {
 
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
-      <motion.nav
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the pointer only magnifies the icons under it; nothing is activated by it */}
+      <nav
         className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
         onMouseMove={(event) => follow(event.nativeEvent.x)}
         onMouseLeave={() => follow(Infinity)}
@@ -335,7 +336,7 @@ export const Dock = () => {
         </button>
         <SeasonBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
         <GlassFilter />
-      </motion.nav>
+      </nav>
     </div>
   );
 };
