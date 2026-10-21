@@ -1,6 +1,6 @@
 // The blimp over the town: a hull, fins and a gondola, and a banner on the
-// flank facing the camera with the site's name, or the season's greeting in
-// its colors (`blimp` in DECOR), strung along its back with the season's
+// flank facing the camera with the site's name, or the theme's greeting in
+// its colors (`blimp` in its theme's town), strung along its back with the theme's
 // lights and wearing its hat. Drawn once per look and then only moved, so its
 // baked outline stays true. Its trims are drawn in its own frame, nose along
 // +x, up +y and the banner's flank +z, and turned onto its heading.
@@ -26,7 +26,7 @@ const backAt = (x: number) => HULL_R * Math.sqrt(Math.max(0, 1 - (x / (HULL_R * 
  */
 const blimpShadowLine = (x: number) => 0.08 + 0.6 * Math.max(0, x - 0.55) ** 2;
 
-/** Something a season dresses the blimp in, drawn in its frame. */
+/** Something a theme dresses the blimp in, drawn in its frame. */
 type Trim = (blimp: Placed) => void;
 
 /** What the blimp's banner says, the colors of its banner, fins and lettering, and what else it wears. */
@@ -39,7 +39,7 @@ export interface BlimpLook {
   trim?: Trim;
 }
 
-/** The site's own blimp, for a day without a season. */
+/** The site's own blimp, for a day without a theme. */
 export const PLAIN_BLIMP: BlimpLook = {
   banner: "accentRed",
   fins: "accentRed",
@@ -122,7 +122,7 @@ export const lanterns: Trim = (blimp) => {
   }
 };
 
-/** How the blimp's drawn: its look, the season's lights along its back, and its heading. */
+/** How the blimp's drawn: its look, the theme's lights along its back, and its heading. */
 export interface BlimpDress {
   look: BlimpLook;
   lights?: readonly Token[];

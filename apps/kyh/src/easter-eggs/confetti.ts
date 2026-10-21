@@ -4,7 +4,7 @@
 // none has nothing over it.
 import type { Confetto } from "./burst";
 import { stepConfetto, throwConfetti } from "./burst";
-import type { ConfettiSide } from "@/seasons/seasons";
+import type { ConfettiSide } from "@/themes/theme";
 
 /** How long a fountain lasts, and the fade at its end, in ms. */
 const LIFE = 1600;
@@ -82,7 +82,7 @@ const tick = (now: number) => {
   canvas = null;
 };
 
-/** Throw a fountain of confetti, in a season's colors, out of a point on the screen. */
+/** Throw a fountain of confetti, in a theme's colors, out of a point on the screen. */
 export const throwConfettiAt = (from: { x: number; y: number }, sides: readonly ConfettiSide[]) => {
   const now = performance.now();
   fountains.push({ bits: throwConfetti(Math.random, sides), born: now, from });

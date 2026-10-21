@@ -1,8 +1,8 @@
 // What one find throws out of the cursor, like coins out of a block: a pop of
-// confetti, and a handful of eggs (or the season's pieces, src/seasons) that
+// confetti, and a handful of eggs (or the theme's pieces, src/themes) that
 // spray out and then fly home to the avatar. Pure, given a random source, so the shape of a burst is asserted.
-import type { ConfettiSide } from "@/seasons/seasons";
-import { DEFAULT_SEASON, seasonOf } from "@/seasons/seasons";
+import type { ConfettiSide } from "@/themes/theme";
+import { DEFAULT_THEME, themeOf } from "@/themes";
 
 /** Eggs per find; the avatar pops once for each that lands. */
 export const EGGS_PER_FIND = 5;
@@ -47,11 +47,11 @@ const between = (random: () => number, low: number, high: number) => low + rando
 
 /**
  * A find's confetti: a small pop up and out of the cursor, about a hand high,
- * in the season's colors. Paper shows its front and its back as it flips.
+ * in the theme's colors. Paper shows its front and its back as it flips.
  */
 export const throwConfetti = (
   random: () => number = Math.random,
-  sides: readonly ConfettiSide[] = seasonOf(DEFAULT_SEASON).confetti,
+  sides: readonly ConfettiSide[] = themeOf(DEFAULT_THEME).confetti,
 ): Confetto[] => {
   const side = (): ConfettiSide =>
     sides[Math.floor(random() * sides.length)] ?? { back: "white", front: "white" };

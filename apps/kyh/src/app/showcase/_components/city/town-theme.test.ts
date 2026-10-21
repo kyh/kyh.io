@@ -3,13 +3,14 @@ import test from "node:test";
 
 import type { CityProject } from "./draw-landmarks";
 import { projects } from "@/lib/data";
-import { SEASONS } from "@/seasons/seasons";
+import type { ThemeId } from "@/themes";
+import { THEMES, themeOf } from "@/themes";
 import { drawBlimp } from "./blimp";
 import { houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { planEntries } from "./draw-landmarks";
 import { planCity } from "./plan";
 import { openSpots } from "./open-spots";
-import { DECOR, decorSteps } from "./season-decor";
+import { decorSteps } from "./town-theme";
 import { createSketch, FLANK_ON, viewAt } from "./sketch";
 import { finish } from "./steps";
 
@@ -24,24 +25,24 @@ const cityProjects: CityProject[] = projects.map((project) => ({
 
 const plan = planCity(planEntries(cityProjects));
 
-const decorated = (season: (typeof SEASONS)[number]["id"]) => {
+const decorated = (theme: ThemeId) => {
   const sketch = createSketch();
-  finish(decorSteps(sketch, plan, season));
+  finish(decorSteps(sketch, plan, themeOf(theme)));
   return sketch;
 };
 
-test("every season but the default puts something out, and the default nothing", () => {
-  for (const { id } of SEASONS) {
+test("every theme but the default puts something out, and the default nothing", () => {
+  for (const { id } of THEMES) {
     const sketch = decorated(id);
     const drawn = sketch.faces.size + sketch.lines.size;
     assert.equal(drawn > 0, id !== "classic", id);
-    assert.equal(Object.keys(DECOR[id]).length > 0, id !== "classic", id);
+    assert.equal(Object.keys(themeOf(id).town).length > 0, id !== "classic", id);
     // The default flies the site's own blimp.
-    assert.equal(DECOR[id].blimp !== undefined, id !== "classic", id);
+    assert.equal(themeOf(id).town.blimp !== undefined, id !== "classic", id);
   }
 });
 
-test("a season's decorations are the same every time they're drawn", () => {
+test("a theme's decorations are the same every time they're drawn", () => {
   const first = decorated("halloween");
   const again = decorated("halloween");
   assert.deepEqual([...first.faces], [...again.faces]);
@@ -49,7 +50,7 @@ test("a season's decorations are the same every time they're drawn", () => {
 });
 
 test("decorations draw whole triangles and segments, every number finite", () => {
-  for (const { id } of SEASONS) {
+  for (const { id } of THEMES) {
     const sketch = decorated(id);
     for (const positions of sketch.faces.values()) {
       assert.equal(positions.length % 9, 0, id);
@@ -98,7 +99,7 @@ test("the shore spots ring the pond, out of the water", () => {
   }
 });
 
-test("the square's fountain is the one spot for a season's giant piece", () => {
+test("the square's fountain is the one spot for a theme's giant piece", () => {
   const squares = plan.blocks.filter((block) => block.use === "plaza");
   assert.deepEqual(
     openSpots(plan).centerpiece,
@@ -109,11 +110,11 @@ test("the square's fountain is the one spot for a season's giant piece", () => {
   );
 });
 
-test("every season's blimp and flyer draw something in every view", () => {
+test("every theme's blimp and flyer draw something in every view", () => {
   for (let heading = 0; heading < 4; heading += 1) {
     const view = viewAt(heading);
-    for (const { id } of SEASONS) {
-      const { blimp, flyer, lights } = DECOR[id];
+    for (const { id } of THEMES) {
+      const { blimp, flyer, lights } = themeOf(id).town;
       if (blimp) {
         const turned = FLANK_ON + (heading * Math.PI) / 2;
         const sketch = drawBlimp({ heading: turned, lights, look: blimp }, view, [view]);

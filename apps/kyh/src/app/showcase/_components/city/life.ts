@@ -1,5 +1,5 @@
 // The town's life: everything moving on the ground, drawn smoothly between
-// ticks; the visitors' lines over their heads, and whatever the season has
+// ticks; the visitors' lines over their heads, and whatever the theme has
 // people send up (hearts at Valentine's); cars and people you can pick
 // up, carry and drop; and, through the room, everyone else doing the same.
 // The engine hands over pointer positions in the town and a way to put town
@@ -25,7 +25,6 @@ import type { Ground, Held } from "./carry";
 import { carryTo, flightOf, HANG, LIFT, pickUp, RAISE, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
-import { DECOR } from "./season-decor";
 import { TICK } from "./traffic";
 import { doorwaySize, INSIDE, SAYING } from "./visitors";
 import { actorKey, CARS, createWorld, parseActorKey, tickAt, VISITORS, WALKERS } from "./world";
@@ -377,8 +376,8 @@ export const createLife = (options: LifeOptions) => {
     }
   };
 
-  const emoteIn = (scheme: Scheme) => (options.still ? null : (DECOR[scheme.season].emote ?? null));
-  /** What the season has people send up, if anything, and who is sending one up since when. */
+  const emoteIn = (scheme: Scheme) => (options.still ? null : (scheme.theme.town.emote ?? null));
+  /** What the theme has people send up, if anything, and who is sending one up since when. */
   let emote: Emote | null = emoteIn(options.scheme);
   // Oldest first.
   const puffs: { born: number; id: number; key: string }[] = [];
@@ -386,7 +385,7 @@ export const createLife = (options: LifeOptions) => {
   let nextPuff = 0;
   const people = [...KEYS.walker, ...KEYS.visitor];
 
-  /** Now and then someone on screen sends up the season's emote, which rises from their head. */
+  /** Now and then someone on screen sends up the theme's emote, which rises from their head. */
   const send = (time: number) => {
     if (!emote || openedAt === null || options.scale() < EMOTE_SCALE) {
       puffs.length = 0;

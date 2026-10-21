@@ -6,10 +6,10 @@ import { MotionConfig } from "motion/react";
 
 import type { CityProject } from "./city/draw-landmarks";
 import type { CityCallbacks } from "./city/engine";
-import type { Scheme } from "./city/palette";
-import { DEFAULT_SEASON } from "@/seasons/seasons";
-import type { Theme } from "@/seasons/store";
-import { currentTheme, subscribeToTheme } from "@/seasons/store";
+import type { Setting } from "./city/town-theme";
+import { DEFAULT_THEME } from "@/themes";
+import type { Appearance } from "@/themes/store";
+import { currentAppearance, subscribeToTheme } from "@/themes/store";
 import { Pin, PinList } from "./city-pins";
 
 type City = Awaited<ReturnType<typeof loadCity>>;
@@ -18,7 +18,7 @@ interface CityMount extends CityCallbacks {
   overlay: HTMLElement | null;
   surface: HTMLElement;
   projects: CityProject[];
-  scheme: Scheme;
+  setting: Setting;
   reducedMotion: boolean;
 }
 
@@ -44,9 +44,9 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-/** The city by day or night, as the site's theme is, in the season's look. */
-const schemeOf = ({ mode, season }: Theme): Scheme => ({
-  season,
+/** The city by day or night, as the site is, dressed for its theme. */
+const settingOf = ({ mode, theme }: Appearance): Setting => ({
+  theme,
   time: mode === "dark" ? "night" : "day",
 });
 
@@ -95,7 +95,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   // The theme needs the visitor's date and their light or dark, which a render
   // (on the server too) can't read: the city starts in the default's and
   // takes theirs on mount.
-  const schemeRef = useRef<Scheme>({ season: DEFAULT_SEASON, time: "day" });
+  const settingRef = useRef<Setting>({ theme: DEFAULT_THEME, time: "day" });
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
@@ -114,8 +114,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   // first, so the city is built in it.
   useEffect(() => {
     const update = () => {
-      schemeRef.current = schemeOf(currentTheme());
-      cityRef.current?.setScheme(schemeRef.current);
+      settingRef.current = settingOf(currentAppearance());
+      cityRef.current?.setSetting(settingRef.current);
     };
     update();
     return subscribeToTheme(update);
@@ -154,7 +154,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           overlay: overlayRef.current,
           projects,
           reducedMotion,
-          scheme: schemeRef.current,
+          setting: settingRef.current,
           surface,
         });
         if (!isMounted) {
@@ -162,8 +162,8 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           return;
         }
         cityRef.current = city;
-        // The theme or the season may have changed while the city loaded.
-        city.setScheme(schemeRef.current);
+        // The theme or its light or dark may have changed while the city loaded.
+        city.setSetting(settingRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
         if (process.env.NODE_ENV === "development") {

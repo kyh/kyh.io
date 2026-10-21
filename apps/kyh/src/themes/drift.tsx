@@ -1,6 +1,6 @@
 "use client";
 
-// What falls across every page in a season that has it: snow at Christmas, a
+// What falls across every page in a theme that has it: snow at Christmas, a
 // few flakes drawn and the rest soft dots, and tumbling leaves at
 // Thanksgiving. Each piece is CSS-animated (global.css), so the fall costs
 // the compositor and not the page; a visitor who'd rather not see motion
@@ -9,10 +9,10 @@ import { useReducedMotion } from "motion/react";
 
 import { createRandom } from "@/lib/random";
 import { useSvgId } from "@/lib/svg-id";
-import type { Drift } from "./seasons";
+import type { Drift } from "./theme";
 import { PieceDefs, PieceLayers } from "./piece";
-import { seasonOf } from "./seasons";
-import { useSeason } from "./store";
+import { themeOf } from "./index";
+import { useTheme } from "./store";
 
 interface Piece {
   delay: number;
@@ -20,7 +20,7 @@ interface Piece {
   size: number;
   sway: number;
   x: number;
-  /** The season's piece drawn, or (snow only) a plain dot. */
+  /** The theme's piece drawn, or (snow only) a plain dot. */
   drawn: boolean;
 }
 
@@ -46,15 +46,15 @@ const layoutOf = (drift: Drift): Piece[] => {
 
 const LAYOUTS: Record<Drift, Piece[]> = { leaves: layoutOf("leaves"), snow: layoutOf("snow") };
 
-export const SeasonDrift = () => {
-  const { art, drift } = seasonOf(useSeason());
+export const ThemeDrift = () => {
+  const { art, drift } = themeOf(useTheme());
   const still = useReducedMotion();
   const id = useSvgId("piece");
   if (drift === null || still) {
     return null;
   }
   return (
-    <div className="season-drift" data-drift={drift} aria-hidden="true">
+    <div className="theme-drift" data-drift={drift} aria-hidden="true">
       <svg className="absolute size-0">
         <defs>
           <PieceDefs art={art} id={id} />
@@ -72,13 +72,13 @@ export const SeasonDrift = () => {
           "--drift-x": `${x}%`,
         } as React.CSSProperties;
         return (
-          <span key={index} className="season-drift-piece" style={style}>
+          <span key={index} className="theme-drift-piece" style={style}>
             {drawn ? (
-              <svg viewBox="0 0 24 24" className="season-drift-sway">
+              <svg viewBox="0 0 24 24" className="theme-drift-sway">
                 <PieceLayers art={art} id={id} />
               </svg>
             ) : (
-              <span className="season-drift-sway season-drift-dot" />
+              <span className="theme-drift-sway theme-drift-dot" />
             )}
           </span>
         );

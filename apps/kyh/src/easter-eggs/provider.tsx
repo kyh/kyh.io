@@ -1,7 +1,7 @@
 "use client";
 
 // Celebrates each find like a coin pickup: confetti (`confetti.ts`) and a label at the pointer,
-// eggs (or the season's pieces, src/seasons: bats over Halloween) that spray
+// eggs (or the theme's pieces, src/themes: bats over Halloween) that spray
 // out and fly home to the visitor's avatar (`EggCatcher`),
 // which pops as each lands. Once the last egg of the last find lands the
 // visitor's own color turns gold, so every room draws them gold too.
@@ -20,10 +20,10 @@ import {
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 
 import { CURSOR_ARROW } from "@/components/cursor";
-import { PieceDefs, PieceLayers } from "@/seasons/piece";
-import type { SeasonId } from "@/seasons/seasons";
-import { seasonOf } from "@/seasons/seasons";
-import { currentSeason } from "@/seasons/store";
+import type { ThemeId } from "@/themes";
+import { themeOf } from "@/themes";
+import { PieceDefs, PieceLayers } from "@/themes/piece";
+import { currentTheme } from "@/themes/store";
 import { lastPointer } from "@/lib/pointer";
 import { useSvgId } from "@/lib/svg-id";
 import { GOLD, gradientOf, ownColorName, setOwnColorName, subscribeToOwnColor } from "@/lib/color";
@@ -58,7 +58,7 @@ interface Burst {
   to: Point;
   eggs: SprayedEgg[];
   /** What it throws, fixed at the find so a switch mid-flight doesn't swap them. */
-  season: SeasonId;
+  theme: ThemeId;
 }
 
 interface EggsState {
@@ -124,7 +124,7 @@ export const EggProgress = () => {
 
 interface BurstProps {
   burst: Burst;
-  /** The id the pieces' gradients are under, per season. */
+  /** The id the pieces' gradients are under, per theme. */
   pieceId: string;
   onLand: () => void;
   onDone: (id: number) => void;
@@ -164,7 +164,7 @@ const BurstLabel = ({ label }: { label: string }) => {
 
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
 const BurstPieces = ({ burst, pieceId, onLand, onDone }: BurstProps) => {
-  const { art } = seasonOf(burst.season);
+  const { art } = themeOf(burst.theme);
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
@@ -195,7 +195,7 @@ const BurstPieces = ({ burst, pieceId, onLand, onDone }: BurstProps) => {
             }
           }}
         >
-          <PieceLayers art={art} id={`${pieceId}-${burst.season}`} />
+          <PieceLayers art={art} id={`${pieceId}-${burst.theme}`} />
         </motion.svg>
       ))}
     </div>
@@ -248,14 +248,14 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       next += 1;
       // The burst comes out of the pointer, or the middle if it hasn't moved yet.
       const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-      const season = currentSeason();
-      throwConfettiAt(from, seasonOf(season).confetti);
+      const theme = currentTheme();
+      throwConfettiAt(from, themeOf(theme).confetti);
       const burst = {
         ...burstOf(),
         from,
         id: next,
         label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
-        season,
+        theme,
         to,
       };
       setBursts((current) => [...current, burst]);
@@ -270,7 +270,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   );
 
   const catching = bursts.length > 0;
-  const seasons = [...new Set(bursts.map((burst) => burst.season))];
+  const themes = [...new Set(bursts.map((burst) => burst.theme))];
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
@@ -305,8 +305,8 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         >
           <svg className="absolute size-0">
             <defs>
-              {seasons.map((season) => (
-                <PieceDefs key={season} art={seasonOf(season).art} id={`${pieceId}-${season}`} />
+              {themes.map((theme) => (
+                <PieceDefs key={theme} art={themeOf(theme).art} id={`${pieceId}-${theme}`} />
               ))}
             </defs>
           </svg>

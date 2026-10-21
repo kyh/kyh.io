@@ -1,4 +1,4 @@
-// Each season's one giant piece, in or beside the square's fountain: the
+// Each theme's one giant piece, in or beside the square's fountain: the
 // town's tree, a waving skeleton, a lantern gate, a shamrock, a turkey, an
 // egg, a heart. The ones with a front face the way the town is first seen;
 // the flat ones face +z, so every view sees them at the same slant. Pure.

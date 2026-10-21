@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
 import { iconAttrs } from "@/components/icons";
-import { SeasonBloom } from "@/components/season-bloom";
+import { ThemeBloom } from "@/components/theme-bloom";
 import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
-import { DEFAULT_SEASON } from "@/seasons/seasons";
-import { toggleTheme, useTheme } from "@/seasons/store";
+import { DEFAULT_THEME } from "@/themes";
+import { toggleTheme, useAppearance } from "@/themes/store";
 
 /** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
@@ -201,7 +201,7 @@ const GlassFilter = () => (
 
 export const Dock = () => {
   const pathname = usePathname();
-  const theme = useTheme();
+  const appearance = useAppearance();
   const mouseX = useMotionValue(Infinity);
   const [hovered, setHovered] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -227,11 +227,11 @@ export const Dock = () => {
   };
   const release = () => window.clearTimeout(holding.current);
 
-  const plain = theme.season === DEFAULT_SEASON;
-  // A season's tap goes back to the visitor's own light or dark.
+  const plain = appearance.theme === DEFAULT_THEME;
+  // A holiday theme's tap goes back to the visitor's own light or dark.
   const themeLabel = plain
-    ? `Switch to ${theme.mode === "light" ? "dark" : "light"} mode`
-    : `Back to ${theme.own} mode`;
+    ? `Switch to ${appearance.mode === "light" ? "dark" : "light"} mode`
+    : `Back to ${appearance.own} mode`;
   // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
   const hover = (event: React.PointerEvent, item: string) => {
     if (event.pointerType === "mouse" && !blooming) {
@@ -319,22 +319,22 @@ export const Dock = () => {
           onPointerEnter={(event) => hover(event, "theme")}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-            {/* Light and dark morph into each other; a season pops in wearing its glyph. */}
+            {/* Light and dark morph into each other; a holiday theme pops in wearing its glyph. */}
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={plain ? "plain" : theme.season}
+                key={plain ? "plain" : appearance.theme}
                 className="flex size-full items-center justify-center"
                 initial={{ opacity: 0, rotate: -40, scale: 0.4 }}
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 exit={{ opacity: 0, rotate: 40, scale: 0.4 }}
                 transition={{ damping: 22, stiffness: 420, type: "spring" }}
               >
-                <ThemeIcon theme={theme} look="glyph" />
+                <ThemeIcon appearance={appearance} look="glyph" />
               </motion.span>
             </AnimatePresence>
           </DockItem>
         </button>
-        <SeasonBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
+        <ThemeBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
         <GlassFilter />
       </nav>
     </div>

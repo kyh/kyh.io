@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { DEFAULT_SEASON } from "@/seasons/seasons";
+import { DEFAULT_THEME } from "@/themes";
 import type { Scheme, Token } from "./palette";
 import {
   colorIn,
@@ -14,9 +14,10 @@ import {
   PALETTE,
   shade,
 } from "./palette";
+import { schemeOf } from "./town-theme";
 
-const DAY: Scheme = { season: DEFAULT_SEASON, time: "day" };
-const NIGHT: Scheme = { season: DEFAULT_SEASON, time: "night" };
+const DAY: Scheme = schemeOf({ theme: DEFAULT_THEME, time: "day" });
+const NIGHT: Scheme = schemeOf({ theme: DEFAULT_THEME, time: "night" });
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
@@ -118,9 +119,9 @@ test("by night the greys are the site's slate, lightness kept", () => {
   assert.equal(shade("sea", DAY, false), "#e7e7e7");
 });
 
-test("a season's tint turns the greys by day and by night", () => {
+test("a theme's tint turns the greys by day and by night", () => {
   for (const time of ["day", "night"] as const) {
-    const scheme: Scheme = { season: "stPatricks", time };
+    const scheme: Scheme = schemeOf({ theme: "stPatricks", time });
     const [lightness, a, b] = oklab(shade("land", scheme, false));
     assert.ok(Math.abs((Math.atan2(b, a) * 180) / Math.PI - 140) < 3);
     assert.ok(Math.abs(lightness - oklab(greyOf(colorIn("land", scheme)))[0]) < 0.01);
@@ -137,8 +138,8 @@ test("the greys are plain by day and slate by night", () => {
   assert.ok(chroma(shade("land", NIGHT, false)) > 0.005);
 });
 
-test("a season repaints its tokens and leaves the rest", () => {
-  const christmas: Scheme = { season: "christmas", time: "day" };
+test("a theme repaints its tokens and leaves the rest", () => {
+  const christmas: Scheme = schemeOf({ theme: "christmas", time: "day" });
   assert.notEqual(colorIn("lawn", christmas), PALETTE.lawn.day, "no snow on the lawns");
   assert.notEqual(colorIn("roofBlue", christmas), PALETTE.roofBlue.day, "no snow on the roofs");
   assert.equal(shade("lawn", christmas, false), colorIn("lawn", christmas), "the snow was tinted");
@@ -147,8 +148,8 @@ test("a season repaints its tokens and leaves the rest", () => {
   assert.equal(colorIn("land", NIGHT), PALETTE.land.night);
 });
 
-test("a season's vivid tokens keep their color in the grey town", () => {
-  const easter: Scheme = { season: "easter", time: "day" };
+test("a theme's vivid tokens keep their color in the grey town", () => {
+  const easter: Scheme = schemeOf({ theme: "easter", time: "day" });
   assert.equal(shade("roofPink", easter, false), PALETTE.roofPink.day);
   assert.notEqual(shade("roofPink", DAY, false), PALETTE.roofPink.day);
   assert.equal(shade("wallLeft", easter, false), greyIn(PALETTE.wallLeft.day, easter));

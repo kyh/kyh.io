@@ -1,4 +1,4 @@
-// Hats for whatever in the sky wears one: the blimp in a season's, Santa and
+// Hats for whatever in the sky wears one: the blimp in a theme's, Santa and
 // the witch in their own. Each is drawn in a frame of its own, the brim's
 // middle at the origin and the crown up +y, which `wearing` stands on a point
 // of its wearer, sized and leaning back. Pure.

@@ -1,5 +1,5 @@
 // What floats over the town in HTML rather than in the drawing: the lines
-// visitors say on their way out, what the season has people send up (a
+// visitors say on their way out, what the theme has people send up (a
 // heart at Valentine's), other people's pointers and what they're saying,
 // and this player's own line. Placed fresh every frame; whatever a
 // frame doesn't place is taken away.

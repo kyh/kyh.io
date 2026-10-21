@@ -1,8 +1,8 @@
 // The holidays' dates, in the visitor's local time. A day is one number,
-// yyyymmdd, so days compare as numbers and a season's days are a range of
+// yyyymmdd, so days compare as numbers and a theme's days are a range of
 // them. Pure.
 
-/** The days a season runs, from and to, both included. */
+/** The days a theme runs, from and to, both included. */
 export type Window = readonly [from: number, to: number];
 
 /** A day as yyyymmdd, in local time. */

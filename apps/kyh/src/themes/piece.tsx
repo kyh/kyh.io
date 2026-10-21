@@ -1,6 +1,6 @@
 "use client";
 
-// Draws a season's piece (`art.ts`) in a 24×24 <svg>: its gradients once, in
+// Draws a theme's piece (`art.ts`) in a 24×24 <svg>: its gradients once, in
 // <defs> under an id, and its layers wherever it shows, filling from them. A
 // page showing many of one piece (a burst, the drift) shares one set of defs.
 import { useSvgId } from "@/lib/svg-id";
