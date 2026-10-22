@@ -3,7 +3,7 @@
 // breathing a little while it's lit.
 import { BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial } from "three";
 
-import type { Theme } from "./palette";
+import type { Time } from "./palette";
 import type { Rect } from "./plan";
 import { PALETTE } from "./palette";
 
@@ -11,7 +11,7 @@ import { PALETTE } from "./palette";
 const INSIDE = 0.36;
 const OUTSIDE = 0.2;
 /** The band's strongest alpha, on the lot's edge. */
-const PEAK: Record<Theme, number> = { day: 0.5, night: 0.62 };
+const PEAK: Record<Time, number> = { day: 0.5, night: 0.62 };
 
 /**
  * Triangles for a band round `rect` at height `y`: positions, and each
@@ -84,7 +84,7 @@ export const createHalo = () => {
   const mesh = new Mesh(bandGeometry({ d: 1, w: 1, x: 0, z: 0 }, 0), material);
   mesh.renderOrder = 3;
   mesh.visible = false;
-  let tone: Record<Theme, string> = PALETTE.accentBlue;
+  let tone: Record<Time, string> = PALETTE.accentBlue;
   let level = 0;
   let lit = false;
   return {
@@ -94,7 +94,7 @@ export const createHalo = () => {
     },
     mesh,
     /** Ring this lot in this color, or let the ring fade with null. */
-    show: (lot: { rect: Rect; y: number; tone: Record<Theme, string> } | null) => {
+    show: (lot: { rect: Rect; y: number; tone: Record<Time, string> } | null) => {
       lit = lot !== null;
       if (lot) {
         mesh.geometry.dispose();
@@ -102,11 +102,11 @@ export const createHalo = () => {
         ({ tone } = lot);
       }
     },
-    update: (dt: number, time: number, theme: Theme) => {
+    update: (dt: number, time: number, period: Time) => {
       level += ((lit ? 1 : 0) - level) * (1 - Math.exp(-dt * 12));
       mesh.visible = level > 0.01;
-      material.color.set(tone[theme]);
-      material.opacity = level * PEAK[theme] * (0.85 + 0.15 * Math.sin(time * 2.6));
+      material.color.set(tone[period]);
+      material.opacity = level * PEAK[period] * (0.85 + 0.15 * Math.sin(time * 2.6));
     },
   };
 };

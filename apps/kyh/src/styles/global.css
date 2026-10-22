@@ -55,25 +55,25 @@
   --link-color-hover: var(--colors-gray0);
 }
 
-/* A seasonal theme's greys (src/seasons): Tailwind's slate in oklch, turned to
-   the season's hue, its faint chroma scaled by the season's. */
-html[data-season] {
-  --colors-gray0: oklch(99.5% calc(0.004 * var(--season-chroma)) var(--season-hue));
-  --colors-gray50: oklch(98.4% calc(0.003 * var(--season-chroma)) var(--season-hue));
-  --colors-gray100: oklch(96.8% calc(0.007 * var(--season-chroma)) var(--season-hue));
-  --colors-gray200: oklch(92.9% calc(0.013 * var(--season-chroma)) var(--season-hue));
-  --colors-gray300: oklch(86.9% calc(0.022 * var(--season-chroma)) var(--season-hue));
-  --colors-gray400: oklch(70.4% calc(0.04 * var(--season-chroma)) var(--season-hue));
-  --colors-gray500: oklch(55.4% calc(0.046 * var(--season-chroma)) var(--season-hue));
-  --colors-gray600: oklch(44.6% calc(0.043 * var(--season-chroma)) var(--season-hue));
-  --colors-gray700: oklch(37.2% calc(0.044 * var(--season-chroma)) var(--season-hue));
-  --colors-gray800: oklch(27.9% calc(0.041 * var(--season-chroma)) var(--season-hue));
-  --colors-gray900: oklch(20.8% calc(0.042 * var(--season-chroma)) var(--season-hue));
-  --colors-gray950: oklch(12.9% calc(0.042 * var(--season-chroma)) var(--season-hue));
-  --colors-gray1000: oklch(7% calc(0.03 * var(--season-chroma)) var(--season-hue));
+/* A theme's greys (src/themes): Tailwind's slate in oklch, turned to
+   the theme's hue, its faint chroma scaled by the theme's. */
+html[data-tint] {
+  --colors-gray0: oklch(99.5% calc(0.004 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray50: oklch(98.4% calc(0.003 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray100: oklch(96.8% calc(0.007 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray200: oklch(92.9% calc(0.013 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray300: oklch(86.9% calc(0.022 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray400: oklch(70.4% calc(0.04 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray500: oklch(55.4% calc(0.046 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray600: oklch(44.6% calc(0.043 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray700: oklch(37.2% calc(0.044 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray800: oklch(27.9% calc(0.041 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray900: oklch(20.8% calc(0.042 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray950: oklch(12.9% calc(0.042 * var(--tint-chroma)) var(--tint-hue));
+  --colors-gray1000: oklch(7% calc(0.03 * var(--tint-chroma)) var(--tint-hue));
 }
 
-/* A layer of a season's piece that swings like a beating wing (src/seasons/art.ts):
+/* A layer of a theme's piece that swings like a beating wing (src/themes/art.ts):
    about its pivot, in the piece's own 24×24 units, foreshortened as it rises. */
 .piece-swing {
   transform-box: view-box;
@@ -91,10 +91,10 @@ html[data-season] {
   }
 }
 
-/* What falls across every page in a season that has it (src/seasons/drift.tsx):
+/* What falls across every page in a theme that has it (src/themes/drift.tsx):
    each piece falls the height of the screen, swaying as it goes (leaves
    tumble, turning over), on transforms alone, under the dock and the cursors. */
-.season-drift {
+.theme-drift {
   --snow: #dce7f3;
   --snow-edge: rgb(96 128 168 / 35%);
   position: fixed;
@@ -109,7 +109,7 @@ html[data-season] {
   }
 }
 
-.season-drift-piece {
+.theme-drift-piece {
   position: absolute;
   top: 0;
   left: var(--drift-x);
@@ -119,7 +119,7 @@ html[data-season] {
   animation: drift-fall var(--drift-duration) linear var(--drift-delay) infinite;
 }
 
-.season-drift-sway {
+.theme-drift-sway {
   display: block;
   width: 100%;
   height: 100%;
@@ -133,7 +133,7 @@ html[data-season] {
   }
 }
 
-.season-drift-dot {
+.theme-drift-dot {
   border-radius: 50%;
   background: var(--snow);
   box-shadow: 0 0 0 0.5px var(--snow-edge);
@@ -342,11 +342,11 @@ button.link {
   }
 }
 
-/* The themes blooming over the theme toggle (components/season-bloom.tsx): a
+/* The themes blooming over the theme toggle (components/theme-bloom.tsx): a
    solid disc springing from the button (Base UI's --transform-origin), a
    wedge per theme clipped to its slice (so the slice is what takes the
    pointer), edge to edge round a hub that wears the theme. */
-.season-bloom {
+.theme-bloom {
   position: relative;
   transform-origin: var(--transform-origin);
   outline: none;
@@ -358,7 +358,7 @@ button.link {
   box-shadow: 0 10px 36px var(--colors-shadowDark);
 }
 
-.season-bloom-wedge {
+.theme-bloom-wedge {
   --wedge: color-mix(in srgb, var(--panel), var(--body-color) 5%);
   position: absolute;
   inset: 0;
@@ -380,7 +380,7 @@ button.link {
   }
 }
 
-.season-bloom-face {
+.theme-bloom-face {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -394,14 +394,14 @@ button.link {
   }
 }
 
-.season-bloom-piece {
+.theme-bloom-piece {
   position: absolute;
   width: 24px;
   height: 24px;
   color: var(--body-color);
 }
 
-.season-bloom-hub {
+.theme-bloom-hub {
   position: absolute;
   display: grid;
   place-items: center;
@@ -547,7 +547,7 @@ button.link {
    In the components layer so Tailwind utilities can override them. */
 @layer components {
   .city {
-    /* Day's greys: plain, as the town's are, unless a season tints them; then
+    /* Day's greys: plain, as the town's are, unless a theme tints them; then
        the site's. Night's are the site's slate. */
     --city-paper: #f7f7f7;
     --city-paper-hover: #ededed;
@@ -557,7 +557,7 @@ button.link {
     --city-ink: #454545;
     --city-ink-soft: #7d7d7d;
 
-    html[data-season] & {
+    html[data-tint] & {
       --city-paper: var(--colors-gray50);
       --city-paper-hover: var(--colors-gray100);
       --city-line: var(--colors-gray300);
@@ -707,7 +707,7 @@ button.link {
     }
   }
 
-  /* What the season has someone send up (a heart at Valentine's): centered on
+  /* What the theme has someone send up (a heart at Valentine's): centered on
      their head, then risen and faded each frame (overlay.ts). */
   .city-emote {
     position: absolute;

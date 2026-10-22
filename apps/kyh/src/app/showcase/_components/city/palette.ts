@@ -1,8 +1,8 @@
 // Every color in the city, by day (ink on paper, after Inkline Town) and by
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
-import type { SeasonId } from "@/seasons/seasons";
-import { seasonOf } from "@/seasons/seasons";
+import type { ListedTheme } from "@/themes";
+import type { Town } from "./town-theme";
 
 export const PALETTE = {
   accentBlue: { day: "#4f78c4", night: "#7aa5ff" },
@@ -85,7 +85,7 @@ export const PALETTE = {
 } as const;
 
 export type Token = keyof typeof PALETTE;
-export type Theme = "day" | "night";
+export type Time = "day" | "night";
 
 /** Which token a face takes, by the way it faces: up, toward +z or toward +x. */
 export interface Paint {
@@ -120,7 +120,7 @@ export const ROOFS = [
 
 export const ROOF_GRAY = paint("roofGray", "roofGray", "roofGrayShade");
 
-// The colors the season's decorations, the blimp and what flies with it share.
+// The colors a theme's decorations, the blimp and what flies with it share.
 export const RED = paint("festiveRed", "festiveRed", "festiveRedShade");
 export const GREEN = paint("festiveGreen", "festiveGreen", "festiveGreenShade");
 export const GOLD = paint("gold", "gold", "goldShade");
@@ -223,31 +223,21 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
 /** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
-/** A season's colors for some tokens, by day and by night. */
-type Repaint = Partial<Record<Token, Record<Theme, string>>>;
-
-/**
- * How a season dresses the town itself: the colors some of its tokens take
- * (snow on the roofs and lawns at Christmas, the trees turned at Thanksgiving),
- * which stay in color while the rest of the town is grey, as do any `vivid`
- * tokens it keeps in their own colors.
- */
-export interface SeasonLook {
-  repaint?: Repaint;
-  vivid?: ReadonlySet<Token>;
-}
+/** A theme's colors for some tokens, by day and by night. */
+export type Repaint = Partial<Record<Token, Record<Time, string>>>;
 
 const SNOW = { day: "#fbfcfd", night: "#b4c0cc" };
 const SNOW_SHADE = { day: "#e2e9f0", night: "#97a4b1" };
 /** A roof's two slopes' tokens, for each roof. */
-const slopesOf = (roofs: readonly Paint[]) => roofs.flatMap(({ right, top }) => [top, right]);
+export const slopesOf = (roofs: readonly Paint[]) =>
+  roofs.flatMap(({ right, top }) => [top, right]);
 const ROOF_TOKENS = slopesOf([...ROOFS, ROOF_GRAY]);
 
 /**
  * Everything a snowfall settles on: roofs, the flat tops, the grounds and the
- * trees' crowns, white in the grey town rather than turned to the season's hue.
+ * trees' crowns, white in the grey town rather than turned to the theme's hue.
  */
-const snowfall = (): Repaint => {
+export const snowfall = (): Repaint => {
   const repaint: Repaint = {
     hedge: SNOW_SHADE,
     pine: { day: "#e9f0ea", night: "#a3b2a8" },
@@ -264,44 +254,11 @@ const snowfall = (): Repaint => {
   return repaint;
 };
 
-/** Every season's look, keyed by season so a new one isn't missed. */
-export const SEASON_LOOKS: Record<SeasonId, SeasonLook> = {
-  christmas: { repaint: snowfall() },
-  classic: {},
-  // Pastel roofs stay pastel while the rest of the town is grey.
-  easter: { vivid: new Set(slopesOf(PASTEL_ROOFS)) },
-  // Every window lit pumpkin orange after dark.
-  halloween: {
-    repaint: {
-      glass: { day: "#dbe6ea", night: "#ff9a3c" },
-      glassDim: { day: "#dbe6ea", night: "#d9661f" },
-    },
-  },
-  lunarNewYear: {
-    repaint: { glass: { day: "#dbe6ea", night: "#ff7a5c" } },
-  },
-  stPatricks: {
-    repaint: {
-      fieldGreen: { day: "#bfe3a8", night: "#24502c" },
-      hedge: { day: "#9fd08a", night: "#2b5a30" },
-      lawn: { day: "#c9eab4", night: "#1f4a28" },
-    },
-  },
-  // The trees turned: maples orange and red, pines left green.
-  thanksgiving: {
-    repaint: {
-      hedge: { day: "#e3b35c", night: "#7a5a24" },
-      tree: { day: "#f0a85a", night: "#9a5522" },
-      treeShade: { day: "#dd7f3c", night: "#7e3f18" },
-    },
-  },
-  valentines: { vivid: new Set<Token>(["roofPink", "roofPinkShade"]) },
-};
-
-/** How the city is drawn: by day or by night, as the site's theme says, in the season's look. */
+/** How the city is drawn: by day or by night, as the site's light or dark says, dressed as its theme's town. */
 export interface Scheme {
-  time: Theme;
-  season: SeasonId;
+  time: Time;
+  theme: ListedTheme;
+  town: Town;
 }
 
 /** Slate's hue and its chroma in its darks; the chroma fades toward white. */
@@ -321,11 +278,10 @@ export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
 
 /**
  * A color as the city's greys show it, the way the site draws its own greys:
- * plain by day, slate by night, and turned by the season's tint at either
+ * plain by day, slate by night, and turned by the theme's tint at either
  * (global.css).
  */
-export const greyIn = (hex: string, { season, time }: Scheme) => {
-  const { tint } = seasonOf(season);
+export const greyIn = (hex: string, { theme: { tint }, time }: Scheme) => {
   if (tint) {
     return slateOf(hex, tint.hue, SLATE_CHROMA * tint.chroma);
   }
@@ -336,9 +292,9 @@ export const greyIn = (hex: string, { season, time }: Scheme) => {
 // run of faces, not two trips through OKLab.
 const greys = new Map<string, string>();
 
-/** A token's color in the scheme: the season's repaint of it, else its own, by day or night. */
-export const colorIn = (token: Token, { season, time }: Scheme) =>
-  (SEASON_LOOKS[season].repaint?.[token] ?? PALETTE[token])[time];
+/** A token's color in the scheme: the theme's repaint of it, else its own, by day or night. */
+export const colorIn = (token: Token, { time, town }: Scheme) =>
+  (town.repaint?.[token] ?? PALETTE[token])[time];
 
 /**
  * The city is drawn in greys; a building shows its colors only while it is
@@ -346,12 +302,12 @@ export const colorIn = (token: Token, { season, time }: Scheme) =>
  */
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
-    // The season's own colors stay in color in the grey town.
-    const { repaint, vivid } = SEASON_LOOKS[scheme.season];
+    // The theme's own colors stay in color in the grey town.
+    const { repaint, vivid } = scheme.town;
     if (repaint?.[token] || vivid?.has(token)) {
       return colorIn(token, scheme);
     }
-    const key = `${scheme.time}|${scheme.season}|${token}`;
+    const key = `${scheme.time}|${scheme.theme.id}|${token}`;
     let grey = greys.get(key);
     if (grey === undefined) {
       grey = greyIn(colorIn(token, scheme), scheme);
@@ -467,20 +423,20 @@ const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]):
   };
 };
 
-const GLOW_LIGHTNESS: Record<Theme, readonly [number, number]> = {
+const GLOW_LIGHTNESS: Record<Time, readonly [number, number]> = {
   day: [0.45, 0.72],
   night: [0.68, 0.85],
 };
 const GLOW_CHROMA = 0.1;
 
 /** A color as a glow on the ground: dark enough to show by day, light enough by night, never washed out. */
-const glowOf = (hex: string): Record<Theme, string> => {
+const glowOf = (hex: string): Record<Time, string> => {
   const [lightness, a, b] = oklab(hex);
   const chroma = Math.hypot(a, b);
   // A grey's faint hue, boosted, would glow in a color it doesn't have.
   const boost = chroma >= NEUTRAL_CHROMA ? Math.max(1, GLOW_CHROMA / chroma) : 0;
-  const at = (theme: Theme) => {
-    const [low, high] = GLOW_LIGHTNESS[theme];
+  const at = (time: Time) => {
+    const [low, high] = GLOW_LIGHTNESS[time];
     return fromOklab([Math.min(high, Math.max(low, lightness)), a * boost, b * boost]);
   };
   return { day: at("day"), night: at("night") };
@@ -489,7 +445,7 @@ const glowOf = (hex: string): Record<Theme, string> => {
 /** How a building looks lit: the tint it paints itself with, and the glow round its lot. */
 export interface Look {
   tint: Tint;
-  glow: Record<Theme, string>;
+  glow: Record<Time, string>;
 }
 
 /**

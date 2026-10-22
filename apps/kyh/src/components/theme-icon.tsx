@@ -2,9 +2,9 @@ import { motion } from "motion/react";
 
 import { iconAttrs } from "@/components/icons";
 import { useSvgId } from "@/lib/svg-id";
-import { PieceIcon } from "@/seasons/piece";
-import { seasonOf } from "@/seasons/seasons";
-import type { Theme } from "@/seasons/store";
+import { themeOf } from "@/themes";
+import { PieceIcon } from "@/themes/piece";
+import type { Appearance } from "@/themes/store";
 
 /** The sun or the moon, morphing into each other. */
 const SunMoon = ({ isLight }: { isLight: boolean }) => {
@@ -95,14 +95,14 @@ const SunMoon = ({ isLight }: { isLight: boolean }) => {
 };
 
 interface ThemeIconProps {
-  theme: Pick<Theme, "mode" | "season">;
-  /** A season as its line glyph, to sit with the dock's icons, or as its colored piece. */
+  appearance: Pick<Appearance, "mode" | "theme">;
+  /** A theme as its line glyph, to sit with the dock's icons, or as its colored piece. */
   look: "glyph" | "piece";
 }
 
-/** A theme's icon, filling its box: its season's glyph or piece, or (the default season) the sun or moon. */
-export const ThemeIcon = ({ theme: { mode, season }, look }: ThemeIconProps) => {
-  const { art, glyph } = seasonOf(season);
+/** A theme's icon, filling its box: its glyph or piece, or (the default theme) the sun or moon. */
+export const ThemeIcon = ({ appearance: { mode, theme }, look }: ThemeIconProps) => {
+  const { art, glyph } = themeOf(theme);
   if (glyph === null) {
     return (
       <span className="block size-full">

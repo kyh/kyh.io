@@ -1,5 +1,5 @@
 // What moves over and around the town besides the blimp (blimp.ts): hot-air
-// balloons, drones, boats sailing round the island, and what a season flies
+// balloons, drones, boats sailing round the island, and what a theme flies
 // across the sky (Santa's sleigh, a witch on her broom). Each is drawn once as
 // a sketch and then only moved, so its baked outline stays true.
 import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
@@ -232,7 +232,7 @@ export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
 /** Santa's sleigh and the witch fly the other way from the blimp, so they show their flank too. */
 export const FLYER_HEADING = FLANK_ON + Math.PI;
 
-/** Something a season flies across the sky, on a heading, drawn whole for its view. */
+/** Something a theme flies across the sky, on a heading, drawn whole for its view. */
 export type Flyer = (heading: number, view: Vec3, covers: readonly Vec3[]) => Sketch;
 
 /** A flyer's frame (nose along +x), scaled up to be seen from the street and turned onto its heading. */

@@ -18,7 +18,7 @@ import {
 } from "matter-js";
 import { discoverEgg } from "@/easter-eggs/store";
 import { tiltGravity } from "@/lib/tilt";
-import { useTheme } from "@/seasons/store";
+import { useAppearance } from "@/themes/store";
 
 const getRenderProps = (isLight: boolean) => ({
   fillStyle: "transparent",
@@ -104,7 +104,7 @@ interface AnimatingFigure {
 }
 
 export const FigureCanvas = () => {
-  const { mode } = useTheme();
+  const { mode } = useAppearance();
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const runnerRef = useRef<Runner | null>(null);

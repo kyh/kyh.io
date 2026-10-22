@@ -10,6 +10,7 @@ import type { StartAt } from "./grow";
 import { BUILT, raise } from "./grow";
 import { WALLS } from "./palette";
 import { build, createMaterials } from "./render";
+import { schemeOf } from "./town-theme";
 import { box, createSketch, part } from "./sketch";
 
 /** The starts stamped on one mesh or line batch, if it is one. */
@@ -44,7 +45,7 @@ const twoBoxes = () => {
   box(sketch, { colors: WALLS, d: 1, h: 1, w: 1, x: 2, y: 0, z: 2 });
   const piece = part(sketch, "piece", [10, 1, 2]);
   box(piece, { colors: WALLS, d: 0.5, h: 0.5, w: 0.5, x: 0, y: 0, z: 0 });
-  return build(sketch, createMaterials({ season: "classic", time: "day" }));
+  return build(sketch, createMaterials(schemeOf({ theme: "classic", time: "day" })));
 };
 
 test("every face and ink line is stamped with the start of where it stands, a part by its place in town", () => {

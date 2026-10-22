@@ -124,7 +124,7 @@ type HouseCell =
 /**
  * A houses block laid out: cottages round the edge, lawns inside (and where
  * an edge lot was left open). Pure, from the block's own random stream, so
- * whatever else needs the layout (the season's decorations) gets the same one.
+ * whatever else needs the layout (the theme's decorations) gets the same one.
  */
 export const houseCells = (block: Block) => {
   const random = createRandom(block.seed);
@@ -408,7 +408,7 @@ const pathStrip = (sketch: Sketch, rect: Footprint) => {
   );
 };
 
-/** The rim of a fountain's basin, which the season's giant piece stands in. */
+/** The rim of a fountain's basin, which the theme's giant piece stands in. */
 export const BASIN = CURB_TOP + 0.1;
 
 const fountain = (sketch: Sketch, x: number, z: number, radius = 0.55) => {

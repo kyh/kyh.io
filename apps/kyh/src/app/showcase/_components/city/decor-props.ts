@@ -1,4 +1,4 @@
-// The props a season puts out round the town, each drawn at a spot on the
+// The props a theme puts out round the town, each drawn at a spot on the
 // ground: pumpkins, graves, trees, snowmen, eggs, lanterns, and the lights
 // strung round a cottage's eaves. Pure.
 import type { Random } from "@/lib/random";

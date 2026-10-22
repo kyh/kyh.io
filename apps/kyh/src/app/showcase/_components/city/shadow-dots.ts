@@ -3,15 +3,15 @@
 // of every building reads as printed while lit faces stay flat.
 import type { WebGLProgramParametersWithUniforms } from "three";
 
-import type { Theme } from "./palette";
+import type { Time } from "./palette";
 
 /** Dot size in CSS pixels. */
 const DOT = 2;
 
 /** How a dot changes the wash under it: darker by day, paler by night, as ink would. */
-const INK: Record<Theme, number> = { day: 0.8, night: 1.3 };
+const INK: Record<Time, number> = { day: 0.8, night: 1.3 };
 
-export const createShadowDots = (time: Theme) => {
+export const createShadowDots = (time: Time) => {
   const uniforms = {
     dotCell: { value: DOT },
     dotInk: { value: INK[time] },
@@ -35,7 +35,7 @@ export const createShadowDots = (time: Theme) => {
     setPixelRatio: (ratio: number) => {
       uniforms.dotCell.value = Math.max(1, Math.round(DOT * ratio));
     },
-    setTime: (next: Theme) => {
+    setTime: (next: Time) => {
       uniforms.dotInk.value = INK[next];
     },
   };

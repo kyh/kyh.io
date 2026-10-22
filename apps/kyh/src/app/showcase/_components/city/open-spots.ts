@@ -1,4 +1,4 @@
-// The town's open spots a season can decorate, worked out from the layout
+// The town's open spots a theme can decorate, worked out from the layout
 // draw-blocks.ts draws (houseCells, parkOf, plazaOf), so the decorations land
 // where the town leaves room. Pure.
 import type { HouseSpec } from "./draw-blocks";
@@ -8,11 +8,11 @@ import { doorstep, houseCells, parkOf, plazaOf } from "./draw-blocks";
 export type Spot = readonly [x: number, z: number];
 
 /**
- * The kinds of open place a season can decorate: beside each cottage's door
+ * The kinds of open place a theme can decorate: beside each cottage's door
  * (porch), a garden's corner furthest from its tree and bush (yard), round
  * the pond between the water and the trees (shore), the square round its
  * fountain and the ball courts, with room for something big (square), and the
- * square's fountain, for the season's one giant piece (centerpiece).
+ * square's fountain, for the theme's one giant piece (centerpiece).
  */
 export const KINDS = ["porch", "yard", "shore", "square", "centerpiece"] as const;
 

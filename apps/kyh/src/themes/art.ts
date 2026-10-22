@@ -1,4 +1,4 @@
-// A season's piece as data: layers of paths in a 24×24 box, filled with
+// A theme's piece as data: layers of paths in a 24×24 box, filled with
 // colors or the piece's own gradients. `piece.tsx` draws it, wherever it
 // shows: the easter-egg bursts, the themes menu, the snow falling. Pure.
 
@@ -57,6 +57,11 @@ export const ellipse = (cx: number, cy: number, rx: number, ry: number, rotate =
 };
 
 export const circle = (cx: number, cy: number, r: number) => ellipse(cx, cy, r, r);
+
+/** An egg, standing in the box: the golden egg's and the painted egg's shape. */
+export const EGG = "M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z";
+/** Light on an egg's shoulder. */
+export const GLOSS = ellipse(9.4, 8.6, 1.9, 3, -24);
 
 /** Curves drawn about the origin (`M x y` then `C` triples), turned to `angle` degrees and moved to a point. */
 export const placed = (

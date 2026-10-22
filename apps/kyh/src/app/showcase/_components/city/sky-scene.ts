@@ -1,12 +1,13 @@
 // The sky over the town and the boats round it, placed in the scene and kept
 // moving: the blimp crossing, balloons drifting, drones over downtown, sails
 // circling the island and the ferry off the pier (boats.ts sails both). sky.ts
-// draws them, and blimp.ts the blimp. The season dresses the sky (DECOR): the
+// draws them, and blimp.ts the blimp. The theme dresses the sky (its town): the
 // blimp in its greeting, colors, lights and hat, else the site's name in grey,
 // and what else it flies across (Santa's sleigh, a witch on her broom).
 import type { Scene } from "three";
 
-import type { SeasonId } from "@/seasons/seasons";
+import type { ThemeId } from "@/themes";
+import { TOWNS } from "@/themes/towns";
 import type { BoatPose } from "./boats";
 import type { Scheme } from "./palette";
 import type { Built, Materials } from "./render";
@@ -17,12 +18,11 @@ import { drawBlimp, PLAIN_BLIMP } from "./blimp";
 import { RAISE } from "./carry";
 import { BUILT, raise } from "./grow";
 import { build } from "./render";
-import { DECOR } from "./season-decor";
 import { FLANK_ON, viewAt } from "./sketch";
 import { drawBalloon, drawBoat, drawDrone, drawFerry, FLYER_HEADING } from "./sky";
 
 /**
- * A path across the sky for what the season dresses there. It turns with the
+ * A path across the sky for what the theme dresses there. It turns with the
  * camera, so it crosses the screen the same way in every view and the blimp's
  * banner always faces it.
  */
@@ -67,7 +67,7 @@ const FLYER_CROSSING: Crossing = {
 /** What a number of quarter turns of the camera does to a heading. */
 const turnedBy = (heading: number, turns: number) => heading + (turns * Math.PI) / 2;
 
-/** Something the season dresses in the sky: drawn from `key`, kept until the key changes. */
+/** Something the theme dresses in the sky: drawn from `key`, kept until the key changes. */
 interface Dressed {
   built: Built;
   key: BlimpLook | Flyer | undefined;
@@ -98,14 +98,14 @@ export const createSky = (
     builds.push(built);
     return built;
   };
-  // What the season dresses: the blimp and what else it flies; none until the first season.
+  // What the theme dresses: the blimp and what else it flies; none until the first theme.
   let blimp: Dressed | null = null;
   let flyer: Dressed | null = null;
   const undraw = (built: Built) => {
     scene.remove(built.group);
     built.dispose();
   };
-  /** Redraws one of them for a season, unless it's drawn from the same thing already. */
+  /** Redraws one of them for a theme, unless it's drawn from the same thing already. */
   const redress = (
     dressed: Dressed | null,
     key: BlimpLook | Flyer | undefined,
@@ -190,9 +190,9 @@ export const createSky = (
       blimp = null;
       flyer = null;
     },
-    /** Dresses the sky for a season, redrawing only what it changes. */
-    dress: (season: SeasonId) => {
-      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer, lights } = DECOR[season];
+    /** Dresses the sky for a theme, redrawing only what it changes. */
+    dress: (theme: ThemeId) => {
+      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer, lights } = TOWNS[theme];
       blimp = redress(
         blimp,
         look,
@@ -208,7 +208,7 @@ export const createSky = (
         true,
       );
     },
-    /** Grey as the town, but what a season dresses in its colors, as its decorations are. */
+    /** Grey as the town, but what a theme dresses in its colors, as its decorations are. */
     paint: (scheme: Scheme) => {
       for (const built of builds) {
         built.paint(scheme, false);
