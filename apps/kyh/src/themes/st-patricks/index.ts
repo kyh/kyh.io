@@ -2,14 +2,11 @@
 // A find throws shamrocks; the town greens its lawns, leaves pots of gold by
 // some doors and under a rainbow in the square, raises a shamrock in the
 // fountain and flies LUCKY under a top hat.
-import { topHatTrim } from "@/app/showcase/_components/city/blimp";
-import { giantShamrock } from "@/app/showcase/_components/city/decor-giants";
-import { potOfGold, rainbow } from "@/app/showcase/_components/city/decor-props";
-import type { Art } from "./art";
-import type { Theme } from "./theme";
-import { placed } from "./art";
-import { span } from "./calendar";
-import { namedConfetti } from "./theme";
+import type { Art } from "../art";
+import type { Theme } from "../theme";
+import { placed } from "../art";
+import { span } from "../calendar";
+import { namedConfetti } from "../theme";
 
 // One leaf of three, a heart with its tip at the stem, about the origin.
 const LEAF: readonly (readonly [number, number])[] = [
@@ -69,29 +66,4 @@ export const theme = {
   mode: "light",
   name: "St. Patrick's Day",
   tint: { chroma: 2, hue: 140 },
-  town: {
-    blimp: {
-      banner: "festiveGreen",
-      fins: "gold",
-      lettering: "gold",
-      text: "LUCKY",
-      trim: topHatTrim("festiveGreen", "screen"),
-    },
-    centerpiece: giantShamrock,
-    lights: ["festiveGreen", "gold"],
-    porch: (sketch, x, z, random) => {
-      if (random.chance(0.4)) {
-        potOfGold(sketch, x, z);
-      }
-    },
-    repaint: {
-      fieldGreen: { day: "#bfe3a8", night: "#24502c" },
-      hedge: { day: "#9fd08a", night: "#2b5a30" },
-      lawn: { day: "#c9eab4", night: "#1f4a28" },
-    },
-    square: (sketch, x, z) => {
-      potOfGold(sketch, x - 0.35, z);
-      rainbow(sketch, x - 0.35, z, 0.4);
-    },
-  },
 } as const satisfies Theme;

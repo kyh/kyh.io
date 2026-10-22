@@ -2,6 +2,7 @@
 // night (pale ink on slate, windows lit). Geometry is batched per token, so a
 // theme switch recolors a few dozen materials and rebuilds nothing.
 import type { ListedTheme } from "@/themes";
+import type { Town } from "./town-theme";
 
 export const PALETTE = {
   accentBlue: { day: "#4f78c4", night: "#7aa5ff" },
@@ -253,10 +254,11 @@ export const snowfall = (): Repaint => {
   return repaint;
 };
 
-/** How the city is drawn: by day or by night, as the site's light or dark says, in its theme's town. */
+/** How the city is drawn: by day or by night, as the site's light or dark says, dressed as its theme's town. */
 export interface Scheme {
   time: Time;
   theme: ListedTheme;
+  town: Town;
 }
 
 /** Slate's hue and its chroma in its darks; the chroma fades toward white. */
@@ -291,7 +293,7 @@ export const greyIn = (hex: string, { theme: { tint }, time }: Scheme) => {
 const greys = new Map<string, string>();
 
 /** A token's color in the scheme: the theme's repaint of it, else its own, by day or night. */
-export const colorIn = (token: Token, { theme: { town }, time }: Scheme) =>
+export const colorIn = (token: Token, { time, town }: Scheme) =>
   (town.repaint?.[token] ?? PALETTE[token])[time];
 
 /**
@@ -301,7 +303,7 @@ export const colorIn = (token: Token, { theme: { town }, time }: Scheme) =>
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
     // The theme's own colors stay in color in the grey town.
-    const { repaint, vivid } = scheme.theme.town;
+    const { repaint, vivid } = scheme.town;
     if (repaint?.[token] || vivid?.has(token)) {
       return colorIn(token, scheme);
     }

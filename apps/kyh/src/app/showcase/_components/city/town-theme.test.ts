@@ -4,7 +4,8 @@ import test from "node:test";
 import type { CityProject } from "./draw-landmarks";
 import { projects } from "@/lib/data";
 import type { ThemeId } from "@/themes";
-import { THEMES, themeOf } from "@/themes";
+import { THEMES } from "@/themes";
+import { TOWNS } from "@/themes/towns";
 import { drawBlimp } from "./blimp";
 import { houseCells, parkOf, plazaOf } from "./draw-blocks";
 import { planEntries } from "./draw-landmarks";
@@ -27,7 +28,7 @@ const plan = planCity(planEntries(cityProjects));
 
 const decorated = (theme: ThemeId) => {
   const sketch = createSketch();
-  finish(decorSteps(sketch, plan, themeOf(theme)));
+  finish(decorSteps(sketch, plan, theme));
   return sketch;
 };
 
@@ -36,9 +37,9 @@ test("every theme but the default puts something out, and the default nothing", 
     const sketch = decorated(id);
     const drawn = sketch.faces.size + sketch.lines.size;
     assert.equal(drawn > 0, id !== "classic", id);
-    assert.equal(Object.keys(themeOf(id).town).length > 0, id !== "classic", id);
+    assert.equal(Object.keys(TOWNS[id]).length > 0, id !== "classic", id);
     // The default flies the site's own blimp.
-    assert.equal(themeOf(id).town.blimp !== undefined, id !== "classic", id);
+    assert.equal(TOWNS[id].blimp !== undefined, id !== "classic", id);
   }
 });
 
@@ -114,7 +115,7 @@ test("every theme's blimp and flyer draw something in every view", () => {
   for (let heading = 0; heading < 4; heading += 1) {
     const view = viewAt(heading);
     for (const { id } of THEMES) {
-      const { blimp, flyer, lights } = themeOf(id).town;
+      const { blimp, flyer, lights } = TOWNS[id];
       if (blimp) {
         const turned = FLANK_ON + (heading * Math.PI) / 2;
         const sketch = drawBlimp({ heading: turned, lights, look: blimp }, view, [view]);

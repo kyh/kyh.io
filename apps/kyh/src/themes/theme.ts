@@ -1,12 +1,13 @@
-// What a theme is: the config every theme file (`christmas.ts`, …) exports
-// as `theme`, one field per effect, each read where the effect happens: the
-// days it runs (the calendar), its light or dark and grey tint (the page's
-// paint), its piece and confetti (easter-egg finds), its glyph (the theme
-// toggle), what falls across every page (`drift.tsx`) and how the
-// showcase's town dresses (`Town` in city/town-theme.ts). A new effect is a
-// field here, a value in each theme, and a read where it shows; a new theme
-// is a file and a line in `index.ts`. Pure.
-import type { Town } from "@/app/showcase/_components/city/town-theme";
+// What a theme is: the config every theme's folder exports from its
+// `index.ts` as `theme`, one field per effect, each read where the effect
+// happens: the days it runs (the calendar), its light or dark and grey tint
+// (the page's paint), its piece and confetti (easter-egg finds), its glyph
+// (the theme toggle) and what falls across every page (`drift.tsx`). How the
+// showcase's town dresses is the folder's `town.ts` (`Town` in
+// city/town-theme.ts), kept apart so the town's drawing code loads only on
+// the showcase. A new effect is a field here (or on `Town`), a value in each
+// theme, and a read where it shows; a new theme is a folder and a line in
+// `index.ts` and `towns.ts`. Pure.
 import { colorNamed, GOLD } from "@/lib/color";
 import type { Art } from "./art";
 import type { Window } from "./calendar";
@@ -45,8 +46,6 @@ export interface Theme {
   glyph: string | null;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
-  /** How the showcase's town dresses for it; the default theme leaves it as it is. */
-  town: Town;
 }
 
 /** Confetti in the site's named colors (lib/color.ts): each name's color, its hue on the back. */

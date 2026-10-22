@@ -4,7 +4,6 @@
 import type { Scene } from "three";
 
 import type { ThemeId } from "@/themes";
-import { themeOf } from "@/themes";
 import type { StartAt } from "./grow";
 import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
@@ -44,7 +43,7 @@ export const createDecor = (
      */
     dressSteps: function* dressSteps(next: ThemeId, startAt: StartAt): Steps<void> {
       const sketch = createSketch(view, covers);
-      yield* decorSteps(sketch, plan, themeOf(next));
+      yield* decorSteps(sketch, plan, next);
       clear();
       theme = next;
       if (sketch.faces.size > 0 || sketch.lines.size > 0) {

@@ -2,10 +2,10 @@
 // other theme runs. A find throws golden eggs; the town stays as it is and
 // flies the site's own blimp.
 import { GOLD } from "@/lib/color";
-import type { Art } from "./art";
-import type { Theme } from "./theme";
-import { EGG, GLOSS } from "./art";
-import { namedConfetti } from "./theme";
+import type { Art } from "../art";
+import type { Theme } from "../theme";
+import { EGG, GLOSS } from "../art";
+import { namedConfetti } from "../theme";
 
 /** The shadowed side of a golden egg. */
 const DEEP_GOLD = "hsl(34, 90%, 30%)";
@@ -50,5 +50,4 @@ export const theme = {
   mode: null,
   name: "Light / Dark",
   tint: null,
-  town: {},
 } as const satisfies Theme;

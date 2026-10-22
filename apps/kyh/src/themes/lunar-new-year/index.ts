@@ -2,15 +2,11 @@
 // find throws red lanterns; the town hangs lanterns by the doors and the
 // pond, lights its windows red after dark, raises a lantern gate in the
 // square and flies HAPPY NEW YEAR.
-import { lanterns } from "@/app/showcase/_components/city/blimp";
-import { lanternGate } from "@/app/showcase/_components/city/decor-giants";
-import { GROUND, lantern, lanternPost } from "@/app/showcase/_components/city/decor-props";
-import { placed as placedIn } from "@/app/showcase/_components/city/sketch";
-import type { Art } from "./art";
-import type { Theme } from "./theme";
-import { ellipse } from "./art";
-import { around, lunarNewYear } from "./calendar";
-import { namedConfetti } from "./theme";
+import type { Art } from "../art";
+import type { Theme } from "../theme";
+import { ellipse } from "../art";
+import { around, lunarNewYear } from "../calendar";
+import { namedConfetti } from "../theme";
 
 const LANTERN_GOLD = "#f5c04a";
 const LANTERN_GOLD_EDGE = "#a8741a";
@@ -74,22 +70,4 @@ export const theme = {
   mode: "dark",
   name: "Lunar New Year",
   tint: { chroma: 2.5, hue: 25 },
-  town: {
-    blimp: {
-      banner: "festiveRed",
-      fins: "gold",
-      lettering: "white",
-      text: "HAPPY NEW YEAR",
-      trim: lanterns,
-    },
-    centerpiece: lanternGate,
-    lights: ["festiveRed", "festiveRed", "gold"],
-    porch: (sketch, x, z) => lanternPost(sketch, x, z),
-    repaint: { glass: { day: "#dbe6ea", night: "#ff7a5c" } },
-    shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
-    square: (sketch, x, z) => {
-      lanternPost(sketch, x - 0.15, z, 0.62);
-      lantern(placedIn(sketch), [x + 0.1, GROUND + 0.25, z + 0.08], 1.6);
-    },
-  },
 } as const satisfies Theme;

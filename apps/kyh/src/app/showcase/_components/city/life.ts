@@ -376,7 +376,7 @@ export const createLife = (options: LifeOptions) => {
     }
   };
 
-  const emoteIn = (scheme: Scheme) => (options.still ? null : (scheme.theme.town.emote ?? null));
+  const emoteIn = (scheme: Scheme) => (options.still ? null : (scheme.town.emote ?? null));
   /** What the theme has people send up, if anything, and who is sending one up since when. */
   let emote: Emote | null = emoteIn(options.scheme);
   // Oldest first.

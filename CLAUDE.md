@@ -137,12 +137,17 @@ theme: the toggle and the hub wear its `glyph` (a line icon drawn to the
 dock's 2px stroke, `iconAttrs`), the wedges its colored piece, and the default
 theme (named "Light / Dark", no glyph) the sun or moon.
 
-Themes live in `src/themes/`, one file each (`christmas.ts`, `halloween.ts`,
-…), each exporting one `theme` config with every effect it has; `theme.ts` is
-the config's type and `index.ts` the registry (`THEMES`, in calendar order).
-Adding a theme is adding its file and listing it in `THEMES`. Adding an effect
-is a field on `Theme`, a value in each theme's file, and a read where the
-effect shows (`themeOf(id).<field>`). The fields:
+Themes live in `src/themes/`, one folder each (`christmas/`, `halloween/`,
+…). A folder's `index.ts` exports its `theme`, every effect the whole site
+reads (`Theme` in `theme.ts`; registry `THEMES` in `index.ts`, in calendar
+order); its `town.ts` exports its `town`, how the showcase's town dresses
+(`Town` in `city/town-theme.ts`; registry `TOWNS` in `towns.ts`, keyed by
+theme so a new one won't compile without it). The town is kept apart so its
+drawing code loads only on `/showcase` (Turbopack keeps a module's imports
+whole, so a `town` beside `theme` would ship it on every page). Adding a theme
+is adding its folder and a line in each registry. Adding an effect is a field
+on `Theme` (or `Town`), a value in each theme, and a read where the effect
+shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
 
 - `days`: when it runs (`calendar.ts`: fixed dates, Easter's computus, the 4th
   Thursday, a Lunar New Year table); the default theme has none;
@@ -154,7 +159,7 @@ effect shows (`themeOf(id).<field>`). The fields:
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at
   Christmas, leaves at Thanksgiving, nothing in the rest;
-- `town`: how the showcase's town dresses (`Town` in `city/town-theme.ts`):
+- `town.ts` (`Town`), how the showcase's town dresses:
   - `repaint`: tokens in its own colors, which stay in color in the grey town,
     and `vivid`, tokens kept in their own: snow on the roofs, grounds and trees
     at Christmas (`snowfall` in `palette.ts`), the trees turned at
@@ -179,17 +184,14 @@ effect shows (`themeOf(id).<field>`). The fields:
     camera (each view draws them a quarter turn on, and they swing with it
     mid-turn), so they always cross the screen and the banner always faces it.
 
-Every theme's file imports the town's drawing code for its `town`, so that
-code ships in the bundle every page loads (Turbopack keeps a module's imports
-whole); the three.js engine stays in the showcase's own chunk.
-
 Each view of the town is dressed for the theme by its decorations
 (`decor-scene.ts`, a drawing of their own, drawn a few spots at a time) and its
 sky (`sky-scene.ts`), in color over the grey town, and redressed without
 redrawing the town when the theme changes: at once for the view on screen,
 and a few milliseconds a frame for the others kept (`draftAhead` in
 `engine.ts`). The engine takes a `Setting` (day or night and the theme's id)
-and paints from a `Scheme` (the theme itself; `schemeOf` in `town-theme.ts`).
+and paints from a `Scheme` (the theme and its town; `schemeOf` in
+`town-theme.ts`).
 The giant pieces, blimp trims and flyers draw through
 `placed` (`sketch.ts`): one pen that moves every point into a frame, turned
 onto a heading (`headedTo`, `FLANK_ON`), scaled or stood somewhere.

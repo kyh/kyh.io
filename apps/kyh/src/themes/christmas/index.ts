@@ -3,16 +3,11 @@
 // under snow, puts trees by the doors and snowmen in the gardens, raises its
 // tree in the square, flies HO HO HO in Santa's hat and sends his sleigh
 // across the sky.
-import { santaTrim } from "@/app/showcase/_components/city/blimp";
-import { townTree } from "@/app/showcase/_components/city/decor-giants";
-import { christmasTree, present, snowman } from "@/app/showcase/_components/city/decor-props";
-import { GREEN, RED, snowfall } from "@/app/showcase/_components/city/palette";
-import { drawSleigh } from "@/app/showcase/_components/city/sky";
-import type { Art } from "./art";
-import type { Theme } from "./theme";
-import { circle, point } from "./art";
-import { span } from "./calendar";
-import { namedConfetti } from "./theme";
+import type { Art } from "../art";
+import type { Theme } from "../theme";
+import { circle, point } from "../art";
+import { span } from "../calendar";
+import { namedConfetti } from "../theme";
 
 /** Six arms out from the middle, each with a pair of branches at every `[how far out, how long, how wide (radians)]`. */
 const snowflake = (
@@ -61,24 +56,4 @@ export const theme = {
   mode: "dark",
   name: "Christmas",
   tint: { chroma: 2, hue: 165 },
-  town: {
-    blimp: {
-      banner: "festiveRed",
-      fins: "festiveGreen",
-      lettering: "white",
-      text: "HO HO HO",
-      trim: santaTrim,
-    },
-    centerpiece: townTree,
-    flyer: drawSleigh,
-    lights: ["festiveRed", "gold", "festiveGreen", "accentBlue"],
-    porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
-    repaint: snowfall(),
-    square: (sketch, x, z, random) => {
-      christmasTree(sketch, x, z, random, 1.25);
-      present(sketch, x + 0.2, z + 0.16, RED);
-      present(sketch, x - 0.18, z + 0.2, GREEN, 0.8);
-    },
-    yard: (sketch, x, z) => snowman(sketch, x, z),
-  },
 } as const satisfies Theme;

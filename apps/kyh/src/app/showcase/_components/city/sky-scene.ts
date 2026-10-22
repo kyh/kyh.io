@@ -7,7 +7,7 @@
 import type { Scene } from "three";
 
 import type { ThemeId } from "@/themes";
-import { themeOf } from "@/themes";
+import { TOWNS } from "@/themes/towns";
 import type { BoatPose } from "./boats";
 import type { Scheme } from "./palette";
 import type { Built, Materials } from "./render";
@@ -192,7 +192,7 @@ export const createSky = (
     },
     /** Dresses the sky for a theme, redrawing only what it changes. */
     dress: (theme: ThemeId) => {
-      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer, lights } = themeOf(theme).town;
+      const { blimp: look = PLAIN_BLIMP, flyer: drawFlyer, lights } = TOWNS[theme];
       blimp = redress(
         blimp,
         look,

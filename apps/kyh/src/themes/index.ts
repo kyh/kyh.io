@@ -1,8 +1,10 @@
-// The site's themes, one file each: everything a theme does lives in its
-// file (`theme.ts` says what that is). The calendar picks one for today,
+// The site's themes, one folder each: its `index.ts` is what the whole site
+// reads (`theme.ts` says what that is), its `town.ts` the showcase's town
+// (listed in `towns.ts`). The calendar picks one for today,
 // unless the themes menu round the theme toggle has (`store.ts`). The
 // default theme is plain light or dark, the visitor's own.
-// Adding a theme is adding its file and listing it here. Pure.
+// Adding a theme is adding its folder and listing it here and in `towns.ts`.
+// Pure.
 import type { Theme } from "./theme";
 import { dayKey } from "./calendar";
 import { theme as christmas } from "./christmas";

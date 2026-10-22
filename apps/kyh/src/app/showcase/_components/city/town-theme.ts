@@ -1,4 +1,5 @@
-// What the town dresses in for a theme (`town` in each src/themes file). A theme decorates five kinds of spot the
+// What the town dresses in for a theme (each src/themes folder's `town.ts`,
+// listed in `TOWNS`). A theme decorates five kinds of spot the
 // town leaves open: beside the cottages' doors, a garden's open corner, round
 // the pond, the square and the ball courts, and the square's middle, for one
 // giant piece (the town's tree at Christmas, a skeleton at Halloween). Drawn
@@ -8,9 +9,10 @@
 // its people's emotes up, and dress the sky (the blimp's look, what flies
 // over), drawn by blimp.ts and sky.ts. Pure.
 import type { Random } from "@/lib/random";
-import type { ListedTheme, ThemeId } from "@/themes";
+import type { ThemeId } from "@/themes";
 import { createRandom, hashString } from "@/lib/random";
 import { themeOf } from "@/themes";
+import { TOWNS } from "@/themes/towns";
 import type { BlimpLook } from "./blimp";
 import type { Kind } from "./open-spots";
 import type { Emote } from "./overlay";
@@ -52,8 +54,12 @@ export interface Setting {
   theme: ThemeId;
 }
 
-/** A setting with its theme looked up, as the city paints it. */
-export const schemeOf = ({ theme, time }: Setting): Scheme => ({ theme: themeOf(theme), time });
+/** A setting with its theme and town looked up, as the city paints it. */
+export const schemeOf = ({ theme, time }: Setting): Scheme => ({
+  theme: themeOf(theme),
+  time,
+  town: TOWNS[theme],
+});
 
 /**
  * A theme's decorations, drawn into a sketch: the same ones in every view,
@@ -63,8 +69,9 @@ export const schemeOf = ({ theme, time }: Setting): Scheme => ({ theme: themeOf(
 export const decorSteps = function* decorSteps(
   sketch: Sketch,
   plan: CityPlan,
-  { id, town }: ListedTheme,
+  id: ThemeId,
 ): Steps<void> {
+  const town = TOWNS[id];
   const spots = openSpots(plan);
   for (const kind of KINDS) {
     const prop = town[kind];

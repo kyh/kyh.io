@@ -2,13 +2,10 @@
 // turned amber, with leaves tumbling down every page. A find throws maple
 // leaves; the town turns its trees, puts out pumpkins and hay bales, stands
 // a turkey in the fountain and flies GIVE THANKS under a top hat.
-import { topHatTrim } from "@/app/showcase/_components/city/blimp";
-import { giantTurkey } from "@/app/showcase/_components/city/decor-giants";
-import { cornShock, GROUND, hayBale, pumpkin } from "@/app/showcase/_components/city/decor-props";
-import type { Art } from "./art";
-import type { Theme } from "./theme";
-import { around, nthWeekday } from "./calendar";
-import { namedConfetti } from "./theme";
+import type { Art } from "../art";
+import type { Theme } from "../theme";
+import { around, nthWeekday } from "../calendar";
+import { namedConfetti } from "../theme";
 
 /** The maple leaf's outline, for its piece and its glyph alike. */
 const MAPLE_OUTLINE =
@@ -62,37 +59,4 @@ export const theme = {
   mode: "light",
   name: "Thanksgiving",
   tint: { chroma: 2, hue: 60 },
-  town: {
-    blimp: {
-      banner: "pumpkin",
-      fins: "festiveRed",
-      lettering: "white",
-      text: "GIVE THANKS",
-      trim: topHatTrim("screen", "screen"),
-    },
-    centerpiece: giantTurkey,
-    lights: ["pumpkin", "gold", "festiveRed"],
-    porch: (sketch, x, z) => {
-      pumpkin(sketch, x, z);
-      pumpkin(sketch, x - 0.09, z + 0.05, 0.6);
-    },
-    // The trees turned: maples orange and red, pines left green.
-    repaint: {
-      hedge: { day: "#e3b35c", night: "#7a5a24" },
-      tree: { day: "#f0a85a", night: "#9a5522" },
-      treeShade: { day: "#dd7f3c", night: "#7e3f18" },
-    },
-    shore: (sketch, x, z) => pumpkin(sketch, x, z, 0.9),
-    square: (sketch, x, z) => {
-      hayBale(sketch, x - 0.12, z);
-      hayBale(sketch, x + 0.12, z);
-      hayBale(sketch, x, z, GROUND + 0.1);
-      cornShock(sketch, x + 0.3, z - 0.1);
-      pumpkin(sketch, x - 0.05, z + 0.17, 1.1);
-    },
-    yard: (sketch, x, z) => {
-      hayBale(sketch, x, z);
-      pumpkin(sketch, x + 0.02, z + 0.12, 0.8);
-    },
-  },
 } as const satisfies Theme;
