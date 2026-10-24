@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
@@ -92,6 +93,9 @@ const ShareHandler = async ({
 
   redirect(`/incident/${incident.id}`);
 };
+
+// The share-target handler: it files a link and redirects, so it is never a page to index.
+export const metadata: Metadata = { robots: { follow: false, index: false } };
 
 const SharePage = ({
   searchParams,

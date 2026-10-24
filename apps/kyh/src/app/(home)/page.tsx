@@ -4,6 +4,9 @@ import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
 import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
+import { VideoJsonLd } from "@/components/json-ld";
+import { siteConfig } from "@/lib/config";
+import { buildPageMetadata } from "@/lib/page-metadata";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
@@ -13,7 +16,13 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
+const home = buildPageMetadata(
+  { description: siteConfig.description, path: "/", title: siteConfig.name },
+  { video: true },
+);
+
 export const metadata: Metadata = {
+  ...home,
   alternates: {
     canonical: "/",
     types: { "text/markdown": "/markdown" },
@@ -22,6 +31,7 @@ export const metadata: Metadata = {
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
+    <VideoJsonLd />
     <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <header className="flex items-center justify-between gap-2 py-4">
         <div className="text-foreground-highlighted flex items-center" aria-label="Home">

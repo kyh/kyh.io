@@ -10,6 +10,7 @@ import { ThemeScript } from "@/themes/theme-script";
 import { ThemeDrift } from "@/themes/drift";
 import { siteConfig } from "@/lib/config";
 import { JsonLd } from "@/components/json-ld";
+import { ogImage } from "@/lib/page-metadata";
 
 import "@/styles/global.css";
 
@@ -44,13 +45,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   openGraph: {
     description: siteConfig.description,
-    images: [
-      {
-        height: 1080,
-        url: `${siteConfig.url}/og.jpg`,
-        width: 1920,
-      },
-    ],
+    images: [ogImage],
     locale: "en-US",
     siteName: siteConfig.name,
     title: siteConfig.name,
@@ -68,13 +63,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: siteConfig.creator,
     description: siteConfig.description,
-    images: [
-      {
-        height: 1080,
-        url: `${siteConfig.url}/og.jpg`,
-        width: 1920,
-      },
-    ],
+    images: [ogImage],
     title: siteConfig.name,
   },
 };

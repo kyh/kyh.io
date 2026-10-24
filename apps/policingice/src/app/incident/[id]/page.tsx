@@ -1,9 +1,19 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 import { desc, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
 import { incidents } from "@/db/drizzle-schema";
+
+import {
+  incidentDescription,
+  incidentJsonLd,
+  incidentPath,
+  incidentTitle,
+  serializeJsonLd,
+} from "@/lib/incident-seo";
+import { ogImage, siteName } from "@/lib/site";
 
 import { IncidentDetail } from "./incident-detail";
 
@@ -39,11 +49,49 @@ export const generateStaticParams = async () => {
   return rows.map((row) => ({ id: String(row.id) }));
 };
 
+const parseId = (id: string) => {
+  const incidentId = Number(id);
+  return Number.isSafeInteger(incidentId) && incidentId > 0 ? incidentId : null;
+};
+
+// Per-incident title, description and canonical. The card stays the site's own
+// text-only image: an incident's footage (and anyone in it) never becomes a preview.
+export const generateMetadata = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> => {
+  const { id } = await params;
+  const incidentId = parseId(id);
+  const incident = incidentId === null ? null : await getIncident(incidentId);
+  if (!incident) {
+    return { robots: { index: false } };
+  }
+  const title = incidentTitle(incident);
+  const description = incidentDescription(incident);
+  const path = incidentPath(incident.id);
+  return {
+    alternates: { canonical: path },
+    description,
+    openGraph: {
+      description,
+      images: [ogImage],
+      publishedTime: incident.createdAt?.toISOString(),
+      siteName,
+      title,
+      type: "article",
+      url: path,
+    },
+    title,
+    twitter: { card: "summary_large_image", description, images: [ogImage], title },
+  };
+};
+
 const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   // A non-numeric id would reach the query as NaN and fail it: answer 404 instead.
-  const incidentId = Number(id);
-  if (!Number.isSafeInteger(incidentId) || incidentId <= 0) {
+  const incidentId = parseId(id);
+  if (incidentId === null) {
     notFound();
   }
   const incident = await getIncident(incidentId);
@@ -51,7 +99,16 @@ const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => 
     notFound();
   }
 
-  return <IncidentDetail incident={incident} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; serializeJsonLd escapes `<`
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(incidentJsonLd(incident)) }}
+      />
+      <IncidentDetail incident={incident} />
+    </>
+  );
 };
 
 export default IncidentPage;
