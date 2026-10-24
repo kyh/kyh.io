@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { siteConfig } from "@/lib/config";
+import { cardImage } from "@/lib/og-card";
 
 /** The site's card: the image every page shares unless it has a better one. */
 export const ogImage = {
@@ -58,7 +59,8 @@ interface PageMetadataOptions {
  * Next shallow-merges `metadata`, so a page that sets `openGraph` replaces the
  * layout's entirely — including the image. Build the whole object here so every
  * page keeps `og:image`, `og:type` and a canonical URL. The homepage's title is
- * the site's name alone, not "Home | …".
+ * the site's name alone, not "Home | …". Every other route leads with its own
+ * share card.
  */
 export const buildPageMetadata = (
   content: PageMetadataInput,
@@ -66,9 +68,11 @@ export const buildPageMetadata = (
 ): Metadata => {
   const isHome = content.path === "/";
   const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
-  let images = [ogImage];
+  // The route's own share card (src/lib/og-card.ts), else the site's og.jpg.
+  const own = cardImage(content.path) ?? ogImage;
+  let images = [own];
   if (video) {
-    images = posterFirst ? [showcaseVideo.poster, ogImage] : [ogImage, showcaseVideo.poster];
+    images = posterFirst ? [showcaseVideo.poster, own] : [own, showcaseVideo.poster];
   }
   return {
     alternates: { canonical: content.path },

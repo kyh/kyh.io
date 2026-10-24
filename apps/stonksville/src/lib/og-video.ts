@@ -15,10 +15,10 @@ export const ogVideo = {
   width: 1200,
 };
 
+/** The share card `app/opengraph-image.tsx` draws; Next adds it to og:image and twitter:image. */
 export const ogImage = {
   alt: `${siteConfig.name}: a live S&P 500 price chart you tap to bet on`,
   height: 630,
-  url: "/og.png",
   width: 1200,
 };
 
@@ -43,7 +43,7 @@ const structuredData = {
       description: siteConfig.description,
       gamePlatform: "Web browser",
       genre: ["Trading", "Arcade"],
-      image: `${siteConfig.url}/og.png`,
+      image: `${siteConfig.url}/opengraph-image`,
       isAccessibleForFree: true,
       name: siteConfig.name,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },

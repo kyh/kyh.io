@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cacheLife, cacheTag } from "next/cache";
 import { desc, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
@@ -13,25 +12,10 @@ import {
   incidentTitle,
   serializeJsonLd,
 } from "@/lib/incident-seo";
-import { ogImage, siteName } from "@/lib/site";
+import { siteName } from "@/lib/site";
 
+import { getIncident, parseId } from "./get-incident";
 import { IncidentDetail } from "./incident-detail";
-
-const getIncident = async (id: number) => {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("incidents", `incident-${id}`);
-  const incident = await db.query.incidents.findFirst({
-    where: {
-      deletedAt: { isNull: true },
-      id,
-      reportCount: { lt: 3 },
-      status: "approved",
-    },
-    with: { videos: true },
-  });
-  return incident ?? null;
-};
 
 // Statically rendered whole, so an unknown id answers 404: with partial
 // prefetching, a route that may stream starts its 200 before notFound() lands.
@@ -49,13 +33,9 @@ export const generateStaticParams = async () => {
   return rows.map((row) => ({ id: String(row.id) }));
 };
 
-const parseId = (id: string) => {
-  const incidentId = Number(id);
-  return Number.isSafeInteger(incidentId) && incidentId > 0 ? incidentId : null;
-};
-
-// Per-incident title, description and canonical. The card stays the site's own
-// text-only image: an incident's footage (and anyone in it) never becomes a preview.
+// Per-incident title, description and canonical. The card (opengraph-image.tsx
+// beside this page) is text only: an incident's footage, and anyone in it, never
+// becomes a preview.
 export const generateMetadata = async ({
   params,
 }: {
@@ -75,7 +55,6 @@ export const generateMetadata = async ({
     description,
     openGraph: {
       description,
-      images: [ogImage],
       publishedTime: incident.createdAt?.toISOString(),
       siteName,
       title,
@@ -83,7 +62,7 @@ export const generateMetadata = async ({
       url: path,
     },
     title,
-    twitter: { card: "summary_large_image", description, images: [ogImage], title },
+    twitter: { card: "summary_large_image", description, title },
   };
 };
 

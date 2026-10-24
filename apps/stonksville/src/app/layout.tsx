@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import { ogImage, ogVideo, serializedStructuredData } from "@/lib/og-video";
+import { ogVideo, serializedStructuredData } from "@/lib/og-video";
 import { siteConfig } from "@/lib/site-config";
 
 import "./styles/globals.css";
@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   openGraph: {
     description: siteConfig.description,
-    images: [ogImage],
     locale: "en-US",
     siteName: siteConfig.name,
     title: siteConfig.name,
@@ -42,7 +41,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: siteConfig.twitter,
     description: siteConfig.description,
-    images: [ogImage],
     title: siteConfig.name,
   },
 };
