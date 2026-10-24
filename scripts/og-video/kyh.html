@@ -112,6 +112,9 @@
         camera.y + ((x + y) * TH * camera.scale) / 2 - z * ZH * camera.scale,
       ];
 
+      /** The closing fade, which the pins and the card share with the town. */
+      let fade = 1;
+
       const canvas = document.getElementById("c");
       const ctx = canvas.getContext("2d");
 
@@ -187,7 +190,7 @@
         const [rx, ry] = iso(lot.x + lot.w / 2, lot.y + lot.d / 2, height);
         const lift = (1 - fall) * 160 + 34 * camera.scale;
         const size = 34 * camera.scale;
-        ctx.globalAlpha = clamp(fall * 3);
+        ctx.globalAlpha = fade * clamp(fall * 3);
         ctx.strokeStyle = INK;
         ctx.lineWidth = 1.4;
         ctx.beginPath();
@@ -204,7 +207,7 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(lot.project.letter, rx, ry - lift + 1);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = fade;
         lot.pinTop = [rx, ry - lift - size / 2];
       };
 
@@ -220,7 +223,7 @@
         ctx.translate(px, py + 10);
         ctx.scale(0.6 + 0.4 * open, 0.6 + 0.4 * open);
         ctx.translate(-px, -(py + 10));
-        ctx.globalAlpha = clamp(open * 2);
+        ctx.globalAlpha = fade * clamp(open * 2);
         ctx.shadowColor = "rgba(15,23,42,0.18)";
         ctx.shadowBlur = 30;
         ctx.shadowOffsetY = 10;
@@ -265,6 +268,7 @@
 
         // Everything but the background fades out at the end, back to frame one.
         const out = 1 - easeInOut(seg(t, 8350, 650));
+        fade = out;
         ctx.globalAlpha = 1;
         ctx.save();
         ctx.globalAlpha = out;
