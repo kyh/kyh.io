@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { absoluteUrl, siteConfig } from "./config";
-import { buildStructuredData, serializeStructuredData } from "./structured-data";
+import { buildStructuredData, buildVideoObject, serializeStructuredData } from "./structured-data";
 
 const [person, organization, website] = buildStructuredData()["@graph"];
 
@@ -52,4 +52,18 @@ test("serialization escapes < so the inline script can't be closed early", () =>
 
   assert.equal(serialized.includes("<"), false);
   assert.deepEqual(JSON.parse(serialized), buildStructuredData());
+});
+
+test("the showcase VideoObject has absolute URLs, an ISO duration and its author", () => {
+  const video = buildVideoObject();
+
+  assert.equal(video["@type"], "VideoObject");
+  assert.ok(video.contentUrl.startsWith(`${siteConfig.url}/`));
+  assert.ok(video.contentUrl.endsWith(".mp4"));
+  assert.ok(video.thumbnailUrl.startsWith(`${siteConfig.url}/`));
+  assert.match(video.duration, /^PT\d+S$/u);
+  assert.match(video.uploadDate, /^\d{4}-\d{2}-\d{2}$/u);
+  assert.equal(video.width, 1200);
+  assert.equal(video.height, 630);
+  assert.equal(video.author["@id"], person["@id"]);
 });
