@@ -214,6 +214,18 @@ body {
     var(--bg-color)
   );
   background-attachment: fixed;
+  /* An app as much as a page: chrome isn't text. Prose opts back in with `select-text`. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable]:not([contenteditable="false"]),
+pre,
+code {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Touch optimization - prevent 300ms tap delay */

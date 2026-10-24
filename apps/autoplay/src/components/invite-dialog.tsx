@@ -73,7 +73,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
             enter
           </button>
         </div>
-        {error !== undefined && <p className="text-[10px] text-red-700">{error}</p>}
+        {error !== undefined && <p className="text-[10px] text-red-700 select-text">{error}</p>}
         <button
           type="button"
           onClick={props.onInvited}

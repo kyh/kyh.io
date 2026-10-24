@@ -26,6 +26,20 @@ body {
   background: var(--term);
 }
 
+/* The demo is a picture of a terminal, not text; what to install and run is. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+code,
+.session {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 :focus-visible {
   outline: 2px solid var(--clay);
   outline-offset: 2px;

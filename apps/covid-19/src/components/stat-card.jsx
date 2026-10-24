@@ -41,7 +41,7 @@ export const StatCard = ({
         </Loader>
       ) : (
         <>
-          <span className="mr-1 text-sm text-gray-100">{value}</span>
+          <span className="mr-1 text-sm text-gray-100 select-text">{value}</span>
           {!!suffix && <span className="text-2xs text-gray-400">{suffix}</span>}
         </>
       )}
@@ -57,7 +57,7 @@ export const StatRow = ({ className, label, value, lowercase, isLoading }) => (
         <rect x="0" y="0" rx="5" ry="5" width="100%" height="100%" />
       </Loader>
     ) : (
-      <span className="text-sm text-gray-100">{value}</span>
+      <span className="text-sm text-gray-100 select-text">{value}</span>
     )}
   </div>
 );

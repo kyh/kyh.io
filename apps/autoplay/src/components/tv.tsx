@@ -182,7 +182,7 @@ const OffAirPanel = ({ reason, missingKeys, onSignIn }: OffAirPanelProps) => (
           <Glyph name="close" size={12} />
         </span>
         <div className="min-w-0 space-y-2">
-          <p className="text-xs leading-relaxed">{reason}</p>
+          <p className="text-xs leading-relaxed select-text">{reason}</p>
           {missingKeys.length > 0 && (
             <div className="bevel-in bg-white/70 p-2 text-[10px] leading-relaxed">
               <p>missing from apps/autoplay/.env:</p>
@@ -247,7 +247,7 @@ const StatusCaption = ({ program, urlError, tuning }: StatusCaptionProps) => {
     return <Ticker program={program} />;
   }
   if (urlError !== undefined) {
-    return <span className="truncate">{urlError}</span>;
+    return <span className="truncate select-text">{urlError}</span>;
   }
   return <span className="truncate">{tuning ? "Tuning in…" : "No signal"}</span>;
 };

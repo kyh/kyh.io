@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const CompTable = ({ data }: Props) => (
-  <table className="min-w-full divide-y divide-slate-600 text-sm">
+  <table className="min-w-full divide-y divide-slate-600 text-sm select-text">
     <thead className="font-semibold">
       <tr>
         <th scope="col" className="table-cell px-3 py-3.5 text-left">

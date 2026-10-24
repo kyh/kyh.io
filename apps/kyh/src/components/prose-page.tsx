@@ -41,7 +41,7 @@ const LinkRow = ({ link }: { link: ContentLink }) => {
 /** Paired with `renderPageMarkdown`, which renders the same content as markdown. */
 export const ProsePage = ({ content }: { content: PageContent }) => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
-    <main className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
+    <main className="relative z-10 select-text mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <Section id="intro" delay={0.1}>
         <ScrambleText
           as="h1"

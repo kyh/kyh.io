@@ -33,6 +33,21 @@ body {
   font-size: 15px;
   line-height: 1.6;
   overflow-x: hidden;
+  /* Charts and controls aren't text; the lesson's prose and tables are. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+.intro,
+.step,
+.offer,
+.table-container,
+.average-summary,
+.visual-description {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 button,
