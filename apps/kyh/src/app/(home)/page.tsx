@@ -33,7 +33,7 @@ const Page = () => (
         </div>
       </header>
 
-      <Section id="intro" delay={0.1}>
+      <Section id="intro" className="select-text" delay={0.1}>
         <ScrambleText
           as="h1"
           trigger="both"
@@ -51,7 +51,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="highlights" delay={0.3}>
+      <Section id="highlights" className="select-text" delay={0.3}>
         <SectionHeading id="highlights">Highlights</SectionHeading>
         <ul className="arrow-list">
           <li>Oversaw product growth from dozens to millions of users</li>
@@ -124,7 +124,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="work" delay={0.5}>
+      <Section id="work" className="select-text" delay={0.5}>
         <SectionHeading id="work">Work Life</SectionHeading>
         <WorkList />
       </Section>
@@ -138,7 +138,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="other-activities" delay={0.9}>
+      <Section id="other-activities" className="select-text" delay={0.9}>
         <SectionHeading id="other-activities">Other Activities</SectionHeading>
         <p className="text-foreground mt-1">
           Beyond work, I love to learn about economics, psychology, and business. You&apos;ll

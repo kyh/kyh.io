@@ -47,7 +47,10 @@ const KeyboardShortcutsHelp = () => {
             <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
             <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
               <Dialog.Title className="text-base font-medium">About Policing ICE</Dialog.Title>
-              <Dialog.Description render={<div />} className="mt-3 text-sm text-muted-foreground">
+              <Dialog.Description
+                render={<div />}
+                className="mt-3 text-sm text-muted-foreground select-text"
+              >
                 <p className="mb-3">
                   Policing ICE is a community-driven platform for collecting and sharing video
                   documentation of U.S. Immigration and Customs Enforcement (ICE) activities.
