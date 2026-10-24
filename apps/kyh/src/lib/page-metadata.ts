@@ -12,18 +12,20 @@ export const ogImage = {
 };
 
 /**
- * The showcase town going up, recorded from `/showcase` by `pnpm og:video kyh`
- * (`scripts/og-video.mjs`), with its last frame as the poster. `uploadDate`
- * and `duration` feed the `VideoObject` in `structured-data.ts`.
+ * The showcase town as a short scene: a drawing of it, not the live page
+ * (`scripts/og-video/kyh.html`, recorded by `pnpm og:video kyh`). Lots pop in,
+ * buildings rise a storey at a time, project pins drop onto the roofs, one
+ * lights up with its card, then the name. `uploadDate` and `duration` feed the
+ * `VideoObject` in `structured-data.ts`.
  */
 export const showcaseVideo = {
   description:
-    "Every project Kaiyu Hsu has built, as an isometric town: it goes up building by building, then the camera flies over it.",
+    "Every project Kaiyu Hsu has built, as an isometric town: it goes up building by building, project pins drop onto the roofs, and one lights up with its card.",
   duration: "PT9S",
   height: 630,
   name: "The kyh.io showcase town",
   poster: {
-    alt: "An isometric town of Kaiyu Hsu's projects, one building per project",
+    alt: "An isometric town of Kaiyu Hsu's projects, one building lit up with its project card",
     height: 630,
     url: `${siteConfig.url}/og/showcase.jpg`,
     width: 1200,

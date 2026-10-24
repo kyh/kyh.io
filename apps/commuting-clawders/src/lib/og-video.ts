@@ -3,9 +3,9 @@ import { SITE_URL } from "@/lib/site";
 export const description = "Keep Clawd running";
 
 /**
- * The live demo running: the scripted Claude Code session beside Clawd's
- * endless run, recorded from the real page by `pnpm og:video commuting-clawders`
- * (`scripts/og-video.mjs` at the repo root).
+ * The demo as a short scene (`scripts/og-video/commuting-clawders.html` at
+ * the repo root, recorded by `pnpm og:video commuting-clawders`): a Claude
+ * Code session beside Clawd's run, the score ticking up with every token.
  */
 export const ogVideo = {
   duration: "PT9S",
@@ -52,7 +52,7 @@ const structuredData = {
       "@id": `${SITE_URL}/#video`,
       "@type": "VideoObject",
       contentUrl: ogVideo.url,
-      description: "Clawd running while a Claude Code session works, and the leaderboard.",
+      description: "Clawd running while a Claude Code session works, one point a token.",
       duration: ogVideo.duration,
       embedUrl: SITE_URL,
       height: ogVideo.height,

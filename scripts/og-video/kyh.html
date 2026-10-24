@@ -1,0 +1,362 @@
+<!doctype html>
+<!--
+  og:video scene for kyh.io (pnpm og:video kyh): the /showcase town told
+  simply, in the site's ink-outline greys. Lots pop in from downtown out,
+  buildings rise a storey at a time, project pins drop onto the roofs, one
+  building lights up in its project's colour with its card, then the name.
+  Not the live page: a drawing of it, for any time t (scripts/og-video.mjs).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>kyh.io og:video scene</title>
+    <style>
+      @font-face {
+        font-family: "Geist";
+        font-weight: 400;
+        src: url("../../apps/kyh/src/app/cards/%5Bpage%5D/Geist-Regular.ttf");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-weight: 500;
+        src: url("../../apps/kyh/src/app/cards/%5Bpage%5D/Geist-Medium.ttf");
+      }
+      html,
+      body {
+        margin: 0;
+        background: #f1f5f9;
+      }
+      canvas {
+        display: block;
+        width: 1200px;
+        height: 630px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="2400" height="1260"></canvas>
+    <script>
+      // Palette and copy from apps/kyh: global.css's slate greys, data.ts's projects.
+      const INK = "#0f172a";
+      const G = {
+        0: "#ffffff",
+        50: "#f8fafc",
+        100: "#f1f5f9",
+        200: "#e2e8f0",
+        300: "#cbd5e1",
+        400: "#94a3b8",
+        500: "#64748b",
+      };
+      const PROJECTS = [
+        {
+          color: "#c1272d",
+          letter: "V",
+          title: "Vibedgames",
+          url: "vibedgames.com",
+          text: "A game studio for your agent",
+        },
+        { color: "#fe5c28", letter: "U", title: "UICapsule" },
+        { color: "#13778f", letter: "F", title: "Founding" },
+        { color: "#6a3d9a", letter: "D", title: "Dataembed" },
+        { color: "#58847b", letter: "E", title: "Edgestories" },
+        { color: "#d97757", letter: "C", title: "Commuting Clawders" },
+      ];
+      const DURATION = 9000;
+
+      const clamp = (x) => Math.max(0, Math.min(1, x));
+      const seg = (t, start, length) => clamp((t - start) / length);
+      const easeOut = (x) => 1 - (1 - x) ** 3;
+      const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+      const spring = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.exp(-5.5 * x) * Math.cos(8.5 * x));
+      const mix = (a, b, k) => {
+        const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+        const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+        return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * k)).join(",")})`;
+      };
+      let seed = 11;
+      const random = () => {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647;
+      };
+
+      // The town: a 5x5 block of lots, taller toward the middle.
+      const N = 5;
+      const lots = [];
+      for (let gx = 0; gx < N; gx += 1) {
+        for (let gy = 0; gy < N; gy += 1) {
+          const middle = Math.hypot(gx - 2, gy - 2);
+          const storeys = Math.max(1, Math.round(6 - middle * 1.6 + random() * 2));
+          lots.push({ gx, gy, middle, storeys, x: gx + 0.14, y: gy + 0.14, w: 0.72, d: 0.72 });
+        }
+      }
+      lots.sort((a, b) => a.middle - b.middle || a.gx - b.gx);
+      lots.forEach((lot, rank) => {
+        lot.start = 700 + rank * 70 + random() * 60;
+      });
+      // Pins for six of the buildings; the first is the one that lights up.
+      const at = (gx, gy) => lots.find((lot) => lot.gx === gx && lot.gy === gy);
+      const pinned = [at(2, 2), at(0, 1), at(3, 0), at(4, 3), at(1, 4), at(4, 1)];
+      pinned.forEach((lot, index) => {
+        lot.project = PROJECTS[index];
+        lot.pinAt = 3500 + index * 170;
+      });
+      const hero = pinned[0];
+      const drawOrder = [...lots].sort((a, b) => a.gx + a.gy - (b.gx + b.gy) || a.gx - b.gx);
+
+      const TW = 122;
+      const TH = 61;
+      const ZH = 24;
+      let camera = { scale: 1, x: 600, y: 160 };
+      const iso = (x, y, z = 0) => [
+        camera.x + ((x - y) * TW * camera.scale) / 2,
+        camera.y + ((x + y) * TH * camera.scale) / 2 - z * ZH * camera.scale,
+      ];
+
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+
+      const poly = (points, fill, stroke = INK, width = 1.6) => {
+        ctx.beginPath();
+        points.forEach(([px, py], index) => (index ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = width;
+          ctx.lineJoin = "round";
+          ctx.stroke();
+        }
+      };
+
+      const box = (lot, height, tint) => {
+        const { x, y, w, d } = lot;
+        const top = [
+          iso(x, y, height),
+          iso(x + w, y, height),
+          iso(x + w, y + d, height),
+          iso(x, y + d, height),
+        ];
+        const left = [
+          iso(x, y + d, 0),
+          iso(x + w, y + d, 0),
+          iso(x + w, y + d, height),
+          iso(x, y + d, height),
+        ];
+        const right = [
+          iso(x + w, y, 0),
+          iso(x + w, y + d, 0),
+          iso(x + w, y + d, height),
+          iso(x + w, y, height),
+        ];
+        const faces = tint
+          ? [
+              mix(G[0], tint.color, 0.35 * tint.k),
+              mix(G[200], tint.color, 0.7 * tint.k),
+              mix(G[300], tint.color, 0.9 * tint.k),
+            ]
+          : [G[0], G[200], G[300]];
+        poly(left, faces[1]);
+        poly(right, faces[2]);
+        poly(top, faces[0]);
+        // A window band per storey on both walls.
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 1;
+        for (let storey = 0; storey < Math.floor(height); storey += 1) {
+          const z = storey + 0.55;
+          for (const [a, b] of [
+            [iso(x + 0.12, y + d, z), iso(x + w - 0.12, y + d, z)],
+            [iso(x + w, y + 0.12, z), iso(x + w, y + d - 0.12, z)],
+          ]) {
+            ctx.beginPath();
+            ctx.moveTo(a[0], a[1]);
+            ctx.lineTo(b[0], b[1]);
+            ctx.stroke();
+          }
+        }
+      };
+
+      const roundRect = (x, y, w, h, r) => {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      };
+
+      const pin = (lot, height, t) => {
+        const fall = spring(seg(t, lot.pinAt, 700));
+        if (fall <= 0) return;
+        const [rx, ry] = iso(lot.x + lot.w / 2, lot.y + lot.d / 2, height);
+        const lift = (1 - fall) * 160 + 34 * camera.scale;
+        const size = 34 * camera.scale;
+        ctx.globalAlpha = clamp(fall * 3);
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry - lift + size / 2);
+        ctx.lineTo(rx, ry);
+        ctx.stroke();
+        roundRect(rx - size / 2, ry - lift - size / 2, size, size, 9);
+        ctx.fillStyle = lot.project.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `500 ${Math.round(19 * camera.scale)}px Geist`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(lot.project.letter, rx, ry - lift + 1);
+        ctx.globalAlpha = 1;
+        lot.pinTop = [rx, ry - lift - size / 2];
+      };
+
+      const card = (t) => {
+        const open = spring(seg(t, 5100, 800));
+        if (open <= 0 || !hero.pinTop) return;
+        const [px, py] = hero.pinTop;
+        const w = 360;
+        const h = 112;
+        const x = px + 40;
+        const y = py - 40;
+        ctx.save();
+        ctx.translate(px, py + 10);
+        ctx.scale(0.6 + 0.4 * open, 0.6 + 0.4 * open);
+        ctx.translate(-px, -(py + 10));
+        ctx.globalAlpha = clamp(open * 2);
+        ctx.shadowColor = "rgba(15,23,42,0.18)";
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 10;
+        roundRect(x, y, w, h, 16);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = G[200];
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        roundRect(x + 20, y + 20, 34, 34, 9);
+        ctx.fillStyle = hero.project.color;
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "500 19px Geist";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(hero.project.letter, x + 37, y + 38);
+        ctx.textAlign = "left";
+        ctx.fillStyle = INK;
+        ctx.font = "500 24px Geist";
+        ctx.fillText(hero.project.title, x + 68, y + 30);
+        ctx.fillStyle = G[500];
+        ctx.font = "400 17px Geist";
+        ctx.fillText(hero.project.url, x + 68, y + 54);
+        ctx.fillStyle = G[500];
+        ctx.font = "400 19px Geist";
+        ctx.fillText(hero.project.text, x + 20, y + 88);
+        ctx.restore();
+      };
+
+      const render = (t) => {
+        ctx.setTransform(2, 0, 0, 2, 0, 0);
+        // The camera eases back from downtown as the town goes up.
+        const pull = easeInOut(seg(t, 0, 6200));
+        camera = { scale: 1.16 - 0.16 * pull, x: 600, y: 190 - 30 * pull };
+        const sky = ctx.createRadialGradient(600, 120, 60, 600, 300, 760);
+        sky.addColorStop(0, G[0]);
+        sky.addColorStop(1, G[200]);
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, 1200, 630);
+
+        // Everything but the background fades out at the end, back to frame one.
+        const out = 1 - easeInOut(seg(t, 8350, 650));
+        ctx.globalAlpha = 1;
+        ctx.save();
+        ctx.globalAlpha = out;
+
+        const ground = easeOut(seg(t, 150, 600));
+        if (ground > 0) {
+          ctx.globalAlpha = out * ground;
+          const pad = 0.35;
+          poly(
+            [iso(-pad, -pad), iso(N + pad, -pad), iso(N + pad, N + pad), iso(-pad, N + pad)],
+            G[50],
+            INK,
+            2,
+          );
+          const lift = [iso(N + pad, -pad), iso(N + pad, N + pad), iso(-pad, N + pad)];
+          poly(
+            [
+              lift[0],
+              lift[1],
+              lift[2],
+              [lift[2][0], lift[2][1] + 14],
+              [lift[1][0], lift[1][1] + 14],
+              [lift[0][0], lift[0][1] + 14],
+            ],
+            G[300],
+            INK,
+            2,
+          );
+          ctx.globalAlpha = out;
+        }
+
+        const light = easeInOut(seg(t, 5000, 600));
+        for (const lot of drawOrder) {
+          const pop = spring(seg(t, lot.start, 500));
+          if (pop <= 0) continue;
+          // The lot's plate pops in, then the building rises a storey at a time.
+          ctx.globalAlpha = out * clamp(pop * 2);
+          const inset = (1 - pop) * 0.3;
+          poly(
+            [
+              iso(lot.x + inset - 0.06, lot.y + inset - 0.06),
+              iso(lot.x + lot.w - inset + 0.06, lot.y + inset - 0.06),
+              iso(lot.x + lot.w - inset + 0.06, lot.y + lot.d - inset + 0.06),
+              iso(lot.x + inset - 0.06, lot.y + lot.d - inset + 0.06),
+            ],
+            G[100],
+            INK,
+            1.2,
+          );
+          let height = 0;
+          for (let storey = 0; storey < lot.storeys; storey += 1) {
+            height += spring(seg(t, lot.start + 300 + storey * 130, 420));
+          }
+          if (height > 0.02) {
+            box(
+              lot,
+              height,
+              lot === hero && light > 0 ? { color: hero.project.color, k: light } : null,
+            );
+          }
+          lot.height = height;
+        }
+        ctx.globalAlpha = out;
+        for (const lot of pinned) pin(lot, lot.height ?? 0, t);
+        card(t);
+        ctx.restore();
+
+        // The name, over a veil of the page's own white.
+        const veil = easeInOut(seg(t, 6700, 600)) * (1 - easeInOut(seg(t, 8350, 650)));
+        if (veil > 0) {
+          ctx.globalAlpha = veil * 0.88;
+          ctx.fillStyle = G[100];
+          ctx.fillRect(0, 0, 1200, 630);
+          const rise = spring(seg(t, 6850, 900));
+          ctx.globalAlpha = veil * clamp(rise * 1.5);
+          ctx.fillStyle = INK;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "alphabetic";
+          ctx.font = "500 92px Geist";
+          ctx.fillText("Kaiyu Hsu", 600, 330 + (1 - rise) * 30);
+          ctx.fillStyle = G[500];
+          ctx.font = "400 34px Geist";
+          ctx.fillText("Everything I've built, as a town · kyh.io", 600, 390 + (1 - rise) * 30);
+        }
+        ctx.globalAlpha = 1;
+      };
+
+      window.scene = { duration: DURATION, render };
+      window.sceneReady = document.fonts
+        .load("500 40px Geist")
+        .then(() => document.fonts.load("400 40px Geist"))
+        .then(() => render(0));
+    </script>
+  </body>
+</html>

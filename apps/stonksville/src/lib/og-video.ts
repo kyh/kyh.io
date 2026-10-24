@@ -1,12 +1,13 @@
 import { siteConfig } from "@/lib/site-config";
 
 /**
- * The chart running: a stretch of real S&P 500 history replayed tick by tick,
- * recorded from the real page by `pnpm og:video stonksville`
- * (`scripts/og-video.mjs` at the repo root).
+ * The game as a short scene (`scripts/og-video/stonksville.html` at the repo
+ * root, recorded by `pnpm og:video stonksville`): candles build to the now
+ * line, bets land on the grid, the price walks into one and it wins. The
+ * prices are abstract.
  */
 export const ogVideo = {
-  duration: "PT8S",
+  duration: "PT8.5S",
   height: 630,
   poster: `${siteConfig.url}/og/og.jpg`,
   type: "video/mp4",

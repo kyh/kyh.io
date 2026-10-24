@@ -1,0 +1,249 @@
+<!doctype html>
+<!--
+  og:video scene for Commuting Clawders (pnpm og:video commuting-clawders): a
+  Claude Code session on the left, a prompt typed and tools running, while
+  Clawd runs down the track on the right and the score ticks up with every
+  token, then the name. The site's demo, drawn simply (src/lib/demo.ts copy),
+  for any time t (scripts/og-video.mjs).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Commuting Clawders og:video scene</title>
+    <style>
+      @font-face {
+        font-family: "Titan One";
+        src: url("../../apps/commuting-clawders/src/assets/titan-one.ttf");
+      }
+      /* The site sets its terminal in a monospace; Geist Mono is the one the repo keeps as a file. */
+      @font-face {
+        font-family: "Geist Mono";
+        font-weight: 700;
+        src: url("../../apps/stonksville/src/app/geist-mono-bold.ttf");
+      }
+      html,
+      body {
+        margin: 0;
+        background: #121316;
+      }
+      canvas {
+        display: block;
+        width: 1200px;
+        height: 630px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="2400" height="1260"></canvas>
+    <script>
+      // apps/commuting-clawders/src/app/globals.css
+      const C = {
+        clay: "#cd694a",
+        dim: "#8b8e98",
+        ink: "#e6e6e6",
+        line: "#2a2c33",
+        ok: "#4ea96f",
+        promptRow: "#3a3a3a",
+        sky: "#7cc2ea",
+        term: "#121316",
+      };
+      const MONO = "'Geist Mono'";
+      const DURATION = 9000;
+      // Clawd, as src/components/clawd-sprite.tsx draws him.
+      const CLAWD = [
+        "000111111111111000",
+        "000110111111011000",
+        "011111111111111110",
+        "000111111111111000",
+        "000010100001010000",
+      ];
+      const PROMPT = ["build a support agent that", "answers from our docs"];
+      const TOOLS = [
+        { at: 2500, name: "Glob", result: "Found 48 files", target: "docs/**/*.md" },
+        { at: 3300, name: "Read", result: "Read 212 lines", target: "docs/support/refunds.md" },
+        { at: 4100, name: "Write", result: "Wrote 96 lines", target: "agent/tools.ts" },
+      ];
+      const WORK = { end: 6600, start: 2100, tokens: 4830 };
+
+      const clamp = (x) => Math.max(0, Math.min(1, x));
+      const seg = (t, start, length) => clamp((t - start) / length);
+      const easeOut = (x) => 1 - (1 - x) ** 3;
+      const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+      const spring = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.exp(-5.5 * x) * Math.cos(8.5 * x));
+
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+
+      const text = (value, x, y, size, color, font = MONO, align = "left") => {
+        ctx.font = `${font === MONO ? "700 " : ""}${size}px ${font}`;
+        ctx.fillStyle = color;
+        ctx.textAlign = align;
+        ctx.textBaseline = "middle";
+        ctx.fillText(value, x, y);
+      };
+
+      const clawd = (x, y, cell, color) => {
+        ctx.fillStyle = color;
+        CLAWD.forEach((row, ry) => {
+          [...row].forEach((bit, rx) => {
+            if (bit === "1")
+              ctx.fillRect(x + rx * cell, y + ry * cell * 1.6, cell + 0.5, cell * 1.6 + 0.5);
+          });
+        });
+      };
+
+      const tokensAt = (t) =>
+        Math.round(WORK.tokens * easeInOut(seg(t, WORK.start, WORK.end - WORK.start)));
+
+      const terminal = (t) => {
+        ctx.fillStyle = C.term;
+        ctx.fillRect(0, 0, 600, 630);
+        // The welcome box.
+        ctx.strokeStyle = C.clay;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(32, 40, 536, 112, 10);
+        ctx.stroke();
+        ctx.fillStyle = C.term;
+        ctx.fillRect(48, 30, 252, 20);
+        text("Commuting Clawders", 56, 40, 20, C.clay);
+        clawd(56, 74, 4, C.clay);
+        text("Keep Claude working. Every", 148, 86, 20, C.ink);
+        text("token Claude writes is a point.", 148, 116, 20, C.ink);
+
+        // The prompt, typed.
+        const typed = Math.floor(48 * seg(t, 500, 1300));
+        let left = typed;
+        ctx.fillStyle = C.promptRow;
+        ctx.fillRect(32, 180, 536, 72);
+        text("❯", 44, 202, 20, C.dim);
+        PROMPT.forEach((line, row) => {
+          const shown = line.slice(0, Math.max(0, left));
+          left -= line.length + 1;
+          text(shown, 72, 202 + row * 28, 20, C.ink);
+        });
+        if (typed < 48 && Math.floor(t / 400) % 2 === 0) {
+          ctx.fillStyle = C.ink;
+          ctx.fillRect(72 + Math.min(typed, 26) * 12, 192 + (typed > 26 ? 28 : 0), 11, 22);
+        }
+
+        // Tools land one by one.
+        TOOLS.forEach((tool, index) => {
+          const show = easeOut(seg(t, tool.at, 350));
+          if (show <= 0) return;
+          const y = 290 + index * 72 + (1 - show) * 12;
+          ctx.globalAlpha *= show;
+          text("●", 36, y, 18, C.ok);
+          text(`${tool.name}(${tool.target})`, 64, y, 20, C.ink);
+          text(`⎿  ${tool.result}`, 64, y + 28, 19, C.dim);
+          ctx.globalAlpha /= show;
+        });
+
+        // The spinner, counting tokens while Claude works.
+        if (t >= WORK.start && t < WORK.end + 300) {
+          const glyphs = ["·", "✢", "✳", "✶", "✻", "✽"];
+          const glyph = glyphs[Math.floor(t / 120) % glyphs.length];
+          const tokens = tokensAt(t);
+          const count = tokens < 1000 ? `${tokens}` : `${(tokens / 1000).toFixed(1)}k`;
+          text(`${glyph} Architecting… ↓ ${count} tokens`, 36, 548, 20, C.clay);
+        }
+        ctx.fillStyle = C.line;
+        ctx.fillRect(32, 576, 536, 2);
+        text("❯", 36, 600, 20, C.dim);
+      };
+
+      const runner = (t) => {
+        const X = 600;
+        const W = 600;
+        const running = seg(t, WORK.start, 300) * (1 - seg(t, WORK.end, 400));
+        // Distance run: speeds up with work, so the track's sleepers come on.
+        const distance = Math.max(0, t - WORK.start) / 1000 - Math.max(0, t - WORK.end) / 1000;
+        const sky = ctx.createLinearGradient(0, 0, 0, 300);
+        sky.addColorStop(0, "#4ea6dc");
+        sky.addColorStop(1, "#bfe4f6");
+        ctx.fillStyle = sky;
+        ctx.fillRect(X, 0, W, 300);
+        // Simple blocks of town on the horizon.
+        const town = ["#e7b04a", "#c35b8a", "#5a8fd0", "#e46f4f", "#8c62c9", "#4fb08c"];
+        for (let i = 0; i < 12; i += 1) {
+          const bw = 70;
+          const bx = X + i * 52 - 20;
+          const bh = 50 + ((i * 37) % 70);
+          ctx.fillStyle = town[i % town.length];
+          ctx.fillRect(bx, 300 - bh, bw, bh);
+        }
+        ctx.fillStyle = "#6cc04a";
+        ctx.fillRect(X, 300, W, 330);
+        // The track, converging on the horizon.
+        const vx = X + W / 2;
+        const vy = 300;
+        ctx.fillStyle = "#8a6a52";
+        ctx.beginPath();
+        ctx.moveTo(vx - 14, vy);
+        ctx.lineTo(vx + 14, vy);
+        ctx.lineTo(X + W - 60, 630);
+        ctx.lineTo(X + 60, 630);
+        ctx.closePath();
+        ctx.fill();
+        // Sleepers come toward the viewer as Clawd runs.
+        for (let k = 0; k < 14; k += 1) {
+          const z = ((k + ((distance * 3) % 1)) / 14) ** 2;
+          const y = vy + z * 330;
+          const half = 14 + z * (W / 2 - 74);
+          ctx.fillStyle = "#b5602f";
+          ctx.fillRect(vx - half, y, half * 2, 3 + z * 16);
+        }
+        ctx.strokeStyle = "#d9dde3";
+        ctx.lineWidth = 5;
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(vx + side * 8, vy);
+          ctx.lineTo(vx + side * (W / 2 - 120), 630);
+          ctx.stroke();
+        }
+        // Clawd, bobbing as he runs.
+        const bob = Math.abs(Math.sin(t / 110)) * 18 * running;
+        clawd(vx - 99, 460 - bob, 11, C.clay);
+        // The score: one point a token.
+        const score = tokensAt(t).toLocaleString("en-US");
+        ctx.fillStyle = "rgba(25, 40, 70, 0.75)";
+        ctx.beginPath();
+        ctx.roundRect(vx - 110, 28, 220, 64, 32);
+        ctx.fill();
+        text(score, vx, 62, 40, "#ffffff", "Titan One", "center");
+      };
+
+      const scene = (t) => {
+        terminal(t);
+        runner(t);
+        ctx.fillStyle = C.line;
+        ctx.fillRect(598, 0, 2, 630);
+      };
+
+      const render = (t) => {
+        ctx.setTransform(2, 0, 0, 2, 0, 0);
+        ctx.globalAlpha = 1;
+        // The name fades out onto frame one, so the loop closes.
+        scene(t > 7600 ? 0 : t);
+        const name = easeInOut(seg(t, 6900, 500)) * (1 - easeInOut(seg(t, 8400, 600)));
+        if (name > 0) {
+          ctx.globalAlpha = name * 0.86;
+          ctx.fillStyle = C.term;
+          ctx.fillRect(0, 0, 1200, 630);
+          const rise = spring(seg(t, 7000, 900));
+          ctx.globalAlpha = name * clamp(rise * 1.5);
+          clawd(600 - 81, 170 + (1 - rise) * 30, 9, C.clay);
+          text("Commuting Clawders", 600, 330 + (1 - rise) * 30, 84, C.clay, "Titan One", "center");
+          text("Keep Clawd running", 600, 405 + (1 - rise) * 30, 32, C.ink, MONO, "center");
+          ctx.globalAlpha = 1;
+        }
+      };
+
+      window.scene = { duration: DURATION, render };
+      window.sceneReady = Promise.all([
+        document.fonts.load(`700 40px ${MONO}`),
+        document.fonts.load("40px 'Titan One'"),
+      ]).then(() => render(0));
+    </script>
+  </body>
+</html>

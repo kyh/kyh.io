@@ -98,5 +98,5 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 - `docs/mac-setup/` — machine setup notes (not a workspace)
 - `apps/policingice/src/lib/` — `auth.ts` (better-auth), `admin-action.ts` / `incident-action.ts` (Server Actions), `incident-query.ts` (`"use cache"` reads), `env.ts`, `format.ts`
 - `apps/{policingice,autoplay}/src/db/drizzle-schema.ts` — the two Drizzle schemas in the repo (separate Turso databases)
-- `scripts/og-video.mjs` — `pnpm og:video <kyh|autoplay|stonksville|commuting-clawders>` records an app's `og:video` (`public/og/*.mp4` + poster) from its running server in headless Chromium on a stepped clock; needs ffmpeg and a global Playwright. Never part of `verify` or a build; bump the app's `uploadDate`/`duration` beside its metadata when you re-record
+- `scripts/og-video.mjs` — `pnpm og:video <kyh|autoplay|stonksville|commuting-clawders>` records an app's `og:video` (`public/og/*.mp4` + poster) from a scene built to represent it (`scripts/og-video/<app>.html`, drawn for any time t), never the running app, stepped at 30fps in headless Chromium; needs ffmpeg and a global Playwright. Never part of `verify` or a build; bump the app's `uploadDate`/`duration` beside its metadata when you re-record
 - `CLAUDE.md` — per-app notes and conventions · `.claude/skills/release/` — the npm release workflow

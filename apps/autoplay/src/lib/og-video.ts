@@ -1,12 +1,12 @@
 import { siteConfig } from "@/lib/site-config";
 
 /**
- * The TV tuning in, recorded from the real page by `pnpm og:video autoplay`
- * (`scripts/og-video.mjs` at the repo root): the static and chrome of the
- * OFF AIR screen, which is what a visitor without a lineup sees.
+ * The TV as a short scene (`scripts/og-video/autoplay.html` at the repo root,
+ * recorded by `pnpm og:video autoplay`): static in the window chrome, the
+ * channel flipping through the station's formats, then the name.
  */
 export const ogVideo = {
-  duration: "PT6S",
+  duration: "PT8.5S",
   height: 630,
   poster: `${siteConfig.url}/og/og.jpg`,
   type: "video/mp4",
@@ -48,7 +48,7 @@ export const structuredData = {
       duration: ogVideo.duration,
       embedUrl: siteConfig.url,
       height: ogVideo.height,
-      name: `${siteConfig.name} tuning in`,
+      name: `${siteConfig.name}: flipping channels`,
       thumbnailUrl: ogVideo.poster,
       uploadDate: ogVideo.uploadDate,
       width: ogVideo.width,
