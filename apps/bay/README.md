@@ -15,7 +15,7 @@ pnpm dev:bay                                # → http://localhost:3017
 ```
 
 Areas: `ferry` (3×2 tiles round the Ferry Building, the style's test bed), `downtown`, `sf`
-(the whole city, ~1,500 tiles with the water round it); or a rectangle, `--tiles -2,-1:2,1`.
+(the whole city, ~1,500 tiles with the water round it); or a rectangle, `--tiles=-2,-1:2,1` (with `=`, since the value starts with a minus).
 `--limit n` stops after n tiles and `--force` redoes tiles already done. Every step skips work
 already on disk, so an interrupted run picks up where it stopped.
 
@@ -48,4 +48,4 @@ minute or so.
 - Google's Map Tiles API terms restrict storing and deriving from its tiles. tinygyn does the
   same thing, but read the terms before you publish this widely.
 - The model can drift from the render's geometry. The prompt tells it not to, and the feathered
-  context keeps neighbours consistent, but expect to redo some tiles with `--force --tiles i,j:i,j`.
+  context keeps neighbours consistent, but expect to redo some tiles with `--force --tiles=i,j:i,j`.

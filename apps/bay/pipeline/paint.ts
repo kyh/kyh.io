@@ -13,7 +13,7 @@ import sharp from "sharp";
 import { z } from "zod";
 import { GRID, frameRect, frameSize, parseKey } from "../src/lib/grid";
 import { blend, compose, paintOrder, paintedShare } from "../src/lib/paint";
-import { DATA, cli, ensureDirs, mosaicPath, readMosaic, renderPath, writeMosaic } from "./common";
+import { DATA, cli, ensureDirs, isPainted, readMosaic, renderPath, writeMosaic } from "./common";
 import { PROMPT } from "./prompt";
 
 const MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
@@ -22,9 +22,11 @@ const COST_PER_TILE = 0.2;
 const OUTPUTS = path.join(DATA, "paint");
 
 const { force, go, keys, limit } = cli();
-const todo = paintOrder(keys, { i: 0, j: 0 })
-  .filter((k) => force || !existsSync(mosaicPath(k)))
-  .slice(0, limit);
+const done = await Promise.all(keys.map(async (k) => !force && (await isPainted(k))));
+const todo = paintOrder(
+  keys.filter((_, n) => !done[n]),
+  { i: 0, j: 0 },
+).slice(0, limit);
 const unrendered = todo.filter((k) => !existsSync(renderPath(k)));
 console.log(
   `${keys.length} tiles in the area, ${todo.length} to paint with ${MODEL}, about $${(todo.length * COST_PER_TILE).toFixed(2)}`,

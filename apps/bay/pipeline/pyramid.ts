@@ -7,10 +7,10 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { GRID, parseKey } from "../src/lib/grid";
+import { GRID, parseKey, tileKey } from "../src/lib/grid";
 import { TILE, levelCount, parentOf } from "../src/lib/pyramid";
 import type { Manifest } from "../src/lib/pyramid";
-import { MOSAIC, PROJECTION, PUBLIC, readMosaic } from "./common";
+import { MOSAIC, PROJECTION, PUBLIC, isPainted, readMosaic } from "./common";
 
 const files = await readdir(MOSAIC).catch(() => []);
 const cores = files.filter((f) => f.endsWith(".png")).map((f) => parseKey(f.slice(0, -4)));
@@ -34,8 +34,7 @@ const extent = rectOf(cores);
 // the fringes their margins left on the tiles round them
 const painted: { i: number; j: number }[] = [];
 for (const t of cores) {
-  const middle = await readMosaic({ h: 1, w: 1, x: t.i * c + c / 2, y: t.j * c + c / 2 });
-  if (middle[3] === 255) {
+  if (await isPainted(tileKey(t.i, t.j))) {
     painted.push(t);
   }
 }

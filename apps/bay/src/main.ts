@@ -104,9 +104,18 @@ const setView = (next: View) => {
   redraw();
 };
 
-// a trip there: zoom out on the way when it's far, like map apps do
 let trip: { from: View; to: View; start: number } | null = null;
+
+// the pointers down, a flick's glide and the drag's last moves (for the flick)
+const pointers = new Map<number, { x: number; y: number }>();
+let glide = { vx: 0, vy: 0 };
+let trail: { t: number; x: number; y: number }[] = [];
+const moving = () => trip !== null || pointers.size > 0 || Math.hypot(glide.vx, glide.vy) > 0.01;
+
+// a trip there: zoom out on the way when it's far, like map apps do
 const flyTo = (to: View) => {
+  // a trip takes over from a flick's glide, or the glide would carry the camera off its target
+  glide = { vx: 0, vy: 0 };
   trip = { from: view, start: performance.now(), to: clampView(to, bounds, screen) };
   redraw();
 };
@@ -129,11 +138,6 @@ const stepTrip = (now: number) => {
     trip = null;
   }
 };
-
-const pointers = new Map<number, { x: number; y: number }>();
-let glide = { vx: 0, vy: 0 };
-let trail: { t: number; x: number; y: number }[] = [];
-const moving = () => trip !== null || pointers.size > 0 || Math.hypot(glide.vx, glide.vy) > 0.01;
 
 // ---- drawing ------------------------------------------------------------------------------------
 

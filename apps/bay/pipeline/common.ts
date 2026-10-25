@@ -6,7 +6,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import sharp from "sharp";
-import { GRID, SF, toCanvas, tileAt, tileKey } from "../src/lib/grid";
+import { GRID, SF, parseKey, toCanvas, tileAt, tileKey } from "../src/lib/grid";
 import { tileRange } from "../src/lib/paint";
 
 export const ROOT = path.resolve(import.meta.dirname, "..");
@@ -48,7 +48,7 @@ const areaTiles = (box: Box) => {
   );
 };
 
-// `--area ferry` or `--tiles -1,-1:1,1`; the ferry area when neither is given
+// `--area ferry` or `--tiles=-1,-1:1,1` (the = lets the value start with a minus); the ferry area when neither is given
 export const cli = () => {
   const { values } = parseArgs({
     options: {
@@ -63,7 +63,7 @@ export const cli = () => {
   if (values.tiles) {
     const [from, to] = values.tiles.split(":").map((s) => s.split(",").map(Number));
     if (!(from?.length === 2 && to?.length === 2) || [...from, ...to].some(Number.isNaN)) {
-      throw new Error(`--tiles wants i,j:i,j, got ${values.tiles}`);
+      throw new Error(`--tiles=i,j:i,j wanted, got ${values.tiles}`);
     }
     keys = tileRange({ i: from[0] ?? 0, j: from[1] ?? 0 }, { i: to[0] ?? 0, j: to[1] ?? 0 });
   } else {
@@ -109,6 +109,18 @@ export const readMosaic = async (rect: { x: number; y: number; w: number; h: num
     }
   }
   return out;
+};
+
+// whether a tile has been painted as a tile: its middle fully painted. A file alone doesn't say,
+// since a neighbour's feathered margin leaves one on every tile round it
+export const isPainted = async (key: string) => {
+  if (!existsSync(mosaicPath(key))) {
+    return false;
+  }
+  const { i, j } = parseKey(key);
+  const c = GRID.core;
+  const middle = await readMosaic({ h: 1, w: 1, x: i * c + c / 2, y: j * c + c / 2 });
+  return middle[3] === 255;
 };
 
 // an RGBA buffer written back over the mosaic tiles it covers
