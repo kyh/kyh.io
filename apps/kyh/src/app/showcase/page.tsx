@@ -4,16 +4,18 @@ import type { CityProject } from "./_components/city/draw-landmarks";
 import { VideoJsonLd } from "@/components/json-ld";
 import { projects } from "@/lib/data";
 import { buildPageMetadata } from "@/lib/page-metadata";
+import { todaysShowcaseVideo } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
-export const metadata: Metadata = buildPageMetadata(
-  {
-    description: "Everything I've built, as a city you can fly over.",
-    path: "/showcase",
-    title: "Showcase",
-  },
-  { posterFirst: true, video: true },
-);
+export const generateMetadata = async (): Promise<Metadata> =>
+  buildPageMetadata(
+    {
+      description: "Everything I've built, as a city you can fly over.",
+      path: "/showcase",
+      title: "Showcase",
+    },
+    { posterFirst: true, video: await todaysShowcaseVideo() },
+  );
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   colors: project.colors,

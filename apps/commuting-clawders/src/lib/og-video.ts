@@ -3,16 +3,18 @@ import { SITE_URL } from "@/lib/site";
 export const description = "Keep Clawd running";
 
 /**
- * The demo as a short scene (`scripts/og-video/commuting-clawders.html` at
- * the repo root, recorded by `pnpm og:video commuting-clawders`): a Claude
- * Code session beside Clawd's run, the score ticking up with every token.
+ * The site's live demo, recorded from a running build by `pnpm og:video
+ * commuting-clawders` (scripts/og-video.mjs at the repo root): the scripted
+ * Claude Code session (src/lib/demo.ts) beside the real game, Clawd running
+ * while the score ticks up a point a token. Its last beat is crossfaded over
+ * its first, so it loops.
  */
 export const ogVideo = {
-  duration: "PT9S",
+  duration: "PT8S",
   height: 630,
   poster: `${SITE_URL}/og/og.jpg`,
   type: "video/mp4",
-  uploadDate: "2026-10-24",
+  uploadDate: "2026-10-25",
   url: `${SITE_URL}/og/og.mp4`,
   width: 1200,
 };

@@ -1,17 +1,17 @@
 import { siteConfig } from "@/lib/site-config";
 
 /**
- * The game as a short scene (`scripts/og-video/stonksville.html` at the repo
- * root, recorded by `pnpm og:video stonksville`): candles build to the now
- * line, bets land on the grid, the price walks into one and it wins. The
- * prices are abstract.
+ * The real game, recorded from a running build by `pnpm og:video
+ * stonksville` (scripts/og-video.mjs at the repo root): the S&P 500 replaying
+ * a stretch of its real daily history while bets go down on the grid ahead of
+ * the price. Its last beat is crossfaded over its first, so it loops.
  */
 export const ogVideo = {
-  duration: "PT8.5S",
+  duration: "PT8S",
   height: 630,
   poster: `${siteConfig.url}/og/og.jpg`,
   type: "video/mp4",
-  uploadDate: "2026-10-24",
+  uploadDate: "2026-10-25",
   url: `${siteConfig.url}/og/og.mp4`,
   width: 1200,
 };

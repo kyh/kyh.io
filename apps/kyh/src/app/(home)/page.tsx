@@ -7,6 +7,7 @@ import { Section, SectionHeading, Separator, SubHeading } from "@/components/sec
 import { VideoJsonLd } from "@/components/json-ld";
 import { siteConfig } from "@/lib/config";
 import { buildPageMetadata } from "@/lib/page-metadata";
+import { todaysShowcaseVideo } from "@/lib/todays-video";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
@@ -16,18 +17,16 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
-const home = buildPageMetadata(
-  { description: siteConfig.description, path: "/", title: siteConfig.name },
-  { video: true },
-);
-
-export const metadata: Metadata = {
-  ...home,
+export const generateMetadata = async (): Promise<Metadata> => ({
+  ...buildPageMetadata(
+    { description: siteConfig.description, path: "/", title: siteConfig.name },
+    { video: await todaysShowcaseVideo() },
+  ),
   alternates: {
     canonical: "/",
     types: { "text/markdown": "/markdown" },
   },
-};
+});
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">

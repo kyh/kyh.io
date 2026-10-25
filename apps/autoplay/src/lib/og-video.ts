@@ -3,14 +3,15 @@ import { siteConfig } from "@/lib/site-config";
 /**
  * The TV as a short scene (`scripts/og-video/autoplay.html` at the repo root,
  * recorded by `pnpm og:video autoplay`): static in the window chrome, the
- * channel flipping through the station's formats, then the name.
+ * channel flipping through the station's formats, then the app's icon with
+ * its tagline under it.
  */
 export const ogVideo = {
   duration: "PT8.5S",
   height: 630,
   poster: `${siteConfig.url}/og/og.jpg`,
   type: "video/mp4",
-  uploadDate: "2026-10-24",
+  uploadDate: "2026-10-25",
   url: `${siteConfig.url}/og/og.mp4`,
   width: 1200,
 };

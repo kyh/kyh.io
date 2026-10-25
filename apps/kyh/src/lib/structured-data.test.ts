@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 
+import { THEMES } from "@/themes";
 import { absoluteUrl, siteConfig } from "./config";
+import { showcaseVideoFor } from "./page-metadata";
 import { buildStructuredData, buildVideoObject, serializeStructuredData } from "./structured-data";
 
 const [person, organization, website] = buildStructuredData()["@graph"];
@@ -54,16 +57,30 @@ test("serialization escapes < so the inline script can't be closed early", () =>
   assert.deepEqual(JSON.parse(serialized), buildStructuredData());
 });
 
-test("the showcase VideoObject has absolute URLs, an ISO duration and its author", () => {
-  const video = buildVideoObject();
+test("each theme's showcase VideoObject has absolute URLs, an ISO duration and its author", () => {
+  for (const { id } of THEMES) {
+    const clip = showcaseVideoFor(id);
+    const video = buildVideoObject(clip);
 
-  assert.equal(video["@type"], "VideoObject");
-  assert.ok(video.contentUrl.startsWith(`${siteConfig.url}/`));
-  assert.ok(video.contentUrl.endsWith(".mp4"));
-  assert.ok(video.thumbnailUrl.startsWith(`${siteConfig.url}/`));
-  assert.match(video.duration, /^PT\d+S$/u);
-  assert.match(video.uploadDate, /^\d{4}-\d{2}-\d{2}$/u);
-  assert.equal(video.width, 1200);
-  assert.equal(video.height, 630);
-  assert.equal(video.author["@id"], person["@id"]);
+    assert.equal(video["@type"], "VideoObject");
+    assert.equal(video.contentUrl, clip.url);
+    assert.ok(video.contentUrl.startsWith(`${siteConfig.url}/og/showcase`));
+    assert.ok(video.contentUrl.endsWith(".mp4"));
+    assert.equal(video.thumbnailUrl, clip.poster.url);
+    assert.match(video.duration, /^PT\d+S$/u);
+    assert.match(video.uploadDate, /^\d{4}-\d{2}-\d{2}$/u);
+    assert.equal(video.width, 1200);
+    assert.equal(video.height, 630);
+    assert.equal(video.author["@id"], person["@id"]);
+  }
+});
+
+test("every theme has its showcase clip and poster in public/og", () => {
+  for (const { id } of THEMES) {
+    const clip = showcaseVideoFor(id);
+    for (const url of [clip.url, clip.poster.url]) {
+      const file = new URL(`../../public${new URL(url).pathname}`, import.meta.url);
+      assert.ok(existsSync(file), `${id}: ${file.pathname} is missing`);
+    }
+  }
 });

@@ -1,6 +1,6 @@
 import { absoluteUrl, siteConfig } from "@/lib/config";
 import { workHistory } from "@/lib/data";
-import { showcaseVideo } from "@/lib/page-metadata";
+import type { ShowcaseVideo } from "@/lib/page-metadata";
 import { social } from "@/lib/social";
 
 const PERSON_ID = `${siteConfig.url}/#person`;
@@ -156,26 +156,26 @@ export interface VideoObjectNode {
 }
 
 /**
- * The showcase clip, for the pages that carry it as `og:video` (the homepage
- * and `/showcase`). Its own script rather than a node in the site graph, which
+ * A showcase clip, for the pages that carry it as `og:video` (the homepage
+ * and `/showcase`): the same clip their `og:video` serves. Its own script rather than a node in the site graph, which
  * every page shares; it points back at the Person by `@id`.
  */
-export const buildVideoObject = (): VideoObjectNode => ({
+export const buildVideoObject = (video: ShowcaseVideo): VideoObjectNode => ({
   "@context": "https://schema.org",
   "@id": `${absoluteUrl("/showcase")}#video`,
   "@type": "VideoObject",
   author: { "@id": PERSON_ID },
-  contentUrl: showcaseVideo.url,
-  description: showcaseVideo.description,
-  duration: showcaseVideo.duration,
+  contentUrl: video.url,
+  description: video.description,
+  duration: video.duration,
   embedUrl: absoluteUrl("/showcase"),
-  height: showcaseVideo.height,
+  height: video.height,
   inLanguage: "en-US",
   isFamilyFriendly: true,
-  name: showcaseVideo.name,
-  thumbnailUrl: showcaseVideo.poster.url,
-  uploadDate: showcaseVideo.uploadDate,
-  width: showcaseVideo.width,
+  name: video.name,
+  thumbnailUrl: video.poster.url,
+  uploadDate: video.uploadDate,
+  width: video.width,
 });
 
 /** Escapes `<` so a value containing `</script>` can't end the inline tag early. */

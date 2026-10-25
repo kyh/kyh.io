@@ -2,7 +2,8 @@
 <!--
   og:video scene for Autoplay (pnpm og:video autoplay): the TV in its window
   chrome, static while it tunes, then the channel flips through programmes
-  in the station's formats (src/lib/prompt.ts), then the name. Stylized
+  in the station's formats (src/lib/prompt.ts), then the app's icon
+  (src/app/icon.svg) with its tagline under it. Stylized
   programme cards, not real broadcasts. Drawn for any time t
   (scripts/og-video.mjs).
 -->
@@ -44,6 +45,9 @@
         shadow: "#808080",
       };
       const FONT = "'Geist Mono'";
+      // The app's own icon, drawn crisp at 2x.
+      const ICON = new Image(512, 512);
+      ICON.src = "../../apps/autoplay/src/app/icon.svg";
       const DURATION = 8500;
       // The station's formats, as src/lib/prompt.ts labels them.
       const PROGRAMMES = [
@@ -69,10 +73,12 @@
       const noiseCtx = noise.getContext("2d");
       const noiseData = noiseCtx.createImageData(noise.width, noise.height);
       const drawStatic = (t, alpha = 1) => {
-        let s = Math.floor(t / 33) * 7919 + 1;
+        // A new field every other frame, in a narrow grey range: static that
+        // still reads as static but costs the encoder far less.
+        let s = Math.floor(t / 66) * 7919 + 1;
         for (let i = 0; i < noiseData.data.length; i += 4) {
           s = (s * 16807) % 2147483647;
-          const v = 40 + ((s >> 8) % 150);
+          const v = 70 + ((s >> 8) % 80);
           noiseData.data[i] = v;
           noiseData.data[i + 1] = v;
           noiseData.data[i + 2] = v;
@@ -239,30 +245,29 @@
         } else {
           drawStatic(t);
         }
-        // The name over the static, then back to static: frame one.
+        // The icon with its tagline under it, over the static, then back to static: frame one.
         const name = easeInOut(seg(t, 6150, 500)) * (1 - easeInOut(seg(t, 7900, 600)));
         if (name > 0) {
           const { x, y, w, h } = SCREEN;
-          ctx.globalAlpha = name * 0.82;
+          ctx.globalAlpha = name * 0.88;
           ctx.fillStyle = C.dark;
           ctx.fillRect(x, y, w, h);
           const rise = spring(seg(t, 6250, 900));
+          const under = spring(seg(t, 6550, 900));
+          const size = 168;
+          const cx = x + w / 2;
+          const top = y + h / 2 - 140 + (1 - rise) * 30;
           ctx.globalAlpha = name * clamp(rise * 1.5);
-          text(
-            "Autoplay",
-            x + w / 2 + 5,
-            y + h / 2 - 30 + (1 - rise) * 30 + 5,
-            112,
-            C.accent,
-            "center",
-          );
-          text("Autoplay", x + w / 2, y + h / 2 - 30 + (1 - rise) * 30, 112, "#ffffff", "center");
+          ctx.fillStyle = C.accent;
+          ctx.fillRect(cx - size / 2 + 8, top + 8, size, size);
+          ctx.drawImage(ICON, cx - size / 2, top, size, size);
+          ctx.globalAlpha = name * clamp(under * 1.5);
           text(
             "Your feeds as live TV channels of AI-generated video.",
-            x + w / 2,
-            y + h / 2 + 55 + (1 - rise) * 30,
-            26,
-            C.accent2,
+            cx,
+            top + size + 62 + (1 - under) * 20,
+            28,
+            "#ffffff",
             "center",
           );
           ctx.globalAlpha = 1;
@@ -270,7 +275,10 @@
       };
 
       window.scene = { duration: DURATION, render };
-      window.sceneReady = document.fonts.load(`700 40px ${FONT}`).then(() => render(0));
+      window.sceneReady = Promise.all([
+        document.fonts.load(`700 40px ${FONT}`),
+        ICON.decode(),
+      ]).then(() => render(0));
     </script>
   </body>
 </html>
