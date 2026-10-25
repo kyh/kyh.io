@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 
 import { ProsePage } from "@/components/prose-page";
 import { privacyContent } from "@/lib/page-content";
-import { buildPageMetadata } from "@/lib/page-metadata";
+import { todaysPageMetadata } from "@/lib/todays-video";
 
-export const metadata: Metadata = buildPageMetadata(privacyContent);
+export const generateMetadata = (): Promise<Metadata> => todaysPageMetadata(privacyContent);
 
 const Page = () => <ProsePage content={privacyContent} />;
 

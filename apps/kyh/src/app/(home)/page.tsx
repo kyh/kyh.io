@@ -4,10 +4,8 @@ import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
 import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
-import { VideoJsonLd } from "@/components/json-ld";
 import { siteConfig } from "@/lib/config";
-import { buildPageMetadata } from "@/lib/page-metadata";
-import { todaysShowcaseVideo } from "@/lib/todays-video";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
@@ -18,10 +16,11 @@ import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
 export const generateMetadata = async (): Promise<Metadata> => ({
-  ...buildPageMetadata(
-    { description: siteConfig.description, path: "/", title: siteConfig.name },
-    { video: await todaysShowcaseVideo() },
-  ),
+  ...(await todaysPageMetadata({
+    description: siteConfig.description,
+    path: "/",
+    title: siteConfig.name,
+  })),
   alternates: {
     canonical: "/",
     types: { "text/markdown": "/markdown" },
@@ -30,7 +29,6 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
-    <VideoJsonLd />
     <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <header className="flex items-center justify-between gap-2 py-4">
         <div className="text-foreground-highlighted flex items-center" aria-label="Home">

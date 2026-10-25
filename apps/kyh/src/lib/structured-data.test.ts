@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { THEMES } from "@/themes";
 import { absoluteUrl, siteConfig } from "./config";
-import { showcaseVideoFor } from "./page-metadata";
+import { siteVideoFor } from "./page-metadata";
 import { buildStructuredData, buildVideoObject, serializeStructuredData } from "./structured-data";
 
 const [person, organization, website] = buildStructuredData()["@graph"];
@@ -59,7 +59,7 @@ test("serialization escapes < so the inline script can't be closed early", () =>
 
 test("each theme's showcase VideoObject has absolute URLs, an ISO duration and its author", () => {
   for (const { id } of THEMES) {
-    const clip = showcaseVideoFor(id);
+    const clip = siteVideoFor(id);
     const video = buildVideoObject(clip);
 
     assert.equal(video["@type"], "VideoObject");
@@ -77,7 +77,7 @@ test("each theme's showcase VideoObject has absolute URLs, an ISO duration and i
 
 test("every theme has its showcase clip and poster in public/og", () => {
   for (const { id } of THEMES) {
-    const clip = showcaseVideoFor(id);
+    const clip = siteVideoFor(id);
     for (const url of [clip.url, clip.poster.url]) {
       const file = new URL(`../../public${new URL(url).pathname}`, import.meta.url);
       assert.ok(existsSync(file), `${id}: ${file.pathname} is missing`);

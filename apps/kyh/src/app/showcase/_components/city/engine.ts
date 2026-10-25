@@ -1192,7 +1192,15 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
       ...life.debug(),
       /** Where each boat is drawn on screen. */
       boats: boats.poses(clock.time).map((pose) => toScreen(pose.x, pose.y + 0.4, pose.z)),
-      intro: { clock: intro.clock, phase: intro.phase },
+      /** The build clock, when its last building's up and its last machine's gone (s). */
+      intro: {
+        built: schedule.end,
+        cleared: Math.max(schedule.end, sites?.end ?? 0),
+        clock: intro.clock,
+        phase: intro.phase,
+      },
+      /** Where the camera looks, and how close. */
+      view: { ...view },
     }),
     dispose: () => {
       cancelAnimationFrame(frame);

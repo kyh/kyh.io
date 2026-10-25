@@ -4,15 +4,17 @@
 // Three clips are the real app, captured in headless Chromium from a server
 // you started:
 //
-//   pnpm og:video kyh [theme]            # `next dev -p 3100` in apps/kyh (window.city is dev-only)
+//   pnpm og:video kyh [theme]            # `next dev -p 3100` in apps/kyh (window.city is dev-only), NEXT_PUBLIC_ASSETS_URL set for the pins' icons
 //   pnpm og:video stonksville            # `next build && next start -p 3004` in apps/stonksville
 //   pnpm og:video commuting-clawders     # `next build && next start -p 3016`, local.db pushed
 //
-// kyh records the /showcase town once per theme (`classic`, the default, or any
-// id in apps/kyh/src/themes), picked in the dock's themes menu as a visitor
-// would, with the site's logo and the showcase's line over the middle; each goes
-// to apps/kyh/public/og/showcase[-<theme>]. `pnpm og:video kyh all` records
-// every theme in turn.
+// kyh records the /showcase opening once per theme (`classic`, the default, or
+// any id in apps/kyh/src/themes): the theme picked in the dock's themes menu on
+// the homepage as a visitor would, then the showcase reached by its link, so
+// the town goes up in that theme from its first frame, the camera pulling back
+// from downtown, and the site's logo and line come up over the finished town.
+// Each goes to apps/kyh/public/og/showcase[-<theme>]. `pnpm og:video kyh all`
+// records every theme in turn.
 //
 // A capture swaps the page's clock (performance.now, Date, requestAnimationFrame
 // and, where asked, timers) for one it advances a frame at a time,
@@ -70,7 +72,7 @@ const kyhLogo = () => {
     .join("")}</g></svg>`;
 };
 
-/** The logo and the showcase page's description, over the middle of the town in the theme's own colors. */
+/** The logo and the site's line, over the middle of the town in the theme's own colors; hidden until the frames fade it in. */
 const kyhOverlay = ({ logo, line }) => {
   const city = getComputedStyle(document.querySelector(".city") ?? document.body);
   const sea = city.getPropertyValue("--city-sea").trim() || "#e7e7e7";
@@ -78,18 +80,13 @@ const kyhOverlay = ({ logo, line }) => {
   // The page's chrome (the dock, the presence avatars, the flyover buttons,
   // the dev tools) has nothing to do in a clip.
   style.textContent = `
-    [data-og-hide], div.fixed.top-6.right-6, div.fixed.top-0.left-0, .city > .absolute.top-6.left-6, nextjs-portal { display: none !important; }
-    #og-mark { position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 24px; pointer-events: none;
+    .fixed:has(.dock-item), div.fixed.top-6.right-6, div.fixed.top-0.left-0, .city > .absolute.top-6.left-6, nextjs-portal { display: none !important; }
+    #og-mark { position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 24px; pointer-events: none; opacity: 0;
       background: radial-gradient(ellipse 36% 34% at 50% 52%, color-mix(in oklab, ${sea} 94%, transparent) 0%, color-mix(in oklab, ${sea} 78%, transparent) 50%, transparent 100%); }
     #og-mark svg { border-radius: 14px; box-shadow: 0 16px 36px -14px rgb(0 0 0 / 0.45); }
-    #og-mark p { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--body-color-highlighted); }
+    #og-mark p { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; color: var(--body-color-highlighted); }
   `;
   document.head.append(style);
-  // The dock's bar, hidden whole once the theme's picked.
-  const bar = document.querySelector(".dock-item")?.closest(".fixed");
-  if (bar instanceof HTMLElement) {
-    bar.dataset.ogHide = "";
-  }
   const mark = document.createElement("div");
   mark.id = "og-mark";
   mark.innerHTML = `${logo}<p></p>`;
@@ -97,35 +94,48 @@ const kyhOverlay = ({ logo, line }) => {
   document.body.append(mark);
 };
 
-/** Where the camera looks a fraction of the way round its circle. */
-const kyhCamera = (turn) => {
-  const angle = turn * Math.PI * 2;
-  window.city.look(36 + Math.cos(angle) * 3.2, 37 + Math.sin(angle) * 3.2, 1.05);
+/** How long the logo takes to come up over the finished town (s). */
+const KYH_MARK_FADE = 0.8;
+
+/**
+ * A frame of the opening. The camera is the page's own pull-back until it has
+ * settled, then held where it stopped, so the flyover the town opens on
+ * doesn't take it; the mark comes up as the last buildings do.
+ */
+const kyhFrame = ({ fade, seconds }) => {
+  const { intro, view } = window.city.debug();
+  window.__ogBuilt ??= intro.built;
+  if (!window.__ogHeld && intro.phase === "building" && intro.clock >= intro.built - 0.25) {
+    window.__ogHeld = true;
+    window.city.look(view.x, view.z, view.zoom);
+  }
+  const shown = Math.min(1, Math.max(0, (seconds - (window.__ogBuilt - 0.5)) / fade));
+  const mark = document.querySelector("#og-mark");
+  if (mark instanceof HTMLElement) {
+    mark.style.opacity = String(shown * shown * (3 - 2 * shown));
+  }
 };
 
 const kyhCapture = (theme) => ({
   // The town's multiplayer room and analytics: a capture shouldn't join the live town.
   block: ["party.vibedgames.com", "vercel-scripts.com", "vitals.vercel-insights.com"],
   colorScheme: "light",
-  crf: 30,
-  /** The camera drifts once round a small circle over downtown: the clip's own loop. */
-  frame: (page, index, total) => page.evaluate(kyhCamera, index / total),
-  frames: 240,
+  crf: 33,
+  frame: (page, index) => page.evaluate(kyhFrame, { fade: KYH_MARK_FADE, seconds: index / FPS }),
+  // The build (about 5.5s), its last trucks driving off and the town opening
+  // (to about 7.3s), then the finished town held.
+  frames: 270,
   gl: true,
   out: `apps/kyh/public/og/showcase${theme === "classic" ? "" : `-${theme}`}`,
-  path: "/showcase",
-  poster: 45,
-  /** The theme picked in the dock's menu, the town built and its flyover let go, then the mark over it. */
+  // The homepage first: the theme's picked there, then the showcase is
+  // reached by its link, so the town is built in the theme from its first frame.
+  path: "/",
+  // The finished town under the mark.
+  poster: 255,
   prepare: async (page, step) => {
-    // The town is sketched a few pieces a frame, so the clock runs while it's made.
-    for (let i = 0; !(await page.evaluate(() => "city" in window)); i += 1) {
-      if (i > 600) {
-        throw new Error("The showcase never made its town (is apps/kyh running under next dev?)");
-      }
-      await step(33);
-      await page.waitForTimeout(100);
-    }
-    await page.locator("button[aria-haspopup=menu]:not([data-nextjs-dev-tools-button])").focus();
+    const menu = page.locator("button[aria-haspopup=menu]:has(.dock-item)");
+    await menu.waitFor({ timeout: 120_000 });
+    await menu.focus();
     await page.keyboard.press("ArrowUp");
     for (let i = 0; i < 20; i += 1) {
       await step(33);
@@ -133,26 +143,21 @@ const kyhCapture = (theme) => ({
     await page.evaluate((name) => {
       document.querySelector(`[role=menuitemradio][aria-label="${name}"]`)?.click();
     }, KYH_THEMES[theme]);
-    await page.mouse.move(0, 0);
-    // The opening: the town goes up and its machines drive off.
-    for (let i = 0; i < 2000; i += 1) {
-      await step(50);
-      if (i % 20 === 0) {
-        const { phase } = await page.evaluate(() => window.city.debug().intro);
-        if (phase === "done") {
-          break;
-        }
-      }
-    }
-    await page.evaluate(kyhOverlay, {
-      line: "Everything I've built, as a city you can fly over.",
-      logo: kyhLogo(),
-    });
-    // A beat for the redress and the pins to settle on the camera's first spot.
-    await page.evaluate(kyhCamera, 0);
-    for (let i = 0; i < 30; i += 1) {
+    // Holding the toggle is an easter egg: its confetti settles on the homepage.
+    for (let i = 0; i < 180; i += 1) {
       await step(33);
     }
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => document.querySelector('a[href="/showcase"]')?.click());
+    // The town is made as it mounts; its clock waits for the page's, so the
+    // opening is still on its first frame however long that takes.
+    for (let i = 0; !(await page.evaluate(() => "city" in window)); i += 1) {
+      if (i > 600) {
+        throw new Error("The showcase never made its town (is apps/kyh running under next dev?)");
+      }
+      await page.waitForTimeout(200);
+    }
+    await page.evaluate(kyhOverlay, { line: "Kaiyu's corner of the internet", logo: kyhLogo() });
   },
   url: "http://localhost:3100",
 });

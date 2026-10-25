@@ -14,15 +14,17 @@ export const ogImage = {
 };
 
 /**
- * The showcase town as it really runs: `/showcase` recorded in headless
- * Chromium by `pnpm og:video kyh <theme>` (scripts/og-video.mjs), the camera
- * drifting once round downtown while the town's traffic goes about, with the
- * site's logo and the showcase's line over the middle. One clip per theme,
- * picked in the dock's themes menu: `showcase.mp4` for the default (by day),
- * `showcase-<theme folder>.mp4` for each holiday's. `uploadDate` and `duration` feed
- * the `VideoObject` in `structured-data.ts`.
+ * The site's clip, every page's `og:video`: the showcase's opening as it
+ * really runs, `/showcase` recorded in headless Chromium from its first frame
+ * by `pnpm og:video kyh <theme>` (scripts/og-video.mjs). The town goes up
+ * storey by storey from downtown out while the camera pulls back, its trucks
+ * drive off and its traffic comes out, and the site's logo comes up over the
+ * finished town with "Kaiyu's corner of the internet" under it. One clip per
+ * theme, picked in the dock's themes menu: `showcase.mp4` for the default (by
+ * day), `showcase-<theme folder>.mp4` for each holiday's. `uploadDate` and
+ * `duration` feed the `VideoObject` in `structured-data.ts`.
  */
-export const showcaseVideoFor = (id: ThemeId) => {
+export const siteVideoFor = (id: ThemeId) => {
   // The theme's folder name: `lunarNewYear` is `showcase-lunar-new-year`.
   const file =
     id === DEFAULT_THEME
@@ -30,12 +32,12 @@ export const showcaseVideoFor = (id: ThemeId) => {
       : `showcase-${id.replaceAll(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`)}`;
   const dressed = id === DEFAULT_THEME ? "" : ` dressed for ${themeOf(id).name}`;
   return {
-    description: `Every project Kaiyu Hsu has built, as an isometric town${dressed}: the camera drifts over downtown while cars and people go about, under the kyh logo.`,
-    duration: "PT8S",
+    description: `An isometric town of every project Kaiyu Hsu has built goes up${dressed}, storey by storey from downtown out, while the camera pulls back over it; then the kyh logo comes up over the finished town with "Kaiyu's corner of the internet" under it.`,
+    duration: "PT9S",
     height: 630,
-    name: `The kyh.io showcase town${dressed}`,
+    name: `${siteConfig.siteName}: Kaiyu's corner of the internet`,
     poster: {
-      alt: `An isometric town of Kaiyu Hsu's projects${dressed}, the kyh logo in the middle`,
+      alt: `The finished isometric town of Kaiyu Hsu's projects${dressed}, the kyh logo and "Kaiyu's corner of the internet" in the middle`,
       height: 630,
       url: `${siteConfig.url}/og/${file}.jpg`,
       width: 1200,
@@ -47,9 +49,9 @@ export const showcaseVideoFor = (id: ThemeId) => {
   };
 };
 
-export type ShowcaseVideo = ReturnType<typeof showcaseVideoFor>;
+export type SiteVideo = ReturnType<typeof siteVideoFor>;
 
-const ogVideoOf = (video: ShowcaseVideo) => ({
+export const ogVideoOf = (video: SiteVideo) => ({
   height: video.height,
   secureUrl: video.url,
   type: video.type,
@@ -64,31 +66,32 @@ export interface PageMetadataInput {
 }
 
 interface PageMetadataOptions {
-  /** Attach a showcase clip as `og:video`, with its poster as a second image. */
-  video?: ShowcaseVideo;
-  /** Lead with the poster rather than the site card (the showcase itself). */
+  /** Lead with the clip's poster rather than the route's card (the showcase, whose page is the town). */
   posterFirst?: boolean;
 }
 
 /**
  * Next shallow-merges `metadata`, so a page that sets `openGraph` replaces the
- * layout's entirely — including the image. Build the whole object here so every
- * page keeps `og:image`, `og:type` and a canonical URL. The homepage's title is
- * the site's name alone, not "Home | …". Every other route leads with its own
- * share card.
+ * layout's entirely — including the image and the video. Build the whole
+ * object here so every page keeps `og:image`, `og:video`, `og:type` and a
+ * canonical URL. The homepage's title is the site's name alone, not "Home | …".
+ *
+ * Every page shares the site's clip as `og:video`. Its `og:image` is the
+ * route's own share card where it has one, since the card names the page and
+ * most link previews show only the image; the clip's poster follows it. The
+ * homepage (which has no card) and `/showcase` (whose page is the town) lead
+ * with the poster.
  */
 export const buildPageMetadata = (
   content: PageMetadataInput,
-  { video, posterFirst = false }: PageMetadataOptions = {},
+  video: SiteVideo,
+  { posterFirst = false }: PageMetadataOptions = {},
 ): Metadata => {
   const isHome = content.path === "/";
   const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
-  // The route's own share card (src/lib/og-card.ts), else the site's og.jpg.
-  const own = cardImage(content.path) ?? ogImage;
-  let images = [own];
-  if (video) {
-    images = posterFirst ? [video.poster, own] : [own, video.poster];
-  }
+  // The route's own share card (src/lib/og-card.ts); the homepage has none.
+  const own = cardImage(content.path);
+  const images = own && !posterFirst ? [own, video.poster] : [video.poster, own ?? ogImage];
   return {
     alternates: { canonical: content.path },
     description: content.description,
@@ -100,14 +103,14 @@ export const buildPageMetadata = (
       title,
       type: "website",
       url: content.path,
-      videos: video ? [ogVideoOf(video)] : undefined,
+      videos: [ogVideoOf(video)],
     },
     title: isHome ? { absolute: siteConfig.name } : content.title,
     twitter: {
       card: "summary_large_image",
       creator: siteConfig.creator,
       description: content.description,
-      images: [images[0] ?? ogImage],
+      images: [images[0] ?? video.poster],
       title,
     },
   };

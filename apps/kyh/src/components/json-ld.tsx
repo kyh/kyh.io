@@ -3,7 +3,7 @@ import {
   buildVideoObject,
   serializeStructuredData,
 } from "@/lib/structured-data";
-import { todaysShowcaseVideo } from "@/lib/todays-video";
+import { todaysVideo } from "@/lib/todays-video";
 
 const structuredData = serializeStructuredData(buildStructuredData());
 
@@ -12,9 +12,9 @@ export const JsonLd = () => (
   <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
 );
 
-/** Today's showcase clip's `VideoObject`, on the pages that carry it as `og:video`. */
+/** Today's clip's `VideoObject`, on every page, as every page carries it as `og:video`. */
 export const VideoJsonLd = async () => {
-  const videoObject = serializeStructuredData(buildVideoObject(await todaysShowcaseVideo()));
+  const videoObject = serializeStructuredData(buildVideoObject(await todaysVideo()));
   return (
     // oxlint-disable-next-line react/no-danger -- as above: escaped JSON-LD
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: videoObject }} />

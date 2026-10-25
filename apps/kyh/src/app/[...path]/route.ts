@@ -4,6 +4,7 @@ import { absoluteUrl } from "@/lib/config";
 import { prefersHtml } from "@/lib/content-negotiation";
 import { buildNotFoundMarkdown } from "@/lib/markdown";
 import { buildNotFoundHtml } from "@/lib/not-found-html";
+import { todaysVideo } from "@/lib/todays-video";
 
 /**
  * Catch-all 404. Static routes and files in `public/` are matched first, so this
@@ -13,7 +14,7 @@ import { buildNotFoundHtml } from "@/lib/not-found-html";
  * for the whole homepage bundle to be told nothing is there. This returns a real
  * 404 with a short body instead: HTML for browsers, markdown for everything else.
  */
-const handle = (req: NextRequest) => {
+const handle = async (req: NextRequest) => {
   const { pathname } = req.nextUrl;
   const html = prefersHtml(req.headers.get("accept"));
 
@@ -25,7 +26,9 @@ const handle = (req: NextRequest) => {
     "X-Robots-Tag": "noindex, follow",
   });
 
-  const body = html ? buildNotFoundHtml(pathname) : buildNotFoundMarkdown(pathname);
+  const body = html
+    ? buildNotFoundHtml(pathname, await todaysVideo())
+    : buildNotFoundMarkdown(pathname);
 
   return new Response(body, { headers, status: 404 });
 };

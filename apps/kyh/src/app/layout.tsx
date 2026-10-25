@@ -9,63 +9,72 @@ import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/themes/theme-script";
 import { ThemeDrift } from "@/themes/drift";
 import { siteConfig } from "@/lib/config";
-import { JsonLd } from "@/components/json-ld";
-import { ogImage } from "@/lib/page-metadata";
+import { JsonLd, VideoJsonLd } from "@/components/json-ld";
+import { ogImage, ogVideoOf } from "@/lib/page-metadata";
+import { todaysVideo } from "@/lib/todays-video";
 
 import "@/styles/global.css";
 
-export const metadata: Metadata = {
-  description: siteConfig.description,
-  icons: [
-    {
-      rel: "icon",
-      sizes: "96x96",
-      type: "image/png",
-      url: `${siteConfig.url}/favicon/favicon-96x96.png`,
-    },
-    {
-      rel: "icon",
-      type: "image/svg+xml",
-      url: `${siteConfig.url}/favicon/favicon.svg`,
-    },
-    {
-      rel: "shortcut icon",
-      url: `${siteConfig.url}/favicon/favicon.ico`,
-    },
-    {
-      rel: "apple-touch-icon",
-      sizes: "180x180",
-      url: `${siteConfig.url}/favicon/apple-touch-icon.png`,
-    },
-    {
-      rel: "manifest",
-      url: `${siteConfig.url}/favicon/site.webmanifest`,
-    },
-  ],
-  metadataBase: new URL(siteConfig.url),
-  openGraph: {
+/**
+ * The defaults every route starts from (a 404 keeps them whole): today's clip
+ * as `og:video` and its poster leading `og:image`, as on the homepage.
+ */
+export const generateMetadata = async (): Promise<Metadata> => {
+  const video = await todaysVideo();
+  return {
     description: siteConfig.description,
-    images: [ogImage],
-    locale: "en-US",
-    siteName: siteConfig.name,
-    title: siteConfig.name,
-    type: "website",
-    url: siteConfig.url,
-  },
-  other: {
-    "apple-mobile-web-app-title": siteConfig.shortName,
-  },
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  twitter: {
-    card: "summary_large_image",
-    creator: siteConfig.creator,
-    description: siteConfig.description,
-    images: [ogImage],
-    title: siteConfig.name,
-  },
+    icons: [
+      {
+        rel: "icon",
+        sizes: "96x96",
+        type: "image/png",
+        url: `${siteConfig.url}/favicon/favicon-96x96.png`,
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        url: `${siteConfig.url}/favicon/favicon.svg`,
+      },
+      {
+        rel: "shortcut icon",
+        url: `${siteConfig.url}/favicon/favicon.ico`,
+      },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        url: `${siteConfig.url}/favicon/apple-touch-icon.png`,
+      },
+      {
+        rel: "manifest",
+        url: `${siteConfig.url}/favicon/site.webmanifest`,
+      },
+    ],
+    metadataBase: new URL(siteConfig.url),
+    openGraph: {
+      description: siteConfig.description,
+      images: [video.poster, ogImage],
+      locale: "en-US",
+      siteName: siteConfig.name,
+      title: siteConfig.name,
+      type: "website",
+      url: siteConfig.url,
+      videos: [ogVideoOf(video)],
+    },
+    other: {
+      "apple-mobile-web-app-title": siteConfig.shortName,
+    },
+    title: {
+      default: siteConfig.name,
+      template: `%s | ${siteConfig.name}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      creator: siteConfig.creator,
+      description: siteConfig.description,
+      images: [video.poster],
+      title: siteConfig.name,
+    },
+  };
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
@@ -75,6 +84,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
     </head>
     <body>
       <JsonLd />
+      <VideoJsonLd />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
         <ThemeDrift />

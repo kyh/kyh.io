@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 
 import type { CityProject } from "./_components/city/draw-landmarks";
-import { VideoJsonLd } from "@/components/json-ld";
 import { projects } from "@/lib/data";
-import { buildPageMetadata } from "@/lib/page-metadata";
-import { todaysShowcaseVideo } from "@/lib/todays-video";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
-export const generateMetadata = async (): Promise<Metadata> =>
-  buildPageMetadata(
+export const generateMetadata = (): Promise<Metadata> =>
+  todaysPageMetadata(
     {
       description: "Everything I've built, as a city you can fly over.",
       path: "/showcase",
       title: "Showcase",
     },
-    { posterFirst: true, video: await todaysShowcaseVideo() },
+    { posterFirst: true },
   );
 
 const cityProjects: CityProject[] = projects.map((project) => ({
@@ -29,7 +27,6 @@ const cityProjects: CityProject[] = projects.map((project) => ({
 
 const Page = () => (
   <main>
-    <VideoJsonLd />
     {/* The city is drawn on a canvas; each building's icon is a real link. */}
     <h1 className="sr-only">Showcase: a city of everything I&apos;ve built</h1>
     <CityShowcase projects={cityProjects} />

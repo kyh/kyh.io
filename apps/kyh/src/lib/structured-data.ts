@@ -1,6 +1,6 @@
 import { absoluteUrl, siteConfig } from "@/lib/config";
 import { workHistory } from "@/lib/data";
-import type { ShowcaseVideo } from "@/lib/page-metadata";
+import type { SiteVideo } from "@/lib/page-metadata";
 import { social } from "@/lib/social";
 
 const PERSON_ID = `${siteConfig.url}/#person`;
@@ -156,11 +156,11 @@ export interface VideoObjectNode {
 }
 
 /**
- * A showcase clip, for the pages that carry it as `og:video` (the homepage
- * and `/showcase`): the same clip their `og:video` serves. Its own script rather than a node in the site graph, which
- * every page shares; it points back at the Person by `@id`.
+ * The site's clip, the same one every page serves as `og:video` (a recording
+ * of the showcase's opening, embedded from `/showcase`). Its own script beside
+ * the site graph rather than a node in it; it points back at the Person by `@id`.
  */
-export const buildVideoObject = (video: ShowcaseVideo): VideoObjectNode => ({
+export const buildVideoObject = (video: SiteVideo): VideoObjectNode => ({
   "@context": "https://schema.org",
   "@id": `${absoluteUrl("/showcase")}#video`,
   "@type": "VideoObject",
