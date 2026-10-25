@@ -1,0 +1,35 @@
+{
+  "name": "@repo/bay",
+  "private": true,
+  "description": "San Francisco as an AI-painted isometric map",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite --port 3017",
+    "build": "vite build",
+    "preview": "vite preview --port 3017",
+    "lint": "oxlint --report-unused-disable-directives",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts",
+    "render": "dotenv -e .env -- tsx pipeline/render.ts",
+    "paint": "dotenv -e .env -- tsx pipeline/paint.ts",
+    "pyramid": "tsx pipeline/pyramid.ts"
+  },
+  "dependencies": {
+    "3d-tiles-renderer": "^0.5.3",
+    "three": "^0.186.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "@types/three": "^0.186.0",
+    "dotenv-cli": "^11.0.0",
+    "playwright-core": "^1.64.1",
+    "sharp": "^0.35.5",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

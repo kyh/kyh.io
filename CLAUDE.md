@@ -11,7 +11,7 @@ pnpm verify        # typecheck · lint · format · test — run before committi
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
-pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, apps/kyh, apps/commuting-clawders/mod, apps/mod-dev)
+pnpm test          # run tests (apps/autoplay, apps/bay, apps/vis-ml, apps/policingice, apps/kyh, apps/commuting-clawders/mod, apps/mod-dev)
 ```
 
 ## Agent-driven development
@@ -91,6 +91,20 @@ needs the DB, aired items fall back in-memory). Port 3005.
 - `src/lib/x-account.ts` / `src/lib/grants.ts` - read/refresh the X and Google grants
 - `src/components/tv.tsx` - the TV chrome: ch−/ch+, static, status bar, sources dialog
 - `.env.example` - every key documented; app boots without them and shows OFF AIR
+
+### bay (`apps/bay`)
+
+San Francisco as one AI-painted isometric map, after tinygyn.com. Vite SPA (vanilla TS,
+canvas), port 3017, plus a three-step pipeline run by hand (README): `render` draws each
+tile's frame from Google Photorealistic 3D Tiles (`3d-tiles-renderer` in headless Chrome,
+`render.html`), `paint` has an OpenAI image model repaint it carrying on from painted neighbours
+(dry run without `--go`: it costs money), `pyramid` cuts the mosaic into `public/data/`. Data is
+gitignored; the viewer shows "Nothing painted yet" without it.
+
+**Key files**: `src/lib/grid.ts` (the one projection: lat/lon ↔ canvas, each tile's camera),
+`src/lib/paint.ts` (paint order, context + mask, feathered blend; pure, tested),
+`src/lib/pyramid.ts` / `src/lib/view.ts` (levels, pan/zoom; tested), `pipeline/` (the steps;
+`prompt.ts` is the style), `src/main.ts` (viewer).
 
 ### kyh (`apps/kyh`)
 
