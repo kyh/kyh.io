@@ -9,8 +9,6 @@ Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 Sitemap: ${absoluteUrl("/sitemap.xml")}
-
-# Agent index: ${absoluteUrl("/llms.txt")}
 `;
 
   return new Response(body, {
