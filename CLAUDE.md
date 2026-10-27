@@ -98,7 +98,11 @@ Main website. Also the agent-facing surface: `src/lib/` holds the pure builders
 behind `/markdown`, `/llms.txt`, the JSON-LD graph and the 404 body, each with
 unit tests next to it. `src/lib/config.ts` is the single source of truth for the
 canonical routes — add a page there and it appears in the sitemap, `llms.txt`,
-the homepage site nav and the 404 recovery links at once.
+the homepage site nav and the 404 recovery links at once. Every page shares one `og:video`:
+the showcase's opening recorded per theme (`pnpm og:video kyh`, the logo and
+"Kaiyu's corner of the internet" over the finished town), today's theme's
+picked by `src/lib/todays-video.ts`; `og:image` leads with each route's own
+card (the homepage and `/showcase` with the clip's poster).
 
 The site has one set of themes: plain Light and Dark, and one per holiday,
 which brings its own light or dark (Halloween, Christmas and Lunar New Year are

@@ -1,0 +1,284 @@
+<!doctype html>
+<!--
+  og:video scene for Autoplay (pnpm og:video autoplay): the TV in its window
+  chrome, static while it tunes, then the channel flips through programmes
+  in the station's formats (src/lib/prompt.ts), then the app's icon
+  (src/app/icon.svg) with its tagline under it. Stylized
+  programme cards, not real broadcasts. Drawn for any time t
+  (scripts/og-video.mjs).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Autoplay og:video scene</title>
+    <style>
+      @font-face {
+        font-family: "Geist Mono";
+        font-weight: 700;
+        src: url("../../apps/autoplay/src/app/geist-mono-bold.ttf");
+      }
+      html,
+      body {
+        margin: 0;
+        background: #b429f9;
+      }
+      canvas {
+        display: block;
+        width: 1200px;
+        height: 630px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="2400" height="1260"></canvas>
+    <script>
+      // apps/autoplay/src/app/styles/globals.css: the chrome, outline and accents.
+      const C = {
+        accent: "#ff3ec8",
+        accent2: "#00e0ff",
+        background: "#b429f9",
+        chrome: "#c0c0c0",
+        dark: "#0a0a0a",
+        face: "#dfdfdf",
+        light: "#ffffff",
+        outline: "#14001f",
+        shadow: "#808080",
+      };
+      const FONT = "'Geist Mono'";
+      // The app's own icon, drawn crisp at 2x.
+      const ICON = new Image(512, 512);
+      ICON.src = "../../apps/autoplay/src/app/icon.svg";
+      const DURATION = 8500;
+      // The station's formats, as src/lib/prompt.ts labels them.
+      const PROGRAMMES = [
+        { at: 1000, channel: 1, label: "1994 sitcom", until: 2600 },
+        { at: 2900, channel: 2, label: "satirical news network", until: 4400 },
+        { at: 4700, channel: 3, label: "anime news network", until: 6000 },
+      ];
+
+      const clamp = (x) => Math.max(0, Math.min(1, x));
+      const seg = (t, start, length) => clamp((t - start) / length);
+      const easeOut = (x) => 1 - (1 - x) ** 3;
+      const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+      const spring = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.exp(-5.5 * x) * Math.cos(8.5 * x));
+
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+      const SCREEN = { h: 456, w: 1112, x: 44, y: 86 };
+
+      // Static: a small noise field, new every frame, drawn up without smoothing.
+      const noise = document.createElement("canvas");
+      noise.width = 278;
+      noise.height = 114;
+      const noiseCtx = noise.getContext("2d");
+      const noiseData = noiseCtx.createImageData(noise.width, noise.height);
+      const drawStatic = (t, alpha = 1) => {
+        // A new field every other frame, in a narrow grey range: static that
+        // still reads as static but costs the encoder far less.
+        let s = Math.floor(t / 66) * 7919 + 1;
+        for (let i = 0; i < noiseData.data.length; i += 4) {
+          s = (s * 16807) % 2147483647;
+          const v = 70 + ((s >> 8) % 80);
+          noiseData.data[i] = v;
+          noiseData.data[i + 1] = v;
+          noiseData.data[i + 2] = v;
+          noiseData.data[i + 3] = 255;
+        }
+        noiseCtx.putImageData(noiseData, 0, 0);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(noise, SCREEN.x, SCREEN.y, SCREEN.w, SCREEN.h);
+        ctx.restore();
+      };
+
+      const bevel = (x, y, w, h, raised = true) => {
+        ctx.fillStyle = C.chrome;
+        ctx.fillRect(x, y, w, h);
+        const [a, b] = raised ? [C.light, C.dark] : [C.dark, C.light];
+        ctx.fillStyle = a;
+        ctx.fillRect(x, y, w, 2);
+        ctx.fillRect(x, y, 2, h);
+        ctx.fillStyle = b;
+        ctx.fillRect(x, y + h - 2, w, 2);
+        ctx.fillRect(x + w - 2, y, 2, h);
+      };
+
+      const text = (value, x, y, size, color, align = "left") => {
+        ctx.font = `700 ${size}px ${FONT}`;
+        ctx.fillStyle = color;
+        ctx.textAlign = align;
+        ctx.textBaseline = "middle";
+        ctx.fillText(value, x, y);
+      };
+
+      const chrome = (title, status) => {
+        ctx.fillStyle = C.background;
+        ctx.fillRect(0, 0, 1200, 630);
+        ctx.fillStyle = C.outline;
+        ctx.fillRect(22, 18, 1156, 594);
+        bevel(25, 21, 1150, 588);
+        const bar = ctx.createLinearGradient(30, 0, 1170, 0);
+        bar.addColorStop(0, "#ff2fb4");
+        bar.addColorStop(0.55, "#a63cf5");
+        bar.addColorStop(1, "#6a2fd4");
+        ctx.fillStyle = bar;
+        ctx.fillRect(30, 26, 1140, 50);
+        ctx.fillStyle = C.outline;
+        ctx.fillRect(30, 76, 1140, 3);
+        text(title, 50, 52, 22, "#ffffff");
+        for (let i = 0; i < 3; i += 1) bevel(1062 + i * 34, 37, 28, 28);
+        ctx.fillStyle = C.outline;
+        ctx.fillRect(SCREEN.x - 3, SCREEN.y - 3, SCREEN.w + 6, SCREEN.h + 6);
+        ctx.fillStyle = C.dark;
+        ctx.fillRect(SCREEN.x, SCREEN.y, SCREEN.w, SCREEN.h);
+        bevel(44, 556, 40, 40);
+        ctx.fillStyle = C.outline;
+        ctx.beginPath();
+        ctx.moveTo(58, 566);
+        ctx.lineTo(58, 586);
+        ctx.lineTo(74, 576);
+        ctx.closePath();
+        ctx.fill();
+        bevel(92, 556, 1064, 40, false);
+        text(status, 108, 577, 20, C.outline);
+      };
+
+      /** A programme card: each format its own look, the format's name the hero. */
+      const programme = (show, t) => {
+        const age = t - show.at;
+        const { x, y, w, h } = SCREEN;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        // The tube opens from a line.
+        const open = easeOut(seg(age, 0, 180));
+        ctx.translate(0, y + h / 2);
+        ctx.scale(1, Math.max(0.01, open));
+        ctx.translate(0, -(y + h / 2));
+        const title = spring(seg(age, 150, 800));
+        if (show.channel === 1) {
+          const sky = ctx.createLinearGradient(0, y, 0, y + h);
+          sky.addColorStop(0, "#ffd36e");
+          sky.addColorStop(1, "#ff7a59");
+          ctx.fillStyle = sky;
+          ctx.fillRect(x, y, w, h);
+          ctx.fillStyle = "rgba(20,0,31,0.18)";
+          for (let i = 0; i < 9; i += 1)
+            ctx.fillRect(x + i * 130 + ((age / 40) % 130), y + h - 120, 64, 120);
+          ctx.fillStyle = "#14001f";
+          ctx.fillRect(x, y + h - 26, w, 26);
+        } else if (show.channel === 2) {
+          ctx.fillStyle = "#0b1f4b";
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = "rgba(0,224,255,0.25)";
+          ctx.lineWidth = 2;
+          for (let r = 60; r < 600; r += 60) {
+            ctx.beginPath();
+            ctx.arc(x + w - 160, y + 150, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.fillStyle = "#e11d48";
+          ctx.fillRect(x, y + h - 120, w, 54);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(x, y + h - 66, w, 40);
+          const ticker = "BREAKING · TOP STORY · LIVE · ".repeat(6);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(x, y + h - 66, w, 40);
+          ctx.clip();
+          text(ticker, x + 20 - ((age / 6) % 500), y + h - 46, 20, "#0b1f4b");
+          ctx.restore();
+        } else {
+          const sky = ctx.createLinearGradient(x, y, x + w, y + h);
+          sky.addColorStop(0, C.accent);
+          sky.addColorStop(1, C.accent2);
+          ctx.fillStyle = sky;
+          ctx.fillRect(x, y, w, h);
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          for (let i = 0; i < 14; i += 1) {
+            const sx = x + ((i * 173 + age / 5) % w);
+            const sy = y + ((i * 97) % (h - 60)) + 20;
+            const r = 6 + (i % 3) * 4 + 3 * Math.sin(age / 200 + i);
+            ctx.beginPath();
+            for (let k = 0; k < 8; k += 1) {
+              const rr = k % 2 ? r * 0.35 : r;
+              const a = (k * Math.PI) / 4;
+              ctx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr);
+            }
+            ctx.fill();
+          }
+        }
+        // Channel chip and the format's name, springing in.
+        ctx.globalAlpha = clamp(title * 1.4);
+        ctx.fillStyle = C.outline;
+        ctx.fillRect(x + 32, y + 30, 120, 44);
+        text(`CH 0${show.channel}`, x + 92, y + 53, 24, "#ffffff", "center");
+        ctx.fillStyle = "#e11d48";
+        ctx.beginPath();
+        ctx.roundRect(x + w - 168, y + 32, 136, 40, 20);
+        ctx.fill();
+        text("● ON AIR", x + w - 100, y + 53, 20, "#ffffff", "center");
+        const lift = (1 - title) * 40;
+        const upper = show.label.toUpperCase();
+        ctx.font = `700 64px ${FONT}`;
+        const size = Math.min(64, (w - 120) / (ctx.measureText(upper).width / 64));
+        text(upper, x + w / 2 + 4, y + h / 2 - 20 + lift + 4, size, "rgba(20,0,31,0.45)", "center");
+        text(upper, x + w / 2, y + h / 2 - 20 + lift, size, "#ffffff", "center");
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      };
+
+      const render = (t) => {
+        ctx.setTransform(2, 0, 0, 2, 0, 0);
+        ctx.globalAlpha = 1;
+        const show = PROGRAMMES.find((p) => t >= p.at && t < p.until);
+        const channel = show ? show.channel : t >= 6000 ? 1 : 1;
+        const title = show
+          ? `AUTOPLAY — CH 0${channel} · ${show.label.toUpperCase()}`
+          : "AUTOPLAY — CH 01 · PUBLIC ACCESS";
+        const status = show ? `On air: ${show.label}` : "No signal";
+        chrome(title, status);
+        if (show) {
+          programme(show, t);
+        } else {
+          drawStatic(t);
+        }
+        // The icon with its tagline under it, over the static, then back to static: frame one.
+        const name = easeInOut(seg(t, 6150, 500)) * (1 - easeInOut(seg(t, 7900, 600)));
+        if (name > 0) {
+          const { x, y, w, h } = SCREEN;
+          ctx.globalAlpha = name * 0.88;
+          ctx.fillStyle = C.dark;
+          ctx.fillRect(x, y, w, h);
+          const rise = spring(seg(t, 6250, 900));
+          const under = spring(seg(t, 6550, 900));
+          const size = 168;
+          const cx = x + w / 2;
+          const top = y + h / 2 - 140 + (1 - rise) * 30;
+          ctx.globalAlpha = name * clamp(rise * 1.5);
+          ctx.fillStyle = C.accent;
+          ctx.fillRect(cx - size / 2 + 8, top + 8, size, size);
+          ctx.drawImage(ICON, cx - size / 2, top, size, size);
+          ctx.globalAlpha = name * clamp(under * 1.5);
+          text(
+            "Your feeds as live TV channels of AI-generated video.",
+            cx,
+            top + size + 62 + (1 - under) * 20,
+            28,
+            "#ffffff",
+            "center",
+          );
+          ctx.globalAlpha = 1;
+        }
+      };
+
+      window.scene = { duration: DURATION, render };
+      window.sceneReady = Promise.all([
+        document.fonts.load(`700 40px ${FONT}`),
+        ICON.decode(),
+      ]).then(() => render(0));
+    </script>
+  </body>
+</html>

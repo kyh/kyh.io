@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 
 import type { CityProject } from "./_components/city/draw-landmarks";
 import { projects } from "@/lib/data";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/showcase" },
-  description: "Everything I've built, as a city you can fly over.",
-  title: "Showcase",
-};
+export const generateMetadata = (): Promise<Metadata> =>
+  todaysPageMetadata(
+    {
+      description: "Everything I've built, as a city you can fly over.",
+      path: "/showcase",
+      title: "Showcase",
+    },
+    { posterFirst: true },
+  );
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   colors: project.colors,

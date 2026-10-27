@@ -1,5 +1,6 @@
 import type { SiteRoute } from "@/lib/config";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
+import type { SiteVideo } from "@/lib/page-metadata";
 
 const escapeHtml = (value: string) =>
   value
@@ -15,12 +16,24 @@ const renderDescription = (description: string) =>
 const listItem = (route: SiteRoute) =>
   `<li><a href="${route.path}">${escapeHtml(route.title)}</a> <span>${renderDescription(route.description)}</span></li>`;
 
+/** The site's clip as `og:video`, with its poster, as every other page carries it. */
+const videoTags = (video: SiteVideo) =>
+  [
+    `<meta property="og:title" content="${escapeHtml(siteConfig.name)}">`,
+    `<meta property="og:image" content="${escapeHtml(video.poster.url)}">`,
+    `<meta property="og:image:alt" content="${escapeHtml(video.poster.alt)}">`,
+    `<meta property="og:video" content="${escapeHtml(video.url)}">`,
+    `<meta property="og:video:type" content="${video.type}">`,
+    `<meta property="og:video:width" content="${video.width}">`,
+    `<meta property="og:video:height" content="${video.height}">`,
+  ].join("\n");
+
 /**
  * Deliberately does not render inside the root layout: that ships the dock, the
  * multiplayer canvas and a ~45 KB RSC payload, none of which help someone who
  * landed on a URL that doesn't exist.
  */
-export const buildNotFoundHtml = (pathname: string) => `<!doctype html>
+export const buildNotFoundHtml = (pathname: string, video?: SiteVideo) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -31,7 +44,7 @@ export const buildNotFoundHtml = (pathname: string) => `<!doctype html>
 <link rel="canonical" href="${absoluteUrl("/")}">
 <link rel="alternate" type="text/markdown" href="${absoluteUrl("/markdown")}" title="Markdown version for agents">
 <link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml">
-<style>
+${video ? `${videoTags(video)}\n` : ""}<style>
 :root { color-scheme: light dark; --fg: #0f172a; --muted: #64748b; --bg: #f8fafc; --line: #e2e8f0; }
 @media (prefers-color-scheme: dark) { :root { --fg: #f1f5f9; --muted: #94a3b8; --bg: #0b1120; --line: #1e293b; } }
 body { margin: 0; background: var(--bg); color: var(--muted); font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }

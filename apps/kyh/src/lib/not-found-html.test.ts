@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { absoluteUrl, agentRoutes, siteRoutes } from "./config";
+import { DEFAULT_THEME } from "@/themes";
 import { buildNotFoundHtml } from "./not-found-html";
+import { siteVideoFor } from "./page-metadata";
 
 test("is a complete, self-contained document", () => {
   const html = buildNotFoundHtml("/missing");
@@ -40,4 +42,12 @@ test("renders code spans in descriptions instead of raw backticks", () => {
 
 test("stays small enough to be cheap for an agent that took a wrong turn", () => {
   assert.ok(buildNotFoundHtml("/missing").length < 6000);
+});
+
+test("carries the site's clip as og:video when given one", () => {
+  const video = siteVideoFor(DEFAULT_THEME);
+  const html = buildNotFoundHtml("/missing", video);
+  assert.ok(html.includes(`<meta property="og:video" content="${video.url}">`));
+  assert.ok(html.includes(`<meta property="og:image" content="${video.poster.url}">`));
+  assert.ok(!buildNotFoundHtml("/missing").includes("og:video"));
 });

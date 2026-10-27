@@ -25,7 +25,8 @@
     "format": "oxfmt --check",
     "lint:fix": "oxlint --fix",
     "format:fix": "oxfmt --write",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "og:video": "node scripts/og-video.mjs"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

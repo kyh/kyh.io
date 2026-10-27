@@ -4,6 +4,8 @@ import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
 import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
+import { siteConfig } from "@/lib/config";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
@@ -13,12 +15,17 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
-export const metadata: Metadata = {
+export const generateMetadata = async (): Promise<Metadata> => ({
+  ...(await todaysPageMetadata({
+    description: siteConfig.description,
+    path: "/",
+    title: siteConfig.name,
+  })),
   alternates: {
     canonical: "/",
     types: { "text/markdown": "/markdown" },
   },
-};
+});
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">

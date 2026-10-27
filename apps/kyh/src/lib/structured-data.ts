@@ -1,5 +1,6 @@
 import { absoluteUrl, siteConfig } from "@/lib/config";
 import { workHistory } from "@/lib/data";
+import type { SiteVideo } from "@/lib/page-metadata";
 import { social } from "@/lib/social";
 
 const PERSON_ID = `${siteConfig.url}/#person`;
@@ -136,6 +137,47 @@ export const buildStructuredData = (): StructuredData => ({
   ],
 });
 
+export interface VideoObjectNode {
+  "@context": "https://schema.org";
+  "@type": "VideoObject";
+  "@id": string;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  contentUrl: string;
+  embedUrl: string;
+  uploadDate: string;
+  duration: string;
+  width: number;
+  height: number;
+  isFamilyFriendly: boolean;
+  inLanguage: string;
+  author: { "@id": string };
+}
+
+/**
+ * The site's clip, the same one every page serves as `og:video` (a recording
+ * of the showcase's opening, embedded from `/showcase`). Its own script beside
+ * the site graph rather than a node in it; it points back at the Person by `@id`.
+ */
+export const buildVideoObject = (video: SiteVideo): VideoObjectNode => ({
+  "@context": "https://schema.org",
+  "@id": `${absoluteUrl("/showcase")}#video`,
+  "@type": "VideoObject",
+  author: { "@id": PERSON_ID },
+  contentUrl: video.url,
+  description: video.description,
+  duration: video.duration,
+  embedUrl: absoluteUrl("/showcase"),
+  height: video.height,
+  inLanguage: "en-US",
+  isFamilyFriendly: true,
+  name: video.name,
+  thumbnailUrl: video.poster.url,
+  uploadDate: video.uploadDate,
+  width: video.width,
+});
+
 /** Escapes `<` so a value containing `</script>` can't end the inline tag early. */
-export const serializeStructuredData = (data: StructuredData) =>
-  JSON.stringify(data).replaceAll("<", String.raw`<`);
+export const serializeStructuredData = (data: StructuredData | VideoObjectNode) =>
+  JSON.stringify(data).replaceAll("<", String.raw`\u003c`);
