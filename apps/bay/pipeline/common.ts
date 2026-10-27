@@ -53,6 +53,7 @@ export const cli = () => {
   const { values } = parseArgs({
     options: {
       area: { type: "string" },
+      discard: { default: false, type: "boolean" },
       force: { default: false, type: "boolean" },
       from: { default: "render", type: "string" },
       go: { default: false, type: "boolean" },
@@ -77,7 +78,7 @@ export const cli = () => {
   }
   const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY;
   const from: Layer = values.from === "paint" ? "paint" : "render";
-  return { force: values.force, from, go: values.go, keys, limit };
+  return { discard: values.discard, force: values.force, from, go: values.go, keys, limit };
 };
 
 export const ensureDirs = async () => {

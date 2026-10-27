@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { frameSize, parseKey } from "./grid";
-import { blend, compose, featherWeight, paintOrder, paintedShare, tileRange } from "./paint";
+import {
+  blend,
+  compose,
+  featherWeight,
+  nextWave,
+  paintOrder,
+  paintedShare,
+  tileRange,
+} from "./paint";
 
 const grid = { core: 8, margin: 4 };
 const size = frameSize(grid);
@@ -65,4 +73,36 @@ test("blend: the output takes the core, fades into what's painted, and fills wha
   // the unpainted right margin takes the output, painted only as much as its weight
   assert.deepEqual(at(next, size - 1, 8), [200, 0, 0, 0]);
   assert.equal(paintedShare(next) > paintedShare(painted), true);
+});
+
+test("waves: the first tile alone, then tiles beside the painted and apart from each other", () => {
+  const order = paintOrder(tileRange({ i: -2, j: -2 }, { i: 2, j: 2 }), { i: 0, j: 0 });
+  assert.deepEqual(nextWave(order, new Set(), 10), ["0_0"]);
+  const painted = new Set(["0_0"]);
+  const all = new Set(order);
+  for (let round = 0; painted.size < all.size; round += 1) {
+    assert.ok(round < 25, "waves stop coming before the area is painted");
+    const wave = nextWave(order, painted, 10);
+    assert.ok(wave.length > 0);
+    for (const [n, key] of wave.entries()) {
+      const t = parseKey(key);
+      assert.ok(!painted.has(key));
+      assert.ok(
+        [...painted]
+          .map(parseKey)
+          .some((p) => Math.max(Math.abs(p.i - t.i), Math.abs(p.j - t.j)) === 1),
+      );
+      for (const other of wave.slice(n + 1).map(parseKey)) {
+        assert.ok(
+          Math.max(Math.abs(other.i - t.i), Math.abs(other.j - t.j)) > 1,
+          `${key} touches another in its wave`,
+        );
+      }
+    }
+    for (const key of wave) {
+      painted.add(key);
+    }
+  }
+  assert.equal(nextWave(order, painted, 10).length, 0);
+  assert.equal(nextWave(order, new Set(["0_0"]), 2).length, 2);
 });

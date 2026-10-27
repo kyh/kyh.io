@@ -1,6 +1,7 @@
 // Step 2: paint each rendered frame in the map's style with an image model, out from the first
 // tile, each one carrying on from the neighbours already painted, and fold it into the mosaic.
-// Costs money, so without --go it only says what it would do.
+// Costs money, so without --go it only says what it would do. (To paint with a local agent
+// instead, see jobs.ts and CODEX.md.)
 //
 //   pnpm -F @repo/bay paint --area ferry        # the plan and its cost
 //   pnpm -F @repo/bay paint --area ferry --go   # paint
@@ -9,11 +10,10 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import sharp from "sharp";
 import { z } from "zod";
-import { GRID, frameRect, frameSize, parseKey } from "../src/lib/grid";
-import { blend, compose, paintOrder, paintedShare } from "../src/lib/paint";
-import { DATA, cli, ensureDirs, isPainted, readMosaic, renderPath, writeMosaic } from "./common";
+import { paintOrder } from "../src/lib/paint";
+import { DATA, cli, ensureDirs, isPainted, renderPath } from "./common";
+import { SIZE, foldIn, png, prepare } from "./frames";
 import { PROMPT } from "./prompt";
 
 const MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
@@ -47,14 +47,6 @@ if (!key) {
 await ensureDirs();
 await mkdir(OUTPUTS, { recursive: true });
 
-const size = frameSize(GRID);
-const png = (pixels: Uint8Array) =>
-  sharp(Buffer.from(pixels), { raw: { channels: 4, height: size, width: size } })
-    .png()
-    .toBuffer();
-const rgba = async (file: Buffer | string) =>
-  new Uint8Array(await sharp(file).resize(size, size).ensureAlpha().raw().toBuffer());
-
 // the style reference, when there is one: a picture of the look to match, sent with every frame
 const reference = process.env.STYLE_REFERENCE ? await readFile(process.env.STYLE_REFERENCE) : null;
 
@@ -65,7 +57,7 @@ const edit = async (image: Buffer, mask: Buffer | null) => {
   const form = new FormData();
   form.append("model", MODEL);
   form.append("prompt", PROMPT);
-  form.append("size", `${size}x${size}`);
+  form.append("size", `${SIZE}x${SIZE}`);
   form.append("quality", "high");
   form.append("input_fidelity", "high");
   form.append("output_format", "png");
@@ -102,15 +94,11 @@ const edit = async (image: Buffer, mask: Buffer | null) => {
 };
 
 for (const [n, tile] of todo.entries()) {
-  const { i, j } = parseKey(tile);
-  const rect = frameRect(GRID, i, j);
   const started = Date.now();
-  const painted = await readMosaic(rect);
-  const share = paintedShare(painted);
-  const { image, mask } = compose(await rgba(renderPath(tile)), painted);
+  const { image, mask, share } = await prepare(tile, force);
   const output = await edit(await png(image), share > 0 ? await png(mask) : null);
   await writeFile(path.join(OUTPUTS, `${tile}.png`), output);
-  await writeMosaic(rect, blend(GRID, painted, await rgba(output)));
+  await foldIn(tile, output);
   console.log(
     `[${n + 1}/${todo.length}] ${tile}: ${Math.round(share * 100)}% context, ${((Date.now() - started) / 1000).toFixed(0)}s`,
   );

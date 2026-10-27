@@ -14,6 +14,7 @@
     "test": "tsx --test src/**/*.test.ts",
     "render": "dotenv -e .env -- tsx pipeline/render.ts",
     "paint": "dotenv -e .env -- tsx pipeline/paint.ts",
+    "jobs": "dotenv -e .env -- tsx pipeline/jobs.ts",
     "pyramid": "tsx pipeline/pyramid.ts"
   },
   "dependencies": {

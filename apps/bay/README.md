@@ -9,9 +9,13 @@ pnpm -F @repo/bay render --area ferry       # 1. open data → data/render/ (no 
 pnpm -F @repo/bay pyramid                   # 2. cut → public/data/
 pnpm dev:bay                                # → http://localhost:3017
 
-# optional: repaint with an image model (OPENAI_API_KEY in .env)
+# optional: repaint with an image model, either with a local agent (Codex: CODEX.md is its
+# brief, no key here) ...
+pnpm -F @repo/bay jobs --area ferry         #    fold in its paintings, lay out the next wave
+# ... or straight through the OpenAI API (OPENAI_API_KEY in .env)
 pnpm -F @repo/bay paint --area ferry        #    the plan and its cost (dry run)
 pnpm -F @repo/bay paint --area ferry --go   #    paint → data/mosaic/
+# then
 pnpm -F @repo/bay pyramid --from=paint      #    cut the painted map instead
 ```
 
@@ -48,7 +52,12 @@ answer goes back into the mosaic in full over the core and fading out across the
 blends into the neighbours it carried on from (`src/lib/paint.ts`, tested). About $0.20 a tile
 (`paint` prints the estimate before spending): `ferry` ~$4, all of `sf` ~$300.
 
-`STYLE_REFERENCE` sends a picture of the look with every frame. The first tiles set the style
+With an agent, the same frames go out as jobs in waves (`pipeline/jobs.ts`): each run folds in
+the `output.png` files saved since the last one and lays out the next wave in `data/jobs/`, a
+folder a tile with its `input.png`, `mask.png` (white keeps) and `job.md`. A wave's tiles never
+touch, so they can be painted in any order. Point the agent at `CODEX.md`.
+
+`STYLE_REFERENCE` sends a picture of the look with every frame (or job). The first tiles set the style
 for everything after them, so paint `ferry`, look at it, adjust the prompt, and repaint it with
 `--force` before going bigger.
 

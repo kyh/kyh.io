@@ -21,6 +21,29 @@ export const paintOrder = (keys: Iterable<string>, start: { i: number; j: number
   return [...new Set(keys)].toSorted((a, b) => ring(a) - ring(b) || angle(a) - angle(b));
 };
 
+// how many tiles apart two are, counting diagonals as one step
+const apart = (a: { i: number; j: number }, b: { i: number; j: number }) =>
+  Math.max(Math.abs(a.i - b.i), Math.abs(a.j - b.j));
+
+// the tiles that can be painted at once next, in paint order: each one beside a tile already
+// painted (the first alone when nothing is), and none beside another of the wave, since
+// neighbours share a margin and each needs the other's paint as context
+export const nextWave = (order: string[], painted: Set<string>, limit: number) => {
+  const done = [...painted].map(parseKey);
+  const wave: string[] = [];
+  for (const key of order) {
+    if (wave.length >= limit || (done.length === 0 && wave.length === 1)) {
+      break;
+    }
+    const t = parseKey(key);
+    const free = !painted.has(key) && wave.every((w) => apart(parseKey(w), t) > 1);
+    if (free && (done.length === 0 || done.some((d) => apart(d, t) === 1))) {
+      wave.push(key);
+    }
+  }
+  return wave;
+};
+
 // every tile in a rectangle of tiles, both ends included
 export const tileRange = (from: { i: number; j: number }, to: { i: number; j: number }) => {
   const keys: string[] = [];

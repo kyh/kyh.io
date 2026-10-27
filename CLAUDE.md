@@ -99,7 +99,9 @@ plus a pipeline run by hand (README), keyless: `render` builds each tile's scene
 (DataSF buildings and street trees, OpenFreeMap vector tiles, AWS terrain; cached in
 `data/source/`) and draws it with three.js in headless Chrome (`render.html`); `pyramid` cuts
 the renders into `public/data/`. `paint` is optional: an OpenAI image model repaints the renders,
-carrying on from painted neighbours (dry run without `--go`: it costs money), and
+carrying on from painted neighbours (dry run without `--go`: it costs money); `jobs` hands the same
+frames to a local agent instead, in waves of folders under `data/jobs/` (`CODEX.md` is its
+brief); and
 `pyramid --from=paint` cuts that instead. Data is gitignored; the viewer shows "Nothing drawn
 yet" without it.
 
@@ -107,7 +109,7 @@ yet" without it.
 `src/lib/scene.ts` (the scene and its pure helpers; tested), `pipeline/source.ts` (the open data,
 a frame's scene), `src/render/` (the three.js drawing; `style.ts` is every colour),
 `src/lib/paint.ts` (paint order, context + mask, feathered blend; tested), `src/lib/pyramid.ts` /
-`src/lib/view.ts` (levels, pan/zoom; tested), `pipeline/prompt.ts` (the painter's brief),
+`src/lib/view.ts` (levels, pan/zoom; tested), `pipeline/prompt.ts` (the painter's brief), `pipeline/jobs.ts` + `CODEX.md` (painting with an agent),
 `src/main.ts` (viewer).
 
 ### kyh (`apps/kyh`)
