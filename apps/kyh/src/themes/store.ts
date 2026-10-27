@@ -24,6 +24,8 @@ export interface Appearance {
 }
 
 let chosen: ThemeId | null = null;
+/** Whether the toggle has flipped plain light or dark since it left today's holiday, so the next tap goes back to it. */
+let flipped = false;
 // The calendar's answer, worked out once a day rather than on every read.
 let today = { key: 0, theme: DEFAULT_THEME };
 /** The visitor's own light or dark: what they last picked, null to follow their system, undefined until read. */
@@ -157,20 +159,40 @@ const onVisible = () => {
 /** Picks a theme over the calendar's; picking the calendar's own hands it back, and the default is plain light or dark. */
 export const chooseTheme = (id: ThemeId) => {
   chosen = id === calendarTheme() ? null : id;
+  flipped = false;
   changed();
 };
 
-/** The toggle's tap: plain light or dark flips and is kept, unless it's the system's again; a holiday's theme goes back to plain. */
-export const toggleTheme = () => {
-  const { mode, theme } = currentAppearance();
+/**
+ * Where the toggle's tap goes: a holiday's theme to plain light or dark, and
+ * plain flips. On a holiday the tap cycles through it: the visitor's own,
+ * then the other, then today's holiday again. Takes the appearance shown, so
+ * a label rendered from it hydrates as the server rendered it.
+ */
+export const nextTap = (
+  { mode, own, theme }: Appearance = currentAppearance(),
+): Pick<Appearance, "mode" | "theme"> => {
   if (theme !== DEFAULT_THEME) {
-    chooseTheme(DEFAULT_THEME);
+    return { mode: own, theme: DEFAULT_THEME };
+  }
+  const holiday = calendarTheme();
+  if (flipped && holiday !== DEFAULT_THEME) {
+    return { mode: themeOf(holiday).mode ?? own, theme: holiday };
+  }
+  return { mode: mode === "light" ? "dark" : "light", theme: DEFAULT_THEME };
+};
+
+/** The toggle's tap (`nextTap`): plain light or dark flips and is kept, unless it's the system's again. */
+export const toggleTheme = () => {
+  const next = nextTap();
+  if (next.theme !== DEFAULT_THEME || currentTheme() !== DEFAULT_THEME) {
+    chooseTheme(next.theme);
     return;
   }
-  const flipped = mode === "light" ? "dark" : "light";
   // Flipped back to their system's, they follow the system again, as they did
   // before they picked (next-themes' "system").
-  const kept = flipped === systemMode() ? null : flipped;
+  const kept = next.mode === systemMode() ? null : next.mode;
+  flipped = true;
   picked = kept;
   try {
     if (kept) {

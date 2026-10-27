@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { mock } from "node:test";
 
 import { DEFAULT_THEME, THEMES, themeOn } from "./index";
 import {
@@ -7,6 +7,7 @@ import {
   chooseTheme,
   currentAppearance,
   currentTheme,
+  nextTap,
   subscribeToTheme,
   toggleTheme,
 } from "./store";
@@ -46,6 +47,36 @@ test("a holiday's theme brings its own light or dark; plain light or dark is the
   chooseTheme(calendarTheme());
 });
 
+test("on a holiday a tap cycles through the visitor's own light or dark, the other, and the holiday", () => {
+  mock.timers.enable({ apis: ["Date"], now: new Date(2026, 9, 31) });
+  try {
+    chooseTheme(calendarTheme());
+    assert.equal(currentTheme(), "halloween");
+    const seen = [];
+    for (let tap = 0; tap < 4; tap += 1) {
+      const next = nextTap();
+      toggleTheme();
+      const { mode, theme } = currentAppearance();
+      assert.deepEqual(next, { mode, theme });
+      seen.push(`${theme}|${mode}`);
+    }
+    assert.deepEqual(seen, [
+      `${DEFAULT_THEME}|light`,
+      `${DEFAULT_THEME}|dark`,
+      "halloween|dark",
+      // The dark they flipped to is now their own.
+      `${DEFAULT_THEME}|dark`,
+    ]);
+  } finally {
+    // Leaves plain light, as the visitor's own.
+    if (currentAppearance().mode === "dark") {
+      toggleTheme();
+    }
+    mock.timers.reset();
+    chooseTheme(calendarTheme());
+  }
+});
+
 test("an appearance is the same object until it changes, as a snapshot must be", () => {
   assert.equal(currentAppearance(), currentAppearance());
 });
@@ -58,8 +89,11 @@ test("a tap back to the system's own light or dark forgets the pick, so the them
     setItem: (key: string, value: string) => kept.set(key, value),
   };
   Object.assign(globalThis, { localStorage: storage });
+  // A day without a holiday, where taps only flip.
+  mock.timers.enable({ apis: ["Date"], now: new Date(2026, 5, 15) });
   try {
     chooseTheme(DEFAULT_THEME);
+    assert.equal(calendarTheme(), DEFAULT_THEME);
     // Without a window the system is light.
     if (currentAppearance().mode === "dark") {
       toggleTheme();
@@ -72,6 +106,7 @@ test("a tap back to the system's own light or dark forgets the pick, so the them
     assert.equal(kept.has("theme"), false);
   } finally {
     Reflect.deleteProperty(globalThis, "localStorage");
+    mock.timers.reset();
     chooseTheme(calendarTheme());
   }
 });

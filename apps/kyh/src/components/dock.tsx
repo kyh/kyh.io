@@ -10,8 +10,8 @@ import { iconAttrs } from "@/components/icons";
 import { ThemeBloom } from "@/components/theme-bloom";
 import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
-import { DEFAULT_THEME } from "@/themes";
-import { toggleTheme, useAppearance } from "@/themes/store";
+import { DEFAULT_THEME, themeOf } from "@/themes";
+import { nextTap, toggleTheme, useAppearance } from "@/themes/store";
 
 /** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
@@ -228,10 +228,13 @@ export const Dock = () => {
   const release = () => window.clearTimeout(holding.current);
 
   const plain = appearance.theme === DEFAULT_THEME;
-  // A holiday theme's tap goes back to the visitor's own light or dark.
-  const themeLabel = plain
-    ? `Switch to ${appearance.mode === "light" ? "dark" : "light"} mode`
-    : `Back to ${appearance.own} mode`;
+  // A tap flips light and dark, leaves a holiday for the visitor's own, and on
+  // a holiday comes back round to it.
+  const next = nextTap(appearance);
+  const themeLabel =
+    next.theme === DEFAULT_THEME
+      ? `${plain ? "Switch to" : "Back to"} ${next.mode} mode`
+      : `Switch to ${themeOf(next.theme).name}`;
   // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
   const hover = (event: React.PointerEvent, item: string) => {
     if (event.pointerType === "mouse" && !blooming) {
