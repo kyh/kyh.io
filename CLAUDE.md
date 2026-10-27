@@ -124,7 +124,8 @@ or dark, a pick in another tab (`storage`), and the calendar into a new day
 when the tab is next looked at (`visibilitychange`); a theme picked in the
 menu stays in its tab. The
 dock's theme toggle wears the theme's icon: a tap flips light and dark, or
-takes a holiday's theme back to the visitor's own; held down (or ArrowUp), it
+takes a holiday's theme back to the visitor's own; on a holiday the taps cycle
+round it (the visitor's own, the other, the holiday again: `nextTap`); held down (or ArrowUp), it
 blooms the themes as a radial menu over itself (`src/components/theme-bloom.tsx`):
 a solid disc that springs from the button (nudged up off the bottom), a wedge
 per theme (plain light or dark is one, wearing the sun or moon it goes back
