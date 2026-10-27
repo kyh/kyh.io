@@ -17,15 +17,17 @@
     "pyramid": "tsx pipeline/pyramid.ts"
   },
   "dependencies": {
-    "3d-tiles-renderer": "^0.5.3",
     "three": "^0.186.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
+    "@mapbox/vector-tile": "^3.0.0",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "catalog:",
     "@types/three": "^0.186.0",
     "dotenv-cli": "^11.0.0",
+    "pbf": "^5.1.2",
     "playwright-core": "^1.64.1",
     "sharp": "^0.35.5",
     "tsx": "catalog:",

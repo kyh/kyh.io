@@ -40,6 +40,7 @@ const response = await fetch(`${BASE}/manifest.json`).catch(() => null);
 const manifest: Manifest | null = response?.ok ? await response.json() : null;
 if (!manifest) {
   byId("empty", HTMLDivElement).hidden = false;
+  minimap.hidden = true;
 }
 
 // ---- tiles: fetched once, decoded off the main thread ------------------------------------------

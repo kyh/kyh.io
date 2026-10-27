@@ -1,7 +1,9 @@
-// Step 3: cut the painted mosaic into the viewer's pyramid in public/data/: level 0 at full size,
-// each level up half the one below, until a tile spans it all, and manifest.json listing them.
+// Step 3: cut the map into the viewer's pyramid in public/data/: level 0 at full size, each level
+// up half the one below, until a tile spans it all, and manifest.json listing them. Cut from the
+// renders as they are (the default), or from the mosaic painted over them.
 //
-//   pnpm -F @repo/bay pyramid
+//   pnpm -F @repo/bay pyramid               # the procedural map
+//   pnpm -F @repo/bay pyramid --from=paint  # the painted one
 
 import { existsSync } from "node:fs";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
@@ -10,12 +12,17 @@ import sharp from "sharp";
 import { GRID, parseKey, tileKey } from "../src/lib/grid";
 import { TILE, levelCount, parentOf } from "../src/lib/pyramid";
 import type { Manifest } from "../src/lib/pyramid";
-import { MOSAIC, PROJECTION, PUBLIC, isPainted, readMosaic } from "./common";
+import { MOSAIC, PROJECTION, PUBLIC, RENDERS, cli, isPainted, readMosaic } from "./common";
 
-const files = await readdir(MOSAIC).catch(() => []);
+const { from } = cli();
+const files = await readdir(from === "paint" ? MOSAIC : RENDERS).catch(() => []);
 const cores = files.filter((f) => f.endsWith(".png")).map((f) => parseKey(f.slice(0, -4)));
 if (cores.length === 0) {
-  throw new Error("nothing painted yet: run render and paint first");
+  throw new Error(
+    from === "paint"
+      ? "nothing painted yet: run render and paint first"
+      : "nothing rendered yet: run render first",
+  );
 }
 const c = GRID.core;
 const rectOf = (tiles: { i: number; j: number }[]) => {
@@ -34,7 +41,7 @@ const extent = rectOf(cores);
 // the fringes their margins left on the tiles round them
 const painted: { i: number; j: number }[] = [];
 for (const t of cores) {
-  if (await isPainted(tileKey(t.i, t.j))) {
+  if (from === "render" || (await isPainted(tileKey(t.i, t.j)))) {
     painted.push(t);
   }
 }
@@ -52,7 +59,7 @@ const levels: string[][] = [[]];
 await mkdir(path.join(PUBLIC, "0"), { recursive: true });
 for (let y = Math.floor(extent.y / TILE); y * TILE < extent.y + extent.h; y += 1) {
   for (let x = Math.floor(extent.x / TILE); x * TILE < extent.x + extent.w; x += 1) {
-    const pixels = await readMosaic({ h: TILE, w: TILE, x: x * TILE, y: y * TILE });
+    const pixels = await readMosaic({ h: TILE, w: TILE, x: x * TILE, y: y * TILE }, from);
     if (pixels.some((v, n) => n % 4 === 3 && v > 0)) {
       await sharp(Buffer.from(pixels), { raw: { channels: 4, height: TILE, width: TILE } })
         .webp({ quality: 88 })

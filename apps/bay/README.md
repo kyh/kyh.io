@@ -1,42 +1,56 @@
 # tiny bay
 
-San Francisco as one painted isometric map, after [tinygyn](https://tinygyn.com): Google's
-photorealistic 3D tiles rendered through one orthographic camera (45° down, looking north,
-0.25 m a pixel), each frame repainted by an image model, and the frames feathered into one
-picture served as a tile pyramid.
+San Francisco as one isometric map, after [tinygyn](https://tinygyn.com). Every frame is drawn
+from open data through one orthographic camera (45° down, looking north, 0.25 m a pixel): no
+keys, no accounts. An image model can repaint it on top, optionally.
 
 ```sh
-cp apps/bay/.env.example apps/bay/.env      # GOOGLE_MAPS_API_KEY, OPENAI_API_KEY
-pnpm -F @repo/bay render --area ferry       # 1. Google 3D tiles → data/render/
-pnpm -F @repo/bay paint --area ferry        #    the plan and its cost (dry run)
-pnpm -F @repo/bay paint --area ferry --go   # 2. paint → data/mosaic/
-pnpm -F @repo/bay pyramid                   # 3. cut → public/data/
+pnpm -F @repo/bay render --area ferry       # 1. open data → data/render/ (no keys)
+pnpm -F @repo/bay pyramid                   # 2. cut → public/data/
 pnpm dev:bay                                # → http://localhost:3017
+
+# optional: repaint with an image model (OPENAI_API_KEY in .env)
+pnpm -F @repo/bay paint --area ferry        #    the plan and its cost (dry run)
+pnpm -F @repo/bay paint --area ferry --go   #    paint → data/mosaic/
+pnpm -F @repo/bay pyramid --from=paint      #    cut the painted map instead
 ```
 
-Areas: `ferry` (3×2 tiles round the Ferry Building, the style's test bed), `downtown`, `sf`
-(the whole city, ~1,500 tiles with the water round it); or a rectangle, `--tiles=-2,-1:2,1` (with `=`, since the value starts with a minus).
-`--limit n` stops after n tiles and `--force` redoes tiles already done. Every step skips work
-already on disk, so an interrupted run picks up where it stopped.
+Areas: `ferry` (20 tiles round the Ferry Building), `downtown`, `sf` (the whole city, ~1,500
+tiles with the water round it); or a rectangle, `--tiles=-2,-1:2,1` (with `=`, since the value
+starts with a minus). `--limit n` stops after n tiles and `--force` redoes tiles already done.
+Every step skips work already on disk, so an interrupted run picks up where it stopped.
 
-## How a tile is painted
+## Where the map comes from
+
+All open, keyless, fetched once and kept in `data/source/` (`pipeline/source.ts`):
+
+- [DataSF building footprints](https://data.sfgov.org/d/ynuv-fyni): every building with its
+  LiDAR-measured roof height.
+- [DataSF street trees](https://data.sfgov.org/d/tkzw-k3nq): ~190,000 trees with their trunk
+  sizes; parks and woods grow their own on a seeded grid.
+- [OpenFreeMap](https://openfreemap.org) vector tiles (OpenStreetMap): water, parks, grass,
+  sand, piers, roads and rail.
+- [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/): the ground's heights, so
+  the hills stand.
+
+Each frame's scene is built in local metres (`src/lib/scene.ts`) and drawn by three.js in
+headless Chrome (`render.html`, `src/render/`): the ground painted onto the terrain, buildings
+with windowed walls, edges and rooftop kit, round canopies, a low afternoon sun with shadows.
+Every colour is in `src/render/style.ts`. About 5 seconds a tile.
+
+## Painting (optional)
 
 The canvas is cut into 768 px cores, and each tile's frame is its core plus 128 px round it
 (1024 px). Tiles are painted out from the Ferry Building, ring by ring, so every tile after the
 first has a painted neighbour. The model gets the frame's render with whatever's already painted
 pasted over it, a mask keeping the painted part, and the prompt in `pipeline/prompt.ts`. Its
 answer goes back into the mosaic in full over the core and fading out across the margin, so it
-blends into the neighbours it carried on from (`src/lib/paint.ts`, tested).
+blends into the neighbours it carried on from (`src/lib/paint.ts`, tested). About $0.20 a tile
+(`paint` prints the estimate before spending): `ferry` ~$4, all of `sf` ~$300.
 
 `STYLE_REFERENCE` sends a picture of the look with every frame. The first tiles set the style
 for everything after them, so paint `ferry`, look at it, adjust the prompt, and repaint it with
 `--force` before going bigger.
-
-## Cost and time
-
-About $0.20 a tile at high quality (`paint` prints the estimate before spending), so `ferry` is
-about $1, `downtown` ~$20 and all of `sf` ~$300. Renders take a few seconds a tile and paints a
-minute or so.
 
 ## Serving
 
@@ -45,7 +59,8 @@ minute or so.
 
 ## Caveats
 
-- Google's Map Tiles API terms restrict storing and deriving from its tiles. tinygyn does the
-  same thing, but read the terms before you publish this widely.
-- The model can drift from the render's geometry. The prompt tells it not to, and the feathered
-  context keeps neighbours consistent, but expect to redo some tiles with `--force --tiles=i,j:i,j`.
+- OpenStreetMap data is ODbL: keep the credit the viewer shows.
+- Bridges draw flat on the water, and a building is one block at its median roof height, so
+  spires and towers on top (the Ferry Building's clock tower) don't show.
+- The buildings and trees are DataSF's, so outside San Francisco the map has ground and roads
+  only.

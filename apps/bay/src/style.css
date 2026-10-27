@@ -138,6 +138,10 @@ svg {
   cursor: pointer;
 }
 
+.credit a {
+  color: inherit;
+}
+
 .credit {
   position: fixed;
   right: 72px;

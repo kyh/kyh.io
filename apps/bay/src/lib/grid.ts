@@ -65,30 +65,91 @@ const enu = (lat: number, lon: number) => {
   return { east, north, up };
 };
 
-// the camera's frame: right and up across the picture, and the way it looks
-export const basis = (proj: Projection) => {
+// The world the scene is built in: metres east, north and up from the anchor, the Earth's curve
+// included (a point 10 km off sits 8 m below the anchor's horizon), so places line up with the
+// canvas however far out they are.
+export const toLocal = (proj: Projection, lat: number, lon: number, height: number): Vec3 => {
   const { east, north, up } = enu(proj.anchor.lat, proj.anchor.lon);
-  const a = rad(proj.azimuth);
-  const t = rad(proj.tilt);
-  const ahead = add(scale(north, Math.cos(a)), scale(east, Math.sin(a)));
-  const right = add(scale(east, Math.cos(a)), scale(north, -Math.sin(a)));
-  const look = add(scale(ahead, Math.cos(t)), scale(up, -Math.sin(t)));
-  const screenUp = add(scale(ahead, Math.sin(t)), scale(up, Math.cos(t)));
-  const origin = toEcef(proj.anchor.lat, proj.anchor.lon, proj.anchor.height);
-  return { look, origin, right, up: screenUp };
+  const d = sub(
+    toEcef(lat, lon, height),
+    toEcef(proj.anchor.lat, proj.anchor.lon, proj.anchor.height),
+  );
+  return [dot(d, east), dot(d, north), dot(d, up)];
 };
 
-// a place on Earth to canvas pixels (y down, like every canvas)
-export const toCanvas = (proj: Projection, lat: number, lon: number, height: number) => {
+// how far below the anchor's horizon the ground at a local east, north sits
+export const curvature = (e: number, n: number) => -(e * e + n * n) / (2 * 6_371_000);
+
+// metres east and north to latitude and longitude, near enough to pick the data round a place:
+// the ellipsoid's radii of curvature at the anchor, north-south and east-west
+export const toLatLon = (proj: Projection, e: number, n: number) => {
+  const sin = Math.sin(rad(proj.anchor.lat));
+  const meridian = (A * (1 - E2)) / (1 - E2 * sin * sin) ** 1.5;
+  const normal = A / Math.sqrt(1 - E2 * sin * sin);
+  return {
+    lat: proj.anchor.lat + (n / meridian) * (180 / Math.PI),
+    lon: proj.anchor.lon + (e / (normal * Math.cos(rad(proj.anchor.lat)))) * (180 / Math.PI),
+  };
+};
+
+// the camera's frame in local metres: right and up across the picture, and the way it looks
+export const basis = (proj: Projection) => {
+  const a = rad(proj.azimuth);
+  const t = rad(proj.tilt);
+  const ahead: Vec3 = [Math.sin(a), Math.cos(a), 0];
+  const zUp: Vec3 = [0, 0, 1];
+  return {
+    ahead,
+    look: add(scale(ahead, Math.cos(t)), scale(zUp, -Math.sin(t))),
+    right: [Math.cos(a), -Math.sin(a), 0] satisfies Vec3,
+    up: add(scale(ahead, Math.sin(t)), scale(zUp, Math.cos(t))),
+  };
+};
+
+// a local point to canvas pixels (y down, like every canvas)
+export const localToCanvas = (proj: Projection, p: Vec3) => {
   const b = basis(proj);
-  const d = sub(toEcef(lat, lon, height), b.origin);
-  return { x: dot(d, b.right) / proj.mpp, y: -dot(d, b.up) / proj.mpp };
+  return { x: dot(p, b.right) / proj.mpp, y: -dot(p, b.up) / proj.mpp };
+};
+
+// a place on Earth to canvas pixels
+export const toCanvas = (proj: Projection, lat: number, lon: number, height: number) =>
+  localToCanvas(proj, toLocal(proj, lat, lon, height));
+
+// the ground (east, north) a canvas point shows when what's there stands at height z
+export const groundAt = (proj: Projection, x: number, y: number, z: number) => {
+  const b = basis(proj);
+  const t = rad(proj.tilt);
+  const across = x * proj.mpp;
+  const along = (-y * proj.mpp - z * Math.cos(t)) / Math.sin(t);
+  return {
+    e: b.right[0] * across + b.ahead[0] * along,
+    n: b.right[1] * across + b.ahead[1] * along,
+  };
+};
+
+// the ground a canvas rectangle can show anything from, for heights between low and high
+export const groundBox = (
+  proj: Projection,
+  rect: { x: number; y: number; w: number; h: number },
+  low: number,
+  high: number,
+) => {
+  const corners = [rect.x, rect.x + rect.w].flatMap((x) =>
+    [rect.y, rect.y + rect.h].flatMap((y) => [low, high].map((z) => groundAt(proj, x, y, z))),
+  );
+  return {
+    e0: Math.min(...corners.map((c) => c.e)),
+    e1: Math.max(...corners.map((c) => c.e)),
+    n0: Math.min(...corners.map((c) => c.n)),
+    n1: Math.max(...corners.map((c) => c.n)),
+  };
 };
 
 // how far back along its look the camera stands from the canvas plane: above every hill in SF
 const STANDOFF = 4000;
 
-// the orthographic camera that sees a rectangle of the canvas: where it stands and which way it faces
+// the orthographic camera that sees a rectangle of the canvas, in local metres
 export const cameraFor = (
   proj: Projection,
   rect: { x: number; y: number; w: number; h: number },
@@ -96,11 +157,12 @@ export const cameraFor = (
   const b = basis(proj);
   const cx = (rect.x + rect.w / 2) * proj.mpp;
   const cy = (rect.y + rect.h / 2) * proj.mpp;
-  const center = add(b.origin, add(scale(b.right, cx), scale(b.up, -cy)));
+  const center = add(scale(b.right, cx), scale(b.up, -cy));
   return {
     far: STANDOFF * 2,
     halfHeight: (rect.h * proj.mpp) / 2,
     halfWidth: (rect.w * proj.mpp) / 2,
+    look: b.look,
     near: 1,
     position: add(center, scale(b.look, -STANDOFF)),
     target: center,

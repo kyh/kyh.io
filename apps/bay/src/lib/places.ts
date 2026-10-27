@@ -1,8 +1,5 @@
-// The places the map names and search finds. Heights are the ground's above the ellipsoid
-// Google's tiles stand on: in San Francisco that is about 32 m below sea level, so a place's
-// height is its elevation less 32.
-
-const GEOID = -32;
+// The places the map names and search finds, at their ground's elevation above the sea: the
+// heights the map's terrain and buildings stand at.
 
 export interface Place {
   name: string;
@@ -12,7 +9,7 @@ export interface Place {
 }
 
 const place = (name: string, lat: number, lon: number, elevation: number): Place => ({
-  height: elevation + GEOID,
+  height: elevation,
   lat,
   lon,
   name,

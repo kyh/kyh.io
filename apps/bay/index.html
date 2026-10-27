@@ -56,13 +56,15 @@
 
     <canvas id="minimap" class="minimap" aria-label="Whole map; click to go there"></canvas>
 
-    <p class="credit">Map data ©Google</p>
+    <p class="credit">
+      © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · DataSF · OpenFreeMap
+    </p>
 
     <div id="empty" class="empty" hidden>
-      <h1>Nothing painted yet</h1>
+      <h1>Nothing drawn yet</h1>
       <p>
-        Render, paint and cut the tiles: <code>pnpm -F @repo/bay render</code>,
-        <code>paint --go</code>, <code>pyramid</code>. See the README.
+        Render the tiles and cut them: <code>pnpm -F @repo/bay render</code>, then
+        <code>pyramid</code>. See the README.
       </p>
     </div>
 

@@ -94,17 +94,21 @@ needs the DB, aired items fall back in-memory). Port 3005.
 
 ### bay (`apps/bay`)
 
-San Francisco as one AI-painted isometric map, after tinygyn.com. Vite SPA (vanilla TS,
-canvas), port 3017, plus a three-step pipeline run by hand (README): `render` draws each
-tile's frame from Google Photorealistic 3D Tiles (`3d-tiles-renderer` in headless Chrome,
-`render.html`), `paint` has an OpenAI image model repaint it carrying on from painted neighbours
-(dry run without `--go`: it costs money), `pyramid` cuts the mosaic into `public/data/`. Data is
-gitignored; the viewer shows "Nothing painted yet" without it.
+San Francisco as one isometric map, after tinygyn.com. Vite SPA (vanilla TS, canvas), port 3017,
+plus a pipeline run by hand (README), keyless: `render` builds each tile's scene from open data
+(DataSF buildings and street trees, OpenFreeMap vector tiles, AWS terrain; cached in
+`data/source/`) and draws it with three.js in headless Chrome (`render.html`); `pyramid` cuts
+the renders into `public/data/`. `paint` is optional: an OpenAI image model repaints the renders,
+carrying on from painted neighbours (dry run without `--go`: it costs money), and
+`pyramid --from=paint` cuts that instead. Data is gitignored; the viewer shows "Nothing drawn
+yet" without it.
 
-**Key files**: `src/lib/grid.ts` (the one projection: lat/lon ↔ canvas, each tile's camera),
-`src/lib/paint.ts` (paint order, context + mask, feathered blend; pure, tested),
-`src/lib/pyramid.ts` / `src/lib/view.ts` (levels, pan/zoom; tested), `pipeline/` (the steps;
-`prompt.ts` is the style), `src/main.ts` (viewer).
+**Key files**: `src/lib/grid.ts` (the one projection: local metres ↔ canvas, each tile's camera),
+`src/lib/scene.ts` (the scene and its pure helpers; tested), `pipeline/source.ts` (the open data,
+a frame's scene), `src/render/` (the three.js drawing; `style.ts` is every colour),
+`src/lib/paint.ts` (paint order, context + mask, feathered blend; tested), `src/lib/pyramid.ts` /
+`src/lib/view.ts` (levels, pan/zoom; tested), `pipeline/prompt.ts` (the painter's brief),
+`src/main.ts` (viewer).
 
 ### kyh (`apps/kyh`)
 

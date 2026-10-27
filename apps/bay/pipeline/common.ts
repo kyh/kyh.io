@@ -54,6 +54,7 @@ export const cli = () => {
     options: {
       area: { type: "string" },
       force: { default: false, type: "boolean" },
+      from: { default: "render", type: "string" },
       go: { default: false, type: "boolean" },
       limit: { type: "string" },
       tiles: { type: "string" },
@@ -75,7 +76,8 @@ export const cli = () => {
     keys = areaTiles(box);
   }
   const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY;
-  return { force: values.force, go: values.go, keys, limit };
+  const from: Layer = values.from === "paint" ? "paint" : "render";
+  return { force: values.force, from, go: values.go, keys, limit };
 };
 
 export const ensureDirs = async () => {
@@ -85,17 +87,41 @@ export const ensureDirs = async () => {
 export const renderPath = (key: string) => path.join(RENDERS, `${key}.png`);
 export const mosaicPath = (key: string) => path.join(MOSAIC, `${key}.png`);
 
-// a rectangle of the mosaic as one RGBA buffer, unpainted pixels clear
-export const readMosaic = async (rect: { x: number; y: number; w: number; h: number }) => {
+// what the published map is cut from: the renders as they are, or the mosaic painted over them
+export type Layer = "render" | "paint";
+
+// a tile's core as RGBA: the painted mosaic's file, or the middle of its render's frame
+const readCore = async (key: string, layer: Layer) => {
+  if (layer === "paint") {
+    const file = mosaicPath(key);
+    return existsSync(file) ? await sharp(file).ensureAlpha().raw().toBuffer() : null;
+  }
+  const file = renderPath(key);
+  if (!existsSync(file)) {
+    return null;
+  }
+  const c = GRID.core;
+  const m = GRID.margin;
+  return sharp(file)
+    .extract({ height: c, left: m, top: m, width: c })
+    .ensureAlpha()
+    .raw()
+    .toBuffer();
+};
+
+// a rectangle of the mosaic (or of the renders) as one RGBA buffer, what's missing clear
+export const readMosaic = async (
+  rect: { x: number; y: number; w: number; h: number },
+  layer: Layer = "paint",
+) => {
   const c = GRID.core;
   const out = new Uint8Array(rect.w * rect.h * 4);
   for (let j = Math.floor(rect.y / c); j * c < rect.y + rect.h; j += 1) {
     for (let i = Math.floor(rect.x / c); i * c < rect.x + rect.w; i += 1) {
-      const file = mosaicPath(tileKey(i, j));
-      if (!existsSync(file)) {
+      const tile = await readCore(tileKey(i, j), layer);
+      if (!tile) {
         continue;
       }
-      const tile = await sharp(file).ensureAlpha().raw().toBuffer();
       // the rows of the tile inside the rectangle, copied across
       const left = Math.max(rect.x, i * c);
       const right = Math.min(rect.x + rect.w, (i + 1) * c);

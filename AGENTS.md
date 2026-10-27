@@ -63,21 +63,21 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 ## Platform matrix
 
-| App                      | Dev command                       | Port                        | Agent-verifiable at runtime?                           |
-| ------------------------ | --------------------------------- | --------------------------- | ------------------------------------------------------ |
-| `kyh`                    | `pnpm dev:kyh`                    | 3000                        | **Yes** — headless, no config; has tests               |
-| `policingice`            | `pnpm dev:policingice`            | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)            |
-| `stonksville`            | `pnpm dev:stonksville`            | 3004                        | **Yes** — headless, no config                          |
-| `autoplay`               | `pnpm dev:autoplay`               | 3005                        | OFF AIR screen yes; live TV needs X + fal keys         |
-| `bay`                    | `pnpm dev:bay`                    | 3017                        | Viewer yes (empty without tiles); pipeline needs keys  |
-| `kwadrants`              | `pnpm dev:kwadrants`              | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots               |
-| `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                |
-| `vis-ml`                 | `pnpm dev:vis-ml`                 | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
-| `covid-19`               | `pnpm dev:covid`                  | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
-| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — `.env` from example + `db:push` (local file) |
-| `cli`                    | `pnpm dev:cli`                    | —                           | No — Ink terminal UI, needs a real TTY                 |
-| `commuting-clawders/mod` | `pnpm dev:commuting-clawders-mod` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
-| `mod-dev`                | `pnpm dev:mod-dev`                | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"` |
+| App                      | Dev command                       | Port                        | Agent-verifiable at runtime?                               |
+| ------------------------ | --------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| `kyh`                    | `pnpm dev:kyh`                    | 3000                        | **Yes** — headless, no config; has tests                   |
+| `policingice`            | `pnpm dev:policingice`            | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)                |
+| `stonksville`            | `pnpm dev:stonksville`            | 3004                        | **Yes** — headless, no config                              |
+| `autoplay`               | `pnpm dev:autoplay`               | 3005                        | OFF AIR screen yes; live TV needs X + fal keys             |
+| `bay`                    | `pnpm dev:bay`                    | 3017                        | Yes: `render` + `pyramid` are keyless; `paint` needs a key |
+| `kwadrants`              | `pnpm dev:kwadrants`              | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots                   |
+| `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                    |
+| `vis-ml`                 | `pnpm dev:vis-ml`                 | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                              |
+| `covid-19`               | `pnpm dev:covid`                  | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                    |
+| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — `.env` from example + `db:push` (local file)     |
+| `cli`                    | `pnpm dev:cli`                    | —                           | No — Ink terminal UI, needs a real TTY                     |
+| `commuting-clawders/mod` | `pnpm dev:commuting-clawders-mod` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY      |
+| `mod-dev`                | `pnpm dev:mod-dev`                | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"`     |
 
 The Vite apps all default to 5173 and auto-increment when it's taken; read the dev log for the port actually chosen rather than assuming.
 
