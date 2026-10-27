@@ -211,7 +211,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
               add feed
             </button>
           </form>
-          {error !== undefined && <p className="text-[10px] text-red-700">{error}</p>}
+          {error !== undefined && <p className="text-[10px] text-red-700 select-text">{error}</p>}
         </div>
       </div>
     </WindowDialog>

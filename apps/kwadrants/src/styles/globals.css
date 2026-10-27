@@ -13,6 +13,19 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+  /* An app, not a document: chrome isn't text. Main text opts back in with `select-text`. */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable]:not([contenteditable="false"]),
+  pre,
+  code {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   *,
   ::after,
   ::before,

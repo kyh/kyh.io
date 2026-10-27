@@ -83,7 +83,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
         <p className="text-sm text-muted-foreground">No posts found.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
+          <table className="w-full min-w-[600px] text-sm select-text">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 pr-3 font-normal">Title</th>
