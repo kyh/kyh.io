@@ -175,8 +175,9 @@ export const nextTap = (
   if (theme !== DEFAULT_THEME) {
     return { mode: own, theme: DEFAULT_THEME };
   }
-  const holiday = calendarTheme();
-  if (flipped && holiday !== DEFAULT_THEME) {
+  // Only a tap sets `flipped`, so a render (the server's prerender too) never reads the date.
+  const holiday = flipped ? calendarTheme() : DEFAULT_THEME;
+  if (holiday !== DEFAULT_THEME) {
     return { mode: themeOf(holiday).mode ?? own, theme: holiday };
   }
   return { mode: mode === "light" ? "dark" : "light", theme: DEFAULT_THEME };
