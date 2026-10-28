@@ -362,6 +362,20 @@ const distanceTo = (line: Point[], e: number, n: number) => {
 // crossings closer than this to one already placed are the same junction's, metres
 const SAME = 6;
 
+// how squarely two segments must meet to be a junction: pieces of one street (cut where the
+// vector tiles meet, or where OpenStreetMap splits a way mid-block) run on nearly straight
+const JUNCTION = Math.sin((30 * Math.PI) / 180);
+
+// the sine of the angle two segments meet at
+const squareness = (a: Point, b: Point, c: Point, d: Point) => {
+  const u = [b[0] - a[0], b[1] - a[1]];
+  const v = [d[0] - c[0], d[1] - c[1]];
+  const length = Math.hypot(u[0] ?? 0, u[1] ?? 0) * Math.hypot(v[0] ?? 0, v[1] ?? 0);
+  return length === 0
+    ? 0
+    : Math.abs((u[0] ?? 0) * (v[1] ?? 0) - (u[1] ?? 0) * (v[0] ?? 0)) / length;
+};
+
 // zebra crossings at every junction of streets: across each road, a step back from the junction
 // on each side (half the other road's width, plus a sidewalk), wherever the road goes on there
 export const crossingsOf = (roads: Road[]) => {
@@ -384,7 +398,8 @@ export const crossingsOf = (roads: Road[]) => {
       for (let i = 0; i + 1 < one.line.length; i += 1) {
         for (let j = 0; j + 1 < two.line.length; j += 1) {
           const [a, b, c, d] = [one.line[i], one.line[i + 1], two.line[j], two.line[j + 1]];
-          const t = a && b && c && d ? meet(a, b, c, d) : null;
+          const t =
+            a && b && c && d && squareness(a, b, c, d) >= JUNCTION ? meet(a, b, c, d) : null;
           if (a && b && c && d && t !== null) {
             const at: Point = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
             place(one, two, at, a, b);

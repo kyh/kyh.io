@@ -140,6 +140,18 @@ test("crossings: across each street a step back from the junction, not off a roa
   ]);
   assert.equal(tee.length, 3);
   assert.ok(tee.every((c) => c.n > -1));
+  // pieces of one street meeting end to end, straight on or with a slight kink, are no junction
+  const pieces = crossingsOf([
+    road([
+      [-100, 0],
+      [0, 0],
+    ]),
+    road([
+      [0, 0],
+      [100, 5],
+    ]),
+  ]);
+  assert.equal(pieces.length, 0);
   // bridges and paths get none
   assert.equal(
     crossingsOf([
