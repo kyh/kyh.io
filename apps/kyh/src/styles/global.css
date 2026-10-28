@@ -282,6 +282,8 @@ html[data-tint] {
   height: var(--drop);
   background: var(--web);
   transform-origin: 50% 0;
+  /* Wound in, so a spider sitting still (reduced motion) has none hanging. */
+  scale: 1 0;
   animation: spider-thread 11s ease-in-out infinite;
 }
 
