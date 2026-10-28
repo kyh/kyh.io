@@ -151,6 +151,20 @@ const paintGround = (frame: Frame) => {
   }
   ctx.setLineDash([]);
 
+  // zebra crossings: bars along the road, a metre apart across it, three metres long
+  ctx.fillStyle = GROUND.lane;
+  for (const c of frame.crossings) {
+    const [x, y] = at([c.e, c.n]);
+    ctx.save();
+    ctx.translate(x, y);
+    // the canvas's y runs south, so the road's angle turns the other way
+    ctx.rotate(-c.angle);
+    for (let across = -c.width / 2 + 0.75; across < c.width / 2 - 0.5; across += 1) {
+      ctx.fillRect(-1.5 * scale, across * scale, 3 * scale, 0.5 * scale);
+    }
+    ctx.restore();
+  }
+
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 8;
@@ -292,6 +306,46 @@ const wallsOf = (b: Building) => {
   return geometry;
 };
 
+// a building's tower as a building of its own, a square shaft up from its roof, and the pyramid
+// that caps it at the peak
+const towerOf = (b: Building) => {
+  const { spire } = b;
+  if (!spire) {
+    return null;
+  }
+  const h = spire.side / 2;
+  const shoulder = b.top + (spire.top - b.top) * 0.8;
+  const square: Ring = [
+    [spire.e - h, spire.n - h],
+    [spire.e + h, spire.n - h],
+    [spire.e + h, spire.n + h],
+    [spire.e - h, spire.n + h],
+  ];
+  const shaft: Building = {
+    ...b,
+    base: b.top - 1,
+    rings: [square],
+    spire: undefined,
+    top: shoulder,
+  };
+  const positions: number[] = [];
+  for (const [n, a] of square.entries()) {
+    const c = square[(n + 1) % square.length] ?? a;
+    positions.push(a[0], a[1], shoulder, c[0], c[1], shoulder, spire.e, spire.n, spire.top);
+  }
+  const cap = new Geometry();
+  cap.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  cap.setAttribute(
+    "uv",
+    new Float32BufferAttribute(
+      Array.from({ length: 24 }, () => 0),
+      2,
+    ),
+  );
+  cap.computeVertexNormals();
+  return { cap, shaft };
+};
+
 const roofOf = (b: Building) => {
   const [outer = [], ...holes] = b.rings.map(open);
   const contour = outer.map((p) => new Vector2(p[0], p[1]));
@@ -360,8 +414,12 @@ const buildingMeshes = (frame: Frame) => {
     const wall = palette.walls[t] ?? palette.walls[0];
     const roof = palette.roofs[t] ?? palette.roofs[0];
     const curtain = look === "tower" && t !== 4;
-    const walls = mergeGeometries(list.map(wallsOf));
-    const roofs = mergeGeometries(list.map(roofOf));
+    const towers = list.map(towerOf).filter((tower) => tower !== null);
+    const walls = mergeGeometries([
+      ...list.map(wallsOf),
+      ...towers.map((tower) => wallsOf(tower.shaft)),
+    ]);
+    const roofs = mergeGeometries([...list.map(roofOf), ...towers.map((tower) => tower.cap)]);
     kit.push(...list.flatMap(kitOf));
     const faceMaterial = new MeshLambertMaterial({
       map: facade(look === "house" || look === "tower" ? look : "block", wall, curtain),

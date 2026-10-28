@@ -20,12 +20,15 @@ import {
   area,
   areaOf,
   canopyOf,
+  crossingsOf,
   hash,
   heightAt,
   inArea,
   lookOf,
   roadOf,
   scatterTrees,
+  spireOf,
+  withoutBorrowedSpires,
 } from "../src/lib/scene";
 import { DATA } from "./common";
 
@@ -242,6 +245,7 @@ const Footprint = z.object({
     type: z.literal("MultiPolygon"),
   }),
   median_1st_m: z.coerce.number(),
+  peak_1st_m: z.coerce.number().optional(),
   sf16_bldgid: z.string(),
 });
 const StreetTree = z.object({
@@ -266,24 +270,28 @@ const byNumbers: Within = (b) =>
 const socrata = async (dataset: string, within: Within, select: string, key: string) => {
   const [x = 0, y = 0] = key.split("_").map(Number);
   const b = tileBounds(x, y, VECTOR_ZOOM);
-  const body = await cached(`datasf/${dataset}/${VECTOR_ZOOM}_${key}.json`, async () => {
-    const rows: unknown[] = [];
-    for (let offset = 0; ; offset += 50_000) {
-      const query = new URLSearchParams({
-        $limit: "50000",
-        $offset: String(offset),
-        $order: ":id",
-        $select: select,
-        $where: within(b),
-      });
-      const page = await get(`https://data.sf.gov/resource/${dataset}.json?${query}`);
-      const list = Rows.parse(JSON.parse(page.toString()));
-      rows.push(...list);
-      if (list.length < 50_000) {
-        return Buffer.from(JSON.stringify(rows));
+  // kept by what was asked for, so asking for a column more fetches afresh
+  const body = await cached(
+    `datasf/${dataset}/${hash(select)}/${VECTOR_ZOOM}_${key}.json`,
+    async () => {
+      const rows: unknown[] = [];
+      for (let offset = 0; ; offset += 50_000) {
+        const query = new URLSearchParams({
+          $limit: "50000",
+          $offset: String(offset),
+          $order: ":id",
+          $select: select,
+          $where: within(b),
+        });
+        const page = await get(`https://data.sf.gov/resource/${dataset}.json?${query}`);
+        const list = Rows.parse(JSON.parse(page.toString()));
+        rows.push(...list);
+        if (list.length < 50_000) {
+          return Buffer.from(JSON.stringify(rows));
+        }
       }
-    }
-  });
+    },
+  );
   return Rows.parse(JSON.parse(body.toString()));
 };
 
@@ -299,7 +307,7 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
     const rows = await socrata(
       "ynuv-fyni",
       byGeometry("shape"),
-      "sf16_bldgid,median_1st_m,shape AS footprint",
+      "sf16_bldgid,median_1st_m,peak_1st_m,shape AS footprint",
       key,
     );
     for (const row of rows) {
@@ -309,7 +317,13 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
         continue;
       }
       ids.add(parsed.data.sf16_bldgid);
-      for (const [n, polygon] of parsed.data.footprint.coordinates.entries()) {
+      // one peak for the whole building: its tower goes on its biggest part
+      const polygons = parsed.data.footprint.coordinates;
+      const sizes = polygons.map((poly) =>
+        area((poly[0] ?? []).map((p): Point => [p[0] ?? 0, p[1] ?? 0])),
+      );
+      const biggest = sizes.indexOf(Math.max(...sizes));
+      for (const [n, polygon] of polygons.entries()) {
         const rings = polygon.map((r) =>
           r.map((p): Point => {
             const l = toLocal(proj, p[1] ?? 0, p[0] ?? 0, 0);
@@ -326,7 +340,9 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
         const base = Math.min(...outer.map((p) => heightAt(terrain, p[0], p[1]))) - 1;
         const top = Math.max(base + 3, parsed.data.median_1st_m + curvature(first[0], first[1]));
         const look = lookOf(area(outer), top - base);
-        buildings.push({ base, id, look, rings, tone: hash(id) % 6, top });
+        const peak = (parsed.data.peak_1st_m ?? 0) + curvature(first[0], first[1]);
+        const spire = n === biggest ? (spireOf(rings, top, peak) ?? undefined) : undefined;
+        buildings.push({ base, id, look, rings, spire, tone: hash(id) % 6, top });
       }
     }
   }
@@ -378,5 +394,13 @@ export const frameScene = async (
     (t) => !buildings.some((b) => inArea(b.rings, t.e, t.n)),
   );
   const trees = [...(await streetTreesIn(proj, keys, box)), ...planted];
-  return { areas, box, buildings, roads, terrain, trees };
+  return {
+    areas,
+    box,
+    buildings: withoutBorrowedSpires(buildings),
+    crossings: crossingsOf(roads),
+    roads,
+    terrain,
+    trees,
+  };
 };

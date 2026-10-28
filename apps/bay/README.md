@@ -69,7 +69,11 @@ for everything after them, so paint `ferry`, look at it, adjust the prompt, and 
 ## Caveats
 
 - OpenStreetMap data is ODbL: keep the credit the viewer shows.
-- Bridges draw flat on the water, and a building is one block at its median roof height, so
-  spires and towers on top (the Ferry Building's clock tower) don't show.
+- Bridges draw flat on the water.
+- A building is one block at its median roof height. Where its LiDAR peak stands 15 m or more
+  above that, a square tower with a pyramid cap rises from the footprint's middle to the peak
+  (the Ferry Building's clock tower). DataSF doesn't say where the peak is, so an off-centre
+  spire lands in the middle, and a peak no higher than a building within 25 m is taken for that
+  neighbour's and dropped.
 - The buildings and trees are DataSF's, so outside San Francisco the map has ground and roads
   only.

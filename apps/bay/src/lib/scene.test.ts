@@ -1,20 +1,32 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { Area, Ring, Terrain } from "./scene";
+import type { Area, Building, Ring, Road, Terrain } from "./scene";
 import {
   area,
   areaOf,
   canopyOf,
+  centroid,
+  crossingsOf,
   heightAt,
   inArea,
   lookOf,
   roadOf,
   scatterTrees,
   seeded,
+  spireOf,
+  withoutBorrowedSpires,
 } from "./scene";
 
 // a tree's place, to compare two frames' trees
 const key = (t: { e: number; n: number }) => `${t.e.toFixed(3)}:${t.n.toFixed(3)}`;
+
+// a plain street along a line
+const road = (line: [number, number][]): Road => ({
+  bridge: false,
+  kind: "street",
+  line,
+  width: 10,
+});
 
 const square = (x: number, y: number, s: number): Ring => [
   [x, y],
@@ -83,4 +95,90 @@ test("buildings, trees, roads and ground classes", () => {
   assert.equal(areaOf("water", "ocean"), "water");
   assert.equal(areaOf("landcover", "wood"), "wood");
   assert.equal(areaOf("landuse", "residential"), null);
+});
+
+test("a tower stands in the middle of a big footprint whose peak stands well above its roof", () => {
+  // the Ferry Building, near enough: 200 by 50 m, roof at 18 m, clock tower to 75 m
+  const ferry = [square(0, 0, 50).map(([e, n]): [number, number] => [e * 4, n])];
+  assert.deepEqual(centroid(ferry[0] ?? []), [100, 25]);
+  const spire = spireOf(ferry, 18, 75);
+  assert.ok(spire);
+  assert.equal(spire.top, 75);
+  assert.equal(spire.e, 100);
+  assert.ok(spire.side >= 4 && spire.side <= 12);
+  // a chimney's rise, or a small footprint, is no tower
+  assert.equal(spireOf(ferry, 18, 25), null);
+  assert.equal(spireOf([square(0, 0, 10)], 10, 60), null);
+});
+
+test("crossings: across each street a step back from the junction, not off a road's end", () => {
+  // a cross: four crossings, two across each road
+  const cross = crossingsOf([
+    road([
+      [-100, 0],
+      [100, 0],
+    ]),
+    road([
+      [0, -100],
+      [0, 100],
+    ]),
+  ]);
+  assert.equal(cross.length, 4);
+  for (const c of cross) {
+    assert.equal(Math.round(Math.hypot(c.e, c.n) * 10) / 10, 7.5);
+  }
+  // a T: the stem ends at the junction, so there is no crossing beyond its end
+  const tee = crossingsOf([
+    road([
+      [-100, 0],
+      [100, 0],
+    ]),
+    road([
+      [0, 0],
+      [0, 100],
+    ]),
+  ]);
+  assert.equal(tee.length, 3);
+  assert.ok(tee.every((c) => c.n > -1));
+  // bridges and paths get none
+  assert.equal(
+    crossingsOf([
+      {
+        ...road([
+          [-100, 0],
+          [100, 0],
+        ]),
+        bridge: true,
+      },
+      road([
+        [0, -100],
+        [0, 100],
+      ]),
+    ]).length,
+    0,
+  );
+});
+
+// a 40 m block along the east, with a tower to a peak if it has one
+const block = (e: number, top: number, peak?: number): Building => {
+  const b: Building = {
+    base: 0,
+    id: String(e),
+    look: "block",
+    rings: [square(e, 0, 40)],
+    tone: 0,
+    top,
+  };
+  if (peak !== undefined) {
+    b.spire = { e: e + 20, n: 20, side: 6, top: peak };
+  }
+  return b;
+};
+
+test("a tower a taller neighbour lent is taken off; one standing alone stays", () => {
+  const [low, tall] = withoutBorrowedSpires([block(0, 20, 90), block(50, 100)]);
+  assert.equal(low?.spire, undefined);
+  assert.equal(tall?.top, 100);
+  const [alone] = withoutBorrowedSpires([block(0, 20, 90), block(200, 100)]);
+  assert.equal(alone?.spire?.top, 90);
 });

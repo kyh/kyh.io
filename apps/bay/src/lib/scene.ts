@@ -34,6 +34,16 @@ export interface Building {
   look: BuildingLook;
   // which of its look's colours it wears
   tone: number;
+  // a tower standing above the roof (a clock tower, a spire, a stepped top), where it has one
+  spire?: Spire;
+}
+
+export interface Spire {
+  e: number;
+  n: number;
+  // the side of its square, metres
+  side: number;
+  top: number;
 }
 
 export interface Tree {
@@ -68,6 +78,15 @@ export interface Scene {
   roads: Road[];
   buildings: Building[];
   trees: Tree[];
+  crossings: Crossing[];
+}
+
+// a zebra crossing: where its middle is, which way the road it crosses runs, and how wide it is
+export interface Crossing {
+  e: number;
+  n: number;
+  angle: number;
+  width: number;
 }
 
 // the ground's height at a point, bilinear between the grid's, held at its edges
@@ -268,3 +287,149 @@ export const areaOf = (layer: string, cls: string): AreaKind | null => {
   }
   return null;
 };
+
+// the middle of a ring by area (the shoelace centroid), or null for a ring with no area
+export const centroid = (ring: Ring): Point | null => {
+  let a = 0;
+  let e = 0;
+  let n = 0;
+  for (let i = 0; i < ring.length; i += 1) {
+    const p = ring[i];
+    const q = ring[(i + 1) % ring.length];
+    if (p && q) {
+      const cross = p[0] * q[1] - q[0] * p[1];
+      a += cross;
+      e += (p[0] + q[0]) * cross;
+      n += (p[1] + q[1]) * cross;
+    }
+  }
+  return Math.abs(a) < 1e-9 ? null : [e / (3 * a), n / (3 * a)];
+};
+
+// how far the highest point must stand above the roof to be a tower, metres: less is chimneys,
+// plant and the odd overhanging tree in the LiDAR
+const SPIRE_RISE = 15;
+
+// a building's tower from its LiDAR peak: where its footprint's middle is, a square a sixth of the
+// footprint across (4 to 12 m), up to the peak. The data has no place for the peak, so it stands
+// in the middle, as the Ferry Building's clock tower does.
+export const spireOf = (rings: Ring[], top: number, peak: number): Spire | null => {
+  const [outer] = rings;
+  if (!outer || peak - top < SPIRE_RISE || area(outer) < 400) {
+    return null;
+  }
+  const middle = centroid(outer);
+  if (!(middle && inArea(rings, middle[0], middle[1]))) {
+    return null;
+  }
+  const side = Math.min(12, Math.max(4, Math.sqrt(area(outer)) / 6));
+  return { e: middle[0], n: middle[1], side, top: peak };
+};
+
+// where two segments cross, as the distance along the first (0 to 1), or null
+const meet = (a: Point, b: Point, c: Point, d: Point) => {
+  const r = [b[0] - a[0], b[1] - a[1]];
+  const s = [d[0] - c[0], d[1] - c[1]];
+  const den = (r[0] ?? 0) * (s[1] ?? 0) - (r[1] ?? 0) * (s[0] ?? 0);
+  if (Math.abs(den) < 1e-9) {
+    return null;
+  }
+  const t = ((c[0] - a[0]) * (s[1] ?? 0) - (c[1] - a[1]) * (s[0] ?? 0)) / den;
+  const u = ((c[0] - a[0]) * (r[1] ?? 0) - (c[1] - a[1]) * (r[0] ?? 0)) / den;
+  const slack = 1e-6;
+  return t >= -slack && t <= 1 + slack && u >= -slack && u <= 1 + slack ? t : null;
+};
+
+// how far a point is from a polyline, metres
+const distanceTo = (line: Point[], e: number, n: number) => {
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 0; i + 1 < line.length; i += 1) {
+    const a = line[i];
+    const b = line[i + 1];
+    if (a && b) {
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const t = Math.max(
+        0,
+        Math.min(1, ((e - a[0]) * dx + (n - a[1]) * dy) / (dx * dx + dy * dy || 1)),
+      );
+      best = Math.min(best, Math.hypot(a[0] + dx * t - e, a[1] + dy * t - n));
+    }
+  }
+  return best;
+};
+
+// crossings closer than this to one already placed are the same junction's, metres
+const SAME = 6;
+
+// zebra crossings at every junction of streets: across each road, a step back from the junction
+// on each side (half the other road's width, plus a sidewalk), wherever the road goes on there
+export const crossingsOf = (roads: Road[]) => {
+  const streets = roads.filter((r) => (r.kind === "street" || r.kind === "major") && !r.bridge);
+  const crossings: Crossing[] = [];
+  const place = (road: Road, other: Road, at: Point, a: Point, b: Point) => {
+    const angle = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const step = other.width / 2 + 2.5;
+    for (const side of [-1, 1]) {
+      const e = at[0] + Math.cos(angle) * step * side;
+      const n = at[1] + Math.sin(angle) * step * side;
+      const near = crossings.some((c) => Math.hypot(c.e - e, c.n - n) < SAME);
+      if (!near && distanceTo(road.line, e, n) < 1) {
+        crossings.push({ angle, e, n, width: road.width });
+      }
+    }
+  };
+  for (const [x, one] of streets.entries()) {
+    for (const two of streets.slice(x + 1)) {
+      for (let i = 0; i + 1 < one.line.length; i += 1) {
+        for (let j = 0; j + 1 < two.line.length; j += 1) {
+          const [a, b, c, d] = [one.line[i], one.line[i + 1], two.line[j], two.line[j + 1]];
+          const t = a && b && c && d ? meet(a, b, c, d) : null;
+          if (a && b && c && d && t !== null) {
+            const at: Point = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+            place(one, two, at, a, b);
+            place(two, one, at, c, d);
+          }
+        }
+      }
+    }
+  }
+  return crossings;
+};
+
+// the gap between two footprints' bounding boxes, metres (0 when they overlap)
+const gapBetween = (a: Ring, b: Ring) => {
+  const box = (r: Ring) => ({
+    e0: Math.min(...r.map((p) => p[0])),
+    e1: Math.max(...r.map((p) => p[0])),
+    n0: Math.min(...r.map((p) => p[1])),
+    n1: Math.max(...r.map((p) => p[1])),
+  });
+  const p = box(a);
+  const q = box(b);
+  return Math.hypot(Math.max(0, p.e0 - q.e1, q.e0 - p.e1), Math.max(0, p.n0 - q.n1, q.n0 - p.n1));
+};
+
+// how near a building as tall as a tower's peak makes the peak its, metres
+const BORROWED = 25;
+
+// towers taken off buildings whose peak a taller neighbour lent them: a tower's facade leaning
+// into the LiDAR of the block beside it reads as that block's peak
+export const withoutBorrowedSpires = (buildings: Building[]) =>
+  buildings.map((b) => {
+    const [outer] = b.rings;
+    const { spire } = b;
+    if (!(spire && outer)) {
+      return b;
+    }
+    const lent = buildings.some((o) => {
+      const [other] = o.rings;
+      return (
+        o !== b &&
+        other !== undefined &&
+        o.top >= spire.top - 8 &&
+        gapBetween(outer, other) < BORROWED
+      );
+    });
+    return lent ? { ...b, spire: undefined } : b;
+  });
