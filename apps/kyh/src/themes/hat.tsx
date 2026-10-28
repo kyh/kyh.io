@@ -38,7 +38,8 @@ const perchesOnScreen = () =>
   [...document.querySelectorAll<HTMLElement>("[data-hat-perch]")].flatMap((element) => {
     const rect = element.getBoundingClientRect();
     const key = element.dataset.hatPerch;
-    if (!key || rect.width === 0) {
+    // An open folder's apps are gone once it closes, and the hat with them.
+    if (!key || rect.width === 0 || element.closest("[role=dialog]")) {
       return [];
     }
     const perch: Perch = { key, x: rect.right - IN_FROM_RIGHT, y: rect.top + DOWN_FROM_TOP };
@@ -94,11 +95,15 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     const at = placed.getBoundingClientRect();
     const grip = { x: at.left - event.clientX, y: at.top - event.clientY };
     const brimAt = (move: PointerEvent) => ({ x: move.clientX + grip.x, y: move.clientY + grip.y });
+    const { pointerId } = event;
     carrying.current?.abort();
     const carry = new AbortController();
     carrying.current = carry;
     const { signal } = carry;
     const drop = (up: PointerEvent) => {
+      if (up.pointerId !== pointerId) {
+        return;
+      }
       carry.abort();
       const brim = brimAt(up);
       const perches = perchesOnScreen();
@@ -112,14 +117,21 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
       );
       setHeld(null);
     };
-    window.addEventListener("pointermove", (move) => setHeld(brimAt(move)), { signal });
+    const move = (to: PointerEvent) => {
+      if (to.pointerId === pointerId) {
+        setHeld(brimAt(to));
+      }
+    };
+    window.addEventListener("pointermove", move, { signal });
     window.addEventListener("pointerup", drop, { signal });
     window.addEventListener("pointercancel", drop, { signal });
     setHeld({ x: at.left, y: at.top });
   };
 
   const [left, top, width, height] = picture.box;
-  const drawing = (
+  // Carried, it's drawn again over everything; the worn one stays put, unseen,
+  // so the node the press began on keeps it (a finger's capture is lost with it).
+  const drawing = (carried: boolean) => (
     <svg
       viewBox={picture.box.join(" ")}
       className="pointer-events-none absolute touch-none overflow-visible"
@@ -136,8 +148,8 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
       <g
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={held ? "pointer-events-auto cursor-grabbing" : "pointer-events-auto cursor-grab"}
-        onPointerDown={pickUp}
+        className={carried ? undefined : "pointer-events-auto cursor-grab"}
+        onPointerDown={carried ? undefined : pickUp}
         // Worn on a link, a press on the hat is for the hat.
         onClick={(event) => {
           event.preventDefault();
@@ -172,28 +184,30 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     </svg>
   );
 
-  if (held) {
-    return createPortal(
-      <span
-        ref={hat}
-        className="pointer-events-none fixed z-[60] size-0"
-        style={{ left: held.x, rotate: `${TILT}deg`, scale: 1.15, top: held.y }}
-        aria-hidden="true"
-      >
-        {drawing}
-      </span>,
-      document.body,
-    );
-  }
   const worn = (
     <span
       ref={hat}
-      className="pointer-events-none absolute top-[5px] right-[7px] z-[2] size-0"
+      className={`pointer-events-none absolute top-[5px] right-[7px] z-[2] size-0 ${held ? "invisible" : ""}`}
       style={{ rotate: `${TILT}deg` }}
       aria-hidden="true"
     >
-      {drawing}
+      {drawing(false)}
     </span>
   );
-  return host ? createPortal(worn, host) : worn;
+  return (
+    <>
+      {host ? createPortal(worn, host) : worn}
+      {held &&
+        createPortal(
+          <span
+            className="pointer-events-none fixed z-[60] size-0 cursor-grabbing"
+            style={{ left: held.x, rotate: `${TILT}deg`, scale: 1.15, top: held.y }}
+            aria-hidden="true"
+          >
+            {drawing(true)}
+          </span>,
+          document.body,
+        )}
+    </>
+  );
 };
