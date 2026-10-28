@@ -60,14 +60,17 @@ export const theme = {
     ...namedConfetti("gold", "gold"),
   ],
   // New Year's Eve and the week after it.
+  corners: null,
   days: (year) => {
     const first = lunarNewYear(year);
     return first === null ? null : around(first, 1, 6);
   },
   drift: null,
   glyph: LANTERN_GLYPH,
+  hat: null,
   id: "lunarNewYear",
   mode: "dark",
   name: "Lunar New Year",
   tint: { chroma: 2.5, hue: 25 },
+  trail: true,
 } as const satisfies Theme;

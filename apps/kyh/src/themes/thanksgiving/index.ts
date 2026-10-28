@@ -6,6 +6,7 @@ import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { around, nthWeekday } from "../calendar";
 import { namedConfetti } from "../theme";
+import { topHat } from "../hats";
 
 /** The maple leaf's outline, for its piece and its glyph alike. */
 const MAPLE_OUTLINE =
@@ -52,11 +53,14 @@ export const theme = {
     ...namedConfetti("orange", "gold"),
   ],
   // Thanksgiving week, Monday to Sunday.
+  corners: null,
   days: (year) => around(nthWeekday(year, 11, 4, 4), 3, 3),
   drift: "leaves",
   glyph: MAPLE_GLYPH,
+  hat: topHat("#3b2a1e", "#1c140e", "#b08a62"),
   id: "thanksgiving",
   mode: "light",
   name: "Thanksgiving",
   tint: { chroma: 2, hue: 60 },
+  trail: true,
 } as const satisfies Theme;

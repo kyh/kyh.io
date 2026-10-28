@@ -44,10 +44,13 @@ const GOLDEN_EGG = {
 export const theme = {
   art: GOLDEN_EGG,
   confetti: namedConfetti("gold", "gold", "crimson", "blue", "green", "plum"),
+  corners: null,
   drift: null,
   glyph: null,
+  hat: null,
   id: "classic",
   mode: null,
   name: "Light / Dark",
   tint: null,
+  trail: false,
 } as const satisfies Theme;

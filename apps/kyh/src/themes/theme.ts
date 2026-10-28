@@ -2,7 +2,9 @@
 // `index.ts` as `theme`, one field per effect, each read where the effect
 // happens: the days it runs (the calendar), its light or dark and grey tint
 // (the page's paint), its piece and confetti (easter-egg finds), its glyph
-// (the theme toggle) and what falls across every page (`drift.tsx`). How the
+// (the theme toggle), what falls across every page (`drift.tsx`), the hat on
+// the logo (`hat.tsx`), what trails the pointer (`trail.tsx`) and what hangs
+// in the page's corners (`corners.tsx`). How the
 // showcase's town dresses is the folder's `town.ts` (`Town` in
 // city/town-theme.ts), kept apart so the town's drawing code loads only on
 // the showcase. A new effect is a field here (or on `Town`), a value in each
@@ -23,6 +25,9 @@ export type Mode = "light" | "dark";
 
 /** What falls across every page: snow drifting down, or leaves tumbling. */
 export type Drift = "snow" | "leaves";
+
+/** What hangs in the page's top corners: cobwebs, a spider on each. */
+export type Corners = "webs";
 
 /** One side of a bit of confetti and its flip side. */
 export interface ConfettiSide {
@@ -46,6 +51,11 @@ export interface Theme {
   glyph: string | null;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
+  /** Worn on the logo's corner, tilted: a piece with its brim's middle at (12, 19). Null wears none. */
+  hat: Art | null;
+  /** Whether a mouse leaves a trail of the theme's piece behind it. */
+  trail: boolean;
+  corners: Corners | null;
 }
 
 /** Confetti in the site's named colors (lib/color.ts): each name's color, its hue on the back. */

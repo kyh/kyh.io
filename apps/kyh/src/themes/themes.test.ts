@@ -28,7 +28,7 @@ test("where two overlap, the one listed first runs", () => {
   assert.equal(on(2029, 2, 10), "valentines");
 });
 
-test("each theme is whole: one id, its art's gradients, confetti, and only the default runs always, keeps the visitor's light or dark and wears the sun or moon", () => {
+test("each theme is whole: one id, its art's gradients, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it leaves no trail", () => {
   assert.equal(new Set(THEMES.map(({ id }) => id)).size, THEMES.length);
   for (const theme of THEMES) {
     assert.ok(theme.art.layers.length > 0, theme.id);
@@ -38,6 +38,11 @@ test("each theme is whole: one id, its art's gradients, confetti, and only the d
     assert.equal(theme.tint === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.mode === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.glyph === null, theme.id === DEFAULT_THEME, theme.id);
+    assert.equal(theme.trail, theme.id !== DEFAULT_THEME, theme.id);
+    if (theme.hat !== null) {
+      assert.ok(theme.hat.layers.length > 0, theme.id);
+      assert.deepEqual(missingGradients(theme.hat), [], theme.id);
+    }
   }
 });
 

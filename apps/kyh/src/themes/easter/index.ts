@@ -6,6 +6,7 @@ import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { circle, EGG, GLOSS } from "../art";
 import { around, easterSunday } from "../calendar";
+import { BUNNY_EARS } from "../hats";
 
 const PAINTED_EGG = {
   gradients: {
@@ -42,11 +43,14 @@ export const theme = {
     { back: "#dcefff", front: "#8cc8f5" },
   ],
   // Good Friday to Easter Monday.
+  corners: null,
   days: (year) => around(easterSunday(year), 2, 1),
   drift: null,
   glyph: EGG,
+  hat: BUNNY_EARS,
   id: "easter",
   mode: "light",
   name: "Easter",
   tint: { chroma: 1.5, hue: 320 },
+  trail: true,
 } as const satisfies Theme;

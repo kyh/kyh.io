@@ -7,6 +7,7 @@ import type { Theme } from "../theme";
 import { placed } from "../art";
 import { span } from "../calendar";
 import { namedConfetti } from "../theme";
+import { topHat } from "../hats";
 
 // One leaf of three, a heart with its tip at the stem, about the origin.
 const LEAF: readonly (readonly [number, number])[] = [
@@ -59,11 +60,14 @@ const SHAMROCK_GLYPH = `${[180, -60, 60].map((angle) => placed(GLYPH_LEAF, [12, 
 export const theme = {
   art: SHAMROCK,
   confetti: [{ back: "#86efac", front: "#15803d" }, ...namedConfetti("green", "green", "gold")],
+  corners: null,
   days: (year) => span(year, [3, 14], [3, 17]),
   drift: null,
   glyph: SHAMROCK_GLYPH,
+  hat: topHat("#15803d", "#111827", "#0b3d1e"),
   id: "stPatricks",
   mode: "light",
   name: "St. Patrick's Day",
   tint: { chroma: 2, hue: 140 },
+  trail: true,
 } as const satisfies Theme;

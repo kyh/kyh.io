@@ -164,6 +164,16 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at
   Christmas, leaves at Thanksgiving, nothing in the rest;
+- `hat`: a piece worn tilted on the homepage logo's corner (`hat.tsx`, the
+  hats in `hats.ts`, the blimp's drawn flat): a witch's at Halloween, Santa's
+  at Christmas, top hats at St. Patrick's and Thanksgiving, bunny ears at
+  Easter, none in the rest;
+- `trail`: a mouse leaves the theme's piece behind it (`trail.tsx`: a ring of
+  pieces reused, moved on the DOM and animated by WAAPI, no React per move);
+  every holiday has one, the default none;
+- `corners`: what hangs in the page's top corners (`corners.tsx`,
+  CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
+  walking round the left one and one dropping on its thread from the right;
 - `town.ts` (`Town`), how the showcase's town dresses:
   - `repaint`: tokens in its own colors, which stay in color in the grey town,
     and `vivid`, tokens kept in their own: snow on the roofs, grounds and trees

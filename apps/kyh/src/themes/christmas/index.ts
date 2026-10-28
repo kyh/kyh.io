@@ -8,6 +8,7 @@ import type { Theme } from "../theme";
 import { circle, point } from "../art";
 import { span } from "../calendar";
 import { namedConfetti } from "../theme";
+import { SANTA_HAT } from "../hats";
 
 /** Six arms out from the middle, each with a pair of branches at every `[how far out, how long, how wide (radians)]`. */
 const snowflake = (
@@ -49,11 +50,14 @@ export const theme = {
     { back: "#e0f2fe", front: "#ffffff" },
     ...namedConfetti("gold"),
   ],
+  corners: null,
   days: (year) => span(year, [12, 15], [12, 26]),
   drift: "snow",
   glyph: SNOWFLAKE_GLYPH,
+  hat: SANTA_HAT,
   id: "christmas",
   mode: "dark",
   name: "Christmas",
   tint: { chroma: 2, hue: 165 },
+  trail: true,
 } as const satisfies Theme;

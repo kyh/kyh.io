@@ -176,8 +176,193 @@ html[data-tint] {
   }
 }
 
+/* What hangs in the page's top corners in a theme that has it
+   (src/themes/corners.tsx): a cobweb in each, a spider walking round the
+   left one and one dropping on its thread from the right, mirrored, and
+   smaller on a phone. */
+.theme-corners {
+  --web: hsl(270 40% 84% / 0.26);
+  --spider: hsl(270 28% 16%);
+  --spider-edge: hsl(270 45% 80% / 0.8);
+  --drop: 150px;
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.theme-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+
+  &[data-side="right"] {
+    right: 0;
+    left: auto;
+    transform-origin: 100% 0;
+  }
+
+  @media (width < 40rem) {
+    scale: 0.6;
+  }
+}
+
+/* The right one is the left one in a mirror. */
+.theme-corner-mirror {
+  position: absolute;
+  inset: 0;
+
+  [data-side="right"] > & {
+    scale: -1 1;
+  }
+}
+
+.theme-web {
+  fill: none;
+  stroke: var(--web);
+  stroke-width: 1;
+}
+
+.spider {
+  position: absolute;
+  top: -13px;
+  left: -13px;
+  width: 26px;
+  height: 26px;
+}
+
+.spider-body {
+  fill: var(--spider);
+  stroke: var(--spider-edge);
+  stroke-width: 0.6;
+}
+
+.spider-legs {
+  fill: none;
+  stroke: var(--spider-edge);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-box: view-box;
+  transform-origin: 13.6px 12px;
+  animation: spider-step 0.16s ease-in-out infinite alternate;
+
+  &[data-gait="1"] {
+    animation-direction: alternate-reverse;
+  }
+}
+
+/* Round the ring and back, turning about at each end, resting between. */
+.spider-walk {
+  top: 0;
+  left: 0;
+  offset-rotate: auto;
+  animation: spider-walk 16s ease-in-out infinite;
+}
+
+.spider-hang {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Hangs head down, its thread paid out behind it. */
+.spider-drop {
+  rotate: 90deg;
+  animation: spider-drop 11s ease-in-out infinite;
+}
+
+.spider-thread {
+  position: absolute;
+  top: 0;
+  left: -0.5px;
+  width: 1px;
+  height: var(--drop);
+  background: var(--web);
+  transform-origin: 50% 0;
+  animation: spider-thread 11s ease-in-out infinite;
+}
+
+@keyframes spider-step {
+  from {
+    rotate: -7deg;
+  }
+  to {
+    rotate: 7deg;
+  }
+}
+
+@keyframes spider-walk {
+  0% {
+    offset-distance: 0%;
+    offset-rotate: auto 180deg;
+  }
+  4%,
+  14% {
+    offset-distance: 0%;
+    offset-rotate: auto;
+  }
+  32%,
+  42% {
+    offset-distance: 45%;
+    offset-rotate: auto;
+  }
+  62% {
+    offset-distance: 100%;
+    offset-rotate: auto;
+  }
+  66%,
+  74% {
+    offset-distance: 100%;
+    offset-rotate: auto 180deg;
+  }
+  100% {
+    offset-distance: 0%;
+    offset-rotate: auto 180deg;
+  }
+}
+
+@keyframes spider-drop {
+  0%,
+  14%,
+  88%,
+  100% {
+    translate: 0 0;
+  }
+  42%,
+  58% {
+    translate: 0 var(--drop);
+  }
+  50% {
+    translate: 0 calc(var(--drop) - 10px);
+  }
+}
+
+@keyframes spider-thread {
+  0%,
+  14%,
+  88%,
+  100% {
+    scale: 1 0;
+  }
+  42%,
+  58% {
+    scale: 1 1;
+  }
+  50% {
+    /* 10px short of the drop. */
+    scale: 1 0.933;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .piece-swing {
+  .piece-swing,
+  .spider-legs,
+  .spider-walk,
+  .spider-drop,
+  .spider-thread {
     animation: none;
   }
 }
