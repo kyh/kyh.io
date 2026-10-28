@@ -275,6 +275,10 @@ html[data-tint] {
   }
 }
 
+.theme-corners[data-offscreen] * {
+  animation-play-state: paused;
+}
+
 /* Its legs scrabble while it's held, and hold still while it bounces. */
 .spider-free {
   &[data-phase="held"] {

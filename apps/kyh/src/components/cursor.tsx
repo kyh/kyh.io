@@ -44,23 +44,43 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
     () => new Interpolator<PagePoint>({ delayMs: 120, lerp: lerpPoint, maxExtrapolateMs: 0 }),
   );
 
+  const wake = useRef<() => void>(null);
+
   useEffect(() => {
     smooth.push(t, { fromCenter, fromTop });
+    wake.current?.();
   }, [smooth, t, fromCenter, fromTop]);
 
   useEffect(() => {
     let frame = 0;
     const draw = () => {
+      frame = 0;
       const point = smooth.sample();
       if (point && ref.current) {
         const view = readViewport();
         const { x, y } = toScreen(point, view);
         ref.current.style.transform = `translate(${x - offset}px, ${y - offset}px)`;
       }
-      frame = requestAnimationFrame(draw);
+      // Caught up to the last spot sent, it holds still (no frames) until the next or a scroll.
+      if (point !== smooth.latest) {
+        frame = requestAnimationFrame(draw);
+      }
     };
-    frame = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(frame);
+    const start = () => {
+      if (frame === 0) {
+        frame = requestAnimationFrame(draw);
+      }
+    };
+    wake.current = start;
+    start();
+    window.addEventListener("scroll", start, { passive: true });
+    window.addEventListener("resize", start);
+    return () => {
+      wake.current = null;
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", start);
+      window.removeEventListener("resize", start);
+    };
   }, [smooth]);
 
   const line = lineOf(chat);

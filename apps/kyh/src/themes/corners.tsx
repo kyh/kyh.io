@@ -150,6 +150,11 @@ const useBend = (
       if (!corner.current || at?.kind !== "mouse") {
         return;
       }
+      // Hung from the page's top and never scaled up, a web is never lower on the screen than
+      // this: below it, a web at rest needn't be measured (a forced layout every move).
+      if (at.y > WEB_SIZE + BEND_REACH && target === 0 && bend.strength === 0) {
+        return;
+      }
       const local = localIn(corner.current, side, at.x, at.y);
       const near =
         local.x > -BEND_REACH &&
@@ -394,13 +399,30 @@ const Web = ({ side }: { side: Side }) => {
   );
 };
 
+/** Scrolled out of sight, the corners' CSS animations hold still (global.css): nobody sees them beat. */
+const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
+  useEffect(() => {
+    const element = corners.current;
+    if (!shown || !element) {
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [corners, shown]);
+};
+
 export const ThemeCorners = () => {
   const { corners } = themeOf(useTheme());
+  const ref = useRef<HTMLDivElement>(null);
+  usePausedOffscreen(ref, corners !== null);
   if (corners === null) {
     return null;
   }
   return (
-    <div className="theme-corners" data-corners={corners} aria-hidden="true">
+    <div ref={ref} className="theme-corners" data-corners={corners} aria-hidden="true">
       <Web side="left" />
       <Web side="right" />
     </div>

@@ -36,6 +36,7 @@ export const ThemeTrail = () => {
     const random = createRandom(Date.now());
     let from: { x: number; y: number } | null = null;
     let next = 0;
+    const flights: Animation[] = [];
     return subscribeToPointer(() => {
       const at = lastPointer();
       if (at?.kind !== "mouse") {
@@ -45,18 +46,20 @@ export const ThemeTrail = () => {
         return;
       }
       from = { x: at.x, y: at.y };
-      const piece = pieces.current[next];
+      const index = next;
+      const piece = pieces.current[index];
       next = (next + 1) % RING;
       if (!piece) {
         return;
       }
-      piece.style.left = `${at.x - SIZE / 2}px`;
-      piece.style.top = `${at.y - SIZE / 2}px`;
+      // `translate`, not left and top: a move mustn't dirty layout for the next reader of it.
+      piece.style.translate = `${at.x - SIZE / 2}px ${at.y - SIZE / 2}px`;
+      piece.hidden = false;
       // Off up and to either side, turning a little, as if let go.
       const dx = random.range(-28, 28);
       const dy = random.range(-46, -16);
       const turn = random.range(-30, 30);
-      piece.animate(
+      const flight = piece.animate(
         [
           { opacity: 0.95, transform: "translate(0, 0) scale(0.4) rotate(0deg)" },
           { offset: 0.25, opacity: 0.9, transform: "translate(0, 0) scale(1) rotate(0deg)" },
@@ -64,6 +67,13 @@ export const ThemeTrail = () => {
         ],
         { duration: LIFE_MS, easing: "ease-out" },
       );
+      flights[index] = flight;
+      // Hidden between flights, so a bat's wings don't beat on where nobody can see them.
+      flight.addEventListener("finish", () => {
+        if (flights[index] === flight) {
+          piece.hidden = true;
+        }
+      });
     });
   }, [trail, still]);
 
@@ -83,8 +93,9 @@ export const ThemeTrail = () => {
           ref={(piece) => {
             pieces.current[index] = piece;
           }}
-          className="absolute opacity-0"
+          className="absolute top-0 left-0 opacity-0"
           style={{ height: SIZE, width: SIZE }}
+          hidden
         >
           <svg viewBox="0 0 24 24" className="block size-full overflow-visible">
             <PieceLayers art={art} id={id} />

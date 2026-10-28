@@ -132,6 +132,13 @@ export const FigureCanvas = () => {
     }
   }, []);
 
+  // Parked once everything settles (see afterTick): whatever moves a figure starts it again.
+  const wakePhysics = useCallback(() => {
+    if (isVisibleRef.current) {
+      resumePhysics();
+    }
+  }, [resumePhysics]);
+
   // IntersectionObserver to pause when not visible
   useEffect(() => {
     if (!containerRef.current) {
@@ -265,6 +272,7 @@ export const FigureCanvas = () => {
         });
         Composite.add(engineRef.current.world, body);
       }
+      wakePhysics();
       discoverEgg("shapes");
     };
 
@@ -289,6 +297,8 @@ export const FigureCanvas = () => {
       spawnFiguresAt(touch.clientX - rect.left, touch.clientY - rect.top);
     };
 
+    // A press wakes it, so the mouse constraint's next tick can pick a figure up.
+    canvas.addEventListener("pointerdown", wakePhysics);
     canvas.addEventListener("click", handleClick);
     canvas.addEventListener("touchend", handleTouch);
 
@@ -307,6 +317,7 @@ export const FigureCanvas = () => {
         for (const body of bodiesRef.current) {
           Sleeping.set(body, false);
         }
+        wakePhysics();
       }
     };
 
@@ -384,14 +395,20 @@ export const FigureCanvas = () => {
     });
 
     // Drawn only while something moves: once the figures settle and sleep,
-    // the canvas holds its last frame instead of repainting every one.
+    // the canvas holds its last frame and the runner parks, waking no frames
+    // (its next one is already asked for, so stopping here cancels it).
     staleRef.current = true;
     Events.on(runner, "afterTick", () => {
       const moving =
-        animatingRef.current.length > 0 || bodiesRef.current.some((body) => !body.isSleeping);
+        animatingRef.current.length > 0 ||
+        mouseConstraint.body !== null ||
+        bodiesRef.current.some((body) => !body.isSleeping);
       if (moving || staleRef.current) {
         Render.world(render);
         staleRef.current = false;
+      }
+      if (!moving) {
+        Runner.stop(runner);
       }
     });
 
@@ -400,6 +417,7 @@ export const FigureCanvas = () => {
     }
 
     return () => {
+      canvas.removeEventListener("pointerdown", wakePhysics);
       canvas.removeEventListener("click", handleClick);
       canvas.removeEventListener("touchend", handleTouch);
       canvas.removeEventListener("touchend", requestOrientationPermission);
@@ -416,13 +434,14 @@ export const FigureCanvas = () => {
       bodiesRef.current = [];
       animatingRef.current = [];
     };
-  }, []);
+  }, [wakePhysics]);
 
   // Restroked by the fade on the next tick, so the figures a visitor spawned survive the switch.
   useEffect(() => {
     isLightRef.current = mode === "light";
     staleRef.current = true;
-  }, [mode]);
+    wakePhysics();
+  }, [mode, wakePhysics]);
 
   return (
     <div
