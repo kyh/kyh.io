@@ -94,11 +94,12 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     }
     event.preventDefault();
     event.stopPropagation();
-    // A landing still settling would put the hat somewhere it isn't.
+    // Taken from where it's seen, mid-landing too; then the landing stops, so
+    // the next drop measures where it really rests.
+    const at = placed.getBoundingClientRect();
     for (const animation of placed.getAnimations()) {
       animation.cancel();
     }
-    const at = placed.getBoundingClientRect();
     const grip = { x: at.left - event.clientX, y: at.top - event.clientY };
     const brimAt = (move: PointerEvent) => ({ x: move.clientX + grip.x, y: move.clientY + grip.y });
     const { pointerId } = event;
