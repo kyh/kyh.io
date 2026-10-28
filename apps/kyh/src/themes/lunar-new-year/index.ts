@@ -8,44 +8,19 @@ import { ellipse } from "../art";
 import { around, lunarNewYear } from "../calendar";
 import { namedConfetti } from "../theme";
 
-const LANTERN_GOLD = "#f5c04a";
-const LANTERN_GOLD_EDGE = "#a8741a";
-
+/** A red paper lantern: hung from a hook, ribbed, gold caps, a tassel below. */
 const LANTERN = {
-  gradients: {
-    body: {
-      at: [0.4, 0.35],
-      kind: "radial",
-      r: 0.75,
-      stops: [
-        [0, "#ffd27a"],
-        [0.3, "#ff4a3d"],
-        [1, "#a3121b"],
-      ],
-    },
-  },
   layers: [
-    { d: "M12 1.8v3.6", stroke: LANTERN_GOLD_EDGE, strokeWidth: 1 },
-    {
-      d: ellipse(12, 12.6, 7.4, 6),
-      gradient: "body",
-      shadow: true,
-      stroke: "#7a0d14",
-      strokeWidth: 0.6,
-    },
-    {
-      d: "M12 6.7v11.8M8.4 7.6c-1.7 3-1.7 7.8 0 10M15.6 7.6c1.7 3 1.7 7.8 0 10",
-      opacity: 0.7,
-      stroke: "#8f1018",
-      strokeWidth: 0.5,
-    },
+    { d: "M12 1.8v3.6", strokeWidth: 1 },
+    { d: ellipse(12, 12.6, 7.4, 6), fill: "festiveRed", shade: "festiveRedShade" },
+    { d: "M12 6.7v11.8M8.4 7.6c-1.7 3-1.7 7.8 0 10M15.6 7.6c1.7 3 1.7 7.8 0 10", strokeWidth: 0.4 },
     {
       d: "M9.2 5.2h5.6a.8.8 0 0 1 .8.8v1.2H8.4V6a.8.8 0 0 1 .8-.8ZM8.4 18h7.2v1.2a.8.8 0 0 1-.8.8H9.2a.8.8 0 0 1-.8-.8Z",
-      fill: LANTERN_GOLD,
-      stroke: LANTERN_GOLD_EDGE,
-      strokeWidth: 0.4,
+      fill: "gold",
+      shade: "goldShade",
     },
-    { d: "M12 20v3M10.8 20.2l-.4 2.4M13.2 20.2l.4 2.4", stroke: "#e2362b", strokeWidth: 0.9 },
+    { d: "M12 20v3M10.8 20.2l-.4 2.4M13.2 20.2l.4 2.4", strokeWidth: 1.7 },
+    { d: "M12 20v3M10.8 20.2l-.4 2.4M13.2 20.2l.4 2.4", stroke: "festiveRed", strokeWidth: 0.8 },
   ],
 } satisfies Art;
 
@@ -60,6 +35,7 @@ export const theme = {
     ...namedConfetti("gold", "gold"),
   ],
   // New Year's Eve and the week after it.
+  corners: null,
   days: (year) => {
     const first = lunarNewYear(year);
     return first === null ? null : around(first, 1, 6);
@@ -70,4 +46,5 @@ export const theme = {
   mode: "dark",
   name: "Lunar New Year",
   tint: { chroma: 2.5, hue: 25 },
+  trail: true,
 } as const satisfies Theme;

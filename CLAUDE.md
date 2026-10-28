@@ -158,12 +158,23 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   Thursday, a Lunar New Year table); the default theme has none;
 - `mode` and `tint`: its light or dark, and its grey tint (an OKLCH hue and a
   chroma as a multiple of slate's), painted by `paint.ts`;
-- `art`: its piece as data (`art.ts`: paths and gradients, drawn by
-  `piece.tsx`; a layer can `swing` about a point, as the bat's wings beat),
+- `art`: its piece as data (`art.ts`, drawn by `piece.tsx`), in the
+  showcase town's hand like every theme effect: flat faces in the town's
+  palette tokens (by day or night through `light-dark()`), outlined in its
+  ink, the side turned from the light in its darker token under the town's
+  checker of shade dots; no gradients, gloss or drop shadows. A layer can
+  `swing` about a point, as the bat's wings beat;
   thrown by easter-egg finds, worn by the menu's wedges and falling in the
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at
   Christmas, leaves at Thanksgiving, nothing in the rest;
+- `trail`: a mouse leaves the theme's piece behind it (`trail.tsx`: a ring of
+  pieces reused, moved on the DOM and animated by WAAPI, no React per move);
+  every holiday has one, the default none;
+- `corners`: what hangs in the page's top corners (`corners.tsx`,
+  CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
+  walking round the left one and one dropping on its thread from the right,
+  hung from the top of the page, so they scroll away with it;
 - `town.ts` (`Town`), how the showcase's town dresses:
   - `repaint`: tokens in its own colors, which stay in color in the grey town,
     and `vivid`, tokens kept in their own: snow on the roofs, grounds and trees
@@ -181,6 +192,15 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   - `lights`, strung round every cottage's eaves and along the blimp's back;
   - `emote`: what the town's people now and then send up (hearts at
     Valentine's), floated over their heads by `life.ts` (`Emote` in `overlay.ts`);
+  - `hat`: the hat the homepage's icon wears tilted on its corner, drawn in
+    the town's own hand (`city/hats.ts`: a witch's at Halloween, Santa's at
+    Christmas, top hats at St. Patrick's and Thanksgiving, bunny ears at
+    Easter). The page gets no town code: `themes/hat-pictures.ts` pictures
+    each on the server with `city/picture.ts` (pure, tested), which projects
+    a sketch's faces and ink to SVG paths and, with no depth buffer, puts them
+    in order a patch at a time (each solid's flat caps and its curved side;
+    the farther of two overlapping goes first), each stroke of ink with the
+    last patch along it; `themes/hat.tsx` sets the brim's middle on the corner;
   - its sky: the blimp's `blimp` look, its greeting in the theme's colors
     ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
     which Santa and the witch wear too), and a `flyer` crossing higher up the

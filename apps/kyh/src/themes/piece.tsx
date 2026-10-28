@@ -1,45 +1,50 @@
 "use client";
 
-// Draws a theme's piece (`art.ts`) in a 24×24 <svg>: its gradients once, in
-// <defs> under an id, and its layers wherever it shows, filling from them. A
-// page showing many of one piece (a burst, the drift) shares one set of defs.
+// Draws a theme's piece (`art.ts`) in a 24×24 <svg>, in the showcase town's
+// hand: each face flat in its palette color, outlined in ink, its shaded side
+// in the darker color under a checker of dots (`shadow-dots.ts` does the same
+// to the town). Colors follow the page's light or dark (`light-dark()`, read
+// against the `color-scheme` the theme store paints), as the town's day and
+// night. A page showing many of one piece (a burst, the drift) shares one set
+// of defs: the dots, and each shaded face's outline to clip its shade to.
+import type { Token } from "@/app/showcase/_components/city/palette";
+import { PALETTE } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
-import type { Art, Gradient, Layer } from "./art";
+import type { Art, Layer } from "./art";
 
-const Stops = ({ gradient }: { gradient: Gradient }) =>
-  gradient.stops.map(([offset, color, opacity]) => (
-    <stop key={offset} offset={offset} stopColor={color} stopOpacity={opacity} />
-  ));
+/** A palette color by day and by night, as the page is. */
+export const townColor = (token: Token) =>
+  `light-dark(${PALETTE[token].day}, ${PALETTE[token].night})`;
 
-/** A piece's gradients, for inside <defs>. */
-export const PieceDefs = ({ art, id }: { art: Art; id: string }) =>
-  Object.entries(art.gradients ?? {}).map(([name, gradient]) =>
-    gradient.kind === "radial" ? (
-      <radialGradient
-        key={name}
-        id={`${id}-${name}`}
-        cx={gradient.at[0]}
-        cy={gradient.at[1]}
-        r={gradient.r}
-      >
-        <Stops gradient={gradient} />
-      </radialGradient>
-    ) : (
-      <linearGradient
-        key={name}
-        id={`${id}-${name}`}
-        x1={gradient.from[0]}
-        y1={gradient.from[1]}
-        x2={gradient.to[0]}
-        y2={gradient.to[1]}
-      >
-        <Stops gradient={gradient} />
-      </linearGradient>
-    ),
-  );
+/** The town's ink, and its shade dots: darker by day, paler by night, as the town's are. */
+export const INK = townColor("ink");
+const DOTS = "light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.3))";
+/** The town's fine line, in the box's units. */
+const FINE = 0.6;
+/** A dot, in the box's units: about two pixels at the size pieces show. */
+const DOT = 0.75;
 
-const fillOf = (layer: Layer, id: string) =>
-  layer.gradient === undefined ? (layer.fill ?? "none") : `url(#${id}-${layer.gradient})`;
+/** The checker of shade dots, `size` units a dot, for inside <defs> under `id`. */
+export const ShadeDots = ({ id, size }: { id: string; size: number }) => (
+  <pattern id={id} width={size * 2} height={size * 2} patternUnits="userSpaceOnUse">
+    <rect width={size} height={size} style={{ fill: DOTS }} />
+    <rect x={size} y={size} width={size} height={size} style={{ fill: DOTS }} />
+  </pattern>
+);
+
+/** A piece's defs: its shade dots and the outlines its shades are clipped to. */
+export const PieceDefs = ({ art, id }: { art: Art; id: string }) => (
+  <>
+    <ShadeDots id={`${id}-dots`} size={DOT} />
+    {art.layers.map((layer, index) =>
+      layer.shade === undefined ? null : (
+        <clipPath key={index} id={`${id}-clip-${index}`}>
+          <path d={layer.d} />
+        </clipPath>
+      ),
+    )}
+  </>
+);
 
 /** A swinging layer's class and the pivot and angles its animation reads (global.css). */
 const swingOf = ({ swing }: Layer) => {
@@ -58,44 +63,50 @@ const swingOf = ({ swing }: Layer) => {
   return { className: "piece-swing", style };
 };
 
-const PieceLayer = ({ layer, id }: { layer: Layer; id: string }) => {
-  const swing = swingOf(layer);
-  const filled = layer.gradient !== undefined || layer.fill !== undefined;
-  return (
-    <>
-      {layer.shadow && (
-        <path
-          d={layer.d}
-          {...swing}
-          fill={filled ? "black" : "none"}
-          stroke={layer.stroke && "black"}
-          strokeWidth={layer.strokeWidth}
-          opacity={0.2}
-          transform="translate(0 1.5)"
-        />
-      )}
+const PieceLayer = ({ layer, index, id }: { layer: Layer; index: number; id: string }) => {
+  const { className, style } = swingOf(layer);
+  if (layer.fill === undefined) {
+    // A line: in a palette color, or ink.
+    return (
       <path
         d={layer.d}
-        {...swing}
-        fill={fillOf(layer, id)}
-        stroke={layer.stroke}
-        strokeWidth={layer.strokeWidth}
-        opacity={layer.opacity}
+        className={className}
+        style={{
+          ...style,
+          fill: "none",
+          stroke: layer.stroke ? townColor(layer.stroke) : INK,
+          strokeWidth: layer.strokeWidth ?? FINE,
+        }}
       />
-    </>
+    );
+  }
+  const split = layer.split ?? 12;
+  return (
+    <g className={className} style={style}>
+      <path d={layer.d} style={{ fill: townColor(layer.fill) }} />
+      {layer.shade !== undefined && (
+        <g clipPath={`url(#${id}-clip-${index})`}>
+          <rect x={split} y={-4} width={32} height={32} style={{ fill: townColor(layer.shade) }} />
+          <rect x={split} y={-4} width={32} height={32} fill={`url(#${id}-dots)`} />
+        </g>
+      )}
+      {layer.ink !== 0 && (
+        <path d={layer.d} style={{ fill: "none", stroke: INK, strokeWidth: layer.ink ?? FINE }} />
+      )}
+    </g>
   );
 };
 
-/** A piece's layers, filled from the gradients `PieceDefs` made under the same id. */
+/** A piece's layers, shaded from the defs `PieceDefs` made under the same id. */
 export const PieceLayers = ({ art, id }: { art: Art; id: string }) => (
   <g strokeLinecap="round" strokeLinejoin="round">
     {art.layers.map((layer, index) => (
-      <PieceLayer key={index} layer={layer} id={id} />
+      <PieceLayer key={index} layer={layer} index={index} id={id} />
     ))}
   </g>
 );
 
-/** One piece on its own, gradients and all: an icon. */
+/** One piece on its own, defs and all: an icon. */
 export const PieceIcon = ({ art, className }: { art: Art; className?: string }) => {
   const id = useSvgId("piece");
   return (

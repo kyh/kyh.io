@@ -8,8 +8,8 @@ import type { Token } from "./palette";
 import type { Placed, Sketch, Vec3 } from "./sketch";
 import { lantern } from "./decor-props";
 import { heart } from "./draw-kit";
-import { santaHat, topHat, wearing, witchHat } from "./hats";
-import { paint, RED, WHITE } from "./palette";
+import { bunnyEar, santaHat, topHat, wearing, witchHat } from "./hats";
+import { paint, RED } from "./palette";
 import { ballTriangles, createSketch, extrudeTriangles, face, headedTo, placed } from "./sketch";
 
 /** The hull's radius, and its length as a multiple of it. */
@@ -75,23 +75,11 @@ export const topHatTrim =
   (blimp) =>
     topHat(wearing(blimp, brow, 1, 0.15), crown, band);
 
-/** Bunny ears, white with pink inside, side by side and leaning apart. */
-export const bunnyEars: Trim = (blimp) => {
+/** Bunny ears, side by side and leaning apart, each standing on the back where it is. */
+export const bunnyEarTrim: Trim = (blimp) => {
   for (const side of [-1, 1]) {
     const x = BROW + side * 0.13;
-    // Each ear stands like a hat of its own, leaning out.
-    const ear = wearing(blimp, [x, backAt(x) - 0.06, 0], 1, -side * 0.3);
-    ear.ball({ colors: WHITE, detail: 10, r: 0.1, ry: 3.2, rz: 0.45, x: 0, y: 0.32, z: 0 });
-    ear.ball({
-      colors: paint("accentPink"),
-      detail: 8,
-      r: 0.055,
-      ry: 4.4,
-      rz: 0.4,
-      x: 0,
-      y: 0.32,
-      z: 0.035,
-    });
+    bunnyEar(wearing(blimp, [x, backAt(x) - 0.06, 0], 1, -side * 0.3));
   }
 };
 

@@ -32,9 +32,10 @@ const SNOWFLAKE_PATH = snowflake([
 
 const SNOWFLAKE = {
   layers: [
-    { d: SNOWFLAKE_PATH, shadow: true, stroke: "#6d9ccf", strokeWidth: 3 },
-    { d: SNOWFLAKE_PATH, stroke: "#ffffff", strokeWidth: 1.4 },
-    { d: circle(12, 12, 1.4), fill: "#ffffff", stroke: "#6d9ccf", strokeWidth: 0.6 },
+    // White arms outlined in ink.
+    { d: SNOWFLAKE_PATH, strokeWidth: 2.6 },
+    { d: SNOWFLAKE_PATH, stroke: "white", strokeWidth: 1.4 },
+    { d: circle(12, 12, 1.4), fill: "white", shade: "whiteShade" },
   ],
 } satisfies Art;
 
@@ -49,6 +50,7 @@ export const theme = {
     { back: "#e0f2fe", front: "#ffffff" },
     ...namedConfetti("gold"),
   ],
+  corners: null,
   days: (year) => span(year, [12, 15], [12, 26]),
   drift: "snow",
   glyph: SNOWFLAKE_GLYPH,
@@ -56,4 +58,5 @@ export const theme = {
   mode: "dark",
   name: "Christmas",
   tint: { chroma: 2, hue: 165 },
+  trail: true,
 } as const satisfies Theme;

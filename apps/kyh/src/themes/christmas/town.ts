@@ -1,5 +1,6 @@
 // How the showcase's town dresses for Christmas (`Town` in city/town-theme.ts).
 import { santaTrim } from "@/app/showcase/_components/city/blimp";
+import { santaHat } from "@/app/showcase/_components/city/hats";
 import { townTree } from "@/app/showcase/_components/city/decor-giants";
 import { christmasTree, present, snowman } from "@/app/showcase/_components/city/decor-props";
 import { GREEN, RED, snowfall } from "@/app/showcase/_components/city/palette";
@@ -16,6 +17,7 @@ export const town: Town = {
   },
   centerpiece: townTree,
   flyer: drawSleigh,
+  hat: santaHat,
   lights: ["festiveRed", "gold", "festiveGreen", "accentBlue"],
   porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
   repaint: snowfall(),

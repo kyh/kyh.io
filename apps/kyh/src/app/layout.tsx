@@ -7,7 +7,9 @@ import { Dock } from "@/components/dock";
 import { Multiplayer } from "@/components/multiplayer/cursors";
 import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/themes/theme-script";
+import { ThemeCorners } from "@/themes/corners";
 import { ThemeDrift } from "@/themes/drift";
+import { ThemeTrail } from "@/themes/trail";
 import { siteConfig } from "@/lib/config";
 import { JsonLd, VideoJsonLd } from "@/components/json-ld";
 import { ogImage, ogVideoOf } from "@/lib/page-metadata";
@@ -88,6 +90,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
       <Providers>
         <div className="blur-header" aria-hidden="true" />
         <ThemeDrift />
+        <ThemeCorners />
+        <ThemeTrail />
         <Multiplayer />
         <Dock />
         {children}

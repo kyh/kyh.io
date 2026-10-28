@@ -26,28 +26,18 @@ const LEAF: readonly (readonly [number, number])[] = [
 ];
 const SHAMROCK_CENTER = [12, 10.6] as const;
 
+const SHAMROCK_STEM = "M12 11c.4 3.4 1.6 6.4 3.6 8.6";
+
 const SHAMROCK = {
-  gradients: {
-    body: {
-      at: [0.4, 0.3],
-      kind: "radial",
-      r: 0.8,
-      stops: [
-        [0, "#c4f7b4"],
-        [0.45, "#3fae4a"],
-        [1, "#1d6b2a"],
-      ],
-    },
-  },
   layers: [
-    { d: "M12 11c.4 3.4 1.6 6.4 3.6 8.6", shadow: true, stroke: "#1f6b2c", strokeWidth: 1.5 },
+    // A green stem, outlined in ink.
+    { d: SHAMROCK_STEM, strokeWidth: 2.3 },
+    { d: SHAMROCK_STEM, stroke: "festiveGreen", strokeWidth: 1.1 },
     {
       // Up, then down to either side.
       d: [180, -60, 60].map((angle) => placed(LEAF, SHAMROCK_CENTER, angle)).join(""),
-      gradient: "body",
-      shadow: true,
-      stroke: "#155a22",
-      strokeWidth: 0.6,
+      fill: "festiveGreen",
+      shade: "festiveGreenShade",
     },
   ],
 } satisfies Art;
@@ -59,6 +49,7 @@ const SHAMROCK_GLYPH = `${[180, -60, 60].map((angle) => placed(GLYPH_LEAF, [12, 
 export const theme = {
   art: SHAMROCK,
   confetti: [{ back: "#86efac", front: "#15803d" }, ...namedConfetti("green", "green", "gold")],
+  corners: null,
   days: (year) => span(year, [3, 14], [3, 17]),
   drift: null,
   glyph: SHAMROCK_GLYPH,
@@ -66,4 +57,5 @@ export const theme = {
   mode: "light",
   name: "St. Patrick's Day",
   tint: { chroma: 2, hue: 140 },
+  trail: true,
 } as const satisfies Theme;

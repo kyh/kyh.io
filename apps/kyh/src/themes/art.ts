@@ -1,31 +1,24 @@
-// A theme's piece as data: layers of paths in a 24×24 box, filled with
-// colors or the piece's own gradients. `piece.tsx` draws it, wherever it
-// shows: the easter-egg bursts, the themes menu, the snow falling. Pure.
-
-/** A gradient stop: where along it, the color, and how opaque. */
-export type Stop = readonly [offset: number, color: string, opacity?: number];
-
-/** A gradient across the shape it fills, in fractions of its box. */
-export type Gradient =
-  | {
-      kind: "linear";
-      from: readonly [number, number];
-      to: readonly [number, number];
-      stops: readonly Stop[];
-    }
-  | { kind: "radial"; at: readonly [number, number]; r: number; stops: readonly Stop[] };
+// A theme's piece as data: layers of paths in a 24×24 box, drawn the way
+// the showcase draws its town (after Inkline Town): flat faces in the town's
+// palette, outlined in its ink, the side turned from the light (right of the
+// middle) in a darker color and dotted as the town's shade is. `piece.tsx`
+// draws it, wherever it shows: the easter-egg bursts, the themes menu, the
+// trail and the drift. Pure.
+import type { Token } from "@/app/showcase/_components/city/palette";
 
 export interface Layer {
   d: string;
-  /** A color; none when unset. */
-  fill?: string;
-  /** One of the piece's gradients by name, over `fill`. */
-  gradient?: string;
-  stroke?: string;
+  /** A face's color, from the town's palette; none when unset. */
+  fill?: Token;
+  /** The face's side turned from the light, right of `split`: this color, dotted. */
+  shade?: Token;
+  /** Where the shade starts across the box; the middle when unset. */
+  split?: number;
+  /** A line in a palette color (a stem, a tassel) rather than ink. */
+  stroke?: Token;
   strokeWidth?: number;
-  opacity?: number;
-  /** Drawn again beneath it, dark and dropped a little: its shadow. */
-  shadow?: boolean;
+  /** Ink round a face, this wide; a face gets the town's fine line when unset, 0 for none. */
+  ink?: number;
   /** Swings about a point (in the box) from one angle to another and back, as a wing beats. */
   swing?: Swing;
 }
@@ -38,7 +31,6 @@ export interface Swing {
 }
 
 export interface Art {
-  gradients?: Readonly<Record<string, Gradient>>;
   layers: readonly Layer[];
 }
 
@@ -60,8 +52,6 @@ export const circle = (cx: number, cy: number, r: number) => ellipse(cx, cy, r, 
 
 /** An egg, standing in the box: the golden egg's and the painted egg's shape. */
 export const EGG = "M12 2C8 2 4.5 8.5 4.5 14a7.5 7.5 0 0 0 15 0C19.5 8.5 16 2 12 2Z";
-/** Light on an egg's shoulder. */
-export const GLOSS = ellipse(9.4, 8.6, 1.9, 3, -24);
 
 /** Curves drawn about the origin (`M x y` then `C` triples), turned to `angle` degrees and moved to a point. */
 export const placed = (
@@ -79,9 +69,3 @@ export const placed = (
   );
   return `M${start}${triples.map((triple) => `C${triple}`).join("")}Z`;
 };
-
-/** The names a piece's layers fill with that it has no gradient for. */
-export const missingGradients = ({ gradients = {}, layers }: Art) =>
-  layers.flatMap(({ gradient }) =>
-    gradient !== undefined && !(gradient in gradients) ? [gradient] : [],
-  );
