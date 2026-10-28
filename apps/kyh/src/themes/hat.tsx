@@ -48,7 +48,9 @@ const perchesOnScreen = () =>
 
 export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const picture = pictures[useTheme()];
-  const dots = useSvgId("hat-dots");
+  const wornDots = useSvgId("hat-dots");
+  // The carried copy is drawn while the worn one stays, so its pattern needs its own id.
+  const carriedDots = useSvgId("hat-dots");
   const still = useReducedMotion();
   /** What it's worn on away from the logo; null on the logo. */
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -92,6 +94,10 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     }
     event.preventDefault();
     event.stopPropagation();
+    // A landing still settling would put the hat somewhere it isn't.
+    for (const animation of placed.getAnimations()) {
+      animation.cancel();
+    }
     const at = placed.getBoundingClientRect();
     const grip = { x: at.left - event.clientX, y: at.top - event.clientY };
     const brimAt = (move: PointerEvent) => ({ x: move.clientX + grip.x, y: move.clientY + grip.y });
@@ -131,58 +137,61 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const [left, top, width, height] = picture.box;
   // Carried, it's drawn again over everything; the worn one stays put, unseen,
   // so the node the press began on keeps it (a finger's capture is lost with it).
-  const drawing = (carried: boolean) => (
-    <svg
-      viewBox={picture.box.join(" ")}
-      className="pointer-events-none absolute touch-none overflow-visible"
-      style={{
-        height: height * SCALE,
-        left: left * SCALE,
-        top: top * SCALE,
-        width: width * SCALE,
-      }}
-    >
-      <defs>
-        <ShadeDots id={dots} size={DOT} />
-      </defs>
-      <g
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={carried ? undefined : "pointer-events-auto cursor-grab"}
-        onPointerDown={carried ? undefined : pickUp}
-        // Worn on a link, a press on the hat is for the hat.
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
+  const drawing = (carried: boolean) => {
+    const dots = carried ? carriedDots : wornDots;
+    return (
+      <svg
+        viewBox={picture.box.join(" ")}
+        className="pointer-events-none absolute touch-none overflow-visible"
+        style={{
+          height: height * SCALE,
+          left: left * SCALE,
+          top: top * SCALE,
+          width: width * SCALE,
         }}
       >
-        {picture.layers.map((layer, index) =>
-          layer.kind === "faces" ? (
-            // A hairline of the face's own color closes the seams between facets.
-            <g key={index}>
+        <defs>
+          <ShadeDots id={dots} size={DOT} />
+        </defs>
+        <g
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={carried ? undefined : "pointer-events-auto cursor-grab"}
+          onPointerDown={carried ? undefined : pickUp}
+          // Worn on a link, a press on the hat is for the hat.
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          {picture.layers.map((layer, index) =>
+            layer.kind === "faces" ? (
+              // A hairline of the face's own color closes the seams between facets.
+              <g key={index}>
+                <path
+                  d={layer.d}
+                  fill={layer.fill}
+                  stroke={layer.fill}
+                  strokeWidth={0.4}
+                  vectorEffect="non-scaling-stroke"
+                />
+                {layer.shaded && <path d={layer.d} fill={`url(#${dots})`} />}
+              </g>
+            ) : (
               <path
+                key={index}
                 d={layer.d}
-                fill={layer.fill}
-                stroke={layer.fill}
-                strokeWidth={0.4}
+                fill="none"
+                stroke={layer.stroke}
+                strokeWidth={layer.width}
                 vectorEffect="non-scaling-stroke"
               />
-              {layer.shaded && <path d={layer.d} fill={`url(#${dots})`} />}
-            </g>
-          ) : (
-            <path
-              key={index}
-              d={layer.d}
-              fill="none"
-              stroke={layer.stroke}
-              strokeWidth={layer.width}
-              vectorEffect="non-scaling-stroke"
-            />
-          ),
-        )}
-      </g>
-    </svg>
-  );
+            ),
+          )}
+        </g>
+      </svg>
+    );
+  };
 
   const worn = (
     <span
