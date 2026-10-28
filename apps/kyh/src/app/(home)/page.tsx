@@ -51,7 +51,9 @@ const Page = () => (
         <ScrambleText
           as="h1"
           trigger="both"
-          className="text-foreground-highlighted mb-3 text-lg leading-none font-medium"
+          className="text-foreground-highlighted relative mb-3 w-fit text-lg leading-none font-medium"
+          data-hat-perch="title:name"
+          data-hat-sits="text"
         >
           Kaiyu Hsu
         </ScrambleText>

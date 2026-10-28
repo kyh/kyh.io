@@ -25,9 +25,17 @@ const SCALE = 0.32;
 const TILT = 20;
 /** A shade dot, in picture units: two pixels, as the town's are. */
 const DOT = 2 / SCALE;
-/** Where on a perch the brim sits: in from its top-right corner, as `top-[5px] right-[7px]`. */
-const IN_FROM_RIGHT = 7;
-const DOWN_FROM_TOP = 5;
+/**
+ * Where on a perch the brim sits, in from its top-right corner: tilted on the
+ * corner of an icon, or on top of a title's last letter (`data-hat-sits="text"`),
+ * so the text stays readable under it.
+ */
+const SEATS = {
+  corner: { right: 7, top: 5 },
+  text: { right: 6, top: -3 },
+};
+const seatOf = (element: HTMLElement | null) =>
+  element?.dataset.hatSits === "text" ? SEATS.text : SEATS.corner;
 
 interface Point {
   x: number;
@@ -42,7 +50,8 @@ const perchesOnScreen = () =>
     if (!key || rect.width === 0 || element.closest("[role=dialog]")) {
       return [];
     }
-    const perch: Perch = { key, x: rect.right - IN_FROM_RIGHT, y: rect.top + DOWN_FROM_TOP };
+    const seat = seatOf(element);
+    const perch: Perch = { key, x: rect.right - seat.right, y: rect.top + seat.top };
     return [{ element, perch }];
   });
 
@@ -194,11 +203,12 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     );
   };
 
+  const seat = seatOf(host);
   const worn = (
     <span
       ref={hat}
-      className={`pointer-events-none absolute top-[5px] right-[7px] z-[2] size-0 ${held ? "invisible" : ""}`}
-      style={{ rotate: `${TILT}deg` }}
+      className={`pointer-events-none absolute z-[2] size-0 ${held ? "invisible" : ""}`}
+      style={{ right: seat.right, rotate: `${TILT}deg`, top: seat.top }}
       aria-hidden="true"
     >
       {drawing(false)}

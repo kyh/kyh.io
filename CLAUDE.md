@@ -206,8 +206,10 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
     the farther of two overlapping goes first), each stroke of ink with the
     last patch along it; `themes/hat.tsx` sets the brim's middle on the corner.
     The hat can be picked up and worn on anything marked `data-hat-perch`
-    (the logo, app icons and folders, dock icons, the avatar): let go near
-    one's top-right corner it lands there, else back on the logo
+    (the logo, app icons and folders, dock icons, the avatar, the homepage's
+    titles): let go near one's top-right corner it lands there, tilted on an
+    icon's corner or on a title's last letter (`data-hat-sits="text"`), else
+    back on the logo
     (`themes/perch.ts`, pure, tested); leaving the homepage puts it back;
   - its sky: the blimp's `blimp` look, its greeting in the theme's colors
     ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
