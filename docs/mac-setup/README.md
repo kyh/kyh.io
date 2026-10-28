@@ -18,7 +18,7 @@ https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ## Applications
 
 - Editors: Zed (primary), Cursor
-- Dev Tools: Claude, OrbStack, Fork, Android Studio, Xcode
+- Dev Tools: Claude, Fork, Android Studio, Xcode
 - Browsers: Chrome
 - Design: Figma
 - Productivity: Raycast, CleanShot X, Screen Studio, Spokenly
