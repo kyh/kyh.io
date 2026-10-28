@@ -8,7 +8,7 @@ export const EASTER_EGGS = [
   "lift",
   // Send a line of chat: typing anywhere talks (lib/chat-input.ts).
   "chat",
-  // Tap the homepage's figure canvas to drop shapes (figure-canvas.tsx).
+  // Tap the homepage's figure canvas to drop shapes (figure-physics.tsx).
   "shapes",
   // Hold the theme toggle down and the themes bloom over it (components/dock.tsx).
   "bloom",

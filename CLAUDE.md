@@ -328,7 +328,7 @@ it's dropped. `side-quests-grid.tsx` is the one place grids meet the room;
 Easter eggs live in `src/easter-eggs/`. `store.ts` lists them and keeps which
 are found (memory only: a refresh starts over); a find is one
 `discoverEgg(id)` where it hides: `city/engine.ts` (lift a car, person or boat),
-`lib/chat-input.ts` (send a chat line), `figure-canvas.tsx` (spawn shapes),
+`lib/chat-input.ts` (send a chat line), `figure-physics.tsx` (spawn shapes),
 `dock.tsx` (hold the theme toggle), `side-quests-grid.tsx` (move an
 icon), `rsvp-reader.tsx` (open the speed reader). A touch-only device (no
 hover, coarse pointer) hunts without the chat egg, since it has no keyboard

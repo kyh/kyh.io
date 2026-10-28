@@ -49,20 +49,15 @@ const useSiteRoom = () => {
 const usePointerBroadcast = (room: SiteRoom) => {
   useEffect(() => {
     let moved = false;
-    const stop = subscribeToPointer(() => {
-      moved = true;
-    });
-    // Scrolling slides the page under a still pointer.
-    const onScroll = () => {
-      moved = true;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
     const rate = new FixedRate(SEND_RATE);
     let last = performance.now();
     let frame = 0;
+    // The clock runs only while there's a move to send: a still page wakes no frames.
     const tick = (now: number) => {
       const at = lastPointer();
-      if (rate.due(now - last) && moved && at) {
+      if (!at) {
+        moved = false;
+      } else if (rate.due(now - last) && moved) {
         moved = false;
         // A lifted finger leaves no cursor behind.
         room.point(
@@ -76,13 +71,21 @@ const usePointerBroadcast = (room: SiteRoom) => {
         );
       }
       last = now;
-      frame = requestAnimationFrame(tick);
+      frame = moved ? requestAnimationFrame(tick) : 0;
     };
-    frame = requestAnimationFrame(tick);
+    const wake = () => {
+      moved = true;
+      if (frame === 0) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    const stop = subscribeToPointer(wake);
+    // Scrolling slides the page under a still pointer.
+    window.addEventListener("scroll", wake, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
       stop();
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", wake);
     };
   }, [room]);
 };
