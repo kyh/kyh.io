@@ -244,6 +244,55 @@ html[data-tint] {
   left: -13px;
   width: 26px;
   height: 26px;
+  /* It can be picked off its web (corners.tsx), by a bit more than itself. */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+  }
+}
+
+/* While a spider's off its web, the one on it holds its place unseen, and it
+   may be carried anywhere on the screen. */
+.theme-corners:has([data-taken]) {
+  overflow: visible;
+}
+
+[data-taken] {
+  .spider-walk,
+  .spider-hang {
+    visibility: hidden;
+  }
+
+  .spider-walk,
+  .spider-drop,
+  .spider-thread {
+    animation-play-state: paused;
+  }
+}
+
+/* Its legs scrabble while it's held, and hold still while it bounces. */
+.spider-free {
+  &[data-phase="held"] {
+    cursor: grabbing;
+
+    .spider-legs {
+      animation-duration: 0.07s;
+    }
+  }
+
+  &[data-phase="bounce"] .spider-legs {
+    animation-play-state: paused;
+  }
+}
+
+.spider-line {
+  stroke: var(--web);
+  stroke-width: 1;
 }
 
 .spider-body {

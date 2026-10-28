@@ -114,6 +114,7 @@ const DockItem = ({
       ref={ref}
       style={{ height, width }}
       className="dock-item relative z-[1] flex aspect-square items-center justify-center rounded-[25%]"
+      data-hat-perch={`dock:${label}`}
     >
       <AnimatePresence>
         {hovered && (

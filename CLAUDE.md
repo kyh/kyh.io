@@ -174,7 +174,11 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
 - `corners`: what hangs in the page's top corners (`corners.tsx`,
   CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
   walking round the left one and one dropping on its thread from the right,
-  hung from the top of the page, so they scroll away with it;
+  hung from the top of the page, so they scroll away with it. A mouse
+  brushing a web pushes its strands aside on a spring (`Bend` in `web.ts`);
+  a spider can be picked off, carried on its thread, and let go bounces on
+  it like a bungee and climbs home (`bungee.ts`, pure, tested), all on the
+  DOM a frame at a time;
 - `town.ts` (`Town`), how the showcase's town dresses:
   - `repaint`: tokens in its own colors, which stay in color in the grey town,
     and `vivid`, tokens kept in their own: snow on the roofs, grounds and trees
@@ -200,7 +204,11 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
     a sketch's faces and ink to SVG paths and, with no depth buffer, puts them
     in order a patch at a time (each solid's flat caps and its curved side;
     the farther of two overlapping goes first), each stroke of ink with the
-    last patch along it; `themes/hat.tsx` sets the brim's middle on the corner;
+    last patch along it; `themes/hat.tsx` sets the brim's middle on the corner.
+    The hat can be picked up and worn on anything marked `data-hat-perch`
+    (the logo, app icons and folders, dock icons, the avatar): let go near
+    one's top-right corner it lands there, else back on the logo
+    (`themes/perch.ts`, pure, tested); leaving the homepage puts it back;
   - its sky: the blimp's `blimp` look, its greeting in the theme's colors
     ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
     which Santa and the witch wear too), and a `flyer` crossing higher up the

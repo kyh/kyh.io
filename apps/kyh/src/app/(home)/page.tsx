@@ -33,7 +33,11 @@ const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
     <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <header className="flex items-center justify-between gap-2 py-4">
-        <div className="text-foreground-highlighted relative flex items-center" aria-label="Home">
+        <div
+          className="text-foreground-highlighted relative flex items-center"
+          aria-label="Home"
+          data-hat-perch="logo"
+        >
           <Logo />
           <ThemeHat pictures={HAT_PICTURES} />
         </div>
