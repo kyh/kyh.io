@@ -65,10 +65,7 @@ export interface PageMetadataInput {
  * Every page shares one picture: the site's clip as `og:video` and its poster
  * as `og:image`, so any link to the site unfurls as the same town.
  */
-export const buildPageMetadata = (
-  content: PageMetadataInput,
-  video: SiteVideo,
-): Metadata => {
+export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo): Metadata => {
   const isHome = content.path === "/";
   const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
   return {
