@@ -95,8 +95,9 @@ html[data-tint] {
    each piece falls the height of the screen, swaying as it goes (leaves
    tumble, turning over), on transforms alone, under the dock and the cursors. */
 .theme-drift {
-  --snow: #dce7f3;
-  --snow-edge: rgb(96 128 168 / 35%);
+  /* The showcase town's white, edged in its ink (city/palette.ts). */
+  --snow: #fbfbf8;
+  --snow-edge: rgb(61 73 67 / 45%);
   position: fixed;
   inset: 0;
   z-index: 5;
@@ -104,8 +105,8 @@ html[data-tint] {
   pointer-events: none;
 
   [data-theme="dark"] & {
-    --snow: #f3f7ff;
-    --snow-edge: rgb(255 255 255 / 20%);
+    --snow: #d9e0dc;
+    --snow-edge: rgb(169 186 179 / 45%);
   }
 }
 
@@ -182,9 +183,10 @@ html[data-tint] {
    smaller on a phone. They hang from the top of the page, not the screen,
    so they scroll away with it. */
 .theme-corners {
-  --web: hsl(270 40% 84% / 0.26);
-  --spider: hsl(270 28% 16%);
-  --spider-edge: hsl(270 45% 80% / 0.8);
+  /* The showcase town's ink and black (city/palette.ts), by day and by night. */
+  --web: rgb(61 73 67 / 0.35);
+  --spider: #3a4642;
+  --spider-edge: #3d4943;
   --drop: 150px;
   position: absolute;
   top: 0;
@@ -192,6 +194,12 @@ html[data-tint] {
   left: 0;
   /* The webs, and the spider at the bottom of its drop. */
   height: 280px;
+
+  [data-theme="dark"] & {
+    --web: rgb(169 186 179 / 0.35);
+    --spider: #0c1214;
+    --spider-edge: #a9bab3;
+  }
   z-index: 5;
   overflow: hidden;
   pointer-events: none;

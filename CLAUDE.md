@@ -158,8 +158,12 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   Thursday, a Lunar New Year table); the default theme has none;
 - `mode` and `tint`: its light or dark, and its grey tint (an OKLCH hue and a
   chroma as a multiple of slate's), painted by `paint.ts`;
-- `art`: its piece as data (`art.ts`: paths and gradients, drawn by
-  `piece.tsx`; a layer can `swing` about a point, as the bat's wings beat),
+- `art`: its piece as data (`art.ts`, drawn by `piece.tsx`), in the
+  showcase town's hand like every theme effect: flat faces in the town's
+  palette tokens (by day or night through `light-dark()`), outlined in its
+  ink, the side turned from the light in its darker token under the town's
+  checker of shade dots; no gradients, gloss or drop shadows. A layer can
+  `swing` about a point, as the bat's wings beat;
   thrown by easter-egg finds, worn by the menu's wedges and falling in the
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at

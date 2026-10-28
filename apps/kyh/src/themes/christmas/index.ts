@@ -32,9 +32,10 @@ const SNOWFLAKE_PATH = snowflake([
 
 const SNOWFLAKE = {
   layers: [
-    { d: SNOWFLAKE_PATH, shadow: true, stroke: "#6d9ccf", strokeWidth: 3 },
-    { d: SNOWFLAKE_PATH, stroke: "#ffffff", strokeWidth: 1.4 },
-    { d: circle(12, 12, 1.4), fill: "#ffffff", stroke: "#6d9ccf", strokeWidth: 0.6 },
+    // White arms outlined in ink.
+    { d: SNOWFLAKE_PATH, strokeWidth: 2.6 },
+    { d: SNOWFLAKE_PATH, stroke: "white", strokeWidth: 1.4 },
+    { d: circle(12, 12, 1.4), fill: "white", shade: "whiteShade" },
   ],
 } satisfies Art;
 

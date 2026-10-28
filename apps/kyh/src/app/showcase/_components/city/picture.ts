@@ -8,7 +8,7 @@
 // last patch along it, so a nearer patch covers the ink behind it. Pure.
 import type { Time, Token } from "./palette";
 import type { Placed, Sketch, Vec3, Weight } from "./sketch";
-import { PALETTE } from "./palette";
+import { PALETTE, SHADE } from "./palette";
 import {
   ballTriangles,
   createSketch,
@@ -35,7 +35,8 @@ export interface Picture {
 }
 
 export type PictureLayer =
-  | { kind: "faces"; d: string; fill: string }
+  /** `shaded` faces are turned from the light and take the town's shade dots. */
+  | { kind: "faces"; d: string; fill: string; shaded: boolean }
   | { kind: "ink"; d: string; stroke: string; width: number };
 
 type Point = readonly [number, number];
@@ -360,7 +361,7 @@ export const pictureOf = (draw: (pen: Placed) => void, time: Time): Picture => {
     const byColor = groupBy(patch.facets, (facet) => facet.token);
     for (const [token, facets] of byColor) {
       const d = facets.map((facet) => pathOf(facet.corners, true)).join("");
-      addTo(layers, { d, fill: PALETTE[token][time], kind: "faces" });
+      addTo(layers, { d, fill: PALETTE[token][time], kind: "faces", shaded: SHADE.has(token) });
     }
     inkAt(place);
   }

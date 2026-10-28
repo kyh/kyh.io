@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { missingGradients } from "./art";
 import { DEFAULT_THEME, THEMES, themeOn, windowIn } from "./index";
 
 const on = (year: number, month: number, day: number) => themeOn(new Date(year, month - 1, day));
@@ -28,11 +27,10 @@ test("where two overlap, the one listed first runs", () => {
   assert.equal(on(2029, 2, 10), "valentines");
 });
 
-test("each theme is whole: one id, its art's gradients, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it leaves no trail", () => {
+test("each theme is whole: one id, its art, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it leaves no trail", () => {
   assert.equal(new Set(THEMES.map(({ id }) => id)).size, THEMES.length);
   for (const theme of THEMES) {
     assert.ok(theme.art.layers.length > 0, theme.id);
-    assert.deepEqual(missingGradients(theme.art), [], theme.id);
     assert.ok(theme.confetti.length > 0, theme.id);
     assert.equal("days" in theme, theme.id !== DEFAULT_THEME, theme.id);
     assert.equal(theme.tint === null, theme.id === DEFAULT_THEME, theme.id);

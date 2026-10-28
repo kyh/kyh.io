@@ -12,33 +12,11 @@ const MAPLE_OUTLINE =
   "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4Z";
 
 const MAPLE_LEAF = {
-  gradients: {
-    body: {
-      from: [0, 0],
-      kind: "linear",
-      stops: [
-        [0, "#ffb347"],
-        [0.55, "#e8590c"],
-        [1, "#a61e0d"],
-      ],
-      to: [1, 1],
-    },
-  },
   layers: [
-    { d: "M12 14v8", stroke: "#7a3b12", strokeWidth: 1.1 },
-    {
-      d: MAPLE_OUTLINE,
-      gradient: "body",
-      shadow: true,
-      stroke: "#7a2a0a",
-      strokeWidth: 0.5,
-    },
-    {
-      d: "M12 15.6V5.5M12 13.4l5.4-2.6M12 13.4 6.6 10.8",
-      opacity: 0.55,
-      stroke: "#7a2a0a",
-      strokeWidth: 0.5,
-    },
+    { d: "M12 14v8", strokeWidth: 1.9 },
+    { d: "M12 14v8", stroke: "pumpkinShade", strokeWidth: 0.8 },
+    { d: MAPLE_OUTLINE, fill: "pumpkin", shade: "pumpkinShade" },
+    { d: "M12 15.6V5.5M12 13.4l5.4-2.6M12 13.4 6.6 10.8", strokeWidth: 0.4 },
   ],
 } satisfies Art;
 

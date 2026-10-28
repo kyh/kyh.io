@@ -4,31 +4,23 @@
 // in the fountain and flies HAPPY EASTER with bunny ears.
 import type { Art } from "../art";
 import type { Theme } from "../theme";
-import { circle, EGG, GLOSS } from "../art";
+import { circle, EGG } from "../art";
 import { around, easterSunday } from "../calendar";
 
 const PAINTED_EGG = {
-  gradients: {
-    body: {
-      from: [0, 0],
-      kind: "linear",
-      stops: [
-        [0, "#f6eeff"],
-        [1, "#c6a3f0"],
-      ],
-      to: [0, 1],
-    },
-  },
   layers: [
-    { d: EGG, gradient: "body", shadow: true, stroke: "#9b7cc8", strokeWidth: 0.6 },
-    { d: `${circle(9, 8.4, 0.8)}${circle(12, 8, 0.8)}${circle(15, 8.4, 0.8)}`, fill: "#ff8fbb" },
+    { d: EGG, fill: "roofLilac", shade: "roofLilacShade" },
+    {
+      d: `${circle(9, 8.4, 0.8)}${circle(12, 8, 0.8)}${circle(15, 8.4, 0.8)}`,
+      fill: "accentPink",
+      ink: 0.3,
+    },
     {
       d: "M5.2 13l1.7-1.6 1.7 1.6 1.7-1.6 1.7 1.6 1.7-1.6 1.7 1.6 1.7-1.6 1.7 1.6",
-      stroke: "#f5c400",
+      stroke: "accentYellow",
       strokeWidth: 1.2,
     },
-    { d: "M5.6 16.6h12.8", stroke: "#4fcf9f", strokeWidth: 1.1 },
-    { d: GLOSS, fill: "white", opacity: 0.7 },
+    { d: "M5.6 16.6h12.8", stroke: "accentGreen", strokeWidth: 1.1 },
   ],
 } satisfies Art;
 
