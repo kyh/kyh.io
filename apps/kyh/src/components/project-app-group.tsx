@@ -82,18 +82,19 @@ const ProjectAppIcon = ({
     >
       <div
         className={cn(
-          "relative size-[60px] overflow-hidden rounded-[14px]",
+          "relative size-[60px] rounded-[14px]",
           showShadow &&
             "shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]",
         )}
         data-slot="app-icon"
+        data-hat-perch={`app:${name}`}
       >
         <Image
           src={iconSrc}
           alt={name}
           width={iconSize}
           height={iconSize}
-          className="size-full object-cover"
+          className="size-full rounded-[inherit] object-cover"
           draggable={false}
         />
       </div>
@@ -291,6 +292,7 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
                 className="relative size-[60px] rounded-[14px] bg-white/50 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-md dark:bg-[#0f172a]/50 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.15)]"
                 ref={folderRef}
                 data-slot="folder-preview"
+                data-hat-perch={`folder:${title}`}
               >
                 <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" data-slot="folder-grid">
                   {items.slice(0, 4).map((item) => (

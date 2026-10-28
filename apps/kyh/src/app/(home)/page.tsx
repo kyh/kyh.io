@@ -33,7 +33,11 @@ const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
     <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <header className="flex items-center justify-between gap-2 py-4">
-        <div className="text-foreground-highlighted relative flex items-center" aria-label="Home">
+        <div
+          className="text-foreground-highlighted relative flex items-center"
+          aria-label="Home"
+          data-hat-perch="logo"
+        >
           <Logo />
           <ThemeHat pictures={HAT_PICTURES} />
         </div>
@@ -47,7 +51,9 @@ const Page = () => (
         <ScrambleText
           as="h1"
           trigger="both"
-          className="text-foreground-highlighted mb-3 text-lg leading-none font-medium"
+          className="text-foreground-highlighted relative mb-3 w-fit text-lg leading-none font-medium"
+          data-hat-perch="title:name"
+          data-hat-sits="text"
         >
           Kaiyu Hsu
         </ScrambleText>

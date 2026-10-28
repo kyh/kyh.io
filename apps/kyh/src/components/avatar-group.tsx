@@ -23,7 +23,8 @@ export const AvatarGroup = () => {
     <ul className="mr-2 flex transition-opacity duration-[230ms] ease-out">
       <AnimatePresence mode="popLayout">
         <motion.li
-          className="-mr-2 rounded-full shadow-md"
+          className="relative -mr-2 rounded-full shadow-md"
+          data-hat-perch="me"
           style={{ zIndex: players.length }}
           initial={{ opacity: 0, scale: 0.8 }}
           // Alone it fades back, unless it's catching easter eggs or gone gold.
