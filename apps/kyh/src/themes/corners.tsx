@@ -83,14 +83,20 @@ const clampTo = (bounds: Bounds, { x, y }: Point): Point => ({
   y: Math.min(bounds.bottom, Math.max(bounds.top, y)),
 });
 
+// Each gait its own <svg>, so its step turns the whole box: the compositor's
+// work, where a <path> turning inside one <svg> repaints it every frame.
 const Spider = () => (
-  <svg viewBox="0 0 24 24" className="block size-full overflow-visible">
+  <>
     {([0, 1] as const).map((gait) => (
-      <path key={gait} d={spiderLegs(gait)} className="spider-legs" data-gait={gait} />
+      <svg key={gait} viewBox="0 0 24 24" className="spider-legs" data-gait={gait}>
+        <path d={spiderLegs(gait)} />
+      </svg>
     ))}
-    <ellipse cx={9.4} cy={HIP[1]} rx={4.2} ry={3.4} className="spider-body" />
-    <circle cx={15.4} cy={HIP[1]} r={2.1} className="spider-body" />
-  </svg>
+    <svg viewBox="0 0 24 24" className="absolute inset-0 size-full overflow-visible">
+      <ellipse cx={9.4} cy={HIP[1]} rx={4.2} ry={3.4} className="spider-body" />
+      <circle cx={15.4} cy={HIP[1]} r={2.1} className="spider-body" />
+    </svg>
+  </>
 );
 
 /** A spider taken off its web, and where it goes back to. */

@@ -306,13 +306,16 @@ html[data-tint] {
 }
 
 .spider-legs {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
   fill: none;
   stroke: var(--spider-edge);
   stroke-width: 0.9;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transform-box: view-box;
-  transform-origin: 13.6px 12px;
+  /* The hip (web.ts), in the 24-unit box. */
+  transform-origin: calc(13.6 / 24 * 100%) 50%;
   animation: spider-step 0.16s ease-in-out infinite alternate;
 
   &[data-gait="1"] {
