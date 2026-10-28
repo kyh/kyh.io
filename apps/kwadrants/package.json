@@ -16,7 +16,7 @@
     "cn": "catalog:",
     "konva": "^10.9.0",
     "lucide-react": "catalog:",
-    "motion": "^14.3.0",
+    "motion": "^14.6.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.3.2"

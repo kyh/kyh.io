@@ -22,7 +22,7 @@
     "check:external": "node scripts/cli.mjs check"
   },
   "dependencies": {
-    "skills": "^1.7.2"
+    "skills": "^1.7.4"
   },
   "engines": {
     "node": ">=24"
