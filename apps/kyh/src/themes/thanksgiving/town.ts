@@ -1,5 +1,6 @@
 // How the showcase's town dresses for Thanksgiving (`Town` in city/town-theme.ts).
 import { topHatTrim } from "@/app/showcase/_components/city/blimp";
+import { topHat } from "@/app/showcase/_components/city/hats";
 import { giantTurkey } from "@/app/showcase/_components/city/decor-giants";
 import { cornShock, GROUND, hayBale, pumpkin } from "@/app/showcase/_components/city/decor-props";
 import type { Town } from "@/app/showcase/_components/city/town-theme";
@@ -13,6 +14,7 @@ export const town: Town = {
     trim: topHatTrim("screen", "screen"),
   },
   centerpiece: giantTurkey,
+  hat: (hat) => topHat(hat, "screen", "screen"),
   lights: ["pumpkin", "gold", "festiveRed"],
   porch: (sketch, x, z) => {
     pumpkin(sketch, x, z);

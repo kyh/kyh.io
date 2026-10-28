@@ -179,14 +179,19 @@ html[data-tint] {
 /* What hangs in the page's top corners in a theme that has it
    (src/themes/corners.tsx): a cobweb in each, a spider walking round the
    left one and one dropping on its thread from the right, mirrored, and
-   smaller on a phone. */
+   smaller on a phone. They hang from the top of the page, not the screen,
+   so they scroll away with it. */
 .theme-corners {
   --web: hsl(270 40% 84% / 0.26);
   --spider: hsl(270 28% 16%);
   --spider-edge: hsl(270 45% 80% / 0.8);
   --drop: 150px;
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  /* The webs, and the spider at the bottom of its drop. */
+  height: 280px;
   z-index: 5;
   overflow: hidden;
   pointer-events: none;

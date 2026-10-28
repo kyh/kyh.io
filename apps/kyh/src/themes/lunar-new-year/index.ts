@@ -67,7 +67,6 @@ export const theme = {
   },
   drift: null,
   glyph: LANTERN_GLYPH,
-  hat: null,
   id: "lunarNewYear",
   mode: "dark",
   name: "Lunar New Year",

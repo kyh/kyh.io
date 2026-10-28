@@ -63,3 +63,25 @@ export const topHat = (hat: Placed, crown: Token, band: Token) => {
   face(hat.sketch, "gold", square(0.06, 0), "hair");
   face(hat.sketch, band, square(0.032, 0.004), null);
 };
+
+/** A bunny's ear, white with pink inside, standing up from the origin like a hat of its own. */
+export const bunnyEar = (ear: Placed) => {
+  ear.ball({ colors: WHITE, detail: 10, r: 0.1, ry: 3.2, rz: 0.45, x: 0, y: 0.32, z: 0 });
+  ear.ball({
+    colors: paint("accentPink"),
+    detail: 8,
+    r: 0.055,
+    ry: 4.4,
+    rz: 0.4,
+    x: 0,
+    y: 0.32,
+    z: 0.035,
+  });
+};
+
+/** A pair of bunny ears worn as a hat, side by side and leaning apart. */
+export const bunnyEars = (hat: Placed) => {
+  for (const side of [-1, 1]) {
+    bunnyEar(wearing(hat, [side * 0.13, 0, 0], 1, -side * 0.3));
+  }
+};

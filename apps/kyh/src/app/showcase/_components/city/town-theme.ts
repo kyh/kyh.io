@@ -19,7 +19,7 @@ import type { Emote } from "./overlay";
 import type { Repaint, Scheme, Time, Token } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Flyer } from "./sky";
-import type { Sketch } from "./sketch";
+import type { Placed, Sketch } from "./sketch";
 import type { Steps } from "./steps";
 import { eaveLights } from "./decor-props";
 import { KINDS, openSpots } from "./open-spots";
@@ -37,7 +37,9 @@ export type Prop = (sketch: Sketch, x: number, z: number, random: Random) => voi
  * the town is grey, as do any `vivid` tokens it keeps in their own colors; the
  * lights it strings round every cottage's eaves and along the blimp's back;
  * what its people send up (life.ts floats it); how the blimp looks and what
- * else flies over (sky-scene.ts flies both).
+ * else flies over (sky-scene.ts flies both); and the hat the site's logo
+ * wears (`hat`, in its own frame as hats.ts draws them, pictured off the
+ * showcase by picture.ts).
  */
 export interface Town extends Partial<Record<Kind, Prop>> {
   repaint?: Repaint;
@@ -46,6 +48,7 @@ export interface Town extends Partial<Record<Kind, Prop>> {
   emote?: Emote;
   blimp?: BlimpLook;
   flyer?: Flyer;
+  hat?: (hat: Placed) => void;
 }
 
 /** What the city is drawn in: day or night, and the theme, as the site shows them. */

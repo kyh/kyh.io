@@ -1,5 +1,6 @@
 // How the showcase's town dresses for Easter (`Town` in city/town-theme.ts).
-import { bunnyEars } from "@/app/showcase/_components/city/blimp";
+import { bunnyEarTrim } from "@/app/showcase/_components/city/blimp";
+import { bunnyEars } from "@/app/showcase/_components/city/hats";
 import { giantEgg } from "@/app/showcase/_components/city/decor-giants";
 import { egg } from "@/app/showcase/_components/city/decor-props";
 import { PASTEL_ROOFS, slopesOf } from "@/app/showcase/_components/city/palette";
@@ -14,9 +15,10 @@ export const town: Town = {
     fins: "accentPink",
     lettering: "white",
     text: "HAPPY EASTER",
-    trim: bunnyEars,
+    trim: bunnyEarTrim,
   },
   centerpiece: giantEgg,
+  hat: bunnyEars,
   lights: ["accentPink", "accentYellow", "accentTeal", "accentPurple"],
   porch: pastelEgg,
   shore: pastelEgg,

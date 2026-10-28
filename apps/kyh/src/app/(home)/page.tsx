@@ -8,6 +8,7 @@ import { siteConfig } from "@/lib/config";
 import { todaysPageMetadata } from "@/lib/todays-video";
 import { getPublicAssetUrl } from "@/lib/public-assets";
 import { ThemeHat } from "@/themes/hat";
+import { HAT_PICTURES } from "@/themes/hat-pictures";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
 import { SideQuests } from "./_components/side-quests";
@@ -34,7 +35,7 @@ const Page = () => (
       <header className="flex items-center justify-between gap-2 py-4">
         <div className="text-foreground-highlighted relative flex items-center" aria-label="Home">
           <Logo />
-          <ThemeHat />
+          <ThemeHat pictures={HAT_PICTURES} />
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <ViewAsMenu />

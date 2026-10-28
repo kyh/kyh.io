@@ -8,7 +8,6 @@ import type { Theme } from "../theme";
 import { ellipse, point } from "../art";
 import { span } from "../calendar";
 import { namedConfetti } from "../theme";
-import { WITCH_HAT } from "../hats";
 
 const NIGHT = "hsl(270, 30%, 8%)";
 /** A faint moonlit edge, so a bat still shows against the night. */
@@ -63,7 +62,6 @@ export const theme = {
   days: (year) => span(year, [10, 25], [10, 31]),
   drift: null,
   glyph: BAT_GLYPH,
-  hat: WITCH_HAT,
   id: "halloween",
   mode: "dark",
   name: "Halloween",

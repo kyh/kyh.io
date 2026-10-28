@@ -47,7 +47,6 @@ export const theme = {
   corners: null,
   drift: null,
   glyph: null,
-  hat: null,
   id: "classic",
   mode: null,
   name: "Light / Dark",

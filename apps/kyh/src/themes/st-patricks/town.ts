@@ -1,5 +1,6 @@
 // How the showcase's town dresses for St. Patrick's Day (`Town` in city/town-theme.ts).
 import { topHatTrim } from "@/app/showcase/_components/city/blimp";
+import { topHat } from "@/app/showcase/_components/city/hats";
 import { giantShamrock } from "@/app/showcase/_components/city/decor-giants";
 import { potOfGold, rainbow } from "@/app/showcase/_components/city/decor-props";
 import type { Town } from "@/app/showcase/_components/city/town-theme";
@@ -13,6 +14,7 @@ export const town: Town = {
     trim: topHatTrim("festiveGreen", "screen"),
   },
   centerpiece: giantShamrock,
+  hat: (hat) => topHat(hat, "festiveGreen", "screen"),
   lights: ["festiveGreen", "gold"],
   porch: (sketch, x, z, random) => {
     if (random.chance(0.4)) {

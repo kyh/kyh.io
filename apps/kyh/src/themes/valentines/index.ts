@@ -41,7 +41,6 @@ export const theme = {
   days: (year) => span(year, [2, 10], [2, 14]),
   drift: null,
   glyph: HEART,
-  hat: null,
   id: "valentines",
   mode: "light",
   name: "Valentine's Day",
