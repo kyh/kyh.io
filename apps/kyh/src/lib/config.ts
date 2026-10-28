@@ -33,7 +33,7 @@ export const siteRoutes: SiteRoute[] = [
     title: "About",
   },
   {
-    description: "Ventures, projects, mini apps and templates, with links to each one.",
+    description: "Ventures, projects, mini apps and templates.",
     path: "/showcase",
     title: "Showcase",
   },

@@ -12,7 +12,7 @@ import { ThemeDrift } from "@/themes/drift";
 import { ThemeTrail } from "@/themes/trail";
 import { siteConfig } from "@/lib/config";
 import { JsonLd, VideoJsonLd } from "@/components/json-ld";
-import { ogImage, ogVideoOf } from "@/lib/page-metadata";
+import { ogVideoOf } from "@/lib/page-metadata";
 import { todaysVideo } from "@/lib/todays-video";
 
 import "@/styles/global.css";
@@ -54,7 +54,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
     metadataBase: new URL(siteConfig.url),
     openGraph: {
       description: siteConfig.description,
-      images: [video.poster, ogImage],
+      images: [video.poster],
       locale: "en-US",
       siteName: siteConfig.name,
       title: siteConfig.name,

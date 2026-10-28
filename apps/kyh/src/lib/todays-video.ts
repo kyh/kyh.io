@@ -20,7 +20,5 @@ export const todaysVideo = async () => {
 };
 
 /** A page's metadata (`buildPageMetadata`) with today's clip as its `og:video`. */
-export const todaysPageMetadata = async (
-  content: PageMetadataInput,
-  options?: Parameters<typeof buildPageMetadata>[2],
-): Promise<Metadata> => buildPageMetadata(content, await todaysVideo(), options);
+export const todaysPageMetadata = async (content: PageMetadataInput): Promise<Metadata> =>
+  buildPageMetadata(content, await todaysVideo());

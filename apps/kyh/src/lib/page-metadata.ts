@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
 
 import { siteConfig } from "@/lib/config";
-import { cardImage } from "@/lib/og-card";
 import type { ThemeId } from "@/themes";
 import { DEFAULT_THEME, themeOf } from "@/themes";
-
-/** The site's card: the image every page shares unless it has a better one. */
-export const ogImage = {
-  alt: `${siteConfig.name}: Hello World.`,
-  height: 1080,
-  url: `${siteConfig.url}/og.jpg`,
-  width: 1920,
-};
 
 /**
  * The site's clip, every page's `og:video`: the showcase's opening as it
@@ -65,39 +56,24 @@ export interface PageMetadataInput {
   description: string;
 }
 
-interface PageMetadataOptions {
-  /** Lead with the clip's poster rather than the route's card (the showcase, whose page is the town). */
-  posterFirst?: boolean;
-}
-
 /**
  * Next shallow-merges `metadata`, so a page that sets `openGraph` replaces the
  * layout's entirely — including the image and the video. Build the whole
  * object here so every page keeps `og:image`, `og:video`, `og:type` and a
  * canonical URL. The homepage's title is the site's name alone, not "Home | …".
  *
- * Every page shares the site's clip as `og:video`. Its `og:image` is the
- * route's own share card where it has one, since the card names the page and
- * most link previews show only the image; the clip's poster follows it. The
- * homepage (which has no card) and `/showcase` (whose page is the town) lead
- * with the poster.
+ * Every page shares one picture: the site's clip as `og:video` and its poster
+ * as `og:image`, so any link to the site unfurls as the same town.
  */
-export const buildPageMetadata = (
-  content: PageMetadataInput,
-  video: SiteVideo,
-  { posterFirst = false }: PageMetadataOptions = {},
-): Metadata => {
+export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo): Metadata => {
   const isHome = content.path === "/";
   const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
-  // The route's own share card (src/lib/og-card.ts); the homepage has none.
-  const own = cardImage(content.path);
-  const images = own && !posterFirst ? [own, video.poster] : [video.poster, own ?? ogImage];
   return {
     alternates: { canonical: content.path },
     description: content.description,
     openGraph: {
       description: content.description,
-      images,
+      images: [video.poster],
       locale: "en-US",
       siteName: siteConfig.name,
       title,
@@ -110,7 +86,7 @@ export const buildPageMetadata = (
       card: "summary_large_image",
       creator: siteConfig.creator,
       description: content.description,
-      images: [images[0] ?? video.poster],
+      images: [video.poster],
       title,
     },
   };

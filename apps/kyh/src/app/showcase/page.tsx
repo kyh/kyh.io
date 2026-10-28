@@ -6,14 +6,11 @@ import { todaysPageMetadata } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
 export const generateMetadata = (): Promise<Metadata> =>
-  todaysPageMetadata(
-    {
-      description: "Everything I've built, as a city you can fly over.",
-      path: "/showcase",
-      title: "Showcase",
-    },
-    { posterFirst: true },
-  );
+  todaysPageMetadata({
+    description: "Always on a side quest",
+    path: "/showcase",
+    title: "Showcase",
+  });
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   colors: project.colors,
