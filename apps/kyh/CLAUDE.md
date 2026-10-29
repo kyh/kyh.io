@@ -13,6 +13,27 @@ how a feature behaves is in its code.
   showcase's opening, recorded per theme (`pnpm og:video kyh`), picked by
   `src/lib/todays-video.ts`.
 
+## Keeping in sync
+
+`src/lib/data.ts` (projects, work history) and `src/lib/config.ts` (routes)
+are the sources. Most surfaces read them, so editing a source is enough:
+`/markdown`, `llms.txt`, the sitemap, JSON-LD, the homepage, `/showcase`.
+The rest is by hand:
+
+- **The CLI** (`apps/cli/src/data/content.ts`) keeps its own copy, since it
+  ships to npm alone. Mirror every project and work change there: same order,
+  titles, descriptions (emoji stripped) and urls. `src/lib/data.test.ts` fails
+  until it matches. Release the CLI after (`release cli patch`).
+- **A new project** also needs `colors`, picked from its favicon (most-used
+  colors, main first; one grey for a black and white icon). Without them its
+  building can't light up in its own colors. A bespoke building is optional
+  (`LANDMARKS` in `city/draw-landmarks.ts`); otherwise it gets a generic one.
+- **Prose that states facts** is checked by hand: the role and employers in
+  `llms-txt.ts`, `page-content.ts` and the CLI's `heroText`, and the project
+  names `llms-txt.ts` gives as examples.
+- **A new page** goes in `siteRoutes`. Its `description` there is for nav and
+  agents. The page's own metadata may differ (`/showcase` uses a tagline).
+
 ## Themes (`src/themes/`)
 
 - `store.ts` owns the theme (no next-themes): the calendar's for today, unless
