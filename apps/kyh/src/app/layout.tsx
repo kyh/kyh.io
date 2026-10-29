@@ -9,6 +9,7 @@ import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/themes/theme-script";
 import { ThemeCorners } from "@/themes/corners";
 import { ThemeDrift } from "@/themes/drift";
+import { ThemeGhost } from "@/themes/ghost";
 import { ThemeTrail } from "@/themes/trail";
 import { siteConfig } from "@/lib/config";
 import { JsonLd, VideoJsonLd } from "@/components/json-ld";
@@ -92,6 +93,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
         <ThemeDrift />
         <ThemeCorners />
         <ThemeTrail />
+        <ThemeGhost />
         <Multiplayer />
         <Dock />
         {children}

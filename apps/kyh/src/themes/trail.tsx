@@ -24,7 +24,8 @@ const SIZE = 28;
 const LIFE_MS = 1000;
 
 export const ThemeTrail = () => {
-  const { art, trail } = themeOf(useTheme());
+  const { art, trail: follows } = themeOf(useTheme());
+  const trail = follows === "pieces";
   const still = useReducedMotion();
   const id = useSvgId("trail");
   const pieces = useRef<(HTMLSpanElement | null)[]>([]);

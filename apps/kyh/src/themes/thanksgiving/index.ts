@@ -38,5 +38,5 @@ export const theme = {
   mode: "light",
   name: "Thanksgiving",
   tint: { chroma: 2, hue: 60 },
-  trail: true,
+  trail: "pieces",
 } as const satisfies Theme;

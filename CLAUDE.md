@@ -168,9 +168,21 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at
   Christmas, leaves at Thanksgiving, nothing in the rest;
-- `trail`: a mouse leaves the theme's piece behind it (`trail.tsx`: a ring of
-  pieces reused, moved on the DOM and animated by WAAPI, no React per move);
-  every holiday has one, the default none;
+- `trail`: what follows a mouse: `"pieces"`, the theme's piece left behind it
+  (`trail.tsx`: a ring of pieces reused, moved on the DOM and animated by
+  WAAPI, no React per move), or `"ghost"` at Halloween, a ghost in a sheet
+  floating after it (`ghost.tsx`), a soft body after saharan's bubbles
+  (`sheet.ts`, pure, tested): its outline is a loop of Verlet points, edges
+  held to length, area held by pressure, pulled back to the ghost's shape by
+  shape matching (hard at the head, barely at the hem); the pointer pulls only
+  the head and the air pushes each bit of outline along its normal as its
+  speed squared, so the hem streams and billows behind and the drag tips it
+  into the move; the hem's lobes are drawn between its stepped cusps; its face
+  is the chibi plants' (`face.ts`, pure, tested): round eyes with a big and a
+  small shine, a tiny mouth and blush; it blinks, goes wide-eyed hurried, and
+  screws its eyes into > < poked, startled by a click or brought up short; drawn a
+  frame at a time on the DOM; every holiday has one, the
+  default none;
 - `corners`: what hangs in the page's top corners (`corners.tsx`,
   CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
   walking round the left one and one dropping on its thread from the right,
@@ -210,7 +222,9 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
     titles): let go near one's top-right corner it lands there, tilted on an
     icon's corner or on a title's last letter (`data-hat-sits="text"`), else
     back on the logo
-    (`themes/perch.ts`, pure, tested); leaving the homepage puts it back;
+    (`themes/perch.ts`, pure, tested); carried it leans into the drag and let
+    go it wobbles as it settles, as kwadrants' tags do (`leanFor`, `landing`
+    in `perch.ts`); leaving the homepage puts it back;
   - its sky: the blimp's `blimp` look, its greeting in the theme's colors
     ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
     which Santa and the witch wear too), and a `flyer` crossing higher up the
