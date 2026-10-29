@@ -40,7 +40,8 @@ export const ThemeGhost = () => {
       return;
     }
     let ghost: Ghost | null = null;
-    let from: { x: number; y: number } | null = null;
+    // The mouse, not the pointer: a finger on a touchscreen laptop isn't followed.
+    let mouse: { x: number; y: number } | null = null;
     let moved = { x: 0, y: 0 };
     let frame = 0;
     let last = 0;
@@ -52,12 +53,11 @@ export const ThemeGhost = () => {
       });
     };
     const draw = (now: number) => {
-      const at = lastPointer();
-      if (!ghost || !at) {
+      if (!ghost || !mouse) {
         frame = 0;
         return;
       }
-      stepGhost(ghost, at, moved, (now - last) / 1000);
+      stepGhost(ghost, mouse, moved, (now - last) / 1000);
       last = now;
       moved = { x: 0, y: 0 };
       const paths = ghostPaths(ghost);
@@ -81,15 +81,23 @@ export const ThemeGhost = () => {
       frame = 0;
     };
 
+    // Off the page or touched, it fades and rests; the mouse back, it floats on from where it was.
+    const leave = () => {
+      show(false);
+      stop();
+    };
     const unsubscribe = subscribeToPointer(() => {
       const at = lastPointer();
       if (at?.kind !== "mouse") {
+        if (frame !== 0) {
+          leave();
+        }
         return;
       }
-      if (from) {
-        moved = { x: moved.x + at.x - from.x, y: moved.y + at.y - from.y };
+      if (mouse) {
+        moved = { x: moved.x + at.x - mouse.x, y: moved.y + at.y - mouse.y };
       }
-      from = { x: at.x, y: at.y };
+      mouse = { x: at.x, y: at.y };
       if (!ghost) {
         ghost = createGhost(at);
       }
@@ -98,11 +106,6 @@ export const ThemeGhost = () => {
         start();
       }
     });
-    // Off the page, it fades and rests; back on, it floats on from where it was.
-    const leave = () => {
-      show(false);
-      stop();
-    };
     document.documentElement.addEventListener("mouseleave", leave);
     return () => {
       unsubscribe();
