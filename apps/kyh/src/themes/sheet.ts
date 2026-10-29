@@ -9,7 +9,9 @@
 // drag on the hem tips the head over into the move; stopping, the hem swings
 // back under and settles. In the screen's pixels, +y down; the paths are
 // about the head. Pure (state is stepped in place, for a frame's sake).
-import { ellipse, point } from "./art";
+import type { FacePaths, Mood } from "./face";
+import { point } from "./art";
+import { createMood, facePaths, stepMood } from "./face";
 
 interface Point {
   x: number;
@@ -43,6 +45,8 @@ export interface Ghost {
   time: number;
   /** Seconds not yet stepped. */
   owed: number;
+  /** What its face shows (`face.ts`). */
+  mood: Mood;
 }
 
 /** The head's radius. */
@@ -83,6 +87,8 @@ const WEIGHT = 380;
 const FLUTTER = 160;
 const FLUTTER_SPEED = 1.4;
 const STEP = 1 / 120;
+/** How fast it slows (pixels a second, a second) before it feels brought up short. */
+const JOLT = 3000;
 /** Seconds caught up at most, after a slow frame or a hidden tab. */
 const MOST_OWED = 0.1;
 const ITERATIONS = 8;
@@ -218,7 +224,8 @@ export const createGhost = (at: Point): Ghost => {
     x: x + rest.x,
     y: y + rest.y,
   }));
-  return { back, knots, owed: 0, tilt: 0, time: 0, vx: 0, vy: 0, x, y };
+  const mood = createMood(Math.round(at.x * 7919 + at.y));
+  return { back, knots, mood, owed: 0, tilt: 0, time: 0, vx: 0, vy: 0, x, y };
 };
 
 /** Where the head is and how it's turned, from its points: shape matching's best fit. */
@@ -382,26 +389,33 @@ export const stepGhost = (ghost: Ghost, pointer: Point, moved: Point, seconds: n
     const length = Math.hypot(x, y) || 1;
     ghost.back = { x: x / length, y: y / length };
   }
+  const before = Math.hypot(ghost.vx, ghost.vy);
   ghost.owed = Math.min(MOST_OWED, ghost.owed + seconds);
   while (ghost.owed >= STEP) {
     ghost.owed -= STEP;
     tick(ghost, pointer);
   }
+  // Its face: hurried by the pointer, poked when the pointer's on its head,
+  // jolted when it's brought up short.
+  const slowing = seconds > 0 ? (before - Math.hypot(ghost.vx, ghost.vy)) / seconds : 0;
+  stepMood(ghost.mood, seconds, {
+    jolt: Math.min(1, Math.max(0, (slowing - JOLT) / JOLT)),
+    moved: reach,
+    poked: Math.hypot(pointer.x - ghost.x, pointer.y - ghost.y) < HEAD,
+  });
 };
 
 /** The hem's points: the loosest of the outline. */
 export const hemOf = (ghost: Ghost) =>
   ghost.knots.filter((_, index) => (REST[index]?.hold ?? 1) < 0.05);
 
-export interface GhostPaths {
+export interface GhostPaths extends FacePaths {
   /** The whole of it: its face and its outline. */
   body: string;
   /** Its side turned from the light: right of its middle, as it's turned. */
   shade: string;
   /** Folds up the sheet from the hem's cusps, in ink. */
   creases: string;
-  /** Its eyes and its mouth. */
-  face: string;
 }
 
 /** A smooth closed curve through a loop of points, about `at`. */
@@ -472,9 +486,6 @@ const scalloped = (knots: readonly Knot[]) => {
   return drawn;
 };
 
-/** How open its eyes are, now: a blink every few seconds. */
-const blink = (time: number) => (time % 4.3 < 0.14 ? 0.15 : 1);
-
 /** Its paths about the head's middle, for an <svg> moved there. */
 export const ghostPaths = (ghost: Ghost): GhostPaths => {
   const at = { x: ghost.x, y: ghost.y };
@@ -504,16 +515,10 @@ export const ghostPaths = (ghost: Ghost): GhostPaths => {
     })
     .join("");
 
-  // Looking where it's going, and blinking now and then.
-  const lookX = Math.max(-2, Math.min(2, ghost.vx / 150));
-  const lookY = Math.max(-1.5, Math.min(1.5, ghost.vy / 150));
-  const open = blink(ghost.time);
-  const degrees = (ghost.tilt * 180) / Math.PI;
-  const eye = (x: number) => {
-    const c = rotate(x + lookX, -3.5 + lookY, ghost.tilt);
-    return ellipse(c.x, c.y, 1.9, 3 * open, degrees);
+  // Its face looks where it's going: the eyes lead the head.
+  const look = {
+    x: Math.max(-2.4, Math.min(2.4, ghost.vx / 140)),
+    y: Math.max(-1.6, Math.min(1.6, ghost.vy / 140)),
   };
-  const mouth = rotate(lookX * 0.6, 4 + lookY * 0.6, ghost.tilt);
-  const face = eye(-5) + eye(5) + ellipse(mouth.x, mouth.y, 1.6, 2.2, degrees);
-  return { body, creases, face, shade };
+  return { body, creases, shade, ...facePaths(ghost.mood, look, ghost.tilt) };
 };

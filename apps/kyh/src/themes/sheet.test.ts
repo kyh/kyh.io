@@ -100,8 +100,10 @@ test("its paths are drawn about its head, closed, and all numbers", () => {
   const ghost = createGhost({ x: 640, y: 480 });
   run(ghost, { x: 640, y: 480 }, 1, { x: 5, y: -3 });
   const paths = ghostPaths(ghost);
-  for (const d of Object.values(paths)) {
-    assert.ok(d.length > 0);
+  const { blush, squints, ...drawn } = paths;
+  assert.ok(blush > 0 && blush <= 1);
+  for (const d of [...Object.values(drawn), squints]) {
+    assert.ok(d.length > 0 || d === squints);
     assert.ok(!d.includes("NaN") && !d.includes("undefined"), d);
     for (const [n] of d.matchAll(/-?\d+(?:\.\d+)?/gu)) {
       assert.ok(Math.abs(Number(n)) < 70, n);

@@ -13,6 +13,7 @@ import { useEffect, useRef } from "react";
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { useSvgId } from "@/lib/svg-id";
 import type { Ghost } from "./sheet";
+import { SQUINT_WIDTH } from "./face";
 import { createGhost, ghostPaths, stepGhost } from "./sheet";
 import { themeOf } from "./index";
 import { INK, ShadeDots, townColor } from "./piece";
@@ -32,7 +33,11 @@ export const ThemeGhost = () => {
   const dots = useRef<SVGPathElement | null>(null);
   const creases = useRef<SVGPathElement | null>(null);
   const outline = useRef<SVGPathElement | null>(null);
-  const face = useRef<SVGPathElement | null>(null);
+  const cheeks = useRef<SVGPathElement | null>(null);
+  const eyes = useRef<SVGPathElement | null>(null);
+  const mouth = useRef<SVGPathElement | null>(null);
+  const shine = useRef<SVGPathElement | null>(null);
+  const squints = useRef<SVGPathElement | null>(null);
   const on = trail === "ghost" && !still;
 
   useEffect(() => {
@@ -67,7 +72,12 @@ export const ThemeGhost = () => {
       shade.current?.setAttribute("d", paths.shade);
       dots.current?.setAttribute("d", paths.shade);
       creases.current?.setAttribute("d", paths.creases);
-      face.current?.setAttribute("d", paths.face);
+      cheeks.current?.setAttribute("d", paths.cheeks);
+      cheeks.current?.style.setProperty("opacity", `${paths.blush}`);
+      eyes.current?.setAttribute("d", paths.eyes);
+      mouth.current?.setAttribute("d", paths.mouth);
+      shine.current?.setAttribute("d", paths.shine);
+      squints.current?.setAttribute("d", paths.squints);
       frame = requestAnimationFrame(draw);
     };
     const start = () => {
@@ -134,7 +144,15 @@ export const ThemeGhost = () => {
             <path ref={dots} fill={`url(#${id}-dots)`} />
             <path ref={creases} style={{ fill: "none", stroke: INK, strokeWidth: 0.9 }} />
             <path ref={outline} style={{ fill: "none", stroke: INK, strokeWidth: 1.4 }} />
-            <path ref={face} style={{ fill: townColor("screen") }} />
+            {/* A chibi face (`face.ts`): blush, eyes with their shine, > < when squeezed shut. */}
+            <path ref={cheeks} style={{ fill: townColor("accentPink") }} />
+            <path ref={eyes} style={{ fill: townColor("screen") }} />
+            <path ref={mouth} style={{ fill: townColor("screen") }} />
+            <path ref={shine} style={{ fill: townColor("white") }} />
+            <path
+              ref={squints}
+              style={{ fill: "none", stroke: townColor("screen"), strokeWidth: SQUINT_WIDTH }}
+            />
           </g>
         </svg>
       </span>
