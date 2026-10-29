@@ -170,7 +170,7 @@ export const edgePoint = (edge: Edge, s: number, side = 0) => ({
 });
 
 /** How far in from a block's edge its sidewalk runs, in cells. */
-export const SIDEWALK = 0.17;
+const SIDEWALK = 0.17;
 
 export const cornerId = (bx: number, bz: number, corner: "nw" | "ne" | "se" | "sw") =>
   `${bx},${bz}:${corner}`;
@@ -218,7 +218,7 @@ export const sidewalkGraph = (plan: Pick<CityPlan, "blocks">): Graph => {
  * Where to go from the end of `edge`: anywhere but straight back, mostly.
  * Draws from and returns the walker's or driver's own random state.
  */
-export const turnAfter = (graph: Graph, edge: number, rng: number, uTurn: number) => {
+const turnAfter = (graph: Graph, edge: number, rng: number, uTurn: number) => {
   const here = graph.edges[edge];
   const options = here ? (graph.out[here.to] ?? []) : [];
   const forward = options.filter((option) => graph.edges[option]?.to !== here?.from);
@@ -393,7 +393,7 @@ export interface Walker {
 }
 
 /** Puts a walker where its edge and distance say. */
-export const poseWalker = (graph: Graph, walker: Walker, settle: boolean) => {
+const poseWalker = (graph: Graph, walker: Walker, settle: boolean) => {
   const edge = graph.edges[walker.edge];
   if (!edge) {
     return;

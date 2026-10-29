@@ -104,7 +104,7 @@ export const doorsOf = (
 /** Inside a building, stepping out, walking the sidewalks, or going in. */
 export const INSIDE = 0;
 export const LEAVING = 1;
-export const WALKING = 2;
+const WALKING = 2;
 export const ENTERING = 3;
 
 export interface Visitor {
@@ -377,9 +377,6 @@ export const createVisitors = (
 };
 
 export type Visitors = ReturnType<typeof createVisitors>;
-
-/** Whether someone is out in the street, rather than inside a building. */
-export const isOut = (visitor: Visitor) => visitor.mode !== INSIDE;
 
 /** How far from its door a visitor is full size, growing out of it or shrinking into it (cells). */
 const DOORWAY = 0.3;

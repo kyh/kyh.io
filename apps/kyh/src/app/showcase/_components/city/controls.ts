@@ -7,7 +7,7 @@
 /** Left alone this long, the flyover picks up again. */
 export const IDLE_MS = 30_000;
 /** A press that travels farther than this, in CSS pixels, is a drag, not a tap. */
-export const DRAG_THRESHOLD = 5;
+const DRAG_THRESHOLD = 5;
 
 /**
  * Whether a pointer move over the town is a hover: a mouse that moved. A move

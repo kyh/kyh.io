@@ -48,7 +48,7 @@ const at = (radius: number, degrees: number, bend: Bend | null = null) => {
 };
 
 /** One ring, spoke to spoke, sagging between each. */
-export const ringPath = (radius: number, bend: Bend | null = null) => {
+const ringPath = (radius: number, bend: Bend | null = null) => {
   const [first = 0, ...rest] = SPOKES;
   let last = first;
   const arcs = rest.map((degrees) => {

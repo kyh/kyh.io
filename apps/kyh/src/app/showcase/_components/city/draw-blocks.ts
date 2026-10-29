@@ -7,7 +7,6 @@ import type { Random } from "@/lib/random";
 import type { Side, Sketch } from "./sketch";
 import {
   bench,
-  board,
   bush,
   door,
   FLOOR,
@@ -50,7 +49,7 @@ const doorAlong = ({ d, front, w }: HouseSpec) => (front === "front" ? w * 0.38 
 export const eavesOf = ({ floors }: HouseSpec) => CURB_TOP + 0.03 + floors * FLOOR + 0.06;
 
 /** An Inkline cottage: walls, a pitched roof, a door and a few windows. */
-export const house = (sketch: Sketch, spec: HouseSpec) => {
+const house = (sketch: Sketch, spec: HouseSpec) => {
   const height = spec.floors * FLOOR + 0.06;
   plate(sketch, inset(spec, -0.08));
   box(sketch, {
@@ -626,51 +625,6 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
   ]) {
     lamp(sketch, cx + (dx ?? 0), cz + (dz ?? 0));
   }
-};
-
-/** A two-storey shop for a small lot nobody claimed. */
-export const shop = (sketch: Sketch, lot: Footprint, name: string, seed: number) => {
-  const random = createRandom(seed);
-  const building = inset(lot, 0.45);
-  const awning = random.pick(ACCENTS);
-  plate(sketch, inset(building, -0.1));
-  box(sketch, {
-    colors: WALLS,
-    d: building.d,
-    h: FLOOR * 2 + 0.06,
-    w: building.w,
-    x: building.x,
-    y: CURB_TOP + 0.03,
-    z: building.z,
-  });
-  storefront(sketch, building, "front", awning);
-  windows(sketch, building, {
-    columns: 3,
-    floors: 1,
-    side: "front",
-    y: CURB_TOP + 0.03 + FLOOR + 0.1,
-  });
-  windows(sketch, building, { columns: 3, floors: 2, side: "side", y: CURB_TOP + 0.13 });
-  gable(sketch, {
-    colors: random.pick(ROOFS),
-    d: building.d,
-    ends: WALLS,
-    ridge: "x",
-    rise: 0.4,
-    w: building.w,
-    x: building.x,
-    y: CURB_TOP + 0.03 + FLOOR * 2 + 0.06,
-    z: building.z,
-  });
-  board(sketch, building, {
-    along: 0.15,
-    h: 0.16,
-    side: "front",
-    text: name,
-    w: building.w - 0.3,
-    y: CURB_TOP + 0.45,
-  });
-  bush(sketch, building.x + building.w + 0.2, building.z + building.d + 0.15);
 };
 
 const DRAWERS: Partial<

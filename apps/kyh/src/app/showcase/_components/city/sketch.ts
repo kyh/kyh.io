@@ -398,7 +398,7 @@ export const solid = (
 // `solid` call when they form one closed shape.
 
 /** A planar polygon, wound to face `outward`, split into triangles. */
-export const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint): Triangle[] => {
+const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint): Triangle[] => {
   const [first, second, third] = points;
   if (!first || !second || !third) {
     return [];
