@@ -77,6 +77,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const hat = useRef<HTMLSpanElement>(null);
   const landFrom = useRef<Held | null>(null);
   const carrying = useRef<AbortController | null>(null);
+  const carriedHat = useRef<HTMLSpanElement>(null);
 
   useEffect(() => () => carrying.current?.abort(), []);
 
@@ -136,7 +137,11 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
         brim,
         perches.map(({ perch }) => perch),
       );
-      landFrom.current = { ...brim, lean };
+      // The landing starts from the lean on screen, which eases after the drag's.
+      const shown = carriedHat.current
+        ? Number(getComputedStyle(carriedHat.current).rotate.replace("deg", ""))
+        : TILT + lean;
+      landFrom.current = { ...brim, lean: Number.isFinite(shown) ? shown - TILT : lean };
       setHost(
         key === HOME ? null : (perches.find(({ perch }) => perch.key === key)?.element ?? null),
       );
@@ -239,6 +244,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
       {held &&
         createPortal(
           <span
+            ref={carriedHat}
             className="pointer-events-none fixed z-[60] size-0 cursor-grabbing"
             style={{
               left: held.x,
