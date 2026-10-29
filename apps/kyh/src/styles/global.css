@@ -452,6 +452,7 @@ html[data-tint] {
 /* Nothing fixed past the screen's edge (a visitor's chat bubble) may pan the page sideways. */
 html {
   overflow-x: clip;
+  scrollbar-gutter: stable;
 }
 
 body {

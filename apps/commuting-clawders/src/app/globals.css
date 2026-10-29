@@ -26,6 +26,10 @@ body {
   background: var(--term);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /* The demo is a picture of a terminal, not text; what to install and run is. */
 body {
   -webkit-user-select: none;
