@@ -168,9 +168,14 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   drift; `glyph`, its line icon; `confetti`, the finds' colors;
 - `drift`: what falls across every page (`drift.tsx`, CSS-animated): snow at
   Christmas, leaves at Thanksgiving, nothing in the rest;
-- `trail`: a mouse leaves the theme's piece behind it (`trail.tsx`: a ring of
-  pieces reused, moved on the DOM and animated by WAAPI, no React per move);
-  every holiday has one, the default none;
+- `trail`: what follows a mouse: `"pieces"`, the theme's piece left behind it
+  (`trail.tsx`: a ring of pieces reused, moved on the DOM and animated by
+  WAAPI, no React per move), or `"ghost"` at Halloween, a ghost in a sheet
+  floating after it (`ghost.tsx`), its sheet cloth (`sheet.ts`, pure, tested:
+  strands stepped by Verlet, held to length and to each other, weighed and
+  slowed by the air) that streams out behind as it moves and swings back when
+  it stops, drawn a frame at a time on the DOM; every holiday has one, the
+  default none;
 - `corners`: what hangs in the page's top corners (`corners.tsx`,
   CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
   walking round the left one and one dropping on its thread from the right,
