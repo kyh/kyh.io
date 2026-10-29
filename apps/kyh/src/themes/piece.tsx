@@ -13,11 +13,10 @@ import { useSvgId } from "@/lib/svg-id";
 import type { Art, Layer } from "./art";
 
 /** A palette color by day and by night, as the page is. */
-export const townColor = (token: Token) =>
-  `light-dark(${PALETTE[token].day}, ${PALETTE[token].night})`;
+const townColor = (token: Token) => `light-dark(${PALETTE[token].day}, ${PALETTE[token].night})`;
 
 /** The town's ink, and its shade dots: darker by day, paler by night, as the town's are. */
-export const INK = townColor("ink");
+const INK = townColor("ink");
 const DOTS = "light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.3))";
 /** The town's fine line, in the box's units. */
 const FINE = 0.6;

@@ -479,22 +479,6 @@ export const parkedCar = (sketch: Sketch, x: number, z: number, along: "x" | "z"
   );
 };
 
-/** A low hedge around three sides of a yard. */
-export const hedge = (sketch: Sketch, rect: Footprint, y = 0.04) => {
-  const colors = paint("hedge", "hedge", "treeShade");
-  box(sketch, { colors, d: 0.08, h: 0.1, w: rect.w, x: rect.x, y, z: rect.z });
-  box(sketch, { colors, d: rect.d - 0.08, h: 0.1, w: 0.08, x: rect.x, y, z: rect.z + 0.08 });
-  box(sketch, {
-    colors,
-    d: rect.d - 0.08,
-    h: 0.1,
-    w: 0.08,
-    x: rect.x + rect.w - 0.08,
-    y,
-    z: rect.z + 0.08,
-  });
-};
-
 /** A thin stroke loop on the ground, for paths and pitches. */
 export const groundLoop = (
   sketch: Sketch,

@@ -269,7 +269,7 @@ const SLATE_CHROMA = 0.042;
  * A grey of the same lightness, turned to `hue` (OKLCH degrees) as Tailwind's
  * slate is: its tint kept through the darks and faded toward white.
  */
-export const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
+const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
   const [lightness] = oklab(greyOf(hex));
   const amount = chroma * Math.min(1, (1 - lightness) / 0.25);
   const angle = (hue * Math.PI) / 180;

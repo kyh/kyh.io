@@ -15,7 +15,7 @@ import { PARTY, PARTY_HOST } from "@/lib/party";
 import { asText } from "@/lib/wire";
 import { acceptOrder, hostReorder, ordersEntry, REORDER } from "@/lib/shared-order";
 
-export const SITE_ROOM = "kyh-site";
+const SITE_ROOM = "kyh-site";
 
 const NONE: PlayerMap = {};
 const NO_ONE: Visitor[] = [];

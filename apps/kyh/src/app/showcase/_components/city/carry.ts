@@ -55,7 +55,7 @@ export interface Held {
  * lands, so it's found twice; either way the thing stays on its point of the
  * ray, so it never leaves the hand.
  */
-export const hangingOver = (
+const hangingOver = (
   { view, surfaceAt }: Ground,
   seen: { x: number; z: number },
   height: number,

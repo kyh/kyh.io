@@ -342,7 +342,7 @@ export const drawEdgestories: DrawLandmark = (sketch, site, title) => {
 // Commuting Clawders: a running track where Clawd runs laps, forever.
 
 /** A stadium outline: two half circles joined by straights, along x. */
-export const stadium = (
+const stadium = (
   cx: number,
   cz: number,
   straight: number,
