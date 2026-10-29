@@ -219,7 +219,9 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
     titles): let go near one's top-right corner it lands there, tilted on an
     icon's corner or on a title's last letter (`data-hat-sits="text"`), else
     back on the logo
-    (`themes/perch.ts`, pure, tested); leaving the homepage puts it back;
+    (`themes/perch.ts`, pure, tested); carried it leans into the drag and let
+    go it wobbles as it settles, as kwadrants' tags do (`leanFor`, `landing`
+    in `perch.ts`); leaving the homepage puts it back;
   - its sky: the blimp's `blimp` look, its greeting in the theme's colors
     ("BOO!" at Halloween) and a hat or trim (`blimp.ts`; the hats in `hats.ts`,
     which Santa and the witch wear too), and a `flyer` crossing higher up the

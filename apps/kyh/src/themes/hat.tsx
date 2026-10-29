@@ -8,7 +8,9 @@
 // It can be picked up and put on something else: an app's icon, a folder, a
 // dock icon, the visitor's avatar, anything marked `data-hat-perch`. Let go
 // near one's top-right corner and it's worn there (`perch.ts`), else it goes
-// back on the logo. Leaving the homepage puts it back on the logo.
+// back on the logo. Leaving the homepage puts it back on the logo. Carried,
+// it leans into the way it's dragged, and let go it wobbles as it settles, as
+// kwadrants' tags do (`leanFor`, `landing`).
 import { useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -16,7 +18,7 @@ import { createPortal } from "react-dom";
 import { useSvgId } from "@/lib/svg-id";
 import type { HatPictures } from "./hat-pictures";
 import type { Perch } from "./perch";
-import { HOME, perchFor } from "./perch";
+import { HOME, LANDING_MS, landing, leanFor, perchFor } from "./perch";
 import { ShadeDots } from "./piece";
 import { useTheme } from "./store";
 
@@ -42,6 +44,14 @@ interface Point {
   y: number;
 }
 
+/** Where its brim is while it's carried, and how far it leans into the drag. */
+interface Held extends Point {
+  lean: number;
+}
+
+/** How long after the last move a carried hat stands back up. */
+const STILL_MS = 90;
+
 const perchesOnScreen = () =>
   [...document.querySelectorAll<HTMLElement>("[data-hat-perch]")].flatMap((element) => {
     const rect = element.getBoundingClientRect();
@@ -63,10 +73,9 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const still = useReducedMotion();
   /** What it's worn on away from the logo; null on the logo. */
   const [host, setHost] = useState<HTMLElement | null>(null);
-  /** Where its brim is while it's carried. */
-  const [held, setHeld] = useState<Point | null>(null);
+  const [held, setHeld] = useState<Held | null>(null);
   const hat = useRef<HTMLSpanElement>(null);
-  const landFrom = useRef<Point | null>(null);
+  const landFrom = useRef<Held | null>(null);
   const carrying = useRef<AbortController | null>(null);
 
   useEffect(() => () => carrying.current?.abort(), []);
@@ -83,13 +92,9 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     if (still) {
       return;
     }
-    placed.animate(
-      [
-        { scale: 1.15, translate: `${from.x - to.left}px ${from.y - to.top}px` },
-        { scale: 1, translate: "0 0" },
-      ],
-      { duration: 380, easing: "cubic-bezier(0.3, 1.35, 0.5, 1)" },
-    );
+    placed.animate(landing({ x: from.x - to.left, y: from.y - to.top }, TILT, from.lean), {
+      duration: LANDING_MS,
+    });
   }, [held, still]);
 
   if (!picture) {
@@ -116,6 +121,10 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     const carry = new AbortController();
     carrying.current = carry;
     const { signal } = carry;
+    let lastX = event.clientX;
+    let lean = 0;
+    let standing = 0;
+    signal.addEventListener("abort", () => clearTimeout(standing));
     const drop = (up: PointerEvent) => {
       if (up.pointerId !== pointerId) {
         return;
@@ -127,21 +136,31 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
         brim,
         perches.map(({ perch }) => perch),
       );
-      landFrom.current = brim;
+      landFrom.current = { ...brim, lean };
       setHost(
         key === HOME ? null : (perches.find(({ perch }) => perch.key === key)?.element ?? null),
       );
       setHeld(null);
     };
     const move = (to: PointerEvent) => {
-      if (to.pointerId === pointerId) {
-        setHeld(brimAt(to));
+      if (to.pointerId !== pointerId) {
+        return;
       }
+      lean = leanFor(to.clientX - lastX);
+      lastX = to.clientX;
+      const brim = brimAt(to);
+      setHeld({ ...brim, lean });
+      // Held still, it stands back up.
+      clearTimeout(standing);
+      standing = window.setTimeout(() => {
+        lean = 0;
+        setHeld({ ...brim, lean });
+      }, STILL_MS);
     };
     window.addEventListener("pointermove", move, { signal });
     window.addEventListener("pointerup", drop, { signal });
     window.addEventListener("pointercancel", drop, { signal });
-    setHeld({ x: at.left, y: at.top });
+    setHeld({ lean: 0, x: at.left, y: at.top });
   };
 
   const [left, top, width, height] = picture.box;
@@ -221,7 +240,13 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
         createPortal(
           <span
             className="pointer-events-none fixed z-[60] size-0 cursor-grabbing"
-            style={{ left: held.x, rotate: `${TILT}deg`, scale: 1.15, top: held.y }}
+            style={{
+              left: held.x,
+              rotate: `${TILT + held.lean}deg`,
+              scale: 1.15,
+              top: held.y,
+              transition: still ? undefined : "rotate 120ms ease-out",
+            }}
             aria-hidden="true"
           >
             {drawing(true)}
