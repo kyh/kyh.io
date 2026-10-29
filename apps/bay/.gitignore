@@ -1,0 +1,4 @@
+# the pipeline's work and its output: renders, paintings, the mosaic and the served pyramid
+data/
+public/data/
+.env
