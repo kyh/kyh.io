@@ -3,7 +3,7 @@
 // happens: the days it runs (the calendar), its light or dark and grey tint
 // (the page's paint), its piece and confetti (easter-egg finds), its glyph
 // (the theme toggle), what falls across every page (`drift.tsx`), what
-// trails the pointer (`trail.tsx`) and what hangs in the page's corners
+// follows the pointer (`trail.tsx`, `ghost.tsx`) and what hangs in the page's corners
 // (`corners.tsx`). How the
 // showcase's town dresses is the folder's `town.ts` (`Town` in
 // city/town-theme.ts), kept apart so the town's drawing code loads only on
@@ -25,6 +25,9 @@ export type Mode = "light" | "dark";
 
 /** What falls across every page: snow drifting down, or leaves tumbling. */
 export type Drift = "snow" | "leaves";
+
+/** What follows a mouse: the theme's piece let go behind it, or a ghost floating after it. */
+export type Trail = "pieces" | "ghost";
 
 /** What hangs in the page's top corners: cobwebs, a spider on each. */
 export type Corners = "webs";
@@ -51,8 +54,8 @@ export interface Theme {
   glyph: string | null;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
-  /** Whether a mouse leaves a trail of the theme's piece behind it. */
-  trail: boolean;
+  /** What follows a mouse about: its pieces (`trail.tsx`) or a ghost (`ghost.tsx`); null, nothing. */
+  trail: Trail | null;
   corners: Corners | null;
 }
 

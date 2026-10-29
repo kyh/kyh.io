@@ -1,5 +1,5 @@
 // Halloween: the week up to the 31st, dark and turned purple. A find throws
-// bats; the town puts jack-o'-lanterns by the doors and the pond and graves
+// bats, a ghost floats after the mouse (`ghost.tsx`); the town puts jack-o'-lanterns by the doors and the pond and graves
 // in the gardens, lights its windows orange after dark, stands a waving
 // skeleton in the fountain, flies BOO! in a witch's hat and sends a witch
 // across the sky.
@@ -60,5 +60,5 @@ export const theme = {
   mode: "dark",
   name: "Halloween",
   tint: { chroma: 2.5, hue: 295 },
-  trail: true,
+  trail: "ghost",
 } as const satisfies Theme;

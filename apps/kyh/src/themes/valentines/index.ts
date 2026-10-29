@@ -29,5 +29,5 @@ export const theme = {
   mode: "light",
   name: "Valentine's Day",
   tint: { chroma: 2, hue: 350 },
-  trail: true,
+  trail: "pieces",
 } as const satisfies Theme;

@@ -36,7 +36,7 @@ test("each theme is whole: one id, its art, confetti, and only the default runs 
     assert.equal(theme.tint === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.mode === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.glyph === null, theme.id === DEFAULT_THEME, theme.id);
-    assert.equal(theme.trail, theme.id !== DEFAULT_THEME, theme.id);
+    assert.equal(theme.trail === null, theme.id === DEFAULT_THEME, theme.id);
   }
 });
 
