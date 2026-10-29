@@ -13,7 +13,7 @@ import { useEffect, useRef } from "react";
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { useSvgId } from "@/lib/svg-id";
 import type { Ghost } from "./sheet";
-import { SQUINT_WIDTH } from "./face";
+import { SQUINT_WIDTH, startle } from "./face";
 import { createGhost, ghostPaths, stepGhost } from "./sheet";
 import { themeOf } from "./index";
 import { INK, ShadeDots, townColor } from "./piece";
@@ -116,9 +116,17 @@ export const ThemeGhost = () => {
         start();
       }
     });
+    // A click anywhere makes it flinch, > <.
+    const flinch = (event: PointerEvent) => {
+      if (ghost && frame !== 0 && event.pointerType === "mouse") {
+        startle(ghost.mood);
+      }
+    };
+    window.addEventListener("pointerdown", flinch, { capture: true, passive: true });
     document.documentElement.addEventListener("mouseleave", leave);
     return () => {
       unsubscribe();
+      window.removeEventListener("pointerdown", flinch, { capture: true });
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
     };

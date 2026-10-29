@@ -180,7 +180,7 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
   into the move; the hem's lobes are drawn between its stepped cusps; its face
   is the chibi plants' (`face.ts`, pure, tested): round eyes with a big and a
   small shine, a tiny mouth and blush; it blinks, goes wide-eyed hurried, and
-  screws its eyes into > < poked or brought up short; drawn a
+  screws its eyes into > < poked, startled by a click or brought up short; drawn a
   frame at a time on the DOM; every holiday has one, the
   default none;
 - `corners`: what hangs in the page's top corners (`corners.tsx`,

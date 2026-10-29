@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createMood, facePaths, stepMood } from "./face";
+import { createMood, facePaths, startle, stepMood } from "./face";
 
 const calm = { jolt: 0, moved: 0, poked: false };
 
@@ -60,4 +60,11 @@ test("hurried, its eyes and mouth go wide, and calm as it slows", () => {
   assert.ok(widthOf(facePaths(hurried, still, 0).mouth) > widthOf(calmFace.mouth));
   run(2, calm, hurried);
   assert.ok(hurried.excite < 0.05, `${hurried.excite}`);
+});
+
+test("a click startles it into > < for a moment, then it opens its eyes again", () => {
+  const mood = createMood(1);
+  startle(mood);
+  assert.ok(facePaths(run(0.2, calm, mood), still, 0).squints.length > 0);
+  assert.equal(facePaths(run(1, calm, mood), still, 0).squints, "");
 });

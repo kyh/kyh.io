@@ -3,9 +3,10 @@
 // one down and out, a tiny round mouth and blushing cheeks. It blinks, a
 // quick close and a softer open with the odd double; it goes wide-eyed and
 // open-mouthed when it's hurried; and it screws its eyes shut into > < and
-// blushes when it's poked or brought up short. Drawn in the showcase town's
-// hand: flat faces, no gradients. In the head's own pixels, +y down, its
-// middle at the origin. Pure (state is stepped in place, for a frame's sake).
+// blushes when it's poked, startled by a click or brought up short. Drawn
+// in the showcase town's hand: flat faces, no gradients. In the head's own
+// pixels, +y down, its middle at the origin. Pure (state is stepped in place,
+// for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
 import { ellipse, point } from "./art";
@@ -45,6 +46,8 @@ const MOUTH_Y = EYE_Y + 2.6;
 const CHEEK_R = 1.9;
 const CHEEK_X = EYE_SEP + EYE_R + 1.6;
 const CHEEK_Y = EYE_Y + 1.9;
+/** Seconds a poke or a startle holds its eyes shut. */
+const STARTLE_S = 0.45;
 
 export const createMood = (seed: number): Mood => ({
   blink: 0,
@@ -55,6 +58,11 @@ export const createMood = (seed: number): Mood => ({
   squint: 0,
   squintHold: 0,
 });
+
+/** A click anywhere startles it: it flinches, screwing its eyes into > < for a moment. */
+export const startle = (mood: Mood) => {
+  mood.squintHold = Math.max(mood.squintHold, STARTLE_S);
+};
 
 /** Steps its feelings `seconds` on. */
 export const stepMood = (mood: Mood, seconds: number, cues: Cues) => {
@@ -72,7 +80,7 @@ export const stepMood = (mood: Mood, seconds: number, cues: Cues) => {
   }
   // > < a moment after it's poked (it floats off a pointer, so a poke is brief) or jolted.
   if (cues.poked) {
-    mood.squintHold = Math.max(mood.squintHold, 0.45);
+    mood.squintHold = Math.max(mood.squintHold, STARTLE_S);
   }
   if (cues.jolt > 0.2) {
     mood.squintHold = Math.max(mood.squintHold, 0.2 + cues.jolt * 0.35);
