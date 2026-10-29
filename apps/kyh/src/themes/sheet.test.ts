@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Ghost } from "./sheet";
-import { createGhost, ghostPaths, HEAD, hemOf, stepGhost } from "./sheet";
+import { createGhost, ghostPaths, hemOf, POINTS, stepGhost } from "./sheet";
 
 const still = { x: 0, y: 0 };
 
@@ -55,8 +55,27 @@ test("stopped, the sheet swings back under it", () => {
   assert.ok(Math.abs(ghost.tilt) < 0.12, `${ghost.tilt}`);
 });
 
-test("the cloth keeps its length however it's thrown about", () => {
+const perimeter = (g: Ghost) => {
+  let length = 0;
+  for (const [index, knot] of g.knots.entries()) {
+    const next = g.knots[(index + 1) % g.knots.length];
+    length += next ? Math.hypot(next.x - knot.x, next.y - knot.y) : 0;
+  }
+  return length;
+};
+const area = (g: Ghost) => {
+  let sum = 0;
+  for (const [index, a] of g.knots.entries()) {
+    const b = g.knots[(index + 1) % g.knots.length];
+    sum += b ? a.x * b.y - b.x * a.y : 0;
+  }
+  return sum / 2;
+};
+
+test("the cloth keeps its length and the body its fill however it's thrown about", () => {
   const ghost = createGhost({ x: 0, y: 0 });
+  const restLength = perimeter(ghost);
+  const restArea = area(ghost);
   let pointer = { x: 0, y: 0 };
   for (const by of [
     { x: 30, y: 0 },
@@ -64,15 +83,10 @@ test("the cloth keeps its length however it's thrown about", () => {
     { x: 0, y: -40 },
   ]) {
     pointer = run(ghost, pointer, 0.3, by);
+    assert.ok(Math.abs(perimeter(ghost) / restLength - 1) < 0.05, `${perimeter(ghost)}`);
+    assert.ok(Math.abs(area(ghost) / restArea - 1) < 0.2, `${area(ghost)} ${restArea}`);
   }
-  for (const strand of ghost.sheet) {
-    let length = 0;
-    for (const [index, knot] of strand.entries()) {
-      const before = strand[index - 1];
-      length += before ? Math.hypot(knot.x - before.x, knot.y - before.y) : 0;
-    }
-    assert.ok(Math.abs(length - 28) < 2, `${length}`);
-  }
+  assert.equal(ghost.knots.length, POINTS);
 });
 
 test("a slow frame catches up no more than a tenth of a second", () => {
@@ -94,5 +108,4 @@ test("its paths are drawn about its head, closed, and all numbers", () => {
     }
   }
   assert.ok(paths.body.startsWith("M") && paths.body.endsWith("Z"));
-  assert.ok(paths.body.includes(`A${HEAD} ${HEAD}`));
 });

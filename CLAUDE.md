@@ -171,10 +171,14 @@ shows (`themeOf(id).<field>`, `TOWNS[id].<field>`). The fields:
 - `trail`: what follows a mouse: `"pieces"`, the theme's piece left behind it
   (`trail.tsx`: a ring of pieces reused, moved on the DOM and animated by
   WAAPI, no React per move), or `"ghost"` at Halloween, a ghost in a sheet
-  floating after it (`ghost.tsx`), its sheet cloth (`sheet.ts`, pure, tested:
-  strands stepped by Verlet, held to length and to each other, weighed and
-  slowed by the air) that streams out behind as it moves and swings back when
-  it stops, drawn a frame at a time on the DOM; every holiday has one, the
+  floating after it (`ghost.tsx`), a soft body after saharan's bubbles
+  (`sheet.ts`, pure, tested): its outline is a loop of Verlet points, edges
+  held to length, area held by pressure, pulled back to the ghost's shape by
+  shape matching (hard at the head, barely at the hem); the pointer pulls only
+  the head and the air pushes each bit of outline along its normal as its
+  speed squared, so the hem streams and billows behind and the drag tips it
+  into the move; the hem's lobes are drawn between its stepped cusps; drawn a
+  frame at a time on the DOM; every holiday has one, the
   default none;
 - `corners`: what hangs in the page's top corners (`corners.tsx`,
   CSS-animated): cobwebs at Halloween (`web.ts`, pure, tested), a spider
