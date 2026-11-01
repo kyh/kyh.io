@@ -20,14 +20,14 @@
     "@vercel/speed-insights": "^2.0.0",
     "@vibedgames/multiplayer": "0.3.0",
     "cn": "catalog:",
-    "geist": "^1.8.2",
+    "geist": "^1.9.0",
     "lucide-react": "catalog:",
     "matter-js": "^0.20.0",
-    "motion": "^14.6.0",
+    "motion": "^14.9.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "three": "^0.186.1"
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
@@ -36,7 +36,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@types/three": "^0.186.0",
+    "@types/three": "^0.187.0",
     "postcss": "catalog:",
     "sharp": "^0.35.5",
     "tailwindcss": "catalog:",
