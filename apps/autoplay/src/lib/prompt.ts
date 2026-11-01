@@ -81,10 +81,10 @@ export const pickFormat = (day: string = today()): Format => {
 
 const clean = (text: string): string =>
   text
-    .replace(URL_PATTERN, "")
-    .replace(MENTION_PATTERN, "")
+    .replaceAll(URL_PATTERN, "")
+    .replaceAll(MENTION_PATTERN, "")
     // A hashtag's word is usually the subject — keep it, drop the hash.
-    .replace(HASHTAG_PATTERN, "$<word>")
+    .replaceAll(HASHTAG_PATTERN, "$<word>")
     .replaceAll(/\s+/gu, " ")
     .trim();
 
