@@ -3,7 +3,7 @@ import test from "node:test";
 
 import type { Creature, Pose } from "./follower/creature";
 import type { Point } from "./follower/walk";
-import { reindeer } from "./christmas/reindeer";
+import { penguin } from "./christmas/penguin";
 import { bunny } from "./easter/bunny";
 import { ghost } from "./halloween/ghost";
 import { dragon } from "./lunar-new-year/dragon";
@@ -95,7 +95,7 @@ sweep("dragon", dragon);
 sweep("ghost", ghost);
 sweep("leprechaun", leprechaun);
 sweep("lovebird", lovebird);
-sweep("reindeer", reindeer);
+sweep("penguin", penguin);
 sweep("turkey", turkey);
 
 /** A walker petted: the mouse comes to rest on it, and it stays put for it rather than walking off. */
@@ -120,5 +120,5 @@ const petting = <State>(name: string, creature: Creature<State>) => {
 
 petting("bunny", bunny);
 petting("leprechaun", leprechaun);
-petting("reindeer", reindeer);
+petting("penguin", penguin);
 petting("turkey", turkey);

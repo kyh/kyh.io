@@ -1,102 +1,67 @@
 "use client";
 
-// What follows a mouse at Christmas: a reindeer (`reindeer.ts`), drawn in
-// the showcase town's hand as the theme's pieces are (`piece.tsx`): a brown
-// coat with its belly in the darker brown under the shade dots, a shaggy
-// pale mane and rump, branching antlers, dark hooves, and a gold bell on a
-// red collar. Parts marked `data-part` are posed a frame at a time by the
+// What follows a mouse at Christmas: an Adélie penguin in a red scarf
+// (`penguin.ts`), drawn in the showcase town's hand as the theme's pieces are
+// (`piece.tsx`): a black back and flippers, a white front with its
+// underside in the shaded white under the shade dots, a white ring round its
+// eye, a dark beak, pink feet, and a red scarf striped white whose end swings
+// as it goes. Parts marked `data-part` are posed a frame at a time by the
 // stage.
 import type { Token } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
-import { Stage } from "../follower/stage";
 import { filled, stroked } from "../follower/ink";
+import { Stage } from "../follower/stage";
 import { ShadeDots } from "../piece";
-import { reindeer } from "./reindeer";
+import { penguin } from "./penguin";
 
 const BODY =
-  "M-22 -46C-10 -52 8 -52 18 -49C25 -46 25 -36 20 -31C10 -27 -10 -27 -19 -30C-25 -33 -27 -42 -22 -46Z";
-const BELLY = "M22 -34C16 -29 0 -27 -10 -28C-16 -28 -21 -30 -24 -34C-12 -31 8 -31 22 -34Z";
-const RUMP = "M-22 -45C-25 -42 -25 -36 -21 -32C-20 -36 -19 -41 -22 -45Z";
-const TAIL = "M-23 -44C-26 -43 -27 -40 -25 -38C-24 -40 -23 -42 -23 -44Z";
-const MANE = "M17 -48C22 -46 25 -40 23 -33L21 -35L20.5 -32L18 -35C17 -39 16 -44 17 -48Z";
-const COLLAR = "M13 -50C17 -46 19 -42 19.5 -40";
-const SKULL =
-  "M-6 -2C-5 -6 1 -7 5 -4C8 -2 11 0 12.5 2.4C13.4 4 12.4 5.6 10.6 5.6C7 5.6 2 5 -2 3.6C-5 2.6 -6.4 0.6 -6 -2Z";
-const EAR = "M-2 -4C-6 -7 -10 -7 -12 -5C-10 -3 -6 -2 -2 -2.6Z";
-/** An antler: the beam sweeping back and up, its tines forward and out. */
-const ANTLER =
-  "M-1 -5C-4 -12 -9 -16 -8 -24C-7.5 -28 -5 -31 -2 -33M-1.6 -7l5 -1M-3.4 -11l4 -5M-7 -16l-5 -3M-8 -21l4 -4M-6.4 -27l5 -2M-4 -31l-3 -4";
-const Leg = ({ index, token, hoof }: { index: number; token: Token; hoof: string }) => (
-  <>
-    <path data-part={`leg-${index}`} style={stroked(4.8)} />
-    <path data-part={`leg-${index}`} style={stroked(3, token)} markerEnd={`url(#${hoof})`} />
-  </>
-);
+  "M1 -42C8 -42 12 -36 12 -28C12 -18 13 -10 10 -5C7 -1 3 0 -1 0C-6 0 -10 -2 -12 -6C-14 -11 -12 -20 -10 -28C-8 -36 -5 -42 1 -42Z";
+const FRONT = "M8 -31C11 -26 12.6 -18 12 -11C11 -6 8 -2 3 -1C-2 -1 -4 -3 -4 -6C0 -10 4 -20 8 -31Z";
+const UNDERSIDE = "M12.2 -12C11 -6 8 -2 3 -1C-2 -1 -4 -3 -4 -6C2 -6.5 8 -8.5 12.2 -12Z";
+const TAIL = "M-11.6 -6.4L-16.4 -1.6L-10.6 -2.8Z";
+const FLIPPER = "M-1 -28.6C-6.4 -25 -8.4 -17 -7.2 -10.6C-4.2 -15 -1 -21 0.4 -26.4Z";
+const SCARF = "M-11 -28.4C-4 -24.6 6 -24.6 11.2 -28.6L11.8 -24.6C6 -20.8 -4 -20.8 -11.6 -24.6Z";
+const SCARF_STRIPES = "M-6 -25.6v3.8M0 -24.4v3.8M6 -25.2v3.6";
+const SCARF_END = "M-10 -26.4L-15.6 -14.4L-12 -13.4L-7 -24.6Z";
+const UPPER_BEAK = "M9 -34.2L15.6 -32.2L9 -31.2Z";
+const LOWER_BEAK = "M9 -32L14.6 -31.4L9 -30.4Z";
+const FOOT = "M-2 -0.6C0 -1.8 4 -1.8 6.2 -0.4L5.2 0.5H-2Z";
 
-const Antler = ({ token }: { token: Token }) => (
-  <>
-    <path d={ANTLER} style={stroked(3.4)} />
-    <path d={ANTLER} style={stroked(1.8, token)} />
-  </>
+const Foot = ({ index, token }: { index: number; token: Token }) => (
+  <path data-part={`foot-${index}`} d={FOOT} style={filled(token, 0.8)} />
 );
 
 export const Follower = () => {
-  const id = useSvgId("reindeer");
-  const hoof = `${id}-hoof`;
+  const id = useSvgId("penguin");
   return (
-    <Stage creature={reindeer} box={{ height: 150, width: 170, x: -85, y: -130 }}>
+    <Stage creature={penguin} box={{ height: 120, width: 130, x: -65, y: -100 }}>
       <defs>
-        <ShadeDots id={`${id}-dots`} size={1} />
-        {/* A hoof at the end of each leg, turned along it. */}
-        <marker
-          id={hoof}
-          markerUnits="userSpaceOnUse"
-          markerWidth={8}
-          markerHeight={8}
-          refX={1}
-          refY={2.4}
-          orient="auto"
-          overflow="visible"
-        >
-          <path d="M0 0.4H4.4V4.4H0Z" style={filled("screen", 0.8)} />
-        </marker>
+        <ShadeDots id={`${id}-dots`} size={0.9} />
       </defs>
       <g data-part="flip">
-        <Leg index={2} token="furShade" hoof={hoof} />
-        <Leg index={3} token="furShade" hoof={hoof} />
-        <Leg index={0} token="fur" hoof={hoof} />
-        <Leg index={1} token="fur" hoof={hoof} />
+        <Foot index={1} token="roofPinkShade" />
+        <Foot index={0} token="accentPink" />
         <g data-part="body">
-          <path d={TAIL} style={filled("whiteShade", 0.9)} />
-          <path d={BODY} style={filled("fur")} />
-          <path d={BELLY} style={filled("furShade")} />
-          <path d={BELLY} fill={`url(#${id}-dots)`} />
-          <path d={RUMP} style={filled("whiteShade")} />
-          <path d={BODY} style={stroked(1.4)} />
-          <path data-part="neck" style={stroked(13)} />
-          <path data-part="neck" style={stroked(10.4, "fur")} />
-          <path d={MANE} style={filled("whiteShade", 0.9)} />
-          <path d={COLLAR} style={stroked(4.6)} />
-          <path d={COLLAR} style={stroked(2.8, "festiveRed")} />
-          <g data-part="bell">
-            <circle cx={19.5} cy={-36.6} r={2.7} style={filled("gold", 0.9)} />
-            <path d="M19.5 -36v2.2" style={stroked(0.7)} />
-          </g>
+          <path d={TAIL} style={filled("screen", 0.8)} />
+          <path d={BODY} style={filled("screen")} />
+          <path d={FRONT} style={filled("white")} />
+          <path d={UNDERSIDE} style={filled("whiteShade")} />
+          <path d={UNDERSIDE} fill={`url(#${id}-dots)`} />
+          <path d={BODY} style={stroked(1.3)} />
           <g data-part="head">
-            <g transform="translate(3 0.6)">
-              <Antler token="hayShade" />
-            </g>
-            <g data-part="ear">
-              <path d={EAR} style={filled("fur", 0.9)} />
-              <path d="M-3 -3.8C-6 -5 -8.6 -5.2 -10 -4.8" style={stroked(0.7, "furShade")} />
-            </g>
-            <path d={SKULL} style={filled("fur")} />
-            <path d={SKULL} style={stroked(1.1)} />
-            <ellipse cx={12} cy={3.4} rx={1.7} ry={1.3} style={filled("screen")} />
-            <circle data-part="eye" cx={1.6} cy={-2.4} r={1.1} style={filled("screen")} />
-            <path data-part="eyelid" d="M0.4 -2.2h2.4" style={{ ...stroked(0.8), opacity: 0 }} />
-            <Antler token="hay" />
+            <circle cx={5} cy={-34.4} r={2.3} style={filled("white", 0.6)} />
+            <circle data-part="eye" cx={5.4} cy={-34.4} r={1.1} style={filled("screen")} />
+            <path data-part="eyelid" d="M3.6 -34.2h3" style={{ ...stroked(0.8), opacity: 0 }} />
+            <path data-part="beak" d={LOWER_BEAK} style={filled("screen", 0.6)} />
+            <path d={UPPER_BEAK} style={filled("screen", 0.7)} />
           </g>
+          <g data-part="scarf">
+            <path d={SCARF_END} style={filled("festiveRed", 0.8)} />
+            <path d="M-11.8 -19.6l3.6 1.6" style={stroked(1, "white")} />
+          </g>
+          <path d={SCARF} style={filled("festiveRed", 0.9)} />
+          <path d={SCARF_STRIPES} style={stroked(1.1, "white")} />
+          <path data-part="flipper" d={FLIPPER} style={filled("screen", 0.9)} />
         </g>
       </g>
     </Stage>

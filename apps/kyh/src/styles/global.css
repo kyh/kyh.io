@@ -92,8 +92,11 @@ html[data-tint] {
 }
 
 /* What falls across every page in a theme that has it (src/themes/drift.tsx):
-   each piece falls the height of the screen, swaying as it goes (leaves
-   tumble, turning over), on transforms alone, under the dock and the cursors. */
+   each piece falls the height of the screen on transforms alone, under the
+   dock and the cursors. Snow sways as it drifts down. A leaf either flutters,
+   swinging like a pendulum (quick through the bottom of the swing, stalling at
+   each end tipped edge up) as it turns over a little, or tumbles end over end,
+   falling faster; a breeze carries every leaf aside as it falls. */
 .theme-drift {
   /* The showcase town's white, edged in its ink (city/palette.ts). */
   --snow: #fbfbf8;
@@ -129,8 +132,26 @@ html[data-tint] {
     alternate;
 
   [data-drift="leaves"] & {
-    animation-name: drift-tumble;
-    animation-duration: calc(var(--drift-duration) / 5);
+    /* Its turning over is seen in depth. */
+    perspective: calc(var(--drift-size) * 5);
+    animation: leaf-swing var(--leaf-swing) linear var(--drift-delay) infinite alternate;
+  }
+
+  &[data-motion="tumble"] {
+    animation-name: leaf-wobble;
+    animation-timing-function: ease-in-out;
+  }
+}
+
+.theme-drift-turn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: leaf-flutter var(--leaf-turn) ease-in-out var(--drift-delay) infinite alternate;
+
+  [data-motion="tumble"] > & {
+    animation: leaf-tumble var(--leaf-turn) linear var(--drift-delay) infinite;
   }
 }
 
@@ -140,12 +161,13 @@ html[data-tint] {
   box-shadow: 0 0 0 0.5px var(--snow-edge);
 }
 
+/* Down the screen, carried aside by the breeze (none for snow). */
 @keyframes drift-fall {
   from {
     translate: 0 -10vh;
   }
   to {
-    translate: 0 110vh;
+    translate: var(--drift-wind, 0) 110vh;
   }
 }
 
@@ -160,20 +182,58 @@ html[data-tint] {
   }
 }
 
-/* A leaf turns over as it swings: its width runs through zero to its back. */
-@keyframes drift-tumble {
-  from {
+/* A leaf's pendulum: from one end of its swing, dropping and speeding up to
+   the bottom, then slowing and climbing to the other end, where it stalls
+   with its leading edge up. Each half is a quarter of a sine, so it's
+   quickest at the bottom; played back and forth, it swings to and fro. */
+@keyframes leaf-swing {
+  0% {
     translate: calc(var(--drift-sway) * -1) 0;
-    rotate: -40deg;
-    scale: 1 1;
+    rotate: 38deg;
+    /* Speeding up into the bottom (a sine's ease-in)… */
+    animation-timing-function: cubic-bezier(0.12, 0, 0.39, 0);
   }
   50% {
-    scale: -0.4 1;
+    translate: 0 var(--leaf-dip);
+    rotate: 0deg;
+    /* …and slowing out of it (a sine's ease-out). */
+    animation-timing-function: cubic-bezier(0.61, 1, 0.88, 1);
+  }
+  100% {
+    translate: var(--drift-sway) 0;
+    rotate: -38deg;
+  }
+}
+
+/* A tumbling leaf barely swings: it rocks a little as it spins down. */
+@keyframes leaf-wobble {
+  from {
+    translate: calc(var(--drift-sway) * -1) 0;
+    rotate: -12deg;
   }
   to {
     translate: var(--drift-sway) 0;
-    rotate: 50deg;
-    scale: 1 1;
+    rotate: 12deg;
+  }
+}
+
+/* Fluttering, it rocks over on its midrib, showing its edge and part of its back. */
+@keyframes leaf-flutter {
+  from {
+    rotate: 0.3 1 0 -60deg;
+  }
+  to {
+    rotate: 0.3 1 0 60deg;
+  }
+}
+
+/* Tumbling, it spins end over end about a slanting axis. */
+@keyframes leaf-tumble {
+  from {
+    rotate: 1 0.4 0 0deg;
+  }
+  to {
+    rotate: 1 0.4 0 360deg;
   }
 }
 

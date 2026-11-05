@@ -23,8 +23,14 @@ export interface GreyTint {
 /** The site's two color schemes, which every theme is one of. */
 export type Mode = "light" | "dark";
 
-/** What falls across every page: snow drifting down, or leaves tumbling. */
+/** How what falls across every page falls: snow drifting down, or leaves fluttering and tumbling. */
 export type Drift = "snow" | "leaves";
+
+/** What falls across every page, and the pieces it's made of, mixed (`drift.tsx`). */
+export interface Fall {
+  kind: Drift;
+  pieces: readonly Art[];
+}
 
 /** What hangs in the page's top corners: cobwebs, a spider on each. */
 export type Corners = "webs";
@@ -45,12 +51,12 @@ export interface Theme {
   mode: Mode | null;
   /** Null keeps the site's own slate. */
   tint: GreyTint | null;
-  /** What an easter-egg find throws, and what falls across the page if the theme has `drift`. */
+  /** What an easter-egg find throws. */
   art: Art;
   /** Its icon as a line drawing in the 24×24 box, stroked as the dock's other icons are; null (the default theme) wears the sun or moon. */
   glyph: string | null;
   confetti: readonly ConfettiSide[];
-  drift: Drift | null;
+  drift: Fall | null;
   corners: Corners | null;
 }
 
