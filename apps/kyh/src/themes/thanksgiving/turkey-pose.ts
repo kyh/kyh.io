@@ -40,6 +40,11 @@ import {
 } from "../follower/solid";
 import { footAt, limbOf, pace } from "../follower/walk";
 
+/**
+ * How big it's drawn, to its own pixels: about the ghost's height. Its walk is
+ * in screen pixels, so a step's length is turned back into its own (`legOf`).
+ */
+export const SIZE = 0.7;
 const BODY: Vec3 = [-1, 37, 0];
 const BODY_RADII: Vec3 = [22, 16.5, 15];
 /** Its breast tipped up a little. */
@@ -218,7 +223,7 @@ const legOf = (turkey: Turkey, frame: Frame, index: number) => {
   const step = footAt(turkey.walker, turkey.gait, index / 2, 7);
   // Worked out side on, in its own forward and up (with +y down, as the limb's solver takes it).
   const hipLocal = { x: hip[0], y: -(hip[1] + frame.rise) };
-  const footLocal = { x: hip[0] + step.x, y: step.y };
+  const footLocal = { x: hip[0] + step.x / SIZE, y: step.y };
   const { end, joint } = limbOf(hipLocal, footLocal, THIGH, SHANK, -1);
   const placeFlat = (x: number, y: number) => apply(frame.yaw, [x, -y, side * 4.5]);
   const hipAt = placeFlat(hipLocal.x, hipLocal.y);

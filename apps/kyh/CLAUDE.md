@@ -67,6 +67,9 @@ The rest is by hand:
 - The penguin and the turkey are in the round: a behavior module (springs
   for every part) beside a `*-pose.ts` that builds the parts in 3D and orders
   the layers. Draw a new follower that way; the others are flat, side on.
+- A follower stands about the ghost's size on screen. One drawn bigger is
+  shrunk by the stage's `size` (the turkey's `SIZE`), its ink and shade dots
+  widened back by it, and its gait, hit box and stride in screen pixels.
 - Adding a theme: its folder, plus a line in each registry. Adding an effect: a
   field on `Theme` or `Town`, a value in each theme, a read where it shows.
 - No theme's days may run past December 31st: the calendar only looks in the

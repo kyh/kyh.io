@@ -41,10 +41,13 @@ const apply = (element: SVGElement, part: Part) => {
 export const Stage = <State,>({
   creature,
   box,
+  size = 1,
   children,
 }: {
   creature: Creature<State>;
   box: Box;
+  /** How big it's drawn, to its own pixels (and so its bubble's offset). */
+  size?: number;
   children: ReactNode;
 }) => {
   const holder = useRef<HTMLSpanElement>(null);
@@ -118,7 +121,10 @@ export const Stage = <State,>({
       moved = { x: 0, y: 0 };
       const pose = creature.pose(state);
       holder.current?.style.setProperty("translate", `${pose.at.x}px ${pose.at.y}px`);
-      bubble.current?.style.setProperty("translate", `${pose.bubble.x}px ${pose.bubble.y}px`);
+      bubble.current?.style.setProperty(
+        "translate",
+        `${pose.bubble.x * size}px ${pose.bubble.y * size}px`,
+      );
       for (const [name, part] of Object.entries(pose.parts)) {
         for (const element of parts.get(name) ?? []) {
           apply(element, part);
@@ -185,7 +191,7 @@ export const Stage = <State,>({
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
     };
-  }, [creature]);
+  }, [creature, size]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[3] overflow-hidden" aria-hidden="true">
@@ -196,7 +202,11 @@ export const Stage = <State,>({
           className="absolute overflow-visible"
           style={{ height: box.height, left: box.x, top: box.y, width: box.width }}
         >
-          <g strokeLinecap="round" strokeLinejoin="round">
+          <g
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            transform={size === 1 ? undefined : `scale(${size})`}
+          >
             {children}
           </g>
         </svg>

@@ -18,9 +18,16 @@ import type { Gait, Point, Swing, Walker } from "../follower/walk";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
 import { createWalker, isOnWalker, pace, stepSwing, stepWalker } from "../follower/walk";
-import { turkeyPose } from "./turkey-pose";
+import { SIZE, turkeyPose } from "./turkey-pose";
 
-const GAIT: Gait = { accel: 1300, behind: 70, below: 42, stride: 34, top: 360 };
+/** Its walk, on the screen: its stride and where it keeps to by the pointer shrunk with it. */
+const GAIT: Gait = {
+  accel: 1300,
+  behind: 70 * SIZE,
+  below: 42 * SIZE,
+  stride: 34 * SIZE,
+  top: 360,
+};
 
 /** What it's busy with a moment: a few pecks at the ground, a gobble, an alarm's head up. */
 type Act = "none" | "peck" | "gobble" | "alert";
@@ -131,7 +138,7 @@ const gobble = (turkey: Turkey, now: boolean) => {
 };
 
 /** Whether a point on the screen is on it: its body and its head, not the air round its tail. */
-const isOn = (turkey: Turkey, at: Point) => isOnWalker(turkey.walker, at, 28, 80);
+const isOn = (turkey: Turkey, at: Point) => isOnWalker(turkey.walker, at, 28 * SIZE, 80 * SIZE);
 
 /** How far into an act it is, eased in and out: 0 at either end to 1 in its middle. */
 const envelope = (turkey: Turkey, act: Act, edge = 4) => {
