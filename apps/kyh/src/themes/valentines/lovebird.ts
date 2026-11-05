@@ -159,8 +159,9 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   const landing = bird.flushed === 0 && (bird.still > LAND_S || (bird.perch > 0.5 && gentle));
   const spot = spotOf(bird, pointer, landing);
   const off = Math.hypot(spot.x - bird.x, spot.y - bird.y);
-  if (landing && off < 4) {
-    // On the pointer: it holds on.
+  // Landed once it's close; perched, it holds on however far a gentle move carries the pointer.
+  const holding = landing && (off < 4 || bird.perch > 0.5);
+  if (holding) {
     bird.x = spot.x;
     bird.y = spot.y;
     bird.vx = 0;
@@ -168,7 +169,7 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   } else {
     fly(bird, spot, dt);
   }
-  bird.perch = approach(bird.perch, landing && off < 4 ? 1 : 0, 12, seconds);
+  bird.perch = approach(bird.perch, holding ? 1 : 0, 12, seconds);
   const dozing = bird.perch > 0.9 && bird.still > DOZE_S;
   bird.doze = approach(bird.doze, dozing ? 1 : 0, dozing ? 1 : 6, seconds);
   stepWings(bird, moved, dt);
