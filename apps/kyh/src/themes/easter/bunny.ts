@@ -14,7 +14,7 @@ import type { Creature, Part, Pose } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Gait, Point, Swing, Walker } from "../follower/walk";
 import { point, round } from "../art";
-import { createEmotes, say, stepEmotes } from "../follower/emote";
+import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import {
   approach,
   createWalker,
@@ -118,8 +118,12 @@ const stepTalk = (bunny: Bunny, dozing: boolean, idle: number, seconds: number) 
   stepEmotes(emotes, seconds);
   if (dozing) {
     say(emotes, SLEEP);
-  } else if (bunny.petted > 0.5 && say(emotes, PET, emotes.line === null && bunny.petted < 0.6)) {
-    begin(bunny, "binky");
+  } else if (bunny.petted > PETTED_S) {
+    // The moment a petting counts, it answers it, whatever it was saying.
+    if (reached(bunny.petted, seconds, PETTED_S)) {
+      say(emotes, PET, true);
+      begin(bunny, "binky");
+    }
   } else if (idle > 2 && random.chance(seconds * 0.12)) {
     say(emotes, CHATTER);
   }

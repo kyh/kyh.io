@@ -14,7 +14,7 @@ import type { Creature, Part, Pose } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Gait, Point, Walker } from "../follower/walk";
 import { point, round } from "../art";
-import { createEmotes, say, stepEmotes } from "../follower/emote";
+import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import {
   approach,
   createWalker,
@@ -121,8 +121,11 @@ const stepTalk = (
   stepEmotes(emotes, seconds);
   if (napping) {
     say(emotes, SLEEP);
-  } else if (leprechaun.petted > 0.5) {
-    say(emotes, PET, emotes.line === null && leprechaun.petted < 0.6);
+  } else if (leprechaun.petted > PETTED_S) {
+    // The moment a petting counts, it answers it, whatever it was saying.
+    if (reached(leprechaun.petted, seconds, PETTED_S)) {
+      say(emotes, PET, true);
+    }
   } else if (dancing && random.chance(seconds * 0.4)) {
     say(emotes, JIG);
   } else if (idle > 1.5 && random.chance(seconds * 0.1)) {
@@ -223,15 +226,15 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
       [`shoe-${index}`, { transform: `translate(${point(end.x, end.y)})` }],
     ] as const;
   });
-  const reached = hands.map((at) =>
+  const reaches = hands.map((at) =>
     limb({ x: SHOULDER.x, y: SHOULDER.y + lift }, at, ARM, ARM, -1),
   );
-  const arms = reached.flatMap(({ d, end }, index) => [
+  const arms = reaches.flatMap(({ d, end }, index) => [
     [`arm-${index}`, { d }] as const,
     [`hand-${index}`, { transform: `translate(${point(end.x, end.y)})` }] as const,
   ]);
   // The coin leaves from, and lands in, the hand where it's drawn: where the arm reaches.
-  const hand = reached[0]?.end ?? SHOULDER;
+  const hand = reaches[0]?.end ?? SHOULDER;
   const parts = {
     body: { transform: `translate(0 ${round(lift)})` },
     coin: {

@@ -61,3 +61,13 @@ export const stepEmotes = (emotes: Emotes, seconds: number) => {
   }
   emotes.quiet = Math.max(0, emotes.quiet - rest);
 };
+
+/** Seconds a mouse rests on a follower before it's a petting. */
+export const PETTED_S = 0.5;
+
+/**
+ * Whether a time held (a petting, `seconds` longer this step) has just
+ * passed `mark`: the one step to answer it on, whatever's being said.
+ */
+export const reached = (held: number, seconds: number, mark: number) =>
+  held > mark && held - seconds <= mark;

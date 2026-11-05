@@ -116,6 +116,26 @@ const petting = <State>(name: string, creature: Creature<State>) => {
     const now = creature.pose(state).at;
     assert.ok(Math.hypot(now.x - settled.x, now.y - settled.y) < 12, `${name}`);
   });
+
+  test(`the ${name} answers a petting even while it's saying something`, () => {
+    const state = creature.create({ x: 400, y: 300 });
+    const still = { x: 0, y: 0 };
+    for (let at = 0; at < 60 * 3; at += 1) {
+      creature.step(state, { x: 400, y: 300 }, still, 1 / 60);
+    }
+    const settled = creature.pose(state).at;
+    const on = { x: settled.x, y: settled.y - 20 };
+    // Clicked on, it's mid-line when the mouse comes to rest on it.
+    creature.poke(state, on);
+    creature.step(state, on, { x: on.x - 400, y: on.y - 300 }, 1 / 60);
+    const before = creature.pose(state).say;
+    assert.ok(before !== null, name);
+    for (let at = 0; at < 40; at += 1) {
+      creature.step(state, on, still, 1 / 60);
+    }
+    const after = creature.pose(state).say;
+    assert.ok(after !== null && after !== before, `${name}: ${before} → ${after}`);
+  });
 };
 
 petting("bunny", bunny);
