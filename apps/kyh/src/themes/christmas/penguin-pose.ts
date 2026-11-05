@@ -76,7 +76,7 @@ const frameOf = (penguin: Penguin) => {
   const turn = (direction: Vec3): Vec3 => apply(yaw, apply(body, direction));
   const place = (local: Vec3): Vec3 =>
     add(apply(yaw, add(apply(body, sub(local, PIVOT)), PIVOT)), [0, lift, 0]);
-  return { phase, place, slide, turn, walking, yaw };
+  return { hop: rig.lift.x, phase, place, slide, turn, walking, yaw };
 };
 
 type Frame = ReturnType<typeof frameOf>;
@@ -152,10 +152,11 @@ const flipperOf = (penguin: Penguin, frame: Frame, side: 1 | -1, index: number) 
 /** A foot on the ground (1 its left), stepping as it waddles; trailing behind as it slides. */
 const footOf = (penguin: Penguin, frame: Frame, side: 1 | -1) => {
   const step = footAt(penguin.walker, penguin.gait, side === 1 ? 0 : 0.5, 2.6);
-  const { slide } = frame;
+  const { hop, slide } = frame;
+  // Jumping, its feet leave the ground with it.
   const local: Vec3 = [
     3 + step.x * (1 - slide) - 13 * slide,
-    -step.y * (1 - slide) + slide,
+    -step.y * (1 - slide) + slide + hop,
     4 * side,
   ];
   const at = apply(frame.yaw, local);

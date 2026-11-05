@@ -9,41 +9,13 @@
 // beak, a dark beard and pink legs. Each `data-layer` is one part the stage
 // stacks by how near the camera it is; each `data-part` is posed a frame at a
 // time.
-import type { Token } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
+import { Solid } from "../follower/shaded";
 import { Stage } from "../follower/stage";
 import { ShadeDots } from "../piece";
 import { turkey } from "./turkey";
 import { FEATHERS } from "./turkey-pose";
-
-/**
- * A shaded solid: all of it in its shade color under the shade dots, then its
- * lit part over that, kept inside it, and ink round it.
- */
-const Solid = ({
-  name,
-  id,
-  fill,
-  shade,
-  ink,
-}: {
-  name: string;
-  id: string;
-  fill: Token;
-  shade: Token;
-  ink: number;
-}) => (
-  <>
-    <clipPath id={`${id}-${name}`}>
-      <path data-part={name} />
-    </clipPath>
-    <path data-part={name} style={filled(shade)} />
-    <path data-part={name} fill={`url(#${id}-dots)`} />
-    <path data-part={`${name}-lit`} style={filled(fill)} clipPath={`url(#${id}-${name})`} />
-    <path data-part={name} style={stroked(ink)} />
-  </>
-);
 
 /** A red fleshy part hanging off its head (the snood, the wattle): a thick red line, inked. */
 const Flesh = ({ name, width }: { name: string; width: number }) => (

@@ -86,6 +86,10 @@ test("a spring reaches its goal smoothly, never past it, at any frame rate", () 
     assert.ok(most <= 10 + 1e-9, `${fps}: overshot to ${most}`);
   }
   assert.ok(close(run(30).at, run(144).at, 0.02));
+  // One long step, as after a stalled frame, lands near the goal without passing it.
+  const stalled = springAt(0);
+  stepSpring(stalled, 10, 8, 1);
+  assert.ok(stalled.x > 9.9 && stalled.x <= 10, `${stalled.x}`);
 });
 
 test("a heading turns the short way round, across ±π", () => {

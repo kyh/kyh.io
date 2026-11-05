@@ -151,16 +151,13 @@ export interface Spring {
 
 export const springAt = (x: number): Spring => ({ v: 0, x });
 
-/** The longest step a spring takes: past it, it would come apart. */
-const MOST_STEP = 0.05;
-
 /**
  * Steps a spring `seconds` on toward `goal`, `rate` its quickness (about how
  * many times a second it closes the gap): solved exactly, so it's the same at
- * any frame rate.
+ * any frame rate and never overshoots, however long the step.
  */
 export const stepSpring = (spring: Spring, goal: number, rate: number, seconds: number) => {
-  const t = Math.min(Math.max(seconds, 0), MOST_STEP);
+  const t = Math.max(seconds, 0);
   const off = spring.x - goal;
   const pull = spring.v + rate * off;
   const decay = Math.exp(-rate * t);

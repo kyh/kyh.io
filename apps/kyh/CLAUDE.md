@@ -58,7 +58,7 @@ The rest is by hand:
 - `follower/` is the followers' kit: `creature.ts` (the contract: create, step,
   poke, pose), `stage.tsx` (runs one on the DOM a frame at a time, poses its
   `data-part`s, restacks its `data-layer`s nearest last, floats its speech
-  bubble), `walk.ts` (getting about on legs: the walker, strides, knees,
+  bubble), `shaded.tsx` (a solid part drawn shaded), `walk.ts` (getting about on legs: the walker, strides, knees,
   swinging bits), `solid.ts` (followers in the round: parts as 3D solids seen
   from a little above, so they turn through every view; caps, depth, and the
   critically damped springs everything eases on), `emote.ts` (what it says,

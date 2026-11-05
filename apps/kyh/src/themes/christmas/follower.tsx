@@ -8,9 +8,9 @@
 // white ring round each eye, a dark beak, black flippers, pink feet and a red
 // scarf striped white. Each `data-layer` is one part the stage stacks by how
 // near the camera it is; each `data-part` is posed a frame at a time.
-import type { Token } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
+import { Solid } from "../follower/shaded";
 import { Stage } from "../follower/stage";
 import { ShadeDots } from "../piece";
 import { penguin } from "./penguin";
@@ -23,34 +23,6 @@ const STRIPES = {
   strokeDasharray: "1.4 3.6",
   strokeLinecap: "butt",
 } as const;
-
-/**
- * A shaded solid: all of it in its shade color under the shade dots, then its
- * lit part over that, kept inside it; inked round if it stands apart.
- */
-const Solid = ({
-  name,
-  id,
-  fill,
-  shade,
-  ink,
-}: {
-  name: string;
-  id: string;
-  fill: Token;
-  shade: Token;
-  ink?: number;
-}) => (
-  <>
-    <clipPath id={`${id}-${name}`}>
-      <path data-part={name} />
-    </clipPath>
-    <path data-part={name} style={filled(shade)} />
-    <path data-part={name} fill={`url(#${id}-dots)`} />
-    <path data-part={`${name}-lit`} style={filled(fill)} clipPath={`url(#${id}-${name})`} />
-    {ink === undefined ? null : <path data-part={name} style={stroked(ink)} />}
-  </>
-);
 
 const Eye = ({ index }: { index: number }) => (
   <>
