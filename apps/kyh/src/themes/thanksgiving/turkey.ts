@@ -1,33 +1,24 @@
 // The turkey that follows a mouse about at Thanksgiving, for `follower.tsx`:
-// a wild tom, drawn side on and facing right (flipped to face left). It walks
-// after the mouse (`../follower/walk.ts`) on bird's legs, the hock bending
-// back, its head held still and thrust forward a step at a time as a
-// walking bird's is, its snood and wattle swinging as it goes. Left be, it
-// pecks about, then puffs up and fans its tail to strut, gobbling now and
-// then; left long enough, it tucks its head in and sleeps. A click on it
-// sets it gobbling; a click elsewhere makes it shock-gobble or call an alarm
-// putt, as a tom does at a sudden noise. A mouse resting on it is a petting.
-// In its own pixels about its feet, +y down. Pure (state is stepped in
-// place, for a frame's sake).
+// a wild tom, built in the round (`turkey-pose.ts` draws it) and turning to
+// face its way. It walks after the mouse (`../follower/walk.ts`) on bird's
+// legs, the hock bending back, its head held still and thrust forward a step
+// at a time as a walking bird's is, its snood and wattle swinging as it goes.
+// Left be, it pecks about, then puffs up and fans its tail to strut, gobbling
+// now and then; left long enough, it tucks its head in and sleeps. A click on
+// it sets it gobbling; a click elsewhere makes it shock-gobble or call an
+// alarm putt, as a tom does at a sudden noise. A mouse resting on it is a
+// petting. Every movement eases on a spring (`../follower/solid.ts`), so it
+// never snaps. Pure (state is stepped in place, for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
-import type { Creature, Part, Pose } from "../follower/creature";
+import type { Creature } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
+import type { Spring } from "../follower/solid";
 import type { Gait, Point, Swing, Walker } from "../follower/walk";
-import { point, round } from "../art";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
-import {
-  approach,
-  createWalker,
-  degrees,
-  footAt,
-  isOnWalker,
-  limbOf,
-  pace,
-  stepSwing,
-  stepWalker,
-  widthOf,
-} from "../follower/walk";
+import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
+import { createWalker, isOnWalker, pace, stepSwing, stepWalker } from "../follower/walk";
+import { turkeyPose } from "./turkey-pose";
 
 const GAIT: Gait = { accel: 1300, behind: 70, below: 42, stride: 34, top: 360 };
 
@@ -35,8 +26,23 @@ const GAIT: Gait = { accel: 1300, behind: 70, below: 42, stride: 34, top: 360 };
 type Act = "none" | "peck" | "gobble" | "alert";
 const ACT_S: Record<Act, number> = { alert: 1.1, gobble: 1.4, none: 0, peck: 0.9 };
 
+/** Each part's spring: where it's going, and how fast it gets there. */
+export interface Rig {
+  /** Which way it faces, radians: 0 to the right, a quarter turn toward the camera. */
+  heading: Spring;
+  /** 0 to 1: tail folded to fanned (and chest puffed), and dozing. */
+  fan: Spring;
+  doze: Spring;
+  /** Its head, forward and up from its feet (pixels). */
+  headX: Spring;
+  headY: Spring;
+  /** Its body bowed forward (radians, + bowed), to peck. */
+  bow: Spring;
+}
+
 export interface Turkey {
   walker: Walker;
+  gait: Gait;
   emotes: Emotes;
   random: Random;
   act: Act;
@@ -45,18 +51,20 @@ export interface Turkey {
   /** Seconds till it next pecks or, strutting, gobbles. */
   nextPeck: number;
   nextGobble: number;
-  /** 0 to 1: tail folded to fanned, and dozing. */
-  fan: number;
-  doze: number;
   /** Seconds the mouse has rested on it. */
   petted: number;
-  /** Its head about its body, and how fast it's going, for the wattle's swing. */
-  head: Point;
-  headV: Point;
+  rig: Rig;
+  /** Its wattle and snood, swinging as it's carried. */
   wattle: Swing;
   snood: Swing;
   /** How fast it was going a step ago, to feel it speed up. */
   lastVx: number;
+  lastVy: number;
+  lastHeadV: number;
+  /** A gobble's tremble on its head (pixels up), on top of its glide. */
+  tremble: number;
+  /** Seconds it's been about, for its strut's slow pivot. */
+  time: number;
 }
 
 const GOBBLE = ["Gobble gobble!", "GOBBLE GOBBLE GOBBLE!", "gobble-obble-obble!"];
@@ -72,37 +80,35 @@ const SLEEP_S = 32;
 /** Faster than this it's walking, not standing. */
 const MOVING = 30;
 
-/** Where its head sits on its body, its neck's root, and its hips. */
-const HEAD: Point = { x: 21, y: -67 };
-const NECK: Point = { x: 12, y: -50 };
-const HIPS = [
-  { x: 3, y: -27 },
-  { x: -3, y: -27 },
-] as const;
-const THIGH = 15;
-const SHANK = 16;
-/** The tail's root, and its feathers' angles folded and fanned (degrees, clockwise from +x). */
-export const TAIL: Point = { x: -17, y: -44 };
-export const FEATHERS = 9;
-const FOLDED = [186, 196] as const;
-const FANNED = [196, 292] as const;
+/** Where its head sits, forward and up from its feet. */
+const HEAD: Point = { x: 20, y: 62 };
 
 export const createTurkey = (at: Point): Turkey => {
   const seed = Math.round(at.x * 7919 + at.y * 31);
   return {
     act: "none",
     actFor: 0,
-    doze: 0,
     emotes: createEmotes(seed),
-    fan: 0,
-    head: { ...HEAD },
-    headV: { x: 0, y: 0 },
+    gait: GAIT,
+    lastHeadV: 0,
     lastVx: 0,
+    lastVy: 0,
     nextGobble: 2,
     nextPeck: 1.5,
     petted: 0,
     random: createRandom(seed + 1),
+    rig: {
+      bow: springAt(0),
+      doze: springAt(0),
+      fan: springAt(0),
+      headX: springAt(HEAD.x),
+      headY: springAt(HEAD.y),
+      // A three-quarter view, toward the camera, to begin with.
+      heading: springAt(Math.PI / 4),
+    },
     snood: { angle: 0, spin: 0 },
+    time: 0,
+    tremble: 0,
     walker: createWalker(at, GAIT),
     wattle: { angle: 0, spin: 0 },
   };
@@ -127,37 +133,45 @@ const gobble = (turkey: Turkey, now: boolean) => {
 /** Whether a point on the screen is on it: its body and its head, not the air round its tail. */
 const isOn = (turkey: Turkey, at: Point) => isOnWalker(turkey.walker, at, 28, 80);
 
-/** Where its head goes this frame, about its body, for what it's at. */
+/** How far into an act it is, eased in and out: 0 at either end to 1 in its middle. */
+const envelope = (turkey: Turkey, act: Act, edge = 4) => {
+  if (turkey.act !== act) {
+    return 0;
+  }
+  const t = turkey.actFor / ACT_S[act];
+  return smooth(Math.min(t, 1 - t) * edge);
+};
+
+/** Where its head goes this frame, forward and up from its feet, for what it's at. */
 const headGoal = (turkey: Turkey): Point => {
-  const { act, actFor, doze, fan, walker } = turkey;
+  const { act, actFor, rig, walker } = turkey;
+  const fan = rig.fan.x;
+  const doze = rig.doze.x;
   // Strutting, it draws its head back onto its puffed chest; dozing, it tucks it in.
   let x = HEAD.x + (14 - HEAD.x) * fan + (-1 - HEAD.x) * doze;
-  let y = HEAD.y + (-63 - HEAD.y) * fan + (-56 - HEAD.y) * doze;
+  let y = HEAD.y + (59 - HEAD.y) * fan + (50 - HEAD.y) * doze;
   // Walking, it holds its head still as its body passes under, then thrusts it forward: every step.
   const step = (walker.phase * 2) % 1;
   const bob = step < 0.75 ? 3 - (step / 0.75) * 6 : -3 + ((step - 0.75) / 0.25) * 6;
   x += bob * pace(walker, GAIT);
-  const t = actFor / ACT_S[act];
   if (act === "peck") {
-    const down = Math.abs(Math.sin(t * Math.PI * 2)) ** 0.7;
+    const down = Math.abs(Math.sin((actFor / ACT_S.peck) * Math.PI * 2)) ** 0.7;
     x += (31 - x) * down;
-    y += (-6 - y) * down;
+    y += (6 - y) * down;
   } else if (act === "gobble") {
-    const out = Math.sin(Math.min(1, t) * Math.PI);
+    const out = envelope(turkey, "gobble");
     x += 6 * out;
-    y += (-5 + Math.sin(actFor * 46) * 1.6) * out;
+    y += 5 * out;
   } else if (act === "alert") {
-    const up = Math.min(1, actFor / 0.15) * Math.min(1, (1 - t) / 0.3);
-    x += 2 * up;
-    y -= 10 * up;
+    y += 10 * envelope(turkey, "alert", 6);
   }
   return { x, y };
 };
 
-/** Its tail fanned or folded, its eyes shut or open, after what it's at. */
+/** Its tail fanning or folding, its eyes shutting or opening, after what it's at. */
 const settle = (turkey: Turkey, strutting: boolean, sleeping: boolean, seconds: number) => {
-  turkey.fan = approach(turkey.fan, strutting ? 1 : 0, strutting ? 2.5 : 5, seconds);
-  turkey.doze = approach(turkey.doze, sleeping ? 1 : 0, sleeping ? 1.2 : 6, seconds);
+  stepSpring(turkey.rig.fan, strutting ? 1 : 0, strutting ? 3.5 : 6, seconds);
+  stepSpring(turkey.rig.doze, sleeping ? 1 : 0, sleeping ? 1.5 : 8, seconds);
 };
 
 /** What it's up to, left be: pecking about, then strutting and gobbling, then dozing. */
@@ -204,29 +218,41 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
 };
 
 /** Its head after where it's going, quick; its wattle and snood swinging as it's carried. */
-const stepHead = (turkey: Turkey, seconds: number) => {
-  const { walker } = turkey;
+const stepHead = (turkey: Turkey, pointer: Point, seconds: number) => {
+  const { rig, walker } = turkey;
+  // Strutting, it shows off its fan: turned to the camera, pivoting slowly side to side as a tom does.
+  const display = Math.PI / 2 + 0.5 * Math.sin(turkey.time * 0.7);
+  const facing = rig.fan.x > 0.5 ? display : faceGoal(walker, pointer, rig.heading.x, MOVING);
+  stepAngle(rig.heading, facing, rig.fan.x > 0.5 ? 3 : 8, seconds);
   const goal = headGoal(turkey);
+  // A peck is quick, down and up; otherwise its head glides.
+  const rate = turkey.act === "peck" ? 34 : 20;
+  stepSpring(rig.headX, goal.x, rate, seconds);
+  stepSpring(rig.headY, goal.y, rate, seconds);
+  stepSpring(rig.bow, turkey.act === "peck" ? 0.32 : 0, 14, seconds);
   const dt = Math.min(seconds, 0.05);
   if (dt <= 0) {
     return;
   }
-  const was = turkey.head;
-  turkey.head = {
-    x: approach(was.x, goal.x, 22, seconds),
-    y: approach(was.y, goal.y, 22, seconds),
-  };
-  const v = { x: (turkey.head.x - was.x) / dt, y: (turkey.head.y - was.y) / dt };
-  const carried = ((walker.vx - turkey.lastVx) / dt) * walker.facing;
-  const ax = (v.x - turkey.headV.x) / dt + carried;
-  turkey.headV = v;
+  // The wattle lags the head, carried forward along its heading with the body.
+  const heading = rig.heading.x;
+  const along =
+    ((walker.vx - turkey.lastVx) * Math.cos(heading) +
+      (walker.vy - turkey.lastVy) * Math.sin(heading)) /
+    dt;
+  const ax = (rig.headX.v - turkey.lastHeadV) / dt + along;
+  turkey.lastHeadV = rig.headX.v;
   turkey.lastVx = walker.vx;
+  turkey.lastVy = walker.vy;
   stepSwing(turkey.wattle, ax, seconds);
   stepSwing(turkey.snood, ax * 0.7, seconds);
+  turkey.tremble =
+    turkey.act === "gobble" ? Math.sin(turkey.actFor * 46) * 1.4 * envelope(turkey, "gobble") : 0;
 };
 
 export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = turkey;
+  turkey.time += seconds;
   // Pecking, it stands; left far behind, it gives up the ground and goes.
   const near = Math.hypot(pointer.x - walker.x, pointer.y - walker.y) < 200;
   // Pecking, or petted (a mouse resting on it), it stands.
@@ -238,7 +264,7 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   turkey.petted = !moving && isOn(turkey, pointer) ? turkey.petted + seconds : 0;
   const sleeping = stepActs(turkey, moving, idle, seconds);
   stepTalk(turkey, sleeping, idle, seconds);
-  stepHead(turkey, seconds);
+  stepHead(turkey, pointer, seconds);
 };
 
 export const pokeTurkey = (turkey: Turkey, at: Point) => {
@@ -251,72 +277,6 @@ export const pokeTurkey = (turkey: Turkey, at: Point) => {
   } else if (say(turkey.emotes, PUTT, turkey.act !== "gobble")) {
     begin(turkey, "alert");
   }
-};
-
-const leg = (hip: Point, toward: Point) => {
-  const { end: foot, joint: hock } = limbOf(hip, toward, THIGH, SHANK, -1);
-  // Three toes forward, curled as the foot's lifted, and one back.
-  const curl = Math.min(1, -foot.y / 6);
-  const toes = [
-    [6.5, 0.4],
-    [5, 1.6],
-    [4, -0.6],
-  ]
-    .map(
-      ([x = 0, y = 0]) => `M${point(foot.x, foot.y)}l${point(x * (1 - curl * 0.4), y + curl * 3)}`,
-    )
-    .join("");
-  return `M${point(hip.x, hip.y)}L${point(hock.x, hock.y)}L${point(foot.x, foot.y)}${toes}M${point(foot.x, foot.y)}l-2.6 0.6`;
-};
-
-export const turkeyPose = (turkey: Turkey): Pose => {
-  const { walker, fan, doze } = turkey;
-  const amount = pace(walker, GAIT);
-  // The body rides up as a leg straightens under it; strutting, it puffs up; dozing, it settles.
-  const rise = -Math.abs(Math.sin(walker.phase * Math.PI * 2)) * 1.6 * amount;
-  const sit = doze * 7;
-  const puff = 1 + fan * 0.07;
-  const lean =
-    fan * -7 + (turkey.act === "peck" ? 9 : 0) * Math.sin((turkey.actFor / ACT_S.peck) * Math.PI);
-  const width = widthOf(walker);
-
-  const legs = HIPS.map((hip, index) => {
-    const step = footAt(walker, GAIT, index / 2, 7);
-    // Dozing, it squats on its folded legs.
-    const at = { x: hip.x, y: hip.y + rise + sit };
-    return [`leg-${index}`, { d: leg(at, { x: hip.x + step.x, y: step.y }) }] as const;
-  });
-  const feathers = Array.from({ length: FEATHERS }, (_, index) => {
-    const t = index / (FEATHERS - 1);
-    const folded = FOLDED[0] + (FOLDED[1] - FOLDED[0]) * t;
-    const fanned = FANNED[0] + (FANNED[1] - FANNED[0]) * t;
-    const angle = folded + (fanned - folded) * fan;
-    // Fanned, the middle feathers stand tallest.
-    const length = 0.78 + fan * (0.16 + 0.12 * Math.sin(t * Math.PI));
-    const transform = `translate(${point(TAIL.x, TAIL.y)}) rotate(${round(angle)}) scale(${round(length)})`;
-    return [`feather-${index}`, { transform }] as const;
-  });
-  const { head, snood, wattle } = turkey;
-  const bend = point(NECK.x + (head.x - NECK.x) * 0.15 + 4, NECK.y + (head.y - NECK.y) * 0.65);
-  const parts = {
-    body: { transform: `translate(0 ${round(rise + sit)}) rotate(${round(lean)} 0 -30)` },
-    eye: { opacity: doze > 0.5 ? 0 : 1 },
-    eyelid: { opacity: doze > 0.5 ? 1 : 0 },
-    flip: { transform: `scale(${point(width * puff, puff)})` },
-    head: { transform: `translate(${point(head.x, head.y)})` },
-    neck: { d: `M${point(NECK.x, NECK.y)}Q${bend} ${point(head.x, head.y + 3)}` },
-    snood: { transform: `rotate(${round(degrees(snood.angle))} 2 -3)` },
-    wattle: { transform: `rotate(${round(degrees(wattle.angle))} 1 4)` },
-    wing: { transform: `translate(0 ${round(fan * 4)}) rotate(${round(fan * 7)} 4 -42)` },
-    ...Object.fromEntries(legs),
-    ...Object.fromEntries(feathers),
-  } satisfies Record<string, Part>;
-  return {
-    at: { x: walker.x, y: walker.y },
-    bubble: { x: turkey.head.x * width * puff, y: -94 * puff + sit },
-    parts,
-    say: turkey.emotes.line,
-  };
 };
 
 export const turkey: Creature<Turkey> = {

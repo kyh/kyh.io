@@ -2,7 +2,8 @@
 
 // Runs a theme's follower (`creature.ts`) after the mouse: created where the
 // mouse is, stepped and posed a frame at a time straight on the DOM, never
-// through React, its parts found once by their `data-part`; a click anywhere
+// through React, its parts found once by their `data-part` (and its layers by
+// their `data-layer`, restacked nearest last as it turns); a click anywhere
 // pokes it; off the page or touched, it fades and rests, and the mouse back,
 // it carries on from where it was. What it says floats over its head in a
 // bubble, in the town's sign colors. Loaded with the follower's own chunk,
@@ -57,6 +58,23 @@ export const Stage = <State,>({
       const name = element.dataset.part ?? "";
       parts.set(name, [...(parts.get(name) ?? []), element]);
     }
+    const layers = new Map<string, SVGElement>();
+    for (const element of drawing.current?.querySelectorAll<SVGElement>("[data-layer]") ?? []) {
+      layers.set(element.dataset.layer ?? "", element);
+    }
+    let stacked = "";
+    // Restacked only when the order changes: moving a node is cheap, but not every frame.
+    const restack = (order: readonly string[]) => {
+      const key = order.join(" ");
+      if (key === stacked) {
+        return;
+      }
+      stacked = key;
+      for (const name of order) {
+        const layer = layers.get(name);
+        layer?.parentNode?.append(layer);
+      }
+    };
     let state: State | null = null;
     // The mouse, not the pointer: a finger on a touchscreen laptop isn't followed.
     let mouse: { x: number; y: number } | null = null;
@@ -105,6 +123,9 @@ export const Stage = <State,>({
         for (const element of parts.get(name) ?? []) {
           apply(element, part);
         }
+      }
+      if (pose.order) {
+        restack(pose.order);
       }
       if (pose.say !== said) {
         speak(pose.say);

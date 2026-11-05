@@ -2,7 +2,8 @@
 // pure creature, created where the mouse first is, stepped after it a frame
 // at a time, poked by a click, and posed: where it is, what it says, and each
 // of its drawn parts (the elements marked `data-part` in its <svg>) as the
-// path, transform or opacity to give them this frame. Pure.
+// path, transform or opacity to give them this frame, and, if it turns in
+// the round, the order its layers stack in. Pure.
 import type { Point } from "./walk";
 
 /** One drawn part this frame; what's left out stays as it was. */
@@ -20,6 +21,11 @@ export interface Pose {
   /** What its bubble says; null, nothing. */
   say: string | null;
   parts: Readonly<Record<string, Part>>;
+  /**
+   * Its layers (the elements marked `data-layer`, side by side in its <svg>)
+   * back to front, for one turning in the round: what's nearer is drawn over.
+   */
+  order?: readonly string[];
 }
 
 export interface Creature<State> {
