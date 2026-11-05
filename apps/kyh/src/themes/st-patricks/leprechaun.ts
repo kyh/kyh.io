@@ -214,7 +214,6 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
   const cross = act === "cross" ? Math.sin(t * Math.PI) : 0;
   // The coin goes up off his thumb and comes down into his hand.
   const coin = act === "coin" ? Math.sin(t * Math.PI) : 0;
-  const hand = hands[0] ?? SHOULDER;
   const width = widthOf(walker);
   const legs = HIPS.flatMap((hip, index) => {
     const from = { x: hip.x, y: hip.y + lift };
@@ -224,14 +223,15 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
       [`shoe-${index}`, { transform: `translate(${point(end.x, end.y)})` }],
     ] as const;
   });
-  const arms = hands.flatMap((at, index) => {
-    const from = { x: SHOULDER.x, y: SHOULDER.y + lift };
-    const { d, end } = limb(from, at, ARM, ARM, -1);
-    return [
-      [`arm-${index}`, { d }],
-      [`hand-${index}`, { transform: `translate(${point(end.x, end.y)})` }],
-    ] as const;
-  });
+  const reached = hands.map((at) =>
+    limb({ x: SHOULDER.x, y: SHOULDER.y + lift }, at, ARM, ARM, -1),
+  );
+  const arms = reached.flatMap(({ d, end }, index) => [
+    [`arm-${index}`, { d }] as const,
+    [`hand-${index}`, { transform: `translate(${point(end.x, end.y)})` }] as const,
+  ]);
+  // The coin leaves from, and lands in, the hand where it's drawn: where the arm reaches.
+  const hand = reached[0]?.end ?? SHOULDER;
   const parts = {
     body: { transform: `translate(0 ${round(lift)})` },
     coin: {
