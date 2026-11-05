@@ -6,8 +6,10 @@
 // and a gold tuft at the tail, and a red head with a gold mane, horns, a jaw
 // that opens and long whiskers. Parts marked `data-part` are posed a frame
 // at a time by the stage.
+import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
 import { Stage } from "../follower/stage";
+import { ShadeDots } from "../piece";
 import { dragon, SEGMENTS } from "./dragon";
 
 /** A segment of body, pointing along +x toward the head: its disc, belly, a scale and its fin. */
@@ -45,29 +47,37 @@ const Segment = ({ index }: { index: number }) => (
   </g>
 );
 
-export const Follower = () => (
-  <Stage creature={dragon} box={{ height: 340, width: 340, x: -170, y: -170 }}>
-    {/* Tail first, so each segment lies over the one behind it. */}
-    {Array.from({ length: SEGMENTS }, (_, index) => (
-      <Segment key={index} index={SEGMENTS - 1 - index} />
-    ))}
-    <g data-part="head">
-      <path d={HORNS} style={stroked(3.4)} />
-      <path d={HORNS} style={stroked(1.8, "hay")} />
-      <path d={MANE} style={filled("gold", 0.9)} />
-      <g data-part="jaw">
-        <path d={JAW} style={filled("festiveRedShade", 0.9)} />
-        <path d="M5 4.4l1 1.4 1 -1.4 1 1.4 1 -1.4" style={stroked(0.7, "white")} />
+export const Follower = () => {
+  const id = useSvgId("dragon");
+  return (
+    <Stage creature={dragon} box={{ height: 340, width: 340, x: -170, y: -170 }}>
+      <defs>
+        <ShadeDots id={`${id}-dots`} size={0.8} />
+      </defs>
+      {/* Tail first, so each segment lies over the one behind it. */}
+      {Array.from({ length: SEGMENTS }, (_, index) => (
+        <Segment key={index} index={SEGMENTS - 1 - index} />
+      ))}
+      <g data-part="head">
+        <path d={HORNS} style={stroked(3.4)} />
+        <path d={HORNS} style={stroked(1.8, "hay")} />
+        <path d={MANE} style={filled("gold", 0.9)} />
+        <g data-part="jaw">
+          <path d={JAW} style={filled("festiveRedShade")} />
+          <path d={JAW} fill={`url(#${id}-dots)`} />
+          <path d={JAW} style={stroked(0.9)} />
+          <path d="M5 4.4l1 1.4 1 -1.4 1 1.4 1 -1.4" style={stroked(0.7, "white")} />
+        </g>
+        <path d={SNOUT} style={filled("festiveRed", 1.1)} />
+        <path d={TEETH} style={stroked(0.7, "white")} />
+        <path d="M2.6 -6.4Q6.6 -9 10.6 -6" style={stroked(1.4, "gold")} />
+        <circle cx={7.4} cy={-4.4} r={2.3} style={filled("white", 0.7)} />
+        <circle data-part="eye" cx={8} cy={-4.4} r={1.1} style={filled("screen")} />
+        <path data-part="eyelid" d="M5.4 -4.2h4" style={{ ...stroked(0.8), opacity: 0 }} />
+        <circle cx={16.4} cy={-2.4} r={0.6} style={filled("screen")} />
+        <path data-part="whisker-0" style={stroked(1, "gold")} />
+        <path data-part="whisker-1" style={stroked(1, "gold")} />
       </g>
-      <path d={SNOUT} style={filled("festiveRed", 1.1)} />
-      <path d={TEETH} style={stroked(0.7, "white")} />
-      <path d="M2.6 -6.4Q6.6 -9 10.6 -6" style={stroked(1.4, "gold")} />
-      <circle cx={7.4} cy={-4.4} r={2.3} style={filled("white", 0.7)} />
-      <circle data-part="eye" cx={8} cy={-4.4} r={1.1} style={filled("screen")} />
-      <path data-part="eyelid" d="M5.4 -4.2h4" style={{ ...stroked(0.8), opacity: 0 }} />
-      <circle cx={16.4} cy={-2.4} r={0.6} style={filled("screen")} />
-      <path data-part="whisker-0" style={stroked(1, "gold")} />
-      <path data-part="whisker-1" style={stroked(1, "gold")} />
-    </g>
-  </Stage>
-);
+    </Stage>
+  );
+};

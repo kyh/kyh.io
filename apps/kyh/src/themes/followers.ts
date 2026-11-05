@@ -1,8 +1,8 @@
 // What follows the mouse about in each theme: every theme folder's
 // `follower.tsx` (the ghost at Halloween, the turkey at Thanksgiving), keyed
 // by theme so a new one won't compile without its entry, null for none. Each
-// is lazy, its own chunk: a page loads only today's, and only once a mouse
-// moves on it (`follower/index.tsx`), so a phone never loads one at all.
+// is lazy, its own chunk: a page loads only the current theme's, and only once
+// a mouse is on it (`follower/index.tsx`), so a phone never loads one at all.
 import type { ComponentType, LazyExoticComponent } from "react";
 import { lazy } from "react";
 

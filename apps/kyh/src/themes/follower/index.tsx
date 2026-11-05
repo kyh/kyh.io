@@ -1,7 +1,7 @@
 "use client";
 
-// What follows a mouse about in today's theme (`followers.ts`): loaded only
-// once a mouse has moved on the page, so a finger never fetches it, and not
+// What follows a mouse about in the current theme (`followers.ts`): loaded only
+// once a mouse is on the page (it's moved, or clicked), so a finger never fetches it, and not
 // at all for a visitor who'd rather not see motion. The follower itself runs
 // on its stage (`stage.tsx`), in its own chunk.
 import { useReducedMotion } from "motion/react";
@@ -11,7 +11,7 @@ import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { FOLLOWERS } from "../followers";
 import { useTheme } from "../store";
 
-/** Whether a mouse has moved on the page yet. */
+/** Whether a mouse has been on the page yet: moved, or clicked. */
 const useMouseSeen = () => {
   const [seen, setSeen] = useState(false);
   useEffect(() => {

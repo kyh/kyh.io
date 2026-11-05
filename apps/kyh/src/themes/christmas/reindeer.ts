@@ -22,7 +22,7 @@ import {
   degrees,
   footAt,
   isOnWalker,
-  jointOf,
+  limbOf,
   pace,
   stepSwing,
   stepWalker,
@@ -150,7 +150,7 @@ const stepActs = (reindeer: Reindeer, moving: boolean, idle: number, seconds: nu
     return lying;
   }
   reindeer.next -= seconds;
-  if (idle > 1 && reindeer.next <= 0) {
+  if (idle > 1 && reindeer.petted === 0 && reindeer.next <= 0) {
     begin(reindeer, reindeer.random.chance(0.6) ? "graze" : "look");
     reindeer.next = 1.5 + reindeer.random.next() * 3;
   }
@@ -174,7 +174,9 @@ const stepTalk = (reindeer: Reindeer, lying: boolean, idle: number, seconds: num
 export const stepReindeer = (reindeer: Reindeer, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = reindeer;
   const near = Math.hypot(pointer.x - walker.x, pointer.y - walker.y) < 200;
-  stepWalker(walker, GAIT, pointer, moved, seconds, reindeer.act === "graze" && near);
+  // Grazing, or petted (a mouse resting on it), it stands.
+  const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(reindeer, pointer);
+  stepWalker(walker, GAIT, pointer, moved, seconds, resting || (reindeer.act === "graze" && near));
   const moving = walker.speed > MOVING;
   const idle = moving ? 0 : walker.still;
   reindeer.petted = !moving && isOn(reindeer, pointer) ? reindeer.petted + seconds : 0;
@@ -208,8 +210,8 @@ export const pokeReindeer = (reindeer: Reindeer, at: Point) => {
 
 /** A leg's path, hip to joint to hoof, and its hoof. */
 const legPath = (hip: Point, foot: Point, bend: 1 | -1) => {
-  const joint = jointOf(hip, foot, UPPER, LOWER, bend);
-  return `M${point(hip.x, hip.y)}L${point(joint.x, joint.y)}L${point(foot.x, foot.y)}`;
+  const { end, joint } = limbOf(hip, foot, UPPER, LOWER, bend);
+  return `M${point(hip.x, hip.y)}L${point(joint.x, joint.y)}L${point(end.x, end.y)}`;
 };
 
 /** Where each foot is: in its trot, folded under it lying down, tucked up flying. */

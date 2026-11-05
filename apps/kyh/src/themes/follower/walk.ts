@@ -173,12 +173,13 @@ export const footAt = (walker: Walker, gait: Gait, offset: number, lift: number)
 };
 
 /**
- * The joint of a two-boned limb from `hip` to `foot`, bones `upper` and
- * `lower` long, bent to one side of the line between (`bend`, 1 or -1, as the
+ * A two-boned limb from `hip` toward `foot`, bones `upper` and `lower` long,
+ * its joint bent to one side of the line between (`bend`, 1 or -1, as the
  * limb is drawn facing right): a knee forward, a bird's or a deer's hock back.
- * A foot out of reach is reached for.
+ * Its `end` is where the foot gets to: the foot, or, out of reach, as far
+ * toward it as the limb goes, so neither bone ever stretches.
  */
-export const jointOf = (hip: Point, foot: Point, upper: number, lower: number, bend: 1 | -1) => {
+export const limbOf = (hip: Point, foot: Point, upper: number, lower: number, bend: 1 | -1) => {
   const dx = foot.x - hip.x;
   const dy = foot.y - hip.y;
   const most = upper + lower - 0.01;
@@ -187,7 +188,10 @@ export const jointOf = (hip: Point, foot: Point, upper: number, lower: number, b
   const toward = Math.atan2(dy, dx);
   const cos = (upper * upper + reach * reach - lower * lower) / (2 * upper * reach);
   const angle = toward - bend * Math.acos(Math.max(-1, Math.min(1, cos)));
-  return { x: hip.x + upper * Math.cos(angle), y: hip.y + upper * Math.sin(angle) };
+  return {
+    end: { x: hip.x + reach * Math.cos(toward), y: hip.y + reach * Math.sin(toward) },
+    joint: { x: hip.x + upper * Math.cos(angle), y: hip.y + upper * Math.sin(angle) },
+  };
 };
 
 /** Something dangling (a wattle, a bell, ears): its angle (radians, 0 hanging straight) and how fast it swings. */

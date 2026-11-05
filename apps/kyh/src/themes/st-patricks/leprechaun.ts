@@ -20,7 +20,7 @@ import {
   createWalker,
   footAt,
   isOnWalker,
-  jointOf,
+  limbOf,
   pace,
   stepWalker,
   widthOf,
@@ -137,7 +137,9 @@ export const stepLeprechaun = (
   seconds: number,
 ) => {
   const { walker } = leprechaun;
-  stepWalker(walker, GAIT, pointer, moved, seconds);
+  // Petted (a mouse resting on him), he stands for it.
+  const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(leprechaun, pointer);
+  stepWalker(walker, GAIT, pointer, moved, seconds, resting);
   const moving = walker.speed > MOVING;
   const idle = moving ? 0 : walker.still;
   leprechaun.petted = !moving && isOn(leprechaun, pointer) ? leprechaun.petted + seconds : 0;
@@ -155,10 +157,13 @@ export const pokeLeprechaun = (leprechaun: Leprechaun, at: Point) => {
   }
 };
 
-/** A two-boned limb's path: hip to knee to foot, or shoulder to elbow to hand. */
+/** A two-boned limb: its path, hip to knee to foot or shoulder to elbow to hand, and where its end gets to. */
 const limb = (from: Point, to: Point, upper: number, lower: number, bend: 1 | -1) => {
-  const joint = jointOf(from, to, upper, lower, bend);
-  return `M${point(from.x, from.y)}L${point(joint.x, joint.y)}L${point(to.x, to.y)}`;
+  const { end, joint } = limbOf(from, to, upper, lower, bend);
+  return {
+    d: `M${point(from.x, from.y)}L${point(joint.x, joint.y)}L${point(end.x, end.y)}`,
+    end,
+  };
 };
 
 /** His feet: stepping as he walks; in the jig, one heel kicked out a beat while he hops on the other. */
@@ -212,18 +217,19 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
   const hand = hands[0] ?? SHOULDER;
   const width = widthOf(walker);
   const legs = HIPS.flatMap((hip, index) => {
-    const foot = feet[index] ?? hip;
     const from = { x: hip.x, y: hip.y + lift };
+    const { d, end } = limb(from, feet[index] ?? hip, THIGH, SHIN, 1);
     return [
-      [`leg-${index}`, { d: limb(from, foot, THIGH, SHIN, 1) }],
-      [`shoe-${index}`, { transform: `translate(${point(foot.x, foot.y)})` }],
+      [`leg-${index}`, { d }],
+      [`shoe-${index}`, { transform: `translate(${point(end.x, end.y)})` }],
     ] as const;
   });
   const arms = hands.flatMap((at, index) => {
     const from = { x: SHOULDER.x, y: SHOULDER.y + lift };
+    const { d, end } = limb(from, at, ARM, ARM, -1);
     return [
-      [`arm-${index}`, { d: limb(from, at, ARM, ARM, -1) }],
-      [`hand-${index}`, { transform: `translate(${point(at.x, at.y)})` }],
+      [`arm-${index}`, { d }],
+      [`hand-${index}`, { transform: `translate(${point(end.x, end.y)})` }],
     ] as const;
   });
   const parts = {

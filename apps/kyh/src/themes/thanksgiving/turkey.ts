@@ -22,7 +22,7 @@ import {
   degrees,
   footAt,
   isOnWalker,
-  jointOf,
+  limbOf,
   pace,
   stepSwing,
   stepWalker,
@@ -226,7 +226,9 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   const { walker } = turkey;
   // Pecking, it stands; left far behind, it gives up the ground and goes.
   const near = Math.hypot(pointer.x - walker.x, pointer.y - walker.y) < 200;
-  stepWalker(walker, GAIT, pointer, moved, seconds, turkey.act === "peck" && near);
+  // Pecking, or petted (a mouse resting on it), it stands.
+  const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(turkey, pointer);
+  stepWalker(walker, GAIT, pointer, moved, seconds, resting || (turkey.act === "peck" && near));
   const moving = walker.speed > MOVING;
   const idle = moving ? 0 : walker.still;
   // Petted while it stands, it puffs up for the mouse.
@@ -248,8 +250,8 @@ export const pokeTurkey = (turkey: Turkey, at: Point) => {
   }
 };
 
-const leg = (hip: Point, foot: Point) => {
-  const hock = jointOf(hip, foot, THIGH, SHANK, -1);
+const leg = (hip: Point, toward: Point) => {
+  const { end: foot, joint: hock } = limbOf(hip, toward, THIGH, SHANK, -1);
   // Three toes forward, curled as the foot's lifted, and one back.
   const curl = Math.min(1, -foot.y / 6);
   const toes = [

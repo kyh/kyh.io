@@ -187,7 +187,7 @@ const isOn = (bird: Lovebird, at: Point) =>
 
 export const pokeLovebird = (bird: Lovebird, at: Point) => {
   bird.still = 0;
-  if (isOn(bird, at) || bird.perch > 0.5) {
+  if (isOn(bird, at)) {
     // Flushed off in a flutter, straight up.
     bird.flushed = FLUSH_S;
     bird.vy -= 260;

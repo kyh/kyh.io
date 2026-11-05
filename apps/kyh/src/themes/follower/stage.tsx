@@ -146,8 +146,11 @@ export const Stage = <State,>({
       }
     };
     const unsubscribe = subscribeToPointer(follow);
-    // Loaded after the mouse first moved: it comes in where the mouse is, not on the next move.
-    follow();
+    // Loaded after the mouse first moved: it comes in where the mouse is, not on the next move,
+    // unless the mouse has left the page while it loaded.
+    if (document.documentElement.matches(":hover")) {
+      follow();
+    }
     const poke = (event: PointerEvent) => {
       if (state !== null && frame !== 0 && event.pointerType === "mouse") {
         creature.poke(state, { x: event.clientX, y: event.clientY });

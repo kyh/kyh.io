@@ -31,11 +31,14 @@ const session = <State>(creature: Creature<State>, check: (pose: Pose, pointer: 
     [{ x: 0, y: -9 }, 0.5],
     [{ x: 25, y: 18 }, 0.4],
   ];
-  for (const [by, seconds] of moves) {
+  // How far behind it is at the end of each, the first slow enough for any of them to keep up with.
+  const behind = moves.map(([by, seconds]) => {
     for (let at = 0; at < seconds * 60; at += 1) {
       frame(by);
     }
-  }
+    const { at } = creature.pose(state);
+    return Math.hypot(at.x - pointer.x, at.y - pointer.y);
+  });
   // Clicked on, it answers at once.
   said = new Set();
   creature.poke(state, creature.pose(state).at);
@@ -47,7 +50,7 @@ const session = <State>(creature: Creature<State>, check: (pose: Pose, pointer: 
   for (let at = 0; at < 60 * 60; at += 1) {
     frame({ x: 0, y: 0 });
   }
-  return { answered, idle: said };
+  return { answered, behind, idle: said };
 };
 
 const NUMBER = /-?\d+(?:\.\d+)?(?:e-?\d+)?/gu;
@@ -56,8 +59,10 @@ const sweep = <State>(name: string, creature: Creature<State>) => {
   test(`the ${name} stays with the mouse, posed in numbers, and has its say`, () => {
     let parts = 0;
     let last = 0;
-    const { answered, idle } = session(creature, (pose, pointer) => {
-      assert.ok(Number.isFinite(pose.at.x) && Number.isFinite(pose.at.y), name);
+    const { answered, behind, idle } = session(creature, (pose, pointer) => {
+      for (const { x, y } of [pose.at, pose.bubble]) {
+        assert.ok(Number.isFinite(x) && Number.isFinite(y), name);
+      }
       last = Math.hypot(pose.at.x - pointer.x, pose.at.y - pointer.y);
       parts = Object.keys(pose.parts).length;
       for (const [part, { d, transform, opacity }] of Object.entries(pose.parts)) {
@@ -70,6 +75,12 @@ const sweep = <State>(name: string, creature: Creature<State>) => {
       }
     });
     assert.ok(parts > 0, name);
+    // Following a slow mouse, it keeps near its spot; darting about, it lags but is never lost.
+    assert.ok((behind[0] ?? Infinity) < 180, `${name}: ${behind.join(", ")}`);
+    assert.ok(
+      behind.every((away) => away < 700),
+      `${name}: ${behind.join(", ")}`,
+    );
     // Caught up and settled by the pointer once it's left be.
     assert.ok(last < 100, `${name}: ${last}`);
     assert.equal(answered.size, 1, name);
@@ -86,3 +97,28 @@ sweep("leprechaun", leprechaun);
 sweep("lovebird", lovebird);
 sweep("reindeer", reindeer);
 sweep("turkey", turkey);
+
+/** A walker petted: the mouse comes to rest on it, and it stays put for it rather than walking off. */
+const petting = <State>(name: string, creature: Creature<State>) => {
+  test(`the ${name} stays to be petted`, () => {
+    const state = creature.create({ x: 400, y: 300 });
+    const still = { x: 0, y: 0 };
+    for (let at = 0; at < 60 * 3; at += 1) {
+      creature.step(state, { x: 400, y: 300 }, still, 1 / 60);
+    }
+    const settled = creature.pose(state).at;
+    // Onto its body, then resting there.
+    const on = { x: settled.x, y: settled.y - 20 };
+    creature.step(state, on, { x: on.x - 400, y: on.y - 300 }, 1 / 60);
+    for (let at = 0; at < 60 * 3; at += 1) {
+      creature.step(state, on, still, 1 / 60);
+    }
+    const now = creature.pose(state).at;
+    assert.ok(Math.hypot(now.x - settled.x, now.y - settled.y) < 12, `${name}`);
+  });
+};
+
+petting("bunny", bunny);
+petting("leprechaun", leprechaun);
+petting("reindeer", reindeer);
+petting("turkey", turkey);

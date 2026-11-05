@@ -97,7 +97,8 @@ const stepActs = (bunny: Bunny, moving: boolean, idle: number, seconds: number) 
   const dozing = idle > DOZE_S && bunny.petted === 0;
   bunny.doze = approach(bunny.doze, dozing ? 1 : 0, dozing ? 1 : 6, seconds);
   bunny.actFor += seconds;
-  const over = bunny.actFor > ACT_S[bunny.act] || (moving && bunny.act !== "binky");
+  const kept = bunny.act === "binky" || bunny.act === "thump";
+  const over = bunny.actFor > ACT_S[bunny.act] || (moving && !kept);
   if (bunny.act !== "none" && over) {
     bunny.act = "none";
   }
@@ -126,7 +127,9 @@ const stepTalk = (bunny: Bunny, dozing: boolean, idle: number, seconds: number) 
 
 export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = bunny;
-  stepWalker(walker, GAIT, pointer, moved, seconds, bunny.act === "binky");
+  // Leaping, or petted (a mouse resting on it), it stays put.
+  const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(bunny, pointer);
+  stepWalker(walker, GAIT, pointer, moved, seconds, resting || bunny.act === "binky");
   const moving = walker.speed > MOVING;
   const idle = moving ? 0 : walker.still;
   bunny.petted = !moving && isOn(bunny, pointer) ? bunny.petted + seconds : 0;

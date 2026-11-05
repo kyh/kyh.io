@@ -48,12 +48,16 @@ export const say = (emotes: Emotes, lines: readonly string[], now = false) => {
 
 /** Steps it `seconds` on: the line runs out, then the quiet. */
 export const stepEmotes = (emotes: Emotes, seconds: number) => {
+  let rest = seconds;
   if (emotes.line !== null) {
-    emotes.left -= seconds;
-    if (emotes.left <= 0) {
-      emotes.line = null;
+    emotes.left -= rest;
+    if (emotes.left > 0) {
+      return;
     }
-    return;
+    // The line ran out partway through: the rest of the time counts toward the quiet.
+    emotes.line = null;
+    rest = -emotes.left;
+    emotes.left = 0;
   }
-  emotes.quiet = Math.max(0, emotes.quiet - seconds);
+  emotes.quiet = Math.max(0, emotes.quiet - rest);
 };

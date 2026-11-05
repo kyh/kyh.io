@@ -195,16 +195,15 @@ const whiskerOf = (dragon: Dragon, side: number) => {
 
 export const dragonPose = (dragon: Dragon): Pose => {
   const at = { x: dragon.x, y: dragon.y };
+  const flip = Math.sign(dragon.upright || 1) * Math.max(0.2, Math.abs(dragon.upright));
   const segments = dragon.body.map((segment, index) => {
     const ahead = dragon.body[index - 1] ?? at;
     const angle = Math.atan2(ahead.y - segment.y, ahead.x - segment.x);
-    // Thinner to the tail; every segment the way up its head is, so its fins all run along one side.
+    // Thinner to the tail; every segment turned over as its head is, so its fins all run along one side.
     const size = 1 - (index / SEGMENTS) * 0.55;
-    const up = dragon.upright < 0 ? -1 : 1;
-    const transform = `translate(${point(segment.x - at.x, segment.y - at.y)}) rotate(${round(degrees(angle))}) scale(${round(size)} ${round(size * up)})`;
+    const transform = `translate(${point(segment.x - at.x, segment.y - at.y)}) rotate(${round(degrees(angle))}) scale(${round(size)} ${round(size * flip)})`;
     return [`segment-${index}`, { transform }] as const;
   });
-  const flip = Math.sign(dragon.upright || 1) * Math.max(0.2, Math.abs(dragon.upright));
   const parts = {
     eye: { opacity: dragon.doze > 0.6 ? 0 : 1 },
     eyelid: { opacity: dragon.doze > 0.6 ? 1 : 0 },

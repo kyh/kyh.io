@@ -48,11 +48,13 @@ The rest is by hand:
   a missing one won't compile).
 - Keep `town` out of `index.ts`: Turbopack keeps a module's imports whole, so
   the town's drawing code would ship on every page instead of only `/showcase`.
-- What follows the mouse is the folder's `follower.tsx` (the drawing) beside
-  its pure creature (`halloween/ghost.ts`, `thanksgiving/turkey.ts`, …),
-  registry `FOLLOWERS` in `followers.ts`, keyed by theme, each `lazy`: a page
-  loads only today's, and only once a mouse moves (`follower/index.tsx`), so a
-  phone never loads one. Never import a follower statically.
+- A theme with something following the mouse has a `follower.tsx` (the
+  drawing) beside its pure creature (`halloween/ghost.ts`,
+  `thanksgiving/turkey.ts`, …), registry `FOLLOWERS` in `followers.ts`, keyed
+  by theme (null for none, as the default theme has), each `lazy`: a page
+  loads only the current theme's, and only once a mouse is on it
+  (`follower/index.tsx`), so a phone never loads one. Never import a follower
+  statically.
 - `follower/` is the followers' kit: `creature.ts` (the contract: create, step,
   poke, pose), `stage.tsx` (runs one on the DOM a frame at a time, poses its
   `data-part`s, floats its speech bubble), `walk.ts` (getting about on legs:

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Gait, Point, Walker } from "./walk";
-import { createWalker, footAt, jointOf, spotOf, stepWalker } from "./walk";
+import { createWalker, footAt, limbOf, spotOf, stepWalker } from "./walk";
 
 const GAIT: Gait = { accel: 1300, behind: 70, below: 40, stride: 34, top: 360 };
 const still = { x: 0, y: 0 };
@@ -42,7 +42,7 @@ test("it faces the way it goes, and the pointer once it's stopped", () => {
 test("its top speed holds however far it's left behind", () => {
   const walker = createWalker({ x: 0, y: 0 }, GAIT);
   run(walker, { x: 5000, y: 0 }, 2);
-  assert.ok(walker.speed <= GAIT.top + 1e-6, `${walker.speed}`);
+  assert.ok(walker.speed > GAIT.top * 0.99 && walker.speed <= GAIT.top + 1e-6, `${walker.speed}`);
 });
 
 test("a foot on the ground goes back as fast as the body goes on, so it never slips", () => {
@@ -61,14 +61,17 @@ test("a limb's joint keeps both bones their length, bent the way asked", () => {
   const hip = { x: 0, y: -30 };
   const foot = { x: 4, y: 0 };
   for (const bend of [1, -1] as const) {
-    const joint = jointOf(hip, foot, 15, 16, bend);
+    const { end, joint } = limbOf(hip, foot, 15, 16, bend);
+    assert.ok(Math.hypot(end.x - foot.x, end.y - foot.y) < 1e-9);
     assert.ok(Math.abs(Math.hypot(joint.x - hip.x, joint.y - hip.y) - 15) < 1e-6);
     assert.ok(Math.abs(Math.hypot(foot.x - joint.x, foot.y - joint.y) - 16) < 1e-6);
     // Forward (+x) of the line from hip to foot, or back of it.
     const across = (foot.x - hip.x) * (joint.y - hip.y) - (foot.y - hip.y) * (joint.x - hip.x);
     assert.equal(Math.sign(across), -bend);
   }
-  // Out of reach, it reaches.
-  const far = jointOf(hip, { x: 0, y: 100 }, 15, 16, 1);
-  assert.ok(Number.isFinite(far.x) && Number.isFinite(far.y));
+  // Out of reach, it reaches as far as it goes toward it, neither bone stretched.
+  const far = limbOf(hip, { x: 0, y: 100 }, 15, 16, 1);
+  assert.ok(Math.abs(far.end.x) < 1e-6 && far.end.y > hip.y + 30.9, `${far.end.y}`);
+  assert.ok(Math.abs(Math.hypot(far.joint.x - hip.x, far.joint.y - hip.y) - 15) < 1e-6);
+  assert.ok(Math.abs(Math.hypot(far.end.x - far.joint.x, far.end.y - far.joint.y) - 16) < 1e-6);
 });
