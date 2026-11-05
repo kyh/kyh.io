@@ -29,6 +29,8 @@ export const ghost: Creature<Haunt> = {
     still: 0,
   }),
   poke: (haunt, at) => {
+    // A click wakes it from its boredom: it's quiet a while before it moans again.
+    haunt.still = 0;
     startle(haunt.ghost.mood);
     const on = Math.hypot(at.x - haunt.ghost.x, at.y - haunt.ghost.y) < HEAD * 2;
     say(haunt.emotes, on ? BOO : EEK, on || haunt.emotes.random.chance(0.3));

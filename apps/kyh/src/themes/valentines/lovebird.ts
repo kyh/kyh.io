@@ -121,7 +121,9 @@ const fly = (bird: Lovebird, spot: Point, dt: number) => {
 
 const stepActs = (bird: Lovebird, dozing: boolean, seconds: number) => {
   bird.actFor += seconds;
-  if (bird.act !== "none" && (bird.actFor > ACT_S[bird.act] || bird.perch < 0.5)) {
+  // Preening and chirping are a perched bird's; a cock of the head goes in flight too.
+  const flownOff = bird.perch < 0.5 && bird.act !== "tilt";
+  if (bird.act !== "none" && (bird.actFor > ACT_S[bird.act] || flownOff)) {
     bird.act = "none";
   }
   if (bird.act !== "none" || bird.perch < 0.9 || dozing) {
