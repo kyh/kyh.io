@@ -32,6 +32,8 @@ export interface Lovebird {
   flap: number;
   /** 0 flying to 1 perched on the pointer, and dozing there. */
   perch: number;
+  /** Whether it's holding on to the pointer now: once shaken off, it flies and lands again. */
+  riding: boolean;
   doze: number;
   /** Which way from the pointer it flies: back along the way the pointer came. */
   back: Point;
@@ -82,6 +84,7 @@ export const createLovebird = (at: Point): Lovebird => {
     flushed: 0,
     next: 1.5,
     perch: 0,
+    riding: false,
     random: createRandom(seed + 1),
     still: 0,
     time: 0,
@@ -156,11 +159,12 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   bird.flushed = Math.max(0, bird.flushed - seconds);
   // Perched, a gentle move carries it along; a quick one shakes it off.
   const gentle = dt > 0 && Math.hypot(moved.x, moved.y) / dt < SHAKEN;
-  const landing = bird.flushed === 0 && (bird.still > LAND_S || (bird.perch > 0.5 && gentle));
+  const landing = bird.flushed === 0 && (bird.still > LAND_S || (bird.riding && gentle));
   const spot = spotOf(bird, pointer, landing);
   const off = Math.hypot(spot.x - bird.x, spot.y - bird.y);
   // Landed once it's close; perched, it holds on however far a gentle move carries the pointer.
-  const holding = landing && (off < 4 || bird.perch > 0.5);
+  const holding = landing && (off < 4 || bird.riding);
+  bird.riding = holding;
   if (holding) {
     bird.x = spot.x;
     bird.y = spot.y;

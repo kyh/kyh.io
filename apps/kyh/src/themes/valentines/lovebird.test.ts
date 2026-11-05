@@ -45,3 +45,14 @@ test("perched, a quick move shakes it off and it flies", () => {
   assert.ok(bird.perch < 0.1, `${bird.perch}`);
   assert.ok(bird.x < pointer.x - 10, "behind");
 });
+
+test("shaken off, it flies and lands again, rather than snapping back onto the pointer", () => {
+  const bird = perched();
+  // One quick jerk, then the pointer moves on gently.
+  let pointer = run(bird, { x: 300, y: 300 }, 1 / 60, { x: 15, y: 0 });
+  pointer = run(bird, pointer, 0.1, { x: 2, y: 0 });
+  assert.ok(Math.hypot(bird.x - pointer.x, bird.y - pointer.y) > 4, "still flying");
+  // Left be, it lands on it again.
+  run(bird, pointer, 3);
+  assert.ok(bird.perch > 0.99, `${bird.perch}`);
+});
