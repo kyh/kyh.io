@@ -1,4 +1,4 @@
-// The ghost that follows a mouse about at Halloween, for `ghost.tsx`, as a
+// The ghost that follows a mouse about at Halloween, for `ghost.ts`, as a
 // soft body after saharan's bubbles: its outline is the body, a closed loop
 // of points stepped by Verlet, each edge held to its length, the area inside
 // held by pressure, and every point pulled back toward the ghost's shape
@@ -10,7 +10,7 @@
 // back under and settles. In the screen's pixels, +y down; the paths are
 // about the head. Pure (state is stepped in place, for a frame's sake).
 import type { FacePaths, Mood } from "./face";
-import { point } from "./art";
+import { point } from "../art";
 import { createMood, facePaths, stepMood } from "./face";
 
 interface Point {

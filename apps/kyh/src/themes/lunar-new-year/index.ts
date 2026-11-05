@@ -46,5 +46,4 @@ export const theme = {
   mode: "dark",
   name: "Lunar New Year",
   tint: { chroma: 2.5, hue: 25 },
-  trail: "pieces",
 } as const satisfies Theme;

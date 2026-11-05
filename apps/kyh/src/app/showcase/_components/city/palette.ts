@@ -13,6 +13,9 @@ export const PALETTE = {
   accentRed: { day: "#d9614f", night: "#ff7a66" },
   accentTeal: { day: "#3f9c97", night: "#5fd0c8" },
   accentYellow: { day: "#e9b949", night: "#ffd166" },
+  /** A turkey's feathers (the theme followers'), and their side from the light. */
+  bronze: { day: "#7d5c40", night: "#7a5d45" },
+  bronzeShade: { day: "#644a33", night: "#634b37" },
   door: { day: "#8f9891", night: "#3a4a4f" },
   festiveGreen: { day: "#3f8f55", night: "#4fae68" },
   festiveGreenShade: { day: "#327447", night: "#3d8c53" },
@@ -21,6 +24,9 @@ export const PALETTE = {
   field: { day: "#efe5c4", night: "#2b2a22" },
   fieldGreen: { day: "#dce6c8", night: "#1f2b22" },
   flame: { day: "#f3a64a", night: "#ffb057" },
+  /** A reindeer's coat, and its side from the light. */
+  fur: { day: "#ab835f", night: "#8a6b51" },
+  furShade: { day: "#93704f", night: "#735842" },
   glass: { day: "#dbe6ea", night: "#f1c76f" },
   glassDim: { day: "#dbe6ea", night: "#34434b" },
   gold: { day: "#e8b22e", night: "#ffc94a" },
@@ -129,8 +135,10 @@ export const BLACK = paint("screen");
 
 /** The tokens painted only on faces turned from the light, which take the shadow dots. */
 export const SHADE: ReadonlySet<Token> = new Set<Token>([
+  "bronzeShade",
   "festiveGreenShade",
   "festiveRedShade",
+  "furShade",
   "goldShade",
   "hayShade",
   "pineShade",

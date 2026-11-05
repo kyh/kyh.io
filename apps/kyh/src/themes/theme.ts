@@ -2,14 +2,14 @@
 // `index.ts` as `theme`, one field per effect, each read where the effect
 // happens: the days it runs (the calendar), its light or dark and grey tint
 // (the page's paint), its piece and confetti (easter-egg finds), its glyph
-// (the theme toggle), what falls across every page (`drift.tsx`), what
-// follows the pointer (`trail.tsx`, `ghost.tsx`) and what hangs in the page's corners
-// (`corners.tsx`). How the
-// showcase's town dresses is the folder's `town.ts` (`Town` in
-// city/town-theme.ts), kept apart so the town's drawing code loads only on
-// the showcase. A new effect is a field here (or on `Town`), a value in each
-// theme, and a read where it shows; a new theme is a folder and a line in
-// `index.ts` and `towns.ts`. Pure.
+// (the theme toggle), what falls across every page (`drift.tsx`) and what
+// hangs in the page's corners (`corners.tsx`). Two things a theme has are
+// kept apart from it, each in its folder and listed by theme, so their code
+// loads only where it shows: how the showcase's town dresses (`town.ts`,
+// listed in `towns.ts`), and what follows the mouse about (`follower.tsx`,
+// listed in `followers.ts`, loaded lazily). A new effect is a field here (or
+// on `Town`), a value in each theme, and a read where it shows; a new theme
+// is a folder and a line in `index.ts`, `towns.ts` and `followers.ts`. Pure.
 import { colorNamed, GOLD } from "@/lib/color";
 import type { Art } from "./art";
 import type { Window } from "./calendar";
@@ -25,9 +25,6 @@ export type Mode = "light" | "dark";
 
 /** What falls across every page: snow drifting down, or leaves tumbling. */
 export type Drift = "snow" | "leaves";
-
-/** What follows a mouse: the theme's piece let go behind it, or a ghost floating after it. */
-export type Trail = "pieces" | "ghost";
 
 /** What hangs in the page's top corners: cobwebs, a spider on each. */
 export type Corners = "webs";
@@ -54,8 +51,6 @@ export interface Theme {
   glyph: string | null;
   confetti: readonly ConfettiSide[];
   drift: Drift | null;
-  /** What follows a mouse about: its pieces (`trail.tsx`) or a ghost (`ghost.tsx`); null, nothing. */
-  trail: Trail | null;
   corners: Corners | null;
 }
 

@@ -9,8 +9,7 @@ import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/themes/theme-script";
 import { ThemeCorners } from "@/themes/corners";
 import { ThemeDrift } from "@/themes/drift";
-import { ThemeGhost } from "@/themes/ghost";
-import { ThemeTrail } from "@/themes/trail";
+import { ThemeFollower } from "@/themes/follower";
 import { siteConfig } from "@/lib/config";
 import { JsonLd, VideoJsonLd } from "@/components/json-ld";
 import { ogVideoOf } from "@/lib/page-metadata";
@@ -92,8 +91,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
         <div className="blur-header" aria-hidden="true" />
         <ThemeDrift />
         <ThemeCorners />
-        <ThemeTrail />
-        <ThemeGhost />
+        <ThemeFollower />
         <Multiplayer />
         <Dock />
         {children}

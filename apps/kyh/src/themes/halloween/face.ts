@@ -9,7 +9,7 @@
 // for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
-import { ellipse, point } from "./art";
+import { ellipse, point } from "../art";
 
 interface Point {
   x: number;
