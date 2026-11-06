@@ -315,28 +315,6 @@ test("it falls asleep sitting side on, a little toward the camera, its head on i
   }
 });
 
-test("its beard hangs from the middle of its breast, not below its belly", () => {
-  const turkey = createTurkey({ x: 400, y: 400 });
-  run(
-    turkey,
-    () => ({ x: 400, y: 400 }),
-    3,
-    () => {
-      turkey.rig.heading.x = Math.PI / 2;
-      turkey.rig.heading.v = 0;
-      turkey.nextPeck = 99;
-    },
-  );
-  const pose = turkeyPose(turkey);
-  const breast = centerOf(pose.parts.breast?.d);
-  const ys = [...(pose.parts.beard?.d ?? "").matchAll(/-?[\d.]+ (?<y>-?[\d.]+)/gu)].map((found) =>
-    Number(found.groups?.y),
-  );
-  // Seen from the front: its root above the breast's middle, its tip short of its belly's bottom.
-  assert.ok((ys[0] ?? 0) < breast.y, `${ys[0]} ${breast.y}`);
-  assert.ok(Math.max(...ys) < breast.y + 10, `${Math.max(...ys)} ${breast.y}`);
-});
-
 /** A pointer jumping from one side to the other and back, over and over. */
 const zigzag = (t: number) => ({ x: 600 + 250 * Math.sign(Math.sin(t * 1.3)), y: 400 });
 
@@ -351,4 +329,184 @@ test("doubling back, its feet don't splay into the splits", () => {
   });
   // About its longest stride and a little: without the turkey's strain (`turkey.ts`) it's past 30.
   assert.ok(widest < 27, `${widest}`);
+});
+
+/** Runs it for `seconds` left be, never nodding off, for its bouts of foraging and strutting. */
+const idling = (turkey: Turkey, seconds: number, each: () => void) =>
+  run(
+    turkey,
+    (t) => ({ x: 400 + 100 * Math.min(t, 1), y: 400 }),
+    seconds,
+    () => {
+      turkey.walker.still = Math.min(turkey.walker.still, 20);
+      each();
+    },
+  );
+
+test("a peck sees its fan shut: no strut opens on one that's running", () => {
+  const turkey = createTurkey({ x: 400, y: 400 });
+  let most = 0;
+  let struts = 0;
+  let was = false;
+  idling(turkey, 300, () => {
+    if (turkey.act === "peck") {
+      most = Math.max(most, turkey.rig.fan.x);
+    }
+    struts += turkey.strutting && !was ? 1 : 0;
+    was = turkey.strutting;
+  });
+  assert.ok(struts >= 10, `${struts}`);
+  assert.ok(most <= 0.1, `${most}`);
+});
+
+test("a gobble's head shake never flickers its face over and under its head", () => {
+  for (const degrees of [-30, -20, -10, 0, -170, -160, -150]) {
+    const heading = (degrees * Math.PI) / 180;
+    const turkey = createTurkey({ x: 400, y: 400 });
+    const hold = () => {
+      turkey.rig.heading.x = heading;
+      turkey.rig.heading.v = 0;
+      turkey.nextPeck = 99;
+    };
+    run(turkey, () => ({ x: 400, y: 400 }), 2, hold);
+    pokeTurkey(turkey, { x: turkey.walker.x, y: turkey.walker.y - 30 });
+    assert.equal(turkey.act, "gobble");
+    let swaps = 0;
+    let was: boolean | null = null;
+    run(
+      turkey,
+      () => ({ x: 400, y: 400 }),
+      1.5,
+      (pose) => {
+        hold();
+        const order = pose.order ?? [];
+        const over = order.indexOf("face") > order.indexOf("head");
+        swaps += was !== null && over !== was ? 1 : 0;
+        was = over;
+      },
+    );
+    assert.ok(swaps <= 1, `${degrees}: ${swaps}`);
+  }
+});
+
+/** The lowest an ellipse part reaches, down the screen (an `art.ts` ellipse path). */
+const bottomOf = (d: string | undefined) => {
+  const { y } = centerOf(d);
+  const { rotate, rx, ry } =
+    /a(?<rx>[\d.]+) (?<ry>[\d.]+) (?<rotate>-?[\d.]+)/u.exec(d ?? "")?.groups ?? {};
+  const angle = (Number(rotate) * Math.PI) / 180;
+  return y + Math.hypot(Number(rx) * Math.sin(angle), Number(ry) * Math.cos(angle));
+};
+
+/** A line part's end, the last point of its path. */
+const endOf = (d: string | undefined) => {
+  const points = [...(d ?? "").matchAll(/L(?<x>-?[\d.]+) (?<y>-?[\d.]+)/gu)];
+  return Number(points.at(-1)?.groups?.y);
+};
+
+test("walking away, its folded tail stops short of its feet, so its steps show", () => {
+  for (const degrees of [-120, -105, -90, -75, -60]) {
+    const way = (degrees * Math.PI) / 180;
+    const turkey = createTurkey({ x: 800, y: 900 });
+    const clear: number[] = [];
+    run(
+      turkey,
+      (t) => ({
+        x: 800 + 130 * t * Math.cos(way),
+        y: 900 + 130 * t * Math.sin(way) * Math.sin(0.48),
+      }),
+      6,
+      (pose, t) => {
+        if (t < 4) {
+          return;
+        }
+        const tail = Math.max(
+          ...Array.from({ length: 11 }, (_, index) => bottomOf(pose.parts[`tip-${index}`]?.d)),
+        );
+        const foot = Math.max(endOf(pose.parts["shank-0"]?.d), endOf(pose.parts["shank-1"]?.d));
+        clear.push(foot - tail);
+      },
+    );
+    // Its own pixels of shank below its tail, on the leg standing, at the worst of its stride.
+    assert.ok(Math.min(...clear) > 8, `${degrees}: ${Math.min(...clear)}`);
+  }
+});
+
+test("its wings' ink and primaries are never half see-through", () => {
+  for (let step = 0; step < 32; step += 1) {
+    const heading = (step / 32) * Math.PI * 2;
+    const turkey = createTurkey({ x: 400, y: 400 });
+    run(
+      turkey,
+      () => ({ x: 400, y: 400 }),
+      0.2,
+      () => {
+        turkey.rig.heading.x = heading;
+      },
+    );
+    const { parts } = turkeyPose(turkey);
+    for (const name of ["primaries", "bars", "wing-ink", "wing-edge"]) {
+      for (const index of [0, 1]) {
+        assert.ok(
+          [0, 1].includes(parts[`${name}-${index}`]?.opacity ?? 1),
+          `${name} at ${heading}`,
+        );
+      }
+    }
+  }
+});
+
+test("seen from the front, its beard grows from its upper breast, standing or strutting", () => {
+  for (const fan of [0, 1]) {
+    const turkey = createTurkey({ x: 400, y: 400 });
+    run(
+      turkey,
+      () => ({ x: 400, y: 400 }),
+      3,
+      () => {
+        turkey.rig.heading.x = Math.PI / 2;
+        turkey.rig.heading.v = 0;
+        turkey.rig.fan.x = fan;
+        turkey.nextPeck = 99;
+      },
+    );
+    const { parts } = turkeyPose(turkey);
+    const ys = [...(parts.beard?.d ?? "").matchAll(/-?[\d.]+ (?<y>-?[\d.]+)/gu)].map((found) =>
+      Number(found.groups?.y),
+    );
+    const bottom = Math.max(bottomOf(parts.body?.d), bottomOf(parts.breast?.d));
+    const top = 2 * centerOf(parts.body?.d).y - bottomOf(parts.body?.d);
+    const downTorso = (y: number) => (y - top) / (bottom - top);
+    assert.ok(downTorso(ys[0] ?? 1) < 0.42, `root ${downTorso(ys[0] ?? 1)}`);
+    assert.ok(downTorso(Math.max(...ys)) < 0.68, `tip ${downTorso(Math.max(...ys))}`);
+  }
+});
+
+test("asleep, its head and face stay over its body, and nothing of them swaps nodding off or waking", () => {
+  for (const dx of [100, -100]) {
+    const turkey = createTurkey({ x: 400, y: 400 });
+    let swaps = 0;
+    let was = "";
+    const watch = (pose: Pose, t: number) => {
+      if (t < 5) {
+        return;
+      }
+      const order = pose.order ?? [];
+      const key = [
+        order.indexOf("head") > order.indexOf("torso"),
+        order.indexOf("face") > order.indexOf("head"),
+      ].join(",");
+      swaps += was !== "" && key !== was ? 1 : 0;
+      was = key;
+    };
+    const at = (t: number) => ({ x: 400 + dx * Math.min(t, 1), y: 400 });
+    run(turkey, at, 44, watch);
+    assert.equal(was, "true,true");
+    const { parts } = turkeyPose(turkey);
+    // Its near eye shut, shown: seen from its side, not the back of its head.
+    assert.ok(Math.max(parts["lid-0"]?.opacity ?? 0, parts["lid-1"]?.opacity ?? 0) > 0.8);
+    pokeTurkey(turkey, { x: turkey.walker.x, y: turkey.walker.y - 30 });
+    run(turkey, () => at(1), 2, watch, 44);
+    assert.equal(swaps, 0, `${dx}`);
+  }
 });

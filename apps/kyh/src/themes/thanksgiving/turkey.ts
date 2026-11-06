@@ -120,6 +120,12 @@ export interface Turkey {
    * under its body as it sways.
    */
   tailNear: boolean;
+  /**
+   * Whether its face is turned from the camera, behind its head: by how it
+   * holds its head, not a gobble's shake, and held a little either way, so
+   * its face doesn't flicker over and under its head.
+   */
+  faceAway: boolean;
   /** Where on the screen a noise (a click off it) came from, that it looks toward. */
   heard: Point | null;
   rig: Rig;
@@ -150,7 +156,7 @@ const MOVING = 20;
 /** Where its head sits, forward and up from its feet: walking, strutting (drawn back) and asleep (on its back). */
 const HEAD: Point = { x: 19, y: 70 };
 const STRUT_HEAD: Point = { x: 12, y: 65 };
-const DOZE_HEAD: Point = { x: 1, y: 54 };
+const DOZE_HEAD: Point = { x: 6, y: 58 };
 /** Where a peck takes its head: down to the ground in front of it. */
 const PECK_HEAD: Point = { x: 40, y: 8 };
 /** How far it bows to peck (radians): a feeding turkey's tilt. */
@@ -176,6 +182,7 @@ export const createTurkey = (at: Point): Turkey => {
     bout: "forage",
     boutLeft: STRUT_S,
     emotes: createEmotes(seed),
+    faceAway: false,
     feet: createFeet(STEPS, walker, heading),
     gait: GAIT,
     heard: null,
@@ -315,7 +322,7 @@ const stepBout = (turkey: Turkey, moving: boolean, seconds: number) => {
 
 /** Its next peck, foraging (its tail folded), or gobble, strutting, once it's due: each counted only while it's at that. */
 const startAct = (turkey: Turkey, idle: number, seconds: number) => {
-  const foraging = !turkey.strutting && turkey.rig.fan.x < 0.15;
+  const foraging = !turkey.strutting && turkey.rig.fan.x < 0.1;
   if (foraging) {
     turkey.nextPeck -= seconds;
   } else if (turkey.strutting) {
@@ -337,7 +344,9 @@ const stepActs = (turkey: Turkey, moving: boolean, idle: number, seconds: number
   const sleeping = idle > SLEEP_S && turkey.petted === 0;
   stepBout(turkey, moving, seconds);
   const showing = idle > STRUT_S && turkey.bout === "strut";
-  turkey.strutting = !moving && !sleeping && (showing || turkey.petted > 0.4);
+  // A peck that's running is seen out before its fan opens.
+  const free = !moving && !sleeping && turkey.act !== "peck";
+  turkey.strutting = free && (showing || turkey.petted > 0.4);
   settle(turkey, sleeping, moving, seconds);
   turkey.actFor += seconds;
   // A peck's given up the moment the mouse moves off; anything, the moment it falls asleep.
@@ -416,7 +425,9 @@ const stepHead = (
   stepSpring(rig.headX, goal.x, rate, seconds);
   stepSpring(rig.headY, goal.y, rate, seconds);
   stepSpring(rig.nod, goal.nod, rate, seconds);
-  stepSpring(rig.look, rig.doze.x > 0.3 ? TUCKED : 0, 3, seconds);
+  // Round by the camera's side, so it's its face that's seen on its back, not the back of its head.
+  const tucked = Math.cos(rig.heading.x) < 0 ? -TUCKED : TUCKED;
+  stepSpring(rig.look, rig.doze.x > 0.3 ? tucked : 0, 3, seconds);
   stepSpring(rig.bow, turkey.act === "peck" ? PECK_BOW : 0, 9, seconds);
   turkey.reach = peckDown(turkey);
   // A gobble shakes its head about, fast, which flings its snood and wattle.
@@ -460,6 +471,12 @@ const tailNearOf = (turkey: Turkey) => {
   return turkey.tailNear ? away > 0.05 : away > 0.15;
 };
 
+/** Whether its face is turned from the camera: past a little beyond side on, held either way. */
+const faceAwayOf = ({ faceAway, rig }: Turkey) => {
+  const away = -Math.sin(rig.heading.x + rig.look.x);
+  return faceAway ? away > 0.13 : away > 0.28;
+};
+
 export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = turkey;
   turkey.time += seconds;
@@ -478,6 +495,7 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   stepFeet(turkey.feet, STEPS, walker, turkey.rig.heading.x, seconds);
   turkey.bob = bobOf(turkey);
   turkey.tailNear = tailNearOf(turkey);
+  turkey.faceAway = faceAwayOf(turkey);
   // Its snood, wattle and beard, carried by its head and breast: the air and their swing do the rest.
   const flesh = fleshOf(turkey);
   for (const name of ["snood", "wattle", "beard"] as const) {
