@@ -25,7 +25,7 @@ export const HEAD: Vec3 = [0.9, 34.6, 0];
 export const HEAD_R = 6.4;
 /** His shoulder (on his left; z flipped for his right), and his hand hanging at rest. */
 export const SHOULDER: Vec3 = [0, 26, 5.7];
-const HANG: Vec3 = [0.5, 14.4, 7.2];
+const HANG: Vec3 = [0.5, 13.3, 7];
 
 /** The coin leaves his thumb and lands back in his hand at these points of the flip, this high between. */
 export const LAUNCH = 0.22;
@@ -47,6 +47,9 @@ export const bump = (t: number, [from, top, fall, to]: readonly [number, number,
 /** How far through `act` he is, 0 to 1; null when he's not at it. */
 export const timeIn = (leprechaun: Leprechaun, act: Act) =>
   leprechaun.act === act ? Math.min(1, leprechaun.actFor / ACT_S[act]) : null;
+
+/** Which way he faces as drawn: his heading, and his jig's spin on top of it. */
+export const facingOf = (leprechaun: Leprechaun) => leprechaun.rig.heading.x + leprechaun.spin.x;
 
 /** Its side, from a hand's index: 1 his left, -1 his right. */
 export const sideOf = (index: number) => (index === 0 ? 1 : -1);
@@ -100,12 +103,12 @@ export const gaitOf = (leprechaun: Leprechaun) => {
 
 /** How far ahead of his hips a foot is, along the way he faces (ground pixels): his hips and arms turn with it. */
 export const aheadOf = (leprechaun: Leprechaun, index: number) => {
-  const { feet, rig, walker } = leprechaun;
+  const { feet, walker } = leprechaun;
   const foot = feet.feet[index];
   if (!foot) {
     return 0;
   }
-  const heading = rig.heading.x;
+  const heading = facingOf(leprechaun);
   const toward = (foot.y - walker.y) / Math.sin(PITCH);
   return (foot.x - walker.x) * Math.cos(heading) + toward * Math.sin(heading);
 };
@@ -175,7 +178,8 @@ export const doffOf = (leprechaun: Leprechaun) => {
 /** A foot stamped, crossly: lifted slowly, brought down hard. */
 export const stampOf = (leprechaun: Leprechaun) => {
   const t = timeIn(leprechaun, "cross");
-  return t === null ? 0 : bump(t, [0.1, 0.24, 0.26, 0.3]);
+  // Once he's turned to the visitor.
+  return t === null ? 0 : bump(t, [0.3, 0.42, 0.44, 0.48]);
 };
 
 /** A hand walking: swinging against the opposite foot, arcing up at either end, pumped as he runs. */
@@ -241,6 +245,6 @@ export const handGoals = (leprechaun: Leprechaun): Vec3[] =>
  */
 export const elbowPole = (goal: Vec3, index: number): Vec3 => {
   const side = sideOf(index);
-  const low = add([-0.7, -0.5, 0], [0, 0, side * (0.5 + 0.1 * Math.max(0, goal[0]))]);
+  const low = add([-1, -0.3, 0], [0, 0, side * (0.2 + 0.1 * Math.max(0, goal[0]))]);
   return mix(low, [-0.15, -0.3, side], ramp(goal[1], SHOULDER[1], SHOULDER[1] + 8));
 };

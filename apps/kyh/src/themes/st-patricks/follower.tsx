@@ -4,7 +4,7 @@
 // built in the round (`leprechaun-pose.ts`) and drawn in the showcase town's
 // hand as the theme's pieces are (`piece.tsx`): flat faces, each solid's side
 // from the light in its shade under the shade dots, ink round the outside. A
-// green coat with its tails in the darker green, a black belt and gold
+// green coat with its tails in the darker green under the shade dots, a black belt and gold
 // buckles, green breeches, white stockings, black shoes, a red beard and hair,
 // a buckled green hat, and a gold coin to flip. Each `data-layer` is one part
 // the stage stacks by how near the camera it is; each `data-part` is posed a
@@ -105,14 +105,10 @@ export const Follower = () => {
       </defs>
       {[0, 1].map((index) => (
         <g key={`tail-${index}`} data-layer={`tail-${index}`}>
-          <Shaded
-            name={`tail-${index}`}
-            id={id}
-            fill="festiveGreen"
-            shade="festiveGreenShade"
-            by={0.8}
-            ink={0.9}
-          />
+          {/* Darker than his breeches, all under the shade dots: a flap of coat, not a leg. */}
+          <path data-part={`tail-${index}`} style={filled("festiveGreenShade")} />
+          <path data-part={`tail-${index}`} fill={`url(#${id}-dots)`} />
+          <path data-part={`tail-${index}`} style={stroked(0.9)} />
         </g>
       ))}
       <Leg index={0} />
@@ -131,13 +127,13 @@ export const Follower = () => {
         {/* His ears on his head, under his hair (and his beard, on the face over it). */}
         {[0, 1].map((index) => (
           <g key={`ear-${index}`} data-part={`ear-${index}-shown`}>
-            <Solid name={`ear-${index}`} id={id} fill="skin" shade="skinDark" ink={0.3} />
+            <path data-part={`ear-${index}`} style={filled("skin")} />
+            <path data-part={`ear-${index}-rim`} style={stroked(0.45)} />
           </g>
         ))}
         <Shaded name="hair" id={id} fill="pumpkin" shade="pumpkinShade" by={1.1} ink={0.7} />
       </g>
-      {/* The face fades as it turns away, as one: its parts overlap. */}
-      <g data-layer="face" data-part="face">
+      <g data-layer="face">
         {/* Ink round the jaw's beard and its point together, under both, so the seam's covered. */}
         <path data-part="beard" style={stroked(2)} />
         <path data-part="tuft" style={stroked(2)} />
@@ -179,7 +175,7 @@ export const Follower = () => {
       <g data-layer="coin">
         <g data-part="coin" style={{ opacity: 0 }}>
           <path data-part="coin-back" style={filled("goldShade", 0.5)} />
-          <path data-part="coin-face" style={filled("gold", 0.5)} />
+          <path data-part="coin-face" style={filled("gold")} />
         </g>
       </g>
     </Stage>

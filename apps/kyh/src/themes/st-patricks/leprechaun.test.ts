@@ -4,7 +4,8 @@ import test from "node:test";
 import type { Point } from "../follower/walk";
 import type { Leprechaun } from "./leprechaun";
 import { leprechaun, PET } from "./leprechaun";
-import { CATCH, coinOf, timeIn } from "./leprechaun-acts";
+import { hangsOf } from "./leprechaun-pose";
+import { CATCH, coinOf, facingOf, timeIn } from "./leprechaun-acts";
 
 const FRAME = 1 / 60;
 const STILL: Point = { x: 0, y: 0 };
@@ -80,8 +81,40 @@ test("his coat's tails stream out behind a run, swing back as he stops, and sett
   for (let frame = 0; frame < 60 * 6; frame += 1) {
     step();
   }
+  // Settled where it hangs now (he's turned since, so not where it hung before).
   const after = tipOf(state, 0);
-  assert.ok(Math.hypot(after.x - rest.x, after.y - rest.y) < 1.5, JSON.stringify({ after, rest }));
+  const hang = hangsOf(state).tails[0] ?? [];
+  const [root = { x: 0, y: 0 }] = hang;
+  const tip = hang.at(-1) ?? root;
+  const now = { x: tip.x - root.x, y: tip.y - root.y };
+  assert.ok(Math.hypot(after.x - now.x, after.y - now.y) < 1.5, JSON.stringify({ after, now }));
+});
+
+test("his coat's tails never fold sharply, walking or running any way", () => {
+  for (const by of [
+    { x: 0, y: -1.2 },
+    { x: 0, y: 1.2 },
+    { x: 2, y: 0 },
+    { x: 0, y: -2.5 },
+    { x: -3, y: 2 },
+  ]) {
+    const { state, step } = settled();
+    let sharpest = 0;
+    for (let frame = 0; frame < 240; frame += 1) {
+      step(by);
+      for (const chain of state.tails) {
+        for (const [index, c] of chain.knots.entries()) {
+          const a = chain.knots[index - 2];
+          const b = chain.knots[index - 1];
+          if (a && b) {
+            const bend = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(b.y - a.y, b.x - a.x);
+            sharpest = Math.max(sharpest, Math.abs(Math.atan2(Math.sin(bend), Math.cos(bend))));
+          }
+        }
+      }
+    }
+    assert.ok(sharpest < (70 * Math.PI) / 180, `${JSON.stringify(by)}: ${sharpest}`);
+  }
 });
 
 /** An ellipse's middle, from its path (`ellipsePath`): where it starts, and half its first arc's span on. */
@@ -234,6 +267,74 @@ test("his face and beard's point never show through the back of his head", () =>
     // Under his head, and under his coat: his beard's point never hangs down his back.
     assert.ok(stack.indexOf("face") < stack.indexOf("head"), `${heading}: ${stack.join(" ")}`);
     assert.ok(stack.indexOf("face") < stack.indexOf("torso"), `${heading}: ${stack.join(" ")}`);
-    assert.equal(parts.face?.opacity, 0, `${heading}`);
   }
+});
+
+test("walking a little up the screen, near side on, his face holds steady: no blinking on and off", () => {
+  for (const by of [
+    { x: 2, y: -0.4 },
+    { x: -2, y: -0.4 },
+    { x: 3.5, y: -0.6 },
+  ]) {
+    const { state, step } = settled();
+    // Up to his pace and turned to his way first.
+    for (let frame = 0; frame < 120; frame += 1) {
+      step(by);
+    }
+    let last: Record<string, number> = {};
+    let swaps = 0;
+    let over: boolean | null = null;
+    for (let frame = 0; frame < 240; frame += 1) {
+      step(by);
+      const { order = [], parts } = leprechaun.pose(state);
+      const now = order.indexOf("face") > order.indexOf("head");
+      swaps += over !== null && now !== over ? 1 : 0;
+      over = now;
+      for (const [name, part] of Object.entries(parts)) {
+        const was = last[name];
+        if (part.opacity !== undefined && was !== undefined) {
+          assert.ok(Math.abs(part.opacity - was) < 0.3, `${JSON.stringify(by)} ${name}`);
+        }
+      }
+      last = Object.fromEntries(
+        Object.entries(parts).flatMap(([name, part]) =>
+          part.opacity === undefined ? [] : [[name, part.opacity]],
+        ),
+      );
+    }
+    assert.equal(swaps, 0, JSON.stringify(by));
+  }
+});
+
+test("his jig's spin goes all the way round at 30 frames a second, as at 144", () => {
+  for (const fps of [24, 30, 144]) {
+    const state = leprechaun.create({ x: 400, y: 300 });
+    state.next = Number.POSITIVE_INFINITY;
+    let last = facingOf(state);
+    let turned = 0;
+    for (let frame = 0; frame < 20 * fps; frame += 1) {
+      leprechaun.step(state, { x: 400, y: 300 }, STILL, 1 / fps);
+      const now = facingOf(state);
+      turned += Math.atan2(Math.sin(now - last), Math.cos(now - last));
+      last = now;
+    }
+    // Four spins in twenty seconds of jig (and a little turn to face the visitor first).
+    assert.ok(Math.abs(turned / (Math.PI * 2) - 4) < 0.15, `${fps}: ${turned / (Math.PI * 2)}`);
+  }
+});
+
+test("one greeting a click: no petting answer, no guarding his gold, till the mouse moves on", () => {
+  const { state, step } = settled();
+  const on = { x: state.walker.x, y: state.walker.y - 20 };
+  step({ x: on.x - state.walker.x, y: on.y - state.walker.y });
+  leprechaun.poke(state, on);
+  const said = new Set<string>();
+  for (let frame = 0; frame < 60 * 4; frame += 1) {
+    step();
+    if (state.emotes.line !== null) {
+      said.add(state.emotes.line);
+    }
+    assert.ok(state.rig.guard.x < 0.05, `guard ${state.rig.guard.x}`);
+  }
+  assert.equal(said.size, 1, [...said].join(" | "));
 });
