@@ -26,6 +26,8 @@ export interface Chain {
   knots: Knot[];
   /** Seconds not yet stepped. */
   owed: number;
+  /** How far its root's been carried since its last step: drawn with it, not yet stepped (a frame shorter than a step). */
+  lead?: Point;
 }
 
 /** Where a chain hangs this frame: its root, and each knot after it at rest, from the root. */
@@ -96,6 +98,7 @@ export const createChain = (hang: Hang): Chain => ({
     const { x, y } = restAt(hang, index);
     return { px: x, py: y, x, y };
   }),
+  lead: { x: 0, y: 0 },
   owed: 0,
 });
 
@@ -212,17 +215,14 @@ export const stepChain = (
   chain.owed = Math.min(chain.owed + Math.max(0, seconds), MOST_OWED);
   const steps = Math.floor(chain.owed / STEP);
   if (steps === 0) {
-    // A frame shorter than a step (a 144Hz display): carried along whole, so its root stays on the body.
-    const dx = hang.root.x - (was?.x ?? hang.root.x);
-    const dy = hang.root.y - (was?.y ?? hang.root.y);
-    for (const knot of chain.knots) {
-      knot.x += dx;
-      knot.y += dy;
-      knot.px += dx;
-      knot.py += dy;
-    }
+    // A frame shorter than a step (a 144Hz display): drawn carried along with its root, stepped on the next.
+    chain.lead = {
+      x: hang.root.x - (was?.x ?? hang.root.x),
+      y: hang.root.y - (was?.y ?? hang.root.y),
+    };
     return;
   }
+  chain.lead = { x: 0, y: 0 };
   chain.owed -= steps * STEP;
   const from = chain.knots[0] ?? hang.root;
   const start = { x: from.x, y: from.y };
@@ -240,7 +240,10 @@ export const stepChain = (
 
 /** The chain's points, root to tip, about `origin` (the stage's, so a pose can draw them), in a drawing scaled by `size`. */
 export const chainAbout = (chain: Chain, origin: Point, size = 1): Point[] =>
-  chain.knots.map((knot) => ({ x: (knot.x - origin.x) / size, y: (knot.y - origin.y) / size }));
+  chain.knots.map((knot) => ({
+    x: (knot.x + (chain.lead?.x ?? 0) - origin.x) / size,
+    y: (knot.y + (chain.lead?.y ?? 0) - origin.y) / size,
+  }));
 
 /** How far, and which way, the tip's been carried from where it hangs at rest: for a part drawn as one piece (an ear's swing). */
 export const swayOf = (chain: Chain, hang: Hang): Point => {
@@ -249,7 +252,7 @@ export const swayOf = (chain: Chain, hang: Hang): Point => {
     return { x: 0, y: 0 };
   }
   const rest = restAt(hang, chain.knots.length - 1);
-  return { x: tip.x - rest.x, y: tip.y - rest.y };
+  return { x: tip.x + (chain.lead?.x ?? 0) - rest.x, y: tip.y + (chain.lead?.y ?? 0) - rest.y };
 };
 
 /**

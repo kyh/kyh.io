@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Chain, Hang, Point, Stuff } from "./chain";
-import { CLOTH, createChain, FLOPPY, SPRINGY, stepChain, swayOf } from "./chain";
+import { chainAbout, CLOTH, createChain, FLOPPY, SPRINGY, stepChain, swayOf } from "./chain";
 
 /** A chain of five 6px links hanging straight down from `root`. */
 const hangAt = (root: Point): Hang => ({
@@ -82,11 +82,35 @@ test("on a display faster than its steps, its root never comes off the body betw
   for (let frame = 0; frame < 144; frame += 1) {
     root = { x: root.x + 300 / 144, y: Math.sin(frame / 10) * 20 };
     stepChain(chain, hangAt(root), FLOPPY, 1 / 144);
-    const [first] = chain.knots;
+    const [first] = chainAbout(chain, { x: 0, y: 0 });
     assert.ok(
       Math.hypot((first?.x ?? 0) - root.x, (first?.y ?? 0) - root.y) < 1e-9,
       `frame ${frame}`,
     );
+  }
+});
+
+test("carried along, it trails as far behind at 144 and 240 frames a second as at 60", () => {
+  for (const stuff of [CLOTH, SPRINGY]) {
+    const leans = [60, 144, 240].map((fps) => {
+      const chain = createChain(hangAt({ x: 0, y: 0 }));
+      let root = { x: 0, y: 0 };
+      let sum = 0;
+      let count = 0;
+      for (let frame = 0; frame < fps * 3; frame += 1) {
+        root = { x: root.x + 200 / fps, y: 0 };
+        stepChain(chain, hangAt(root), stuff, 1 / fps);
+        if (frame > fps) {
+          sum += swayOf(chain, hangAt(root)).x;
+          count += 1;
+        }
+      }
+      return sum / count;
+    });
+    const [at60 = 0, ...faster] = leans;
+    for (const lean of faster) {
+      assert.ok(Math.abs(lean - at60) < Math.abs(at60) * 0.1, leans.join(", "));
+    }
   }
 });
 
