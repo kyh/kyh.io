@@ -7,6 +7,7 @@ import {
   capPath,
   depthOf,
   ellipseOf,
+  faceGoal,
   headingOf,
   PITCH,
   pitchOf,
@@ -155,4 +156,23 @@ test("a cap shows whole facing the camera, in part side on, and not at all turne
   // Side on, the cap is the front sliver of the outline: right of its middle.
   const xs = [...side.matchAll(/[ML](?<x>-?[\d.]+) /gu)].map(({ groups }) => Number(groups?.x));
   assert.ok(Math.min(...xs) > 4, `${Math.min(...xs)}`);
+});
+
+test("standing, a follower never turns its back to look at the mouse, and faces the camera when the mouse is on it", () => {
+  const still = { speed: 0, vx: 0, vy: 0, x: 200, y: 200 };
+  // The mouse on it: its face to the camera, leaning toward the mouse's side.
+  const on = faceGoal(still, { x: 210, y: 170 }, 0, 25);
+  assert.ok(Math.sin(on) > 0.8 && Math.cos(on) > 0, `${on}`);
+  // The mouse far up and to either side: turned toward it, but no further round than a little past its side.
+  for (const pointer of [
+    { x: 120, y: 60 },
+    { x: 280, y: 60 },
+    { x: 200, y: 20 },
+  ]) {
+    const goal = faceGoal(still, pointer, 0, 25);
+    assert.ok(Math.sin(goal) >= -0.31, `${pointer.x}, ${pointer.y}: ${goal}`);
+  }
+  // Below it, it faces the mouse much as before.
+  const below = faceGoal(still, { x: 300, y: 300 }, 0, 25);
+  assert.ok(Math.cos(below) > 0 && Math.sin(below) > 0, `${below}`);
 });

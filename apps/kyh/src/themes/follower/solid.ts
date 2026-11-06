@@ -328,10 +328,16 @@ export const capPath = (body: Ellipsoid, normal: Vec3, offset: number) => {
   return polygonPath([...arc, ...way]);
 };
 
+/** How far a standing follower turns from the camera at most: it never shows its back to look at the mouse. */
+const MOST_AWAY = 0.3;
+/** A mouse this near across, at or above its feet, is on it: it turns its face to the camera for it. */
+const ON_IT = 30;
+
 /**
  * Which way a follower on foot should face: its way while it goes; standing,
- * the mouse, a little toward the camera so it shows its face; and where it
- * faces already when the mouse is on it.
+ * the mouse, a little toward the camera, and never so far round it shows its
+ * back; with the mouse on it (petting, clicking it), the camera, leaning
+ * toward the mouse's side, so what it does for the mouse is seen.
  */
 export const faceGoal = (
   walker: { x: number; y: number; vx: number; vy: number; speed: number },
@@ -344,11 +350,20 @@ export const faceGoal = (
   }
   const dx = pointer.x - walker.x;
   const dy = pointer.y - walker.y;
-  if (Math.hypot(dx, dy) < 30) {
+  if (Math.abs(dx) < ON_IT && dy < 6) {
+    return Math.PI / 2 - (0.5 * Math.max(-ON_IT, Math.min(ON_IT, dx))) / ON_IT;
+  }
+  if (Math.hypot(dx, dy) < ON_IT) {
     return current;
   }
   const toward = headingOf(dx, dy);
-  return toward + 0.3 * Math.atan2(Math.sin(Math.PI / 2 - toward), Math.cos(Math.PI / 2 - toward));
+  const biased =
+    toward + 0.3 * Math.atan2(Math.sin(Math.PI / 2 - toward), Math.cos(Math.PI / 2 - toward));
+  // Turned past the side toward the back, it stops at the side, a little away: no further.
+  if (Math.sin(biased) >= -MOST_AWAY) {
+    return biased;
+  }
+  return Math.cos(biased) >= 0 ? -Math.asin(MOST_AWAY) : Math.PI + Math.asin(MOST_AWAY);
 };
 
 /** Lines through points seen from the camera, each its own stroke: a foot's toes. */
