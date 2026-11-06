@@ -107,6 +107,16 @@ test("a move down the screen faces it toward the camera, across it to its side",
   assert.ok(close(headingOf(10, 0), 0));
   assert.ok(close(headingOf(0, 10), Math.PI / 2));
   assert.ok(close(headingOf(-10, 0), Math.PI));
+  // A diagonal: the heading's way over the ground, seen from the camera, is the way it moved on the screen.
+  for (const [dx, dy] of [
+    [10, 10],
+    [-7, 3],
+    [2, -9],
+  ] as const) {
+    const heading = headingOf(dx, dy);
+    const seen = toScreen([Math.cos(heading), 0, Math.sin(heading)]);
+    assert.ok(close(Math.atan2(seen.y, seen.x), Math.atan2(dy, dx)), `${dx}, ${dy}`);
+  }
 });
 
 const ball = (facingAngle: number): Ellipsoid => ({

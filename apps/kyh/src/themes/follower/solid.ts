@@ -174,9 +174,11 @@ export const stepAngle = (spring: Spring, goal: number, rate: number, seconds: n
 
 /**
  * Which way, as a heading, a move across the screen goes: the screen's
- * down is toward the camera, foreshortened, so it counts for more.
+ * down is toward the camera, foreshortened by the camera's pitch, so a
+ * pixel of it is 1 / sin(PITCH) of the ground. Exactly that, so a body
+ * (and its planted feet) points the way it travels.
  */
-export const headingOf = (dx: number, dy: number) => Math.atan2(dy / SIN / 1.4, dx);
+export const headingOf = (dx: number, dy: number) => Math.atan2(dy / SIN, dx);
 
 /** Eased in and out: 0 to 1 as `t` goes 0 to 1, with no jolt at either end. */
 export const smooth = (t: number) => {
