@@ -283,6 +283,23 @@ test("a pointer resting under it is a petting: it nuzzles, and again after anoth
   assert.equal(nuzzles, 2);
 });
 
+test("a petting that comes mid-act is let go if the pointer moves on before the act ends", () => {
+  const bird = perched();
+  let pointer = run(bird, { x: 300, y: 300 }, 0.1, { x: 1, y: 0 });
+  Object.assign(bird, { act: "preen", actFor: 0 });
+  run(bird, pointer, 1.2);
+  assert.ok(bird.nuzzleDue);
+  // Carried off gently, then set down: no nuzzle owed from before.
+  pointer = run(bird, pointer, 0.3, { x: 2, y: 0 });
+  assert.ok(!bird.nuzzleDue);
+  let nuzzled = false;
+  for (let frame = 0; frame < 30; frame += 1) {
+    stepLovebird(bird, pointer, STILL, 1 / 60);
+    nuzzled ||= bird.act === "nuzzle";
+  }
+  assert.ok(!nuzzled);
+});
+
 test("perched, a click (on whatever's under the pointer) makes it flinch and cock its head; it stays", () => {
   const bird = perched();
   lovebird.poke(bird, { x: 300, y: 300 });

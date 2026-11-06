@@ -711,6 +711,10 @@ const stepActs = (bird: Lovebird, dozing: boolean, seconds: number) => {
 /** Held still on a resting pointer a moment, it's being petted: it says so and nuzzles down to it, once what it's at is done. */
 const stepPetting = (bird: Lovebird, holding: boolean, seconds: number) => {
   bird.petted = holding && bird.still > 0 ? bird.petted + seconds : 0;
+  // A petting owed a nuzzle is let go once the pointer moves on: it isn't nuzzled after.
+  if (bird.petted === 0) {
+    bird.nuzzleDue = false;
+  }
   if (!reached(bird.petted, seconds, PETTED_S)) {
     return;
   }
