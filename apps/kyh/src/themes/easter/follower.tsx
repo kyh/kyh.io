@@ -34,14 +34,18 @@ export const Follower = () => {
       </defs>
       {[0, 1].map((index) => (
         <g key={`hind-${index}`} data-layer={`hind-${index}`}>
-          <path data-part={`hind-leg-${index}`} style={filled("white", 1)} />
-          <Solid name={`hind-${index}`} id={id} fill="white" shade="whiteShade" ink={1} />
+          {/* Its shin and foot one outline: inked round both first, then filled, no seam between. */}
+          <path data-part={`hind-leg-${index}`} style={stroked(2)} />
+          <path data-part={`hind-${index}`} style={stroked(2)} />
+          <path data-part={`hind-leg-${index}`} style={filled("white")} />
+          <Solid name={`hind-${index}`} id={id} fill="white" shade="whiteShade" />
         </g>
       ))}
       {[0, 1].map((index) => (
         <g key={`fore-${index}`} data-layer={`fore-${index}`}>
+          {/* Its foreleg and paw one outline: the paw shaded inside it, no seam between. */}
           <path data-part={`fore-leg-${index}`} style={filled("white", 0.9)} />
-          <Solid name={`fore-${index}`} id={id} fill="white" shade="whiteShade" ink={0.9} />
+          <Solid name={`fore-${index}`} id={id} fill="white" shade="whiteShade" />
         </g>
       ))}
       <g data-layer="tail">
@@ -77,6 +81,8 @@ export const Follower = () => {
         <g key={`ear-${index}`} data-layer={`ear-${index}`}>
           <Solid name={`ear-${index}`} id={id} fill="white" shade="whiteShade" ink={1.1} />
           <path data-part={`lining-${index}`} style={filled("accentPink")} />
+          {/* Its base in its head's white, over the root: it grows out of its head, no seam inked. */}
+          <path data-part={`ear-${index}-base`} style={filled("white")} />
         </g>
       ))}
     </Stage>
