@@ -16,9 +16,8 @@ import { useEffect, useRef } from "react";
 
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import type { Spider as Body } from "./bungee";
+import type { Corners } from "./theme";
 import { bounce, climb, SLACK, settled } from "./bungee";
-import { themeOf } from "./index";
-import { useTheme } from "./store";
 import type { Bend } from "./web";
 import {
   BEND_REACH,
@@ -406,10 +405,10 @@ const Web = ({ side }: { side: Side }) => {
 };
 
 /** Scrolled out of sight, the corners' CSS animations hold still (global.css): nobody sees them beat. */
-const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
+const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>) => {
   useEffect(() => {
     const element = corners.current;
-    if (!shown || !element) {
+    if (!element) {
       return;
     }
     const observer = new IntersectionObserver(([entry]) => {
@@ -417,16 +416,13 @@ const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, sho
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [corners, shown]);
+  }, [corners]);
 };
 
-export const ThemeCorners = () => {
-  const { corners } = themeOf(useTheme());
+/** What hangs in the page's top corners. Loaded only for a theme that has it (`effects.tsx`). */
+export const Hanging = ({ corners }: { corners: Corners }) => {
   const ref = useRef<HTMLDivElement>(null);
-  usePausedOffscreen(ref, corners !== null);
-  if (corners === null) {
-    return null;
-  }
+  usePausedOffscreen(ref);
   return (
     <div ref={ref} className="theme-corners" data-corners={corners} aria-hidden="true">
       <Web side="left" />

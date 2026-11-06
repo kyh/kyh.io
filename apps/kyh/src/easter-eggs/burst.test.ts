@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { dress } from "@/themes/classic/dress";
 import { burstOf, EGGS_PER_FIND, stepConfetto, throwConfetti } from "./burst";
 
 const seeded = (seed: number) => {
@@ -27,7 +28,7 @@ test("a find throws a set number of eggs, upward, landing one at a time", () => 
 
 test("confetti leaves the cursor upward, then settles into a slow fall", () => {
   const random = seeded(3);
-  const confetti = throwConfetti(random);
+  const confetti = throwConfetti(random, dress.confetti);
   assert.ok(confetti.some((bit) => bit.kind === "paper"));
   assert.ok(confetti.some((bit) => bit.kind === "sequin"));
   for (const bit of confetti) {
@@ -46,7 +47,7 @@ test("confetti leaves the cursor upward, then settles into a slow fall", () => {
 
 test("paper flips between its two sides as it falls", () => {
   const random = seeded(5);
-  const [paper] = throwConfetti(random);
+  const [paper] = throwConfetti(random, dress.confetti);
   assert.ok(paper);
   const sides = new Set<boolean>();
   for (let frame = 0; frame < 200; frame += 1) {

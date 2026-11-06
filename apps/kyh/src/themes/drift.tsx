@@ -15,10 +15,8 @@ import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
 import { useSvgId } from "@/lib/svg-id";
 import type { Art } from "./art";
-import type { Drift } from "./theme";
+import type { Drift, Fall } from "./theme";
 import { PieceDefs, PieceLayers } from "./piece";
-import { themeOf } from "./index";
-import { useTheme } from "./store";
 
 type Motion = "flutter" | "tumble";
 
@@ -140,11 +138,11 @@ const Falling = ({
   );
 };
 
-export const ThemeDrift = () => {
-  const { drift } = themeOf(useTheme());
+/** What falls, across the whole page. Loaded only for a theme that has it (`effects.tsx`). */
+export const Drifting = ({ drift }: { drift: Fall }) => {
   const still = useReducedMotion();
   const id = useSvgId("piece");
-  if (drift === null || still) {
+  if (still) {
     return null;
   }
   const layout = layoutOf(drift.kind, drift.pieces.length);

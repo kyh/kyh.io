@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { dressOf, loadDress } from "./dresses";
 import { FOLLOWERS } from "./followers";
 import { DEFAULT_THEME, THEMES, themeOn, windowIn } from "./index";
 
@@ -28,11 +29,14 @@ test("where two overlap, the one listed first runs", () => {
   assert.equal(on(2029, 2, 10), "valentines");
 });
 
-test("each theme is whole: one id, its art, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it has nothing following the mouse", () => {
+test("each theme is whole: one id, a dress with art and confetti, and only the default runs always, keeps the visitor's light or dark, wears the sun or moon, and has nothing following the mouse", async () => {
   assert.equal(new Set(THEMES.map(({ id }) => id)).size, THEMES.length);
   for (const theme of THEMES) {
-    assert.ok(theme.art.layers.length > 0, theme.id);
-    assert.ok(theme.confetti.length > 0, theme.id);
+    assert.equal(dressOf(theme.id), null, `${theme.id}: loaded before it was asked for`);
+    const dress = await loadDress(theme.id);
+    assert.equal(dressOf(theme.id), dress, theme.id);
+    assert.ok(dress.art.layers.length > 0, theme.id);
+    assert.ok(dress.confetti.length > 0, theme.id);
     assert.equal("days" in theme, theme.id !== DEFAULT_THEME, theme.id);
     assert.equal(theme.tint === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.mode === null, theme.id === DEFAULT_THEME, theme.id);
