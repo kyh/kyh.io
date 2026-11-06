@@ -40,6 +40,15 @@ const STRIPES = {
   strokeLinecap: "butt",
 } as const;
 
+/** A side of its scarf's ring, inked, red, striped white; its ends cut square where they meet the other side's. */
+const Ring = ({ name }: { name: string }) => (
+  <>
+    <path data-part={name} style={{ ...stroked(6.8), strokeLinecap: "butt" }} />
+    <path data-part={name} style={{ ...stroked(4.8, "festiveRed"), strokeLinecap: "butt" }} />
+    <path data-part={name} style={STRIPES} />
+  </>
+);
+
 /** A shaded black solid, as `Solid` draws one, in its black; inked round this wide unless it shares an outline. */
 const Black = ({
   name,
@@ -104,7 +113,7 @@ export const Follower = () => {
         </g>
       ))}
       <g data-layer="tail">
-        <path data-part="tail" style={{ fill: BLACK_SHADE, stroke: INK, strokeWidth: 1 }} />
+        <path data-part="tail" style={{ fill: BLACK, stroke: INK, strokeWidth: 0.9 }} />
       </g>
       {[0, 1].map((index) => (
         <g key={`flipper-${index}`} data-layer={`flipper-${index}`}>
@@ -112,6 +121,8 @@ export const Follower = () => {
         </g>
       ))}
       <g data-layer="torso">
+        {/* Its scarf's far side, round the back of its neck: where it shows past its neck, it goes on round. */}
+        <Ring name="scarf-back" />
         <path data-part="body" style={stroked(OUTLINE)} />
         <path data-part="head" style={stroked(OUTLINE)} />
         <Black name="body" id={id} />
@@ -120,10 +131,8 @@ export const Follower = () => {
         <Solid name="front" id={id} fill="white" shade="whiteShade" ink={0.7} />
         <Eye index={0} />
         <Eye index={1} />
-        <path data-part="scarf" style={stroked(6.8)} />
-        <path data-part="scarf" style={stroked(4.8, "festiveRed")} />
-        <path data-part="scarf" style={STRIPES} />
-        {/* Its head again, over its scarf, for when its neck points at the camera. */}
+        <Ring name="scarf" />
+        {/* Its head again, over its scarf, for when it bows its head over it or its neck points at the camera. */}
         <g data-part="head-over" style={{ opacity: 0 }}>
           <path data-part="head" style={stroked(OUTLINE)} />
           <Black name="head" id={id} clip="head-over" />

@@ -50,7 +50,7 @@ const BODY_RADII: Vec3 = [11, 17, 10.5];
 /** Its white front: the cap of its body past a plane tipped forward and down (as for a unit sphere). */
 const FRONT_NORMAL: Vec3 = [1, -0.35, 0];
 const FRONT_OFFSET = 0.2;
-const HEAD: Vec3 = [2.5, 34, 0];
+const HEAD: Vec3 = [2.5, 35.5, 0];
 const HEAD_R = 8;
 /** What it rocks and bows about: low on its feet. */
 const PIVOT: Vec3 = [0, 3, 0];
@@ -59,7 +59,7 @@ const LIE = 1.42;
 const SINK = 6.5;
 const HEAD_UP = 1.15;
 const SCARF: Vec3 = [1.4, 28.6, 0];
-const SCARF_RADII = [10.6, 10.2] as const;
+const SCARF_RADII = [9.6, 9.2] as const;
 const SCARF_SAMPLES = 48;
 /** Where the scarf's knot sits round its neck (radians from its front, toward its left). */
 const KNOT = 0.8;
@@ -71,8 +71,9 @@ const SCARF_ENDS = [
 /** Its flippers: half their length, width and thickness, hung from its shoulders. */
 const FLIPPER: Vec3 = [7, 3, 1];
 const SHOULDER: Vec3 = [1, 27, 10];
-/** A foot: half its length and its width. */
+/** A foot: half its length and its width; and as much of its leg as shows. */
 const FOOT = [4.4, 2.5] as const;
+const LEG = 3;
 
 const axesOf = (radii: Vec3): Vec3[] => [
   [radii[0], 0, 0],
@@ -131,7 +132,7 @@ const headOf = (penguin: Penguin, { place, slide, turn }: Frame) => {
   const center: Vec3 = [
     HEAD[0] + 2.4 * bowed - 3.5 * slide,
     HEAD[1] - 2.6 * bowed - 3 * rig.doze.x,
-    2.4 * Math.sin(rig.look.x) * bowed,
+    3.5 * Math.sin(rig.look.x) * bowed,
   ];
   const own: Mat3 = compose(yawOf(rig.look.x), pitchOf(rig.nod.x + HEAD_UP * slide));
   const direction = (local: Vec3) => turn(apply(own, local));
@@ -146,11 +147,13 @@ type Head = ReturnType<typeof headOf>;
 const eyesOf = (penguin: Penguin, head: Head) => {
   const shut = penguin.rig.doze.x;
   return [1, -1].flatMap((side, index) => {
-    const out = normalize([0.5, 0.26, 0.82 * side]);
+    // Lying, its eyes are seen from ahead of it as much as from its sides: they show sooner.
+    const slide = penguin.rig.slide.x;
+    const out = normalize([0.5 + 0.5 * slide, 0.26, 0.82 * side]);
     const normal = head.direction(out);
     const at = head.point(scale(out, HEAD_R - 0.2));
     const [u, v] = tangentsOf(normal);
-    const shown = smooth((facing(normal) - 0.05) / 0.25);
+    const shown = smooth((facing(normal) + 0.02 * slide - 0.03) / 0.3);
     const ring = ellipseOf(at, [scale(u, 2.3), scale(v, 2.3)]);
     const eye = ellipseOf(add(at, scale(normal, 0.2)), [scale(u, 1.15), scale(v, 1.15)]);
     const lid = linePath([add(at, scale(u, 2.1)), add(at, scale(u, -2.1))]);
@@ -164,8 +167,8 @@ const eyesOf = (penguin: Penguin, head: Head) => {
 
 /** Its beak: short and stout, its lower half opening as it brays; from any side, the outline round its points. */
 const beakOf = (penguin: Penguin, head: Head) => {
-  const base: Vec3 = [HEAD_R - 1.2, -0.9, 0];
-  const tip: Vec3 = [HEAD_R + 4.4, -1.7, 0];
+  const base: Vec3 = [HEAD_R - 1.2, -0.2, 0];
+  const tip: Vec3 = [HEAD_R + 4.4, -1, 0];
   const open = apply(pitchOf(-0.6 * penguin.rig.beak.x), sub(tip, base));
   const upper = [
     add(base, [0, 1.9, 0]),
@@ -217,13 +220,13 @@ const footOf = (penguin: Penguin, frame: Frame, index: number) => {
   const at = mix(planted, [rear[0], rear[1] * 0.45, rear[2]], frame.slide);
   const turned = yawOf(foot?.turn ?? penguin.rig.heading.x);
   const ahead = apply(turned, [FOOT[0], 0, 0]);
-  // Its short leg, down from under its body to its heel.
-  const hip = frame.place([0.5, 4.5, side * 3.6]);
+  // Its leg: a short dark stub up from its heel toward its body, the rest of it under its feathers.
+  const heel = add(at, scale(ahead, -0.35));
+  const up = sub(frame.place([0.5, 4.5, side * 3.6]), heel);
+  const long = Math.hypot(up[0], up[1], up[2]);
   return {
     at,
-    leg: linePath([hip, add(at, scale(ahead, -0.35))]),
-    // Its toes the nearest it comes to the camera, about the body's middle.
-    near: Math.max(at[2], at[2] + ahead[2] * 0.8),
+    leg: linePath([heel, add(heel, scale(up, Math.min(1, LEG / (long || 1))))]),
     outline: ellipseOf(at, [ahead, apply(turned, [0, 0, FOOT[1]])]),
   };
 };
@@ -240,11 +243,12 @@ const ringAt = (frame: Frame, t: number) => ({
     .reduce((sum, value, axis) => sum + value * (TOWARD_CAMERA[axis] ?? 0), -0.02),
 });
 
-/** The near side of its scarf, round its neck: the part of the ring facing the camera, its ends where it turns away. */
-const scarfOf = (frame: Frame) => {
-  const ring = Array.from({ length: SCARF_SAMPLES }, (_, index) =>
-    ringAt(frame, (index / SCARF_SAMPLES) * Math.PI * 2),
-  );
+/** One side of its scarf's ring (1 the near, -1 the far): the run of it facing that way, its ends where it turns. */
+const arcOf = (frame: Frame, way: 1 | -1) => {
+  const ring = Array.from({ length: SCARF_SAMPLES }, (_, index) => {
+    const point = ringAt(frame, (index / SCARF_SAMPLES) * Math.PI * 2);
+    return { at: point.at, near: point.near * way };
+  });
   const shown = ring.filter(({ near }) => near > 0).length;
   if (shown === 0) {
     return "";
@@ -275,11 +279,14 @@ const scarfOf = (frame: Frame) => {
   return linePath(arc);
 };
 
+/** Where round its neck the scarf's knot is: at its front, and lying on its belly, at its side (not under it on the snow). */
+const knotAngleOf = (slide: number) => KNOT + (Math.PI * 0.55 - KNOT) * slide;
+
 /** Where the scarf's knot is, on its body. */
-const SCARF_KNOT: Vec3 = [
-  SCARF[0] + Math.cos(KNOT) * SCARF_RADII[0],
+const knotOf = (slide: number): Vec3 => [
+  SCARF[0] + Math.cos(knotAngleOf(slide)) * SCARF_RADII[0],
   SCARF[1] - 1,
-  Math.sin(KNOT) * SCARF_RADII[1],
+  Math.sin(knotAngleOf(slide)) * SCARF_RADII[1],
 ];
 
 /**
@@ -292,8 +299,9 @@ const SCARF_KNOT: Vec3 = [
 export const scarfHangOf = (penguin: Penguin, which = 0) => {
   const frame = frameOf(penguin, true);
   const end = SCARF_ENDS[which] ?? SCARF_ENDS[0];
-  const knot = frame.place(SCARF_KNOT);
-  const out = frame.turn([Math.cos(KNOT + end.splay), 0, Math.sin(KNOT + end.splay)]);
+  const knot = frame.place(knotOf(frame.slide));
+  const angle = knotAngleOf(frame.slide) + end.splay;
+  const out = frame.turn([Math.cos(angle), 0, Math.sin(angle)]);
   const hang = normalize([out[0] * 0.35, -1, out[2] * 0.35]);
   const rest: Point[] = Array.from({ length: end.links + 1 }, (_, index) =>
     toScreen(add(knot, scale(hang, (end.length * index) / end.links))),
@@ -320,7 +328,7 @@ const scarfEndOf = (penguin: Penguin, frame: Frame, which: number) => {
   if (!root || points.length < 2) {
     return { fringe: "", line: "", strip: "" };
   }
-  const knot = toScreen(frame.place(SCARF_KNOT));
+  const knot = toScreen(frame.place(knotOf(frame.slide)));
   const last = points.length - 1;
   const drawn = points.map((p, index) => {
     const carried = (1 - index / last) ** 2;
@@ -366,31 +374,121 @@ const solid = (name: string, outline: Ellipse): [string, Part][] => {
   ];
 };
 
-const byDepth = (a: readonly [string, number], b: readonly [string, number]) => a[1] - b[1];
+/** Its tail: low at its back; pressed to its rear as it lies on its belly. */
+const tailOf = (slide: number) => mix([-8, 3.5, 0], [-1.5, -0.5, 0], slide);
+
+/** Nearer the camera than this, a layer goes over one it was under. */
+const OVER = 1.5;
+
+/**
+ * Layers in the order they were, each moved past its neighbour only once
+ * it's clearly the nearer: so two about as near don't swap back and forth.
+ */
+const settle = (layers: readonly [string, number][], was: readonly string[]) => {
+  const rank = (name: string) => {
+    const at = was.indexOf(name);
+    return at === -1 ? Number.POSITIVE_INFINITY : at;
+  };
+  const list = layers.toSorted((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]);
+  for (const _ of list) {
+    for (let index = 0; index + 1 < list.length; index += 1) {
+      const a = list[index];
+      const b = list[index + 1];
+      if (a && b && a[1] - b[1] > OVER) {
+        list[index] = b;
+        list[index + 1] = a;
+      }
+    }
+  }
+  return list.map(([name]) => name);
+};
+
+/**
+ * How much its head is drawn over its scarf (and its scarf's ends under
+ * it): once its neck points at the camera (lying on its belly, sliding at
+ * it), and as it bows its head forward and down over the scarf.
+ */
+const headOverOf = (penguin: Penguin, frame: Frame) => {
+  const lying = smooth((dot(frame.turn([0, 1, 0]), TOWARD_CAMERA) - 0.55) / 0.25);
+  return { lying, over: Math.max(lying, smooth((-penguin.rig.nod.x - 0.12) / 0.2)) };
+};
 
 /** How much a direction of its body faces the camera, across the ground. */
 const across = (frame: Frame, direction: Vec3) => frame.turn(direction)[2];
 
 /**
+ * Which side of its body a foot (1 its left) is on, by which way the body
+ * faces, not where the foot is (so none pops through as the body goes over
+ * it): in front whenever its front or the foot's side turns at all toward
+ * the camera, behind only facing away; lying, its feet trail from its rear.
+ */
+const footSideOf = (penguin: Penguin, side: number) => {
+  const heading = penguin.rig.heading.x;
+  const ahead = Math.sin(heading) * (1 - 2 * penguin.rig.slide.x);
+  return (ahead + 0.6 * side * Math.cos(heading) + 0.25) / 0.15;
+};
+
+/**
  * Which side of its body each layer is on, scaled so past 1 it's surely in
  * front and past -1 surely behind (`penguin.ts` holds each in between, so
- * none flickers as it steps): a foot by how far its toes come out toward the
- * camera past its belly's foot, a flipper, its tail and its scarf's knot by
- * which way their side of it faces, its beak by which way its head does.
+ * none flickers as it steps): its feet by which way it faces, a flipper, its
+ * tail and its scarf's knot by which way their side of it faces, its beak by
+ * which way its head does.
  */
 export const layerSidesOf = (penguin: Penguin) => {
   const frame = frameOf(penguin);
   const head = headOf(penguin, frame);
-  const feet = [0, 1].map((index) => footOf(penguin, frame, index));
+  const knot = knotAngleOf(frame.slide);
   return {
     beak: head.direction([1, 0, 0])[2] / 0.15,
     "flipper-0": across(frame, [0.35, 0, 1]) / 0.25,
     "flipper-1": across(frame, [0.35, 0, -1]) / 0.25,
-    "foot-0": ((feet[0]?.near ?? 0) - 3) / 0.75,
-    "foot-1": ((feet[1]?.near ?? 0) - 3) / 0.75,
-    "scarf-end": across(frame, [Math.cos(KNOT), 0, Math.sin(KNOT)]) / 0.2,
+    "foot-0": footSideOf(penguin, 1),
+    "foot-1": footSideOf(penguin, -1),
+    // Under its head as it lies facing the camera, else by which way its knot faces.
+    "scarf-end":
+      headOverOf(penguin, frame).lying > 0.5
+        ? -2
+        : across(frame, [Math.cos(knot), 0, Math.sin(knot)]) / 0.2,
     tail: across(frame, [-1, -0.3, 0]) / 0.2,
   } satisfies Record<string, number>;
+};
+
+/**
+ * Its layers back to front: its legs (from under its body, behind all
+ * else), what's behind its body, the body, and what's in front of it, each
+ * side in order of how near the camera, settled from the order they were in
+ * (`penguin.ts` keeps it, with which side each is on).
+ */
+export const orderOf = (penguin: Penguin) => {
+  const frame = frameOf(penguin);
+  const head = headOf(penguin, frame);
+  const layers: [string, number][] = [
+    ["beak", depthOf(head.point([HEAD_R, 0, 0]))],
+    ["tail", depthOf(frame.place(tailOf(frame.slide)))],
+    ["scarf-end", depthOf(frame.place(knotOf(frame.slide)))],
+    ...([1, -1] as const).map((side, index): [string, number] => [
+      `flipper-${index}`,
+      depthOf(flipperOf(penguin, frame, side, index).center),
+    ]),
+    ...[0, 1].map((index): [string, number] => [
+      `foot-${index}`,
+      depthOf(footOf(penguin, frame, index).at),
+    ]),
+  ];
+  // Not stepped yet (none held either side), each goes the side it's on.
+  const sides: Record<string, number> =
+    Object.keys(penguin.front).length === 0 ? layerSidesOf(penguin) : {};
+  const isFront = ([name]: [string, number]) => penguin.front[name] ?? (sides[name] ?? 0) > 0;
+  return [
+    "legs",
+    ...settle(
+      layers.filter((layer) => !isFront(layer)),
+      penguin.stack,
+    ),
+    "torso",
+    ...settle(layers.filter(isFront), penguin.stack),
+  ];
 };
 
 export const penguinPose = (penguin: Penguin): Pose => {
@@ -401,8 +499,7 @@ export const penguinPose = (penguin: Penguin): Pose => {
   const beak = beakOf(penguin, head);
   const flippers = ([1, -1] as const).map((side, index) => flipperOf(penguin, frame, side, index));
   const feet = [0, 1].map((index) => footOf(penguin, frame, index));
-  // Its tail, low at its back; pressed to its rear as it lies on its belly.
-  const tail = frame.place(mix([-8, 3.5, 0], [-1.5, -0.5, 0], frame.slide));
+  const tail = frame.place(tailOf(frame.slide));
   const tailAxes = [apply(pitchOf(-0.7), [4.5, 0, 0]), [0, 1.2, 0], [0, 0, 2.6]] satisfies Vec3[];
   const ends = [0, 1].map((which) => scarfEndOf(penguin, frame, which));
 
@@ -429,13 +526,10 @@ export const penguinPose = (penguin: Penguin): Pose => {
       ...solid(`foot-${index}`, outline),
       [`leg-${index}`, { d: leg }] as const,
     ]),
-    // Its head over its scarf, once its neck points at the camera (lying on its belly, sliding at it).
-    [
-      "head-over",
-      { opacity: round(smooth((dot(frame.turn([0, 1, 0]), TOWARD_CAMERA) - 0.55) / 0.25)) },
-    ],
+    ["head-over", { opacity: round(headOverOf(penguin, frame).over) }],
     ["tail", { d: ellipsePath(ellipseOf(tail, tailAxes.map(frame.turn))) }],
-    ["scarf", { d: scarfOf(frame) }],
+    ["scarf", { d: arcOf(frame, 1) }],
+    ["scarf-back", { d: arcOf(frame, -1) }],
     ...ends.flatMap(({ fringe, line, strip }, which) => {
       const name = which === 0 ? "scarf-end" : "scarf-short";
       return [
@@ -446,29 +540,11 @@ export const penguinPose = (penguin: Penguin): Pose => {
     }),
   ]) satisfies Record<string, Part>;
 
-  // Back to front: its legs, what's behind its body, the body, what's in front of it, each by how near the camera.
-  const layers: [string, number][] = [
-    ["beak", depthOf(head.point([HEAD_R, 0, 0]))],
-    ["tail", depthOf(tail)],
-    ["scarf-end", depthOf(frame.place(SCARF_KNOT))],
-    ...flippers.map(({ center }, index): [string, number] => [`flipper-${index}`, depthOf(center)]),
-    ...feet.map(({ at }, index): [string, number] => [`foot-${index}`, depthOf(at)]),
-  ];
-  // Not stepped yet (none held either side), each goes the side it's on.
-  const sides: Record<string, number> =
-    Object.keys(penguin.front).length === 0 ? layerSidesOf(penguin) : {};
-  const isFront = ([name]: [string, number]) => penguin.front[name] ?? (sides[name] ?? 0) > 0;
   const top = toScreen(head.at);
   return {
     at: { x: penguin.walker.x, y: penguin.walker.y },
     bubble: { x: top.x, y: top.y - HEAD_R - 12 },
-    order: [
-      // Its legs come from under its body: behind it, and behind all else.
-      ["legs", 0] as const,
-      ...layers.filter((layer) => !isFront(layer)).toSorted(byDepth),
-      ["torso", 0] as const,
-      ...layers.filter(isFront).toSorted(byDepth),
-    ].map(([name]) => name),
+    order: penguin.stack.length > 0 ? penguin.stack : orderOf(penguin),
     parts,
     say: penguin.emotes.line,
   };
