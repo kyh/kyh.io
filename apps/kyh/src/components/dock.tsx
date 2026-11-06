@@ -10,14 +10,12 @@ import { iconAttrs } from "@/components/icons";
 import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
 import { DEFAULT_THEME, themeOf } from "@/themes";
-import { loadDresses } from "@/themes/dresses";
 import { nextTap, toggleTheme, useAppearance } from "@/themes/store";
 
 /**
  * The themes menu, in its own chunk: no page needs it until the toggle's held
  * down. Fetched as soon as a press or a mouse over the toggle hints at it, so
- * it's usually in by the time the hold blooms it, and every theme's dress
- * with it, for the pieces on its wedges.
+ * it's usually in by the time the hold blooms it.
  */
 const loadBloom = () => import("@/components/theme-bloom");
 const ThemeBloom = lazy(async () => {
@@ -25,7 +23,6 @@ const ThemeBloom = lazy(async () => {
   return { default: loaded };
 });
 const fetchBloom = async () => {
-  void loadDresses();
   try {
     await loadBloom();
   } catch {

@@ -21,8 +21,7 @@ import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react
 
 import { CURSOR_ARROW } from "@/components/cursor";
 import type { ThemeId } from "@/themes";
-import type { Art } from "@/themes/art";
-import { loadDress } from "@/themes/dresses";
+import { themeOf } from "@/themes";
 import { PieceDefs, PieceLayers } from "@/themes/piece";
 import { currentTheme } from "@/themes/store";
 import { lastPointer } from "@/lib/pointer";
@@ -60,7 +59,6 @@ interface Burst {
   eggs: SprayedEgg[];
   /** What it throws, fixed at the find so a switch mid-flight doesn't swap them. */
   theme: ThemeId;
-  art: Art;
 }
 
 interface EggsState {
@@ -166,7 +164,7 @@ const BurstLabel = ({ label }: { label: string }) => {
 
 /** The label pops at the pointer; the eggs spray out, then fly home one at a time. */
 const BurstPieces = ({ burst, pieceId, onLand, onDone }: BurstProps) => {
-  const { art } = burst;
+  const { art } = themeOf(burst.theme);
   const home = { x: burst.to.x - burst.from.x, y: burst.to.y - burst.from.y };
   const last = burst.eggs.length - 1;
   return (
@@ -237,7 +235,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       return subscribeToEggs(popNew);
     }
     let next = 0;
-    const celebrate = async () => {
+    const celebrate = () => {
       if (foundEggs().length <= heard.current) {
         return;
       }
@@ -251,17 +249,9 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       // The burst comes out of the pointer, or the middle if it hasn't moved yet.
       const from = lastPointer() ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
       const theme = currentTheme();
-      // The theme's dress is in by now, loaded as the page came up; if not, it's a moment away.
-      let dress;
-      try {
-        dress = await loadDress(theme);
-      } catch {
-        return;
-      }
-      throwConfettiAt(from, dress.confetti);
+      throwConfettiAt(from, themeOf(theme).confetti);
       const burst = {
         ...burstOf(),
-        art: dress.art,
         from,
         id: next,
         label: done ? "Every easter egg found!" : `Easter egg discovered! ${count}/${total}`,
@@ -270,11 +260,8 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
       };
       setBursts((current) => [...current, burst]);
     };
-    const heardOne = () => {
-      void celebrate();
-    };
-    heardOne();
-    return subscribeToEggs(heardOne);
+    celebrate();
+    return subscribeToEggs(celebrate);
   }, [still, pop]);
 
   const done = useCallback(
@@ -283,8 +270,7 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   );
 
   const catching = bursts.length > 0;
-  // One set of piece defs per theme thrown, from the first of its bursts.
-  const thrown = [...new Map(bursts.map((burst) => [burst.theme, burst.art])).entries()];
+  const themes = [...new Set(bursts.map((burst) => burst.theme))];
 
   // Gold once every egg is found and the last of them has landed.
   useEffect(() => {
@@ -319,8 +305,8 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
         >
           <svg className="absolute size-0">
             <defs>
-              {thrown.map(([theme, art]) => (
-                <PieceDefs key={theme} art={art} id={`${pieceId}-${theme}`} />
+              {themes.map((theme) => (
+                <PieceDefs key={theme} art={themeOf(theme).art} id={`${pieceId}-${theme}`} />
               ))}
             </defs>
           </svg>

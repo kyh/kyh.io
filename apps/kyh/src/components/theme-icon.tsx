@@ -2,9 +2,7 @@ import { motion } from "motion/react";
 
 import { iconAttrs } from "@/components/icons";
 import { useSvgId } from "@/lib/svg-id";
-import type { ThemeId } from "@/themes";
 import { themeOf } from "@/themes";
-import { useDress } from "@/themes/dresses";
 import { PieceIcon } from "@/themes/piece";
 import type { Appearance } from "@/themes/store";
 
@@ -102,19 +100,9 @@ interface ThemeIconProps {
   look: "glyph" | "piece";
 }
 
-/** A theme's piece, once its dress is in (`dresses.ts`); an empty box till then. */
-const Piece = ({ theme }: { theme: ThemeId }) => {
-  const art = useDress(theme)?.art;
-  return art ? (
-    <PieceIcon art={art} className="block size-full" />
-  ) : (
-    <span className="block size-full" />
-  );
-};
-
 /** A theme's icon, filling its box: its glyph or piece, or (the default theme) the sun or moon. */
 export const ThemeIcon = ({ appearance: { mode, theme }, look }: ThemeIconProps) => {
-  const { glyph } = themeOf(theme);
+  const { art, glyph } = themeOf(theme);
   if (glyph === null) {
     return (
       <span className="block size-full">
@@ -123,7 +111,7 @@ export const ThemeIcon = ({ appearance: { mode, theme }, look }: ThemeIconProps)
     );
   }
   return look === "piece" ? (
-    <Piece theme={theme} />
+    <PieceIcon art={art} className="block size-full" />
   ) : (
     <svg {...iconAttrs} className="block size-full">
       <path d={glyph} />

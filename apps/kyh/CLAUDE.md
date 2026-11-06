@@ -43,16 +43,9 @@ The rest is by hand:
   `barColor` to `global.css`. `script.ts` paints the same before first paint;
   a test holds it to the store day by day.
 - One folder per theme. `index.ts` exports its `theme` (`Theme` in
-  `theme.ts`, registry `THEMES`, in calendar order): only what every page
-  needs for every theme before first paint (days, mode, tint, name, glyph).
-  `dress.ts` exports its `dress` (`Dress`: piece, confetti, drift, corners;
-  registry in `dresses.ts`), each its own chunk, loaded for the
-  theme that's on (`useDress`) and for all once the themes menu is near.
-  `town.ts` exports its `town` (`Town` in `city/town-theme.ts`, registry
-  `TOWNS`). Each registry is keyed by theme, so a missing entry won't compile.
-- Keep a dress out of `index.ts`, and import a theme's `dress.ts` only through
-  `dresses.ts`. The effects that draw them (`drift.tsx`, `corners.tsx`) load
-  through `effects.tsx`, only on a day whose dress has them.
+  `theme.ts`, registry `THEMES`, in calendar order); `town.ts` exports its
+  `town` (`Town` in `city/town-theme.ts`, registry `TOWNS`, keyed by theme so
+  a missing one won't compile).
 - Keep `town` out of `index.ts`: Turbopack keeps a module's imports whole, so
   the town's drawing code would ship on every page instead of only `/showcase`.
 - A theme with something following the mouse has a `follower.tsx` (the
@@ -78,8 +71,7 @@ The rest is by hand:
   shrunk by the stage's `size` (the turkey's `SIZE`), its ink and shade dots
   widened back by it, and its gait, hit box and stride in screen pixels.
 - Adding a theme: its folder, plus a line in each registry. Adding an effect: a
-  field on `Dress` (on `Theme` only if it must show before first paint, or on
-  `Town`), a value in each theme, a read where it shows.
+  field on `Theme` or `Town`, a value in each theme, a read where it shows.
 - No theme's days may run past December 31st: the calendar only looks in the
   day's own year. A test holds every theme to it.
 - Theme art (`art.ts`, drawn by `piece.tsx`) is drawn in the showcase town's

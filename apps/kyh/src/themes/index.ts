@@ -1,12 +1,10 @@
-// The site's themes, one folder each: its `index.ts` is what every page
-// reads for every theme (`theme.ts` says what that is), its `dress.ts` what
-// it puts on, loaded only when it's on (listed in `dresses.ts`), its
-// `town.ts` the showcase's town (listed in `towns.ts`), its `follower.tsx`,
-// if it has one, what follows the mouse (listed in `followers.ts`). The
-// calendar picks one for today, unless the themes menu round the theme toggle
-// has (`store.ts`). The default theme is plain light or dark, the visitor's
-// own. Adding a theme is adding its folder and listing it here, in
-// `dresses.ts`, `towns.ts` and `followers.ts`.
+// The site's themes, one folder each: its `index.ts` is what the whole site
+// reads (`theme.ts` says what that is), its `town.ts` the showcase's town
+// (listed in `towns.ts`), its `follower.tsx`, if it has one, what follows the
+// mouse (listed in `followers.ts`). The calendar picks one for today,
+// unless the themes menu round the theme toggle has (`store.ts`). The
+// default theme is plain light or dark, the visitor's own.
+// Adding a theme is adding its folder and listing it here, in `towns.ts` and in `followers.ts`.
 // Pure.
 import type { Theme } from "./theme";
 import { dayKey } from "./calendar";
