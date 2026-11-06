@@ -27,7 +27,7 @@ import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/em
 import { createFeet, groundSpeedOf, stepFeet } from "../follower/feet";
 import { faceGoal, smooth, springAt, stepSpring } from "../follower/solid";
 import { createWalker, isOnWalker } from "../follower/walk";
-import { createGo, isDown, stepGo, WALK, WALK_TOP, wayOf } from "./penguin-go";
+import { createGo, isDown, SIZE, stepGo, WALK, WALK_TOP, wayOf } from "./penguin-go";
 import { layerSidesOf, orderOf, penguinPose, scarfHangOf } from "./penguin-pose";
 
 /** A moment's business: a preen, a look about, a stretch, the ecstatic display, a jump (startled, or for joy). */
@@ -148,12 +148,12 @@ const STEPS: Steps = {
   cadence: [0.9, 2.4],
   duty: [0.66, 0.58],
   homes: [
-    { ahead: 2.5, left: 4.2 },
-    { ahead: 2.5, left: -4.2 },
+    { ahead: 2.5 * SIZE, left: 4.2 * SIZE },
+    { ahead: 2.5 * SIZE, left: -4.2 * SIZE },
   ],
-  lift: [1.4, 2.2],
+  lift: [1.4 * SIZE, 2.2 * SIZE],
   offsets: [0, 0.5],
-  reach: 9.5,
+  reach: 9.5 * SIZE,
   top: WALK_TOP,
 };
 
@@ -240,7 +240,7 @@ const bray = (penguin: Penguin) => {
   begin(penguin, "display");
 };
 
-const isOn = (penguin: Penguin, at: Point) => isOnWalker(penguin.walker, at, 16, 46);
+const isOn = (penguin: Penguin, at: Point) => isOnWalker(penguin.walker, at, 16 * SIZE, 46 * SIZE);
 
 /** What it's up to: dozing or not, and its next bit of business when it's idle. */
 const stepActs = (
@@ -350,14 +350,14 @@ const headingGoal = (penguin: Penguin, pointer: Point, held: boolean) => {
   if (way !== null) {
     return way;
   }
+  // Braying or stretching, it turns to show itself off, flippers spread to either side.
+  if (penguin.act === "display" || penguin.act === "stretch") {
+    return penguin.showing;
+  }
   // Just stopped, it keeps facing its way a moment before it turns to the mouse: inching after it, it
   // doesn't turn back and forth.
   if (penguin.stood < STOOD_S) {
     return rig.heading.x;
-  }
-  // Braying or stretching, it turns to show itself off, flippers spread to either side.
-  if (penguin.act === "display" || penguin.act === "stretch") {
-    return penguin.showing;
   }
   return faceGoal(walker, pointer, rig.heading.x, Infinity);
 };
@@ -479,10 +479,10 @@ const stepScarf = (penguin: Penguin, seconds: number) => {
     const { floor, rest } = scarfHangOf(penguin, index);
     stepChain(
       chain,
-      hangOf(rest, walker),
+      hangOf(rest, walker, SIZE),
       stuff,
       Math.min(seconds, 0.05),
-      snowAt(walker.y + floor),
+      snowAt(walker.y + floor * SIZE),
     );
   }
 };
@@ -527,7 +527,7 @@ export const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seco
   const dozing = stepActs(penguin, { idle, moving, turned }, seconds);
   stepTalk(penguin, dozing, idle, seconds);
   // It rocks foot to foot as it steps, more the farther it goes a step.
-  const going = Math.min(1, groundSpeedOf(walker) / 35);
+  const going = Math.min(1, groundSpeedOf(walker) / (35 * SIZE));
   const stepping = penguin.feet.cadence > 0 && go.going === "walk";
   stepSpring(rig.waddle, stepping ? Math.max(going, 0.5) : 0, 8, seconds);
   stepBody(penguin, { dozing, held, pointer }, seconds);

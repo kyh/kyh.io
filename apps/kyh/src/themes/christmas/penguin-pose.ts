@@ -16,6 +16,7 @@ import type { Point } from "../follower/chain";
 import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Mat3, Vec3 } from "../follower/solid";
 import type { Penguin } from "./penguin";
+import { SIZE } from "./penguin-go";
 import { round } from "../art";
 import { chainAbout } from "../follower/chain";
 import { footIn } from "../follower/feet";
@@ -215,7 +216,7 @@ const footOf = (penguin: Penguin, frame: Frame, index: number) => {
   const { walker } = penguin;
   const foot = penguin.feet.feet[index];
   const side = index === 0 ? 1 : -1;
-  const planted = foot ? add(footIn(foot, walker), [0, frame.hop, 0]) : ([0, 0, 0] as const);
+  const planted = foot ? add(footIn(foot, walker, SIZE), [0, frame.hop, 0]) : ([0, 0, 0] as const);
   const rear = frame.place([-1.5, -2, side * 3.6]);
   const at = mix(planted, [rear[0], rear[1] * 0.45, rear[2]], frame.slide);
   const turned = yawOf(foot?.turn ?? penguin.rig.heading.x);
@@ -323,7 +324,7 @@ const pathOf = (points: readonly Point[], closed = false) =>
  */
 const scarfEndOf = (penguin: Penguin, frame: Frame, which: number) => {
   const chain = which === 0 ? penguin.scarfEnd : penguin.scarfShort;
-  const points = chainAbout(chain, penguin.walker);
+  const points = chainAbout(chain, penguin.walker, SIZE);
   const [root] = points;
   if (!root || points.length < 2) {
     return { fringe: "", line: "", strip: "" };

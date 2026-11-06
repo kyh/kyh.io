@@ -30,9 +30,17 @@ export interface Go {
   fast: number;
 }
 
+/** How big it's drawn, to its own pixels: about the ghost's height. */
+export const SIZE = 1.25;
 /** Its top walk over the ground, a second. */
-export const WALK_TOP = 60;
-export const WALK: Gait = { accel: 360, behind: 64, below: 34, stride: 16, top: WALK_TOP };
+export const WALK_TOP = 60 * SIZE;
+export const WALK: Gait = {
+  accel: 360,
+  behind: 64,
+  below: 34 * SIZE,
+  stride: 16 * SIZE,
+  top: WALK_TOP,
+};
 /** How hard it stops (a second squared), lying down and getting up. */
 const BRAKE = 300;
 /**

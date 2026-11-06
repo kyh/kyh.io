@@ -204,6 +204,7 @@ test("led about at random, it always gets to its spot and settles there", () => 
       const frames = Math.max(1, Math.round((far / speed) * 60));
       const by = { x: (Math.cos(angle) * far) / frames, y: (Math.sin(angle) * far) / frames };
       pointer = run(penguin, pointer, frames / 60, by);
+      const acting = penguin.act !== "none";
       const swings = swingsOf(penguin);
       pointer = run(penguin, pointer, 5, STILL, swings.watch);
       const spot = spotOf(penguin.walker, WALK, pointer);
@@ -211,8 +212,10 @@ test("led about at random, it always gets to its spot and settles there", () => 
       const off =
         penguin.petted > 0 ? 0 : Math.hypot(spot.x - penguin.walker.x, spot.y - penguin.walker.y);
       assert.ok(off < 12, `seed ${seed} move ${move}: ${off} off its spot, ${penguin.go.going}`);
-      // Five seconds left be, it turned to face the mouse, and maybe for a stretch, and back: no jitter.
-      assert.ok(swings.count() <= 3, `seed ${seed} move ${move}: ${swings.count()} swings`);
+      // Five seconds left be, it turned to face the mouse, and maybe for a stretch, and back, and from
+      // whatever it was at: no jitter.
+      const most = acting ? 4 : 3;
+      assert.ok(swings.count() <= most, `seed ${seed} move ${move}: ${swings.count()} swings`);
       assert.equal(penguin.go.going, "walk");
     }
   }
@@ -367,4 +370,20 @@ test("a preen that starts as it turns to the mouse is still under the near flipp
     preens += facedPreensOf(penguin, at, 12);
   }
   assert.ok(preens > 20, `${preens}`);
+});
+
+test("clicked on walking away, it turns to show itself off at once, not partway through its bray", () => {
+  const penguin = createPenguin({ x: 400, y: 500 });
+  const pointer = run(penguin, { x: 400, y: 500 }, 1);
+  const at = run(penguin, pointer, 1.5, { x: 0, y: -1.2 });
+  assert.ok(Math.sin(penguin.rig.heading.x) < -0.5, `${penguin.rig.heading.x}`);
+  pokePenguin(penguin, { x: penguin.walker.x, y: penguin.walker.y - 20 });
+  assert.equal(penguin.act, "display");
+  let turned = 0;
+  run(penguin, at, 1.7, STILL, (frame) => {
+    if (turned === 0 && Math.sin(penguin.rig.heading.x) > 0) {
+      turned = frame / 60;
+    }
+  });
+  assert.ok(turned > 0 && turned < 0.6, `${turned}`);
 });

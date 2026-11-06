@@ -19,6 +19,7 @@ import { Solid } from "../follower/shaded";
 import { Stage } from "../follower/stage";
 import { INK, ShadeDots } from "../piece";
 import { penguin } from "./penguin";
+import { SIZE } from "./penguin-go";
 
 /** A color by day in one palette token and by night in another, as the page is. */
 const tone = (day: Token, night: Token) =>
@@ -32,7 +33,10 @@ const BEAK = tone("bronze", "skinDark");
 const BEAK_SHADE = tone("bronzeShade", "bronze");
 
 /** Ink round the body and head together: drawn under both, so the seam between them is covered. */
-const OUTLINE = 2.8;
+/** Ink `width` screen pixels wide, as the ghost's is, though it's drawn bigger (`SIZE`). */
+const inked = (width: number) => width / SIZE;
+
+const OUTLINE = inked(2.8);
 /** The scarf's white stripes: short square dashes across the red. */
 const STRIPES = {
   ...stroked(4.8, "white"),
@@ -43,7 +47,7 @@ const STRIPES = {
 /** A side of its scarf's ring, inked, red, striped white; its ends cut square where they meet the other side's. */
 const Ring = ({ name }: { name: string }) => (
   <>
-    <path data-part={name} style={{ ...stroked(6.8), strokeLinecap: "butt" }} />
+    <path data-part={name} style={{ ...stroked(4.8 + inked(2)), strokeLinecap: "butt" }} />
     <path data-part={name} style={{ ...stroked(4.8, "festiveRed"), strokeLinecap: "butt" }} />
     <path data-part={name} style={STRIPES} />
   </>
@@ -75,9 +79,9 @@ const Black = ({
 
 const Eye = ({ index }: { index: number }) => (
   <>
-    <path data-part={`ring-${index}`} style={filled("white", 0.5)} />
+    <path data-part={`ring-${index}`} style={filled("white", inked(0.5))} />
     <path data-part={`eye-${index}`} style={filled("screen")} />
-    <path data-part={`lid-${index}`} style={{ ...stroked(0.9), opacity: 0 }} />
+    <path data-part={`lid-${index}`} style={{ ...stroked(inked(0.9)), opacity: 0 }} />
   </>
 );
 
@@ -86,7 +90,7 @@ const ScarfEnd = ({ name }: { name: string }) => (
   <>
     <path data-part={`${name}-fringe`} style={stroked(2.2)} />
     <path data-part={`${name}-fringe`} style={stroked(1, "festiveRed")} />
-    <path data-part={name} style={{ ...filled("festiveRed", 1), strokeLinejoin: "round" }} />
+    <path data-part={name} style={{ ...filled("festiveRed", inked(1)), strokeLinejoin: "round" }} />
     <path data-part={`${name}-stripes`} style={{ ...STRIPES, strokeWidth: 3 }} />
   </>
 );
@@ -94,9 +98,9 @@ const ScarfEnd = ({ name }: { name: string }) => (
 export const Follower = () => {
   const id = useSvgId("penguin");
   return (
-    <Stage creature={penguin} box={{ height: 130, width: 150, x: -75, y: -100 }}>
+    <Stage creature={penguin} box={{ height: 130, width: 150, x: -75, y: -100 }} size={SIZE}>
       <defs>
-        <ShadeDots id={`${id}-dots`} size={0.9} />
+        <ShadeDots id={`${id}-dots`} size={inked(0.9)} />
       </defs>
       {/* Its short legs, feathered dark, down from under its body to its heels: always behind it. */}
       <g data-layer="legs">
@@ -109,15 +113,21 @@ export const Follower = () => {
       </g>
       {[0, 1].map((index) => (
         <g key={`foot-${index}`} data-layer={`foot-${index}`}>
-          <Solid name={`foot-${index}`} id={id} fill="accentPink" shade="accentPink" ink={0.8} />
+          <Solid
+            name={`foot-${index}`}
+            id={id}
+            fill="accentPink"
+            shade="accentPink"
+            ink={inked(0.8)}
+          />
         </g>
       ))}
       <g data-layer="tail">
-        <path data-part="tail" style={{ fill: BLACK, stroke: INK, strokeWidth: 0.9 }} />
+        <path data-part="tail" style={{ fill: BLACK, stroke: INK, strokeWidth: inked(0.9) }} />
       </g>
       {[0, 1].map((index) => (
         <g key={`flipper-${index}`} data-layer={`flipper-${index}`}>
-          <Black name={`flipper-${index}`} id={id} ink={0.6} />
+          <Black name={`flipper-${index}`} id={id} ink={inked(0.6)} />
         </g>
       ))}
       <g data-layer="torso">
@@ -128,7 +138,7 @@ export const Follower = () => {
         <Black name="body" id={id} />
         <Black name="head" id={id} />
         {/* Its white front: the part of its body turned forward, shaded as the body is. */}
-        <Solid name="front" id={id} fill="white" shade="whiteShade" ink={0.7} />
+        <Solid name="front" id={id} fill="white" shade="whiteShade" ink={inked(0.7)} />
         <Eye index={0} />
         <Eye index={1} />
         <Ring name="scarf" />
@@ -141,8 +151,11 @@ export const Follower = () => {
         </g>
       </g>
       <g data-layer="beak">
-        <path data-part="beak-lower" style={{ fill: BEAK_SHADE, stroke: INK, strokeWidth: 0.6 }} />
-        <path data-part="beak-upper" style={{ fill: BEAK, stroke: INK, strokeWidth: 0.7 }} />
+        <path
+          data-part="beak-lower"
+          style={{ fill: BEAK_SHADE, stroke: INK, strokeWidth: inked(0.6) }}
+        />
+        <path data-part="beak-upper" style={{ fill: BEAK, stroke: INK, strokeWidth: inked(0.7) }} />
       </g>
       <g data-layer="scarf-end">
         <g data-part="scarf-ends">
