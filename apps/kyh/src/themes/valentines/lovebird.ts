@@ -30,7 +30,7 @@ import type { Spring } from "../follower/solid";
 import type { Point } from "../follower/walk";
 import type { Flex } from "./flex";
 import { flickChain, stepChain } from "../follower/chain";
-import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
+import { createEmotes, reached, say, stepEmotes } from "../follower/emote";
 import { headingOf, PITCH, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
 import { approach, turnBack } from "../follower/walk";
 import { flexAt, kickFlex, stepFlex } from "./flex";
@@ -64,7 +64,9 @@ export interface Rig {
   amp: Spring;
   /** 0 to 1: the landing's flare. */
   flare: Spring;
-  /** 0 to 1: tail closed to fanned; its tail cocked (radians, + up). */
+  /** Its tumble's spin in the screen's plane (radians, + clockwise). */
+  spin: Spring;
+  /** 0 to 1: tail closed to fanned; its tail lowered off its body's line (radians, + down, - cocked up). */
   fan: Spring;
   tail: Spring;
   /** 0 to 1: feet tucked up to gripping; thrown forward to land. */
@@ -104,9 +106,10 @@ export interface Wings {
   /** Beats left before it next bounds, and seconds left of a bound on folded wings. */
   beats: number;
   bound: number;
-  /** Seconds left of flapping to keep its balance, perched, and of the strong beats of a launch. */
+  /** Seconds left of flapping to keep its balance, perched, and of the strong beats of a launch; seconds it's glided down. */
   balance: number;
   launch: number;
+  glide: number;
 }
 
 export interface Lovebird {
@@ -131,6 +134,8 @@ export interface Lovebird {
   /** Seconds it's been carried along on a moving pointer, and seconds it's been held still on one (a petting). */
   ridden: number;
   petted: number;
+  /** Whether it's been petted this time on the pointer: once, till it leaves it. */
+  pettedHere: boolean;
   /** A petting to answer with a nuzzle once what it's at is done. */
   nuzzleDue: boolean;
   /** The pointer's last moves, and how fast they've gone (pixels a second). */
@@ -148,8 +153,13 @@ export interface Lovebird {
   nextGaze: number;
   /** Its head catching up with its body in a thrust, having been held still. */
   thrust: boolean;
-  /** Its body's shake as it rouses, radians of roll. */
+  /** Its body's shake as it rouses, radians in the screen's plane. */
   shiver: number;
+  /** 0 to 1: its eyes shut in a blink, and seconds till its next. */
+  blink: number;
+  nextBlink: number;
+  /** Steps so far: what its pose is built for (`lovebird-pose.ts` keeps one frame a step). */
+  steps: number;
   time: number;
   rig: Rig;
   wings: Wings;
@@ -191,6 +201,10 @@ const TUMBLE = 1500;
 const PACE_S = 0.05;
 /** Seconds of the strong beats of its launch. */
 const LAUNCH_S = 0.32;
+/** Seconds held still on a resting pointer, settled, before it's a petting. */
+const PET_S = 2.5;
+/** Seconds it glides down at most before it beats again. */
+const GLIDE_S = 0.45;
 /** Seconds of being carried before it hops off by itself. */
 const RIDE_S = 3;
 /** Seconds a flush keeps it off the pointer. */
@@ -206,8 +220,8 @@ const LAND_DAMP = 21;
 const PIECE = 1 / 240;
 /** How far its head is held off its neck, at most, before it thrusts to catch up. */
 const NECK_REACH = 3;
-/** Its tail feathers: stiff, light and quick to flick back. */
-const TAIL: Stuff = { damp: 8, drag: 0.012, keep: 0.07, keepTip: 0.02, rub: 0.5, weight: 60 };
+/** Its tail feathers: light, trailing on the air, and quick to flick back. */
+const TAIL: Stuff = { damp: 7, drag: 0.014, keep: 0.05, keepTip: 0.012, rub: 0.5, weight: 60 };
 
 const clamp = (value: number, most: number) => Math.max(-most, Math.min(most, value));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -220,6 +234,7 @@ export const createLovebird = (at: Point): Lovebird => {
     ax: 0,
     ay: 0,
     back: { x: -Math.SQRT1_2, y: -Math.SQRT1_2 },
+    blink: 0,
     carried: [springAt(0), springAt(0)],
     dip: flexAt(0),
     emotes: createEmotes(seed),
@@ -228,11 +243,13 @@ export const createLovebird = (at: Point): Lovebird => {
     landing: [springAt(0), springAt(0)],
     moves: [],
     next: 1.5,
+    nextBlink: 2,
     nextGaze: 1,
     nuzzleDue: false,
     pace: { x: 0, y: 0 },
     perch: 0,
     petted: 0,
+    pettedHere: false,
     random: createRandom(seed + 1),
     ridden: 0,
     riding: false,
@@ -256,18 +273,27 @@ export const createLovebird = (at: Point): Lovebird => {
       pitch: springAt(0.2),
       preen: springAt(0),
       reach: springAt(0),
+      spin: springAt(0),
       spread: springAt(1),
       tail: springAt(0),
     },
     scramble: 0,
     shiver: 0,
     side: 1,
+    steps: 0,
     still: 0,
     sway: flexAt(0),
     tail: { knots: [], owed: 0 },
     thrust: false,
     time: 0,
-    view: { headFront: true, headOverWing: true, near: 1, tailFront: false },
+    view: {
+      age: 0,
+      beakFront: true,
+      headFront: true,
+      headOverWing: true,
+      near: 1,
+      tailFront: false,
+    },
     vx: 0,
     vy: 0,
     wings: {
@@ -275,6 +301,7 @@ export const createLovebird = (at: Point): Lovebird => {
       balance: 0,
       beats: 4,
       bound: 0,
+      glide: 0,
       hand: flexAt(strokeAt(0, 1)),
       launch: 0,
       phase: 0,
@@ -353,7 +380,10 @@ const begin = (bird: Lovebird, act: Act) => {
   bird.side = bird.random.chance(0.5) ? 1 : -1;
   if (act === "chirp") {
     say(bird.emotes, CHATTER);
-    bird.rig.tail.v += 5;
+    // A flick of its tail up as it chirps.
+    bird.rig.tail.v -= 5;
+  } else if (act === "tilt") {
+    say(bird.emotes, TILT);
   }
 };
 
@@ -362,7 +392,7 @@ const touchDown = (bird: Lovebird) => {
   const { vx, vy } = bird;
   kickFlex(bird.dip, 30 + Math.max(0, vy) * 0.08);
   kickFlex(bird.sway, clamp(vx * 0.003, 0.9));
-  bird.rig.tail.v += 6;
+  bird.rig.tail.v -= 6;
   flickChain(bird.tail, { x: vx * 0.5, y: vy * 0.5 + 120 });
 };
 
@@ -403,15 +433,26 @@ const depart = (bird: Lovebird, how: Departure) => {
     spring.x = 0;
     spring.v = 0;
   }
+  // Off the pointer it's done with its perched business: feet up, eyes open, body down to fly.
+  bird.pettedHere = false;
+  bird.nuzzleDue = false;
+  if (bird.act !== "tilt") {
+    bird.act = "none";
+  }
+  rig.content.x = 0;
+  rig.content.v = 0;
+  rig.legs.x *= 0.35;
+  rig.pitch.v -= 5;
   if (how === "tumble") {
     rig.fluff.x = 1;
     const tumble = bird.random.chance(0.5) ? 1 : -1;
     rig.bank.v += 9 * tumble;
+    rig.spin.v += 12 * tumble;
     rig.pitch.v -= 4;
     bird.scramble = 0.6;
     // Its tail whipped about in the tumble.
     flickChain(bird.tail, { x: 420 * tumble, y: -360 });
-    say(bird.emotes, SHAKEN);
+    say(bird.emotes, SHAKEN, true);
     return;
   }
   wings.launch = LAUNCH_S;
@@ -434,7 +475,8 @@ const stepBalance = (bird: Lovebird, holding: boolean, dt: number) => {
   if (holding) {
     // Carried off to the right, it's left leaning back to the left; jerked down, its body's left up.
     kickFlex(sway, -(carriedX.x - before.x) * 0.018);
-    kickFlex(dip, -(carriedY.x - before.y) * 0.03);
+    // Carried up, it crouches into the lift; braked, it rises off its feet.
+    kickFlex(dip, -(carriedY.x - before.y) * 0.25);
   }
   // Carried steadily, it leans into the way it goes; carried briskly, it crouches to spring off.
   const lean = holding ? clamp(carriedX.x * 0.0006, 0.2) : 0;
@@ -443,9 +485,9 @@ const stepBalance = (bird: Lovebird, holding: boolean, dt: number) => {
   stepFlex(sway, lean, 1.7, 0.4, dt);
   stepFlex(dip, crouch, 3.2, 0.3, dt);
   sway.x = clamp(sway.x, 0.45);
-  dip.x = clamp(dip.x, 4);
+  dip.x = clamp(dip.x, 5);
   // Jolted, tipped further than its lean or its pace changed hard, it flaps to steady itself.
-  const jolted = holding && (Math.abs(sway.x - lean) > 0.22 || jolt > 3000);
+  const jolted = holding && (Math.abs(sway.x - lean) > 0.38 || Math.abs(dip.x) > 3 || jolt > 3000);
   wings.balance = jolted ? 0.25 : Math.max(0, wings.balance - dt);
   // Carried a long way, it tires of the ride.
   bird.ridden = holding && speed > 120 ? bird.ridden + dt : Math.max(0, bird.ridden - dt * 2);
@@ -476,7 +518,10 @@ const flyingWings = (bird: Lovebird): WingGoal => {
     return { amp: 1, hertz: 8, spread: 1 };
   }
   if (bird.vy > 160 && speed > 240) {
-    return { amp: 0.12, hertz: 4, spread: 1 };
+    // A short glide down on held wings, then slow beats.
+    return bird.wings.glide < GLIDE_S
+      ? { amp: 0.12, hertz: 4, spread: 1 }
+      : { amp: 0.6, hertz: 5, spread: 1 };
   }
   if (bird.wings.bound > 0) {
     return { amp: 0.25, hertz: 0, spread: 0 };
@@ -536,6 +581,7 @@ const beat = (bird: Lovebird, hertz: number, cruise: boolean, dt: number) => {
 const stepWings = (bird: Lovebird, holding: boolean, dt: number) => {
   const { rig, wings } = bird;
   wings.launch = Math.max(0, wings.launch - dt);
+  wings.glide = bird.vy > 160 && !holding ? wings.glide + dt : 0;
   const goal = holding ? perchedWings(bird) : flyingWings(bird);
   // Bounding, it folds its wings tight at once; perched, it folds them away at its leisure.
   const folding = wings.bound > 0 ? 30 : 16;
@@ -579,6 +625,7 @@ const stepBody = (bird: Lovebird, pointer: Point, dt: number) => {
   const perched = 0.92 - 0.12 * rig.doze.x + 0.1 * rig.preen.x;
   stepSpring(rig.pitch, mix(flared, perched, perch), 8, dt);
   stepSpring(rig.lift, bounding ? -2.5 : 0, 7, dt);
+  stepSpring(rig.spin, 0, 7, dt);
 };
 
 /** Its tail fanning as it brakes, turns and lands; cocked to counter a sway; its feet down to land and grip. */
@@ -588,16 +635,18 @@ const stepTail = (bird: Lovebird, holding: boolean, dt: number) => {
   const along = (bird.ax * bird.vx + bird.ay * bird.vy) / Math.max(speed, 1);
   const braking = Math.max(0, Math.min(0.6, -along / 2600));
   const flyingFan = Math.min(1, 0.15 + braking + Math.abs(rig.bank.x) * 0.35 + rig.flare.x);
+  // Perched, its tail's a little open, so it shows edge on too.
   const perchedFan = Math.min(
     1,
-    0.06 + 0.3 * envelope(bird, "chirp") + 0.8 * envelope(bird, "rouse"),
+    0.3 + 0.3 * envelope(bird, "chirp") + 0.6 * envelope(bird, "rouse"),
   );
   stepSpring(rig.fan, mix(flyingFan, perchedFan, perch), 14, dt);
-  // Perched, its tail swings against its body's lean: up as it tips forward over its feet.
-  const counter = bird.sway.x * Math.cos(rig.heading.x) * 1.3;
-  const flyingTail = -0.15 * rig.flare.x + (bird.wings.bound > 0 ? 0.06 : 0);
-  stepSpring(rig.tail, mix(flyingTail, 0.18 + clamp(counter, 0.5), perch), 10, dt);
-  stepSpring(rig.legs, holding ? 1 : 0, holding ? 16 : 9, dt);
+  // Perched, its tail hangs below it and swings against its body's lean: up as it tips forward over its feet.
+  const counter = -bird.sway.x * Math.cos(rig.heading.x) * 1.3;
+  // Flaring, it lowers its tail to brake; bounding, it holds it up a little.
+  const flyingTail = 0.2 * rig.flare.x - (bird.wings.bound > 0 ? 0.06 : 0);
+  stepSpring(rig.tail, mix(flyingTail, 0.6 + clamp(counter, 0.45), perch), 10, dt);
+  stepSpring(rig.legs, holding ? 1 : 0, holding ? 16 : 24, dt);
   stepSpring(rig.reach, holding ? 0 : rig.flare.x, 20, dt);
 };
 
@@ -660,16 +709,16 @@ const stepHead = (bird: Lovebird, holding: boolean, dt: number) => {
   const doze = rig.doze.x;
   const perched = bird.perch > 0.5;
   const gaze = perched ? glance(bird, dt) : 0;
-  // Preening, it turns its head back to the wing on its near side; dozing, it tucks it into its back.
+  // Preening, it bows its head to the bend of its near wing; dozing, it turns it back over its far shoulder, its beak tucked into its back.
   const { near } = bird.view;
   const away = Math.max(preen, doze);
-  const look = gaze * (1 - away) * (1 - nuzzle) + near * Math.min(2.4, 2.3 * preen + 2.4 * doze);
+  const look = gaze * (1 - away) * (1 - nuzzle) + near * (1.45 * preen - 2.5 * doze);
   stepSpring(rig.look, look, perched ? 18 : 8, dt);
   // Nuzzling, it bobs its head down to the pointer twice.
   const bob =
     nuzzle * (0.25 + 0.3 * Math.abs(Math.sin((bird.actFor / ACT_S.nuzzle) * Math.PI * 2)));
-  const nod = -0.6 * preen - 0.25 * doze + 0.3 * chirp - 0.12 * tilt - bob;
-  stepSpring(rig.nod, Math.max(-0.75, Math.min(0.45, nod)) + (perched ? 0 : -0.08), 12, dt);
+  const nod = -1.1 * preen - 0.25 * doze + 0.3 * chirp - 0.12 * tilt - bob;
+  stepSpring(rig.nod, Math.max(-1.1, Math.min(0.45, nod)) + (perched ? 0 : -0.08), 12, dt);
   stepSpring(rig.cock, 0.6 * tilt * bird.side + 0.25 * nuzzle * bird.side, 12, dt);
   const nibble = preen * 0.45 * Math.abs(Math.sin(bird.actFor * 15));
   const open = chirp * Math.abs(Math.sin((bird.actFor / ACT_S.chirp) * Math.PI * 3));
@@ -688,11 +737,14 @@ const stepActs = (bird: Lovebird, dozing: boolean, seconds: number) => {
     bird.act = "none";
   }
   const rouse = envelope(bird, "rouse");
-  bird.shiver = rouse * 0.22 * Math.sin(bird.actFor * Math.PI * 2 * 7);
+  // Rousing, it shakes itself, body and head, in the screen's plane.
+  bird.shiver = rouse * 0.14 * Math.sin(bird.actFor * Math.PI * 2 * 8);
   const { rig } = bird;
   stepSpring(rig.doze, dozing ? 1 : 0, dozing ? 1.5 : 8, seconds);
-  const fluff = 0.55 * rig.doze.x + rouse + 0.3 * envelope(bird, "preen") + 0.5 * rig.content.x;
-  stepSpring(rig.fluff, Math.min(1, fluff), 4, seconds);
+  const fluff = 0.55 * rig.doze.x + rouse + 0.3 * envelope(bird, "preen") + 0.4 * rig.content.x;
+  // Its feathers snap up at once, and settle slowly.
+  const goal = Math.min(1, fluff);
+  stepSpring(rig.fluff, goal, goal > rig.fluff.x ? 20 : 4, seconds);
   if (bird.act !== "none" || bird.perch < 0.9 || dozing || busy) {
     return;
   }
@@ -708,22 +760,39 @@ const stepActs = (bird: Lovebird, dozing: boolean, seconds: number) => {
   }
 };
 
-/** Held still on a resting pointer a moment, it's being petted: it says so and nuzzles down to it, once what it's at is done. */
+/**
+ * Settled a while on a resting pointer, it's being petted: once a perch, it
+ * says so if it isn't talking and nuzzles down to it, once what it's at is done.
+ */
 const stepPetting = (bird: Lovebird, holding: boolean, seconds: number) => {
-  bird.petted = holding && bird.still > 0 ? bird.petted + seconds : 0;
+  bird.petted = holding && bird.still > 0 && bird.perch > 0.99 ? bird.petted + seconds : 0;
+  // Nuzzling, it says so as soon as it isn't saying something else.
+  if (bird.act === "nuzzle") {
+    say(bird.emotes, PET);
+  }
   // A petting owed a nuzzle is let go once the pointer moves on: it isn't nuzzled after.
   if (bird.petted === 0) {
     bird.nuzzleDue = false;
   }
-  if (!reached(bird.petted, seconds, PETTED_S)) {
+  if (bird.pettedHere || !reached(bird.petted, seconds, PET_S)) {
     return;
   }
-  say(bird.emotes, PET, true);
+  bird.pettedHere = true;
   if (bird.act === "none") {
     begin(bird, "nuzzle");
   } else if (bird.act !== "nuzzle") {
     bird.nuzzleDue = true;
   }
+};
+
+/** A blink now and then: shut and open again in a few frames. */
+const BLINK_S = 0.16;
+const stepBlink = (bird: Lovebird, dt: number) => {
+  bird.nextBlink -= dt;
+  if (bird.nextBlink <= 0) {
+    bird.nextBlink = bird.random.range(1.8, 5.5);
+  }
+  bird.blink = bird.nextBlink < BLINK_S ? Math.sin((1 - bird.nextBlink / BLINK_S) * Math.PI) : 0;
 };
 
 /** What it says unprompted: snores asleep, chatter flying. */
@@ -771,6 +840,7 @@ const stepPlace = (bird: Lovebird, pointer: Point, dt: number) => {
 export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, seconds: number) => {
   const dt = Math.min(Math.max(0, seconds), MOST_STEP);
   bird.time += dt;
+  bird.steps += 1;
   const back = turnBack(bird.back, moved, 60);
   // Never below the pointer: it flies above it.
   bird.back = { x: back.x, y: Math.min(0.2, back.y) };
@@ -780,7 +850,8 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   stepPace(bird, moved, seconds);
   const from = { x: bird.x, y: bird.y };
   const holding = stepPlace(bird, pointer, dt);
-  bird.perch = approach(bird.perch, holding ? 1 : 0, 12, seconds);
+  // Off the pointer it's quickly a bird in the air again.
+  bird.perch = approach(bird.perch, holding ? 1 : 0, holding ? 12 : 22, seconds);
   const dozing = bird.perch > 0.9 && bird.still > DOZE_S;
   stepBalance(bird, holding, dt);
   stepWings(bird, holding, dt);
@@ -790,9 +861,10 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   stepHead(bird, holding, dt);
   stepActs(bird, dozing, seconds);
   stepPetting(bird, holding, seconds);
+  stepBlink(bird, dt);
   stepTalk(bird, dozing, seconds);
   stepChain(bird.tail, tailHangOf(bird), TAIL, dt);
-  bird.view = settleView(bird.view, viewOf(bird));
+  bird.view = settleView(bird.view, viewOf(bird), dt);
 };
 
 /** Whether a point on the screen is on it: its body and head, above its feet. */

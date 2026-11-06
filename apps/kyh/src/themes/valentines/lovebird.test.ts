@@ -267,37 +267,52 @@ test("carried a long way, it hops off by itself, then lands once the pointer res
   assert.ok(bird.perch > 0.99);
 });
 
-test("a pointer resting under it is a petting: it nuzzles, and again after another rest", () => {
-  const bird = perched();
+/** Steps it a frame at a time after a pointer moving `by` a frame, counting the nuzzles it begins. */
+const nuzzlesIn = (bird: Lovebird, from: Point, seconds: number, by = STILL) => {
+  let pointer = from;
   let nuzzles = 0;
-  let pointer = { x: 300, y: 300 };
-  for (let round = 0; round < 2; round += 1) {
-    pointer = run(bird, pointer, 0.1, { x: 1, y: 0 });
-    let nuzzled = false;
-    for (let frame = 0; frame < 300; frame += 1) {
-      stepLovebird(bird, pointer, STILL, 1 / 60);
-      nuzzled ||= bird.act === "nuzzle";
-    }
-    nuzzles += nuzzled ? 1 : 0;
+  for (let frame = 0; frame < seconds * 60; frame += 1) {
+    const was = bird.act;
+    pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
+    stepLovebird(bird, pointer, by, 1 / 60);
+    nuzzles += bird.act === "nuzzle" && was !== "nuzzle" ? 1 : 0;
   }
-  assert.equal(nuzzles, 2);
+  return { nuzzles, pointer };
+};
+
+test("a petting is a settled while on a resting pointer: once a perch, not at each pause of a ride", () => {
+  const bird = createLovebird({ x: 300, y: 300 });
+  let { nuzzles, pointer } = nuzzlesIn(bird, { x: 300, y: 300 }, 5);
+  assert.equal(nuzzles, 1, "settled on it");
+  // Carried along with pauses: still the same perch, so no more pettings.
+  for (let pause = 0; pause < 4; pause += 1) {
+    ({ pointer } = nuzzlesIn(bird, pointer, 0.6, { x: 2.5, y: 0 }));
+    const rest = nuzzlesIn(bird, pointer, 1.5);
+    nuzzles += rest.nuzzles;
+  }
+  assert.ok(bird.riding);
+  assert.equal(nuzzles, 1, "pauses in a ride");
+  // Off it and back on: a new perch, a new petting.
+  ({ pointer } = nuzzlesIn(bird, pointer, 0.3, { x: 14, y: 0 }));
+  assert.ok(!bird.riding);
+  nuzzles += nuzzlesIn(bird, pointer, 6).nuzzles;
+  assert.equal(nuzzles, 2, "landed again");
 });
 
 test("a petting that comes mid-act is let go if the pointer moves on before the act ends", () => {
-  const bird = perched();
-  let pointer = run(bird, { x: 300, y: 300 }, 0.1, { x: 1, y: 0 });
-  Object.assign(bird, { act: "preen", actFor: 0 });
-  run(bird, pointer, 1.2);
+  const bird = createLovebird({ x: 300, y: 300 });
+  let pointer = { x: 300, y: 300 };
+  bird.next = 99;
+  while (bird.petted < 1.2) {
+    stepLovebird(bird, pointer, STILL, 1 / 60);
+  }
+  Object.assign(bird, { act: "preen", actFor: 0, next: 99 });
+  run(bird, pointer, 1.5);
   assert.ok(bird.nuzzleDue);
   // Carried off gently, then set down: no nuzzle owed from before.
   pointer = run(bird, pointer, 0.3, { x: 2, y: 0 });
   assert.ok(!bird.nuzzleDue);
-  let nuzzled = false;
-  for (let frame = 0; frame < 30; frame += 1) {
-    stepLovebird(bird, pointer, STILL, 1 / 60);
-    nuzzled ||= bird.act === "nuzzle";
-  }
-  assert.ok(!nuzzled);
+  assert.equal(nuzzlesIn(bird, pointer, 0.5).nuzzles, 0);
 });
 
 test("perched, a click (on whatever's under the pointer) makes it flinch and cock its head; it stays", () => {
@@ -320,4 +335,50 @@ test("preening, it holds its near wing off its side, in front of its body, its h
   assert.ok(bird.rig.preen.x > 0.8, `${bird.rig.preen.x}`);
   assert.ok(bird.rig.spread.x < 0.05);
   assert.ok(stackOf(bird, nearWingOf(bird)) > stackOf(bird, "body"));
+});
+
+test("jerked off, it says so at once, whatever it was saying", () => {
+  const bird = perched();
+  bird.emotes.line = "♥";
+  bird.emotes.left = 5;
+  run(bird, { x: 300, y: 300 }, 0.1, { x: 40, y: 0 });
+  assert.ok(["eep!", "whoa!"].includes(bird.emotes.line ?? ""), `${bird.emotes.line}`);
+});
+
+test("off the pointer, it's at once a bird in the air: feet up, eyes open, body down", () => {
+  const bird = perched();
+  bird.rig.content.x = 1;
+  const pitch = bird.rig.pitch.x;
+  run(bird, { x: 300, y: 300 }, 6 / 60, { x: 14, y: 0 });
+  assert.ok(!bird.riding);
+  assert.ok(bird.rig.legs.x < 0.3, `legs ${bird.rig.legs.x}`);
+  assert.equal(bird.rig.content.x, 0);
+  assert.ok(bird.rig.pitch.x < pitch - 0.1, `pitch ${bird.rig.pitch.x}`);
+});
+
+test("carried straight up, it crouches into the lift and rises off its feet as it's stopped", () => {
+  const bird = perched();
+  let most = 0;
+  let least = 0;
+  let pointer = { x: 300, y: 300 };
+  for (let frame = 0; frame < 60; frame += 1) {
+    const by = { x: 0, y: frame < 36 ? -5 : 0 };
+    pointer = run(bird, pointer, 1 / 60, by);
+    most = Math.max(most, bird.dip.x);
+    least = Math.min(least, bird.dip.x);
+  }
+  assert.ok(bird.riding);
+  assert.ok(most > 0.8 && least < -0.8, `${least} ${most}`);
+});
+
+test("rousing, it shakes itself in the screen's plane, its feathers up at once", () => {
+  const bird = perched();
+  Object.assign(bird, { act: "rouse", actFor: 0, next: 99 });
+  let shake = 0;
+  for (let frame = 0; frame < 20; frame += 1) {
+    stepLovebird(bird, { x: 300, y: 300 }, STILL, 1 / 60);
+    shake = Math.max(shake, Math.abs(bird.shiver));
+  }
+  assert.ok(shake > 0.1, `${shake}`);
+  assert.ok(bird.rig.fluff.x > 0.7, `${bird.rig.fluff.x}`);
 });
