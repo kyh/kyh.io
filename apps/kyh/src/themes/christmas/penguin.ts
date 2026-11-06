@@ -391,8 +391,9 @@ const stepLayers = (penguin: Penguin) => {
 const stepScarf = (penguin: Penguin, seconds: number) => {
   const { walker } = penguin;
   const ends = [penguin.scarfEnd, penguin.scarfShort];
-  // Sliding, the air under them as it rushes along bears their weight, and streams them out behind.
-  const stuff = { ...SCARF, weight: SCARF.weight * (1 - 1.9 * penguin.rig.slide.x) };
+  // Sliding, the air under them as it rushes along bears their weight (all of it, never more: they don't
+  // float up), and the drag streams them out behind.
+  const stuff = { ...SCARF, weight: SCARF.weight * Math.max(0, 1 - penguin.rig.slide.x) };
   for (const [index, chain] of ends.entries()) {
     const { floor, rest } = scarfHangOf(penguin, index);
     stepChain(chain, hangOf(rest, walker), stuff, Math.min(seconds, 0.05));

@@ -172,6 +172,9 @@ test("standing, a follower never turns its back to look at the mouse, and faces 
     const goal = faceGoal(still, pointer, 0, 25);
     assert.ok(Math.sin(goal) >= -0.31, `${pointer.x}, ${pointer.y}: ${goal}`);
   }
+  // Far up the page right above it, the mouse isn't on it: it turns toward it, as far round as it goes.
+  const above = faceGoal(still, { x: 205, y: 20 }, 0, 25);
+  assert.ok(Math.sin(above) < 0, `${above}`);
   // Below it, it faces the mouse much as before.
   const below = faceGoal(still, { x: 300, y: 300 }, 0, 25);
   assert.ok(Math.cos(below) > 0 && Math.sin(below) > 0, `${below}`);

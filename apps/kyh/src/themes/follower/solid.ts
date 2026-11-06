@@ -330,8 +330,9 @@ export const capPath = (body: Ellipsoid, normal: Vec3, offset: number) => {
 
 /** How far a standing follower turns from the camera at most: it never shows its back to look at the mouse. */
 const MOST_AWAY = 0.3;
-/** A mouse this near across, at or above its feet, is on it: it turns its face to the camera for it. */
+/** A mouse this near across, and from its feet up to this high, is on it: it turns its face to the camera for it. */
 const ON_IT = 30;
+const ON_IT_TALL = 60;
 
 /**
  * Which way a follower on foot should face: its way while it goes; standing,
@@ -350,7 +351,7 @@ export const faceGoal = (
   }
   const dx = pointer.x - walker.x;
   const dy = pointer.y - walker.y;
-  if (Math.abs(dx) < ON_IT && dy < 6) {
+  if (Math.abs(dx) < ON_IT && dy < 6 && dy > -ON_IT_TALL) {
     return Math.PI / 2 - (0.5 * Math.max(-ON_IT, Math.min(ON_IT, dx))) / ON_IT;
   }
   if (Math.hypot(dx, dy) < ON_IT) {
