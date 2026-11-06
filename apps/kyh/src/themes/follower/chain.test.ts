@@ -84,3 +84,27 @@ test("a hidden tab's long frame is caught up only so far: it neither leaps nor c
   }
   assert.equal(chain.knots[0]?.x, 400);
 });
+
+test("a constraint given to a step holds after every fixed step, the same at any frame rate", () => {
+  const bends = [30, 60, 144].map((fps) => {
+    const chain = createChain(hangAt({ x: 0, y: 0 }));
+    let calls = 0;
+    // No knot may go left of the root: a wall it leans on.
+    const wall = (held: Chain) => {
+      calls += 1;
+      for (const knot of held.knots) {
+        knot.x = Math.max(knot.x, held.knots[0]?.x ?? 0);
+      }
+    };
+    let root = { x: 0, y: 0 };
+    for (let frame = 0; frame < fps * 0.5; frame += 1) {
+      root = { x: root.x + 300 / fps, y: 0 };
+      stepChain(chain, hangAt(root), CLOTH, 1 / fps, wall);
+    }
+    assert.ok(calls >= 59, `${fps}: ${calls} steps`);
+    return Math.min(...chain.knots.map((knot) => knot.x - (chain.knots[0]?.x ?? 0)));
+  });
+  for (const bend of bends) {
+    assert.ok(bend >= 0, `${bend}`);
+  }
+});

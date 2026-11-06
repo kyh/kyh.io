@@ -188,9 +188,17 @@ const stepOnce = (
 /**
  * Steps a chain `seconds` on, its root carried to `hang.root` over them (so a
  * long frame's move isn't one jump). A hang with a different number of knots
- * starts the chain afresh.
+ * starts the chain afresh. `hold`, if given, is a further constraint (a bend
+ * limit, say) applied after every fixed step, so it holds the same at any
+ * frame rate.
  */
-export const stepChain = (chain: Chain, hang: Hang, stuff: Stuff, seconds: number) => {
+export const stepChain = (
+  chain: Chain,
+  hang: Hang,
+  stuff: Stuff,
+  seconds: number,
+  hold?: (chain: Chain) => void,
+) => {
   if (chain.knots.length !== hang.rest.length + 1) {
     Object.assign(chain, createChain(hang));
     return;
@@ -217,6 +225,7 @@ export const stepChain = (chain: Chain, hang: Hang, stuff: Stuff, seconds: numbe
       y: start.y + (hang.root.y - start.y) * t,
     };
     stepOnce(chain, hang, stuff, root, links);
+    hold?.(chain);
   }
 };
 
