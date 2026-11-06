@@ -375,8 +375,8 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
       say(emotes, SLEEP);
     }
   } else if (turkey.petted > PETTED_S) {
-    // The moment a petting counts, it answers it, whatever it was saying.
-    if (reached(turkey.petted, seconds, PETTED_S)) {
+    // The moment a petting counts, it answers it, whatever it was saying, short of a click's gobble.
+    if (reached(turkey.petted, seconds, PETTED_S) && turkey.act !== "gobble") {
       say(emotes, PET, true);
     }
   } else if (groundSpeedOf(walker) > TOP * 0.9 && random.chance(seconds * 0.6)) {

@@ -155,6 +155,24 @@ test("clicked on, it gobbles facing the camera, its back never turned", () => {
   assert.ok(Math.sin(turkey.rig.heading.x) > 0.9, `${turkey.rig.heading.x}`);
 });
 
+test("clicked as the mouse lands on it, its gobble isn't cut off by a purr", () => {
+  for (const wait of [0.02, 0.16, 0.4]) {
+    const turkey = createTurkey({ x: 600, y: 400 });
+    run(turkey, (t) => ({ x: 600 + 120 * Math.min(t, 1), y: 400 }), 3);
+    const on = { x: turkey.walker.x, y: turkey.walker.y - 30 };
+    run(turkey, () => on, wait);
+    pokeTurkey(turkey, on);
+    const said = turkey.emotes.line;
+    assert.notEqual(said, null);
+    run(
+      turkey,
+      () => on,
+      1,
+      () => assert.equal(turkey.emotes.line, said, `${wait}s`),
+    );
+  }
+});
+
 test("a peck takes its beak to the ground without burying its flesh", () => {
   const turkey = createTurkey({ x: 400, y: 400 });
   let lowest = -Infinity;
