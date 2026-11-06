@@ -19,7 +19,7 @@ import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Ellipsoid, Mat3, Vec3 } from "../follower/solid";
 import type { Act, Bunny } from "./bunny";
 import type { Footing } from "./hop";
-import { ellipse, round } from "../art";
+import { round } from "../art";
 import { chainAbout, hangOf } from "../follower/chain";
 import { legTo } from "../follower/feet";
 import {
@@ -48,8 +48,14 @@ import {
   TOWARD_CAMERA,
   yawOf,
 } from "../follower/solid";
-import { feetOf, HIND_LIFT, HIND_REST, placeOf } from "./hop";
+import { FORE_REACH, feetOf, HIND_LIFT, HIND_REST, placeOf, SHOULDER } from "./hop";
 
+/**
+ * How big it's drawn, to its own pixels: about the ghost's size on the screen.
+ * Its hops and feet are in its own pixels (`hop.ts`); its chains in the
+ * screen's, so they're handed this to go between.
+ */
+export const SIZE = 1.15;
 const TORSO: Vec3 = [-2.4, 8.4, 0];
 const TORSO_RADII: Vec3 = [9.6, 7.4, 7];
 const CHEST: Vec3 = [3.8, 9.4, 0];
@@ -88,9 +94,8 @@ const FOOT = 7.6;
 const HIP: Vec3 = [-6.6, 4.6, 4.2];
 const THIGH = 5.2;
 const SHIN = 7.6;
-const SHOULDER: Vec3 = [5, 4.6, 2.3];
-/** How far a forepaw reaches from its shoulder. */
-const FORE_REACH = 9;
+/** Its shoulders, in its own pixels (`hop.ts` plans its forepaws within reach of them). */
+const SHOULDER_AT: Vec3 = [SHOULDER.x, SHOULDER.y, SHOULDER.side];
 /** Its hind feet kicked out behind in a binky: soles up, toes trailing. */
 const KICKED = 2.85;
 /** What it pitches about: over its hind feet; what its rear lifts about, stamping: its forepaws. And the middle it squashes and stretches about. */
@@ -186,7 +191,7 @@ const frameOf = (bunny: Bunny) => {
   const { binky, thump } = acts;
   const stand = rig.stand.x;
   const low = 1.8 * rig.doze.x + 0.9 * rig.content.x;
-  const pitch = hop.pitch + REAR * stand - 0.24 * rig.sniff.x + binky.pitch;
+  const pitch = hop.pitch + REAR * stand - 0.38 * rig.sniff.x + binky.pitch;
   const body: Mat3 = compose(pitchOf(pitch), rollOf(binky.roll));
   // Stamping, its rear lifts about its forepaws.
   const rear: Mat3 = pitchOf(-STAMP_LIFT * thump.stamp);
@@ -240,7 +245,7 @@ const headOf = (bunny: Bunny, frame: Frame) => {
   const direction = (local: Vec3) => frame.turn(apply(own, local));
   const at = add(frame.place(NECK), direction(HEAD));
   const point = (local: Vec3) => add(at, direction(local));
-  return { at, direction, nod, point };
+  return { at, direction, nod, pitch: frame.pitch, point };
 };
 
 type Head = ReturnType<typeof headOf>;
@@ -276,7 +281,13 @@ const earRestOf = (bunny: Bunny, head: Head, side: 1 | -1, index: number) => {
   const { rig } = bunny;
   const swivel = rig.swivel[index]?.x ?? 0;
   // Its left ear stands a little straighter; its right is the floppier, its tip folding out.
-  const lay = rig.lay.x + (side === 1 ? -0.1 : 0.24) - head.nod * (1 - EAR_NOD);
+  // Its ears keep a little of its nod, and none of its body's pitch: sat up, they stand up, not laid back.
+  const lay =
+    rig.lay.x +
+    (side === 1 ? -0.1 : 0.24) -
+    rig.nod.x * (1 - EAR_NOD) -
+    (head.nod - rig.nod.x) -
+    head.pitch;
   const splay = 0.24 + 0.2 * Math.max(0, rig.lay.x) + 0.25 * swivel;
   // Set a little apart fore and aft, so side on one doesn't hide the other.
   let at: Vec3 = [EAR_ROOT[0] + 0.6 * side, EAR_ROOT[1], EAR_ROOT[2] * side];
@@ -365,10 +376,9 @@ const hindOf = (bunny: Bunny, frame: Frame, footing: Footing, side: 1 | -1) => {
   const pull: Vec3 = footing.swing >= 0 ? reachOf(hip, placed, THIGH + SHIN - 0.5) : [0, 0, 0];
   const heel = add(placed, pull);
   // Its leg's out from under its haunch: pushing off, flying, kicking.
-  // Its leg's out from behind its haunch pushing off and early in its swing, trailing; swung on under it, it's tucked again.
-  const trailing = footing.swing >= 0 ? footing.swing < 0.4 : angle > 0.6;
-  const out = kick > 0.3 || (size > 0.4 && trailing);
-  return { heel, out, toe: add(toe, pull) };
+  // Kicked right out behind it, in a binky (once a binky, while it's up).
+  const kicked = kick > 0.3;
+  return { heel, kicked, toe: add(toe, pull) };
 };
 
 type Hind = ReturnType<typeof hindOf>;
@@ -384,23 +394,30 @@ const foreOf = (
 ) => {
   const { rig } = bunny;
   const { binky } = frame.acts;
-  // Swinging, its paw goes no farther from its shoulder than its leg reaches.
-  const shoulder = frame.place([SHOULDER[0], SHOULDER[1], SHOULDER[2] * side]);
+  const shoulder = frame.place([SHOULDER_AT[0], SHOULDER_AT[1], SHOULDER_AT[2] * side]);
   const set = worldOf(footing, frame.hop.at);
-  const ground = footing.swing >= 0 ? add(set, reachOf(shoulder, set, FORE_REACH)) : set;
-  const hanging = frame.place([7.6, 3.6, side * 2]);
-  // Grooming, its paws scrub up its face and down, one and then the other.
+  // Swinging, its paw's drawn in toward its shoulder as far as its leg can't reach, most in mid-air and
+  // none as it lifts and lands, so it never jumps; what's left, its leg's top leans to (`foreParts`).
+  const swinging = footing.swing >= 0 ? Math.sin(Math.PI * footing.swing) : 0;
+  const ground = add(set, scale(reachOf(shoulder, set, FORE_REACH), swinging));
+  // Up off the ground: dangling below its shoulders sat up or flying; rubbing its face grooming.
+  const forward: Vec3 = [Math.cos(frame.heading), 0, Math.sin(frame.heading)];
+  const hanging = add(add(shoulder, [0, -5, 0]), scale(forward, 2.2));
   const scrub = bunny.time * 7 + index * Math.PI;
   const face = head.point([3.4 + 0.8 * Math.sin(scrub), -3.2 + 2.4 * Math.sin(scrub), side * 2]);
   const groom = rig.groom.x;
   const up = Math.max(rig.stand.x, groom, smooth(binky.lift / 6));
   const raised = add(scale(hanging, 1 - groom), scale(face, groom));
-  // Which way it points: as it was set down on the ground, as its body is held up.
+  // Which way it points: as it was set down on the ground; dangling, down and a little forward; grooming, up its face.
   const pointed: Vec3 = [Math.cos(footing.turn), 0, Math.sin(footing.turn)];
-  const held = normalize(frame.turn([1, 0, 0]));
+  const dangling = normalize(add(scale(forward, 0.45), [0, -1, 0]));
+  const held = normalize(
+    add(scale(dangling, 1 - groom), scale(head.direction([0.3, 1, 0]), groom)),
+  );
   return {
     ahead: normalize(add(scale(pointed, 1 - up), scale(held, up))),
     at: add(scale(ground, 1 - up), scale(raised, up)),
+    shoulder,
   };
 };
 
@@ -478,15 +495,33 @@ const leafOf = (line: readonly Point[], widthAt: (u: number) => number, shift: P
     tipTangent = { x: tangent.x * widthAt(1), y: tangent.y * widthAt(1) };
   }
   const tip = line.at(-1) ?? { x: 0, y: 0 };
-  // Round the tip: a half circle from one side to the other.
-  const cap = Array.from({ length: 7 }, (_, index) => {
-    const angle = ((index + 1) / 8) * Math.PI;
-    return {
-      x: tip.x + shift.x + tipNormal.x * Math.cos(angle) + tipTangent.x * Math.sin(angle),
-      y: tip.y + shift.y + tipNormal.y * Math.cos(angle) + tipTangent.y * Math.sin(angle),
-    };
-  });
-  return polygon([...left, ...cap, ...right.toReversed()]);
+  const root = line[0] ?? tip;
+  const second = line[1] ?? tip;
+  const rootLength = Math.hypot(second.x - root.x, second.y - root.y) || 1;
+  const rootWidth = widthAt(0);
+  const rootNormal = {
+    x: (-(second.y - root.y) / rootLength) * rootWidth,
+    y: ((second.x - root.x) / rootLength) * rootWidth,
+  };
+  const rootTangent = {
+    x: (-(second.x - root.x) / rootLength) * rootWidth,
+    y: (-(second.y - root.y) / rootLength) * rootWidth,
+  };
+  // Round both ends: a half circle from one side to the other, at its tip and at its root.
+  const capOf = (at: Point, normal: Point, tangent: Point, from: number) =>
+    Array.from({ length: 7 }, (_, index) => {
+      const angle = from + ((index + 1) / 8) * Math.PI;
+      return {
+        x: at.x + shift.x + normal.x * Math.cos(angle) + tangent.x * Math.sin(angle),
+        y: at.y + shift.y + normal.y * Math.cos(angle) + tangent.y * Math.sin(angle),
+      };
+    });
+  return polygon([
+    ...left,
+    ...capOf(tip, tipNormal, tipTangent, 0),
+    ...right.toReversed(),
+    ...capOf(root, rootNormal, rootTangent, Math.PI),
+  ]);
 };
 
 const solid = (name: string, outline: Ellipse): [string, Part][] => {
@@ -565,6 +600,18 @@ const aheadOf = (point: Vec3, { center, radii, turn }: Ellipsoid) => {
   return crossing < 0 ? null : (b - Math.sqrt(crossing)) / (2 * a);
 };
 
+/** How far round an ellipse reaches from its middle, any way, and a little over. */
+const reachOfEllipse = (outline: Ellipse) => Math.max(outline.rx, outline.ry) + 1.5;
+
+/** A box just round some ellipses (its haunches), a little over. */
+const aroundOf = (outlines: readonly Ellipse[]) => {
+  const left = Math.min(...outlines.map((outline) => outline.cx - reachOfEllipse(outline)));
+  const right = Math.max(...outlines.map((outline) => outline.cx + reachOfEllipse(outline)));
+  const top = Math.min(...outlines.map((outline) => outline.cy - reachOfEllipse(outline)));
+  const bottom = Math.max(...outlines.map((outline) => outline.cy + reachOfEllipse(outline)));
+  return `M${round(left)} ${round(top)}H${round(right)}V${round(bottom)}H${round(left)}Z`;
+};
+
 /** Its body: its torso and chest, squashed and stretched and breathing, its haunches either side drawn after its hind feet. */
 const bodyOf = (frame: Frame, bunch: number) => {
   const stretch = (radii: Vec3, breath = 1): Vec3 => [
@@ -600,7 +647,7 @@ interface Geometry {
 const KEPT = new WeakMap<Bunny, { geometry: Geometry; version: number }>();
 
 /** Everything placed this frame, worked out once a step. */
-const geometryOf = (bunny: Bunny) => {
+export const geometryOf = (bunny: Bunny) => {
   const kept = KEPT.get(bunny);
   if (kept && kept.version === bunny.version) {
     return kept.geometry;
@@ -621,35 +668,56 @@ const geometryOf = (bunny: Bunny) => {
   return geometry;
 };
 
+/** The screen height its chains hang about (see `hangsOf`). */
+const CHAIN_HEIGHT = 0;
+
 /** Where its ears and tail hang at rest this frame, on the screen: the chains' roots and shapes. */
 export const hangsOf = (bunny: Bunny) => {
   const { ears, frame, head } = geometryOf(bunny);
-  const origin = { x: bunny.walker.x, y: bunny.walker.y };
+  // Its chains feel the air of its going across, not toward or away from the camera: going up the screen
+  // isn't wind on its ears from above. So they hang from where it is across, at a fixed height.
+  const origin = { x: bunny.walker.x, y: CHAIN_HEIGHT };
   const earHang = (index: number) =>
     hangOf(
       (ears[index]?.points ?? []).map((local) => toScreen(head.point(local))),
       origin,
+      SIZE,
     );
   const hangs: [Hang, Hang] = [earHang(0), earHang(1)];
   const tail = hangOf(
     tailRestOf(bunny).map((local) => toScreen(frame.place(local))),
     origin,
+    SIZE,
   );
   return { ears: hangs, tail };
 };
 
-/** An ear (1 its left) drawn along its chain: its back, its lit side, its pink inside as far as it faces the camera, and its base grown out of its head. */
+/** An ear (1 its left) drawn along its chain: its back, its lit side, and its pink inside as far as it faces the camera. */
 const earOf = (bunny: Bunny, head: Head, rest: ReturnType<typeof earRestOf>, chain: Chain) => {
   const root = head.point(rest.points[0] ?? EAR_ROOT);
   const rootSeen = toScreen(root);
   // The chain about the ear's root as it is now: a frame too short to step the chain leaves it where it was.
-  const knots = chainAbout(chain, { x: 0, y: 0 });
+  const knots = chainAbout(chain, { x: 0, y: 0 }, SIZE);
   const first = knots[0] ?? { x: 0, y: 0 };
   const points = knots.map((knot) => ({
     x: knot.x - first.x + rootSeen.x,
     y: knot.y - first.y + rootSeen.y,
   }));
-  const line = smoothLine(points);
+  // Pointing at the camera, it's seen foreshortened: its line drawn straight from root to tip, a short round blade, not a crumple.
+  const tipSeen = points.at(-1) ?? rootSeen;
+  let arc = 0;
+  for (const [index, point] of points.entries()) {
+    const before = points[index - 1] ?? point;
+    arc += Math.hypot(point.x - before.x, point.y - before.y);
+  }
+  const straight = smooth((0.8 - arc / EAR_LENGTH) / 0.35);
+  const last = Math.max(1, points.length - 1);
+  const line = smoothLine(
+    points.map((point, index) => ({
+      x: point.x + (rootSeen.x + ((tipSeen.x - rootSeen.x) * index) / last - point.x) * straight,
+      y: point.y + (rootSeen.y + ((tipSeen.y - rootSeen.y) * index) / last - point.y) * straight,
+    })),
+  );
   // How wide it looks: its blade turned edge on is narrow, though never thinner than its cup.
   const inside = head.direction(rest.inside);
   const along = head.direction(apply(rest.middle, [0, 1, 0]));
@@ -664,15 +732,7 @@ const earOf = (bunny: Bunny, head: Head, rest: ReturnType<typeof earRestOf>, cha
   const shown =
     smooth((toward(inside) + 0.15) / 0.75) * (1 - smooth((bunny.rig.lay.x - 0.45) / 0.5));
   const lit = EAR_WIDTH * broad * 0.55;
-  // Its base: a patch of its head's white over the ear's root, so it grows out of its head, no seam inked.
-  const baseR = width(0) * 0.95;
-  const second = points[1] ?? tip;
-  const base = {
-    x: rootSeen.x + (second.x - rootSeen.x) * 0.12,
-    y: rootSeen.y + (second.y - rootSeen.y) * 0.12,
-  };
   return {
-    base: ellipse(base.x, base.y, baseR, baseR),
     depth: earDepthOf(rest.points, head),
     lining: { d: leafOf(line.slice(1), lining), opacity: round(shown) },
     tip,
@@ -685,7 +745,8 @@ const earOf = (bunny: Bunny, head: Head, rest: ReturnType<typeof earRestOf>, cha
 
 /** Its eyes: dark, high on either side of its head, a glint in each; shut in a curve, dozing or content. */
 const eyesOf = (bunny: Bunny, head: Head) => {
-  const shut = Math.max(bunny.rig.doze.x, bunny.rig.content.x);
+  // Its eyes open or shut, swapped at once as it closes them: never a grey half-faded disc.
+  const open = Math.max(bunny.rig.doze.x, bunny.rig.content.x) < 0.5 ? 1 : 0;
   return ([1, -1] as const).flatMap((side, index) => {
     const { at, normal } = surfaceOf(HEAD_RADII, [EYE[0], EYE[1], EYE[2] * side]);
     const world = head.direction(normal);
@@ -707,17 +768,17 @@ const eyesOf = (bunny: Bunny, head: Head) => {
         `eye-${index}`,
         {
           d: ellipsePath(ellipseOf(center, [scale(u, EYE_R), scale(v, EYE_R)])),
-          opacity: round(shown * (1 - shut)),
+          opacity: round(shown * open),
         },
       ],
       [
         `glint-${index}`,
         {
           d: ellipsePath(ellipseOf(glint, [scale(u, 0.5), scale(v, 0.5)])),
-          opacity: round(shown * (1 - shut)),
+          opacity: round(shown * open),
         },
       ],
-      [`lid-${index}`, { d: linePath(lid), opacity: round(shown * smooth(shut * 1.4 - 0.2)) }],
+      [`lid-${index}`, { d: linePath(lid), opacity: round(shown * (1 - open)) }],
     ] as const;
   });
 };
@@ -730,8 +791,6 @@ const muzzleOf = (bunny: Bunny, head: Head) => {
     const center = head.point([PAD[0], PAD[1] + 0.35 * twitch, PAD[2] * side]);
     return { center, outline: ellipseOf(center, axesOf(PAD_RADII, head.direction)) };
   });
-  // Turned away, its pads are behind its head: gone over a wide turn, so they neither pop nor show through it.
-  const padsShown = smooth((toward(head.direction([1, -0.2, 0])) + 0.6) / 0.8);
   const nose = (x: number, y: number, z: number) =>
     head.point([
       NOSE[0] + x,
@@ -759,9 +818,17 @@ const muzzleOf = (bunny: Bunny, head: Head) => {
       [head.point([6.5, -2.9, 0]), head.point([6, -3.4, 1])],
       [head.point([6.5, -2.9, 0]), head.point([6, -3.4, -1])],
     ]),
-    nose: hullPath([nose(0, 0.5, 0.95), nose(0, 0.5, -0.95), nose(0.25, 0.65, 0), bottom]),
+    // Its nose a little rounded forward, so side on it has a tip, not an edge.
+    nose: hullPath([
+      nose(-0.1, 0.6, 1.15),
+      nose(-0.1, 0.6, -1.15),
+      nose(0.3, 0.8, 0),
+      nose(1.3, 0.2, 0.6),
+      nose(1.3, 0.2, -0.6),
+      nose(1.1, -0.5, 0),
+      bottom,
+    ]),
     pads,
-    padsShown,
     whiskers: linesPath(whiskers),
   };
 };
@@ -792,7 +859,6 @@ const OVER = {
   haunch: 1,
   head: 2.5,
   hind: 0.5,
-  hindOut: 1.1,
   kicked: 1.4,
   tail: 1.2,
 } as const;
@@ -838,6 +904,8 @@ export const sidesOf = (bunny: Bunny): Record<string, boolean> => {
     );
   }
   entries.push(
+    // Its muzzle on its head's near side, till it's turned well away.
+    ["pads", steady(was.pads, toward(head.direction([1, -0.2, 0])) + 0.15, FACING_BAND)],
     ["tail", steady(was.tail, toward(frame.turn(TAIL_OUT_WAY)), FACING_BAND)],
     // Its head over its body but turned away, steadily: a hop's pitch can't flip it.
     ["head", steady(was.head, depthOf(head.at) - torsoDepth, SETTLED * 2)],
@@ -846,13 +914,8 @@ export const sidesOf = (bunny: Bunny): Record<string, boolean> => {
 };
 
 /** Its layers back to front: what's nearer the camera is drawn over. */
-const orderOf = (
-  bunny: Bunny,
-  geometry: Geometry,
-  ears: readonly { depth: number }[],
-  muzzle: { center: Vec3 },
-) => {
-  const { body, head, hinds } = geometry;
+const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: number }[]) => {
+  const { body, hinds } = geometry;
   const { sides } = bunny;
   const torsoDepth = depthOf(body.torsoAt);
   const headDepth = torsoDepth + (sides.head ? OVER.head : -OVER.head);
@@ -860,7 +923,8 @@ const orderOf = (
     ["torso", torsoDepth],
     ["head", headDepth],
     // Parts on another (the muzzle on its head, its ears in it) before it or after it by which side of it they're on, going round.
-    ["muzzle", headDepth + roundOf(sub(muzzle.center, head.at)) * 3 + 0.4],
+    // Its muzzle before its head or behind it by the one steady test its pads' ink keeps to.
+    ["muzzle", headDepth + (sides.pads === false ? -0.4 : 0.4)],
     // Each part on its body over or under it by the side it's on (kept steady in `sidesOf`).
     ["tail", torsoDepth + (sides.tail ? OVER.tail : -OVER.tail)],
     ...ears.map(({ depth }, index): [string, number] => [
@@ -873,15 +937,13 @@ const orderOf = (
       `haunch-${index}`,
       torsoDepth + (sides[`haunch-${index}`] ? OVER.haunch : -OVER.haunch),
     ]),
-    // A hind leg on its haunch's side: under its haunch tucked, over it pushing off or flying; kicked out in a binky, over all.
-    ...hinds.map(({ out }, index): [string, number] => {
+    // A hind leg on its haunch's side, always under its haunch: it shows where it reaches out past it,
+    // pushing off and trailing. Kicked right out behind in a binky, over all.
+    ...hinds.map(({ kicked }, index): [string, number] => {
       if (!sides[`haunch-${index}`]) {
         return [`hind-${index}`, torsoDepth - OVER.haunch - 0.3];
       }
-      if (!out) {
-        return [`hind-${index}`, torsoDepth + OVER.hind];
-      }
-      return [`hind-${index}`, torsoDepth + (bunny.act === "binky" ? OVER.kicked : OVER.hindOut)];
+      return [`hind-${index}`, torsoDepth + (kicked ? OVER.kicked : OVER.hind)];
     }),
     // A forepaw before or behind its body; up at its face, before its head.
     ...geometry.fores.map((_, index): [string, number] => {
@@ -910,12 +972,14 @@ const hindParts = (geometry: Geometry, hind: Hind, index: number): [string, Part
 /** A foreleg and its paw as one: the outline round its shoulder, its wrist and its paw. */
 const foreParts = (
   geometry: Geometry,
-  { ahead: way, at: paw }: Fore,
+  { ahead: way, at: paw, shoulder }: Fore,
   index: number,
 ): [string, Part][] => {
   const { frame } = geometry;
-  const side = index === 0 ? 1 : -1;
-  const shoulder = frame.place([SHOULDER[0], SHOULDER[1], SHOULDER[2] * side]);
+  // Its leg never longer than it is: past its reach, the top of it leans from its shoulder toward its paw, inside its chest.
+  const off = sub(shoulder, paw);
+  const far = Math.hypot(off[0], off[1], off[2]);
+  const top = far > FORE_REACH ? add(paw, scale(off, FORE_REACH / far)) : shoulder;
   const ahead = scale(way, 1.6);
   const toe = add(paw, ahead);
   const heel = add(paw, scale(ahead, -0.6));
@@ -924,8 +988,8 @@ const foreParts = (
       `fore-leg-${index}`,
       {
         d: hullPath([
-          ...ringOf(shoulder, 1.9),
-          ...ringOf(add(paw, [0, 1, 0]), 1.15),
+          ...ringOf(top, 1.9),
+          ...ringOf(add(paw, scale(normalize(sub(top, paw)), 1.2)), 1.15),
           ...ringOf(toe, 1.1),
           ...ringOf(heel, 1.1),
         ]),
@@ -943,7 +1007,7 @@ export const bunnyPose = (bunny: Bunny): Pose => {
     earOf(bunny, head, rest, bunny.ears[index] ?? bunny.ears[0]),
   );
   // The tail at its chain's tip, about where its root is now.
-  const tailKnots = chainAbout(bunny.tail, { x: 0, y: 0 });
+  const tailKnots = chainAbout(bunny.tail, { x: 0, y: 0 }, SIZE);
   const tailSeen = toScreen(frame.place(TAIL));
   const tailTip = tailKnots.at(-1) ?? tailSeen;
   const tailFirst = tailKnots[0] ?? tailSeen;
@@ -955,23 +1019,29 @@ export const bunnyPose = (bunny: Bunny): Pose => {
 
   const parts = Object.fromEntries([
     ...solid("torso", body.torso),
+    // Round its haunches, with its body cut out: their rims are inked only past its body.
+    [
+      "beyond-torso",
+      { d: `${aroundOf(body.haunches.map(({ outline }) => outline))}${ellipsePath(body.torso)}` },
+    ],
     ...solid("chest", body.chest),
     ...body.haunches.flatMap(({ outline }, index) => solid(`haunch-${index}`, outline)),
     ...solid("head", ellipseOf(head.at, axesOf(HEAD_RADII, head.direction))),
     ...eyesOf(bunny, head),
-    ...muzzle.pads.flatMap(({ outline }, index): [string, Part][] =>
-      solid(`pad-${index}`, outline).map(([name, part]) => [
-        name,
-        { ...part, opacity: round(muzzle.padsShown) },
-      ]),
-    ),
+    // Its pads drawn whole in their own layer, before or behind its head; their ink only while they're on its near side.
+    ...muzzle.pads.flatMap(({ outline }, index): [string, Part][] => [
+      ...solid(`pad-${index}`, outline),
+      [
+        `pad-ink-${index}`,
+        { d: ellipsePath(outline), opacity: bunny.sides.pads === false ? 0 : 1 },
+      ],
+    ]),
     ["nose", { d: muzzle.nose }],
     ["mouth", { d: muzzle.mouth }],
     ["whiskers", { d: muzzle.whiskers }],
-    ...ears.flatMap(({ base, lining, whole, wholeLit }, index): [string, Part][] => [
+    ...ears.flatMap(({ lining, whole, wholeLit }, index): [string, Part][] => [
       [`ear-${index}`, { d: whole }],
       [`ear-${index}-lit`, { d: wholeLit }],
-      [`ear-${index}-base`, { d: base }],
       [`lining-${index}`, lining],
     ]),
     ["tail", { d: puffPath(tailAt, TAIL_R) }],
@@ -985,7 +1055,7 @@ export const bunnyPose = (bunny: Bunny): Pose => {
   return {
     at: { x: bunny.walker.x, y: bunny.walker.y },
     bubble: { x: headSeen.x, y: top - 8 },
-    order: orderOf(bunny, geometry, ears, muzzle),
+    order: orderOf(bunny, geometry, ears),
     parts,
     say: bunny.emotes.line,
   };

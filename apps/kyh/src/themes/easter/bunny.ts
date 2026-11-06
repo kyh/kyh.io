@@ -35,6 +35,7 @@ import {
   bunnyPose,
   hangsOf,
   sidesOf,
+  SIZE,
   THUMP_BEATS,
   thumpAt,
 } from "./bunny-pose";
@@ -97,6 +98,8 @@ export interface Bunny {
   sides: Record<string, boolean>;
   /** A binky or a thump asked for while it was hopping: it does it once it's landed. */
   queued: Act | null;
+  /** Seconds its chains are owed, short of a whole step of theirs. */
+  chainOwed: number;
   /** Counts its steps, so what's worked out from it once a step is worked out once (`bunny-pose.ts`). */
   version: number;
 }
@@ -109,6 +112,8 @@ const PET = ["♥", "*purr*"];
 const SLEEP = ["z z z"];
 
 const DOZE_S = 30;
+/** Farther than this from the mouse (over the ground), it won't hop away from it to its spot. */
+const AWAY_FROM_MOUSE = 20;
 /** Seconds a mouse must be still on it to be resting there: one passing over isn't petting. */
 const RESTING_S = 0.08;
 /** Petted, how far from straight at the camera it turns: a three-quarter view. */
@@ -126,6 +131,8 @@ const EARS: readonly [Stuff, Stuff] = [
 const EAR_BEND = 0.3;
 /** And its root's swing from where it stands, held by the muscles at its base. */
 const EAR_ROOT_BEND = 0.4;
+/** The chains' fixed step (`../follower/chain.ts` steps at 120Hz). */
+const CHAIN_STEP = 1 / 120;
 /** Its tail: a short stiff puff that wobbles. */
 const TAIL: Stuff = { damp: 4.5, drag: 0.004, keep: 0.09, keepTip: 0.09, rub: 0.3, weight: 0 };
 /** How quickly its head turns to where it's going. */
@@ -135,7 +142,8 @@ const NECK_TURN = 1;
 /** Its body's wobble: how fast, and how soon it dies. */
 const WOBBLE = { damping: 0.4, hertz: 6 } as const;
 
-const groundOf = (at: Point): Spot => ({ x: at.x, z: at.y / SIN });
+/** A point on the screen as a spot of its ground, in its own pixels: drawn `SIZE` times bigger. */
+const groundOf = (at: Point): Spot => ({ x: at.x / SIZE, z: at.y / (SIN * SIZE) });
 
 export const createBunny = (at: Point): Bunny => {
   const seed = Math.round(at.x * 7919 + at.y * 13);
@@ -146,6 +154,7 @@ export const createBunny = (at: Point): Bunny => {
     act: "none",
     actFor: 0,
     breath: 0,
+    chainOwed: 0,
     ears: [
       { knots: [], owed: 0 },
       { knots: [], owed: 0 },
@@ -191,7 +200,7 @@ const begin = (bunny: Bunny, act: Act) => {
   bunny.actFor = 0;
 };
 
-const isOn = (bunny: Bunny, at: Point) => isOnWalker(bunny.walker, at, 18, 42);
+const isOn = (bunny: Bunny, at: Point) => isOnWalker(bunny.walker, at, 18 * SIZE, 42 * SIZE);
 
 const isHopping = (bunny: Bunny) => bunny.hopper.leap !== null;
 
@@ -210,12 +219,22 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
         : null;
     return { face, target: null };
   }
-  const target = groundOf(spotOf(walker, GAIT, pointer));
+  const spot = spotOf(walker, GAIT, pointer);
   const face =
     dozing || act !== "none"
       ? null
       : faceGoal({ ...walker, speed: 0 }, pointer, bunny.hopper.heading, 0);
-  return { face, target };
+  // Its spot swinging round behind a mouse that's turned back, it won't hop away from the mouse to
+  // get there: it waits, turned to the mouse, till its spot's come round.
+  const toSpot = { x: spot.x - walker.x, y: (spot.y - walker.y) / SIN };
+  const toMouse = { x: pointer.x - walker.x, y: (pointer.y - walker.y) / SIN };
+  const away =
+    toSpot.x * toMouse.x + toSpot.y * toMouse.y < 0 &&
+    Math.hypot(toMouse.x, toMouse.y) > AWAY_FROM_MOUSE;
+  return {
+    face: away ? faceGoal({ ...walker, speed: 0 }, pointer, bunny.hopper.heading, 0) : face,
+    target: away ? null : groundOf(spot),
+  };
 };
 
 /** Whether it's somewhere to go: far enough from where it'd be that it'll hop. */
@@ -278,7 +297,9 @@ const stepRig = (bunny: Bunny, dozing: boolean, leaving: boolean, seconds: numbe
   const groom = envelope(bunny, "groom");
   const sniff = envelope(bunny, "sniff");
   const alert = bunny.act === "thump" ? thumpAt(bunny.actFor).alert : 0;
-  const leap = bunny.hopper.leap?.size ?? 0;
+  // Bounding along or toward the camera it lays its ears back; bounding away, they'd point at the camera, so not.
+  const along = Math.min(1, 1 + Math.sin(bunny.hopper.heading));
+  const leap = (bunny.hopper.leap?.size ?? 0) * along;
   // Somewhere to go, it drops onto all fours at once.
   const down = leaving ? 2.5 : 1;
   stepSpring(rig.stand, Math.min(1, stand + 0.3 * groom + 0.35 * alert), 6 * down, seconds);
@@ -369,8 +390,8 @@ const stepHops = (bunny: Bunny, want: ReturnType<typeof wantOf>, seconds: number
   }
   const place = placeOf(hopper);
   bunny.hop = Math.floor(bunny.hop) + place.u;
-  walker.x = place.at.x;
-  walker.y = place.at.z * SIN;
+  walker.x = place.at.x * SIZE;
+  walker.y = place.at.z * SIN * SIZE;
   if (seconds > 0) {
     walker.vx = (walker.x - was.x) / seconds;
     walker.vy = (walker.y - was.y) / seconds;
@@ -393,14 +414,24 @@ const stepHops = (bunny: Bunny, want: ReturnType<typeof wantOf>, seconds: number
 
 /** Its ears and tail after where they hang this frame, the air on them as it goes. */
 const stepChains = (bunny: Bunny, seconds: number) => {
+  // Handed whole steps of the chains' own (`CHAIN_STEP`), and nothing between: a frame shorter than a
+  // step would carry them along whole, without the air, and its ears would lean less at 144Hz than at 60.
+  // Drawn about their roots, they never come away from it in a frame they're not stepped.
+  bunny.chainOwed += Math.max(0, seconds);
+  const steps = Math.floor(bunny.chainOwed / CHAIN_STEP);
+  if (steps === 0) {
+    return;
+  }
+  bunny.chainOwed -= steps * CHAIN_STEP;
+  const span = steps * CHAIN_STEP + CHAIN_STEP * 1e-6;
   const hangs = hangsOf(bunny);
   for (const [index, ear] of bunny.ears.entries()) {
     const hang = hangs.ears[index] ?? hangs.ears[0];
-    stepChain(ear, hang, EARS[index] ?? EARS[0], seconds, (held) => {
+    stepChain(ear, hang, EARS[index] ?? EARS[0], span, (held) => {
       stiffen(held, hang, EAR_BEND, EAR_ROOT_BEND);
     });
   }
-  stepChain(bunny.tail, hangs.tail, TAIL, seconds);
+  stepChain(bunny.tail, hangs.tail, TAIL, span);
 };
 
 /** Its breath, nose and ears, alive while it's still. */

@@ -56,7 +56,13 @@ export interface Hopper {
   /** Where its feet were last set down. */
   hind: Pair;
   fore: Pair;
+  /** Which way it last turned (1 its left, -1 its right): turning right round, it keeps on that way. */
+  turned: number;
 }
+
+/** Its shoulders, forward of its feet and up; and how far a forepaw reaches from one. */
+export const SHOULDER = { side: 2.3, x: 5, y: 4.6 } as const;
+export const FORE_REACH = 9;
 
 /** Where its feet stand about it, at rest: its hind toes under its belly, its forepaws under its chest. */
 export const HIND_REST = { side: 3.9, x: 0.6 } as const;
@@ -68,13 +74,14 @@ export const HIND_LIFT = 0.26;
 export const FORE_LAND = [0.58, 0.62] as const;
 export const HIND_LAND = 0.84;
 /** Its body's rise: from as it straightens to push off, till its forepaws have taken it. */
-const RISE = [0.14, 0.7] as const;
+const RISE = [0.1, 0.6] as const;
 /** Its speed through a hop, as a share of its speed in the air: slow gathered, fastest flying. */
 const PACE: readonly (readonly [number, number])[] = [
   [0.12, 0.3],
   [HIND_LIFT, 1],
   [FORE_LAND[0], 1],
-  [0.72, 0.25],
+  // Its forepaws down, it brakes on them hard.
+  [0.66, 0.2],
   [HIND_LAND, 0.1],
 ];
 /** Its speed, between hops it goes straight on into, as a share of its speed in the air. */
@@ -86,7 +93,7 @@ const ON = 0.08;
  * shortest worth hopping; and nearer than this, it's there.
  */
 export const MOST_LEAP = 60;
-const MOST_LEAP_DEEP = 100;
+const MOST_LEAP_DEEP = 70;
 const LEAST_LEAP = 5;
 export const ARRIVED = 9;
 /** Its hops a second: a little hop, a long bound. */
@@ -97,6 +104,12 @@ const MOST_TURN = 1.2;
 const MOST_PIVOT = 1.1;
 export const LEAST_PIVOT = 0.5;
 const PIVOT_S = 0.3;
+/** Turning right round (what it's after is behind it), how far it turns in one hop, and the hop's length in seconds. */
+const BEHIND = (2 * Math.PI) / 3;
+const MOST_REVERSE = 1.7;
+const REVERSE_S = 0.36;
+/** How far off it must be to set off from a stand: nearer, it waits, then goes in one hop. */
+const SET_OFF = 25;
 const PIVOT_HEIGHT = 2.5;
 
 const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -124,6 +137,7 @@ export const createHopper = (at: Spot, heading: number): Hopper => ({
   at,
   heading,
   leap: null,
+  turned: 0,
   u: 0,
 });
 
@@ -168,7 +182,7 @@ export const turnAt = (leap: Leap, u: number) =>
   wrap(leap.turnTo - leap.turnFrom) * smooth((u - TURNING[0]) / (TURNING[1] - TURNING[0]));
 
 /** How high its body is `u` through a hop: crouched to push off, up in an arc, down taking the landing. */
-export const liftAt = (leap: Leap, u: number) => {
+export const liftAt = (leap: Pick<Leap, "height">, u: number) => {
   const [up, down] = RISE;
   if (u < up) {
     return -0.15 * leap.height * Math.sin((Math.PI * u) / up);
@@ -183,11 +197,32 @@ export const liftAt = (leap: Leap, u: number) => {
 /** Whether all its feet are off the ground `u` through a hop. */
 export const isAirborne = (u: number) => u > HIND_LIFT && u < FORE_LAND[0];
 
+/**
+ * Where its forepaws land (`at`, and how far `ahead` of it, along its way):
+ * within reach of its shoulders as they come down, and, as its body goes on
+ * over them, as far ahead of them landing as they're left behind lifting. A
+ * last hop's land as near where they'll stand as they reach.
+ */
+const foreLandingOf = (leap: Way & Pick<Leap, "height" | "turnTo">, way: Spot, length: number) => {
+  const landing = bodyAt(leap, FORE_LAND[0]);
+  const high = SHOULDER.y + Math.max(0, liftAt(leap, FORE_LAND[0]));
+  const reach = Math.sqrt(Math.max(0, FORE_REACH ** 2 - high ** 2)) - 0.4;
+  // Going on, half its way on the ground; stopping, where its paws will stand.
+  const gone = Math.hypot(leap.to.x - landing.x, leap.to.z - landing.z);
+  const want = length > 0 ? gone / 2 : gone + FORE_REST.x - SHOULDER.x;
+  return { ahead: SHOULDER.x + Math.max(-reach, Math.min(reach, want)), at: landing };
+};
+
 /** Where it'd land its feet, a hop from `from` to `to` heading `turn`: just as it stands, a last hop; else its hind feet ahead, bounding. */
-const landingOf = (leap: Way & Pick<Leap, "turnTo">, last: boolean) => {
+const landingOf = (leap: Way & Pick<Leap, "height" | "turnTo">, last: boolean) => {
   const { to, turnTo } = leap;
   if (last) {
-    return standing(to, turnTo);
+    // Its hind feet just as it'll stand; its forepaws as near that as they reach, landing.
+    const fore = foreLandingOf(leap, { x: Math.cos(turnTo), z: Math.sin(turnTo) }, 0);
+    return {
+      fore: pairAt(fore.at, turnTo, fore.ahead, FORE_REST.side),
+      hind: standing(to, turnTo).hind,
+    };
   }
   const length = Math.hypot(to.x - leap.from.x, to.z - leap.from.z);
   const way =
@@ -197,8 +232,7 @@ const landingOf = (leap: Way & Pick<Leap, "turnTo">, last: boolean) => {
   // Each foot set down where its body will be halfway through its time on the ground (so it's as far
   // ahead landing as it's left behind lifting): its forepaws from their landing to the end of the hop,
   // its hind feet into the next, as far again as this one's push; its hind feet a little ahead besides, bounding.
-  const foreLanding = bodyAt(leap, FORE_LAND[0]);
-  const fore = { x: (foreLanding.x + to.x) / 2, z: (foreLanding.z + to.z) / 2 };
+  const fore = foreLandingOf(leap, way, length);
   const hindLanding = bodyAt(leap, HIND_LAND);
   const push = goneBy(leap, HIND_LIFT) * length;
   const hind = {
@@ -206,10 +240,44 @@ const landingOf = (leap: Way & Pick<Leap, "turnTo">, last: boolean) => {
     z: (hindLanding.z + to.z + way.z * push) / 2,
   };
   return {
-    fore: pairAt(fore, turnTo, FORE_REST.x, FORE_REST.side),
+    fore: pairAt(fore.at, turnTo, fore.ahead, FORE_REST.side),
     hind: pairAt(hind, turnTo, HIND_REST.x + 0.06 * length, HIND_REST.side),
   };
 };
+
+/** Its turn and hop toward what's `off` it (x, z): turning more than it hops, right round the way it's been turning. */
+/**
+ * How far it turns this hop toward `want` (radians from its heading), at most
+ * `most`: what it's after behind it, it turns right round, further, and the way
+ * it's been turning, not back and forth.
+ */
+const turnOf = (hopper: Hopper, want: number, most: number) => {
+  let toward = wrap(want);
+  const behind = Math.abs(toward) > BEHIND;
+  if (behind && hopper.turned !== 0 && Math.sign(toward) !== hopper.turned) {
+    toward += hopper.turned * Math.PI * 2;
+  }
+  const limit = behind ? MOST_REVERSE : most;
+  return Math.max(-limit, Math.min(limit, toward));
+};
+
+const towardOf = (hopper: Hopper, offX: number, offZ: number) => {
+  const { heading } = hopper;
+  const turn = turnOf(hopper, Math.atan2(offZ, offX) - heading, MOST_TURN);
+  const along = offX * Math.cos(heading + turn) + offZ * Math.sin(heading + turn);
+  const longest = MOST_LEAP + (MOST_LEAP_DEEP - MOST_LEAP) * Math.abs(Math.sin(heading + turn));
+  const length = Math.max(0, Math.min(longest, along));
+  return length < LEAST_LEAP && Math.abs(turn) < LEAST_PIVOT
+    ? { length: 0, turn: 0 }
+    : { length, turn };
+};
+
+/** How long a hop takes: a hop round where it stands, longer turning right round; a hop on, quicker the longer. */
+const secondsOf = (length: number, turn: number) =>
+  length === 0
+    ? PIVOT_S +
+      (REVERSE_S - PIVOT_S) * smooth((Math.abs(turn) - MOST_PIVOT) / (MOST_REVERSE - MOST_PIVOT))
+    : 1 / (LEAST_HOPS + (MOST_HOPS - LEAST_HOPS) * smooth(Math.min(1, length / MOST_LEAP)));
 
 /**
  * Its next hop toward `target` (null, it's to stay), or, there already, round
@@ -221,19 +289,12 @@ export const planLeap = (hopper: Hopper, target: Spot | null, face: number | nul
   const offX = target ? target.x - at.x : 0;
   const offZ = target ? target.z - at.z : 0;
   const away = Math.hypot(offX, offZ);
-  let turn = 0;
-  let length = 0;
-  if (target && away > ARRIVED) {
-    turn = Math.max(-MOST_TURN, Math.min(MOST_TURN, wrap(Math.atan2(offZ, offX) - heading)));
-    const along = offX * Math.cos(heading + turn) + offZ * Math.sin(heading + turn);
-    const most = MOST_LEAP + (MOST_LEAP_DEEP - MOST_LEAP) * Math.abs(Math.sin(heading + turn));
-    length = Math.max(0, Math.min(most, along));
-    if (length < LEAST_LEAP && Math.abs(turn) < LEAST_PIVOT) {
-      length = 0;
-      turn = 0;
-    }
+  let { length, turn } = { length: 0, turn: 0 };
+  // Setting off from a stand it waits till it's a hop's worth away; going, it goes on till it's there.
+  if (target && away > (going ? ARRIVED : SET_OFF)) {
+    ({ length, turn } = towardOf(hopper, offX, offZ));
   } else if (face !== null && Math.abs(wrap(face - heading)) > LEAST_PIVOT) {
-    turn = Math.max(-MOST_PIVOT, Math.min(MOST_PIVOT, wrap(face - heading)));
+    turn = turnOf(hopper, face - heading, MOST_PIVOT);
   }
   if (length === 0 && turn === 0) {
     return null;
@@ -246,7 +307,7 @@ export const planLeap = (hopper: Hopper, target: Spot | null, face: number | nul
     end: last ? 0 : ON,
     from: at,
     height: length === 0 ? PIVOT_HEIGHT : PIVOT_HEIGHT + 7 * smooth(size),
-    seconds: length === 0 ? PIVOT_S : 1 / (LEAST_HOPS + (MOST_HOPS - LEAST_HOPS) * smooth(size)),
+    seconds: secondsOf(length, turn),
     size,
     start: going ? ON : 0,
     to: { x: at.x + way.x * length, z: at.z + way.z * length },
@@ -296,6 +357,10 @@ export const stepHopper = (hopper: Hopper, seconds: number, plan: () => Leap | n
     // Landed: it stands where it came down, and plans on.
     hopper.at = leap.to;
     hopper.heading = wrap(leap.turnTo);
+    const turned = wrap(leap.turnTo - leap.turnFrom);
+    if (Math.abs(turned) > 0.2) {
+      hopper.turned = Math.sign(turned);
+    }
     hopper.hind = leap.hind;
     hopper.fore = leap.fore;
     hopper.leap = plan();
@@ -321,7 +386,8 @@ const footAt = (pin: Pin, landing: Pin, lift: number, land: number, u: number, h
   const w = (u - lift) / (land - lift);
   const e = smooth(w);
   return {
-    height: height * Math.sin(Math.PI * w),
+    // Lifted and set down softly: no speed up or down as it leaves the ground or touches it.
+    height: height * 16 * w * w * (1 - w) * (1 - w),
     swing: w,
     turn: pin.turn + wrap(landing.turn - pin.turn) * e,
     x: pin.x + (landing.x - pin.x) * e,
@@ -334,6 +400,9 @@ const pairOf = <T>(pair: Pair, each: (pin: Pin, index: number) => T): readonly [
   each(pair[0], 0),
   each(pair[1], 1),
 ];
+
+/** How much of its body's rise a swinging foot is carried up by: all of it, coming down to none as it touches down. */
+const settling = (swing: number) => 1 - smooth((swing - 0.55) / 0.45);
 
 /** Its feet now: its hind feet together, its forepaws one just after the other. */
 export const feetOf = (hopper: Hopper) => {
@@ -355,11 +424,17 @@ export const feetOf = (hopper: Hopper) => {
         u,
         clear,
       );
-      return { ...swung, height: swung.swing >= 0 ? swung.height + body * 0.75 : 0 };
+      return {
+        ...swung,
+        height: swung.swing >= 0 ? swung.height + body * 0.75 * settling(swung.swing) : 0,
+      };
     }),
     hind: pairOf(hopper.hind, (pin, index) => {
       const swung = footAt(pin, leap.hind[index] ?? pin, HIND_LIFT, HIND_LAND, u, clear * 1.2);
-      return { ...swung, height: swung.swing >= 0 ? swung.height + body * 0.85 : 0 };
+      return {
+        ...swung,
+        height: swung.swing >= 0 ? swung.height + body * 0.85 * settling(swung.swing) : 0,
+      };
     }),
   };
 };

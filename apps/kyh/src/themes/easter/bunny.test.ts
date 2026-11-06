@@ -3,10 +3,10 @@ import test from "node:test";
 
 import type { Point } from "../follower/walk";
 import type { Bunny } from "./bunny";
-import { PITCH } from "../follower/solid";
-import { bunnyPose, hopOf } from "./bunny-pose";
+import { PITCH, toScreen } from "../follower/solid";
+import { bunnyPose, geometryOf, hopOf, SIZE } from "./bunny-pose";
 import { createBunny, pokeBunny, stepBunny } from "./bunny";
-import { feetOf, HIND_LIFT, isAirborne, planLeap, TURNING } from "./hop";
+import { FORE_LAND, FORE_REACH, feetOf, HIND_LIFT, isAirborne, planLeap, TURNING } from "./hop";
 
 const STILL: Point = { x: 0, y: 0 };
 
@@ -18,9 +18,10 @@ const middleOf = (bunny: Bunny, part: string) => {
       pose.parts[part]?.d ?? "",
     )?.groups;
   assert.ok(found, part);
+  // Drawn `SIZE` times its own pixels about where it is.
   return {
-    x: pose.at.x + Number(found.x) + Number(found.dx) / 2,
-    y: pose.at.y + Number(found.y) + Number(found.dy) / 2,
+    x: pose.at.x + (Number(found.x) + Number(found.dx) / 2) * SIZE,
+    y: pose.at.y + (Number(found.y) + Number(found.dy) / 2) * SIZE,
   };
 };
 
@@ -224,8 +225,8 @@ test("its ears lean the same at any frame rate", () => {
     let pointer = HOME;
     let sum = 0;
     let count = 0;
-    // Back and forth for seven seconds: long enough that the swinging averages out.
-    for (let frame = 0; frame < 8 * fps; frame += 1) {
+    // Back and forth for eighteen seconds: long enough that the swinging, and which hops it happens to take, average out.
+    for (let frame = 0; frame < 19 * fps; frame += 1) {
       const t = frame / fps;
       const by = t > 1 ? { x: ((t % 3 < 1.5 ? 1 : -1) * 300) / fps, y: 0 } : STILL;
       pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
@@ -307,8 +308,8 @@ test("its layers stay in order while it hops, any way", () => {
       },
     );
     const hops = bunny.hop - hop0;
-    // Its near hind leg comes out from under its haunch and goes back once a hop: no more.
-    assert.ok(changes <= hops * 2 + 2, `${k}: ${changes} changes in ${hops} hops`);
+    // Hopping straight on, nothing changes sides: at most a couple settling in.
+    assert.ok(changes <= 3, `${k}: ${changes} changes in ${hops} hops`);
   }
 });
 
@@ -327,4 +328,137 @@ test("clicked elsewhere while it hops round where it stands, it finishes turning
     }
   }
   assert.ok(thumped);
+});
+
+test("its forepaws come down within reach of its shoulders, and land without a jump", () => {
+  for (const way of WAYS) {
+    const bunny = settled();
+    let farthest = 0;
+    // How much more its paw moves on the frame it lands than the frame before: it should be slowing.
+    let landingJump = Number.NEGATIVE_INFINITY;
+    let last: Point | null = null;
+    let lastMove = 0;
+    chase(bunny, HOME, { x: way.x * 220, y: way.y * 220 }, 2.5, 0.5, () => {
+      const { fores } = geometryOf(bunny);
+      const [fore] = fores;
+      if (!fore) {
+        return;
+      }
+      const down = feetOf(bunny.hopper).fore[0].swing < 0;
+      const off = [
+        fore.shoulder[0] - fore.at[0],
+        fore.shoulder[1] - fore.at[1],
+        fore.shoulder[2] - fore.at[2],
+      ];
+      if (down && Math.max(bunny.rig.stand.x, bunny.rig.groom.x) < 0.005) {
+        farthest = Math.max(farthest, Math.hypot(off[0] ?? 0, off[1] ?? 0, off[2] ?? 0));
+      }
+      // Its paw on the screen, against its body: how far it moves as it lands.
+      const local = toScreen(fore.at);
+      const seen = { x: bunny.walker.x + local.x * SIZE, y: bunny.walker.y + local.y * SIZE };
+      const { leap, u } = bunny.hopper;
+      const landing =
+        leap !== null && u >= FORE_LAND[0] && u - 1 / (leap.seconds * 60) < FORE_LAND[0];
+      const move = last ? Math.hypot(seen.x - last.x, seen.y - last.y) : 0;
+      if (landing && last) {
+        landingJump = Math.max(landingJump, move - lastMove);
+      }
+      last = seen;
+      lastMove = move;
+    });
+    assert.ok(
+      farthest <= FORE_REACH + 0.5,
+      `${JSON.stringify(way)}: a planted paw ${farthest} from its shoulder`,
+    );
+    assert.ok(
+      landingJump < 0.5,
+      `${JSON.stringify(way)}: its paw sped up ${landingJump}px landing`,
+    );
+  }
+});
+
+test("hopping away from the camera its ears stay up, not flattened onto its head", () => {
+  const bunny = settled();
+  chase(bunny, HOME, { x: 0, y: -160 }, 2, 0, (frame) => {
+    if (frame > 30) {
+      for (const ear of bunny.ears) {
+        const [root] = ear.knots;
+        const tip = ear.knots.at(-1);
+        assert.ok(
+          root && tip && root.y - tip.y > 6,
+          `ear tip ${root && tip ? root.y - tip.y : 0}px above its root`,
+        );
+      }
+    }
+  });
+});
+
+test("sat up tall its ears stand up, side on either way", () => {
+  for (const heading of [0, Math.PI]) {
+    const bunny = settled();
+    bunny.act = "stand";
+    bunny.actFor = 0;
+    for (let frame = 0; frame < 60; frame += 1) {
+      bunny.hopper.heading = heading;
+      bunny.rig.gaze.x = heading;
+      stepBunny(bunny, { x: bunny.walker.x + 54, y: bunny.walker.y - 28 }, STILL, 1 / 60);
+    }
+    assert.ok(bunny.rig.stand.x > 0.8);
+    for (const rest of geometryOf(bunny).ears) {
+      const [root] = rest.points;
+      const tip = rest.points.at(-1);
+      const lean = root && tip ? Math.abs(Math.atan2(tip[0] - root[0], tip[1] - root[1])) : Math.PI;
+      assert.ok(lean < 0.6, `heading ${heading}: ear ${(lean * 180) / Math.PI}° from upright`);
+    }
+  }
+});
+
+test("sat up facing the camera its forepaws dangle below its shoulders", () => {
+  const bunny = settled();
+  bunny.act = "stand";
+  bunny.actFor = 0;
+  for (let frame = 0; frame < 60; frame += 1) {
+    bunny.hopper.heading = Math.PI / 2;
+    bunny.rig.gaze.x = Math.PI / 2;
+    stepBunny(bunny, { x: bunny.walker.x + 54, y: bunny.walker.y - 28 }, STILL, 1 / 60);
+  }
+  for (const fore of geometryOf(bunny).fores) {
+    const drop = toScreen(fore.at).y - toScreen(fore.shoulder).y;
+    assert.ok(drop > 3, `its paw ${drop}px below its shoulder`);
+  }
+});
+
+test("its muzzle is all there or not at all: never see-through", () => {
+  const bunny = settled();
+  chase(bunny, HOME, { x: -220, y: 90 }, 3, 0.5, () => {
+    for (const [name, part] of Object.entries(bunnyPose(bunny).parts)) {
+      if (name.startsWith("pad")) {
+        assert.ok(
+          part.opacity === undefined || part.opacity === 0 || part.opacity === 1,
+          `${name}: ${part.opacity}`,
+        );
+      }
+    }
+  });
+});
+
+test("turning right round after the mouse, it turns one way, not back and forth", () => {
+  for (const speed of [150, 250]) {
+    const bunny = settled();
+    const pointer = chase(bunny, HOME, { x: speed, y: 0 }, 1.5, 0);
+    const turns: number[] = [];
+    let was = bunny.hopper.leap;
+    chase(bunny, pointer, { x: -speed, y: 0 }, 2, 0, () => {
+      const { leap } = bunny.hopper;
+      if (leap && leap !== was && Math.abs(leap.turnTo - leap.turnFrom) > 0.3) {
+        turns.push(Math.sign(leap.turnTo - leap.turnFrom));
+      }
+      was = leap;
+    });
+    // Its big turns, round to face the other way, all one way.
+    assert.ok(
+      turns.length > 0 && turns.every((sign) => sign === turns[0]),
+      `${speed}: ${turns.join(" ")}`,
+    );
+  }
 });
