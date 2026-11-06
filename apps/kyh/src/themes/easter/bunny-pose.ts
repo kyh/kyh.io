@@ -72,6 +72,7 @@ const HEAD_RADII: Vec3 = [6.4, 5.5, 5];
 const PAD: Vec3 = [5, -2.3, 1.45];
 const PAD_RADII: Vec3 = [2.3, 2.1, 1.9];
 const NOSE: Vec3 = [6.9, -0.9, 0];
+const NOSE_TIP: Vec3 = [8.2, -0.9, 0];
 /** Its eyes: which way from its head's middle, and how big. */
 const EYE: Vec3 = [0.42, 0.34, 0.84];
 const EYE_R = 1.75;
@@ -96,6 +97,9 @@ const THIGH = 5.2;
 const SHIN = 7.6;
 /** Its shoulders, in its own pixels (`hop.ts` plans its forepaws within reach of them). */
 const SHOULDER_AT: Vec3 = [SHOULDER.x, SHOULDER.y, SHOULDER.side];
+/** Grooming, which way from its head's middle its paws scrub (up and down by the middle one), and how far off it. */
+const PAW_WASH: Vec3 = [0.8, 0.55, 0.45];
+const PAW_OFF_HEAD = 1.6;
 /** Its hind feet kicked out behind in a binky: soles up, toes trailing. */
 const KICKED = 2.85;
 /** What it pitches about: over its hind feet; what its rear lifts about, stamping: its forepaws. And the middle it squashes and stretches about. */
@@ -403,8 +407,14 @@ const foreOf = (
   // Up off the ground: dangling below its shoulders sat up or flying; rubbing its face grooming.
   const forward: Vec3 = [Math.cos(frame.heading), 0, Math.sin(frame.heading)];
   const hanging = add(add(shoulder, [0, -5, 0]), scale(forward, 2.2));
+  // Up and down beside its nose, just off its head: on it, not in it.
   const scrub = bunny.time * 7 + index * Math.PI;
-  const face = head.point([3.4 + 0.8 * Math.sin(scrub), -3.2 + 2.4 * Math.sin(scrub), side * 2]);
+  const wash = surfaceOf(HEAD_RADII, [
+    PAW_WASH[0],
+    PAW_WASH[1] * Math.sin(scrub),
+    PAW_WASH[2] * side,
+  ]);
+  const face = head.point(add(wash.at, scale(wash.normal, PAW_OFF_HEAD)));
   const groom = rig.groom.x;
   const up = Math.max(rig.stand.x, groom, smooth(binky.lift / 6));
   const raised = add(scale(hanging, 1 - groom), scale(face, groom));
@@ -578,21 +588,35 @@ const puffPath = (center: Point, r: number, shift: Point = UNMOVED) => {
   return `${d}Z`;
 };
 
-/**
- * How far a point is in front of a solid's near side, along the camera's line
- * through it (negative behind it); null if the line misses the solid, so
- * they don't overlap on the screen.
- */
-const aheadOf = (point: Vec3, { center, radii, turn }: Ellipsoid) => {
-  // In the solid's own axes, scaled to a unit sphere: the point, and the camera's way.
+/** In a solid's own axes, scaled to a unit sphere: a point, and the camera's way. */
+const unitOf = (point: Vec3, { center, radii, turn }: Ellipsoid) => {
   const [ax, ay, az] = [turn([1, 0, 0]), turn([0, 1, 0]), turn([0, 0, 1])];
   const unit = (v: Vec3): Vec3 => [
     dot(ax, v) / radii[0],
     dot(ay, v) / radii[1],
     dot(az, v) / radii[2],
   ];
-  const q = unit(sub(point, center));
-  const e = unit(TOWARD_CAMERA);
+  return { e: unit(TOWARD_CAMERA), q: unit(sub(point, center)) };
+};
+
+/**
+ * How far a point is from hiding behind a solid, in the solid's radii: past
+ * zero it's either before the solid's middle or out past its outline. Unlike
+ * `aheadOf` it has a value all the way round, so it can be kept steady.
+ */
+const clearOf = (point: Vec3, ellipsoid: Ellipsoid) => {
+  const { e, q } = unitOf(point, ellipsoid);
+  const before = dot(q, normalize(e));
+  return Math.max(before, Math.sqrt(Math.max(0, dot(q, q) - before ** 2)) - 1);
+};
+
+/**
+ * How far a point is in front of a solid's near side, along the camera's line
+ * through it (negative behind it); null if the line misses the solid, so
+ * they don't overlap on the screen.
+ */
+const aheadOf = (point: Vec3, ellipsoid: Ellipsoid) => {
+  const { e, q } = unitOf(point, ellipsoid);
   const a = dot(e, e);
   const b = 2 * dot(q, e);
   const c = dot(q, q) - 1;
@@ -847,6 +871,10 @@ const steady = (was: boolean | undefined, margin: number, band: number) => {
 const SETTLED = 0.8;
 /** Which side of its body its haunches, forelegs and tail show, by which way they face: a band so a hop's pitch can't flip them. */
 const FACING_BAND = 0.15;
+/** How far its nose must be past its head's outline, in its head's radii, to change which side its muzzle's drawn: a hop's pitch and a sniff's nod stay inside it. */
+const MUZZLE_BAND = 0.1;
+/** How far grooming goes before its paws are up about its head, and not on the ground. */
+const PAWS_UP = 0.3;
 /** Its haunches', forelegs' and tail's ways out from its body. */
 const HAUNCH_OUT: Vec3 = [-0.6, 0, 0.8];
 const FORE_OUT: Vec3 = [0.6, 0, 0.8];
@@ -860,6 +888,7 @@ const OVER = {
   head: 2.5,
   hind: 0.5,
   kicked: 1.4,
+  muzzle: 0.4,
   tail: 1.2,
 } as const;
 
@@ -879,17 +908,18 @@ const sideOf = (
 
 /** Which of its parts are on the near side of its body (and its paws before its head) this frame, for the behavior to keep. */
 export const sidesOf = (bunny: Bunny): Record<string, boolean> => {
-  const { body, ears, fores, frame, head } = geometryOf(bunny);
+  const { body, ears, frame, head } = geometryOf(bunny);
   const was = bunny.sides;
   const torsoDepth = depthOf(body.torsoAt);
   const torso: Ellipsoid = { center: body.torsoAt, radii: TORSO_RADII, turn: frame.turn };
   const headSolid: Ellipsoid = { center: head.at, radii: HEAD_RADII, turn: head.direction };
   const entries: [string, boolean][] = [];
   for (const [index, side] of ([1, -1] as const).entries()) {
-    const paw = fores[index]?.at ?? [0, 0, 0];
     const points = ears[index]?.points ?? [];
     const ear = head.point(points[2] ?? EAR_ROOT);
     const out = (way: Vec3) => toward(frame.turn([way[0], way[1], way[2] * side]));
+    // Which side of its head its paw scrubs: where it is in a scrub mustn't move it over and under.
+    const cheek = toward(head.direction([PAW_WASH[0], 0, PAW_WASH[2] * side]));
     // Its ear over its body where they overlap by which is in front; else by its depth, steadily.
     const earAbove = steady(
       was[`ear-${index}`],
@@ -898,14 +928,14 @@ export const sidesOf = (bunny: Bunny): Record<string, boolean> => {
     );
     entries.push(
       [`fore-${index}`, steady(was[`fore-${index}`], out(FORE_OUT), FACING_BAND)],
-      [`fore-${index}-head`, sideOf(paw, [headSolid], was[`fore-${index}-head`], false)],
+      [`fore-${index}-head`, steady(was[`fore-${index}-head`], cheek, FACING_BAND)],
       [`ear-${index}`, sideOf(ear, [torso], was[`ear-${index}`], earAbove)],
       [`haunch-${index}`, steady(was[`haunch-${index}`], out(HAUNCH_OUT), FACING_BAND)],
     );
   }
   entries.push(
-    // Its muzzle on its head's near side, till it's turned well away.
-    ["pads", steady(was.pads, toward(head.direction([1, -0.2, 0])) + 0.15, FACING_BAND)],
+    // Its muzzle before its head till the tip of its nose has gone in behind its outline.
+    ["pads", steady(was.pads, clearOf(head.point(NOSE_TIP), headSolid), MUZZLE_BAND)],
     ["tail", steady(was.tail, toward(frame.turn(TAIL_OUT_WAY)), FACING_BAND)],
     // Its head over its body but turned away, steadily: a hop's pitch can't flip it.
     ["head", steady(was.head, depthOf(head.at) - torsoDepth, SETTLED * 2)],
@@ -924,7 +954,7 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
     ["head", headDepth],
     // Parts on another (the muzzle on its head, its ears in it) before it or after it by which side of it they're on, going round.
     // Its muzzle before its head or behind it by the one steady test its pads' ink keeps to.
-    ["muzzle", headDepth + (sides.pads === false ? -0.4 : 0.4)],
+    ["muzzle", headDepth + (sides.pads === false ? -OVER.muzzle : OVER.muzzle)],
     // Each part on its body over or under it by the side it's on (kept steady in `sidesOf`).
     ["tail", torsoDepth + (sides.tail ? OVER.tail : -OVER.tail)],
     ...ears.map(({ depth }, index): [string, number] => [
@@ -945,12 +975,18 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
       }
       return [`hind-${index}`, torsoDepth + (kicked ? OVER.kicked : OVER.hind)];
     }),
-    // A forepaw before or behind its body; up at its face, before its head.
+    // A forepaw before or behind its body; up at its face, over all of its head, or under all of it.
     ...geometry.fores.map((_, index): [string, number] => {
-      if (sides[`fore-${index}-head`]) {
-        return [`fore-${index}`, headDepth + 0.2];
+      const beside = torsoDepth + (sides[`fore-${index}`] ? OVER.fore : -OVER.fore);
+      if (bunny.rig.groom.x < PAWS_UP) {
+        return [`fore-${index}`, beside];
       }
-      return [`fore-${index}`, torsoDepth + (sides[`fore-${index}`] ? OVER.fore : -OVER.fore)];
+      return [
+        `fore-${index}`,
+        sides[`fore-${index}-head`]
+          ? Math.max(headDepth, torsoDepth) + 2 * OVER.muzzle
+          : Math.min(beside, headDepth - 2 * OVER.muzzle),
+      ];
     }),
   ];
   return layers.toSorted((a, b) => a[1] - b[1]).map(([name]) => name);

@@ -95,7 +95,7 @@ const ON = 0.08;
 export const MOST_LEAP = 60;
 const MOST_LEAP_DEEP = 70;
 const LEAST_LEAP = 5;
-export const ARRIVED = 9;
+const ARRIVED = 9;
 /** Its hops a second: a little hop, a long bound. */
 const LEAST_HOPS = 2.8;
 const MOST_HOPS = 4.2;
@@ -109,7 +109,7 @@ const BEHIND = (2 * Math.PI) / 3;
 const MOST_REVERSE = 1.7;
 const REVERSE_S = 0.36;
 /** How far off it must be to set off from a stand: nearer, it waits, then goes in one hop. */
-const SET_OFF = 25;
+export const SET_OFF = 25;
 const PIVOT_HEIGHT = 2.5;
 
 const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));

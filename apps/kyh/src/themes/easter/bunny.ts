@@ -39,7 +39,7 @@ import {
   THUMP_BEATS,
   thumpAt,
 } from "./bunny-pose";
-import { ARRIVED, createHopper, isAirborne, placeOf, planLeap, stepHopper } from "./hop";
+import { createHopper, isAirborne, placeOf, planLeap, SET_OFF, stepHopper } from "./hop";
 import { jiggleAt, stepJiggle } from "./jiggle";
 import { stiffen } from "./stiffen";
 
@@ -98,8 +98,6 @@ export interface Bunny {
   sides: Record<string, boolean>;
   /** A binky or a thump asked for while it was hopping: it does it once it's landed. */
   queued: Act | null;
-  /** Seconds its chains are owed, short of a whole step of theirs. */
-  chainOwed: number;
   /** Counts its steps, so what's worked out from it once a step is worked out once (`bunny-pose.ts`). */
   version: number;
 }
@@ -118,6 +116,10 @@ const AWAY_FROM_MOUSE = 20;
 const RESTING_S = 0.08;
 /** Petted, how far from straight at the camera it turns: a three-quarter view. */
 const PETTED_TURN = 0.5;
+/** Seconds the mouse must be still before it settles to the camera: a pause isn't a stop. */
+const SETTLING_S = 0.4;
+/** Settled, the farthest from straight at the camera it stands: three-quarters on, its face and whatever it's up to in view. */
+const SETTLED_TURN = 0.85;
 const IDLE: readonly Act[] = ["sniff", "sniff", "groom", "stand"];
 /** Acts it holds still for, whatever the mouse does, till they're done. */
 const KEPT: ReadonlySet<Act> = new Set<Act>(["binky", "thump"]);
@@ -125,14 +127,14 @@ const KEPT: ReadonlySet<Act> = new Set<Act>(["binky", "thump"]);
 /** Its ears: stiff at the root and soft toward the tip; the right one softer and heavier, so it flops more. */
 const EARS: readonly [Stuff, Stuff] = [
   { damp: 7, drag: 0.005, keep: 0.14, keepTip: 0.022, rub: 0.45, weight: 30 },
-  { damp: 5.5, drag: 0.006, keep: 0.11, keepTip: 0.014, rub: 0.5, weight: 70 },
+  { damp: 5.5, drag: 0.006, keep: 0.11, keepTip: 0.02, rub: 0.5, weight: 50 },
 ];
 /** The most an ear's joint bends from its rest, radians: it bends along its length, never kinks. */
 const EAR_BEND = 0.3;
 /** And its root's swing from where it stands, held by the muscles at its base. */
 const EAR_ROOT_BEND = 0.4;
-/** The chains' fixed step (`../follower/chain.ts` steps at 120Hz). */
-const CHAIN_STEP = 1 / 120;
+/** And about the most it swings in a step of its chain, root to tip, radians. */
+const EAR_SWING = 0.14;
 /** Its tail: a short stiff puff that wobbles. */
 const TAIL: Stuff = { damp: 4.5, drag: 0.004, keep: 0.09, keepTip: 0.09, rub: 0.3, weight: 0 };
 /** How quickly its head turns to where it's going. */
@@ -154,7 +156,6 @@ export const createBunny = (at: Point): Bunny => {
     act: "none",
     actFor: 0,
     breath: 0,
-    chainOwed: 0,
     ears: [
       { knots: [], owed: 0 },
       { knots: [], owed: 0 },
@@ -204,6 +205,16 @@ const isOn = (bunny: Bunny, at: Point) => isOnWalker(bunny.walker, at, 18 * SIZE
 
 const isHopping = (bunny: Bunny) => bunny.hopper.leap !== null;
 
+/** Which way it'd stand: to the mouse; settled, no further from the camera than three-quarters on. */
+const faceOf = (bunny: Bunny, pointer: Point) => {
+  const { hopper, walker } = bunny;
+  const goal = faceGoal({ ...walker, speed: 0 }, pointer, hopper.heading, 0);
+  if (walker.still < SETTLING_S || Math.sin(goal) >= Math.cos(SETTLED_TURN)) {
+    return goal;
+  }
+  return Math.PI / 2 + (Math.cos(goal) >= 0 ? -SETTLED_TURN : SETTLED_TURN);
+};
+
 /** Where it'd hop to, and which way it'd turn to stood there: null, it's to stay as it is. */
 const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean) => {
   const { act, walker } = bunny;
@@ -220,10 +231,7 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
     return { face, target: null };
   }
   const spot = spotOf(walker, GAIT, pointer);
-  const face =
-    dozing || act !== "none"
-      ? null
-      : faceGoal({ ...walker, speed: 0 }, pointer, bunny.hopper.heading, 0);
+  const face = dozing || act !== "none" ? null : faceOf(bunny, pointer);
   // Its spot swinging round behind a mouse that's turned back, it won't hop away from the mouse to
   // get there: it waits, turned to the mouse, till its spot's come round.
   const toSpot = { x: spot.x - walker.x, y: (spot.y - walker.y) / SIN };
@@ -232,7 +240,7 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
     toSpot.x * toMouse.x + toSpot.y * toMouse.y < 0 &&
     Math.hypot(toMouse.x, toMouse.y) > AWAY_FROM_MOUSE;
   return {
-    face: away ? faceGoal({ ...walker, speed: 0 }, pointer, bunny.hopper.heading, 0) : face,
+    face: away ? faceOf(bunny, pointer) : face,
     target: away ? null : groundOf(spot),
   };
 };
@@ -240,7 +248,7 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
 /** Whether it's somewhere to go: far enough from where it'd be that it'll hop. */
 const isLeaving = (bunny: Bunny, target: Spot | null) => {
   const { at } = bunny.hopper;
-  return target !== null && Math.hypot(target.x - at.x, target.z - at.z) > ARRIVED * 1.5;
+  return target !== null && Math.hypot(target.x - at.x, target.z - at.z) > SET_OFF;
 };
 
 /** What it's up to: dozing or not, and its next bit of business when it's idle. */
@@ -414,24 +422,14 @@ const stepHops = (bunny: Bunny, want: ReturnType<typeof wantOf>, seconds: number
 
 /** Its ears and tail after where they hang this frame, the air on them as it goes. */
 const stepChains = (bunny: Bunny, seconds: number) => {
-  // Handed whole steps of the chains' own (`CHAIN_STEP`), and nothing between: a frame shorter than a
-  // step would carry them along whole, without the air, and its ears would lean less at 144Hz than at 60.
-  // Drawn about their roots, they never come away from it in a frame they're not stepped.
-  bunny.chainOwed += Math.max(0, seconds);
-  const steps = Math.floor(bunny.chainOwed / CHAIN_STEP);
-  if (steps === 0) {
-    return;
-  }
-  bunny.chainOwed -= steps * CHAIN_STEP;
-  const span = steps * CHAIN_STEP + CHAIN_STEP * 1e-6;
   const hangs = hangsOf(bunny);
   for (const [index, ear] of bunny.ears.entries()) {
     const hang = hangs.ears[index] ?? hangs.ears[0];
-    stepChain(ear, hang, EARS[index] ?? EARS[0], span, (held) => {
-      stiffen(held, hang, EAR_BEND, EAR_ROOT_BEND);
+    stepChain(ear, hang, EARS[index] ?? EARS[0], seconds, (held) => {
+      stiffen(held, hang, EAR_BEND, EAR_ROOT_BEND, EAR_SWING);
     });
   }
-  stepChain(bunny.tail, hangs.tail, TAIL, span);
+  stepChain(bunny.tail, hangs.tail, TAIL, seconds);
 };
 
 /** Its breath, nose and ears, alive while it's still. */
