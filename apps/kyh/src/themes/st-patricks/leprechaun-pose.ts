@@ -65,11 +65,11 @@ import {
 } from "./leprechaun-acts";
 
 const COAT: Vec3 = [0.4, 19.6, 0];
-const COAT_RADII: Vec3 = [6.8, 9.2, 7.4];
+const COAT_RADII: Vec3 = [6.8, 9.2, 8];
 const BELT_Y = 16.8;
 const HIP: Vec3 = [0, 12.4, 2.6];
 const LEG = [5.6, 5.6] as const;
-const ARM = [6.2, 6] as const;
+const ARM = [6.6, 6.4] as const;
 const ANKLE = 1.9;
 /** The coat's tails, hung from the small of his back, root to tip (z flipped for his right). */
 const TAIL: readonly Vec3[] = [
@@ -84,7 +84,13 @@ const BEARD: readonly Vec3[] = [
   [4.2, -9.6, 0],
   [3.4, -12.8, 0],
 ];
-const BRIM: readonly [number, number] = [7.4, 6.2];
+const BRIM: readonly [number, number] = [7.8, 6.8];
+/** His hair: the cap of his head behind and above a plane tipped up at the back (his nape bare). */
+const HAIR_NORMAL: Vec3 = [-0.7, 1, 0];
+const HAIR_OFFSET = 0.4;
+/** His beard: the cap of a shell about his jaw below a plane tipped down at the front. */
+const BEARD_NORMAL: Vec3 = [0.25, -1, 0];
+const BEARD_OFFSET = 0.4;
 const CROWN = { bottom: 4.9, high: 9, top: 4.3 } as const;
 /** His shoe about the sole under his ankle: its sole round, then its upper. */
 const SHOE: readonly Vec3[] = [
@@ -114,6 +120,8 @@ const BALL: readonly Vec3[] = [
 ];
 
 const COS = Math.cos(PITCH);
+/** Turned this far from the camera (his face's facing, level), his face is gone, and goes under his coat. */
+const FACE_AWAY = -0.42;
 
 /** A point of the stage lifted back into the world on the camera's own plane: a chain's knot, for a hull. */
 const lifted = (at: Point): Vec3 => [at.x, -at.y / COS, 0];
@@ -287,7 +295,8 @@ const swungOf = (at: Vec3, home: Vec3, swinging: boolean): Vec3 => {
   const keep = SWUNG / far;
   return [
     home[0] + (at[0] - home[0]) * keep,
-    at[1] + Math.min(4.5, (far - SWUNG) * 0.5),
+    // Kicked up only so far: his knee bends no more than a runner's.
+    at[1] + Math.min(2.6, (far - SWUNG) * 0.3),
     home[2] + (at[2] - home[2]) * keep,
   ];
 };
@@ -375,22 +384,17 @@ const armOf = (leprechaun: Leprechaun, frame: Frame, index: number) => {
 const nearOf = (at: Vec3) => at[2] * COS;
 
 /**
- * How far in front of his body each arm is (its nearer end, against his
- * coat, which it hangs beside rather than behind, so it leans front), and,
- * raised, in front of his head: for `leprechaun.ts` to settle which side each
- * is drawn on without flickering as it swings.
+ * How far in front of his head each arm is, raised (its forearm's middle;
+ * -9, lowered): for `leprechaun.ts` to settle which side of his head each is
+ * drawn on without flickering as it swings.
  */
 export const armSidesOf = (leprechaun: Leprechaun) => {
   const frame = frameOf(leprechaun);
-  const coat = nearOf(frame.place(COAT));
   const head = nearOf(headOf(leprechaun, frame).center);
   return [0, 1].map((index) => {
     const { elbow, hand } = armOf(leprechaun, frame, index);
     const raised = hand[1] - frame.lift > SHOULDER[1] + 3;
-    return {
-      body: Math.max(nearOf(elbow), nearOf(hand)) - coat + 0.9,
-      head: raised ? nearOf(mix(elbow, hand, 0.5)) - head : -9,
-    };
+    return { head: raised ? nearOf(mix(elbow, hand, 0.5)) - head : -9 };
   });
 };
 
@@ -428,10 +432,8 @@ const flapPath = (points: readonly Point[], widths: readonly number[]) => {
 const tailsOf = (leprechaun: Leprechaun, frame: Frame) => {
   const origin = { x: leprechaun.walker.x, y: leprechaun.walker.y };
   const broad = 0.4 + 0.6 * Math.abs(dot(frame.turn([-1, 0, 0]), TOWARD_CAMERA));
-  return leprechaun.tails.map((chain, index) => {
+  return leprechaun.tails.map((chain) => {
     const points = chainAbout(chain, origin);
-    const side = sideOf(index);
-    const root = frame.place([TAIL[0]?.[0] ?? 0, TAIL[0]?.[1] ?? 0, side * (TAIL[0]?.[2] ?? 0)]);
     return {
       d:
         points.length > 1
@@ -440,10 +442,13 @@ const tailsOf = (leprechaun: Leprechaun, frame: Frame) => {
               [3, 3.9, 3.7, 2.6].map((w) => w * broad),
             )
           : "",
-      near: nearOf(root) - nearOf(frame.place(COAT)),
     };
   });
 };
+
+/** How much a direction points toward the camera, level: its tilt up or down aside. */
+const forwardLevel = (direction: Vec3) =>
+  direction[2] / (Math.hypot(direction[0], direction[2]) || 1);
 
 /** His face, on his head: beard, nose, cheeks, eyes, brows, the mouth in his beard. */
 const faceOf = (leprechaun: Leprechaun, head: Head) => {
@@ -455,14 +460,11 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
   };
   const origin = { x: leprechaun.walker.x, y: leprechaun.walker.y };
   const knots = chainAbout(leprechaun.beard, origin).map(lifted);
-  // His beard: the lower back-tipped cap of a shell about his jaw, and its point hanging from his chin.
-  const radii: Vec3 = [r * 1.1, r * 1.04, r * 1.14];
-  const shell = {
-    center: head.at([0.5, -1, 0]),
-    radii,
-    turn: head.turn,
-  };
-  const jaw = capPath(shell, [-0.25, -1, 0], 0);
+  // His beard: the cap of a shell about his jaw, its chin and the front of his jaw (his cheeks and nape
+  // bare), and its point hanging from his chin.
+  const radii: Vec3 = [r * 1.08, r * 1.02, r * 1.08];
+  const shell = { center: head.at([0.4, -0.8, 0]), radii, turn: head.turn };
+  const jaw = capPath(shell, BEARD_NORMAL, BEARD_OFFSET);
   const chin = [
     head.at([3.8, -5, 3.6]),
     head.at([3.8, -5, -3.6]),
@@ -474,7 +476,7 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
   const mouth = [-0.35, 0, 0.35].map(
     (z, index) => on([0.82, -0.6 + (index === 1 ? -0.06 : 0), z], r * 1.08).at,
   );
-  const eyes = [1, -1].map((side) => on([0.8, 0.2, side * 0.56]));
+  const eyes = [1, -1].map((side) => on([0.8, 0.22, side * 0.5]));
   const brows = [1, -1].map((side) => {
     const lift = 0.4 + 0.08 * rig.brow.x;
     return [on([0.82, lift - 0.06 * rig.brow.x, side * 0.22]).at, on([0.66, lift, side * 0.6]).at];
@@ -485,11 +487,12 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
     browsShown: eyes.map((eye) => shownOf(eye.normal)),
     cheeks: [1, -1].map((side) => on([0.72, -0.24, side * 0.64])),
     eyes,
-    front: dot(head.turn([1, -0.15, 0]), TOWARD_CAMERA),
+    // Which way his face looks, level (his nods and bows aside): 1 to the camera, 0 side on, -1 away.
+    front: forwardLevel(head.turn([1, 0, 0])),
     hair: capPath(
-      { center: head.center, radii: [r * 1.04, r * 1.04, r * 1.04], turn: head.turn },
-      [-1, 0.2, 0],
-      0.3,
+      { center: head.center, radii: [r * 1.03, r * 1.03, r * 1.03], turn: head.turn },
+      HAIR_NORMAL,
+      HAIR_OFFSET,
     ),
     moustache: [1, -1].map((side) => on([0.92, -0.4, side * 0.27], r + 0.1)),
     mouth: linePath(mouth),
@@ -501,15 +504,20 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
 
 type Face = ReturnType<typeof faceOf>;
 
-/** His ears, either side of his head, and how near the camera each is. */
+/**
+ * His ears, either side of his head at his eyes' height, behind his cheeks:
+ * on his head under his hair and beard, the far one gone once it's well
+ * behind his head.
+ */
 const earsOf = (head: Head) =>
   [1, -1].map((side) => {
-    const at = head.at([-0.4, -0.5, side * (HEAD_R + 0.3)]);
-    const axes = [head.turn([0, 1.5, 0]), head.turn([1, 0, 0]), head.turn([0, 0, 0.7])];
+    const at = head.at([-1, 0.5, side * (HEAD_R + 0.1)]);
+    const axes = [head.turn([0, 1.35, 0]), head.turn([0.85, 0, 0]), head.turn([0, 0, 0.6])];
+    const outline = ellipseOf(at, axes);
     return {
-      d: ellipsePath(ellipseOf(at, axes)),
-      // Drawn over his head only once it's turned well toward the camera: face on, they're behind its sides.
-      near: dot(head.turn([0, 0, side]), TOWARD_CAMERA) > 0.3,
+      d: ellipsePath(outline),
+      lit: solidPaths(outline).lit,
+      shown: smooth((dot(head.turn([0, 0, side]), TOWARD_CAMERA) + 0.35) / 0.25),
     };
   });
 
@@ -525,10 +533,10 @@ const hatOf = (leprechaun: Leprechaun, frame: Frame, head: Head, hands: readonly
   const seat = head.at([0.3 + 1.4 * nap, HEAD_R * 0.76 + rig.hatRise.x - 1 * nap, 0]);
   const doff = doffOf(leprechaun);
   const side = sideOf(leprechaun.hand);
-  // Doffed, it's held by its brim on his side, swept crown forward, brim down, as he bows.
+  // Doffed, it's held by its brim on his side, swept crown out from his side, brim down, as he bows.
   const held = compose(
     frame.yaw,
-    compose(pitchOf(-0.3 * doff.grip - 1.05 * doff.sweep), rollOf(side * 0.35 * doff.sweep)),
+    compose(pitchOf(-0.3 * doff.grip - 0.35 * doff.sweep), rollOf(side * 1.15 * doff.sweep)),
   );
   const carried = (local: Vec3) => apply(held, local);
   const hand = hands[leprechaun.hand] ?? seat;
@@ -567,10 +575,11 @@ const hatOf = (leprechaun: Leprechaun, frame: Frame, head: Head, hands: readonly
 /** The coin: up off his thumb and back into his hand, turning end over end; its far face and its near. */
 const coinPose = (leprechaun: Leprechaun, frame: Frame, hand: Vec3) => {
   const coin = coinOf(leprechaun);
-  const at = add(hand, frame.turn([0.5, 1.2 + coin.height, 0]));
+  // Up off his thumb, drifting a little out before him, clear of his hat's brim.
+  const at = add(hand, frame.turn([0.5 + coin.height * 0.06, 1.2 + coin.height, 0]));
   const normal = frame.turn([Math.sin(coin.spin), Math.cos(coin.spin), 0]);
   const toward = dot(normal, TOWARD_CAMERA) >= 0 ? 1 : -1;
-  const disc = (by: number) => discOf(add(at, scale(normal, by * 0.3)), normal, 2);
+  const disc = (by: number) => discOf(add(at, scale(normal, by * 0.35)), normal, 2.4);
   return { at, back: disc(-toward), face: disc(toward), shown: coin.shown };
 };
 
@@ -689,7 +698,11 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
       ],
     ]),
     ...solid("head", headOutline),
-    ...ears.map(({ d }, index) => [`ear-${index}`, { d }] as const),
+    ...ears.flatMap(({ d, lit, shown }, index): [string, Part][] => [
+      [`ear-${index}`, { d }],
+      [`ear-${index}-lit`, { d: lit }],
+      [`ear-${index}-shown`, { opacity: round(shown) }],
+    ]),
     ...faceParts(face, shut),
     ...solid("brim", hat.brim),
     ["crown", { d: hat.crown }],
@@ -700,20 +713,29 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
     ["coin-back", { d: coin.back }],
     ["coin-face", { d: coin.face }],
     ["coin", { opacity: round(coin.shown) }],
+    ["face", { opacity: round(smooth((face.front - FACE_AWAY) / 0.2)) }],
   ]) satisfies Record<string, Part>;
 
-  // Back to front: what's nearer the camera is drawn over. His legs under his coat; his arms and tails
-  // to their side of it (the arms settled in `leprechaun.ts`, so a swing doesn't flicker them); his head
-  // over it all, his face and ears over his head as they turn toward the camera, his hat, worn, over all;
-  // a hand raised before his face over that, and what's in a hand with it.
+  // Back to front: what's nearer the camera is drawn over. His legs under his coat, the nearer over the
+  // other; his arms and tails to their side of it (settled in `leprechaun.ts`, so a swing doesn't flicker
+  // them); his head over it all, his face over his head as it turns toward the camera, his hat, worn, over
+  // all; a hand raised before his face over that, and what's in a hand with it.
   const body = coat.depth;
   const top = body + 10;
-  const armKeys = arms.map(({ elbow }, index) => {
+  const armKeys = [0, 1].map((index) => {
     if (leprechaun.armOverHead[index]) {
       return top + 1 + index * 0.01;
     }
-    return body + (leprechaun.armFront[index] ? 0.4 : -0.4) + nearOf(elbow) * 0.01;
+    return body + (leprechaun.armFront[index] ? 0.4 : -0.4) + index * 0.01;
   });
+  const doff = doffOf(leprechaun);
+  // Doffed, the hat's over his head till it's swept down clear of it, then goes with the hand that holds
+  // it: before him (as he faces the visitor to doff it), over his face and beard, the hand over it.
+  const low = hat.grip > 0.5 && doff.t > 0.4 && hat.center[1] < head.center[1];
+  const before = nearOf(hat.center) - nearOf(head.center) > -1.5;
+  if (low && before) {
+    armKeys[leprechaun.hand] = top + 0.7;
+  }
   const held = armKeys[leprechaun.hand] ?? body;
   const coinNear = nearOf(coin.at) - nearOf(head.center);
   const flying = coinOf(leprechaun).height > 3;
@@ -721,16 +743,19 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
   const layers: [string, number][] = [
     ["torso", body],
     ["head", top],
-    ["face", top + (face.front > -0.35 ? 0.1 : -0.1)],
-    ["hat", hat.grip > 0.5 ? held - 0.005 : top + 0.5],
+    // Turned away, his face (his beard's point with it) goes under his coat, faded out by then.
+    ["face", face.front > FACE_AWAY ? top + 0.1 : body - 0.5],
+    ["hat", low ? held - 0.005 : top + 0.5],
     ["coin", coinKey],
-    ...ears.map(({ near }, index): [string, number] => [`ear-${index}`, top + (near ? 0.2 : -0.2)]),
-    ...tails.map(({ near }, index): [string, number] => [`tail-${index}`, body + near * 0.1]),
-    ...legs.map(({ knee }, index): [string, number] => [
-      `leg-${index}`,
-      body - 5 + nearOf(knee) * 0.1,
+    ...[0, 1].map((index): [string, number] => [
+      `tail-${index}`,
+      body + (leprechaun.tailFront[index] ? 0.3 : -0.3) + index * 0.01,
     ]),
-    ...arms.map((_, index): [string, number] => [`arm-${index}`, armKeys[index] ?? body]),
+    ...[0, 1].map((index): [string, number] => [
+      `leg-${index}`,
+      body - 5 + (leprechaun.nearLeg === index ? 0.1 : 0),
+    ]),
+    ...[0, 1].map((index): [string, number] => [`arm-${index}`, armKeys[index] ?? body]),
   ];
   const crown = toScreen(hat.topAt);
   return {

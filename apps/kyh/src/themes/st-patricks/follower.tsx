@@ -126,16 +126,18 @@ export const Follower = () => {
       </g>
       <Arm index={0} />
       <Arm index={1} />
-      {[0, 1].map((index) => (
-        <g key={`ear-${index}`} data-layer={`ear-${index}`}>
-          <path data-part={`ear-${index}`} style={filled("skinDark", 0.4)} />
-        </g>
-      ))}
       <g data-layer="head">
         <Solid name="head" id={id} fill="skin" shade="skinDark" ink={1} />
-        <path data-part="hair" style={filled("pumpkin", 0.7)} />
+        {/* His ears on his head, under his hair (and his beard, on the face over it). */}
+        {[0, 1].map((index) => (
+          <g key={`ear-${index}`} data-part={`ear-${index}-shown`}>
+            <Solid name={`ear-${index}`} id={id} fill="skin" shade="skinDark" ink={0.3} />
+          </g>
+        ))}
+        <Shaded name="hair" id={id} fill="pumpkin" shade="pumpkinShade" by={1.1} ink={0.7} />
       </g>
-      <g data-layer="face">
+      {/* The face fades as it turns away, as one: its parts overlap. */}
+      <g data-layer="face" data-part="face">
         {/* Ink round the jaw's beard and its point together, under both, so the seam's covered. */}
         <path data-part="beard" style={stroked(2)} />
         <path data-part="tuft" style={stroked(2)} />

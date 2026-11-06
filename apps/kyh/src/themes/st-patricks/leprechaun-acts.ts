@@ -24,13 +24,13 @@ export const ACT_S: Record<Act, number> = { coin: 1.9, cross: 1.4, doff: 1.9, no
 export const HEAD: Vec3 = [0.9, 34.6, 0];
 export const HEAD_R = 6.4;
 /** His shoulder (on his left; z flipped for his right), and his hand hanging at rest. */
-export const SHOULDER: Vec3 = [0, 26, 5.3];
-const HANG: Vec3 = [0.5, 14.6, 6.4];
+export const SHOULDER: Vec3 = [0, 26, 5.7];
+const HANG: Vec3 = [0.5, 14.4, 7.2];
 
 /** The coin leaves his thumb and lands back in his hand at these points of the flip, this high between. */
 export const LAUNCH = 0.22;
 export const CATCH = 0.74;
-const COIN_UP = 22;
+const COIN_UP = 42;
 const COIN_TURNS = 6;
 
 /** The jig: beats a second, and how high he hops on each. */
@@ -136,14 +136,16 @@ export const liftOf = (leprechaun: Leprechaun) => {
 };
 
 /** The doff, through the act: the hand's way (brim, lifted, swept out low, back), and how much it holds the hat. */
+const BRIM_SIDE: Vec3 = [HEAD[0] + 1.6, HEAD[1] + 4.2, 6.6];
 const DOFF_WAY: readonly (readonly [number, Vec3])[] = [
-  [0, [HEAD[0] + 2.4, HEAD[1] + 3.6, 6.4]],
-  [0.24, [HEAD[0] + 2.4, HEAD[1] + 3.6, 6.4]],
-  [0.42, [HEAD[0] + 3.6, HEAD[1] + 6.6, 6.6]],
-  [0.62, [6.4, 23.5, 9.6]],
-  [0.8, [6, 22.5, 9]],
-  [0.92, [HEAD[0] + 2.4, HEAD[1] + 3.6, 6.4]],
-  [1, [HEAD[0] + 2.4, HEAD[1] + 3.6, 6.4]],
+  [0, BRIM_SIDE],
+  [0.2, BRIM_SIDE],
+  // Up off his head and out to his side, clear of his face; then swept down low at his side as he bows.
+  [0.36, [2, 37.4, 10.4]],
+  [0.6, [3.6, 22.5, 11.2]],
+  [0.8, [3.4, 21.8, 11]],
+  [0.92, BRIM_SIDE],
+  [1, BRIM_SIDE],
 ];
 
 /** Along a way of points at times, eased between. */
@@ -160,12 +162,12 @@ export const doffOf = (leprechaun: Leprechaun) => {
     return { bow: 0, grip: 0, hand: HEAD, reach: 0, sweep: 0, t: 0 };
   }
   return {
-    bow: bump(t, [0.3, 0.5, 0.78, 0.92]),
-    grip: bump(t, [0.16, 0.24, 0.86, 0.92]),
+    bow: bump(t, [0.34, 0.52, 0.78, 0.92]),
+    grip: bump(t, [0.13, 0.2, 0.86, 0.92]),
     hand: along(DOFF_WAY, t),
-    reach: bump(t, [0, 0.16, 0.9, 1]),
-    // Swept out, the hat's turned crown forward, its brim to the ground.
-    sweep: bump(t, [0.4, 0.62, 0.8, 0.92]),
+    reach: bump(t, [0, 0.13, 0.9, 1]),
+    // Swept out, the hat's turned crown out from his side, its brim to the ground.
+    sweep: bump(t, [0.38, 0.6, 0.8, 0.92]),
     t,
   };
 };
@@ -192,7 +194,8 @@ const walkHand = (leprechaun: Leprechaun, index: number): Vec3 => {
 const jigHand = (leprechaun: Leprechaun, index: number): Vec3 => {
   const side = sideOf(index);
   const up = Math.floor(leprechaun.beat / 2) % 2 === index;
-  return up ? [1.2, 36.6, side * 8.6] : [-0.6, 18, side * 7.6];
+  // Up and out over his shoulder, clear of his head and hat; or on his hip, elbow out.
+  return up ? [0.6, 35.8, side * 12] : [-0.6, 18, side * 8.4];
 };
 
 /** A hand at a moment's business: the coin flipped off the thumb and caught; arms folded crossly. */
@@ -204,7 +207,7 @@ const actHand = (leprechaun: Leprechaun, index: number, rest: Vec3): Vec3 => {
     const flick = 1.8 * bump(coin, [LAUNCH - 0.05, LAUNCH, LAUNCH, LAUNCH + 0.06]);
     const meet = 1.2 * bump(coin, [CATCH - 0.14, CATCH - 0.02, CATCH, CATCH + 0.02]);
     const dip = -2 * bump(coin, [CATCH, CATCH + 0.03, CATCH + 0.06, CATCH + 0.2]);
-    return mix(rest, [5.6, 19.4 + flick + meet + dip, side * 2.8], bump(coin, [0, 0.14, 0.88, 1]));
+    return mix(rest, [8.4, 20.4 + flick + meet + dip, side * 3], bump(coin, [0, 0.14, 0.88, 1]));
   }
   const doff = doffOf(leprechaun);
   if (doff.reach > 0 && own) {
@@ -212,7 +215,7 @@ const actHand = (leprechaun: Leprechaun, index: number, rest: Vec3): Vec3 => {
   }
   const cross = timeIn(leprechaun, "cross");
   if (cross !== null) {
-    const folded: Vec3 = [4.4, 22 + (index === 0 ? 0 : 1.4), -side * 3.4];
+    const folded: Vec3 = [8, 22.4 + (index === 0 ? 0 : 1.4), -side * 3.2];
     return mix(rest, folded, bump(cross, [0, 0.16, 0.82, 1]));
   }
   return rest;
@@ -225,9 +228,10 @@ export const handGoals = (leprechaun: Leprechaun): Vec3[] =>
     const { guard, jig, nap } = leprechaun.rig;
     let rest = walkHand(leprechaun, index);
     rest = mix(rest, jigHand(leprechaun, index), jig.x);
-    rest = mix(rest, [4.4, 17.4, side * 1.4], nap.x);
+    // Folded on his belly as he naps.
+    rest = mix(rest, [7.8, 17.6, side * 1.6], nap.x);
     // Hidden behind his back: a mouse is after his gold.
-    rest = mix(rest, [-4.4, 18.4, side * 2.6], guard.x);
+    rest = mix(rest, [-7.2, 18.6, side * 2.4], guard.x);
     return actHand(leprechaun, index, rest);
   });
 
