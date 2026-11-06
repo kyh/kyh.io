@@ -23,7 +23,7 @@ import type { Spring } from "../follower/solid";
 import type { Gait, Point, Walker } from "../follower/walk";
 import type { Go } from "./penguin-go";
 import { createChain, hangOf, stepChain } from "../follower/chain";
-import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
+import { createEmotes, PETTED_S, reached, say, sayWithHeart, stepEmotes } from "../follower/emote";
 import { createFeet, groundSpeedOf, stepFeet } from "../follower/feet";
 import { faceGoal, smooth, springAt, stepSpring } from "../follower/solid";
 import { createWalker, isOnWalker } from "../follower/walk";
@@ -276,7 +276,7 @@ const stepActs = (
 const answerPetting = (penguin: Penguin) => {
   const { emotes } = penguin;
   if (penguin.act === "display") {
-    say(emotes, emotes.line && !emotes.line.endsWith("♥") ? [`${emotes.line} ♥`] : PET, true);
+    sayWithHeart(emotes, PET);
     return;
   }
   say(emotes, PET, true);

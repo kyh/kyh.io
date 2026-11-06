@@ -155,7 +155,7 @@ test("clicked on, it gobbles facing the camera, its back never turned", () => {
   assert.ok(Math.sin(turkey.rig.heading.x) > 0.9, `${turkey.rig.heading.x}`);
 });
 
-test("clicked as the mouse lands on it, its gobble isn't cut off by a purr", () => {
+test("clicked as the mouse lands on it, it gobbles on through the petting", () => {
   for (const wait of [0.02, 0.16, 0.4]) {
     const turkey = createTurkey({ x: 600, y: 400 });
     run(turkey, (t) => ({ x: 600 + 120 * Math.min(t, 1), y: 400 }), 3);
@@ -168,7 +168,7 @@ test("clicked as the mouse lands on it, its gobble isn't cut off by a purr", () 
       turkey,
       () => on,
       1,
-      () => assert.equal(turkey.emotes.line, said, `${wait}s`),
+      () => assert.ok(turkey.emotes.line?.startsWith(said ?? ""), `${wait}s`),
     );
   }
 });

@@ -26,7 +26,7 @@ import type { Gait, Point, Walker } from "../follower/walk";
 import type { Hopper, Spot } from "./hop";
 import type { Jiggle } from "./jiggle";
 import { createChain, flickChain, stepChain } from "../follower/chain";
-import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
+import { createEmotes, PETTED_S, reached, say, sayWithHeart, stepEmotes } from "../follower/emote";
 import {
   faceGoal,
   headingOf,
@@ -296,10 +296,12 @@ const stepTalk = (bunny: Bunny, dozing: boolean, idle: number, seconds: number) 
   if (dozing) {
     say(emotes, SLEEP);
   } else if (bunny.petted > PETTED_S) {
-    // The moment a petting counts, it answers it, whatever it was saying: a binky, unless it's in one.
+    // The moment a petting counts, it answers it, whatever it was saying: a binky; in one, or just down from a click's, a heart on its line.
     if (reached(bunny.petted, seconds, PETTED_S)) {
-      say(emotes, PET, true);
-      if (bunny.act !== "binky") {
+      if (bunny.act === "binky" || BINKY.includes(emotes.line ?? "")) {
+        sayWithHeart(emotes, PET);
+      } else {
+        say(emotes, PET, true);
         begin(bunny, "binky");
       }
     }

@@ -324,6 +324,30 @@ test("its layers stay in order while it hops, any way", () => {
   }
 });
 
+test("clicked as the mouse lands on it, it cheers on through the petting, and binkies once", () => {
+  for (const wait of [1, 10, 24]) {
+    const bunny = settled();
+    const on = { x: bunny.walker.x, y: bunny.walker.y - 20 };
+    stepBunny(bunny, on, { x: 0, y: 0 }, 1 / 60);
+    for (let frame = 0; frame < wait; frame += 1) {
+      stepBunny(bunny, on, { x: 0, y: 0 }, 1 / 60);
+    }
+    pokeBunny(bunny, on);
+    const said = bunny.emotes.line ?? "";
+    let binkies = 0;
+    let was = bunny.act;
+    for (let frame = 0; frame < 60; frame += 1) {
+      stepBunny(bunny, on, { x: 0, y: 0 }, 1 / 60);
+      binkies += bunny.act === "binky" && was !== "binky" ? 1 : 0;
+      was = bunny.act;
+      if (said !== "♥") {
+        assert.ok(bunny.emotes.line?.startsWith(said), `${wait}: ${bunny.emotes.line}`);
+      }
+    }
+    assert.equal(binkies, 0, `${wait}`);
+  }
+});
+
 test("clicked elsewhere while it hops round where it stands, it finishes turning, then thumps", () => {
   const bunny = settled();
   bunny.hopper.leap = planLeap(bunny.hopper, null, bunny.hopper.heading + 1);

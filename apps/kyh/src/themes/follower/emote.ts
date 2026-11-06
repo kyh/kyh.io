@@ -46,6 +46,10 @@ export const say = (emotes: Emotes, lines: readonly string[], now = false) => {
   return true;
 };
 
+/** Answers a petting at once without cutting a click's line short: it goes on, with a heart. */
+export const sayWithHeart = (emotes: Emotes, lines: readonly string[]) =>
+  say(emotes, emotes.line && !emotes.line.endsWith("♥") ? [`${emotes.line} ♥`] : lines, true);
+
 /** Steps it `seconds` on: the line runs out, then the quiet. */
 export const stepEmotes = (emotes: Emotes, seconds: number) => {
   let rest = seconds;

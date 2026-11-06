@@ -22,7 +22,7 @@ import type { Feet, Steps } from "../follower/feet";
 import type { Spring } from "../follower/solid";
 import type { Chain } from "../follower/chain";
 import type { Gait, Point, Walker } from "../follower/walk";
-import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
+import { createEmotes, PETTED_S, reached, say, sayWithHeart, stepEmotes } from "../follower/emote";
 import { createFeet, groundSpeedOf, keepPace, stepFeet } from "../follower/feet";
 import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
 import { createChain, flickChain, hangOf, stepChain } from "../follower/chain";
@@ -375,9 +375,13 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
       say(emotes, SLEEP);
     }
   } else if (turkey.petted > PETTED_S) {
-    // The moment a petting counts, it answers it, whatever it was saying, short of a click's gobble.
-    if (reached(turkey.petted, seconds, PETTED_S) && turkey.act !== "gobble") {
-      say(emotes, PET, true);
+    // The moment a petting counts, it answers it, whatever it was saying; mid-gobble, it gobbles on with a heart.
+    if (reached(turkey.petted, seconds, PETTED_S)) {
+      if (turkey.act === "gobble") {
+        sayWithHeart(emotes, PET);
+      } else {
+        say(emotes, PET, true);
+      }
     }
   } else if (groundSpeedOf(walker) > TOP * 0.9 && random.chance(seconds * 0.6)) {
     say(emotes, HURRY);
