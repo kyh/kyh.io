@@ -120,6 +120,8 @@ const MOVING = 6;
 const RESTING = 120;
 /** Stood still this long, it turns from its way to the mouse. */
 const STOOD_S = 0.8;
+/** A turn up to this far, radians, goes the short way, even past its back: any more, and it picks its way round. */
+const SHORT_TURN = 2.6;
 /** Its heading facing the camera. */
 const TOWARD = Math.PI / 2;
 const IDLE: readonly Act[] = ["preen", "look", "look", "stretch", "jump"];
@@ -241,7 +243,11 @@ const bray = (penguin: Penguin) => {
 const isOn = (penguin: Penguin, at: Point) => isOnWalker(penguin.walker, at, 16, 46);
 
 /** What it's up to: dozing or not, and its next bit of business when it's idle. */
-const stepActs = (penguin: Penguin, moving: boolean, idle: number, seconds: number) => {
+const stepActs = (
+  penguin: Penguin,
+  { idle, moving, turned }: { idle: number; moving: boolean; turned: boolean },
+  seconds: number,
+) => {
   const dozing = (idle > DOZE_S && penguin.petted === 0) || penguin.petted > PET_DOZE_S;
   penguin.actFor += seconds;
   const kept = penguin.act === "display" || penguin.act === "jump";
@@ -258,7 +264,8 @@ const stepActs = (penguin: Penguin, moving: boolean, idle: number, seconds: numb
     return dozing;
   }
   penguin.next -= seconds;
-  if (idle > 1 && penguin.next <= 0) {
+  // Only once it's done turning to the mouse: a preen picks its side from where it faces.
+  if (idle > 1 && turned && penguin.next <= 0) {
     begin(penguin, penguin.acts.pick(IDLE));
     penguin.next = 1.5 + penguin.acts.next() * 3;
   }
@@ -339,7 +346,7 @@ const headingGoal = (penguin: Penguin, pointer: Point, held: boolean) => {
   if (go.going === "flop" || go.going === "rise") {
     return rig.heading.x;
   }
-  const way = wayOf(go, walker, pointer, held);
+  const way = wayOf(go, walker, { heading: rig.heading.x, held, pointer });
   if (way !== null) {
     return way;
   }
@@ -358,29 +365,25 @@ const headingGoal = (penguin: Penguin, pointer: Point, held: boolean) => {
 /**
  * Turns its heading toward `goal`: the short way, unless that's nearly all
  * the way round, when it turns past the camera (showing its face, not its
- * back), the way round picked once and kept till it's there, so a goal
- * straight behind it can't swing it one way and back the next frame.
+ * back), the way round picked once and kept, so a goal straight behind it
+ * can't swing it one way and back the next frame. A goal that comes back
+ * within a short turn ends that: held to, it'd spin all the way round to it.
  */
 const stepHeading = (penguin: Penguin, goal: number, seconds: number) => {
   const { rig, turning } = penguin;
   const heading = rig.heading.x;
   let turn = wrap(goal - heading);
-  // A new turn nearly all the way round, or its goal moved well off: it picks which way round, once:
-  // the way that doesn't take it past facing straight away from the camera.
-  if (Math.abs(turn) > 2 && (turning.way === 0 || Math.abs(wrap(goal - turning.goal)) > 0.5)) {
+  if (Math.abs(turn) <= SHORT_TURN) {
+    turning.way = 0;
+  } else if (turning.way === 0 || Math.abs(wrap(goal - turning.goal)) > 0.5) {
+    // The way that doesn't take it past facing straight away from the camera.
     const away = wrap(-Math.PI / 2 - heading);
     const passes = Math.sign(away) === Math.sign(turn) && Math.abs(away) < Math.abs(turn);
     turning.way = passes ? -Math.sign(turn) : Math.sign(turn);
     turning.goal = goal;
   }
   if (turning.way !== 0) {
-    // On round the way it picked, till it's there.
-    const round = ((turn * turning.way + Math.PI * 2) % (Math.PI * 2)) * turning.way;
-    if (Math.abs(round) < 0.3 || Math.abs(round) > Math.PI * 2 - 0.3) {
-      turning.way = 0;
-    } else {
-      turn = round;
-    }
+    turn = ((turn * turning.way + Math.PI * 2) % (Math.PI * 2)) * turning.way;
   }
   stepSpring(rig.heading, heading + turn, 7, seconds);
   rig.heading.x = wrap(rig.heading.x);
@@ -518,7 +521,10 @@ export const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seco
   penguin.stood = moving ? 0 : penguin.stood + seconds;
   const idle = moving ? 0 : walker.still;
   penguin.petted = !moving && isOn(penguin, pointer) ? penguin.petted + seconds : 0;
-  const dozing = stepActs(penguin, moving, idle, seconds);
+  const turned =
+    penguin.stood >= STOOD_S &&
+    Math.abs(wrap(headingGoal(penguin, pointer, held) - rig.heading.x)) < 0.2;
+  const dozing = stepActs(penguin, { idle, moving, turned }, seconds);
   stepTalk(penguin, dozing, idle, seconds);
   // It rocks foot to foot as it steps, more the farther it goes a step.
   const going = Math.min(1, groundSpeedOf(walker) / 35);

@@ -293,3 +293,78 @@ test("it preens under the flipper on the side toward the camera", () => {
   }
   assert.ok(preened > 6, `${preened}`);
 });
+
+/** The most it turns one way in any 2 seconds, watched frame to frame, while its feet get under 15 pixels. */
+const spinOf = (penguin: Penguin) => {
+  const frames: { at: Point; turned: number }[] = [];
+  let last = penguin.rig.heading.x;
+  let most = 0;
+  return {
+    most: () => most,
+    watch: () => {
+      const { x } = penguin.rig.heading;
+      const turned = Math.atan2(Math.sin(x - last), Math.cos(x - last));
+      last = x;
+      frames.push({ at: { x: penguin.walker.x, y: penguin.walker.y }, turned });
+      const window = frames.slice(-120);
+      const [first] = window;
+      if (first && Math.hypot(first.at.x - penguin.walker.x, first.at.y - penguin.walker.y) < 15) {
+        most = Math.max(most, Math.abs(window.reduce((sum, { turned: each }) => sum + each, 0)));
+      }
+    },
+  };
+};
+
+test("sent off and straight back, it hardly ever spins round on the spot", () => {
+  const random = createRandom(7);
+  const tries = 600;
+  let spins = 0;
+  for (let tried = 0; tried < tries; tried += 1) {
+    const { penguin, pointer } = settled();
+    const spin = spinOf(penguin);
+    const angle = random.next() * Math.PI * 2;
+    const speed = (100 + random.next() * 200) / 60;
+    const by = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+    const out = run(penguin, pointer, 0.3 + random.next() * 0.9, by, spin.watch);
+    const paused = run(penguin, out, 0.8 + random.next() * 1.2, STILL, spin.watch);
+    const back = run(penguin, paused, 0.5, { x: -by.x, y: -by.y }, spin.watch);
+    run(penguin, back, 4, STILL, spin.watch);
+    spins += spin.most() > 4.5 ? 1 : 0;
+  }
+  // Past the camera the long way is 4.3 at most; a moving mouse can add a little to the odd one.
+  assert.ok(spins < tries * 0.02, `${spins}`);
+});
+
+/** How many preens it starts left be `seconds`, each held, once under way, to the near flipper with its face showing. */
+const facedPreensOf = (penguin: Penguin, pointer: Point, seconds: number) => {
+  let preens = 0;
+  let was = penguin.act;
+  run(penguin, pointer, seconds, STILL, () => {
+    if (penguin.act === "preen" && was !== "preen") {
+      preens += 1;
+    }
+    if (penguin.act === "preen" && penguin.actFor > 0.5) {
+      const { x } = penguin.rig.heading;
+      assert.ok(Math.cos(x) * penguin.preenSide >= -0.15, `far side at ${x}`);
+      assert.ok(Math.sin(x) > -0.5, `facing away at ${x}`);
+    }
+    was = penguin.act;
+  });
+  return preens;
+};
+
+test("a preen that starts as it turns to the mouse is still under the near flipper, face showing", () => {
+  const random = createRandom(11);
+  let preens = 0;
+  for (let tries = 0; tries < 150; tries += 1) {
+    const start = { x: 300 + tries * 3, y: 300 };
+    const penguin = createPenguin(start);
+    // Off to its side, so the mouse resting there isn't a petting.
+    const beside = run(penguin, { x: start.x + 64, y: start.y - 34 }, 1);
+    const angle = random.next() * Math.PI * 2;
+    const by = { x: Math.cos(angle) * 3.3, y: Math.sin(angle) * 3.3 };
+    const at = run(penguin, beside, 0.4 + random.next() * 0.6, by);
+    preens += facedPreensOf(penguin, at, 12);
+  }
+  assert.ok(preens > 20, `${preens}`);
+});

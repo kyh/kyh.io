@@ -69,6 +69,10 @@ const SHORT = 6;
 const SLIDE_S = 0.9;
 const RISE_SPEED = 30;
 const NEAR = 90;
+/** How much it must face its way (a cosine) to walk it at all. */
+const STEPS_AT = 0.3;
+/** A spot behind it nearer than this, screen pixels, isn't worth turning round for. */
+const SHUFFLE = 13;
 /** Up this far off its belly, it walks again. */
 const UP = 0.25;
 
@@ -88,17 +92,28 @@ const aimOf = (walker: Walker, pointer: Point) => {
   };
 };
 
+const facingOf = (aim: { toward: number }, heading: number) => Math.cos(wrap(aim.toward - heading));
+
+/** Whether it's turned enough its way to walk it at all. */
+const isFacing = (aim: { toward: number }, heading: number) => facingOf(aim, heading) > STEPS_AT;
+
 /**
  * Its heading's goal while it has somewhere to go: on its feet, the way
  * there over the ground; on its belly, the way it slides, or, slowed nearly
  * to a stop, the way there again (it pivots round to it). Else null.
  */
-export const wayOf = (go: Go, walker: Walker, pointer: Point, held: boolean) => {
+export const wayOf = (
+  go: Go,
+  walker: Walker,
+  { heading, held, pointer }: { heading: number; held: boolean; pointer: Point },
+) => {
   const aim = aimOf(walker, pointer);
   if (go.going === "slide") {
     return walker.speed > 20 ? Math.atan2(walker.vy / SIN, walker.vx) : aim.toward;
   }
-  return go.going === "walk" && !held && aim.off > 8 ? aim.toward : null;
+  // It won't about-face for a shuffle: a spot this near and behind it can stay there.
+  const worth = isFacing(aim, heading) ? 8 : SHUFFLE;
+  return go.going === "walk" && !held && aim.off > worth ? aim.toward : null;
 };
 
 /** Into a new way of going, its counts of being left behind started afresh. */
@@ -134,8 +149,8 @@ const walk = (
   const { held, heading, moved, pointer } = moves;
   const aim = aimOf(walker, pointer);
   const perPixel = aim.off > 0 ? aim.ground / aim.off : 1;
-  const facing = Math.cos(wrap(aim.toward - heading));
-  const top = (WALK_TOP / perPixel) * Math.max(0, (facing - 0.3) / 0.7) ** 2;
+  const facing = facingOf(aim, heading);
+  const top = (WALK_TOP / perPixel) * Math.max(0, (facing - STEPS_AT) / (1 - STEPS_AT)) ** 2;
   const { back } = walker;
   stepWalker(walker, { ...WALK, top }, pointer, moved, seconds, held);
   // The mouse doubled straight back: its spot swings round under the mouse, not over (`walk.ts`), so
