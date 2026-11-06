@@ -28,7 +28,7 @@ import type { Act } from "./leprechaun-acts";
 import { createChain, flickChain, hangOf, stepChain } from "../follower/chain";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import { createFeet, keepPace, stepFeet } from "../follower/feet";
-import { faceGoal, PITCH, smooth, springAt, stepSpring } from "../follower/solid";
+import { faceGoal, headingOf, PITCH, smooth, springAt, stepSpring } from "../follower/solid";
 import { createWalker, isOnWalker, stepWalker } from "../follower/walk";
 import {
   ACT_S,
@@ -120,11 +120,13 @@ export interface Leprechaun {
   rests: Point[][];
   /** Which way round he's committed to a big turn: 1, -1, or 0 for none. */
   turnWay: number;
-  /** How fast he's been going over the ground these last moments, eased, and whether that's a walk, however slow. */
-  way: Point;
+  /** A point dragged along behind him on a line (`AMBLE` long once he's walked that far), and whether it's taut. */
+  trail: Point;
   ambling: boolean;
-  /** Clicked on and greeting whoever it was: no petting counts till the mouse moves on. */
-  greeted: boolean;
+  /** How fast the mouse has been going, pixels a second, eased. */
+  mouseSpeed: number;
+  /** Clicked on and greeting whoever it was: how far the mouse has moved on since, and no petting counts till it has. */
+  greeted: Point | null;
   /** Seconds till he blinks. */
   blinkIn: number;
   /** How fast he and his body went a step ago, to feel them speed up. */
@@ -203,13 +205,14 @@ export const createLeprechaun = (at: Point): Leprechaun => {
     faceFront: true,
     feet: createFeet(STEPS, walker, Math.PI / 4),
     gait: GAIT,
-    greeted: false,
+    greeted: null,
     hand: 0,
     lastLift: 0,
     lastRise: 0,
     lastTurn: 0,
     lastVx: 0,
     lastVy: 0,
+    mouseSpeed: 0,
     nearLeg: 0,
     next: 1.5,
     petted: 0,
@@ -241,9 +244,9 @@ export const createLeprechaun = (at: Point): Leprechaun => {
     tailFront: [false, false],
     tails: [unhung(), unhung()],
     time: 0,
+    trail: { x: walker.x, y: walker.y },
     turnWay: 0,
     walker,
-    way: { x: 0, y: 0 },
   };
   return leprechaun;
 };
@@ -379,34 +382,44 @@ const turnToward = (leprechaun: Leprechaun, goal: number, rate: number, seconds:
   heading.x = Math.atan2(Math.sin(heading.x), Math.cos(heading.x));
 };
 
-/** Seconds his way's eased over: after a very slow mouse he walks in fits, stopping between each. */
-const WAY_S = 0.3;
 /**
- * His way's ground speed (pixels a second) that counts as ambling, and the
- * slower one that ends it: under the first, so a mouse inched a pixel doesn't
- * turn him to it and back.
+ * How far he goes on the screen (pixels) before it's a walk: past the step or
+ * two a nudge of the mouse takes him, a stride's length up the screen. By
+ * distance, as his slowest step is as quick as a slow walk.
  */
-const AMBLE = 8;
-const AMBLE_DONE = 4;
+const AMBLE = 12;
+/** Seconds of a still mouse that end a walk: longer than a slow mouse rests between one pixel and the next. */
+const AMBLE_REST_S = 0.2;
 
-const stepWay = (leprechaun: Leprechaun, seconds: number) => {
-  const { walker, way } = leprechaun;
-  const ease = 1 - Math.exp(-seconds / WAY_S);
-  way.x += (walker.vx - way.x) * ease;
-  way.y += (walker.vy / Math.sin(PITCH) - way.y) * ease;
-  leprechaun.ambling = Math.hypot(way.x, way.y) > (leprechaun.ambling ? AMBLE_DONE : AMBLE);
+/** Whether he's walking, however slowly: he's gone `AMBLE` one way after a mouse that's still going. */
+const stepTrail = (leprechaun: Leprechaun) => {
+  const { trail, walker } = leprechaun;
+  const dx = walker.x - trail.x;
+  const dy = walker.y - trail.y;
+  const off = Math.hypot(dx, dy);
+  if (walker.still >= AMBLE_REST_S || dx * walker.vx + dy * walker.vy < 0) {
+    trail.x = walker.x;
+    trail.y = walker.y;
+    leprechaun.ambling = false;
+  } else if (off > AMBLE) {
+    trail.x = walker.x - (dx / off) * AMBLE;
+    trail.y = walker.y - (dy / off) * AMBLE;
+    leprechaun.ambling = true;
+  }
 };
 
 /**
- * Which way he faces left to himself: his way; an amble too slow for
- * `faceGoal` to call moving, the way he's been going (up the screen, a slow
- * mouse is a real walk over the ground); otherwise the mouse.
+ * Which way he faces left to himself: his way; at a walk too slow for
+ * `faceGoal` to call moving, his way too (up the screen, a slow mouse is a real
+ * walk over the ground), and as he was between one fit of it and the next;
+ * otherwise the mouse.
  */
 const goalOf = (leprechaun: Leprechaun, pointer: Point) => {
-  const { rig, walker, way } = leprechaun;
-  return leprechaun.ambling && walker.speed <= MOVING
-    ? Math.atan2(way.y, way.x)
-    : faceGoal(walker, pointer, rig.heading.x, MOVING);
+  const { rig, walker } = leprechaun;
+  if (!leprechaun.ambling || walker.speed > MOVING) {
+    return faceGoal(walker, pointer, rig.heading.x, MOVING);
+  }
+  return walker.speed > 1 ? headingOf(walker.vx, walker.vy) : rig.heading.x;
 };
 
 /** His body, head, brows and eyes after what he's at. */
@@ -434,7 +447,7 @@ const stepBody = (
   const crossly = cross === null ? 0 : bump(cross, [0, 0.12, 0.8, 1]);
 
   // Busy, dancing his jig or napping, he faces the visitor; off after the mouse, his way.
-  stepWay(leprechaun, seconds);
+  stepTrail(leprechaun);
   const going = walker.speed > MOVING || leprechaun.ambling;
   const acting = leprechaun.act !== "none" && !(going && leprechaun.act === "coin");
   const busy = acting || leprechaun.petted > 0 || dancing || rig.nap.x > 0.05;
@@ -642,9 +655,8 @@ const settleSides = (
     // A hand behind his back (hiding his gold) is drawn behind him, its arm with it.
     const ahead = goals[index]?.[0] ?? 0;
     const before = !moving && ahead > HAND_AHEAD && Math.sin(heading) > 0.1;
-    const hidden = isHidden(leprechaun, index);
-    leprechaun.armBehind[index] = hidden;
-    const behind = hidden && Math.sin(heading) > -0.2;
+    const behind = isHidden(leprechaun, index) && Math.sin(heading) > -0.2;
+    leprechaun.armBehind[index] = behind;
     const shown = sideToward(heading, side) + 0.35;
     const front = before || settled(leprechaun.armFront[index] ?? true, shown, 0.1);
     leprechaun.armFront[index] = front && !behind;
@@ -656,6 +668,12 @@ const settleSides = (
 
 /** The longest a frame's felt: after a hidden tab he carries on, rather than nodding off at once. */
 const MOST_FRAME = 0.1;
+/** Seconds the mouse's speed is eased over: a whole pixel in a 240Hz frame is no quick move. */
+const MOUSE_S = 0.02;
+/** A mouse on him and no faster than this (pixels a second) has come to rest there; faster, it's passing. */
+const PASSING = 180;
+/** How far the mouse moves on from a click (pixels), however slowly: farther than a hand shakes. */
+const GREETED = 12;
 
 export const stepLeprechaun = (
   leprechaun: Leprechaun,
@@ -668,18 +686,26 @@ export const stepLeprechaun = (
   leprechaun.time += seconds;
   // He stands for a petting (a mouse resting on him), to doff his hat, and to have his cross word (arms
   // folded, a foot stamped). His coin, he catches on the move.
-  const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(leprechaun, pointer);
+  if (seconds > 0) {
+    const ease = 1 - Math.exp(-seconds / MOUSE_S);
+    const speed = Math.hypot(moved.x, moved.y) / seconds;
+    leprechaun.mouseSpeed += (speed - leprechaun.mouseSpeed) * ease;
+  }
+  const resting = leprechaun.mouseSpeed < PASSING && isOn(leprechaun, pointer);
   const standing = leprechaun.act === "doff" || leprechaun.act === "cross";
   stepWalker(walker, GAIT, pointer, moved, seconds, resting || standing);
   // No faster toward or away from the camera than across: his steps are as long either way.
   keepPace(walker, STEPS.top, seconds);
   const moving = walker.speed > MOVING;
   const idle = moving ? 0 : walker.still;
-  // A click on him is a greeting: no petting counts (no scowl, no hiding his gold) till the mouse moves.
-  if (Math.hypot(moved.x, moved.y) > 3) {
-    leprechaun.greeted = false;
+  // A click on him is a greeting: no petting counts (no scowl, no hiding his gold) till the mouse moves on.
+  const { greeted } = leprechaun;
+  if (greeted) {
+    greeted.x += moved.x;
+    greeted.y += moved.y;
+    leprechaun.greeted = Math.hypot(greeted.x, greeted.y) > GREETED ? null : greeted;
   }
-  const petting = !moving && isOn(leprechaun, pointer) && !leprechaun.greeted;
+  const petting = !moving && isOn(leprechaun, pointer) && leprechaun.greeted === null;
   leprechaun.petted = petting ? leprechaun.petted + seconds : 0;
   const doing = stepActs(leprechaun, pointer, { idle, moving }, seconds);
   stepTalk(leprechaun, doing, idle, seconds);
@@ -700,7 +726,7 @@ export const pokeLeprechaun = (leprechaun: Leprechaun, at: Point) => {
     say(leprechaun.emotes, DOFF, true);
     // A click is a greeting, not a grab at his gold.
     leprechaun.petted = 0;
-    leprechaun.greeted = true;
+    leprechaun.greeted = { x: 0, y: 0 };
     // Mid-doff, he carries on with the one he's at.
     if (!doffing) {
       begin(leprechaun, "doff", at);
