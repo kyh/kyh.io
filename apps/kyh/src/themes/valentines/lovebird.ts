@@ -35,7 +35,7 @@ import { headingOf, PITCH, smooth, springAt, stepAngle, stepSpring } from "../fo
 import { approach, turnBack } from "../follower/walk";
 import { flexAt, kickFlex, stepFlex } from "./flex";
 import type { View } from "./lovebird-pose";
-import { lovebirdPose, settleView, SIZE, tailHangOf, viewOf } from "./lovebird-pose";
+import { lovebirdPose, settleFaces, settleView, SIZE, tailHangOf, viewOf } from "./lovebird-pose";
 import { strokeAt } from "./wingbeat";
 
 /** A moment's business, perched: a preen, a chirp, a cock of the head, a rousing shake of its feathers, a nuzzle petted. */
@@ -110,6 +110,8 @@ export interface Wings {
   balance: number;
   launch: number;
   glide: number;
+  /** The face each wing's cupped to, its left then its right (1 its top): held through a cup (`lovebird-pose.ts`). */
+  faces: [1 | -1, 1 | -1];
 }
 
 export interface Lovebird {
@@ -302,6 +304,7 @@ export const createLovebird = (at: Point): Lovebird => {
       balance: 0,
       beats: 4,
       bound: 0,
+      faces: [1, 1],
       glide: 0,
       hand: flexAt(strokeAt(0, 1)),
       launch: 0,
@@ -873,6 +876,7 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
   stepTalk(bird, dozing, seconds);
   stepChain(bird.tail, tailHangOf(bird), TAIL, dt);
   bird.view = settleView(bird.view, viewOf(bird), dt);
+  bird.wings.faces = settleFaces(bird);
 };
 
 /** Whether a point on the screen is on it: its body and head, above its feet. */

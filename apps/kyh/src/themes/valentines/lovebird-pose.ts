@@ -111,6 +111,8 @@ const SPREAD: readonly Vec3[] = [
 ];
 /** How much of each point is on its hand, bent after the arm. */
 const HAND_SHARE = [0, 0, 1, 1, 0.5, 0, 0] as const;
+/** How thick a spread wing is each side of its chord. */
+const LENS = 1.55;
 /** The folded wing being preened (the near one): its wrist lifted off its side, its flight feathers fanned a little. */
 const PREENED: readonly Vec3[] = [
   [0.5, 1, 0.8],
@@ -357,31 +359,43 @@ const turnAbout = (v: Vec3, axis: Vec3, angle: number): Vec3 => {
   );
 };
 
+/** The way a wing's top faces, whichever wing it is. */
+const topOf = (points: readonly Vec3[], side: number) =>
+  normalize(
+    scale(cross(sub(at(points, TIP), at(points, 0)), sub(at(points, 0), at(points, 6))), side),
+  );
+
 /**
  * A spread wing (its points about its body) turned about its span, `amount`
- * of the way to showing its broad side to the camera, whichever side is
- * nearer: so a wing braking to land is never seen edge on, whichever way it
- * comes in. Its span pointing at the camera, it's seen end on and left be.
+ * of the way to showing its `face` (1 its top) to the camera: so a wing
+ * braking to land is never seen edge on, whichever way it comes in. Its span
+ * pointing at the camera, it's seen end on and left be; so is a wing showing
+ * its other face square on, where the turn is a half turn either way round.
  */
-const cupped = (points: Vec3[], shoulder: Vec3, side: number, toCamera: Vec3, amount: number) => {
-  const spans = points.map((point) => sub(point, shoulder));
-  const tip = at(spans, TIP);
-  const span = normalize(tip);
+const cupped = (
+  points: Vec3[],
+  shoulder: Vec3,
+  side: number,
+  toCamera: Vec3,
+  amount: number,
+  face: number,
+) => {
+  const span = normalize(sub(at(points, TIP), shoulder));
   const across = sub(toCamera, scale(span, dot(toCamera, span)));
-  if (amount <= 0 || Math.hypot(...across) < 0.2) {
+  const reach = amount * smooth((Math.hypot(...across) - 0.1) / 0.2);
+  if (reach <= 0) {
     return points;
   }
-  const normal = normalize(
-    scale(cross(sub(tip, at(spans, 0)), sub(at(spans, 0), at(spans, 6))), side),
-  );
-  const goal = scale(normalize(across), dot(normal, across) >= 0 ? 1 : -1);
+  const normal = topOf(points, side);
+  const goal = scale(normalize(across), face);
   const angle = Math.atan2(dot(cross(normal, goal), span), dot(normal, goal));
-  const by = Math.max(-1.4, Math.min(1.4, angle * amount));
-  return spans.map((point) => add(shoulder, turnAbout(point, span, by)));
+  const by =
+    Math.max(-1.4, Math.min(1.4, angle * reach)) * smooth((Math.PI - Math.abs(angle)) / 0.3);
+  return points.map((point) => add(shoulder, turnAbout(sub(point, shoulder), span, by)));
 };
 
-/** A wing's points this frame (1 its left): folded or spread, raised or lowered on its stroke, the hand bent after the arm. */
-const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
+/** A wing this frame (1 its left), both ways: tucked, and spread, raised or lowered on its stroke, the hand bent after the arm; how far between them it is, and how far it's to be cupped. */
+const wingPosed = (bird: Lovebird, side: 1 | -1) => {
   const { rig, wings } = bird;
   const preening = side === bird.view.near ? rig.preen.x : 0;
   // Drawn in a little through the upstroke.
@@ -396,22 +410,96 @@ const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
   // On the upstroke it turns its wings about their span, leading edge up.
   const twist = pitchOf(0.45 * rig.amp.x * upstrokeAt(wings.phase));
   const shoulder = side3(SHOULDER, side);
-  const spreadOut = SPREAD.map((point, index) => {
+  const open = SPREAD.map((point, index) => {
     const out = side3(point, side);
     const share = HAND_SHARE[index] ?? 0;
     const bent = add(wrist, apply(bend, sub(out, wrist)));
     return add(shoulder, apply(raise, apply(twist, mix(out, bent, share))));
   });
-  const between = FOLDED.map((folded, index) => {
-    // Preened, the folded wing's held off its side, its feathers parted.
-    const tucked = add(side3(folded, side), scale(side3(at(PREENED, index), side), preening));
-    return mix(tucked, at(spreadOut, index), spread);
-  });
+  // Preened, the folded wing's held off its side, its feathers parted.
+  const tucked = FOLDED.map((folded, index) =>
+    add(side3(folded, side), scale(side3(at(PREENED, index), side), preening)),
+  );
   // Braking to land, and folding or steadying itself perched, its wings are cupped round to show
-  // their broad side, as far as they're open: folded, they lie as they lie.
-  const cup = 0.9 * Math.min(1, Math.max(2 * rig.flare.x, rig.legs.x)) * Math.min(1, spread * 3);
-  return cupped(between, shoulder, side, frame.unturn(TOWARD_CAMERA), cup).map(frame.place);
+  // their broad side, as far as they're open: folded, they lie as they lie. The floors are for
+  // its springs, which only near nothing: a cup has to end for its face to be chosen again.
+  const braced = Math.min(1, Math.max(0, Math.max(2 * rig.flare.x, rig.legs.x) - 0.02));
+  const cup = 0.9 * braced * Math.min(1, Math.max(0, spread - 0.02) * 3);
+  return { cup, open, shoulder, spread, tucked };
 };
+
+const between = (tucked: readonly Vec3[], open: readonly Vec3[], spread: number) =>
+  tucked.map((point, index) => mix(point, at(open, index), spread));
+
+const faceIndex = (side: 1 | -1) => (side === 1 ? 0 : 1);
+
+/** A wing's points this frame (1 its left): cupped spread, so folding it away carries it round to its side once, whatever face it was showing. */
+const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
+  const { cup, open, shoulder, spread, tucked } = wingPosed(bird, side);
+  const face = bird.wings.faces[faceIndex(side)];
+  const toCamera = frame.unturn(TOWARD_CAMERA);
+  return between(tucked, cupped(open, shoulder, side, toCamera, cup, face), spread).map(
+    frame.place,
+  );
+};
+
+/** The face a wing's cupped to: its nearer one as its cup begins, then held, as a stroke or a turn carrying it past edge on would swing it right over to its other face. */
+const faceOf = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
+  const { cup, open, spread, tucked } = wingPosed(bird, side);
+  if (cup > 0) {
+    return bird.wings.faces[faceIndex(side)];
+  }
+  // Opening from folded it's its top, even the far wing's: seen from above that's the face a stroke
+  // comes back to, where a far wing held to its underside would pass edge on every beat.
+  const nearer = dot(topOf(between(tucked, open, spread), side), frame.unturn(TOWARD_CAMERA));
+  return spread < 0.5 || nearer >= 0 ? 1 : -1;
+};
+
+/** The faces its wings are cupped to, after this frame. */
+export const settleFaces = (bird: Lovebird): [1 | -1, 1 | -1] => {
+  const frame = frameOf(bird);
+  return [faceOf(bird, frame, 1), faceOf(bird, frame, -1)];
+};
+
+/**
+ * A flat outline on the screen given the thickness of a thin solid, `out` its
+ * normal as seen: its two sides, between its ends across `out`, bulged apart
+ * like a lens, so edge on it's a lens, not a line. Sides, not leading and
+ * trailing edges, as which edges those are depends on the view; which goes
+ * which way is whichever's already that way, so it only ever widens.
+ */
+const lensOf = (outline: readonly Point[], out: Point, thick: number) => {
+  const seen = Math.hypot(out.x, out.y);
+  if (seen < 0.001) {
+    return outline;
+  }
+  const up = { x: out.x / seen, y: out.y / seen };
+  const placed = outline.map((point) => ({
+    along: point.y * up.x - point.x * up.y,
+    height: point.x * up.x + point.y * up.y,
+    point,
+  }));
+  const alongs = placed.map(({ along }) => along);
+  const start = Math.min(...alongs);
+  const end = Math.max(...alongs);
+  const from = alongs.indexOf(start);
+  const to = alongs.indexOf(end);
+  const onFirst = (index: number) =>
+    from <= to ? index >= from && index <= to : index >= from || index <= to;
+  const heightOf = (first: boolean) => {
+    const side = placed.filter((_, index) => onFirst(index) === first);
+    return side.reduce((sum, { height }) => sum + height, 0) / Math.max(1, side.length);
+  };
+  const way = heightOf(true) >= heightOf(false) ? 1 : -1;
+  return placed.map(({ along, point }, index) => {
+    const t = (2 * along - start - end) / Math.max(end - start, 1);
+    const by = thick * seen * (1 - t ** 4) * (onFirst(index) ? way : -way);
+    return { x: point.x + up.x * by, y: point.y + up.y * by };
+  });
+};
+
+/** A quill: short of both a wing's edges, its outline being rounded inside the points it's drawn round. */
+const quill = (from: Vec3, to: Vec3) => [mix(from, to, 0.1), mix(from, to, 0.92)];
 
 /** A wing: its outline, its flight feathers, and which side of it shows. */
 const wingOf = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
@@ -419,29 +507,19 @@ const wingOf = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
   const seen = points.map(toScreen);
   const p = (index: number) => at(points, index);
   const s = (index: number) => seen[index] ?? { x: 0, y: 0 };
-  const normal = scale(cross(sub(p(TIP), p(0)), sub(p(0), p(6))), side);
-  const unit = normalize(normal);
+  const unit = topOf(points, side);
   const top = smooth(dot(unit, TOWARD_CAMERA) / 0.16 + 0.5);
-  // The wing's thick at its leading edge (its arm and wrist) and cambered under its trailing edge, so edge on it's a lens, not a line.
-  const depth = 0.7 + 0.3 * bird.rig.spread.x;
-  const thick = (index: number, by: number) => toScreen(add(p(index), scale(unit, by * depth)));
-  // Thick out to its hand too: never thinner than a feather's width.
-  const edge = [
-    thick(0, 2),
-    thick(WRIST, 2),
-    toScreen(add(mix(p(WRIST), p(TIP), 0.45), scale(unit, 1.5 * depth))),
-    thick(TIP, 0.7),
-    thick(3, -0.5),
-    thick(4, -0.7),
-    thick(5, -0.7),
-    thick(6, 1),
-  ];
+  const edge = lensOf(
+    [s(0), s(WRIST), toScreen(mix(p(WRIST), p(TIP), 0.45)), s(TIP), s(3), s(4), s(5), s(6)],
+    toScreen(unit),
+    LENS * (0.7 + 0.3 * bird.rig.spread.x),
+  );
   const along = (a: number, b: number, t: number) => mix(p(a), p(b), t);
   const quills = linesPath([
-    [along(TIP, 3, 0.5), along(WRIST, TIP, 0.62)],
-    [p(3), along(WRIST, TIP, 0.4)],
-    [along(3, 4, 0.5), along(WRIST, TIP, 0.2)],
-    [along(4, 5, 0.5), along(0, WRIST, 0.55)],
+    quill(along(TIP, 3, 0.5), along(WRIST, TIP, 0.62)),
+    quill(p(3), along(WRIST, TIP, 0.4)),
+    quill(along(3, 4, 0.5), along(WRIST, TIP, 0.2)),
+    quill(along(4, 5, 0.5), along(0, WRIST, 0.55)),
   ]);
   return {
     hand: loopPath([s(WRIST), s(TIP), s(3), s(4)], new Set([1])),

@@ -464,3 +464,205 @@ test("coming in to land from any side, neither wing is ever edge on in the last 
     assert.ok(Math.min(...last) > 1.5, `${way}: ${last.map((n) => n.toFixed(1)).join(" ")}`);
   }
 });
+
+type Screen = readonly [number, number];
+
+/** A path's points on the screen (pixels): its curves' control points count, as near enough. */
+const pointsOf = (d: string): Screen[] => {
+  const numbers = (d.match(/-?\d+(?:\.\d+)?/gu) ?? []).map(Number);
+  return Array.from({ length: Math.floor(numbers.length / 2) }, (_, index): Screen => [
+    (numbers[index * 2] ?? 0) * SIZE,
+    (numbers[index * 2 + 1] ?? 0) * SIZE,
+  ]);
+};
+
+/** How far a point lies outside a closed outline (pixels), 0 if it's inside. */
+const outsideBy = ([x, y]: Screen, outline: readonly Screen[]) => {
+  let inside = false;
+  let nearest = Number.POSITIVE_INFINITY;
+  for (const [index, [ax, ay]] of outline.entries()) {
+    const [bx, by] = outline[(index + 1) % outline.length] ?? [ax, ay];
+    if (ay > y !== by > y && x < ax + ((y - ay) / (by - ay)) * (bx - ax)) {
+      inside = !inside;
+    }
+    const t =
+      ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1);
+    const u = Math.max(0, Math.min(1, t));
+    nearest = Math.min(nearest, Math.hypot(x - ax - u * (bx - ax), y - ay - u * (by - ay)));
+  }
+  return inside ? 0 : nearest;
+};
+
+/** Each wing's outline and how much of its top shows. */
+const wingsOf = (bird: Lovebird) => {
+  const { parts } = lovebirdPose(bird);
+  return ["wing-0", "wing-1"].map((wing) => ({
+    outline: pointsOf(parts[wing]?.d ?? ""),
+    top: parts[`${wing}-top`]?.opacity ?? 0,
+  }));
+};
+
+/** How far one outline's shape is from another's (pixels): its two edges can trade places, unseen. */
+const outlineMoved = (a: readonly Screen[], b: readonly Screen[]) =>
+  Math.max(...a.map((point) => outsideBy(point, b)), ...b.map((point) => outsideBy(point, a)));
+
+/**
+ * Watches its wings frame to frame: an outline's biggest move in a frame (or
+ * in a sixtieth of a second, its frames being longer), and how often the near wing's top is shown and hidden again within a
+ * tenth. Not the far wing's: it rises from behind its body on each stroke, its
+ * faces changing with the beat as a wing's do.
+ */
+const watchWings = (fps: number) => {
+  const empty: Screen[] = [];
+  const last = [
+    { outline: empty, shows: true, turned: -99 },
+    { outline: empty, shows: true, turned: -99 },
+  ];
+  const seen = { flashes: 0, frame: 0, jump: 0 };
+  const watch = (bird: Lovebird) => {
+    seen.frame += 1;
+    for (const [index, { outline, top }] of wingsOf(bird).entries()) {
+      const was = last[index];
+      if (was !== undefined) {
+        if (was.outline.length > 0) {
+          const moved = outlineMoved(outline, was.outline);
+          seen.jump = Math.max(seen.jump, moved * Math.min(1, fps / 60));
+        }
+        was.outline = outline;
+        const shows = top >= 0.8;
+        if ((top <= 0.2 || shows) && shows !== was.shows) {
+          const near = index === (bird.view.near === 1 ? 0 : 1);
+          seen.flashes += near && seen.frame - was.turned < 0.1 * fps ? 1 : 0;
+          was.turned = seen.frame;
+          was.shows = shows;
+        }
+      }
+    }
+  };
+  return { seen, watch };
+};
+
+test("coming in to land, a wing never snaps or flashes its other side, at any frame rate", () => {
+  for (const fps of [30, 60, 120, 144]) {
+    let flashes = 0;
+    let jump = 0;
+    for (let way = 5; way < 180; way += 10) {
+      for (const lead of [0, 0.05, 0.1]) {
+        const bird = createLovebird({ x: 500, y: 300 });
+        const angle = (way * Math.PI) / 180;
+        const by = { x: (Math.cos(angle) * 222) / fps, y: (Math.sin(angle) * 222) / fps };
+        let pointer = { x: 500, y: 300 };
+        for (let frame = 0; frame < (1.5 + lead) * fps; frame += 1) {
+          pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
+          stepLovebird(bird, pointer, by, 1 / fps);
+        }
+        const { seen, watch } = watchWings(fps);
+        for (let frame = 0; frame < 1.6 * fps; frame += 1) {
+          stepLovebird(bird, pointer, STILL, 1 / fps);
+          if (bird.rig.flare.x > 0.3 || bird.riding) {
+            watch(bird);
+          }
+          // Its strokes swing a wing's tip further than this in the air: it's held on that a snap shows.
+          seen.jump = bird.riding ? seen.jump : 0;
+          jump = Math.max(jump, seen.jump);
+        }
+        flashes += seen.flashes;
+      }
+    }
+    assert.equal(flashes, 0, `${fps} fps`);
+    assert.ok(jump < 10, `${fps} fps: ${jump} pixels`);
+  }
+});
+
+test("clicked perched, its wings steady it without a snap or a flash of their other side", () => {
+  for (const fps of [30, 60, 144]) {
+    const bird = perched();
+    for (let click = 0; click < 6; click += 1) {
+      const { seen, watch } = watchWings(fps);
+      lovebird.poke(bird, { x: 300, y: 300 });
+      for (let frame = 0; frame < 0.8 * fps; frame += 1) {
+        stepLovebird(bird, { x: 300, y: 300 }, STILL, 1 / fps);
+        watch(bird);
+      }
+      assert.equal(seen.flashes, 0, `${fps} fps, click ${click}`);
+      assert.ok(seen.jump < 10, `${fps} fps, click ${click}: ${seen.jump} pixels`);
+    }
+  }
+});
+
+/** How long a shape is, and how wide on average across that length (pixels). */
+const lengthAndWidth = (outline: readonly Screen[]) => {
+  let from: Screen = [0, 0];
+  let length = 0;
+  for (const a of outline) {
+    for (const b of outline) {
+      const apart = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (apart > length) {
+        from = a;
+        length = apart;
+      }
+    }
+  }
+  const to = outline.find((b) => Math.hypot(from[0] - b[0], from[1] - b[1]) === length) ?? from;
+  const ux = (to[0] - from[0]) / Math.max(length, 1);
+  const uy = (to[1] - from[1]) / Math.max(length, 1);
+  const flat = outline.map(([x, y]): Screen => [
+    (x - from[0]) * ux + (y - from[1]) * uy,
+    (y - from[1]) * ux - (x - from[0]) * uy,
+  ]);
+  const stations = 24;
+  let width = 0;
+  for (let station = 0; station < stations; station += 1) {
+    const along = ((station + 0.5) / stations) * length;
+    const crossings = flat.flatMap(([ax, ay], index) => {
+      const [bx, by] = flat[(index + 1) % flat.length] ?? [ax, ay];
+      return ax <= along === bx <= along ? [] : [ay + ((along - ax) / (bx - ax)) * (by - ay)];
+    });
+    width += crossings.length > 0 ? Math.max(...crossings) - Math.min(...crossings) : 0;
+  }
+  return { length, width: width / stations };
+};
+
+test("flying any way, a long wing is never drawn thinner than a wing, seen edge on", () => {
+  for (let way = 0; way < 360; way += 15) {
+    const bird = createLovebird({ x: 500, y: 300 });
+    const angle = (way * Math.PI) / 180;
+    const by = { x: Math.cos(angle) * 4, y: Math.sin(angle) * 4 };
+    let pointer = { x: 500, y: 300 };
+    let thinnest = Number.POSITIVE_INFINITY;
+    for (let frame = 0; frame < 300; frame += 1) {
+      pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
+      stepLovebird(bird, pointer, by, 1 / 60);
+      if (frame >= 60 && bird.rig.spread.x > 0.7) {
+        for (const { outline } of wingsOf(bird)) {
+          const { length, width } = lengthAndWidth(outline);
+          thinnest = length >= 20 ? Math.min(thinnest, width) : thinnest;
+        }
+      }
+    }
+    assert.ok(thinnest >= 2.2, `${way}°: ${thinnest} pixels`);
+  }
+});
+
+test("flying any way, its quills stay inside its wings: no thorns", () => {
+  for (let way = 0; way < 360; way += 30) {
+    const bird = createLovebird({ x: 500, y: 300 });
+    const angle = (way * Math.PI) / 180;
+    const by = { x: Math.cos(angle) * 4, y: Math.sin(angle) * 4 };
+    let pointer = { x: 500, y: 300 };
+    let most = 0;
+    for (let frame = 0; frame < 240; frame += 1) {
+      pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
+      stepLovebird(bird, pointer, by, 1 / 60);
+      if (frame >= 60 && bird.rig.spread.x > 0.7) {
+        const { parts } = lovebirdPose(bird);
+        for (const [index, { outline }] of wingsOf(bird).entries()) {
+          for (const end of pointsOf(parts[`quills-${index}`]?.d ?? "")) {
+            most = Math.max(most, outsideBy(end, outline));
+          }
+        }
+      }
+    }
+    assert.ok(most < 1, `${way}°: ${most} pixels`);
+  }
+});
