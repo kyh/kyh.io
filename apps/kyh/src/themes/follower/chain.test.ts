@@ -76,6 +76,20 @@ test("it moves the same at 30, 60 and 144 frames a second", () => {
   assert.ok(Math.abs(a - b) < 2 && Math.abs(b - c) < 2, tips.join(", "));
 });
 
+test("on a display faster than its steps, its root never comes off the body between them", () => {
+  const chain = createChain(hangAt({ x: 0, y: 0 }));
+  let root = { x: 0, y: 0 };
+  for (let frame = 0; frame < 144; frame += 1) {
+    root = { x: root.x + 300 / 144, y: Math.sin(frame / 10) * 20 };
+    stepChain(chain, hangAt(root), FLOPPY, 1 / 144);
+    const [first] = chain.knots;
+    assert.ok(
+      Math.hypot((first?.x ?? 0) - root.x, (first?.y ?? 0) - root.y) < 1e-9,
+      `frame ${frame}`,
+    );
+  }
+});
+
 test("a hidden tab's long frame is caught up only so far: it neither leaps nor comes apart", () => {
   const chain = createChain(hangAt({ x: 0, y: 0 }));
   stepChain(chain, hangAt({ x: 400, y: 0 }), CLOTH, 5);

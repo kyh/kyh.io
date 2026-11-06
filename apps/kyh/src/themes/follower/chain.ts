@@ -212,6 +212,15 @@ export const stepChain = (
   chain.owed = Math.min(chain.owed + Math.max(0, seconds), MOST_OWED);
   const steps = Math.floor(chain.owed / STEP);
   if (steps === 0) {
+    // A frame shorter than a step (a 144Hz display): carried along whole, so its root stays on the body.
+    const dx = hang.root.x - (was?.x ?? hang.root.x);
+    const dy = hang.root.y - (was?.y ?? hang.root.y);
+    for (const knot of chain.knots) {
+      knot.x += dx;
+      knot.y += dy;
+      knot.px += dx;
+      knot.py += dy;
+    }
     return;
   }
   chain.owed -= steps * STEP;
