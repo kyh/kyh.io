@@ -3,9 +3,11 @@ import test from "node:test";
 
 import type { Penguin } from "./penguin";
 import type { Point } from "../follower/walk";
+import { createRandom } from "@/lib/random";
 import { groundSpeedOf } from "../follower/feet";
+import { spotOf } from "../follower/walk";
 import { createPenguin, pokePenguin, stepPenguin } from "./penguin";
-import { WALK_TOP } from "./penguin-go";
+import { WALK, WALK_TOP } from "./penguin-go";
 
 const STILL: Point = { x: 0, y: 0 };
 const FRAME = 1 / 60;
@@ -157,4 +159,137 @@ test("left be, its flippers stay below its head and it preens standing up", () =
   });
   assert.ok(highest <= 1.6, `${highest}`);
   assert.ok(bowed >= -0.1, `${bowed}`);
+});
+
+/** Watches its heading frame to frame: how many times its turning goes back on itself. */
+const swingsOf = (penguin: Penguin) => {
+  let swings = 0;
+  let last = penguin.rig.heading.x;
+  let was = 0;
+  return {
+    count: () => swings,
+    watch: () => {
+      const now = penguin.rig.heading.x;
+      const turn = Math.atan2(Math.sin(now - last), Math.cos(now - last));
+      if (Math.abs(turn) > 0.002 && Math.sign(turn) !== was) {
+        swings += was === 0 ? 0 : 1;
+        was = Math.sign(turn);
+      }
+      last = now;
+    },
+  };
+};
+
+test("its spot straight behind it as it faces the camera, it turns round once and goes", () => {
+  const penguin = createPenguin({ x: 500, y: 400 });
+  const pointer = run(penguin, { x: 500, y: 400 }, 1);
+  // Left and a little down, then left be: its spot ends up behind it as it faces the camera.
+  const at = run(penguin, pointer, 1, { x: -40 / 60, y: 10 / 60 });
+  const swings = swingsOf(penguin);
+  run(penguin, at, 3, STILL, swings.watch);
+  assert.ok(swings.count() <= 1, `${swings.count()}`);
+  const spot = spotOf(penguin.walker, WALK, at);
+  assert.ok(Math.hypot(spot.x - penguin.walker.x, spot.y - penguin.walker.y) < 10);
+});
+
+test("led about at random, it always gets to its spot and settles there", () => {
+  for (const seed of [1, 2, 3, 4, 5]) {
+    const random = createRandom(seed);
+    const penguin = createPenguin({ x: 600, y: 400 });
+    let pointer = run(penguin, { x: 600, y: 400 }, 1);
+    for (let move = 0; move < 12; move += 1) {
+      const angle = random.next() * Math.PI * 2;
+      const far = 20 + random.next() * 130;
+      const speed = 30 + random.next() * 170;
+      const frames = Math.max(1, Math.round((far / speed) * 60));
+      const by = { x: (Math.cos(angle) * far) / frames, y: (Math.sin(angle) * far) / frames };
+      pointer = run(penguin, pointer, frames / 60, by);
+      const swings = swingsOf(penguin);
+      pointer = run(penguin, pointer, 5, STILL, swings.watch);
+      const spot = spotOf(penguin.walker, WALK, pointer);
+      // Unless the mouse came to rest on it: then it stays to be petted.
+      const off =
+        penguin.petted > 0 ? 0 : Math.hypot(spot.x - penguin.walker.x, spot.y - penguin.walker.y);
+      assert.ok(off < 12, `seed ${seed} move ${move}: ${off} off its spot, ${penguin.go.going}`);
+      // Five seconds left be, it turned to face the mouse, and maybe for a stretch, and back: no jitter.
+      assert.ok(swings.count() <= 3, `seed ${seed} move ${move}: ${swings.count()} swings`);
+      assert.equal(penguin.go.going, "walk");
+    }
+  }
+});
+
+test("a short move up or down the screen, at any speed, never puts it on its belly", () => {
+  for (const way of [1, -1]) {
+    for (const far of [40, 60, 80, 100]) {
+      for (const speed of [60, 150, 400]) {
+        const { penguin, pointer } = settled();
+        const frames = Math.max(1, Math.round((far / speed) * 60));
+        let lying = 0;
+        const at = run(penguin, pointer, frames / 60, { x: 0, y: (way * far) / frames }, () => {
+          lying = Math.max(lying, penguin.rig.slide.x);
+        });
+        run(penguin, at, 4, STILL, () => {
+          lying = Math.max(lying, penguin.rig.slide.x);
+        });
+        assert.ok(lying < 0.05, `${way * far}px at ${speed}: ${lying}`);
+      }
+    }
+  }
+});
+
+test("chasing a running mouse it slides at the mouse's speed, and stops short of it at any frame rate", () => {
+  for (const hz of [30, 60, 144]) {
+    const penguin = createPenguin({ x: 300, y: 450 });
+    let pointer = { x: 300, y: 450 };
+    const frame = (by: Point) => {
+      pointer = { x: pointer.x + by.x, y: pointer.y + by.y };
+      stepPenguin(penguin, pointer, by, 1 / hz);
+    };
+    for (let at = 0; at < hz; at += 1) {
+      frame(STILL);
+    }
+    let slowest = Infinity;
+    let fastest = 0;
+    for (let at = 0; at < hz * 3; at += 1) {
+      frame({ x: 250 / hz, y: 0 });
+      if (at > hz * 2 && penguin.go.going === "slide") {
+        slowest = Math.min(slowest, penguin.walker.speed);
+        fastest = Math.max(fastest, penguin.walker.speed);
+      }
+    }
+    // No pushing and dragging by turns: a steady slide.
+    assert.ok(fastest - slowest < 30, `${hz}Hz: ${slowest}..${fastest}`);
+    for (let at = 0; at < hz * 4; at += 1) {
+      frame(STILL);
+    }
+    // Stopped behind the mouse, not under it, so it isn't petted.
+    assert.ok(pointer.x - penguin.walker.x > 40, `${hz}Hz: ${pointer.x - penguin.walker.x}`);
+    assert.equal(penguin.petted, 0);
+  }
+});
+
+/** How many preens it starts left be `seconds`, each checked to be under its flipper toward the camera. */
+const preensOf = (penguin: Penguin, pointer: Point, seconds: number) => {
+  let preens = 0;
+  run(penguin, pointer, seconds, STILL, () => {
+    if (penguin.act === "preen" && penguin.actFor < 0.02) {
+      preens += 1;
+      assert.ok(Math.cos(penguin.rig.heading.x) * penguin.preenSide >= 0);
+    }
+  });
+  return preens;
+};
+
+test("it preens under the flipper on the side toward the camera", () => {
+  let preened = 0;
+  for (const [index, heading] of [0.3, 1.2, 2, 2.8, -0.4, -2.6].entries()) {
+    for (let tries = 0; tries < 6; tries += 1) {
+      const at = { x: 400 + index * 37 + tries * 101, y: 300 };
+      const penguin = createPenguin(at);
+      const pointer = run(penguin, at, 1);
+      penguin.rig.heading.x = heading;
+      preened += preensOf(penguin, pointer, 25);
+    }
+  }
+  assert.ok(preened > 6, `${preened}`);
 });

@@ -25,7 +25,7 @@ import type { Go } from "./penguin-go";
 import { createChain, hangOf, stepChain } from "../follower/chain";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import { createFeet, groundSpeedOf, stepFeet } from "../follower/feet";
-import { faceGoal, PITCH, smooth, springAt, stepSpring } from "../follower/solid";
+import { faceGoal, smooth, springAt, stepSpring } from "../follower/solid";
 import { createWalker, isOnWalker } from "../follower/walk";
 import { createGo, isDown, stepGo, WALK, WALK_TOP, wayOf } from "./penguin-go";
 import { layerSidesOf, orderOf, penguinPose, scarfHangOf } from "./penguin-pose";
@@ -80,11 +80,14 @@ export interface Penguin {
   act: Act;
   actFor: number;
   next: number;
-  /** Which flipper it preens under: 1 its left, -1 its right. */
+  /** Which flipper it preens under: 1 its left, -1 its right; and the heading it shows itself off at. */
   preenSide: 1 | -1;
+  showing: number;
   /** A bray asked for while it couldn't (in the air, on its belly): done once it can. */
   queued: boolean;
   petted: number;
+  /** A turn nearly all the way round: which way round it's going (1, -1, or 0 for none) and toward what. */
+  turning: { way: number; goal: number };
   /** Seconds it's stood still. */
   stood: number;
   /** Seconds it's been about, for its flaps and beats. */
@@ -188,10 +191,12 @@ export const createPenguin = (at: Point): Penguin => {
     // Laid out where they hang on its first step.
     scarfEnd: createChain({ rest: [], root: at }),
     scarfShort: createChain({ rest: [], root: at }),
+    showing: Math.PI / 2,
     sliding: false,
     stack: [],
     stood: 0,
     time: 0,
+    turning: { goal: 0, way: 0 },
     walker,
   };
 };
@@ -206,8 +211,18 @@ const begin = (penguin: Penguin, act: Act) => {
   }
   penguin.act = act;
   penguin.actFor = 0;
+  // Showing itself off, it turns to the camera, near enough: the three-quarter view on the side it
+  // faces, picked once, so the goal holds still as it turns.
+  if (act === "display" || act === "stretch") {
+    const off = Math.atan2(
+      Math.sin(penguin.rig.heading.x - TOWARD),
+      Math.cos(penguin.rig.heading.x - TOWARD),
+    );
+    penguin.showing = TOWARD + Math.max(-0.6, Math.min(0.6, off));
+  }
   if (act === "preen") {
-    penguin.preenSide = penguin.acts.chance(0.5) ? 1 : -1;
+    // Under the flipper on the side toward the camera, so it's its face that's seen, not the back of its head.
+    penguin.preenSide = Math.cos(penguin.rig.heading.x) >= 0 ? 1 : -1;
   }
 };
 
@@ -321,10 +336,8 @@ const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
  */
 const headingGoal = (penguin: Penguin, pointer: Point, held: boolean) => {
   const { go, rig, walker } = penguin;
-  if (go.going !== "walk") {
-    return go.going === "slide" && walker.speed > 20
-      ? Math.atan2(walker.vy / Math.sin(PITCH), walker.vx)
-      : rig.heading.x;
+  if (go.going === "flop" || go.going === "rise") {
+    return rig.heading.x;
   }
   const way = wayOf(go, walker, pointer, held);
   if (way !== null) {
@@ -337,25 +350,40 @@ const headingGoal = (penguin: Penguin, pointer: Point, held: boolean) => {
   }
   // Braying or stretching, it turns to show itself off, flippers spread to either side.
   if (penguin.act === "display" || penguin.act === "stretch") {
-    return TOWARD + Math.max(-0.6, Math.min(0.6, wrap(rig.heading.x - TOWARD)));
+    return penguin.showing;
   }
   return faceGoal(walker, pointer, rig.heading.x, Infinity);
 };
 
 /**
  * Turns its heading toward `goal`: the short way, unless that's nearly all
- * the way round, when it turns past the camera (showing its face, not its back).
+ * the way round, when it turns past the camera (showing its face, not its
+ * back), the way round picked once and kept till it's there, so a goal
+ * straight behind it can't swing it one way and back the next frame.
  */
-const stepHeading = (heading: Spring, goal: number, rate: number, seconds: number) => {
-  let turn = wrap(goal - heading.x);
-  if (Math.abs(turn) > 2) {
-    const other = turn - Math.sign(turn) * Math.PI * 2;
-    if (Math.sin(heading.x + other / 2) > Math.sin(heading.x + turn / 2)) {
-      turn = other;
+const stepHeading = (penguin: Penguin, goal: number, seconds: number) => {
+  const { rig, turning } = penguin;
+  const heading = rig.heading.x;
+  let turn = wrap(goal - heading);
+  // A new turn nearly all the way round, or its goal moved well off: it picks which way round, once:
+  // the way that doesn't take it past facing straight away from the camera.
+  if (Math.abs(turn) > 2 && (turning.way === 0 || Math.abs(wrap(goal - turning.goal)) > 0.5)) {
+    const away = wrap(-Math.PI / 2 - heading);
+    const passes = Math.sign(away) === Math.sign(turn) && Math.abs(away) < Math.abs(turn);
+    turning.way = passes ? -Math.sign(turn) : Math.sign(turn);
+    turning.goal = goal;
+  }
+  if (turning.way !== 0) {
+    // On round the way it picked, till it's there.
+    const round = ((turn * turning.way + Math.PI * 2) % (Math.PI * 2)) * turning.way;
+    if (Math.abs(round) < 0.3 || Math.abs(round) > Math.PI * 2 - 0.3) {
+      turning.way = 0;
+    } else {
+      turn = round;
     }
   }
-  stepSpring(heading, heading.x + turn, rate, seconds);
-  heading.x = wrap(heading.x);
+  stepSpring(rig.heading, heading + turn, 7, seconds);
+  rig.heading.x = wrap(rig.heading.x);
 };
 
 /** Its body: on its feet or its belly, which way, leaning, lifted and squashed. */
@@ -367,7 +395,7 @@ const stepBody = (
   const { rig } = penguin;
   // A belly flop is quick; getting up, less so.
   stepSpring(rig.slide, penguin.sliding ? 1 : 0, penguin.sliding ? 16 : 6, seconds);
-  stepHeading(rig.heading, headingGoal(penguin, goal.pointer, goal.held), 7, seconds);
+  stepHeading(penguin, headingGoal(penguin, goal.pointer, goal.held), seconds);
   stepSpring(rig.doze, goal.dozing ? 1 : 0, goal.dozing ? 2 : 10, seconds);
   const preen = envelope(penguin, "preen");
   const display = envelope(penguin, "display");

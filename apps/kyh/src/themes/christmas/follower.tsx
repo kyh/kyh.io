@@ -28,8 +28,8 @@ const tone = (day: Token, night: Token) =>
 const BLACK = tone("screen", "metal");
 const BLACK_SHADE = tone("screen", "metalDark");
 /** Its beak: dark, a little warm, so it's not lost against its face. */
-const BEAK = tone("bronzeShade", "bronze");
-const BEAK_SHADE = tone("screen", "bronzeShade");
+const BEAK = tone("bronze", "skinDark");
+const BEAK_SHADE = tone("bronzeShade", "bronze");
 
 /** Ink round the body and head together: drawn under both, so the seam between them is covered. */
 const OUTLINE = 2.8;
@@ -145,8 +145,10 @@ export const Follower = () => {
         <path data-part="beak-upper" style={{ fill: BEAK, stroke: INK, strokeWidth: 0.7 }} />
       </g>
       <g data-layer="scarf-end">
-        <ScarfEnd name="scarf-short" />
-        <ScarfEnd name="scarf-end" />
+        <g data-part="scarf-ends">
+          <ScarfEnd name="scarf-short" />
+          <ScarfEnd name="scarf-end" />
+        </g>
       </g>
     </Stage>
   );

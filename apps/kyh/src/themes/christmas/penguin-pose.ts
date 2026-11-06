@@ -49,7 +49,7 @@ const BODY: Vec3 = [0, 17, 0];
 const BODY_RADII: Vec3 = [11, 17, 10.5];
 /** Its white front: the cap of its body past a plane tipped forward and down (as for a unit sphere). */
 const FRONT_NORMAL: Vec3 = [1, -0.35, 0];
-const FRONT_OFFSET = 0.2;
+const FRONT_OFFSET = 0.05;
 const HEAD: Vec3 = [2.5, 35.5, 0];
 const HEAD_R = 8;
 /** What it rocks and bows about: low on its feet. */
@@ -168,8 +168,8 @@ const eyesOf = (penguin: Penguin, head: Head) => {
 /** Its beak: short and stout, its lower half opening as it brays; from any side, the outline round its points. */
 const beakOf = (penguin: Penguin, head: Head) => {
   const base: Vec3 = [HEAD_R - 1.2, -0.2, 0];
-  const tip: Vec3 = [HEAD_R + 4.4, -1, 0];
-  const open = apply(pitchOf(-0.6 * penguin.rig.beak.x), sub(tip, base));
+  const tip: Vec3 = [HEAD_R + 5.2, -1.1, 0];
+  const open = apply(pitchOf(-0.8 * penguin.rig.beak.x), sub(tip, base));
   const upper = [
     add(base, [0, 1.9, 0]),
     add(base, [0, 0.2, 2.2]),
@@ -445,11 +445,8 @@ export const layerSidesOf = (penguin: Penguin) => {
     "flipper-1": across(frame, [0.35, 0, -1]) / 0.25,
     "foot-0": footSideOf(penguin, 1),
     "foot-1": footSideOf(penguin, -1),
-    // Under its head as it lies facing the camera, else by which way its knot faces.
-    "scarf-end":
-      headOverOf(penguin, frame).lying > 0.5
-        ? -2
-        : across(frame, [Math.cos(knot), 0, Math.sin(knot)]) / 0.2,
+    // By which way its knot faces, leaning to the front: hanging from a knot that shows, they show.
+    "scarf-end": (across(frame, [Math.cos(knot), 0, Math.sin(knot)]) + 0.35) / 0.2,
     tail: across(frame, [-1, -0.3, 0]) / 0.2,
   } satisfies Record<string, number>;
 };
@@ -527,6 +524,8 @@ export const penguinPose = (penguin: Penguin): Pose => {
       [`leg-${index}`, { d: leg }] as const,
     ]),
     ["head-over", { opacity: round(headOverOf(penguin, frame).over) }],
+    // Its scarf's ends tuck away under its head as it lies facing the camera, and come out as it gets up.
+    ["scarf-ends", { opacity: round(1 - headOverOf(penguin, frame).lying) }],
     ["tail", { d: ellipsePath(ellipseOf(tail, tailAxes.map(frame.turn))) }],
     ["scarf", { d: arcOf(frame, 1) }],
     ["scarf-back", { d: arcOf(frame, -1) }],

@@ -24,7 +24,7 @@ export interface Go {
   going: Going;
   /** Seconds it's been at it. */
   since: number;
-  /** Seconds it's been left far behind on its feet; and how fast the mouse goes over the ground (smoothed), and how long it's gone that fast. */
+  /** Seconds it's been left far behind on its feet; and how fast the mouse goes across the screen (smoothed), and how long it's gone that fast. */
   behind: number;
   mouse: number;
   fast: number;
@@ -37,23 +37,34 @@ export const WALK: Gait = { accel: 360, behind: 64, below: 34, stride: 16, top: 
 const BRAKE = 300;
 /**
  * As far off its spot as this (screen pixels) this long, it flops to slide
- * after it; or this far off it while the mouse runs away from it, at many
- * times its walk, this long. A flick of the mouse is too short for either.
+ * after it; or this far off it while the mouse runs away
+ * across the screen (pixels a second) this long. A flick of the mouse is too
+ * short for either. It flops only facing its way, so it slides off that way.
  */
 const FAR = 120;
 const FAR_S = 0.3;
-const RUNNING = 3 * WALK_TOP;
+const RUNNING = 180;
 const RUNNING_S = 0.2;
-const RUNNING_OFF = 20;
+const RUNNING_OFF = 40;
+const FACING = 0.7;
 /** Lying this far down, it pushes off. */
 const LAIN = 0.7;
-/** On its belly: how hard it pushes (a second squared), its top speed, how the snow slows it, how fast it steers. */
+/**
+ * On its belly: how hard it pushes (a second squared), its top speed, how
+ * hard it slows to stop short of its spot, how fast it eases toward the
+ * speed it wants (a second), how fast it steers, and how far short it stops.
+ */
 const PUSH = 1000;
 const SLIDE_TOP = 420;
-const FRICTION = 170;
-/** How hard it drags to a stop on its belly, a second squared. */
-const DRAG = 450;
+const SLOWING = 260;
+const DRAG = 700;
+const EASE = 8;
+/** How fast it closes in on its spot on top of the mouse's speed, a second: of how far it has to go. */
+const CLOSING = 3;
+/** How the snow slows it as it goes down onto its belly, a second squared. */
+const SNOW = 80;
 const STEER = 2.2;
+const SHORT = 6;
 /** It slides this long at the least, and gets up slower than this, this near its spot (screen pixels). */
 const SLIDE_S = 0.9;
 const RISE_SPEED = 30;
@@ -77,15 +88,25 @@ const aimOf = (walker: Walker, pointer: Point) => {
   };
 };
 
-/** Its heading's goal on its feet while it has somewhere to go: the way there over the ground. Else null. */
+/**
+ * Its heading's goal while it has somewhere to go: on its feet, the way
+ * there over the ground; on its belly, the way it slides, or, slowed nearly
+ * to a stop, the way there again (it pivots round to it). Else null.
+ */
 export const wayOf = (go: Go, walker: Walker, pointer: Point, held: boolean) => {
   const aim = aimOf(walker, pointer);
+  if (go.going === "slide") {
+    return walker.speed > 20 ? Math.atan2(walker.vy / SIN, walker.vx) : aim.toward;
+  }
   return go.going === "walk" && !held && aim.off > 8 ? aim.toward : null;
 };
 
+/** Into a new way of going, its counts of being left behind started afresh. */
 const goTo = (go: Go, going: Going) => {
   go.going = going;
   go.since = 0;
+  go.behind = 0;
+  go.fast = 0;
 };
 
 /** Stepped by its own velocity: the walker carries it without pushing, and keeps count of the mouse. */
@@ -128,29 +149,36 @@ const walk = (
     !held && go.mouse > RUNNING && aim.off > RUNNING_OFF
       ? go.fast + seconds
       : Math.max(0, go.fast - seconds * 2);
-  if (go.behind > FAR_S || go.fast > RUNNING_S) {
-    go.behind = 0;
+  if ((go.behind > FAR_S || go.fast > RUNNING_S) && facing > FACING) {
     goTo(go, "flop");
   }
 };
 
-/** How fast its speed changes on its belly: pushing on, dragging its feet and flippers to stop short, or coasting. */
-const slideAccel = (go: Go, aim: ReturnType<typeof aimOf>, speed: number, turn: number) => {
-  const ahead = Math.abs(turn) < 1.6;
-  const stopping = (speed * speed) / (2 * FRICTION);
-  // It pushes on while it couldn't stop short of its spot, or while the mouse runs on about as fast.
-  const chasing = stopping < aim.ground - 30 || go.mouse > speed * 0.8;
-  if (ahead && chasing && aim.off > NEAR / 2) {
-    return PUSH;
+/**
+ * The speed it wants on its belly: the mouse's, as it runs on, and on top of
+ * that more the farther it is from its spot (so it closes in, keeping back
+ * as far as it would take it to stop, should the mouse stop), but never more
+ * than it could stop from just short of its spot. None while its spot is
+ * behind it.
+ */
+const slideGoal = (go: Go, aim: ReturnType<typeof aimOf>, turn: number) => {
+  if (Math.abs(turn) > 1.6) {
+    return 0;
   }
-  // Past its spot, or about to go past it, it drags to a stop.
-  return !ahead || stopping > aim.ground + 10 ? -DRAG : -FRICTION;
+  const perPixel = aim.off > 0 ? aim.ground / aim.off : 1;
+  const running = go.mouse * perPixel * Math.max(0, Math.cos(turn));
+  // Following a running mouse, it keeps back from its spot as far as it would take to stop.
+  const lag = (running * running) / (2 * DRAG);
+  const left = Math.max(0, aim.ground - SHORT);
+  const closing = Math.min(CLOSING * (left - lag), Math.sqrt(2 * SLOWING * left));
+  return Math.max(0, Math.min(SLIDE_TOP, running + closing));
 };
 
 /**
- * On its belly: pushing on along its way while it's far (it can't push
- * backward), else coasting, the snow slowing it, or dragging to a stop short
- * of going past; steering a little toward its spot while it's ahead.
+ * On its belly: easing toward the speed it wants (pushing no harder than it
+ * can, slowing no harder than it can drag), steering a little toward its
+ * spot while it's ahead; slowed nearly to a stop, it pivots round to face it
+ * before it pushes off again.
  */
 const slide = (
   go: Go,
@@ -168,13 +196,14 @@ const slide = (
   if (Math.abs(turn) < 1.6) {
     way += Math.max(-STEER * dt, Math.min(STEER * dt, turn));
   }
-  const accel = slideAccel(go, aim, speed, turn);
-  speed = Math.max(0, Math.min(SLIDE_TOP, speed + accel * dt));
+  const goal = slideGoal(go, aim, turn);
+  const change = (goal - speed) * Math.min(1, EASE * dt);
+  speed = Math.max(0, speed + Math.max(-DRAG * dt, Math.min(PUSH * dt, change)));
   walker.vx = speed * Math.cos(way);
   walker.vy = speed * Math.sin(way) * SIN;
   walker.speed = Math.hypot(walker.vx, walker.vy);
   coast(walker, pointer, moved, seconds);
-  if (go.since > SLIDE_S && speed < RISE_SPEED && (aim.off < NEAR || accel < 0)) {
+  if (go.since > SLIDE_S && speed < RISE_SPEED && goal < RISE_SPEED && aim.off < NEAR) {
     goTo(go, "rise");
   }
 };
@@ -193,7 +222,7 @@ export const stepGo = (
   const { lying, moved, pointer } = moves;
   go.since += seconds;
   if (seconds > 0) {
-    const mouse = Math.hypot(moved.x, moved.y / SIN) / seconds;
+    const mouse = Math.hypot(moved.x, moved.y) / seconds;
     go.mouse += (mouse - go.mouse) * Math.min(1, seconds / 0.04);
   }
   if (go.going === "walk") {
@@ -205,7 +234,7 @@ export const stepGo = (
     return;
   }
   // Going down, it goes on as it was going (no faster, the snow slowing it); getting up, it stops where it is.
-  brake(walker, go.going === "flop" ? FRICTION : BRAKE, Math.min(seconds, 0.05));
+  brake(walker, go.going === "flop" ? SNOW : BRAKE, Math.min(seconds, 0.05));
   coast(walker, pointer, moved, seconds);
   if (go.going === "flop" && lying > LAIN) {
     goTo(go, "slide");
