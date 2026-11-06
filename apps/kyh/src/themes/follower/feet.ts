@@ -72,6 +72,13 @@ export interface Steps {
   duty: readonly [number, number];
   /** How high a foot's lifted mid-swing, walking slowest and at `top`. */
   lift: readonly [number, number];
+  /**
+   * Optional: a foot on the ground this many reaches from its place lifts at
+   * once, its turn or not (a sharp turn, a reversal), and may do so once every
+   * other foot is on the ground or this far through its swing (0 to 1).
+   * Left out, 1.25 reaches and only with the others down.
+   */
+  strain?: { reach: number; swung: number };
 }
 
 /** Something on feet: where it is on the screen, and how fast it's going (pixels a second). A walker. */
@@ -199,6 +206,15 @@ const swingFoot = (
   foot.turn += turnBetween(foot.turn, heading) * Math.min(1, dt * 12);
 };
 
+/** Whether a foot on the ground's left so far from its place it lifts at once, the others down (or far enough through their swing). */
+const isStrained = (feet: Feet, steps: Steps, foot: Foot, home: Point) => {
+  const { reach = STRAINED, swung = 1 } = steps.strain ?? {};
+  const others = feet.feet.every(
+    (other) => other === foot || other.planted || other.swing >= swung,
+  );
+  return others && apart(foot, home) > steps.reach * reach;
+};
+
 /** One step of its feet, `dt` seconds, under the body where it is now. */
 const stepOnce = (feet: Feet, steps: Steps, body: Body, heading: number, dt: number) => {
   const homes = steps.homes.map((_, index) => homeOf(steps, index, body, heading));
@@ -224,8 +240,7 @@ const stepOnce = (feet: Feet, steps: Steps, body: Body, heading: number, dt: num
     const stride = Math.floor(at);
     if (foot.planted) {
       const due = at - stride >= duty && stride > foot.stride;
-      const others = feet.feet.every((other) => other === foot || other.planted);
-      const strained = moving && others && apart(foot, home) > steps.reach * STRAINED;
+      const strained = moving && isStrained(feet, steps, foot, home);
       // Standing, a foot already neat stays put when its turn comes.
       const neat = !moving && apart(foot, home) < steps.reach * NEAT;
       if (due || strained) {

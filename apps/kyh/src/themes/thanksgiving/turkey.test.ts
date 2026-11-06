@@ -271,3 +271,84 @@ test("it never pecks with its tail still fanned, nor snores before it's nodded o
   assert.equal(fannedPecks, 0);
   assert.equal(wakeSnores, 0);
 });
+
+/** How far its head stands over the top of its body, standing facing `heading`. */
+const above = (heading: number) => {
+  const turkey = createTurkey({ x: 400, y: 400 });
+  run(
+    turkey,
+    () => ({ x: 400, y: 400 }),
+    3,
+    () => {
+      turkey.rig.heading.x = heading;
+      turkey.rig.heading.v = 0;
+      turkey.nextPeck = 99;
+    },
+  );
+  const pose = turkeyPose(turkey);
+  const top = Math.min(centerOf(pose.parts.body?.d).y, centerOf(pose.parts.breast?.d).y);
+  return top - centerOf(pose.parts.head?.d).y;
+};
+
+test("facing away, its head's low over its back on a short neck, not up on a stalk", () => {
+  // No higher over its body than seen side on.
+  assert.ok(above(-Math.PI / 2) <= above(0), `${above(-Math.PI / 2)} ${above(0)}`);
+});
+
+test("it falls asleep sitting side on, a little toward the camera, its head on its back seen", () => {
+  for (const [dx, dy] of [
+    [100, 0],
+    [-100, 0],
+    [0, 120],
+    [0, -120],
+    [60, 90],
+  ] as const) {
+    const turkey = createTurkey({ x: 400, y: 400 });
+    run(turkey, (t) => ({ x: 400 + dx * Math.min(t, 1), y: 400 + dy * Math.min(t, 1) }), 44);
+    const heading = turkey.rig.heading.x;
+    assert.ok(turkey.rig.doze.x > 0.9);
+    // Side on (cos near ±1), turned a little toward the camera (sin a little over 0).
+    assert.ok(
+      Math.abs(Math.cos(heading)) > 0.85 && Math.sin(heading) > 0.2,
+      `${dx},${dy}: ${heading}`,
+    );
+  }
+});
+
+test("its beard hangs from the middle of its breast, not below its belly", () => {
+  const turkey = createTurkey({ x: 400, y: 400 });
+  run(
+    turkey,
+    () => ({ x: 400, y: 400 }),
+    3,
+    () => {
+      turkey.rig.heading.x = Math.PI / 2;
+      turkey.rig.heading.v = 0;
+      turkey.nextPeck = 99;
+    },
+  );
+  const pose = turkeyPose(turkey);
+  const breast = centerOf(pose.parts.breast?.d);
+  const ys = [...(pose.parts.beard?.d ?? "").matchAll(/-?[\d.]+ (?<y>-?[\d.]+)/gu)].map((found) =>
+    Number(found.groups?.y),
+  );
+  // Seen from the front: its root above the breast's middle, its tip short of its belly's bottom.
+  assert.ok((ys[0] ?? 0) < breast.y, `${ys[0]} ${breast.y}`);
+  assert.ok(Math.max(...ys) < breast.y + 10, `${Math.max(...ys)} ${breast.y}`);
+});
+
+/** A pointer jumping from one side to the other and back, over and over. */
+const zigzag = (t: number) => ({ x: 600 + 250 * Math.sign(Math.sin(t * 1.3)), y: 400 });
+
+test("doubling back, its feet don't splay into the splits", () => {
+  const turkey = createTurkey(zigzag(0));
+  let widest = 0;
+  run(turkey, zigzag, 12, (_, t) => {
+    const [a, b] = turkey.feet.feet;
+    if (a && b && t > 1) {
+      widest = Math.max(widest, Math.hypot(a.x - b.x, (a.y - b.y) / Math.sin(0.48)));
+    }
+  });
+  // About its longest stride and a little: without the turkey's strain (`turkey.ts`) it's past 30.
+  assert.ok(widest < 27, `${widest}`);
+});

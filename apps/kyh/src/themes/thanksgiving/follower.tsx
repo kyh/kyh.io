@@ -7,7 +7,7 @@
 // body (its back and breast drawn as one) and wings, inked only along their
 // lower edge, their dark primaries barred white, tail feathers banded dark and tipped chestnut, a neck feathered low and
 // bare red above up to a bare blue head with a red snood and wattle, a pale
-// beak, a dark beard, bronze drumsticks and pink shanks, the nearer leg lit.
+// beak, a near-black beard, bronze drumsticks and pink shanks, the nearer leg lit.
 // Each `data-layer` is one part the stage stacks by how near the camera it
 // is; each `data-part` is posed a frame at a time.
 import type { Token } from "@/app/showcase/_components/city/palette";
@@ -21,6 +21,13 @@ import { FEATHERS, SIZE } from "./turkey-pose";
 
 /** Ink `width` screen pixels wide, as the ghost's is, though the turkey's drawn smaller. */
 const ink = (width: number) => width / SIZE;
+
+/** Its neck: bare red skin above, feathered bronze below, thickest where it leaves its body. */
+const NECK = [
+  ["neck", 5, "accentRed"],
+  ["neck-low", 6.8, "bronze"],
+  ["neck-base", 9, "bronze"],
+] as const;
 
 /** A red fleshy part hanging off its head (the snood, the wattle): a thick red line, inked. */
 const Flesh = ({ name, width }: { name: string; width: number }) => (
@@ -62,7 +69,7 @@ const Torso = ({ id }: { id: string }) => {
   );
 };
 
-/** Its beard: coarse dark bronze hair, thin at the root and spreading to the tip like a tassel, not inked. */
+/** Its beard: coarse near-black hair, thin at the root and spreading to the tip like a tassel, not inked. */
 const Beard = () => (
   <>
     {(
@@ -72,7 +79,7 @@ const Beard = () => (
         ["beard-tip", 3],
       ] as const
     ).map(([name, width]) => (
-      <path key={name} data-part={name} style={stroked(width, "bronzeShade")} />
+      <path key={name} data-part={name} style={stroked(width, "screen")} />
     ))}
   </>
 );
@@ -146,9 +153,13 @@ export const Follower = () => {
         <Beard />
       </g>
       <g data-layer="neck">
-        <path data-part="neck" style={stroked(5 + ink(2.4))} />
-        <path data-part="neck" style={stroked(5, "accentRed")} />
-        <path data-part="neck-low" style={stroked(5.4, "bronze")} />
+        {/* A thick feathered base tapering up the neck to the bare red skin, inked round as one. */}
+        {NECK.map(([name, width]) => (
+          <path key={`${name}-ink`} data-part={name} style={stroked(width + ink(2.4))} />
+        ))}
+        {NECK.map(([name, width, token]) => (
+          <path key={name} data-part={name} style={stroked(width, token)} />
+        ))}
       </g>
       <g data-layer="head">
         <Solid name="head" id={id} fill="roofBlue" shade="roofBlueShade" ink={ink(1)} />

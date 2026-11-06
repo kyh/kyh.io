@@ -53,6 +53,8 @@ const STEPS: Steps = {
   lift: [2.2, 4.2],
   offsets: [0, 0.5],
   reach: 17 * SIZE,
+  // Turning round, a foot left behind steps on at once (as soon as the other's past mid-swing): no splits.
+  strain: { reach: 0.8, swung: 0.35 },
   top: TOP,
 };
 
@@ -155,6 +157,8 @@ const PECK_HEAD: Point = { x: 40, y: 8 };
 const PECK_BOW = 0.4;
 /** The farthest its head's held back over the ground walking, its own pixels: what its neck gives. */
 const MOST_HELD = 15;
+/** Which way it sits asleep: side on, turned a little toward the camera (radians from side on). */
+const SLEEP_SIDE = 0.44;
 /** Its head turned back onto its shoulder, asleep. */
 const TUCKED = 2.5;
 
@@ -234,7 +238,7 @@ const envelope = (turkey: Turkey, act: Act, edge = 4) => {
 
 /** How far down a peck has its head: two jabs at the ground, quick down and up. */
 const peckDown = (turkey: Turkey) =>
-  turkey.act === "peck" ? Math.abs(Math.sin((turkey.actFor / ACT_S.peck) * Math.PI * 2)) ** 0.4 : 0;
+  turkey.act === "peck" ? Math.abs(Math.sin((turkey.actFor / ACT_S.peck) * Math.PI * 2)) ** 1.2 : 0;
 
 /** Where its head goes this frame, forward and up from its feet, and its nod, for what it's at. */
 const headGoal = (turkey: Turkey) => {
@@ -247,8 +251,8 @@ const headGoal = (turkey: Turkey) => {
   const front = Math.max(0, Math.sin(rig.heading.x)) * upright;
   const away = Math.max(0, -Math.sin(rig.heading.x)) * upright;
   // Strutting, it draws its head back onto its puffed chest; dozing, it lays it on its back.
-  let x = HEAD.x - 9 * front - 10 * away;
-  let y = HEAD.y + 7 * front - 8 * away;
+  let x = HEAD.x - 9 * front - 6 * away;
+  let y = HEAD.y + 2 * front - 14 * away;
   x += (STRUT_HEAD.x - HEAD.x) * fan + (DOZE_HEAD.x - HEAD.x) * doze;
   y += (STRUT_HEAD.y - HEAD.y) * fan + (DOZE_HEAD.y - HEAD.y) * doze;
   let nod = -0.2 * fan - 0.3 * doze;
@@ -256,12 +260,13 @@ const headGoal = (turkey: Turkey) => {
   if (turkey.act === "peck") {
     x += (PECK_HEAD.x - x) * down;
     y += (PECK_HEAD.y - y) * down;
-    nod = -0.35 - 1.05 * down;
+    nod = -0.3 - 0.7 * down;
   }
   // Gobbling, it throws its neck out and up; alarmed, it stands tall.
   const out = envelope(turkey, "gobble");
-  x += 8 * out;
-  y += 4 * out;
+  // Facing the camera, thrown up more than out, so its neck shows rather than hunching onto its breast.
+  x += 8 * out * (1 - 0.8 * front);
+  y += 4 * out * (1 + front);
   nod += 0.35 * out;
   const tall = envelope(turkey, "alert", 6);
   x -= 3 * tall;
@@ -370,8 +375,12 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
 /** Which way it turns to face: its way, the mouse, a noise, its display; asleep, it stays as it is. */
 const facingOf = (turkey: Turkey, pointer: Point, moving: boolean, sleeping: boolean) => {
   const { rig, walker } = turkey;
+  // Nodding off, it turns slowly to sit side on, a little toward the camera, its head on its back seen.
   if (sleeping || rig.doze.x > 0.05) {
-    return rig.heading.x;
+    const sides = [SLEEP_SIDE, Math.PI - SLEEP_SIDE];
+    const off = (to: number) =>
+      Math.abs(Math.atan2(Math.sin(to - rig.heading.x), Math.cos(to - rig.heading.x)));
+    return off(sides[0] ?? 0) < off(sides[1] ?? 0) ? (sides[0] ?? 0) : (sides[1] ?? 0);
   }
   // Strutting, it shows off its fan: turned to the camera, pivoting slowly side to side as a tom does.
   if (turkey.strutting && !moving) {
@@ -396,7 +405,11 @@ const stepHead = (
 ) => {
   const { rig } = turkey;
   const facing = facingOf(turkey, pointer, state.moving, state.sleeping);
-  stepAngle(rig.heading, facing, turkey.strutting && !state.moving ? 3 : 7, seconds);
+  let turning = turkey.strutting && !state.moving ? 3 : 7;
+  if (rig.doze.x > 0.05) {
+    turning = 1.5;
+  }
+  stepAngle(rig.heading, facing, turning, seconds);
   const goal = headGoal(turkey);
   // A peck is quick, down and up; otherwise its head glides.
   const rate = turkey.act === "peck" ? 40 : 16;

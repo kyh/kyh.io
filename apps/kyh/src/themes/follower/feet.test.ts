@@ -231,3 +231,33 @@ test("however uneven its frames, a foot on the ground stays put and steps fit it
   assert.equal(watch.slid(), 0);
   assert.ok(most < STEPS.reach * 1.1, `${most}`);
 });
+
+/** The widest its feet get apart reversing: walking right, then back left, its heading turning round. */
+const widest = (steps: Steps) => {
+  const body: Body = { vx: 0, vy: 0, x: 0, y: 300 };
+  const feet = createFeet(steps, body, 0);
+  let heading = 0;
+  let most = 0;
+  for (let frame = 0; frame < 180; frame += 1) {
+    const vx = frame < 60 ? 140 : Math.max(-140, 140 - (frame - 60) * 20);
+    body.vx = vx;
+    body.x += vx / 60;
+    if (frame >= 60) {
+      heading = Math.min(Math.PI, heading + 0.12);
+    }
+    stepFeet(feet, steps, body, heading, 1 / 60);
+    const [a, b] = feet.feet;
+    if (a && b && frame > 60) {
+      most = Math.max(most, apart(a, b));
+    }
+  }
+  return most;
+};
+
+test("an optional strain lifts a foot left behind sooner, so a reversal doesn't splay its legs", () => {
+  const before = widest(STEPS);
+  const after = widest({ ...STEPS, strain: { reach: 0.9, swung: 0.5 } });
+  assert.ok(after < before * 0.85, `${before} → ${after}`);
+  // Left out, it's as it was: the same as asking for the old default.
+  assert.equal(widest({ ...STEPS, strain: { reach: 1.25, swung: 1 } }), before);
+});
