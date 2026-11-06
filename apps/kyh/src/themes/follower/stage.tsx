@@ -161,7 +161,8 @@ export const Stage = <State,>({
         }
         return;
       }
-      if (mouse) {
+      // Back on the page, however far from where it left isn't a move: it'd read as a shake.
+      if (mouse && frame !== 0) {
         moved = { x: moved.x + at.x - mouse.x, y: moved.y + at.y - mouse.y };
       }
       mouse = { x: at.x, y: at.y };
