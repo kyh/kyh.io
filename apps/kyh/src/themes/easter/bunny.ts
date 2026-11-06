@@ -261,7 +261,7 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
     toSpot.x * toMouse.x + toSpot.y * toMouse.y < 0 &&
     Math.hypot(toMouse.x, toMouse.y) > AWAY_FROM_MOUSE;
   const mouse = headingOf(pointer.x - walker.x, pointer.y - walker.y + HEAD_UP);
-  return { face, target: away ? null : groundOf(spot), watch: free ? (face ?? mouse) : null };
+  return { face, target: away ? null : groundOf(spot), watch: free ? mouse : null };
 };
 
 /** Whether it's somewhere to go: far enough from where it'd be that it'll hop. */

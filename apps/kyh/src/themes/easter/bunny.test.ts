@@ -877,6 +877,31 @@ test("a nudge doesn't hop it round for all its head turns", () => {
   }
 });
 
+test("a nudge doesn't swing its head away and back", () => {
+  for (const fps of FRAME_RATES) {
+    for (const spot of [
+      { x: 700, y: 350 },
+      { x: 60, y: 350 },
+      { x: 300, y: 100 },
+      { x: 300, y: 600 },
+    ]) {
+      const bunny = leftAt(spot, fps);
+      bunny.next = Number.POSITIVE_INFINITY;
+      let pointer = spot;
+      let gaze = bunny.rig.gaze.x;
+      let travel = 0;
+      for (let frame = 1; frame <= 16 * fps; frame += 1) {
+        const next = { x: spot.x + (Math.floor(frame / fps / 2) % 2), y: spot.y };
+        stepBunny(bunny, next, { x: next.x - pointer.x, y: next.y - pointer.y }, 1 / fps);
+        pointer = next;
+        travel += Math.abs(turnOf(gaze, bunny.rig.gaze.x));
+        gaze = bunny.rig.gaze.x;
+      }
+      assert.ok(travel < 2, `${fps}fps at ${JSON.stringify(spot)}: ${travel} radians`);
+    }
+  }
+});
+
 test("a mouse going to and fro behind it, its head holds at its neck's limit, not side to side", () => {
   for (const fps of FRAME_RATES) {
     const bunny = settled();
