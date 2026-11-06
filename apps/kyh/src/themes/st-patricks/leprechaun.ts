@@ -388,8 +388,8 @@ const turnToward = (leprechaun: Leprechaun, goal: number, rate: number, seconds:
  * distance, as his slowest step is as quick as a slow walk.
  */
 const AMBLE = 12;
-/** Seconds of a still mouse that end a walk: longer than a slow mouse rests between one pixel and the next. */
-const AMBLE_REST_S = 0.2;
+/** Seconds of a still mouse that end a walk: longer than a slow hand hesitates, or a stop-go mouse has him crabbing sidelong. */
+const AMBLE_REST_S = 0.5;
 
 /** Whether he's walking, however slowly: he's gone `AMBLE` one way after a mouse that's still going. */
 const stepTrail = (leprechaun: Leprechaun) => {

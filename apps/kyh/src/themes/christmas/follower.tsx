@@ -32,10 +32,10 @@ const BLACK_SHADE = tone("screen", "metalDark");
 const BEAK = tone("bronze", "skinDark");
 const BEAK_SHADE = tone("bronzeShade", "bronze");
 
-/** Ink round the body and head together: drawn under both, so the seam between them is covered. */
 /** Ink `width` screen pixels wide, as the ghost's is, though it's drawn bigger (`SIZE`). */
 const inked = (width: number) => width / SIZE;
 
+/** Ink round the body and head together: drawn under both, so the seam between them is covered. */
 const OUTLINE = inked(2.8);
 /** The scarf's white stripes: short square dashes across the red. */
 const STRIPES = {
