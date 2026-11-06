@@ -93,11 +93,24 @@ export const turnBack = (back: Point, moved: Point, reach: number): Point => {
 export const strideAt = (walker: Walker, gait: Gait) =>
   gait.stride * (1 + Math.min(1, walker.speed / gait.top) * 0.9);
 
-/** Where it's headed: its spot behind and below the pointer. */
-export const spotOf = (walker: Walker, gait: Gait, pointer: Point): Point => ({
-  x: pointer.x + walker.back.x * gait.behind,
-  y: pointer.y + gait.below + walker.back.y * gait.behind * 0.4,
-});
+/** How far to the side of the pointer it keeps at the least, of how far behind: never right under it. */
+const ASIDE = 0.6;
+
+/**
+ * Where it's headed: its spot behind and below the pointer, and always a
+ * little to one side of it (the side it's on), so a pointer moved straight
+ * up or down isn't left resting on its back, petting it without being asked.
+ */
+export const spotOf = (walker: Walker, gait: Gait, pointer: Point): Point => {
+  const side =
+    walker.back.x === 0 ? Math.sign(walker.x - pointer.x) || -1 : Math.sign(walker.back.x);
+  const across = walker.back.x * gait.behind;
+  const least = gait.behind * ASIDE;
+  return {
+    x: pointer.x + (Math.abs(across) < least ? side * least : across),
+    y: pointer.y + gait.below + walker.back.y * gait.behind * 0.4,
+  };
+};
 
 /**
  * Steps it `seconds` on after the pointer, which moved `moved` pixels since

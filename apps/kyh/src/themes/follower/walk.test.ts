@@ -75,3 +75,19 @@ test("a limb's joint keeps both bones their length, bent the way asked", () => {
   assert.ok(Math.abs(Math.hypot(far.joint.x - hip.x, far.joint.y - hip.y) - 15) < 1e-6);
   assert.ok(Math.abs(Math.hypot(far.end.x - far.joint.x, far.end.y - far.joint.y) - 16) < 1e-6);
 });
+
+test("a pointer moved straight up or down leaves the walker beside it, not under it", () => {
+  for (const dy of [-8, 8]) {
+    const walker = createWalker({ x: 300, y: 300 }, GAIT);
+    let pointer = { x: 300, y: 300 };
+    for (let frame = 0; frame < 120; frame += 1) {
+      const moved = frame < 40 ? { x: 0, y: dy } : { x: 0, y: 0 };
+      pointer = { x: pointer.x + moved.x, y: pointer.y + moved.y };
+      stepWalker(walker, GAIT, pointer, moved, 1 / 60);
+    }
+    assert.ok(
+      Math.abs(walker.x - pointer.x) >= GAIT.behind * 0.5,
+      `${dy}: ${walker.x - pointer.x}`,
+    );
+  }
+});

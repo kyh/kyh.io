@@ -116,7 +116,8 @@ export const Stage = <State,>({
         frame = 0;
         return;
       }
-      creature.step(state, mouse, moved, (now - last) / 1000);
+      // A frame stamped before the loop started (rAF can be) is no time at all.
+      creature.step(state, mouse, moved, Math.max(0, now - last) / 1000);
       last = now;
       moved = { x: 0, y: 0 };
       const pose = creature.pose(state);

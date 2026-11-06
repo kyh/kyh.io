@@ -83,6 +83,8 @@ const MOST_OWED = 0.1;
 /** The speed past which the push grows only as the speed: a fling can't tear it. */
 const MOST_MET = 500;
 const ITERATIONS = 4;
+/** The farthest its root goes in one frame before it's laid out afresh: a leap, not a move. */
+const MOST_LEAP = 120;
 
 const restAt = (hang: Hang, index: number): Point => {
   const rest = index === 0 ? { x: 0, y: 0 } : (hang.rest[index - 1] ?? { x: 0, y: 0 });
@@ -190,6 +192,12 @@ const stepOnce = (
  */
 export const stepChain = (chain: Chain, hang: Hang, stuff: Stuff, seconds: number) => {
   if (chain.knots.length !== hang.rest.length + 1) {
+    Object.assign(chain, createChain(hang));
+    return;
+  }
+  // Carried farther in one frame than it could swing (back from a hidden tab), it's laid out afresh, not whipped.
+  const [was] = chain.knots;
+  if (was && Math.hypot(hang.root.x - was.x, hang.root.y - was.y) > MOST_LEAP) {
     Object.assign(chain, createChain(hang));
     return;
   }
