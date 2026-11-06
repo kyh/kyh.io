@@ -212,9 +212,9 @@ export const stepChain = (chain: Chain, hang: Hang, stuff: Stuff, seconds: numbe
   }
 };
 
-/** The chain's points, root to tip, about `origin` (the stage's, so a pose can draw them). */
-export const chainAbout = (chain: Chain, origin: Point): Point[] =>
-  chain.knots.map((knot) => ({ x: knot.x - origin.x, y: knot.y - origin.y }));
+/** The chain's points, root to tip, about `origin` (the stage's, so a pose can draw them), in a drawing scaled by `size`. */
+export const chainAbout = (chain: Chain, origin: Point, size = 1): Point[] =>
+  chain.knots.map((knot) => ({ x: (knot.x - origin.x) / size, y: (knot.y - origin.y) / size }));
 
 /** How far, and which way, the tip's been carried from where it hangs at rest: for a part drawn as one piece (an ear's swing). */
 export const swayOf = (chain: Chain, hang: Hang): Point => {
@@ -224,4 +224,48 @@ export const swayOf = (chain: Chain, hang: Hang): Point => {
   }
   const rest = restAt(hang, chain.knots.length - 1);
   return { x: tip.x - rest.x, y: tip.y - rest.y };
+};
+
+/**
+ * A hang from where a chain lies at rest this frame, root first, about the
+ * stage's `origin`: as a pose projects it. `size` is the stage's, for a
+ * follower drawn scaled: the chain itself lives in the screen's pixels.
+ */
+export const hangOf = (points: readonly Point[], origin: Point, size = 1): Hang => {
+  const [root = { x: 0, y: 0 }, ...rest] = points;
+  return {
+    rest: rest.map((point) => ({ x: (point.x - root.x) * size, y: (point.y - root.y) * size })),
+    root: { x: origin.x + root.x * size, y: origin.y + root.y * size },
+  };
+};
+
+/** A knock to a chain, pixels a second, felt more toward its tip: a gobble's shake, a poke. */
+export const flickChain = (chain: Chain, by: Point) => {
+  const last = chain.knots.length - 1;
+  for (const [index, knot] of chain.knots.entries()) {
+    if (index > 0) {
+      const share = index / last;
+      knot.px -= by.x * share * STEP;
+      knot.py -= by.y * share * STEP;
+    }
+  }
+};
+
+const fixed = (n: number) => Math.round(n * 100) / 100;
+
+/** The chain as a smooth path about `origin` (in a drawing scaled by `size`): through the middle of each pair of links, root to tip. */
+export const chainPath = (chain: Chain, origin: Point, size = 1) => {
+  const points = chainAbout(chain, origin, size);
+  const [first, ...others] = points;
+  if (!first) {
+    return "";
+  }
+  let d = `M${fixed(first.x)} ${fixed(first.y)}`;
+  for (const [index, point] of others.entries()) {
+    const next = others[index + 1];
+    d += next
+      ? `Q${fixed(point.x)} ${fixed(point.y)} ${fixed((point.x + next.x) / 2)} ${fixed((point.y + next.y) / 2)}`
+      : `L${fixed(point.x)} ${fixed(point.y)}`;
+  }
+  return d;
 };

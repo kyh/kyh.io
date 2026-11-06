@@ -8,10 +8,12 @@
 // hocks that bend back. It turns to its heading; each part is a layer
 // stacked by how near the camera it is. In its own pixels: x forward, y up,
 // z to its left, its feet at the origin. Pure.
+import type { Point } from "../follower/chain";
 import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Vec3 } from "../follower/solid";
 import type { Turkey } from "./turkey";
 import { round } from "../art";
+import { chainPath } from "../follower/chain";
 import {
   add,
   apply,
@@ -154,9 +156,12 @@ const feathersOf = ({ fan, place, turn }: Frame) => {
   });
 };
 
-/** Its head, neck, eyes, beak, snood and wattle. */
+/** Links in each of its snood, wattle and beard. */
+const FLESH_LINKS = 4;
+
+/** Its head, neck, eyes and beak, and where its snood and wattle hang from it at rest. */
 const headOf = (turkey: Turkey, frame: Frame) => {
-  const { rig, snood, wattle } = turkey;
+  const { rig } = turkey;
   const at = frame.place([rig.headX.x, rig.headY.x + turkey.tremble, 0]);
   const forward = frame.turn([1, 0, 0]);
   const up = frame.turn([0, 1, 0]);
@@ -198,22 +203,39 @@ const headOf = (turkey: Turkey, frame: Frame) => {
     local(9.6, -0.6),
   ]);
   // The snood from above its beak, hanging over it, longer strutting; the wattle from its chin.
-  const drape = (start: Vec3, swing: number, first: Vec3, second: Vec3) => {
-    const turnBy = (v: Vec3) => apply(pitchOf(-swing), v);
-    const middle = add(start, frame.turn(turnBy(first)));
-    return linePath(curveOf(start, middle, add(middle, frame.turn(turnBy(second)))));
+  const drape = (start: Vec3, first: Vec3, second: Vec3) => {
+    const middle = add(start, frame.turn(first));
+    return curveOf(start, middle, add(middle, frame.turn(second)), FLESH_LINKS).map(toScreen);
   };
   const snoodLength = 4 + 3 * frame.fan;
-  const snoodPath = drape(local(3.2, 4), snood.angle, [3.4, -0.6, 0], [0.8, -snoodLength, 0]);
-  const wattlePath = drape(local(1.4, -4.4), wattle.angle, [-0.4, -3.6, 0], [0.6, -3.2, 0]);
   return {
     at,
     beak,
     eyes,
     neck,
-    snood: snoodPath,
-    wattle: wattlePath,
+    snood: drape(local(3.2, 4), [3.4, -0.6, 0], [0.8, -snoodLength, 0]),
+    wattle: drape(local(1.4, -4.4), [-0.4, -3.6, 0], [0.6, -3.2, 0]),
   };
+};
+
+/** Its beard: a tuft hanging from its breast. */
+const beardOf = (frame: Frame) =>
+  curveOf(
+    frame.place([18, 42, 0]),
+    frame.place([18.3, 37.5, 0]),
+    frame.place([18.6, 33, 0]),
+    3,
+  ).map(toScreen);
+
+/**
+ * Where its snood, wattle and beard hang at rest this frame, each root first,
+ * in its own pixels about where it stands: the chains (`turkey.ts`) are pulled
+ * toward them, and the air and their swing do the rest.
+ */
+export const fleshOf = (turkey: Turkey): Record<"beard" | "snood" | "wattle", Point[]> => {
+  const frame = frameOf(turkey);
+  const { snood, wattle } = headOf(turkey, frame);
+  return { beard: beardOf(frame), snood, wattle };
 };
 
 /** A leg (1 its left): hip to hock to foot, the hock bending back, and its toes. */
@@ -255,11 +277,10 @@ export const turkeyPose = (turkey: Turkey): Pose => {
   const head = headOf(turkey, frame);
   const legs = [0, 1].map((index) => legOf(turkey, frame, index));
   // The beard hangs from its breast, seen when its breast is.
-  const breast = frame.place([18, 42, 0]);
   const beardShown = smooth((facing(frame.turn([1, -0.2, 0])) + 0.2) / 0.4);
   const parts = Object.fromEntries([
     ...solid("body", body.outline),
-    ["beard", { d: linePath([breast, frame.place([18.6, 33, 0])]), opacity: round(beardShown) }],
+    ["beard", { d: chainPath(turkey.beard, turkey.walker, SIZE), opacity: round(beardShown) }],
     ...wings.flatMap(({ bars, outline }, index): [string, Part][] => [
       ...solid(`wing-${index}`, outline),
       [`bars-${index}`, { d: bars }],
@@ -279,8 +300,8 @@ export const turkeyPose = (turkey: Turkey): Pose => {
     ),
     ...head.eyes,
     ["beak", { d: head.beak }],
-    ["snood", { d: head.snood }],
-    ["wattle", { d: head.wattle }],
+    ["snood", { d: chainPath(turkey.snood, turkey.walker, SIZE) }],
+    ["wattle", { d: chainPath(turkey.wattle, turkey.walker, SIZE) }],
     ...legs.map(({ path }, index) => [`leg-${index}`, { d: path }] as const),
   ]) satisfies Record<string, Part>;
 

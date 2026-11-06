@@ -9,10 +9,12 @@
 // its belly to slide, and turns to its heading; each part is a layer stacked
 // by how near the camera it is. In its own pixels: x forward, y up, z to its
 // left, its feet at the origin. Pure.
+import type { Point } from "../follower/chain";
 import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Mat3, Vec3 } from "../follower/solid";
 import type { Penguin } from "./penguin";
 import { round } from "../art";
+import { chainPath } from "../follower/chain";
 import {
   add,
   apply,
@@ -199,16 +201,32 @@ const scarfOf = (frame: Frame) => {
 };
 
 /** Its scarf's end, hanging from the knot and swinging as it's carried. */
-const scarfEndOf = (penguin: Penguin, frame: Frame) => {
-  const knot: Vec3 = [
-    SCARF[0] + Math.cos(KNOT) * SCARF_RADII[0],
-    SCARF[1] - 1,
-    Math.sin(KNOT) * SCARF_RADII[1],
-  ];
-  const hang = normalize(apply(pitchOf(-0.15 - penguin.scarf.angle * 0.8), [0.1, -1, 0.3]));
-  const points = [0, 0.5, 1].map((t) => frame.place(add(knot, scale(hang, SCARF_END * t))));
-  return { d: linePath(points), depth: depthOf(points[1] ?? frame.place(knot)) };
+/** Where the scarf's knot is, on its body. */
+const SCARF_KNOT: Vec3 = [
+  SCARF[0] + Math.cos(KNOT) * SCARF_RADII[0],
+  SCARF[1] - 1,
+  Math.sin(KNOT) * SCARF_RADII[1],
+];
+/** How many links its end has. */
+const SCARF_LINKS = 4;
+
+/**
+ * Where its scarf's end would hang at rest this frame, knot first, on the
+ * screen about where it stands: the chain (`penguin.ts`) is pulled toward it,
+ * and the air and its swing do the rest.
+ */
+export const scarfRestOf = (penguin: Penguin): Point[] => {
+  const frame = frameOf(penguin);
+  const hang = normalize(apply(pitchOf(-0.15), [0.1, -1, 0.3]));
+  return Array.from({ length: SCARF_LINKS + 1 }, (_, index) =>
+    toScreen(frame.place(add(SCARF_KNOT, scale(hang, (SCARF_END * index) / SCARF_LINKS)))),
+  );
 };
+
+const scarfEndOf = (penguin: Penguin, frame: Frame) => ({
+  d: chainPath(penguin.scarfEnd, penguin.walker),
+  depth: depthOf(frame.place(add(SCARF_KNOT, [0, -SCARF_END / 2, 0]))),
+});
 
 const solid = (name: string, outline: Ellipse): [string, Part][] => {
   const { lit, whole } = solidPaths(outline);

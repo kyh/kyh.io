@@ -15,11 +15,13 @@ import { createRandom } from "@/lib/random";
 import type { Creature } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Spring } from "../follower/solid";
-import type { Gait, Point, Swing, Walker } from "../follower/walk";
+import type { Chain } from "../follower/chain";
+import type { Gait, Point, Walker } from "../follower/walk";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
-import { createWalker, isOnWalker, pace, stepSwing, stepWalker } from "../follower/walk";
-import { penguinPose } from "./penguin-pose";
+import { CLOTH, createChain, flickChain, hangOf, stepChain } from "../follower/chain";
+import { createWalker, isOnWalker, pace, stepWalker } from "../follower/walk";
+import { penguinPose, scarfRestOf } from "./penguin-pose";
 
 const GAIT: Gait = { accel: 1200, behind: 64, below: 34, stride: 16, top: 400 };
 
@@ -65,10 +67,8 @@ export interface Penguin {
   /** Seconds it's been about, for its flaps and beats. */
   time: number;
   rig: Rig;
-  /** Its scarf's end, swinging as it's carried. */
-  scarf: Swing;
-  lastVx: number;
-  lastVy: number;
+  /** Its scarf's end: cloth, streaming out behind as it's carried and swinging back (`chain.ts`). */
+  scarfEnd: Chain;
 }
 
 const BRAY = ["Hraa-aa-aa!", "Squawk!", "Merry Christmas!"];
@@ -92,8 +92,6 @@ export const createPenguin = (at: Point): Penguin => {
     actFor: 0,
     emotes: createEmotes(seed),
     gait: GAIT,
-    lastVx: 0,
-    lastVy: 0,
     next: 1.5,
     petted: 0,
     random: createRandom(seed + 1),
@@ -109,7 +107,8 @@ export const createPenguin = (at: Point): Penguin => {
       pitch: springAt(0),
       slide: springAt(0),
     },
-    scarf: { angle: 0, spin: 0 },
+    // Laid out where it hangs on its first step.
+    scarfEnd: createChain({ rest: [], root: at }),
     time: 0,
     walker: createWalker(at, GAIT),
   };
@@ -119,7 +118,7 @@ const begin = (penguin: Penguin, act: Act) => {
   penguin.act = act;
   penguin.actFor = 0;
   if (act === "display" || act === "jump") {
-    penguin.scarf.spin += 8;
+    flickChain(penguin.scarfEnd, { x: 0, y: -160 });
   }
 };
 
@@ -238,20 +237,8 @@ export const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seco
   const dozing = stepActs(penguin, moving, idle, seconds);
   stepTalk(penguin, dozing, idle, seconds);
   stepRig(penguin, pointer, dozing, seconds);
-  // Its scarf's end lags its body as it's carried, and is tossed a little each waddle.
-  const dt = Math.min(seconds, 0.05);
-  const heading = penguin.rig.heading.x;
-  const ax =
-    dt > 0
-      ? ((walker.vx - penguin.lastVx) * Math.cos(heading) +
-          (walker.vy - penguin.lastVy) * Math.sin(heading)) /
-        dt
-      : 0;
-  penguin.lastVx = walker.vx;
-  penguin.lastVy = walker.vy;
-  const rock =
-    Math.sin(walker.phase * Math.PI * 2) * pace(walker, GAIT) * (1 - penguin.rig.slide.x);
-  stepSwing(penguin.scarf, ax + rock * 500, seconds);
+  // Its scarf's end, carried by its knot as it waddles and slides: the air and its swing do the rest.
+  stepChain(penguin.scarfEnd, hangOf(scarfRestOf(penguin), walker), CLOTH, Math.min(seconds, 0.05));
 };
 
 export const pokePenguin = (penguin: Penguin, at: Point) => {

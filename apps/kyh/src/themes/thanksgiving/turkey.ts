@@ -14,11 +14,13 @@ import { createRandom } from "@/lib/random";
 import type { Creature } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Spring } from "../follower/solid";
-import type { Gait, Point, Swing, Walker } from "../follower/walk";
+import type { Chain } from "../follower/chain";
+import type { Gait, Point, Walker } from "../follower/walk";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
 import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
-import { createWalker, isOnWalker, pace, stepSwing, stepWalker } from "../follower/walk";
-import { SIZE, turkeyPose } from "./turkey-pose";
+import { createChain, flickChain, FLOPPY, hangOf, stepChain } from "../follower/chain";
+import { createWalker, isOnWalker, pace, stepWalker } from "../follower/walk";
+import { fleshOf, SIZE, turkeyPose } from "./turkey-pose";
 
 /** Its walk, on the screen: its stride and where it keeps to by the pointer shrunk with it. */
 const GAIT: Gait = {
@@ -61,13 +63,10 @@ export interface Turkey {
   /** Seconds the mouse has rested on it. */
   petted: number;
   rig: Rig;
-  /** Its wattle and snood, swinging as it's carried. */
-  wattle: Swing;
-  snood: Swing;
-  /** How fast it was going a step ago, to feel it speed up. */
-  lastVx: number;
-  lastVy: number;
-  lastHeadV: number;
+  /** Its wattle, snood and beard: flesh hanging off it, flung about as it's carried (`chain.ts`). */
+  wattle: Chain;
+  snood: Chain;
+  beard: Chain;
   /** A gobble's tremble on its head (pixels up), on top of its glide. */
   tremble: number;
   /** Seconds it's been about, for its strut's slow pivot. */
@@ -95,11 +94,9 @@ export const createTurkey = (at: Point): Turkey => {
   return {
     act: "none",
     actFor: 0,
+    beard: createChain({ rest: [], root: at }),
     emotes: createEmotes(seed),
     gait: GAIT,
-    lastHeadV: 0,
-    lastVx: 0,
-    lastVy: 0,
     nextGobble: 2,
     nextPeck: 1.5,
     petted: 0,
@@ -113,11 +110,12 @@ export const createTurkey = (at: Point): Turkey => {
       // A three-quarter view, toward the camera, to begin with.
       heading: springAt(Math.PI / 4),
     },
-    snood: { angle: 0, spin: 0 },
+    // Each laid out where it hangs on its first step.
+    snood: createChain({ rest: [], root: at }),
     time: 0,
     tremble: 0,
     walker: createWalker(at, GAIT),
-    wattle: { angle: 0, spin: 0 },
+    wattle: createChain({ rest: [], root: at }),
   };
 };
 
@@ -126,8 +124,8 @@ const begin = (turkey: Turkey, act: Act) => {
   turkey.actFor = 0;
   if (act === "gobble") {
     // The gobble shakes its wattle and snood about.
-    turkey.wattle.spin += 9;
-    turkey.snood.spin -= 7;
+    flickChain(turkey.wattle, { x: 90, y: -60 });
+    flickChain(turkey.snood, { x: -70, y: -40 });
   }
 };
 
@@ -237,22 +235,6 @@ const stepHead = (turkey: Turkey, pointer: Point, seconds: number) => {
   stepSpring(rig.headX, goal.x, rate, seconds);
   stepSpring(rig.headY, goal.y, rate, seconds);
   stepSpring(rig.bow, turkey.act === "peck" ? 0.32 : 0, 14, seconds);
-  const dt = Math.min(seconds, 0.05);
-  if (dt <= 0) {
-    return;
-  }
-  // The wattle lags the head, carried forward along its heading with the body.
-  const heading = rig.heading.x;
-  const along =
-    ((walker.vx - turkey.lastVx) * Math.cos(heading) +
-      (walker.vy - turkey.lastVy) * Math.sin(heading)) /
-    dt;
-  const ax = (rig.headX.v - turkey.lastHeadV) / dt + along;
-  turkey.lastHeadV = rig.headX.v;
-  turkey.lastVx = walker.vx;
-  turkey.lastVy = walker.vy;
-  stepSwing(turkey.wattle, ax, seconds);
-  stepSwing(turkey.snood, ax * 0.7, seconds);
   turkey.tremble =
     turkey.act === "gobble" ? Math.sin(turkey.actFor * 46) * 1.4 * envelope(turkey, "gobble") : 0;
 };
@@ -272,6 +254,11 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   const sleeping = stepActs(turkey, moving, idle, seconds);
   stepTalk(turkey, sleeping, idle, seconds);
   stepHead(turkey, pointer, seconds);
+  // Its snood, wattle and beard, carried by its head and breast: the air and their swing do the rest.
+  const flesh = fleshOf(turkey);
+  stepChain(turkey.snood, hangOf(flesh.snood, walker, SIZE), FLOPPY, seconds);
+  stepChain(turkey.wattle, hangOf(flesh.wattle, walker, SIZE), FLOPPY, seconds);
+  stepChain(turkey.beard, hangOf(flesh.beard, walker, SIZE), FLOPPY, seconds);
 };
 
 export const pokeTurkey = (turkey: Turkey, at: Point) => {
