@@ -7,7 +7,7 @@
 // round the outside. A green body and head, a blue rump, a peach face and a
 // red forehead, a white ring round each eye, a pale hooked beak; green wings,
 // their flight feathers darker on top and the whole underside in the shade;
-// a blue tail, its outer feathers banded red at the base where they show
+// a green tail, its outer feathers banded red at the base where they show
 // fanned; pink feet. Each `data-layer` is one part the stage stacks by how
 // near the camera it is; each `data-part` is posed a frame at a time.
 import { useSvgId } from "@/lib/svg-id";
@@ -21,7 +21,7 @@ import { SIZE } from "./lovebird-pose";
 /** Ink `width` screen pixels wide, as the ghost's is, though the lovebird's drawn bigger. */
 const ink = (width: number) => width / SIZE;
 
-/** Ink round the body and the head: drawn under each, so the caps over them don't cover it. */
+/** Ink round the body: drawn under it, so the rump's cap over it doesn't cover it. */
 const OUTLINE = 2.6;
 
 const Eye = ({ index }: { index: number }) => (
@@ -67,7 +67,7 @@ export const Follower = () => {
         </g>
       ))}
       <g data-layer="tail">
-        <path data-part="tail" style={filled("accentBlue", ink(0.8))} />
+        <path data-part="tail" style={filled("festiveGreen", ink(0.8))} />
         <path data-part="band" style={filled("festiveRed")} />
         <path data-part="tail-quills" style={stroked(ink(0.45))} />
         <path data-part="tail" style={stroked(ink(0.8))} />
@@ -83,10 +83,11 @@ export const Follower = () => {
       <g data-layer="head">
         <Beak at="back" />
         <path data-part="head-tufts" style={filled("festiveGreen", ink(0.7))} />
-        <path data-part="head" style={stroked(ink(OUTLINE))} />
         <Solid name="head" id={id} fill="festiveGreen" shade="festiveGreenShade" />
         <Solid name="face" id={id} fill="accentPink" shade="accentPink" ink={ink(0.5)} />
         <Solid name="brow" id={id} fill="festiveRed" shade="festiveRedShade" ink={ink(0.5)} />
+        {/* Its head inked over its caps, as fine as the body's ink shows: it's drawn over the body. */}
+        <path data-part="head" style={stroked(ink(1.3))} />
         <Eye index={0} />
         <Eye index={1} />
         <Beak at="front" />
