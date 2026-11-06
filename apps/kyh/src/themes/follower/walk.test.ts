@@ -76,12 +76,17 @@ test("a limb's joint keeps both bones their length, bent the way asked", () => {
   assert.ok(Math.abs(Math.hypot(far.end.x - far.joint.x, far.end.y - far.joint.y) - 16) < 1e-6);
 });
 
-test("a pointer moved straight up or down leaves the walker beside it, not under it", () => {
+test("a pointer moved up or down, wobbling a little side to side, leaves the walker beside it, never crossing under it", () => {
   for (const dy of [-8, 8]) {
     const walker = createWalker({ x: 300, y: 300 }, GAIT);
     let pointer = { x: 300, y: 300 };
+    const sides = new Set<number>();
     for (let frame = 0; frame < 120; frame += 1) {
-      const moved = frame < 40 ? { x: 0, y: dy } : { x: 0, y: 0 };
+      // A hand's wobble: a pixel left, a pixel right.
+      const moved = frame < 40 ? { x: frame % 2 === 0 ? 1 : -1, y: dy } : { x: 0, y: 0 };
+      if (frame > 20) {
+        sides.add(Math.sign(walker.x - pointer.x));
+      }
       pointer = { x: pointer.x + moved.x, y: pointer.y + moved.y };
       stepWalker(walker, GAIT, pointer, moved, 1 / 60);
     }
@@ -89,5 +94,6 @@ test("a pointer moved straight up or down leaves the walker beside it, not under
       Math.abs(walker.x - pointer.x) >= GAIT.behind * 0.5,
       `${dy}: ${walker.x - pointer.x}`,
     );
+    assert.equal(sides.size, 1, `${dy}: crossed sides`);
   }
 });

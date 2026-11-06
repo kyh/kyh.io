@@ -102,10 +102,10 @@ const ASIDE = 0.6;
  * up or down isn't left resting on its back, petting it without being asked.
  */
 export const spotOf = (walker: Walker, gait: Gait, pointer: Point): Point => {
-  const side =
-    walker.back.x === 0 ? Math.sign(walker.x - pointer.x) || -1 : Math.sign(walker.back.x);
   const across = walker.back.x * gait.behind;
   const least = gait.behind * ASIDE;
+  // Too little to the side, it keeps to the side it's on: a near-vertical move's wobble doesn't swing it across.
+  const side = Math.sign(walker.x - pointer.x) || Math.sign(walker.back.x) || -1;
   return {
     x: pointer.x + (Math.abs(across) < least ? side * least : across),
     y: pointer.y + gait.below + walker.back.y * gait.behind * 0.4,
