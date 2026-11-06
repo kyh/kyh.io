@@ -1,17 +1,34 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
 import { iconAttrs } from "@/components/icons";
-import { ThemeBloom } from "@/components/theme-bloom";
 import { ThemeIcon } from "@/components/theme-icon";
 import { discoverEgg } from "@/easter-eggs/store";
 import { DEFAULT_THEME, themeOf } from "@/themes";
 import { nextTap, toggleTheme, useAppearance } from "@/themes/store";
+
+/**
+ * The themes menu, in its own chunk: no page needs it until the toggle's held
+ * down. Fetched as soon as a press or a mouse over the toggle hints at it, so
+ * it's usually in by the time the hold blooms it.
+ */
+const loadBloom = () => import("@/components/theme-bloom");
+const ThemeBloom = lazy(async () => {
+  const { ThemeBloom: loaded } = await loadBloom();
+  return { default: loaded };
+});
+const fetchBloom = async () => {
+  try {
+    await loadBloom();
+  } catch {
+    // Only a head start: it's fetched again, and fails where it's drawn.
+  }
+};
 
 /** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
@@ -207,6 +224,8 @@ export const Dock = () => {
   const [hovered, setHovered] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const [blooming, setBlooming] = useState(false);
+  // Drawn from the first bloom on, so it can fold away when closed.
+  const [bloomed, setBloomed] = useState(false);
   // A tap is light or dark; held down, the toggle blooms the themes, and the
   // release that ends the hold is no tap (whether it was is kept until the next press).
   const holding = useRef(0);
@@ -216,9 +235,11 @@ export const Dock = () => {
     // The dock settles back to rest under the themes, the toggle at its own size.
     mouseX.set(Infinity);
     setBlooming(true);
+    setBloomed(true);
     discoverEgg("bloom");
   };
   const press = () => {
+    void fetchBloom();
     held.current = false;
     window.clearTimeout(holding.current);
     holding.current = window.setTimeout(() => {
@@ -320,7 +341,10 @@ export const Dock = () => {
               toggleTheme();
             }
           }}
-          onPointerEnter={(event) => hover(event, "theme")}
+          onPointerEnter={(event) => {
+            void fetchBloom();
+            hover(event, "theme");
+          }}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
             {/* Light and dark morph into each other; a holiday theme pops in wearing its glyph. */}
@@ -338,7 +362,11 @@ export const Dock = () => {
             </AnimatePresence>
           </DockItem>
         </button>
-        <ThemeBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
+        {bloomed && (
+          <Suspense fallback={null}>
+            <ThemeBloom anchor={toggle} open={blooming} onOpenChange={setBlooming} />
+          </Suspense>
+        )}
         <GlassFilter />
       </nav>
     </div>

@@ -77,6 +77,9 @@ The rest is by hand:
 - Theme art (`art.ts`, drawn by `piece.tsx`) is drawn in the showcase town's
   hand: flat faces in its palette tokens, ink outlines, the shaded side in the
   darker token with the shade dots. No gradients, gloss or drop shadows.
+- The themes menu (`components/theme-bloom.tsx`, Base UI's Menu with it) is
+  lazy: the dock fetches it once the toggle's hovered or pressed, and draws it
+  from the first bloom. Never import it statically.
 - The homepage hat is pictured on the server (`themes/hat-pictures.ts` →
   `city/picture.ts`), so the page loads no town code.
 
