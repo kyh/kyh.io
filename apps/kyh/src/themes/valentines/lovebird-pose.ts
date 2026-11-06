@@ -138,12 +138,18 @@ const buildFrame = (bird: Lovebird) => {
   const steady = add(apply(tilt, BODY), [0, rig.lift.x - bird.dip.x, 0]);
   const center = add(steady, [0, heave, 0]);
   const turn = (direction: Vec3): Vec3 => apply(orient, direction);
+  /** A direction in the world in its body's frame: the way back from `turn`. */
+  const unturn = (direction: Vec3): Vec3 => [
+    orient[0][0] * direction[0] + orient[1][0] * direction[1] + orient[2][0] * direction[2],
+    orient[0][1] * direction[0] + orient[1][1] * direction[1] + orient[2][1] * direction[2],
+    orient[0][2] * direction[0] + orient[1][2] * direction[1] + orient[2][2] * direction[2],
+  ];
   const place = (local: Vec3): Vec3 => add(center, turn(local));
   /** Placed on its body without the heave of its beats: for what trails off it (its tail's chain). */
   const placeSteady = (local: Vec3): Vec3 => add(steady, turn(local));
   const puff = 1 + 0.08 * rig.fluff.x;
   const radii = scale(mix(FLYING_RADII, PERCHED_RADII, bird.perch), puff);
-  return { center, place, placeSteady, radii, steady, tilt, turn, yaw };
+  return { center, place, placeSteady, radii, steady, tilt, turn, unturn, yaw };
 };
 
 type Frame = ReturnType<typeof buildFrame>;
@@ -342,6 +348,38 @@ const beakOf = (bird: Lovebird, head: Head) => {
   };
 };
 
+/** A point turned about an axis through the origin (a unit direction) by `angle`. */
+const turnAbout = (v: Vec3, axis: Vec3, angle: number): Vec3 => {
+  const c = Math.cos(angle);
+  return add(
+    add(scale(v, c), scale(cross(axis, v), Math.sin(angle))),
+    scale(axis, dot(axis, v) * (1 - c)),
+  );
+};
+
+/**
+ * A spread wing (its points about its body) turned about its span, `amount`
+ * of the way to showing its broad side to the camera, whichever side is
+ * nearer: so a wing braking to land is never seen edge on, whichever way it
+ * comes in. Its span pointing at the camera, it's seen end on and left be.
+ */
+const cupped = (points: Vec3[], shoulder: Vec3, side: number, toCamera: Vec3, amount: number) => {
+  const spans = points.map((point) => sub(point, shoulder));
+  const tip = at(spans, TIP);
+  const span = normalize(tip);
+  const across = sub(toCamera, scale(span, dot(toCamera, span)));
+  if (amount <= 0 || Math.hypot(...across) < 0.2) {
+    return points;
+  }
+  const normal = normalize(
+    scale(cross(sub(tip, at(spans, 0)), sub(at(spans, 0), at(spans, 6))), side),
+  );
+  const goal = scale(normalize(across), dot(normal, across) >= 0 ? 1 : -1);
+  const angle = Math.atan2(dot(cross(normal, goal), span), dot(normal, goal));
+  const by = Math.max(-1.4, Math.min(1.4, angle * amount));
+  return spans.map((point) => add(shoulder, turnAbout(point, span, by)));
+};
+
 /** A wing's points this frame (1 its left): folded or spread, raised or lowered on its stroke, the hand bent after the arm. */
 const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
   const { rig, wings } = bird;
@@ -355,20 +393,24 @@ const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
     yawOf(-side * 0.45 * rig.flare.x),
   );
   const bend = rollOf(-side * (wings.hand.x - wings.arm));
-  // Flaring, and on the upstroke, it turns its wings about their span, leading edge up: cupped to brake,
-  // their broad underside to the way it flies.
-  const twist = pitchOf(0.9 * rig.flare.x + 0.45 * rig.amp.x * upstrokeAt(wings.phase));
+  // On the upstroke it turns its wings about their span, leading edge up.
+  const twist = pitchOf(0.45 * rig.amp.x * upstrokeAt(wings.phase));
   const shoulder = side3(SHOULDER, side);
-  return FOLDED.map((folded, index) => {
-    const out = side3(at(SPREAD, index), side);
+  const spreadOut = SPREAD.map((point, index) => {
+    const out = side3(point, side);
     const share = HAND_SHARE[index] ?? 0;
     const bent = add(wrist, apply(bend, sub(out, wrist)));
-    const flexed = mix(out, bent, share);
-    const spreadAt = add(shoulder, apply(raise, apply(twist, flexed)));
+    return add(shoulder, apply(raise, apply(twist, mix(out, bent, share))));
+  });
+  const between = FOLDED.map((folded, index) => {
     // Preened, the folded wing's held off its side, its feathers parted.
     const tucked = add(side3(folded, side), scale(side3(at(PREENED, index), side), preening));
-    return frame.place(mix(tucked, spreadAt, spread));
+    return mix(tucked, at(spreadOut, index), spread);
   });
+  // Braking to land, and folding or steadying itself perched, its wings are cupped round to show
+  // their broad side, as far as they're open: folded, they lie as they lie.
+  const cup = 0.9 * Math.min(1, Math.max(2 * rig.flare.x, rig.legs.x)) * Math.min(1, spread * 3);
+  return cupped(between, shoulder, side, frame.unturn(TOWARD_CAMERA), cup).map(frame.place);
 };
 
 /** A wing: its outline, its flight feathers, and which side of it shows. */

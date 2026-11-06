@@ -383,6 +383,9 @@ const begin = (bird: Lovebird, act: Act) => {
     say(bird.emotes, CHATTER);
     // A flick of its tail up as it chirps.
     bird.rig.tail.v -= 5;
+  } else if (act === "tilt") {
+    // A cock of the head, and sometimes a question: never over a petting's ♥.
+    say(bird.emotes, TILT);
   } else if (act === "nuzzle") {
     // Petted, it says so at once, whatever it was saying.
     say(bird.emotes, PET, true);
@@ -518,7 +521,8 @@ const flyingWings = (bird: Lovebird): WingGoal => {
     return { amp: 1, hertz: 7, spread: 1 };
   }
   if (bird.rig.flare.x > 0.15) {
-    return { amp: 1, hertz: 6, spread: 1 };
+    // Flaring, short strokes held high: braking beats, its wings never down past its feet.
+    return { amp: 0.55, hertz: 6, spread: 1 };
   }
   if (bird.scramble > 0) {
     return { amp: 1, hertz: 8, spread: 1 };
@@ -593,7 +597,8 @@ const stepWings = (bird: Lovebird, holding: boolean, dt: number) => {
   const folding = wings.bound > 0 ? 30 : 16;
   const opening = wings.launch > 0 ? 32 : 22;
   stepSpring(rig.spread, goal.spread, goal.spread > rig.spread.x ? opening : folding, dt);
-  stepSpring(rig.amp, goal.amp, 12, dt);
+  // Taken hold, it stops its strokes at once, so its wings don't hang down past its feet.
+  stepSpring(rig.amp, goal.amp, holding ? 24 : 12, dt);
   beat(bird, goal.hertz, !holding && cruising(bird), dt);
 };
 

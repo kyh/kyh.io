@@ -4,7 +4,7 @@ import test from "node:test";
 import type { Lovebird } from "./lovebird";
 import type { Point } from "../follower/walk";
 import { createLovebird, lovebird, stepLovebird } from "./lovebird";
-import { lovebirdPose, tailHangOf } from "./lovebird-pose";
+import { lovebirdPose, SIZE, tailHangOf } from "./lovebird-pose";
 import { flexAt, stepFlex } from "./flex";
 import { swayOf } from "../follower/chain";
 
@@ -391,8 +391,11 @@ test("rousing, it shakes itself in the screen's plane, its feathers up at once",
 const areaOf = (d: string) => {
   const numbers = (d.match(/-?\d+(?:\.\d+)?/gu) ?? []).map(Number);
   let area = 0;
-  for (let index = 0; index + 3 < numbers.length; index += 2) {
-    const [x0 = 0, y0 = 0, x1 = 0, y1 = 0] = numbers.slice(index, index + 4);
+  for (let index = 0; index + 1 < numbers.length; index += 2) {
+    // Round to the first point again: the outline's closed.
+    const next = (index + 2) % (numbers.length - (numbers.length % 2));
+    const [x0 = 0, y0 = 0] = numbers.slice(index, index + 2);
+    const [x1 = 0, y1 = 0] = numbers.slice(next, next + 2);
     area += x0 * y1 - x1 * y0;
   }
   return Math.abs(area / 2);
@@ -418,4 +421,46 @@ test("flaring to land toward the camera, its wings show broad, not edge on", () 
   }
   assert.ok(flared > 2, `${flared} frames flared`);
   assert.ok(thinnest > 25, `${thinnest}`);
+});
+
+/** How thick a path's outline is across its length, seen (pixels): its area over its span. */
+const thicknessOf = (d: string) => {
+  const numbers = (d.match(/-?\d+(?:\.\d+)?/gu) ?? []).map(Number);
+  let span = 0;
+  for (let a = 0; a + 1 < numbers.length; a += 2) {
+    for (let b = a + 2; b + 1 < numbers.length; b += 2) {
+      const dx = (numbers[a] ?? 0) - (numbers[b] ?? 0);
+      const dy = (numbers[a + 1] ?? 0) - (numbers[b + 1] ?? 0);
+      span = Math.max(span, Math.hypot(dx, dy));
+    }
+  }
+  return (1.5 * areaOf(d) * SIZE) / Math.max(span, 1);
+};
+
+test("coming in to land from any side, neither wing is ever edge on in the last fifth of a second", () => {
+  // The pointer's last move, from far off to where it rests: right (it comes in from above-left), down (from above), left (from above-right), and the rest round.
+  for (const way of [0, 45, 90, 135, 180, 225, 270, 315]) {
+    const angle = (way * Math.PI) / 180;
+    const rest = { x: 600, y: 500 };
+    const from = { x: rest.x - 420 * Math.cos(angle), y: rest.y - 420 * Math.sin(angle) };
+    const bird = createLovebird(from);
+    let pointer = run(bird, from, 1.5);
+    for (let frame = 1; frame <= 12; frame += 1) {
+      const next = {
+        x: from.x + ((rest.x - from.x) * frame) / 12,
+        y: from.y + ((rest.y - from.y) * frame) / 12,
+      };
+      stepLovebird(bird, next, { x: next.x - pointer.x, y: next.y - pointer.y }, 1 / 60);
+      pointer = next;
+    }
+    const seen: number[][] = [];
+    for (let frame = 0; frame < 240 && !bird.riding; frame += 1) {
+      stepLovebird(bird, rest, STILL, 1 / 60);
+      const { parts } = lovebirdPose(bird);
+      seen.push(["wing-0", "wing-1"].map((wing) => thicknessOf(parts[wing]?.d ?? "")));
+    }
+    assert.ok(bird.riding, `${way}: landed`);
+    const last = seen.slice(-12).flat();
+    assert.ok(Math.min(...last) > 1.5, `${way}: ${last.map((n) => n.toFixed(1)).join(" ")}`);
+  }
 });
