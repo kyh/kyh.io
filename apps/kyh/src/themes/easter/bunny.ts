@@ -9,11 +9,12 @@
 // long ears and its cotton tail are chains (`../follower/chain.ts`), held
 // stiff against kinking (`stiffen.ts`), streaming back as it flies, flopping
 // as it lands and swinging back up when it stops, the right ear floppier than
-// the left. Left be, it breathes, twitches its nose, swivels an ear now and
-// then, sniffs about, grooms its face with its paws and sits up tall to look
-// round; left long enough, it lays its ears back and dozes. A click on it, or
-// a petting, sets it leaping and twisting in the air (a binky, a happy
-// rabbit's jump); a click elsewhere makes it thump, or, hopping, startle.
+// the left. Stood, it turns its head to watch the mouse. Left be, it breathes,
+// twitches its nose, swivels an ear now and then, sniffs about, grooms its face
+// with its paws and sits up tall to look round; left long enough, it lays its
+// ears back and dozes. A click on it, or a petting, sets it leaping and
+// twisting in the air (a binky, a happy rabbit's jump); a click elsewhere makes
+// it thump, or, hopping, startle.
 // Pure (state is stepped in place, for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
@@ -26,7 +27,15 @@ import type { Hopper, Spot } from "./hop";
 import type { Jiggle } from "./jiggle";
 import { createChain, flickChain, stepChain } from "../follower/chain";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
-import { faceGoal, PITCH, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
+import {
+  faceGoal,
+  headingOf,
+  PITCH,
+  smooth,
+  springAt,
+  stepAngle,
+  stepSpring,
+} from "../follower/solid";
 import { createWalker, isOnWalker, spotOf, turnBack } from "../follower/walk";
 import {
   ACT_S,
@@ -39,7 +48,16 @@ import {
   THUMP_BEATS,
   thumpAt,
 } from "./bunny-pose";
-import { createHopper, isAirborne, isPivot, placeOf, planLeap, SET_OFF, stepHopper } from "./hop";
+import {
+  createHopper,
+  isAirborne,
+  isPivot,
+  placeOf,
+  planLeap,
+  SET_OFF,
+  stepHopper,
+  wrap,
+} from "./hop";
 import { jiggleAt, stepJiggle } from "./jiggle";
 import { stiffen } from "./stiffen";
 
@@ -61,7 +79,7 @@ export interface Rig {
   content: Spring;
   /** Its head turned (radians, + to its left) and nodded (+ up, - down). */
   look: Spring;
-  /** Which way its head faces in the world: ahead of its body into a turn, as an animal looks where it's going. */
+  /** Which way its head faces in the world: ahead of its body into a turn, as an animal looks where it's going; stood, to the mouse. */
   gaze: Spring;
   nod: Spring;
   /** Its ears laid back (radians; less than 0 pricked forward), each swivelled out (radians), and its tail flagged up. */
@@ -141,6 +159,8 @@ const TAIL: Stuff = { damp: 4.5, drag: 0.004, keep: 0.09, keepTip: 0.09, rub: 0.
 const GAZE_RATE = 9;
 /** How far its head turns from its body, either way. */
 const NECK_TURN = 1;
+/** How far up the screen its head is from its feet: a mouse level with its head is beside it, not behind it. */
+const HEAD_UP = 18;
 /** Its body's wobble: how fast, and how soon it dies. */
 const WOBBLE = { damping: 0.4, hertz: 6 } as const;
 
@@ -215,11 +235,11 @@ const faceOf = (bunny: Bunny, pointer: Point) => {
   return Math.PI / 2 + (Math.cos(goal) >= 0 ? -SETTLED_TURN : SETTLED_TURN);
 };
 
-/** Where it'd hop to, and which way it'd turn to stood there: null, it's to stay as it is. */
+/** Where it'd hop to, which way it'd turn to stood there, and where it'd look: null, it's to stay as it is. */
 const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean) => {
   const { act, walker } = bunny;
   if (KEPT.has(act)) {
-    return { face: null, target: null };
+    return { face: null, target: null, watch: null };
   }
   // Petted (a mouse resting on it), it stays, turned round to the camera to see who's petting it;
   // a mouse on it at all, it won't hop off from under it.
@@ -228,11 +248,11 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
       bunny.petted > 0.2 && act === "none"
         ? Math.PI / 2 + (Math.cos(bunny.hopper.heading) >= 0 ? -PETTED_TURN : PETTED_TURN)
         : null;
-    return { face, target: null };
+    return { face, target: null, watch: null };
   }
   const spot = spotOf(walker, GAIT, pointer);
-  const face =
-    dozing || act !== "none" || walker.still < SETTLING_S ? null : faceOf(bunny, pointer);
+  const free = !dozing && act === "none";
+  const face = free && walker.still >= SETTLING_S ? faceOf(bunny, pointer) : null;
   // Its spot swinging round behind a mouse that's turned back, it won't hop away from the mouse to
   // get there: it waits till its spot's come round.
   const toSpot = { x: spot.x - walker.x, y: (spot.y - walker.y) / SIN };
@@ -240,7 +260,8 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
   const away =
     toSpot.x * toMouse.x + toSpot.y * toMouse.y < 0 &&
     Math.hypot(toMouse.x, toMouse.y) > AWAY_FROM_MOUSE;
-  return { face, target: away ? null : groundOf(spot) };
+  const mouse = headingOf(pointer.x - walker.x, pointer.y - walker.y + HEAD_UP);
+  return { face, target: away ? null : groundOf(spot), watch: free ? (face ?? mouse) : null };
 };
 
 /** Whether it's somewhere to go: far enough from where it'd be that it'll hop. */
@@ -369,6 +390,23 @@ const stepBeats = (bunny: Bunny, seconds: number) => {
   }
 };
 
+/**
+ * Which way its head turns, stood facing `heading`, to look to `watch`: past
+ * its neck's reach, to the limit on the side it's on, or a mouse going round
+ * behind it would fling its head from side to side.
+ */
+const watchOf = (gaze: number, heading: number, watch: number | null) => {
+  if (watch === null) {
+    return heading;
+  }
+  const lead = wrap(watch - heading);
+  if (Math.abs(lead) <= NECK_TURN) {
+    return watch;
+  }
+  const on = wrap(gaze - heading);
+  return heading + NECK_TURN * Math.sign(Math.abs(on) > NECK_TURN / 2 ? on : lead);
+};
+
 /** Its hops on: planned as each lands, its body knocked as it takes off and lands. */
 const stepHops = (bunny: Bunny, want: ReturnType<typeof wantOf>, seconds: number) => {
   const { hopper, walker } = bunny;
@@ -404,9 +442,10 @@ const stepHops = (bunny: Bunny, want: ReturnType<typeof wantOf>, seconds: number
   }
   walker.speed = Math.hypot(walker.vx, walker.vy);
   bunny.rig.heading.x = place.heading;
-  // Its head turns ahead of its body to where this hop will face, smoothly.
+  // Its head turns ahead of its body to where this hop will face, smoothly; stood, to what it's watching.
   const { gaze } = bunny.rig;
-  stepAngle(gaze, hopper.leap ? hopper.leap.turnTo : place.heading, GAZE_RATE, seconds);
+  const looking = hopper.leap ? hopper.leap.turnTo : watchOf(gaze.x, place.heading, want.watch);
+  stepAngle(gaze, looking, GAZE_RATE, seconds);
   // No farther round than its neck turns: it never looks back over its shoulder the wrong way round.
   const lead = Math.atan2(Math.sin(gaze.x - place.heading), Math.cos(gaze.x - place.heading));
   if (Math.abs(lead) > NECK_TURN) {
@@ -466,7 +505,7 @@ export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: n
   // Busy (sat up, sniffing, grooming), it stays, and gets down on all fours before it hops off; it turns round only between.
   const { rig } = bunny;
   const busy = bunny.act !== "none" || Math.max(rig.stand.x, rig.groom.x) > 0.04;
-  stepHops(bunny, busy ? { face: null, target: null } : want, dt);
+  stepHops(bunny, busy ? { face: null, target: null, watch: null } : want, dt);
   // A hop round to face whoever's petting it is in place: the petting goes on through it.
   bunny.petted = resting ? bunny.petted + dt : 0;
   stepTalk(bunny, dozing, idle, dt);

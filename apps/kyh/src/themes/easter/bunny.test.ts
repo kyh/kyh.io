@@ -779,3 +779,93 @@ test("led on in steps with pauses between, it doesn't hop round at every pause",
     }
   }
 });
+
+/** Its head's turn from its body, and how far it's gone as the mouse goes along `path`, stood. */
+const watching = (bunny: Bunny, path: (seconds: number) => Point, seconds: number, fps: number) => {
+  const lead = () => {
+    const { gaze, heading } = bunny.rig;
+    return Math.atan2(Math.sin(gaze.x - heading.x), Math.cos(gaze.x - heading.x));
+  };
+  let pointer = path(0);
+  let was = lead();
+  const seen = { body: 0, most: 0, sides: new Set<number>(), turned: 0 };
+  for (let frame = 1; frame <= seconds * fps; frame += 1) {
+    const next = path(frame / fps);
+    const heading = bunny.rig.heading.x;
+    stepBunny(bunny, next, { x: next.x - pointer.x, y: next.y - pointer.y }, 1 / fps);
+    pointer = next;
+    const now = lead();
+    seen.body += Math.abs(bunny.rig.heading.x - heading);
+    seen.turned += Math.abs(now - was);
+    seen.most = Math.max(seen.most, Math.abs(now));
+    if (Math.abs(now) > 0.8) {
+      seen.sides.add(Math.sign(now));
+    }
+    was = now;
+  }
+  return seen;
+};
+
+test("a mouse waved beside it, it stands and turns its head to watch, at any frame rate", () => {
+  for (const fps of FRAME_RATES) {
+    for (const spot of [
+      { x: 700, y: 350 },
+      { x: 60, y: 350 },
+      { x: 300, y: 600 },
+    ]) {
+      for (const { reach, every } of [
+        { every: 1, reach: 30 },
+        { every: 2, reach: 60 },
+      ]) {
+        const bunny = leftAt(spot, fps);
+        const { x, y } = bunny.walker;
+        const sweep = (time: number) => ({
+          x: Math.round(x + 30 + reach * Math.sin((2 * Math.PI * time) / every)),
+          y: Math.round(y - 30),
+        });
+        const seen = watching(bunny, sweep, 8, fps);
+        const where = `${fps}fps at ${JSON.stringify(spot)} ±${reach}px every ${every}s`;
+        assert.ok(seen.turned > 6, `${where}: its head turned ${seen.turned}`);
+        assert.ok(seen.most <= 1.001, `${where}: past its neck, ${seen.most}`);
+      }
+    }
+  }
+});
+
+test("a nudge doesn't hop it round for all its head turns", () => {
+  for (const fps of FRAME_RATES) {
+    for (const spot of [
+      { x: 700, y: 350 },
+      { x: 60, y: 350 },
+      { x: 300, y: 100 },
+      { x: 300, y: 600 },
+    ]) {
+      for (const every of [1, 4]) {
+        const bunny = leftAt(spot, fps);
+        const nudged = (time: number) => ({
+          x: spot.x + (Math.floor(time / every) % 2),
+          y: spot.y,
+        });
+        const pivots = pivotsAlong(bunny, nudged, 16, fps);
+        assert.equal(pivots, 0, `${fps}fps at ${JSON.stringify(spot)} every ${every}s`);
+      }
+    }
+  }
+});
+
+test("a mouse going to and fro behind it, its head holds at its neck's limit, not side to side", () => {
+  for (const fps of FRAME_RATES) {
+    const bunny = settled();
+    // Its spot is where it stands, so it stays: the mouse off its tail, up and down across dead behind it.
+    bunny.walker.back = { x: 0.92, y: 0.39 };
+    const { x, y } = bunny.walker;
+    const wave = (time: number) => ({
+      x: x - 40,
+      y: y - 36 + 8 * Math.sin((2 * Math.PI * time) / 5),
+    });
+    const seen = watching(bunny, wave, 10, fps);
+    assert.equal(seen.body, 0, `${fps}fps: it turned round`);
+    assert.ok(seen.most > 0.9, `${fps}fps: its head only turned ${seen.most}`);
+    assert.equal(seen.sides.size, 1, `${fps}fps: its head's sides ${[...seen.sides].join(" ")}`);
+  }
+});

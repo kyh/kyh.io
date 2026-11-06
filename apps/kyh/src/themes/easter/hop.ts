@@ -112,7 +112,7 @@ const REVERSE_S = 0.36;
 export const SET_OFF = 25;
 const PIVOT_HEIGHT = 2.5;
 
-const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
+export const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
 /** A point about the bunny (x forward, z to its left) on the ground, it at `at` heading `turn`. */
 export const groundAt = (at: Spot, turn: number, forward: number, left: number): Spot => ({
