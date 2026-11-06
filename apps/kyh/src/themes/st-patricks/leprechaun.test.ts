@@ -5,7 +5,7 @@ import type { Point } from "../follower/walk";
 import type { Leprechaun } from "./leprechaun";
 import { leprechaun, PET } from "./leprechaun";
 import { hangsOf } from "./leprechaun-pose";
-import { CATCH, coinOf, facingOf, timeIn } from "./leprechaun-acts";
+import { CATCH, coinOf, facingOf, SIZE, timeIn } from "./leprechaun-acts";
 
 const FRAME = 1 / 60;
 const STILL: Point = { x: 0, y: 0 };
@@ -86,7 +86,8 @@ test("his coat's tails stream out behind a run, swing back as he stops, and sett
   const hang = hangsOf(state).tails[0] ?? [];
   const [root = { x: 0, y: 0 }] = hang;
   const tip = hang.at(-1) ?? root;
-  const now = { x: tip.x - root.x, y: tip.y - root.y };
+  // In his own pixels, drawn bigger on the screen.
+  const now = { x: (tip.x - root.x) * SIZE, y: (tip.y - root.y) * SIZE };
   assert.ok(Math.hypot(after.x - now.x, after.y - now.y) < 1.5, JSON.stringify({ after, now }));
 });
 
@@ -141,8 +142,8 @@ test("the coin goes up off his thumb, clear over the top of his hat", () => {
   assert.ok(over > 4, `the coin peaks ${over}px over his crown`);
 });
 
-test("the mouse darting off mid-flip, he stays for the catch: the coin never vanishes in the air", () => {
-  const { pointer, state, step } = settled();
+test("the mouse darting off mid-flip, he goes after it and catches his coin on the move", () => {
+  const { state, step } = settled();
   state.act = "coin";
   state.actFor = 0;
   const from = { ...state.walker };
@@ -154,8 +155,7 @@ test("the mouse darting off mid-flip, he stays for the catch: the coin never van
       assert.equal(parts.coin?.opacity, 1, `frame ${frame}`);
     }
   }
-  assert.ok(Math.hypot(state.walker.x - from.x, state.walker.y - from.y) < 2);
-  assert.ok(pointer().x > from.x + 100);
+  assert.ok(state.walker.x > from.x + 10, `${state.walker.x - from.x}`);
 });
 
 test("he turns his face to the visitor for his business: a doff, a cross word, a coin, a petting", () => {
@@ -180,17 +180,18 @@ test("he turns his face to the visitor for his business: a doff, a cross word, a
 });
 
 test("a click on him is a greeting, not a grab at his gold: no scowl, no hands behind his back", () => {
-  const { state, step } = settled();
+  const { pointer, state, step } = settled();
   const on = { x: state.walker.x, y: state.walker.y - 20 };
-  step({ x: on.x - state.walker.x, y: on.y - state.walker.y });
+  step({ x: on.x - pointer().x, y: on.y - pointer().y });
   for (let frame = 0; frame < 20; frame += 1) {
     step();
   }
   leprechaun.poke(state, on);
+  // Resting there a moment, he'd begun to guard his gold: the click lets it go.
   for (let frame = 0; frame < 100; frame += 1) {
     step();
-    assert.ok(state.rig.guard.x < 0.05, `guard ${state.rig.guard.x}`);
-    assert.ok(state.rig.brow.x > -0.1, `brow ${state.rig.brow.x}`);
+    assert.ok(state.rig.guard.x < (frame < 45 ? 0.3 : 0.05), `guard ${state.rig.guard.x}`);
+    assert.ok(state.rig.brow.x > -0.25, `brow ${state.rig.brow.x}`);
     assert.ok(!PET.includes(state.emotes.line ?? ""), `${state.emotes.line}`);
   }
 });
@@ -221,20 +222,21 @@ test("walking any way, his arms, legs and coat tails keep their side of him: no 
       }
       last = now;
     }
-    // Once, perhaps, as he turns to his way; never with his stride.
+    // Once or twice as he turns to his way (round through his front, each side passes once); never
+    // with his stride.
     assert.ok(
-      swaps.every((count) => count <= 1),
+      swaps.every((count) => count <= 2),
       `${JSON.stringify(by)}: ${swaps.join(" ")}`,
     );
   }
 });
 
 test("a mouse coming to rest on him neither cuts off nor restarts his doff", () => {
-  const { state, step } = settled();
+  const { pointer, state, step } = settled();
   const on = { x: state.walker.x, y: state.walker.y - 20 };
   leprechaun.poke(state, on);
   assert.equal(state.act, "doff");
-  step({ x: on.x - state.walker.x, y: on.y - state.walker.y });
+  step({ x: on.x - pointer().x, y: on.y - pointer().y });
   for (let frame = 0; frame < 60; frame += 1) {
     step();
   }
@@ -324,9 +326,9 @@ test("his jig's spin goes all the way round at 30 frames a second, as at 144", (
 });
 
 test("one greeting a click: no petting answer, no guarding his gold, till the mouse moves on", () => {
-  const { state, step } = settled();
+  const { pointer, state, step } = settled();
   const on = { x: state.walker.x, y: state.walker.y - 20 };
-  step({ x: on.x - state.walker.x, y: on.y - state.walker.y });
+  step({ x: on.x - pointer().x, y: on.y - pointer().y });
   leprechaun.poke(state, on);
   const said = new Set<string>();
   for (let frame = 0; frame < 60 * 4; frame += 1) {
@@ -337,4 +339,51 @@ test("one greeting a click: no petting answer, no guarding his gold, till the mo
     assert.ok(state.rig.guard.x < 0.05, `guard ${state.rig.guard.x}`);
   }
   assert.equal(said.size, 1, [...said].join(" | "));
+});
+
+test("turned to the visitor, then sent off up the screen, he turns round and walks off: no moonwalk", () => {
+  for (const start of [1.2, Math.PI / 2, 1.92, 2.3]) {
+    for (const by of [
+      { x: 0, y: -1.7 },
+      { x: 0.6, y: -2.5 },
+      { x: -0.4, y: -3.8 },
+      { x: 2, y: -1.4 },
+    ]) {
+      const { state, step } = settled();
+      state.rig.heading.x = start;
+      state.rig.heading.v = 0;
+      let facing = 0;
+      for (let frame = 0; frame < 300; frame += 1) {
+        step(by);
+        facing += Math.sin(state.rig.heading.x) > 0.2 ? 1 : 0;
+      }
+      // A turn takes him a fraction of a second; walking backward would take the whole five.
+      assert.ok(facing < 40, `from ${start}, going ${JSON.stringify(by)}: ${facing} frames`);
+    }
+  }
+});
+
+test("hiding his gold, his hands go behind his back, drawn behind his coat", () => {
+  const { pointer, state, step } = settled();
+  const on = { x: state.walker.x, y: state.walker.y - 22 };
+  step({ x: on.x - pointer().x, y: on.y - pointer().y });
+  for (let frame = 0; frame < 90; frame += 1) {
+    step();
+  }
+  assert.ok(state.rig.guard.x > 0.9, `${state.rig.guard.x}`);
+  const order = leprechaun.pose(state).order ?? [];
+  for (const arm of ["arm-0", "arm-1"]) {
+    assert.ok(order.indexOf(arm) < order.indexOf("torso"), order.join(" "));
+  }
+});
+
+test("napping, he faces the visitor, so his hat tipped over his eyes is seen", () => {
+  const { state, step } = settled();
+  // The mouse off to one side, a little above, where he'd turn to look.
+  step({ x: -140, y: -40 });
+  for (let frame = 0; frame < 60 * 40; frame += 1) {
+    step();
+  }
+  assert.ok(state.rig.nap.x > 0.9, `${state.rig.nap.x}`);
+  assert.ok(Math.sin(state.rig.heading.x) > 0.85, `${state.rig.heading.x}`);
 });

@@ -41,13 +41,14 @@ import {
   handGoals,
   facingOf,
   liftOf,
+  SIZE,
   STEPS,
   timeIn,
 } from "./leprechaun-acts";
-import { armSidesOf, hangsOf, leprechaunPose } from "./leprechaun-pose";
+import { leprechaunPose, stepPoseOf } from "./leprechaun-pose";
 
 /** His walk on the screen. He's slower than the others: on short legs he steps no faster than a person. */
-const GAIT: Gait = { accel: 900, behind: 60, below: 34, stride: 26, top: 200 };
+const GAIT: Gait = { accel: 900, behind: 60 * SIZE, below: 34 * SIZE, stride: 26 * SIZE, top: 200 };
 
 /** A spring that overshoots and settles: what has weight swings on past and comes back. */
 export interface Wobble {
@@ -115,6 +116,8 @@ export interface Leprechaun {
   tails: Chain[];
   beard: Chain;
   rests: Point[][];
+  /** Which way round he's committed to a big turn: 1, -1, or 0 for none. */
+  turnWay: number;
   /** Clicked on and greeting whoever it was: no petting counts till the mouse moves on. */
   greeted: boolean;
   /** Seconds till he blinks. */
@@ -135,6 +138,8 @@ export const PET = ["Hands off me gold!", "Paws off!"];
 const SLEEP = ["z z z"];
 
 const JIG_S = 4;
+/** Seconds of a still mouse before he'll flip his coin. */
+const COIN_IDLE_S = 2.2;
 const NAP_S = 32;
 const MOVING = 25;
 /** The longest a step's felt: a slow frame doesn't fling him. */
@@ -229,6 +234,7 @@ export const createLeprechaun = (at: Point): Leprechaun => {
     tailFront: [false, false],
     tails: [unhung(), unhung()],
     time: 0,
+    turnWay: 0,
     walker,
   };
   return leprechaun;
@@ -237,21 +243,30 @@ export const createLeprechaun = (at: Point): Leprechaun => {
 /** Within this of him across, the mouse is right by him: he turns to it only so far. */
 const BESIDE = 40;
 
+/** Toward the camera, leaning toward the mouse's side. */
+const towardVisitor = (leprechaun: Leprechaun, pointer: Point) =>
+  Math.PI / 2 - 0.5 * clamp((pointer.x - leprechaun.walker.x) / BESIDE, 1);
+
 /**
- * Which way he faces for a moment's business (a doff, a cross word, a coin,
- * a petting): to the camera, so it's seen, leaning toward the mouse's side.
+ * Which way he faces for a moment's business (a cross word, a coin, a
+ * petting, his jig, his nap): to the camera, so it's seen, leaning toward
+ * the mouse's side. Doffing his hat, three-quarters on, his hat's hand
+ * nearer, so his bow shows.
  */
 const businessHeading = (leprechaun: Leprechaun, pointer: Point) =>
-  Math.PI / 2 - 0.5 * clamp((pointer.x - leprechaun.walker.x) / BESIDE, 1);
+  leprechaun.act === "doff"
+    ? Math.PI / 2 - 0.7 * (leprechaun.hand === 0 ? 1 : -1)
+    : towardVisitor(leprechaun, pointer);
 
 const begin = (leprechaun: Leprechaun, act: Act, pointer: Point) => {
   leprechaun.act = act;
   leprechaun.actFor = 0;
   // He uses the hand that'll be nearer the camera once he's turned to it: his left, the mouse to his left.
-  leprechaun.hand = Math.cos(businessHeading(leprechaun, pointer)) >= 0 ? 0 : 1;
+  leprechaun.hand = Math.cos(towardVisitor(leprechaun, pointer)) >= 0 ? 0 : 1;
 };
 
-const isOn = (leprechaun: Leprechaun, at: Point) => isOnWalker(leprechaun.walker, at, 13, 52);
+const isOn = (leprechaun: Leprechaun, at: Point) =>
+  isOnWalker(leprechaun.walker, at, 14 * SIZE, 54 * SIZE);
 
 /** What he's up to: napping, dancing, or, idle a moment, flipping his coin. */
 const stepActs = (
@@ -265,8 +280,8 @@ const stepActs = (
   const dancing =
     !moving && !napping && idle > JIG_S && (leprechaun.petted === 0 || leprechaun.rig.jig.x > 0.5);
   leprechaun.actFor += seconds;
-  // Walked off, he leaves off a coin once it's caught (he stands for the flip).
-  const left = moving && leprechaun.act === "coin";
+  // Walked off mid-flip, he goes, and leaves off once he's caught it.
+  const left = moving && (timeIn(leprechaun, "coin") ?? 0) > CATCH + 0.04;
   const over = leprechaun.actFor > ACT_S[leprechaun.act] || left;
   if (leprechaun.act !== "none" && over) {
     leprechaun.act = "none";
@@ -275,7 +290,8 @@ const stepActs = (
     return { dancing, napping };
   }
   leprechaun.next -= seconds;
-  if (idle > 0.8 && leprechaun.next <= 0) {
+  // Only once he's been left be a while: a pause in a slow mouse's travels isn't his cue.
+  if (idle > COIN_IDLE_S && leprechaun.next <= 0) {
     begin(leprechaun, "coin", pointer);
     leprechaun.next = 2 + leprechaun.random.next() * 3;
   }
@@ -326,15 +342,30 @@ const stepJig = (leprechaun: Leprechaun, dancing: boolean, seconds: number) => {
   }
 };
 
+/** A turn this far round or more is a big one: he picks a way round and keeps to it. */
+const BIG_TURN = 2.2;
+
 /**
- * Turns his heading's spring toward `goal`, the short way round, unless that
- * way passes his back to the camera for a turn of more than a third: then
- * through his front, so reversing at a run he turns to face the visitor.
+ * Turns his heading's spring toward `goal`, the short way round. A big turn
+ * (a reversal) goes the way he's already turning, or else through his front,
+ * so he turns to face the visitor; and once picked, that way's kept till the
+ * turn's no longer big, so a goal straight behind him can't flip it from one
+ * frame to the next and leave him stuck, walking backward.
  */
-const turnToward = (heading: Spring, goal: number, rate: number, seconds: number) => {
-  let turn = Math.atan2(Math.sin(goal - heading.x), Math.cos(goal - heading.x));
-  if (Math.abs(turn) > 2.2 && Math.sin(heading.x + turn / 2) < 0) {
-    turn -= Math.sign(turn) * Math.PI * 2;
+const turnToward = (leprechaun: Leprechaun, goal: number, rate: number, seconds: number) => {
+  const { heading } = leprechaun.rig;
+  const short = Math.atan2(Math.sin(goal - heading.x), Math.cos(goal - heading.x));
+  let turn = short;
+  if (Math.abs(short) <= BIG_TURN) {
+    leprechaun.turnWay = 0;
+  } else {
+    if (leprechaun.turnWay === 0) {
+      const front = Math.sin(heading.x + short / 2) < 0 ? -Math.sign(short) : Math.sign(short);
+      leprechaun.turnWay = Math.abs(heading.v) > 0.5 ? Math.sign(heading.v) : front;
+    }
+    if (Math.sign(short) !== leprechaun.turnWay) {
+      turn = short - Math.sign(short) * Math.PI * 2;
+    }
   }
   stepSpring(heading, heading.x + turn, rate, seconds);
   heading.x = Math.atan2(Math.sin(heading.x), Math.cos(heading.x));
@@ -364,12 +395,15 @@ const stepBody = (
   const cross = timeIn(leprechaun, "cross");
   const crossly = cross === null ? 0 : bump(cross, [0, 0.12, 0.8, 1]);
 
-  // Busy, or dancing his jig, he faces the visitor.
-  const busy = leprechaun.act !== "none" || leprechaun.petted > 0 || dancing;
+  // Busy, dancing his jig or napping, he faces the visitor; off after the mouse, his way.
+  const going = walker.speed > MOVING;
+  const acting = leprechaun.act !== "none" && !(going && leprechaun.act === "coin");
+  const busy = acting || leprechaun.petted > 0 || dancing || rig.nap.x > 0.05;
   const goal = busy
     ? businessHeading(leprechaun, pointer)
     : faceGoal(walker, pointer, rig.heading.x, MOVING);
-  turnToward(rig.heading, goal, 7, seconds);
+  // On the move, he turns to his way briskly: he doesn't walk off backward.
+  turnToward(leprechaun, goal, going ? 10 : 7, seconds);
   stepSpring(rig.nap, napping ? 1 : 0, napping ? 1.2 : 8, seconds);
   const guarding = leprechaun.petted > 0.25 && !dancing;
   stepSpring(rig.guard, guarding ? 1 : 0, 7, seconds);
@@ -443,7 +477,7 @@ const stepLoose = (
 };
 
 /** His coat's tails: light wool, caught by the air, streaming out behind a run and flaring as he spins. */
-const TAILS: Stuff = { damp: 2.5, drag: 0.016, keep: 0.012, keepTip: 0.002, rub: 0.6, weight: 300 };
+const TAILS: Stuff = { damp: 2.5, drag: 0.014, keep: 0.012, keepTip: 0.002, rub: 0.6, weight: 380 };
 /** The most a coat tail bends between one length of it and the next (radians): wool, not a hinge. */
 const TAIL_BEND = 0.6;
 
@@ -484,10 +518,13 @@ const BEARD: Stuff = { damp: 4.5, drag: 0.014, keep: 0.025, keepTip: 0.005, rub:
 const REST_RATE = 14;
 
 /** His coat's tails and his beard's point, after where they hang this frame: roots on his body, rests eased. */
-const stepChains = (leprechaun: Leprechaun, seconds: number) => {
+const stepChains = (
+  leprechaun: Leprechaun,
+  hangs: { beard: Point[]; tails: Point[][] },
+  seconds: number,
+) => {
   const { walker } = leprechaun;
   const origin = { x: walker.x, y: walker.y };
-  const hangs = hangsOf(leprechaun);
   const chains = [...leprechaun.tails, leprechaun.beard];
   const stuffs = [TAILS, TAILS, BEARD];
   const ease = 1 - Math.exp(-REST_RATE * Math.max(0, seconds));
@@ -510,7 +547,7 @@ const stepChains = (leprechaun: Leprechaun, seconds: number) => {
     const chain = chains[index];
     if (chain) {
       const hold = index < 2 ? TAIL_HOLD : undefined;
-      stepChain(chain, hangOf(hang, origin), stuffs[index] ?? TAILS, seconds, hold);
+      stepChain(chain, hangOf(hang, origin, SIZE), stuffs[index] ?? TAILS, seconds, hold);
     }
   }
 };
@@ -529,7 +566,11 @@ const settled = (was: boolean, value: number, give: number) => (was ? value > -g
  * leg's the nearer: by which way his shoulders, hips and back face (not how a
  * limb's swinging), each changed only once it's well over.
  */
-const settleSides = (leprechaun: Leprechaun, moving: boolean) => {
+const settleSides = (
+  leprechaun: Leprechaun,
+  arms: readonly { head: number }[],
+  moving: boolean,
+) => {
   const heading = facingOf(leprechaun);
   // His face (his head's turn on top of his heading, level): toward the camera, it's over his head.
   const face = Math.sin(heading + leprechaun.rig.look.x);
@@ -540,13 +581,17 @@ const settleSides = (leprechaun: Leprechaun, moving: boolean) => {
   }
   const back = -Math.sin(heading) * Math.cos(PITCH);
   const goals = handGoals(leprechaun);
-  for (const [index, { head }] of armSidesOf(leprechaun).entries()) {
+  for (const [index, { head }] of arms.entries()) {
     const side = index === 0 ? 1 : -1;
     // An arm hangs at his side, seen over his coat's edge unless that side's well turned away;
     // standing with a hand out before his chest (a coin, his arms folded), it's over his coat.
-    const before = !moving && (goals[index]?.[0] ?? 0) > 4 && Math.sin(heading) > 0.1;
+    // A hand behind his back (hiding his gold) is drawn behind him, its arm with it.
+    const ahead = goals[index]?.[0] ?? 0;
+    const before = !moving && ahead > 4 && Math.sin(heading) > 0.1;
+    const behind = !moving && ahead < -3 && Math.sin(heading) > -0.2;
     const shown = sideToward(heading, side) + 0.35;
-    leprechaun.armFront[index] = before || settled(leprechaun.armFront[index] ?? true, shown, 0.1);
+    const front = before || settled(leprechaun.armFront[index] ?? true, shown, 0.1);
+    leprechaun.armFront[index] = front && !behind;
     leprechaun.armOverHead[index] = settled(leprechaun.armOverHead[index] ?? false, head, 0.3);
     const tail = back * 4.4 + sideToward(heading, side) * 1.9;
     leprechaun.tailFront[index] = settled(leprechaun.tailFront[index] ?? false, tail, 0.5);
@@ -565,11 +610,10 @@ export const stepLeprechaun = (
   const { walker } = leprechaun;
   const seconds = Math.min(Math.max(elapsed, 0), MOST_FRAME);
   leprechaun.time += seconds;
-  // He stands for a petting (a mouse resting on him), to doff his hat, to have his cross word (arms
-  // folded, a foot stamped), and with his coin in the air.
+  // He stands for a petting (a mouse resting on him), to doff his hat, and to have his cross word (arms
+  // folded, a foot stamped). His coin, he catches on the move.
   const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(leprechaun, pointer);
-  const flipping = (timeIn(leprechaun, "coin") ?? 1) < CATCH + 0.04;
-  const standing = leprechaun.act === "doff" || leprechaun.act === "cross" || flipping;
+  const standing = leprechaun.act === "doff" || leprechaun.act === "cross";
   stepWalker(walker, GAIT, pointer, moved, seconds, resting || standing);
   // No faster toward or away from the camera than across: his steps are as long either way.
   keepPace(walker, STEPS.top, seconds);
@@ -588,8 +632,9 @@ export const stepLeprechaun = (
   stepLoose(leprechaun, felt, seconds);
   // His feet set down where they land and stay there till they lift: none faster than a person's.
   stepFeet(leprechaun.feet, STEPS, walker, facingOf(leprechaun), seconds);
-  stepChains(leprechaun, seconds);
-  settleSides(leprechaun, moving);
+  const posed = stepPoseOf(leprechaun);
+  stepChains(leprechaun, posed, seconds);
+  settleSides(leprechaun, posed.arms, moving);
 };
 
 export const pokeLeprechaun = (leprechaun: Leprechaun, at: Point) => {

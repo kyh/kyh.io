@@ -57,16 +57,18 @@ import {
   HOP,
   elbowPole,
   HEAD,
+  HEAD_GROWN,
   HEAD_R,
   liftOf,
   SHOULDER,
   sideOf,
+  SIZE,
   stampOf,
   STEPS,
 } from "./leprechaun-acts";
 
 const COAT: Vec3 = [0.4, 19.6, 0];
-const COAT_RADII: Vec3 = [6.8, 9.2, 8];
+const COAT_RADII: Vec3 = [6.8, 9.2, 8.4];
 const BELT_Y = 16.8;
 const HIP: Vec3 = [0, 12.4, 2.6];
 const LEG = [5.6, 5.6] as const;
@@ -84,15 +86,15 @@ const BEARD: readonly Vec3[] = [
   [3.4, -6.4, 0],
   [4.2, -9.6, 0],
   [3.4, -12.8, 0],
-];
-const BRIM: readonly [number, number] = [7.8, 6.8];
+].map(([x = 0, y = 0, z = 0]) => [x * HEAD_GROWN, y * HEAD_GROWN, z]);
+const BRIM: readonly [number, number] = [7.8 * HEAD_GROWN, 6.8 * HEAD_GROWN];
 /** His hair: the cap of his head behind and above a plane tipped up at the back (his nape bare). */
 const HAIR_NORMAL: Vec3 = [-1, 0.5, 0];
 const HAIR_OFFSET = 0.2;
 /** His beard: the cap of a shell about his jaw below a plane tipped down at the front. */
 const BEARD_NORMAL: Vec3 = [0.25, -1, 0];
 const BEARD_OFFSET = 0.4;
-const CROWN = { bottom: 4.9, high: 9, top: 4.3 } as const;
+const CROWN = { bottom: 4.9 * HEAD_GROWN, high: 9 * HEAD_GROWN, top: 4.3 * HEAD_GROWN } as const;
 /** His shoe about the sole under his ankle: its sole round, then its upper. */
 const SHOE: readonly Vec3[] = [
   [-1.7, 0, 1.1],
@@ -322,7 +324,7 @@ const footOf = (leprechaun: Leprechaun, frame: Frame, index: number) => {
   const { jig } = frame;
   // Where it's set down (or swinging, lifted), on the ground; in his jig, under him, kicked out a beat.
   const set = swungOf(
-    foot ? footIn(foot, { x: walker.x, y: walker.y }) : apply(frame.yaw, [0, 0, side * 2.6]),
+    foot ? footIn(foot, { x: walker.x, y: walker.y }, SIZE) : apply(frame.yaw, [0, 0, side * 2.6]),
     apply(frame.yaw, [0.3, 0, side * 2.6]),
     foot?.planted === false,
   );
@@ -398,9 +400,8 @@ const nearOf = (at: Vec3) => at[2] * COS;
  * -9, lowered): for `leprechaun.ts` to settle which side of his head each is
  * drawn on without flickering as it swings.
  */
-export const armSidesOf = (leprechaun: Leprechaun) => {
-  const frame = frameOf(leprechaun);
-  const head = nearOf(headOf(leprechaun, frame).center);
+const armSidesIn = (leprechaun: Leprechaun, frame: Frame, at: Head) => {
+  const head = nearOf(at.center);
   return [0, 1].map((index) => {
     const { elbow, hand } = armOf(leprechaun, frame, index);
     const raised = hand[1] - frame.lift > SHOULDER[1] + 3;
@@ -416,7 +417,7 @@ export const armSidesOf = (leprechaun: Leprechaun) => {
  * round, not crumpled on the screen).
  */
 const tailRests = (leprechaun: Leprechaun, frame: Frame) => {
-  const swept = pitchOf(-Math.min(1.1, groundSpeedOf(leprechaun.walker) / 200));
+  const swept = pitchOf(-Math.min(0.6, groundSpeedOf(leprechaun.walker) / 300));
   const [root = TAIL[0] ?? COAT] = TAIL;
   return [1, -1].map((side) =>
     TAIL.map((at) => {
@@ -433,6 +434,21 @@ const beardRest = (head: Head) => BEARD.map((local) => toScreen(head.at(local)))
 export const hangsOf = (leprechaun: Leprechaun) => {
   const frame = frameOf(leprechaun);
   return { beard: beardRest(headOf(leprechaun, frame)), tails: tailRests(leprechaun, frame) };
+};
+
+/**
+ * What `leprechaun.ts` needs of his pose each step, his frame worked out
+ * once: where his floppy bits hang (as `hangsOf`), and how far in front of
+ * his head each arm is, raised (-9, lowered), to settle which side it's on.
+ */
+export const stepPoseOf = (leprechaun: Leprechaun) => {
+  const frame = frameOf(leprechaun);
+  const head = headOf(leprechaun, frame);
+  return {
+    arms: armSidesIn(leprechaun, frame, head),
+    beard: beardRest(head),
+    tails: tailRests(leprechaun, frame),
+  };
 };
 
 /** A cloth flap along a chain: a strip `widths` wide at each knot, root to tip. */
@@ -457,7 +473,7 @@ const tailsOf = (leprechaun: Leprechaun, frame: Frame) => {
   const origin = { x: leprechaun.walker.x, y: leprechaun.walker.y };
   const broad = 0.4 + 0.6 * Math.abs(dot(frame.turn([-1, 0, 0]), TOWARD_CAMERA));
   return leprechaun.tails.map((chain) => {
-    const points = chainAbout(chain, origin);
+    const points = chainAbout(chain, origin, SIZE);
     return {
       d:
         points.length > 1
@@ -479,24 +495,28 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
     return { at: add(head.center, scale(normal, out)), normal };
   };
   const origin = { x: leprechaun.walker.x, y: leprechaun.walker.y };
-  const knots = chainAbout(leprechaun.beard, origin).map(lifted);
+  const knots = chainAbout(leprechaun.beard, origin, SIZE).map(lifted);
   // His beard: the cap of a shell about his jaw, its chin and the front of his jaw (his cheeks and nape
   // bare), and its point hanging from his chin.
   const radii: Vec3 = [r * 1.08, r * 1.02, r * 1.08];
   const shell = { center: head.at([0.4, -0.8, 0]), radii, turn: head.turn };
   const jaw = capPath(shell, BEARD_NORMAL, BEARD_OFFSET);
   const chin = [
-    head.at([3.8, -5, 3.6]),
-    head.at([3.8, -5, -3.6]),
-    head.at([1.2, -7.2, 2.2]),
-    head.at([1.2, -7.2, -2.2]),
-  ];
+    [3.8, -5, 3.6],
+    [3.8, -5, -3.6],
+    [1.2, -7.2, 2.2],
+    [1.2, -7.2, -2.2],
+  ].map(([x = 0, y = 0, z = 0]) => head.at([x * HEAD_GROWN, y * HEAD_GROWN, z * HEAD_GROWN]));
   const tuft = knots.length > 1 ? hullPath([...chin, ...knots]) : "";
   const nose = on([1, -0.32, 0], r);
-  const mouth = [-0.35, 0, 0.35].map(
-    (z, index) => on([0.82, -0.6 + (index === 1 ? -0.06 : 0), z], r * 1.08).at,
-  );
+  // His mouth, below his moustache: a smile, wider and deeper as he greets someone or dances.
+  const joy = Math.max(rig.jig.x, doffOf(leprechaun).reach, 0.3);
+  const mouth = [-0.38, -0.19, 0, 0.19, 0.38].map((z) => {
+    const dip = (1 - (z / 0.38) ** 2) * 0.14 * joy;
+    return on([0.8, -0.62 - dip, z * (0.8 + 0.3 * joy)], r * 1.08).at;
+  });
   const eyes = [1, -1].map((side) => on([0.82, 0.12, side * 0.5]));
+  const bowed = Math.min(1, Math.max(0, -rig.nod.x / 0.3));
   const brows = [1, -1].map((side) => {
     const lift = 0.33 + 0.08 * rig.brow.x;
     return [on([0.82, lift - 0.06 * rig.brow.x, side * 0.22]).at, on([0.66, lift, side * 0.6]).at];
@@ -507,10 +527,11 @@ const faceOf = (leprechaun: Leprechaun, head: Head) => {
     browsShown: eyes.map((eye) => shownOf(eye.normal)),
     cheeks: [1, -1].map((side) => on([0.72, -0.24, side * 0.64])),
     eyes,
+    // Bowed, his forehead's what's toward the camera: his hair's drawn back off it.
     hair: capPath(
       { center: head.center, radii: [r * 1.03, r * 1.03, r * 1.03], turn: head.turn },
-      HAIR_NORMAL,
-      HAIR_OFFSET,
+      [HAIR_NORMAL[0], HAIR_NORMAL[1] - 0.15 * bowed, 0],
+      HAIR_OFFSET + 0.12 * bowed,
     ),
     moustache: [1, -1].map((side) => on([0.92, -0.4, side * 0.27], r + 0.1)),
     mouth: linePath(mouth),
@@ -529,7 +550,7 @@ type Face = ReturnType<typeof faceOf>;
  */
 const earsOf = (head: Head) =>
   [1, -1].map((side) => {
-    const at = head.at([-0.9, -0.3, side * (HEAD_R + 0.05)]);
+    const at = head.at([-0.9, -0.3, side * (HEAD_R + 0.35)]);
     const up = head.turn([0, 1.35, 0]);
     const back = head.turn([-0.85, 0, 0]);
     // Its rim, the back half of it: a short C of ink, open toward his face.
@@ -540,7 +561,7 @@ const earsOf = (head: Head) =>
     return {
       d: ellipsePath(ellipseOf(at, [up, back, head.turn([0, 0, 0.6])])),
       rim: linePath(rim),
-      shown: smooth((dot(head.turn([0, 0, side]), TOWARD_CAMERA) + 0.35) / 0.25),
+      shown: smooth((dot(head.turn([0, 0, side]), TOWARD_CAMERA) + 0.4) / 0.4),
     };
   });
 
@@ -556,10 +577,14 @@ const hatOf = (leprechaun: Leprechaun, frame: Frame, head: Head, hands: readonly
   const seat = head.at([0.3 + 1.4 * nap, HEAD_R * 0.76 + rig.hatRise.x - 1 * nap, 0]);
   const doff = doffOf(leprechaun);
   const side = sideOf(leprechaun.hand);
-  // Doffed, it's held by its brim on his side, swept crown out from his side, brim down, as he bows.
+  // Doffed, it's held by its brim on his side: lifted off tipped crown out, clear of his face, then swept
+  // low before him and rolled crown down as he bows.
   const held = compose(
     frame.yaw,
-    compose(pitchOf(-0.3 * doff.grip - 0.35 * doff.sweep), rollOf(side * 1.15 * doff.sweep)),
+    compose(
+      pitchOf(-0.3 * doff.grip - 1.25 * doff.sweep),
+      rollOf(side * (0.7 * doff.lifted + 0.3 * doff.sweep)),
+    ),
   );
   const carried = (local: Vec3) => apply(held, local);
   const hand = hands[leprechaun.hand] ?? seat;

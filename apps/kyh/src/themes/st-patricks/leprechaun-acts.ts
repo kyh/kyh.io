@@ -20,9 +20,18 @@ import { add, mix, PITCH, smooth } from "../follower/solid";
 export type Act = "none" | "coin" | "doff" | "cross";
 export const ACT_S: Record<Act, number> = { coin: 1.9, cross: 1.4, doff: 1.9, none: 0 };
 
+/**
+ * How big he's drawn, to his own pixels: a little over the ghost's height and
+ * near its width, so his face reads. His walk, his steps and his chains are in
+ * screen pixels, so each is turned back into his own where it's drawn.
+ */
+export const SIZE = 1.1;
+
 /** Where his head sits, and its radius: the hat's choreography is about it. */
-export const HEAD: Vec3 = [0.9, 34.6, 0];
-export const HEAD_R = 6.4;
+export const HEAD: Vec3 = [0.9, 35.1, 0];
+export const HEAD_R = 6.9;
+/** How much bigger his head is than the one his face and hat were laid out on. */
+export const HEAD_GROWN = HEAD_R / 6.4;
 /** His shoulder (on his left; z flipped for his right), and his hand hanging at rest. */
 export const SHOULDER: Vec3 = [0, 26, 5.7];
 const HANG: Vec3 = [0.5, 13.3, 7];
@@ -80,12 +89,12 @@ export const STEPS: Steps = {
   cadence: [1.4, 2.8],
   duty: [0.62, 0.14],
   homes: [
-    { ahead: 0.3, left: 2.6 },
-    { ahead: 0.3, left: -2.6 },
+    { ahead: 0.3 * SIZE, left: 2.6 * SIZE },
+    { ahead: 0.3 * SIZE, left: -2.6 * SIZE },
   ],
-  lift: [2, 4.5],
+  lift: [2 * SIZE, 4.5 * SIZE],
   offsets: [0, 0.5],
-  reach: 6,
+  reach: 6 * SIZE,
   top: 190,
 };
 
@@ -110,7 +119,7 @@ export const aheadOf = (leprechaun: Leprechaun, index: number) => {
   }
   const heading = facingOf(leprechaun);
   const toward = (foot.y - walker.y) / Math.sin(PITCH);
-  return (foot.x - walker.x) * Math.cos(heading) + toward * Math.sin(heading);
+  return ((foot.x - walker.x) * Math.cos(heading) + toward * Math.sin(heading)) / SIZE;
 };
 
 /**
@@ -139,14 +148,14 @@ export const liftOf = (leprechaun: Leprechaun) => {
 };
 
 /** The doff, through the act: the hand's way (brim, lifted, swept out low, back), and how much it holds the hat. */
-const BRIM_SIDE: Vec3 = [HEAD[0] + 1.6, HEAD[1] + 4.2, 6.6];
+const BRIM_SIDE: Vec3 = [HEAD[0] + 1.6, HEAD[1] + HEAD_R * 0.66, 6.6];
 const DOFF_WAY: readonly (readonly [number, Vec3])[] = [
   [0, BRIM_SIDE],
   [0.2, BRIM_SIDE],
-  // Up off his head and out to his side, clear of his face; then swept down low at his side as he bows.
-  [0.36, [2, 37.4, 10.4]],
-  [0.6, [3.6, 22.5, 11.2]],
-  [0.8, [3.4, 21.8, 11]],
+  // Up off his head and out to his side, clear of his face; then swept down low and forward as he bows.
+  [0.36, [1.5, 36.5, 12.4]],
+  [0.6, [7.4, 17, 7.6]],
+  [0.8, [7.2, 16.4, 7.4]],
   [0.92, BRIM_SIDE],
   [1, BRIM_SIDE],
 ];
@@ -162,14 +171,16 @@ const along = (way: readonly (readonly [number, Vec3])[], t: number): Vec3 => {
 export const doffOf = (leprechaun: Leprechaun) => {
   const t = timeIn(leprechaun, "doff");
   if (t === null) {
-    return { bow: 0, grip: 0, hand: HEAD, reach: 0, sweep: 0, t: 0 };
+    return { bow: 0, grip: 0, hand: HEAD, lifted: 0, reach: 0, sweep: 0, t: 0 };
   }
   return {
     bow: bump(t, [0.34, 0.52, 0.78, 0.92]),
     grip: bump(t, [0.13, 0.2, 0.86, 0.92]),
     hand: along(DOFF_WAY, t),
+    // Lifted off and out, the hat's tipped crown out, its brim clear of his face.
+    lifted: bump(t, [0.2, 0.34, 0.42, 0.56]),
     reach: bump(t, [0, 0.13, 0.9, 1]),
-    // Swept out, the hat's turned crown out from his side, its brim to the ground.
+    // Swept low, the hat's rolled crown down, its open side up toward him.
     sweep: bump(t, [0.38, 0.6, 0.8, 0.92]),
     t,
   };
@@ -199,7 +210,7 @@ const jigHand = (leprechaun: Leprechaun, index: number): Vec3 => {
   const side = sideOf(index);
   const up = Math.floor(leprechaun.beat / 2) % 2 === index;
   // Up and out over his shoulder, clear of his head and hat; or on his hip, elbow out.
-  return up ? [0.6, 35.8, side * 12] : [-0.6, 18, side * 8.4];
+  return up ? [0.6, 37.6, side * 9.6] : [-0.6, 18, side * 8.4];
 };
 
 /** A hand at a moment's business: the coin flipped off the thumb and caught; arms folded crossly. */
