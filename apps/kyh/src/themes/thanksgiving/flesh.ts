@@ -48,7 +48,8 @@ export const holdFlesh = (hang: Hang, most: number, floor: number) => (chain: Ch
     }
     if (knot.y > floor) {
       knot.y = floor;
-      knot.py = Math.min(knot.py, floor);
+      // +y down: at rest on it, its fall stopped (py at the floor, not above it).
+      knot.py = Math.max(knot.py, floor);
     }
   }
 };

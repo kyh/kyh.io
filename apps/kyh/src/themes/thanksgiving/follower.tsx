@@ -4,8 +4,8 @@
 // built in the round (`turkey-pose.ts`) and drawn in the showcase town's hand
 // as the theme's pieces are (`piece.tsx`): flat faces, each solid's side from
 // the light in its shade under the shade dots, ink round the outside. A bronze
-// body (its back and breast drawn as one) and wings, the wings' flight
-// feathers barred white, tail feathers banded dark and tipped chestnut, a neck feathered low and
+// body (its back and breast drawn as one) and wings, inked only along their
+// lower edge, their dark primaries barred white, tail feathers banded dark and tipped chestnut, a neck feathered low and
 // bare red above up to a bare blue head with a red snood and wattle, a pale
 // beak, a dark beard, bronze drumsticks and pink shanks, the nearer leg lit.
 // Each `data-layer` is one part the stage stacks by how near the camera it
@@ -62,24 +62,20 @@ const Torso = ({ id }: { id: string }) => {
   );
 };
 
-/** Its beard: coarse dark hair, thin at the root and spreading to the tip like a brush. */
-const Beard = () => {
-  const strands = [
-    ["beard", 1.3],
-    ["beard-mid", 2.1],
-    ["beard-tip", 2.9],
-  ] as const;
-  return (
-    <>
-      {strands.map(([name, width]) => (
-        <path key={`${name}-ink`} data-part={name} style={stroked(width + ink(1))} />
-      ))}
-      {strands.map(([name, width]) => (
-        <path key={name} data-part={name} style={stroked(width, "screen")} />
-      ))}
-    </>
-  );
-};
+/** Its beard: coarse dark bronze hair, thin at the root and spreading to the tip like a tassel, not inked. */
+const Beard = () => (
+  <>
+    {(
+      [
+        ["beard", 1.4],
+        ["beard-mid", 2.2],
+        ["beard-tip", 3],
+      ] as const
+    ).map(([name, width]) => (
+      <path key={name} data-part={name} style={stroked(width, "bronzeShade")} />
+    ))}
+  </>
+);
 
 /** A line of a leg (`<part>-<index>`): inked, in its shade, and lit over that as it's nearer the camera. */
 const Bone = ({
@@ -129,13 +125,18 @@ export const Follower = () => {
       ))}
       {[0, 1].map((index) => (
         <g key={`wing-${index}`} data-layer={`wing-${index}`}>
-          <Solid name={`wing-${index}`} id={id} fill="bronze" shade="bronzeShade" />
+          <clipPath id={`${id}-primaries-${index}`}>
+            <path data-part={`primaries-${index}`} />
+          </clipPath>
+          <path data-part={`primaries-${index}`} style={filled("bronzeShade", ink(0.8))} />
           <path
             data-part={`bars-${index}`}
-            clipPath={`url(#${id}-wing-${index})`}
-            style={{ ...stroked(1.7, "white"), strokeLinecap: "butt" }}
+            clipPath={`url(#${id}-primaries-${index})`}
+            style={{ ...stroked(1.1, "white"), strokeLinecap: "butt" }}
           />
-          <path data-part={`wing-${index}`} style={stroked(ink(0.9))} />
+          <Solid name={`wing-${index}`} id={id} fill="bronze" shade="bronzeShade" />
+          <path data-part={`wing-ink-${index}`} style={stroked(ink(0.9))} />
+          <path data-part={`wing-edge-${index}`} style={stroked(ink(0.9))} />
         </g>
       ))}
       <g data-layer="torso">

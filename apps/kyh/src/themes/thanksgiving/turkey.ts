@@ -150,7 +150,7 @@ const HEAD: Point = { x: 19, y: 70 };
 const STRUT_HEAD: Point = { x: 12, y: 65 };
 const DOZE_HEAD: Point = { x: 1, y: 54 };
 /** Where a peck takes its head: down to the ground in front of it. */
-const PECK_HEAD: Point = { x: 33, y: 8 };
+const PECK_HEAD: Point = { x: 40, y: 8 };
 /** How far it bows to peck (radians): a feeding turkey's tilt. */
 const PECK_BOW = 0.4;
 /** The farthest its head's held back over the ground walking, its own pixels: what its neck gives. */
@@ -241,11 +241,16 @@ const headGoal = (turkey: Turkey) => {
   const { rig } = turkey;
   const fan = rig.fan.x;
   const doze = rig.doze.x;
-  // Facing the camera, it holds its head back and up, its neck showing over its breast.
-  const front = Math.max(0, Math.sin(rig.heading.x)) * (1 - fan) * (1 - doze);
+  // Facing the camera, it holds its head back and up, its neck showing over its breast; facing
+  // away, back and down, so the camera looking down on it doesn't see it on a stalk.
+  const upright = (1 - fan) * (1 - doze);
+  const front = Math.max(0, Math.sin(rig.heading.x)) * upright;
+  const away = Math.max(0, -Math.sin(rig.heading.x)) * upright;
   // Strutting, it draws its head back onto its puffed chest; dozing, it lays it on its back.
-  let x = HEAD.x - 9 * front + (STRUT_HEAD.x - HEAD.x) * fan + (DOZE_HEAD.x - HEAD.x) * doze;
-  let y = HEAD.y + 3 * front + (STRUT_HEAD.y - HEAD.y) * fan + (DOZE_HEAD.y - HEAD.y) * doze;
+  let x = HEAD.x - 9 * front - 10 * away;
+  let y = HEAD.y + 7 * front - 8 * away;
+  x += (STRUT_HEAD.x - HEAD.x) * fan + (DOZE_HEAD.x - HEAD.x) * doze;
+  y += (STRUT_HEAD.y - HEAD.y) * fan + (DOZE_HEAD.y - HEAD.y) * doze;
   let nod = -0.2 * fan - 0.3 * doze;
   const down = peckDown(turkey);
   if (turkey.act === "peck") {
@@ -265,19 +270,18 @@ const headGoal = (turkey: Turkey) => {
   return { nod, x, y };
 };
 
-/** Its tail fanning or folding (snapping part open as it gobbles), its eyes shutting or opening, its feathers ruffling. */
-const settle = (turkey: Turkey, sleeping: boolean, seconds: number) => {
+/**
+ * Its tail fanning strutting or folding (at once, set off walking), its eyes
+ * shutting or opening, its body feathers ruffling as it gobbles. Its tail
+ * stays folded for a gobble that isn't part of a strut.
+ */
+const settle = (turkey: Turkey, sleeping: boolean, moving: boolean, seconds: number) => {
   const { rig, strutting } = turkey;
-  let fan = 0;
-  let rate = 6;
+  let rate = moving ? 14 : 6;
   if (strutting) {
-    fan = 1;
     rate = 3.5;
-  } else if (turkey.act === "gobble") {
-    fan = 0.4;
-    rate = 14;
   }
-  stepSpring(rig.fan, fan, rate, seconds);
+  stepSpring(rig.fan, strutting ? 1 : 0, rate, seconds);
   stepSpring(rig.doze, sleeping ? 1 : 0, sleeping ? 1.5 : 8, seconds);
   stepSpring(rig.ruffle, envelope(turkey, "gobble", 8), 20, seconds);
 };
@@ -304,11 +308,15 @@ const stepBout = (turkey: Turkey, moving: boolean, seconds: number) => {
   }
 };
 
-/** Its next peck, foraging, or gobble, strutting, once it's due. */
+/** Its next peck, foraging (its tail folded), or gobble, strutting, once it's due: each counted only while it's at that. */
 const startAct = (turkey: Turkey, idle: number, seconds: number) => {
-  turkey.nextPeck -= seconds;
-  turkey.nextGobble -= seconds;
-  if (!turkey.strutting && idle > 0.8 && turkey.nextPeck <= 0) {
+  const foraging = !turkey.strutting && turkey.rig.fan.x < 0.15;
+  if (foraging) {
+    turkey.nextPeck -= seconds;
+  } else if (turkey.strutting) {
+    turkey.nextGobble -= seconds;
+  }
+  if (foraging && idle > 0.8 && turkey.nextPeck <= 0) {
     begin(turkey, "peck");
     turkey.nextPeck = 0.8 + turkey.random.next() * 2.2;
   } else if (turkey.strutting && turkey.nextGobble <= 0 && idle < SLEEP_S - 2) {
@@ -325,7 +333,7 @@ const stepActs = (turkey: Turkey, moving: boolean, idle: number, seconds: number
   stepBout(turkey, moving, seconds);
   const showing = idle > STRUT_S && turkey.bout === "strut";
   turkey.strutting = !moving && !sleeping && (showing || turkey.petted > 0.4);
-  settle(turkey, sleeping, seconds);
+  settle(turkey, sleeping, moving, seconds);
   turkey.actFor += seconds;
   // A peck's given up the moment the mouse moves off; anything, the moment it falls asleep.
   const off = (turkey.act === "peck" && (moving || turkey.walker.still < 0.15)) || sleeping;
@@ -343,7 +351,10 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
   const { emotes, random, walker } = turkey;
   stepEmotes(emotes, seconds);
   if (sleeping) {
-    say(emotes, SLEEP);
+    // Once it's nodded off: its eyes shut, its head down.
+    if (turkey.rig.doze.x > 0.6) {
+      say(emotes, SLEEP);
+    }
   } else if (turkey.petted > PETTED_S) {
     // The moment a petting counts, it answers it, whatever it was saying.
     if (reached(turkey.petted, seconds, PETTED_S)) {
@@ -428,7 +439,7 @@ export const bobOf = (turkey: Turkey) => {
 };
 
 /** How far each hanging part swings from the way it hangs (radians): its beard's stiff hair least. */
-const SWING = { beard: 0.5, snood: 0.8, wattle: 0.8 } as const;
+const SWING = { beard: 0.5, snood: 0.6, wattle: 0.6 } as const;
 
 /** Whether its tail's nearer the camera than its body: facing away past a little beyond side on, held either way. */
 const tailNearOf = (turkey: Turkey) => {

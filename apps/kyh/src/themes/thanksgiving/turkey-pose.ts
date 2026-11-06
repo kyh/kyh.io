@@ -60,7 +60,7 @@ const BREAST: Vec3 = [7, 34, 0];
 const BREAST_RADII: Vec3 = [14, 14.5, 17.5];
 /** Its body tipped up a little at the front, its back sloping down to its tail. */
 const BREAST_UP = 0.1;
-const WING: Vec3 = [-5, 38, 13.6];
+const WING: Vec3 = [-5, 43, 16.5];
 const WING_RADII: Vec3 = [14, 7, 2.2];
 /** The tail's root, inside the back of its body, and its feathers' length folded and fanned. */
 const TAIL: Vec3 = [-15, 44, 0];
@@ -167,23 +167,57 @@ const bodyOf = (frame: Frame) => {
   return { back, breast, center: mix(back.at, breast.at, 0.5) };
 };
 
-/** A wing (1 its left): a flat solid on its side, barred pale; drooping, its tip to the ground, as it struts. */
-const wingOf = ({ ahead, fan, place, turn }: Frame, side: 1 | -1) => {
-  const droop = compose(pitchOf(0.08 - 0.36 * fan), rollOf(0.14 * side * fan));
-  const center = place([WING[0], WING[1] - 5 * fan, WING[2] * side * (1 + 0.1 * fan)]);
-  const axes = WING_RADII.map((radius, index) =>
-    apply(droop, [index === 0 ? radius : 0, index === 1 ? radius : 0, index === 2 ? radius : 0]),
+/** Its primaries: long dark flight feathers out of the back of its folded wing, top to bottom. */
+const PRIMARIES = 4;
+
+/**
+ * A wing (1 its left): a flat solid on its side, its shoulder standing out
+ * past its breast seen from the front, its top melting into its body, and its
+ * barred primaries trailing back past its rump; strutting, lowered, their tips
+ * dragged down by its feet.
+ */
+const wingOf = ({ ahead, fan, place, puff, turn }: Frame, side: 1 | -1) => {
+  const droop = compose(pitchOf(0.08 + 0.42 * fan), rollOf((0.1 + 0.12 * fan) * side));
+  const out = WING[2] * (puff + 0.08 * fan);
+  const center = place([WING[0], WING[1] - 7 * fan, out * side]);
+  const local = (x: number, y: number, z = 0): Vec3 =>
+    add(center, turn(apply(droop, [x, y, z * side])));
+  const [length, height, thick] = WING_RADII;
+  const axes = [
+    [length, 0, 0],
+    [0, height, 0],
+    [0, 0, thick],
+  ].map((axis) => turn(apply(droop, [axis[0] ?? 0, axis[1] ?? 0, (axis[2] ?? 0) * side])));
+  // Its edge, inked: from the tip of its primaries' root round under it to its wrist; its top's its body.
+  const edge = linePath(
+    Array.from({ length: 13 }, (_, index) => {
+      const angle = Math.PI * (1 + (0.85 * index) / 12);
+      return local(length * Math.cos(angle), height * Math.sin(angle), thick);
+    }),
   );
-  // Its barring: short pale bars across its flight feathers, back and low on the wing.
-  const on = (x: number, y: number) =>
-    add(center, turn(apply(droop, [x, y, side * WING_RADII[2]])));
-  const bars = linesPath([-2.5, -5.6, -8.7, -11.8].map((x) => [on(x, -7.5), on(x - 1.5, 0.5)]));
+  const primaries = Array.from({ length: PRIMARIES }, (_, index) => {
+    const root = local(-7 - index * 0.8, 0.5 - index * 1.3, thick * 0.6);
+    const along = turn(apply(droop, [-1, 0.06 - index * 0.04, 0]));
+    const reach = 16 - index * 1.2;
+    const middle = add(root, scale(along, reach / 2));
+    const across = turn(apply(droop, [0, 1.15, 0]));
+    const bars = [0.55, 0.8].map((at) => {
+      const on = add(root, scale(along, reach * at));
+      return [add(on, scale(across, 1.6)), add(on, scale(across, -1.6))];
+    });
+    return {
+      bars,
+      path: ellipsePath(ellipseOf(middle, [scale(along, reach / 2), across])),
+    };
+  });
   return {
-    bars,
+    bars: linesPath(primaries.flatMap(({ bars }) => bars)),
+    edge,
     // Over its body only as its side turns to the camera: edge on, it's behind its breast and back.
     // By its heading alone, so its sway doesn't flick it over and under.
     facing: toward(scale([-ahead[2], 0, ahead[0]], side)),
-    outline: ellipseOf(center, axes.map(turn)),
+    outline: ellipseOf(center, axes),
+    primaries: primaries.map(({ path }) => path).join(""),
   };
 };
 
@@ -191,7 +225,7 @@ const wingOf = ({ ahead, fan, place, turn }: Frame, side: 1 | -1) => {
 const featherAxes = (s: number, opened: number) => {
   // Folded, a closed wedge sloping down behind: the middle feathers on top, the outer ones lapped
   // under them down each side, like a roof. Fanned, an upright half wheel.
-  const folded = normalize([-1, -0.36 - 0.06 * Math.abs(s), 0.14 * s]);
+  const folded = normalize([-1, -0.5 - 0.06 * Math.abs(s), 0.14 * s]);
   const spread = s * 0.5 * Math.PI * 0.95;
   const fanned = normalize([-0.3, Math.cos(spread), Math.sin(spread)]);
   const roof = normalize([0, Math.cos(0.55 * s), Math.sin(0.55 * s)]);
@@ -270,7 +304,8 @@ const neckOf = (root: Vec3, head: Vec3, attach: Vec3) => {
     0,
   ]);
   const curve = curveOf(root, bend, attach, 6);
-  return { low: linePath(curve.slice(0, 4)), whole: linePath(curve) };
+  // Feathered most of its way up; bare and red only near its head.
+  return { low: linePath(curve.slice(0, 5)), whole: linePath(curve) };
 };
 
 /** Its head, neck, eyes and beak, and where its snood and wattle hang from it at rest. */
@@ -338,13 +373,13 @@ const headOf = (turkey: Turkey, frame: Frame) => {
 
 /** Where its beard grows: the front of its breast, a little below the most forward of it, hanging out clear below. */
 const BEARD: Vec3 = [BREAST[0] + BREAST_RADII[0] - 2, BREAST[1] - 3, 0];
-const BEARD_LENGTH = 11.5;
+const BEARD_LENGTH = 9;
 
 /** Its beard: a tuft of coarse hair hanging from the front of its breast, clear of it. */
 const beardOf = (frame: Frame) => {
   const root = frame.place(add(BEARD, [2.5 * frame.fan, 0, 0]));
   return Array.from({ length: FLESH_LINKS + 1 }, (_, index): Vec3 =>
-    add(root, add(scale(frame.ahead, index * 1.5), [0, (-index * BEARD_LENGTH) / FLESH_LINKS, 0])),
+    add(root, add(scale(frame.ahead, index * 1.1), [0, (-index * BEARD_LENGTH) / FLESH_LINKS, 0])),
   );
 };
 
@@ -436,8 +471,8 @@ const layersOf = (
 ) => {
   const { feathers, legs, torsoDepth, wings } = drawn;
   const front = toward(frame.ahead);
-  // Its neck comes out of the top of its breast: over its body only seen from the front.
-  const neckDepth = torsoDepth + 4 * (front - 0.3) + (front > 0.3 ? 0.03 : 0);
+  // Its neck comes out of the top of its breast: always behind it, so only what's clear of it shows.
+  const neckDepth = torsoDepth - 0.5;
   // Its head over its body, but beyond it facing away; asleep, half sunk in the feathers of its back.
   let headDepth = Math.max(torsoDepth + 0.3, neckDepth + 0.01);
   if (frame.doze > 0.5) {
@@ -449,12 +484,10 @@ const layersOf = (
   const away = toward(drawn.head.forward) < -0.25 || frame.doze > 0.5;
   const faceDepth = away ? Math.min(neckDepth, headDepth) - 0.01 : headDepth + 0.01;
   // Its beard on its breast: over its body unless its breast's turned away, and under its head and face.
-  // Its neck over its body (seen from the front) is over its beard too.
-  let beardOnBody = front > -0.15 ? torsoDepth + 0.2 : torsoDepth - 0.2;
-  if (front > 0.3) {
-    beardOnBody = torsoDepth + 0.01;
-  }
-  const beardDepth = Math.min(beardOnBody, headDepth - 0.02);
+  const beardDepth = Math.min(
+    front > -0.15 ? torsoDepth + 0.2 : torsoDepth - 0.2,
+    headDepth - 0.02,
+  );
   const tailDepth = turkey.tailNear ? torsoDepth + 0.5 : torsoDepth - 2;
   const layers: [string, number][] = [
     ["torso", torsoDepth],
@@ -497,10 +530,20 @@ export const turkeyPose = (turkey: Turkey): Pose => {
     ["beard", { d: chainPath(turkey.beard, turkey.walker, SIZE), opacity: beardShown }],
     ["beard-mid", { d: tipPath(turkey.beard, turkey.walker, 2), opacity: beardShown }],
     ["beard-tip", { d: tipPath(turkey.beard, turkey.walker, 4), opacity: beardShown }],
-    ...wings.flatMap(({ bars, outline }, index): [string, Part][] => [
-      ...solid(`wing-${index}`, outline),
-      [`bars-${index}`, { d: bars }],
-    ]),
+    ...wings.flatMap(
+      ({ bars, edge, facing: side, outline, primaries }, index): [string, Part][] => [
+        ...solid(`wing-${index}`, outline),
+        // Its side to the camera, only its lower edge's inked; edge on, under its body, all of it.
+        [
+          `wing-ink-${index}`,
+          { d: ellipsePath(outline), opacity: round(1 - smooth((side - 0.15) / 0.25)) },
+        ],
+        [`wing-edge-${index}`, { d: edge, opacity: round(smooth((side - 0.15) / 0.25)) }],
+        // The far wing's primaries are behind its back, not poking up over it.
+        [`primaries-${index}`, { d: primaries, opacity: round(smooth((side + 0.3) / 0.3)) }],
+        [`bars-${index}`, { d: bars, opacity: round(smooth((side + 0.3) / 0.3)) }],
+      ],
+    ),
     ...feathers.flatMap(({ band, tip, whole }, index): [string, Part][] => [
       [`feather-${index}`, { d: whole }],
       [`band-${index}`, { d: band }],
