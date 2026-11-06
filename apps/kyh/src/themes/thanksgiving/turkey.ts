@@ -28,7 +28,7 @@ import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/s
 import { createChain, flickChain, hangOf, stepChain } from "../follower/chain";
 import { createWalker, isOnWalker, stepWalker } from "../follower/walk";
 import { FLESH, holdFlesh } from "./flesh";
-import { fleshOf, SIZE, turkeyPose } from "./turkey-pose";
+import { fleshOf, SIZE, turkeyPose, wingOverOf } from "./turkey-pose";
 
 /** Its pace: a walk, ground pixels a second at the most (`../follower/feet.ts`), so about three strides a second. */
 const TOP = 150;
@@ -120,6 +120,8 @@ export interface Turkey {
    * under its body as it sways.
    */
   tailNear: boolean;
+  /** Whether each wing, its left then its right, is over its body (`wingOverOf`). */
+  wingOver: [boolean, boolean];
   /**
    * Whether its face is turned from the camera, behind its head: by how it
    * holds its head, not a gobble's shake, and held a little either way, so
@@ -156,6 +158,8 @@ const MOVING = 20;
 /** Where its head sits, forward and up from its feet: walking, strutting (drawn back) and asleep (on its back). */
 const HEAD: Point = { x: 19, y: 70 };
 const STRUT_HEAD: Point = { x: 12, y: 65 };
+/** How far it pivots either way strutting (radians): short of where a wing comes over its body, which would blink at every turn. */
+const STRUT_PIVOT = 0.4;
 const DOZE_HEAD: Point = { x: 6, y: 58 };
 /** Where a peck takes its head: down to the ground in front of it. */
 const PECK_HEAD: Point = { x: 40, y: 8 };
@@ -210,6 +214,7 @@ export const createTurkey = (at: Point): Turkey => {
     time: 0,
     walker,
     wattle: createChain({ rest: [], root: at }),
+    wingOver: [false, false],
   };
 };
 
@@ -393,7 +398,7 @@ const facingOf = (turkey: Turkey, pointer: Point, moving: boolean, sleeping: boo
   }
   // Strutting, it shows off its fan: turned to the camera, pivoting slowly side to side as a tom does.
   if (turkey.strutting && !moving) {
-    return Math.PI / 2 + 0.5 * Math.sin(turkey.time * 0.7);
+    return Math.PI / 2 + STRUT_PIVOT * Math.sin(turkey.time * 0.7);
   }
   const toward = turkey.act === "alert" && turkey.heard ? turkey.heard : pointer;
   const goal = faceGoal(walker, toward, rig.heading.x, MOVING / 2);
@@ -495,6 +500,11 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   stepFeet(turkey.feet, STEPS, walker, turkey.rig.heading.x, seconds);
   turkey.bob = bobOf(turkey);
   turkey.tailNear = tailNearOf(turkey);
+  const [left, right] = turkey.wingOver;
+  turkey.wingOver = [
+    wingOverOf(left, turkey.rig.heading.x, 1),
+    wingOverOf(right, turkey.rig.heading.x, -1),
+  ];
   turkey.faceAway = faceAwayOf(turkey);
   // Its snood, wattle and beard, carried by its head and breast: the air and their swing do the rest.
   const flesh = fleshOf(turkey);

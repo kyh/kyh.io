@@ -5,7 +5,7 @@ import type { Pose } from "../follower/creature";
 import type { Point } from "../follower/walk";
 import type { Turkey } from "./turkey";
 import { createTurkey, pokeTurkey, stepTurkey } from "./turkey";
-import { SIZE, turkeyPose } from "./turkey-pose";
+import { SIZE, turkeyPose, wingOverOf } from "./turkey-pose";
 
 const FRAME = 1 / 60;
 
@@ -508,5 +508,67 @@ test("asleep, its head and face stay over its body, and nothing of them swaps no
     pokeTurkey(turkey, { x: turkey.walker.x, y: turkey.walker.y - 30 });
     run(turkey, () => at(1), 2, watch, 44);
     assert.equal(swaps, 0, `${dx}`);
+  }
+});
+
+/** Watches each wing frame to frame: how many times it went over or under its body, and the shortest it stayed. */
+const wingSwapsOf = (turkey: Turkey) => {
+  const over = (name: string) => {
+    const { order } = turkeyPose(turkey);
+    return (order?.indexOf(name) ?? 0) > (order?.indexOf("torso") ?? 0);
+  };
+  const names = ["wing-0", "wing-1"];
+  const was = names.map(over);
+  const since = names.map(() => 0);
+  let swaps = 0;
+  let shortest = Infinity;
+  return {
+    shortest: () => shortest,
+    swaps: () => swaps,
+    watch: () => {
+      for (const [index, name] of names.entries()) {
+        since[index] = (since[index] ?? 0) + FRAME;
+        if (over(name) !== was[index]) {
+          was[index] = !was[index];
+          swaps += 1;
+          shortest = Math.min(shortest, since[index] ?? 0);
+          since[index] = 0;
+        }
+      }
+    },
+  };
+};
+
+test("a strut's slow pivot leaves its wings where they are", () => {
+  const turkey = createTurkey({ x: 400, y: 400 });
+  run(turkey, () => ({ x: 400, y: 340 }), 2);
+  const wings = wingSwapsOf(turkey);
+  let strutting = 0;
+  run(
+    turkey,
+    () => ({ x: 400, y: 340 }),
+    60,
+    () => {
+      strutting += turkey.strutting ? FRAME : 0;
+      wings.watch();
+    },
+  );
+  assert.ok(strutting > 10, `${strutting}`);
+  // Over or under as it starts or leaves off strutting, but no blink at the end of each pivot.
+  assert.ok(wings.shortest() > 2, `${wings.shortest()}`);
+});
+
+test("a heading wandering about where a wing comes over its body leaves the wing as it was", () => {
+  for (const side of [1, -1] as const) {
+    // Its left wing comes over turning toward side on from about 63 degrees, its right mirrored.
+    const line = side === 1 ? 1.1 : Math.PI - 1.1;
+    for (const was of [true, false]) {
+      let over = wingOverOf(was, line + (was ? -0.3 : 0.3) * side, side);
+      assert.equal(over, was);
+      for (let turned = 0; turned < 200; turned += 1) {
+        over = wingOverOf(over, line + 0.03 * Math.sin(turned), side);
+      }
+      assert.equal(over, was);
+    }
   }
 });

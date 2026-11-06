@@ -171,8 +171,14 @@ const bodyOf = (frame: Frame) => {
 
 /** Its primaries: long dark flight feathers out of the back of its folded wing, top to bottom. */
 const PRIMARIES = 4;
-/** How far a wing's side faces the camera (`toward`) once it's drawn over its body. */
+/** How far a wing's side faces the camera (`toward`) once it's drawn over its body, and how far either way it's held. */
 const OVER_BODY = 0.4;
+const OVER_HELD = 0.04;
+
+/** Whether a wing (1 its left) is over its body, after whether it was: by its heading alone, so its sway can't flick it. */
+export const wingOverOf = (was: boolean, heading: number, side: 1 | -1) =>
+  toward([-Math.sin(heading) * side, 0, Math.cos(heading) * side]) >
+  OVER_BODY + (was ? -OVER_HELD : OVER_HELD);
 
 /**
  * A wing (1 its left): a flat solid on its side, its shoulder standing out
@@ -224,8 +230,6 @@ const wingOf = ({ ahead, fan, place, puff, turn }: Frame, side: 1 | -1) => {
     bars: linesPath(primaries.flatMap(({ bars }) => bars)),
     drawnOut,
     edge,
-    // Over its body only as its side turns to the camera: edge on, it's behind its breast and back.
-    // By its heading alone, so its sway doesn't flick it over and under.
     facing: shown,
     outline: ellipseOf(center, axes),
     primaries: primaries.map(({ path }) => path).join(""),
@@ -514,9 +518,12 @@ const layersOf = (
     ["neck", neckDepth],
     ["head", headDepth],
     ["face", faceDepth],
+    // Over its body only as its side turns to the camera: edge on, it's behind its breast and back.
     ...wings.map(({ facing: side }, index): [string, number] => [
       `wing-${index}`,
-      torsoDepth + 6 * (side - OVER_BODY) + index * 1e-3,
+      torsoDepth +
+        (turkey.wingOver[index] ? 1 : -1) * (0.01 + 6 * Math.abs(side - OVER_BODY)) +
+        index * 1e-3,
     ]),
     // Its tail feathers lapped the middle over the outer, as they lie folded, and as a fan's do.
     ...feathers.map(({ edge }, index): [string, number] => [
@@ -550,16 +557,14 @@ export const turkeyPose = (turkey: Turkey): Pose => {
     ["beard", { d: chainPath(turkey.beard, turkey.walker, SIZE), opacity: beardShown }],
     ["beard-mid", { d: tipPath(turkey.beard, turkey.walker, 2), opacity: beardShown }],
     ["beard-tip", { d: tipPath(turkey.beard, turkey.walker, 4), opacity: beardShown }],
-    ...wings.flatMap(
-      ({ bars, drawnOut, edge, facing: side, outline, primaries }, index): [string, Part][] => [
-        ...solid(`wing-${index}`, outline),
-        // Over its body, only its lower edge's inked; under it, all of it.
-        [`wing-ink-${index}`, { d: ellipsePath(outline), opacity: side < OVER_BODY ? 1 : 0 }],
-        [`wing-edge-${index}`, { d: edge, opacity: side < OVER_BODY ? 0 : 1 }],
-        [`primaries-${index}`, { d: primaries, opacity: drawnOut > 0 ? 1 : 0 }],
-        [`bars-${index}`, { d: bars, opacity: drawnOut > 0 ? 1 : 0 }],
-      ],
-    ),
+    ...wings.flatMap(({ bars, drawnOut, edge, outline, primaries }, index): [string, Part][] => [
+      ...solid(`wing-${index}`, outline),
+      // Over its body, only its lower edge's inked; under it, all of it.
+      [`wing-ink-${index}`, { d: ellipsePath(outline), opacity: turkey.wingOver[index] ? 0 : 1 }],
+      [`wing-edge-${index}`, { d: edge, opacity: turkey.wingOver[index] ? 1 : 0 }],
+      [`primaries-${index}`, { d: primaries, opacity: drawnOut > 0 ? 1 : 0 }],
+      [`bars-${index}`, { d: bars, opacity: drawnOut > 0 ? 1 : 0 }],
+    ]),
     ...feathers.flatMap(({ band, tip, whole }, index): [string, Part][] => [
       [`feather-${index}`, { d: whole }],
       [`band-${index}`, { d: band }],
