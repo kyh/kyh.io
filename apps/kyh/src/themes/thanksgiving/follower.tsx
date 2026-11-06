@@ -4,8 +4,8 @@
 // built in the round (`turkey-pose.ts`) and drawn in the showcase town's hand
 // as the theme's pieces are (`piece.tsx`): flat faces, each solid's side from
 // the light in its shade under the shade dots, ink round the outside. A bronze
-// body (its back and breast inked round as one) and wings, the wings barred
-// pale, tail feathers banded dark and tipped chestnut, a neck feathered low and
+// body (its back and breast drawn as one) and wings, the wings' flight
+// feathers barred white, tail feathers banded dark and tipped chestnut, a neck feathered low and
 // bare red above up to a bare blue head with a red snood and wattle, a pale
 // beak, a dark beard, bronze drumsticks and pink shanks, the nearer leg lit.
 // Each `data-layer` is one part the stage stacks by how near the camera it
@@ -31,18 +31,51 @@ const Flesh = ({ name, width }: { name: string; width: number }) => (
 );
 
 /**
- * Its body: its back and its breast, two solids inked round as one. Both
- * inks go under both faces, so only the outside of the two shows.
+ * Its body: its back and its breast, two solids drawn as one. Both inks go
+ * under both faces, so only the outside of the two shows, and both lit parts
+ * are kept inside the two together, so no seam shows where they meet.
  */
 const Torso = ({ id }: { id: string }) => {
   const masses = ["body", "breast"] as const;
   return (
     <>
+      <clipPath id={`${id}-torso`}>
+        {masses.map((name) => (
+          <path key={name} data-part={name} />
+        ))}
+      </clipPath>
       {masses.map((name) => (
         <path key={`${name}-ink`} data-part={name} style={stroked(ink(2.8))} />
       ))}
       {masses.map((name) => (
-        <Solid key={name} name={name} id={id} fill="bronze" shade="bronzeShade" />
+        <g key={name}>
+          <path data-part={name} style={filled("bronzeShade")} />
+          <path data-part={name} fill={`url(#${id}-dots)`} />
+        </g>
+      ))}
+      <g clipPath={`url(#${id}-torso)`}>
+        {masses.map((name) => (
+          <path key={name} data-part={`${name}-lit`} style={filled("bronze")} />
+        ))}
+      </g>
+    </>
+  );
+};
+
+/** Its beard: coarse dark hair, thin at the root and spreading to the tip like a brush. */
+const Beard = () => {
+  const strands = [
+    ["beard", 1.3],
+    ["beard-mid", 2.1],
+    ["beard-tip", 2.9],
+  ] as const;
+  return (
+    <>
+      {strands.map(([name, width]) => (
+        <path key={`${name}-ink`} data-part={name} style={stroked(width + ink(1))} />
+      ))}
+      {strands.map(([name, width]) => (
+        <path key={name} data-part={name} style={stroked(width, "screen")} />
       ))}
     </>
   );
@@ -96,25 +129,20 @@ export const Follower = () => {
       ))}
       {[0, 1].map((index) => (
         <g key={`wing-${index}`} data-layer={`wing-${index}`}>
-          <Solid
-            name={`wing-${index}`}
-            id={id}
-            fill="bronzeShade"
-            shade="bronzeShade"
-            ink={ink(0.9)}
-          />
+          <Solid name={`wing-${index}`} id={id} fill="bronze" shade="bronzeShade" />
           <path
             data-part={`bars-${index}`}
-            style={{ ...stroked(1.2, "white"), strokeDasharray: "0.9 2.6", strokeLinecap: "butt" }}
+            clipPath={`url(#${id}-wing-${index})`}
+            style={{ ...stroked(1.7, "white"), strokeLinecap: "butt" }}
           />
+          <path data-part={`wing-${index}`} style={stroked(ink(0.9))} />
         </g>
       ))}
       <g data-layer="torso">
         <Torso id={id} />
       </g>
       <g data-layer="beard">
-        <path data-part="beard" style={stroked(2 + ink(1))} />
-        <path data-part="beard" style={stroked(2, "screen")} />
+        <Beard />
       </g>
       <g data-layer="neck">
         <path data-part="neck" style={stroked(5 + ink(2.4))} />
