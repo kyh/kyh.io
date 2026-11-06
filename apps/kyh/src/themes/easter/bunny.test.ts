@@ -224,7 +224,7 @@ test("a thump: its rear lifts, then it stamps, hard; hopping, it startles instea
   assert.ok(rose > 3, `its rear rose ${rose}px`);
   assert.ok(squash < -0.18, `stamp squash ${squash}`);
   const going = settled();
-  chase(going, { x: 600, y: 400 }, { x: 300, y: 0 }, 0.3, 0);
+  chase(going, { x: 600, y: 400 }, { x: 300, y: 0 }, 0.5, 0);
   assert.ok(going.hopper.leap !== null);
   pokeBunny(going, { x: going.walker.x - 200, y: going.walker.y - 150 });
   assert.notEqual(going.act, "thump");
@@ -639,16 +639,143 @@ test("left be, it settles three-quarters on to the camera, for all it gets up to
   }
 });
 
-test("following a slow mouse, it doesn't hop round to the camera at every pause", () => {
-  const bunny = settled();
-  let turned = 0;
+const FRAME_RATES = [30, 60, 144, 240];
+
+/** Its hops round where it stands as the mouse goes along `path`, seconds to where it is. */
+const pivotsAlong = (
+  bunny: Bunny,
+  path: (seconds: number) => Point,
+  seconds: number,
+  fps: number,
+  whole = true,
+) => {
+  const at = (time: number) => {
+    const { x, y } = path(time);
+    return whole ? { x: Math.round(x), y: Math.round(y) } : { x, y };
+  };
+  let pointer = at(0);
   let was = bunny.hopper.leap;
-  chase(bunny, HOME, { x: 30, y: 0 }, 8, 0, () => {
+  let pivots = 0;
+  for (let frame = 1; frame <= seconds * fps; frame += 1) {
+    const next = at(frame / fps);
+    stepBunny(bunny, next, { x: next.x - pointer.x, y: next.y - pointer.y }, 1 / fps);
+    pointer = next;
     const { leap } = bunny.hopper;
     if (leap && leap !== was && leap.size === 0) {
-      turned += 1;
+      pivots += 1;
     }
     was = leap;
-  });
-  assert.ok(turned <= 2, `${turned} hops round`);
+  }
+  return pivots;
+};
+
+/** Led over to `to` and left there till it's settled. */
+const leftAt = (to: Point, fps: number) => {
+  const from = { x: 300, y: 350 };
+  const bunny = settled(from);
+  const led = (time: number) => {
+    const part = Math.min(1, time / 1.5);
+    return { x: from.x + (to.x - from.x) * part, y: from.y + (to.y - from.y) * part };
+  };
+  pivotsAlong(bunny, led, 5, fps);
+  return bunny;
+};
+
+test("settled, a nudge of the mouse leaves it standing as it stands", () => {
+  const spots = [
+    { x: 700, y: 350 },
+    { x: 60, y: 350 },
+    { x: 300, y: 100 },
+    { x: 300, y: 600 },
+    { x: 600, y: 120 },
+    { x: 100, y: 600 },
+    { x: 630, y: 660 },
+    { x: 365, y: 660 },
+  ];
+  for (const fps of FRAME_RATES) {
+    for (const spot of spots) {
+      for (const every of [1, 4]) {
+        const bunny = leftAt(spot, fps);
+        const nudged = (time: number) => ({
+          x: spot.x + (Math.floor(time / every) % 2),
+          y: spot.y,
+        });
+        const pivots = pivotsAlong(bunny, nudged, 16, fps);
+        const where = `${fps}fps at ${JSON.stringify(spot)} every ${every}s`;
+        assert.ok(pivots <= 1, `${where}: ${pivots} hops round`);
+        assert.ok(Math.sin(bunny.hopper.heading) > 0.4, `${where}: turned from the camera`);
+      }
+    }
+  }
+});
+
+test("following a slow mouse, it doesn't wag from side to side", () => {
+  const ways = [
+    { x: 30, y: 0 },
+    { x: -30, y: 0 },
+    { x: 0, y: -20 },
+    { x: 0, y: -30 },
+    { x: 0, y: -40 },
+    { x: 0, y: 20 },
+    { x: 0, y: 40 },
+    { x: 30, y: -40 },
+  ];
+  for (const fps of FRAME_RATES) {
+    for (const whole of [true, false]) {
+      for (const way of ways) {
+        const from = { x: 500, y: way.y < 0 ? 650 : 100 };
+        const bunny = settled(from);
+        const slow = (time: number) => ({ x: from.x + way.x * time, y: from.y + way.y * time });
+        const pivots = pivotsAlong(bunny, slow, 10, fps, whole);
+        const where = `${fps}fps ${whole ? "whole" : "fractional"} ${JSON.stringify(way)}`;
+        assert.ok(pivots <= 2, `${where}: ${pivots} hops round`);
+      }
+    }
+  }
+});
+
+test("led off and left, it turns to the camera before it gets up to anything", () => {
+  for (const fps of FRAME_RATES) {
+    for (const way of WAYS) {
+      const bunny = settled();
+      const by = { x: way.x * 200, y: way.y * 200 };
+      chase(
+        bunny,
+        HOME,
+        by,
+        1,
+        8,
+        (_frame, moving) => {
+          // An act already due the moment it stops is the one that'd beat it to the turn.
+          bunny.next = moving ? 0 : bunny.next;
+          const { act, hopper } = bunny;
+          const where = `${fps}fps ${JSON.stringify(way)} ${act}`;
+          assert.ok(act === "none" || Math.sin(hopper.heading) > 0.2, where);
+        },
+        fps,
+      );
+    }
+  }
+});
+
+test("led on in steps with pauses between, it doesn't hop round at every pause", () => {
+  const rhythms = [
+    { pause: 1, step: 30 },
+    { pause: 1, step: 60 },
+    { pause: 0.7, step: 60 },
+    { pause: 1.2, step: 120 },
+  ];
+  for (const fps of FRAME_RATES) {
+    for (const { pause, step } of rhythms) {
+      for (const way of [1, -1]) {
+        const bunny = settled({ x: 500, y: 350 });
+        const stepped = (time: number) => ({
+          x: 500 + way * ((step * Math.floor(time / pause)) % 380),
+          y: 350,
+        });
+        const pivots = pivotsAlong(bunny, stepped, 12, fps);
+        assert.ok(pivots <= 4, `${fps}fps ${way * step}px every ${pause}s: ${pivots} hops round`);
+      }
+    }
+  }
 });

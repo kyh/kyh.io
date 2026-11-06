@@ -279,6 +279,10 @@ const secondsOf = (length: number, turn: number) =>
       (REVERSE_S - PIVOT_S) * smooth((Math.abs(turn) - MOST_PIVOT) / (MOST_REVERSE - MOST_PIVOT))
     : 1 / (LEAST_HOPS + (MOST_HOPS - LEAST_HOPS) * smooth(Math.min(1, length / MOST_LEAP)));
 
+/** Whether `face` is far enough round from `heading` that it'd hop round to it. */
+export const isPivot = (heading: number, face: number) =>
+  Math.abs(wrap(face - heading)) > LEAST_PIVOT;
+
 /**
  * Its next hop toward `target` (null, it's to stay), or, there already, round
  * to `face` (null, whichever way it faces): or null, no hop at all.
@@ -293,7 +297,7 @@ export const planLeap = (hopper: Hopper, target: Spot | null, face: number | nul
   // Setting off from a stand it waits till it's a hop's worth away; going, it goes on till it's there.
   if (target && away > (going ? ARRIVED : SET_OFF)) {
     ({ length, turn } = towardOf(hopper, offX, offZ));
-  } else if (face !== null && Math.abs(wrap(face - heading)) > LEAST_PIVOT) {
+  } else if (face !== null && isPivot(heading, face)) {
     turn = turnOf(hopper, face - heading, MOST_PIVOT);
   }
   if (length === 0 && turn === 0) {

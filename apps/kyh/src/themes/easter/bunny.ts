@@ -39,7 +39,7 @@ import {
   THUMP_BEATS,
   thumpAt,
 } from "./bunny-pose";
-import { createHopper, isAirborne, placeOf, planLeap, SET_OFF, stepHopper } from "./hop";
+import { createHopper, isAirborne, isPivot, placeOf, planLeap, SET_OFF, stepHopper } from "./hop";
 import { jiggleAt, stepJiggle } from "./jiggle";
 import { stiffen } from "./stiffen";
 
@@ -117,7 +117,7 @@ const RESTING_S = 0.08;
 /** Petted, how far from straight at the camera it turns: a three-quarter view. */
 const PETTED_TURN = 0.5;
 /** Seconds the mouse must be still before it settles to the camera: a pause isn't a stop. */
-const SETTLING_S = 0.4;
+const SETTLING_S = 1.3;
 /** Settled, the farthest from straight at the camera it stands: three-quarters on, its face and whatever it's up to in view. */
 const SETTLED_TURN = 0.85;
 const IDLE: readonly Act[] = ["sniff", "sniff", "groom", "stand"];
@@ -205,11 +205,11 @@ const isOn = (bunny: Bunny, at: Point) => isOnWalker(bunny.walker, at, 18 * SIZE
 
 const isHopping = (bunny: Bunny) => bunny.hopper.leap !== null;
 
-/** Which way it'd stand: to the mouse; settled, no further from the camera than three-quarters on. */
+/** Which way it'd stand, settled: to the mouse, no further from the camera than three-quarters on. */
 const faceOf = (bunny: Bunny, pointer: Point) => {
   const { hopper, walker } = bunny;
   const goal = faceGoal({ ...walker, speed: 0 }, pointer, hopper.heading, 0);
-  if (walker.still < SETTLING_S || Math.sin(goal) >= Math.cos(SETTLED_TURN)) {
+  if (Math.sin(goal) >= Math.cos(SETTLED_TURN)) {
     return goal;
   }
   return Math.PI / 2 + (Math.cos(goal) >= 0 ? -SETTLED_TURN : SETTLED_TURN);
@@ -231,18 +231,16 @@ const wantOf = (bunny: Bunny, pointer: Point, resting: boolean, dozing: boolean)
     return { face, target: null };
   }
   const spot = spotOf(walker, GAIT, pointer);
-  const face = dozing || act !== "none" ? null : faceOf(bunny, pointer);
+  const face =
+    dozing || act !== "none" || walker.still < SETTLING_S ? null : faceOf(bunny, pointer);
   // Its spot swinging round behind a mouse that's turned back, it won't hop away from the mouse to
-  // get there: it waits, turned to the mouse, till its spot's come round.
+  // get there: it waits till its spot's come round.
   const toSpot = { x: spot.x - walker.x, y: (spot.y - walker.y) / SIN };
   const toMouse = { x: pointer.x - walker.x, y: (pointer.y - walker.y) / SIN };
   const away =
     toSpot.x * toMouse.x + toSpot.y * toMouse.y < 0 &&
     Math.hypot(toMouse.x, toMouse.y) > AWAY_FROM_MOUSE;
-  return {
-    face: away ? faceOf(bunny, pointer) : face,
-    target: away ? null : groundOf(spot),
-  };
+  return { face, target: away ? null : groundOf(spot) };
 };
 
 /** Whether it's somewhere to go: far enough from where it'd be that it'll hop. */
@@ -264,7 +262,7 @@ const stepActs = (bunny: Bunny, leaving: boolean, idle: number, seconds: number)
     return dozing;
   }
   bunny.next -= seconds;
-  if (idle > 0.8 && bunny.next <= 0) {
+  if (idle > SETTLING_S && bunny.next <= 0) {
     begin(bunny, bunny.random.pick(IDLE));
     bunny.next = 1.2 + bunny.random.next() * 2.5;
   }
@@ -453,7 +451,8 @@ export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: n
   const { walker } = bunny;
   const dt = Math.max(0, seconds);
   bunny.time += dt;
-  walker.still = Math.hypot(moved.x, moved.y) < 0.5 ? walker.still + dt : 0;
+  // Any move at all: a slow mouse goes under half a pixel a frame on a fast screen.
+  walker.still = moved.x === 0 && moved.y === 0 ? walker.still + dt : 0;
   walker.back = turnBack(walker.back, moved, 80);
   // Petted (a mouse resting on it), it stays put.
   const resting = walker.still > RESTING_S && isOn(bunny, pointer);
@@ -461,7 +460,9 @@ export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: n
   const dozing = idle > DOZE_S && bunny.petted === 0;
   const want = wantOf(bunny, pointer, resting, dozing);
   const leaving = isLeaving(bunny, want.target);
-  stepActs(bunny, leaving, idle, dt);
+  // Still to turn round, it's not idle yet: whatever it's up to, it's up to it facing the camera.
+  const turning = want.face !== null && isPivot(bunny.hopper.heading, want.face);
+  stepActs(bunny, leaving, turning ? 0 : idle, dt);
   // Busy (sat up, sniffing, grooming), it stays, and gets down on all fours before it hops off; it turns round only between.
   const { rig } = bunny;
   const busy = bunny.act !== "none" || Math.max(rig.stand.x, rig.groom.x) > 0.04;
