@@ -1,39 +1,63 @@
 // The turkey that follows a mouse about at Thanksgiving, for `follower.tsx`:
 // a wild tom, built in the round (`turkey-pose.ts` draws it) and turning to
-// face its way. It walks after the mouse (`../follower/walk.ts`) on bird's
-// legs, the hock bending back, its head held still and thrust forward a step
-// at a time as a walking bird's is, its snood and wattle swinging as it goes.
-// Left be, it pecks about, then puffs up and fans its tail to strut, gobbling
-// now and then; left long enough, it tucks its head in and sleeps. A click on
-// it sets it gobbling; a click elsewhere makes it shock-gobble or call an
-// alarm putt, as a tom does at a sudden noise. A mouse resting on it is a
-// petting. Every movement eases on a spring (`../follower/solid.ts`), so it
-// never snaps. Pure (state is stepped in place, for a frame's sake).
+// face its way. It walks after the mouse (`../follower/walk.ts`), never
+// faster than a turkey walks, on bird's legs whose feet stay where they're
+// set down (`../follower/feet.ts`), the hock bending back, its head held
+// still over the ground as its body passes under, then thrust forward, a
+// step at a time, as a walking bird's is; its snood, wattle and beard swing
+// as it goes. Left be, it bows to peck about, then puffs up and fans its
+// tail to strut, gobbling now and then; left long enough, it turns its head
+// back onto its shoulder and sleeps. A click on it sets it gobbling, neck
+// thrown out, head shaking, feathers ruffled; a click elsewhere makes it
+// shock-gobble or stand tall and putt toward the noise, as a tom does. A
+// mouse resting on it is a petting. Every movement eases on a spring
+// (`../follower/solid.ts`), so it never snaps. Pure (state is stepped in
+// place, for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
 import type { Creature } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
+import type { Feet, Steps } from "../follower/feet";
 import type { Spring } from "../follower/solid";
 import type { Chain } from "../follower/chain";
 import type { Gait, Point, Walker } from "../follower/walk";
 import { createEmotes, PETTED_S, reached, say, stepEmotes } from "../follower/emote";
+import { createFeet, groundSpeedOf, keepPace, stepFeet } from "../follower/feet";
 import { faceGoal, smooth, springAt, stepAngle, stepSpring } from "../follower/solid";
-import { createChain, flickChain, FLOPPY, hangOf, stepChain } from "../follower/chain";
-import { createWalker, isOnWalker, pace, stepWalker } from "../follower/walk";
+import { createChain, hangOf, stepChain } from "../follower/chain";
+import { createWalker, isOnWalker, stepWalker } from "../follower/walk";
+import { FLESH } from "./flesh";
 import { fleshOf, SIZE, turkeyPose } from "./turkey-pose";
 
-/** Its walk, on the screen: its stride and where it keeps to by the pointer shrunk with it. */
+/** Its pace: a walk, ground pixels a second at the most (`../follower/feet.ts`), so about three strides a second. */
+const TOP = 150;
+
+/** Its walk, on the screen: where it keeps to by the pointer shrunk with it. */
 const GAIT: Gait = {
-  accel: 1300,
+  accel: 700,
   behind: 70 * SIZE,
   below: 42 * SIZE,
   stride: 34 * SIZE,
-  top: 360,
+  top: TOP,
+};
+
+/** Its steps, in ground pixels: its feet under its hips, as far each way as its legs reach (`turkey-pose.ts`). */
+const STEPS: Steps = {
+  cadence: [1.4, 3],
+  duty: [0.62, 0.38],
+  homes: [
+    { ahead: 0.8 * SIZE, left: 4.5 * SIZE },
+    { ahead: 0.8 * SIZE, left: -4.5 * SIZE },
+  ],
+  lift: [2.2, 4.2],
+  offsets: [0, 0.5],
+  reach: 17 * SIZE,
+  top: TOP,
 };
 
 /** What it's busy with a moment: a few pecks at the ground, a gobble, an alarm's head up. */
 type Act = "none" | "peck" | "gobble" | "alert";
-const ACT_S: Record<Act, number> = { alert: 1.1, gobble: 1.4, none: 0, peck: 0.9 };
+const ACT_S: Record<Act, number> = { alert: 1.4, gobble: 1.5, none: 0, peck: 1.1 };
 
 /** Each part's spring: where it's going, and how fast it gets there. */
 export interface Rig {
@@ -42,16 +66,30 @@ export interface Rig {
   /** 0 to 1: tail folded to fanned (and chest puffed), and dozing. */
   fan: Spring;
   doze: Spring;
-  /** Its head, forward and up from its feet (pixels). */
+  /** Its head, forward and up from its feet (its own pixels), before its neck's held to its length. */
   headX: Spring;
   headY: Spring;
+  /** Its head nodded (radians, + beak up) and turned on its neck (radians, + to its left). */
+  nod: Spring;
+  look: Spring;
   /** Its body bowed forward (radians, + bowed), to peck. */
   bow: Spring;
+  /** 0 to 1: its feathers ruffled up, gobbling. */
+  ruffle: Spring;
+}
+
+/** A gobble's shake of its head, on top of its glide: forward and up (its own pixels), and turned. */
+export interface Shake {
+  x: number;
+  y: number;
+  turn: number;
 }
 
 export interface Turkey {
   walker: Walker;
   gait: Gait;
+  /** Its feet, set down on the ground (`../follower/feet.ts`). */
+  feet: Feet;
   emotes: Emotes;
   random: Random;
   act: Act;
@@ -62,14 +100,18 @@ export interface Turkey {
   nextGobble: number;
   /** Seconds the mouse has rested on it. */
   petted: number;
+  strutting: boolean;
+  /** Where on the screen a noise (a click off it) came from, that it looks toward. */
+  heard: Point | null;
   rig: Rig;
-  /** Its wattle, snood and beard: flesh hanging off it, flung about as it's carried (`chain.ts`). */
+  /** Its head bobbing as it walks, forward (its own pixels): held over the ground, then thrust on. */
+  bob: number;
+  shake: Shake;
+  /** Its wattle, snood and beard: flesh hanging off it, swung about as it's carried (`chain.ts`). */
   wattle: Chain;
   snood: Chain;
   beard: Chain;
-  /** A gobble's tremble on its head (pixels up), on top of its glide. */
-  tremble: number;
-  /** Seconds it's been about, for its strut's slow pivot. */
+  /** Seconds it's been about, for its strut's slow pivot and a gobble's shake. */
   time: number;
 }
 
@@ -83,20 +125,32 @@ const SLEEP = ["z z z"];
 /** Seconds of a still mouse before it struts, and before it dozes off. */
 const STRUT_S = 5;
 const SLEEP_S = 32;
-/** Faster than this it's walking, not standing. */
-const MOVING = 30;
+/** Faster than this it's walking, not standing (ground pixels a second). */
+const MOVING = 20;
 
-/** Where its head sits, forward and up from its feet. */
-const HEAD: Point = { x: 20, y: 62 };
+/** Where its head sits, forward and up from its feet: walking, strutting (drawn back) and asleep (on its back). */
+const HEAD: Point = { x: 19, y: 70 };
+const STRUT_HEAD: Point = { x: 12, y: 65 };
+const DOZE_HEAD: Point = { x: 1, y: 54 };
+/** Where a peck takes its head: down to the ground in front of it. */
+const PECK_HEAD: Point = { x: 38, y: 9 };
+/** Its head turned back onto its shoulder, asleep. */
+const TUCKED = 2.5;
 
 export const createTurkey = (at: Point): Turkey => {
   const seed = Math.round(at.x * 7919 + at.y * 31);
+  const walker = createWalker(at, GAIT);
+  // A three-quarter view, toward the camera, to begin with.
+  const heading = Math.PI / 4;
   return {
     act: "none",
     actFor: 0,
     beard: createChain({ rest: [], root: at }),
+    bob: 0,
     emotes: createEmotes(seed),
+    feet: createFeet(STEPS, walker, heading),
     gait: GAIT,
+    heard: null,
     nextGobble: 2,
     nextPeck: 1.5,
     petted: 0,
@@ -107,14 +161,17 @@ export const createTurkey = (at: Point): Turkey => {
       fan: springAt(0),
       headX: springAt(HEAD.x),
       headY: springAt(HEAD.y),
-      // A three-quarter view, toward the camera, to begin with.
-      heading: springAt(Math.PI / 4),
+      heading: springAt(heading),
+      look: springAt(0),
+      nod: springAt(0),
+      ruffle: springAt(0),
     },
+    shake: { turn: 0, x: 0, y: 0 },
     // Each laid out where it hangs on its first step.
     snood: createChain({ rest: [], root: at }),
+    strutting: false,
     time: 0,
-    tremble: 0,
-    walker: createWalker(at, GAIT),
+    walker,
     wattle: createChain({ rest: [], root: at }),
   };
 };
@@ -122,17 +179,14 @@ export const createTurkey = (at: Point): Turkey => {
 const begin = (turkey: Turkey, act: Act) => {
   turkey.act = act;
   turkey.actFor = 0;
-  if (act === "gobble") {
-    // The gobble shakes its wattle and snood about.
-    flickChain(turkey.wattle, { x: 90, y: -60 });
-    flickChain(turkey.snood, { x: -70, y: -40 });
-  }
 };
 
 const gobble = (turkey: Turkey, now: boolean) => {
   if (say(turkey.emotes, GOBBLE, now)) {
     begin(turkey, "gobble");
+    return true;
   }
+  return false;
 };
 
 /** Whether a point on the screen is on it: its body and its head, not the air round its tail. */
@@ -147,46 +201,63 @@ const envelope = (turkey: Turkey, act: Act, edge = 4) => {
   return smooth(Math.min(t, 1 - t) * edge);
 };
 
-/** Where its head goes this frame, forward and up from its feet, for what it's at. */
-const headGoal = (turkey: Turkey): Point => {
-  const { act, actFor, rig, walker } = turkey;
+/** How far down a peck has its head: two jabs at the ground, quick down and up. */
+const peckDown = (turkey: Turkey) =>
+  turkey.act === "peck" ? Math.abs(Math.sin((turkey.actFor / ACT_S.peck) * Math.PI * 2)) ** 0.6 : 0;
+
+/** Where its head goes this frame, forward and up from its feet, and its nod, for what it's at. */
+const headGoal = (turkey: Turkey) => {
+  const { rig } = turkey;
   const fan = rig.fan.x;
   const doze = rig.doze.x;
-  // Strutting, it draws its head back onto its puffed chest; dozing, it tucks it in.
-  let x = HEAD.x + (14 - HEAD.x) * fan + (-1 - HEAD.x) * doze;
-  let y = HEAD.y + (59 - HEAD.y) * fan + (50 - HEAD.y) * doze;
-  // Walking, it holds its head still as its body passes under, then thrusts it forward: every step.
-  const step = (walker.phase * 2) % 1;
-  const bob = step < 0.75 ? 3 - (step / 0.75) * 6 : -3 + ((step - 0.75) / 0.25) * 6;
-  x += bob * pace(walker, GAIT);
-  if (act === "peck") {
-    const down = Math.abs(Math.sin((actFor / ACT_S.peck) * Math.PI * 2)) ** 0.7;
-    x += (31 - x) * down;
-    y += (6 - y) * down;
-  } else if (act === "gobble") {
-    const out = envelope(turkey, "gobble");
-    x += 6 * out;
-    y += 5 * out;
-  } else if (act === "alert") {
-    y += 10 * envelope(turkey, "alert", 6);
+  // Strutting, it draws its head back onto its puffed chest; dozing, it lays it on its back.
+  let x = HEAD.x + (STRUT_HEAD.x - HEAD.x) * fan + (DOZE_HEAD.x - HEAD.x) * doze;
+  let y = HEAD.y + (STRUT_HEAD.y - HEAD.y) * fan + (DOZE_HEAD.y - HEAD.y) * doze;
+  let nod = -0.2 * fan - 0.3 * doze;
+  const down = peckDown(turkey);
+  if (turkey.act === "peck") {
+    x += (PECK_HEAD.x - x) * down;
+    y += (PECK_HEAD.y - y) * down;
+    nod = -0.35 - 1.05 * down;
   }
-  return { x, y };
+  // Gobbling, it throws its neck out and up; alarmed, it stands tall.
+  const out = envelope(turkey, "gobble");
+  x += 8 * out;
+  y += 4 * out;
+  nod += 0.35 * out;
+  const tall = envelope(turkey, "alert", 6);
+  x -= 3 * tall;
+  y += 9 * tall;
+  nod += 0.15 * tall;
+  return { nod, x, y };
 };
 
-/** Its tail fanning or folding, its eyes shutting or opening, after what it's at. */
-const settle = (turkey: Turkey, strutting: boolean, sleeping: boolean, seconds: number) => {
-  stepSpring(turkey.rig.fan, strutting ? 1 : 0, strutting ? 3.5 : 6, seconds);
-  stepSpring(turkey.rig.doze, sleeping ? 1 : 0, sleeping ? 1.5 : 8, seconds);
+/** Its tail fanning or folding (snapping part open as it gobbles), its eyes shutting or opening, its feathers ruffling. */
+const settle = (turkey: Turkey, sleeping: boolean, seconds: number) => {
+  const { rig, strutting } = turkey;
+  let fan = 0;
+  let rate = 6;
+  if (strutting) {
+    fan = 1;
+    rate = 3.5;
+  } else if (turkey.act === "gobble") {
+    fan = 0.4;
+    rate = 14;
+  }
+  stepSpring(rig.fan, fan, rate, seconds);
+  stepSpring(rig.doze, sleeping ? 1 : 0, sleeping ? 1.5 : 8, seconds);
+  stepSpring(rig.ruffle, envelope(turkey, "gobble", 8), 20, seconds);
 };
 
 /** What it's up to, left be: pecking about, then strutting and gobbling, then dozing. */
 const stepActs = (turkey: Turkey, moving: boolean, idle: number, seconds: number) => {
   const sleeping = idle > SLEEP_S && turkey.petted === 0;
-  const strutting = !moving && !sleeping && (idle > STRUT_S || turkey.petted > 0.4);
-  settle(turkey, strutting, sleeping, seconds);
+  turkey.strutting = !moving && !sleeping && (idle > STRUT_S || turkey.petted > 0.4);
+  settle(turkey, sleeping, seconds);
   turkey.actFor += seconds;
-  const over = turkey.actFor > ACT_S[turkey.act] || (moving && turkey.act === "peck");
-  if (turkey.act !== "none" && over) {
+  // A peck's given up the moment the mouse moves off.
+  const off = turkey.act === "peck" && (moving || turkey.walker.still < 0.15);
+  if (turkey.act !== "none" && (turkey.actFor > ACT_S[turkey.act] || off)) {
     turkey.act = "none";
   }
   if (turkey.act !== "none" || moving || sleeping) {
@@ -194,12 +265,12 @@ const stepActs = (turkey: Turkey, moving: boolean, idle: number, seconds: number
   }
   turkey.nextPeck -= seconds;
   turkey.nextGobble -= seconds;
-  if (!strutting && idle > 0.8 && turkey.nextPeck <= 0) {
+  if (!turkey.strutting && idle > 0.8 && turkey.nextPeck <= 0) {
     begin(turkey, "peck");
     turkey.nextPeck = 1.6 + turkey.random.next() * 3;
-  } else if (strutting && turkey.nextGobble <= 0) {
-    gobble(turkey, false);
-    turkey.nextGobble = 4 + turkey.random.next() * 5;
+  } else if (turkey.strutting && turkey.nextGobble <= 0) {
+    // Its bubble busy, it gobbles a moment later instead.
+    turkey.nextGobble = gobble(turkey, false) ? 4 + turkey.random.next() * 5 : 0.5;
   }
   return sleeping;
 };
@@ -215,50 +286,96 @@ const stepTalk = (turkey: Turkey, sleeping: boolean, idle: number, seconds: numb
     if (reached(turkey.petted, seconds, PETTED_S)) {
       say(emotes, PET, true);
     }
-  } else if (walker.speed > GAIT.top * 0.85 && random.chance(seconds * 0.6)) {
+  } else if (groundSpeedOf(walker) > TOP * 0.9 && random.chance(seconds * 0.6)) {
     say(emotes, HURRY);
   } else if (idle > 2 && random.chance(seconds * 0.12)) {
     say(emotes, CHATTER);
   }
 };
 
-/** Its head after where it's going, quick; its wattle and snood swinging as it's carried. */
-const stepHead = (turkey: Turkey, pointer: Point, seconds: number) => {
+/** Its head after what it's at, quick; turned to its way, the mouse, its display or a noise. */
+const stepHead = (turkey: Turkey, pointer: Point, moving: boolean, seconds: number) => {
   const { rig, walker } = turkey;
   // Strutting, it shows off its fan: turned to the camera, pivoting slowly side to side as a tom does.
   const display = Math.PI / 2 + 0.5 * Math.sin(turkey.time * 0.7);
-  const facing = rig.fan.x > 0.5 ? display : faceGoal(walker, pointer, rig.heading.x, MOVING);
-  stepAngle(rig.heading, facing, rig.fan.x > 0.5 ? 3 : 8, seconds);
+  const toward = turkey.act === "alert" && turkey.heard ? turkey.heard : pointer;
+  const showing = turkey.strutting && !moving;
+  const facing = showing ? display : faceGoal(walker, toward, rig.heading.x, MOVING / 2);
+  stepAngle(rig.heading, facing, showing ? 3 : 7, seconds);
   const goal = headGoal(turkey);
   // A peck is quick, down and up; otherwise its head glides.
-  const rate = turkey.act === "peck" ? 34 : 20;
+  const rate = turkey.act === "peck" ? 30 : 16;
   stepSpring(rig.headX, goal.x, rate, seconds);
   stepSpring(rig.headY, goal.y, rate, seconds);
-  stepSpring(rig.bow, turkey.act === "peck" ? 0.32 : 0, 14, seconds);
-  turkey.tremble =
-    turkey.act === "gobble" ? Math.sin(turkey.actFor * 46) * 1.4 * envelope(turkey, "gobble") : 0;
+  stepSpring(rig.nod, goal.nod, rate, seconds);
+  stepSpring(rig.look, rig.doze.x > 0.3 ? TUCKED : 0, 3, seconds);
+  stepSpring(rig.bow, turkey.act === "peck" ? 0.85 : 0, 9, seconds);
+  // A gobble shakes its head about, fast, which flings its snood and wattle.
+  const out = envelope(turkey, "gobble");
+  const t = turkey.time;
+  turkey.shake = {
+    turn: Math.sin(t * 29) * 0.4 * out,
+    x: Math.sin(t * 37) * 1.6 * out,
+    y: Math.sin(t * 46 + 1) * 1.3 * out,
+  };
+};
+
+/**
+ * Its head's bob as it walks, forward (its own pixels): held still over the
+ * ground for three quarters of each step while its body goes on under it,
+ * then thrust forward past it. Held as far as its neck lets it, so at a
+ * hurry it creeps on a little through the hold.
+ */
+const bobOf = (turkey: Turkey) => {
+  const { feet, walker } = turkey;
+  if (feet.cadence <= 0) {
+    return 0;
+  }
+  const speed = groundSpeedOf(walker);
+  // A step (half a stride), in its own pixels, and how much of it the head's held back.
+  const step = speed / feet.cadence / 2 / SIZE;
+  const held = Math.min(step * 0.75, 11) * smooth(speed / MOVING / 2);
+  const t = (feet.phase * 2) % 1;
+  if (t < 0.75) {
+    return held / 2 - (t / 0.75) * held;
+  }
+  return -held / 2 + smooth((t - 0.75) / 0.25) * held;
+};
+
+/** Holds a hanging chain off the ground beneath its root (screen pixels): a peck doesn't bury its wattle. */
+const floorChain = (chain: Chain, floor: number) => {
+  for (const knot of chain.knots) {
+    if (knot.y > floor) {
+      knot.y = floor;
+      knot.py = Math.min(knot.py, floor);
+    }
+  }
 };
 
 export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = turkey;
   turkey.time += seconds;
-  // Pecking, it stands; left far behind, it gives up the ground and goes.
-  const near = Math.hypot(pointer.x - walker.x, pointer.y - walker.y) < 200;
-  // Pecking, or petted (a mouse resting on it), it stands.
+  // Petted (a mouse resting on it), or pecking with the mouse still, it stands.
   const resting = Math.hypot(moved.x, moved.y) < 3 && isOn(turkey, pointer);
-  stepWalker(walker, GAIT, pointer, moved, seconds, resting || (turkey.act === "peck" && near));
-  const moving = walker.speed > MOVING;
+  stepWalker(walker, GAIT, pointer, moved, seconds, resting || turkey.act === "peck");
+  // No faster toward the camera or away than across: its steps are as long either way.
+  keepPace(walker, TOP, seconds);
+  const moving = groundSpeedOf(walker) > MOVING;
   const idle = moving ? 0 : walker.still;
   // Petted while it stands, it puffs up for the mouse.
   turkey.petted = !moving && isOn(turkey, pointer) ? turkey.petted + seconds : 0;
   const sleeping = stepActs(turkey, moving, idle, seconds);
   stepTalk(turkey, sleeping, idle, seconds);
-  stepHead(turkey, pointer, seconds);
+  stepHead(turkey, pointer, moving, seconds);
+  stepFeet(turkey.feet, STEPS, walker, turkey.rig.heading.x, seconds);
+  turkey.bob = bobOf(turkey);
   // Its snood, wattle and beard, carried by its head and breast: the air and their swing do the rest.
   const flesh = fleshOf(turkey);
-  stepChain(turkey.snood, hangOf(flesh.snood, walker, SIZE), FLOPPY, seconds);
-  stepChain(turkey.wattle, hangOf(flesh.wattle, walker, SIZE), FLOPPY, seconds);
-  stepChain(turkey.beard, hangOf(flesh.beard, walker, SIZE), FLOPPY, seconds);
+  for (const name of ["snood", "wattle", "beard"] as const) {
+    const { floor, points } = flesh[name];
+    stepChain(turkey[name], hangOf(points, walker, SIZE), FLESH, seconds);
+    floorChain(turkey[name], walker.y + floor * SIZE);
+  }
 };
 
 export const pokeTurkey = (turkey: Turkey, at: Point) => {
@@ -269,6 +386,7 @@ export const pokeTurkey = (turkey: Turkey, at: Point) => {
   } else if (turkey.random.chance(0.45)) {
     gobble(turkey, true);
   } else if (say(turkey.emotes, PUTT, turkey.act !== "gobble")) {
+    turkey.heard = { x: at.x, y: at.y };
     begin(turkey, "alert");
   }
 };
