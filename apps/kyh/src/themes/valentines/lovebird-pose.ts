@@ -113,13 +113,13 @@ const SPREAD: readonly Vec3[] = [
 const HAND_SHARE = [0, 0, 1, 1, 0.5, 0, 0] as const;
 /** The folded wing being preened (the near one): its wrist lifted off its side, its flight feathers fanned a little. */
 const PREENED: readonly Vec3[] = [
-  [0.5, 0.6, 1],
-  [2, 2.5, 3.5],
-  [1, 2.5, 4],
-  [0.5, 2, 3.5],
-  [0.5, 1.6, 3],
-  [0.5, 1, 2],
-  [0.5, 0.4, 0.8],
+  [0.5, 1, 0.8],
+  [2, 4.5, 2.5],
+  [1, 4, 3],
+  [0.5, 3.5, 2.5],
+  [0.5, 3, 2],
+  [0.5, 2, 1.2],
+  [0.5, 0.8, 0.5],
 ];
 
 const side3 = ([x, y, z]: Vec3, side: number): Vec3 => [x, y, z * side];
@@ -355,13 +355,16 @@ const wingPoints = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
     yawOf(-side * 0.45 * rig.flare.x),
   );
   const bend = rollOf(-side * (wings.hand.x - wings.arm));
+  // Flaring, and on the upstroke, it turns its wings about their span, leading edge up: cupped to brake,
+  // their broad underside to the way it flies.
+  const twist = pitchOf(0.9 * rig.flare.x + 0.45 * rig.amp.x * upstrokeAt(wings.phase));
   const shoulder = side3(SHOULDER, side);
   return FOLDED.map((folded, index) => {
     const out = side3(at(SPREAD, index), side);
     const share = HAND_SHARE[index] ?? 0;
     const bent = add(wrist, apply(bend, sub(out, wrist)));
     const flexed = mix(out, bent, share);
-    const spreadAt = add(shoulder, apply(raise, flexed));
+    const spreadAt = add(shoulder, apply(raise, apply(twist, flexed)));
     // Preened, the folded wing's held off its side, its feathers parted.
     const tucked = add(side3(folded, side), scale(side3(at(PREENED, index), side), preening));
     return frame.place(mix(tucked, spreadAt, spread));
@@ -378,14 +381,15 @@ const wingOf = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
   const unit = normalize(normal);
   const top = smooth(dot(unit, TOWARD_CAMERA) / 0.16 + 0.5);
   // The wing's thick at its leading edge (its arm and wrist) and cambered under its trailing edge, so edge on it's a lens, not a line.
-  const thick = (index: number, by: number) =>
-    toScreen(add(p(index), scale(unit, by * (0.4 + 0.6 * bird.rig.spread.x))));
+  const depth = 0.7 + 0.3 * bird.rig.spread.x;
+  const thick = (index: number, by: number) => toScreen(add(p(index), scale(unit, by * depth)));
+  // Thick out to its hand too: never thinner than a feather's width.
   const edge = [
     thick(0, 2),
-    thick(WRIST, 1.6),
-    toScreen(add(mix(p(WRIST), p(TIP), 0.45), scale(unit, 0.8 * (0.4 + 0.6 * bird.rig.spread.x)))),
-    s(TIP),
-    thick(3, -0.4),
+    thick(WRIST, 2),
+    toScreen(add(mix(p(WRIST), p(TIP), 0.45), scale(unit, 1.5 * depth))),
+    thick(TIP, 0.7),
+    thick(3, -0.5),
     thick(4, -0.7),
     thick(5, -0.7),
     thick(6, 1),
@@ -471,7 +475,7 @@ const tailOf = (bird: Lovebird, frame: Frame) => {
     const direction = frame.turn(apply(cock, [-Math.cos(angle), 0, Math.sin(angle)]));
     const length = TAIL_LENGTH * (1 - 0.34 * Math.min(1, Math.abs(u) * 2) ** 2);
     // Its outer feathers lie a little under the middle ones, so it's never quite flat.
-    const under = frame.turn(apply(cock, [0, -3.6 * Math.abs(u) * t, 0]));
+    const under = frame.turn(apply(cock, [0, -4.5 * Math.abs(u) * t, 0]));
     const seen = toScreen(
       add(add(add(root, scale(across, u * 2.6)), scale(direction, length * t)), under),
     );
@@ -542,6 +546,8 @@ export interface View {
   tailFront: boolean;
   /** Its beak drawn over its head: its tip nearer the camera than its head's middle. */
   beakFront: boolean;
+  /** Its feet down (gripping or thrown forward to land), so its near one's in front of its body; tucked up, both behind. */
+  feetDown: boolean;
 }
 
 /** How much its left side, its face and its tail face the camera this frame (-1 away to 1 toward), and how much nearer its beak's tip is than its head's middle (pixels). */
@@ -551,6 +557,7 @@ export const viewOf = (bird: Lovebird) => {
   const head = headOf(bird, frame);
   return {
     beak: depthOf(head.point(BEAK_TIP)) - depthOf(head.center),
+    feet: Math.max(bird.rig.legs.x, bird.rig.reach.x),
     forward: dot(apply(frame.yaw, [1, 0, 0]), TOWARD_CAMERA),
     left: dot(frame.turn([0, 0, 1]), TOWARD_CAMERA),
     tail: dot(frame.turn(apply(cock, [-1, 0, 0])), TOWARD_CAMERA),
@@ -572,6 +579,7 @@ const turnView = (view: View, facings: ReturnType<typeof viewOf>): View => {
   return {
     age: view.age,
     beakFront: held(view.beakFront, facings.beak, -1.2, 1.2),
+    feetDown: held(view.feetDown, facings.feet, 0.3, 0.6),
     headFront: held(view.headFront, facings.forward, -0.4, -0.12),
     headOverWing: held(view.headOverWing, facings.forward, 0.2, 0.4),
     near,
@@ -594,7 +602,8 @@ export const settleView = (
     next.headFront !== view.headFront ||
     next.headOverWing !== view.headOverWing ||
     next.tailFront !== view.tailFront ||
-    next.beakFront !== view.beakFront;
+    next.beakFront !== view.beakFront ||
+    next.feetDown !== view.feetDown;
   if (!changed || view.age < VIEW_S) {
     return { ...view, age: view.age + seconds };
   }
@@ -605,10 +614,10 @@ export const settleView = (
  * Its layers back to front: the far wing and foot behind it all; its tail
  * and head behind its body when they're turned away; its near foot, its tail
  * toward the camera, then its near wing and head over its body, whichever's
- * nearer; preening, its head goes under its near wing. Tucked up, both
- * feet are behind its body.
+ * nearer. Tucked up, both feet are behind its body.
  */
-export const orderOf = (view: View, feetDown: boolean, preening: boolean) => {
+export const orderOf = (view: View) => {
+  const { feetDown } = view;
   const [nearWing, farWing] = view.near === 1 ? ["wing-0", "wing-1"] : ["wing-1", "wing-0"];
   const [nearLeg, farLeg] = view.near === 1 ? ["leg-0", "leg-1"] : ["leg-1", "leg-0"];
   const order = feetDown ? [farWing, farLeg] : [farWing, farLeg, nearLeg];
@@ -627,7 +636,7 @@ export const orderOf = (view: View, feetDown: boolean, preening: boolean) => {
   }
   if (!view.headFront) {
     order.push(nearWing);
-  } else if (view.headOverWing && !preening) {
+  } else if (view.headOverWing) {
     order.push(nearWing, "head");
   } else {
     order.push("head", nearWing);
@@ -680,7 +689,7 @@ export const lovebirdPose = (bird: Lovebird): Pose => {
   return {
     at: { x: bird.x, y: bird.y },
     bubble: { x: crown.x, y: crown.y - head.r - 10 },
-    order: orderOf(bird.view, Math.max(bird.rig.legs.x, bird.rig.reach.x) > 0.5, false),
+    order: orderOf(bird.view),
     parts,
     say: bird.emotes.line,
   };

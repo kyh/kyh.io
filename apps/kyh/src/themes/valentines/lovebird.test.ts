@@ -345,13 +345,17 @@ test("jerked off, it says so at once, whatever it was saying", () => {
   assert.ok(["eep!", "whoa!"].includes(bird.emotes.line ?? ""), `${bird.emotes.line}`);
 });
 
-test("off the pointer, it's at once a bird in the air: feet up, eyes open, body down", () => {
+test("off the pointer, it's soon a bird in the air: feet pushed off then tucked, wings open, eyes open, body down", () => {
   const bird = perched();
   bird.rig.content.x = 1;
   const pitch = bird.rig.pitch.x;
-  run(bird, { x: 300, y: 300 }, 6 / 60, { x: 14, y: 0 });
+  run(bird, { x: 300, y: 300 }, 3 / 60, { x: 14, y: 0 });
   assert.ok(!bird.riding);
+  // Its feet still down a moment as it pushes off: they don't vanish behind it the frame it leaves.
+  assert.ok(bird.view.feetDown, "feet down as it pushes off");
+  run(bird, { x: 342, y: 300 }, 7 / 60, { x: 14, y: 0 });
   assert.ok(bird.rig.legs.x < 0.3, `legs ${bird.rig.legs.x}`);
+  assert.ok(bird.rig.spread.x > 0.6, `spread ${bird.rig.spread.x}`);
   assert.equal(bird.rig.content.x, 0);
   assert.ok(bird.rig.pitch.x < pitch - 0.1, `pitch ${bird.rig.pitch.x}`);
 });
@@ -381,4 +385,37 @@ test("rousing, it shakes itself in the screen's plane, its feathers up at once",
   }
   assert.ok(shake > 0.1, `${shake}`);
   assert.ok(bird.rig.fluff.x > 0.7, `${bird.rig.fluff.x}`);
+});
+
+/** The area of a path's outline, its points taken as a polygon (pixels²). */
+const areaOf = (d: string) => {
+  const numbers = (d.match(/-?\d+(?:\.\d+)?/gu) ?? []).map(Number);
+  let area = 0;
+  for (let index = 0; index + 3 < numbers.length; index += 2) {
+    const [x0 = 0, y0 = 0, x1 = 0, y1 = 0] = numbers.slice(index, index + 4);
+    area += x0 * y1 - x1 * y0;
+  }
+  return Math.abs(area / 2);
+};
+
+test("flaring to land toward the camera, its wings show broad, not edge on", () => {
+  const bird = perched();
+  // Off down the screen, toward the camera, then left be: it comes in to land facing the camera.
+  const pointer = run(bird, { x: 300, y: 300 }, 0.6, { x: 0, y: 14 });
+  let flared = 0;
+  let thinnest = Number.POSITIVE_INFINITY;
+  for (let frame = 0; frame < 180 && !bird.riding; frame += 1) {
+    stepLovebird(bird, pointer, STILL, 1 / 60);
+    if (bird.rig.flare.x > 0.7) {
+      flared += 1;
+      const { parts } = lovebirdPose(bird);
+      thinnest = Math.min(
+        thinnest,
+        areaOf(parts["wing-0"]?.d ?? ""),
+        areaOf(parts["wing-1"]?.d ?? ""),
+      );
+    }
+  }
+  assert.ok(flared > 2, `${flared} frames flared`);
+  assert.ok(thinnest > 25, `${thinnest}`);
 });
