@@ -108,6 +108,8 @@ export interface Leprechaun {
    */
   faceFront: boolean;
   armFront: boolean[];
+  /** Which hands are behind his back, hiding his gold (`isHidden`). */
+  armBehind: boolean[];
   armOverHead: boolean[];
   tailFront: boolean[];
   nearLeg: 0 | 1;
@@ -118,6 +120,9 @@ export interface Leprechaun {
   rests: Point[][];
   /** Which way round he's committed to a big turn: 1, -1, or 0 for none. */
   turnWay: number;
+  /** How fast he's been going over the ground these last moments, eased, and whether that's a walk, however slow. */
+  way: Point;
+  ambling: boolean;
   /** Clicked on and greeting whoever it was: no petting counts till the mouse moves on. */
   greeted: boolean;
   /** Seconds till he blinks. */
@@ -187,6 +192,8 @@ export const createLeprechaun = (at: Point): Leprechaun => {
   const leprechaun: Leprechaun = {
     act: "none",
     actFor: 0,
+    ambling: false,
+    armBehind: [false, false],
     armFront: [true, true],
     armOverHead: [false, false],
     beard: unhung(),
@@ -236,6 +243,7 @@ export const createLeprechaun = (at: Point): Leprechaun => {
     time: 0,
     turnWay: 0,
     walker,
+    way: { x: 0, y: 0 },
   };
   return leprechaun;
 };
@@ -371,6 +379,36 @@ const turnToward = (leprechaun: Leprechaun, goal: number, rate: number, seconds:
   heading.x = Math.atan2(Math.sin(heading.x), Math.cos(heading.x));
 };
 
+/** Seconds his way's eased over: after a very slow mouse he walks in fits, stopping between each. */
+const WAY_S = 0.3;
+/**
+ * His way's ground speed (pixels a second) that counts as ambling, and the
+ * slower one that ends it: under the first, so a mouse inched a pixel doesn't
+ * turn him to it and back.
+ */
+const AMBLE = 8;
+const AMBLE_DONE = 4;
+
+const stepWay = (leprechaun: Leprechaun, seconds: number) => {
+  const { walker, way } = leprechaun;
+  const ease = 1 - Math.exp(-seconds / WAY_S);
+  way.x += (walker.vx - way.x) * ease;
+  way.y += (walker.vy / Math.sin(PITCH) - way.y) * ease;
+  leprechaun.ambling = Math.hypot(way.x, way.y) > (leprechaun.ambling ? AMBLE_DONE : AMBLE);
+};
+
+/**
+ * Which way he faces left to himself: his way; an amble too slow for
+ * `faceGoal` to call moving, the way he's been going (up the screen, a slow
+ * mouse is a real walk over the ground); otherwise the mouse.
+ */
+const goalOf = (leprechaun: Leprechaun, pointer: Point) => {
+  const { rig, walker, way } = leprechaun;
+  return leprechaun.ambling && walker.speed <= MOVING
+    ? Math.atan2(way.y, way.x)
+    : faceGoal(walker, pointer, rig.heading.x, MOVING);
+};
+
 /** His body, head, brows and eyes after what he's at. */
 const stepBody = (
   leprechaun: Leprechaun,
@@ -396,12 +434,11 @@ const stepBody = (
   const crossly = cross === null ? 0 : bump(cross, [0, 0.12, 0.8, 1]);
 
   // Busy, dancing his jig or napping, he faces the visitor; off after the mouse, his way.
-  const going = walker.speed > MOVING;
+  stepWay(leprechaun, seconds);
+  const going = walker.speed > MOVING || leprechaun.ambling;
   const acting = leprechaun.act !== "none" && !(going && leprechaun.act === "coin");
   const busy = acting || leprechaun.petted > 0 || dancing || rig.nap.x > 0.05;
-  const goal = busy
-    ? businessHeading(leprechaun, pointer)
-    : faceGoal(walker, pointer, rig.heading.x, MOVING);
+  const goal = busy ? businessHeading(leprechaun, pointer) : goalOf(leprechaun, pointer);
   // On the move, he turns to his way briskly: he doesn't walk off backward.
   turnToward(leprechaun, goal, going ? 10 : 7, seconds);
   stepSpring(rig.nap, napping ? 1 : 0, napping ? 1.2 : 8, seconds);
@@ -558,8 +595,25 @@ const FACE_AWAY = 0.35;
 /** How much a side of him (his left, 1, or his right) faces the camera, his heading `heading`. */
 const sideToward = (heading: number, side: number) => side * Math.cos(heading) * Math.cos(PITCH);
 
+/** How far back a hand goes (his body's pixels) as he hides his gold, then comes out: about his coat's edge. */
+const HAND_BACK = -1;
+const HAND_OUT = -0.5;
+/** A hand this far ahead of him is out at some business: past the farthest a stride swings it. */
+const HAND_AHEAD = 6;
+
 /** A side of him settled: changed only once `value` is past `give` the other way. */
 const settled = (was: boolean, value: number, give: number) => (was ? value > -give : value > give);
+
+/**
+ * Whether a hand's behind his back: gone there hiding his gold (a walking
+ * hand swings as far back, and doesn't count), an arm already drawn behind
+ * him staying there for it, till the hand itself is out again.
+ */
+const isHidden = ({ armBehind, armFront, rig }: Leprechaun, index: number) => {
+  const hand = rig.hands[index]?.[0]?.x ?? 0;
+  const hiding = rig.guard.v > 0 && (hand < HAND_BACK || !(armFront[index] ?? true));
+  return hiding || ((armBehind[index] ?? false) && hand < HAND_OUT);
+};
 
 /**
  * Which side of his body and head each arm and coat tail's drawn, and which
@@ -587,8 +641,10 @@ const settleSides = (
     // standing with a hand out before his chest (a coin, his arms folded), it's over his coat.
     // A hand behind his back (hiding his gold) is drawn behind him, its arm with it.
     const ahead = goals[index]?.[0] ?? 0;
-    const before = !moving && ahead > 4 && Math.sin(heading) > 0.1;
-    const behind = !moving && ahead < -3 && Math.sin(heading) > -0.2;
+    const before = !moving && ahead > HAND_AHEAD && Math.sin(heading) > 0.1;
+    const hidden = isHidden(leprechaun, index);
+    leprechaun.armBehind[index] = hidden;
+    const behind = hidden && Math.sin(heading) > -0.2;
     const shown = sideToward(heading, side) + 0.35;
     const front = before || settled(leprechaun.armFront[index] ?? true, shown, 0.1);
     leprechaun.armFront[index] = front && !behind;

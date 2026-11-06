@@ -409,7 +409,6 @@ const armSidesIn = (leprechaun: Leprechaun, frame: Frame, at: Head) => {
   });
 };
 
-/** The coat's tails: the stage points each hangs at rest from, root to tip. */
 /**
  * The coat's tails: the stage points each hangs at rest from, root to tip,
  * swung back from the root the faster he goes, as wool is by the air (so
@@ -617,6 +616,7 @@ const hatOf = (leprechaun: Leprechaun, frame: Frame, head: Head, hands: readonly
     top: ellipsePath(ellipseOf(topAt, [turn([CROWN.top, 0, 0]), turn([0, 0, CROWN.top])])),
     topAt,
     topShown: shownOf(turn([0, 1, 0]), 0),
+    wornAt: add(seat, worn([0, CROWN.high, 0])),
   };
 };
 
@@ -813,10 +813,12 @@ export const leprechaunPose = (leprechaun: Leprechaun): Pose => {
     ]),
     ...[0, 1].map((index): [string, number] => [`arm-${index}`, armKeys[index] ?? body]),
   ];
+  // Over where his hat's worn, not where it is: swept down in a bow, it would pull his words onto his head.
   const crown = toScreen(hat.topAt);
+  const worn = toScreen(hat.wornAt);
   return {
     at: { x: leprechaun.walker.x, y: leprechaun.walker.y },
-    bubble: { x: crown.x, y: crown.y - 10 },
+    bubble: { x: worn.x, y: Math.min(crown.y, worn.y) - 10 },
     order: layers.toSorted((a, b) => a[1] - b[1]).map(([name]) => name),
     parts,
     say: leprechaun.emotes.line,

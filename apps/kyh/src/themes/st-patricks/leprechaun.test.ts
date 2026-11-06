@@ -3,9 +3,10 @@ import test from "node:test";
 
 import type { Point } from "../follower/walk";
 import type { Leprechaun } from "./leprechaun";
+import { PITCH } from "../follower/solid";
 import { leprechaun, PET } from "./leprechaun";
 import { hangsOf } from "./leprechaun-pose";
-import { CATCH, coinOf, facingOf, SIZE, timeIn } from "./leprechaun-acts";
+import { CATCH, coinOf, facingOf, HEAD_R, SIZE, timeIn } from "./leprechaun-acts";
 
 const FRAME = 1 / 60;
 const STILL: Point = { x: 0, y: 0 };
@@ -386,4 +387,217 @@ test("napping, he faces the visitor, so his hat tipped over his eyes is seen", (
   }
   assert.ok(state.rig.nap.x > 0.9, `${state.rig.nap.x}`);
   assert.ok(Math.sin(state.rig.heading.x) > 0.85, `${state.rig.heading.x}`);
+});
+
+test("his words stay over his head all through a bow, and clear of the hat as it's lifted", () => {
+  for (const side of [1, -1]) {
+    const { state, step } = settled();
+    leprechaun.poke(state, { x: state.walker.x + side * 6, y: state.walker.y - 20 });
+    let highest = Number.POSITIVE_INFINITY;
+    let lowest = Number.NEGATIVE_INFINITY;
+    while (state.act === "doff") {
+      step();
+      const { bubble, parts } = leprechaun.pose(state);
+      const head = middleOf(parts.head?.d);
+      const crown = middleOf(parts["crown-top"]?.d);
+      assert.ok(bubble.y < head.y - HEAD_R - 3, `${state.actFor}: ${bubble.y} on ${head.y}`);
+      assert.ok(bubble.y < crown.y + 1 || crown.y > head.y - HEAD_R, `${state.actFor}: hat`);
+      highest = Math.min(highest, bubble.y);
+      lowest = Math.max(lowest, bubble.y);
+    }
+    assert.ok(lowest - highest < 24, `the bubble dropped ${lowest - highest}`);
+  }
+});
+
+/**
+ * A leprechaun after a mouse that moves in whole pixels, as a real one does,
+ * and what's seen of his walk: the most seconds on end he went some way other
+ * than he faced, and how often he turned straight back on a turn.
+ */
+const slowly = (fps: number) => {
+  const state = leprechaun.create({ x: 500, y: 350 });
+  state.next = Number.POSITIVE_INFINITY;
+  const exact = { x: 500, y: 350 };
+  let pointer: Point = { x: 500, y: 350 };
+  const seen = { astray: 0, turns: 0 };
+  let astrayFor = 0;
+  let from = { x: state.walker.x, y: state.walker.y };
+  let facing = { x: 0, y: 0 };
+  let window = 0;
+  let turning = 0;
+  let sinceTurn = Number.POSITIVE_INFINITY;
+  const go = (velocity: Point, seconds: number) => {
+    for (let frame = 0; frame < Math.round(seconds * fps); frame += 1) {
+      exact.x += velocity.x / fps;
+      exact.y += velocity.y / fps;
+      const next = { x: Math.round(exact.x), y: Math.round(exact.y) };
+      leprechaun.step(state, next, { x: next.x - pointer.x, y: next.y - pointer.y }, 1 / fps);
+      pointer = next;
+      const heading = facingOf(state);
+      facing = { x: facing.x + Math.cos(heading), y: facing.y + Math.sin(heading) };
+      const way = Math.abs(state.rig.heading.v) > 0.3 ? Math.sign(state.rig.heading.v) : turning;
+      sinceTurn += 1 / fps;
+      if (turning !== 0 && way !== turning) {
+        // The way the walker takes can double back on itself; turning straight back again is dither.
+        seen.turns += sinceTurn < 0.4 ? 1 : 0;
+        sinceTurn = 0;
+      }
+      turning = way;
+      window += 1 / fps;
+      if (window >= 0.5) {
+        // Half a second's walk, over the ground, and how much of it went the way he faced.
+        const dx = state.walker.x - from.x;
+        const dy = (state.walker.y - from.y) / Math.sin(PITCH);
+        const walked = Math.hypot(dx, dy);
+        const ahead = (dx * facing.x + dy * facing.y) / (Math.hypot(facing.x, facing.y) || 1);
+        astrayFor = walked > 2 && ahead < walked * 0.3 ? astrayFor + window : 0;
+        seen.astray = Math.max(seen.astray, astrayFor);
+        from = { x: state.walker.x, y: state.walker.y };
+        facing = { x: 0, y: 0 };
+        window = 0;
+      }
+    }
+  };
+  const forget = () => {
+    seen.astray = 0;
+    seen.turns = 0;
+  };
+  return { forget, go, seen, state };
+};
+
+const WAYS: readonly Point[] = [
+  { x: 0, y: -1 },
+  { x: 0, y: 1 },
+  { x: 1, y: 0 },
+  { x: -1, y: 0 },
+  { x: 0.7, y: -0.7 },
+  { x: -0.7, y: 0.7 },
+];
+
+test("after a slow mouse any way across the screen, he walks the way he faces: no crab-walk", () => {
+  for (const fps of [30, 60, 144]) {
+    for (const speed of [10, 14, 18, 24, 32]) {
+      for (const way of WAYS) {
+        const { go, seen } = slowly(fps);
+        go({ x: 0, y: 0 }, 2);
+        go({ x: way.x * speed, y: way.y * speed }, 10);
+        const label = `${fps}fps ${speed}px/s ${JSON.stringify(way)}`;
+        assert.ok(seen.astray < 1.2, `${label}: ${seen.astray}s astray`);
+        assert.ok(seen.turns <= 3, `${label}: ${seen.turns} turns back`);
+      }
+    }
+  }
+});
+
+test("doubling back after a slow mouse, he turns round and walks off: no moonwalk", () => {
+  for (const fps of [30, 60, 144]) {
+    for (const speed of [10, 14, 18, 24, 32]) {
+      for (const way of WAYS) {
+        const { forget, go, seen } = slowly(fps);
+        go({ x: way.x * speed, y: way.y * speed }, 6);
+        forget();
+        go({ x: -way.x * speed, y: -way.y * speed }, 8);
+        const label = `${fps}fps ${speed}px/s ${JSON.stringify(way)}`;
+        assert.ok(seen.astray < 1.2, `${label}: ${seen.astray}s astray`);
+        assert.ok(seen.turns <= 3, `${label}: ${seen.turns} turns back`);
+      }
+    }
+  }
+});
+
+test("a mouse inched a pixel at a time doesn't turn him back and forth", () => {
+  for (const fps of [30, 60, 144]) {
+    for (const way of WAYS) {
+      const { forget, go, seen, state } = slowly(fps);
+      go({ x: 0, y: 0 }, 3);
+      const stood = state.rig.heading.x;
+      forget();
+      for (let inch = 0; inch < 6; inch += 1) {
+        go({ x: way.x * 12, y: way.y * 12 }, 0.1);
+        go({ x: 0, y: 0 }, 0.9);
+      }
+      const label = `${fps}fps ${JSON.stringify(way)}`;
+      assert.ok(seen.turns <= 1, `${label}: ${seen.turns} turns back`);
+      const off = state.rig.heading.x - stood;
+      assert.ok(Math.abs(Math.atan2(Math.sin(off), Math.cos(off))) < 0.5, `${label}: ${off}`);
+    }
+  }
+});
+
+/** A petted leprechaun's arms frame by frame: over or under his coat, and each swap of side and back. */
+const armWatch = (state: Leprechaun) => {
+  const lastSwap = [-1, -1];
+  const was: (boolean | null)[] = [null, null];
+  let frame = 0;
+  let flickers = 0;
+  return {
+    flickers: () => flickers,
+    look: () => {
+      frame += 1;
+      const order = leprechaun.pose(state).order ?? [];
+      const over = [0, 1].map((arm) => order.indexOf(`arm-${arm}`) > order.indexOf("torso"));
+      for (const [arm, now] of over.entries()) {
+        if (was[arm] !== null && was[arm] !== now) {
+          flickers += (lastSwap[arm] ?? -1) >= 0 && frame - (lastSwap[arm] ?? 0) < 6 ? 1 : 0;
+          lastSwap[arm] = frame;
+        }
+        was[arm] = now;
+      }
+      return over;
+    },
+  };
+};
+
+test("leaving a petting, his arms swap sides of his coat once, and only with his hands out from behind him", () => {
+  for (let turn = 0; turn < 24; turn += 1) {
+    for (const pace of [2, 5, 9]) {
+      const { pointer, state, step } = settled();
+      const on = { x: state.walker.x + (turn % 5) - 2, y: state.walker.y - 22 };
+      step({ x: on.x - pointer().x, y: on.y - pointer().y });
+      for (let frame = 0; frame < 90; frame += 1) {
+        step();
+      }
+      const angle = (turn / 24) * Math.PI * 2;
+      const by = { x: Math.cos(angle) * pace, y: Math.sin(angle) * pace };
+      const arms = armWatch(state);
+      const out = [false, false];
+      for (let frame = 0; frame < 45; frame += 1) {
+        step(by);
+        const over = arms.look();
+        for (const [arm, shown] of over.entries()) {
+          const hand = state.rig.hands[arm]?.[0]?.x ?? 0;
+          out[arm] = out[arm] === true || hand > -1;
+          const backOn = Math.sin(facingOf(state)) > 0.3 && !out[arm];
+          assert.ok(!shown || !backOn, `turn ${turn} frame ${frame} arm ${arm}: ${hand}`);
+        }
+      }
+      assert.equal(arms.flickers(), 0, `turn ${turn} pace ${pace}`);
+    }
+  }
+});
+
+test("coming to rest on him, his arms swap sides of his coat without a flicker", () => {
+  for (let turn = 0; turn < 24; turn += 1) {
+    const { pointer, state, step } = settled();
+    const angle = (turn / 24) * Math.PI * 2;
+    const start = {
+      x: state.walker.x + Math.cos(angle) * 120,
+      y: state.walker.y - 22 + Math.sin(angle) * 60,
+    };
+    step({ x: start.x - pointer().x, y: start.y - pointer().y });
+    for (let frame = 0; frame < 60; frame += 1) {
+      step();
+    }
+    const on = { x: state.walker.x + (turn % 5) - 2, y: state.walker.y - 22 };
+    const arms = armWatch(state);
+    for (let frame = 0; frame < 20; frame += 1) {
+      step({ x: (on.x - pointer().x) / (20 - frame), y: (on.y - pointer().y) / (20 - frame) });
+      arms.look();
+    }
+    for (let frame = 0; frame < 90; frame += 1) {
+      step();
+      arms.look();
+    }
+    assert.equal(arms.flickers(), 0, `turn ${turn}`);
+  }
 });
