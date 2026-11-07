@@ -272,8 +272,8 @@ const bellyAt = (ring: Ring) => {
   const faced = facedAt(ring);
   const middle = wrap(-Math.PI / 2 - faced);
   const half = BELLY + BELLY_ROLLED * Math.abs(ring.roll);
-  const lo = Math.max(middle - half, -Math.PI / 2);
-  const hi = Math.min(middle + half, BELLY_EDGE);
+  const lo = Math.max(middle - half, middle > 0 ? -BELLY_EDGE : -Math.PI / 2);
+  const hi = Math.min(middle + half, middle > 0 ? Math.PI / 2 : BELLY_EDGE);
   const rim = (Math.sign(middle) * Math.PI) / 2;
   const shown = lo < hi;
   return {

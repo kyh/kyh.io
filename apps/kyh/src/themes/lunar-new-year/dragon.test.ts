@@ -562,6 +562,33 @@ test("circling, its snap goes at the mouse", () => {
   }
 });
 
+test("its idle snaps never open on the back of its head", () => {
+  for (const start of STARTS) {
+    for (let more = 0; more < 3; more += 1) {
+      const at = { x: start.x + more * 37, y: start.y + more * 23 };
+      const dragon = createDragon(at);
+      run(dragon, at, 25, STILL, 60, () => {
+        if (dragon.act === "snap" && dragon.actFor > 0.1) {
+          const shown = Math.sin(dragon.rig.aim.x + dragon.rig.look.x);
+          assert.ok(shown > -0.2, `${JSON.stringify(at)}: ${shown}`);
+        }
+      });
+    }
+  }
+});
+
+test("its roar over and the mouse left off it, a petting ends", () => {
+  for (const start of STARTS) {
+    const dragon = circling(start);
+    const off = { x: dragon.swim.x + 300, y: dragon.swim.z + 300 };
+    run(dragon, off, 0.02);
+    dragon.held = true;
+    dragon.greet = 0.05;
+    run(dragon, off, 0.1);
+    assert.equal(dragon.held, false);
+  }
+});
+
 /** The area a path of straight lines encloses. */
 const areaOf = (d: string | undefined) => {
   let area = 0;
@@ -605,6 +632,13 @@ test("banked hard, its gold stays a belly: never more than about a third of it",
     most = Math.max(most, goldSeen(pose));
   });
   assert.ok(most > 0.05 && most < 0.37, `${most}`);
+});
+
+test("its gold shows banked either way, the same", () => {
+  const left = mostGold(looping);
+  const right = mostGold((t) => looping(-t));
+  assert.ok(Math.min(left, right) > 0.15, `${left} and ${right}`);
+  assert.ok(Math.max(left, right) < 0.37, `${left} and ${right}`);
 });
 
 test("every layer it stacks is a child of what it's stacked in, so stacking reaches it", async () => {

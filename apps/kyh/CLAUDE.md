@@ -64,7 +64,7 @@ The rest is by hand:
   critically damped springs everything eases on), `emote.ts` (what it says,
   and its quiet between), `ink.ts`. `followers.test.ts` drives every creature
   through a session.
-- All but the dragon and the ghost are in the round: a behavior module (springs
+- All but the ghost are in the round: a behavior module (springs
   for every part) beside a `*-pose.ts` that builds the parts in 3D and orders
   the layers. Draw a new follower that way.
 - A follower stands about the ghost's size on screen. One drawn another size is
