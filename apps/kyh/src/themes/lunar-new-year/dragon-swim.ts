@@ -50,7 +50,7 @@ const TOP = 560;
 const SPEEDS_UP = 900;
 const BRAKES = 2400;
 /** How hard it turns at most (radians a second), and how quickly it takes up a turn (a second). */
-const MOST_TURN = 6.5;
+export const MOST_TURN = 6.5;
 const TAKES_TURN = 16;
 /** How much of how far it's off its heading it turns by, a second. */
 const STEERS = 8;

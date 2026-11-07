@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as React from "react";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import type { Chain } from "../follower/chain";
 import type { Pose } from "../follower/creature";
@@ -7,6 +10,7 @@ import type { Point } from "../follower/walk";
 import type { Dragon } from "./dragon";
 import { swayOf } from "../follower/chain";
 import { createDragon, dragon as creature, pokeDragon, stepDragon } from "./dragon";
+import { SEGMENTS } from "./dragon-body";
 import { hangsOf, tailHangOf } from "./dragon-pose";
 
 const STILL: Point = { x: 0, y: 0 };
@@ -345,18 +349,67 @@ test("clicked on, it turns to the visitor and roars, its back never to them", ()
   }
 });
 
-test("clicked elsewhere, it lunges there, jaws open", () => {
-  const dragon = circling();
-  const away = { x: headAt(dragon).x + 150, y: headAt(dragon).y + 40 };
-  pokeDragon(dragon, away);
-  let nearest = Infinity;
+/** Clicks `at` a frame after a mouse jumped there, and runs it till its lunge is over, telling how it went. */
+const clicked = (dragon: Dragon, at: Point) => {
+  stepDragon(dragon, at, STILL, 1 / 60);
+  pokeDragon(dragon, at);
+  const darted = dragon.lunge !== null;
+  const off = () => Math.hypot(headAt(dragon).x - at.x, headAt(dragon).y - at.y);
+  const from = off();
+  let farthest = from;
   let jaw = 0;
-  run(dragon, { x: 400, y: 300 }, 0.9, STILL, 60, (pose) => {
-    nearest = Math.min(nearest, Math.hypot(pose.at.x - away.x, pose.at.y - away.y));
+  let seconds = 0;
+  while (dragon.lunge && seconds < 2) {
+    stepDragon(dragon, at, STILL, 1 / 60);
+    seconds += 1 / 60;
+    farthest = Math.max(farthest, off());
     jaw = Math.max(jaw, dragon.rig.jaw.x);
-  });
-  assert.ok(nearest < 45, `${nearest}`);
-  assert.ok(jaw > 0.4, `${jaw}`);
+  }
+  return { darted, end: off(), farthest, from, jaw, seconds };
+};
+
+test("a click on the pearl is a dart at it that ends there, not a whirl", () => {
+  for (const start of STARTS) {
+    const dragon = circling(start);
+    const { darted, end, farthest, from, jaw, seconds } = clicked(dragon, start);
+    assert.ok(darted);
+    assert.ok(end < 22, `${end}`);
+    assert.ok(farthest < from + 20, `${farthest} from ${from}`);
+    assert.ok(seconds < 0.8, `${seconds}`);
+    assert.ok(jaw > 0.4, `${jaw}`);
+  }
+});
+
+test("a click near it, at any angle, ends at the click or is a snap from where it is", () => {
+  const worst = { end: 0, seconds: 0, swing: 0 };
+  for (const distance of [50, 90, 140, 300]) {
+    for (let turn = 0; turn < 16; turn += 1) {
+      const start = STARTS[turn % STARTS.length] ?? CENTER;
+      const dragon = createDragon(start);
+      run(dragon, start, 2.5);
+      const way = dragon.swim.heading + (turn / 16) * Math.PI * 2;
+      const at = {
+        x: headAt(dragon).x + Math.cos(way) * distance,
+        y: headAt(dragon).y + Math.sin(way) * distance * 0.46,
+      };
+      const { darted, end, farthest, from, seconds } = clicked(dragon, at);
+      worst.swing = Math.max(worst.swing, farthest - from);
+      worst.seconds = Math.max(worst.seconds, seconds);
+      worst.end = Math.max(worst.end, darted ? end : 0);
+    }
+  }
+  assert.ok(worst.end < 22, JSON.stringify(worst));
+  assert.ok(worst.swing < 50, JSON.stringify(worst));
+  assert.ok(worst.seconds < 1.4, JSON.stringify(worst));
+});
+
+test("clicked close by, it snaps at the click without swimming there", () => {
+  const dragon = circling();
+  const yaw = dragon.swim.heading;
+  const at = { x: headAt(dragon).x + Math.cos(yaw) * 30, y: headAt(dragon).y + Math.sin(yaw) * 14 };
+  pokeDragon(dragon, at);
+  assert.equal(dragon.lunge, null);
+  assert.equal(dragon.act, "snap");
 });
 
 test("a mouse come to rest on it stops it, and it leans in with its eyes shut", () => {
@@ -409,4 +462,209 @@ test("its bubble floats over its head in every pose", () => {
     assert.ok(pose.bubble.y <= -26, `${pose.bubble.y}`);
     assert.ok(Math.abs(pose.bubble.x) < 8, `${pose.bubble.x}`);
   });
+});
+
+const pettedOn = (start: Point) => {
+  const dragon = circling(start);
+  const on = headAt(dragon);
+  run(dragon, on, 0.1, STILL);
+  stepDragon(dragon, on, { x: 3, y: 0 }, 1 / 60);
+  run(dragon, on, 0.1, STILL);
+  assert.ok(dragon.held);
+  return { dragon, on };
+};
+
+test("petted, it stays content and quiet: no acts, no chatter, its jaw shut", () => {
+  for (const start of STARTS) {
+    const { dragon, on } = pettedOn(start);
+    run(dragon, on, 1, STILL);
+    const lines = new Set<string>();
+    run(dragon, on, 20, STILL, 60, (pose) => {
+      assert.equal(dragon.act, "none");
+      assert.ok(dragon.rig.jaw.x < 0.05, `${dragon.rig.jaw.x}`);
+      if (pose.say) {
+        lines.add(pose.say);
+      }
+    });
+    assert.ok(
+      [...lines].every((line) => line.includes("♥")),
+      [...lines].join(" "),
+    );
+  }
+});
+
+test("a nudge while it's petted isn't another petting", () => {
+  const { dragon, on } = pettedOn({ x: 400, y: 300 });
+  let answers = 0;
+  let line: string | null = null;
+  along(
+    dragon,
+    (t) => ({ x: on.x + (Math.floor(t) % 2), y: on.y }),
+    0,
+    16,
+    60,
+    (pose) => {
+      if (pose.say !== line && pose.say !== null) {
+        answers += 1;
+      }
+      line = pose.say;
+    },
+  );
+  assert.ok(answers <= 1, `${answers}`);
+});
+
+test("a mouse crawling over it pets it: it stays stopped and answers", () => {
+  const dragon = circling();
+  let at = headAt(dragon);
+  run(dragon, at, 0.1, STILL);
+  stepDragon(dragon, at, { x: 3, y: 0 }, 1 / 60);
+  run(dragon, at, 0.1, STILL);
+  let answered = false;
+  for (let frame = 0; frame < 90; frame += 1) {
+    const moved = frame % 3 === 0 ? { x: 1, y: 0 } : STILL;
+    at = { x: at.x + moved.x, y: at.y };
+    stepDragon(dragon, at, moved, 1 / 60);
+    assert.ok(dragon.held, `${frame}`);
+    answered ||= creature.pose(dragon).say?.includes("♥") ?? false;
+  }
+  assert.ok(answered);
+});
+
+test("a second click on it roars on, its jaw held open", () => {
+  const dragon = circling();
+  const on = headAt(dragon);
+  pokeDragon(dragon, on);
+  let t = 0;
+  let open = false;
+  while (t < 3 && !open) {
+    stepDragon(dragon, on, STILL, 1 / 60);
+    t += 1 / 60;
+    open = dragon.rig.jaw.x > 0.9;
+  }
+  assert.ok(open);
+  pokeDragon(dragon, on);
+  run(dragon, on, 0.4, STILL, 60, () => {
+    assert.ok(dragon.rig.jaw.x > 0.7, `${dragon.rig.jaw.x}`);
+  });
+});
+
+test("circling, its snap goes at the mouse", () => {
+  for (const start of STARTS) {
+    const dragon = circling(start);
+    dragon.act = "snap";
+    dragon.actFor = 0;
+    run(dragon, start, 0.2, STILL);
+    const { x, y } = headAt(dragon);
+    const way = Math.atan2((start.y - y) / 0.46, start.x - x);
+    const off = way - dragon.rig.aim.x - dragon.rig.look.x;
+    const by = Math.abs(Math.atan2(Math.sin(off), Math.cos(off)));
+    assert.ok(by < 0.45, `${by}`);
+  }
+});
+
+/** The area a path of straight lines encloses. */
+const areaOf = (d: string | undefined) => {
+  let area = 0;
+  for (const outline of (d ?? "").split("Z")) {
+    const numbers = (outline.match(/-?[\d.]+/gu) ?? []).map(Number);
+    let twice = 0;
+    for (let at = 0; at + 1 < numbers.length; at += 2) {
+      const next = (at + 2) % numbers.length;
+      twice += (numbers[at] ?? 0) * (numbers[next + 1] ?? 0);
+      twice -= (numbers[next] ?? 0) * (numbers[at + 1] ?? 0);
+    }
+    area += Math.abs(twice) / 2;
+  }
+  return area;
+};
+
+const goldSeen = ({ parts }: Pose) => {
+  let gold = 0;
+  let body = 0;
+  for (let segment = 0; segment < SEGMENTS; segment += 1) {
+    gold += areaOf(parts[`belly-${segment}`]?.d);
+    body += areaOf(parts[`seg-${segment}`]?.d);
+  }
+  return gold / body;
+};
+
+const mostGold = (path: (t: number) => Point) => {
+  let most = 0;
+  along(createDragon(path(0)), path, 0, 12, 60, (pose) => {
+    most = Math.max(most, goldSeen(pose));
+  });
+  return most;
+};
+
+test("banked hard, its gold stays a belly: never more than about a third of it", () => {
+  let most = Math.max(mostGold(pacing), mostGold(looping));
+  const dragon = circling();
+  dragon.act = "curl";
+  dragon.actFor = 0;
+  run(dragon, CENTER, 2.5, STILL, 60, (pose) => {
+    most = Math.max(most, goldSeen(pose));
+  });
+  assert.ok(most > 0.05 && most < 0.37, `${most}`);
+});
+
+test("every layer it stacks is a child of what it's stacked in, so stacking reaches it", async () => {
+  Object.assign(globalThis, { React });
+  const { Follower } = await import("./follower");
+  const markup = renderToStaticMarkup(createElement(Follower));
+  const parents = new Map<string, string>();
+  const open: string[] = [];
+  for (const match of markup.matchAll(
+    /<(?<closing>\/?)[\w-]+(?<attributes>(?:\s[^>]*?)?)(?<alone>\/?)>/gu,
+  )) {
+    const { alone, attributes = "", closing } = match.groups ?? {};
+    if (closing) {
+      open.pop();
+      continue;
+    }
+    const layer = /data-layer="(?<name>[^"]+)"/u.exec(attributes)?.groups?.name;
+    if (layer) {
+      parents.set(layer, open.at(-1) ?? "");
+    }
+    if (!alone) {
+      open.push(layer ?? match[0]);
+    }
+  }
+  const dragon = createDragon(CENTER);
+  run(dragon, CENTER, 1, { x: 200, y: 0 });
+  const { order = [] } = creature.pose(dragon);
+  assert.deepEqual([...parents.keys()].toSorted(), order.toSorted());
+  for (const name of order) {
+    const parent = parents.get(name);
+    assert.ok(parent === "head" || parent === parents.get("head"), `${name}: ${parent}`);
+  }
+});
+
+test("side on, its near whisker lies over its face and its far one behind", () => {
+  const dragon = createDragon({ x: 100, y: 300 });
+  run(dragon, { x: 100, y: 300 }, 3, { x: 240, y: 0 });
+  const { order = [] } = creature.pose(dragon);
+  assert.ok(Math.abs(Math.cos(dragon.rig.aim.x)) > 0.9, `${dragon.rig.aim.x}`);
+  assert.ok(order.indexOf("whisker-0") > order.indexOf("skull"), order.join(" "));
+  assert.ok(order.indexOf("whisker-1") < order.indexOf("skull"), order.join(" "));
+});
+
+const finOver = (pose: Pose, segment: number) => Boolean(pose.parts[`fin-front-${segment}`]?.d);
+
+test("its fins don't change sides of its body and straight back", () => {
+  const dragon = circling();
+  const was = Array.from({ length: SEGMENTS }, (_, segment) =>
+    finOver(creature.pose(dragon), segment),
+  );
+  const flipped = was.map(() => -9);
+  let backs = 0;
+  run(dragon, CENTER, 40, STILL, 60, (pose) => {
+    for (let segment = 0; segment < SEGMENTS; segment += 1) {
+      if (finOver(pose, segment) !== was[segment]) {
+        backs += dragon.time - (flipped[segment] ?? -9) < 0.1 ? 1 : 0;
+        flipped[segment] = dragon.time;
+        was[segment] = finOver(pose, segment);
+      }
+    }
+  });
+  assert.equal(backs, 0);
 });

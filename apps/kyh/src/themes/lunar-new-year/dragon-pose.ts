@@ -39,6 +39,7 @@ import {
 } from "../follower/solid";
 import {
   bodyOf,
+  finFacings,
   headFrameOf,
   legFacings,
   legsOf,
@@ -57,8 +58,8 @@ const SKULL_R: Vec3 = [7.2, 6.4, 6.2];
 const MUZZLE: Vec3 = [9.4, -0.8, 0];
 const MUZZLE_R: Vec3 = [7.6, 3.8, 4.6];
 /** Its nose: two gold mounds side by side at the end of its muzzle, its nostrils on them. */
-const NOSE: Vec3 = [15.2, 1.1, 2.1];
-const NOSE_R: Vec3 = [2.4, 1.9, 2];
+const NOSE: Vec3 = [15.2, 0.9, 1.5];
+const NOSE_R: Vec3 = [2.4, 1.7, 2.1];
 const JAW: Vec3 = [8, -1.8, 0];
 const JAW_R: Vec3 = [7.2, 1.8, 3.8];
 /** Where its jaw hinges, and how far it drops open (radians). */
@@ -301,7 +302,7 @@ const eyesOf = (dragon: Dragon, head: Head): [string, Part][] => {
   });
 };
 
-/** Its nostrils, each side of its nose's top: seen from the front and the side. */
+/** Its nostrils, each side of its nose's top, seen from the front and the side: slits, since a round one on a round mound looks back at you like an eye. */
 const nostrilsOf = (head: Head): [string, Part][] =>
   [1, -1].map((side, index) => {
     const out = normalize([0.72, 0.58, 0.38 * side]);
@@ -309,9 +310,15 @@ const nostrilsOf = (head: Head): [string, Part][] =>
     const center = head.point(
       add(side3(NOSE, side), [out[0] * NOSE_R[0], out[1] * NOSE_R[1], out[2] * NOSE_R[2]]),
     );
+    const across = normalize(cross(normal, head.direction([0.3, 1, -0.5 * side])));
     return [
       `nostril-${index}`,
-      { d: disc(center, normal, 0.7), opacity: round(smooth((facing(normal) - 0.02) / 0.2)) },
+      {
+        d: ellipsePath(
+          ellipseOf(center, [scale(across, 0.95), scale(cross(normal, across), 0.32)]),
+        ),
+        opacity: round(smooth((facing(normal) - 0.02) / 0.2)),
+      },
     ];
   });
 
@@ -431,8 +438,6 @@ const depthsOf = (dragon: Dragon) => {
       ["jaw", depthOf(head.point(head.hinged(JAW))) - 1],
       ["beard", depthOf(head.point(head.hinged([9.5, -5, 0]))) - 1.5],
       ...[1, -1].flatMap((side, index): [string, number][] => [
-        [`horn-${index}`, depthOf(head.point(side3([-3, 7, 5], side)))],
-        [`ear-${index}`, depthOf(head.point(side3([-5, 4.4, 7], side)))],
         [`whisker-${index}`, depthOf(head.point(side3([12, -1, 8], side)))],
       ]),
       ...Array.from({ length: LOCKS }, (_, index): [string, number] => {
@@ -475,21 +480,28 @@ export interface Stacking {
   head: string[];
   /** Each leg on the near side of its segment. */
   legs: boolean[];
+  /** Each ring's fin over its segment. */
+  fins: boolean[];
 }
 
 /** How far a leg's flank is turned past side on before it changes sides of its segment. */
 const LEG_TURN = 0.15;
+const FIN_TURN = 0.1;
+
+/** Whether a part's over its segment, from how much it faces the camera: clearly past the rim before it changes. */
+const heldOver = (facings: number, was: boolean | undefined, turn: number) => {
+  const near = was ?? facings > 0;
+  return near ? facings > -turn : facings > turn;
+};
 
 export const stackingOf = (dragon: Dragon, was: Stacking | null): Stacking => {
   const depths = depthsOf(dragon);
-  const legs = legFacings(frameOf(dragon).rings).map((facings, index) => {
-    const near = was?.legs[index] ?? facings > 0;
-    return near ? facings > -LEG_TURN : facings > LEG_TURN;
-  });
+  const { rings } = frameOf(dragon);
   return {
     body: settle(was?.body ?? sorted(depths.body), depths.body, BODY_MARGIN),
+    fins: finFacings(rings).map((facings, index) => heldOver(facings, was?.fins[index], FIN_TURN)),
     head: settle(was?.head ?? sorted(depths.head), depths.head, HEAD_MARGIN),
-    legs,
+    legs: legFacings(rings).map((facings, index) => heldOver(facings, was?.legs[index], LEG_TURN)),
   };
 };
 
@@ -512,15 +524,22 @@ const puffsOf = (dragon: Dragon, origin: Point): [string, Part][] =>
   dragon.puffs.map(({ age, life, x, y }, index) => {
     const t = life > 0 ? age / life : 1;
     const shown = life > 0 && t < 1;
-    const r = 1.4 + 3 * t;
+    const r = 2 + 4 * t;
     return [
       `puff-${index}`,
       {
         d: shown ? ellipsePath({ angle: 0, cx: x - origin.x, cy: y - origin.y, rx: r, ry: r }) : "",
-        opacity: shown ? round(Math.min(1, (1 - t) * 1.8)) : 0,
+        opacity: shown ? round(0.7 * Math.min(1, t * 8, (1 - t) * 1.8)) : 0,
       },
     ];
   });
+
+/** Where its breath leaves it, on the screen: a little off the end of its nose. */
+export const noseAt = (dragon: Dragon): Point => {
+  const frame = frameOf(dragon);
+  const seen = toScreen(headOf(dragon, frame.head).point([NOSE[0] + 5, NOSE[1], 0]));
+  return { x: frame.origin.x + seen.x, y: frame.origin.y + seen.y };
+};
 
 /** Its head's layers, the ink round its solids under the first of them: one outline, no seams inside it. */
 const headOrder = (layers: readonly string[]) => {
@@ -540,7 +559,11 @@ export const dragonPose = (dragon: Dragon): Pose => {
   const head = headOf(dragon, frame.head);
   const { origin } = frame;
   const rings = swungOf(frame.rings, dragon.tail, origin);
-  const body = bodyOf(rings, dragon.lean.x, dragon.ripple);
+  const body = bodyOf(rings, {
+    lean: dragon.lean.x,
+    over: dragon.stacking.fins,
+    ripple: dragon.ripple,
+  });
   const jaw: Ellipsoid = {
     center: head.point(head.hinged(JAW)),
     radii: scale(JAW_R, HEAD_SIZE),

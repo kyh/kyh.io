@@ -61,6 +61,8 @@ const WAVE_LENGTH = 76;
 /** How far its belly's gold wraps round from its middle, radians: level, all out of sight; rolled, the scales fan up its flank. */
 const BELLY = 0.46;
 const BELLY_ROLLED = 1.1;
+/** The farthest up its flank the gold comes, seen: a third of its width, so a hard bank doesn't turn it into a gold prawn. */
+const BELLY_EDGE = Math.asin(2 * 0.35 - 1);
 /** Up and to the left, where the town's light comes from: as `solid.ts` has it. */
 const LIGHT: Point = { x: -0.55, y: -0.83 };
 /** How much of the width it shades, turned square from the light. */
@@ -84,6 +86,13 @@ export interface Ring {
   side: Vec3;
   r: number;
   roll: number;
+}
+
+/** Its fins this frame: swept back by `lean`, rippling, and which rings' stand over their segment. */
+export interface Fins {
+  lean: number;
+  ripple: number;
+  over: readonly boolean[];
 }
 
 /** How thick it is at a ring, as a share of its girth: slim at the neck, tapering long to the tail. */
@@ -264,7 +273,7 @@ const bellyAt = (ring: Ring) => {
   const middle = wrap(-Math.PI / 2 - faced);
   const half = BELLY + BELLY_ROLLED * Math.abs(ring.roll);
   const lo = Math.max(middle - half, -Math.PI / 2);
-  const hi = Math.min(middle + half, Math.PI / 2);
+  const hi = Math.min(middle + half, BELLY_EDGE);
   const rim = (Math.sign(middle) * Math.PI) / 2;
   const shown = lo < hi;
   return {
@@ -343,8 +352,7 @@ const segmentOf = (
   rings: readonly Ring[],
   allEdges: readonly Edges[],
   segment: number,
-  lean: number,
-  ripple: number,
+  { lean, over, ripple }: Fins,
 ) => {
   const first = segment * RINGS_EACH;
   const indexes = Array.from({ length: RINGS_EACH + 1 }, (_, step) => first + step);
@@ -387,11 +395,11 @@ const segmentOf = (
     }
     const height = finHeight(index);
     const sweep = lean * height + ripple * Math.sin(index * 0.9);
-    return [{ path: finOf(ring, height, sweep), top: dot(ring.up, TOWARD_CAMERA) }];
+    return [{ front: over[index] ?? true, path: finOf(ring, height, sweep) }];
   });
   const finsOn = (front: boolean) =>
     fins
-      .filter(({ top }) => top > -0.05 === front)
+      .filter((fin) => fin.front === front)
       .map(({ path }) => path)
       .join("");
   return [
@@ -409,10 +417,10 @@ const segmentOf = (
 export const segmentAt = (ring: number) => Math.min(SEGMENTS - 1, Math.floor(ring / RINGS_EACH));
 
 /** Its body's parts. */
-export const bodyOf = (rings: readonly Ring[], lean: number, ripple: number) => {
+export const bodyOf = (rings: readonly Ring[], fins: Fins) => {
   const edges = rings.map((ring, index) => edgesOf(rings, ring, index));
   return Array.from({ length: SEGMENTS }, (_, index) =>
-    segmentOf(rings, edges, index, lean, ripple),
+    segmentOf(rings, edges, index, fins),
   ).flat();
 };
 
@@ -425,6 +433,9 @@ export const segmentDepths = (rings: readonly Ring[]) =>
 /** How much each leg's flank faces the camera. */
 export const legFacings = (rings: readonly Ring[]) =>
   LEGS.map(({ ring, side }) => side * dot(rings[ring]?.side ?? [0, 0, 0], TOWARD_CAMERA));
+
+/** How much each ring's top faces the camera: past nothing, its fin stands in front of its body. */
+export const finFacings = (rings: readonly Ring[]) => rings.map(({ up }) => dot(up, TOWARD_CAMERA));
 
 /** Its legs' parts: each drawn behind its segment on the far side, over it on the near. */
 export const legsOf = (

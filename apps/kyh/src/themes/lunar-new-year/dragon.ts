@@ -34,8 +34,17 @@ import {
   toScreen,
 } from "../follower/solid";
 import { REACH } from "./dragon-body";
-import { dragonPose, hangsOf, isOn, LOCKS, stackingOf, tailHangOf, TUFTS } from "./dragon-pose";
-import { createSwim, STEP, stepSwim, topOf, wrap } from "./dragon-swim";
+import {
+  dragonPose,
+  hangsOf,
+  isOn,
+  LOCKS,
+  noseAt,
+  stackingOf,
+  tailHangOf,
+  TUFTS,
+} from "./dragon-pose";
+import { createSwim, MOST_TURN, STEP, stepSwim, topOf, wrap } from "./dragon-swim";
 import { trailAt } from "./dragon-trail";
 
 /** A moment's business, circling or held: a snap at the pearl, a shake of its mane, a puff of smoke, a look round, a tight curl over its own body. */
@@ -79,6 +88,15 @@ type Coil = "none" | "waiting" | "winding" | "wound";
 interface Puff extends Point {
   age: number;
   life: number;
+  /** Pixels a second on the screen: it leaves with the dragon's way, so its head doesn't swim into it. */
+  away: Point;
+}
+
+/** Where it's lunging on the ground, and seconds yet of it. */
+interface Lunge {
+  left: number;
+  x: number;
+  z: number;
 }
 
 export interface Dragon {
@@ -106,8 +124,7 @@ export interface Dragon {
   /** Seconds yet of its roar of greeting, once it's turned to the visitor for it; seconds it's owed that. */
   greet: number;
   greetDue: number;
-  /** Where it's lunging on the ground, and seconds yet of it. */
-  lunge: { left: number; x: number; z: number } | null;
+  lunge: Lunge | null;
   coil: Coil;
   /** Pixels of its spiral it's wound. */
   wound: number;
@@ -190,11 +207,19 @@ const SPIRAL = (() => {
 const REST_S = 0.025;
 const ARRIVED_S = 0.3;
 const GREET_S = 1.7;
-const LUNGE_S = 0.7;
+const GREET_OPENS_S = 0.3;
+/** A lunge: seconds of it at most; how near its nose counts as a bite; the tightest it turns for it; and how near it just snaps, ground pixels. */
+const LUNGE_S = 1.3;
+const BITES = 16;
+const LUNGE_RADIUS = 20;
+const LUNGE_WIDEST = 30;
+const SNAPS_WITHIN = 34;
+const SNAPS_BEHIND_WITHIN = 100;
 /** Pixels of the way it clears its own body by, going over it. */
 const CLEARS = 14;
-/** How far its head turns off its neck, at most. */
+/** How far its head turns off its neck, at most, and snapping at something. */
 const MOST_LOOK = 1.5;
+const SNAP_LOOK = 1.8;
 const LOOK_REACH = 0.9;
 /** Seconds its layers keep their places at least, once changed: nothing flickers. */
 const STACK_S = 0.15;
@@ -245,7 +270,13 @@ export const createDragon = (at: Point): Dragon => {
     pace: { x: 0, y: 0 },
     petted: 0,
     pointer: at,
-    puffs: Array.from({ length: 4 }, () => ({ age: 0, life: 0, x: 0, y: 0 })),
+    puffs: Array.from({ length: 4 }, () => ({
+      age: 0,
+      away: { x: 0, y: 0 },
+      life: 0,
+      x: 0,
+      y: 0,
+    })),
     random: createRandom(seed + 1),
     rig: {
       aim: springAt(heading),
@@ -261,7 +292,7 @@ export const createDragon = (at: Point): Dragon => {
     ripple: 0,
     side: 1,
     stacked: 0,
-    stacking: { body: [], head: [], legs: [] },
+    stacking: { body: [], fins: [], head: [], legs: [] },
     steps: 0,
     still: 0,
     stir: 0,
@@ -325,6 +356,20 @@ const courseOfCircle = (dragon: Dragon, at: Point): Course => {
 /** Which way it faces to greet the visitor: three-quarters to the camera, on the side it already faces. */
 const facedHeading = (heading: number) => (Math.cos(heading) >= 0 ? 0.95 : Math.PI - 0.95);
 
+/** A dart at the click: the one arc through it, as fast as that arc can be swum, so it arrives. Behind it, the tightest way round. */
+const courseOfLunge = (swim: Swim, lunge: Lunge): Course => {
+  const dx = lunge.x - swim.x;
+  const dz = lunge.z - swim.z;
+  const heading = Math.atan2(dz, dx);
+  const off = Math.abs(wrap(heading - swim.heading));
+  const arc = Math.hypot(dx, dz) / (2 * Math.max(0.02, Math.sin(Math.min(off, Math.PI / 2))));
+  const tight = Math.max(LUNGE_RADIUS, Math.min(arc, LUNGE_WIDEST));
+  // Well off its nose it comes round first, so a far click isn't a sweep the wrong way.
+  const radius = mix(Math.max(arc, LUNGE_RADIUS), tight, smooth((off - 0.5) / 0.6));
+  const speed = Math.min(topOf(swim.heading) * 1.3, radius * MOST_TURN);
+  return { heading, height: 0, radius, speed, weave: 0 };
+};
+
 const courseOf = (dragon: Dragon, at: Point): Course => {
   const { act, coil, greet, greetDue, held, lunge, swim } = dragon;
   const stopped = { heading: swim.heading, height: swim.h.x, radius: RADIUS, speed: 0, weave: 0 };
@@ -332,13 +377,7 @@ const courseOf = (dragon: Dragon, at: Point): Course => {
     return stopped;
   }
   if (lunge) {
-    return {
-      heading: Math.atan2(lunge.z - swim.z, lunge.x - swim.x),
-      height: 0,
-      radius: 24,
-      speed: topOf(swim.heading) * 1.3,
-      weave: 0,
-    };
+    return courseOfLunge(swim, lunge);
   }
   if (greetDue > 0 || greet > 0) {
     const heading = facedHeading(swim.heading);
@@ -397,9 +436,26 @@ const stepWay = (dragon: Dragon, pointer: Point) => {
   }
 };
 
+/** Its lunge ends at the bite, its jaw shutting as the spring lets go; or past the click, if it missed. */
+const stepLunge = (dragon: Dragon) => {
+  const { lunge, swim } = dragon;
+  if (!lunge) {
+    return;
+  }
+  lunge.left -= STEP;
+  const dx = lunge.x - swim.x;
+  const dz = lunge.z - swim.z;
+  const off = Math.hypot(dx, dz);
+  const past = off < BITES * 3 && Math.abs(wrap(Math.atan2(dz, dx) - swim.heading)) > 1.6;
+  if (lunge.left <= 0 || off < BITES || past) {
+    dragon.lunge = null;
+  }
+};
+
 /** One fixed step of its swim, the pointer where it was this far through the frame. */
 const stepOnce = (dragon: Dragon, at: Point, move: Point) => {
   const { chase, lean, pace, swim } = dragon;
+  stepLunge(dragon);
   stepBack(dragon, move);
   stepWay(dragon, at);
   const closes = 1 - Math.exp(-7 * STEP);
@@ -490,10 +546,11 @@ const stepAttention = (dragon: Dragon, pointer: Point, moved: Point, seconds: nu
     dragon.still += seconds;
   }
   const resting = distance < 0.5 && dragon.still > REST_S;
-  if (!resting) {
-    dragon.held = false;
-  } else if (dragon.still < ARRIVED_S && !dragon.lunge && dragon.coil === "none") {
-    dragon.held ||= isOn(dragon, pointer);
+  if (dragon.held) {
+    // A mouse stroking it, or nudged, is still on it: only moving off it lets it go.
+    dragon.held = distance < 0.5 || isOn(dragon, pointer);
+  } else if (resting && dragon.still < ARRIVED_S && !dragon.lunge && dragon.coil === "none") {
+    dragon.held = isOn(dragon, pointer);
   }
   stepCoil(dragon, pointer);
 };
@@ -520,17 +577,20 @@ const lookGoal = (dragon: Dragon, pointer: Point) => {
   const at = toScreen([swim.x, swim.h.x, swim.z]);
   const off = wrap(headingOf(pointer.x - at.x, pointer.y - at.y) - yaw);
   // Straight behind it, it looks ahead, so a mouse there doesn't swing its head from side to side.
-  const fade = 1 - smooth((Math.abs(off) - 1.9) / 1);
-  const gaze = dragon.act === "gaze" ? Math.sin((dragon.actFor / ACT_S.gaze) * Math.PI * 2) : 0;
   const snap = envelope(dragon, "snap");
-  return clamp(off, mix(LOOK_REACH, 1.2, snap)) * fade * (1 - Math.abs(gaze)) + gaze * 1.1;
+  const fade = mix(1 - smooth((Math.abs(off) - 1.9) / 1), 1, snap);
+  const gaze = dragon.act === "gaze" ? Math.sin((dragon.actFor / ACT_S.gaze) * Math.PI * 2) : 0;
+  return clamp(off, mix(LOOK_REACH, SNAP_LOOK, snap)) * fade * (1 - Math.abs(gaze)) + gaze * 1.1;
 };
 
 const stepHead = (dragon: Dragon, pointer: Point, dt: number) => {
   const { rig, swim } = dragon;
-  stepSpring(rig.look, lookGoal(dragon, pointer), 8, dt);
+  const striking = dragon.act === "snap" || dragon.lunge;
+  stepSpring(rig.look, lookGoal(dragon, pointer), striking ? 20 : 8, dt);
   const roaring =
-    dragon.greet > 0 ? smooth((GREET_S - dragon.greet) / 0.3) * smooth(dragon.greet / 0.25) : 0;
+    dragon.greet > 0
+      ? smooth((GREET_S - dragon.greet) / GREET_OPENS_S) * smooth(dragon.greet / 0.25)
+      : 0;
   const snap = envelope(dragon, "snap");
   const shake = envelope(dragon, "shake");
   const petted = dragon.held ? 1 : 0;
@@ -591,26 +651,27 @@ const stepPuffs = (dragon: Dragon, dt: number) => {
   const spawn =
     dragon.act === "puff" &&
     Math.floor((dragon.actFor - dt) / 0.24) < Math.floor(dragon.actFor / 0.24);
+  const slows = Math.exp(-2.2 * dt);
   for (const puff of dragon.puffs) {
     puff.age += dt;
-    puff.y -= 12 * dt;
-    puff.x += Math.sin(puff.age * 4) * 4 * dt;
+    puff.away = { x: puff.away.x * slows, y: puff.away.y * slows };
+    puff.y += (puff.away.y - 12) * dt;
+    puff.x += (puff.away.x + Math.sin(puff.age * 4) * 4) * dt;
   }
   if (!spawn) {
     return;
   }
   const free = dragon.puffs.find(({ age, life }) => age >= life);
   if (free) {
+    const nose = noseAt(dragon);
     const yaw = dragon.rig.aim.x + dragon.rig.look.x;
-    const at = toScreen([
-      swim.x + Math.cos(yaw) * 18,
-      swim.h.x + dragon.rig.rear.x + 1,
-      swim.z + Math.sin(yaw) * 18,
-    ]);
+    const way = toScreenLead(swim.heading, swim.speed);
+    const blown = toScreenLead(yaw, 26);
     free.age = 0;
+    free.away = { x: way.x + blown.x, y: way.y + blown.y };
     free.life = 0.95;
-    free.x = at.x;
-    free.y = at.y;
+    free.x = nose.x;
+    free.y = nose.y;
   }
 };
 
@@ -622,11 +683,15 @@ const stepActs = (dragon: Dragon, seconds: number) => {
     dragon.act = "none";
   }
   stepPuffs(dragon, Math.min(seconds, MOST_STEP));
+  if (dragon.held) {
+    dragon.act = "none";
+  }
   const free =
     dragon.act === "none" &&
     dragon.coil === "none" &&
     dragon.greet <= 0 &&
     dragon.greetDue <= 0 &&
+    !dragon.held &&
     !dragon.lunge;
   if (!free || dragon.still < 1.2 || dragon.chase.x > 0.2) {
     return;
@@ -661,10 +726,13 @@ const stepTalk = (dragon: Dragon, seconds: number) => {
   stepEmotes(dragon.emotes, seconds);
   if (dragon.rig.doze.x > 0.6) {
     say(dragon.emotes, SLEEP);
-  } else if (dragon.still > 2 && dragon.coil === "none" && dragon.random.chance(seconds * 0.12)) {
+  } else if (
+    dragon.still > 2 &&
+    dragon.coil === "none" &&
+    !dragon.held &&
+    dragon.random.chance(seconds * 0.12)
+  ) {
     say(dragon.emotes, CHATTER);
-  } else if (dragon.petted > PETTED_S * 4 && dragon.random.chance(seconds * 0.2)) {
-    say(dragon.emotes, PET);
   }
 };
 
@@ -694,6 +762,7 @@ const stepChains = (dragon: Dragon, seconds: number) => {
 
 const sameStacking = (a: Stacking, b: Stacking) =>
   a.body.join(" ") === b.body.join(" ") &&
+  a.fins.join(" ") === b.fins.join(" ") &&
   a.head.join(" ") === b.head.join(" ") &&
   a.legs.join(" ") === b.legs.join(" ");
 
@@ -703,13 +772,6 @@ export const stepDragon = (dragon: Dragon, pointer: Point, moved: Point, seconds
   dragon.wave += dt * (1.7 + dragon.swim.speed * 0.012);
   stepGreeting(dragon, seconds);
   stepAttention(dragon, pointer, moved, seconds);
-  if (dragon.lunge) {
-    dragon.lunge.left -= seconds;
-    const off = Math.hypot(dragon.lunge.x - dragon.swim.x, dragon.lunge.z - dragon.swim.z);
-    if (dragon.lunge.left <= 0 || off < 18) {
-      dragon.lunge = null;
-    }
-  }
   stepSwimming(dragon, pointer, moved, Math.max(0, seconds));
   stepHead(dragon, pointer, dt);
   stepActs(dragon, seconds);
@@ -736,12 +798,29 @@ export const pokeDragon = (dragon: Dragon, at: Point) => {
   dragon.stir = 0;
   if (isOn(dragon, at)) {
     say(dragon.emotes, GREETING, true);
-    dragon.greet = 0;
-    dragon.greetDue = GREET_S;
+    if (dragon.greet > 0) {
+      // Already roaring, it roars on: a second click doesn't shut its jaw to open it again.
+      dragon.greet = Math.max(dragon.greet, GREET_S - GREET_OPENS_S);
+    } else {
+      dragon.greetDue = GREET_S;
+    }
     dragon.act = "none";
     return;
   }
-  dragon.lunge = { left: LUNGE_S, x: at.x, z: at.y / SIN };
+  const { swim } = dragon;
+  const { x } = at;
+  const z = at.y / SIN;
+  const off = Math.hypot(x - swim.x, z - swim.z);
+  const turn = wrap(Math.atan2(z - swim.z, x - swim.x) - swim.heading);
+  // Close by, or just behind it where getting there is a loop, it snaps round at it from where it is.
+  if (off < SNAPS_WITHIN || (off < SNAPS_BEHIND_WITHIN && Math.abs(turn) > 2.1)) {
+    dragon.lunge = null;
+    begin(dragon, "snap");
+    return;
+  }
+  // The short way round, whatever it was turning: the long way is the whirl.
+  swim.committed = turn >= 0 ? 1 : -1;
+  dragon.lunge = { left: Math.min(LUNGE_S, 0.4 + off / 400 + Math.abs(turn) * 0.2), x, z };
   say(dragon.emotes, LUNGE, dragon.emotes.line === null && dragon.random.chance(0.3));
 };
 

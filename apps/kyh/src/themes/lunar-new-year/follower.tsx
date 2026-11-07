@@ -8,7 +8,10 @@
 // and a gold belly that shows as it banks; short clawed legs and a gold tuft at
 // its tail; a red head with a gold nose and jaw, gold brows, pale horns, gold
 // whiskers, a beard and a mane. Each `data-layer` is one part the stage stacks
-// by how near the camera it is; each `data-part` is posed a frame at a time.
+// by how near the camera it is, restacked within its own parent, so every
+// layer of the head is a child of it; each `data-part` is posed a frame at a
+// time. Its ears and horns are no layers: they stay first in the head, its mane
+// and skull over their roots, or from the side they lie across the mane as a slab.
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
 import { Solid } from "../follower/shaded";
@@ -74,6 +77,12 @@ export const Follower = () => {
         <Segment key={index} index={index} id={id} />
       ))}
       <g data-layer="head">
+        {[0, 1].map((index) => (
+          <g key={index}>
+            <path data-part={`ear-${index}`} style={filled("festiveRed", 0.8)} />
+            <path data-part={`horn-${index}`} style={filled("whiteShade", 0.9)} />
+          </g>
+        ))}
         {Array.from({ length: LOCKS }, (_, index) => (
           <path
             key={index}
@@ -83,21 +92,9 @@ export const Follower = () => {
           />
         ))}
         {[0, 1].map((index) => (
-          <g key={index}>
-            <path
-              data-layer={`ear-${index}`}
-              data-part={`ear-${index}`}
-              style={filled("festiveRed", 0.8)}
-            />
-            <path
-              data-layer={`horn-${index}`}
-              data-part={`horn-${index}`}
-              style={filled("whiteShade", 0.9)}
-            />
-            <g data-layer={`whisker-${index}`}>
-              <path data-part={`whisker-${index}`} style={stroked(2)} />
-              <path data-part={`whisker-${index}`} style={stroked(0.9, "gold")} />
-            </g>
+          <g key={index} data-layer={`whisker-${index}`}>
+            <path data-part={`whisker-${index}`} style={stroked(2)} />
+            <path data-part={`whisker-${index}`} style={stroked(0.9, "gold")} />
           </g>
         ))}
         <path data-layer="beard" data-part="beard" style={filled("gold", 0.8)} />
