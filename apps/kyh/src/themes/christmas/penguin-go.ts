@@ -18,7 +18,7 @@ import { spotOf, stepWalker } from "../follower/walk";
 const SIN = Math.sin(PITCH);
 
 /** On its feet, on its way down, on its belly, or getting up. */
-export type Going = "walk" | "flop" | "slide" | "rise";
+type Going = "walk" | "flop" | "slide" | "rise";
 
 export interface Go {
   going: Going;

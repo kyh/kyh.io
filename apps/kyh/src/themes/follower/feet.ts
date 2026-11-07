@@ -18,13 +18,7 @@ import { add, dot, normalize, PITCH, scale, sub } from "./solid";
 
 const SIN = Math.sin(PITCH);
 
-/** A point on the screen as a point of the ground: its up and down stretched back out of the camera's foreshortening. */
-export const groundOf = (at: Point): Point => ({ x: at.x, y: at.y / SIN });
-
-/** A point of the ground back on the screen. */
-export const screenOf = (at: Point): Point => ({ x: at.x, y: at.y * SIN });
-
-export interface Foot {
+interface Foot {
   /** Where it is on the screen (under it, on the ground, while it's lifted). */
   x: number;
   y: number;
@@ -51,7 +45,7 @@ export interface Feet {
 }
 
 /** Where a foot stands at rest, ground pixels about the walker: ahead along its heading, and to its left. */
-export interface Home {
+interface Home {
   ahead: number;
   left: number;
 }
@@ -82,7 +76,7 @@ export interface Steps {
 }
 
 /** Something on feet: where it is on the screen, and how fast it's going (pixels a second). A walker. */
-export interface Body extends Point {
+interface Body extends Point {
   vx: number;
   vy: number;
 }
@@ -104,13 +98,13 @@ const between = (range: readonly [number, number], t: number) =>
   range[0] + (range[1] - range[0]) * t;
 
 /** How far apart two points of the screen are, on the ground. */
-export const apart = (a: Point, b: Point) => Math.hypot(a.x - b.x, (a.y - b.y) / SIN);
+const apart = (a: Point, b: Point) => Math.hypot(a.x - b.x, (a.y - b.y) / SIN);
 
 /** How fast it's going over the ground, pixels a second. */
 export const groundSpeedOf = (body: Body) => Math.hypot(body.vx, body.vy / SIN);
 
 /** Where foot `index` stands at rest, on the screen, for a body facing `heading` (radians, as `solid.ts`'s). */
-export const homeOf = (steps: Steps, index: number, body: Point, heading: number): Point => {
+const homeOf = (steps: Steps, index: number, body: Point, heading: number): Point => {
   const home = steps.homes[index] ?? { ahead: 0, left: 0 };
   const cos = Math.cos(heading);
   const sin = Math.sin(heading);

@@ -310,9 +310,6 @@ export const scarfHangOf = (penguin: Penguin, which = 0) => {
   return { floor: toScreen([knot[0], 0, knot[2]]).y + 1, rest };
 };
 
-/** Where its scarf's long end would hang at rest this frame (`scarfHangOf`). */
-export const scarfRestOf = (penguin: Penguin): Point[] => scarfHangOf(penguin).rest;
-
 const fixed = (n: number) => round(n);
 const pathOf = (points: readonly Point[], closed = false) =>
   `${points.map((p, index) => `${index === 0 ? "M" : "L"}${fixed(p.x)} ${fixed(p.y)}`).join("")}${closed ? "Z" : ""}`;

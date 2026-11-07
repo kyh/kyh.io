@@ -736,7 +736,7 @@ export const settleView = (
  * toward the camera, then its near wing and head over its body, whichever's
  * nearer. Tucked up, both feet are behind its body.
  */
-export const orderOf = (view: View) => {
+const orderOf = (view: View) => {
   const { feetDown } = view;
   const [nearWing, farWing] = view.near === 1 ? ["wing-0", "wing-1"] : ["wing-1", "wing-0"];
   const [nearLeg, farLeg] = view.near === 1 ? ["leg-0", "leg-1"] : ["leg-1", "leg-0"];

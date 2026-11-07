@@ -20,14 +20,14 @@ export interface Spot {
 }
 
 /** A foot set down: where (its toe, or its paw), and which way it points. */
-export interface Pin extends Spot {
+interface Pin extends Spot {
   turn: number;
 }
 
 /** A pair of feet: its left, its right. */
-export type Pair = readonly [Pin, Pin];
+type Pair = readonly [Pin, Pin];
 
-export interface Leap {
+interface Leap {
   from: Spot;
   to: Spot;
   /** Its heading as it sets off and as it lands. */
@@ -66,13 +66,13 @@ export const FORE_REACH = 9;
 
 /** Where its feet stand about it, at rest: its hind toes under its belly, its forepaws under its chest. */
 export const HIND_REST = { side: 3.9, x: 0.6 } as const;
-export const FORE_REST = { side: 2.3, x: 7.6 } as const;
+const FORE_REST = { side: 2.3, x: 7.6 } as const;
 
 /** When in a hop: its forepaws lift (left, right), its hind feet push off, its forepaws land, its hind feet land. */
-export const FORE_LIFT = [0.04, 0.08] as const;
+const FORE_LIFT = [0.04, 0.08] as const;
 export const HIND_LIFT = 0.26;
-export const FORE_LAND = [0.58, 0.62] as const;
-export const HIND_LAND = 0.84;
+const FORE_LAND = [0.58, 0.62] as const;
+const HIND_LAND = 0.84;
 /** Its body's rise: from as it straightens to push off, till its forepaws have taken it. */
 const RISE = [0.1, 0.6] as const;
 /** Its speed through a hop, as a share of its speed in the air: slow gathered, fastest flying. */
@@ -92,7 +92,7 @@ const ON = 0.08;
  * the camera (foreshortened, so a longer hop that way looks no longer); its
  * shortest worth hopping; and nearer than this, it's there.
  */
-export const MOST_LEAP = 60;
+const MOST_LEAP = 60;
 const MOST_LEAP_DEEP = 70;
 const LEAST_LEAP = 5;
 const ARRIVED = 9;
@@ -102,7 +102,7 @@ const MOST_HOPS = 4.2;
 /** The most it turns in a hop, going, and hopping round where it stands; and the least worth a hop round. */
 const MOST_TURN = 1.2;
 const MOST_PIVOT = 1.1;
-export const LEAST_PIVOT = 0.5;
+const LEAST_PIVOT = 0.5;
 const PIVOT_S = 0.3;
 /** Turning right round (what it's after is behind it), how far it turns in one hop, and the hop's length in seconds. */
 const BEHIND = (2 * Math.PI) / 3;
@@ -115,7 +115,7 @@ const PIVOT_HEIGHT = 2.5;
 export const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
 /** A point about the bunny (x forward, z to its left) on the ground, it at `at` heading `turn`. */
-export const groundAt = (at: Spot, turn: number, forward: number, left: number): Spot => ({
+const groundAt = (at: Spot, turn: number, forward: number, left: number): Spot => ({
   x: at.x + forward * Math.cos(turn) - left * Math.sin(turn),
   z: at.z + forward * Math.sin(turn) + left * Math.cos(turn),
 });
@@ -165,7 +165,7 @@ const goneBy = (leap: Way, u: number) => {
 };
 
 /** Where its body is on the ground `u` through a hop. */
-export const bodyAt = (leap: Way, u: number): Spot => {
+const bodyAt = (leap: Way, u: number): Spot => {
   const gone = goneBy(leap, u);
   return {
     x: leap.from.x + (leap.to.x - leap.from.x) * gone,
@@ -174,15 +174,15 @@ export const bodyAt = (leap: Way, u: number): Spot => {
 };
 
 /** When in a hop it turns: from the end of its push, on its toes, till its forepaws land. */
-export const TURNING = [0.18, FORE_LAND[0]] as const;
+const TURNING = [0.18, FORE_LAND[0]] as const;
 
 /** Its heading `u` through a hop: it turns only with its forepaws up, pushing off on its toes and flying. */
-export const turnAt = (leap: Leap, u: number) =>
+const turnAt = (leap: Leap, u: number) =>
   leap.turnFrom +
   wrap(leap.turnTo - leap.turnFrom) * smooth((u - TURNING[0]) / (TURNING[1] - TURNING[0]));
 
 /** How high its body is `u` through a hop: crouched to push off, up in an arc, down taking the landing. */
-export const liftAt = (leap: Pick<Leap, "height">, u: number) => {
+const liftAt = (leap: Pick<Leap, "height">, u: number) => {
   const [up, down] = RISE;
   if (u < up) {
     return -0.15 * leap.height * Math.sin((Math.PI * u) / up);
@@ -322,7 +322,7 @@ export const planLeap = (hopper: Hopper, target: Spot | null, face: number | nul
 };
 
 /** What happened over a step: it took off, its forepaws or hind feet landed (how big the hop was). */
-export interface Beats {
+interface Beats {
   tookOff: number;
   foreLanded: number;
   hindLanded: number;

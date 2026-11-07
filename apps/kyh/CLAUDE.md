@@ -62,8 +62,7 @@ The rest is by hand:
   swinging bits), `solid.ts` (followers in the round: parts as 3D solids seen
   from a little above, so they turn through every view; caps, depth, and the
   critically damped springs everything eases on), `emote.ts` (what it says,
-  and its quiet between), `ink.ts`. `followers.test.ts` drives every creature
-  through a session.
+  and its quiet between), `ink.ts`. Followers have no tests: judge them by eye.
 - All but the ghost are in the round: a behavior module (springs
   for every part) beside a `*-pose.ts` that builds the parts in 3D and orders
   the layers. Draw a new follower that way.

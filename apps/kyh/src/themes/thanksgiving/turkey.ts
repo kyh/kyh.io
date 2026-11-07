@@ -66,7 +66,7 @@ type Act = "none" | "peck" | "gobble" | "alert";
 const ACT_S: Record<Act, number> = { alert: 1.4, gobble: 1.5, none: 0, peck: 1.1 };
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** Which way it faces, radians: 0 to the right, a quarter turn toward the camera. */
   heading: Spring;
   /** 0 to 1: tail folded to fanned (and chest puffed), and dozing. */
@@ -85,7 +85,7 @@ export interface Rig {
 }
 
 /** A gobble's shake of its head, on top of its glide: forward and up (its own pixels), and turned. */
-export interface Shake {
+interface Shake {
   x: number;
   y: number;
   turn: number;
@@ -172,7 +172,7 @@ const SLEEP_SIDE = 0.44;
 /** Its head turned back onto its shoulder, asleep. */
 const TUCKED = 2.5;
 
-export const createTurkey = (at: Point): Turkey => {
+const createTurkey = (at: Point): Turkey => {
   const seed = Math.round(at.x * 7919 + at.y * 31);
   const walker = createWalker(at, GAIT);
   // A three-quarter view, toward the camera, to begin with.
@@ -454,7 +454,7 @@ const stepHead = (
  * ground while its body goes on under it (three quarters of each step, or as
  * much of the step as its neck gives at a hurry), then thrust forward past it.
  */
-export const bobOf = (turkey: Turkey) => {
+const bobOf = (turkey: Turkey) => {
   const { feet, walker } = turkey;
   if (feet.cadence <= 0) {
     return 0;
@@ -486,7 +486,7 @@ const faceAwayOf = ({ faceAway, rig }: Turkey) => {
   return faceAway ? away > 0.13 : away > 0.28;
 };
 
-export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds: number) => {
+const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = turkey;
   turkey.time += seconds;
   // Petted (a mouse resting on it), or pecking with the mouse still, it stands.
@@ -521,7 +521,7 @@ export const stepTurkey = (turkey: Turkey, pointer: Point, moved: Point, seconds
   }
 };
 
-export const pokeTurkey = (turkey: Turkey, at: Point) => {
+const pokeTurkey = (turkey: Turkey, at: Point) => {
   // Awake at once, whatever it was at.
   turkey.walker.still = Math.min(turkey.walker.still, STRUT_S - 1);
   if (isOn(turkey, at)) {

@@ -37,7 +37,7 @@ export const SHOULDER: Vec3 = [0, 26, 5.7];
 const HANG: Vec3 = [0.5, 13.3, 7];
 
 /** The coin leaves his thumb and lands back in his hand at these points of the flip, this high between. */
-export const LAUNCH = 0.22;
+const LAUNCH = 0.22;
 export const CATCH = 0.74;
 const COIN_UP = 42;
 const COIN_TURNS = 6;
@@ -47,7 +47,7 @@ export const BEATS_S = 2.4;
 export const HOP = 3.2;
 
 /** 0 to 1 as `t` goes `from` to `to`, eased. */
-export const ramp = (t: number, from: number, to: number) => smooth((t - from) / (to - from));
+const ramp = (t: number, from: number, to: number) => smooth((t - from) / (to - from));
 
 /** Up over `from` to `top`, held, and down over `fall` to `to`. */
 export const bump = (t: number, [from, top, fall, to]: readonly [number, number, number, number]) =>

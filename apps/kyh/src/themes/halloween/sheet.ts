@@ -199,8 +199,6 @@ const PERIMETER = sumOf(LINKS);
 const LIFT =
   (WEIGHT * sumOf(REST.map((rest) => 1 - rest.hold))) / sumOf(REST.map((rest) => rest.hold));
 
-export const POINTS = REST.length;
-
 /** The hem's cusps, right to left as the outline runs: the points nearest where each falls at rest. */
 const CUSPS = Array.from({ length: LOBES + 1 }, (_, cusp) => {
   const x = (HEAD + FLARE) * (1 - (2 * cusp) / LOBES);
@@ -405,11 +403,7 @@ export const stepGhost = (ghost: Ghost, pointer: Point, moved: Point, seconds: n
   });
 };
 
-/** The hem's points: the loosest of the outline. */
-export const hemOf = (ghost: Ghost) =>
-  ghost.knots.filter((_, index) => (REST[index]?.hold ?? 1) < 0.05);
-
-export interface GhostPaths extends FacePaths {
+interface GhostPaths extends FacePaths {
   /** The whole of it: its face and its outline. */
   body: string;
   /** Its side turned from the light: right of its middle, as it's turned. */

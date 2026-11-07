@@ -51,7 +51,7 @@ const ACT_S: Record<Act, number> = {
 const IDLE: readonly Act[] = ["preen", "chirp", "tilt", "rouse", "preen", "tilt"];
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** Which way it faces, radians: 0 to the right, a quarter turn toward the camera. */
   heading: Spring;
   /** Its body rolled (radians, + its top to its left) and pitched (+ its front up). */
@@ -97,7 +97,7 @@ interface Move {
 }
 
 /** Its wings' beat: where in it they are, the arm's stroke and the hand whipping after it. */
-export interface Wings {
+interface Wings {
   /** Wingbeats so far: the fraction is where in one they are, the downstroke first. */
   phase: number;
   /** The arm's stroke (radians, + up) and the hand's, lagging and overshooting it. */
@@ -228,7 +228,7 @@ const TAIL: Stuff = { damp: 7, drag: 0.014, keep: 0.05, keepTip: 0.012, rub: 0.5
 const clamp = (value: number, most: number) => Math.max(-most, Math.min(most, value));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
-export const createLovebird = (at: Point): Lovebird => {
+const createLovebird = (at: Point): Lovebird => {
   const seed = Math.round(at.x * 7919 + at.y * 11);
   return {
     act: "none",
@@ -848,7 +848,7 @@ const stepPlace = (bird: Lovebird, pointer: Point, dt: number) => {
   return holding;
 };
 
-export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, seconds: number) => {
+const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, seconds: number) => {
   const dt = Math.min(Math.max(0, seconds), MOST_STEP);
   bird.time += dt;
   bird.steps += 1;
@@ -883,7 +883,7 @@ export const stepLovebird = (bird: Lovebird, pointer: Point, moved: Point, secon
 const isOn = (bird: Lovebird, at: Point) =>
   Math.abs(at.x - bird.x) < 15 * SIZE && at.y < bird.y + 2 && at.y > bird.y - 30 * SIZE;
 
-export const pokeLovebird = (bird: Lovebird, at: Point) => {
+const pokeLovebird = (bird: Lovebird, at: Point) => {
   bird.still = 0;
   if (bird.riding) {
     // Perched, a click's at its feet, on whatever's under the pointer: the perch jolts, it flinches and cocks its head.

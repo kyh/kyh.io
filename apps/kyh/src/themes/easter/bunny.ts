@@ -68,7 +68,7 @@ const SIN = Math.sin(PITCH);
 export type Act = "none" | "sniff" | "groom" | "stand" | "binky" | "thump";
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** Which way it faces, radians: its hops' (kept here for what reads it). */
   heading: Spring;
   /** 0 to 1: sat up tall on its haunches, grooming, nose down sniffing, dozing, content being petted. */
@@ -167,7 +167,7 @@ const WOBBLE = { damping: 0.4, hertz: 6 } as const;
 /** A point on the screen as a spot of its ground, in its own pixels: drawn `SIZE` times bigger. */
 const groundOf = (at: Point): Spot => ({ x: at.x / SIZE, z: at.y / (SIN * SIZE) });
 
-export const createBunny = (at: Point): Bunny => {
+const createBunny = (at: Point): Bunny => {
   const seed = Math.round(at.x * 7919 + at.y * 13);
   const walker = createWalker(at, GAIT);
   // A three-quarter view, toward the camera, to begin with.
@@ -488,7 +488,7 @@ const stepLife = (bunny: Bunny, seconds: number) => {
   }
 };
 
-export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: number) => {
+const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: number) => {
   const { walker } = bunny;
   const dt = Math.max(0, seconds);
   bunny.time += dt;
@@ -519,7 +519,7 @@ export const stepBunny = (bunny: Bunny, pointer: Point, moved: Point, seconds: n
   bunny.sides = sidesOf(bunny);
 };
 
-export const pokeBunny = (bunny: Bunny, at: Point) => {
+const pokeBunny = (bunny: Bunny, at: Point) => {
   bunny.walker.still = Math.min(bunny.walker.still, 3);
   // In the air, a click goes by.
   if (bunny.act === "binky") {

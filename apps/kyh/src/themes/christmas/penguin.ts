@@ -42,7 +42,7 @@ const ACT_S: Record<Act, number> = {
 };
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** Which way it faces, radians: 0 to the right, a quarter turn toward the camera. */
   heading: Spring;
   /** Its body turned from its heading (radians, + to its left), as it preens. */
@@ -130,7 +130,7 @@ const IDLE: readonly Act[] = ["preen", "look", "look", "stretch", "jump"];
  * Its scarf's ends: soft cloth, hardly kept to where they hang, so their
  * weight and the air and their own swing do most of it, as the ghost's hem.
  */
-export const SCARF: Stuff = {
+const SCARF: Stuff = {
   damp: 2,
   drag: 0.02,
   keep: 0.005,
@@ -157,7 +157,7 @@ const STEPS: Steps = {
   top: WALK_TOP,
 };
 
-export const createPenguin = (at: Point): Penguin => {
+const createPenguin = (at: Point): Penguin => {
   const seed = Math.round(at.x * 7919 + at.y * 17);
   const walker = createWalker(at, WALK);
   // A three-quarter view, toward the camera, to begin with.
@@ -506,7 +506,7 @@ const stepLegs = (penguin: Penguin, seconds: number) => {
   walker.phase = feet.phase;
 };
 
-export const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seconds: number) => {
+const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seconds: number) => {
   const { go, rig, walker } = penguin;
   penguin.time += seconds;
   // Petted (a mouse resting on it), it stays for it; braying or jumping, it stands its ground.
@@ -536,7 +536,7 @@ export const stepPenguin = (penguin: Penguin, pointer: Point, moved: Point, seco
   stepScarf(penguin, seconds);
 };
 
-export const pokePenguin = (penguin: Penguin, at: Point) => {
+const pokePenguin = (penguin: Penguin, at: Point) => {
   penguin.walker.still = Math.min(penguin.walker.still, 3);
   if (isOn(penguin, at)) {
     if (penguin.act !== "display") {

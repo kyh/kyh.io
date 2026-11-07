@@ -51,13 +51,13 @@ import { leprechaunPose, stepPoseOf } from "./leprechaun-pose";
 const GAIT: Gait = { accel: 900, behind: 60 * SIZE, below: 34 * SIZE, stride: 26 * SIZE, top: 200 };
 
 /** A spring that overshoots and settles: what has weight swings on past and comes back. */
-export interface Wobble {
+interface Wobble {
   x: number;
   v: number;
 }
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** Which way he faces, radians: 0 to the right, a quarter turn toward the camera. */
   heading: Spring;
   /** His body leaned forward (radians, - back), and rolled toward his left. */
@@ -141,7 +141,7 @@ const DOFF = ["Top o' the mornin'!", "Top o' the mornin' to ye!"];
 const CROSS = ["Oi!", "Begorrah!"];
 const CHATTER = ["Sláinte! ☘", "Ye'll not find me pot o' gold!", "Lucky you!", "Me gold!"];
 const JIG = ["♪ diddly-dee ♪", "☘ ♪ ☘", "hup!"];
-export const PET = ["Hands off me gold!", "Paws off!"];
+const PET = ["Hands off me gold!", "Paws off!"];
 const SLEEP = ["z z z"];
 
 const JIG_S = 4;
@@ -187,7 +187,7 @@ const HAT: readonly [number, number] = [17, 0.28];
 /** His hat turning on his head: held firmer, it lags a turn and settles, never spinning round. */
 const HAT_TURN: readonly [number, number] = [17, 0.6];
 
-export const createLeprechaun = (at: Point): Leprechaun => {
+const createLeprechaun = (at: Point): Leprechaun => {
   const seed = Math.round(at.x * 7919 + at.y * 3);
   const unhung = (): Chain => createChain({ rest: [], root: at });
   const walker = createWalker(at, GAIT);
@@ -675,12 +675,7 @@ const PASSING = 180;
 /** How far the mouse moves on from a click (pixels), however slowly: farther than a hand shakes. */
 const GREETED = 12;
 
-export const stepLeprechaun = (
-  leprechaun: Leprechaun,
-  pointer: Point,
-  moved: Point,
-  elapsed: number,
-) => {
+const stepLeprechaun = (leprechaun: Leprechaun, pointer: Point, moved: Point, elapsed: number) => {
   const { walker } = leprechaun;
   const seconds = Math.min(Math.max(elapsed, 0), MOST_FRAME);
   leprechaun.time += seconds;
@@ -719,7 +714,7 @@ export const stepLeprechaun = (
   settleSides(leprechaun, posed.arms, moving);
 };
 
-export const pokeLeprechaun = (leprechaun: Leprechaun, at: Point) => {
+const pokeLeprechaun = (leprechaun: Leprechaun, at: Point) => {
   leprechaun.walker.still = Math.min(leprechaun.walker.still, 2);
   const doffing = leprechaun.act === "doff";
   if (isOn(leprechaun, at)) {

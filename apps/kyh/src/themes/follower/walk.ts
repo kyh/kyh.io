@@ -90,7 +90,7 @@ export const turnBack = (back: Point, moved: Point, reach: number): Point => {
 };
 
 /** Its stride at the speed it's going: longer the faster. */
-export const strideAt = (walker: Walker, gait: Gait) =>
+const strideAt = (walker: Walker, gait: Gait) =>
   gait.stride * (1 + Math.min(1, walker.speed / gait.top) * 0.9);
 
 /** How far to the side of the pointer it keeps at the least, of how far behind: never right under it. */
@@ -159,32 +159,6 @@ export const stepWalker = (
   walker.phase += (walker.speed * dt) / strideAt(walker, gait);
 };
 
-/** How much it's walking, 0 standing to 1 at a stride: its legs blend from standing to stepping. */
-export const pace = (walker: Walker, gait: Gait) => Math.min(1, walker.speed / (gait.top * 0.2));
-
-/** How much of a stride a foot is on the ground. */
-const STANCE = 0.6;
-
-/**
- * A foot in its stride, about where it stands at rest: back along the ground
- * as the body goes over it (as far as the body goes, so it never slips), then
- * lifted and swung forward. `offset` is when in the stride this foot steps.
- */
-export const footAt = (walker: Walker, gait: Gait, offset: number, lift: number): Point => {
-  const t = (((walker.phase + offset) % 1) + 1) % 1;
-  const reach = strideAt(walker, gait) * STANCE;
-  const amount = pace(walker, gait);
-  if (t < STANCE) {
-    return { x: (reach / 2 - (t / STANCE) * reach) * amount, y: 0 };
-  }
-  const u = (t - STANCE) / (1 - STANCE);
-  const eased = u * u * (3 - 2 * u);
-  return {
-    x: (-reach / 2 + eased * reach) * amount,
-    y: -lift * Math.sin(u * Math.PI) * amount,
-  };
-};
-
 /**
  * A two-boned limb from `hip` toward `foot`, bones `upper` and `lower` long,
  * its joint bent to one side of the line between (`bend`, 1 or -1, as the
@@ -207,34 +181,9 @@ export const limbOf = (hip: Point, foot: Point, upper: number, lower: number, be
   };
 };
 
-/** Something dangling (a wattle, a bell, ears): its angle (radians, 0 hanging straight) and how fast it swings. */
-export interface Swing {
-  angle: number;
-  spin: number;
-}
-
-/** How hard a swing's righted, a second squared, and how it's slowed, a second. */
-const SWING_STIFFNESS = 90;
-const SWING_DAMPING = 5;
-
-/** Swings it `seconds` on, carried along at `ax` (pixels a second squared): it lags the way it's carried. */
-export const stepSwing = (swing: Swing, ax: number, seconds: number) => {
-  const dt = Math.min(seconds, MOST_STEP);
-  const lag = Math.max(-1.2, Math.min(1.2, -ax / 1600));
-  swing.spin += (SWING_STIFFNESS * (lag - swing.angle) - SWING_DAMPING * swing.spin) * dt;
-  swing.angle += swing.spin * dt;
-};
-
 /** Eases `from` toward `to`, `rate` of the way a second. */
 export const approach = (from: number, to: number, rate: number, seconds: number) =>
   from + (to - from) * Math.min(1, rate * Math.min(seconds, MOST_STEP));
-
-/** Its drawn width, flipped to face its way: never quite edge on, mid-turn. */
-export const widthOf = (walker: Walker) =>
-  Math.sign(walker.turn || 1) * Math.max(0.2, Math.abs(walker.turn));
-
-/** Degrees, from radians: for an SVG rotate(). */
-export const degrees = (radians: number) => (radians * 180) / Math.PI;
 
 /** Whether a point on the screen is on a walker: within `half` of it across, and up to `tall` above its feet. */
 export const isOnWalker = (walker: Walker, at: Point, half: number, tall: number) =>

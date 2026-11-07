@@ -429,16 +429,11 @@ const tailRests = (leprechaun: Leprechaun, frame: Frame) => {
 /** The beard's point at rest, chin to tip, on the stage. */
 const beardRest = (head: Head) => BEARD.map((local) => toScreen(head.at(local)));
 
-/** Where his floppy bits hang this frame, root first, on the stage about his feet: for `leprechaun.ts` to step. */
-export const hangsOf = (leprechaun: Leprechaun) => {
-  const frame = frameOf(leprechaun);
-  return { beard: beardRest(headOf(leprechaun, frame)), tails: tailRests(leprechaun, frame) };
-};
-
 /**
  * What `leprechaun.ts` needs of his pose each step, his frame worked out
- * once: where his floppy bits hang (as `hangsOf`), and how far in front of
- * his head each arm is, raised (-9, lowered), to settle which side it's on.
+ * once: where his floppy bits hang, root first, on the stage about his feet,
+ * and how far in front of his head each arm is, raised (-9, lowered), to
+ * settle which side it's on.
  */
 export const stepPoseOf = (leprechaun: Leprechaun) => {
   const frame = frameOf(leprechaun);

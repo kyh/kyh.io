@@ -78,7 +78,7 @@ const EYE: Vec3 = [0.42, 0.34, 0.84];
 const EYE_R = 1.75;
 /** Its ears: rooted well into the top of its head, each this long, in this many links. */
 const EAR_ROOT: Vec3 = [-1.6, 3.2, 1.9];
-export const EAR_LINKS = 4;
+const EAR_LINKS = 4;
 const EAR_LENGTH = 17.5;
 /** How much each link of an ear curves back on the one before, and how far the floppier one's tip folds out. */
 const EAR_CURL = 0.07;
@@ -89,7 +89,7 @@ const EAR_NOD = 0.2;
 /** Its tail, at the top of its rump, and how far it sticks out. */
 const TAIL: Vec3 = [-11.4, 9.6, 0];
 const TAIL_OUT = 2.6;
-export const TAIL_R = 3.1;
+const TAIL_R = 3.1;
 /** Its hind feet's length, heel to toe; its hips (in its haunches), and the bones from hip to knee to heel. */
 const FOOT = 7.6;
 const HIP: Vec3 = [-6.6, 4.6, 4.2];
@@ -174,7 +174,7 @@ const bumpOf = (u: number, from: number, to: number) =>
   u > from && u < to ? Math.sin((Math.PI * (u - from)) / (to - from)) : 0;
 
 /** Where it is in its hop this frame: where on the ground, its heading, its body's rise and pitch. */
-export const hopOf = (bunny: Bunny) => {
+const hopOf = (bunny: Bunny) => {
   const place = placeOf(bunny.hopper);
   // Nose up as it pushes off, down as it lands on its forepaws.
   const pitch = 0.22 * place.size * (bumpOf(place.u, 0.06, 0.36) - bumpOf(place.u, 0.5, 0.84));
@@ -671,7 +671,7 @@ interface Geometry {
 const KEPT = new WeakMap<Bunny, { geometry: Geometry; version: number }>();
 
 /** Everything placed this frame, worked out once a step. */
-export const geometryOf = (bunny: Bunny) => {
+const geometryOf = (bunny: Bunny) => {
   const kept = KEPT.get(bunny);
   if (kept && kept.version === bunny.version) {
     return kept.geometry;

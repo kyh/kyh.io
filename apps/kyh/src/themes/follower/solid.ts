@@ -37,12 +37,6 @@ export const compose = (a: Mat3, b: Mat3): Mat3 => {
   return [apply(columns, a[0]), apply(columns, a[1]), apply(columns, a[2])];
 };
 
-export const IDENTITY: Mat3 = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
-
 /** A roll about the forward axis: positive tips its top to its left (+z). */
 export const rollOf = (angle: number): Mat3 => [
   [1, 0, 0],
@@ -120,7 +114,7 @@ export const ellipsePath = ({ angle, cx, cy, rx, ry }: Ellipse) => ellipse(cx, c
 const LIGHT = { x: -0.55, y: -0.83 };
 
 /** The ellipse moved toward the light: drawn over the shaded whole, it leaves the shade a crescent. */
-export const litOf = (outline: Ellipse, amount = 0.32): Ellipse => {
+const litOf = (outline: Ellipse, amount = 0.32): Ellipse => {
   const shift = Math.min(outline.rx, outline.ry) * amount;
   return { ...outline, cx: outline.cx + LIGHT.x * shift, cy: outline.cy + LIGHT.y * shift };
 };

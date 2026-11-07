@@ -40,12 +40,12 @@ import { trailAt } from "./dragon-trail";
 /** How many segments its body's cut into, and how many rings each spans. */
 export const SEGMENTS = 12;
 const RINGS_EACH = 2;
-export const RINGS = SEGMENTS * RINGS_EACH + 1;
+const RINGS = SEGMENTS * RINGS_EACH + 1;
 /** Pixels of trail from its head to its first ring, and between rings. */
 const FIRST = 5;
 const GAP = 4.1;
 /** Pixels of trail its body lies along, and what the trail must keep. */
-export const LENGTH = FIRST + GAP * (RINGS - 1);
+const LENGTH = FIRST + GAP * (RINGS - 1);
 export const REACH = LENGTH + 16;
 /** How thick it is at its thickest, pixels, and how far down it (0 to 1) that is. */
 const GIRTH = 5.1;
@@ -53,7 +53,7 @@ const FULLEST = 0.2;
 /** The rings its neck bends over, from its head onto the trail. */
 const NECK = 6;
 /** Which ring its swinging stretch starts at, and how many rings to a link of its chain. */
-export const TAIL_FROM = 16;
+const TAIL_FROM = 16;
 const TAIL_EACH = 2;
 /** The wave of height down its body: pixels, and pixels from crest to crest. */
 const WAVE = 5.6;
@@ -89,7 +89,7 @@ export interface Ring {
 }
 
 /** Its fins this frame: swept back by `lean`, rippling, and which rings' stand over their segment. */
-export interface Fins {
+interface Fins {
   lean: number;
   ripple: number;
   over: readonly boolean[];

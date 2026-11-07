@@ -19,7 +19,7 @@ const FADE_MS = 300;
 const POP_MS = 220;
 
 /** The box its <svg> draws, in its own pixels about where it is. */
-export interface Box {
+interface Box {
   x: number;
   y: number;
   width: number;

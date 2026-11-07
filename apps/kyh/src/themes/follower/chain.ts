@@ -51,34 +51,6 @@ export interface Stuff {
   damp: number;
 }
 
-/** Stiff, flicking back quickly: a bunny's ear, a beak's wattle. */
-export const SPRINGY: Stuff = {
-  damp: 14,
-  drag: 0.006,
-  keep: 0.05,
-  keepTip: 0.015,
-  rub: 0.4,
-  weight: 0,
-};
-/** Cloth: a scarf's end, a coat's tails, a ribbon. */
-export const CLOTH: Stuff = {
-  damp: 5,
-  drag: 0.012,
-  keep: 0.06,
-  keepTip: 0.004,
-  rub: 0.6,
-  weight: 420,
-};
-/** Flesh that hangs and jiggles: a snood, a beard. */
-export const FLOPPY: Stuff = {
-  damp: 9,
-  drag: 0.006,
-  keep: 0.1,
-  keepTip: 0.02,
-  rub: 0.5,
-  weight: 300,
-};
-
 const STEP = 1 / 120;
 /** Seconds caught up at most, after a slow frame or a hidden tab. */
 const MOST_OWED = 0.1;
@@ -244,16 +216,6 @@ export const chainAbout = (chain: Chain, origin: Point, size = 1): Point[] =>
     x: (knot.x + (chain.lead?.x ?? 0) - origin.x) / size,
     y: (knot.y + (chain.lead?.y ?? 0) - origin.y) / size,
   }));
-
-/** How far, and which way, the tip's been carried from where it hangs at rest: for a part drawn as one piece (an ear's swing). */
-export const swayOf = (chain: Chain, hang: Hang): Point => {
-  const tip = chain.knots.at(-1);
-  if (!tip) {
-    return { x: 0, y: 0 };
-  }
-  const rest = restAt(hang, chain.knots.length - 1);
-  return { x: tip.x + (chain.lead?.x ?? 0) - rest.x, y: tip.y + (chain.lead?.y ?? 0) - rest.y };
-};
 
 /**
  * A hang from where a chain lies at rest this frame, root first, about the

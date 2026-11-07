@@ -60,7 +60,7 @@ const ACT_S: Record<Act, number> = {
 const IDLE: readonly Act[] = ["snap", "shake", "puff", "gaze", "curl", "snap", "puff", "curl"];
 
 /** Each part's spring: where it's going, and how fast it gets there. */
-export interface Rig {
+interface Rig {
   /** The way its neck points, its heading smoothed: its head doesn't wag with its weave. */
   aim: Spring;
   /** Its head turned off that (radians, toward the camera +), nodded (+ up) and tipped (+ its top to its left). */
@@ -241,7 +241,7 @@ const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const emptyChain = (): Chain => ({ knots: [], owed: 0 });
 
-export const createDragon = (at: Point): Dragon => {
+const createDragon = (at: Point): Dragon => {
   const seed = Math.round(at.x * 7919 + at.y * 7);
   const heading = 0.5;
   const swim = createSwim(at.x - BEHIND, at.y / SIN, heading, REACH);
@@ -782,7 +782,7 @@ const sameStacking = (a: Stacking, b: Stacking) =>
   a.head.join(" ") === b.head.join(" ") &&
   a.legs.join(" ") === b.legs.join(" ");
 
-export const stepDragon = (dragon: Dragon, pointer: Point, moved: Point, seconds: number) => {
+const stepDragon = (dragon: Dragon, pointer: Point, moved: Point, seconds: number) => {
   const dt = Math.min(Math.max(0, seconds), MOST_STEP);
   dragon.time += dt;
   dragon.wave += dt * (1.7 + dragon.swim.speed * 0.012);
@@ -809,7 +809,7 @@ export const stepDragon = (dragon: Dragon, pointer: Point, moved: Point, seconds
   }
 };
 
-export const pokeDragon = (dragon: Dragon, at: Point) => {
+const pokeDragon = (dragon: Dragon, at: Point) => {
   dragon.still = 0;
   dragon.stir = 0;
   if (isOn(dragon, at)) {
