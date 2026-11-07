@@ -139,6 +139,7 @@ const petting = <State>(name: string, creature: Creature<State>) => {
 };
 
 petting("bunny", bunny);
+petting("dragon", dragon);
 petting("leprechaun", leprechaun);
 petting("penguin", penguin);
 petting("turkey", turkey);
