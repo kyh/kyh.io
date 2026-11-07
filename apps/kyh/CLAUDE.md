@@ -48,6 +48,27 @@ The rest is by hand:
   a missing one won't compile).
 - Keep `town` out of `index.ts`: Turbopack keeps a module's imports whole, so
   the town's drawing code would ship on every page instead of only `/showcase`.
+- A theme with something following the mouse has a `follower.tsx` (the
+  drawing) beside its pure creature (`halloween/ghost.ts`,
+  `thanksgiving/turkey.ts`, …), registry `FOLLOWERS` in `followers.ts`, keyed
+  by theme (null for none, as the default theme has), each `lazy`: a page
+  loads only the current theme's, and only once a mouse is on it
+  (`follower/index.tsx`), so a phone never loads one. Never import a follower
+  statically.
+- `follower/` is the followers' kit: `creature.ts` (the contract: create, step,
+  poke, pose), `stage.tsx` (runs one on the DOM a frame at a time, poses its
+  `data-part`s, restacks its `data-layer`s nearest last, floats its speech
+  bubble), `shaded.tsx` (a solid part drawn shaded), `walk.ts` (getting about on legs: the walker, strides, knees,
+  swinging bits), `solid.ts` (followers in the round: parts as 3D solids seen
+  from a little above, so they turn through every view; caps, depth, and the
+  critically damped springs everything eases on), `emote.ts` (what it says,
+  and its quiet between), `ink.ts`. Followers have no tests: judge them by eye.
+- All but the ghost are in the round: a behavior module (springs
+  for every part) beside a `*-pose.ts` that builds the parts in 3D and orders
+  the layers. Draw a new follower that way.
+- A follower stands about the ghost's size on screen. One drawn another size is
+  scaled by the stage's `size` (its `SIZE`), its ink and shade dots kept to
+  screen width by it, and its gait, hit box and stride in screen pixels.
 - Adding a theme: its folder, plus a line in each registry. Adding an effect: a
   field on `Theme` or `Town`, a value in each theme, a read where it shows.
 - No theme's days may run past December 31st: the calendar only looks in the
@@ -55,6 +76,9 @@ The rest is by hand:
 - Theme art (`art.ts`, drawn by `piece.tsx`) is drawn in the showcase town's
   hand: flat faces in its palette tokens, ink outlines, the shaded side in the
   darker token with the shade dots. No gradients, gloss or drop shadows.
+- The themes menu (`components/theme-bloom.tsx`, Base UI's Menu with it) is
+  lazy: the dock fetches it once the toggle's hovered or pressed, and draws it
+  from the first bloom. Never import it statically.
 - The homepage hat is pictured on the server (`themes/hat-pictures.ts` →
   `city/picture.ts`), so the page loads no town code.
 

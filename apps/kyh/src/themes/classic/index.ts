@@ -21,5 +21,4 @@ export const theme = {
   mode: null,
   name: "Light / Dark",
   tint: null,
-  trail: null,
 } as const satisfies Theme;

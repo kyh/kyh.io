@@ -9,7 +9,7 @@
 // for a frame's sake).
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
-import { ellipse, point } from "./art";
+import { ellipse, point } from "../art";
 
 interface Point {
   x: number;
@@ -32,7 +32,7 @@ export interface Mood {
 }
 
 /** What it's feeling, a frame: how fast the pointer moved (pixels), whether it's poked, and how hard it was brought up short (0 to 1). */
-export interface Cues {
+interface Cues {
   moved: number;
   poked: boolean;
   jolt: number;

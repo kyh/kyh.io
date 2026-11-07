@@ -13,6 +13,9 @@ export const PALETTE = {
   accentRed: { day: "#d9614f", night: "#ff7a66" },
   accentTeal: { day: "#3f9c97", night: "#5fd0c8" },
   accentYellow: { day: "#e9b949", night: "#ffd166" },
+  /** A turkey's feathers (the Thanksgiving follower's), and their side from the light. */
+  bronze: { day: "#7d5c40", night: "#7a5d45" },
+  bronzeShade: { day: "#644a33", night: "#634b37" },
   door: { day: "#8f9891", night: "#3a4a4f" },
   festiveGreen: { day: "#3f8f55", night: "#4fae68" },
   festiveGreenShade: { day: "#327447", night: "#3d8c53" },
@@ -129,6 +132,7 @@ export const BLACK = paint("screen");
 
 /** The tokens painted only on faces turned from the light, which take the shadow dots. */
 export const SHADE: ReadonlySet<Token> = new Set<Token>([
+  "bronzeShade",
   "festiveGreenShade",
   "festiveRedShade",
   "goldShade",

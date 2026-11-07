@@ -57,5 +57,4 @@ export const theme = {
   mode: "light",
   name: "St. Patrick's Day",
   tint: { chroma: 2, hue: 140 },
-  trail: "pieces",
 } as const satisfies Theme;

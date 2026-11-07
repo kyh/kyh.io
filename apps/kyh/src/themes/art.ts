@@ -2,8 +2,8 @@
 // the showcase draws its town (after Inkline Town): flat faces in the town's
 // palette, outlined in its ink, the side turned from the light (right of the
 // middle) in a darker color and dotted as the town's shade is. `piece.tsx`
-// draws it, wherever it shows: the easter-egg bursts, the themes menu, the
-// trail and the drift. Pure.
+// draws it, wherever it shows: the easter-egg bursts, the themes menu and the
+// drift. Pure.
 import type { Token } from "@/app/showcase/_components/city/palette";
 
 export interface Layer {
@@ -34,7 +34,8 @@ export interface Art {
   layers: readonly Layer[];
 }
 
-const round = (n: number) => Math.round(n * 100) / 100;
+/** A number to the hundredth, for a path or a transform. */
+export const round = (n: number) => Math.round(n * 100) / 100;
 
 /** A point in a path, to the hundredth. */
 export const point = (x: number, y: number) => `${round(x)} ${round(y)}`;

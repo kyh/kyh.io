@@ -52,11 +52,10 @@ export const theme = {
   ],
   corners: null,
   days: (year) => span(year, [12, 15], [12, 26]),
-  drift: "snow",
+  drift: { kind: "snow", pieces: [SNOWFLAKE] },
   glyph: SNOWFLAKE_GLYPH,
   id: "christmas",
   mode: "dark",
   name: "Christmas",
   tint: { chroma: 2, hue: 165 },
-  trail: "pieces",
 } as const satisfies Theme;

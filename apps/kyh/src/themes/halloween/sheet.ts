@@ -1,4 +1,4 @@
-// The ghost that follows a mouse about at Halloween, for `ghost.tsx`, as a
+// The ghost that follows a mouse about at Halloween, for `ghost.ts`, as a
 // soft body after saharan's bubbles: its outline is the body, a closed loop
 // of points stepped by Verlet, each edge held to its length, the area inside
 // held by pressure, and every point pulled back toward the ghost's shape
@@ -10,7 +10,7 @@
 // back under and settles. In the screen's pixels, +y down; the paths are
 // about the head. Pure (state is stepped in place, for a frame's sake).
 import type { FacePaths, Mood } from "./face";
-import { point } from "./art";
+import { point } from "../art";
 import { createMood, facePaths, stepMood } from "./face";
 
 interface Point {
@@ -198,8 +198,6 @@ const PERIMETER = sumOf(LINKS);
 /** The lift on the head's points that floats the hem's weight, so it hangs and doesn't sink. */
 const LIFT =
   (WEIGHT * sumOf(REST.map((rest) => 1 - rest.hold))) / sumOf(REST.map((rest) => rest.hold));
-
-export const POINTS = REST.length;
 
 /** The hem's cusps, right to left as the outline runs: the points nearest where each falls at rest. */
 const CUSPS = Array.from({ length: LOBES + 1 }, (_, cusp) => {
@@ -405,11 +403,7 @@ export const stepGhost = (ghost: Ghost, pointer: Point, moved: Point, seconds: n
   });
 };
 
-/** The hem's points: the loosest of the outline. */
-export const hemOf = (ghost: Ghost) =>
-  ghost.knots.filter((_, index) => (REST[index]?.hold ?? 1) < 0.05);
-
-export interface GhostPaths extends FacePaths {
+interface GhostPaths extends FacePaths {
   /** The whole of it: its face and its outline. */
   body: string;
   /** Its side turned from the light: right of its middle, as it's turned. */
