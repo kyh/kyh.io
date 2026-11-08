@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "cn": "catalog:",
-    "konva": "^10.9.0",
+    "konva": "^10.9.1",
     "lucide-react": "catalog:",
-    "motion": "^14.6.0",
+    "motion": "^14.10.1",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-konva": "^19.3.2"

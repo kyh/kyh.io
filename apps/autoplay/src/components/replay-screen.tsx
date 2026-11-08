@@ -354,7 +354,6 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
   const [playingId, setPlayingId] = useState<string | undefined>();
   /** Sessions whose file would not play; skipped rather than retried forever. */
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const playerRef = useRef<Player | undefined>(undefined);
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);
