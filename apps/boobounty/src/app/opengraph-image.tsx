@@ -16,12 +16,17 @@ export const size = { height: 630, width: 1200 };
 const assets = async () => {
   "use cache";
   cacheLife("max");
-  const [font, jar] = await Promise.all([
+  const [display, font, jar] = await Promise.all([
     // Literal paths: a computed one makes the build trace the whole project.
+    readFile(path.join(process.cwd(), "src/assets/fraunces-semibold.ttf")),
     readFile(path.join(process.cwd(), "src/assets/inter-semibold.ttf")),
     readFile(path.join(process.cwd(), "public/honeypot.png")),
   ]);
-  return { font: font.toString("base64"), jar: jar.toString("base64") };
+  return {
+    display: display.toString("base64"),
+    font: font.toString("base64"),
+    jar: jar.toString("base64"),
+  };
 };
 
 // Satori draws only a plain <img>; next/image (what the lint rule wants) can't render here.
@@ -35,7 +40,7 @@ const jarImage = (base64: string) =>
   });
 
 const OpengraphImage = async () => {
-  const { font, jar } = await assets();
+  const { display, font, jar } = await assets();
   return new ImageResponse(
     <div
       style={{
@@ -60,7 +65,15 @@ const OpengraphImage = async () => {
         }}
       >
         <div style={{ color: "#9a5200", fontSize: 30 }}>{siteConfig.name}</div>
-        <div style={{ fontSize: 46, letterSpacing: -1.2, lineHeight: 1.1, marginTop: 14 }}>
+        <div
+          style={{
+            fontFamily: "Fraunces",
+            fontSize: 50,
+            letterSpacing: -1.25,
+            lineHeight: 1.02,
+            marginTop: 14,
+          }}
+        >
           {`${siteConfig.tagline}.`}
         </div>
         <div style={{ color: "#6f6450", fontSize: 26, lineHeight: 1.35, marginTop: 20 }}>
@@ -70,7 +83,10 @@ const OpengraphImage = async () => {
     </div>,
     {
       ...size,
-      fonts: [{ data: Buffer.from(font, "base64"), name: "Inter", style: "normal", weight: 600 }],
+      fonts: [
+        { data: Buffer.from(display, "base64"), name: "Fraunces", style: "normal", weight: 600 },
+        { data: Buffer.from(font, "base64"), name: "Inter", style: "normal", weight: 600 },
+      ],
     },
   );
 };

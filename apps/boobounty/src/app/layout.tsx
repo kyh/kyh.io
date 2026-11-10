@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { siteConfig } from "@/lib/site";
@@ -7,6 +7,7 @@ import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const fraunces = Fraunces({ axes: ["opsz"], subsets: ["latin"], variable: "--font-fraunces" });
 
 const title = `${siteConfig.name}: ${siteConfig.tagline}`;
 
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
-  <html className={inter.variable} lang="en">
+  <html className={`${inter.variable} ${fraunces.variable}`} lang="en">
     <body>{children}</body>
   </html>
 );
