@@ -7,8 +7,9 @@
 //   2. The exact skills listed per repo in external-skills.json are installed
 //      globally with the bundled `skills` CLI (falls back to `npx skills`), all
 //      repos in parallel by default (throttle with KYH_SKILLS_CONCURRENCY; skip
-//      with KYH_SKILLS_NO_EXTERNAL=1). Any other skill the CLI installed from
-//      those repos is then removed, so every machine converges on the list.
+//      with KYH_SKILLS_NO_EXTERNAL=1). Any other skill the CLI installed —
+//      including from repos dropped from the list — is then removed, so every
+//      machine converges on the list.
 //   3. Non-universal agents (claude) get their own dirs symlinked to the
 //      canonical store: ~/.claude/skills/<name> -> ~/.agents/skills/<name>.
 //   4. CLAUDE.md is copied to ~/.claude/CLAUDE.md and mcp.json merged into
@@ -325,9 +326,9 @@ const addRepo = ([repo, names], bin) =>
     `added ${names.length} skills from ${repo}`,
   );
 
-// Skills the `skills` CLI installed from a curated repo that the manifest no
-// longer lists. Pruning only curated repos' skills leaves anything added from
-// elsewhere for `kyh-skills check` to flag rather than silently deleting it.
+// Skills the `skills` CLI installed that the manifest doesn't list, whether
+// their repo is still curated or was dropped. The manifest is the whole set, so
+// an ad-hoc `npx skills add` is pruned too: list it to keep it.
 const unlistedSkills = (manifest) => {
   let lock;
   try {
@@ -336,9 +337,7 @@ const unlistedSkills = (manifest) => {
     return [];
   }
   return Object.entries(lock.skills ?? {})
-    .filter(
-      ([name, meta]) => manifest.has(meta.source) && !manifest.get(meta.source).includes(name),
-    )
+    .filter(([name, meta]) => !manifest.get(meta.source)?.includes(name))
     .map(([name]) => name);
 };
 

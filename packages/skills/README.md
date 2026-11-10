@@ -10,8 +10,8 @@ directories so they're available across every project.
 npx @kyh/skills@latest install
 ```
 
-Same command for a fresh machine and for updates. `@latest` stops npx from
-reusing a cached older version.
+Same command for a fresh machine and for updates (`i` is an alias). `@latest`
+stops npx from reusing a cached older version.
 
 ```bash
 npx @kyh/skills@latest install --dry-run   # print what would change
@@ -56,9 +56,10 @@ servers are only added, never overwritten.
 On install, the CLI also installs the exact skills listed per repo in
 [`external-skills.json`](./external-skills.json) using the bundled `skills` CLI
 (`skills add <repo> -g -s <skill>... -y`; falls back to `npx skills` if
-unresolved), then removes any other skill the CLI installed from those repos.
-The file is the whole set: every machine that reinstalls converges on it, so
-removals sync too.
+unresolved), then removes any other skill the CLI installed, including every
+skill from a repo dropped from the file. The file is the whole set: every
+machine that reinstalls converges on it, so removals sync too. A skill added
+ad-hoc with `npx skills add` is removed on the next install unless listed.
 
 - Repos install all in parallel by default; throttle with `KYH_SKILLS_CONCURRENCY`.
 - Skip the whole step: `KYH_SKILLS_NO_EXTERNAL=1`.

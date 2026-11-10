@@ -1,8 +1,7 @@
 {
-  "$comment": "External skills installed on postinstall via `skills add <repo> -g -s <skill>... -y`, then any other skill from a listed repo is removed, so this file is the exact set on every machine. `unmanaged`: hand-installed skills with no repo source; the drift check tolerates them but a fresh install won't recreate them. Set KYH_SKILLS_NO_EXTERNAL=1 to skip the whole step.",
+  "$comment": "External skills installed on postinstall via `skills add <repo> -g -s <skill>... -y`, then any other skill the `skills` CLI installed is removed (dropped repos included), so this file is the exact set on every machine. `unmanaged`: hand-installed skills with no repo source; the drift check tolerates them but a fresh install won't recreate them. Set KYH_SKILLS_NO_EXTERNAL=1 to skip the whole step.",
   "skills": {
     "vercel-labs/agent-browser": ["agent-browser"],
-    "vercel/ai-elements": ["ai-elements"],
     "vercel/ai": ["ai-sdk"],
     "emilkowalski/skills": [
       "animation-vocabulary",
@@ -34,7 +33,6 @@
       "triage",
       "wayfinder"
     ],
-    "jakubkrehel/make-interfaces-feel-better": ["make-interfaces-feel-better"],
     "jakubkrehel/skills": ["better-colors", "better-typography", "better-ui"],
     "supabase/agent-skills": ["supabase-postgres-best-practices"],
     "vercel-labs/agent-skills": [
