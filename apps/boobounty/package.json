@@ -1,0 +1,31 @@
+{
+  "name": "@repo/boobounty",
+  "private": true,
+  "description": "Honeypot pentesting for AI companies",
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "dev": "next dev --turbopack -p 3006",
+    "lint": "oxlint --report-unused-disable-directives",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/three": "^0.186.0",
+    "postcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}
