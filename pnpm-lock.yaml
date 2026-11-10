@@ -278,6 +278,9 @@ importers:
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
+      three:
+        specifier: ^0.186.1
+        version: 0.186.1
     devDependencies:
       '@kyh/tsconfig':
         specifier: workspace:^
@@ -294,6 +297,9 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.3.0(@types/react@19.3.0)
+      '@types/three':
+        specifier: ^0.186.0
+        version: 0.186.0
       postcss:
         specifier: 'catalog:'
         version: 8.5.31

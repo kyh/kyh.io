@@ -15,7 +15,8 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",
@@ -23,6 +24,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@types/three": "^0.186.0",
     "postcss": "catalog:",
     "typescript": "catalog:"
   }

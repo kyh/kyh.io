@@ -1,19 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
 
-const sans = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
-const serif = Instrument_Serif({
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-instrument",
-  weight: "400",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 const title = `${siteConfig.name}: ${siteConfig.tagline}`;
 
@@ -39,11 +32,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f7f2e8",
+  themeColor: "#f5f5f7",
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
-  <html className={`${sans.variable} ${mono.variable} ${serif.variable}`} lang="en">
+  <html className={inter.variable} lang="en">
     <body>{children}</body>
   </html>
 );
