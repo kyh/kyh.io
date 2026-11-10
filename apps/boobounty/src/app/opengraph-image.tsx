@@ -60,7 +60,10 @@ const OpengraphImage = async () => {
         }}
       >
         <div style={{ color: "#9a5200", fontSize: 30 }}>{siteConfig.name}</div>
-        <div style={{ fontSize: 36, letterSpacing: -0.8, lineHeight: 1.22, marginTop: 18 }}>
+        <div style={{ fontSize: 46, letterSpacing: -1.2, lineHeight: 1.1, marginTop: 14 }}>
+          {`${siteConfig.tagline}.`}
+        </div>
+        <div style={{ color: "#6f6450", fontSize: 26, lineHeight: 1.35, marginTop: 20 }}>
           {siteConfig.description}
         </div>
       </div>

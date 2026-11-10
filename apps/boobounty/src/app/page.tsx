@@ -1,21 +1,20 @@
-import { ContactForm } from "@/components/contact-form";
 import { Honeypot } from "@/components/honeypot";
 import { siteConfig } from "@/lib/site";
 
 const Home = () => (
-  <main className="flex h-svh min-h-[560px] flex-col">
-    <section className="min-h-0 w-full flex-1">
+  <main className="relative h-svh overflow-hidden">
+    <div className="absolute inset-0">
       <Honeypot />
-    </section>
+    </div>
 
-    <section className="mx-auto w-full max-w-[760px] px-6 pt-2 pb-10 text-center sm:pb-14">
-      <h1 className="text-[21px] leading-[1.3] font-semibold tracking-[-0.015em] sm:text-[30px] sm:leading-[1.25] sm:[@media(max-height:820px)]:text-[26px]">
-        {siteConfig.description}
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto max-w-[680px] px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-center sm:pb-14">
+      <h1 className="text-[26px] leading-[1.12] font-semibold tracking-[-0.02em] sm:text-[40px]">
+        {siteConfig.tagline}.
       </h1>
-      <div className="mt-6 sm:mt-8">
-        <ContactForm />
-      </div>
-    </section>
+      <p className="mx-auto mt-3 max-w-[520px] text-[16px] leading-[1.45] text-secondary sm:mt-4 sm:text-[19px]">
+        {siteConfig.description}
+      </p>
+    </div>
   </main>
 );
 

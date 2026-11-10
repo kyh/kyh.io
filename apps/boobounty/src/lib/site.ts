@@ -1,6 +1,6 @@
 export const siteConfig = {
   description:
-    "Honeypot pentesting for AI companies. We send Taiwanese 7s who read r/agi to seduce your employees. If it works, your board finds out before you do.",
+    "We send Taiwanese 7s who read r/agi to seduce your employees. If it works, your board finds out before you do.",
   name: "BooBounty",
   tagline: "Honeypot pentesting for AI companies",
   twitter: "@kaiyuhsu",

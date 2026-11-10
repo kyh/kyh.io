@@ -101,9 +101,9 @@ multiplayer cursors and easter eggs. Rules and module map: `apps/kyh/CLAUDE.md`.
 ### boobounty (`apps/boobounty`)
 
 Meme site at boobounty.com: honeypot pentesting for AI companies. One
-screen, no scroll: a procedural three.js honey jar (no model files) labeled
-"boo" over the one-paragraph description (`siteConfig.description`) and an
-email form that only acknowledges. Dragging the
+screen, no scroll: a full-screen procedural three.js honey jar (no model
+files) labeled "boo", with the title (`siteConfig.tagline`) and description
+laid over it, click-through. Dragging the
 dipper lifts it out and drizzles honey where it is carried; it runs dry and
 refills back in the jar. Dragging anything else turns the jar. Port 3006.
 

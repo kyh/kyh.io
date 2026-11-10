@@ -42,7 +42,7 @@ const STALE_RELEASE_MS = 40;
 
 // Framing in world units around TARGET: tight like a product shot, tighter in portrait.
 const framing = (aspect: number) =>
-  aspect < 1 ? { halfHeight: 1.9, halfWidth: 1.95 } : { halfHeight: 1.95, halfWidth: 2.4 };
+  aspect < 1 ? { halfHeight: 3, halfWidth: 2.5 } : { halfHeight: 3.6, halfWidth: 3 };
 
 // The dipper lifts and drizzles a curve on its own once, to show what it does.
 const DEMO = { duration: 2.2, start: 0.9 };

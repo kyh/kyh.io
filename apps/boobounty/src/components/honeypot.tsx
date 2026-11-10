@@ -41,7 +41,7 @@ const Honeypot = () => {
   }, []);
 
   return (
-    <div className="size-full mask-b-from-90%">
+    <div className="size-full">
       {status === "failed" ? (
         <Image
           alt="A glass jar of honey with a wooden dipper resting on the rim"
