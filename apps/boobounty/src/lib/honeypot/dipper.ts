@@ -44,15 +44,7 @@ const below = (x: number, z: number) => {
  * back through the mouth to rest in the honey and refill. Coordinates are in
  * the jar's frame.
  */
-export const createDipper = ({
-  dipper,
-  rimDrip,
-  drops,
-}: {
-  dipper: Object3D;
-  rimDrip: Object3D;
-  drops: Drops;
-}) => {
+export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops }) => {
   const tip = DIPPER_TIP.clone();
   const last = tip.clone();
   const goal = new Vector3();
@@ -130,7 +122,6 @@ export const createDipper = ({
     axis.lerp(target, 1 - Math.exp(-TURN_RATE * seconds)).normalize();
     dipper.position.copy(tip);
     dipper.quaternion.setFromUnitVectors(UP, axis);
-    rimDrip.visible = tip.distanceTo(DIPPER_TIP) < 0.03;
 
     stepHoney(seconds);
     return (

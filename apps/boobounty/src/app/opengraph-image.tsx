@@ -60,20 +60,9 @@ const OpengraphImage = async () => {
         }}
       >
         <div style={{ color: "#9a5200", fontSize: 30 }}>{siteConfig.name}</div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            fontSize: 54,
-            letterSpacing: -1.5,
-            lineHeight: 1.06,
-            marginTop: 16,
-          }}
-        >
-          <div>Your weights are air-gapped.</div>
-          <div style={{ marginTop: 12 }}>Your engineers aren’t.</div>
+        <div style={{ fontSize: 36, letterSpacing: -0.8, lineHeight: 1.22, marginTop: 18 }}>
+          {siteConfig.description}
         </div>
-        <div style={{ color: "#6f6450", fontSize: 26, marginTop: 24 }}>{siteConfig.tagline}</div>
       </div>
     </div>,
     {

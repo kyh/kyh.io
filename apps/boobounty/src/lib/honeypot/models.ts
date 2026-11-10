@@ -70,6 +70,20 @@ const rib = (y: number) => {
 // The glass thickens toward the lip, as pressed jars do.
 const wall = (y: number) => 0.045 + 0.015 * smoothstep(1.6, 1.8, y);
 
+const bodyProfile = silhouette.getSpacedPoints(220);
+
+/** The radius a flat label rests at around the jar at height y: on the crests of the ribs. */
+export const labelRadiusAt = (y: number) => {
+  const above = bodyProfile.findIndex((point) => point.y >= y);
+  const a = bodyProfile[Math.max(0, above - 1)];
+  const b = bodyProfile[Math.max(0, above)];
+  if (!a || !b) {
+    return JAR_RADIUS + RIB_DEPTH;
+  }
+  const t = (y - a.y) / (b.y - a.y || 1);
+  return a.x + (b.x - a.x) * t + RIB_DEPTH;
+};
+
 const outerProfile = silhouette
   .getSpacedPoints(220)
   .map((point) => new Vector2(point.x + rib(point.y), point.y));
@@ -404,8 +418,7 @@ export const createHoneypot = () => {
     DIPPER_AXIS,
     (LIP_TOP - DIPPER_TIP.y) / DIPPER_AXIS.y,
   );
-  const rimDrip = drip(Math.atan2(rest.z, rest.x), 0.55, honeyMaterial(0.4));
-  group.add(rimDrip);
+  group.add(drip(Math.atan2(rest.z, rest.x), 0.55, honeyMaterial(0.4)));
 
-  return { dipper, grip, group, rimDrip };
+  return { dipper, grip, group };
 };

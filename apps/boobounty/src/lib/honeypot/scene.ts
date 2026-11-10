@@ -29,9 +29,11 @@ import {
 import { createDipper } from "./dipper";
 import { createHoneyDrops } from "./honey-drops";
 import { JAR_RADIUS, createHoneypot } from "./models";
+import { createSticker } from "./sticker";
 
 const BACKGROUND = "#fcf3cf";
-const TARGET = new Vector3(0, 1.2, 0);
+// The middle of the jar's body, so the jar sits at the center of the frame.
+const TARGET = new Vector3(0, 1, 0);
 const FOV = 28;
 const ELEVATION = 0.44;
 const IDLE_SPIN = 0.12;
@@ -40,7 +42,7 @@ const STALE_RELEASE_MS = 40;
 
 // Framing in world units around TARGET: tight like a product shot, tighter in portrait.
 const framing = (aspect: number) =>
-  aspect < 1 ? { halfHeight: 2.1, halfWidth: 2.2 } : { halfHeight: 1.95, halfWidth: 2.4 };
+  aspect < 1 ? { halfHeight: 1.9, halfWidth: 1.95 } : { halfHeight: 1.95, halfWidth: 2.4 };
 
 // The dipper lifts and drizzles a curve on its own once, to show what it does.
 const DEMO = { duration: 2.2, start: 0.9 };
@@ -253,7 +255,9 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   world.add(honeypot.group);
   scene.add(world);
   const drops = createHoneyDrops(world);
-  const dipper = createDipper({ dipper: honeypot.dipper, drops, rimDrip: honeypot.rimDrip });
+  const dipper = createDipper({ dipper: honeypot.dipper, drops });
+  const sticker = createSticker();
+  world.add(sticker.mesh);
 
   let dirty = true;
   const resize = () => {
@@ -514,6 +518,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
   // Compile every shader before the first frame, so the reveal doesn't stutter.
   const reveal = async () => {
+    await sticker.ready();
     await renderer.compileAsync(scene, camera);
     if (disposed) {
       return;
