@@ -1,5 +1,13 @@
 import type { Group } from "three";
-import { CylinderGeometry, LatheGeometry, Mesh, Vector2 } from "three";
+import {
+  CatmullRomCurve3,
+  CylinderGeometry,
+  LatheGeometry,
+  Mesh,
+  TubeGeometry,
+  Vector2,
+  Vector3,
+} from "three";
 
 import { HONEY_LEVEL, honeyMaterial, thinHoneyMaterial } from "./models";
 
@@ -13,7 +21,16 @@ const CREEP_SECONDS = 6;
 const MAX_PUDDLES = 160;
 // A moving stream lays a new puddle this far from the last: a drizzled line.
 const DRIZZLE_SPACING = 0.06;
-const STEER_RATE = 12;
+// Where the stream lands trails its source, as a falling rope does.
+const TRAIL_RATE = 10;
+// A thin stream falling onto a surface folds into a rope that winds into coils.
+const COIL_TURNS = 3;
+const COIL_RADIUS = 0.055;
+const COIL_SEGMENTS = 90;
+const COIL_RADIAL = 8;
+const COIL_GROW_SECONDS = 0.9;
+const COIL_SPIN = 9;
+const COIL_SINK_SECONDS = 0.7;
 
 interface Puddle {
   mesh: Mesh;
@@ -21,26 +38,40 @@ interface Puddle {
   age: number;
 }
 
+interface Coil {
+  mesh: Mesh;
+  age: number;
+  sinking: number;
+}
+
 interface Stream {
   bead: Mesh;
   thread: Mesh;
+  /** Where the honey leaves its source. */
+  source: { x: number; z: number; ground: number };
+  /** Where the stream meets the surface below, trailing the source. */
   x: number;
   z: number;
-  aim: { x: number; z: number; ground: number };
   ground: number;
   top: number;
   bottom: number;
   topSpeed: number;
   bottomSpeed: number;
+  flow: number;
   pouring: boolean;
   puddle: Puddle | "jar" | undefined;
+  coil: Coil | undefined;
 }
 
+/** A stream running from a source that can move: lands, drizzles, thins. */
 export interface Pour {
-  /** Moves the source; the stream follows and drizzles a line where it lands. */
-  steer: (x: number, z: number, from: number, intoJar: boolean) => void;
+  /**
+   * Moves the source to (x, from, z); `flow` (0 to 1) thins the stream as
+   * its source runs dry. `intoJar` lands it on the jar's honey, not the floor.
+   */
+  steer: (x: number, z: number, from: number, intoJar: boolean, flow: number) => void;
+  /** Stops the flow at its source; what is in the air still falls. */
   release: () => void;
-  cancel: () => void;
 }
 
 const sphereVolume = (radius: number) => (4 / 3) * Math.PI * radius ** 3;
@@ -78,6 +109,27 @@ const puddleGeometry = () => {
   return geometry;
 };
 
+// Turns that tighten and stack as they lay, rising a rope's width per turn.
+const coilGeometry = () => {
+  const points = Array.from({ length: COIL_TURNS * 16 + 1 }, (_, index) => {
+    const t = index / (COIL_TURNS * 16);
+    const angle = t * COIL_TURNS * Math.PI * 2;
+    const radius = COIL_RADIUS * (1 - 0.35 * t);
+    return new Vector3(
+      Math.cos(angle) * radius,
+      t * COIL_TURNS * THREAD * 1.3,
+      Math.sin(angle) * radius,
+    );
+  });
+  return new TubeGeometry(
+    new CatmullRomCurve3(points),
+    COIL_SEGMENTS,
+    THREAD * 0.75,
+    COIL_RADIAL,
+    false,
+  );
+};
+
 // A drop pulls a tail up into the thread it fell from.
 const teardrop = () =>
   new LatheGeometry(
@@ -94,13 +146,15 @@ const teardrop = () =>
     32,
   );
 
-/** Honey you pour: a thread from above that pools, merges and creeps where it lands. */
+/** Honey that runs from a moving source: a thread that pools, drizzles, merges and creeps. */
 export const createHoneyDrops = (world: Group) => {
   const beadGeometry = teardrop();
   // Thinner at the bottom: the stream speeds up as it falls.
   const threadGeometry = new CylinderGeometry(1, 0.55, 1, 12, 1, true).translate(0, 0.5, 0);
   const material = honeyMaterial(0.9);
   const puddleMaterial = thinHoneyMaterial();
+  const up = new Vector3(0, 1, 0);
+  const along = new Vector3();
   let streams: Stream[] = [];
   let puddles: Puddle[] = [];
 
@@ -137,11 +191,56 @@ export const createHoneyDrops = (world: Group) => {
     return puddle;
   };
 
-  const removeStream = (stream: Stream) => {
-    world.remove(stream.bead, stream.thread);
+  const removeCoil = (stream: Stream) => {
+    if (stream.coil) {
+      world.remove(stream.coil.mesh);
+      stream.coil.mesh.geometry.dispose();
+      stream.coil = undefined;
+    }
   };
 
-  /** Starts pouring at (x, z) from height `from`. Release stops the flow at its source. */
+  const removeStream = (stream: Stream) => {
+    world.remove(stream.bead, stream.thread);
+    removeCoil(stream);
+  };
+
+  const surfaceUnder = (stream: Stream) =>
+    stream.puddle === "jar" || stream.puddle === undefined
+      ? stream.ground
+      : stream.puddle.mesh.position.y + stream.puddle.mesh.scale.y * 0.8;
+
+  // Grows the coil while honey still runs into it; sinks it once the thread is gone.
+  const stepCoil = (stream: Stream, seconds: number, running: boolean) => {
+    if (!stream.coil && running && stream.puddle !== undefined) {
+      const mesh = new Mesh(coilGeometry(), material);
+      mesh.geometry.setDrawRange(0, 0);
+      world.add(mesh);
+      stream.coil = { age: 0, mesh, sinking: 0 };
+    }
+    const { coil } = stream;
+    if (!coil) {
+      return false;
+    }
+    if (running) {
+      coil.age += seconds;
+      coil.mesh.rotation.y -= COIL_SPIN * seconds;
+    } else {
+      coil.sinking += seconds;
+    }
+    const grown = Math.min(1, coil.age / COIL_GROW_SECONDS);
+    coil.mesh.geometry.setDrawRange(0, Math.floor(grown * COIL_SEGMENTS) * COIL_RADIAL * 6);
+    const left = 1 - coil.sinking / COIL_SINK_SECONDS;
+    if (left <= 0) {
+      removeCoil(stream);
+      return false;
+    }
+    const width = Math.sqrt(stream.flow);
+    coil.mesh.scale.set(width, left * width, width);
+    coil.mesh.position.set(stream.x, surfaceUnder(stream) - (1 - left) * THREAD, stream.z);
+    return true;
+  };
+
+  /** Starts a stream from (x, from, z). */
   const pour = (x: number, z: number, from: number, intoJar: boolean): Pour => {
     const bead = new Mesh(beadGeometry, material);
     const thread = new Mesh(threadGeometry, material);
@@ -152,13 +251,15 @@ export const createHoneyDrops = (world: Group) => {
     world.add(bead, thread);
     const ground = intoJar ? HONEY_LEVEL : 0;
     const stream: Stream = {
-      aim: { ground, x, z },
       bead,
       bottom: from,
       bottomSpeed: 0,
+      coil: undefined,
+      flow: 1,
       ground,
       pouring: true,
       puddle: undefined,
+      source: { ground, x, z },
       thread,
       top: from,
       topSpeed: 0,
@@ -167,36 +268,30 @@ export const createHoneyDrops = (world: Group) => {
     };
     streams.push(stream);
     return {
-      cancel: () => {
-        if (stream.puddle === undefined) {
-          removeStream(stream);
-          streams = streams.filter((other) => other !== stream);
-        } else {
-          stream.pouring = false;
-        }
-      },
       release: () => {
         stream.pouring = false;
       },
-      steer: (toX, toZ, toFrom, toJar) => {
+      steer: (toX, toZ, toFrom, toJar, flow) => {
         if (stream.pouring) {
-          stream.aim = { ground: toJar ? HONEY_LEVEL : 0, x: toX, z: toZ };
+          stream.source = { ground: toJar ? HONEY_LEVEL : 0, x: toX, z: toZ };
           stream.top = toFrom;
+          stream.flow = Math.max(0.05, Math.min(1, flow));
         }
       },
     };
   };
 
-  const follow = (stream: Stream, seconds: number) => {
-    const k = 1 - Math.exp(-STEER_RATE * seconds);
-    stream.x += (stream.aim.x - stream.x) * k;
-    stream.z += (stream.aim.z - stream.z) * k;
+  const trail = (stream: Stream, seconds: number) => {
+    const k = 1 - Math.exp(-TRAIL_RATE * seconds);
+    stream.x += (stream.source.x - stream.x) * k;
+    stream.z += (stream.source.z - stream.z) * k;
     if (stream.puddle === undefined) {
-      stream.ground = stream.aim.ground;
+      stream.ground = stream.source.ground;
       return;
     }
-    if (stream.aim.ground !== stream.ground) {
-      stream.ground = stream.aim.ground;
+    if (stream.source.ground !== stream.ground) {
+      removeCoil(stream);
+      stream.ground = stream.source.ground;
       stream.bottom = stream.ground;
       stream.puddle =
         stream.ground > 0 ? "jar" : land(stream.x, stream.z, sphereVolume(THREAD * 2), true);
@@ -208,13 +303,18 @@ export const createHoneyDrops = (world: Group) => {
       Math.hypot(puddle.mesh.position.x - stream.x, puddle.mesh.position.z - stream.z) >
         DRIZZLE_SPACING
     ) {
-      stream.puddle = land(stream.x, stream.z, sphereVolume(THREAD * 1.6), false);
+      stream.puddle = land(
+        stream.x,
+        stream.z,
+        sphereVolume(THREAD * 1.6 * Math.sqrt(stream.flow)),
+        false,
+      );
     }
   };
 
   const stepStream = (stream: Stream, seconds: number) => {
     if (stream.pouring) {
-      follow(stream, seconds);
+      trail(stream, seconds);
     }
     if (stream.puddle === undefined) {
       stream.bottomSpeed += GRAVITY * seconds;
@@ -235,18 +335,29 @@ export const createHoneyDrops = (world: Group) => {
       const { puddle } = stream;
       puddle.radius = Math.min(
         MAX_VOLUME_RADIUS,
-        volumeRadius(sphereVolume(puddle.radius) + FEED * seconds),
+        volumeRadius(sphereVolume(puddle.radius) + FEED * stream.flow * seconds),
       );
       puddle.age = Math.min(puddle.age, SQUASH_SECONDS + 0.6);
     }
     const stretch = 1 + Math.min(stream.bottomSpeed * 0.04, 0.6);
     stream.bead.position.set(stream.x, stream.bottom + BEAD, stream.z);
-    stream.thread.position.x = stream.x;
-    stream.thread.position.z = stream.z;
     stream.bead.scale.set(BEAD / Math.sqrt(stretch), BEAD * stretch, BEAD / Math.sqrt(stretch));
-    stream.thread.position.y = stream.bottom + (stream.puddle === undefined ? BEAD * 2 : 0);
-    stream.thread.scale.set(THREAD, Math.max(0.0001, length), THREAD);
-    return stream.top > stream.ground;
+    // The thread hangs from the source to where it lands, so it leans as the source moves.
+    const base = stream.bottom + (stream.puddle === undefined ? BEAD * 2 : 0);
+    stream.thread.position.set(stream.x, base, stream.z);
+    along.set(
+      stream.source.x - stream.x,
+      Math.max(0, stream.top - base),
+      stream.source.z - stream.z,
+    );
+    const span = along.length();
+    if (span > 1e-4) {
+      stream.thread.quaternion.setFromUnitVectors(up, along.divideScalar(span));
+    }
+    const width = THREAD * Math.sqrt(stream.flow);
+    stream.thread.scale.set(width, length > 0 ? Math.max(0.0001, span) : 0.0001, width);
+    const coiling = stepCoil(stream, seconds, length > 0);
+    return stream.top > stream.ground || coiling;
   };
 
   const update = (seconds: number) => {

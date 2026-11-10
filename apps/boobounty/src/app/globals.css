@@ -2,11 +2,11 @@
 
 :root {
   color-scheme: light;
-  --background: #f5f5f7;
+  --background: #fcf3cf;
   --foreground: #1d1d1f;
-  --secondary: #6e6e73;
-  --line: #d2d2d7;
-  --honey: #a85a00;
+  --secondary: #6f6450;
+  --line: #e6d9a8;
+  --honey: #9a5200;
 }
 
 @theme inline {
@@ -24,7 +24,7 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
   ::selection {
-    background: #ffd27a;
+    background: #f6c75a;
   }
   h1,
   h2 {

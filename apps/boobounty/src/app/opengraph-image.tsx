@@ -30,7 +30,7 @@ const jarImage = (base64: string) =>
     alt: "",
     height: 630,
     src: `data:image/png;base64,${base64}`,
-    style: { left: -250, position: "absolute", top: 0 },
+    style: { left: -330, position: "absolute", top: 0 },
     width: 1135,
   });
 
@@ -40,7 +40,7 @@ const OpengraphImage = async () => {
     <div
       style={{
         alignItems: "center",
-        background: "#f5f5f7",
+        background: "#fcf3cf",
         color: "#1d1d1f",
         display: "flex",
         fontFamily: "Inter",
@@ -59,7 +59,7 @@ const OpengraphImage = async () => {
           width: 500,
         }}
       >
-        <div style={{ color: "#a85a00", fontSize: 30 }}>{siteConfig.name}</div>
+        <div style={{ color: "#9a5200", fontSize: 30 }}>{siteConfig.name}</div>
         <div
           style={{
             display: "flex",
@@ -73,7 +73,7 @@ const OpengraphImage = async () => {
           <div>Your weights are air-gapped.</div>
           <div style={{ marginTop: 12 }}>Your engineers aren’t.</div>
         </div>
-        <div style={{ color: "#6e6e73", fontSize: 26, marginTop: 24 }}>{siteConfig.tagline}</div>
+        <div style={{ color: "#6f6450", fontSize: 26, marginTop: 24 }}>{siteConfig.tagline}</div>
       </div>
     </div>,
     {

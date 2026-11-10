@@ -100,14 +100,16 @@ multiplayer cursors and easter eggs. Rules and module map: `apps/kyh/CLAUDE.md`.
 
 ### boobounty (`apps/boobounty`)
 
-Meme site at boobounty.com: honeypot pentesting for AI companies. One page:
-a procedural three.js honey jar (no model files) over a short description and
-an email form that only acknowledges. Drag turns the jar, a tap drops honey
-that spreads into puddles. Port 3006.
+Meme site at boobounty.com: honeypot pentesting for AI companies. One
+screen, no scroll: a procedural three.js honey jar (no model files) over a
+short description and an email form that only acknowledges. Dragging the
+dipper lifts it out and drizzles honey where it is carried; it runs dry and
+refills back in the jar. Dragging anything else turns the jar. Port 3006.
 
 - `src/lib/honeypot/models.ts` - jar, honey, dipper, drip geometry and materials
-- `src/lib/honeypot/scene.ts` - renderer, lights, input, loop, teardown
-- `src/lib/honeypot/honey-drops.ts` - falling drops and puddles
+- `src/lib/honeypot/scene.ts` - renderer, lights, input, opening drizzle, loop, teardown
+- `src/lib/honeypot/dipper.ts` - carrying the dipper: lift, follow, lean, return, its load
+- `src/lib/honeypot/honey-drops.ts` - the stream, its coil, drizzled puddles
 - Three can't show one transmissive mesh through another, so the honey
   refracts and the glass is a transparent shell with a fresnel shader.
 - `public/honeypot.png` is a capture of the canvas: the no-WebGL fallback and

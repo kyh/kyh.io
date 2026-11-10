@@ -3,10 +3,12 @@ import {
   CatmullRomCurve3,
   Color,
   CustomBlending,
+  CylinderGeometry,
   DoubleSide,
   Group,
   LatheGeometry,
   Mesh,
+  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   OneFactor,
@@ -320,8 +322,8 @@ export const honeyMaterial = (thickness: number) => {
  */
 export const thinHoneyMaterial = () =>
   new MeshPhysicalMaterial({
-    attenuationColor: new Color("#c8761a"),
-    attenuationDistance: 0.05,
+    attenuationColor: new Color("#bd6510"),
+    attenuationDistance: 0.032,
     color: new Color("#ffcf7a"),
     ior: 1.49,
     roughness: 0.04,
@@ -359,8 +361,11 @@ const glassMaterial = () => {
   return material;
 };
 
-const DIPPER_TIP = new Vector3(-0.55, 1.05, -0.1);
-const DIPPER_AXIS = new Vector3(0.8, 0.55, 0.25).normalize();
+export const DIPPER_TIP = new Vector3(-0.55, 1.05, -0.1);
+export const DIPPER_AXIS = new Vector3(0.8, 0.55, 0.25).normalize();
+const DIPPER_LENGTH = 2.9;
+// The handle is thinner than a fingertip; grabbing it uses a fatter, unseen stand-in.
+const DIPPER_GRIP_RADIUS = 0.3;
 
 /** The jar, its honey, the dipper resting on the rim and a drip under it. */
 export const createHoneypot = () => {
@@ -381,7 +386,15 @@ export const createHoneypot = () => {
     new MeshStandardMaterial({ bumpMap: grain, bumpScale: 0.4, map: grain, roughness: 0.55 }),
   );
   wood.castShadow = true;
-  dipper.add(wood, new Mesh(dipperCoatGeometry(), honeyMaterial(0.3)));
+  const grip = new Mesh(
+    new CylinderGeometry(DIPPER_GRIP_RADIUS, DIPPER_GRIP_RADIUS, DIPPER_LENGTH, 8).translate(
+      0,
+      DIPPER_LENGTH / 2,
+      0,
+    ),
+    new MeshBasicMaterial({ visible: false }),
+  );
+  dipper.add(wood, new Mesh(dipperCoatGeometry(), honeyMaterial(0.3)), grip);
   dipper.position.copy(DIPPER_TIP);
   dipper.quaternion.copy(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), DIPPER_AXIS));
   group.add(dipper);
@@ -391,7 +404,8 @@ export const createHoneypot = () => {
     DIPPER_AXIS,
     (LIP_TOP - DIPPER_TIP.y) / DIPPER_AXIS.y,
   );
-  group.add(drip(Math.atan2(rest.z, rest.x), 0.55, honeyMaterial(0.4)));
+  const rimDrip = drip(Math.atan2(rest.z, rest.x), 0.55, honeyMaterial(0.4));
+  group.add(rimDrip);
 
-  return group;
+  return { dipper, grip, group, rimDrip };
 };
