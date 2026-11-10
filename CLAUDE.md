@@ -98,6 +98,14 @@ Main website, and the agent-facing surface (`/markdown`, `/llms.txt`, JSON-LD).
 Also `/showcase`, a three.js town of the projects, and site-wide theming,
 multiplayer cursors and easter eggs. Rules and module map: `apps/kyh/CLAUDE.md`.
 
+### boobounty (`apps/boobounty`)
+
+Meme site at boobounty.com: honeypot pentesting for AI companies. Static
+Next.js + Tailwind v4, one page. The contact form only acknowledges; nothing
+is sent. The distracted-boyfriend meme is redrawn as SVG in
+`src/components/love-triangle.tsx` (the stock photo is licensed, so never
+embed it). Port 3006.
+
 ### policingice (`apps/policingice`)
 
 Crowdsourced ICE incident documentation. Next.js, Drizzle + Turso, better-auth.

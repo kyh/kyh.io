@@ -4,7 +4,13 @@ import core from "ultracite/oxlint/core";
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
-const nextApps = ["apps/autoplay/**", "apps/kyh/**", "apps/policingice/**", "apps/stonksville/**"];
+const nextApps = [
+  "apps/autoplay/**",
+  "apps/boobounty/**",
+  "apps/kyh/**",
+  "apps/policingice/**",
+  "apps/stonksville/**",
+];
 
 export default defineConfig({
   extends: [core, react, antiSlop],

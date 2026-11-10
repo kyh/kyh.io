@@ -12,6 +12,7 @@ Personal monorepo. Uses pnpm workspaces + Turborepo.
 | [kwadrants](apps/kwadrants)     | 2x2 matrix canvas editor                | React, Konva, Vite           |
 | [policingice](apps/policingice) | Crowdsourced ICE incident documentation | Next.js, Drizzle, Turso      |
 | [stonksville](apps/stonksville) | Trading chart game                      | Next.js, Canvas              |
+| [boobounty](apps/boobounty)     | Honeypot pentesting for AI companies    | Next.js                      |
 | [tc](apps/tc)                   | Total compensation calculator           | React, Visx, Vite            |
 | [covid-19](apps/covid-19)       | COVID-19 tracking dashboard             | React, D3, Vite              |
 | [vis-ml](apps/vis-ml)           | Interactive ML visualizations           | React, TypeScript, SVG, Vite |
