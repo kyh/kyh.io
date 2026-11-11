@@ -104,8 +104,8 @@ Meme site at boobounty.com: honeypot pentesting for AI companies, laid out
 as a tabloid ad (blackletter masthead, Anton headlines, Fraunces text, Plex
 Mono labels, rules and columns; copy lives in `src/app/page.tsx`). In the
 description, "Taiwanese 7s" and "r/agi" open hover cards
-(`src/components/standfirst.tsx`, Base UI popovers); `public/agent.jpg` is
-a generated photo of a fictional person. The lead
+(`src/components/standfirst.tsx`, Base UI popovers); `public/agent-*.jpg`
+are generated photos of fictional people, shown in rotation. The lead
 photo is a procedural three.js honey jar (no model files) labeled "boo".
 Dragging the dipper lifts it out and drizzles honey where it is carried; it
 runs dry and refills back in the jar. Dragging anything else turns the jar.
