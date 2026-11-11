@@ -100,12 +100,13 @@ multiplayer cursors and easter eggs. Rules and module map: `apps/kyh/CLAUDE.md`.
 
 ### boobounty (`apps/boobounty`)
 
-Meme site at boobounty.com: honeypot pentesting for AI companies. One
-screen, no scroll: a full-screen procedural three.js honey jar (no model
-files) labeled "boo", with the title (`siteConfig.tagline`) and description
-laid over it, click-through. Dragging the
-dipper lifts it out and drizzles honey where it is carried; it runs dry and
-refills back in the jar. Dragging anything else turns the jar. Port 3006.
+Meme site at boobounty.com: honeypot pentesting for AI companies, laid out
+as a tabloid ad (blackletter masthead, Anton headlines, Fraunces text, Plex
+Mono labels, rules and columns; copy lives in `src/app/page.tsx`). The lead
+photo is a procedural three.js honey jar (no model files) labeled "boo".
+Dragging the dipper lifts it out and drizzles honey where it is carried; it
+runs dry and refills back in the jar. Dragging anything else turns the jar.
+Port 3006.
 
 - `src/lib/honeypot/models.ts` - jar, honey, dipper, drip geometry and materials
 - `src/lib/honeypot/scene.ts` - renderer, lights, input, opening drizzle, loop, teardown

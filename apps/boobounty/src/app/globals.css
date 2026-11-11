@@ -6,6 +6,7 @@
   --foreground: #1d1d1f;
   --secondary: #6f6450;
   --honey: #9a5200;
+  --red: #c41e1a;
 }
 
 @theme inline {
@@ -13,13 +14,16 @@
   --color-foreground: var(--foreground);
   --color-secondary: var(--secondary);
   --color-honey: var(--honey);
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
+  --color-red: var(--red);
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-headline: var(--font-anton), Impact, sans-serif;
+  --font-masthead: var(--font-blackletter), serif;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-serif antialiased;
   }
   ::selection {
     background: #f6c75a;

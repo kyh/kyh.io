@@ -2,7 +2,7 @@
 
 > Honeypot pentesting for AI companies.
 
-A meme site. Taiwanese 7s who read r/agi try to seduce your staff; if it works, your board hears about it. One screen: a honey jar you can turn, and a dipper you carry to drizzle honey around it.
+A meme site. Taiwanese 7s who read r/agi try to seduce your staff; if it works, your board hears about it. A tabloid ad: a newspaper page whose lead photo is a honey jar you can turn, with a dipper you carry to drizzle honey around it.
 
 Live at [boobounty.com](https://www.boobounty.com).
 

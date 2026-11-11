@@ -48,7 +48,7 @@ const Honeypot = () => {
           className="object-contain"
           fill
           priority
-          sizes="100vw"
+          sizes="(min-width: 1024px) 58vw, 100vw"
           src="/honeypot.png"
         />
       ) : (

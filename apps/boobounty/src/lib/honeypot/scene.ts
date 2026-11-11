@@ -40,9 +40,10 @@ const IDLE_SPIN = 0.12;
 const VELOCITY_WINDOW_MS = 80;
 const STALE_RELEASE_MS = 40;
 
-// Framing in world units around TARGET: tight like a product shot, tighter in portrait.
+// Framing in world units around TARGET: tight like a product shot, with room
+// above for the carried dipper and around for its drizzle.
 const framing = (aspect: number) =>
-  aspect < 1 ? { halfHeight: 3, halfWidth: 2.5 } : { halfHeight: 3.6, halfWidth: 3 };
+  aspect < 1 ? { halfHeight: 2.8, halfWidth: 2.4 } : { halfHeight: 3.2, halfWidth: 2.8 };
 
 // The dipper lifts and drizzles a curve on its own once, to show what it does.
 const DEMO = { duration: 2.2, start: 0.9 };
