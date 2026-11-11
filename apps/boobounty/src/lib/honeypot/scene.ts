@@ -26,7 +26,9 @@ import {
   WebGLRenderer,
 } from "three";
 
+import { createBadge, onBadge } from "./badge";
 import { createDipper } from "./dipper";
+import { createHalftone } from "./halftone";
 import { createHoneyDrops } from "./honey-drops";
 import { JAR_RADIUS, createHoneypot } from "./models";
 import { createSticker } from "./sticker";
@@ -36,14 +38,19 @@ const BACKGROUND = "#fcf3cf";
 const TARGET = new Vector3(0, 1, 0);
 const FOV = 28;
 const ELEVATION = 0.44;
-const IDLE_SPIN = 0.12;
+// Left alone, the jar sways around its front, label to the viewer, then settles.
+const SWAY = { after: 1.5, amplitude: 0.32, fade: 3, period: 9, rate: 1.4, seconds: 12 };
+// Honey on Kevin's badge this long is a story.
+const EXPOSURE_SECONDS = 0.45;
+// A touch held this still this long on the dipper picks it up instead of scrolling.
+const TOUCH_HOLD_MS = 160;
 const VELOCITY_WINDOW_MS = 80;
 const STALE_RELEASE_MS = 40;
 
 // Framing in world units around TARGET: tight like a product shot, with room
 // above for the carried dipper and around for its drizzle.
 const framing = (aspect: number) =>
-  aspect < 1 ? { halfHeight: 2.8, halfWidth: 2.4 } : { halfHeight: 3.2, halfWidth: 2.8 };
+  aspect < 1 ? { halfHeight: 2.6, halfWidth: 2.3 } : { halfHeight: 2.45, halfWidth: 2.6 };
 
 // The dipper lifts and drizzles a curve on its own once, to show what it does.
 const DEMO = { duration: 2.2, start: 0.9 };
@@ -60,6 +67,10 @@ export interface HoneypotEvents {
   onReady: () => void;
   /** The GPU dropped the context; the canvas is dead. */
   onLost: () => void;
+  /** Someone picked the dipper up, or put it down. */
+  onCarry: (held: boolean) => void;
+  /** Someone got honey on Kevin's badge. Fires once. */
+  onExposed: () => void;
 }
 
 // A softbox's light falls off toward its edges; a hard-edged panel stamps a
@@ -201,6 +212,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   scene.environmentIntensity = 0.9;
 
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 100);
+  const print = createHalftone(renderer, BACKGROUND);
 
   // Backlit, so the honey's glow and shadow fall toward the viewer.
   const sun = new DirectionalLight("#fff6ea", 2.2);
@@ -259,6 +271,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   const dipper = createDipper({ dipper: honeypot.dipper, drops });
   const sticker = createSticker();
   world.add(sticker.mesh);
+  world.add(createBadge());
 
   let dirty = true;
   const resize = () => {
@@ -268,8 +281,10 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     const { halfHeight, halfWidth } = framing(aspect);
     const tan = Math.tan((FOV * Math.PI) / 360);
     const distance = Math.max(halfHeight / tan, halfWidth / (tan * aspect));
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
+    print.setSize(width, height, pixelRatio);
     camera.aspect = aspect;
     camera.position.set(
       0,
@@ -279,7 +294,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     camera.lookAt(TARGET);
     camera.updateProjectionMatrix();
     // setSize clears the drawing buffer; draw now rather than show a blank frame.
-    renderer.render(scene, camera);
+    print.render(scene, camera);
     dirty = true;
   };
   resize();
@@ -312,10 +327,13 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   };
 
   let spin = 0;
-  let idleDirection = 1;
   let idleFor = 0;
   let press: Press | undefined;
-  let demo: number | undefined = DEMO.start;
+  // Waits until the picture is properly in view; skipped for reduced motion.
+  let demo: number | undefined;
+  let demoPending = true;
+  let exposure = 0;
+  let touchedAt: number | undefined;
 
   const unitsPerPixel = () =>
     (2 * camera.position.distanceTo(TARGET) * Math.tan((FOV * Math.PI) / 360)) /
@@ -337,6 +355,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       dipper.drop();
     }
     demo = undefined;
+    demoPending = false;
   };
 
   const endPress = (event?: PointerEvent) => {
@@ -345,6 +364,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     }
     if (press.carryFrom) {
       dipper.drop();
+      events.onCarry(false);
     } else if (event) {
       const recent = press.samples.filter(
         (sample) => event.timeStamp - sample.t < VELOCITY_WINDOW_MS,
@@ -356,7 +376,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
         oldest && newest && fresh && newest.t > oldest.t
           ? ((newest.x - oldest.x) / ((newest.t - oldest.t) / 1000)) * radiansPerPixel()
           : 0;
-      idleDirection = Math.sign(spin) || idleDirection;
     }
     press = undefined;
     idleFor = 0;
@@ -374,6 +393,8 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     if (carryFrom) {
       const point = carryTo(carryFrom, 0, 0);
       dipper.lift(point.x, point.z);
+      dipper.hover(false);
+      events.onCarry(true);
     }
     press = {
       carryFrom,
@@ -388,6 +409,10 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   };
 
   const onPointerMove = (event: PointerEvent) => {
+    if (!press && event.pointerType === "mouse") {
+      dipper.hover(onDipper(event.clientX, event.clientY));
+      return;
+    }
     if (!press || press.id !== event.pointerId) {
       return;
     }
@@ -413,11 +438,19 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     }
   };
   const onPointerLost = () => endPress();
+  const onPointerLeave = () => dipper.hover(false);
 
-  // A touch on the dipper carries it; keep the page from scrolling under it.
+  // A swipe that starts on the dipper still scrolls the page; a touch held on
+  // it first carries it, and from then on the page stays put.
   const onTouchStart = (event: TouchEvent) => {
     const [touch] = event.touches;
-    if (touch && event.touches.length === 1 && onDipper(touch.clientX, touch.clientY)) {
+    touchedAt =
+      touch && event.touches.length === 1 && onDipper(touch.clientX, touch.clientY)
+        ? event.timeStamp
+        : undefined;
+  };
+  const onTouchMove = (event: TouchEvent) => {
+    if (touchedAt !== undefined && event.timeStamp - touchedAt >= TOUCH_HOLD_MS) {
       event.preventDefault();
     }
   };
@@ -426,7 +459,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       spin += event.key === "ArrowLeft" ? -1.5 : 1.5;
-      idleDirection = Math.sign(spin) || idleDirection;
       idleFor = 0;
     } else if ((event.key === "Enter" || event.key === " ") && !dipper.held()) {
       event.preventDefault();
@@ -445,7 +477,9 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointercancel", onPointerLost);
   canvas.addEventListener("lostpointercapture", onPointerLost);
-  canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+  canvas.addEventListener("pointerleave", onPointerLeave);
+  canvas.addEventListener("touchstart", onTouchStart, { passive: true });
+  canvas.addEventListener("touchmove", onTouchMove, { passive: false });
   canvas.addEventListener("keydown", onKeyDown);
   canvas.addEventListener("webglcontextlost", onContextLost);
 
@@ -480,51 +514,73 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
     stepDemo(seconds);
 
-    let idle = 0;
+    let swaying = false;
     if (!press) {
       spin *= Math.exp(-seconds * 3);
+      world.rotation.y += spin * seconds;
       if (Math.abs(spin) < 0.05) {
         idleFor += seconds;
       }
-      idle = reducedMotion
-        ? 0
-        : idleDirection * IDLE_SPIN * Math.min(1, Math.max(0, idleFor - 1.5));
-      world.rotation.y += (spin + idle) * seconds;
+      const t = idleFor - SWAY.after;
+      if (!reducedMotion && t > 0 && t < SWAY.seconds + SWAY.fade + 4) {
+        const ramp =
+          Math.min(1, t) * Math.min(1, Math.max(0, (SWAY.seconds + SWAY.fade - t) / SWAY.fade));
+        const front = Math.round(world.rotation.y / (Math.PI * 2)) * Math.PI * 2;
+        const goal = front + SWAY.amplitude * ramp * Math.sin((Math.PI * 2 * t) / SWAY.period);
+        world.rotation.y += (goal - world.rotation.y) * (1 - Math.exp(-SWAY.rate * seconds));
+        swaying = Math.abs(goal - world.rotation.y) > 1e-4 || ramp > 0;
+      }
     }
 
     const carried = dipper.update(seconds, world.rotation.y);
     drops.update(seconds);
+    if (press?.carryFrom && exposure < EXPOSURE_SECONDS && dipper.pouring()) {
+      const tip = dipper.tip();
+      if (onBadge(tip.x, tip.z)) {
+        exposure += seconds;
+        if (exposure >= EXPOSURE_SECONDS) {
+          events.onExposed();
+        }
+      }
+    }
     const moving =
       press !== undefined ||
       demo !== undefined ||
       carried ||
       Math.abs(spin) > 1e-3 ||
-      idle !== 0 ||
+      swaying ||
       drops.active();
     if (moving || dirty) {
-      renderer.render(scene, camera);
+      print.render(scene, camera);
       dirty = false;
     }
   };
 
   let disposed = false;
-  const visibility = new IntersectionObserver(([entry]) => {
-    if (entry?.isIntersecting) {
-      last = performance.now();
-      renderer.setAnimationLoop(frame);
-    } else {
-      renderer.setAnimationLoop(null);
-    }
-  });
+  const visibility = new IntersectionObserver(
+    ([entry]) => {
+      if (entry?.isIntersecting) {
+        last = performance.now();
+        renderer.setAnimationLoop(frame);
+      } else {
+        renderer.setAnimationLoop(null);
+      }
+      if (demoPending && !reducedMotion && entry && entry.intersectionRatio >= 0.6) {
+        demoPending = false;
+        demo = DEMO.start;
+      }
+    },
+    { threshold: [0, 0.6] },
+  );
 
   // Compile every shader before the first frame, so the reveal doesn't stutter.
   const reveal = async () => {
     await sticker.ready();
-    await renderer.compileAsync(scene, camera);
+    await print.compile(scene, camera);
     if (disposed) {
       return;
     }
-    renderer.render(scene, camera);
+    print.render(scene, camera);
     events.onReady();
     visibility.observe(canvas);
   };
@@ -541,10 +597,13 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointercancel", onPointerLost);
     canvas.removeEventListener("lostpointercapture", onPointerLost);
+    canvas.removeEventListener("pointerleave", onPointerLeave);
     canvas.removeEventListener("touchstart", onTouchStart);
+    canvas.removeEventListener("touchmove", onTouchMove);
     canvas.removeEventListener("keydown", onKeyDown);
     canvas.removeEventListener("webglcontextlost", onContextLost);
     drops.dispose();
+    print.dispose();
     disposeTree(scene);
     scene.environment?.dispose();
     pmrem.dispose();

@@ -1,16 +1,25 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 type Status = "loading" | "ready" | "failed";
 
 // three.js stays out of the page bundle; the copy and form hydrate first.
 const loadScene = () => import("@/lib/honeypot/scene");
 
-const Honeypot = () => {
+interface HoneypotProps {
+  /** Someone picked the dipper up, or put it down. */
+  onCarry: (held: boolean) => void;
+  /** Someone got honey on Kevin's badge. */
+  onExposed: () => void;
+}
+
+const Honeypot = ({ onCarry, onExposed }: HoneypotProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<Status>("loading");
+  const carry = useEffectEvent(onCarry);
+  const expose = useEffectEvent(onExposed);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,6 +35,8 @@ const Honeypot = () => {
           return;
         }
         teardown = mountHoneypot(canvas, {
+          onCarry: carry,
+          onExposed: expose,
           onLost: () => setStatus("failed"),
           onReady: () => setStatus("ready"),
         });
@@ -41,20 +52,20 @@ const Honeypot = () => {
   }, []);
 
   return (
-    <div className="size-full">
+    <div className="relative size-full">
       {status === "failed" ? (
         <Image
-          alt="A glass jar of honey with a wooden dipper resting on the rim"
+          alt="A halftone photo of a glass jar of honey with a wooden dipper, beside a conference badge on the floor"
           className="object-contain"
           fill
           priority
-          sizes="(min-width: 1024px) 58vw, 100vw"
           src="/honeypot.png"
+          unoptimized
         />
       ) : (
         <canvas
-          aria-label="A glass jar of honey with a wooden dipper. Drag the dipper to drizzle honey; arrow keys turn the jar, Enter drizzles."
-          className={`block size-full cursor-grab touch-[pan-y_pinch-zoom] outline-none transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0071e3]/40 active:cursor-grabbing motion-reduce:transition-opacity ${
+          aria-label="A glass jar of honey with a wooden dipper, beside a conference badge on the floor. Drag the dipper to drizzle honey; arrow keys turn the jar, Enter drizzles."
+          className={`block size-full cursor-grab touch-[pan-y_pinch-zoom] transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-red active:cursor-grabbing motion-reduce:transition-opacity ${
             status === "ready" ? "scale-100 opacity-100" : "scale-[0.97] opacity-0"
           }`}
           ref={canvasRef}

@@ -18,6 +18,8 @@ const RETURN_RATE = 7;
 const TURN_RATE = 12;
 // A dipper holds a few seconds of drizzle; dipping it back in refills it.
 const LOAD_SECONDS = 7;
+// Hovered, it rises out of the honey a little, to say it can be picked up.
+const HOVER_LIFT = 0.14;
 const LEAN = 0.05;
 const MAX_LEAN = 0.45;
 // Held like a pen: the handle up and toward the viewer's right, in the scene's frame.
@@ -56,6 +58,7 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
   const target = new Vector3();
   const lean = new Vector3();
   let aim: { x: number; z: number } | undefined;
+  let hovered = false;
   let load = 1;
   let pour: Pour | undefined;
 
@@ -80,6 +83,9 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
       goal.set(DIPPER_TIP.x, CARRY_HEIGHT, DIPPER_TIP.z);
     } else {
       goal.copy(DIPPER_TIP);
+      if (hovered) {
+        goal.addScaledVector(DIPPER_AXIS, HOVER_LIFT);
+      }
     }
   };
 
@@ -127,9 +133,7 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
     dipper.quaternion.setFromUnitVectors(UP, axis);
 
     stepHoney(seconds);
-    return (
-      aim !== undefined || tip.distanceTo(DIPPER_TIP) > 1e-3 || axis.angleTo(DIPPER_AXIS) > 1e-3
-    );
+    return aim !== undefined || tip.distanceTo(goal) > 1e-3 || axis.angleTo(target) > 1e-3;
   };
 
   return {
@@ -138,6 +142,10 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
       aim = undefined;
     },
     held: () => aim !== undefined,
+    /** Raises it a little while the pointer is over it. */
+    hover: (over: boolean) => {
+      hovered = over;
+    },
     /** Picks the dipper up toward (x, z). */
     lift: (x: number, z: number) => {
       aim = { x, z };
@@ -148,6 +156,8 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
         aim = { x, z };
       }
     },
+    /** Whether honey is running off it. */
+    pouring: () => pour !== undefined,
     /** Where the tip is, in the jar's frame. */
     tip: () => tip.clone(),
     update,

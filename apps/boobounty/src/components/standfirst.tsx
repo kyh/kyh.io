@@ -1,9 +1,10 @@
 "use client";
 
 import { Popover } from "@base-ui/react/popover";
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { preload } from "react-dom";
 
 import { halftone } from "@/lib/print";
 import { siteConfig } from "@/lib/site";
@@ -13,17 +14,20 @@ const SUBREDDIT = "r/agi";
 
 const AGENT_FILES = [
   {
-    caption: "Last seen explaining scaling laws at an afterparty.",
+    age: 26,
+    caption: "thinks it’s cute when a man knows his own p(doom).",
     number: "07",
     scene: "at a tech afterparty, holding up a laptop",
   },
   {
-    caption: "Last seen at a hackathon, asking which evals you’re failing.",
+    age: 24,
+    caption: "loves long walks and longer context windows.",
     number: "11",
     scene: "at a late-night hackathon, holding a slice of pizza",
   },
   {
-    caption: "Last seen at the bouldering gym, spotting your staff engineer.",
+    age: 27,
+    caption: "has been spotting your staff engineer since March.",
     number: "23",
     scene: "at a bouldering gym, chalk on her hands",
   },
@@ -39,24 +43,28 @@ const FLASHCARDS = [
     front: "RLHF",
   },
   {
-    back: "Scale beats cleverness. Agree, then ask what they’re scaling.",
-    front: "The Bitter Lesson",
-  },
-  {
-    back: "When they think AGI arrives. The answer is always “sooner than people think.”",
+    back: "When they think AGI arrives. Shorter after two drinks. So is the NDA.",
     front: "Timelines",
   },
   {
-    back: "Tests their models fail. Ask which ones. They will tell you everything.",
-    front: "Evals",
+    back: "A model agreeing with everything you say. Agree with 80%. They test for this.",
+    front: "Sycophancy",
+  },
+  {
+    back: "Getting a system to want what you want. Congratulations: you work in alignment.",
+    front: "Alignment",
   },
   {
     back: "Bigger model, lower loss, straight line on a log plot. Say “Chinchilla” once. Never twice.",
     front: "Scaling laws",
   },
   {
-    back: "Reading a model’s mind. Tell them you wish you could read theirs.",
-    front: "Interpretability",
+    back: "Means they’re about to. Order another round.",
+    front: "“I can’t talk about it.”",
+  },
+  {
+    back: "Fighting words. Say it only if you need to leave immediately.",
+    front: "Stochastic parrot",
   },
   {
     back: "The model itself: billions of numbers. The thing we are actually here for.",
@@ -64,9 +72,18 @@ const FLASHCARDS = [
   },
 ];
 
+const AGENT_PHOTO = { height: 280, width: 210 };
+const agentPhoto = (number: string) => `/agent-${number}.jpg`;
+
+// The popup mounts on open, so without a head start its photo arrives late.
+const warmAgent = (number: string) => {
+  const { props } = getImageProps({ ...AGENT_PHOTO, alt: "", src: agentPhoto(number) });
+  preload(props.src, { as: "image", fetchPriority: "low", imageSrcSet: props.srcSet });
+};
+
 const label = "font-mono text-[11px] leading-[1.45] tracking-[0.06em] uppercase";
 const popupClassName =
-  "origin-(--transform-origin) border-2 border-foreground bg-background shadow-[5px_5px_0] shadow-foreground outline-none transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0";
+  "origin-(--transform-origin) border-2 border-foreground bg-background shadow-[5px_5px_0] shadow-foreground outline-none transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100";
 // An index card: a red rule across the top, faint blue lines below it.
 const indexCard =
   "border border-foreground/25 bg-white bg-[linear-gradient(to_bottom,transparent_34px,var(--red)_34px,var(--red)_36px,transparent_36px),repeating-linear-gradient(to_bottom,transparent_0_23px,#c9d8ee_23px_24px)] shadow-[0_1px_3px] shadow-foreground/20";
@@ -75,16 +92,21 @@ const Note = ({
   children,
   label: text,
   onOpenChange,
+  onWarm,
 }: {
   children: ReactNode;
   label: string;
   onOpenChange?: (open: boolean) => void;
+  /** Called when the pointer or focus arrives, before it opens. */
+  onWarm?: () => void;
 }) => (
   <Popover.Root onOpenChange={onOpenChange}>
     <Popover.Trigger
-      className="cursor-help underline decoration-dotted decoration-2 underline-offset-[0.18em] outline-none focus-visible:bg-foreground/10"
+      className="cursor-help underline decoration-dotted decoration-2 underline-offset-[0.18em] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red"
       closeDelay={120}
       delay={80}
+      onFocus={onWarm}
+      onPointerEnter={onWarm}
       openOnHover
     >
       {text}
@@ -101,6 +123,7 @@ const Note = ({
 const AgentNote = () => {
   const [opens, setOpens] = useState(0);
   const agent = AGENT_FILES[(opens + AGENT_FILES.length - 1) % AGENT_FILES.length];
+  const next = AGENT_FILES[opens % AGENT_FILES.length];
   return (
     <Note
       label={AGENTS}
@@ -109,21 +132,26 @@ const AgentNote = () => {
           setOpens((count) => count + 1);
         }
       }}
+      onWarm={() => next && warmAgent(next.number)}
     >
       {agent && (
         <figure className="w-[210px] p-2">
+          <Popover.Title className="sr-only">Agent {agent.number}&rsquo;s file</Popover.Title>
           <div className="relative border border-foreground">
             <Image
+              {...AGENT_PHOTO}
               alt={`Agent ${agent.number}, ${agent.scene}`}
               className="aspect-3/4 w-full object-cover contrast-[1.1]"
-              height={280}
-              src={`/agent-${agent.number}.jpg`}
-              width={210}
+              loading="eager"
+              src={agentPhoto(agent.number)}
             />
             <div aria-hidden="true" className={halftone} />
           </div>
           <figcaption className={`mt-2 ${label}`}>
-            <span className="text-red">Agent {agent.number}.</span> {agent.caption}
+            <span className="text-red">
+              Agent {agent.number}, {agent.age},
+            </span>{" "}
+            {agent.caption}
           </figcaption>
         </figure>
       )}
@@ -139,12 +167,14 @@ const Flashcards = () => {
   if (!card) {
     return null;
   }
+  // The card face is keyed by its term, so the next card arrives face up
+  // rather than flipping back with its answer showing.
   return (
     <div className="w-[300px] p-4">
-      <p className={label}>
+      <Popover.Title className={label}>
         Agent training · card {index + 1} of {FLASHCARDS.length}
-      </p>
-      <div className="relative mt-3 h-[180px]">
+      </Popover.Title>
+      <div className="relative mt-3 h-[198px]">
         <div
           aria-hidden="true"
           className={`absolute inset-0 translate-x-1.5 translate-y-2 rotate-2 ${indexCard}`}
@@ -154,8 +184,9 @@ const Flashcards = () => {
           className={`absolute inset-0 -translate-x-1 translate-y-1 -rotate-1 ${indexCard}`}
         />
         <button
-          aria-label={flipped ? card.back : `${card.front}. Flip to see what to remember.`}
-          className="absolute inset-0 cursor-pointer perspective-[900px] outline-none focus-visible:ring-2 focus-visible:ring-foreground"
+          aria-label={`Flip card: ${card.front}`}
+          aria-pressed={flipped}
+          className="absolute inset-0 cursor-pointer perspective-[900px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red"
           onClick={() => setFlipped((side) => !side)}
           type="button"
         >
@@ -163,6 +194,7 @@ const Flashcards = () => {
             className={`relative block size-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] transform-3d motion-reduce:duration-0 ${
               flipped ? "rotate-y-180" : ""
             }`}
+            key={card.front}
           >
             <span
               className={`absolute inset-0 flex flex-col justify-center px-5 pt-6 backface-hidden ${indexCard}`}
@@ -170,19 +202,24 @@ const Flashcards = () => {
               <span className="text-center text-[30px] leading-[1.05] font-semibold tracking-[-0.01em]">
                 {card.front}
               </span>
-              <span className={`absolute right-3 bottom-2 text-secondary ${label}`}>
-                Tap to flip
-              </span>
+              <span className={`absolute right-3 bottom-2 text-secondary ${label}`}>Flip ↻</span>
             </span>
             <span
-              className={`absolute inset-0 flex flex-col justify-center gap-1 px-5 pt-7 text-left rotate-y-180 backface-hidden ${indexCard}`}
+              className={`absolute inset-0 px-5 text-left rotate-y-180 backface-hidden ${indexCard}`}
             >
-              <span className={`text-red ${label}`}>Remember</span>
-              <span className="text-[17px] leading-[1.3] italic">{card.back}</span>
+              <span className={`absolute top-[14px] leading-[24px] text-red ${label}`}>
+                Remember
+              </span>
+              <span className="absolute inset-x-5 top-[54px] text-[17px] leading-[24px] italic">
+                {card.back}
+              </span>
             </span>
           </span>
         </button>
       </div>
+      <p aria-live="polite" className="sr-only">
+        {flipped ? card.back : `Card ${index + 1} of ${FLASHCARDS.length}: ${card.front}`}
+      </p>
       <div className="mt-5 flex items-center justify-between gap-3">
         <a
           className={`underline decoration-dotted underline-offset-2 hover:text-red ${label}`}

@@ -6,7 +6,12 @@ import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
 
-const fraunces = Fraunces({ axes: ["opsz"], subsets: ["latin"], variable: "--font-fraunces" });
+const fraunces = Fraunces({
+  axes: ["opsz"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+});
 const anton = Anton({ subsets: ["latin"], variable: "--font-anton", weight: "400" });
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -39,6 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: siteConfig.twitter,
     description: siteConfig.description,
+    site: siteConfig.twitter,
     title,
   },
 };
