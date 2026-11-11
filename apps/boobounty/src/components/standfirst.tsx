@@ -15,7 +15,7 @@ const CUE_CARDS = [
 
 const CARD_TILT = ["-rotate-3", "rotate-2", "-rotate-1", "rotate-3"];
 
-const OPERATIVE = "Taiwanese 7s";
+const AGENTS = "Taiwanese 7s";
 const SUBREDDIT = "r/agi";
 
 const popupClassName =
@@ -39,13 +39,13 @@ const Note = ({ children, label }: { children: ReactNode; label: string }) => (
   </Popover.Root>
 );
 
-const Operative = () => (
+const Agent = () => (
   <figure className="w-[240px] p-2">
     <Image
-      alt="One of our operatives at a tech afterparty, holding a laptop and a lanyard"
+      alt="One of our agents at a tech afterparty, holding a laptop and a lanyard"
       className="aspect-3/4 w-full border border-foreground object-cover"
       height={320}
-      src="/operative.jpg"
+      src="/agent.jpg"
       width={240}
     />
     <figcaption className="mt-2 font-mono text-[11px] leading-[1.45] tracking-[0.06em] uppercase">
@@ -72,10 +72,10 @@ const CueCards = () => (
 );
 
 const annotate = (part: string) => {
-  if (part === OPERATIVE) {
+  if (part === AGENTS) {
     return (
-      <Note label={OPERATIVE}>
-        <Operative />
+      <Note label={AGENTS}>
+        <Agent />
       </Note>
     );
   }
@@ -92,7 +92,7 @@ const annotate = (part: string) => {
 /** The description, with a look at who we send and what they know. */
 export const Standfirst = ({ className }: { className: string }) => (
   <p className={className}>
-    {siteConfig.description.split(new RegExp(`(${OPERATIVE}|${SUBREDDIT})`, "u")).map((part) => (
+    {siteConfig.description.split(new RegExp(`(${AGENTS}|${SUBREDDIT})`, "u")).map((part) => (
       <span key={part}>{annotate(part)}</span>
     ))}
   </p>

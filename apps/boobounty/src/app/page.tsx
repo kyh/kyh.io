@@ -9,7 +9,7 @@ const STEPS = [
     title: "Recon",
   },
   {
-    body: "An operative turns up at the hackathon, the afterparty or the climbing gym, with strong opinions on interpretability.",
+    body: "An agent turns up at the hackathon, the afterparty or the climbing gym, with strong opinions on interpretability.",
     number: "02",
     title: "Approach",
   },
@@ -37,12 +37,12 @@ const TESTIMONIALS = [
 
 const PACKAGES = [
   {
-    body: "One operative, one conference. Made for seed stage.",
+    body: "One agent, one conference. Made for seed stage.",
     name: "The Crush",
     price: "$",
   },
   {
-    body: "Three operatives for a quarter. Includes a Discord presence.",
+    body: "Three agents for a quarter. Includes a Discord presence.",
     name: "The Situationship",
     price: "$$",
   },
@@ -107,8 +107,8 @@ const Home = () => (
                 texting someone named Vivian since the offsite.
               </p>
               <p>
-                BooBounty red-teams the one system you can&rsquo;t patch. Our operatives have read
-                every r/agi thread, can argue scaling laws over natural wine, and laugh at the right
+                BooBounty red-teams the one system you can&rsquo;t patch. Our agents have read every
+                r/agi thread, can argue scaling laws over natural wine, and laugh at the right
                 moment in your RLHF joke.
               </p>
               <p>Nobody gets hurt. Somebody gets a second date. Your board gets a PDF.</p>
@@ -194,7 +194,7 @@ const Home = () => (
               10% off your first breach.
             </p>
             <p className="mt-3 font-mono text-[13px] leading-[1.6] text-secondary">
-              Present to any operative at NeurIPS. One per board. Void where prohibited.
+              Present to any agent at NeurIPS. One per board. Void where prohibited.
             </p>
           </aside>
         </section>
