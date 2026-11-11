@@ -156,8 +156,6 @@ export const createDipper = ({ dipper, drops }: { dipper: Object3D; drops: Drops
         aim = { x, z };
       }
     },
-    /** Whether honey is running off it. */
-    pouring: () => pour !== undefined,
     /** Where the tip is, in the jar's frame. */
     tip: () => tip.clone(),
     update,

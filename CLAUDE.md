@@ -105,13 +105,12 @@ as a tabloid ad (blackletter masthead, Anton headlines, Fraunces text, Plex
 Mono labels, rules and columns; copy lives in `src/app/page.tsx`). In the
 description, "Taiwanese 7s" and "r/agi" open hover cards
 (`src/components/standfirst.tsx`, Base UI popovers); `public/agent-*.jpg`
-are generated photos of fictional people, shown in rotation. The lead
+are generated photos of fictional people, paged with prev/next. The lead
 photo is a procedural three.js honey jar (no model files) labeled "boo",
 printed as a four-color halftone. Dragging the dipper lifts it out and
 drizzles honey where it is carried; it runs dry and refills back in the jar.
-Dragging anything else turns the jar; left alone it sways, then settles.
-Honey on Kevin's badge, on the floor beside it, fires a flashbulb, and the
-caption (`src/components/lead-photo.tsx`) follows what happened. Port 3006.
+Dragging anything else turns the jar; left alone it sways, then settles. The
+caption (`src/components/lead-photo.tsx`) follows the dipper. Port 3006.
 
 - `src/lib/honeypot/models.ts` - jar, honey, dipper, drip geometry and materials
 - `src/lib/honeypot/scene.ts` - renderer, lights, input, opening drizzle, loop, teardown
@@ -119,7 +118,6 @@ caption (`src/components/lead-photo.tsx`) follows what happened. Port 3006.
 - `src/lib/honeypot/honey-drops.ts` - the stream, its coil, drizzled puddles
 - `src/lib/honeypot/sticker.ts` - the label, in `public/fonts/permanent-marker.woff2`
   (Apache 2.0); transparent so the honey's refraction doesn't mirror it
-- `src/lib/honeypot/badge.ts` - Kevin's badge and where honey counts as on it
 - `src/lib/honeypot/halftone.ts` - the print pass: off screen, then CMYK dot
   screens with the paper as white, so blank paper gets no ink
 - Three can't show one transmissive mesh through another, so the honey

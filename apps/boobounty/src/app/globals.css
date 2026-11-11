@@ -19,16 +19,6 @@
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --font-headline: var(--font-anton), Impact, sans-serif;
   --font-masthead: var(--font-blackletter), serif;
-  --animate-flash: flash 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-
-  @keyframes flash {
-    from {
-      opacity: 0.95;
-    }
-    to {
-      opacity: 0;
-    }
-  }
 }
 
 @layer base {

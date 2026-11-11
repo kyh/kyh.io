@@ -75,10 +75,12 @@ const FLASHCARDS = [
 const AGENT_PHOTO = { height: 280, width: 210 };
 const agentPhoto = (number: string) => `/agent-${number}.jpg`;
 
-// The popup mounts on open, so without a head start its photo arrives late.
-const warmAgent = (number: string) => {
-  const { props } = getImageProps({ ...AGENT_PHOTO, alt: "", src: agentPhoto(number) });
-  preload(props.src, { as: "image", fetchPriority: "low", imageSrcSet: props.srcSet });
+// The popup mounts on open, so without a head start its photos arrive late.
+const warmAgents = () => {
+  for (const { number } of AGENT_FILES) {
+    const { props } = getImageProps({ ...AGENT_PHOTO, alt: "", src: agentPhoto(number) });
+    preload(props.src, { as: "image", fetchPriority: "low", imageSrcSet: props.srcSet });
+  }
 };
 
 const label = "font-mono text-[11px] leading-[1.45] tracking-[0.06em] uppercase";
@@ -91,16 +93,14 @@ const indexCard =
 const Note = ({
   children,
   label: text,
-  onOpenChange,
   onWarm,
 }: {
   children: ReactNode;
   label: string;
-  onOpenChange?: (open: boolean) => void;
   /** Called when the pointer or focus arrives, before it opens. */
   onWarm?: () => void;
 }) => (
-  <Popover.Root onOpenChange={onOpenChange}>
+  <Popover.Root>
     <Popover.Trigger
       className="cursor-help underline decoration-dotted decoration-2 underline-offset-[0.18em] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red"
       closeDelay={120}
@@ -119,24 +119,35 @@ const Note = ({
   </Popover.Root>
 );
 
-/** A different agent every time it opens. */
+const arrow = (direction: "left" | "right") => (
+  <svg
+    aria-hidden="true"
+    className="size-3.5"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+  >
+    <path d={direction === "left" ? "M19 12H5M11 6l-6 6 6 6" : "M5 12h14M13 6l6 6-6 6"} />
+  </svg>
+);
+
+const stepButton =
+  "grid size-8 place-items-center border border-foreground outline-none hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red";
+
+/** The agents on file, one at a time. */
 const AgentNote = () => {
-  const [opens, setOpens] = useState(0);
-  const agent = AGENT_FILES[(opens + AGENT_FILES.length - 1) % AGENT_FILES.length];
-  const next = AGENT_FILES[opens % AGENT_FILES.length];
+  const [index, setIndex] = useState(0);
+  const agent = AGENT_FILES[index];
+  const step = (by: number) =>
+    setIndex((current) => (current + by + AGENT_FILES.length) % AGENT_FILES.length);
   return (
-    <Note
-      label={AGENTS}
-      onOpenChange={(open) => {
-        if (open) {
-          setOpens((count) => count + 1);
-        }
-      }}
-      onWarm={() => next && warmAgent(next.number)}
-    >
+    <Note label={AGENTS} onWarm={warmAgents}>
       {agent && (
-        <figure className="w-[210px] p-2">
-          <Popover.Title className="sr-only">Agent {agent.number}&rsquo;s file</Popover.Title>
+        <figure className="w-[230px] p-3">
+          <Popover.Title className="sr-only">Agents on file</Popover.Title>
           <div className="relative border border-foreground">
             <Image
               {...AGENT_PHOTO}
@@ -147,12 +158,33 @@ const AgentNote = () => {
             />
             <div aria-hidden="true" className={halftone} />
           </div>
-          <figcaption className={`mt-2 ${label}`}>
+          <figcaption aria-live="polite" className={`mt-2 min-h-[3lh] ${label}`}>
             <span className="text-red">
               Agent {agent.number}, {agent.age},
             </span>{" "}
             {agent.caption}
           </figcaption>
+          <div className="mt-2 flex items-center justify-between">
+            <button
+              aria-label="Previous agent"
+              className={stepButton}
+              onClick={() => step(-1)}
+              type="button"
+            >
+              {arrow("left")}
+            </button>
+            <span className={label}>
+              {index + 1} / {AGENT_FILES.length}
+            </span>
+            <button
+              aria-label="Next agent"
+              className={stepButton}
+              onClick={() => step(1)}
+              type="button"
+            >
+              {arrow("right")}
+            </button>
+          </div>
         </figure>
       )}
     </Note>
@@ -238,18 +270,7 @@ const Flashcards = () => {
           type="button"
         >
           Next card
-          <svg
-            aria-hidden="true"
-            className="size-3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
+          {arrow("right")}
         </button>
       </div>
     </div>

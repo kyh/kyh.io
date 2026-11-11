@@ -26,7 +26,6 @@ import {
   WebGLRenderer,
 } from "three";
 
-import { createBadge, onBadge } from "./badge";
 import { createDipper } from "./dipper";
 import { createHalftone } from "./halftone";
 import { createHoneyDrops } from "./honey-drops";
@@ -40,8 +39,6 @@ const FOV = 28;
 const ELEVATION = 0.44;
 // Left alone, the jar sways around its front, label to the viewer, then settles.
 const SWAY = { after: 1.5, amplitude: 0.32, fade: 3, period: 9, rate: 1.4, seconds: 12 };
-// Honey on Kevin's badge this long is a story.
-const EXPOSURE_SECONDS = 0.45;
 // A touch held this still this long on the dipper picks it up instead of scrolling.
 const TOUCH_HOLD_MS = 160;
 const VELOCITY_WINDOW_MS = 80;
@@ -69,8 +66,6 @@ export interface HoneypotEvents {
   onLost: () => void;
   /** Someone picked the dipper up, or put it down. */
   onCarry: (held: boolean) => void;
-  /** Someone got honey on Kevin's badge. Fires once. */
-  onExposed: () => void;
 }
 
 // A softbox's light falls off toward its edges; a hard-edged panel stamps a
@@ -271,7 +266,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   const dipper = createDipper({ dipper: honeypot.dipper, drops });
   const sticker = createSticker();
   world.add(sticker.mesh);
-  world.add(createBadge());
 
   let dirty = true;
   const resize = () => {
@@ -332,7 +326,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   // Waits until the picture is properly in view; skipped for reduced motion.
   let demo: number | undefined;
   let demoPending = true;
-  let exposure = 0;
   let touchedAt: number | undefined;
 
   const unitsPerPixel = () =>
@@ -534,15 +527,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
     const carried = dipper.update(seconds, world.rotation.y);
     drops.update(seconds);
-    if (press?.carryFrom && exposure < EXPOSURE_SECONDS && dipper.pouring()) {
-      const tip = dipper.tip();
-      if (onBadge(tip.x, tip.z)) {
-        exposure += seconds;
-        if (exposure >= EXPOSURE_SECONDS) {
-          events.onExposed();
-        }
-      }
-    }
     const moving =
       press !== undefined ||
       demo !== undefined ||

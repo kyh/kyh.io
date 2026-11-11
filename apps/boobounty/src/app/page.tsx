@@ -2,12 +2,6 @@ import { LeadPhoto } from "@/components/lead-photo";
 import { Standfirst } from "@/components/standfirst";
 import { siteConfig } from "@/lib/site";
 
-const COVER_LINES = [
-  { page: 3, text: "The five words that make researchers spill" },
-  { page: 7, text: "“She knew what a KV cache was”: one engineer’s story" },
-  { page: 12, text: "Is YOUR p(doom) attractive? Take the quiz" },
-];
-
 const STEPS = [
   {
     body: (
@@ -40,10 +34,6 @@ const TESTIMONIALS = [
     quote: "We thought our biggest risk was model exfiltration. It was Kevin.",
     source: "Head of security, Series C",
   },
-  {
-    quote: "Our CEO’s update said ‘on track.’ BooBounty’s said ‘Kevin, 1:14 a.m.’",
-    source: "Independent director",
-  },
 ];
 
 const PACKAGES = [
@@ -65,25 +55,10 @@ const PACKAGES = [
   },
 ];
 
-const CLASSIFIEDS = [
-  {
-    body: "Staff engineer with own cluster allocation and strong views on RLHF. Must be able to keep a secret (won’t).",
-    box: "07",
-    heading: "Seeking",
-  },
-  {
-    body: "One lanyard, FRONTIER LAB, ALL ACCESS. Answers to Kevin. Slightly sticky.",
-    box: "23",
-    heading: "Lost",
-  },
-];
-
 const label = "font-mono text-[12px] tracking-[0.08em] uppercase";
 const sectionRule = "border-t-[5px] border-double border-foreground";
 const kicker =
   "inline-block bg-foreground px-2 pt-1 pb-0.5 font-headline text-[22px] leading-none text-background uppercase";
-const dmLink = "underline decoration-dotted underline-offset-[0.15em] hover:text-red";
-const dmUrl = `https://x.com/${siteConfig.twitter.slice(1)}`;
 
 const Home = () => (
   <div className="mx-auto max-w-[1288px] overflow-x-clip px-4 pb-8 sm:px-8">
@@ -106,29 +81,18 @@ const Home = () => (
           Paid advertisement
         </span>
       </div>
-      <ul className="mt-6 hidden grid-cols-3 md:grid">
-        {COVER_LINES.map((line) => (
-          <li
-            className="border-l border-foreground px-4 text-[15px] leading-[1.25] font-semibold first:border-l-0 first:pl-0"
-            key={line.page}
-          >
-            <span className="text-red">Inside:</span> {line.text},{" "}
-            <span className="font-mono text-[12px] font-normal">p.&nbsp;{line.page}</span>
-          </li>
-        ))}
-      </ul>
     </header>
 
     <main>
-      <section className="pt-5 sm:pt-6">
-        <h1 className="relative pt-7 font-headline text-[13vw] leading-[0.86] text-wrap uppercase sm:text-[min(calc((100vw-64px)/8.4),145px)]">
-          <span className="absolute top-0 left-0 -rotate-3 bg-red px-3 pt-1 pb-0.5 text-[clamp(16px,1.6vw,22px)] leading-none text-background shadow-[2px_2px_0] shadow-foreground">
-            Exclusive
-          </span>
+      <section className="pt-8 sm:pt-10">
+        <p className="inline-block -rotate-2 bg-red px-3 pt-1 pb-0.5 font-headline text-[18px] leading-none text-background uppercase shadow-[2px_2px_0] shadow-foreground sm:text-[22px]">
+          Exclusive
+        </p>
+        <h1 className="mt-4 font-headline text-[13vw] leading-[0.9] text-wrap uppercase sm:text-[min(calc((100vw-64px)/8.4),145px)]">
           {siteConfig.tagline}.
         </h1>
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-12">
+        <div className="mt-8 grid gap-8 lg:grid-cols-12">
           <LeadPhoto className="lg:col-span-7" />
 
           <article className="lg:col-span-5 lg:border-l lg:border-foreground lg:pl-8">
@@ -141,14 +105,8 @@ const Home = () => (
                 Your weights are encrypted. Your SOC 2 is spotless. Your staff engineer has been
                 texting someone named Vivian since the offsite.
               </p>
-              <p>
-                BooBounty red-teams the only attack surface in your company with a dating profile.
-                Our agents can argue scaling laws over natural wine and laugh at your paperclip joke
-                like it&rsquo;s the first time.
-              </p>
               <p>Nobody gets hurt. Somebody gets a second date. Your board gets a PDF.</p>
             </div>
-            <p className={`mt-5 text-right ${label}`}>Continued in your next board deck, p. 14 ▸</p>
           </article>
         </div>
       </section>
@@ -186,6 +144,35 @@ const Home = () => (
                     &ldquo;{testimonial.quote}&rdquo;
                   </blockquote>
                   <p className={`mt-2 text-secondary ${label}`}>{testimonial.source}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <div className="border-t border-foreground pt-4 lg:col-span-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+          <section aria-labelledby="rates">
+            <h2 className={kicker} id="rates">
+              Rates
+            </h2>
+            <ul className="mt-5 grid gap-4 sm:grid-cols-3 sm:grid-rows-[auto_1fr_auto]">
+              {PACKAGES.map((pack) => (
+                <li
+                  className="relative flex flex-col border-2 border-foreground p-4 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-0"
+                  key={pack.name}
+                >
+                  {pack.popular && (
+                    <span className="absolute -top-5 -right-3 grid size-[68px] rotate-12 place-items-center bg-red text-center font-headline text-[13px] leading-[1.05] text-background uppercase [clip-path:polygon(50%_0,61%_14%,79%_9%,80%_27%,97%_33%,88%_50%,97%_67%,80%_73%,79%_91%,61%_86%,50%_100%,39%_86%,21%_91%,20%_73%,3%_67%,12%_50%,3%_33%,20%_27%,21%_9%,39%_14%)]">
+                      Most
+                      <br />
+                      popular
+                    </span>
+                  )}
+                  <h3 className="font-headline text-[30px] leading-none uppercase">{pack.name}</h3>
+                  <p className="mt-3 text-[16px] leading-[1.45]">{pack.body}</p>
+                  <p className="mt-4 border-t border-foreground pt-2 font-headline text-[24px] leading-[1.05] text-red uppercase">
+                    {pack.price}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -230,80 +217,17 @@ const Home = () => (
             </p>
           </aside>
         </div>
-
-        <div className="border-t border-foreground pt-4 lg:col-span-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-          <section aria-labelledby="rates">
-            <h2 className={kicker} id="rates">
-              Rates
-            </h2>
-            <ul className="mt-5 grid gap-4 sm:grid-cols-3 sm:grid-rows-[auto_1fr_auto]">
-              {PACKAGES.map((pack) => (
-                <li
-                  className="relative flex flex-col border-2 border-foreground p-4 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-0"
-                  key={pack.name}
-                >
-                  {pack.popular && (
-                    <span className="absolute -top-5 -right-3 grid size-[68px] rotate-12 place-items-center bg-red text-center font-headline text-[13px] leading-[1.05] text-background uppercase [clip-path:polygon(50%_0,61%_14%,79%_9%,80%_27%,97%_33%,88%_50%,97%_67%,80%_73%,79%_91%,61%_86%,50%_100%,39%_86%,21%_91%,20%_73%,3%_67%,12%_50%,3%_33%,20%_27%,21%_9%,39%_14%)]">
-                      Most
-                      <br />
-                      popular
-                    </span>
-                  )}
-                  <h3 className="font-headline text-[30px] leading-none uppercase">{pack.name}</h3>
-                  <p className="mt-3 text-[16px] leading-[1.45]">{pack.body}</p>
-                  <p className="mt-4 border-t border-foreground pt-2 font-headline text-[24px] leading-[1.05] text-red uppercase">
-                    {pack.price}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <aside
-            aria-label="Correction"
-            className="mt-10 border-y-2 border-foreground py-3 text-[16px] leading-normal"
-          >
-            <span className="font-headline text-[18px] uppercase">Correction:</span> In our last
-            edition we said our agents &ldquo;read r/agi.&rdquo; They skim it, like everyone. We
-            regret the error.
-          </aside>
-
-          <section aria-labelledby="classifieds" className="mt-8">
-            <h2 className={label} id="classifieds">
-              Classifieds
-            </h2>
-            <ul className="mt-3 grid gap-4 sm:grid-cols-2">
-              {CLASSIFIEDS.map((ad) => (
-                <li className="border border-foreground p-3 text-[15px] leading-[1.4]" key={ad.box}>
-                  <span className="font-headline text-[17px] uppercase">{ad.heading}:</span>{" "}
-                  {ad.body} <span className="font-mono text-[12px]">Box&nbsp;{ad.box}.</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
       </div>
 
       <section className={`mt-12 ${sectionRule} pt-8 text-center`}>
         <h2 className="font-headline text-[clamp(40px,7vw,96px)] leading-[0.9] uppercase">
           Don&rsquo;t call us. We&rsquo;ll call your engineers.
         </h2>
-        <p className="mt-5 text-[22px] leading-[1.3] font-semibold sm:text-[28px]">
-          Bookings: slide into{" "}
-          <a className={dmLink} href={dmUrl} rel="noreferrer" target="_blank">
-            {siteConfig.twitter}
-          </a>
-          &rsquo;s DMs. It&rsquo;s how we&rsquo;d do it.
-        </p>
       </section>
     </main>
 
     <footer className="mt-10 border-t border-foreground pt-3">
-      <p className="text-[14px] text-secondary italic">
-        Ask your board if BooBounty is right for you. Side effects may include a second date and a
-        sudden interest in natural wine.
-      </p>
-      <div className={`mt-3 flex flex-wrap justify-between gap-2 ${label}`}>
+      <div className={`flex flex-wrap justify-between gap-2 ${label}`}>
         <span>© 2026 {siteConfig.name}</span>
         <span>Results not typical. Your board may already know.</span>
       </div>
