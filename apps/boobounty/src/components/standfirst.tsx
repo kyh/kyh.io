@@ -184,36 +184,36 @@ const Flashcards = () => {
         </button>
       </div>
       <div className="mt-5 flex items-center justify-between gap-3">
-      <a
-        className={`underline decoration-dotted underline-offset-2 hover:text-red ${label}`}
-        href="https://www.reddit.com/r/agi/"
-        rel="noreferrer"
-        target="_blank"
-      >
-        Study group ↗
-      </a>
-      <button
-        className={`flex items-center gap-2 border border-foreground px-3 py-1.5 hover:bg-foreground hover:text-background ${label}`}
-        onClick={() => {
-          setFlipped(false);
-          setIndex((current) => (current + 1) % FLASHCARDS.length);
-        }}
-        type="button"
-      >
-        Next card
-        <svg
-          aria-hidden="true"
-          className="size-3.5"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
+        <a
+          className={`underline decoration-dotted underline-offset-2 hover:text-red ${label}`}
+          href="https://www.reddit.com/r/agi/"
+          rel="noreferrer"
+          target="_blank"
         >
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
-      </button>
+          Study group ↗
+        </a>
+        <button
+          className={`flex items-center gap-2 border border-foreground px-3 py-1.5 hover:bg-foreground hover:text-background ${label}`}
+          onClick={() => {
+            setFlipped(false);
+            setIndex((current) => (current + 1) % FLASHCARDS.length);
+          }}
+          type="button"
+        >
+          Next card
+          <svg
+            aria-hidden="true"
+            className="size-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
       </div>
     </div>
   );
