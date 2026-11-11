@@ -89,7 +89,7 @@ const Home = () => (
         <div className="mt-8 grid gap-8 lg:grid-cols-12">
           <figure className="lg:col-span-7">
             <div className="relative h-[clamp(360px,46vw,600px)] border border-foreground">
-              <div className="size-full brightness-110 contrast-[1.35] grayscale mix-blend-multiply">
+              <div className="size-full contrast-[1.2] saturate-[1.3]">
                 <Honeypot />
               </div>
               <div
