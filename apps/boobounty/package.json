@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

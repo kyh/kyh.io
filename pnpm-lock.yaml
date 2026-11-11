@@ -266,6 +266,9 @@ importers:
 
   apps/boobounty:
     dependencies:
+      '@base-ui/react':
+        specifier: 'catalog:'
+        version: 1.9.0(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       next:
         specifier: 'catalog:'
         version: 16.4.3(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)

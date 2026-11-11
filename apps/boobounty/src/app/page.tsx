@@ -1,4 +1,5 @@
 import { Honeypot } from "@/components/honeypot";
+import { Standfirst } from "@/components/standfirst";
 import { siteConfig } from "@/lib/site";
 
 const STEPS = [
@@ -96,9 +97,7 @@ const Home = () => (
           </figure>
 
           <article className="lg:col-span-5 lg:border-l lg:border-foreground lg:pl-8">
-            <p className="text-[26px] leading-[1.15] font-semibold tracking-[-0.01em] sm:text-[30px]">
-              {siteConfig.description}
-            </p>
+            <Standfirst className="text-[26px] leading-[1.15] font-semibold tracking-[-0.01em] sm:text-[30px]" />
             <p className={`mt-5 border-y border-foreground py-2 ${label}`}>
               By our honeytrap correspondent
             </p>
