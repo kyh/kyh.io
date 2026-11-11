@@ -89,7 +89,13 @@ const Home = () => (
         <div className="mt-8 grid gap-8 lg:grid-cols-12">
           <figure className="lg:col-span-7">
             <div className="relative h-[clamp(360px,46vw,600px)] border border-foreground">
-              <Honeypot />
+              <div className="size-full brightness-110 contrast-[1.35] grayscale mix-blend-multiply">
+                <Honeypot />
+              </div>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(0_0_0/0.3)_0.9px,transparent_1.3px)] bg-size-[4px_4px] mix-blend-multiply"
+              />
             </div>
             <figcaption className={`mt-3 ${label}`}>
               Pictured: the honeypot, moments before it worked.
@@ -173,7 +179,17 @@ const Home = () => (
             ))}
           </ul>
 
-          <aside className="mt-8 border-2 border-dashed border-foreground p-5 sm:p-6">
+          <aside className="relative mt-8 border-2 border-dashed border-foreground p-5 sm:p-6">
+            <svg
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-12 -right-8 size-36 rotate-12 text-honey opacity-35"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 120 120"
+            >
+              <circle cx="60" cy="60" r="50" strokeDasharray="190 12 60 20" strokeWidth="5" />
+              <circle cx="60" cy="60" r="46" strokeOpacity="0.6" strokeWidth="1.5" />
+            </svg>
             <div className="flex items-center gap-3">
               <svg
                 aria-hidden="true"
