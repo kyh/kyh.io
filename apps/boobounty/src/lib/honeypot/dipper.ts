@@ -5,7 +5,7 @@ import type { Pour, createHoneyDrops } from "./honey-drops";
 import { DIPPER_AXIS, DIPPER_TIP, HONEY_LEVEL, JAR_RADIUS, LIP_TOP, MOUTH_RADIUS } from "./models";
 
 /** The height the dipper's tip is carried at: clear of the rim with its head. */
-const CARRY_HEIGHT = 2.2;
+const CARRY_HEIGHT = 2;
 // How far from the jar it can be carried before leaving the frame.
 const REACH = 2.3;
 const HOLD_RATE = 22;
@@ -16,7 +16,7 @@ const LOAD_SECONDS = 7;
 const LEAN = 0.05;
 const MAX_LEAN = 0.45;
 // Held like a pen: the handle up and toward the viewer's right, in the scene's frame.
-const HELD_AXIS = new Vector3(0.35, 0.9, 0.25).normalize();
+const HELD_AXIS = new Vector3(0.55, 0.78, 0.3).normalize();
 const UP = new Vector3(0, 1, 0);
 // Below this the head is still inside the jar and must rise through the mouth.
 const CLEAR_OF_RIM = LIP_TOP + 0.2;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import { halftone } from "@/lib/print";
 import { siteConfig } from "@/lib/site";
 
 const AGENTS = "Taiwanese 7s";
@@ -110,14 +111,17 @@ const AgentNote = () => {
       }}
     >
       {agent && (
-        <figure className="w-[240px] p-2">
-          <Image
-            alt={`Agent ${agent.number}, ${agent.scene}`}
-            className="aspect-3/4 w-full border border-foreground object-cover"
-            height={320}
-            src={`/agent-${agent.number}.jpg`}
-            width={240}
-          />
+        <figure className="w-[210px] p-2">
+          <div className="relative border border-foreground">
+            <Image
+              alt={`Agent ${agent.number}, ${agent.scene}`}
+              className="aspect-3/4 w-full object-cover contrast-[1.1]"
+              height={280}
+              src={`/agent-${agent.number}.jpg`}
+              width={210}
+            />
+            <div aria-hidden="true" className={halftone} />
+          </div>
           <figcaption className={`mt-2 ${label}`}>
             <span className="text-red">Agent {agent.number}.</span> {agent.caption}
           </figcaption>
@@ -179,8 +183,17 @@ const Flashcards = () => {
           </span>
         </button>
       </div>
+      <div className="mt-5 flex items-center justify-between gap-3">
+      <a
+        className={`underline decoration-dotted underline-offset-2 hover:text-red ${label}`}
+        href="https://www.reddit.com/r/agi/"
+        rel="noreferrer"
+        target="_blank"
+      >
+        Study group ↗
+      </a>
       <button
-        className={`mt-5 ml-auto flex items-center gap-2 border border-foreground px-3 py-1.5 hover:bg-foreground hover:text-background ${label}`}
+        className={`flex items-center gap-2 border border-foreground px-3 py-1.5 hover:bg-foreground hover:text-background ${label}`}
         onClick={() => {
           setFlipped(false);
           setIndex((current) => (current + 1) % FLASHCARDS.length);
@@ -201,6 +214,7 @@ const Flashcards = () => {
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>
       </button>
+      </div>
     </div>
   );
 };

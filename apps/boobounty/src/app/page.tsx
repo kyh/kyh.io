@@ -1,5 +1,6 @@
 import { Honeypot } from "@/components/honeypot";
 import { Standfirst } from "@/components/standfirst";
+import { halftone } from "@/lib/print";
 import { siteConfig } from "@/lib/site";
 
 const STEPS = [
@@ -89,13 +90,10 @@ const Home = () => (
         <div className="mt-8 grid gap-8 lg:grid-cols-12">
           <figure className="lg:col-span-7">
             <div className="relative h-[clamp(360px,46vw,600px)] border border-foreground">
-              <div className="size-full contrast-[1.2] saturate-[1.3]">
+              <div className="size-full contrast-[1.15] saturate-[1.15]">
                 <Honeypot />
               </div>
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(0_0_0/0.3)_0.9px,transparent_1.3px)] bg-size-[4px_4px] mix-blend-multiply"
-              />
+              <div aria-hidden="true" className={halftone} />
             </div>
             <figcaption className={`mt-3 ${label}`}>
               Pictured: the honeypot, moments before it worked.
@@ -178,6 +176,18 @@ const Home = () => (
               </li>
             ))}
           </ul>
+          <p className={`mt-4 ${label}`}>
+            Bookings: DM the newsdesk,{" "}
+            <a
+              className="underline decoration-dotted underline-offset-2 hover:text-red"
+              href={`https://x.com/${siteConfig.twitter.slice(1)}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {siteConfig.twitter}
+            </a>
+            .
+          </p>
 
           <aside className="relative mt-8 border-2 border-dashed border-foreground p-5 sm:p-6">
             <svg
