@@ -59,7 +59,7 @@ const Home = () => (
   <div className="mx-auto max-w-[1288px] px-4 pb-8 sm:px-8">
     <header className="pt-5 sm:pt-7">
       <div className="flex items-center gap-4">
-        <span className={`hidden sm:block ${label}`}>Vol. I · No. 1</span>
+        <span className={`hidden sm:block ${label}`}>Vol. I · No. 69</span>
         <span className="hidden h-px flex-1 bg-foreground sm:block" />
         <p className="mx-auto font-masthead text-[48px] leading-none sm:text-[72px]">
           {siteConfig.name}
