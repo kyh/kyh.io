@@ -119,7 +119,8 @@ caption (`src/components/lead-photo.tsx`) follows the dipper. Port 3006.
 - `src/lib/honeypot/sticker.ts` - the label, in `public/fonts/permanent-marker.woff2`
   (Apache 2.0); transparent so the honey's refraction doesn't mirror it
 - `src/lib/honeypot/halftone.ts` - the print pass: off screen, then CMYK dot
-  screens with the paper as white, so blank paper gets no ink
+  screens with the paper as white; the canvas multiplies its ink onto the
+  page, so the dots sit on the crumpled, stained paper (`globals.css`)
 - Three can't show one transmissive mesh through another, so the honey
   refracts and the glass is a transparent shell with a fresnel shader.
 - `public/honeypot.png` (the no-WebGL fallback) and `src/app/opengraph-image.jpg`

@@ -22,33 +22,23 @@
 }
 
 @layer base {
-  /* Newsprint: a fine grain in the paper, and, on wide screens, the crease where the page was folded.
-     The grain is the body's own background, not an overlay, so it costs nothing per frame. */
+  /* Newsprint: crumpled, stained and grainy. All of it is the body's own background,
+     drawn once by the browser, so none of it costs anything per frame. */
   body {
     @apply relative bg-background text-foreground font-serif antialiased;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  @media (width < 64rem) {
-    body::after {
-      display: none;
-    }
-  }
-  body::after {
-    position: absolute;
-    top: 50%;
-    right: 0;
-    left: 0;
-    height: 28px;
-    pointer-events: none;
-    content: "";
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(0 0 0 / 0.04) 48%,
-      rgb(255 255 255 / 0.18) 52%,
-      transparent
-    );
-    transform: translateY(-50%);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E %3Cfilter id='s' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.018' numOctaves='3' seed='4'/%3E %3CfeDisplacementMap in='SourceGraphic' scale='70'/%3E%3CfeGaussianBlur stdDeviation='1.2'/%3E%3C/filter%3E %3Cg filter='url(%23s)'%3E %3Ccircle cx='300' cy='300' r='200' fill='%23b07a24' fill-opacity='0.07'/%3E %3Ccircle cx='300' cy='300' r='200' fill='none' stroke='%238f5f16' stroke-opacity='0.14' stroke-width='4'/%3E %3Ccircle cx='420' cy='200' r='46' fill='%23b07a24' fill-opacity='0.09'/%3E %3Ccircle cx='150' cy='430' r='22' fill='%23b07a24' fill-opacity='0.08'/%3E %3C/g%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E %3Cfilter id='s' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.018' numOctaves='3' seed='4'/%3E %3CfeDisplacementMap in='SourceGraphic' scale='70'/%3E%3CfeGaussianBlur stdDeviation='1.2'/%3E%3C/filter%3E %3Cg filter='url(%23s)'%3E %3Ccircle cx='300' cy='300' r='200' fill='%23b07a24' fill-opacity='0.07'/%3E %3Ccircle cx='300' cy='300' r='200' fill='none' stroke='%238f5f16' stroke-opacity='0.14' stroke-width='4'/%3E %3Ccircle cx='420' cy='200' r='46' fill='%23b07a24' fill-opacity='0.09'/%3E %3Ccircle cx='150' cy='430' r='22' fill='%23b07a24' fill-opacity='0.08'/%3E %3C/g%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E %3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E %3CfeTurbulence type='turbulence' baseFrequency='0.004 0.006' numOctaves='4' seed='11' stitchTiles='stitch'/%3E %3CfeDiffuseLighting lighting-color='white' surfaceScale='4' diffuseConstant='1'%3E%3CfeDistantLight azimuth='225' elevation='60'/%3E%3C/feDiffuseLighting%3E %3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.22' intercept='0.8'/%3E%3CfeFuncG type='linear' slope='0.22' intercept='0.8'/%3E%3CfeFuncB type='linear' slope='0.22' intercept='0.8'/%3E%3C/feComponentTransfer%3E %3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
+    background-position:
+      right -200px top 360px,
+      left -160px top 1500px,
+      0 0,
+      0 0;
+    background-size: 560px, 340px, auto, auto;
+    background-repeat: no-repeat, no-repeat, repeat, repeat;
+    background-blend-mode: multiply, multiply, normal, multiply;
   }
   ::selection {
     background: #f6c75a;

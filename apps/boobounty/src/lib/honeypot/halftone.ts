@@ -27,7 +27,6 @@ void main() {
 // Magenta is held back a little: full strength over yellow turns honey red.
 const fragmentShader = `
 uniform sampler2D picture;
-uniform vec3 paper;
 uniform vec3 paperLinear;
 uniform float pitch;
 varying vec2 vUv;
@@ -56,13 +55,14 @@ void main() {
   float yellow = screen(cmy.b, 0.0);
   float black = screen(k, 0.7854);
   vec3 ink = vec3(1.0 - cyan, 1.0 - magenta, 1.0 - yellow) * (1.0 - 0.92 * black);
-  gl_FragColor = vec4(paper * ink, 1.0);
+  gl_FragColor = vec4(ink, 1.0);
 }
 `;
 
 /**
  * Prints a scene as a newspaper would: rendered off screen, then laid down
- * on the paper as dots of four inks.
+ * as dots of four inks. It draws only the ink, white where there is none, for
+ * the canvas to multiply onto the page, so the dots land on its creases and stains.
  */
 export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
   const target = new WebGLRenderTarget(1, 1, { samples: 4, type: HalfFloatType });
@@ -70,7 +70,6 @@ export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
   const material = new ShaderMaterial({
     fragmentShader,
     uniforms: {
-      paper: { value: new Color(paperColor).convertLinearToSRGB() },
       paperLinear: { value: new Color(paperColor) },
       picture: { value: target.texture },
       pitch,

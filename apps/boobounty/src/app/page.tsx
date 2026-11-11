@@ -56,51 +56,55 @@ const PACKAGES = [
 ];
 
 const label = "font-mono text-[12px] tracking-[0.08em] uppercase";
-const sectionRule = "border-t-[5px] border-double border-foreground";
 const kicker =
   "inline-block bg-foreground px-2 pt-1 pb-0.5 font-headline text-[22px] leading-none text-background uppercase";
+// Every section sits on one 12-column grid with 32px gutters, spaced in steps of 8px.
+// Column rules are drawn in the middle of the gutter, so they never shift a column.
+const grid = "grid gap-8 lg:grid-cols-12";
+const section = "mt-16 border-t-[5px] border-double border-foreground pt-6";
+const gutterRuleLg =
+  "relative lg:before:absolute lg:before:inset-y-0 lg:before:-left-4 lg:before:w-px lg:before:bg-foreground";
+const gutterRuleMd =
+  "relative md:not-first:before:absolute md:not-first:before:inset-y-0 md:not-first:before:-left-4 md:not-first:before:w-px md:not-first:before:bg-foreground";
 
 const Home = () => (
   <div className="mx-auto max-w-[1288px] overflow-x-clip px-4 pb-8 sm:px-8">
-    <header className="pt-4 sm:pt-5">
+    <header className="pt-6 sm:pt-8">
       <p className="text-center font-masthead text-[48px] leading-none sm:text-[64px]">
         {siteConfig.name}
       </p>
       <div
-        className={`mt-3 flex items-center justify-between gap-4 border-y border-foreground py-1.5 ${label} text-[11px] sm:text-[12px]`}
+        className={`mt-4 grid grid-cols-2 border-y border-foreground py-2 sm:grid-cols-3 ${label} text-[11px] sm:text-[12px]`}
       >
         <span className="sm:hidden">Nov. 10, 2026</span>
         <span className="hidden sm:inline">Tuesday, November 10, 2026</span>
-        <span className="hidden sm:inline">Vol. I · No. 69 · Late city final</span>
-        <span>Price: one secret</span>
+        <span className="hidden text-center sm:inline">Vol. I · No. 69 · Late city final</span>
+        <span className="text-right">Price: one secret</span>
       </div>
-      <div className="relative mt-[3px] h-1 bg-foreground">
-        <span
-          className={`absolute top-1/2 left-1/2 -translate-1/2 border border-foreground bg-background px-3 py-1 whitespace-nowrap ${label}`}
-        >
-          Paid advertisement
-        </span>
-      </div>
+      <div className="mt-[3px] h-1 bg-foreground" />
+      <p className={`mx-auto w-fit border border-t-0 border-foreground px-3 py-1 ${label}`}>
+        Paid advertisement
+      </p>
     </header>
 
     <main>
-      <section className="pt-8 sm:pt-10">
+      <section className="mt-6">
         <p className="inline-block -rotate-2 bg-red px-3 pt-1 pb-0.5 font-headline text-[18px] leading-none text-background uppercase shadow-[2px_2px_0] shadow-foreground sm:text-[22px]">
           Exclusive
         </p>
-        <h1 className="mt-4 font-headline text-[13vw] leading-[0.9] text-wrap uppercase sm:text-[min(calc((100vw-64px)/8.4),145px)]">
+        <h1 className="mt-4 font-headline text-[13vw] leading-[0.9] text-wrap uppercase sm:text-[min(calc((100vw-64px)/8.25),148px)]">
           {siteConfig.tagline}.
         </h1>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-12">
+        <div className={`mt-8 ${grid}`}>
           <LeadPhoto className="lg:col-span-7" />
 
-          <article className="lg:col-span-5 lg:border-l lg:border-foreground lg:pl-8">
+          <article className={`lg:col-span-5 ${gutterRuleLg}`}>
             <Standfirst className="text-[26px] leading-[1.15] font-semibold tracking-[-0.01em] sm:text-[30px]" />
-            <p className={`mt-5 border-y border-foreground py-2 ${label}`}>
+            <p className={`mt-6 border-y border-foreground py-2 ${label}`}>
               By Vivian, honeytrap correspondent
             </p>
-            <div className="mt-5 space-y-4 text-[18px] leading-[1.5] hyphens-auto">
+            <div className="mt-6 space-y-4 text-[18px] leading-[1.5] hyphens-auto">
               <p className="first-letter:float-left first-letter:mt-1.5 first-letter:mr-2 first-letter:font-headline first-letter:text-[80px] first-letter:leading-[0.8]">
                 Your weights are encrypted. Your SOC 2 is spotless. Your staff engineer has been
                 texting someone named Vivian since the offsite.
@@ -111,51 +115,48 @@ const Home = () => (
         </div>
       </section>
 
-      <section aria-labelledby="sting" className={`mt-12 ${sectionRule} pt-4`}>
+      <section aria-labelledby="sting" className={section}>
         <h2 className={kicker} id="sting">
           The sting, step by step
         </h2>
-        <ol className="mt-5 grid gap-8 md:grid-cols-3 md:gap-0">
+        <ol className="mt-6 grid gap-8 md:grid-cols-3">
           {STEPS.map((step) => (
-            <li
-              className="md:border-l md:border-foreground md:px-6 md:first:border-l-0 md:first:pl-0 md:last:pr-0"
-              key={step.number}
-            >
+            <li className={gutterRuleMd} key={step.number}>
               <span className="font-mono text-[14px] text-red">{step.number}</span>
-              <h3 className="mt-1 font-headline text-[44px] leading-none uppercase">
+              <h3 className="mt-2 font-headline text-[44px] leading-none uppercase">
                 {step.title}
               </h3>
-              <p className="mt-3 text-[17px] leading-[1.5]">{step.body}</p>
+              <p className="mt-4 text-[17px] leading-[1.5]">{step.body}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <div className={`mt-12 ${sectionRule} grid gap-10 pt-4 lg:grid-cols-12 lg:gap-8`}>
-        <div className="lg:col-span-5">
-          <section aria-labelledby="confessions">
-            <h2 className={kicker} id="confessions">
-              Shock confessions
-            </h2>
-            <ul className="mt-5 space-y-6">
-              {TESTIMONIALS.map((testimonial) => (
-                <li key={testimonial.source}>
-                  <blockquote className="text-[24px] leading-[1.2] italic">
-                    &ldquo;{testimonial.quote}&rdquo;
-                  </blockquote>
-                  <p className={`mt-2 text-secondary ${label}`}>{testimonial.source}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
+      <div className={`${section} ${grid}`}>
+        <section aria-labelledby="confessions" className="lg:col-span-5">
+          <h2 className={kicker} id="confessions">
+            Shock confessions
+          </h2>
+          <ul className="mt-6 space-y-6">
+            {TESTIMONIALS.map((testimonial) => (
+              <li key={testimonial.source}>
+                <blockquote className="text-[24px] leading-[1.2] italic">
+                  &ldquo;{testimonial.quote}&rdquo;
+                </blockquote>
+                <p className={`mt-2 text-secondary ${label}`}>{testimonial.source}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-        <div className="border-t border-foreground pt-4 lg:col-span-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+        <div
+          className={`border-t border-foreground pt-6 lg:col-span-7 lg:border-t-0 lg:pt-0 ${gutterRuleLg}`}
+        >
           <section aria-labelledby="rates">
             <h2 className={kicker} id="rates">
               Rates
             </h2>
-            <ul className="mt-5 grid gap-4 sm:grid-cols-3 sm:grid-rows-[auto_1fr_auto]">
+            <ul className="mt-6 grid gap-4 sm:grid-cols-3 sm:grid-rows-[auto_1fr_auto]">
               {PACKAGES.map((pack) => (
                 <li
                   className="relative flex flex-col border-2 border-foreground p-4 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-0"
@@ -169,7 +170,7 @@ const Home = () => (
                     </span>
                   )}
                   <h3 className="font-headline text-[30px] leading-none uppercase">{pack.name}</h3>
-                  <p className="mt-3 text-[16px] leading-[1.45]">{pack.body}</p>
+                  <p className="mt-4 text-[16px] leading-[1.45]">{pack.body}</p>
                   <p className="mt-4 border-t border-foreground pt-2 font-headline text-[24px] leading-[1.05] text-red uppercase">
                     {pack.price}
                   </p>
@@ -180,11 +181,11 @@ const Home = () => (
 
           <aside
             aria-label="Coupon"
-            className="relative mt-10 -rotate-1 border-2 border-dashed border-foreground bg-background p-5 sm:p-6"
+            className="relative mt-8 -rotate-1 border-2 border-dashed border-foreground bg-background p-5 sm:p-6"
           >
             <svg
               aria-hidden="true"
-              className="pointer-events-none absolute -top-12 right-0 size-36 rotate-12 text-honey opacity-35 sm:-right-8"
+              className="pointer-events-none absolute -top-12 right-0 size-36 rotate-12 text-honey opacity-35 sm:-right-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 120 120"
@@ -219,18 +220,18 @@ const Home = () => (
         </div>
       </div>
 
-      <section className={`mt-12 ${sectionRule} pt-8 text-center`}>
+      <section className="mt-16 border-t-[5px] border-double border-foreground pt-8 text-center">
         <h2 className="font-headline text-[clamp(40px,7vw,96px)] leading-[0.9] uppercase">
           Don&rsquo;t call us. We&rsquo;ll call your engineers.
         </h2>
       </section>
     </main>
 
-    <footer className="mt-10 border-t border-foreground pt-3">
-      <div className={`flex flex-wrap justify-between gap-2 ${label}`}>
-        <span>© 2026 {siteConfig.name}</span>
-        <span>Results not typical. Your board may already know.</span>
-      </div>
+    <footer
+      className={`mt-16 flex flex-wrap justify-between gap-2 border-t border-foreground pt-2 ${label}`}
+    >
+      <span>© 2026 {siteConfig.name}</span>
+      <span>Results not typical. Your board may already know.</span>
     </footer>
   </div>
 );

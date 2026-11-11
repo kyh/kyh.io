@@ -61,7 +61,7 @@ const Honeypot = ({ onCarry }: HoneypotProps) => {
       ) : (
         <canvas
           aria-label="A glass jar of honey with a wooden dipper. Drag the dipper to drizzle honey; arrow keys turn the jar, Enter drizzles."
-          className={`block size-full cursor-grab touch-[pan-y_pinch-zoom] transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-red active:cursor-grabbing motion-reduce:transition-opacity ${
+          className={`block size-full cursor-grab touch-[pan-y_pinch-zoom] mix-blend-multiply transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-red active:cursor-grabbing motion-reduce:transition-opacity ${
             status === "ready" ? "scale-100 opacity-100" : "scale-[0.97] opacity-0"
           }`}
           ref={canvasRef}
