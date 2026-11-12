@@ -22,6 +22,7 @@ pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, ap
 - **Verify**: `pnpm verify` for the static gate; drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` gets `typecheck` + `build` only.
 - **`pnpm lint` is a clean gate.** `oxlint.config.ts` extends the ultracite presets (core, react, next, anti-slop); every rule is an error. Fix the code, don't add config overrides; a `// oxlint-disable-next-line rule -- why` needs a stated reason.
 - **policingice's database is remote production.** No local DB, no seed, no test login. Never run its `db:push`/`db:studio` or anything in `apps/policingice/scripts/`.
+- **Build it in, don't bolt it on.** Every feature gets clean architecture: modular, with concerns separated. Never wedge one in just because it was asked for. If it can't be built naturally into the existing structure and a refactor is the clean path, stop before writing code and say so.
 
 ## Apps
 
