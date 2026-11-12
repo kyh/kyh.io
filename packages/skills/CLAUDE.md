@@ -27,6 +27,7 @@
 ## Code Quality Standards
 
 - Make minimal, surgical changes
+- **Build it in, don't bolt it on.** Every feature gets clean architecture: modular, with concerns separated. Never wedge one in just because I asked for it. Minimal means the smallest clean change, not the smallest diff. If it can't be built naturally into the existing structure and a refactor is the clean path, stop before writing code and propose the refactor: what changes, which files, roughly how big.
 - **Idiomatic first, always.** Follow the language/framework/library's own conventions before inventing anything, and match the surrounding code. Convention beats cleverness — a deviation needs a stated reason.
 - **Don't guess at current practice.** If you're unsure what today's idiom is — unfamiliar library, fast-moving API, version you haven't confirmed — look it up (context7 for library docs, web search otherwise) instead of writing from memory. Training data goes stale; the docs don't.
 - **File naming: kebab-case for all TS/TSX files** (`game-scene.ts`, `use-game-state.ts`), including React components. Exceptions: tool-generated files with mandated names (e.g. `routeTree.gen.ts`)
