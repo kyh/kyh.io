@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3 — 2026-11-11
+
+- CLAUDE.md: build features in, don't bolt on; propose the refactor first when clean needs one
+
 ## 0.2.2 — 2026-11-10
 
 - drop `ai-elements` and `make-interfaces-feel-better`
