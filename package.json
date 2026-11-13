@@ -30,9 +30,9 @@
     "og:video": "node scripts/og-video.mjs"
   },
   "devDependencies": {
-    "dotenv-cli": "^11.0.0",
+    "dotenv-cli": "^11.1.0",
     "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
+    "oxlint": "^1.92.0",
     "tsx": "catalog:",
     "turbo": "^2.11.10",
     "typescript": "catalog:",

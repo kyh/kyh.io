@@ -11,6 +11,7 @@ const ACCENT = "#a5b4fc";
 
 const Bracket = ({ x, y }: { x: "left" | "right"; y: "top" | "bottom" }) => (
   <div
+    // oxlint-disable-next-line sort-keys -- directional border names are computed at runtime
     style={{
       [`border${y === "top" ? "Top" : "Bottom"}`]: `5px solid ${ACCENT}`,
       [`border${x === "left" ? "Left" : "Right"}`]: `5px solid ${ACCENT}`,
