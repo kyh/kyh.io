@@ -15,7 +15,7 @@ const ENTITIES = new Map([
 
 export const displayPostText = (text: string): string =>
   text
-    .replace(URL_PATTERN, "")
+    .replaceAll(URL_PATTERN, "")
     .replaceAll(/&(?:amp|lt|gt|quot|#39);/gu, (entity) => ENTITIES.get(entity) ?? entity)
     .replaceAll(/\s+/gu, " ")
     .trim();

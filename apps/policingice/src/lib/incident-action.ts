@@ -365,6 +365,7 @@ export const submitVote = async (data: {
     await db.update(votes).set({ type: data.type }).where(eq(votes.id, existing.id));
     await db
       .update(incidents)
+      // oxlint-disable-next-line sort-keys -- computed counter names depend on the vote type, so no static order exists
       .set({
         [oldField]: sql`${incidents[oldField]} - 1`,
         [newField]: sql`${incidents[newField]} + 1`,

@@ -86,25 +86,19 @@ const requestProgram = async (sourceId: string, opening: boolean): Promise<Progr
 
 export const LiveScreen = (props: LiveScreenProps) => {
   const videoRef = useVideoPlayback(props.muted, props.paused);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const sessionRef = useRef<Session | undefined>(undefined);
   const [stream, setStream] = useState<MediaStream | undefined>();
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
   /** The latest version whose picture has been scheduled onto the screen. */
   const shownVersionRef = useRef(0);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const tickerTimerRef = useRef<number | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const nextTimerRef = useRef<number | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const recorderRef = useRef<Recorder | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
   const testStreamRef = useRef(false);
   const testProgramsRef = useRef(0);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
   const settleRef = useRef<() => void>(() => {
