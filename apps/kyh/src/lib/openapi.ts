@@ -90,6 +90,7 @@ export const buildOpenApiDocument = (): OpenApiDocument => ({
     version: "1.0.0",
   },
   openapi: "3.1.0",
+  // oxlint-disable-next-line sort-keys -- computed protocol paths are constants, grouped with their related endpoints
   paths: {
     "/": {
       get: {
