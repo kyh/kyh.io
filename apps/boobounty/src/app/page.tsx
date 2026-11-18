@@ -56,14 +56,16 @@ const PACKAGES = [
 ];
 
 const label = "font-mono text-[12px] tracking-[0.08em] uppercase";
+
 const kicker =
   "inline-block bg-foreground px-2 pt-1 pb-0.5 font-headline text-[22px] leading-none text-background uppercase";
-// Every section sits on one 12-column grid with 32px gutters, spaced in steps of 8px.
-// Column rules are drawn in the middle of the gutter, so they never shift a column.
+
 const grid = "grid gap-8 lg:grid-cols-12";
 const section = "mt-16 border-t-[5px] border-double border-foreground pt-6";
+
 const gutterRuleLg =
   "relative lg:before:absolute lg:before:inset-y-0 lg:before:-left-4 lg:before:w-px lg:before:bg-foreground";
+
 const gutterRuleMd =
   "relative md:not-first:before:absolute md:not-first:before:inset-y-0 md:not-first:before:-left-4 md:not-first:before:w-px md:not-first:before:bg-foreground";
 

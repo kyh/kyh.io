@@ -7,8 +7,6 @@ interface HeaderProps {
   version: string;
 }
 
-// Top system bar: identity on the left, live status + clock on the right,
-// sitting above a hairline divider.
 export const Header = ({ clock, version }: HeaderProps) => (
   <Box
     flexDirection="row"

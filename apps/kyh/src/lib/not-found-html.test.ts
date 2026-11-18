@@ -14,7 +14,6 @@ test("is a complete, self-contained document", () => {
   assert.ok(html.includes("<title>404 — Not found | Kaiyu Hsu</title>"));
   assert.ok(html.includes(`<link rel="canonical" href="${absoluteUrl("/")}">`));
   assert.ok(html.includes('<meta name="robots" content="noindex, follow">'));
-  // No external requests: the page has to render for someone with a dead link.
   assert.ok(!html.includes("<script"));
 });
 

@@ -13,6 +13,7 @@ export const ConnectList = () => (
   <div className="-mx-2 mt-1 flex flex-col">
     {connectLinks.map((link) => {
       const Icon = icons[link.social];
+
       return (
         <a
           key={link.label}

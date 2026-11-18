@@ -1,5 +1,3 @@
-// What people say on their way out of each project. A project without lines
-// of its own gets its kind's.
 import type { ProjectKind } from "./draw-landmarks";
 
 const BY_SLUG = new Map<string, readonly string[]>([
@@ -61,5 +59,6 @@ const BY_KIND: Record<ProjectKind, readonly string[]> = {
 /** The `pick`th thing someone says leaving this project, round and round its lines. */
 export const quoteFor = (slug: string, kind: ProjectKind, pick: number) => {
   const lines = BY_SLUG.get(slug) ?? BY_KIND[kind];
+
   return lines[Math.abs(Math.floor(pick)) % lines.length] ?? "";
 };

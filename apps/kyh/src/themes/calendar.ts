@@ -1,7 +1,3 @@
-// The holidays' dates, in the visitor's local time. A day is one number,
-// yyyymmdd, so days compare as numbers and a theme's days are a range of
-// them. Pure.
-
 /** The days a theme runs, from and to, both included. */
 export type Window = readonly [from: number, to: number];
 
@@ -18,14 +14,15 @@ export const dateOf = (key: number) =>
   new Date(Math.floor(key / 10_000), (Math.floor(key / 100) % 100) - 1, key % 100);
 
 /** From one date (month, day) to a later one in the same year. */
-export const span = (year: number, from: [number, number], to: [number, number]): Window => [
+export const span = (year: number, from: [number, number], to: [number, number]) => [
   dayOf(year, ...from),
   dayOf(year, ...to),
 ];
 
 /** Some days either side of one date. */
-export const around = (center: number, before: number, after: number): Window => {
+export const around = (center: number, before: number, after: number) => {
   const date = dateOf(center);
+
   return [
     dayOf(date.getFullYear(), date.getMonth() + 1, date.getDate(), -before),
     dayOf(date.getFullYear(), date.getMonth() + 1, date.getDate(), after),
@@ -44,17 +41,17 @@ export const easterSunday = (year: number) => {
   const weekday = (32 + 2 * (century % 4) + 2 * Math.floor(yearOf / 4) - epact - (yearOf % 4)) % 7;
   const shift = Math.floor((golden + 11 * epact + 22 * weekday) / 451);
   const sum = epact + weekday - 7 * shift + 114;
+
   return dayOf(year, Math.floor(sum / 31), (sum % 31) + 1);
 };
 
 /** The nth weekday (0 Sunday … 6 Saturday) of a month: Thanksgiving is the 4th Thursday of November. */
 export const nthWeekday = (year: number, month: number, weekday: number, nth: number) => {
   const first = new Date(year, month - 1, 1).getDay();
+
   return dayOf(year, month, 1 + ((weekday - first + 7) % 7) + (nth - 1) * 7);
 };
 
-// The lunisolar calendar has no short formula; the years past this table
-// simply have no Lunar New Year until it's extended.
 const LUNAR_NEW_YEAR = new Map<number, readonly [number, number]>([
   [2024, [2, 10]],
   [2025, [1, 29]],
@@ -78,5 +75,6 @@ const LUNAR_NEW_YEAR = new Map<number, readonly [number, number]>([
 /** The first day of the lunar year, or null past the table. */
 export const lunarNewYear = (year: number) => {
   const date = LUNAR_NEW_YEAR.get(year);
+
   return date ? dayOf(year, ...date) : null;
 };

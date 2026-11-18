@@ -4,22 +4,12 @@ import { z } from "zod";
 
 import type { LiveProgram } from "@/lib/api-contract";
 
-// A stand-in for the director session, for working on everything downstream
-// of it — the recording, the upload, the live tail, the replay — without
-// paying fal for a minute of video per try. It plays a stored recording of a
-// real session on a loop and hands its picture and sound over as the stream,
-// answers `configure` and `prompt` the way the model does (a chunk under
-// that version, a second later), and is only ever reachable from a
-// development build with ?teststream in the URL.
-
 /** One real session, recorded as it aired, stitched into a single file by scripts/stitch-test-stream.ts. */
 export const TEST_STREAM_PATH = "test/stream.webm";
 const TEST_STREAM_URL = `https://euxclvii9nvaixnr.public.blob.vercel-storage.com/${TEST_STREAM_PATH}`;
-/** How long after a prompt its "chunk" is reported, standing in for generation. */
 const CHUNK_DELAY_MS = 1000;
 
 declare global {
-  // Every browser that plays WebM has it; the DOM typings do not.
   interface HTMLMediaElement {
     captureStream: () => MediaStream;
   }
@@ -30,7 +20,6 @@ interface Handlers {
   onData: (raw: string) => void;
 }
 
-/** The client messages the director takes; the stand-in answers the first two. */
 const clientMessageSchema = z.discriminatedUnion("type", [
   z.object({
     aspect_ratio: z.string().optional(),
@@ -47,7 +36,6 @@ const clientMessageSchema = z.discriminatedUnion("type", [
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
-/** The one server message the screen acts on: a chunk, which is a prompt's picture on its way. */
 interface ServerMessage {
   type: "chunk";
   prompt_version: number;
@@ -59,13 +47,13 @@ interface TestStreamSession {
   close: () => void;
 }
 
-export const testStreamRequested = (): boolean =>
+export const testStreamRequested = () =>
   process.env.NODE_ENV !== "production" &&
   typeof window !== "undefined" &&
   new URLSearchParams(window.location.search).has("teststream");
 
 /** A program for the stand-in: no source is read, nothing is spent. */
-export const testStreamProgram = (n: number): LiveProgram => ({
+export const testStreamProgram = (n: number) => ({
   authorName: "Test stream",
   authorUsername: "teststream",
   itemId: `test:${n}`,
@@ -75,7 +63,7 @@ export const testStreamProgram = (n: number): LiveProgram => ({
   text: `Test stream ${n} — ${new Date().toLocaleTimeString()}`,
 });
 
-export const openTestStreamSession = (handlers: Handlers): TestStreamSession => {
+export const openTestStreamSession = (handlers: Handlers) => {
   const video = document.createElement("video");
   video.crossOrigin = "anonymous";
   video.loop = true;
@@ -85,22 +73,19 @@ export const openTestStreamSession = (handlers: Handlers): TestStreamSession => 
   let closed = false;
   const timers: number[] = [];
 
-  // The stream is the element's output, so it has to be playing. A browser
-  // without a gesture refuses sound, and muting the element only silences
-  // the speakers: the captured audio still carries the recording's own.
   const start = async () => {
     try {
       await video.play();
     } catch {
       video.muted = true;
-      await video.play().catch(() => {
-        /* empty */
-      });
+      await video.play().catch(() => {});
     }
+
     if (!closed) {
       handlers.onMedia(video.captureStream());
     }
   };
+
   void start();
 
   const emit = (message: ServerMessage) => {
@@ -112,9 +97,11 @@ export const openTestStreamSession = (handlers: Handlers): TestStreamSession => 
   return {
     close: () => {
       closed = true;
+
       for (const timer of timers) {
         window.clearTimeout(timer);
       }
+
       video.pause();
       video.removeAttribute("src");
       video.load();
@@ -123,14 +110,19 @@ export const openTestStreamSession = (handlers: Handlers): TestStreamSession => 
       if (closed) {
         return;
       }
+
       const parsed = clientMessageSchema.safeParse(message);
+
       if (!parsed.success) {
         return;
       }
+
       const sent = parsed.data;
+
       if (sent.type === "stop" || sent.type === "ping") {
         return;
       }
+
       const version = sent.prompt_version;
       timers.push(
         window.setTimeout(

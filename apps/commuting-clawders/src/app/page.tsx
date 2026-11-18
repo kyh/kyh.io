@@ -3,6 +3,7 @@ import { board } from "@/lib/standings";
 
 const HomePage = async () => {
   const { rows, total } = await board();
+
   return (
     <main>
       <h1 className="visually-hidden">Commuting Clawders</h1>

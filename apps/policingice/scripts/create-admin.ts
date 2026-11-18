@@ -1,16 +1,4 @@
 #!/usr/bin/env npx tsx
-/**
- * Create Admin User
- *
- * Creates a new admin user with email/password authentication.
- *
- * Usage:
- *   pnpm with-env tsx scripts/create-admin.ts <email> <password> [name]
- *
- * Examples:
- *   pnpm with-env tsx scripts/create-admin.ts admin@example.com secret123
- *   pnpm with-env tsx scripts/create-admin.ts admin@example.com secret123 "John Doe"
- */
 import { auth } from "../src/lib/auth";
 
 const [email, password, nameArg] = process.argv.slice(2);

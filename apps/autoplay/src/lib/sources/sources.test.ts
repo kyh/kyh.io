@@ -4,9 +4,6 @@ import { describe, it } from "node:test";
 import { isNewsletter, parseFrom } from "./gmail";
 import { bestOf, decodeEntities, itemKind, plainText, recencyScore } from "./types";
 
-// The adapters' pure edges: what counts as a newsletter, who a message is
-// from, and how foreign text becomes something a prompt can use.
-
 describe("isNewsletter", () => {
   it("is decided by list headers, not by the sender", () => {
     assert.equal(isNewsletter([{ name: "List-Id", value: "<weekly.example.com>" }]), true);

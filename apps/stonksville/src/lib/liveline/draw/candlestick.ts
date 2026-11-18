@@ -6,51 +6,47 @@ export type { CandlePoint } from "../types";
 const BULL = "#22c55e";
 const BEAR = "#ef4444";
 
-// Pre-parsed RGB for fast interpolation
 const BULL_RGB = [34, 197, 94] as const;
 const BEAR_RGB = [239, 68, 68] as const;
 
-/** Blend bear→bull by t (0=bear, 1=bull). */
-const blendColor = (t: number): string => {
+const blendColor = (t: number) => {
   const r = Math.round(BEAR_RGB[0] + (BULL_RGB[0] - BEAR_RGB[0]) * t);
   const g = Math.round(BEAR_RGB[1] + (BULL_RGB[1] - BEAR_RGB[1]) * t);
   const b = Math.round(BEAR_RGB[2] + (BULL_RGB[2] - BEAR_RGB[2]) * t);
+
   return `rgb(${r},${g},${b})`;
 };
 
-const directionColor = (isBull: boolean): string => (isBull ? BULL : BEAR);
+const directionColor = (isBull: boolean) => (isBull ? BULL : BEAR);
 
-/** Blend a candle color toward an accent color by t. */
-const blendToAccent = (candleColor: string, accentColor: string, t: number): string => {
+const blendToAccent = (candleColor: string, accentColor: string, t: number) => {
   if (t <= 0) {
     return candleColor;
   }
+
   if (t >= 1) {
     return accentColor;
   }
+
   const [r1, g1, b1] = parseColorRgb(candleColor);
   const [r2, g2, b2] = parseColorRgb(accentColor);
   const r = Math.round(r1 + (r2 - r1) * t);
   const g = Math.round(g1 + (g2 - g1) * t);
   const b = Math.round(b1 + (b2 - b1) * t);
+
   return `rgb(${r},${g},${b})`;
 };
 
-/**
- * Compute pixel dimensions for candle rendering.
- */
 const candleDims = (layout: ChartLayout, candleWidthSecs: number) => {
   const pxPerSec = layout.chartW / (layout.rightEdge - layout.leftEdge);
   const candlePxW = candleWidthSecs * pxPerSec;
   const bodyW = Math.max(1, candlePxW * 0.7);
   const wickW = Math.max(0.8, Math.min(2, bodyW * 0.15));
   const radius = bodyW > 6 ? 1.5 : 0;
+
   return { bodyW, radius, wickW };
 };
 
-/**
- * Rounded rect helper — draws path only (caller fills/strokes).
- */
 const roundedRect = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -61,8 +57,10 @@ const roundedRect = (
 ) => {
   if (r <= 0 || h < r * 2) {
     ctx.rect(x, y, w, h);
+
     return;
   }
+
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
   ctx.arcTo(x + w, y, x + w, y + r, r);
@@ -103,11 +101,11 @@ export const drawCandlesticks = (
   const padL = layout.pad.left;
   const padR = layout.pad.left + layout.chartW;
 
-  // Live pulse: subtle brightness cycle
   const livePulse = 0.12 + Math.sin(now_ms * 0.004) * 0.08;
 
   for (const c of candles) {
     const cx = toX(c.time + candleWidthSecs / 2);
+
     if (cx + halfBody < padL || cx - halfBody > padR) {
       continue;
     }
@@ -115,14 +113,16 @@ export const drawCandlesticks = (
     const isBull = c.close >= c.open;
     const isLive = c.time === liveTime;
     let color = isLive && liveBullBlend >= 0 ? blendColor(liveBullBlend) : directionColor(isBull);
+
     if (accentColor && accentBlend > 0.01) {
       color = blendToAccent(color, accentColor, accentBlend);
     }
 
-    // Scrub dimming: smooth spatial gradient from cursor position
     let candleAlpha = isLive ? liveAlpha : 1;
+
     if (scrubDim > 0.01 && scrubX > 0) {
       const dist = cx - scrubX;
+
       if (dist > 0) {
         const fadeZone = bodyW * 1.5;
         const dimT = Math.min(dist / fadeZone, 1);
@@ -133,12 +133,10 @@ export const drawCandlesticks = (
     const baseAlpha = ctx.globalAlpha;
     ctx.globalAlpha = baseAlpha * candleAlpha;
 
-    // Body geometry
     const bodyTop = toY(Math.max(c.open, c.close));
     const bodyBottom = toY(Math.min(c.open, c.close));
     const bodyH = Math.max(1, bodyBottom - bodyTop);
 
-    // Wicks
     const wickTop = toY(c.high);
     const wickBottom = toY(c.low);
     ctx.lineCap = "round";
@@ -151,6 +149,7 @@ export const drawCandlesticks = (
       ctx.lineWidth = wickW;
       ctx.stroke();
     }
+
     if (wickBottom - bodyBottom > 0.5) {
       ctx.beginPath();
       ctx.moveTo(cx, bodyBottom);
@@ -159,13 +158,11 @@ export const drawCandlesticks = (
       ctx.stroke();
     }
 
-    // Body
     ctx.fillStyle = color;
     ctx.beginPath();
     roundedRect(ctx, cx - halfBody, bodyTop, bodyW, bodyH, radius);
     ctx.fill();
 
-    // Live candle glow
     if (isLive) {
       ctx.save();
       ctx.globalAlpha = baseAlpha * candleAlpha * livePulse;
@@ -195,6 +192,7 @@ export const drawClosePrice = (
   bullBlend = -1,
 ) => {
   const y = layout.toY(liveCandle.close);
+
   if (y < layout.pad.top || y > layout.h - layout.pad.bottom) {
     return;
   }
@@ -237,7 +235,6 @@ export const drawCandleCrosshair = (
 
   const { h, pad } = layout;
 
-  // Vertical line
   ctx.save();
   ctx.globalAlpha = opacity * 0.5;
   ctx.strokeStyle = palette.crosshairLine;
@@ -248,7 +245,6 @@ export const drawCandleCrosshair = (
   ctx.stroke();
   ctx.restore();
 
-  // Tooltip — OHLC + time (matches line chart crosshair patterns)
   if (opacity < 0.1 || layout.w < 200) {
     return;
   }
@@ -264,8 +260,8 @@ export const drawCandleCrosshair = (
   ctx.font = '400 13px "SF Mono", Menlo, monospace';
   ctx.textAlign = "left";
 
-  // Full OHLC at ≥400px, condensed (close + time) at smaller sizes
   let parts: { text: string; color: string }[];
+
   if (layout.w >= 400) {
     const o = formatValue(candle.open);
     const hi = formatValue(candle.high);
@@ -291,39 +287,41 @@ export const drawCandleCrosshair = (
     ];
   }
 
-  // Measure
   let totalW = 0;
   const widths: number[] = [];
+
   for (const p of parts) {
     const w = ctx.measureText(p.text).width;
     widths.push(w);
     totalW += w;
   }
 
-  // Position — center on hover, clamp to chart bounds
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
   const maxX = layout.w - pad.right - totalW;
+
   if (tx < minX) {
     tx = minX;
   }
+
   if (tx > maxX) {
     tx = maxX;
   }
+
   const ty = pad.top + 24;
 
-  // Outline stroke for readability
   ctx.strokeStyle = palette.tooltipBg;
   ctx.lineWidth = 3;
   ctx.lineJoin = "round";
   let cx = tx;
+
   for (let i = 0; i < parts.length; i += 1) {
     ctx.strokeText(parts[i].text, cx, ty);
     cx += widths[i];
   }
 
-  // Fill text
   cx = tx;
+
   for (let i = 0; i < parts.length; i += 1) {
     ctx.fillStyle = parts[i].color;
     ctx.fillText(parts[i].text, cx, ty);
@@ -390,6 +388,7 @@ export const drawLineModeCrosshair = (
 
   let totalW = 0;
   const widths: number[] = [];
+
   for (const p of parts) {
     const w = ctx.measureText(p.text).width;
     widths.push(w);
@@ -399,24 +398,29 @@ export const drawLineModeCrosshair = (
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
   const maxX = layout.w - pad.right - totalW;
+
   if (tx < minX) {
     tx = minX;
   }
+
   if (tx > maxX) {
     tx = maxX;
   }
+
   const ty = pad.top + 24;
 
   ctx.strokeStyle = palette.tooltipBg;
   ctx.lineWidth = 3;
   ctx.lineJoin = "round";
   let lx = tx;
+
   for (let i = 0; i < parts.length; i += 1) {
     ctx.strokeText(parts[i].text, lx, ty);
     lx += widths[i];
   }
 
   lx = tx;
+
   for (let i = 0; i < parts.length; i += 1) {
     ctx.fillStyle = parts[i].color;
     ctx.fillText(parts[i].text, lx, ty);

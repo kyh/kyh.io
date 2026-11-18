@@ -7,8 +7,10 @@ export const useGetStatesDailyData = () => {
   );
 
   const formatted = {};
+
   if (Array.isArray(data)) {
     const sorted = data.map((d) => formatDaily(d)).toSorted((a, b) => a.date - b.date);
+
     for (const state of sorted) {
       if (formatted[state.state]) {
         formatted[state.state].push(state);

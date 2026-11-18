@@ -7,7 +7,7 @@ import { db } from "@/db/drizzle-client";
 
 const siteUrl = "https://www.policingice.com";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap() {
   cacheLife("hours");
   cacheTag("incidents");
 

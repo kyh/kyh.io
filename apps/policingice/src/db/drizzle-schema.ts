@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-// Embedding dimensions for text-embedding-3-small
 export const EMBEDDING_DIMENSIONS = 1536;
 
 export type VideoPlatform =
@@ -13,10 +12,11 @@ export type VideoPlatform =
   | "linkedin"
   | "pinterest"
   | "reddit";
+
 export type IncidentStatus = "approved" | "hidden";
+
 export type VoteType = "unjustified" | "justified";
 
-// better-auth tables
 export const user = sqliteTable("user", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   email: text().notNull().unique(),
@@ -76,7 +76,6 @@ export const incidents = sqliteTable("incidents", {
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   description: text(),
-  // F32_BLOB for vector search
   embedding: blob({ mode: "buffer" }),
   id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   incidentDate: integer("incident_date", { mode: "timestamp" }),

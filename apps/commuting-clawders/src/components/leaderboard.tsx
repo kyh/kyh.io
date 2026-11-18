@@ -1,11 +1,11 @@
 import { formatCount, formatDuration } from "@/lib/format";
 import type { Standing, Totals } from "@/lib/standings";
 
-// The leaderboard as a terminal prints it: each player's best run, in columns.
 export const Leaderboard = ({ standings, totals }: { standings: Standing[]; totals: Totals }) => {
   if (standings.length === 0) {
     return <p className="t-result">⎿ No runs yet. Install the mod and take the top spot.</p>;
   }
+
   return (
     <>
       <p className="t-say">

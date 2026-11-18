@@ -1,6 +1,3 @@
-// The score over the picture: the run's output tokens in a pill at the top,
-// the coins top right. Painted on a canvas and drawn last, over the bloom,
-// so it stays crisp.
 import * as THREE from "three";
 
 const pill = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
@@ -29,11 +26,13 @@ const coin = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number) =>
   ctx.fill();
   ctx.fillStyle = "#ffe36a";
   ctx.beginPath();
+
   for (let i = 0; i < 10; i += 1) {
     const radius = i % 2 === 0 ? r * 0.55 : r * 0.24;
     const angle = -Math.PI / 2 + (i * Math.PI) / 5;
     ctx.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
   }
+
   ctx.fill();
 };
 
@@ -59,17 +58,19 @@ export const createHud = () => {
 
   const draw = (width: number, height: number, score: number, coins: number) => {
     const key = `${width}x${height}:${score}:${coins}`;
+
     if (!ctx || key === shown) {
       return;
     }
+
     shown = key;
+
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
-      // WebGL2 allocates a texture's storage once, at its first size; without
-      // this the HUD is squeezed into the old size, off its corner.
       texture.dispose();
     }
+
     ctx.clearRect(0, 0, width, height);
     const size = Math.round(Math.min(height * 0.065, width * 0.07));
     const top = size * 0.5;

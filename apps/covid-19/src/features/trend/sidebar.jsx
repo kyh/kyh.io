@@ -12,6 +12,7 @@ export const Sidebar = ({
   usDailyData,
 }) => {
   const lastUSDay = usDailyData.at(-1);
+
   return (
     <>
       <section className="sidebar mr-10 hidden w-64 rounded-sm border border-gray-700 sm:block">
@@ -31,6 +32,7 @@ export const Sidebar = ({
             {states.map((state) => {
               const data = statesDailyData[state];
               const lastDay = data.at(-1);
+
               return (
                 <li key={state}>
                   <button

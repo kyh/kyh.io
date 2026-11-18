@@ -23,13 +23,13 @@ test("the calendar picks each holiday's theme, and the default between them", ()
 });
 
 test("where two overlap, the one listed first runs", () => {
-  // 2029's Lunar New Year's Eve, Feb 12, falls in Valentine's week.
   assert.equal(on(2029, 2, 12), "lunarNewYear");
   assert.equal(on(2029, 2, 10), "valentines");
 });
 
 test("each theme is whole: one id, its art, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it has nothing following the mouse", () => {
   assert.equal(new Set(THEMES.map(({ id }) => id)).size, THEMES.length);
+
   for (const theme of THEMES) {
     assert.ok(theme.art.layers.length > 0, theme.id);
     assert.ok(theme.confetti.length > 0, theme.id);

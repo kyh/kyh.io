@@ -4,30 +4,35 @@ const HEX_RE = /^#(?<hex>[0-9a-f]{3,8})$/iu;
 const RGB_RE = /rgba?\(\s*(?<r>\d+)\s*,\s*(?<g>\d+)\s*,\s*(?<b>\d+)/u;
 
 /** Parse any CSS color string to [r, g, b]. Handles hex (#rgb, #rrggbb), rgb(), rgba(). */
-export const parseColorRgb = (color: string): [number, number, number] => {
+export const parseColorRgb = (color: string) => {
   const hex = HEX_RE.exec(color)?.groups?.hex;
+
   if (hex !== undefined) {
     const h = hex.length === 3 ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] : hex;
+
     return [
       Number.parseInt(h.slice(0, 2), 16),
       Number.parseInt(h.slice(2, 4), 16),
       Number.parseInt(h.slice(4, 6), 16),
     ];
   }
+
   const rgb = RGB_RE.exec(color)?.groups;
+
   if (rgb) {
     return [Number(rgb.r), Number(rgb.g), Number(rgb.b)];
   }
+
   return [128, 128, 128];
 };
 
-const rgba = (r: number, g: number, b: number, a: number): string => `rgba(${r}, ${g}, ${b}, ${a})`;
+const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r}, ${g}, ${b}, ${a})`;
 
 /**
  * Derive a full palette from a single accent color + theme mode.
  * Momentum colors are always semantic green/red regardless of accent.
  */
-export const resolveTheme = (color: string, mode: ThemeMode): LivelinePalette => {
+export const resolveTheme = (color: string, mode: ThemeMode) => {
   const [r, g, b] = parseColorRgb(color);
   const isDark = mode === "dark";
 
@@ -78,15 +83,14 @@ export const SERIES_COLORS = [
 ];
 
 /** Derive per-series palettes from series definitions. */
-export const resolveSeriesPalettes = (
-  series: LivelineSeries[],
-  mode: ThemeMode,
-): Map<string, LivelinePalette> => {
+export const resolveSeriesPalettes = (series: LivelineSeries[], mode: ThemeMode) => {
   const map = new Map<string, LivelinePalette>();
+
   for (let i = 0; i < series.length; i += 1) {
     const s = series[i];
     const color = s.color || SERIES_COLORS[i % SERIES_COLORS.length];
     map.set(s.id, resolveTheme(color, mode));
   }
+
   return map;
 };

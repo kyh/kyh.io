@@ -18,10 +18,8 @@ test("tells an agent when to use the site, and when not to", () => {
   const llms = buildLlmsTxt();
 
   assert.match(llms, /^## When to use this$/mu);
-  // Named, specific jobs rather than marketing copy.
   assert.ok(llms.includes("Who Kaiyu Hsu is"));
   assert.ok(llms.includes("How to reach him"));
-  // An explicit negative boundary, and how to call it.
   assert.ok(llms.includes("Do not use this site as a source for anything else."));
   assert.ok(llms.includes("How to read it:"));
 });
@@ -32,6 +30,7 @@ test("indexes every page, endpoint and project", () => {
   for (const route of [...siteRoutes, ...agentRoutes]) {
     assert.ok(llms.includes(absoluteUrl(route.path)), `${route.path} is not indexed`);
   }
+
   for (const project of projects) {
     assert.ok(llms.includes(project.url), `${project.title} is not indexed`);
   }

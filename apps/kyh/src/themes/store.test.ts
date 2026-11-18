@@ -18,9 +18,11 @@ test("the calendar's theme plays until another is chosen, and choosing it again 
   const other = THEMES.find(({ id }) => id !== calendarTheme() && id !== DEFAULT_THEME);
   assert.ok(other);
   let heard = 0;
+
   const stop = subscribeToTheme(() => {
     heard += 1;
   });
+
   chooseTheme(other.id);
   assert.equal(currentTheme(), other.id);
   chooseTheme(calendarTheme());
@@ -34,7 +36,6 @@ test("the calendar's theme plays until another is chosen, and choosing it again 
 test("a holiday's theme brings its own light or dark; plain light or dark is the visitor's, which a tap flips", () => {
   chooseTheme("halloween");
   assert.deepEqual(currentAppearance(), { mode: "dark", own: "light", theme: "halloween" });
-  // A tap takes a holiday's theme back to plain, as the visitor had it.
   toggleTheme();
   assert.deepEqual(currentAppearance(), { mode: "light", own: "light", theme: DEFAULT_THEME });
   toggleTheme();
@@ -49,10 +50,12 @@ test("a holiday's theme brings its own light or dark; plain light or dark is the
 
 test("on a holiday a tap cycles through the visitor's own light or dark, the other, and the holiday", () => {
   mock.timers.enable({ apis: ["Date"], now: new Date(2026, 9, 31) });
+
   try {
     chooseTheme(calendarTheme());
     assert.equal(currentTheme(), "halloween");
     const seen = [];
+
     for (let tap = 0; tap < 4; tap += 1) {
       const next = nextTap();
       toggleTheme();
@@ -60,18 +63,18 @@ test("on a holiday a tap cycles through the visitor's own light or dark, the oth
       assert.deepEqual(next, { mode, theme });
       seen.push(`${theme}|${mode}`);
     }
+
     assert.deepEqual(seen, [
       `${DEFAULT_THEME}|light`,
       `${DEFAULT_THEME}|dark`,
       "halloween|dark",
-      // The dark they flipped to is now their own.
       `${DEFAULT_THEME}|dark`,
     ]);
   } finally {
-    // Leaves plain light, as the visitor's own.
     if (currentAppearance().mode === "dark") {
       toggleTheme();
     }
+
     mock.timers.reset();
     chooseTheme(calendarTheme());
   }
@@ -83,21 +86,24 @@ test("an appearance is the same object until it changes, as a snapshot must be",
 
 test("a tap back to the system's own light or dark forgets the pick, so the theme follows the system again", () => {
   const kept = new Map<string, string>();
+
   const storage = {
     getItem: (key: string) => kept.get(key) ?? null,
     removeItem: (key: string) => kept.delete(key),
     setItem: (key: string, value: string) => kept.set(key, value),
   };
+
   Object.assign(globalThis, { localStorage: storage });
-  // A day without a holiday, where taps only flip.
   mock.timers.enable({ apis: ["Date"], now: new Date(2026, 5, 15) });
+
   try {
     chooseTheme(DEFAULT_THEME);
     assert.equal(calendarTheme(), DEFAULT_THEME);
-    // Without a window the system is light.
+
     if (currentAppearance().mode === "dark") {
       toggleTheme();
     }
+
     toggleTheme();
     assert.equal(currentAppearance().mode, "dark");
     assert.equal(kept.get("theme"), "dark");

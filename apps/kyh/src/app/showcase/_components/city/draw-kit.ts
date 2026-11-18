@@ -1,6 +1,3 @@
-// The small pieces every building shares: windows, doors, awnings, signs,
-// rooftop clutter, trees, lamps and benches. All in cells; a storey is
-// `FLOOR` tall.
 import type { Paint, Token } from "./palette";
 import type { Tree } from "./plan";
 import type { Point2, Side, Sketch, Vec3, Weight } from "./sketch";
@@ -34,16 +31,14 @@ export interface Footprint {
   d: number;
 }
 
-export const inset = (rect: Footprint, by: number): Footprint => ({
+export const inset = (rect: Footprint, by: number) => ({
   d: rect.d - by * 2,
   w: rect.w - by * 2,
   x: rect.x + by,
   z: rect.z + by,
 });
 
-/** Dim some windows at night, the same ones every visit: one in `every`. */
-const glassFor = (key: string, every = 3): Token =>
-  hashString(key) % every === 0 ? "glassDim" : "glass";
+const glassFor = (key: string, every = 3) => (hashString(key) % every === 0 ? "glassDim" : "glass");
 
 /** The raised slab a building sits on. */
 export const plate = (sketch: Sketch, rect: Footprint, colors: Paint = PLATE, h = 0.03) => {
@@ -71,6 +66,7 @@ export const windows = (sketch: Sketch, wall: Footprint, grid: WindowGrid) => {
   const width = grid.width ?? 0.12;
   const height = grid.height ?? 0.16;
   const floorHeight = grid.floorHeight ?? FLOOR;
+
   for (const [side, skip] of [
     [grid.side, grid.skip],
     [opposite(grid.side), undefined],
@@ -78,6 +74,7 @@ export const windows = (sketch: Sketch, wall: Footprint, grid: WindowGrid) => {
     if (!seesWall(sketch, side)) {
       continue;
     }
+
     for (let floor = 0; floor < grid.floors; floor += 1) {
       for (let column = 0; column < grid.columns; column += 1) {
         if (!(floor === 0 && column === skip)) {
@@ -103,6 +100,7 @@ export const ribbons = (
   { y, floors, floorHeight = FLOOR }: { y: number; floors: number; floorHeight?: number },
 ) => {
   const span = wallLength(wall, side);
+
   for (const facing of [side, opposite(side)]) {
     if (seesWall(sketch, facing)) {
       for (let floor = 0; floor < floors; floor += 1) {
@@ -112,10 +110,10 @@ export const ribbons = (
           sketch,
           wall,
           { along: 0.1, h: top - bottom, side: facing, w: span - 0.2, y: bottom },
-          // Offices empty out at night: half the floors go dark.
           glassFor(`${wall.x}:${wall.z}:${facing}:${floor}`, 2),
           "hair",
         );
+
         for (let along = 0.35; along < span - 0.2; along += 0.3) {
           line(
             sketch,
@@ -148,15 +146,18 @@ export const door = (
   },
 ) => {
   pane(sketch, wall, { along, h: height, side, w: width, y: 0.07 }, "door", "fine");
+
   if (awning) {
     const top = 0.07 + height + 0.06;
     const out = 0.14;
+
     const corners: Vec3[] = [
       onWall(wall, side, along - 0.05, top, 0.004),
       onWall(wall, side, along + width + 0.05, top, 0.004),
       onWall(wall, side, along + width + 0.05, top - 0.07, out),
       onWall(wall, side, along - 0.05, top - 0.07, out),
     ];
+
     face(sketch, awning, corners, "fine");
   }
 };
@@ -218,10 +219,12 @@ export const billboard = (
   spec: Omit<BoardSpec, "along"> & { x: number; z: number; legs?: number },
 ) => {
   const legs = spec.legs ?? 0.18;
+
   const wall: Footprint =
     spec.side === "front"
       ? { d: 0.05, w: spec.w, x: spec.x, z: spec.z }
       : { d: spec.w, w: 0.05, x: spec.x, z: spec.z };
+
   for (const along of [spec.w * 0.2, spec.w * 0.8]) {
     line(
       sketch,
@@ -232,6 +235,7 @@ export const billboard = (
       "fine",
     );
   }
+
   board(sketch, wall, { ...spec, along: 0, y: spec.y + legs });
 };
 
@@ -251,6 +255,7 @@ const waterTank = (sketch: Sketch, x: number, z: number, y: number) => {
       "hair",
     );
   }
+
   round(sketch, {
     colors: paint("trunk", "roofTerracotta", "roofTerracottaShade"),
     h: 0.24,
@@ -275,6 +280,7 @@ const waterTank = (sketch: Sketch, x: number, z: number, y: number) => {
 /** Air handlers, vents and a tank: what makes a flat roof read as a roof. */
 export const rooftop = (sketch: Sketch, roof: Footprint, y: number, seed: number) => {
   const units = 1 + (seed % 3);
+
   for (let index = 0; index < units; index += 1) {
     const x = roof.x + 0.15 + (((seed * (index + 3)) % 100) / 100) * Math.max(0.1, roof.w - 0.6);
     const z = roof.z + 0.15 + (((seed * (index + 7)) % 100) / 100) * Math.max(0.1, roof.d - 0.6);
@@ -295,6 +301,7 @@ export const rooftop = (sketch: Sketch, roof: Footprint, y: number, seed: number
       "inkSoft",
     );
   }
+
   if (seed % 4 === 0) {
     waterTank(sketch, roof.x + roof.w - 0.45, roof.z + 0.4, y);
   }
@@ -344,6 +351,7 @@ export const tree = (sketch: Sketch, { x, z, kind, size }: Tree, y = 0) => {
       });
       break;
     }
+
     case "poplar": {
       line(
         sketch,
@@ -365,6 +373,7 @@ export const tree = (sketch: Sketch, { x, z, kind, size }: Tree, y = 0) => {
       });
       break;
     }
+
     default: {
       line(
         sketch,
@@ -496,11 +505,12 @@ export const groundLoop = (
 };
 
 /** A heart outline, for love letters. */
-export const heart = (size: number): Point2[] =>
+export const heart = (size: number) =>
   Array.from({ length: 28 }, (_, index) => {
     const t = (index / 28) * Math.PI * 2;
     const x = 16 * Math.sin(t) ** 3;
     const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+
     return [(x / 17) * size, (y / 17) * size] satisfies Point2;
   });
 
@@ -517,6 +527,7 @@ export const cutout = (
     facing === "front"
       ? { origin: at, u: [1, 0, 0] satisfies Vec3, v: [0, 1, 0] satisfies Vec3 }
       : { origin: at, u: [0, 0, -1] satisfies Vec3, v: [0, 1, 0] satisfies Vec3 };
+
   const depth: Vec3 = facing === "front" ? [0, 0, thickness] : [thickness, 0, 0];
   extrude(sketch, outline, frame, depth, colors);
 };

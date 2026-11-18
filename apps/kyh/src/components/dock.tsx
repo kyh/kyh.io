@@ -12,25 +12,20 @@ import { discoverEgg } from "@/easter-eggs/store";
 import { DEFAULT_THEME, themeOf } from "@/themes";
 import { nextTap, toggleTheme, useAppearance } from "@/themes/store";
 
-/**
- * The themes menu, in its own chunk: no page needs it until the toggle's held
- * down. Fetched as soon as a press or a mouse over the toggle hints at it, so
- * it's usually in by the time the hold blooms it.
- */
 const loadBloom = () => import("@/components/theme-bloom");
+
 const ThemeBloom = lazy(async () => {
   const { ThemeBloom: loaded } = await loadBloom();
+
   return { default: loaded };
 });
+
 const fetchBloom = async () => {
   try {
     await loadBloom();
-  } catch {
-    // Only a head start: it's fetched again, and fails where it's drawn.
-  }
+  } catch {}
 };
 
-/** How long the theme toggle is held down to bloom the themes round it (ms). */
 const HOLD_MS = 450;
 
 const links = [
@@ -79,6 +74,7 @@ const DockItem = ({
 
   const distance = useTransform(mouseX, (val) => {
     const bounds = ref.current?.getBoundingClientRect() ?? { width: 0, x: 0 };
+
     return (val ?? 0) - bounds.x - bounds.width / 2;
   });
 
@@ -87,6 +83,7 @@ const DockItem = ({
     [-150, 0, 150],
     [itemWidth, itemWidthMax, itemWidth],
   );
+
   const heightTransform = useTransform(
     distance,
     [-150, 0, 150],
@@ -98,6 +95,7 @@ const DockItem = ({
     [-150, 0, 150],
     [iconWidth, iconWidthMax, iconWidth],
   );
+
   const heightTransformIcon = useTransform(
     distance,
     [-150, 0, 150],
@@ -109,6 +107,7 @@ const DockItem = ({
     mass: 0.1,
     stiffness: 150,
   });
+
   const height = useSpring(heightTransform, {
     damping: 12,
     mass: 0.1,
@@ -120,6 +119,7 @@ const DockItem = ({
     mass: 0.1,
     stiffness: 150,
   });
+
   const heightIcon = useSpring(heightTransformIcon, {
     damping: 12,
     mass: 0.1,
@@ -224,20 +224,18 @@ export const Dock = () => {
   const [hovered, setHovered] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const [blooming, setBlooming] = useState(false);
-  // Drawn from the first bloom on, so it can fold away when closed.
   const [bloomed, setBloomed] = useState(false);
-  // A tap is light or dark; held down, the toggle blooms the themes, and the
-  // release that ends the hold is no tap (whether it was is kept until the next press).
   const holding = useRef(0);
   const held = useRef(false);
+
   const bloom = () => {
     setHovered(null);
-    // The dock settles back to rest under the themes, the toggle at its own size.
     mouseX.set(Infinity);
     setBlooming(true);
     setBloomed(true);
     discoverEgg("bloom");
   };
+
   const press = () => {
     void fetchBloom();
     held.current = false;
@@ -247,23 +245,23 @@ export const Dock = () => {
       bloom();
     }, HOLD_MS);
   };
+
   const release = () => window.clearTimeout(holding.current);
 
   const plain = appearance.theme === DEFAULT_THEME;
-  // A tap flips light and dark, leaves a holiday for the visitor's own, and on
-  // a holiday comes back round to it.
   const next = nextTap(appearance);
+
   const themeLabel =
     next.theme === DEFAULT_THEME
       ? `${plain ? "Switch to" : "Back to"} ${next.mode} mode`
       : `Switch to ${themeOf(next.theme).name}`;
-  // Labels for a mouse only: a tap would leave one up, and a hold would sit under the themes.
+
   const hover = (event: React.PointerEvent, item: string) => {
     if (event.pointerType === "mouse" && !blooming) {
       setHovered(item);
     }
   };
-  // The dock holds still while the themes are out over the toggle.
+
   const follow = (x: number) => {
     if (!blooming) {
       mouseX.set(x);
@@ -318,19 +316,15 @@ export const Dock = () => {
             setHovered(null);
           }}
           onPointerCancel={release}
-          // A finger lifting off a hold sends no click, which would land on the
-          // theme opened under it. (A mouse's lands on no theme: it was pressed
-          // on the toggle and released over the menu, so it goes to what holds both.)
           onTouchEnd={(event) => {
             if (held.current) {
               event.preventDefault();
             }
           }}
-          // A long press on touch would open the browser's own menu.
           onContextMenu={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             held.current = false;
-            // The keyboard's way to the themes, as a menu button opens with an arrow.
+
             if (event.key === "ArrowUp") {
               event.preventDefault();
               bloom();
@@ -347,7 +341,7 @@ export const Dock = () => {
           }}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-            {/* Light and dark morph into each other; a holiday theme pops in wearing its glyph. */}
+            {}
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={plain ? "plain" : appearance.theme}

@@ -1,6 +1,5 @@
 const WEEK = 604_800;
 
-/** [max window secs, tick interval secs], ascending. */
 const TICK_STEPS: [number, number][] = [
   [15, 2],
   [30, 5],
@@ -17,11 +16,12 @@ const TICK_STEPS: [number, number][] = [
 ];
 
 /** Pick a nice time interval in seconds for time axis labels. */
-export const niceTimeInterval = (windowSecs: number): number => {
+export const niceTimeInterval = (windowSecs: number) => {
   for (const [maxWindow, tick] of TICK_STEPS) {
     if (windowSecs <= maxWindow) {
       return tick;
     }
   }
+
   return WEEK;
 };

@@ -1,9 +1,3 @@
-// Where a pointer is on the page, in terms every visitor's screen agrees on.
-// Every page is a column centred in the window, so a spot is pixels from the
-// centre line and from the top of the document: the same word under it on any
-// window width and any scroll. Fractions of the viewport point at different
-// content as soon as two visitors scroll or size their windows differently.
-
 export interface PagePoint {
   /** Pixels right of the page's centre line (negative is left). */
   fromCenter: number;
@@ -19,7 +13,7 @@ export interface Viewport {
 }
 
 /** A spot on screen (client pixels) as a spot on the page. */
-export const toPage = (x: number, y: number, view: Viewport): PagePoint => ({
+export const toPage = (x: number, y: number, view: Viewport) => ({
   fromCenter: Math.round(x + view.scrollX - view.width / 2),
   fromTop: Math.round(y + view.scrollY),
 });
@@ -31,7 +25,7 @@ export const toScreen = (point: PagePoint, view: Viewport) => ({
 });
 
 /** This window's viewport, read fresh. */
-export const readViewport = (): Viewport => ({
+export const readViewport = () => ({
   scrollX: window.scrollX,
   scrollY: window.scrollY,
   width: document.documentElement.clientWidth,

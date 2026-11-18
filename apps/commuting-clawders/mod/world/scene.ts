@@ -1,7 +1,3 @@
-// The line the runner races down: three tracks
-// of chunky ties on warm ballast between low tagged walls, green verges with
-// trees and lamps, pastel houses, a hazy skyline, a bright sky, and the
-// camera riding high behind Clawd. What scrolls is recycled along one period.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
@@ -15,29 +11,24 @@ import { createVfx } from "./vfx";
 
 const PERIOD = 176;
 const BEHIND = 20;
-// A pale haze the fog shares, so the distance melts into the sky.
 const SKY_TOP = new THREE.Color(0x7c_c2_ea);
 const HORIZON = new THREE.Color(0xa9_d9_ed);
 const GAUGE = 1.44;
 const BED_X = LANE_WIDTH * 1.5 + 0.9;
 const WALL_X = BED_X + 0.35;
-// Wide enough to see all three tracks however narrow the pane is.
 const MIN_HORIZONTAL_FOV = 66;
 const FOV = 55;
 const PASTELS = ["#f4c38e", "#9fd3e6", "#f29b8c", "#b9a6e8", "#f6e08f", "#a8dba0"];
 const ROOFS = [0x5b_4b_8f, 0xc0_50_4d, 0x3f_6f_8f, 0x7a_4a_3a];
 
-// Where a point `offset` meters along the period sits once the world has
-// scrolled `scroll` meters: in front of the camera, never more than BEHIND past it.
 const wrap = (offset: number, scroll: number) =>
   ((((offset + scroll) % PERIOD) + PERIOD) % PERIOD) - (PERIOD - BEHIND);
 
-// Distance ahead of the runner in track units, as world z (the runner at 0).
 const ahead = (d: number) => -(d - RUNNER_D) * UNIT;
 
-// The same scatter every run.
 const jitter = (n: number) => {
   const s = Math.sin(n * 91.345) * 47_453.5453;
+
   return s - Math.floor(s);
 };
 
@@ -61,6 +52,7 @@ const sky = () => {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
   });
+
   return new THREE.Mesh(new THREE.SphereGeometry(500, 32, 16), material);
 };
 
@@ -71,11 +63,13 @@ const mesh = (geometry: THREE.BufferGeometry, material: THREE.Material, x = 0, y
   object.position.set(x, y, z);
   object.castShadow = true;
   object.receiveShadow = true;
+
   return object;
 };
 
 const leaves = [0x5c_bf_3a, 0x4f_ad_35, 0x72_cc_48].map((color) => toon(color));
 const bark = solid(0x8a_5a_3a);
+
 const makeTree = (seed: number) => {
   const tree = new THREE.Group();
   const size = 1.6 + jitter(seed) * 0.9;
@@ -85,20 +79,24 @@ const makeTree = (seed: number) => {
   tree.add(
     mesh(new THREE.IcosahedronGeometry(size * 0.7, 1), crown, size * 0.5, 2.6 + size * 0.4, 0.3),
   );
+
   return tree;
 };
 
 const lampPole = solid(0x2f_4f_4a);
+
 const lampGlow = new THREE.MeshStandardMaterial({
   color: 0xff_f1_c8,
   emissive: 0xff_dc_8a,
   emissiveIntensity: 2.2,
 });
+
 const makeLamp = (side: number) => {
   const lamp = new THREE.Group();
   lamp.add(mesh(new THREE.CylinderGeometry(0.09, 0.12, 4.6, 10), lampPole, 0, 2.3, 0));
   lamp.add(mesh(new THREE.BoxGeometry(0.9, 0.1, 0.1), lampPole, -side * 0.4, 4.55, 0));
   lamp.add(mesh(new THREE.SphereGeometry(0.24, 16, 12), lampGlow, -side * 0.8, 4.35, 0));
+
   return lamp;
 };
 
@@ -115,6 +113,7 @@ const makeHouse = (seed: number, side: number) => {
   house.add(body);
   const roof = new THREE.ConeGeometry(Math.max(width, depth) * 0.75, 3 + jitter(seed + 5) * 2, 4);
   roof.rotateY(Math.PI / 4);
+
   const top = mesh(
     roof,
     solid(ROOFS[Math.floor(jitter(seed + 6) * ROOFS.length)] ?? 0x5b_4b_8f),
@@ -122,10 +121,12 @@ const makeHouse = (seed: number, side: number) => {
     0,
     0,
   );
+
   top.scale.set(width / Math.max(width, depth), 1, depth / Math.max(width, depth));
   top.position.y = height + 1.4;
   house.add(top);
   house.position.x = side * (WALL_X + 9 + width / 2 + jitter(seed + 7) * 4);
+
   return { house, map, walls };
 };
 
@@ -139,7 +140,6 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
   ).texture;
   scene.environmentIntensity = 0.45;
 
-  // The sky does most of the lighting; the sun only shapes and casts.
   scene.add(new THREE.HemisphereLight(0xf0_f8_ff, 0x82_77_65, 2.2));
   const sun = new THREE.DirectionalLight(0xff_e4_be, 2.2);
   sun.castShadow = true;
@@ -150,6 +150,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
   scene.add(sun, sun.target);
 
   const strip: { object: THREE.Object3D; offset: number }[] = [];
+
   const along = (object: THREE.Object3D, offset: number) => {
     scene.add(object);
     strip.push({ object, offset });
@@ -175,6 +176,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
     metalness: 0.6,
     roughness: 0.5,
   });
+
   for (const lane of [-1, 0, 1]) {
     for (const side of [-1, 1]) {
       scene.add(
@@ -191,28 +193,34 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
 
   const TIE_GAP = 1.35;
   const tiesPerLane = Math.floor(PERIOD / TIE_GAP);
+
   const ties = new THREE.InstancedMesh(
     new THREE.BoxGeometry(2.4, 0.2, 0.42),
     solid(0x9a_55_30),
     tiesPerLane * 3,
   );
+
   ties.castShadow = true;
   ties.receiveShadow = true;
   ties.frustumCulled = false;
   scene.add(ties);
 
   const WALL_SEGMENT = 16;
+
   const wallSegments = [-1, 1].flatMap((side) =>
     Array.from({ length: PERIOD / WALL_SEGMENT }, (_, i) => {
       const map = wall(side * 100 + i);
       const material = toon(0xff_ff_ff, { map });
+
       const segment = mesh(
         new THREE.BoxGeometry(0.5, 1.6, WALL_SEGMENT - 0.1),
         material,
         side * WALL_X,
         0.8,
       );
+
       along(segment, i * WALL_SEGMENT);
+
       return { map, material };
     }),
   );
@@ -223,6 +231,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
       tree.position.x = side * (WALL_X + 2.5 + jitter(side * 9 + i) * 4);
       along(tree, i * 11 + jitter(i + side) * 5);
     }
+
     for (let i = 0; i < PERIOD / 22; i += 1) {
       const lamp = makeLamp(side);
       lamp.position.x = side * (WALL_X + 0.9);
@@ -234,11 +243,13 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
     Array.from({ length: PERIOD / 22 }, (_, i) => {
       const { house, map, walls } = makeHouse(side * 70 + i * 3, side);
       along(house, i * 22 + (side > 0 ? 9 : 0));
+
       return { map, walls };
     }),
   );
 
   const haze = new THREE.MeshStandardMaterial({ color: 0xa9_c4_e4, roughness: 1 });
+
   for (let i = 0; i < 26; i += 1) {
     const width = 10 + jitter(i) * 18;
     const height = 25 + jitter(i + 40) * 55;
@@ -256,6 +267,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
   scene.add(clawd.root);
   const props = createProps(scene);
   const vfx = createVfx(scene);
+
   const blob = new THREE.Mesh(
     new THREE.CircleGeometry(0.85, 32).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({
@@ -265,6 +277,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
       transparent: true,
     }),
   );
+
   scene.add(blob);
 
   const camera = new THREE.PerspectiveCamera(FOV, 16 / 9, 0.1, 800);
@@ -275,9 +288,7 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
   let cameraX = 0;
   let cameraY = 0;
   let lastX = 1;
-  // Last frame's run, to see what just happened: a coin, a crash, a landing.
   const last = { coins: 0, crashes: 0, jumps: 0, landings: 0, scroll: 0, step: 0 };
-  // Wall-clock seconds, so Clawd breathes and coins spin while the run is paused.
   let elapsed = 0;
 
   const resize = (width: number, height: number) => {
@@ -291,25 +302,27 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
     vfx.resize(height, camera.fov);
   };
 
-  // Drawn in terminal blocks, two pixels a cell: textures only become noise
-  // there, so surfaces go flat, the fog closes in, and Clawd grows.
   const setCoarse = (coarse: boolean) => {
     if (coarse === isCoarse) {
       return;
     }
+
     isCoarse = coarse;
     bedMaterial.map = coarse ? null : bedTexture;
     bedMaterial.color.setHex(coarse ? 0x6a_55_50 : 0xff_ff_ff);
     bedMaterial.needsUpdate = true;
+
     for (const { map, material } of wallSegments) {
       material.map = coarse ? null : map;
       material.color.setHex(coarse ? 0xe8_c9_a0 : 0xff_ff_ff);
       material.needsUpdate = true;
     }
+
     for (const { map, walls } of houses) {
       walls.map = coarse ? null : map;
       walls.needsUpdate = true;
     }
+
     scene.fog = new THREE.Fog(HORIZON, coarse ? 35 : 50, coarse ? 140 : 190);
     clawd.root.scale.setScalar(coarse ? 2.1 : 1.7);
     vfx.setCoarse(coarse);
@@ -319,24 +332,31 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
     const base = game.roof * ROOF_Y;
     const scrolled = (game.scroll - last.scroll) * UNIT;
     const scale = clawd.root.scale.x;
+
     if (game.coins > last.coins) {
       vfx.coin(new THREE.Vector3(runnerX, base + 1.4 * scale, -0.6));
     }
+
     if (game.crashes > last.crashes) {
       vfx.crash(new THREE.Vector3(runnerX, base + scale, -1));
     }
+
     if (game.jumps > last.jumps) {
       clawd.impact("jump");
     }
+
     if (game.landings > last.landings) {
       clawd.impact("land");
       vfx.puff(new THREE.Vector3(runnerX, base, 0.2), 12, 1.4);
     }
+
     last.step += dt;
+
     if (isActive && game.jump < 0 && game.roof === 0 && last.step > 0.09) {
       last.step = 0;
       vfx.puff(new THREE.Vector3(runnerX, 0, 0.4), 1, 0.7);
     }
+
     vfx.wind(camera, dt > 0 ? scrolled / dt : 0, dt);
     vfx.update(dt, scrolled);
     Object.assign(last, {
@@ -358,8 +378,10 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
         ties.setMatrixAt(lane * tiesPerLane + i, matrix);
       }
     }
+
     ties.instanceMatrix.needsUpdate = true;
     bedTexture.offset.y = (scroll / PERIOD) * bedTexture.repeat.y;
+
     for (const { object, offset } of strip) {
       object.position.z = wrap(offset, scroll);
     }
@@ -380,10 +402,6 @@ export const createScene = (renderer: THREE.WebGLRenderer) => {
     blob.scale.setScalar(Math.max(0.4, 1 - jumpLift * 0.15) * (clawd.root.scale.x / 1.7));
     effects(game, dt, runnerX, isActive);
 
-    // Held well back and barely following sideways, so all three lanes stay
-    // framed and Clawd moves across them. A tall pane can't see the lanes
-    // from that far without a fisheye, so it comes closer and looks down;
-    // blocks sit closer still, for size.
     cameraX += (runnerX * 0.13 - cameraX) * Math.min(1, dt * 5);
     cameraY += (game.roof * ROOF_Y * 0.8 - cameraY) * Math.min(1, dt * 4);
     const shake = game.crash > 0 ? Math.sin(elapsed * 70) * game.crash * 0.3 : 0;

@@ -28,16 +28,18 @@ const web: Package = {
   name: "@repo/web",
   scripts: ["dev", "lint", "test", "typecheck"],
 };
+
 const lib: Package = { dir: "packages/lib", name: "@repo/lib", scripts: ["typecheck"] };
 
 const packageOf = (file: string) => {
   if (file.startsWith("apps/web/")) {
     return web;
   }
+
   return file.startsWith("packages/lib/") ? lib : undefined;
 };
 
-const write = (file: string): Use => ({
+const write = (file: string) => ({
   command: "",
   file: `${ROOT}/${file}`,
   isBackground: false,
@@ -46,7 +48,7 @@ const write = (file: string): Use => ({
   tool: "Write",
 });
 
-const bash = (command: string, isError = false): Use => ({
+const bash = (command: string, isError = false) => ({
   command,
   file: "",
   isBackground: false,
@@ -106,6 +108,7 @@ describe("unverifiedOf", () => {
       "Unverified: e2e — said twice",
       "Unverified: everything",
     ].join("\n");
+
     assert.deepEqual(
       [...unverifiedOf(reply)],
       [
@@ -128,6 +131,7 @@ describe("checksOf", () => {
       ],
       ROOT,
     );
+
     assert.deepEqual(
       checksOf(ledger, needs, new Map()).map(({ kind, mark }) => [kind, mark]),
       [
@@ -140,6 +144,7 @@ describe("checksOf", () => {
 
   it("counts a check only for the packages it ran for", () => {
     const both = needsOf(["apps/web/src/page.tsx", "packages/lib/index.ts"], packageOf, "pnpm");
+
     const statics = (...commands: string[]) =>
       checksOf(
         ledgerOf(
@@ -153,6 +158,7 @@ describe("checksOf", () => {
         both,
         new Map(),
       ).find((check) => check.kind === "static");
+
     assert.deepEqual(statics("pnpm -F @repo/web typecheck"), {
       hint: "pnpm -F @repo/lib typecheck",
       kind: "static",
@@ -162,9 +168,8 @@ describe("checksOf", () => {
       statics("pnpm -F @repo/web typecheck", "cd packages/lib && pnpm typecheck")?.mark,
       "pass",
     );
-    // A root check names no package, so it counts for all of them.
     assert.equal(statics("pnpm typecheck")?.mark, "pass");
-    // A failure in one package fails the kind, even when another passed.
+
     const failed = checksOf(
       ledgerOf(
         [
@@ -178,6 +183,7 @@ describe("checksOf", () => {
       both,
       new Map(),
     ).find((check) => check.kind === "static");
+
     assert.equal(failed?.mark, "fail");
   });
 
@@ -186,14 +192,12 @@ describe("checksOf", () => {
     assert.equal(countsFor("pnpm -F @repo/webs typecheck", web, [web, webs]), false);
     assert.equal(countsFor("cd apps/webs && pnpm typecheck", web, [web, webs]), false);
     assert.equal(countsFor("pnpm --filter=@repo/web typecheck", web, [web, webs]), true);
-    // A check aimed at a package the change didn't touch counts for none of it.
     assert.equal(countsFor("pnpm -F @repo/other test", web, [web, webs]), false);
     assert.equal(countsFor("yarn workspace other test", web, [web]), false);
     assert.equal(countsFor("cd apps/other && pnpm test", web, [web]), false);
     assert.equal(countsFor("cd ./apps/other && pnpm test", web, [web]), false);
     assert.equal(countsFor("cd ../other && pnpm test", web, [web]), false);
     assert.equal(countsFor("cd ./apps/web && pnpm test", web, [web, webs]), true);
-    // One aimed at nothing counts for all.
     assert.equal(countsFor("pnpm test", web, [web, webs]), true);
     assert.equal(countsFor("cd . && pnpm test", web, [web]), true);
     assert.equal(countsFor("cd .. && pnpm test", web, [web]), true);
@@ -209,6 +213,7 @@ describe("checksOf", () => {
       [write("apps/web/src/page.tsx"), bash("pnpm -F @repo/web typecheck")],
       ROOT,
     );
+
     const checks = checksOf(
       ledger,
       needs,
@@ -217,6 +222,7 @@ describe("checksOf", () => {
         ["static", "skipped"],
       ]),
     );
+
     assert.deepEqual(
       checks.find((check) => check.kind === "e2e"),
       {
@@ -239,6 +245,7 @@ describe("what the gate says", () => {
       { hint: "pnpm -F @repo/web test", kind: "test", mark: "stale" },
       { hint: "pnpm -F @repo/web dev, then drive the change", kind: "e2e", mark: "none" },
     ]);
+
     assert.match(text, /^mod-dev: this change isn't proven yet/u);
     assert.match(text, /\n- test ran before your last edit: pnpm -F @repo\/web test\n/u);
     assert.match(

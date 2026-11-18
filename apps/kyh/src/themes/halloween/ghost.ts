@@ -1,7 +1,3 @@
-// The ghost as a follower (`../follower/creature.ts`): its sheet (`sheet.ts`)
-// floating after the mouse, its face (`face.ts`) flinching at a click, and
-// what it says: BOO! when it's clicked on, a squeak when a click elsewhere
-// makes it jump, and the odd moan while it's left hanging about. Pure.
 import type { Creature } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Ghost } from "./sheet";
@@ -19,7 +15,6 @@ interface Haunt {
 const BOO = ["Boo!", "BOO!", "Boo! ✦"];
 const EEK = ["eep!", "!!", "eek!"];
 const MOAN = ["ooOOooo…", "boo?", "…booo", "spooky, huh?"];
-/** Seconds of a still pointer before it moans, now and then. */
 const BORED_S = 5;
 
 export const ghost: Creature<Haunt> = {
@@ -29,7 +24,6 @@ export const ghost: Creature<Haunt> = {
     still: 0,
   }),
   poke: (haunt, at) => {
-    // A click wakes it from its boredom: it's quiet a while before it moans again.
     haunt.still = 0;
     startle(haunt.ghost.mood);
     const on = Math.hypot(at.x - haunt.ghost.x, at.y - haunt.ghost.y) < HEAD * 2;
@@ -37,6 +31,7 @@ export const ghost: Creature<Haunt> = {
   },
   pose: (haunt) => {
     const { blush, ...paths } = ghostPaths(haunt.ghost);
+
     return {
       at: { x: haunt.ghost.x, y: haunt.ghost.y },
       bubble: { x: 0, y: -HEAD - 8 },
@@ -57,6 +52,7 @@ export const ghost: Creature<Haunt> = {
     stepGhost(haunt.ghost, pointer, moved, seconds);
     haunt.still = Math.hypot(moved.x, moved.y) < 0.5 ? haunt.still + seconds : 0;
     stepEmotes(haunt.emotes, seconds);
+
     if (haunt.still > BORED_S) {
       say(haunt.emotes, MOAN);
     }

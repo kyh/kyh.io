@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { todaysPageMetadata } from "@/lib/todays-video";
 import { RSVPReader } from "./_components/rsvp-reader";
 
-export const generateMetadata = (): Promise<Metadata> =>
+export const generateMetadata = () =>
   todaysPageMetadata({
     description: "Speed read through my bio",
     path: "/rsvp",

@@ -1,5 +1,3 @@
-// Clawd as Claude Code draws it at launch: a 1-bit sprite, each pixel a
-// little taller than wide like a terminal cell.
 const BITS = [
   "000111111111111000",
   "000110111111011000",
@@ -7,6 +5,7 @@ const BITS = [
   "000111111111111000",
   "000010100001010000",
 ];
+
 const CELL_HEIGHT = 2.4;
 
 const runs = BITS.flatMap((row, y) =>

@@ -1,16 +1,9 @@
-// A spring that wobbles: for the bunny's body squashing as it lands and
-// stretching as it takes off, and quivering a moment after. The kit's springs
-// (`../follower/solid.ts`) are critically damped, so they never overshoot;
-// flesh does, a little. Solved exactly over each step, so it moves the same
-// at any frame rate and a long frame can't throw it. Pure (state is stepped
-// in place, for a frame's sake).
-
 export interface Jiggle {
   x: number;
   v: number;
 }
 
-export const jiggleAt = (x: number): Jiggle => ({ v: 0, x });
+export const jiggleAt = (x: number) => ({ v: 0, x });
 
 /**
  * Steps a jiggle `seconds` on toward `goal`: `hertz` how fast it wobbles,

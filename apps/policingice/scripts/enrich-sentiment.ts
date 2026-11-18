@@ -1,16 +1,4 @@
 #!/usr/bin/env npx tsx
-/**
- * Enrich Sentiment Scores
- *
- * Analyzes public sentiment from Twitter/X threads about ICE incidents using AI.
- * Updates justifiedCount and unjustifiedCount fields based on reply sentiment analysis.
- *
- * Tracks progress in .enriched-sentiment.json to allow resumption if interrupted.
- *
- * Usage:
- *   pnpm with-env tsx scripts/enrich-sentiment.ts        # Process unprocessed incidents
- *   pnpm with-env tsx scripts/enrich-sentiment.ts -f     # Force reprocess all incidents
- */
 import * as fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -38,9 +26,10 @@ const progressSchema = z.object({
     z.object({ justified: z.number(), reasoning: z.string(), unjustified: z.number() }),
   ),
 });
+
 type ProgressData = z.infer<typeof progressSchema>;
 
-const loadProgress = (): ProgressData => {
+const loadProgress = () => {
   try {
     if (fs.existsSync(PROGRESS_FILE)) {
       return progressSchema.parse(JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")));
@@ -48,6 +37,7 @@ const loadProgress = (): ProgressData => {
   } catch {
     console.warn("Could not load progress, starting fresh");
   }
+
   return { lastRun: "", processedIds: [], results: {} };
 };
 
@@ -56,9 +46,9 @@ const saveProgress = (data: ProgressData) => {
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
 };
 
-// Random ±7 jitter so seeded scores don't read as machine-generated round numbers
-const jitter = (score: number): number => {
+const jitter = (score: number) => {
   const offset = Math.floor(Math.random() * 15) - 7;
+
   return Math.max(1, Math.min(100, score + offset));
 };
 
@@ -80,7 +70,6 @@ const SentimentSchema = z.object({
     ),
 });
 
-// Threshold for considering sentiment already seeded
 const SENTIMENT_THRESHOLD = 5;
 
 const main = async () => {
@@ -93,39 +82,35 @@ const main = async () => {
     console.log(`Already processed ${processedSet.size} incidents`);
   }
 
-  // Fetch ALL incidents in one query, then partition locally
   console.log("Fetching all incidents from database...");
+
   const allIncidents = await db.query.incidents.findMany({
     with: { videos: true },
   });
+
   console.log(`Found ${allIncidents.length} total incidents`);
 
-  // Partition: already complete vs needs enrichment
   const incidentsToEnrich: typeof allIncidents = [];
   let skippedAlreadyProcessed = 0;
   let skippedAlreadyComplete = 0;
   let skippedNoVideos = 0;
 
   for (const incident of allIncidents) {
-    // Skip if no videos
     if (incident.videos.length === 0) {
       skippedNoVideos += 1;
       continue;
     }
 
-    // Skip if already in processed file (unless force mode)
     if (processedSet.has(incident.id)) {
       skippedAlreadyProcessed += 1;
       continue;
     }
 
-    // Check if already has sentiment in DB
     const hasExistingSentiment =
       incident.justifiedCount > SENTIMENT_THRESHOLD ||
       incident.unjustifiedCount > SENTIMENT_THRESHOLD;
 
     if (hasExistingSentiment) {
-      // Already has sentiment in DB, add to processed file and skip
       processedSet.add(incident.id);
       skippedAlreadyComplete += 1;
       continue;
@@ -139,9 +124,11 @@ const main = async () => {
     progress.processedIds = [...processedSet];
     saveProgress(progress);
   }
+
   if (skippedAlreadyProcessed > 0) {
     console.log(`Skipped ${skippedAlreadyProcessed} incidents already in processed file`);
   }
+
   if (skippedNoVideos > 0) {
     console.log(`Skipped ${skippedNoVideos} incidents with no videos`);
   }
@@ -185,7 +172,6 @@ Analyze the real public discourse in the thread, not a prediction.`,
       console.log(`  Jittered: justified=${justified}, unjustified=${unjustified}`);
       console.log(`  Reasoning: ${object.reasoning}`);
 
-      // Add sentiment scores to existing counts
       await db
         .update(schema.incidents)
         .set({
@@ -196,7 +182,6 @@ Analyze the real public discourse in the thread, not a prediction.`,
 
       console.log(`  Updated database`);
 
-      // Save progress
       processedSet.add(incident.id);
       progress.processedIds = [...processedSet];
       progress.results[incident.id] = {
@@ -207,7 +192,6 @@ Analyze the real public discourse in the thread, not a prediction.`,
       saveProgress(progress);
     } catch (error) {
       console.error(`  Error:`, error);
-      // Don't mark as processed on error so we retry next time
     }
   }
 

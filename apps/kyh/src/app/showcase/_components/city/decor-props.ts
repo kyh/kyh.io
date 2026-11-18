@@ -1,6 +1,3 @@
-// The props a theme puts out round the town, each drawn at a spot on the
-// ground: pumpkins, graves, trees, snowmen, eggs, lanterns, and the lights
-// strung round a cottage's eaves. Pure.
 import type { Random } from "@/lib/random";
 import type { HouseSpec } from "./draw-blocks";
 import type { Paint, Token } from "./palette";
@@ -17,6 +14,7 @@ export const PUMPKIN = paint("pumpkin", "pumpkin", "pumpkinShade");
 const STONE = paint("stone", "stone", "stoneShade");
 const HAY = paint("hay", "hay", "hayShade");
 export const STEM = paint("trunk");
+
 const RAINBOW: readonly Token[] = [
   "accentRed",
   "accentOrange",
@@ -72,20 +70,24 @@ export const deadTree = (sketch: Sketch, x: number, z: number, random: Random) =
     ],
     "bold",
   );
+
   for (let index = 0; index < 5; index += 1) {
     const from: Vec3 = [x, GROUND + 0.22 + index * 0.08, z];
     const angle = random.range(0, Math.PI * 2);
     const reach = random.range(0.14, 0.24);
+
     const elbow: Vec3 = [
       from[0] + Math.cos(angle) * reach * 0.6,
       from[1] + reach * 0.35,
       from[2] + Math.sin(angle) * reach * 0.6,
     ];
+
     const tip: Vec3 = [
       elbow[0] + Math.cos(angle + 0.5) * reach * 0.5,
       elbow[1] + reach * 0.45,
       elbow[2] + Math.sin(angle + 0.5) * reach * 0.5,
     ];
+
     line(sketch, [from, elbow, tip]);
   }
 };
@@ -100,11 +102,13 @@ export const christmasTree = (sketch: Sketch, x: number, z: number, random: Rand
     y: GROUND,
     z: z - 0.02 * size,
   });
+
   const tiers = [
     { h: 0.22, r: 0.2, y: 0.04 },
     { h: 0.2, r: 0.15, y: 0.16 },
     { h: 0.18, r: 0.1, y: 0.27 },
   ] as const;
+
   for (const tier of tiers) {
     round(sketch, {
       colors: GREEN,
@@ -117,8 +121,7 @@ export const christmasTree = (sketch: Sketch, x: number, z: number, random: Rand
       z,
     });
   }
-  // Baubles round the lower two tiers (none on a porch's little tree, where
-  // they'd be specks), and a star on top.
+
   for (let index = 0; index < (size < 1 ? 0 : 8); index += 1) {
     const tier = index % 2 === 0 ? tiers[0] : tiers[1];
     const angle = random.range(0, Math.PI * 2);
@@ -132,6 +135,7 @@ export const christmasTree = (sketch: Sketch, x: number, z: number, random: Rand
       z: z + Math.sin(angle) * reach,
     });
   }
+
   ball(sketch, { colors: GOLD, detail: 8, r: 0.03 * size, x, y: GROUND + 0.46 * size, z });
 };
 
@@ -176,6 +180,7 @@ export const snowman = (sketch: Sketch, x: number, z: number) => {
   ] as const) {
     ball(sketch, { colors: WHITE, detail: 8, r, x, y: GROUND + y, z });
   }
+
   box(sketch, {
     colors: BLACK,
     d: 0.045,
@@ -224,6 +229,7 @@ export const balloon = (sketch: Sketch, x: number, z: number, height: number, co
 
 export const potOfGold = (sketch: Sketch, x: number, z: number) => {
   ball(sketch, { colors: BLACK, detail: 8, r: 0.075, ry: 0.75, x, y: GROUND + 0.05, z });
+
   for (const [dx, dz, dy] of [
     [0, 0, 0.03],
     [0.03, 0.01, 0.015],
@@ -237,12 +243,16 @@ export const potOfGold = (sketch: Sketch, x: number, z: number) => {
 /** A rainbow arching from a point along x, its bands in color. */
 export const rainbow = (sketch: Sketch, x: number, z: number, radius: number) => {
   const center = x + radius;
+
   for (const [band, token] of RAINBOW.entries()) {
     const r = radius - band * 0.03;
-    const points = Array.from({ length: 17 }, (_, step): Vec3 => {
+
+    const points = Array.from({ length: 17 }, (_, step) => {
       const angle = (step / 16) * Math.PI;
+
       return [center - Math.cos(angle) * r, GROUND + Math.sin(angle) * r, z];
     });
+
     line(sketch, points, "bold", token);
   }
 };
@@ -252,9 +262,11 @@ export const lantern = (pen: Placed, [x, y, z]: Vec3, size = 1) => {
   const r = 0.05 * size;
   const big = size > 2;
   pen.ball({ colors: RED, detail: big ? 14 : 10, r, ry: 0.85, x, y, z });
+
   for (const cap of [y + r * 0.8, y - r * 0.8 - 0.012 * size]) {
     pen.round({ colors: GOLD, h: 0.012 * size, r: r * 0.45, segments: 8, x, y: cap, z }, "hair");
   }
+
   pen.line(
     [
       [x, y - r * 0.8 - 0.012 * size, z],
@@ -284,27 +296,33 @@ export const eaveLights = (sketch: Sketch, house: HouseSpec, colors: readonly To
   const top = eavesOf(house) - 0.01;
   const out = 0.03;
   const { d, w, x, z } = house;
+
   const corners: Spot[] = [
     [x - out, z - out],
     [x + w + out, z - out],
     [x + w + out, z + d + out],
     [x - out, z + d + out],
   ];
+
   let bulb = 0;
+
   for (const [index, [ax, az]] of corners.entries()) {
     const [bx, bz] = corners[(index + 1) % corners.length] ?? [ax, az];
     const spans = Math.max(2, Math.round(Math.hypot(bx - ax, bz - az) / 0.09));
     const wire: Vec3[] = [];
+
     for (let step = 0; step <= spans * 2; step += 1) {
       const along = step / (spans * 2);
-      // Every other point is a bulb, hanging where the wire sags lowest.
       const hanging = step % 2 === 1;
+
       const at: Vec3 = [
         ax + (bx - ax) * along,
         top - (hanging ? 0.022 : 0),
         az + (bz - az) * along,
       ];
+
       wire.push(at);
+
       if (hanging) {
         const token = colors[bulb % colors.length] ?? "gold";
         bulb += 1;
@@ -319,6 +337,7 @@ export const eaveLights = (sketch: Sketch, house: HouseSpec, colors: readonly To
         );
       }
     }
+
     line(sketch, wire, "hair");
   }
 };

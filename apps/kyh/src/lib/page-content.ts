@@ -38,11 +38,7 @@ export interface PageContent {
   sections: ContentSection[];
 }
 
-const toContentLink = (route: {
-  path: string;
-  title: string;
-  description: string;
-}): ContentLink => ({
+const toContentLink = (route: { path: string; title: string; description: string }) => ({
   description: route.description,
   href: route.path,
   label: route.title,

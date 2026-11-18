@@ -16,9 +16,9 @@ import { SWRConfig } from "swr";
 const swrConfig = {
   fetcher: async (...args) => {
     const res = await fetch(...args);
+
     return res.json();
   },
-  // 5 mins
   refreshInterval: 300_000,
 };
 

@@ -37,15 +37,17 @@ export const LineChart = ({
 
   useEffect(() => {
     const containerElement = container.current;
+
     if (!containerElement) {
       return;
     }
 
     const mergedOptions = { ...defaultOptions, ...options };
-    // set the dimensions and margins of the graph
+
     const margin = {
       ...mergedOptions.margin,
     };
+
     const width = mergedOptions.width || containerElement.offsetWidth || 300;
     const height = mergedOptions.height || containerElement.offsetHeight || 300;
 
@@ -62,6 +64,7 @@ export const LineChart = ({
 
       if (mergedOptions.xAxis) {
         const xAxisSvg = svg.selectAll(".x-axis");
+
         if (xAxisSvg.empty()) {
           svg
             .append("g")
@@ -75,6 +78,7 @@ export const LineChart = ({
 
       if (mergedOptions.yAxis) {
         const yAxisSvg = svg.selectAll(".y-axis");
+
         if (yAxisSvg.empty()) {
           svg
             .append("g")
@@ -126,6 +130,7 @@ export const LineChart = ({
 
         svg.on("touchmove mousemove", (event) => {
           const e = onMouseEvent(pointer(event)[0]);
+
           if (e.date && e[dataKey]) {
             tooltip
               .attr("transform", `translate(${x(e.date)},${0})`)

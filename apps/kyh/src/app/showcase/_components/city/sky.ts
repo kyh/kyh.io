@@ -1,7 +1,3 @@
-// What moves over and around the town besides the blimp (blimp.ts): hot-air
-// balloons, drones, boats sailing round the island, and what a theme flies
-// across the sky (Santa's sleigh, a witch on her broom). Each is drawn once as
-// a sketch and then only moved, so its baked outline stays true.
 import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
 import { santaHat, wearing, witchHat } from "./hats";
 import { BLACK, paint, RED, WHITE } from "./palette";
@@ -27,9 +23,10 @@ const STRIPES = [
 ] as const;
 
 /** A balloon in vertical stripes: recolor every other band of a sphere. */
-export const drawBalloon = (stripe: number, view: Vec3, covers: readonly Vec3[]): Sketch => {
+export const drawBalloon = (stripe: number, view: Vec3, covers: readonly Vec3[]) => {
   const sketch = createSketch(view, covers);
   const [first, second] = STRIPES;
+
   const triangles: Triangle[] = ballTriangles({
     colors: first,
     detail: 16,
@@ -43,9 +40,12 @@ export const drawBalloon = (stripe: number, view: Vec3, covers: readonly Vec3[])
       triangle.a[2] + triangle.b[2] + triangle.c[2],
       triangle.a[0] + triangle.b[0] + triangle.c[0],
     );
+
     const band = Math.floor(((angle + Math.PI) / (Math.PI * 2)) * 8 + stripe);
+
     return band % 2 === 0 ? triangle : { ...triangle, token: second.left };
   });
+
   solid(sketch, triangles, "fine", 70);
   box(
     sketch,
@@ -60,6 +60,7 @@ export const drawBalloon = (stripe: number, view: Vec3, covers: readonly Vec3[])
     },
     "fine",
   );
+
   for (const [x, z] of [
     [-0.06, -0.06],
     [0.06, -0.06],
@@ -75,12 +76,14 @@ export const drawBalloon = (stripe: number, view: Vec3, covers: readonly Vec3[])
       "hair",
     );
   }
+
   return sketch;
 };
 
 /** A sailboat, nose along +x, drawn whole so it can turn as it sails. */
-export const drawBoat = (sail: "white" | "accentRed" | "accentBlue"): Sketch => {
+export const drawBoat = (sail: "white" | "accentRed" | "accentBlue") => {
   const sketch = createSketch(null);
+
   const outline: Point2[] = [
     [-0.32, -0.1],
     [0.2, -0.1],
@@ -88,6 +91,7 @@ export const drawBoat = (sail: "white" | "accentRed" | "accentBlue"): Sketch => 
     [0.2, 0.1],
     [-0.32, 0.1],
   ];
+
   extrude(
     sketch,
     outline,
@@ -123,11 +127,12 @@ export const drawBoat = (sail: "white" | "accentRed" | "accentBlue"): Sketch => 
     ],
     "fine",
   );
+
   return sketch;
 };
 
 /** A ferry for the pier, nose along +x. */
-export const drawFerry = (): Sketch => {
+export const drawFerry = () => {
   const sketch = createSketch(null);
   box(sketch, {
     colors: paint("white", "white", "wallRight"),
@@ -173,11 +178,12 @@ export const drawFerry = (): Sketch => {
     },
     "hair",
   );
+
   return sketch;
 };
 
 /** A delivery drone: a body and four rotors, buzzing between the towers. */
-export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
+export const drawDrone = (view: Vec3, covers: readonly Vec3[]) => {
   const sketch = createSketch(view, covers);
   box(
     sketch,
@@ -192,6 +198,7 @@ export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
     },
     "hair",
   );
+
   for (const [x, z] of [
     [-0.12, -0.12],
     [0.12, -0.12],
@@ -213,6 +220,7 @@ export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
       "hair",
     );
   }
+
   box(
     sketch,
     {
@@ -226,6 +234,7 @@ export const drawDrone = (view: Vec3, covers: readonly Vec3[]): Sketch => {
     },
     "hair",
   );
+
   return sketch;
 };
 
@@ -235,9 +244,9 @@ export const FLYER_HEADING = FLANK_ON + Math.PI;
 /** Something a theme flies across the sky, on a heading, drawn whole for its view. */
 export type Flyer = (heading: number, view: Vec3, covers: readonly Vec3[]) => Sketch;
 
-/** A flyer's frame (nose along +x), scaled up to be seen from the street and turned onto its heading. */
 const flying = (heading: number, view: Vec3, covers: readonly Vec3[]) => {
   const turn = headedTo(heading);
+
   return placed(createSketch(view, covers), ([x, y, z]) => turn([x * 1.6, y * 1.6, z * 1.6]));
 };
 
@@ -246,6 +255,7 @@ const DEER = paint("skinDark");
 /** Santa in his sleigh with his sack, four reindeer ahead, the lead one's nose red. */
 export const drawSleigh: Flyer = (heading, view, covers) => {
   const pen = flying(heading, view, covers);
+
   for (const z of [-0.13, 0.13]) {
     pen.line(
       [
@@ -258,6 +268,7 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
       "bold",
       "gold",
     );
+
     for (const x of [-0.2, 0.15]) {
       pen.line([
         [x, 0, z],
@@ -265,6 +276,7 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
       ]);
     }
   }
+
   pen.solid(boxTriangles({ colors: RED, d: 0.28, h: 0.16, w: 0.5, x: -0.3, y: 0.07, z: -0.14 }));
   pen.solid(boxTriangles({ colors: RED, d: 0.28, h: 0.3, w: 0.08, x: -0.32, y: 0.07, z: -0.14 }));
   pen.ball({ colors: paint("hay"), detail: 10, r: 0.11, ry: 0.9, x: -0.2, y: 0.32, z: 0 });
@@ -272,6 +284,7 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
   pen.ball({ colors: paint("skin"), detail: 8, r: 0.068, x: 0.01, y: 0.47, z: 0 });
   pen.ball({ colors: WHITE, detail: 8, r: 0.06, ry: 1.1, x: 0.06, y: 0.42, z: 0 });
   santaHat(wearing(pen, [-0.01, 0.51, 0], 0.2, 0.6));
+
   for (const [x, lead] of [
     [0.72, false],
     [1.12, true],
@@ -280,7 +293,6 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
       pen.ball({ colors: DEER, detail: 10, r: 0.075, rx: 1.7, x, y: 0.13, z });
       pen.rod([x + 0.09, 0.15, z], [x + 0.15, 0.21, z], 0.026, DEER);
       pen.ball({ colors: DEER, detail: 8, r: 0.042, rx: 1.3, x: x + 0.17, y: 0.22, z });
-      // Mid-gallop: forelegs reaching, hind legs kicked back; antlers up.
       pen.line([
         [x + 0.08, 0.09, z],
         [x + 0.18, 0.03, z],
@@ -298,11 +310,13 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
         [x + 0.14, 0.3, z],
         [x + 0.2, 0.35, z],
       ]);
+
       if (lead && z > 0) {
         pen.ball({ colors: RED, detail: 6, r: 0.03, x: x + 0.23, y: 0.215, z });
       }
     }
   }
+
   for (const z of [-0.1, 0.1]) {
     pen.line(
       [
@@ -313,6 +327,7 @@ export const drawSleigh: Flyer = (heading, view, covers) => {
       "hair",
     );
   }
+
   return pen.sketch;
 };
 
@@ -322,10 +337,10 @@ const ROBE = paint("accentPurple");
 export const drawWitch: Flyer = (heading, view, covers) => {
   const pen = flying(heading, view, covers);
   pen.rod([-0.42, 0, 0], [0.5, 0.04, 0], 0.022, DEER);
-  // The bristles flare from the stick's tail.
   pen
     .moved((point) => {
       const [x, y, z] = rotate(point, [0, 0, 0], "z", Math.PI / 2);
+
       return [x - 0.42, y, z];
     })
     .round({ colors: paint("hay"), h: 0.3, r: 0.035, segments: 10, top: 0.11, x: 0, z: 0 });
@@ -333,16 +348,18 @@ export const drawWitch: Flyer = (heading, view, covers) => {
     .moved((point) => rotate(point, [0.02, 0.02, 0], "z", -0.25))
     .round({ colors: ROBE, h: 0.36, r: 0.15, segments: 10, top: 0.05, x: 0.02, y: 0.02, z: 0 });
   pen.ball({ colors: paint("accentGreen"), detail: 8, r: 0.07, x: 0.13, y: 0.44, z: 0 });
-  // Her arms reach down to the stick.
+
   for (const z of [-0.06, 0.06]) {
     pen.rod([0.08, 0.32, z], [0.3, 0.06, z * 0.5], 0.026, ROBE);
   }
+
   witchHat(wearing(pen, [0.11, 0.5, 0], 0.25, 0.35));
-  // The cat, ears up.
   pen.ball({ colors: BLACK, detail: 8, r: 0.05, rx: 1.3, x: -0.27, y: 0.06, z: 0 });
   pen.ball({ colors: BLACK, detail: 8, r: 0.035, x: -0.21, y: 0.12, z: 0 });
+
   for (const z of [-0.018, 0.018]) {
     pen.round({ colors: BLACK, h: 0.035, r: 0.012, segments: 5, top: 0, x: -0.21, y: 0.145, z });
   }
+
   return pen.sketch;
 };

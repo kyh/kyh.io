@@ -8,11 +8,14 @@ import { IncidentFeed } from "./incident-feed";
 
 const IncidentFeedLoader = async () => {
   const { incidents, nextOffset } = await getIncidents({});
+
   const [session, userVotes] = await Promise.all([
     getSession(),
     getUserVotes({ incidentIds: incidents.map((i) => i.id) }),
   ]);
+
   const isAdmin = !!session?.user && !session.user.isAnonymous;
+
   return (
     <IncidentFeed
       initialIncidents={incidents}

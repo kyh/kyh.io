@@ -1,17 +1,5 @@
 "use client";
 
-// What follows a mouse at Lunar New Year: a festival dragon (`dragon.ts`),
-// built in the round (`dragon-pose.ts`, `dragon-body.ts`) and drawn in the
-// showcase town's hand as the theme's pieces are (`piece.tsx`): flat faces,
-// each solid's side from the light in its shade under the shade dots, ink round
-// the outside. A long red body ringed in ink, a row of gold fins down its spine
-// and a gold belly that shows as it banks; short clawed legs and a gold tuft at
-// its tail; a red head with a gold nose and jaw, gold brows, pale horns, gold
-// whiskers, a beard and a mane. Each `data-layer` is one part the stage stacks
-// by how near the camera it is, restacked within its own parent, so every
-// layer of the head is a child of it; each `data-part` is posed a frame at a
-// time. Its ears and horns are no layers: they stay first in the head, its mane
-// and skull over their roots, or from the side they lie across the mane as a slab.
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
 import { Solid } from "../follower/shaded";
@@ -31,6 +19,7 @@ const Leg = ({ index, at }: { index: number; at: "front" | "back" }) => (
 
 const Segment = ({ index, id }: { index: number; id: string }) => {
   const legs = LEGS.flatMap(({ ring }, leg) => (segmentAt(ring) === index ? [leg] : []));
+
   return (
     <g data-layer={`seg-${index}`}>
       {index === SEGMENTS - 1 &&
@@ -68,6 +57,7 @@ const Eye = ({ index }: { index: number }) => (
 
 export const Follower = () => {
   const id = useSvgId("dragon");
+
   return (
     <Stage creature={dragon} box={{ height: 340, width: 340, x: -170, y: -170 }}>
       <defs>

@@ -73,7 +73,7 @@ const [currentRole] = workHistory;
  * behind the domain; `WebSite` ties the two to the URL. No PostalAddress or
  * phone: a personal site has no office to list.
  */
-export const buildStructuredData = (): StructuredData => ({
+export const buildStructuredData = () => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -160,7 +160,7 @@ export interface VideoObjectNode {
  * of the showcase's opening, embedded from `/showcase`). Its own script beside
  * the site graph rather than a node in it; it points back at the Person by `@id`.
  */
-export const buildVideoObject = (video: SiteVideo): VideoObjectNode => ({
+export const buildVideoObject = (video: SiteVideo) => ({
   "@context": "https://schema.org",
   "@id": `${absoluteUrl("/showcase")}#video`,
   "@type": "VideoObject",

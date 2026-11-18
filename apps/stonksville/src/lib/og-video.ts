@@ -23,7 +23,6 @@ export const ogImage = {
   width: 1200,
 };
 
-/** JSON-LD for the one page: the site, the game and its clip. */
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [

@@ -34,8 +34,6 @@ export const useKeyboardShortcuts = () => useContext(KeyboardShortcutsContext);
 const KeyboardShortcutsHelp = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
-  // resolvedTheme is undefined on the server; render theme-dependent UI only
-  // after hydration to avoid a mismatch.
   const isDark = useIsHydrated() && resolvedTheme === "dark";
 
   return (
@@ -145,16 +143,15 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
     (id: number, element: HTMLElement | null) => {
       if (element) {
         incidentsRef.current.set(id, element);
-        // Rebuild order based on DOM position
         const entries = [...incidentsRef.current.entries()];
         entries.sort((a, b) => {
           const rectA = a[1].getBoundingClientRect();
           const rectB = b[1].getBoundingClientRect();
+
           return rectA.top - rectB.top;
         });
         incidentOrderRef.current = entries.map(([entryId]) => entryId);
 
-        // Set initial active if none
         if (activeIncidentId === null && incidentOrderRef.current.length > 0) {
           setActiveIncidentId(incidentOrderRef.current[0]);
         }
@@ -168,7 +165,6 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
     incidentOrderRef.current = incidentOrderRef.current.filter((i) => i !== id);
   }, []);
 
-  // Update active incident based on scroll position
   useEffect(() => {
     const handleScroll = () => {
       const viewportCenter = window.innerHeight / 3;
@@ -205,11 +201,14 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
 
     const goToIncident = (index: number) => {
       const order = incidentOrderRef.current;
+
       if (index < 0 || index >= order.length) {
         return;
       }
+
       const id = order[index];
       const element = incidentsRef.current.get(id);
+
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
         setActiveIncidentId(id);
@@ -218,13 +217,16 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
 
     const scrollCarousel = (e: KeyboardEvent, direction: "prev" | "next") => {
       const api = activeIncidentId === null ? null : carouselsRef.current.get(activeIncidentId);
+
       if (!api) {
         return;
       }
+
       if (direction === "prev" && api.canScrollPrev()) {
         e.preventDefault();
         api.scrollPrev();
       }
+
       if (direction === "next" && api.canScrollNext()) {
         e.preventDefault();
         api.scrollNext();
@@ -246,22 +248,26 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
           goToIncident(currentIndex + 1);
           break;
         }
+
         case "ArrowUp":
         case "k": {
           e.preventDefault();
           goToIncident(currentIndex - 1);
           break;
         }
+
         case "ArrowLeft":
         case "h": {
           scrollCarousel(e, "prev");
           break;
         }
+
         case "ArrowRight":
         case "l": {
           scrollCarousel(e, "next");
           break;
         }
+
         default: {
           break;
         }
@@ -269,6 +275,7 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeIncidentId]);
 

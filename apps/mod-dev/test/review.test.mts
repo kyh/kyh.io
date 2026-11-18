@@ -15,26 +15,30 @@ fix: export it like the others | src/index.ts:3`;
 
 const MODELS = { lookModel: "sonnet", model: "opus" };
 
-// Ports that answer the looker from `looks` in turn and the judge with
-// `judge`, recording every call.
 const portsOf = (looks: readonly Answer[], judge?: Answer) => {
   const calls: { model: string; system: string; prompt: string }[] = [];
   const read: Look[] = [];
   let looked = 0;
+
   const ports: Ports = {
     complete: (request) => {
       calls.push(request);
+
       if (request.system === SYSTEM) {
         return Promise.resolve(judge ?? { text: SCORECARD });
       }
+
       looked += 1;
+
       return Promise.resolve(looks[looked - 1] ?? { text: "done" });
     },
     look: (look) => {
       read.push(look);
+
       return Promise.resolve(`(${look.target})`);
     },
   };
+
   return { calls, ports, read };
 };
 

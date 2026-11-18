@@ -29,5 +29,5 @@ allowBuilds:
   esbuild: true
 
 minimumReleaseAgeExclude:
-  - '@interfere/landmines@0.1.0'
+  - "@interfere/landmines@0.1.0"
   - ultracite@8.3.0

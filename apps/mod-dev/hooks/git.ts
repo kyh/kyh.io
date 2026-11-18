@@ -1,13 +1,5 @@
-// The diff /score reads, from git.
-
 import type { Diff } from "./grade";
 
-// Prints the commit the work is measured from and what it is, then the stat
-// and the patch of everything since: commits, uncommitted edits and untracked
-// files, staged into a copy of the index so the real one is left alone.
-// Lockfiles stay in the stat but out of the patch. The base is the merge base
-// with the default branch, or `$1` when given. Exits 2 when `$1` names no
-// commit, 3 outside a repository.
 export const DIFF_SCRIPT = `
 ref="\${1:-}"
 top="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 3
@@ -35,10 +27,11 @@ git diff --cached --stat=160,100,200 "$base"
 git diff --cached --unified=5 "$base" -- . ':(exclude)*.lock' ':(exclude)*.lockb' ':(exclude)*-lock.json' ':(exclude)*-lock.yaml' | head -c 2000000
 `;
 
-export const parseDiff = (stdout: string): Diff => {
+export const parseDiff = (stdout: string) => {
   const [base = "", against = "", ...rest] = stdout.split("\n");
   const body = rest.join("\n");
   const at = body.search(/^diff --git /mu);
+
   return {
     against,
     base,
@@ -47,16 +40,16 @@ export const parseDiff = (stdout: string): Diff => {
   };
 };
 
-// A short hash of a text: a polynomial hash modulo the largest 32-bit prime.
 const PRIME = 4_294_967_291;
 
 export const hashOf = (text: string) => {
   let hash = 0;
+
   for (const char of text) {
     hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % PRIME;
   }
+
   return hash.toString(16).padStart(8, "0");
 };
 
-// A change's fingerprint: the same change is reviewed once.
 export const fingerprintOf = ({ base, patch, stat }: Diff) => hashOf(`${base}\n${stat}\n${patch}`);

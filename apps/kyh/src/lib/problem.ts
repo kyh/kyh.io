@@ -7,7 +7,7 @@ export interface Problem {
   instance: string;
 }
 
-export const buildNotFoundProblem = (pathname: string): Problem => ({
+export const buildNotFoundProblem = (pathname: string) => ({
   detail: `No API endpoint exists at ${pathname}. This site has no /api surface; see /openapi.json for what it does serve.`,
   instance: pathname,
   status: 404,

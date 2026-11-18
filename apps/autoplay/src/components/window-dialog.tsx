@@ -5,9 +5,6 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Glyph } from "@/components/glyph";
 import { cn } from "cn";
 
-// A desktop window as a modal: Base UI handles focus, escape, the backdrop and
-// scroll locking; the chrome is the same `win` plastic as everything else.
-
 interface WindowDialogProps {
   open: boolean;
   onClose: () => void;

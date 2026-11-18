@@ -4,7 +4,7 @@ import test from "node:test";
 import type { Block, Lot } from "./plan";
 import { createSchedule, LEAD, RISE } from "./schedule";
 
-const block = (x: number, z: number): Block => ({
+const block = (x: number, z: number) => ({
   bx: 0,
   bz: 0,
   d: 6,
@@ -15,7 +15,8 @@ const block = (x: number, z: number): Block => ({
   x,
   z,
 });
-const lot = (slug: string, x: number, z: number): Lot => ({ d: 2, size: "half", slug, w: 2, x, z });
+
+const lot = (slug: string, x: number, z: number) => ({ d: 2, size: "half", slug, w: 2, x, z });
 
 const PLAN = {
   blocks: [block(33, 33), block(60, 60)],

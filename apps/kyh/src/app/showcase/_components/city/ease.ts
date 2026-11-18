@@ -1,6 +1,3 @@
-// The small numbers every part of the town moves by: clamping, blending,
-// easing, and the way things come and go.
-
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 

@@ -19,7 +19,6 @@ export const ogVideo = {
   width: 1200,
 };
 
-/** JSON-LD for the site: the site, the game (a Claude Code plugin) and its clip. */
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [

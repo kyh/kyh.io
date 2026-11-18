@@ -13,15 +13,14 @@ import { CopyCommand } from "./copy-command";
 import { Leaderboard } from "./leaderboard";
 
 const TICK_MS = 100;
-// With reduced motion the demo holds still on Claude mid-turn.
 const STILL_SECONDS = 9;
-// Claude Code's working glyph, frame by frame.
 const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 const subscribeMotion = (onChange: () => void) => {
   const query = matchMedia(REDUCED_MOTION);
   query.addEventListener("change", onChange);
+
   return () => query.removeEventListener("change", onChange);
 };
 
@@ -36,6 +35,7 @@ type World = Awaited<ReturnType<typeof loadWorld>>;
 
 const loadWorld = async (host: HTMLElement) => {
   const { mountWorld } = await import("@repo/commuting-clawders-mod/world");
+
   return mountWorld(host);
 };
 
@@ -49,9 +49,11 @@ const TranscriptLine = ({ line }: { line: Line }) => {
   if (line.kind === "prompt") {
     return <Prompt text={line.text} />;
   }
+
   if (line.kind === "note") {
     return <p className="t-note">{line.text}</p>;
   }
+
   if (line.kind === "say") {
     return (
       <p className="t-say">
@@ -59,6 +61,7 @@ const TranscriptLine = ({ line }: { line: Line }) => {
       </p>
     );
   }
+
   if (line.kind === "diff") {
     return (
       <div className="t-diff">
@@ -67,6 +70,7 @@ const TranscriptLine = ({ line }: { line: Line }) => {
       </div>
     );
   }
+
   return (
     <div className="t-tool">
       <p>
@@ -77,7 +81,6 @@ const TranscriptLine = ({ line }: { line: Line }) => {
   );
 };
 
-// The prompt box and the hint line under it, as Claude Code draws them.
 const Composer = ({ input }: { input: string }) => (
   <div aria-hidden="true" className="composer">
     <div className="input">
@@ -90,8 +93,6 @@ const Composer = ({ input }: { input: string }) => (
   </div>
 );
 
-// The mod at work: a Claude Code session on the left, the Commuting Clawders pane on
-// the right running the real game, both driven by one scripted loop.
 export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Totals }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -104,19 +105,25 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
 
   useEffect(() => {
     const host = hostRef.current;
+
     if (!host) {
       return;
     }
+
     let isMounted = true;
+
     const mount = async () => {
       const world = await loadWorld(host);
+
       if (isMounted) {
         worldRef.current = world;
       } else {
         world.dispose();
       }
     };
+
     void mount();
+
     return () => {
       isMounted = false;
       worldRef.current?.dispose();
@@ -128,17 +135,19 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
     if (isStill) {
       return;
     }
+
     const startedAt = performance.now();
+
     const timer = setInterval(() => {
       setElapsed((performance.now() - startedAt) / 1000);
       setCoins(worldRef.current?.coins() ?? 0);
     }, TICK_MS);
+
     return () => clearInterval(timer);
   }, [isStill]);
 
   useEffect(() => {
     const { run } = state;
-    // An ended run keeps its score up, as the mod's HUD does.
     const tokens = run.kind === "idle" ? (run.last?.tokens ?? 0) : run.tokens;
     worldRef.current?.setRun({ isActive: !isStill && isActive(run), tokens });
   });

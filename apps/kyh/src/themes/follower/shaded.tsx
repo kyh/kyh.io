@@ -1,6 +1,3 @@
-// A part of a follower in the round drawn as the town draws a solid: all of it
-// in its shade color under the shade dots, then its lit part (`<name>-lit`,
-// from `solidPaths` in `solid.ts`) over that, kept inside it, and ink round it.
 import type { Token } from "@/app/showcase/_components/city/palette";
 import { filled, stroked } from "./ink";
 

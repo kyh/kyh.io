@@ -13,10 +13,10 @@ const HEADERS = {
   "x-width": "560",
 };
 
-// A bottom-up RGBA readback, as gl.readPixels gives it, from top-down rows.
 const readback = (rows: number[][]) => {
   const width = rows[0]?.length ?? 0;
   const out = new Uint8Array(width * rows.length * 4);
+
   for (const [y, row] of rows.toReversed().entries()) {
     for (const [x, color] of row.entries()) {
       out.set(
@@ -25,6 +25,7 @@ const readback = (rows: number[][]) => {
       );
     }
   }
+
   return out;
 };
 
@@ -97,7 +98,9 @@ describe("frames", () => {
       1,
       1,
     );
+
     assert.deepEqual([...cells], [0x25_80, 0xff_ff_ff, 0x00_00_00]);
+
     const flat = toCells(
       readback([
         [0x12_34_56, 0x12_34_56],
@@ -108,6 +111,7 @@ describe("frames", () => {
       1,
       1,
     );
+
     assert.deepEqual([...flat], [0x20, 0x12_34_56, 0x12_34_56]);
   });
 });

@@ -22,7 +22,7 @@ export const drawLoading = (
   now_ms: number,
   alpha = 1,
   strokeColor?: string,
-): void => {
+) => {
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
   const centerY = pad.top + chartH / 2;
@@ -32,11 +32,9 @@ export const drawLoading = (
 
   const breath = loadingBreath(now_ms);
 
-  // Sample the squiggly at ~32 evenly-spaced points — same density as
-  // typical chart data, and rendered through the same spline path so the
-  // loading→chart handoff has zero visual shape difference.
   const numPts = 32;
   const pts: [number, number][] = [];
+
   for (let i = 0; i <= numPts; i += 1) {
     const t = i / numPts;
     const x = leftX + t * chartW;

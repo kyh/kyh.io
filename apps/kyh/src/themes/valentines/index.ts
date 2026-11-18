@@ -1,7 +1,3 @@
-// Valentine's Day: the days up to the 14th, light and turned pink. A find
-// throws candy hearts; the town ties balloons by the doors and in the
-// square, keeps its pink roofs pink, puts a heart in the fountain, sends up
-// hearts and flies BE MINE.
 import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { span } from "../calendar";

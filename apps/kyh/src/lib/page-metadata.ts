@@ -16,12 +16,13 @@ import { DEFAULT_THEME, themeOf } from "@/themes";
  * `duration` feed the `VideoObject` in `structured-data.ts`.
  */
 export const siteVideoFor = (id: ThemeId) => {
-  // The theme's folder name: `lunarNewYear` is `showcase-lunar-new-year`.
   const file =
     id === DEFAULT_THEME
       ? "showcase"
       : `showcase-${id.replaceAll(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`)}`;
+
   const dressed = id === DEFAULT_THEME ? "" : ` dressed for ${themeOf(id).name}`;
+
   return {
     description: `An isometric town of every project Kaiyu Hsu has built goes up${dressed}, storey by storey from downtown out, while the camera pulls back over it; then the kyh logo comes up over the finished town with "Kaiyu's corner of the internet" under it.`,
     duration: "PT9S",
@@ -65,9 +66,10 @@ export interface PageMetadataInput {
  * Every page shares one picture: the site's clip as `og:video` and its poster
  * as `og:image`, so any link to the site unfurls as the same town.
  */
-export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo): Metadata => {
+export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo) => {
   const isHome = content.path === "/";
   const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
+
   return {
     alternates: { canonical: content.path },
     description: content.description,

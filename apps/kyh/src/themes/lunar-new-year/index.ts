@@ -1,14 +1,9 @@
-// Lunar New Year: New Year's Eve and the week after, dark and turned red. A
-// find throws red lanterns; the town hangs lanterns by the doors and the
-// pond, lights its windows red after dark, raises a lantern gate in the
-// square and flies HAPPY NEW YEAR.
 import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { ellipse } from "../art";
 import { around, lunarNewYear } from "../calendar";
 import { namedConfetti } from "../theme";
 
-/** A red paper lantern: hung from a hook, ribbed, gold caps, a tassel below. */
 const LANTERN = {
   layers: [
     { d: "M12 1.8v3.6", strokeWidth: 1 },
@@ -24,7 +19,6 @@ const LANTERN = {
   ],
 } satisfies Art;
 
-/** The lantern: hung from a hook, a rib down its middle, a tassel below. */
 const LANTERN_GLYPH = `M12 2v3.6${ellipse(12, 12, 8.4, 6.4)}${ellipse(12, 12, 3.2, 6.4)}M12 18.4V22`;
 
 export const theme = {
@@ -34,10 +28,10 @@ export const theme = {
     { back: "#ff8a80", front: "#e11d2e" },
     ...namedConfetti("gold", "gold"),
   ],
-  // New Year's Eve and the week after it.
   corners: null,
   days: (year) => {
     const first = lunarNewYear(year);
+
     return first === null ? null : around(first, 1, 6);
   },
   drift: null,

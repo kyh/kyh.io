@@ -5,44 +5,44 @@ import { account } from "@/db/drizzle-schema";
 import { env } from "@/lib/env";
 import { refreshXToken } from "@/lib/x-api";
 
-// The bridge between better-auth and the X API: better-auth lands the OAuth
-// grant in the `account` table at sign-in; this reads it back for timeline
-// calls, refreshing (and persisting) the token when it has expired.
-
 interface XAccount {
   accessToken: string;
   /** The X user id (the provider account id), used in timeline paths. */
   xUserId: string;
 }
 
-/** A token this close to expiry is refreshed now rather than failing mid-program. */
 const EXPIRY_MARGIN_MS = 60_000;
 
 /**
  * A usable X access token for a better-auth user, or undefined when the user
  * has no X grant or it can no longer be refreshed (sign in again).
  */
-export const freshXAccount = async (userId: string): Promise<XAccount | undefined> => {
+export const freshXAccount = async (userId: string) => {
   if (db === undefined || env.X_CLIENT_ID === undefined || env.X_CLIENT_SECRET === undefined) {
-    return undefined;
+    return;
   }
+
   const rows = await db
     .select()
     .from(account)
     .where(and(eq(account.userId, userId), eq(account.providerId, "twitter")))
     .limit(1);
+
   const [row] = rows;
+
   if (row === undefined || row.accessToken === null) {
-    return undefined;
+    return;
   }
 
   const expiresAt = row.accessTokenExpiresAt?.getTime();
   const usable = expiresAt === undefined || expiresAt > Date.now() + EXPIRY_MARGIN_MS;
+
   if (usable) {
     return { accessToken: row.accessToken, xUserId: row.accountId };
   }
+
   if (row.refreshToken === null) {
-    return undefined;
+    return;
   }
 
   try {
@@ -56,8 +56,9 @@ export const freshXAccount = async (userId: string): Promise<XAccount | undefine
         updatedAt: new Date(),
       })
       .where(eq(account.id, row.id));
+
     return { accessToken: grant.accessToken, xUserId: row.accountId };
   } catch {
-    return undefined;
+    return;
   }
 };

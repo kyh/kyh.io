@@ -4,10 +4,11 @@ const siteUrl = "https://policingice.com";
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 
-const escapeXml = (str: string | null | undefined): string => {
+const escapeXml = (str: string | null | undefined) => {
   if (!str) {
     return "";
   }
+
   return str
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -16,9 +17,9 @@ const escapeXml = (str: string | null | undefined): string => {
     .replaceAll("'", "&apos;");
 };
 
-const formatRFC2822 = (date: Date): string => date.toUTCString();
+const formatRFC2822 = (date: Date) => date.toUTCString();
 
-const formatReadableDate = (date: Date): string => {
+const formatReadableDate = (date: Date) => {
   const months = [
     "Jan",
     "Feb",
@@ -33,20 +34,25 @@ const formatReadableDate = (date: Date): string => {
     "Nov",
     "Dec",
   ];
+
   return `${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
 };
 
 const feedUrl = (page: number, limit: number, before: string | null) => {
   const params = new URLSearchParams();
+
   if (limit !== DEFAULT_LIMIT) {
     params.set("limit", String(limit));
   }
+
   if (page > 1) {
     params.set("page", String(page));
   }
+
   if (before) {
     params.set("before", before);
   }
+
   return params.toString() ? `${siteUrl}/api/rss?${params}` : `${siteUrl}/api/rss`;
 };
 
@@ -60,6 +66,7 @@ export const GET = async (request: Request) => {
     Math.max(1, Math.trunc(Number(limitParam ?? "")) || DEFAULT_LIMIT),
     MAX_LIMIT,
   );
+
   const page = Math.max(1, Math.trunc(Number(pageParam ?? "")) || 1);
   const offset = (page - 1) * limit;
   const beforeDate = beforeParam ? new Date(beforeParam) : null;

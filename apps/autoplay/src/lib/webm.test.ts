@@ -12,30 +12,28 @@ import {
   readVint,
 } from "./webm";
 
-// A stream the way MediaRecorder writes one — unknown-size Segment and
-// Clusters, an Info with no Duration — built by hand, then finalized and
-// read back.
-
 const UNKNOWN_8 = [0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
 
-const id = (value: number): number[] => {
+const id = (value: number) => {
   const out: number[] = [];
   let rest = value;
+
   while (rest > 0) {
     out.unshift(rest % 256);
     rest = Math.floor(rest / 256);
   }
+
   return out;
 };
 
-const element = (value: number, body: number[]): number[] => [
+const element = (value: number, body: number[]) => [
   ...id(value),
   // oxlint-disable-next-line no-bitwise -- EBML: one-byte size with its length marker bit
   0x80 | body.length,
   ...body,
 ];
 
-const stream = (): Uint8Array<ArrayBuffer> =>
+const stream = () =>
   new Uint8Array([
     ...element(EBML_HEADER, [0x42, 0x86, 0x81, 0x01]),
     ...id(EBML_SEGMENT),
@@ -60,21 +58,25 @@ interface Found {
   unknown: boolean;
 }
 
-/** Every element at one level, `from` to `to`, entering nothing. */
-const elements = (bytes: Uint8Array, from: number, to: number): Found[] => {
+const elements = (bytes: Uint8Array, from: number, to: number) => {
   const found: Found[] = [];
   let cursor = from;
+
   while (cursor < to) {
     const elementId = readVint(bytes, cursor, true);
+
     const size =
       elementId === undefined ? undefined : readVint(bytes, cursor + elementId.length, false);
+
     if (elementId === undefined || size === undefined) {
       break;
     }
+
     const body = cursor + elementId.length + size.length;
     found.push({ at: cursor, body, id: elementId.value, size: size.value, unknown: size.unknown });
     cursor = size.unknown ? body : body + size.value;
   }
+
   return found;
 };
 
@@ -108,6 +110,7 @@ describe("finalizeWebm", () => {
     const duration = elements(output, info.body, info.body + info.size).find(
       (child) => child.id === EBML_DURATION,
     );
+
     assert.ok(duration !== undefined);
     const view = new DataView(output.buffer, output.byteOffset + duration.body, 8);
     assert.equal(view.getFloat64(0), 2500);

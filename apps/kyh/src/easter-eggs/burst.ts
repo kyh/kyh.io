@@ -1,6 +1,3 @@
-// What one find throws out of the cursor, like coins out of a block: a pop of
-// confetti, and a handful of eggs (or the theme's pieces, src/themes) that
-// spray out and then fly home to the avatar. Pure, given a random source, so the shape of a burst is asserted.
 import type { ConfettiSide } from "@/themes/theme";
 import { DEFAULT_THEME, themeOf } from "@/themes";
 
@@ -26,12 +23,11 @@ export interface Confetto {
   back: string;
 }
 
-// Paper catches the air: light gravity, heavy drag, a slow terminal fall that
-// it flutters through. Sequins are beads: they drop fast and barely slow.
 const PHYSICS = {
   paper: { drag: 0.075, gravity: 0.3 },
   sequin: { drag: 0.02, gravity: 0.55 },
 } as const;
+
 const TERMINAL = 3;
 
 export interface SprayedEgg {
@@ -52,11 +48,13 @@ const between = (random: () => number, low: number, high: number) => low + rando
 export const throwConfetti = (
   random: () => number = Math.random,
   sides: readonly ConfettiSide[] = themeOf(DEFAULT_THEME).confetti,
-): Confetto[] => {
-  const side = (): ConfettiSide =>
+) => {
+  const side = () =>
     sides[Math.floor(random() * sides.length)] ?? { back: "white", front: "white" };
-  const papers = Array.from({ length: PAPERS }, (): Confetto => {
+
+  const papers = Array.from({ length: PAPERS }, () => {
     const { back, front } = side();
+
     return {
       back,
       front,
@@ -71,9 +69,11 @@ export const throwConfetti = (
       y: 0,
     };
   });
-  const sequins = Array.from({ length: SEQUINS }, (): Confetto => {
+
+  const sequins = Array.from({ length: SEQUINS }, () => {
     const { front } = side();
     const radius = between(random, 1.5, 2.6);
+
     return {
       back: front,
       front,
@@ -88,6 +88,7 @@ export const throwConfetti = (
       y: 0,
     };
   });
+
   return [...papers, ...sequins];
 };
 
@@ -100,19 +101,22 @@ export const stepConfetto = (bit: Confetto, frames: number, random: () => number
   const { drag, gravity } = PHYSICS[bit.kind];
   bit.vx -= bit.vx * Math.min(1, drag * frames);
   bit.vy = Math.min(bit.vy + gravity * frames, TERMINAL);
+
   if (bit.kind === "paper") {
     bit.vx += (random() - 0.5) * frames;
   }
+
   bit.x += bit.vx * frames;
   bit.y += bit.vy * frames;
+
   return bit.kind === "paper" ? Math.cos((bit.y + bit.phase) * 0.09) : 1;
 };
 
 export const burstOf = (random: () => number = Math.random) => {
-  // Eggs spray up and out in a fan, the way coins leave a block.
   const eggs: SprayedEgg[] = Array.from({ length: EGGS_PER_FIND }, (_, index) => {
     const angle = -Math.PI / 2 + ((index - (EGGS_PER_FIND - 1) / 2) / EGGS_PER_FIND) * Math.PI;
     const reach = between(random, 90, 140);
+
     return {
       delay: index * 0.09,
       tilt: between(random, -30, 30),
@@ -120,5 +124,6 @@ export const burstOf = (random: () => number = Math.random) => {
       y: Math.sin(angle) * reach,
     };
   });
+
   return { eggs };
 };

@@ -31,7 +31,9 @@ const IncidentArticle = ({
     if (!shortcuts) {
       return;
     }
+
     shortcuts.registerIncident(incidentId, ref.current);
+
     return () => shortcuts.unregisterIncident(incidentId);
   }, [incidentId, shortcuts]);
 
@@ -45,21 +47,26 @@ interface IncidentDetailProps {
 export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
   const [sessionReady, setSessionReady] = useState(false);
   const [userVote, setUserVote] = useState<"unjustified" | "justified" | null>(null);
+
   const [counts, setCounts] = useState({
     justified: incident.justifiedCount,
     unjustified: incident.unjustifiedCount,
   });
+
   const [reported, setReported] = useState(false);
 
   useEffect(() => {
     const initSession = async () => {
       let session = await authClient.getSession();
+
       if (!session.data) {
         await authClient.signIn.anonymous();
         session = await authClient.getSession();
       }
+
       setSessionReady(session.data?.user.id !== undefined);
     };
+
     void initSession();
   }, []);
 
@@ -72,8 +79,10 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
       const voteType = await getUserVote({
         incidentId: incident.id,
       });
+
       setUserVote(voteType);
     };
+
     void loadVote();
   }, [sessionReady, incident.id]);
 
@@ -82,7 +91,6 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
       const prevVote = userVote;
       const prevCounts = { ...counts };
 
-      // Optimistic update
       if (prevVote === type) {
         setUserVote(null);
         setCounts((prev) => ({ ...prev, [type]: prev[type] - 1 }));

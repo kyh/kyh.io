@@ -1,6 +1,3 @@
-// Which building stands for which project, and where it likes to stand.
-// A project missing here still gets a building: a generic one for its kind,
-// with its name on it, on the nearest free lot.
 import type { Bounds, DrawLandmark } from "./landmark";
 import type { CityPlan, Lot, LotSize, PlanEntry } from "./plan";
 import type { Sketch } from "./sketch";
@@ -79,9 +76,10 @@ const SIZE_BY_KIND: Record<ProjectKind, LotSize> = {
   venture: "large",
 };
 
-export const planEntries = (projects: readonly CityProject[]): PlanEntry[] =>
+export const planEntries = (projects: readonly CityProject[]) =>
   projects.map((project) => {
     const landmark = LANDMARKS.get(project.slug);
+
     return {
       home: landmark?.home,
       size: landmark?.size ?? SIZE_BY_KIND[project.kind],
@@ -105,26 +103,32 @@ export const lotSteps = function* lotSteps(
   sketch: Sketch,
   plan: CityPlan,
   projects: readonly CityProject[],
-): Steps<Placed[]> {
+) {
   const bySlug = new Map(projects.map((project) => [project.slug, project]));
   const placed: Placed[] = [];
+
   for (const lot of plan.lots) {
     const site = { ...lot, y: lot.size === "launch" ? 0 : CURB_TOP };
     const project = bySlug.get(lot.slug);
+
     if (project) {
       const own = createSketch(sketch.view, sketch.covers);
       const draw = LANDMARKS.get(project.slug)?.draw;
+
       const bounds = draw
         ? draw(own, site, project.title)
         : drawGenericLot(own, site, lot.size, project.title, hashString(project.slug));
+
       placed.push({ bounds, lot, project, sketch: own });
     } else if (lot.size === "template") {
       drawTemplateHouse(sketch, site, "");
     } else if (lot.size !== "launch") {
       drawGenericLot(sketch, site, lot.size, "", hashString(`${lot.x}:${lot.z}`));
     }
+
     yield;
   }
+
   return placed;
 };
 

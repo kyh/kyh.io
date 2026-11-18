@@ -1,6 +1,3 @@
-// The demo session the site plays beside the live game: prompts typed,
-// Claude working through them, the quiet gaps between. Everything on screen
-// is a pure function of the time into the loop, so it never drifts.
 import { addTokens, endTurn, idle, resultOf, startTurn } from "@repo/commuting-clawders-mod/run";
 import type { Run } from "@repo/commuting-clawders-mod/run";
 
@@ -14,7 +11,6 @@ export type Line =
 type Beat =
   | { kind: "type"; text: string; seconds: number }
   | { kind: "work"; verb: string; seconds: number; tokens: number; lines: Line[] }
-  // Claude quiet past the grace: the run is over, and the screen rests.
   | { kind: "over"; seconds: number };
 
 export interface Spinner {
@@ -116,23 +112,27 @@ export const LOOP_SECONDS = BEATS.reduce((sum, beat) => sum + beat.seconds, STAR
 
 const ms = (seconds: number) => Math.round(seconds * 1000);
 
-export const demoAt = (time: number): DemoState => {
+export const demoAt = (time: number) => {
   const t = time % LOOP_SECONDS;
   const lines: Line[] = [];
   let input = "";
   let spinner: Spinner | null = null;
   let run: Run = idle;
   let at = START;
+
   for (const beat of BEATS) {
     if (t < at) {
       break;
     }
+
     const into = Math.min(t - at, beat.seconds);
     const done = t >= at + beat.seconds;
+
     if (beat.kind === "type") {
       input = done
         ? ""
         : beat.text.slice(0, Math.ceil((into / (beat.seconds * 0.8)) * beat.text.length));
+
       if (done) {
         lines.push({ kind: "prompt", text: beat.text });
       }
@@ -143,6 +143,7 @@ export const demoAt = (time: number): DemoState => {
       run = addTokens(run, tokens);
       const shown = Math.floor(share * (beat.lines.length + 1));
       lines.push(...beat.lines.slice(0, done ? beat.lines.length : shown));
+
       if (done) {
         run = endTurn(run, ms(at + beat.seconds));
       } else {
@@ -150,6 +151,7 @@ export const demoAt = (time: number): DemoState => {
       }
     } else if (into >= GRACE_SECONDS) {
       const result = resultOf(run, ms(at + GRACE_SECONDS), 0);
+
       if (result) {
         run = { kind: "idle", last: { ...result, rank: null } };
         lines.push({
@@ -158,11 +160,12 @@ export const demoAt = (time: number): DemoState => {
         });
       }
     }
+
     at += beat.seconds;
   }
+
   return { input, lines, run, spinner };
 };
 
-// Claude Code's spinner count: "980 tokens", "1.9k tokens".
 export const formatTokens = (tokens: number) =>
   tokens < 1000 ? `${tokens}` : `${(tokens / 1000).toFixed(1)}k`;

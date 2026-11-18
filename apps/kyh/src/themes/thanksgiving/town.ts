@@ -1,4 +1,3 @@
-// How the showcase's town dresses for Thanksgiving (`Town` in city/town-theme.ts).
 import { topHatTrim } from "@/app/showcase/_components/city/blimp";
 import { topHat } from "@/app/showcase/_components/city/hats";
 import { giantTurkey } from "@/app/showcase/_components/city/decor-giants";
@@ -20,7 +19,6 @@ export const town: Town = {
     pumpkin(sketch, x, z);
     pumpkin(sketch, x - 0.09, z + 0.05, 0.6);
   },
-  // The trees turned: maples orange and red, pines left green.
   repaint: {
     hedge: { day: "#e3b35c", night: "#7a5a24" },
     tree: { day: "#f0a85a", night: "#9a5522" },

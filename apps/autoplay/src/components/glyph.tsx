@@ -1,8 +1,3 @@
-// The UI's icons, drawn on a 10×10 grid instead of typed. Unicode glyphs
-// come from whichever fallback font has them, each with its own ink offset,
-// so a ✕ sits on the baseline and a ▁ fills the box; an SVG in currentColor
-// lands the same in every button and stays crisp at 8 to 12px.
-
 const GLYPHS = {
   close: (
     <path

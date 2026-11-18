@@ -11,8 +11,6 @@ interface IdentityProps {
 }
 
 export const Identity = ({ hero, innerWidth }: IdentityProps) => {
-  // always render the full bio — the globe panel yields (app.tsx) rather than
-  // this text getting clipped
   const bioLines = wrapText(hero, innerWidth);
 
   return (

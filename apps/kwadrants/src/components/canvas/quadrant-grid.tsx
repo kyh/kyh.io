@@ -14,6 +14,7 @@ interface QuadrantGridProps {
 }
 
 const GRID_SPACING = 40;
+
 const THEME_COLORS = {
   dark: { axis: "#6b7280", bg: "#1f2937", grid: "#4b5563" },
   light: { axis: "#9ca3af", bg: "#f9fafb", grid: "#d1d5db" },
@@ -51,6 +52,7 @@ export const QuadrantGrid = ({
           />,
         );
       }
+
       for (let y = by + GRID_SPACING; y < by + height; y += GRID_SPACING) {
         elements.push(
           <Line
@@ -76,10 +78,10 @@ export const QuadrantGrid = ({
 
   return (
     <>
-      {/* Background */}
+      {}
       <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={themeColors.bg} />
 
-      {/* Quadrant backgrounds */}
+      {}
       <Rect x={bx} y={by} width={width / 2} height={height / 2} fill={colors.topLeft} />
       <Rect x={centerX} y={by} width={width / 2} height={height / 2} fill={colors.topRight} />
       <Rect x={bx} y={centerY} width={width / 2} height={height / 2} fill={colors.bottomLeft} />
@@ -91,10 +93,10 @@ export const QuadrantGrid = ({
         fill={colors.bottomRight}
       />
 
-      {/* Grid pattern */}
+      {}
       {renderGrid()}
 
-      {/* Divider lines */}
+      {}
       <Line
         points={[centerX, by, centerX, by + height]}
         stroke={themeColors.axis}

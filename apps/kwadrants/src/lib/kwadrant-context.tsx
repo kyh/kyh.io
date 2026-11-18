@@ -34,57 +34,59 @@ interface KwadrantContextValue {
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
 
 type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+
 interface JsonObject {
   [key: string]: JsonValue;
 }
 
-const asJsonObject = (value: JsonValue | undefined): JsonObject | null =>
+const asJsonObject = (value: JsonValue | undefined) =>
   value instanceof Object && !Array.isArray(value) ? value : null;
 
 const isString = (value: JsonValue | undefined): value is string => String(value) === value;
 
-const stringEntries = (value: JsonValue | undefined): LabelValues => {
+const stringEntries = (value: JsonValue | undefined) => {
   const object = asJsonObject(value);
+
   if (!object) {
     return {};
   }
+
   const entries: LabelValues = {};
+
   for (const [key, entry] of Object.entries(object)) {
     if (isString(entry)) {
       entries[key] = entry;
     }
   }
+
   return entries;
 };
 
-// Migrate old localStorage format (axisLabels/edgeLabels) to new (layoutLabels)
-const migrateState = (stored: JsonObject): Partial<KwadrantState> => {
+const migrateState = (stored: JsonObject) => {
   if (stored.layoutLabels) {
-    // SAFETY: `layoutLabels` marks the current schema, which is only ever
-    // written by this provider as JSON.stringify(state); getInitialState still
-    // falls back per field.
     return stored as Partial<KwadrantState>;
   }
 
-  // Old format detected - migrate
   const layoutLabels: LayoutLabels = { ...DEFAULT_LAYOUT_LABELS };
 
   const axisLabels = stringEntries(stored.axisLabels);
+
   if (Object.keys(axisLabels).length > 0) {
     layoutLabels.axis = { ...DEFAULT_LAYOUT_LABELS.axis, ...axisLabels };
   }
+
   const edgeLabels = stringEntries(stored.edgeLabels);
+
   if (Object.keys(edgeLabels).length > 0) {
     layoutLabels.edge = { ...DEFAULT_LAYOUT_LABELS.edge, ...edgeLabels };
   }
 
   const { axisLabels: _oldAxis, edgeLabels: _oldEdge, ...rest } = stored;
-  // SAFETY: `rest` is the old persisted KwadrantState minus its replaced label
-  // fields, written by this provider; getInitialState still falls back per field.
+
   return { ...rest, layoutLabels } as Partial<KwadrantState>;
 };
 
-const getInitialState = (): KwadrantState => {
+const getInitialState = () => {
   const defaultState: KwadrantState = {
     gridType: "none",
     images: [],
@@ -101,13 +103,16 @@ const getInitialState = (): KwadrantState => {
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+
     if (stored) {
-      // SAFETY: JSON.parse output is a JSON value by construction.
       const storedJson = asJsonObject(JSON.parse(stored) as JsonValue);
+
       if (!storedJson) {
         return defaultState;
       }
+
       const parsed = migrateState(storedJson);
+
       return {
         gridType: parsed.gridType || "none",
         images: parsed.images || [],
@@ -118,9 +123,7 @@ const getInitialState = (): KwadrantState => {
         theme: parsed.theme || "light",
       };
     }
-  } catch {
-    // Ignore parse errors
-  }
+  } catch {}
 
   return defaultState;
 };
@@ -132,6 +135,7 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
     const timeoutId = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }, 300);
+
     return () => clearTimeout(timeoutId);
   }, [state]);
 
@@ -254,8 +258,10 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
 
 export const useKwadrant = () => {
   const context = useContext(KwadrantContext);
+
   if (!context) {
     throw new Error("useKwadrant must be used within a KwadrantProvider");
   }
+
   return context;
 };

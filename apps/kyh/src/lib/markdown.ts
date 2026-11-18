@@ -3,7 +3,6 @@ import type { ContentLink, PageContent } from "@/lib/page-content";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 import { connectLinks, projects, workHistory } from "@/lib/data";
 
-/** Site-relative hrefs become absolute so the markdown stands on its own. */
 const resolveHref = (href: string) => (href.startsWith("/") ? absoluteUrl(href) : href);
 
 const linkLine = (link: ContentLink) =>
@@ -18,13 +17,16 @@ export const renderPageMarkdown = (page: PageContent) => {
 
   for (const section of page.sections) {
     parts.push(`## ${section.heading}`);
+
     for (const block of section.blocks) {
       if (block.kind === "text") {
         parts.push(block.text);
       }
+
       if (block.kind === "subheading") {
         parts.push(`### ${block.text}`);
       }
+
       if (block.kind === "links") {
         parts.push(block.items.map(linkLine).join("\n"));
       }

@@ -26,8 +26,10 @@ export const scrambleFrame = (
   const spelled = [...reading];
   const end = Math.min(tick, widthOf(text, reading));
   let frame = "";
+
   for (let index = 0; index < end; index += 1) {
     const letter = letters[index] ?? "";
+
     if (index < tick - LAG) {
       frame += letter;
     } else if (index < spelled.length && index < tick - SPELL) {
@@ -40,5 +42,6 @@ export const scrambleFrame = (
           : (glyphs[Math.floor(random() * glyphs.length)] ?? underneath);
     }
   }
+
   return frame;
 };

@@ -14,13 +14,10 @@ import { getSession } from "@/lib/auth";
 import { getIncidents as getCachedIncidents } from "@/lib/incident-query";
 import { detectPlatform, resolveVideoUrl } from "@/lib/video-utils";
 
-// Raw row contract for the vector_top_k query below: incidents.* joined with an
-// optional video, all timestamps as unix seconds. Parsed at the SQL boundary.
 const vectorRowSchema = z.object({
   created_at: z.number().nullable(),
   deleted_at: z.number().nullable(),
   description: z.string().nullable(),
-  // Opaque F32_BLOB passed through untouched; never inspected here.
   embedding: z.custom<Buffer | null>(),
   id: z.number(),
   incident_date: z.number().nullable(),
@@ -50,25 +47,25 @@ const vectorRowSchema = z.object({
 
 const requireAdmin = async () => {
   const session = await getSession();
+
   if (!session?.user || session.user.isAnonymous) {
     throw new Error("Unauthorized");
   }
+
   return session.user;
 };
 
-// Parse date string as local time (not UTC)
-const parseLocalDate = (dateStr: string): Date => {
+const parseLocalDate = (dateStr: string) => {
   const parts = dateStr.split("-").map(Number);
+
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
 
-// Relational-query ordering: undated incidents sort as newest, then by id.
 const newestFirst = (inc: typeof incidents) => [
   desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
   desc(inc.id),
 ];
 
-// Server action wrapper — delegates to cached query so clients can call it
 export const getIncidents = async (data: { offset?: number; limit?: number }) =>
   await getCachedIncidents(data);
 
@@ -80,7 +77,7 @@ export const searchIncidents = async (data: {
   const rangeStart = data.startDate ? parseLocalDate(data.startDate) : undefined;
   const rangeEnd = data.endDate ? parseLocalDate(data.endDate) : undefined;
   rangeEnd?.setDate(rangeEnd.getDate() + 1);
-  // An undefined bound is dropped from the filter, so the date range is optional on either side.
+
   const baseFilter = {
     deletedAt: { isNull: true },
     incidentDate: { gte: rangeStart, lte: rangeEnd },
@@ -88,7 +85,6 @@ export const searchIncidents = async (data: {
     status: "approved",
   } as const;
 
-  // No text query - just date filters
   if (!data.query) {
     const results = await db.query.incidents.findMany({
       limit: 50,
@@ -96,10 +92,10 @@ export const searchIncidents = async (data: {
       where: baseFilter,
       with: { videos: true },
     });
+
     return { incidents: results };
   }
 
-  // Text query - do both keyword and vector search, combine results
   const resultMap = new Map<
     number,
     Awaited<ReturnType<typeof db.query.incidents.findMany>>[0] & {
@@ -108,8 +104,8 @@ export const searchIncidents = async (data: {
     }
   >();
 
-  // 1. Keyword search (always works, even without embeddings)
   const q = `%${data.query}%`;
+
   const keywordResults = await db.query.incidents.findMany({
     limit: 30,
     orderBy: newestFirst,
@@ -117,27 +113,27 @@ export const searchIncidents = async (data: {
     with: { videos: true },
   });
 
-  // Add keyword results with score based on position
   for (const [idx, incident] of keywordResults.entries()) {
     resultMap.set(incident.id, { ...incident, _score: 100 - idx });
   }
 
-  // 2. Vector search (only if we have embeddings)
   try {
     const { embedding } = await embed({
       model: "openai/text-embedding-3-small",
       value: data.query,
     });
+
     const vectorStr = `[${embedding.join(",")}]`;
 
-    // Build date conditions for SQL
     let dateConditions = "";
     const args: (string | number)[] = [vectorStr];
+
     if (data.startDate) {
       const start = Math.floor(parseLocalDate(data.startDate).getTime() / 1000);
       dateConditions += " AND i.incident_date >= ?";
       args.push(start);
     }
+
     if (data.endDate) {
       const end = parseLocalDate(data.endDate);
       end.setDate(end.getDate() + 1);
@@ -161,7 +157,6 @@ export const searchIncidents = async (data: {
       `,
     });
 
-    // Group videos and merge with existing results
     const vectorIncidents = new Map<
       number,
       {
@@ -176,6 +171,7 @@ export const searchIncidents = async (data: {
       const row = vectorRowSchema.parse(rawRow);
       const { id } = row;
       let entry = vectorIncidents.get(id);
+
       if (!entry) {
         entry = {
           distance: row.vec_distance,
@@ -197,6 +193,7 @@ export const searchIncidents = async (data: {
         };
         vectorIncidents.set(id, entry);
       }
+
       if (row.vid && row.url && row.platform) {
         entry.incident.videos.push({
           createdAt: row.v_created_at ? new Date(row.v_created_at * 1000) : null,
@@ -208,23 +205,22 @@ export const searchIncidents = async (data: {
       }
     }
 
-    // Merge vector results - boost score if also in keyword results
     let idx = 0;
+
     for (const [id, { incident, distance }] of vectorIncidents) {
       const vectorScore = 100 - idx - distance * 10;
       const existing = resultMap.get(id);
+
       if (existing) {
         existing._score += vectorScore;
       } else {
         resultMap.set(id, { ...incident, _score: vectorScore });
       }
+
       idx += 1;
     }
-  } catch {
-    // Vector search failed (no index, no embeddings, etc) - keyword results only
-  }
+  } catch {}
 
-  // Sort by combined score
   const sortedResults = [...resultMap.values()]
     .toSorted((a, b) => b._score - a._score)
     .slice(0, 50)
@@ -239,6 +235,7 @@ export const getUserVotes = async (data: { incidentIds: number[] }) => {
   }
 
   const session = await getSession();
+
   if (!session?.user.id) {
     return {};
   }
@@ -248,14 +245,17 @@ export const getUserVotes = async (data: { incidentIds: number[] }) => {
   });
 
   const byIncident: Record<number, VoteType> = {};
+
   for (const vote of userVotes) {
     byIncident[vote.incidentId] = vote.type;
   }
+
   return byIncident;
 };
 
 export const getUserVote = async (data: { incidentId: number }) => {
   const session = await getSession();
+
   if (!session?.user.id) {
     return null;
   }
@@ -274,11 +274,11 @@ export const createIncident = async (data: {
   videoUrls: string[];
 }) => {
   const session = await getSession();
+
   if (!session?.user.id) {
     return { error: "Unauthorized", incident: null };
   }
 
-  // Resolve all URLs (e.g., Twitter /i/status/ URLs to embeddable format)
   const resolvedUrls = await Promise.all(data.videoUrls.map(resolveVideoUrl));
 
   const existingVideos = await db.query.videos.findMany({
@@ -302,6 +302,7 @@ export const createIncident = async (data: {
     }
 
     revalidateTag("incidents", "max");
+
     return {
       autoApproved: true,
       incident: existingIncident,
@@ -328,6 +329,7 @@ export const createIncident = async (data: {
   );
 
   revalidateTag("incidents", "max");
+
   return { autoApproved: true, incident, merged: false };
 };
 
@@ -336,6 +338,7 @@ export const submitVote = async (data: {
   type: "unjustified" | "justified";
 }) => {
   const session = await getSession();
+
   if (!session?.user.id) {
     return { error: "No session", success: false };
   }
@@ -346,7 +349,6 @@ export const submitVote = async (data: {
     where: { incidentId: data.incidentId, sessionId },
   });
 
-  // Toggle: if same vote type, remove it
   if (existing?.type === data.type) {
     await db.delete(votes).where(eq(votes.id, existing.id));
     const field = data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
@@ -355,10 +357,10 @@ export const submitVote = async (data: {
       .set({ [field]: sql`${incidents[field]} - 1` })
       .where(eq(incidents.id, data.incidentId));
     revalidateTag("incidents", "max");
+
     return { action: "removed" as const, success: true };
   }
 
-  // If different vote type exists, switch it
   if (existing) {
     const oldField = existing.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
     const newField = data.type === "unjustified" ? "unjustifiedCount" : "justifiedCount";
@@ -371,10 +373,10 @@ export const submitVote = async (data: {
       })
       .where(eq(incidents.id, data.incidentId));
     revalidateTag("incidents", "max");
+
     return { action: "switched" as const, success: true };
   }
 
-  // New vote
   await db.insert(votes).values({
     incidentId: data.incidentId,
     sessionId,
@@ -388,6 +390,7 @@ export const submitVote = async (data: {
     .where(eq(incidents.id, data.incidentId));
 
   revalidateTag("incidents", "max");
+
   return { action: "added" as const, success: true };
 };
 
@@ -397,11 +400,13 @@ export const reportIncident = async (data: { incidentId: number }) => {
     .set({ reportCount: sql`${incidents.reportCount} + 1` })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
 export const addVideoToIncident = async (data: { incidentId: number; url: string }) => {
   const session = await getSession();
+
   if (!session?.user.id) {
     return { error: "Unauthorized", success: false };
   }
@@ -414,6 +419,7 @@ export const addVideoToIncident = async (data: { incidentId: number; url: string
     url: resolvedUrl,
   });
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -424,6 +430,7 @@ export const updateIncidentDetails = async (data: {
   incidentDate?: string;
 }) => {
   const session = await getSession();
+
   if (!session?.user.id) {
     return { error: "Unauthorized", success: false };
   }
@@ -437,6 +444,7 @@ export const updateIncidentDetails = async (data: {
     })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -448,6 +456,7 @@ export const hideIncident = async (data: { incidentId: number }) => {
     .set({ deletedAt: new Date() })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -456,6 +465,7 @@ export const deleteIncident = async (data: { incidentId: number }) => {
 
   await db.delete(incidents).where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -465,6 +475,7 @@ export const togglePinIncident = async (data: { incidentId: number }) => {
   const incident = await db.query.incidents.findFirst({
     where: { id: data.incidentId },
   });
+
   if (!incident) {
     return { error: "Not found", success: false };
   }
@@ -474,5 +485,6 @@ export const togglePinIncident = async (data: { incidentId: number }) => {
     .set({ pinned: !incident.pinned })
     .where(eq(incidents.id, data.incidentId));
   revalidateTag("incidents", "max");
+
   return { pinned: !incident.pinned, success: true };
 };

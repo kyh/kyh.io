@@ -1,4 +1,3 @@
-// How the showcase's town dresses for Lunar New Year (`Town` in city/town-theme.ts).
 import { lanterns } from "@/app/showcase/_components/city/blimp";
 import { lanternGate } from "@/app/showcase/_components/city/decor-giants";
 import { GROUND, lantern, lanternPost } from "@/app/showcase/_components/city/decor-props";

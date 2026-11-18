@@ -14,7 +14,7 @@ export interface Bounds extends Footprint {
 
 export type DrawLandmark = (sketch: Sketch, site: Site, title: string) => Bounds;
 
-export const bounds = (rect: Footprint, y: number, h: number): Bounds => ({
+export const bounds = (rect: Footprint, y: number, h: number) => ({
   d: rect.d,
   h,
   w: rect.w,

@@ -78,6 +78,7 @@ test("each theme's showcase VideoObject has absolute URLs, an ISO duration and i
 test("every theme has its showcase clip and poster in public/og", () => {
   for (const { id } of THEMES) {
     const clip = siteVideoFor(id);
+
     for (const url of [clip.url, clip.poster.url]) {
       const file = new URL(`../../public${new URL(url).pathname}`, import.meta.url);
       assert.ok(existsSync(file), `${id}: ${file.pathname} is missing`);

@@ -1,15 +1,5 @@
 "use client";
 
-// What follows a mouse at Thanksgiving: a wild tom turkey (`turkey.ts`),
-// built in the round (`turkey-pose.ts`) and drawn in the showcase town's hand
-// as the theme's pieces are (`piece.tsx`): flat faces, each solid's side from
-// the light in its shade under the shade dots, ink round the outside. A bronze
-// body (its back and breast drawn as one) and wings, inked only along their
-// lower edge, their dark primaries barred white, tail feathers banded dark and tipped chestnut, a neck feathered low and
-// bare red above up to a bare blue head with a red snood and wattle, a pale
-// beak, a near-black beard, bronze drumsticks and pink shanks, the nearer leg lit.
-// Each `data-layer` is one part the stage stacks by how near the camera it
-// is; each `data-part` is posed a frame at a time.
 import type { Token } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
@@ -19,17 +9,14 @@ import { ShadeDots } from "../piece";
 import { turkey } from "./turkey";
 import { FEATHERS, SIZE } from "./turkey-pose";
 
-/** Ink `width` screen pixels wide, as the ghost's is, though the turkey's drawn smaller. */
 const ink = (width: number) => width / SIZE;
 
-/** Its neck: bare red skin above, feathered bronze below, thickest where it leaves its body. */
 const NECK = [
   ["neck", 5, "accentRed"],
   ["neck-low", 6.8, "bronze"],
   ["neck-base", 9, "bronze"],
 ] as const;
 
-/** A red fleshy part hanging off its head (the snood, the wattle): a thick red line, inked. */
 const Flesh = ({ name, width }: { name: string; width: number }) => (
   <>
     <path data-part={name} style={stroked(width + ink(1.4))} />
@@ -37,13 +24,9 @@ const Flesh = ({ name, width }: { name: string; width: number }) => (
   </>
 );
 
-/**
- * Its body: its back and its breast, two solids drawn as one. Both inks go
- * under both faces, so only the outside of the two shows, and both lit parts
- * are kept inside the two together, so no seam shows where they meet.
- */
 const Torso = ({ id }: { id: string }) => {
   const masses = ["body", "breast"] as const;
+
   return (
     <>
       <clipPath id={`${id}-torso`}>
@@ -69,7 +52,6 @@ const Torso = ({ id }: { id: string }) => {
   );
 };
 
-/** Its beard: coarse near-black hair, thin at the root and spreading to the tip like a tassel, not inked. */
 const Beard = () => (
   <>
     {(
@@ -84,7 +66,6 @@ const Beard = () => (
   </>
 );
 
-/** A line of a leg (`<part>-<index>`): inked, in its shade, and lit over that as it's nearer the camera. */
 const Bone = ({
   part,
   index,
@@ -108,6 +89,7 @@ const Bone = ({
 
 export const Follower = () => {
   const id = useSvgId("turkey");
+
   return (
     <Stage creature={turkey} box={{ height: 150, width: 170, x: -85, y: -120 }} size={SIZE}>
       <defs>
@@ -153,7 +135,7 @@ export const Follower = () => {
         <Beard />
       </g>
       <g data-layer="neck">
-        {/* A thick feathered base tapering up the neck to the bare red skin, inked round as one. */}
+        {}
         {NECK.map(([name, width]) => (
           <path key={`${name}-ink`} data-part={name} style={stroked(width + ink(2.4))} />
         ))}

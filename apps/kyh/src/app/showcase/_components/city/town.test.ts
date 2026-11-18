@@ -26,13 +26,15 @@ const drawTown = (list: CityProject[]) => {
   const sketch = createSketch();
   drawGround(sketch, plan, createRandom(11));
   drawCountryside(sketch, plan);
+
   for (const block of plan.blocks) {
     drawBlock(sketch, block);
   }
+
   return { placed: drawLots(sketch, plan, list), sketch };
 };
 
-const signsIn = (sketch: ReturnType<typeof createSketch>): string[] => [
+const signsIn = (sketch: ReturnType<typeof createSketch>) => [
   ...sketch.signs.map((sign) => sign.text),
   ...sketch.parts.flatMap((piece) => signsIn(piece.sketch)),
 ];
@@ -40,6 +42,7 @@ const signsIn = (sketch: ReturnType<typeof createSketch>): string[] => [
 test("every project on the site has a building in town", () => {
   const { placed } = drawTown(cityProjects);
   const slugs = new Set(placed.map((entry) => entry.project.slug));
+
   for (const project of cityProjects) {
     assert.ok(slugs.has(project.slug), `${project.title} has no building`);
   }
@@ -47,6 +50,7 @@ test("every project on the site has a building in town", () => {
 
 test("every building is tall enough to click and carries its project's name", () => {
   const { placed } = drawTown(cityProjects);
+
   for (const { bounds, project, sketch } of placed) {
     assert.ok(
       bounds.w > 0.5 && bounds.d > 0.5 && bounds.h > 0.3,
@@ -61,6 +65,7 @@ test("every building is tall enough to click and carries its project's name", ()
 
 test("each building is drawn on its own, so it can light up alone", () => {
   const { placed } = drawTown(cityProjects);
+
   for (const { project, sketch } of placed) {
     assert.ok(sketch.faces.size > 0, `${project.title} has no faces of its own`);
   }
@@ -69,9 +74,11 @@ test("each building is drawn on its own, so it can light up alone", () => {
 test("each building has a color of its own to light up in", () => {
   const { placed } = drawTown(cityProjects);
   const colors = placed.map(({ sketch }) => dominant(faceAreas(sketch)));
+
   for (const [index, color] of colors.entries()) {
     assert.ok(color !== null, `${placed[index]?.project.title} is all grey`);
   }
+
   assert.ok(new Set(colors).size >= 4, `only ${new Set(colors).size} colors across town`);
 });
 
@@ -84,6 +91,7 @@ test("a project added tomorrow still gets a building with its name on it", () =>
     title: "Brand New Thing",
     url: "https://example.com",
   };
+
   const { placed } = drawTown([...cityProjects, newcomer]);
   const building = placed.find((entry) => entry.project.slug === newcomer.slug);
   assert.ok(building);
@@ -93,17 +101,21 @@ test("a project added tomorrow still gets a building with its name on it", () =>
 test("the town draws as flat faces and ink, with nothing degenerate", () => {
   const { placed, sketch } = drawTown(cityProjects);
   let triangles = 0;
+
   const faces = [sketch, ...placed.map((entry) => entry.sketch)].flatMap((each) => [
     ...each.faces.values(),
   ]);
+
   for (const positions of faces) {
     assert.equal(positions.length % 9, 0);
     assert.ok(positions.every(Number.isFinite));
     triangles += positions.length / 9;
   }
+
   for (const batch of sketch.lines.values()) {
     assert.equal(batch.positions.length % 6, 0);
     assert.ok(batch.positions.every(Number.isFinite));
   }
+
   assert.ok(triangles > 10_000);
 });

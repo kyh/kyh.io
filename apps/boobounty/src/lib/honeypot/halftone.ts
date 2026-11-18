@@ -10,7 +10,6 @@ import {
   WebGLRenderTarget,
 } from "three";
 
-// The dot pitch in CSS pixels: coarse enough to read as print, fine enough to keep the jar.
 const PITCH = 4.5;
 
 const vertexShader = `
@@ -21,10 +20,6 @@ void main() {
 }
 `;
 
-// Four screens at the classic angles (cyan 15°, magenta 75°, yellow 0°, black 45°),
-// with the paper as white: where the picture is paper, no ink is laid down at all.
-// The picture's paper went through tone mapping, so it is compared after the same.
-// Magenta is held back a little: full strength over yellow turns honey red.
 const fragmentShader = `
 uniform sampler2D picture;
 uniform vec3 paperLinear;
@@ -67,6 +62,7 @@ void main() {
 export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
   const target = new WebGLRenderTarget(1, 1, { samples: 4, type: HalfFloatType });
   const pitch = { value: PITCH };
+
   const material = new ShaderMaterial({
     fragmentShader,
     uniforms: {
@@ -76,6 +72,7 @@ export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
     },
     vertexShader,
   });
+
   const quad = new Mesh(new PlaneGeometry(2, 2), material);
   quad.frustumCulled = false;
   const post = new PostScene();
@@ -83,7 +80,6 @@ export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
   const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
   return {
-    /** Compiles both passes; the scene's shaders differ off screen, so compile them there. */
     compile: async (scene: Scene, view: Camera) => {
       renderer.setRenderTarget(target);
       const offscreen = renderer.compileAsync(scene, view);
@@ -101,7 +97,6 @@ export const createHalftone = (renderer: WebGLRenderer, paperColor: string) => {
       renderer.setRenderTarget(null);
       renderer.render(post, camera);
     },
-    /** Matches the drawing buffer, in device pixels. */
     setSize: (width: number, height: number, pixelRatio: number) => {
       target.setSize(Math.round(width * pixelRatio), Math.round(height * pixelRatio));
       pitch.value = PITCH * pixelRatio;

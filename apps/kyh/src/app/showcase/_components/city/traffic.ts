@@ -1,8 +1,3 @@
-// The town going about its day: cars driving the grid, turning at random at
-// every junction, and people walking the sidewalks round the blocks and
-// across at the zebra crossings. Pure state, stepped in fixed ticks. Each car
-// and walker carries its own random state, so a snapshot of them is the whole
-// town, and any browser stepping it from there gets the same town.
 import type { CityPlan } from "./plan";
 import { advance, drawOf, seedOf } from "@/lib/random";
 
@@ -36,25 +31,27 @@ export interface Graph {
   ids: Map<string, number>;
 }
 
-const createGraph = (): Graph & {
-  node: (id: string, x: number, z: number) => number;
-  both: (a: number, b: number) => void;
-} => {
+const createGraph = () => {
   const graph: Graph = { edges: [], ids: new Map(), nodes: [], out: [] };
+
   const link = (a: number, b: number) => {
     const pa = graph.nodes[a];
     const pb = graph.nodes[b];
+
     if (!pa || !pb) {
       return;
     }
+
     const along = pa.x === pb.x || pa.z === pb.z;
-    // Along an axis the length is a plain difference, the same on every machine.
+
     const length = along
       ? Math.abs(pb.x - pa.x) + Math.abs(pb.z - pa.z)
       : Math.hypot(pb.x - pa.x, pb.z - pa.z);
+
     if (length < 1e-9) {
       return;
     }
+
     graph.edges.push({
       ax: pa.x,
       az: pa.z,
@@ -66,6 +63,7 @@ const createGraph = (): Graph & {
     });
     graph.out[a]?.push(graph.edges.length - 1);
   };
+
   return {
     ...graph,
     both: (a, b) => {
@@ -74,30 +72,37 @@ const createGraph = (): Graph & {
     },
     node: (id, x, z) => {
       const known = graph.ids.get(id);
+
       if (known !== undefined) {
         return known;
       }
+
       graph.nodes.push({ x, z });
       graph.out.push([]);
       graph.ids.set(id, graph.nodes.length - 1);
+
       return graph.nodes.length - 1;
     },
   };
 };
 
 /** The roads, both ways, junction to junction. */
-export const roadGraph = (plan: Pick<CityPlan, "junctions" | "roads">): Graph => {
+export const roadGraph = (plan: Pick<CityPlan, "junctions" | "roads">) => {
   const graph = createGraph();
+
   for (const junction of plan.junctions) {
     graph.node(junction.id, junction.x, junction.z);
   }
+
   for (const road of plan.roads) {
     const a = graph.ids.get(road.from);
     const b = graph.ids.get(road.to);
+
     if (a !== undefined && b !== undefined) {
       graph.both(a, b);
     }
   }
+
   return graph;
 };
 
@@ -106,29 +111,33 @@ interface Routes {
   via: number[];
 }
 
-// A graph never changes once built, so each target's routes are worked out once.
 const routesByGraph = new WeakMap<Graph, Map<number, Routes>>();
 
 /** Shortest hop counts to one node, and the edge to take from anywhere to get there. */
-export const routeTo = (graph: Graph, target: number): Routes => {
+export const routeTo = (graph: Graph, target: number) => {
   const known = routesByGraph.get(graph) ?? new Map<number, Routes>();
   routesByGraph.set(graph, known);
   const cached = known.get(target);
+
   if (cached) {
     return cached;
   }
+
   const into: number[][] = graph.nodes.map(() => []);
+
   for (const [index, edge] of graph.edges.entries()) {
     into[edge.to]?.push(index);
   }
+
   const hops = graph.nodes.map(() => Infinity);
   const via = graph.nodes.map(() => -1);
   hops[target] = 0;
   const queue = [target];
-  // The queue grows as it's walked: an array iterator reads the length each step.
+
   for (const node of queue) {
     for (const index of into[node] ?? []) {
       const from = graph.edges[index]?.from ?? 0;
+
       if (hops[from] === Infinity) {
         hops[from] = (hops[node] ?? 0) + 1;
         via[from] = index;
@@ -136,8 +145,10 @@ export const routeTo = (graph: Graph, target: number): Routes => {
       }
     }
   }
+
   const routes = { hops, via };
   known.set(target, routes);
+
   return routes;
 };
 
@@ -147,19 +158,24 @@ export const pathTo = (graph: Graph, from: number, to: number) => {
   const points: { x: number; z: number }[] = [];
   const seen = new Set<number>();
   let here = from;
-  // A shortest route never loops, but `seen` makes sure of it.
+
   while (!seen.has(here)) {
     seen.add(here);
     const spot = graph.nodes[here];
+
     if (spot) {
       points.push(spot);
     }
+
     const edge = graph.edges[via[here] ?? -1];
+
     if (!edge) {
       break;
     }
+
     here = edge.to;
   }
+
   return points;
 };
 
@@ -169,16 +185,16 @@ export const edgePoint = (edge: Edge, s: number, side = 0) => ({
   z: edge.az + edge.dz * s + edge.dx * side,
 });
 
-/** How far in from a block's edge its sidewalk runs, in cells. */
 const SIDEWALK = 0.17;
 
 export const cornerId = (bx: number, bz: number, corner: "nw" | "ne" | "se" | "sw") =>
   `${bx},${bz}:${corner}`;
 
 /** The sidewalks: round every block, and over the crossings to its neighbors. */
-export const sidewalkGraph = (plan: Pick<CityPlan, "blocks">): Graph => {
+export const sidewalkGraph = (plan: Pick<CityPlan, "blocks">) => {
   const graph = createGraph();
   const blocks = new Set(plan.blocks.map((block) => `${block.bx},${block.bz}`));
+
   for (const block of plan.blocks) {
     const x0 = block.x + SIDEWALK;
     const z0 = block.z + SIDEWALK;
@@ -189,35 +205,36 @@ export const sidewalkGraph = (plan: Pick<CityPlan, "blocks">): Graph => {
     graph.node(cornerId(block.bx, block.bz, "se"), x1, z1);
     graph.node(cornerId(block.bx, block.bz, "sw"), x0, z1);
   }
+
   const join = (a: string, b: string) => {
     const from = graph.ids.get(a);
     const to = graph.ids.get(b);
+
     if (from !== undefined && to !== undefined) {
       graph.both(from, to);
     }
   };
+
   for (const { bx, bz } of plan.blocks) {
     join(cornerId(bx, bz, "nw"), cornerId(bx, bz, "ne"));
     join(cornerId(bx, bz, "ne"), cornerId(bx, bz, "se"));
     join(cornerId(bx, bz, "se"), cornerId(bx, bz, "sw"));
     join(cornerId(bx, bz, "sw"), cornerId(bx, bz, "nw"));
-    // Zebra crossings to the neighbors east and south.
+
     if (blocks.has(`${bx + 1},${bz}`)) {
       join(cornerId(bx, bz, "ne"), cornerId(bx + 1, bz, "nw"));
       join(cornerId(bx, bz, "se"), cornerId(bx + 1, bz, "sw"));
     }
+
     if (blocks.has(`${bx},${bz + 1}`)) {
       join(cornerId(bx, bz, "sw"), cornerId(bx, bz + 1, "nw"));
       join(cornerId(bx, bz, "se"), cornerId(bx, bz + 1, "ne"));
     }
   }
+
   return graph;
 };
 
-/**
- * Where to go from the end of `edge`: anywhere but straight back, mostly.
- * Draws from and returns the walker's or driver's own random state.
- */
 const turnAfter = (graph: Graph, edge: number, rng: number, uTurn: number) => {
   const here = graph.edges[edge];
   const options = here ? (graph.out[here.to] ?? []) : [];
@@ -225,27 +242,29 @@ const turnAfter = (graph: Graph, edge: number, rng: number, uTurn: number) => {
   const back = advance(rng);
   const pick = advance(back);
   const pool = forward.length > 0 && drawOf(back) >= uTurn ? forward : options;
+
   return { edge: pool[Math.floor(drawOf(pick) * pool.length)] ?? edge, rng: pick };
 };
 
 /** The nearest point of any edge to (x, z), with each edge's point pushed sideways by `side`. */
 export const nearestEdge = (graph: Graph, x: number, z: number, side = 0) => {
   let best = { distance: Infinity, edge: 0, s: 0 };
+
   for (const [index, edge] of graph.edges.entries()) {
     const s = Math.min(edge.length, Math.max(0, (x - edge.ax) * edge.dx + (z - edge.az) * edge.dz));
     const point = edgePoint(edge, s, side);
     const distance = (point.x - x) ** 2 + (point.z - z) ** 2;
+
     if (distance < best.distance) {
       best = { distance, edge: index, s };
     }
   }
+
   return best;
 };
 
 /** Spreads one seed across many movers, each a state of its own. */
 export const moverSeed = (seed: number, index: number) => seedOf(seed * 7919 + index * 104_729 + 1);
-
-// Cars keep right, swing through junctions on a curve and pick a new road.
 
 export const LANE = 0.21;
 const TURN = 0.5;
@@ -271,35 +290,43 @@ const curve = (a: number, control: number, b: number, t: number) =>
 const carPoint = (graph: Graph, car: Car) => {
   const edge = graph.edges[car.edge];
   const next = graph.edges[car.next];
+
   if (!edge || !next) {
     return { x: car.pose.x, z: car.pose.z };
   }
+
   const turnStart = edge.length - TURN;
+
   if (car.s < turnStart) {
     return lanePoint(edge, car.s);
   }
+
   const t = Math.min(1, (car.s - turnStart) / (TURN * 2));
   const p0 = lanePoint(edge, turnStart);
   const p2 = lanePoint(next, TURN);
   const straight = Math.abs(edge.dx * next.dx + edge.dz * next.dz) > 0.5;
+
   const control = straight
     ? { x: (p0.x + p2.x) / 2, z: (p0.z + p2.z) / 2 }
     : { x: edge.dx === 0 ? p0.x : p2.x, z: edge.dz === 0 ? p0.z : p2.z };
+
   return { x: curve(p0.x, control.x, p2.x, t), z: curve(p0.z, control.z, p2.z, t) };
 };
 
-/** Puts the car where its edge and distance say, facing along the road. */
 const poseCar = (graph: Graph, car: Car, settle: boolean) => {
   const point = carPoint(graph, car);
   const moved = Math.hypot(point.x - car.pose.x, point.z - car.pose.z);
+
   if (settle) {
     const edge = graph.edges[car.edge];
     car.pose.heading = edge ? Math.atan2(edge.dz, edge.dx) : car.pose.heading;
   } else if (moved > 1e-5) {
     car.pose.heading = Math.atan2(point.z - car.pose.z, point.x - car.pose.x);
   }
+
   car.pose.x = point.x;
   car.pose.z = point.z;
+
   if (settle) {
     car.last = { ...car.pose };
   }
@@ -318,6 +345,7 @@ export const createTraffic = (graph: Graph, count: number, seed = 5) => {
           rng = advance(rng);
           const speed = 0.9 + drawOf(rng) * 0.7;
           const turn = turnAfter(graph, edge, rng, 0);
+
           const car: Car = {
             edge,
             last: { heading: 0, x: 0, z: 0 },
@@ -328,19 +356,24 @@ export const createTraffic = (graph: Graph, count: number, seed = 5) => {
             speed,
             wait: 0,
           };
+
           poseCar(graph, car, true);
+
           return car;
         });
-  /** One tick for one car: `tick` is the tick being stepped into. */
+
   const stepCar = (car: Car, tick: number) => {
     car.last.x = car.pose.x;
     car.last.z = car.pose.z;
     car.last.heading = car.pose.heading;
+
     if (tick < car.wait) {
       return;
     }
+
     car.s += car.speed * TICK;
     const edge = graph.edges[car.edge];
+
     if (edge && car.s >= edge.length + TURN) {
       car.s -= edge.length;
       car.edge = car.next;
@@ -348,9 +381,10 @@ export const createTraffic = (graph: Graph, count: number, seed = 5) => {
       car.next = turn.edge;
       car.rng = turn.rng;
     }
+
     poseCar(graph, car, false);
   };
-  /** Sets a car down on the lane nearest (x, z), to wait there until `wait`. */
+
   const landing = (car: Car, x: number, z: number, wait: number) => {
     const { edge, s } = nearestEdge(graph, x, z, LANE);
     const length = graph.edges[edge]?.length ?? 1;
@@ -362,6 +396,7 @@ export const createTraffic = (graph: Graph, count: number, seed = 5) => {
     car.wait = wait;
     poseCar(graph, car, true);
   };
+
   return {
     cars,
     landing,
@@ -377,8 +412,6 @@ export const createTraffic = (graph: Graph, count: number, seed = 5) => {
 
 export type Traffic = ReturnType<typeof createTraffic>;
 
-// People: a random walk on the sidewalks, a corner at a time.
-
 export interface Walker {
   edge: number;
   s: number;
@@ -392,16 +425,18 @@ export interface Walker {
   last: Pose;
 }
 
-/** Puts a walker where its edge and distance say. */
 const poseWalker = (graph: Graph, walker: Walker, settle: boolean) => {
   const edge = graph.edges[walker.edge];
+
   if (!edge) {
     return;
   }
+
   const point = edgePoint(edge, walker.s, walker.offset);
   walker.pose.x = point.x;
   walker.pose.z = point.z;
   walker.pose.heading = Math.atan2(edge.dz, edge.dx);
+
   if (settle) {
     walker.last = { ...walker.pose };
   }
@@ -421,6 +456,7 @@ export const createCrowd = (graph: Graph, count: number, seed = 9) => {
           rng = advance(rng);
           const phase = drawOf(rng) * Math.PI * 2;
           rng = advance(rng);
+
           const walker: Walker = {
             edge,
             last: { heading: 0, x: 0, z: 0 },
@@ -432,27 +468,35 @@ export const createCrowd = (graph: Graph, count: number, seed = 9) => {
             speed: 0.22 + drawOf(rng) * 0.2,
             wait: 0,
           };
+
           poseWalker(graph, walker, true);
+
           return walker;
         });
+
   const stepWalker = (walker: Walker, tick: number) => {
     walker.last.x = walker.pose.x;
     walker.last.z = walker.pose.z;
     walker.last.heading = walker.pose.heading;
+
     if (tick < walker.wait) {
       return;
     }
+
     walker.s += walker.speed * TICK;
     walker.phase += walker.speed * TICK * 26;
     const edge = graph.edges[walker.edge];
+
     if (edge && walker.s >= edge.length) {
       walker.s -= edge.length;
       const turn = turnAfter(graph, walker.edge, walker.rng, 0.05);
       walker.edge = turn.edge;
       walker.rng = turn.rng;
     }
+
     poseWalker(graph, walker, false);
   };
+
   return {
     landing: (walker: Walker, x: number, z: number, wait: number) => {
       const { edge, s } = nearestEdge(graph, x, z);

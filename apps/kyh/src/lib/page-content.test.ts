@@ -4,7 +4,6 @@ import test from "node:test";
 import { siteRoutes } from "./config";
 import { aboutContent, contactContent, privacyContent, prosePages } from "./page-content";
 
-/** Visible text an extractor would count: prose, headings and link labels. */
 const textLength = (page: (typeof prosePages)[number]) => {
   const blocks = page.sections.flatMap((section) => [
     section.heading,
@@ -12,6 +11,7 @@ const textLength = (page: (typeof prosePages)[number]) => {
       if (block.kind === "links") {
         return block.items.flatMap((item) => [item.label, item.description]);
       }
+
       return [block.text];
     }),
   ]);
@@ -32,13 +32,12 @@ test("every prose page has an h1, at least two h2s and at least one h3", () => {
     assert.ok(page.sections.length >= 2, `${page.path} has fewer than two sections`);
   }
 
-  // Heading depth is what the "flat heading structure" audit looks for; at least
-  // one page-level subheading has to exist across the prose pages.
   const subheadings = prosePages.flatMap((page) =>
     page.sections.flatMap((section) =>
       section.blocks.filter((block) => block.kind === "subheading"),
     ),
   );
+
   assert.ok(subheadings.length >= 4, "prose pages need h3 subheadings");
 });
 

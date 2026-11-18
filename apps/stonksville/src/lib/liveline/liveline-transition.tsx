@@ -41,23 +41,21 @@ export const LivelineTransition = ({
     if (active === prevRef.current) {
       return;
     }
+
     const oldKey = prevRef.current;
     prevRef.current = active;
 
-    // Mount the incoming child
     setMounted((prev) => new Set([...prev, active]));
 
-    // Double rAF ensures the browser paints the opacity:0 state
-    // before we flip to opacity:1, so the CSS transition fires
     let raf1 = requestAnimationFrame(() => {
       raf1 = requestAnimationFrame(() => setVisible(active));
     });
 
-    // Unmount the outgoing child after transition completes
     const timer = setTimeout(() => {
       setMounted((prev) => {
         const next = new Set(prev);
         next.delete(oldKey);
+
         return next;
       });
     }, duration + 50);
@@ -75,10 +73,13 @@ export const LivelineTransition = ({
     >
       {childArray.map((child) => {
         const key = String(child.key ?? "");
+
         if (!mounted.has(key)) {
           return null;
         }
+
         const isActive = key === visible;
+
         return (
           <div
             key={key}

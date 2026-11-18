@@ -31,34 +31,35 @@ export const VideoCarousel = ({
   onSlideChange,
 }: VideoCarouselProps) => {
   const [isDragging, setIsDragging] = useState(false);
+
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     containScroll: "trimSnaps",
   });
+
   const shortcuts = useKeyboardShortcuts();
   const slidesRef = useRef<Map<number, HTMLDivElement>>(new Map());
   const [containerHeight, setContainerHeight] = useState<number | undefined>();
 
-  // Register carousel with keyboard shortcuts provider
   useEffect(() => {
     if (incidentId === undefined || !shortcuts) {
       return;
     }
+
     shortcuts.registerCarousel(incidentId, emblaApi ?? null);
+
     return () => shortcuts.unregisterCarousel(incidentId);
   }, [incidentId, emblaApi, shortcuts]);
 
-  // Embla owns the scroll position; read it as an external store so the first
-  // render already has the real values instead of seeding state from an effect.
   const subscribeToEmbla = useCallback(
     (onStoreChange: () => void) => {
       if (!emblaApi) {
-        return () => {
-          /* empty */
-        };
+        return () => {};
       }
+
       emblaApi.on("select", onStoreChange);
       emblaApi.on("reInit", onStoreChange);
+
       return () => {
         emblaApi.off("select", onStoreChange);
         emblaApi.off("reInit", onStoreChange);
@@ -66,33 +67,36 @@ export const VideoCarousel = ({
     },
     [emblaApi],
   );
+
   const selectedIndex = useSyncExternalStore(
     subscribeToEmbla,
     () => emblaApi?.selectedScrollSnap() ?? 0,
     () => 0,
   );
+
   const canScrollPrev = useSyncExternalStore(
     subscribeToEmbla,
     () => emblaApi?.canScrollPrev() ?? false,
     () => false,
   );
+
   const canScrollNext = useSyncExternalStore(
     subscribeToEmbla,
     () => emblaApi?.canScrollNext() ?? false,
     () => false,
   );
 
-  // Update container height based on current slide
   const updateHeight = useCallback(() => {
     const slide = slidesRef.current.get(selectedIndex);
+
     if (slide) {
       setContainerHeight(slide.offsetHeight);
     }
   }, [selectedIndex]);
 
-  // Observe slide height changes (for when embeds load)
   useEffect(() => {
     const slide = slidesRef.current.get(selectedIndex);
+
     if (!slide) {
       return;
     }
@@ -101,6 +105,7 @@ export const VideoCarousel = ({
 
     const observer = new ResizeObserver(updateHeight);
     observer.observe(slide);
+
     return () => observer.disconnect();
   }, [selectedIndex, updateHeight]);
 
@@ -112,6 +117,7 @@ export const VideoCarousel = ({
     if (!emblaApi) {
       return;
     }
+
     const onDragStart = () => setIsDragging(true);
     const onDragEnd = () => setIsDragging(false);
     emblaApi.on("pointerDown", onDragStart);

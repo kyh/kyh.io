@@ -5,7 +5,6 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 type Status = "loading" | "ready" | "failed";
 
-// three.js stays out of the page bundle; the copy and form hydrate first.
 const loadScene = () => import("@/lib/honeypot/scene");
 
 interface HoneypotProps {
@@ -20,17 +19,22 @@ const Honeypot = ({ onCarry }: HoneypotProps) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+
     if (!canvas) {
       return;
     }
+
     let teardown: (() => void) | undefined;
     let cancelled = false;
+
     const mount = async () => {
       try {
         const { mountHoneypot } = await loadScene();
+
         if (cancelled) {
           return;
         }
+
         teardown = mountHoneypot(canvas, {
           onCarry: carry,
           onLost: () => setStatus("failed"),
@@ -40,7 +44,9 @@ const Honeypot = ({ onCarry }: HoneypotProps) => {
         setStatus("failed");
       }
     };
+
     void mount();
+
     return () => {
       cancelled = true;
       teardown?.();

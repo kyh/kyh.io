@@ -1,27 +1,18 @@
 #!/usr/bin/env npx tsx
-/**
- * Embed Incidents
- *
- * Generates vector embeddings for incidents using OpenAI's text-embedding-3-small model.
- * Only processes incidents that have a description but no embedding yet.
- * Creates a vector index on the incidents table if it doesn't exist.
- *
- * Usage:
- *   pnpm with-env tsx scripts/embed-incidents.ts
- */
 import { embed } from "ai";
 
 const { client, db } = await import("../src/db/drizzle-client");
 
-const generateEmbedding = async (text: string): Promise<number[]> => {
+const generateEmbedding = async (text: string) => {
   const { embedding } = await embed({
     model: "openai/text-embedding-3-small",
     value: text,
   });
+
   return embedding;
 };
 
-const vectorToString = (vector: number[]): string => `[${vector.join(",")}]`;
+const vectorToString = (vector: number[]) => `[${vector.join(",")}]`;
 
 const ensureVectorIndex = async () => {
   try {

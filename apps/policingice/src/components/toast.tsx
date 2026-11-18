@@ -13,8 +13,6 @@ import {
 
 export { toast } from "sonner";
 
-// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
-// has no index signature for `--*` keys; the object holds nothing else.
 const toasterStyle = {
   "--border-radius": "var(--radius)",
   "--normal-bg": "var(--popover)",
@@ -24,6 +22,7 @@ const toasterStyle = {
 
 export const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+
   const toasterTheme: ToasterProps["theme"] =
     theme === "light" || theme === "dark" ? theme : "system";
 

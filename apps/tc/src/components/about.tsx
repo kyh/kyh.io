@@ -115,6 +115,7 @@ export const defaultSteps: Step[] = [
 export const useAbout = () => {
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+
   const handleJoyrideCallback: EventHandler = ({ action, index, type, status }) => {
     if (action === ACTIONS.CLOSE || status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRun(false);

@@ -8,7 +8,6 @@ interface TelemetryProps {
   globeHeight: number;
 }
 
-// Framed dithered icosahedron for the left column.
 export const Telemetry = ({ innerWidth, globeHeight }: TelemetryProps) => (
   <Panel title="GYROSCOPE" bottomTitle="⟲ SPIN">
     <Box flexDirection="column" alignItems="center">

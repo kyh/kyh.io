@@ -8,7 +8,6 @@ import { cn } from "cn";
 
 import { SortableGrid } from "@/components/sortable-grid";
 
-// Types
 interface Point {
   x: number;
   y: number;
@@ -22,27 +21,24 @@ export interface ProjectAppItem {
   url?: string;
 }
 
-// Motion config
 const springTransition = {
   damping: 22,
   stiffness: 200,
   type: "spring",
 } as const;
+
 const labelSpring = { damping: 30, stiffness: 400, type: "spring" } as const;
 const titleSpring = { ...springTransition, damping: 19 } as const;
 const titleExitSpring = { ...springTransition, stiffness: 300 } as const;
 const openStaggerDelay = 0.025;
 const closeStaggerDelay = 0.05;
 
-// Passed to next/image as explicit width/height. `fill` + `sizes` would make it
-// enumerate every configured width into the srcSet — ~2.5 KB of markup per icon.
 const iconSize = 60;
 const miniIconSize = 20;
 const maxLabelWidth = 90;
 
 interface ProjectAppProps {
   name: string;
-  /** Screen-reader only: the grid shows icons and names, so this is the only text saying what each thing is. */
   description: string;
   iconSrc: string;
   url?: string;
@@ -99,7 +95,7 @@ const ProjectAppIcon = ({
         />
       </div>
 
-      {/* Visible truncated label */}
+      {}
       <motion.div
         ref={labelRef}
         className="text-foreground truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium"
@@ -118,7 +114,7 @@ const ProjectAppIcon = ({
       </motion.div>
       <span className="sr-only">{description}</span>
 
-      {/* Expanded label tooltip */}
+      {}
       <AnimatePresence>
         {shouldExpand && (
           <motion.div
@@ -198,9 +194,7 @@ const keyOf = (item: ProjectAppItem) => item.key;
 
 interface ProjectAppGroupProps {
   title: string;
-  /** In the order the folder shows them, in its preview and when open. */
   items: ProjectAppItem[];
-  /** Apps were rearranged inside the open folder: the new order, by key. */
   onDrop: (order: string[]) => void;
   onHold?: (holding: boolean) => void;
 }
@@ -219,12 +213,14 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
 
   const handleOpen = useCallback(() => {
     const rect = folderRef.current?.getBoundingClientRect();
+
     if (rect) {
       setOrigin({
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2,
       });
     }
+
     setIsOpen(true);
   }, []);
 
@@ -235,12 +231,13 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
     }
   }, [isOpen]);
 
-  /** How far each open icon sits from the folder, for flying out of it and back. */
   const measureOffsets = useCallback(
     (from: Point) => {
       const next: Record<string, Point> = {};
+
       for (const item of items) {
         const rect = itemRefs.current[item.key]?.getBoundingClientRect();
+
         if (rect) {
           next[item.key] = {
             x: from.x - (rect.left + rect.width / 2),
@@ -248,6 +245,7 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
           };
         }
       }
+
       return next;
     },
     [items],
@@ -257,16 +255,17 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
     if (!isOpen || !origin) {
       return;
     }
+
     const frame = requestAnimationFrame(() => setItemOffsets(measureOffsets(origin)));
+
     return () => cancelAnimationFrame(frame);
   }, [isOpen, origin, measureOffsets]);
 
-  // Icons may have been rearranged since the folder opened: measure again so
-  // each flies back from where it is now, then close on the next frame.
   const close = () => {
     if (origin) {
       setItemOffsets(measureOffsets(origin));
     }
+
     requestAnimationFrame(() => setIsOpen(false));
   };
 

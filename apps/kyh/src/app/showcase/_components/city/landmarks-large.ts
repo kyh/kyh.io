@@ -1,5 +1,3 @@
-// The big projects, one block each: Founding's tower at the center of town,
-// Vibedgames' arcade, the Yours Sincerely post office and UICapsule's gallery.
 import type { Footprint } from "./draw-kit";
 import type { DrawLandmark, Site } from "./landmark";
 import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
@@ -54,6 +52,7 @@ export const plaza = (sketch: Sketch, site: Site) => {
     },
     "hair",
   );
+
   return site.y + 0.015;
 };
 
@@ -78,8 +77,6 @@ export const monument = (
     y: y + 0.05,
   });
 };
-
-// Founding: the tallest tower in town, crowned with its name.
 
 export const drawFounding: DrawLandmark = (sketch, site, title) => {
   const y0 = plaza(sketch, site);
@@ -135,7 +132,6 @@ export const drawFounding: DrawLandmark = (sketch, site, title) => {
   });
   const beacon = part(sketch, "founding:beacon", [cx, y + 1.42, cz]);
   ball(beacon, { colors: paint("accentRed"), detail: 8, r: 0.07, x: 0, y: 0, z: 0 }, "hair");
-  // Entrance canopy, flags and trees on the plaza.
   box(
     sketch,
     {
@@ -150,19 +146,22 @@ export const drawFounding: DrawLandmark = (sketch, site, title) => {
     "fine",
   );
   door(sketch, podium, { along: 1.6, height: 0.34, side: "front", width: 0.6 });
+
   for (const [index, x] of [podium.x + 0.3, podium.x + 0.75, podium.x + 1.2].entries()) {
     flag(sketch, x, podium.z + podium.d + 0.75, y0, index === 1 ? "accentBlue" : "navy", 0.95);
   }
+
   monument(sketch, podium.x + podium.w - 1.2, site.z + site.d - 0.55, y0, title.toUpperCase(), 1.3);
+
   for (const z of [site.z + 0.6, site.z + 2, site.z + 3.4]) {
     tree(sketch, { kind: "round", size: 1.1, x: site.x + site.w - 0.45, z }, y0);
   }
+
   lamp(sketch, site.x + 0.45, site.z + site.d - 0.45, y0);
   bench(sketch, site.x + 0.6, site.z + site.d - 0.9, "x", y0);
+
   return bounds(podium, y0, y + 1.4 - y0);
 };
-
-// Vibedgames: an arcade with a pixel invader that marches on the roof.
 
 const INVADER = [
   [
@@ -187,7 +186,6 @@ const INVADER = [
   ],
 ] as const;
 
-/** Pixel art from rows of runs, so ink falls between rows, not every pixel. */
 const drawPixels = (
   sketch: Sketch,
   rows: readonly string[],
@@ -196,8 +194,10 @@ const drawPixels = (
 ) => {
   for (const [row, pattern] of rows.entries()) {
     let start = -1;
+
     for (let column = 0; column <= pattern.length; column += 1) {
       const on = pattern[column] === "X";
+
       if (on && start < 0) {
         start = column;
       } else if (!on && start >= 0) {
@@ -232,7 +232,6 @@ export const drawVibedgames: DrawLandmark = (sketch, site, title) => {
   windows(sketch, hall, { columns: 7, floors: 1, side: "front", y: y0 + FLOOR + 0.12 });
   windows(sketch, hall, { columns: 5, floors: 2, side: "side", y: y0 + 0.12 });
   parapet(sketch, hall, y0 + height);
-  // The marquee, ringed with bulbs.
   const marquee = { along: 0.9, h: 0.34, w: hall.w - 1.8 };
   board(sketch, hall, {
     ...marquee,
@@ -242,19 +241,22 @@ export const drawVibedgames: DrawLandmark = (sketch, site, title) => {
     text: title.toUpperCase(),
     y: y0 + height + 0.02,
   });
+
   for (let index = 0; index <= 12; index += 1) {
     const x = hall.x + marquee.along + (marquee.w * index) / 12;
+
     for (const y of [y0 + height + 0.02, y0 + height + 0.36]) {
       ball(sketch, { colors: BULB, detail: 6, r: 0.022, x, y, z: hall.z + hall.d + 0.05 }, "hair");
     }
   }
-  // The invader: two frames, swapped by the animation.
+
   const pixel = 0.15;
   const origin: Vec3 = [hall.x + hall.w / 2 - 5.5 * pixel, y0 + height + 0.08, hall.z + 0.9];
+
   for (const [index, rows] of INVADER.entries()) {
     drawPixels(part(sketch, `vibedgames:frame:${index}`, origin), rows, pixel);
   }
-  // A giant joystick on the plaza.
+
   const jx = site.x + site.w - 0.9;
   const jz = site.z + site.d - 0.8;
   box(sketch, {
@@ -282,13 +284,13 @@ export const drawVibedgames: DrawLandmark = (sketch, site, title) => {
     y: y0 + 0.66,
     z: jz + 0.06,
   });
+
   for (const x of [site.x + 0.5, site.x + 1.3]) {
     tree(sketch, { kind: "round", size: 1, x, z: site.z + site.d - 0.5 }, y0);
   }
+
   return bounds(hall, y0, height + 1.3);
 };
-
-// Yours Sincerely: a post office with a giant love letter out front.
 
 const BLOSSOM = paint("roofPink", "roofPink", "roofPinkShade");
 
@@ -320,6 +322,7 @@ const envelope = (sketch: Sketch, x: number, z: number, y: number, w: number, h:
     ],
     "hair",
   );
+
   return [x + w / 2, y + h * 0.42, front] satisfies Vec3;
 };
 
@@ -347,8 +350,8 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
     y: y0 + height + 0.2,
     z: office.z + 0.5,
   });
-  // A portico of columns with the name across it.
   const portico = { d: 0.5, w: 1.7, x: office.x + 1.1, z: office.z + office.d };
+
   for (let index = 0; index < 4; index += 1) {
     round(sketch, {
       colors: WALLS,
@@ -360,6 +363,7 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
       z: portico.z + 0.38,
     });
   }
+
   box(sketch, {
     colors: paint("paving", "wallLeft", "wallRight"),
     d: portico.d + 0.15,
@@ -385,13 +389,12 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
     },
   );
   door(sketch, office, { along: 1.75, height: 0.32, side: "front", width: 0.4 });
-  // The letter, sealed with a heart, on a plinth.
   const ex = site.x + site.w - 1.75;
   const ez = site.z + site.d - 1.15;
   box(sketch, { colors: PLAZA, d: 0.4, h: 0.12, w: 1.3, x: ex - 0.05, y: y0, z: ez - 0.15 });
   const seal = envelope(sketch, ex, ez, y0 + 0.12, 1.2, 0.78);
   cutout(sketch, heart(0.14), [seal[0], seal[1], seal[2]], paint("accentRed"), 0.04);
-  // Post boxes and blossoming trees.
+
   for (const x of [site.x + 0.5, site.x + 0.8]) {
     box(
       sketch,
@@ -407,6 +410,7 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
       "fine",
     );
   }
+
   for (const [x, z] of [
     [site.x + 0.45, site.z + 0.7],
     [site.x + 0.45, site.z + 2],
@@ -423,13 +427,14 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
     );
     ball(sketch, { colors: BLOSSOM, detail: 9, r: 0.24, ry: 0.85, x, y: y0 + 0.4, z });
   }
-  // Letters drift up from the chimney and fade: written in disappearing ink.
+
   for (let index = 0; index < 5; index += 1) {
     const letter = part(sketch, `yourssincerely:letter:${index}`, [
       office.x + 0.67,
       y0 + height + 0.7,
       office.z + 0.57,
     ]);
+
     box(
       letter,
       {
@@ -453,22 +458,24 @@ export const drawYoursSincerely: DrawLandmark = (sketch, site, title) => {
       "hair",
     );
   }
+
   return bounds(office, y0, height + 0.75);
 };
-
-// UICapsule: a sawtooth gallery and a capsule floating over its plaza.
 
 const SAWTOOTH = paint("roofGray", "glass", "roofGray");
 
 const sawtooth = (sketch: Sketch, hall: Footprint, y: number, teeth: number) => {
   const depth = hall.d / teeth;
+
   for (let index = 0; index < teeth; index += 1) {
     const z0 = hall.z + index * depth;
+
     const outline: Point2[] = [
       [0, 0],
       [depth, 0],
       [depth, 0.32],
     ];
+
     extrude(
       sketch,
       outline,
@@ -479,17 +486,18 @@ const sawtooth = (sketch: Sketch, hall: Footprint, y: number, teeth: number) => 
   }
 };
 
-/** A pill: a cylinder capped with two half-spheres, lying at an angle. */
-const capsuleTriangles = (radius: number, length: number, tilt: number): Triangle[] => {
+const capsuleTriangles = (radius: number, length: number, tilt: number) => {
   const top = paint("accentBlue", "accentBlue", "accentBlue");
   const bottom = paint("white", "white", "wallRight");
   const half = length / 2;
+
   const triangles = [
     ...roundTriangles({ colors: bottom, h: half, r: radius, segments: 20, x: 0, y: -half, z: 0 }),
     ...roundTriangles({ colors: top, h: half, r: radius, segments: 20, x: 0, y: 0, z: 0 }),
     ...ballTriangles({ colors: top, detail: 20, r: radius * 0.995, x: 0, y: half, z: 0 }),
     ...ballTriangles({ colors: bottom, detail: 20, r: radius * 0.995, x: 0, y: -half, z: 0 }),
   ];
+
   return mapTriangles(triangles, (point) => rotate(point, [0, 0, 0], "z", tilt));
 };
 
@@ -518,7 +526,6 @@ export const drawUiCapsule: DrawLandmark = (sketch, site, title) => {
     w: hall.d - 0.4,
     y: y0 + 0.24,
   });
-  // The capsule floats over a plinth and bobs; the plinth stays put.
   const cx = site.x + site.w / 2 - 0.2;
   const cz = site.z + site.d - 1.25;
   round(sketch, { colors: PLAZA, h: 0.16, r: 0.62, segments: 20, x: cx, y: y0, z: cz });
@@ -529,9 +536,11 @@ export const drawUiCapsule: DrawLandmark = (sketch, site, title) => {
   );
   const capsule = part(sketch, "uicapsule:capsule", [cx, y0 + 0.95, cz]);
   solid(capsule, capsuleTriangles(0.3, 0.8, -0.95));
+
   for (const x of [site.x + 0.5, site.x + site.w - 0.5]) {
     bush(sketch, x, site.z + site.d - 0.5, 1.4, y0);
     lamp(sketch, x, site.z + site.d - 1.3, y0);
   }
+
   return bounds({ d: site.d - 0.6, w: hall.w, x: hall.x, z: hall.z }, y0, height + 0.9);
 };

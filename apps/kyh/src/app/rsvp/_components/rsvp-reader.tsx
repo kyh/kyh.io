@@ -21,37 +21,42 @@ type RSVPState =
   | { status: "paused"; wordIndex: number }
   | { status: "finished" };
 
-// ORP index lookup: [0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4...]
 const ORP_THRESHOLDS = [1, 3, 5, 9, 13] as const;
-const getORPIndex = (word: string): number => {
+
+const getORPIndex = (word: string) => {
   const idx = ORP_THRESHOLDS.findIndex((t) => word.length <= t);
+
   return idx === -1 ? 4 : idx;
 };
 
-const getWordDuration = (word: string): number => {
+const getWordDuration = (word: string) => {
   const { baseTime, timePerChar, punctuationMultiplier, commaMultiplier } = RSVP_SETTINGS;
   const duration = baseTime + word.length * timePerChar;
   const lastChar = word.slice(-1);
+
   if (/[.!?]/u.test(lastChar)) {
     return duration * punctuationMultiplier;
   }
+
   if (lastChar === ",") {
     return duration * commaMultiplier;
   }
+
   return duration;
 };
 
-const getCurrentIndex = (state: RSVPState, totalWords: number): number => {
+const getCurrentIndex = (state: RSVPState, totalWords: number) => {
   if (state.status === "playing" || state.status === "paused") {
     return state.wordIndex;
   }
+
   if (state.status === "finished") {
     return totalWords - 1;
   }
+
   return 0;
 };
 
-// Word display component
 const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => {
   const letters = [...word];
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
@@ -72,13 +77,14 @@ const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => 
 
 export const RSVPReader = () => {
   const words = useMemo(() => RSVP_CONTENT.trim().split(/\s+/u).filter(Boolean), []);
+
   const [state, setState] = useState<RSVPState>({
     count: 3,
     status: "countdown",
   });
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Finding the speed reader is an easter egg.
   useEffect(() => {
     discoverEgg("speedread");
   }, []);
@@ -88,10 +94,10 @@ export const RSVPReader = () => {
   const orpIndex = getORPIndex(currentWord);
 
   const isPlaying = state.status === "playing" || state.status === "countdown";
+
   const showWord =
     state.status === "playing" || state.status === "paused" || state.status === "finished";
 
-  // Unified timer effect for countdown and word progression
   useEffect(() => {
     if (state.status === "countdown") {
       timeoutRef.current = setTimeout(() => {
@@ -103,6 +109,7 @@ export const RSVPReader = () => {
       }, 1000);
     } else if (state.status === "playing") {
       const word = words[state.wordIndex];
+
       if (!word) {
         return;
       }
@@ -130,13 +137,15 @@ export const RSVPReader = () => {
       if (prev.status === "playing") {
         return { status: "paused", wordIndex: prev.wordIndex };
       }
+
       if (prev.status === "countdown") {
         return { status: "paused", wordIndex: 0 };
       }
+
       if (prev.status === "finished") {
         return { status: "playing", wordIndex: 0 };
       }
-      // paused
+
       return { status: "playing", wordIndex: prev.wordIndex };
     });
   }, []);
@@ -144,6 +153,7 @@ export const RSVPReader = () => {
   const goToPrevWord = useCallback(() => {
     setState((prev) => {
       const idx = getCurrentIndex(prev, words.length);
+
       return { status: "paused", wordIndex: Math.max(0, idx - 1) };
     });
   }, [words.length]);
@@ -153,15 +163,16 @@ export const RSVPReader = () => {
       if (prev.status === "finished") {
         return { status: "paused", wordIndex: 0 };
       }
+
       const idx = getCurrentIndex(prev, words.length);
       const newIndex = Math.min(words.length - 1, idx + 1);
+
       return newIndex >= words.length - 1
         ? { status: "finished" }
         : { status: "paused", wordIndex: newIndex };
     });
   }, [words.length]);
 
-  // Keyboard handler
   useEffect(() => {
     const handlers = new Map<string, () => void>([
       ["Space", togglePlayPause],
@@ -173,7 +184,9 @@ export const RSVPReader = () => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
+
       const handler = handlers.get(e.code);
+
       if (handler) {
         e.preventDefault();
         handler();
@@ -181,10 +194,12 @@ export const RSVPReader = () => {
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlayPause, goToPrevWord, goToNextWord]);
 
   let playButtonContent = <PlayIcon />;
+
   if (state.status === "countdown") {
     playButtonContent = <span className="font-mono text-lg">{state.count}</span>;
   } else if (isPlaying) {

@@ -1,5 +1,3 @@
-// The town around the projects: cottages, apartments, office towers, parks
-// and a square, each drawn to fill one six-by-six block.
 import type { Footprint } from "./draw-kit";
 import type { Paint, Token } from "./palette";
 import type { Block, Tree } from "./plan";
@@ -42,13 +40,11 @@ export interface HouseSpec extends Footprint {
   seed: number;
 }
 
-/** How far along its wall a cottage's door starts. */
 const doorAlong = ({ d, front, w }: HouseSpec) => (front === "front" ? w * 0.38 : d * 0.4);
 
 /** The height of a cottage's eaves, where its roof starts. */
 export const eavesOf = ({ floors }: HouseSpec) => CURB_TOP + 0.03 + floors * FLOOR + 0.06;
 
-/** An Inkline cottage: walls, a pitched roof, a door and a few windows. */
 const house = (sketch: Sketch, spec: HouseSpec) => {
   const height = spec.floors * FLOOR + 0.06;
   plate(sketch, inset(spec, -0.08));
@@ -61,6 +57,7 @@ const house = (sketch: Sketch, spec: HouseSpec) => {
     y: CURB_TOP + 0.03,
     z: spec.z,
   });
+
   const roof = {
     colors: spec.roof,
     d: spec.d,
@@ -72,18 +69,22 @@ const house = (sketch: Sketch, spec: HouseSpec) => {
     y: eavesOf(spec),
     z: spec.z,
   };
+
   if (spec.hipped) {
     hip(sketch, roof);
   } else {
     gable(sketch, roof);
   }
+
   if (spec.chimney) {
     const cx = spec.ridge === "x" ? spec.x + spec.w * 0.72 : spec.x + spec.w * 0.3;
     const cz = spec.ridge === "x" ? spec.z + spec.d * 0.3 : spec.z + spec.d * 0.72;
     box(sketch, { colors: WALLS, d: 0.1, h: roof.rise + 0.12, w: 0.1, x: cx, y: roof.y, z: cz });
   }
+
   const walls = { ...spec };
   door(sketch, walls, { along: doorAlong(spec), awning: spec.awning, side: spec.front });
+
   for (const side of ["front", "side"] satisfies Side[]) {
     const span = side === "front" ? spec.w : spec.d;
     windows(sketch, walls, {
@@ -96,9 +97,10 @@ const house = (sketch: Sketch, spec: HouseSpec) => {
   }
 };
 
-const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side): HouseSpec => {
+const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side) => {
   const w = Math.min(lot.w - 0.3, random.range(0.85, 1.1));
   const d = Math.min(lot.d - 0.3, random.range(0.8, 1));
+
   return {
     awning: random.pick(ACCENTS),
     chimney: random.chance(0.55),
@@ -115,7 +117,6 @@ const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side)
   };
 };
 
-/** One of a houses block's sixteen cells: a cottage, or a lawn with its tree and maybe a bush. */
 type HouseCell =
   | { lot: Footprint; house: HouseSpec }
   | { lot: Footprint; tree: Tree; bush: readonly [number, number] | null };
@@ -130,10 +131,12 @@ export const houseCells = (block: Block) => {
   const area = inset(block, 0.25);
   const cell = area.w / 4;
   const cells: HouseCell[] = [];
+
   for (let row = 0; row < 4; row += 1) {
     for (let column = 0; column < 4; column += 1) {
       const lot = { d: cell, w: cell, x: area.x + column * cell, z: area.z + row * cell };
       const edge = row === 0 || row === 3 || column === 0 || column === 3;
+
       if (edge && random.chance(0.94)) {
         const ridge = row === 0 || row === 3 ? "x" : "z";
         const front: Side = column === 3 && row !== 3 ? "side" : "front";
@@ -145,32 +148,36 @@ export const houseCells = (block: Block) => {
           x: lot.x + random.range(0.35, lot.w - 0.35),
           z: lot.z + random.range(0.35, lot.d - 0.35),
         };
+
         const shrub = random.chance(0.5)
           ? ([
               lot.x + random.range(0.2, lot.w - 0.2),
               lot.z + random.range(0.2, lot.d - 0.2),
             ] as const)
           : null;
+
         cells.push({ bush: shrub, lot, tree: planted });
       }
     }
   }
+
   return cells;
 };
 
 /** Where a cottage's door is, on the ground just out from its wall (the middle of its 0.16 door). */
 export const doorstep = (spec: HouseSpec) => {
   const [x, , z] = onWall(spec, spec.front, doorAlong(spec) + 0.08, 0, 0.12);
+
   return { x, z };
 };
 
-/** Twelve cottages around the block's edge, gardens and trees inside. */
 const drawHouses = (sketch: Sketch, block: Block) => {
   for (const cell of houseCells(block)) {
     if ("house" in cell) {
       house(sketch, cell.house);
       continue;
     }
+
     const { lot } = cell;
     ground(
       sketch,
@@ -185,6 +192,7 @@ const drawHouses = (sketch: Sketch, block: Block) => {
       "hair",
     );
     tree(sketch, cell.tree, CURB_TOP);
+
     if (cell.bush) {
       bush(sketch, ...cell.bush);
     }
@@ -205,8 +213,10 @@ export const slab = (sketch: Sketch, spec: SlabSpec) => {
   const y = CURB_TOP + 0.03;
   plate(sketch, inset(spec, -0.1));
   box(sketch, { colors: WALLS, d: spec.d, h: height, w: spec.w, x: spec.x, y, z: spec.z });
+
   for (const side of ["front", "side"] satisfies Side[]) {
     const span = side === "front" ? spec.w : spec.d;
+
     if (spec.style === "ribbon") {
       ribbons(sketch, spec, side, { floors: spec.floors, y: y + 0.1 });
     } else {
@@ -219,11 +229,13 @@ export const slab = (sketch: Sketch, spec: SlabSpec) => {
       });
     }
   }
+
   door(sketch, spec, {
     along: Math.max(0.1, spec.w / 2 - 0.08),
     awning: spec.awning,
     side: "front",
   });
+
   if (spec.roofline === "gable") {
     gable(sketch, {
       colors: ROOF_GRAY,
@@ -245,8 +257,8 @@ export const slab = (sketch: Sketch, spec: SlabSpec) => {
 const drawApartments = (sketch: Sketch, block: Block, random: Random) => {
   const area = inset(block, 0.35);
   const style = random.chance(0.5) ? "grid" : "ribbon";
+
   if (random.chance(0.5)) {
-    // Two long bars with a courtyard between.
     for (const z of [area.z, area.z + area.d - 1.7]) {
       slab(sketch, {
         awning: random.pick(ACCENTS),
@@ -260,7 +272,9 @@ const drawApartments = (sketch: Sketch, block: Block, random: Random) => {
         z,
       });
     }
+
     const courtyard = { d: area.d - 3.6, w: area.w, x: area.x, z: area.z + 1.8 };
+
     for (let index = 0; index < 4; index += 1) {
       tree(
         sketch,
@@ -273,10 +287,12 @@ const drawApartments = (sketch: Sketch, block: Block, random: Random) => {
         CURB_TOP,
       );
     }
+
     return;
   }
-  // Four point blocks.
+
   const size = area.w / 2 - 0.3;
+
   for (const [dx, dz] of [
     [0, 0],
     [1, 0],
@@ -294,6 +310,7 @@ const drawApartments = (sketch: Sketch, block: Block, random: Random) => {
       z: area.z + (dz ?? 0) * (area.d / 2 + 0.3),
     });
   }
+
   tree(
     sketch,
     { kind: "round", size: 1.3, x: area.x + area.w / 2, z: area.z + area.d / 2 },
@@ -315,22 +332,29 @@ export const tower = (
   plate(sketch, inset(footprint, -0.12));
   const tiers = floors > 9 ? 2 + Number(random.chance(0.5)) : 1;
   let remaining = floors;
+
   for (let tier = 0; tier < tiers; tier += 1) {
     const tierFloors =
       tier === tiers - 1 ? remaining : Math.max(2, Math.round(remaining * random.range(0.45, 0.6)));
+
     remaining -= tierFloors;
     const height = tierFloors * FLOOR;
     box(sketch, { colors: WALLS, d: rect.d, h: height, w: rect.w, x: rect.x, y, z: rect.z });
+
     for (const side of ["front", "side"] satisfies Side[]) {
       ribbons(sketch, rect, side, { floors: tierFloors, y: y + 0.08 });
     }
+
     y += height;
     parapet(sketch, rect, y);
+
     if (tier < tiers - 1) {
       rect = inset(rect, Math.min(rect.w, rect.d) * 0.14);
     }
   }
+
   rooftop(sketch, inset(rect, 0.12), y, seed);
+
   if (crown) {
     box(
       sketch,
@@ -346,6 +370,7 @@ export const tower = (
       "hair",
     );
   }
+
   return y;
 };
 
@@ -375,6 +400,7 @@ const drawOffices = (sketch: Sketch, block: Block, random: Random) => {
     x: area.x + 0.2,
     z: area.z + area.d - 1.6,
   });
+
   for (let index = 0; index < 3; index += 1) {
     tree(
       sketch,
@@ -382,6 +408,7 @@ const drawOffices = (sketch: Sketch, block: Block, random: Random) => {
       CURB_TOP,
     );
   }
+
   lamp(sketch, area.x + area.w - 0.4, area.z + 2.9);
 };
 
@@ -437,9 +464,11 @@ const scatterTrees = (
   keepOut: (x: number, z: number) => boolean,
 ) => {
   let placed = 0;
+
   for (let attempt = 0; attempt < count * 6 && placed < count; attempt += 1) {
     const x = area.x + random.range(0.2, area.w - 0.2);
     const z = area.z + random.range(0.2, area.d - 0.2);
+
     if (!keepOut(x, z)) {
       tree(
         sketch,
@@ -461,6 +490,7 @@ export const parkOf = (block: Block) => {
   const area = inset(block, 0.18);
   const cx = area.x + area.w / 2;
   const cz = area.z + area.d / 2;
+
   return {
     area,
     court: { d: 1.6, w: 2.8, x: area.x + 0.4, z: area.z + area.d - 2.1 },
@@ -474,8 +504,8 @@ export const parkOf = (block: Block) => {
 const drawPark = (sketch: Sketch, block: Block, random: Random) => {
   const { area, court, cx, cz, pond, style } = parkOf(block);
   drawLawn(sketch, area);
+
   if (style === 0) {
-    // A pond with a curving shore.
     const shore = ellipse(pond.rx, pond.rz, 22, pond.x, pond.z);
     ground(sketch, "water", shore, CURB_TOP + 0.02, "fine");
     pathStrip(sketch, { d: 0.3, w: area.w, x: area.x, z: area.z + 0.5 });
@@ -490,7 +520,6 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
     );
     bench(sketch, cx + 1.4, cz - 1.2, "x");
   } else if (style === 1) {
-    // Paths crossing at a fountain.
     pathStrip(sketch, { d: 0.32, w: area.w, x: area.x, z: cz - 0.16 });
     pathStrip(sketch, { d: area.d, w: 0.32, x: cx - 0.16, z: area.z });
     fountain(sketch, cx, cz);
@@ -502,6 +531,7 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
       (x, z) =>
         Math.abs(x - cx) < 0.45 || Math.abs(z - cz) < 0.45 || Math.hypot(x - cx, z - cz) < 0.9,
     );
+
     for (const [dx, dz, along] of [
       [0.9, -0.35, "x"],
       [-0.9, 0.35, "x"],
@@ -509,10 +539,10 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
     ] as const) {
       bench(sketch, cx + dx, cz + dz, along);
     }
+
     lamp(sketch, cx + 0.5, cz + 0.5);
     lamp(sketch, cx - 0.5, cz - 0.5);
   } else {
-    // A ball court and a meadow.
     box(
       sketch,
       {
@@ -555,12 +585,12 @@ const drawPark = (sketch: Sketch, block: Block, random: Random) => {
   }
 };
 
-/** A plaza stall's footprint. */
 const KIOSK = { d: 0.6, w: 0.8 };
 
 /** A square's paving and its middle, where the fountain is. */
 export const plazaOf = (block: Block) => {
   const area = inset(block, 0.15);
+
   return { area, cx: area.x + area.w / 2, cz: area.z + area.d / 2 };
 };
 
@@ -571,16 +601,19 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
     { colors: PAVING, d: area.d, h: 0.015, w: area.w, x: area.x, y: CURB_TOP, z: area.z },
     "hair",
   );
+
   for (let ring = 1; ring <= 3; ring += 1) {
     groundLoop(sketch, ellipse(ring * 0.75, ring * 0.75, 28, cx, cz), CURB_TOP + 0.02);
   }
+
   fountain(sketch, cx, cz, 0.6);
-  // Kiosks and food trucks around the square.
+
   const stalls: [number, number, Token][] = [
     [area.x + 0.4, area.z + 0.4, "accentRed"],
     [area.x + area.w - 1.2, area.z + 0.4, "accentYellow"],
     [area.x + 0.4, area.z + area.d - 1, "accentTeal"],
   ];
+
   for (const [x, z, awning] of stalls) {
     const kiosk = { ...KIOSK, x, z };
     box(sketch, { colors: WALLS, d: kiosk.d, h: 0.32, w: kiosk.w, x, y: CURB_TOP + 0.015, z });
@@ -599,7 +632,9 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
       "hair",
     );
   }
+
   parkedCar(sketch, area.x + area.w - 0.7, area.z + area.d - 0.6, "x", random.int(0, 99));
+
   for (const [dx, dz] of [
     [-1.9, -1.9],
     [1.9, -1.9],
@@ -608,15 +643,17 @@ const drawPlaza = (sketch: Sketch, block: Block, random: Random) => {
   ]) {
     const x = cx + (dx ?? 0);
     const z = cz + (dz ?? 0);
-    // A small square's corners are the kiosks' already: no tree grows through a roof.
+
     const onStall = stalls.some(
       ([sx, sz]) =>
         x > sx - 0.5 && x < sx + KIOSK.w + 0.5 && z > sz - 0.5 && z < sz + KIOSK.d + 0.5,
     );
+
     if (!onStall) {
       tree(sketch, { kind: "round", size: 1.2, x, z }, CURB_TOP);
     }
   }
+
   for (const [dx, dz] of [
     [-1.2, 0],
     [1.2, 0],
@@ -639,6 +676,7 @@ const DRAWERS: Partial<
 
 export const drawBlock = (sketch: Sketch, block: Block) => {
   const draw = DRAWERS[block.use];
+
   if (draw) {
     draw(sketch, block, createRandom(block.seed));
   }

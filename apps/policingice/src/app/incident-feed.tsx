@@ -49,12 +49,15 @@ const LazyIncidentCard = ({
     if (!shortcuts) {
       return;
     }
+
     shortcuts.registerIncident(incidentId, ref.current);
+
     return () => shortcuts.unregisterIncident(incidentId);
   }, [incidentId, shortcuts]);
 
   useEffect(() => {
     const el = ref.current;
+
     if (!el) {
       return;
     }
@@ -70,6 +73,7 @@ const LazyIncidentCard = ({
     );
 
     observer.observe(el);
+
     return () => observer.disconnect();
   }, []);
 
@@ -133,14 +137,13 @@ const SearchForm = ({
   </Form>
 );
 
-// `||` not `??` throughout: an empty param should read as undefined, not ""
 const readFeedParams = (searchParams: URLSearchParams) => {
   const q = searchParams.get("q") || undefined;
   const start = searchParams.get("start") || undefined;
   const end = searchParams.get("end") || undefined;
   const error = searchParams.get("error") || undefined;
-  // any truthy search param counts
   const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
+
   return { end, error, q, searchKey, start };
 };
 
@@ -162,22 +165,25 @@ export const IncidentFeed = ({
 
   const { q, start, end, error, searchKey } = readFeedParams(searchParams);
 
-  // Show error toast from share redirect
   useEffect(() => {
     if (error === "invalid_url") {
       toast.error(
         "No supported video URL found. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
       );
       const params = new URLSearchParams();
+
       if (q) {
         params.set("q", q);
       }
+
       if (start) {
         params.set("start", start);
       }
+
       if (end) {
         params.set("end", end);
       }
+
       router.replace(params.toString() ? `/?${params}` : "/");
     }
   }, [error, router, q, start, end]);
@@ -187,9 +193,11 @@ export const IncidentFeed = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userVotes, setUserVotes] = useState(initialUserVotes);
+
   const [voteCounts, setVoteCounts] = useState<
     Record<number, { unjustified: number; justified: number }>
   >({});
+
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [fetchedResults, setFetchedResults] = useState<Incident[] | null>(null);
@@ -203,6 +211,7 @@ export const IncidentFeed = ({
 
   const loaderKey = initialIncidents.map((i) => i.id).join(",");
   const [loadedKey, setLoadedKey] = useState(loaderKey);
+
   if (loadedKey !== loaderKey) {
     setLoadedKey(loaderKey);
     setExtraIncidents([]);
@@ -210,11 +219,11 @@ export const IncidentFeed = ({
     setUserVotes(initialUserVotes);
   }
 
-  // Search when URL params change
   useEffect(() => {
     if (searchKey === null) {
       return;
     }
+
     const search = async () => {
       try {
         const result = await searchIncidents({ endDate: end, query: q, startDate: start });
@@ -222,8 +231,10 @@ export const IncidentFeed = ({
       } catch {
         toast.error("Search failed");
       }
+
       setSearchedFor(searchKey);
     };
+
     void search();
   }, [q, start, end, searchKey]);
 
@@ -241,15 +252,19 @@ export const IncidentFeed = ({
 
       setIsSearchOpen(false);
       const params = new URLSearchParams();
+
       if (query) {
         params.set("q", query);
       }
+
       if (startDate) {
         params.set("start", startDate);
       }
+
       if (endDate) {
         params.set("end", endDate);
       }
+
       router.push(`/?${params}`);
     },
     [router],
@@ -264,7 +279,9 @@ export const IncidentFeed = ({
     if (!nextOffset || isLoading) {
       return;
     }
+
     setIsLoading(true);
+
     try {
       const result = await getIncidents({ offset: nextOffset });
       setExtraIncidents((prev) => [...prev, ...result.incidents]);
@@ -274,17 +291,19 @@ export const IncidentFeed = ({
         const newVotes = await getUserVotes({
           incidentIds: result.incidents.map((i) => i.id),
         });
+
         setUserVotes((prev) => ({ ...prev, ...newVotes }));
       }
     } catch {
       toast.error("Failed to load more");
     }
+
     setIsLoading(false);
   }, [nextOffset, isLoading]);
 
-  // Infinite scroll
   useEffect(() => {
     const ref = loadMoreRef.current;
+
     if (!ref || searchResults !== null) {
       return;
     }
@@ -297,31 +316,34 @@ export const IncidentFeed = ({
       },
       { threshold: 0.1 },
     );
+
     observer.observe(ref);
+
     return () => observer.disconnect();
   }, [nextOffset, isLoading, searchResults, loadMore]);
 
   const handleVote = useCallback(
     async (incidentId: number, type: "unjustified" | "justified") => {
-      // Ensure user has session (creates anonymous if needed)
       const session = await authClient.getSession();
+
       if (!session.data) {
         await authClient.signIn.anonymous();
       }
 
       const prevVote = userVotes[incidentId];
+
       const prevCounts = voteCounts[incidentId] ?? {
         justified: 0,
         unjustified: 0,
       };
 
-      // Optimistic update
       if (prevVote === type) {
         setUserVotes((prev) =>
           Object.fromEntries(Object.entries(prev).filter(([id]) => Number(id) !== incidentId)),
         );
         setVoteCounts((prev) => {
           const cur = prev[incidentId] ?? { justified: 0, unjustified: 0 };
+
           return {
             ...prev,
             [incidentId]: {
@@ -335,6 +357,7 @@ export const IncidentFeed = ({
         setVoteCounts((prev) => {
           const cur = prev[incidentId] ?? { justified: 0, unjustified: 0 };
           const otherDelta = prevVote === undefined ? 0 : -1;
+
           return {
             ...prev,
             [incidentId]: {
@@ -362,6 +385,7 @@ export const IncidentFeed = ({
   const getVoteCount = (incident: Incident, type: "unjustified" | "justified") => {
     const base = type === "unjustified" ? incident.unjustifiedCount : incident.justifiedCount;
     const extra = voteCounts[incident.id]?.[type] ?? 0;
+
     return base + extra;
   };
 
@@ -373,6 +397,7 @@ export const IncidentFeed = ({
   const handleHide = useCallback(
     async (incidentId: number) => {
       const result = await hideIncident({ incidentId });
+
       if (result.success) {
         toast.success("Hidden");
         router.refresh();
@@ -389,7 +414,9 @@ export const IncidentFeed = ({
       if (!confirm("Delete this incident?")) {
         return;
       }
+
       const result = await deleteIncident({ incidentId });
+
       if (result.success) {
         toast.success("Deleted");
         router.refresh();
@@ -403,6 +430,7 @@ export const IncidentFeed = ({
   const handlePin = useCallback(
     async (incidentId: number) => {
       const result = await togglePinIncident({ incidentId });
+
       if (result.success) {
         toast.success(result.pinned ? "Pinned" : "Unpinned");
         router.refresh();
@@ -418,6 +446,7 @@ export const IncidentFeed = ({
       if (!editingIncident) {
         return;
       }
+
       await addVideoToIncident({ incidentId: editingIncident.id, url });
       router.refresh();
     },
@@ -429,6 +458,7 @@ export const IncidentFeed = ({
       if (!editingIncident) {
         return;
       }
+
       await updateIncidentDetails({ incidentId: editingIncident.id, ...data });
       router.refresh();
     },
@@ -443,9 +473,11 @@ export const IncidentFeed = ({
       videoUrls: string[];
     }) => {
       const result = await createIncident(data);
+
       if (result.autoApproved) {
         router.refresh();
       }
+
       toast.success(result.merged ? "Added to existing incident" : "Added to feed");
     },
     [router],

@@ -22,6 +22,7 @@ export const AnimateSection = <C extends React.ElementType>({
   ...props
 }: AnimateSectionProps<C>) => {
   const Element = as ?? "div";
+
   return (
     <div className="animate-section">
       <Element
@@ -62,35 +63,33 @@ export const ScrambleText = ({
   const text = children;
   const shownRef = useRef<HTMLSpanElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
-  // Repainting under the pointer makes Chrome fire mouseenter again with no
-  // mouseleave between, so only an enter after a leave counts as a hover.
   const insideRef = useRef(false);
 
-  // Each tick writes the next frame straight into the shown span; screen
-  // readers get the plain text beside it. While it plays, the heading holds
-  // its width, so it never slips out from under the pointer and replays.
   const play = useCallback(() => {
     const shown = shownRef.current;
     const heading = shown?.parentElement;
+
     if (!shown || !heading || timerRef.current) {
       return;
     }
+
     if (globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       delete shown.dataset.pending;
+
       return;
     }
+
     heading.style.minWidth = `${heading.offsetWidth}px`;
     const glyphs = scrambleChars(text);
     const reading = readingOf(text);
     const last = scrambleTicks(text, reading);
     let tick = 0;
-    // The first frame replaces the text in the same task that unhides it, so
-    // an on-load heading never shows whole before it types out.
     shown.textContent = scrambleFrame(text, reading, tick, glyphs, Math.random);
     delete shown.dataset.pending;
     timerRef.current = setInterval(() => {
       tick += 1;
       shown.textContent = scrambleFrame(text, reading, tick, glyphs, Math.random);
+
       if (tick >= last) {
         stop(timerRef);
         heading.style.minWidth = "";
@@ -102,9 +101,12 @@ export const ScrambleText = ({
     if (trigger !== "hover") {
       play();
     }
+
     const shown = shownRef.current;
+
     return () => {
       stop(timerRef);
+
       if (shown) {
         shown.textContent = text;
         shown.parentElement?.style.removeProperty("min-width");

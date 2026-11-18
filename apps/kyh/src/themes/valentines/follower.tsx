@@ -1,15 +1,5 @@
 "use client";
 
-// What follows a mouse at Valentine's: a peach-faced lovebird
-// (`lovebird.ts`), built in the round (`lovebird-pose.ts`) and drawn in the
-// showcase town's hand as the theme's pieces are (`piece.tsx`): flat faces,
-// each solid's side from the light in its shade under the shade dots, ink
-// round the outside. A green body and head, a blue rump, a peach face and a
-// red forehead, a white ring round each eye, a pale hooked beak; green wings,
-// their flight feathers darker on top and the whole underside in the shade;
-// a green tail, its outer feathers banded red at the base where they show
-// fanned; pink feet. Each `data-layer` is one part the stage stacks by how
-// near the camera it is; each `data-part` is posed a frame at a time.
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
 import { Solid } from "../follower/shaded";
@@ -18,10 +8,8 @@ import { ShadeDots } from "../piece";
 import { lovebird } from "./lovebird";
 import { SIZE } from "./lovebird-pose";
 
-/** Ink `width` screen pixels wide, as the ghost's is, though the lovebird's drawn bigger. */
 const ink = (width: number) => width / SIZE;
 
-/** Ink round the body: drawn under it, so the rump's cap over it doesn't cover it. */
 const OUTLINE = 2.6;
 
 const Eye = ({ index }: { index: number }) => (
@@ -33,7 +21,6 @@ const Eye = ({ index }: { index: number }) => (
   </>
 );
 
-/** A wing: its underside in the shade under the dots, its top over it as it shows, its flight feathers, inked. */
 const Wing = ({ index, id }: { index: number; id: string }) => (
   <g data-layer={`wing-${index}`}>
     <path data-part={`wing-${index}`} style={filled("festiveGreenShade")} />
@@ -45,7 +32,6 @@ const Wing = ({ index, id }: { index: number; id: string }) => (
   </g>
 );
 
-/** Its beak: drawn under its head or over it, whichever way it's turned. */
 const Beak = ({ at }: { at: "front" | "back" }) => (
   <>
     <path data-part={`beak-lower-${at}`} style={filled("hayShade", ink(0.6))} />
@@ -55,6 +41,7 @@ const Beak = ({ at }: { at: "front" | "back" }) => (
 
 export const Follower = () => {
   const id = useSvgId("lovebird");
+
   return (
     <Stage creature={lovebird} box={{ height: 150, width: 160, x: -80, y: -100 }} size={SIZE}>
       <defs>
@@ -86,7 +73,7 @@ export const Follower = () => {
         <Solid name="head" id={id} fill="festiveGreen" shade="festiveGreenShade" />
         <Solid name="face" id={id} fill="accentPink" shade="accentPink" ink={ink(0.5)} />
         <Solid name="brow" id={id} fill="festiveRed" shade="festiveRedShade" ink={ink(0.5)} />
-        {/* Its head inked over its caps, as fine as the body's ink shows: it's drawn over the body. */}
+        {}
         <path data-part="head" style={stroked(ink(1.3))} />
         <Eye index={0} />
         <Eye index={1} />

@@ -52,7 +52,7 @@ export interface OpenApiDocument {
 export const OPENAPI_PATH = "/openapi.json";
 export const API_CATALOG_PATH = "/.well-known/api-catalog";
 
-const text = (description: string): MediaType => ({ schema: { description, type: "string" } });
+const text = (description: string) => ({ schema: { description, type: "string" } });
 
 const varyHeader: ResponseObject["headers"] = {
   Vary: {
@@ -66,7 +66,7 @@ const varyHeader: ResponseObject["headers"] = {
  * site with no write API, auth or OAuth; listing anything else here would send
  * agents to endpoints that 404.
  */
-export const buildOpenApiDocument = (): OpenApiDocument => ({
+export const buildOpenApiDocument = () => ({
   components: {
     schemas: {
       Problem: {
