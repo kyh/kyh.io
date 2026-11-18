@@ -30,13 +30,14 @@
     "og:video": "node scripts/og-video.mjs"
   },
   "devDependencies": {
+    "@interfere/landmines": "^0.1.0",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
+    "oxlint": "^1.94.0",
     "tsx": "catalog:",
     "turbo": "^2.11.10",
     "typescript": "catalog:",
-    "ultracite": "8.0.0"
+    "ultracite": "8.3.0"
   },
   "engines": {
     "node": "24.x"

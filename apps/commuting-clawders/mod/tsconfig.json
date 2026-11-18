@@ -9,7 +9,7 @@
     "hooks/screen.ts",
     "hooks/sfx.ts",
     "stream",
-    "test/*.spec.ts",
+    "test/*.test.mts",
     "vite.config.ts",
     "vite.stream.config.ts"
   ]

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { formatDuration } from "../src/lib/format";
-import { posterOf } from "../src/lib/poster";
-import { runSchema } from "../src/lib/runs";
+import { formatDuration } from "./format";
+import { posterOf } from "./poster";
+import { runSchema } from "./runs";
 
 const run = { coins: 12, name: "kai", seconds: 90, tokens: 4200 };
 

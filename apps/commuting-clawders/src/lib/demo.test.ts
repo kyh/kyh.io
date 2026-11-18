@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { BEATS, LOOP_SECONDS, demoAt, formatTokens } from "../src/lib/demo";
+import { BEATS, LOOP_SECONDS, demoAt, formatTokens } from "./demo";
 
 // When each beat starts, in seconds into the loop.
 const starts: number[] = [];
