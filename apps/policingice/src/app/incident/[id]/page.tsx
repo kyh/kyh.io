@@ -38,7 +38,7 @@ export const generateMetadata = async ({ params }: { params: Promise<{ id: strin
   const incident = incidentId === null ? null : await getIncident(incidentId);
 
   if (!incident) {
-    return { robots: { index: false } };
+    return { robots: { index: false } } satisfies Metadata;
   }
 
   const title = incidentTitle(incident);
@@ -58,7 +58,7 @@ export const generateMetadata = async ({ params }: { params: Promise<{ id: strin
     },
     title,
     twitter: { card: "summary_large_image", description, title },
-  };
+  } satisfies Metadata;
 };
 
 const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => {

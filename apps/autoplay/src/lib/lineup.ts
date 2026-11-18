@@ -3,15 +3,15 @@ import { z } from "zod";
 
 import { db } from "@/db/drizzle-client";
 import { account, source } from "@/db/drizzle-schema";
-import type { ChannelSummary } from "@/lib/api-contract";
 import { env } from "@/lib/env";
 import { googleAccessToken } from "@/lib/grants";
-import type { BudgetViewer } from "@/lib/live";
 import { GOOGLE_SOURCES, OWNER_SOURCE_ID } from "@/lib/source-kinds";
 import type { SourceKind } from "@/lib/source-kinds";
 import { fetchFeed } from "@/lib/sources/rss";
 import type { SourceAccess } from "@/lib/sources/types";
 import { freshXAccount } from "@/lib/x-account";
+import type { ChannelSummary } from "@/lib/api-contract";
+import type { BudgetViewer } from "@/lib/live";
 
 /** The signed-in user, as much of it as the lineup needs. Null for a visitor. */
 export type Viewer = { user: { id: string; username?: string | null } } | null;
@@ -37,26 +37,29 @@ export const isOwnerHandle = (username: string | null | undefined) =>
   username.toLowerCase() === env.OWNER_X_USERNAME.toLowerCase();
 
 /** The same viewer as the budgets see them. */
-export const budgetViewerOf = (viewer: NonNullable<Viewer>) => ({
-  owner: isOwnerHandle(viewer.user.username),
-  userId: viewer.user.id,
-});
+export const budgetViewerOf = (viewer: NonNullable<Viewer>) =>
+  ({
+    owner: isOwnerHandle(viewer.user.username),
+    userId: viewer.user.id,
+  }) satisfies BudgetViewer;
 
-const ownerChannel = (owner: boolean) => ({
-  kind: "x",
-  label: env.OWNER_X_USERNAME === undefined ? "public access" : `@${env.OWNER_X_USERNAME}`,
-  mode: owner ? "live" : "replay",
-  number: 1,
-  sourceId: OWNER_SOURCE_ID,
-});
+const ownerChannel: (owner: boolean) => ChannelSummary = (owner) =>
+  ({
+    kind: "x",
+    label: env.OWNER_X_USERNAME === undefined ? "public access" : `@${env.OWNER_X_USERNAME}`,
+    mode: owner ? "live" : "replay",
+    number: 1,
+    sourceId: OWNER_SOURCE_ID,
+  }) satisfies ChannelSummary;
 
-const toChannel = (row: SourceRow, number: number) => ({
-  kind: row.kind,
-  label: row.label,
-  mode: "live",
-  number,
-  sourceId: row.id,
-});
+const toChannel: (row: SourceRow, number: number) => ChannelSummary = (row, number) =>
+  ({
+    kind: row.kind,
+    label: row.label,
+    mode: "live",
+    number,
+    sourceId: row.id,
+  }) satisfies ChannelSummary;
 
 interface NewSource {
   kind: SourceKind;
@@ -161,18 +164,22 @@ export const listChannels = async (viewer: Viewer) => {
 };
 
 const parseRssConfig = (row: SourceRow) => {
-  try {
-    const parsed = rssConfigSchema.safeParse(JSON.parse(row.config ?? "null"));
+  let config: unknown;
 
-    return parsed.success ? parsed.data : undefined;
+  try {
+    config = JSON.parse(row.config ?? "null");
   } catch {
     return;
   }
+
+  const parsed = rssConfigSchema.safeParse(config);
+
+  return parsed.success ? parsed.data : undefined;
 };
 
 type Access = { access: SourceAccess } | { noAccessReason: string };
 
-const xAccess = async (userId: string) => {
+const xAccess: (userId: string) => Promise<Access> = async (userId) => {
   const grant = await freshXAccount(userId);
 
   return grant === undefined
@@ -180,7 +187,7 @@ const xAccess = async (userId: string) => {
     : { access: { accessToken: grant.accessToken, kind: "x", xUserId: grant.xUserId } };
 };
 
-const accessFor = async (row: SourceRow, userId: string) => {
+const accessFor: (row: SourceRow, userId: string) => Promise<Access> = async (row, userId) => {
   switch (row.kind) {
     case "x": {
       return xAccess(userId);
@@ -203,13 +210,22 @@ const accessFor = async (row: SourceRow, userId: string) => {
         ? { noAccessReason: "This feed's settings are unreadable — remove and re-add it" }
         : { access: { kind: "rss", url: config.url } };
     }
+
+    default: {
+      return row.kind satisfies never;
+    }
   }
 };
 
 const resolved = (channelKey: string, kind: SourceKind, outcome: Access) =>
-  "access" in outcome
+  ("access" in outcome
     ? { access: outcome.access, channelKey, kind, mode: "live" }
-    : { channelKey, kind, mode: "off-air", reason: outcome.noAccessReason };
+    : {
+        channelKey,
+        kind,
+        mode: "off-air",
+        reason: outcome.noAccessReason,
+      }) satisfies ResolvedSource;
 
 /**
  * The channel behind a source id, as this viewer may use it. The public
@@ -219,10 +235,14 @@ const resolved = (channelKey: string, kind: SourceKind, outcome: Access) =>
 export const resolveSource = async (sourceId: string, viewer: Viewer) => {
   if (sourceId === OWNER_SOURCE_ID) {
     if (viewer === null || !isOwnerHandle(viewer.user.username)) {
-      return { channelKey: OWNER_SOURCE_ID, kind: "x", mode: "replay" };
+      return { channelKey: OWNER_SOURCE_ID, kind: "x", mode: "replay" } satisfies
+        | ResolvedSource
+        | undefined;
     }
 
-    return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id));
+    return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id)) satisfies
+      | ResolvedSource
+      | undefined;
   }
 
   if (viewer === null || db === undefined) {
@@ -243,7 +263,9 @@ export const resolveSource = async (sourceId: string, viewer: Viewer) => {
     return;
   }
 
-  return resolved(row.id, row.kind, await accessFor(row, viewer.user.id));
+  return resolved(row.id, row.kind, await accessFor(row, viewer.user.id)) satisfies
+    | ResolvedSource
+    | undefined;
 };
 
 /**

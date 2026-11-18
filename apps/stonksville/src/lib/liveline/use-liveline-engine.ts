@@ -254,90 +254,92 @@ interface EngineState {
   candle: CandleState;
 }
 
-const createCandleState = (candleWidth: number) => ({
-  closeLineSmooth: 0,
-  closeLineSmoothInited: false,
-  displayCandle: null,
-  lastCandles: [],
-  lastLineData: [],
-  lastLineValue: undefined,
-  lastLive: null,
-  lineDensityProg: 0,
-  lineDensityTrans: { from: 0, startMs: 0, to: 0 },
-  lineModeProg: 0,
-  lineModeTrans: { from: 0, startMs: 0, to: 0 },
-  lineSmoothClose: 0,
-  lineSmoothInited: false,
-  lineTickSmooth: 0,
-  lineTickSmoothInited: false,
-  liveBirthAlpha: 1,
-  liveBull: 0.5,
-  pausedCandles: null,
-  pausedLineData: null,
-  pausedLineValue: null,
-  pausedLive: null,
-  prevCandleData: { candles: [], width: candleWidth },
-  widthTrans: {
-    fromWidth: candleWidth,
-    oldCandles: [],
-    oldWidth: candleWidth,
-    rangeFromMax: 0,
-    rangeFromMin: 0,
-    rangeToMax: 0,
-    rangeToMin: 0,
-    startMs: 0,
-    toWidth: candleWidth,
-  },
-});
+const createCandleState = (candleWidth: number) =>
+  ({
+    closeLineSmooth: 0,
+    closeLineSmoothInited: false,
+    displayCandle: null,
+    lastCandles: [],
+    lastLineData: [],
+    lastLineValue: undefined,
+    lastLive: null,
+    lineDensityProg: 0,
+    lineDensityTrans: { from: 0, startMs: 0, to: 0 },
+    lineModeProg: 0,
+    lineModeTrans: { from: 0, startMs: 0, to: 0 },
+    lineSmoothClose: 0,
+    lineSmoothInited: false,
+    lineTickSmooth: 0,
+    lineTickSmoothInited: false,
+    liveBirthAlpha: 1,
+    liveBull: 0.5,
+    pausedCandles: null,
+    pausedLineData: null,
+    pausedLineValue: null,
+    pausedLive: null,
+    prevCandleData: { candles: [], width: candleWidth },
+    widthTrans: {
+      fromWidth: candleWidth,
+      oldCandles: [],
+      oldWidth: candleWidth,
+      rangeFromMax: 0,
+      rangeFromMin: 0,
+      rangeToMax: 0,
+      rangeToMin: 0,
+      startMs: 0,
+      toWidth: candleWidth,
+    },
+  }) satisfies CandleState;
 
-const createEngineState = (config: EngineConfig) => ({
-  arrowState: { down: 0, up: 0 },
-  badge: null,
-  badgeColor: { green: 1 },
-  badgeY: null,
-  candle: createCandleState(config.candleWidth ?? 1),
-  chartReveal: 0,
-  ctx: null,
-  displayMax: 0,
-  displayMin: 0,
-  displayValue: config.value,
-  displayValues: new Map(),
-  displayWindow: config.windowSecs,
-  frozenNow: 0,
-  gridState: { interval: 0, labels: new Map() },
-  hoverX: null,
-  lastData: [],
-  lastFrameMs: 0,
-  lastHover: null,
-  lastHoverEntries: [],
-  lastMultiSeries: [],
-  loadingAlpha: config.loading ? 1 : 0,
-  orderbookState: createOrderbookState(),
-  particleState: createParticleState(),
-  pauseProgress: 0,
-  pausedData: null,
-  pausedMultiData: null,
-  raf: 0,
-  rangeInited: false,
-  reducedMotion: false,
-  scrubAmount: 0,
-  seriesAlpha: new Map(),
-  shakeState: createShakeState(),
-  size: { h: 0, w: 0 },
-  targetMax: 0,
-  targetMin: 0,
-  timeAxisState: { labels: new Map() },
-  timeDebt: 0,
-  windowTransition: {
-    from: config.windowSecs,
-    rangeFromMax: 0,
-    rangeFromMin: 0,
-    rangeToMax: 0,
-    rangeToMin: 0,
-    startMs: 0,
-    to: config.windowSecs,
-  },
-});
+const createEngineState: (config: EngineConfig) => EngineState = (config) =>
+  ({
+    arrowState: { down: 0, up: 0 },
+    badge: null,
+    badgeColor: { green: 1 },
+    badgeY: null,
+    candle: createCandleState(config.candleWidth ?? 1),
+    chartReveal: 0,
+    ctx: null,
+    displayMax: 0,
+    displayMin: 0,
+    displayValue: config.value,
+    displayValues: new Map(),
+    displayWindow: config.windowSecs,
+    frozenNow: 0,
+    gridState: { interval: 0, labels: new Map() },
+    hoverX: null,
+    lastData: [],
+    lastFrameMs: 0,
+    lastHover: null,
+    lastHoverEntries: [],
+    lastMultiSeries: [],
+    loadingAlpha: config.loading ? 1 : 0,
+    orderbookState: createOrderbookState(),
+    particleState: createParticleState(),
+    pauseProgress: 0,
+    pausedData: null,
+    pausedMultiData: null,
+    raf: 0,
+    rangeInited: false,
+    reducedMotion: false,
+    scrubAmount: 0,
+    seriesAlpha: new Map(),
+    shakeState: createShakeState(),
+    size: { h: 0, w: 0 },
+    targetMax: 0,
+    targetMin: 0,
+    timeAxisState: { labels: new Map() },
+    timeDebt: 0,
+    windowTransition: {
+      from: config.windowSecs,
+      rangeFromMax: 0,
+      rangeFromMin: 0,
+      rangeToMax: 0,
+      rangeToMin: 0,
+      startMs: 0,
+      to: config.windowSecs,
+    },
+  }) satisfies EngineState;
 
 interface Frame {
   cfg: EngineConfig;
@@ -421,11 +423,12 @@ const collectVisibleCandles = (
   return visible;
 };
 
-const rangeOf = (state: EngineState) => ({
-  maxVal: state.displayMax,
-  minVal: state.displayMin,
-  valRange: state.displayMax - state.displayMin || 0.001,
-});
+const rangeOf = (state: EngineState) =>
+  ({
+    maxVal: state.displayMax,
+    minVal: state.displayMin,
+    valRange: state.displayMax - state.displayMin || 0.001,
+  }) satisfies ValueRange;
 
 const makeLayout = (
   frame: Frame,
@@ -450,7 +453,7 @@ const makeLayout = (
     toY: (v: number) => pad.top + (1 - (v - minVal) / valRange) * chartH,
     valRange,
     w,
-  };
+  } satisfies ChartLayout;
 };
 
 const hideBadge = (state: EngineState) => {
@@ -506,7 +509,7 @@ const advanceWindowTransition = (
   instant: boolean,
 ) => {
   if (instant || wt.startMs === 0) {
-    return { windowSecs: targetWindowSecs, windowTransProgress: 0 };
+    return { windowSecs: targetWindowSecs, windowTransProgress: 0 } satisfies WindowResult;
   }
 
   const t = Math.min((nowMs - wt.startMs) / WINDOW_TRANSITION_MS, 1);
@@ -514,7 +517,7 @@ const advanceWindowTransition = (
   if (t >= 1) {
     wt.startMs = 0;
 
-    return { windowSecs: targetWindowSecs, windowTransProgress: 0 };
+    return { windowSecs: targetWindowSecs, windowTransProgress: 0 } satisfies WindowResult;
   }
 
   const eased = easeInOutCos(t);
@@ -524,7 +527,7 @@ const advanceWindowTransition = (
   return {
     windowSecs: Math.exp(logFrom + (logTo - logFrom) * eased),
     windowTransProgress: eased,
-  };
+  } satisfies WindowResult;
 };
 
 const updateWindowTransition = (
@@ -657,7 +660,7 @@ const updateHoverState = (
   if (!isActiveHover && state.scrubAmount > 0 && state.lastHover) {
     const { x, value, time } = state.lastHover;
 
-    return { hoverTime: time, hoverValue: value, hoverX: x };
+    return { hoverTime: time, hoverValue: value, hoverX: x } satisfies LineHover;
   }
 
   return hover;
@@ -1036,7 +1039,7 @@ const updatePauseTiming = (
     }
   }
 
-  return { pauseProgress, pausedDt: dt * (1 - pauseProgress) };
+  return { pauseProgress, pausedDt: dt * (1 - pauseProgress) } satisfies PauseTiming;
 };
 
 const updateLoadingAlpha = (
@@ -1091,7 +1094,10 @@ const updateStash = (
   const morphingBack = !hasData && chartReveal > 0.005;
 
   if (isCandle) {
-    return { useMultiStash: false, useStash: morphingBack && state.candle.lastCandles.length > 0 };
+    return {
+      useMultiStash: false,
+      useStash: morphingBack && state.candle.lastCandles.length > 0,
+    } satisfies StashUse;
   }
 
   const useMultiStash = morphingBack && state.lastMultiSeries.length > 0;
@@ -1113,7 +1119,7 @@ const updateStash = (
 
   const useStash = !useMultiStash && morphingBack && state.lastData.length >= 2;
 
-  return { useMultiStash, useStash };
+  return { useMultiStash, useStash } satisfies StashUse;
 };
 
 const updateLineModeProg = (cs: CandleState, lineMode: boolean | undefined, nowMs: number) => {
@@ -1160,7 +1166,7 @@ const resolveFrameData = (state: EngineState, cfg: EngineConfig) => {
 
   const hasData = isCandle ? candles.length >= 2 : hasMultiData || points.length >= 2;
 
-  return { candles, hasData, hasMultiData, isCandle, points };
+  return { candles, hasData, hasMultiData, isCandle, points } satisfies FrameData;
 };
 
 const computePhase = (state: EngineState, frame: Frame, data: FrameData) => {
@@ -1194,7 +1200,7 @@ const computePhase = (state: EngineState, frame: Frame, data: FrameData) => {
     revealTarget,
     useMultiStash,
     useStash,
-  };
+  } satisfies FramePhase;
 };
 
 const drawNoData = (state: EngineState, frame: Frame, loadingAlpha: number, grey: boolean) => {
@@ -1253,10 +1259,10 @@ const resolveCandleLineData = (
   }
 
   if (useStash && cs.lastLineData.length > 0) {
-    return { lineData: cs.lastLineData, lineValue: cs.lastLineValue };
+    return { lineData: cs.lastLineData, lineValue: cs.lastLineValue } satisfies CandleLineData;
   }
 
-  return { lineData, lineValue };
+  return { lineData, lineValue } satisfies CandleLineData;
 };
 
 interface WidthMorph {
@@ -1321,7 +1327,7 @@ const updateCandleWidthMorph = (
 
   cs.prevCandleData = { candles: cfg.candles ?? [], width: candleWidthSecs };
 
-  return { displayCandleWidth, morphT };
+  return { displayCandleWidth, morphT } satisfies WidthMorph;
 };
 
 const updateLineDensity = (cs: CandleState, target: number, nowMs: number) => {
@@ -1539,7 +1545,7 @@ const updateCandleHover = (
   if (!isActiveHover && state.scrubAmount > 0 && state.lastHover) {
     const { x, time } = state.lastHover;
 
-    return { candle: candleAtX(candles, x, candleWidth, layout), time, x };
+    return { candle: candleAtX(candles, x, candleWidth, layout), time, x } satisfies CandleHover;
   }
 
   if (hovered !== null && hoverPx !== null) {
@@ -1548,10 +1554,10 @@ const updateCandleHover = (
 
     state.lastHover = { time, value: hovered.close, x: hoverPx };
 
-    return { candle: hovered, time, x: hoverPx };
+    return { candle: hovered, time, x: hoverPx } satisfies CandleHover;
   }
 
-  return { candle: hovered, time: 0, x: hoverPx };
+  return { candle: hovered, time: 0, x: hoverPx } satisfies CandleHover;
 };
 
 interface CandleSet {
@@ -1577,13 +1583,14 @@ const applyLineModeMorph = (cs: CandleState, set: CandleSet, lineModeProg: numbe
   if (lineModeProg > 0.01 && lineModeProg < 0.99) {
     const inv = 1 - lineModeProg;
 
-    const collapseOHLC = (c: CandlePoint) => ({
-      close: c.close,
-      high: c.close + (c.high - c.close) * inv,
-      low: c.close + (c.low - c.close) * inv,
-      open: c.close + (c.open - c.close) * inv,
-      time: c.time,
-    });
+    const collapseOHLC = (c: CandlePoint) =>
+      ({
+        close: c.close,
+        high: c.close + (c.high - c.close) * inv,
+        low: c.close + (c.low - c.close) * inv,
+        open: c.close + (c.open - c.close) * inv,
+        time: c.time,
+      }) satisfies CandlePoint;
 
     candles = candles.map(collapseOHLC);
 
@@ -1596,7 +1603,7 @@ const applyLineModeMorph = (cs: CandleState, set: CandleSet, lineModeProg: numbe
     }
   }
 
-  return { candles, live, oldCandles };
+  return { candles, live, oldCandles } satisfies CandleSet;
 };
 
 interface CloseRef {
@@ -1627,11 +1634,6 @@ const closeRefAt = (refs: CloseRef[], refIdx: number, time: number, fallback: nu
   return a.v + (b.v - a.v) * frac;
 };
 
-interface MorphLine {
-  lineVisible: LivelinePoint[];
-  lineSmoothValue: number;
-}
-
 interface DenseLineArgs {
   lineData: LivelinePoint[];
   lastTick: LivelinePoint;
@@ -1642,6 +1644,11 @@ interface DenseLineArgs {
   leftEdge: number;
   rightEdge: number;
   lineDensityProg: number;
+}
+
+interface MorphLine {
+  lineVisible: LivelinePoint[];
+  lineSmoothValue: number;
 }
 
 const buildDenseLine = (cs: CandleState, args: DenseLineArgs) => {
@@ -1684,7 +1691,7 @@ const buildDenseLine = (cs: CandleState, args: DenseLineArgs) => {
   return {
     lineSmoothValue: cs.lineSmoothClose + (smoothTick - cs.lineSmoothClose) * lineDensityProg,
     lineVisible,
-  };
+  } satisfies MorphLine;
 };
 
 const buildSparseLine = (cs: CandleState, set: CandleSet, displayCandleWidth: number) => {
@@ -1699,7 +1706,7 @@ const buildSparseLine = (cs: CandleState, set: CandleSet, displayCandleWidth: nu
     lineSmoothValue = set.live?.close ?? set.candles.at(-1)?.close ?? 0;
   }
 
-  return { lineSmoothValue, lineVisible };
+  return { lineSmoothValue, lineVisible } satisfies MorphLine;
 };
 
 const padLineToWindow = (lineVisible: LivelinePoint[], leftEdge: number, rightEdge: number) => {
@@ -1721,7 +1728,7 @@ const padLineToWindow = (lineVisible: LivelinePoint[], leftEdge: number, rightEd
     padded.push({ time: t, value: first.value });
   }
 
-  return [...padded, ...lineVisible];
+  return [...padded, ...lineVisible] satisfies LivelinePoint[];
 };
 
 interface CandleBadgeArgs {
@@ -1830,7 +1837,7 @@ const advanceCandleTiming = (
     rawLive,
     rightEdge,
     window,
-  };
+  } satisfies CandleTiming;
 };
 
 const collectCandleSet = (
@@ -1863,10 +1870,14 @@ const collectCandleSet = (
   }
 
   if (phase.useStash) {
-    return { candles: cs.lastCandles, live: cs.lastLive ?? undefined, oldCandles };
+    return {
+      candles: cs.lastCandles,
+      live: cs.lastLive ?? undefined,
+      oldCandles,
+    } satisfies CandleSet;
   }
 
-  return { candles: visible, live: smoothLive, oldCandles };
+  return { candles: visible, live: smoothLive, oldCandles } satisfies CandleSet;
 };
 
 const buildMorphLine = (
@@ -1902,7 +1913,7 @@ const buildMorphLine = (
     return {
       lineSmoothValue: line.lineSmoothValue,
       lineVisible: padLineToWindow(line.lineVisible, timing.leftEdge, timing.rightEdge),
-    };
+    } satisfies MorphLine;
   }
 
   return line;
@@ -2159,7 +2170,7 @@ const collectSeriesEntries = (
     entries.push({ alpha, label: s.label, palette: s.palette, smoothValue: sv, visible });
   }
 
-  return { entries, globalMax, globalMin };
+  return { entries, globalMax, globalMin } satisfies SeriesCollection;
 };
 
 const sampleSeriesAt = (entries: MultiSeriesEntry[], t: number) => {
@@ -2214,7 +2225,11 @@ const updateMultiHover = (
   updateScrubAmount(state, isActiveHover, noMotion);
 
   if (!isActiveHover && state.scrubAmount > 0 && state.lastHover) {
-    return { entries: state.lastHoverEntries, time: state.lastHover.time, x: state.lastHover.x };
+    return {
+      entries: state.lastHoverEntries,
+      time: state.lastHover.time,
+      x: state.lastHover.x,
+    } satisfies MultiHover;
   }
 
   return hover;
@@ -2347,7 +2362,7 @@ const updateDisplayValue = (
     }
   }
 
-  return { adaptiveSpeed, smoothValue: state.displayValue };
+  return { adaptiveSpeed, smoothValue: state.displayValue } satisfies DisplayValueUpdate;
 };
 
 const lineBuffer = (cfg: EngineConfig, chartW: number) => {
@@ -2580,7 +2595,7 @@ const beginFrame = (state: EngineState, canvas: HTMLCanvasElement, w: number, h:
 
   applyDpr(ctx, dpr, w, h);
 
-  return { ctx, dt, nowMs };
+  return { ctx, dt, nowMs } satisfies FrameStart | null;
 };
 
 const createBadgeEls = (container: HTMLDivElement) => {
@@ -2601,7 +2616,7 @@ const createBadgeEls = (container: HTMLDivElement) => {
   el.append(text);
   container.append(el);
 
-  return { container: el, displayW: 0, path, svg, targetW: 0, text };
+  return { container: el, displayW: 0, path, svg, targetW: 0, text } satisfies BadgeEls;
 };
 
 export const useLivelineEngine = (

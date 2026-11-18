@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import type { CityProject } from "./_components/city/draw-landmarks";
 import { projects } from "@/lib/data";
 import { todaysPageMetadata } from "@/lib/todays-video";
@@ -24,7 +22,6 @@ const cityProjects: CityProject[] = projects.map((project) => ({
 
 const Page = () => (
   <main>
-    {}
     <h1 className="sr-only">Showcase: a city of everything I&apos;ve built</h1>
     <CityShowcase projects={cityProjects} />
   </main>

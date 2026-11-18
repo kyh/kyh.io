@@ -82,7 +82,7 @@ export const inviteCookieValue = (code: string) => {
     return;
   }
 
-  return `${code}.${sign(code, secret)}`;
+  return `${code}.${sign(code, secret)}` satisfies string | undefined;
 };
 
 /** The code a cookie header names, if its signature holds. */

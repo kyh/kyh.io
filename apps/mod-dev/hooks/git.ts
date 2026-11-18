@@ -37,7 +37,7 @@ export const parseDiff = (stdout: string) => {
     base,
     patch: at < 0 ? "" : body.slice(at),
     stat: (at < 0 ? body : body.slice(0, at)).trim(),
-  };
+  } satisfies Diff;
 };
 
 const PRIME = 4_294_967_291;

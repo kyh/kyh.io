@@ -255,7 +255,7 @@ const playSession = (
       video.load();
       URL.revokeObjectURL(url);
     },
-  };
+  } satisfies Player;
 };
 
 const playSessionFile = (
@@ -310,6 +310,7 @@ const playSessionFile = (
   })();
 
   return {
+    // oxlint-disable-next-line no-empty-function -- a file plays itself; there is nothing to append
     poke: () => {},
     stop: () => {
       stopped = true;
@@ -319,7 +320,7 @@ const playSessionFile = (
       video.removeAttribute("src");
       video.load();
     },
-  };
+  } satisfies Player;
 };
 
 export const ReplayScreen = (props: ReplayScreenProps) => {
@@ -329,7 +330,6 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
   const [cursor, setCursor] = useState(0);
   const [playingId, setPlayingId] = useState<string | undefined>();
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const playerRef = useRef<Player | undefined>(undefined);
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);

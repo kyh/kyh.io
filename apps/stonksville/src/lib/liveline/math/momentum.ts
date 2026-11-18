@@ -1,4 +1,4 @@
-import type { Momentum, LivelinePoint } from "../types";
+import type { LivelinePoint, Momentum } from "../types";
 
 /**
  * Auto-detect momentum from recent data points.
@@ -7,7 +7,7 @@ import type { Momentum, LivelinePoint } from "../types";
  */
 export const detectMomentum = (points: LivelinePoint[], lookback = 20) => {
   if (points.length < 5) {
-    return "flat";
+    return "flat" satisfies Momentum;
   }
 
   const start = Math.max(0, points.length - lookback);
@@ -30,7 +30,7 @@ export const detectMomentum = (points: LivelinePoint[], lookback = 20) => {
   const range = max - min;
 
   if (range === 0) {
-    return "flat";
+    return "flat" satisfies Momentum;
   }
 
   const tailStart = Math.max(start, points.length - 5);
@@ -38,7 +38,7 @@ export const detectMomentum = (points: LivelinePoint[], lookback = 20) => {
   const last = points.at(-1);
 
   if (last === undefined) {
-    return "flat";
+    return "flat" satisfies Momentum;
   }
 
   const delta = last.value - first;
@@ -46,12 +46,12 @@ export const detectMomentum = (points: LivelinePoint[], lookback = 20) => {
   const threshold = range * 0.12;
 
   if (delta > threshold) {
-    return "up";
+    return "up" satisfies Momentum;
   }
 
   if (delta < -threshold) {
-    return "down";
+    return "down" satisfies Momentum;
   }
 
-  return "flat";
+  return "flat" satisfies Momentum;
 };

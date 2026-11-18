@@ -32,14 +32,15 @@ const MIN_LABEL_GAP = 22;
 const BASE_SPEED = 60;
 const MAX_SPEED = 160;
 
-export const createOrderbookState = () => ({
-  churnRate: 0,
-  labels: [],
-  prevAskTotal: 0,
-  prevBidTotal: 0,
-  smoothSpeed: BASE_SPEED,
-  spawnTimer: 0,
-});
+export const createOrderbookState = () =>
+  ({
+    churnRate: 0,
+    labels: [],
+    prevAskTotal: 0,
+    prevBidTotal: 0,
+    smoothSpeed: BASE_SPEED,
+    spawnTimer: 0,
+  }) satisfies OrderbookState;
 
 const mixColor = (from: Rgb, to: Rgb, t: number) => {
   const r = Math.round(from[0] + (to[0] - from[0]) * t);
@@ -82,7 +83,7 @@ const sumBook = (orderbook: OrderbookData) => {
     maxSize = Math.max(maxSize, size);
   }
 
-  return { askTotal, bidTotal, maxSize };
+  return { askTotal, bidTotal, maxSize } satisfies BookTotals;
 };
 
 const updateChurn = (state: OrderbookState, { bidTotal, askTotal }: BookTotals) => {

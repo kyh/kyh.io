@@ -49,7 +49,7 @@ export const readVint = (bytes: Uint8Array, at: number, id: boolean) => {
     }
   }
 
-  return { length, unknown: !id && unknown, value };
+  return { length, unknown: !id && unknown, value } satisfies Vint | undefined;
 };
 
 export const readUint = (bytes: Uint8Array, at: number, length: number) => {
@@ -155,7 +155,9 @@ const findSegment = (bytes: Uint8Array) => {
 
   const segmentSizeAt = segmentAt + segment.length;
 
-  return { segmentBody: segmentSizeAt + segmentSize.length, segmentSizeAt };
+  return { segmentBody: segmentSizeAt + segmentSize.length, segmentSizeAt } satisfies
+    | { segmentSizeAt: number; segmentBody: number }
+    | undefined;
 };
 
 /**

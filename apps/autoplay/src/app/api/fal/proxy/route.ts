@@ -14,7 +14,6 @@ import { DIRECTOR_MODEL } from "@/lib/api-contract";
 import { getSession } from "@/lib/auth";
 import { budgetViewerOf } from "@/lib/lineup";
 import { programming } from "@/lib/live";
-import type { BudgetViewer } from "@/lib/live";
 
 const SESSION_URL = "https://wma.fal.run/session";
 const HEARTBEAT_URL = "https://wma.fal.run/session/heartbeat";
@@ -51,13 +50,17 @@ const config = resolveProxyConfig({
 });
 
 const heartbeatOf = (body: string) => {
-  try {
-    const beat = heartbeatSchema.safeParse(JSON.parse(body));
+  let parsed: unknown;
 
-    return beat.success ? beat.data.session_id : undefined;
+  try {
+    parsed = JSON.parse(body);
   } catch {
     return;
   }
+
+  const beat = heartbeatSchema.safeParse(parsed);
+
+  return beat.success ? beat.data.session_id : undefined;
 };
 
 const meter = async (target: string | undefined, body: string, response: Response) => {

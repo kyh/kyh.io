@@ -51,7 +51,7 @@ const average = (
     }
   }
 
-  return n === 0 ? [0, 0, 0] : [r / n, g / n, b / n];
+  return (n === 0 ? [0, 0, 0] : [r / n, g / n, b / n]) satisfies Rgb;
 };
 
 const pack = ([r, g, b]: Rgb) => Math.round(r) * 65_536 + Math.round(g) * 256 + Math.round(b);
@@ -67,7 +67,7 @@ const mean = (colors: Rgb[]) => {
 
   const n = Math.max(1, colors.length);
 
-  return [sum[0] / n, sum[1] / n, sum[2] / n];
+  return [sum[0] / n, sum[1] / n, sum[2] / n] satisfies Rgb;
 };
 
 const spread = (colors: Rgb[], center: Rgb) =>

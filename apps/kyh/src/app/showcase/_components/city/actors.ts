@@ -64,20 +64,21 @@ export interface Placement {
   shadowSize: number;
 }
 
-export const placement = () => ({
-  heading: 0,
-  leanX: 0,
-  leanZ: 0,
-  shadowSize: 0,
-  shadowX: 0,
-  shadowY: 0,
-  shadowZ: 0,
-  shown: true,
-  size: 1,
-  x: 0,
-  y: 0,
-  z: 0,
-});
+export const placement: () => Placement = () =>
+  ({
+    heading: 0,
+    leanX: 0,
+    leanZ: 0,
+    shadowSize: 0,
+    shadowX: 0,
+    shadowY: 0,
+    shadowZ: 0,
+    shown: true,
+    size: 1,
+    x: 0,
+    y: 0,
+    z: 0,
+  }) satisfies Placement;
 
 const boxPair = (w: number, h: number, d: number, y: number, x = 0) => {
   const fill = new BoxGeometry(w, h, d).translate(x, y, 0);

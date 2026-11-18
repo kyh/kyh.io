@@ -1,15 +1,8 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it } from "node:test";
-
-import {
-  DAILY_BUDGET_USD_PER_VIEWER,
-  MIN_BILLED_SECONDS,
-  createProgramming,
-  memoryAiredStore,
-  memorySessionStore,
-  usdPerSecond,
-} from "./live";
-import { DAILY_READ_BUDGET_USD, memoryReads } from "./reads";
+import { once } from "node:events";
+import { createServer } from "node:http";
+import type { ServerResponse } from "node:http";
+import { after, describe, it } from "node:test";
 
 const feed = (n: number) =>
   `<rss><channel><title>Stub</title>${Array.from(
@@ -20,21 +13,80 @@ const feed = (n: number) =>
       ).toUTCString()}</pubDate></item>`,
   ).join("")}</channel></rss>`;
 
-const access = { kind: "rss" as const, url: "https://stub.test/feed.xml" };
+const xCalls: string[] = [];
 
-let originalFetch: typeof fetch;
+const sendJson = <Body extends object>(response: ServerResponse, body: Body) => {
+  response.writeHead(200, { "Content-Type": "application/json" });
+  response.end(JSON.stringify(body));
+};
 
-beforeEach(() => {
-  originalFetch = globalThis.fetch;
-  globalThis.fetch = () =>
-    Promise.resolve(
-      new Response(feed(30), { headers: { "Content-Type": "application/xml" }, status: 200 }),
-    );
+const server = createServer((request, response) => {
+  const { pathname } = new URL(request.url ?? "/", "http://localhost");
+
+  if (pathname === "/feed.xml") {
+    response.writeHead(200, { "Content-Type": "application/xml" });
+    response.end(feed(30));
+
+    return;
+  }
+
+  if (pathname.startsWith("/x/")) {
+    xCalls.push(pathname);
+  }
+
+  if (pathname === "/x/2/users/personalized_trends") {
+    sendJson(response, { data: [{ trend_name: "Vercel" }] });
+
+    return;
+  }
+
+  if (pathname === "/x/2/tweets/search/recent") {
+    sendJson(response, {
+      data: Array.from({ length: 10 }, (_, i) => ({
+        author_id: "a1",
+        id: `p${i}`,
+        public_metrics: { like_count: 1000 - i },
+        text: `post ${i}`,
+      })),
+      includes: { users: [{ id: "a1", name: "Ada", username: "ada" }] },
+    });
+
+    return;
+  }
+
+  response.writeHead(pathname === "/dead.xml" ? 403 : 404);
+  response.end("nope");
 });
 
-afterEach(() => {
-  globalThis.fetch = originalFetch;
+server.listen(0, "127.0.0.1");
+
+await once(server, "listening");
+
+after(() => {
+  server.close();
 });
+
+const address = server.address();
+
+assert.ok(address instanceof Object);
+
+const { port } = address;
+const origin = `http://127.0.0.1:${port}`;
+
+process.env.X_API_URL = `${origin}/x/2`;
+
+const {
+  DAILY_BUDGET_USD_PER_VIEWER,
+  MIN_BILLED_SECONDS,
+  createProgramming,
+  memoryAiredStore,
+  memorySessionStore,
+  usdPerSecond,
+} = await import("./live");
+
+const { DAILY_READ_BUDGET_USD, memoryReads } = await import("./reads");
+
+const access = { kind: "rss" as const, url: `${origin}/feed.xml` };
 
 describe("programming", () => {
   it("airs the newest entry first and never the same one twice", async () => {
@@ -101,15 +153,14 @@ describe("programming", () => {
   });
 
   it("puts a source that can't be read on the screen as the reason", async () => {
-    globalThis.fetch = () => Promise.resolve(new Response("nope", { status: 403 }));
-
     const { nextProgram } = createProgramming(
       memoryAiredStore(),
       memorySessionStore(),
       memoryReads(),
     );
 
-    const result = await nextProgram("test:dead", access, { owner: true, userId: "u1" }, true);
+    const dead = { kind: "rss" as const, url: `${origin}/dead.xml` };
+    const result = await nextProgram("test:dead", dead, { owner: true, userId: "u1" }, true);
     assert.equal(result.kind, "off-air");
 
     if (result.kind === "off-air") {
@@ -120,45 +171,8 @@ describe("programming", () => {
 
 const xAccess = { accessToken: "token", kind: "x" as const, xUserId: "42" };
 
-const json = <Body extends object>(body: Body) =>
-  Response.json(body, {
-    headers: { "Content-Type": "application/json" },
-    status: 200,
-  });
-
-let xCalls: string[] = [];
-
-const xStubResponse = (url: string) => {
-  if (url.includes("/users/personalized_trends")) {
-    return json({ data: [{ trend_name: "Vercel" }] });
-  }
-
-  if (url.includes("/tweets/search/recent")) {
-    return json({
-      data: Array.from({ length: 10 }, (_, i) => ({
-        author_id: "a1",
-        id: `p${i}`,
-        public_metrics: { like_count: 1000 - i },
-        text: `post ${i}`,
-      })),
-      includes: { users: [{ id: "a1", name: "Ada", username: "ada" }] },
-    });
-  }
-
-  return new Response("not stubbed", { status: 500 });
-};
-
-const xStub: typeof fetch = (input) => {
-  const url = input instanceof Request ? input.url : String(input);
-  xCalls.push(new URL(url).pathname);
-
-  return Promise.resolve(xStubResponse(url));
-};
-
 describe("X reads", () => {
   it("are priced into the ledger, served from the cache for the hour, and stopped at the day's cap", async () => {
-    xCalls = [];
-    globalThis.fetch = xStub;
     const reads = memoryReads();
     const { nextProgram } = createProgramming(memoryAiredStore(), memorySessionStore(), reads);
     const owner = { owner: true, userId: "u1" };

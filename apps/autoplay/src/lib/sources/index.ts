@@ -1,6 +1,6 @@
 import { pickGmailCandidate } from "./gmail";
 import { pickRssCandidate } from "./rss";
-import type { Item, SourceAccess, SourceContext } from "./types";
+import type { SourceAccess, SourceContext } from "./types";
 import { pickXCandidate } from "./x";
 import { pickYoutubeCandidate } from "./youtube";
 
@@ -21,6 +21,10 @@ export const pickCandidate = (access: SourceAccess, sourceId: string, context: S
 
     case "youtube": {
       return pickYoutubeCandidate(access, sourceId, context);
+    }
+
+    default: {
+      return access satisfies never;
     }
   }
 };

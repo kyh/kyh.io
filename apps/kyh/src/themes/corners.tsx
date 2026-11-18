@@ -41,7 +41,7 @@ const localIn = (corner: HTMLElement, side: Side, x: number, y: number) => {
   return {
     x: (side === "left" ? x - rect.left : rect.right - x) / scale,
     y: (y - rect.top) / scale,
-  };
+  } satisfies Point;
 };
 
 const boundsIn = (corner: HTMLElement, side: Side) => {
@@ -65,10 +65,11 @@ const boundsIn = (corner: HTMLElement, side: Side) => {
 
 type Bounds = ReturnType<typeof boundsIn>;
 
-const clampTo = (bounds: Bounds, { x, y }: Point) => ({
-  x: Math.min(bounds.right, Math.max(bounds.left, x)),
-  y: Math.min(bounds.bottom, Math.max(bounds.top, y)),
-});
+const clampTo = (bounds: Bounds, { x, y }: Point) =>
+  ({
+    x: Math.min(bounds.right, Math.max(bounds.left, x)),
+    y: Math.min(bounds.bottom, Math.max(bounds.top, y)),
+  }) satisfies Point;
 
 const Spider = () => (
   <>

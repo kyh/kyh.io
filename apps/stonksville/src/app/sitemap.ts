@@ -9,5 +9,5 @@ export default function sitemap() {
       priority: 1,
       url: siteConfig.url,
     },
-  ];
+  ] satisfies MetadataRoute.Sitemap;
 }

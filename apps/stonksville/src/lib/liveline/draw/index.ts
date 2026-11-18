@@ -46,7 +46,7 @@ export interface ShakeState {
   amplitude: number;
 }
 
-export const createShakeState = () => ({ amplitude: 0 });
+export const createShakeState = () => ({ amplitude: 0 }) satisfies ShakeState;
 
 const revealRamp = (reveal: number, start: number, end: number) => {
   const t = Math.max(0, Math.min(1, (reveal - start) / (end - start)));

@@ -32,9 +32,9 @@ const lookOf = (kind: LookKind, arg: string) => {
       return;
     }
 
-    return path === undefined
-      ? { kind, target: arg }
-      : { kind, path, target: found?.pattern ?? arg };
+    return (
+      path === undefined ? { kind, target: arg } : { kind, path, target: found?.pattern ?? arg }
+    ) satisfies Look | undefined;
   }
 
   const range = RANGE.exec(arg)?.groups;
@@ -45,7 +45,7 @@ const lookOf = (kind: LookKind, arg: string) => {
   }
 
   if (range === undefined) {
-    return { kind, target };
+    return { kind, target } satisfies Look | undefined;
   }
 
   const from = Number(range.from);
@@ -55,7 +55,7 @@ const lookOf = (kind: LookKind, arg: string) => {
     kind,
     target,
     to: range.to === undefined ? from + MAX_LINES - 1 : Number(range.to),
-  };
+  } satisfies Look | undefined;
 };
 
 export const looksOf = (text: string) => {

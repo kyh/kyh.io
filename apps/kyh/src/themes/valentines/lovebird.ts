@@ -275,12 +275,12 @@ const createLovebird = (at: Point) => {
     },
     x: at.x - BEHIND,
     y: at.y - ABOVE,
-  };
+  } satisfies Lovebird;
 };
 
 const spotOf = (bird: Lovebird, pointer: Point, landing: boolean) => {
   if (landing) {
-    return { x: pointer.x, y: pointer.y };
+    return { x: pointer.x, y: pointer.y } satisfies Point;
   }
 
   const lift = bird.flushed > 0 ? 40 : 0;
@@ -288,7 +288,7 @@ const spotOf = (bird: Lovebird, pointer: Point, landing: boolean) => {
   return {
     x: pointer.x + bird.back.x * BEHIND,
     y: pointer.y - ABOVE - lift + bird.back.y * BEHIND * 0.5 + Math.sin(bird.time * 2.2) * 4,
-  };
+  } satisfies Point;
 };
 
 const fly = (bird: Lovebird, spot: Point, landing: boolean, off: number, dt: number) => {
@@ -482,38 +482,44 @@ interface WingGoal {
 }
 
 const perchedWings = (bird: Lovebird) =>
-  bird.wings.balance > 0
+  (bird.wings.balance > 0
     ? { amp: 0.75, hertz: 5.5, spread: 0.65 }
-    : { amp: 0, hertz: 0, spread: 0 };
+    : { amp: 0, hertz: 0, spread: 0 }) satisfies WingGoal;
 
 const flyingWings = (bird: Lovebird) => {
   const speed = Math.hypot(bird.vx, bird.vy);
 
   if (bird.wings.launch > 0) {
-    return { amp: 1, hertz: 7, spread: 1 };
+    return { amp: 1, hertz: 7, spread: 1 } satisfies WingGoal;
   }
 
   if (bird.rig.flare.x > 0.15) {
-    return { amp: 0.55, hertz: 6, spread: 1 };
+    return { amp: 0.55, hertz: 6, spread: 1 } satisfies WingGoal;
   }
 
   if (bird.scramble > 0) {
-    return { amp: 1, hertz: 8, spread: 1 };
+    return { amp: 1, hertz: 8, spread: 1 } satisfies WingGoal;
   }
 
   if (bird.vy > 160 && speed > 240) {
-    return bird.wings.glide < GLIDE_S
-      ? { amp: 0.12, hertz: 4, spread: 1 }
-      : { amp: 0.6, hertz: 5, spread: 1 };
+    return (
+      bird.wings.glide < GLIDE_S
+        ? { amp: 0.12, hertz: 4, spread: 1 }
+        : { amp: 0.6, hertz: 5, spread: 1 }
+    ) satisfies WingGoal;
   }
 
   if (bird.wings.bound > 0) {
-    return { amp: 0.25, hertz: 0, spread: 0 };
+    return { amp: 0.25, hertz: 0, spread: 0 } satisfies WingGoal;
   }
 
   const climb = Math.max(0, -bird.vy);
 
-  return { amp: 1, hertz: 6.5 + Math.min(2, climb / 250) + (speed < 90 ? 1 : 0), spread: 1 };
+  return {
+    amp: 1,
+    hertz: 6.5 + Math.min(2, climb / 250) + (speed < 90 ? 1 : 0),
+    spread: 1,
+  } satisfies WingGoal;
 };
 
 const cruising = (bird: Lovebird) => {

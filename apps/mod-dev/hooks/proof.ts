@@ -129,7 +129,7 @@ export const checksOf = (
 ) => {
   const packages = needs.map((one) => one.pkg);
 
-  return ORDER.flatMap((kind) => {
+  return ORDER.flatMap<Check>((kind) => {
     const ofKind = needs.filter((one) => one.kind === kind);
 
     if (ofKind.length === 0) {
@@ -212,16 +212,19 @@ export const dirsUp = (file: string) => {
 };
 
 export const packageFrom = (dir: string, json: string) => {
-  try {
-    const { name, scripts = {} } = JSON.parse(json) as {
-      name?: unknown;
-      scripts?: Record<string, string>;
-    };
+  let parsed: { name?: unknown; scripts?: Record<string, string> };
 
-    return {
-      dir,
-      name: name === undefined ? dir || "." : String(name),
-      scripts: Object.keys(scripts),
-    };
-  } catch {}
+  try {
+    parsed = JSON.parse(json) as typeof parsed;
+  } catch {
+    return;
+  }
+
+  const { name, scripts = {} } = parsed;
+
+  return {
+    dir,
+    name: name === undefined ? dir || "." : String(name),
+    scripts: Object.keys(scripts),
+  } satisfies Package | undefined;
 };

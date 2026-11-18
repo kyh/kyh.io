@@ -6,6 +6,7 @@ import { addChunk } from "@/lib/recordings";
 import { errorResponse, readBody, requireOwner } from "@/lib/route";
 import { OWNER_SOURCE_ID } from "@/lib/source-kinds";
 
+// WARNING: only the station's own Blob store; any other URL lets a replay play whatever someone points it at.
 const inOwnStore = (url: string) => {
   try {
     return new URL(url).hostname.endsWith(".public.blob.vercel-storage.com");

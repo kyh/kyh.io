@@ -48,18 +48,19 @@ const MOST_LEAP = 120;
 const restAt = (hang: Hang, index: number) => {
   const rest = index === 0 ? { x: 0, y: 0 } : (hang.rest[index - 1] ?? { x: 0, y: 0 });
 
-  return { x: hang.root.x + rest.x, y: hang.root.y + rest.y };
+  return { x: hang.root.x + rest.x, y: hang.root.y + rest.y } satisfies Point;
 };
 
-export const createChain = (hang: Hang) => ({
-  knots: Array.from({ length: hang.rest.length + 1 }, (_, index) => {
-    const { x, y } = restAt(hang, index);
+export const createChain = (hang: Hang) =>
+  ({
+    knots: Array.from({ length: hang.rest.length + 1 }, (_, index) => {
+      const { x, y } = restAt(hang, index);
 
-    return { px: x, py: y, x, y };
-  }),
-  lead: { x: 0, y: 0 },
-  owed: 0,
-});
+      return { px: x, py: y, x, y };
+    }),
+    lead: { x: 0, y: 0 },
+    owed: 0,
+  }) satisfies Chain;
 
 const linksOf = (hang: Hang) =>
   hang.rest.map((rest, index) => {
@@ -227,7 +228,7 @@ export const hangOf = (points: readonly Point[], origin: Point, size = 1) => {
   return {
     rest: rest.map((point) => ({ x: (point.x - root.x) * size, y: (point.y - root.y) * size })),
     root: { x: origin.x + root.x * size, y: origin.y + root.y * size },
-  };
+  } satisfies Hang;
 };
 
 /** A knock to a chain, pixels a second, felt more toward its tip: a gobble's shake, a poke. */

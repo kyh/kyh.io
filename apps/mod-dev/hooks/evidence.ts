@@ -66,7 +66,10 @@ const labelOf = (use: Use) => {
 
 const tailOf = (output: string) => output.trimEnd().split("\n").slice(-8).join("\n").slice(-600);
 
-export const usesOf = (rows: readonly Row[], agents: ReadonlyMap<string, readonly Row[]>) =>
+export const usesOf: (
+  rows: readonly Row[],
+  agents: ReadonlyMap<string, readonly Row[]>,
+) => Use[] = (rows, agents) =>
   rows.flatMap((row) =>
     row.toolUses.flatMap((use) => {
       const calls = use.agentId === undefined ? undefined : agents.get(use.agentId);
@@ -115,14 +118,14 @@ export const stateOf = (
   const last = ledger.steps.findLast((step) => step.kinds.includes(kind) && isFor(step));
 
   if (last === undefined) {
-    return "none";
+    return "none" satisfies State;
   }
 
   if (last.index < ledger.lastEdit) {
-    return "stale";
+    return "stale" satisfies State;
   }
 
-  return last.isPassed ? "pass" : "fail";
+  return (last.isPassed ? "pass" : "fail") satisfies State;
 };
 
 export const statusOf = (ledger: Ledger) => {

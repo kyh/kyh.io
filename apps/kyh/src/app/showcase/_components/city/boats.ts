@@ -54,20 +54,21 @@ const loopOf = (index: number) => {
     },
     speed: (0.012 + index * 0.004) * direction,
     start: index * 2.1,
-  };
+  } satisfies Course;
 };
 
-const ferryOf = (pier: { x: number; z: number; d: number }) => ({
-  at: (u) => ({
-    heading: Math.cos(u) > 0 ? -Math.PI / 2 : Math.PI / 2,
-    held: false,
-    x: pier.x + 1,
-    y: -0.02,
-    z: pier.z + pier.d + 0.6 + ((Math.sin(u) + 1) / 2) * 9,
-  }),
-  speed: 0.06,
-  start: 0,
-});
+const ferryOf = (pier: { x: number; z: number; d: number }) =>
+  ({
+    at: (u) => ({
+      heading: Math.cos(u) > 0 ? -Math.PI / 2 : Math.PI / 2,
+      held: false,
+      x: pier.x + 1,
+      y: -0.02,
+      z: pier.z + pier.d + 0.6 + ((Math.sin(u) + 1) / 2) * 9,
+    }),
+    speed: 0.06,
+    start: 0,
+  }) satisfies Course;
 
 const along = (course: Course, time: number, phase: number) =>
   course.at(time * course.speed + course.start + phase, time);
@@ -119,7 +120,7 @@ export const createBoats = (pier: { x: number; z: number; d: number } | null) =>
         x: boat.held.spot.x,
         y: boat.held.altitude,
         z: boat.held.spot.z,
-      };
+      } satisfies BoatPose;
     }
 
     if (boat.kind === "sailing") {
@@ -137,7 +138,7 @@ export const createBoats = (pier: { x: number; z: number; d: number } | null) =>
         x: lerp(boat.from.x, boat.to.x, k),
         y: lerp(boat.from.y, boat.to.y, t * t) + Math.sin(t * Math.PI) * 0.25,
         z: lerp(boat.from.z, boat.to.z, k),
-      };
+      } satisfies BoatPose;
     }
 
     const settle = (time - boat.start - boat.flight) / REJOIN;
@@ -156,7 +157,7 @@ export const createBoats = (pier: { x: number; z: number; d: number } | null) =>
       x: lerp(boat.to.x, course.x, k),
       y: course.y,
       z: lerp(boat.to.z, course.z, k),
-    };
+    } satisfies BoatPose;
   };
 
   return {

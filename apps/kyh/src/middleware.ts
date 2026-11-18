@@ -7,6 +7,7 @@ import { discoveryLinks } from "@/lib/openapi";
 export const middleware = (req: NextRequest) => {
   if (acceptsMarkdown(req.headers.get("accept"))) {
     const res = NextResponse.rewrite(new URL("/markdown", req.url));
+    // WARNING: append Vary, never set it: setting drops Next's own keys and a CDN serves HTML and Markdown to the wrong client.
     res.headers.append("Vary", "Accept");
 
     return res;

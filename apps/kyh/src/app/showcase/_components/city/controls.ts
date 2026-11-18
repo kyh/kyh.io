@@ -168,13 +168,15 @@ export const createPresses = () => {
           dy: (y - previous.y) / 2,
           kind: "pinch",
           zoom,
-        };
+        } satisfies PressMove | null;
       }
 
       const started = !dragged && Math.hypot(x - from.x, y - from.y) > DRAG_THRESHOLD;
       dragged ||= started;
 
-      return dragged ? { dx: x - previous.x, dy: y - previous.y, kind: "drag", started } : null;
+      return (
+        dragged ? { dx: x - previous.x, dy: y - previous.y, kind: "drag", started } : null
+      ) satisfies PressMove | null;
     },
     press: (id: number, x: number, y: number) => {
       down.set(id, { x, y });
@@ -195,10 +197,10 @@ export const createPresses = () => {
       spread = 0;
 
       if (dragged) {
-        return "drag";
+        return "drag" satisfies "tap" | "drag" | null;
       }
 
-      return button === 0 ? "tap" : null;
+      return (button === 0 ? "tap" : null) satisfies "tap" | "drag" | null;
     },
   };
 };
@@ -221,16 +223,16 @@ export const keyMove = (key: string) => {
   const pan = KEY_PANS.get(key);
 
   if (pan) {
-    return { dx: pan[0], dy: pan[1], kind: "pan" };
+    return { dx: pan[0], dy: pan[1], kind: "pan" } satisfies KeyMove | null;
   }
 
   if (key === "[" || key === "]") {
-    return { by: key === "]" ? 1 : -1, kind: "turn" };
+    return { by: key === "]" ? 1 : -1, kind: "turn" } satisfies KeyMove | null;
   }
 
   if (key === "+" || key === "=") {
-    return { factor: 1.25, kind: "zoom" };
+    return { factor: 1.25, kind: "zoom" } satisfies KeyMove | null;
   }
 
-  return key === "-" ? { factor: 1 / 1.25, kind: "zoom" } : null;
+  return (key === "-" ? { factor: 1 / 1.25, kind: "zoom" } : null) satisfies KeyMove | null;
 };

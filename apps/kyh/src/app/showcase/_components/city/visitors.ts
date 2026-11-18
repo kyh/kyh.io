@@ -161,11 +161,11 @@ export const createVisitors = (
 
   const nearby = doors.map((door, index) =>
     doors
-      .map((other, otherIndex) => ({
-        distance: Math.hypot(other.x - door.x, other.z - door.z),
-        otherIndex,
-      }))
-      .filter(({ otherIndex }) => otherIndex !== index)
+      .flatMap((other, otherIndex) =>
+        otherIndex === index
+          ? []
+          : [{ distance: Math.hypot(other.x - door.x, other.z - door.z), otherIndex }],
+      )
       .toSorted((a, b) => a.distance - b.distance)
       .slice(0, 5)
       .map(({ otherIndex }) => otherIndex),

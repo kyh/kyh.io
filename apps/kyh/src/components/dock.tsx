@@ -20,11 +20,7 @@ const ThemeBloom = lazy(async () => {
   return { default: loaded };
 });
 
-const fetchBloom = async () => {
-  try {
-    await loadBloom();
-  } catch {}
-};
+const fetchBloom = () => loadBloom().catch(() => null);
 
 const HOLD_MS = 450;
 
@@ -341,7 +337,6 @@ export const Dock = () => {
           }}
         >
           <DockItem label={themeLabel} mouseX={mouseX} hovered={hovered === "theme"}>
-            {}
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={plain ? "plain" : appearance.theme}

@@ -4,9 +4,7 @@ import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 
 export const playQuietly = async (video: HTMLVideoElement) => {
-  try {
-    await video.play();
-  } catch {}
+  await video.play().catch(() => null);
 };
 
 export const useVideoPlayback = (muted: boolean, paused: boolean) => {

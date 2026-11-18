@@ -120,7 +120,7 @@ const solid = (name: string, outline: Ellipse) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
 const massOf = ({ place, turn }: Frame, center: Vec3, radii: Vec3, puff: number) => {
@@ -396,7 +396,11 @@ export const fleshOf = (turkey: Turkey) => {
   const frame = frameOf(turkey);
   const { snood, wattle } = headOf(turkey, frame);
 
-  return { beard: hanging(beardOf(frame)), snood: hanging(snood), wattle: hanging(wattle) };
+  return {
+    beard: hanging(beardOf(frame)),
+    snood: hanging(snood),
+    wattle: hanging(wattle),
+  } satisfies Record<"beard" | "snood" | "wattle", { floor: number; points: Point[] }>;
 };
 
 const legOf = (turkey: Turkey, frame: Frame, index: number) => {
@@ -469,20 +473,26 @@ const layersOf = (
     ["neck", neckDepth],
     ["head", headDepth],
     ["face", faceDepth],
-    ...wings.map(({ facing: side }, index) => [
-      `wing-${index}`,
-      torsoDepth +
-        (turkey.wingOver[index] ? 1 : -1) * (0.01 + 6 * Math.abs(side - OVER_BODY)) +
-        index * 1e-3,
-    ]),
-    ...feathers.map(({ edge }, index) => [
-      `feather-${index}`,
-      tailDepth + (1 - edge + index * 1e-3) * 1e-2,
-    ]),
-    ...legs.map(({ depth }, index) => [
-      `leg-${index}`,
-      torsoDepth - 1 + (depth - torsoDepth) * 0.01,
-    ]),
+    ...wings.map(
+      ({ facing: side }, index) =>
+        [
+          `wing-${index}`,
+          torsoDepth +
+            (turkey.wingOver[index] ? 1 : -1) * (0.01 + 6 * Math.abs(side - OVER_BODY)) +
+            index * 1e-3,
+        ] satisfies [string, number],
+    ),
+    ...feathers.map(
+      ({ edge }, index) =>
+        [`feather-${index}`, tailDepth + (1 - edge + index * 1e-3) * 1e-2] satisfies [
+          string,
+          number,
+        ],
+    ),
+    ...legs.map(
+      ({ depth }, index) =>
+        [`leg-${index}`, torsoDepth - 1 + (depth - torsoDepth) * 0.01] satisfies [string, number],
+    ),
   ];
 
   return layers.toSorted((a, b) => a[1] - b[1]).map(([name]) => name);
@@ -505,18 +515,27 @@ export const turkeyPose = (turkey: Turkey) => {
     ["beard", { d: chainPath(turkey.beard, turkey.walker, SIZE), opacity: beardShown }],
     ["beard-mid", { d: tipPath(turkey.beard, turkey.walker, 2), opacity: beardShown }],
     ["beard-tip", { d: tipPath(turkey.beard, turkey.walker, 4), opacity: beardShown }],
-    ...wings.flatMap(({ bars, drawnOut, edge, outline, primaries }, index) => [
-      ...solid(`wing-${index}`, outline),
-      [`wing-ink-${index}`, { d: ellipsePath(outline), opacity: turkey.wingOver[index] ? 0 : 1 }],
-      [`wing-edge-${index}`, { d: edge, opacity: turkey.wingOver[index] ? 1 : 0 }],
-      [`primaries-${index}`, { d: primaries, opacity: drawnOut > 0 ? 1 : 0 }],
-      [`bars-${index}`, { d: bars, opacity: drawnOut > 0 ? 1 : 0 }],
-    ]),
-    ...feathers.flatMap(({ band, tip, whole }, index) => [
-      [`feather-${index}`, { d: whole }],
-      [`band-${index}`, { d: band }],
-      [`tip-${index}`, { d: tip }],
-    ]),
+    ...wings.flatMap(
+      ({ bars, drawnOut, edge, outline, primaries }, index) =>
+        [
+          ...solid(`wing-${index}`, outline),
+          [
+            `wing-ink-${index}`,
+            { d: ellipsePath(outline), opacity: turkey.wingOver[index] ? 0 : 1 },
+          ],
+          [`wing-edge-${index}`, { d: edge, opacity: turkey.wingOver[index] ? 1 : 0 }],
+          [`primaries-${index}`, { d: primaries, opacity: drawnOut > 0 ? 1 : 0 }],
+          [`bars-${index}`, { d: bars, opacity: drawnOut > 0 ? 1 : 0 }],
+        ] satisfies [string, Part][],
+    ),
+    ...feathers.flatMap(
+      ({ band, tip, whole }, index) =>
+        [
+          [`feather-${index}`, { d: whole }],
+          [`band-${index}`, { d: band }],
+          [`tip-${index}`, { d: tip }],
+        ] satisfies [string, Part][],
+    ),
     ["neck", { d: head.neck.whole, opacity: neckShown }],
     ["neck-low", { d: head.neck.low, opacity: neckShown }],
     ["neck-base", { d: head.neck.base, opacity: neckShown }],
@@ -532,13 +551,16 @@ export const turkeyPose = (turkey: Turkey) => {
     ["beak", { d: head.beak }],
     ["snood", { d: chainPath(turkey.snood, turkey.walker, SIZE) }],
     ["wattle", { d: chainPath(turkey.wattle, turkey.walker, SIZE) }],
-    ...legs.flatMap(({ drumstick, lit, shank, toes }, index) => [
-      [`drumstick-${index}`, { d: drumstick }],
-      [`shank-${index}`, { d: shank }],
-      [`toes-${index}`, { d: toes }],
-      [`shank-lit-${index}`, { d: shank, opacity: lit }],
-      [`toes-lit-${index}`, { d: toes, opacity: lit }],
-    ]),
+    ...legs.flatMap(
+      ({ drumstick, lit, shank, toes }, index) =>
+        [
+          [`drumstick-${index}`, { d: drumstick }],
+          [`shank-${index}`, { d: shank }],
+          [`toes-${index}`, { d: toes }],
+          [`shank-lit-${index}`, { d: shank, opacity: lit }],
+          [`toes-lit-${index}`, { d: toes, opacity: lit }],
+        ] satisfies [string, Part][],
+    ),
   ]) satisfies Record<string, Part>;
 
   const layers = layersOf(turkey, frame, { feathers, legs, torsoDepth, wings });
@@ -551,5 +573,5 @@ export const turkeyPose = (turkey: Turkey) => {
     order: layers,
     parts,
     say: turkey.emotes.line,
-  };
+  } satisfies Pose;
 };

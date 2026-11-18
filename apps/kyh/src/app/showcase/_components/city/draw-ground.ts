@@ -8,12 +8,13 @@ import { box, face, ground, line } from "./sketch";
 const ROAD_Y = 0.01;
 const CURB = paint("paving", "wallLeft", "wallRight");
 
-const flatRect = (rect: Rect, y: number) => [
-  [rect.x, y, rect.z],
-  [rect.x + rect.w, y, rect.z],
-  [rect.x + rect.w, y, rect.z + rect.d],
-  [rect.x, y, rect.z + rect.d],
-];
+const flatRect = (rect: Rect, y: number) =>
+  [
+    [rect.x, y, rect.z],
+    [rect.x + rect.w, y, rect.z],
+    [rect.x + rect.w, y, rect.z + rect.d],
+    [rect.x, y, rect.z + rect.d],
+  ] satisfies Vec3[];
 
 const drawWaves = (sketch: Sketch, random: Random) => {
   for (let index = 0; index < 260; index += 1) {
@@ -39,9 +40,9 @@ const drawWaves = (sketch: Sketch, random: Random) => {
 };
 
 const roadRect = (from: Junction, to: Junction, axis: "x" | "z") =>
-  axis === "x"
+  (axis === "x"
     ? { d: 1, w: to.x - from.x - 1, x: from.x + 0.5, z: from.z - 0.5 }
-    : { d: to.z - from.z - 1, w: 1, x: from.x - 0.5, z: from.z + 0.5 };
+    : { d: to.z - from.z - 1, w: 1, x: from.x - 0.5, z: from.z + 0.5 }) satisfies Rect;
 
 const drawRoad = (sketch: Sketch, rect: Rect, axis: "x" | "z") => {
   face(sketch, "road", flatRect(rect, ROAD_Y), null);

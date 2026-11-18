@@ -55,7 +55,8 @@ const STEPS_AT = 0.3;
 const SHUFFLE = 13;
 const UP = 0.25;
 
-export const createGo = () => ({ behind: 0, fast: 0, going: "walk", mouse: 0, since: 0 });
+export const createGo = () =>
+  ({ behind: 0, fast: 0, going: "walk", mouse: 0, since: 0 }) satisfies Go;
 
 const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
 

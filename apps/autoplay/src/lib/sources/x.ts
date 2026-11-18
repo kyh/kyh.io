@@ -9,7 +9,7 @@ import {
 } from "@/lib/x-api";
 import type { FeedPage, FeedPost } from "@/lib/x-api";
 import { bestOf } from "./types";
-import type { AccessOf, Item, SourceContext } from "./types";
+import type { AccessOf, SourceContext, Item } from "./types";
 
 const USD_PER_TIMELINE_POST = 0.005;
 const USD_PER_OWN_POST = 0.001;
@@ -44,15 +44,29 @@ const searchKey = (trend: string) => `x:search:${trend}`;
 
 export const xItemId = (postId: string) => `x:${postId}`;
 
-const toItem = (post: FeedPost) => ({
-  ...post,
-  id: xItemId(post.id),
-  kind: "x",
-  link: `https://x.com/${post.author.username}/status/${post.id}`,
-});
+const toItem = (post: FeedPost) =>
+  ({
+    ...post,
+    id: xItemId(post.id),
+    kind: "x",
+    link: `https://x.com/${post.author.username}/status/${post.id}`,
+  }) satisfies Item;
 
 const pageUsd = (page: FeedPage) =>
   page.posts.length * (page.source === "home" ? USD_PER_TIMELINE_POST : USD_PER_OWN_POST);
+
+const searchFresh = async (
+  { cache, spend }: SourceContext,
+  accessToken: string,
+  sourceId: string,
+  trend: string,
+) => {
+  const posts = await searchTrendPosts(accessToken, trend, MIN_LIKES);
+  await spend.record("x", sourceId, posts.length * USD_PER_SEARCH_POST);
+  await cache.set(searchKey(trend), posts, SEARCH_CACHE_TTL_MS);
+
+  return posts;
+};
 
 const pickTrendCandidate = async (
   access: AccessOf<"x">,
@@ -86,19 +100,17 @@ const pickTrendCandidate = async (
     return;
   }
 
+  let posts: z.infer<typeof searchSchema>;
+
   try {
-    let posts = await cache.get(searchKey(trend), searchSchema);
-
-    if (posts === undefined) {
-      posts = await searchTrendPosts(access.accessToken, trend, MIN_LIKES);
-      await spend.record("x", sourceId, posts.length * USD_PER_SEARCH_POST);
-      await cache.set(searchKey(trend), posts, SEARCH_CACHE_TTL_MS);
-    }
-
-    return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id)));
+    posts =
+      (await cache.get(searchKey(trend), searchSchema)) ??
+      (await searchFresh(context, access.accessToken, sourceId, trend));
   } catch {
     return;
   }
+
+  return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id)));
 };
 
 const pickTimelineCandidate = async (

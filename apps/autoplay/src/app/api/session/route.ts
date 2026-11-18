@@ -13,10 +13,10 @@ import { ensureSources, isOwnerHandle, listChannels } from "@/lib/lineup";
 
 const googleFor = (owner: boolean) => {
   if (!googleConfigured) {
-    return "unconfigured";
+    return "unconfigured" satisfies SessionPayload["google"];
   }
 
-  return googleOpenToAll || owner ? "ready" : "owner-only";
+  return (googleOpenToAll || owner ? "ready" : "owner-only") satisfies SessionPayload["google"];
 };
 
 export const GET = async () => {

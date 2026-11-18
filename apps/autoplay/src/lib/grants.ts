@@ -5,11 +5,7 @@ export const googleAccessToken = async (accountId: string, userId: string) => {
     return;
   }
 
-  try {
-    const tokens = await auth.api.getAccessToken({ body: { accountId, userId } });
+  const tokens = await auth.api.getAccessToken({ body: { accountId, userId } }).catch(() => null);
 
-    return tokens.accessToken ?? undefined;
-  } catch {
-    return;
-  }
+  return tokens?.accessToken ?? undefined;
 };

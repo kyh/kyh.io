@@ -90,19 +90,20 @@ const homeOf = (steps: Steps, index: number, body: Point, heading: number) => {
   return {
     x: body.x + home.ahead * cos - home.left * sin,
     y: body.y + (home.ahead * sin + home.left * cos) * SIN,
-  };
+  } satisfies Point;
 };
 
-export const createFeet = (steps: Steps, body: Point, heading: number) => ({
-  cadence: 0,
-  feet: steps.homes.map((_, index) => {
-    const { x, y } = homeOf(steps, index, body, heading);
+export const createFeet = (steps: Steps, body: Point, heading: number) =>
+  ({
+    cadence: 0,
+    feet: steps.homes.map((_, index) => {
+      const { x, y } = homeOf(steps, index, body, heading);
 
-    return { from: { x, y }, lift: 0, planted: true, stride: -1, swing: 0, turn: heading, x, y };
-  }),
-  phase: 0,
-  was: { x: body.x, y: body.y },
-});
+      return { from: { x, y }, lift: 0, planted: true, stride: -1, swing: 0, turn: heading, x, y };
+    }),
+    phase: 0,
+    was: { x: body.x, y: body.y },
+  }) satisfies Feet;
 
 const cadenceOf = (
   feet: Feet,
@@ -275,11 +276,8 @@ export const stepFeet = (
  * A foot in a pose's own 3D (x right, y up, z toward the camera, `solid.ts`),
  * about the screen point `origin` its drawing's about, in a drawing scaled by `size`.
  */
-export const footIn = (foot: Foot, origin: Point, size = 1) => [
-  (foot.x - origin.x) / size,
-  foot.lift / size,
-  (foot.y - origin.y) / SIN / size,
-];
+export const footIn = (foot: Foot, origin: Point, size = 1) =>
+  [(foot.x - origin.x) / size, foot.lift / size, (foot.y - origin.y) / SIN / size] satisfies Vec3;
 
 /**
  * A two-boned leg in 3D from `hip` toward `foot`, bones `upper` and `lower`

@@ -1,6 +1,6 @@
 import type { Footprint } from "./draw-kit";
 import type { DrawLandmark, Site } from "./landmark";
-import type { Point2, Sketch, Triangle, Vec3 } from "./sketch";
+import type { Point2, Sketch, Vec3 } from "./sketch";
 import {
   bench,
   board,

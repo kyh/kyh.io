@@ -50,7 +50,7 @@ export const itemKind = (itemId: string) => {
   const prefix = itemId.slice(0, itemId.indexOf(":"));
   const parsed = sourceKindSchema.safeParse(prefix);
 
-  return parsed.success ? parsed.data : "x";
+  return (parsed.success ? parsed.data : "x") satisfies SourceKind;
 };
 
 export const bestOf = (items: Item[]) => {

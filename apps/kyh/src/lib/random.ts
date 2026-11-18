@@ -42,7 +42,7 @@ export const createRandom = (seed: number) => {
       return item;
     },
     range,
-  };
+  } satisfies Random;
 };
 
 /**

@@ -14,7 +14,7 @@ const GONE = 43;
 export type Rig = Pick<Built, "parts" | "screens">;
 
 const toneFor = (colorful: boolean, scheme: Scheme) =>
-  colorful ? (hex) => hex : (hex) => greyIn(hex, scheme);
+  (colorful ? (hex) => hex : (hex) => greyIn(hex, scheme)) satisfies Tint;
 
 const family = (built: Rig, prefix: string) =>
   [...built.parts.entries()]
@@ -316,5 +316,5 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
         drawLedger(ledger, time, toneFor(lit("idlebiz"), scheme));
       }
     },
-  };
+  } satisfies Animations;
 };

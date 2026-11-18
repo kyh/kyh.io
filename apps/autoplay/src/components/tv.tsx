@@ -275,6 +275,7 @@ const TvScreen = (props: ScreenProps) => {
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const testStream = useSyncExternalStore(
+    // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
     () => () => {},
     testStreamRequested,
     () => false,
@@ -322,7 +323,6 @@ const TvScreen = (props: ScreenProps) => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col p-1">
-        {}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
           {surface === "live" && liveReady && (
             <LiveScreen
@@ -366,7 +366,6 @@ const TvScreen = (props: ScreenProps) => {
           )}
         </div>
 
-        {}
         <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <PlaybackControls
             playing={playing}

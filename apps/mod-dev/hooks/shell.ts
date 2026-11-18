@@ -175,7 +175,7 @@ const dropOptions = (words: readonly string[]) => {
   return words.slice(at);
 };
 
-export const unwrap = (words: readonly string[]) => {
+export const unwrap: (words: readonly string[]) => readonly string[] = (words) => {
   const [first = "", second = ""] = words;
 
   if (ASSIGNMENT.test(first)) {

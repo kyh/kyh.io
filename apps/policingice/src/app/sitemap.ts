@@ -32,5 +32,5 @@ export default async function sitemap() {
     url: `${siteUrl}/incident/${incident.id}`,
   }));
 
-  return [...staticPages, ...incidentPages];
+  return [...staticPages, ...incidentPages] satisfies MetadataRoute.Sitemap;
 }

@@ -17,24 +17,24 @@ export const idle: Run = { kind: "idle", last: null };
 export const isActive = (run: Run) => run.kind !== "idle";
 
 export const startTurn = (run: Run, now: number) =>
-  run.kind === "idle"
+  (run.kind === "idle"
     ? { kind: "live", startedAt: now, tokens: 0 }
-    : { kind: "live", startedAt: run.startedAt, tokens: run.tokens };
+    : { kind: "live", startedAt: run.startedAt, tokens: run.tokens }) satisfies Run;
 
 export const addTokens = (run: Run, tokens: number) =>
-  run.kind === "idle" ? run : { ...run, tokens: run.tokens + tokens };
+  (run.kind === "idle" ? run : { ...run, tokens: run.tokens + tokens }) satisfies Run;
 
 export const endTurn = (run: Run, now: number) =>
-  run.kind === "live" ? { ...run, endsAt: now + GRACE_MS, kind: "ending" } : run;
+  (run.kind === "live" ? { ...run, endsAt: now + GRACE_MS, kind: "ending" } : run) satisfies Run;
 
 export const resultOf = (run: Run, now: number, coins: number) =>
-  run.kind === "ending" && now >= run.endsAt
+  (run.kind === "ending" && now >= run.endsAt
     ? {
         coins,
         seconds: Math.round((run.endsAt - GRACE_MS - run.startedAt) / 1000),
         tokens: run.tokens,
       }
-    : null;
+    : null) satisfies Omit<Result, "rank"> | null;
 
 const tokensOf = (count: number) => `${count.toLocaleString("en-US")} tokens`;
 

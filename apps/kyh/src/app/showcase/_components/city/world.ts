@@ -1,9 +1,8 @@
 import type { CityPlan, Rect } from "./plan";
-import type { Pose } from "./traffic";
 import { createCrowd, createTraffic, roadGraph, sidewalkGraph, TICK } from "./traffic";
 import { createVisitors, doorsOf } from "./visitors";
 
-/** Bumped whenever the town steps or packs differently, so old and new pages never share a room. */
+// WARNING: bump on any change to stepping or packing; rooms are named by it and mixed versions desync.
 export const TOWN_VERSION = 1;
 
 export const CARS = 48;
@@ -29,7 +28,7 @@ export const parseActorKey = (key: string) => {
     return null;
   }
 
-  return { index, kind };
+  return { index, kind } satisfies { kind: ActorKind; index: number } | null;
 };
 
 const numbers = (part: string) => (part === "" ? [] : part.split(",").map(Number));

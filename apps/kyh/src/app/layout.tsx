@@ -77,7 +77,7 @@ export const generateMetadata = async () => {
       images: [video.poster],
       title: siteConfig.name,
     },
-  };
+  } satisfies Metadata;
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (

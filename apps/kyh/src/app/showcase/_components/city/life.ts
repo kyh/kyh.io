@@ -15,7 +15,7 @@ import { createNet } from "./net";
 import type { Said } from "@/lib/chat";
 import { lineOf, SHOW_MS } from "@/lib/chat";
 import { ownColor } from "@/lib/color";
-import type { Ground, Held } from "./carry";
+import type { Held, Ground } from "./carry";
 import { carryTo, flightOf, HANG, LIFT, pickUp, RAISE, shadowFor, throwOf } from "./carry";
 import { createOverlay } from "./overlay";
 import { quoteFor } from "./quotes";
@@ -143,7 +143,7 @@ export const createLife = (options: LifeOptions) => {
   }
 
   const { surfaceAt } = options;
-  const underfoot = () => ({ surfaceAt, view: options.view() });
+  const underfoot = () => ({ surfaceAt, view: options.view() }) satisfies Ground;
   let held: Held | null = null;
   const theirs = new Map<string, string>();
   const air = new Map<string, Air>();

@@ -250,7 +250,7 @@ export const rainbow = (sketch: Sketch, x: number, z: number, radius: number) =>
     const points = Array.from({ length: 17 }, (_, step) => {
       const angle = (step / 16) * Math.PI;
 
-      return [center - Math.cos(angle) * r, GROUND + Math.sin(angle) * r, z];
+      return [center - Math.cos(angle) * r, GROUND + Math.sin(angle) * r, z] satisfies Vec3;
     });
 
     line(sketch, points, "bold", token);

@@ -17,17 +17,18 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
-export const generateMetadata = async () => ({
-  ...(await todaysPageMetadata({
-    description: siteConfig.description,
-    path: "/",
-    title: siteConfig.name,
-  })),
-  alternates: {
-    canonical: "/",
-    types: { "text/markdown": "/markdown" },
-  },
-});
+export const generateMetadata = async () =>
+  ({
+    ...(await todaysPageMetadata({
+      description: siteConfig.description,
+      path: "/",
+      title: siteConfig.name,
+    })),
+    alternates: {
+      canonical: "/",
+      types: { "text/markdown": "/markdown" },
+    },
+  }) satisfies Metadata;
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">

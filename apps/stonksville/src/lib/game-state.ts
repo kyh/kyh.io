@@ -56,13 +56,14 @@ export const priceToLevel = (price: number) => Math.log(price) / LEVEL_STEP;
 
 export const levelToPrice = (level: number) => Math.exp(level * LEVEL_STEP);
 
-export const createInitialState = () => ({
-  balance: INITIAL_BALANCE,
-  blocks: [],
-  totalLosses: 0,
-  totalProfit: 0,
-  totalWins: 0,
-});
+export const createInitialState: () => GameState = () =>
+  ({
+    balance: INITIAL_BALANCE,
+    blocks: [],
+    totalLosses: 0,
+    totalProfit: 0,
+    totalWins: 0,
+  }) satisfies GameState;
 
 /**
  * Calculate multiplier based on distance from current price.
@@ -148,7 +149,7 @@ export const placeBlock = (
     ...state,
     balance: state.balance - DEFAULT_BET,
     blocks: [...state.blocks, block],
-  };
+  } satisfies GameState;
 };
 
 const crossedBand = (
@@ -282,5 +283,5 @@ export const updateBlocks = (
     totalLosses: state.totalLosses + losses,
     totalProfit: state.totalProfit + balanceChange,
     totalWins: state.totalWins + wins,
-  };
+  } satisfies GameState;
 };

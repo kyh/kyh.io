@@ -45,8 +45,6 @@ const colors = {
 
 type ColorName = keyof typeof colors;
 
-type Color = (typeof colors)[ColorName];
-
 const COLOR_NAMES = Object.keys(colors).filter((name): name is ColorName => name in colors);
 
 /** A palette color by the name a visitor sent; anything else is no color. */
@@ -94,7 +92,8 @@ export const subscribeToOwnColor = (listener: () => void) => {
   };
 };
 
-/** A visitor's colors: the palette color they name in their state, else the one their room gave them. */
+type Color = (typeof colors)[ColorName];
+
 export const lookOf = (
   state: { look?: JsonValue } | undefined,
   player: { color?: string; hue?: string },
@@ -104,5 +103,5 @@ export const lookOf = (
   return {
     color: named?.color ?? player.color ?? colors.blue.color,
     hue: named?.hue ?? player.hue ?? colors.blue.hue,
-  };
+  } satisfies Color;
 };

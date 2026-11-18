@@ -35,7 +35,7 @@ export const orderStops = (stops: readonly Stop[]) => {
     .filter((stop) => screenV(stop) < median)
     .toSorted((a, b) => screenU(b) - screenU(a));
 
-  return [...near, ...far];
+  return [...near, ...far] satisfies Stop[];
 };
 
 const catmullRom = (p0: number, p1: number, p2: number, p3: number, t: number) =>
@@ -139,5 +139,5 @@ export const createTour = (stops: readonly Stop[]) => {
 
       return best;
     },
-  };
+  } satisfies Tour | null;
 };

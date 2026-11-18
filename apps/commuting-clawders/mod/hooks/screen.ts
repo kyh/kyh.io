@@ -45,7 +45,10 @@ const count = (headers: Readonly<Record<string, string>>, name: string) => {
   return Number.isInteger(value) && value >= 0 ? value : Number.NaN;
 };
 
-export const parseFrame = (headers: Readonly<Record<string, string>>, body: string) => {
+export const parseFrame: (
+  headers: Readonly<Record<string, string>>,
+  body: string,
+) => Frame | null = (headers, body) => {
   const numbers = {
     coins: count(headers, "coins"),
     columns: count(headers, "columns"),

@@ -186,7 +186,7 @@ const createTurkey = (at: Point) => {
     walker,
     wattle: createChain({ rest: [], root: at }),
     wingOver: [false, false],
-  };
+  } satisfies Turkey;
 };
 
 const begin = (turkey: Turkey, act: Act) => {

@@ -1,9 +1,8 @@
 import { useRef, useState, useLayoutEffect, useMemo, useCallback } from "react";
-import type { CSSProperties, RefObject } from "react";
+import type { RefObject, CSSProperties } from "react";
 import type {
   BadgeVariant,
   DegenOptions,
-  LivelinePalette,
   LivelineProps,
   LivelineSeries,
   Momentum,
@@ -60,22 +59,23 @@ const resolveAppearance = ({
   formatTime = defaultFormatTime,
   lerpSpeed = 0.08,
   cursor = "crosshair",
-}: LivelineProps) => ({
-  badge,
-  badgeTail,
-  badgeVariant,
-  color,
-  cursor,
-  fill,
-  formatTime,
-  formatValue,
-  grid,
-  lerpSpeed,
-  pulse,
-  theme,
-  tooltipOutline,
-  tooltipY,
-});
+}: LivelineProps) =>
+  ({
+    badge,
+    badgeTail,
+    badgeVariant,
+    color,
+    cursor,
+    fill,
+    formatTime,
+    formatValue,
+    grid,
+    lerpSpeed,
+    pulse,
+    theme,
+    tooltipOutline,
+    tooltipY,
+  }) satisfies Appearance;
 
 interface Behavior {
   windowSecs: number;
@@ -103,36 +103,38 @@ const resolveBehavior = ({
   mode = "line",
   seriesToggleCompact = false,
   windowStyle = "default",
-}: LivelineProps) => ({
-  exaggerate,
-  loading,
-  mode,
-  momentum,
-  paused,
-  scrub,
-  seriesToggleCompact,
-  showValue,
-  valueMomentumColor,
-  windowSecs,
-  windowStyle,
-});
+}: LivelineProps) =>
+  ({
+    exaggerate,
+    loading,
+    mode,
+    momentum,
+    paused,
+    scrub,
+    seriesToggleCompact,
+    showValue,
+    valueMomentumColor,
+    windowSecs,
+    windowStyle,
+  }) satisfies Behavior;
 
 interface MomentumSetting {
   showMomentum: boolean;
   momentumOverride: Momentum | undefined;
 }
 
-const resolveMomentum = (momentum: boolean | Momentum) => ({
-  momentumOverride: momentum === true || momentum === false ? undefined : momentum,
-  showMomentum: momentum !== false,
-});
+const resolveMomentum = (momentum: boolean | Momentum) =>
+  ({
+    momentumOverride: momentum === true || momentum === false ? undefined : momentum,
+    showMomentum: momentum !== false,
+  }) satisfies MomentumSetting;
 
 const resolveDegen = (degen: LivelineProps["degen"]) => {
   if (degen === true) {
-    return {};
+    return {} satisfies DegenOptions | undefined;
   }
 
-  return degen === false ? undefined : degen;
+  return (degen === false ? undefined : degen) satisfies DegenOptions | undefined;
 };
 
 const resolvePadding = (override: Padding | undefined, badge: boolean, grid: boolean) => {
@@ -149,7 +151,7 @@ const resolvePadding = (override: Padding | undefined, badge: boolean, grid: boo
     left: override?.left ?? 12,
     right: override?.right ?? defaultRight,
     top: override?.top ?? 12,
-  };
+  } satisfies Required<Padding>;
 };
 
 const initialWindowSecs = (windows: WindowOption[] | undefined, windowSecs: number) =>
@@ -169,10 +171,20 @@ const resolveSingleSeriesFeatures = (
   degenOptions: DegenOptions | undefined,
 ) => {
   if (isMultiSeries) {
-    return { degenOptions: undefined, showBadge: false, showFill: false, showMomentum: false };
+    return {
+      degenOptions: undefined,
+      showBadge: false,
+      showFill: false,
+      showMomentum: false,
+    } satisfies SingleSeriesFeatures;
   }
 
-  return { degenOptions, showBadge: look.badge, showFill: look.fill, showMomentum };
+  return {
+    degenOptions,
+    showBadge: look.badge,
+    showFill: look.fill,
+    showMomentum,
+  } satisfies SingleSeriesFeatures;
 };
 
 const usePalette = (color: string, theme: ThemeMode, lineWidth: number | undefined) =>
@@ -185,14 +197,6 @@ const usePalette = (color: string, theme: ThemeMode, lineWidth: number | undefin
 
     return p;
   }, [color, theme, lineWidth]);
-
-interface EngineSeries {
-  id: string;
-  data: LivelineSeries["data"];
-  value: number;
-  palette: LivelinePalette;
-  label?: string;
-}
 
 const useMultiSeries = (seriesProp: LivelineSeries[] | undefined, theme: ThemeMode) => {
   const seriesPalettes = useMemo(
@@ -294,36 +298,38 @@ const BAR_PADDING: Record<WindowStyle, number> = { default: 2, rounded: 3, text:
 
 const pillRadius = (ws: WindowStyle) => (ws === "rounded" ? 999 : 4);
 
-const barStyle = (ws: WindowStyle, colors: ChromeColors) => ({
-  background: ws === "text" ? "transparent" : colors.barBg,
-  borderRadius: ws === "rounded" ? 999 : 6,
-  display: "inline-flex",
-  gap: ws === "text" ? 4 : 2,
-  padding: BAR_PADDING[ws],
-});
+const barStyle = (ws: WindowStyle, colors: ChromeColors) =>
+  ({
+    background: ws === "text" ? "transparent" : colors.barBg,
+    borderRadius: ws === "rounded" ? 999 : 6,
+    display: "inline-flex",
+    gap: ws === "text" ? 4 : 2,
+    padding: BAR_PADDING[ws],
+  }) satisfies CSSProperties;
 
 interface IndicatorPos {
   left: number;
   width: number;
 }
 
-const indicatorStyle = (ws: WindowStyle, colors: ChromeColors, pos: IndicatorPos) => ({
-  background: colors.indicator,
-  borderRadius: pillRadius(ws),
-  height: ws === "rounded" ? "calc(100% - 6px)" : "calc(100% - 4px)",
-  left: pos.left,
-  pointerEvents: "none",
-  position: "absolute",
-  top: ws === "rounded" ? 3 : 2,
-  transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-  width: pos.width,
-});
+const indicatorStyle = (ws: WindowStyle, colors: ChromeColors, pos: IndicatorPos) =>
+  ({
+    background: colors.indicator,
+    borderRadius: pillRadius(ws),
+    height: ws === "rounded" ? "calc(100% - 6px)" : "calc(100% - 4px)",
+    left: pos.left,
+    pointerEvents: "none",
+    position: "absolute",
+    top: ws === "rounded" ? 3 : 2,
+    transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+    width: pos.width,
+  }) satisfies CSSProperties;
 
 const measureIndicator = (bar: HTMLDivElement, btn: HTMLButtonElement) => {
   const barRect = bar.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
 
-  return { left: btnRect.left - barRect.left, width: btnRect.width };
+  return { left: btnRect.left - barRect.left, width: btnRect.width } satisfies IndicatorPos;
 };
 
 const trackButton =
@@ -336,33 +342,35 @@ const trackButton =
     }
   };
 
-const windowButtonStyle = (ws: WindowStyle, colors: ChromeColors, isActive: boolean) => ({
-  background: "transparent",
-  border: "none",
-  borderRadius: pillRadius(ws),
-  color: isActive ? colors.active : colors.inactive,
-  cursor: "pointer",
-  fontFamily: "system-ui, -apple-system, sans-serif",
-  fontSize: 11,
-  fontWeight: isActive ? 600 : 400,
-  lineHeight: "16px",
-  padding: ws === "text" ? "2px 6px" : "3px 10px",
-  position: "relative",
-  transition: "color 0.2s, background 0.15s",
-  zIndex: 1,
-});
+const windowButtonStyle = (ws: WindowStyle, colors: ChromeColors, isActive: boolean) =>
+  ({
+    background: "transparent",
+    border: "none",
+    borderRadius: pillRadius(ws),
+    color: isActive ? colors.active : colors.inactive,
+    cursor: "pointer",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    fontSize: 11,
+    fontWeight: isActive ? 600 : 400,
+    lineHeight: "16px",
+    padding: ws === "text" ? "2px 6px" : "3px 10px",
+    position: "relative",
+    transition: "color 0.2s, background 0.15s",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
-const modeButtonStyle = (ws: WindowStyle) => ({
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  borderRadius: pillRadius(ws),
-  cursor: "pointer",
-  display: "flex",
-  padding: "5px 7px",
-  position: "relative",
-  zIndex: 1,
-});
+const modeButtonStyle = (ws: WindowStyle) =>
+  ({
+    alignItems: "center",
+    background: "transparent",
+    border: "none",
+    borderRadius: pillRadius(ws),
+    cursor: "pointer",
+    display: "flex",
+    padding: "5px 7px",
+    position: "relative",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
 const chipPadding = (ws: WindowStyle, compact: boolean) => {
   if (compact) {
@@ -372,35 +380,37 @@ const chipPadding = (ws: WindowStyle, compact: boolean) => {
   return ws === "text" ? "2px 6px" : "3px 8px";
 };
 
-const chipStyle = (ws: WindowStyle, colors: ChromeColors, isHidden: boolean, compact: boolean) => ({
-  alignItems: "center",
-  background: isHidden || ws === "text" ? "transparent" : colors.indicator,
-  border: "none",
-  borderRadius: pillRadius(ws),
-  color: isHidden ? colors.inactive : colors.active,
-  cursor: "pointer",
-  display: "flex",
-  fontFamily: "system-ui, -apple-system, sans-serif",
-  fontSize: 11,
-  fontWeight: 500,
-  gap: compact ? 0 : 4,
-  lineHeight: "16px",
-  opacity: isHidden ? 0.4 : 1,
-  padding: chipPadding(ws, compact),
-  position: "relative",
-  transition: "opacity 0.2s, background 0.15s, color 0.2s",
-  zIndex: 1,
-});
+const chipStyle = (ws: WindowStyle, colors: ChromeColors, isHidden: boolean, compact: boolean) =>
+  ({
+    alignItems: "center",
+    background: isHidden || ws === "text" ? "transparent" : colors.indicator,
+    border: "none",
+    borderRadius: pillRadius(ws),
+    color: isHidden ? colors.inactive : colors.active,
+    cursor: "pointer",
+    display: "flex",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    fontSize: 11,
+    fontWeight: 500,
+    gap: compact ? 0 : 4,
+    lineHeight: "16px",
+    opacity: isHidden ? 0.4 : 1,
+    padding: chipPadding(ws, compact),
+    position: "relative",
+    transition: "opacity 0.2s, background 0.15s, color 0.2s",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
-const chipDotStyle = (seriesColor: string, isHidden: boolean, compact: boolean) => ({
-  background: seriesColor,
-  borderRadius: "50%",
-  flexShrink: 0,
-  height: compact ? 8 : 6,
-  opacity: isHidden ? 0.4 : 1,
-  transition: "opacity 0.2s",
-  width: compact ? 8 : 6,
-});
+const chipDotStyle = (seriesColor: string, isHidden: boolean, compact: boolean) =>
+  ({
+    background: seriesColor,
+    borderRadius: "50%",
+    flexShrink: 0,
+    height: compact ? 8 : 6,
+    opacity: isHidden ? 0.4 : 1,
+    transition: "opacity 0.2s",
+    width: compact ? 8 : 6,
+  }) satisfies CSSProperties;
 
 interface ValueDisplayProps {
   valueRef: RefObject<HTMLSpanElement | null>;
@@ -587,18 +597,20 @@ const SeriesChips = ({
   </div>
 );
 
-const controlRowStyle = (marginLeft: number) => ({
-  alignItems: "center",
-  display: "flex",
-  gap: 6,
-  marginBottom: 6,
-  marginLeft,
-});
+const controlRowStyle = (marginLeft: number) =>
+  ({
+    alignItems: "center",
+    display: "flex",
+    gap: 6,
+    marginBottom: 6,
+    marginLeft,
+  }) satisfies CSSProperties;
 
-const canvasStyle = (scrub: boolean, cursor: string) => ({
-  cursor: scrub ? cursor : "default",
-  display: "block",
-});
+const canvasStyle = (scrub: boolean, cursor: string) =>
+  ({
+    cursor: scrub ? cursor : "default",
+    display: "block",
+  }) satisfies CSSProperties;
 
 export const Liveline = (props: LivelineProps) => {
   const {

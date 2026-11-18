@@ -25,10 +25,10 @@ export type Surface = "live" | "replay";
  * other channel is its viewer's own session or nothing.
  */
 export const surfaceOf = (channel: ChannelSummary, liveReady: boolean, live: LiveState) =>
-  channel.sourceId === OWNER_SOURCE_ID &&
+  (channel.sourceId === OWNER_SOURCE_ID &&
   (channel.mode !== "live" || !liveReady || live.status === "off-air")
     ? "replay"
-    : "live";
+    : "live") satisfies Surface;
 
 export type ScreenState =
   | { status: "tuning" }
@@ -46,30 +46,35 @@ export const screenState = (
 
   if (surface === "replay") {
     if (replay.status === "loading") {
-      return { status: "tuning" };
+      return { status: "tuning" } satisfies ScreenState;
     }
 
     if (replay.status === "empty") {
       return {
         reason: liveDown === undefined ? replay.reason : `${liveDown} ${replay.reason}`,
         status: "off-air",
-      };
+      } satisfies ScreenState;
     }
 
-    return replay.onAir ? { status: "live", tailing: true } : { liveDown, status: "replay" };
+    return (
+      replay.onAir ? { status: "live", tailing: true } : { liveDown, status: "replay" }
+    ) satisfies ScreenState;
   }
 
   if (!liveReady) {
-    return { reason: "The station can't go on air without fal.", status: "off-air" };
+    return {
+      reason: "The station can't go on air without fal.",
+      status: "off-air",
+    } satisfies ScreenState;
   }
 
   if (live.status === "connecting") {
-    return { status: "tuning" };
+    return { status: "tuning" } satisfies ScreenState;
   }
 
   if (live.status === "off-air") {
-    return { reason: live.reason, status: "off-air" };
+    return { reason: live.reason, status: "off-air" } satisfies ScreenState;
   }
 
-  return { status: "live", tailing: false };
+  return { status: "live", tailing: false } satisfies ScreenState;
 };

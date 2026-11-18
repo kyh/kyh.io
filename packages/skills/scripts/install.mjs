@@ -285,7 +285,10 @@ const skillsBin = () => {
     if (rel) {
       return path.join(path.dirname(pkgJson), rel);
     }
-  } catch {}
+  } catch {
+    return null;
+  }
+
   return null;
 };
 
@@ -395,12 +398,10 @@ const installExternalSkills = async () => {
   const bin = skillsBin();
 
   if (!bin) {
-    try {
-      spawnSync("npx", ["-y", "skills", "--help"], {
-        shell: process.platform === "win32",
-        stdio: "ignore",
-      });
-    } catch {}
+    spawnSync("npx", ["-y", "skills", "--help"], {
+      shell: process.platform === "win32",
+      stdio: "ignore",
+    });
   }
 
   log(`installing external skills from ${manifest.size} repos (concurrency ${limit})…`);

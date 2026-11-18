@@ -13,7 +13,6 @@ import type { Ledger, Row, Use } from "./evidence";
 import { DIFF_SCRIPT, fingerprintOf, hashOf, parseDiff } from "./git";
 import { MARK_LOOK, VERDICT_COLOR, scoreRows, statusLine, verdictChip, verdictLine } from "./board";
 import { asksOf, checksLine, fixLine, promptOf, replyOf, scorecardOf, verdictOf } from "./grade";
-import type { Grade, Instruction } from "./grade";
 import { entriesOf, linesOf, matchesOf } from "./look";
 import type { Look } from "./look";
 import {
@@ -31,9 +30,10 @@ import {
   reviewText,
   unverifiedOf,
 } from "./proof";
-import type { Check, Package } from "./proof";
+import type { Package, Check } from "./proof";
 import { reviewChange } from "./review";
 import type { Models, Ports } from "./review";
+import type { Grade, Instruction } from "./grade";
 
 const INSTRUCTION_FILES = ["AGENTS.md", "CLAUDE.md", "REVIEW.md"];
 const MAX_DIRS = 30;
@@ -46,31 +46,28 @@ const reviewAtom = atom({ key: "review", plugin: "mod-dev" } as const, IDLE);
 const blocksAtom = atom({ key: "blocks", plugin: "mod-dev" } as const, 0);
 
 const rootOf = async ($: EngineInterface) => {
-  try {
-    const { exitCode, stdout } = await $.process.run(["git", "rev-parse", "--show-toplevel"]);
+  const git = await $.process.run(["git", "rev-parse", "--show-toplevel"]).catch(() => null);
 
-    if (exitCode === 0) {
-      return stdout.trim();
-    }
-  } catch {}
-  return $.session.root();
+  return git?.exitCode === 0 ? git.stdout.trim() : $.session.root();
 };
 
-const useOf = ({ agentId, input, isError, text, tool }: ToolUseSummary) => ({
-  agentId,
-  command: String(input.command ?? ""),
-  file: String(input.file_path ?? input.notebook_path ?? ""),
-  isBackground: input.run_in_background === true,
-  isError: isError === true,
-  output: text ?? "",
-  tool,
-});
+const useOf = ({ agentId, input, isError, text, tool }: ToolUseSummary) =>
+  ({
+    agentId,
+    command: String(input.command ?? ""),
+    file: String(input.file_path ?? input.notebook_path ?? ""),
+    isBackground: input.run_in_background === true,
+    isError: isError === true,
+    output: text ?? "",
+    tool,
+  }) satisfies Use;
 
-const rowOf = ({ role, text, toolUses }: SessionMessage) => ({
-  role,
-  text,
-  toolUses: toolUses.map(useOf),
-});
+const rowOf = ({ role, text, toolUses }: SessionMessage) =>
+  ({
+    role,
+    text,
+    toolUses: toolUses.map(useOf),
+  }) satisfies Row;
 
 const readSession = async ($: EngineInterface) => {
   const messages = await $.session.messages();
@@ -146,11 +143,9 @@ const instructionsOf = async ($: EngineInterface, files: readonly string[], root
   const found = new Map<string, string>();
 
   const scan = async (request: FsAncestorsRequest) => {
-    try {
-      for (const { content, dir, name } of await $.fs.ancestors(request)) {
-        found.set(`${dir}/${name}`, content);
-      }
-    } catch {}
+    for (const { content, dir, name } of await $.fs.ancestors(request).catch(() => [])) {
+      found.set(`${dir}/${name}`, content);
+    }
   };
 
   await scan({ names: INSTRUCTION_FILES });
@@ -160,10 +155,13 @@ const instructionsOf = async ($: EngineInterface, files: readonly string[], root
     await scan({ below: root, names: INSTRUCTION_FILES, of: `${root}/${file}` });
   }
 
-  return [...found].map(([path, content]) => ({
-    content,
-    path: path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path,
-  }));
+  return [...found].map(
+    ([path, content]) =>
+      ({
+        content,
+        path: path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path,
+      }) satisfies Instruction,
+  );
 };
 
 const runDiff = async ($: EngineInterface, root: string, ref: string) => {
@@ -198,38 +196,43 @@ const runLook = async ($: EngineInterface, root: string, look: Look) => {
   }
 };
 
-const portsOf = ($: EngineInterface, root: string) => ({
-  complete: async ({ model, prompt, system }) => {
-    try {
-      const answer = await $.model.complete({
-        effort: "high",
-        maxTokens: 16_000,
-        model,
-        prompt,
-        system,
-        timeoutMs: 300_000,
-      });
+const portsOf = ($: EngineInterface, root: string) =>
+  ({
+    complete: async ({ model, prompt, system }) => {
+      try {
+        const answer = await $.model.complete({
+          effort: "high",
+          maxTokens: 16_000,
+          model,
+          prompt,
+          system,
+          timeoutMs: 300_000,
+        });
 
-      return answer.isAnswered
-        ? { text: answer.text }
-        : { error: `${model} gave no answer (${answer.reason}).` };
-    } catch (error) {
-      return {
-        error: `Could not ask ${model}: ${error instanceof Error ? error.message : "refused"}`,
-      };
-    }
-  },
-  look: (look) => runLook($, root, look),
-});
+        return answer.isAnswered
+          ? { text: answer.text }
+          : { error: `${model} gave no answer (${answer.reason}).` };
+      } catch (error) {
+        return {
+          error: `Could not ask ${model}: ${error instanceof Error ? error.message : "refused"}`,
+        };
+      }
+    },
+    look: (look) => runLook($, root, look),
+  }) satisfies Ports;
 
 type Proof =
   | { kind: "said" | "failed"; text: string }
   | { kind: "graded"; grade: Grade; checks: Check[]; card: string; isReady: boolean };
 
 const failed = async ($: EngineInterface, text: string) => {
-  await update($, reviewAtom, (review) => ({ ...review, note: text, phase: "failed" }));
+  await update(
+    $,
+    reviewAtom,
+    (review) => ({ ...review, note: text, phase: "failed" }) satisfies Review,
+  );
 
-  return { kind: "failed", text };
+  return { kind: "failed", text } satisfies Proof;
 };
 
 const prove = async (
@@ -244,11 +247,14 @@ const prove = async (
   const run = await runDiff($, root, ref);
 
   if (run?.exitCode === 2) {
-    return { kind: "said", text: `${run.stderr.trim()}.` };
+    return { kind: "said", text: `${run.stderr.trim()}.` } satisfies Proof;
   }
 
   if (run?.exitCode !== 0) {
-    return { kind: "said", text: "Needs a git repository to read the change from." };
+    return {
+      kind: "said",
+      text: "Needs a git repository to read the change from.",
+    } satisfies Proof;
   }
 
   const diff = parseDiff(run.stdout);
@@ -257,7 +263,7 @@ const prove = async (
     return {
       kind: "said",
       text: `Nothing to score: no changes against ${diff.against}. To compare with another commit: /score <ref>`,
-    };
+    } satisfies Proof;
   }
 
   const evidence = statusOf(ledger) ?? "no edits through tools this session";
@@ -275,7 +281,13 @@ const prove = async (
     const { verdict } = verdictOf(last.grade);
     const card = scorecardOf(last.grade, checks, footer);
 
-    return { card, checks, grade: last.grade, isReady: verdict === "ready", kind: "graded" };
+    return {
+      card,
+      checks,
+      grade: last.grade,
+      isReady: verdict === "ready",
+      kind: "graded",
+    } satisfies Proof;
   }
 
   const packet = promptOf({
@@ -287,7 +299,7 @@ const prove = async (
     reply: said,
   });
 
-  await update($, reviewAtom, (review) => ({ ...review, phase: "reviewing" }));
+  await update($, reviewAtom, (review) => ({ ...review, phase: "reviewing" }) satisfies Review);
   $.ui.status(statusText(ledger, await read($, reviewAtom)));
   const reviewed = await reviewChange(portsOf($, root), models, packet);
 
@@ -300,19 +312,24 @@ const prove = async (
 
   const { grade } = reviewed;
   const { reasons, verdict } = verdictOf(grade);
-  await update($, reviewAtom, () => ({
-    fingerprint,
-    grade,
-    note: footer,
-    phase: "done",
-    reasons,
-    replied,
-    verdict,
-  }));
+  await update(
+    $,
+    reviewAtom,
+    () =>
+      ({
+        fingerprint,
+        grade,
+        note: footer,
+        phase: "done",
+        reasons,
+        replied,
+        verdict,
+      }) satisfies Review,
+  );
   $.ui.status(statusText(ledger, await read($, reviewAtom)));
   const card = scorecardOf(grade, checks, footer);
 
-  return { card, checks, grade, isReady: verdict === "ready", kind: "graded" };
+  return { card, checks, grade, isReady: verdict === "ready", kind: "graded" } satisfies Proof;
 };
 
 const blockOf = async ($: EngineInterface, models: Models, reply: string) => {

@@ -30,11 +30,6 @@ interface Header {
   value: string;
 }
 
-interface Sender {
-  name: string;
-  address: string;
-}
-
 const gmailFetch = <T>(
   accessToken: string,
   path: string,
@@ -53,18 +48,22 @@ const gmailFetch = <T>(
 const header = (headers: Header[], name: string) =>
   headers.find((entry) => entry.name.toLowerCase() === name.toLowerCase())?.value;
 
-/** `"Name" <addr>`, `Name <addr>`, or a bare address. */
+interface Sender {
+  name: string;
+  address: string;
+}
+
 export const parseFrom = (value: string) => {
   const match = /^\s*"?(?<name>[^"<]*?)"?\s*<(?<address>[^>]+)>\s*$/u.exec(value);
 
   if (match === null) {
-    return { address: value.trim(), name: value.trim() };
+    return { address: value.trim(), name: value.trim() } satisfies Sender;
   }
 
   const address = (match.groups?.address ?? value).trim();
   const name = (match.groups?.name ?? "").trim();
 
-  return { address, name: name === "" ? address : name };
+  return { address, name: name === "" ? address : name } satisfies Sender;
 };
 
 export const isNewsletter = (headers: Header[]) =>
@@ -86,7 +85,10 @@ const fetchNewsletters = async (access: AccessOf<"gmail">) => {
       gmailFetch(
         access.accessToken,
         `messages/${entry.id}`,
-        [["format", "metadata"], ...METADATA_HEADERS.map((name) => ["metadataHeaders", name])],
+        [
+          ["format", "metadata"],
+          ...METADATA_HEADERS.map((name) => ["metadataHeaders", name] satisfies [string, string]),
+        ],
         messageSchema,
       ),
     ),

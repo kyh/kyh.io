@@ -19,7 +19,7 @@ const { values: args } = parseArgs({
 const __dirname = import.meta.dirname;
 const PROCESSED_FILE = path.join(__dirname, ".enriched-incidents.json");
 
-const loadProcessedIds = () => {
+const loadProcessedIds: () => Set<number> = () => {
   try {
     if (fs.existsSync(PROCESSED_FILE)) {
       const data = z

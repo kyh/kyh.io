@@ -107,9 +107,11 @@ export const createSky = (
       undraw(dressed.built);
     }
 
-    return sketchOn
-      ? { built: draw(sketchOn(turnedBy(crossing.heading, at))), colorful, crossing, key }
-      : null;
+    return (
+      sketchOn
+        ? { built: draw(sketchOn(turnedBy(crossing.heading, at))), colorful, crossing, key }
+        : null
+    ) satisfies Dressed | null;
   };
 
   const balloons = [add(drawBalloon(0, view, covers)), add(drawBalloon(1, view, covers))];

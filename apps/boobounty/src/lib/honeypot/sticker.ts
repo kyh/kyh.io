@@ -81,12 +81,15 @@ export const createSticker = () => {
   mesh.renderOrder = 2;
 
   const ready = async () => {
-    try {
-      const face = await new FontFace(FONT, `url(${FONT_URL})`).load();
-      document.fonts.add(face);
-      paint(canvas);
-      texture.needsUpdate = true;
-    } catch {}
+    const face = await new FontFace(FONT, `url(${FONT_URL})`).load().catch(() => null);
+
+    if (face === null) {
+      return;
+    }
+
+    document.fonts.add(face);
+    paint(canvas);
+    texture.needsUpdate = true;
   };
 
   return { mesh, ready };

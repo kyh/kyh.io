@@ -19,6 +19,7 @@ const envSchema = z.object({
   VERCEL_ENV: optionalKey,
   VERCEL_PROJECT_PRODUCTION_URL: optionalKey,
   VERCEL_URL: optionalKey,
+  X_API_URL: optionalKey,
   X_CLIENT_ID: optionalKey,
   X_CLIENT_SECRET: optionalKey,
 });

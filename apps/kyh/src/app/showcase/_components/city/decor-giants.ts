@@ -147,7 +147,11 @@ export const giantSkeleton = (sketch: Sketch, cx: number, cz: number) => {
       const points = Array.from({ length: 7 }, (_, step) => {
         const angle = -Math.PI / 2 + (step / 6) * (Math.PI - 0.3);
 
-        return [side * Math.cos(angle) * wide, y - (step / 6) * 0.06, Math.sin(angle) * 0.14];
+        return [
+          side * Math.cos(angle) * wide,
+          y - (step / 6) * 0.06,
+          Math.sin(angle) * 0.14,
+        ] satisfies Vec3;
       });
 
       for (const [index, from] of points.entries()) {
@@ -235,7 +239,11 @@ export const lanternGate = (sketch: Sketch, cx: number, cz: number) => {
       const lat = -Math.PI / 2 + (step / 8) * Math.PI;
       const reach = Math.cos(lat) * r * 1.01;
 
-      return [Math.sin(turn) * reach, y + Math.sin(lat) * r * 0.85, Math.cos(turn) * reach];
+      return [
+        Math.sin(turn) * reach,
+        y + Math.sin(lat) * r * 0.85,
+        Math.cos(turn) * reach,
+      ] satisfies Vec3;
     });
 
     pen.line(rib, "hair", "gold");
@@ -257,7 +265,10 @@ const SHAMROCK: readonly (readonly Point2[])[] = [90, 210, 330].map((degrees) =>
   return heart(size).map(([u, v]) => {
     const up = v + size;
 
-    return [u * Math.cos(turn) - up * Math.sin(turn), u * Math.sin(turn) + up * Math.cos(turn)];
+    return [
+      u * Math.cos(turn) - up * Math.sin(turn),
+      u * Math.sin(turn) + up * Math.cos(turn),
+    ] satisfies Point2;
   });
 });
 

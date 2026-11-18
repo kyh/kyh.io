@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { todaysPageMetadata } from "@/lib/todays-video";
 import { RSVPReader } from "./_components/rsvp-reader";
 

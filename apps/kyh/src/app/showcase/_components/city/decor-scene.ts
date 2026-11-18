@@ -6,7 +6,6 @@ import type { Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Built, Materials } from "./render";
 import type { Vec3 } from "./sketch";
-import type { Steps } from "./steps";
 import { raise } from "./grow";
 import { build } from "./render";
 import { decorSteps } from "./town-theme";

@@ -32,7 +32,7 @@ const FALL_RATE = 3.5;
 const U32 = 2 ** 32;
 const TRAIN_COLORS = [0xf4_f1_ea, 0x2f_b5_a5, 0xe0_47_2f, 0x6e_5b_d0];
 
-export const newGame = (seed = 7) => ({
+export const newGame: (seed?: number) => Game = (seed = 7) => ({
   coins: 0,
   crash: 0,
   crashes: 0,

@@ -1,5 +1,5 @@
 import type { Token } from "./palette";
-import type { Placed, Sketch, Vec3 } from "./sketch";
+import type { Placed, Vec3 } from "./sketch";
 import { lantern } from "./decor-props";
 import { heart } from "./draw-kit";
 import { bunnyEar, santaHat, topHat, wearing, witchHat } from "./hats";
@@ -57,8 +57,8 @@ export const santaTrim: Trim = (blimp) => santaHat(wearing(blimp, brow, 1, 0.5))
 export const witchTrim: Trim = (blimp) => witchHat(wearing(blimp, brow, 1, 0.2));
 
 /** A top hat in a crown color and a band, its gold buckle facing the camera. */
-export const topHatTrim = (crown: Token, band: Token) => (blimp) =>
-  topHat(wearing(blimp, brow, 1, 0.15), crown, band);
+export const topHatTrim = (crown: Token, band: Token) =>
+  ((blimp) => topHat(wearing(blimp, brow, 1, 0.15), crown, band)) satisfies Trim;
 
 /** Bunny ears, side by side and leaning apart, each standing on the back where it is. */
 export const bunnyEarTrim: Trim = (blimp) => {

@@ -189,9 +189,9 @@ export const spineOf = (dragon: Dragon, head: HeadFrame) => {
 
 /** The rings its chain hangs from, on the screen about its head: one a link. */
 export const tailPoints = (rings: readonly Ring[]) =>
-  rings
-    .filter((_, index) => index >= TAIL_FROM && (index - TAIL_FROM) % TAIL_EACH === 0)
-    .map(({ at }) => toScreen(at));
+  rings.flatMap(({ at }, index) =>
+    index >= TAIL_FROM && (index - TAIL_FROM) % TAIL_EACH === 0 ? [toScreen(at)] : [],
+  );
 
 /** Its rings with its tail swung as its chain has it. */
 export const swungOf = (rings: readonly Ring[], chain: Dragon["tail"], origin: Point) => {

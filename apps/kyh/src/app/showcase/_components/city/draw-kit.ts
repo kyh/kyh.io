@@ -31,14 +31,16 @@ export interface Footprint {
   d: number;
 }
 
-export const inset = (rect: Footprint, by: number) => ({
-  d: rect.d - by * 2,
-  w: rect.w - by * 2,
-  x: rect.x + by,
-  z: rect.z + by,
-});
+export const inset = (rect: Footprint, by: number) =>
+  ({
+    d: rect.d - by * 2,
+    w: rect.w - by * 2,
+    x: rect.x + by,
+    z: rect.z + by,
+  }) satisfies Footprint;
 
-const glassFor = (key: string, every = 3) => (hashString(key) % every === 0 ? "glassDim" : "glass");
+const glassFor = (key: string, every = 3) =>
+  (hashString(key) % every === 0 ? "glassDim" : "glass") satisfies Token;
 
 /** The raised slab a building sits on. */
 export const plate = (sketch: Sketch, rect: Footprint, colors: Paint = PLATE, h = 0.03) => {

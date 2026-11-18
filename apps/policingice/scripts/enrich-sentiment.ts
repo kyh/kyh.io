@@ -32,13 +32,15 @@ type ProgressData = z.infer<typeof progressSchema>;
 const loadProgress = () => {
   try {
     if (fs.existsSync(PROGRESS_FILE)) {
-      return progressSchema.parse(JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")));
+      return progressSchema.parse(
+        JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf-8")),
+      ) satisfies ProgressData;
     }
   } catch {
     console.warn("Could not load progress, starting fresh");
   }
 
-  return { lastRun: "", processedIds: [], results: {} };
+  return { lastRun: "", processedIds: [], results: {} } satisfies ProgressData;
 };
 
 const saveProgress = (data: ProgressData) => {

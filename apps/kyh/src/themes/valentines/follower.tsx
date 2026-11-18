@@ -73,7 +73,6 @@ export const Follower = () => {
         <Solid name="head" id={id} fill="festiveGreen" shade="festiveGreenShade" />
         <Solid name="face" id={id} fill="accentPink" shade="accentPink" ink={ink(0.5)} />
         <Solid name="brow" id={id} fill="festiveRed" shade="festiveRedShade" ink={ink(0.5)} />
-        {}
         <path data-part="head" style={stroked(ink(1.3))} />
         <Eye index={0} />
         <Eye index={1} />

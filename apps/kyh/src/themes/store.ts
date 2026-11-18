@@ -47,11 +47,25 @@ const storedMode = () => {
   }
 };
 
-const systemMode = () => (system?.matches ? "dark" : "light");
+const keepMode = (mode: "light" | "dark" | null) => {
+  try {
+    if (mode) {
+      localStorage.setItem(MODE_KEY, mode);
+    } else {
+      localStorage.removeItem(MODE_KEY);
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const systemMode = () => (system?.matches ? "dark" : "light") satisfies Mode;
 
 const ownMode = () => {
   if (typeof window === "undefined") {
-    return picked ?? "light";
+    return (picked ?? "light") satisfies Mode;
   }
 
   if (picked === undefined) {
@@ -60,7 +74,7 @@ const ownMode = () => {
 
   system ??= window.matchMedia("(prefers-color-scheme: dark)");
 
-  return picked ?? systemMode();
+  return (picked ?? systemMode()) satisfies Mode;
 };
 
 const appearances = new Map<string, Appearance>();
@@ -158,16 +172,22 @@ export const chooseTheme = (id: ThemeId) => {
  */
 export const nextTap = ({ mode, own, theme }: Appearance = currentAppearance()) => {
   if (theme !== DEFAULT_THEME) {
-    return { mode: own, theme: DEFAULT_THEME };
+    return { mode: own, theme: DEFAULT_THEME } satisfies Pick<Appearance, "mode" | "theme">;
   }
 
   const holiday = flipped ? calendarTheme() : DEFAULT_THEME;
 
   if (holiday !== DEFAULT_THEME) {
-    return { mode: themeOf(holiday).mode ?? own, theme: holiday };
+    return { mode: themeOf(holiday).mode ?? own, theme: holiday } satisfies Pick<
+      Appearance,
+      "mode" | "theme"
+    >;
   }
 
-  return { mode: mode === "light" ? "dark" : "light", theme: DEFAULT_THEME };
+  return { mode: mode === "light" ? "dark" : "light", theme: DEFAULT_THEME } satisfies Pick<
+    Appearance,
+    "mode" | "theme"
+  >;
 };
 
 /** The toggle's tap (`nextTap`): plain light or dark flips and is kept, unless it's the system's again. */
@@ -184,13 +204,7 @@ export const toggleTheme = () => {
   flipped = true;
   picked = kept;
 
-  try {
-    if (kept) {
-      localStorage.setItem(MODE_KEY, kept);
-    } else {
-      localStorage.removeItem(MODE_KEY);
-    }
-  } catch {}
+  keepMode(kept);
   changed();
 };
 

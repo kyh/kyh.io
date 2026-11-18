@@ -67,7 +67,9 @@ export const readDrop = (payload: JsonValue) => {
 
   const values = numbers.filter((value) => value !== null);
 
-  return values.length === numbers.length ? { from: { x, y, z }, key, state: values } : null;
+  return (
+    values.length === numbers.length ? { from: { x, y, z }, key, state: values } : null
+  ) satisfies Drop | null;
 };
 
 const readPointer = (state: JsonRecord) => {
@@ -88,11 +90,12 @@ const readPointer = (state: JsonRecord) => {
 const readHolding = (state: JsonRecord) =>
   String(state.h) === state.h && parseActorKey(state.h) ? state.h : null;
 
-const lerpSpot = (a: Spot, b: Spot, k: number) => ({
-  x: lerp(a.x, b.x, k),
-  y: lerp(a.y, b.y, k),
-  z: lerp(a.z, b.z, k),
-});
+const lerpSpot = (a: Spot, b: Spot, k: number) =>
+  ({
+    x: lerp(a.x, b.x, k),
+    y: lerp(a.y, b.y, k),
+    z: lerp(a.z, b.z, k),
+  }) satisfies Spot;
 
 export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
   let client: MultiplayerClient | null = null;

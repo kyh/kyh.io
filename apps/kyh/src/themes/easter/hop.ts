@@ -91,29 +91,32 @@ const PIVOT_HEIGHT = 2.5;
 
 export const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
-const groundAt = (at: Spot, turn: number, forward: number, left: number) => ({
-  x: at.x + forward * Math.cos(turn) - left * Math.sin(turn),
-  z: at.z + forward * Math.sin(turn) + left * Math.cos(turn),
-});
+const groundAt = (at: Spot, turn: number, forward: number, left: number) =>
+  ({
+    x: at.x + forward * Math.cos(turn) - left * Math.sin(turn),
+    z: at.z + forward * Math.sin(turn) + left * Math.cos(turn),
+  }) satisfies Spot;
 
-const pairAt = (at: Spot, turn: number, forward: number, side: number) => [
-  { ...groundAt(at, turn, forward, side), turn },
-  { ...groundAt(at, turn, forward, -side), turn },
-];
+const pairAt = (at: Spot, turn: number, forward: number, side: number) =>
+  [
+    { ...groundAt(at, turn, forward, side), turn },
+    { ...groundAt(at, turn, forward, -side), turn },
+  ] satisfies Pair;
 
 const standing = (at: Spot, turn: number) => ({
   fore: pairAt(at, turn, FORE_REST.x, FORE_REST.side),
   hind: pairAt(at, turn, HIND_REST.x, HIND_REST.side),
 });
 
-export const createHopper = (at: Spot, heading: number) => ({
-  ...standing(at, heading),
-  at,
-  heading,
-  leap: null,
-  turned: 0,
-  u: 0,
-});
+export const createHopper = (at: Spot, heading: number) =>
+  ({
+    ...standing(at, heading),
+    at,
+    heading,
+    leap: null,
+    turned: 0,
+    u: 0,
+  }) satisfies Hopper;
 
 type Way = Pick<Leap, "end" | "from" | "start" | "to">;
 
@@ -145,7 +148,7 @@ const bodyAt = (leap: Way, u: number) => {
   return {
     x: leap.from.x + (leap.to.x - leap.from.x) * gone,
     z: leap.from.z + (leap.to.z - leap.from.z) * gone,
-  };
+  } satisfies Spot;
 };
 
 const TURNING = [0.18, FORE_LAND[0]] as const;
@@ -290,15 +293,8 @@ export const planLeap = (hopper: Hopper, target: Spot | null, face: number | nul
     turnTo: heading + turn,
   };
 
-  return { ...leap, ...landingOf(leap, last) };
+  return { ...leap, ...landingOf(leap, last) } satisfies Leap | null;
 };
-
-/** What happened over a step: it took off, its forepaws or hind feet landed (how big the hop was). */
-interface Beats {
-  tookOff: number;
-  foreLanded: number;
-  hindLanded: number;
-}
 
 const crossed = (from: number, to: number, mark: number) => from < mark && to >= mark;
 
@@ -383,10 +379,8 @@ const footAt = (pin: Pin, landing: Pin, lift: number, land: number, u: number, h
   };
 };
 
-const pairOf = <T>(pair: Pair, each: (pin: Pin, index: number) => T) => [
-  each(pair[0], 0),
-  each(pair[1], 1),
-];
+const pairOf = <T>(pair: Pair, each: (pin: Pin, index: number) => T) =>
+  [each(pair[0], 0), each(pair[1], 1)] satisfies readonly [T, T];
 
 const settling = (swing: number) => 1 - smooth((swing - 0.55) / 0.45);
 
@@ -395,7 +389,7 @@ export const feetOf = (hopper: Hopper) => {
   const { leap, u } = hopper;
 
   if (!leap) {
-    const still = (pin: Pin) => ({ ...pin, height: 0, swing: -1 });
+    const still = (pin: Pin) => ({ ...pin, height: 0, swing: -1 }) satisfies Footing;
 
     return { fore: pairOf(hopper.fore, still), hind: pairOf(hopper.hind, still) };
   }

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
 import type { PageMetadataInput } from "@/lib/page-metadata";

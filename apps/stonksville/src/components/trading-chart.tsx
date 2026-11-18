@@ -72,7 +72,7 @@ const fitRange = (
     }
   }
 
-  return { max: max + RANGE_MARGIN_ROWS, min: min - RANGE_MARGIN_ROWS };
+  return { max: max + RANGE_MARGIN_ROWS, min: min - RANGE_MARGIN_ROWS } satisfies LevelRange;
 };
 
 const HALF_BLOCK_H = 0.5;
@@ -169,7 +169,7 @@ const computeDims = (
     timeStart: now - CHART_WINDOW * 1000,
     top: padTop,
     width,
-  };
+  } satisfies OverlayDims;
 };
 
 interface HoverState {
@@ -717,10 +717,8 @@ export const TradingChart = () => {
 
   return (
     <div ref={containerRef} className="relative h-full w-full">
-      {}
       <canvas ref={overlayRef} className="absolute inset-0 h-full w-full" />
 
-      {}
       <div className="absolute inset-0 z-10">
         <Liveline
           data={chartData}
@@ -746,7 +744,6 @@ export const TradingChart = () => {
         />
       </div>
 
-      {}
       <div
         className="absolute inset-0 z-20 cursor-crosshair"
         style={{ touchAction: "none" }}
@@ -757,13 +754,11 @@ export const TradingChart = () => {
         onPointerLeave={resetPointerState}
       />
 
-      {}
       <div
         ref={confettiLayerRef}
         className="pointer-events-none absolute inset-0 z-25 overflow-hidden"
       />
 
-      {}
       <div className="pointer-events-none absolute top-3 left-3 z-30 flex items-center gap-2 font-mono text-sm">
         <span className="text-emerald-400/60">S&amp;P 500</span>
         {tradingDate !== null && (

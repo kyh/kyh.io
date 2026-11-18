@@ -46,10 +46,11 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-const settingOf = ({ mode, theme }: Appearance) => ({
-  theme,
-  time: mode === "dark" ? "night" : "day",
-});
+const settingOf = ({ mode, theme }: Appearance) =>
+  ({
+    theme,
+    time: mode === "dark" ? "night" : "day",
+  }) satisfies Setting;
 
 interface TourToggleProps {
   touring: boolean;
@@ -200,7 +201,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   return (
     <div ref={rootRef} className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
-      {}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {status === "failed" ? (
         <PinList projects={projects} />

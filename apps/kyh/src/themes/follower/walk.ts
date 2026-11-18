@@ -38,18 +38,19 @@ const TURN_REACH = 24;
 const TURN_RATE = 9;
 const MOST_STEP = 0.05;
 
-export const createWalker = (at: Point, gait: Gait) => ({
-  back: { x: -1, y: 0 },
-  facing: 1,
-  phase: 0,
-  speed: 0,
-  still: 0,
-  turn: 1,
-  vx: 0,
-  vy: 0,
-  x: at.x - gait.behind,
-  y: at.y + gait.below,
-});
+export const createWalker = (at: Point, gait: Gait) =>
+  ({
+    back: { x: -1, y: 0 },
+    facing: 1,
+    phase: 0,
+    speed: 0,
+    still: 0,
+    turn: 1,
+    vx: 0,
+    vy: 0,
+    x: at.x - gait.behind,
+    y: at.y + gait.below,
+  }) satisfies Walker;
 
 /**
  * Which way from the pointer a follower keeps, turned toward back along the
@@ -74,7 +75,7 @@ export const turnBack = (back: Point, moved: Point, reach: number) => {
 
   const angle = from + turn * Math.min(1, length / reach);
 
-  return { x: Math.cos(angle), y: Math.sin(angle) };
+  return { x: Math.cos(angle), y: Math.sin(angle) } satisfies Point;
 };
 
 const strideAt = (walker: Walker, gait: Gait) =>
@@ -95,7 +96,7 @@ export const spotOf = (walker: Walker, gait: Gait, pointer: Point) => {
   return {
     x: pointer.x + (Math.abs(across) < least ? side * least : across),
     y: pointer.y + gait.below + walker.back.y * gait.behind * 0.4,
-  };
+  } satisfies Point;
 };
 
 /**

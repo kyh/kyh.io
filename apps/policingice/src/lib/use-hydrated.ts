@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
+// oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
 const subscribe = () => () => {};
 
 const onClient = () => true;

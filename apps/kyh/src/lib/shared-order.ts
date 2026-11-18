@@ -51,7 +51,7 @@ export const parseReorder = (payload: JsonValue) => {
   const order = keyList(record?.order);
   const n = asCount(record?.n);
 
-  return grid && order && n !== null ? { grid, n, order } : null;
+  return (grid && order && n !== null ? { grid, n, order } : null) satisfies ReorderIntent | null;
 };
 
 /**
@@ -104,7 +104,7 @@ export const readSharedOrder = (entry: JsonValue | undefined, keys: string[]) =>
   const known = new Set(keys);
   const kept = order.filter((key) => known.has(key));
 
-  return { by, n, order: [...new Set([...kept, ...keys])] };
+  return { by, n, order: [...new Set([...kept, ...keys])] } satisfies SharedOrder | null;
 };
 
 /** The grid's entry in the room's shared state. */

@@ -1,4 +1,3 @@
-import type { Hang } from "../follower/chain";
 import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Mat3, Vec3 } from "../follower/solid";
 import type { Point } from "../follower/walk";
@@ -96,8 +95,8 @@ const PREENED: readonly Vec3[] = [
   [0.5, 0.8, 0.5],
 ];
 
-const side3 = ([x, y, z]: Vec3, side: number) => [x, y, z * side];
-const at = (points: readonly Vec3[], index: number) => points[index] ?? [0, 0, 0];
+const side3 = ([x, y, z]: Vec3, side: number) => [x, y, z * side] satisfies Vec3;
+const at = (points: readonly Vec3[], index: number) => (points[index] ?? [0, 0, 0]) satisfies Vec3;
 
 const buildFrame = (bird: Lovebird) => {
   const { rig, wings } = bird;
@@ -110,11 +109,12 @@ const buildFrame = (bird: Lovebird) => {
   const center = add(steady, [0, heave, 0]);
   const turn = (direction: Vec3) => apply(orient, direction);
 
-  const unturn = (direction: Vec3) => [
-    orient[0][0] * direction[0] + orient[1][0] * direction[1] + orient[2][0] * direction[2],
-    orient[0][1] * direction[0] + orient[1][1] * direction[1] + orient[2][1] * direction[2],
-    orient[0][2] * direction[0] + orient[1][2] * direction[1] + orient[2][2] * direction[2],
-  ];
+  const unturn = (direction: Vec3) =>
+    [
+      orient[0][0] * direction[0] + orient[1][0] * direction[1] + orient[2][0] * direction[2],
+      orient[0][1] * direction[0] + orient[1][1] * direction[1] + orient[2][1] * direction[2],
+      orient[0][2] * direction[0] + orient[1][2] * direction[1] + orient[2][2] * direction[2],
+    ] satisfies Vec3;
 
   const place = (local: Vec3) => add(center, turn(local));
   const placeSteady = (local: Vec3) => add(steady, turn(local));
@@ -147,7 +147,7 @@ const solid = (name: string, outline: Ellipse) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
 const rimAt = ({ angle, cx, cy, rx, ry }: Ellipse, t: number, out: number) => {
@@ -158,7 +158,7 @@ const rimAt = ({ angle, cx, cy, rx, ry }: Ellipse, t: number, out: number) => {
   return {
     x: cx + along * Math.cos(turn) - across * Math.sin(turn),
     y: cy + along * Math.sin(turn) + across * Math.cos(turn),
-  };
+  } satisfies Point;
 };
 
 const pointPath = (points: readonly Point[]) =>
@@ -432,7 +432,7 @@ const faceOf = (bird: Lovebird, frame: Frame, side: 1 | -1) => {
 export const settleFaces = (bird: Lovebird) => {
   const frame = frameOf(bird);
 
-  return [faceOf(bird, frame, 1), faceOf(bird, frame, -1)];
+  return [faceOf(bird, frame, 1), faceOf(bird, frame, -1)] satisfies [1 | -1, 1 | -1];
 };
 
 const lensOf = (outline: readonly Point[], out: Point, thick: number) => {
@@ -552,7 +552,7 @@ const swingAt = (swing: readonly Point[], t: number) => {
   const b = swing[index + 1] ?? a;
   const k = along - index;
 
-  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k } satisfies Point;
 };
 
 const linesPathFlat = (lines: readonly (readonly Point[])[]) =>
@@ -581,7 +581,7 @@ const tailOf = (bird: Lovebird, frame: Frame) => {
 
     const carried = swingAt(swing, (t * length) / TAIL_LENGTH);
 
-    return { x: seen.x + carried.x, y: seen.y + carried.y };
+    return { x: seen.x + carried.x, y: seen.y + carried.y } satisfies Point;
   };
 
   const us = Array.from({ length: FEATHERS }, (_, index) => index / (FEATHERS - 1) - 0.5);
@@ -691,7 +691,7 @@ const turnView = (view: View, facings: ReturnType<typeof viewOf>) => {
     headOverWing: held(view.headOverWing, facings.forward, 0.2, 0.4),
     near,
     tailFront: held(view.tailFront, facings.tail, 0.05, 0.3),
-  };
+  } satisfies View;
 };
 
 const VIEW_S = 0.15;
@@ -709,10 +709,10 @@ export const settleView = (view: View, facings: ReturnType<typeof viewOf>, secon
     next.feetDown !== view.feetDown;
 
   if (!changed || view.age < VIEW_S) {
-    return { ...view, age: view.age + seconds };
+    return { ...view, age: view.age + seconds } satisfies View;
   }
 
-  return { ...next, age: 0 };
+  return { ...next, age: 0 } satisfies View;
 };
 
 const orderOf = (view: View) => {
@@ -778,12 +778,15 @@ export const lovebirdPose = (bird: Lovebird) => {
     ["beak-lower-front", { d: beak.front ? beak.lower : "" }],
     ["beak-upper-back", { d: beak.front ? "" : beak.upper }],
     ["beak-lower-back", { d: beak.front ? "" : beak.lower }],
-    ...wings.flatMap(({ hand, outline, quills, top }, index) => [
-      [`wing-${index}`, { d: outline }],
-      [`wing-${index}-top`, { d: outline, opacity: round(top) }],
-      [`hand-${index}`, { d: hand, opacity: round(top) }],
-      [`quills-${index}`, { d: quills }],
-    ]),
+    ...wings.flatMap(
+      ({ hand, outline, quills, top }, index) =>
+        [
+          [`wing-${index}`, { d: outline }],
+          [`wing-${index}-top`, { d: outline, opacity: round(top) }],
+          [`hand-${index}`, { d: hand, opacity: round(top) }],
+          [`quills-${index}`, { d: quills }],
+        ] satisfies [string, Part][],
+    ),
     ["tail", { d: tail.outline }],
     ["tail-quills", { d: tail.quills }],
     ["band", { d: tail.band, opacity: round(tail.banded) }],
@@ -798,5 +801,5 @@ export const lovebirdPose = (bird: Lovebird) => {
     order: orderOf(bird.view),
     parts,
     say: bird.emotes.line,
-  };
+  } satisfies Pose;
 };

@@ -56,12 +56,8 @@ const send = async () => {
 const sendOnce = async () => {
   isSending = true;
 
-  try {
-    await send();
-  } catch {
-  } finally {
-    isSending = false;
-  }
+  await send().catch(() => null);
+  isSending = false;
 };
 
 const pause = (ms: number) =>

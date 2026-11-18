@@ -295,11 +295,12 @@ export const drawEdgestories: DrawLandmark = (sketch, site, title) => {
     z: dz,
   });
 
-  const slit = (t: number) => [
-    dx + 0.06,
-    y0 + height + 0.25 + Math.sin(t) * 0.68,
-    dz + Math.cos(t) * 0.68 + 0.04,
-  ];
+  const slit = (t: number) =>
+    [
+      dx + 0.06,
+      y0 + height + 0.25 + Math.sin(t) * 0.68,
+      dz + Math.cos(t) * 0.68 + 0.04,
+    ] satisfies Vec3;
 
   const ribs = [0.15, 0.5, 0.85, 1.2];
   face(

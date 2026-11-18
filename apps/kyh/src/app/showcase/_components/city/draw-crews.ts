@@ -108,7 +108,7 @@ export const drawYard = ({ w, d }: Pick<Rect, "w" | "d">) => {
   for (const height of [0.06, 0.14]) {
     line(
       sketch,
-      corners.map(([x, , z]) => [x, y + height, z]),
+      corners.map(([x, , z]) => [x, y + height, z] satisfies Vec3),
       "fine",
       "accentOrange",
     );
@@ -148,13 +148,14 @@ export const drawScaffold = ({ x, z, w, d }: Rect, top: number) => {
   const z1 = z + d + 0.1;
   const y0 = CURB_TOP;
 
-  const ring = (y: number) => [
-    [x0, y, z0],
-    [x1, y, z0],
-    [x1, y, z1],
-    [x0, y, z1],
-    [x0, y, z0],
-  ];
+  const ring = (y: number) =>
+    [
+      [x0, y, z0],
+      [x1, y, z0],
+      [x1, y, z1],
+      [x0, y, z1],
+      [x0, y, z0],
+    ] satisfies Vec3[];
 
   for (let y = y0 + FLOOR; y < top; y += FLOOR) {
     line(sketch, ring(y), "hair", "inkSoft");

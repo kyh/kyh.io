@@ -182,7 +182,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
         <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
           <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-            {}
             {mode === "create" && (
               <div>
                 <label htmlFor="video-0" className="mb-1 block text-sm">
@@ -228,7 +227,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
               </div>
             )}
 
-            {}
             {mode === "edit" && (
               <>
                 <div>
@@ -272,7 +270,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
               </>
             )}
 
-            {}
             <Field.Root name="location">
               <Field.Label className="mb-1 block text-sm">Location (optional)</Field.Label>
               <Field.Control

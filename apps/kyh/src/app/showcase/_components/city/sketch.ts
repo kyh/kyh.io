@@ -21,7 +21,7 @@ export const viewAt = (heading: number) => {
   const sin = Math.sin(angle);
   const [x, y, z] = VIEW;
 
-  return [x * cos - z * sin, y, x * sin + z * cos];
+  return [x * cos - z * sin, y, x * sin + z * cos] satisfies Vec3;
 };
 
 export interface LineBatch {
@@ -66,9 +66,9 @@ export interface Triangle {
   colors: Paint;
 }
 
-export const createSketch = (
-  view: Vec3 | null = VIEW,
-  covers: readonly Vec3[] = view ? [view] : [],
+export const createSketch: (view?: Vec3 | null, covers?: readonly Vec3[]) => Sketch = (
+  view = VIEW,
+  covers = view ? [view] : [],
 ) => ({
   covers,
   faces: new Map(),
@@ -116,16 +116,13 @@ export const part = (sketch: Sketch, name: string, origin: Vec3, turns = false) 
   return child;
 };
 
-const add = (a: Vec3, b: Vec3) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-export const sub = (a: Vec3, b: Vec3) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const scale = (a: Vec3, k: number) => [a[0] * k, a[1] * k, a[2] * k];
+const add = (a: Vec3, b: Vec3) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]] satisfies Vec3;
+export const sub = (a: Vec3, b: Vec3) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]] satisfies Vec3;
+const scale = (a: Vec3, k: number) => [a[0] * k, a[1] * k, a[2] * k] satisfies Vec3;
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-const cross = (a: Vec3, b: Vec3) => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
+const cross = (a: Vec3, b: Vec3) =>
+  [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] satisfies Vec3;
 
 const length = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
 
@@ -436,7 +433,7 @@ const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint) => {
   const [first, second, third] = points;
 
   if (!first || !second || !third) {
-    return [];
+    return [] satisfies Triangle[];
   }
 
   const normal = normalOf(first, second, third);
@@ -444,7 +441,7 @@ const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint) => {
   const [origin, ...rest] = ordered;
 
   if (!origin) {
-    return [];
+    return [] satisfies Triangle[];
   }
 
   const triangles: Triangle[] = [];
@@ -535,7 +532,7 @@ export const boxTriangles = ({ x, z, w, d, y = 0, h, colors }: BoxSpec) => {
       [0, -1, 0],
       colors,
     ),
-  ];
+  ] satisfies Triangle[];
 };
 
 export const box = (sketch: Sketch, spec: BoxSpec, weight: Weight = "fine") => {
@@ -632,7 +629,7 @@ export const ballTriangles = (spec: BallSpec) => {
       center[0] + Math.sin(phi) * Math.cos(theta) * radii[0],
       center[1] + Math.cos(phi) * radii[1],
       center[2] + Math.sin(phi) * Math.sin(theta) * radii[2],
-    ];
+    ] satisfies Vec3;
   };
 
   const triangles: Triangle[] = [];
@@ -742,7 +739,7 @@ const gableTriangles = (spec: RoofSpec) => {
         [0, -1, 0],
         ends,
       ),
-    ];
+    ] satisfies Triangle[];
   }
 
   const xm = (x0 + x1) / 2;
@@ -796,7 +793,7 @@ const gableTriangles = (spec: RoofSpec) => {
       [0, -1, 0],
       ends,
     ),
-  ];
+  ] satisfies Triangle[];
 };
 
 export const gable = (sketch: Sketch, spec: RoofSpec, weight: Weight = "fine") => {
@@ -827,7 +824,7 @@ const hipTriangles = (spec: RoofSpec & { peak?: number }) => {
   const [c00, c10, c11, c01] = corners;
 
   if (!c00 || !c10 || !c11 || !c01) {
-    return [];
+    return [] satisfies Triangle[];
   }
 
   const sides: [Vec3[], Vec3][] =
@@ -1111,7 +1108,10 @@ export interface Placed {
   solid: (triangles: readonly Triangle[], weight?: Weight, crease?: number) => void;
 }
 
-export const placed = (sketch: Sketch, place: (point: Vec3) => Vec3 = (point) => point) => {
+export const placed: (sketch: Sketch, place?: (point: Vec3) => Vec3) => Placed = (
+  sketch,
+  place = (point) => point,
+) => {
   const solidOf = (triangles: readonly Triangle[], weight: Weight = "fine", crease?: number) =>
     solid(sketch, mapTriangles(triangles, place), weight, crease);
 

@@ -16,12 +16,13 @@ const LETTER_S = 0.04;
 const QUIET_S = 3;
 const QUIET_MORE_S = 4;
 
-export const createEmotes = (seed: number) => ({
-  left: 0,
-  line: null,
-  quiet: 1,
-  random: createRandom(seed),
-});
+export const createEmotes = (seed: number) =>
+  ({
+    left: 0,
+    line: null,
+    quiet: 1,
+    random: createRandom(seed),
+  }) satisfies Emotes;
 
 /**
  * Says one of `lines`, never the one it's saying: at once when `now` (a

@@ -1,7 +1,6 @@
 "use client";
 
 import { z } from "zod";
-
 import type { LiveProgram } from "@/lib/api-contract";
 
 /** One real session, recorded as it aired, stitched into a single file by scripts/stitch-test-stream.ts. */
@@ -42,26 +41,27 @@ interface ServerMessage {
   buffer_depth_seconds: number;
 }
 
-interface TestStreamSession {
-  send: (message: ClientMessage) => void;
-  close: () => void;
-}
-
 export const testStreamRequested = () =>
   process.env.NODE_ENV !== "production" &&
   typeof window !== "undefined" &&
   new URLSearchParams(window.location.search).has("teststream");
 
 /** A program for the stand-in: no source is read, nothing is spent. */
-export const testStreamProgram = (n: number) => ({
-  authorName: "Test stream",
-  authorUsername: "teststream",
-  itemId: `test:${n}`,
-  kind: "x",
-  link: `https://example.com/test-stream/${n}`,
-  prompt: `Test stream ${n}`,
-  text: `Test stream ${n} — ${new Date().toLocaleTimeString()}`,
-});
+export const testStreamProgram = (n: number) =>
+  ({
+    authorName: "Test stream",
+    authorUsername: "teststream",
+    itemId: `test:${n}`,
+    kind: "x",
+    link: `https://example.com/test-stream/${n}`,
+    prompt: `Test stream ${n}`,
+    text: `Test stream ${n} — ${new Date().toLocaleTimeString()}`,
+  }) satisfies LiveProgram;
+
+interface TestStreamSession {
+  send: (message: ClientMessage) => void;
+  close: () => void;
+}
 
 export const openTestStreamSession = (handlers: Handlers) => {
   const video = document.createElement("video");
@@ -78,7 +78,7 @@ export const openTestStreamSession = (handlers: Handlers) => {
       await video.play();
     } catch {
       video.muted = true;
-      await video.play().catch(() => {});
+      await video.play().catch(() => null);
     }
 
     if (!closed) {
@@ -131,5 +131,5 @@ export const openTestStreamSession = (handlers: Handlers) => {
         ),
       );
     },
-  };
+  } satisfies TestStreamSession;
 };

@@ -87,7 +87,10 @@ export const fetchSpxCsv = async () => {
     );
   }
 
-  return { csv: `${lines.join("\n")}\n`, rows: lines.length - 1 };
+  return { csv: `${lines.join("\n")}\n`, rows: lines.length - 1 } satisfies {
+    csv: string;
+    rows: number;
+  };
 };
 
 /** Whether a Blob store is connected (it is on Vercel; usually not in local dev). */

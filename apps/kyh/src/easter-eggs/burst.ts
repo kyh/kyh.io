@@ -50,7 +50,10 @@ export const throwConfetti = (
   sides: readonly ConfettiSide[] = themeOf(DEFAULT_THEME).confetti,
 ) => {
   const side = () =>
-    sides[Math.floor(random() * sides.length)] ?? { back: "white", front: "white" };
+    (sides[Math.floor(random() * sides.length)] ?? {
+      back: "white",
+      front: "white",
+    }) satisfies ConfettiSide;
 
   const papers = Array.from({ length: PAPERS }, () => {
     const { back, front } = side();
@@ -67,7 +70,7 @@ export const throwConfetti = (
       width: between(random, 5, 9),
       x: between(random, -6, 6),
       y: 0,
-    };
+    } satisfies Confetto;
   });
 
   const sequins = Array.from({ length: SEQUINS }, () => {
@@ -86,10 +89,10 @@ export const throwConfetti = (
       width: radius,
       x: between(random, -6, 6),
       y: 0,
-    };
+    } satisfies Confetto;
   });
 
-  return [...papers, ...sequins];
+  return [...papers, ...sequins] satisfies Confetto[];
 };
 
 /**

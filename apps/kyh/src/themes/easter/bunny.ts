@@ -131,7 +131,7 @@ const NECK_TURN = 1;
 const HEAD_UP = 18;
 const WOBBLE = { damping: 0.4, hertz: 6 } as const;
 
-const groundOf = (at: Point) => ({ x: at.x / SIZE, z: at.y / (SIN * SIZE) });
+const groundOf = (at: Point) => ({ x: at.x / SIZE, z: at.y / (SIN * SIZE) }) satisfies Spot;
 
 const createBunny = (at: Point) => {
   const seed = Math.round(at.x * 7919 + at.y * 13);

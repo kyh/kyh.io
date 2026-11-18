@@ -6,11 +6,10 @@ import { TOWNS } from "@/themes/towns";
 import type { BlimpLook } from "./blimp";
 import type { Kind } from "./open-spots";
 import type { Emote } from "./overlay";
-import type { Repaint, Scheme, Time, Token } from "./palette";
+import type { Repaint, Time, Token, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Flyer } from "./sky";
 import type { Placed, Sketch } from "./sketch";
-import type { Steps } from "./steps";
 import { eaveLights } from "./decor-props";
 import { KINDS, openSpots } from "./open-spots";
 
@@ -47,7 +46,7 @@ export interface Setting {
 }
 
 /** A setting with its theme and town looked up, as the city paints it. */
-export const schemeOf = ({ theme, time }: Setting) => ({
+export const schemeOf: ({ theme, time }: Setting) => Scheme = ({ theme, time }) => ({
   theme: themeOf(theme),
   time,
   town: TOWNS[theme],

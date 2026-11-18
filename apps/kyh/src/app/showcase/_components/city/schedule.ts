@@ -45,22 +45,28 @@ export const createSchedule = (
   const random = createRandom(23);
 
   const unordered: Omit<Site, "start">[] = [
-    ...plan.lots.map((lot) => ({
-      d: lot.d,
-      kind: "lot",
-      top: tops.get(lot.slug) ?? null,
-      w: lot.w,
-      x: lot.x,
-      z: lot.z,
-    })),
-    ...plan.blocks.map((block) => ({
-      d: block.d,
-      kind: "block",
-      top: null,
-      w: block.w,
-      x: block.x,
-      z: block.z,
-    })),
+    ...plan.lots.map(
+      (lot) =>
+        ({
+          d: lot.d,
+          kind: "lot",
+          top: tops.get(lot.slug) ?? null,
+          w: lot.w,
+          x: lot.x,
+          z: lot.z,
+        }) satisfies Omit<Site, "start">,
+    ),
+    ...plan.blocks.map(
+      (block) =>
+        ({
+          d: block.d,
+          kind: "block",
+          top: null,
+          w: block.w,
+          x: block.x,
+          z: block.z,
+        }) satisfies Omit<Site, "start">,
+    ),
   ];
 
   const ordered = unordered
@@ -102,5 +108,5 @@ export const createSchedule = (
         )?.start ?? outskirts(x, z)
       );
     },
-  };
+  } satisfies Schedule;
 };

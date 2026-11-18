@@ -2,7 +2,6 @@ import { and, eq, gte } from "drizzle-orm";
 
 import { db } from "@/db/drizzle-client";
 import { airedItem, liveSession } from "@/db/drizzle-schema";
-import type { LivePayload } from "@/lib/api-contract";
 import { dayStart, today } from "@/lib/day";
 import { buildOpeningPrompt, buildSegmentPrompt, pickFormat } from "@/lib/prompt";
 import { DAILY_READ_BUDGET_USD, databaseReads, memoryReads } from "@/lib/reads";
@@ -10,6 +9,7 @@ import type { Reads } from "@/lib/reads";
 import { SOURCE_KIND_NAMES } from "@/lib/source-kinds";
 import { pickCandidate } from "@/lib/sources";
 import type { SourceAccess } from "@/lib/sources/types";
+import type { LivePayload } from "@/lib/api-contract";
 
 const LIST_USD_PER_SECOND = 0.08;
 const PROMO_USD_PER_SECOND = 0.02;
@@ -68,7 +68,7 @@ export const memoryAiredStore = () => {
 
       return Promise.resolve();
     },
-  };
+  } satisfies AiredStore;
 };
 
 export const memorySessionStore = () => {
@@ -93,49 +93,51 @@ export const memorySessionStore = () => {
 
       return Promise.resolve();
     },
-  };
+  } satisfies SessionStore;
 };
 
-export const databaseAiredStore = (database: NonNullable<typeof db>) => ({
-  aired: async (channelKey) => {
-    const rows = await database
-      .select({ itemId: airedItem.itemId })
-      .from(airedItem)
-      .where(eq(airedItem.channelKey, channelKey));
+export const databaseAiredStore = (database: NonNullable<typeof db>) =>
+  ({
+    aired: async (channelKey) => {
+      const rows = await database
+        .select({ itemId: airedItem.itemId })
+        .from(airedItem)
+        .where(eq(airedItem.channelKey, channelKey));
 
-    return new Set(rows.map((row) => row.itemId));
-  },
-  mark: async (channelKey, itemId, userId) => {
-    await database
-      .insert(airedItem)
-      .values({ airedAt: Date.now(), channelKey, itemId, userId })
-      .onConflictDoNothing();
-  },
-});
+      return new Set(rows.map((row) => row.itemId));
+    },
+    mark: async (channelKey, itemId, userId) => {
+      await database
+        .insert(airedItem)
+        .values({ airedAt: Date.now(), channelKey, itemId, userId })
+        .onConflictDoNothing();
+    },
+  }) satisfies AiredStore;
 
-export const databaseSessionStore = (database: NonNullable<typeof db>) => ({
-  open: async (id, userId, at) => {
-    await database
-      .insert(liveSession)
-      .values({ id, seenAt: at, startedAt: at, userId })
-      .onConflictDoNothing();
-  },
-  spans: (since) =>
-    database
-      .select({
-        seenAt: liveSession.seenAt,
-        startedAt: liveSession.startedAt,
-        userId: liveSession.userId,
-      })
-      .from(liveSession)
-      .where(gte(liveSession.startedAt, since)),
-  touch: async (id, userId, at) => {
-    await database
-      .update(liveSession)
-      .set({ seenAt: at })
-      .where(and(eq(liveSession.id, id), eq(liveSession.userId, userId)));
-  },
-});
+export const databaseSessionStore = (database: NonNullable<typeof db>) =>
+  ({
+    open: async (id, userId, at) => {
+      await database
+        .insert(liveSession)
+        .values({ id, seenAt: at, startedAt: at, userId })
+        .onConflictDoNothing();
+    },
+    spans: (since) =>
+      database
+        .select({
+          seenAt: liveSession.seenAt,
+          startedAt: liveSession.startedAt,
+          userId: liveSession.userId,
+        })
+        .from(liveSession)
+        .where(gte(liveSession.startedAt, since)),
+    touch: async (id, userId, at) => {
+      await database
+        .update(liveSession)
+        .set({ seenAt: at })
+        .where(and(eq(liveSession.id, id), eq(liveSession.userId, userId)));
+    },
+  }) satisfies SessionStore;
 
 const billedSeconds = (spans: SessionSpan[]) =>
   spans.reduce(
@@ -190,14 +192,14 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
       return {
         kind: "off-air",
         reason: `Today's live budget ($${DAILY_BUDGET_USD_PER_VIEWER} a viewer, $${DAILY_BUDGET_USD} the station) is spent — back on air at midnight UTC.`,
-      };
+      } satisfies LivePayload;
     }
 
     if (readCap !== undefined && spentOnReads >= readCap) {
       return {
         kind: "off-air",
         reason: `Today's ${SOURCE_KIND_NAMES[access.kind]} read budget ($${readCap}) is spent — back on air at midnight UTC.`,
-      };
+      } satisfies LivePayload;
     }
 
     let item;
@@ -212,14 +214,14 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
       return {
         kind: "off-air",
         reason: error instanceof Error ? error.message : "The source couldn't be read",
-      };
+      } satisfies LivePayload;
     }
 
     if (item === undefined) {
       return {
         kind: "off-air",
         reason: "Nothing worth airing on this source yet — check back soon.",
-      };
+      } satisfies LivePayload;
     }
 
     await store.mark(channelKey, item.id, viewer.userId);
@@ -238,7 +240,7 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
         prompt: format === undefined ? segment : buildOpeningPrompt(format.world, segment),
         text: item.text,
       },
-    };
+    } satisfies LivePayload;
   };
 
   return { budgetLeft, mayContinue, mayOpen, nextProgram, sessionOpened, sessionSeen };

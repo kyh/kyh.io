@@ -110,7 +110,7 @@ const BALL: readonly Vec3[] = [
 
 const COS = Math.cos(PITCH);
 
-const lifted = (at: Point) => [at.x, -at.y / COS, 0];
+const lifted = (at: Point) => [at.x, -at.y / COS, 0] satisfies Vec3;
 
 const shownOf = (normal: Vec3, from = 0.05) =>
   smooth((dot(normalize(normal), TOWARD_CAMERA) - from) / 0.25);
@@ -291,7 +291,7 @@ const swungOf = (at: Vec3, home: Vec3, swinging: boolean) => {
     home[0] + (at[0] - home[0]) * keep,
     at[1] + Math.min(2.6, (far - SWUNG) * 0.3),
     home[2] + (at[2] - home[2]) * keep,
-  ];
+  ] satisfies Vec3;
 };
 
 const footOf = (leprechaun: Leprechaun, frame: Frame, index: number) => {
@@ -629,66 +629,73 @@ const solid = (name: string, outline: Ellipse) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
-const faceParts = (face: Face, shut: number) => [
-  ["beard", { d: face.beard }],
-  ["tuft", { d: face.tuft }],
-  ["hair", { d: face.hair }],
+const faceParts = (face: Face, shut: number) =>
   [
-    "nose",
-    {
-      d: ellipsePath(
-        ellipseOf(
-          face.nose.at,
-          BALL.map((axis) => scale(axis, 1)),
-        ),
-      ),
-      opacity: round(shownOf(face.nose.normal, -0.5)),
-    },
-  ],
-  ["mouth", { d: face.mouth, opacity: round(face.mouthShown) }],
-  ...face.moustache.map(({ at, normal }, index) => [
-    `moustache-${index}`,
-    { d: discOf(at, normal, 1.7, 0.95), opacity: round(shownOf(normal, -0.1)) },
-  ]),
-  ...face.cheeks.map(({ at, normal }, index) => [
-    `cheek-${index}`,
-    { d: discOf(at, normal, 1.15), opacity: round(shownOf(normal) * 0.85) },
-  ]),
-  ...face.eyes.flatMap(({ at, normal }, index) => {
-    const shown = shownOf(normal);
-    const [u] = tangentsOf(normal);
-
-    return [
-      [
-        `eye-${index}`,
-        {
-          d: ellipsePath(
-            ellipseOf(at, [
-              [0.95, 0, 0],
-              [0, 1.15, 0],
-              [0, 0, 0.95],
-            ]),
+    ["beard", { d: face.beard }],
+    ["tuft", { d: face.tuft }],
+    ["hair", { d: face.hair }],
+    [
+      "nose",
+      {
+        d: ellipsePath(
+          ellipseOf(
+            face.nose.at,
+            BALL.map((axis) => scale(axis, 1)),
           ),
-          opacity: round(shown * (1 - shut)),
-        },
-      ],
-      [
-        `lid-${index}`,
-        {
-          d: linePath([add(at, scale(u, 1)), add(at, scale(u, -1))]),
-          opacity: round(shown * shut),
-        },
-      ],
-      [
-        `brow-${index}`,
-        { d: face.brows[index] ?? "", opacity: round(face.browsShown[index] ?? 0) },
-      ],
-    ];
-  }),
-];
+        ),
+        opacity: round(shownOf(face.nose.normal, -0.5)),
+      },
+    ],
+    ["mouth", { d: face.mouth, opacity: round(face.mouthShown) }],
+    ...face.moustache.map(
+      ({ at, normal }, index) =>
+        [
+          `moustache-${index}`,
+          { d: discOf(at, normal, 1.7, 0.95), opacity: round(shownOf(normal, -0.1)) },
+        ] satisfies [string, Part],
+    ),
+    ...face.cheeks.map(
+      ({ at, normal }, index) =>
+        [
+          `cheek-${index}`,
+          { d: discOf(at, normal, 1.15), opacity: round(shownOf(normal) * 0.85) },
+        ] satisfies [string, Part],
+    ),
+    ...face.eyes.flatMap(({ at, normal }, index) => {
+      const shown = shownOf(normal);
+      const [u] = tangentsOf(normal);
+
+      return [
+        [
+          `eye-${index}`,
+          {
+            d: ellipsePath(
+              ellipseOf(at, [
+                [0.95, 0, 0],
+                [0, 1.15, 0],
+                [0, 0, 0.95],
+              ]),
+            ),
+            opacity: round(shown * (1 - shut)),
+          },
+        ],
+        [
+          `lid-${index}`,
+          {
+            d: linePath([add(at, scale(u, 1)), add(at, scale(u, -1))]),
+            opacity: round(shown * shut),
+          },
+        ],
+        [
+          `brow-${index}`,
+          { d: face.brows[index] ?? "", opacity: round(face.browsShown[index] ?? 0) },
+        ],
+      ] satisfies [string, Part][];
+    }),
+  ] satisfies [string, Part][];
 
 export const leprechaunPose = (leprechaun: Leprechaun) => {
   const frame = frameOf(leprechaun);
@@ -722,32 +729,41 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
     ["belt-hole", { d: coat.hole, opacity: round(coat.buckleShown) }],
     ["buttons", { d: coat.buttons, opacity: round(coat.buttonsShown) }],
     ...tails.map(({ d }, index) => [`tail-${index}`, { d }] as const),
-    ...legs.flatMap((leg, index) => [
-      [`thigh-${index}`, { d: leg.thigh }],
-      [`shin-${index}`, { d: leg.shin }],
-      [`shoe-${index}`, { d: leg.shoe }],
-      [`shoe-buckle-${index}`, { d: leg.buckle, opacity: round(leg.buckleShown) }],
-    ]),
-    ...arms.flatMap(({ hand, sleeve }, index) => [
-      [`sleeve-${index}`, { d: sleeve }],
-      [
-        `hand-${index}`,
-        {
-          d: ellipsePath(
-            ellipseOf(
-              hand,
-              BALL.map((axis) => scale(axis, 1.5)),
-            ),
-          ),
-        },
-      ],
-    ]),
+    ...legs.flatMap(
+      (leg, index) =>
+        [
+          [`thigh-${index}`, { d: leg.thigh }],
+          [`shin-${index}`, { d: leg.shin }],
+          [`shoe-${index}`, { d: leg.shoe }],
+          [`shoe-buckle-${index}`, { d: leg.buckle, opacity: round(leg.buckleShown) }],
+        ] satisfies [string, Part][],
+    ),
+    ...arms.flatMap(
+      ({ hand, sleeve }, index) =>
+        [
+          [`sleeve-${index}`, { d: sleeve }],
+          [
+            `hand-${index}`,
+            {
+              d: ellipsePath(
+                ellipseOf(
+                  hand,
+                  BALL.map((axis) => scale(axis, 1.5)),
+                ),
+              ),
+            },
+          ],
+        ] satisfies [string, Part][],
+    ),
     ...solid("head", headOutline),
-    ...ears.flatMap(({ d, rim, shown }, index) => [
-      [`ear-${index}`, { d }],
-      [`ear-${index}-rim`, { d: rim }],
-      [`ear-${index}-shown`, { opacity: round(shown) }],
-    ]),
+    ...ears.flatMap(
+      ({ d, rim, shown }, index) =>
+        [
+          [`ear-${index}`, { d }],
+          [`ear-${index}-rim`, { d: rim }],
+          [`ear-${index}-shown`, { opacity: round(shown) }],
+        ] satisfies [string, Part][],
+    ),
     ...faceParts(face, shut),
     ...solid("brim", hat.brim),
     ["crown", { d: hat.crown }],
@@ -790,12 +806,21 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
     ["face", leprechaun.faceFront ? top + 0.1 : body - 0.5],
     ["hat", low ? held - 0.005 : top + 0.5],
     ["coin", coinKey],
-    ...[0, 1].map((index) => [
-      `tail-${index}`,
-      body + (leprechaun.tailFront[index] ? 0.3 : -0.3) + index * 0.01,
-    ]),
-    ...[0, 1].map((index) => [`leg-${index}`, body - 5 + (leprechaun.nearLeg === index ? 0.1 : 0)]),
-    ...[0, 1].map((index) => [`arm-${index}`, armKeys[index] ?? body]),
+    ...[0, 1].map(
+      (index) =>
+        [
+          `tail-${index}`,
+          body + (leprechaun.tailFront[index] ? 0.3 : -0.3) + index * 0.01,
+        ] satisfies [string, number],
+    ),
+    ...[0, 1].map(
+      (index) =>
+        [`leg-${index}`, body - 5 + (leprechaun.nearLeg === index ? 0.1 : 0)] satisfies [
+          string,
+          number,
+        ],
+    ),
+    ...[0, 1].map((index) => [`arm-${index}`, armKeys[index] ?? body] satisfies [string, number]),
   ];
 
   const crown = toScreen(hat.topAt);
@@ -807,5 +832,5 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
     order: layers.toSorted((a, b) => a[1] - b[1]).map(([name]) => name),
     parts,
     say: leprechaun.emotes.line,
-  };
+  } satisfies Pose;
 };

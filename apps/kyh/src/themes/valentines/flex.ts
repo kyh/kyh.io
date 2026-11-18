@@ -3,7 +3,7 @@ export interface Flex {
   v: number;
 }
 
-export const flexAt = (x: number) => ({ v: 0, x });
+export const flexAt = (x: number) => ({ v: 0, x }) satisfies Flex;
 
 const PIECE = 1 / 240;
 

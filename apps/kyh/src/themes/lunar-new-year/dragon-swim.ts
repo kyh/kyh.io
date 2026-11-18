@@ -71,7 +71,7 @@ export const createSwim = (x: number, z: number, heading: number, reach: number)
     weave: 0,
     x,
     z,
-  };
+  } satisfies Swim;
 };
 
 const offOf = (swim: Swim, goal: number) => {

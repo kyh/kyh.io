@@ -35,7 +35,9 @@ const twitterProvider = () => {
     return;
   }
 
-  return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET };
+  return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET } satisfies
+    | TwitterProviderConfig
+    | undefined;
 };
 
 interface GoogleProviderConfig {
@@ -57,7 +59,7 @@ const googleProvider = () => {
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       prompt: "select_account consent",
     },
-  };
+  } satisfies { google: GoogleProviderConfig } | undefined;
 };
 
 const cookieHeader = (ctx: { headers?: Headers; request?: Request } | null | undefined) =>
@@ -78,6 +80,7 @@ const createAuth = (
     databaseHooks: {
       user: {
         create: {
+          // WARNING: validate the invite before the user row exists and claim it after, so a failed sign-up never burns a code.
           after: async (user, ctx) => {
             const code = inviteFromCookie(cookieHeader(ctx));
 
@@ -130,6 +133,7 @@ const createAuth = (
     user: {
       additionalFields: {
         invitedByCode: { input: false, required: false, type: "string" },
+        // WARNING: never mark username `input: false`: better-auth then drops it from mapProfileToUser and the owner check never passes.
         username: { required: false, type: "string" },
       },
     },
@@ -140,6 +144,7 @@ const buildAuth = () => {
     return;
   }
 
+  // WARNING: without its own secret better-auth throws on every production request; stay OFF AIR instead.
   const secret = env.BETTER_AUTH_SECRET;
 
   if (secret === undefined) {

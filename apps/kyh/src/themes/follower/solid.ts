@@ -6,21 +6,19 @@ export type Vec3 = readonly [number, number, number];
 /** Rows. */
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
 
-export const add = (a: Vec3, b: Vec3) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-export const sub = (a: Vec3, b: Vec3) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-export const scale = (a: Vec3, k: number) => [a[0] * k, a[1] * k, a[2] * k];
+export const add = (a: Vec3, b: Vec3) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]] satisfies Vec3;
+export const sub = (a: Vec3, b: Vec3) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]] satisfies Vec3;
+export const scale = (a: Vec3, k: number) => [a[0] * k, a[1] * k, a[2] * k] satisfies Vec3;
 export const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-export const cross = (a: Vec3, b: Vec3) => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
+export const cross = (a: Vec3, b: Vec3) =>
+  [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] satisfies Vec3;
 
 export const normalize = (a: Vec3) => scale(a, 1 / (Math.hypot(a[0], a[1], a[2]) || 1));
 export const mix = (a: Vec3, b: Vec3, t: number) => add(a, scale(sub(b, a), t));
 
-export const apply = (m: Mat3, v: Vec3) => [dot(m[0], v), dot(m[1], v), dot(m[2], v)];
+export const apply = (m: Mat3, v: Vec3) =>
+  [dot(m[0], v), dot(m[1], v), dot(m[2], v)] satisfies Vec3;
 
 export const compose = (a: Mat3, b: Mat3) => {
   const columns: Mat3 = [
@@ -29,29 +27,32 @@ export const compose = (a: Mat3, b: Mat3) => {
     [b[0][2], b[1][2], b[2][2]],
   ];
 
-  return [apply(columns, a[0]), apply(columns, a[1]), apply(columns, a[2])];
+  return [apply(columns, a[0]), apply(columns, a[1]), apply(columns, a[2])] satisfies Mat3;
 };
 
 /** A roll about the forward axis: positive tips its top to its left (+z). */
-export const rollOf = (angle: number) => [
-  [1, 0, 0],
-  [0, Math.cos(angle), -Math.sin(angle)],
-  [0, Math.sin(angle), Math.cos(angle)],
-];
+export const rollOf = (angle: number) =>
+  [
+    [1, 0, 0],
+    [0, Math.cos(angle), -Math.sin(angle)],
+    [0, Math.sin(angle), Math.cos(angle)],
+  ] satisfies Mat3;
 
 /** A turn about the up axis: positive turns its front from +x toward +z, toward the camera. */
-export const yawOf = (angle: number) => [
-  [Math.cos(angle), 0, -Math.sin(angle)],
-  [0, 1, 0],
-  [Math.sin(angle), 0, Math.cos(angle)],
-];
+export const yawOf = (angle: number) =>
+  [
+    [Math.cos(angle), 0, -Math.sin(angle)],
+    [0, 1, 0],
+    [Math.sin(angle), 0, Math.cos(angle)],
+  ] satisfies Mat3;
 
 /** A pitch about the side axis: positive lifts its front (+x toward +y), negative bows it. */
-export const pitchOf = (angle: number) => [
-  [Math.cos(angle), -Math.sin(angle), 0],
-  [Math.sin(angle), Math.cos(angle), 0],
-  [0, 0, 1],
-];
+export const pitchOf = (angle: number) =>
+  [
+    [Math.cos(angle), -Math.sin(angle), 0],
+    [Math.sin(angle), Math.cos(angle), 0],
+    [0, 0, 1],
+  ] satisfies Mat3;
 
 /** How far the camera looks down, radians: a little less than the town's isometric. */
 export const PITCH = 0.48;
@@ -62,7 +63,7 @@ const COS = Math.cos(PITCH);
 export const TOWARD_CAMERA: Vec3 = [0, SIN, COS];
 
 /** A point of the world on the screen, about the follower's feet: +y down. */
-export const toScreen = (v: Vec3) => ({ x: v[0], y: -v[1] * COS + v[2] * SIN });
+export const toScreen = (v: Vec3) => ({ x: v[0], y: -v[1] * COS + v[2] * SIN }) satisfies Point;
 
 /** How near the camera a point is: what's nearer is drawn over. */
 export const depthOf = (v: Vec3) => dot(v, TOWARD_CAMERA);
@@ -103,7 +104,7 @@ export const ellipseOf = (center: Vec3, axes: readonly Vec3[]) => {
     cy: at.y,
     rx: round(Math.sqrt(Math.max(mean + root, 1e-4))),
     ry: round(Math.sqrt(Math.max(mean - root, 1e-4))),
-  };
+  } satisfies Ellipse;
 };
 
 export const ellipsePath = ({ angle, cx, cy, rx, ry }: Ellipse) => ellipse(cx, cy, rx, ry, angle);
@@ -113,7 +114,11 @@ const LIGHT = { x: -0.55, y: -0.83 };
 const litOf = (outline: Ellipse, amount = 0.32) => {
   const shift = Math.min(outline.rx, outline.ry) * amount;
 
-  return { ...outline, cx: outline.cx + LIGHT.x * shift, cy: outline.cy + LIGHT.y * shift };
+  return {
+    ...outline,
+    cx: outline.cx + LIGHT.x * shift,
+    cy: outline.cy + LIGHT.y * shift,
+  } satisfies Ellipse;
 };
 
 /** A shaded solid's paths: its whole (in the shade color), and its lit part. */
@@ -141,7 +146,7 @@ export interface Spring {
   v: number;
 }
 
-export const springAt = (x: number) => ({ v: 0, x });
+export const springAt = (x: number) => ({ v: 0, x }) satisfies Spring;
 
 /**
  * Steps a spring `seconds` on toward `goal`, `rate` its quickness (about how
@@ -212,7 +217,7 @@ export const tangentsOf = (normal: Vec3) => {
   const helper: Vec3 = Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
   const u = normalize(cross(n, helper));
 
-  return [u, cross(n, u)];
+  return [u, cross(n, u)] satisfies readonly [Vec3, Vec3];
 };
 
 /** An ellipsoid placed in the world: its center, how it's turned (local to world), and its radii. */
@@ -223,11 +228,8 @@ export interface Ellipsoid {
 }
 
 /** Its semi-axes in the world. */
-export const axesOf = ({ radii, turn }: Ellipsoid) => [
-  turn([radii[0], 0, 0]),
-  turn([0, radii[1], 0]),
-  turn([0, 0, radii[2]]),
-];
+export const axesOf = ({ radii, turn }: Ellipsoid) =>
+  [turn([radii[0], 0, 0]), turn([0, radii[1], 0]), turn([0, 0, radii[2]])] satisfies Vec3[];
 
 const onSurface = (body: Ellipsoid, unit: Vec3) => {
   const { radii, turn } = body;
@@ -258,7 +260,7 @@ const pointOf = ({ angle, cx, cy, rx, ry }: Ellipse, t: number) => {
   return {
     x: cx + along * Math.cos(turn) - across * Math.sin(turn),
     y: cy + along * Math.sin(turn) + across * Math.cos(turn),
-  };
+  } satisfies Point;
 };
 
 const polygonPath = (points: readonly Point[]) =>

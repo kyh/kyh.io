@@ -6,19 +6,21 @@ import { usePathname } from "next/navigation";
 import { AvatarGroup } from "@/components/avatar-group";
 import { ChatBubble } from "@/components/chat-bubble";
 import { Cursor } from "@/components/cursor";
-import type { PagePoint } from "@/lib/page-point";
 import type { Player } from "@/lib/player";
 import type { Line } from "@/lib/chat";
 import { lineOf, readChat } from "@/lib/chat";
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { asFinite } from "@/lib/wire";
 import { useChat, usePlayers, useRoomClock, useSelf } from "./provider";
+import type { PagePoint } from "@/lib/page-point";
 
 const pagePointOf = (state: Player["state"]) => {
   const fromCenter = asFinite(state.fromCenter);
   const fromTop = asFinite(state.fromTop);
 
-  return fromCenter === null || fromTop === null ? null : { fromCenter, fromTop };
+  return (
+    fromCenter === null || fromTop === null ? null : { fromCenter, fromTop }
+  ) satisfies PagePoint | null;
 };
 
 const OWN_CURSORS = new Set(["/showcase"]);

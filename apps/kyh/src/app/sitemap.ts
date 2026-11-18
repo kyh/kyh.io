@@ -9,7 +9,10 @@ const sitemap = async () => {
   cacheLife("max");
   const lastModified = new Date().toISOString();
 
-  return siteRoutes.map((route) => ({ lastModified, url: absoluteUrl(route.path) }));
+  return siteRoutes.map((route) => ({
+    lastModified,
+    url: absoluteUrl(route.path),
+  })) satisfies MetadataRoute.Sitemap;
 };
 
 export default sitemap;

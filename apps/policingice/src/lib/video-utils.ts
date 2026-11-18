@@ -1,6 +1,6 @@
 import type { VideoPlatform } from "@/db/drizzle-schema";
 
-export const detectPlatform = (url: string) => {
+export const detectPlatform: (url: string) => VideoPlatform = (url) => {
   const u = url.toLowerCase();
 
   if (u.includes("twitter.com") || u.includes("x.com")) {
@@ -51,6 +51,8 @@ export const isValidVideoUrl = (url: string) => {
 };
 
 const FETCH_TIMEOUT_MS = 5000;
+
+// WARNING: SSRF guard; every fetch and every redirect it follows must land on one of these hosts.
 const ALLOWED_TWITTER_HOSTS = new Set(["twitter.com", "x.com"]);
 
 const isAllowedTwitterHost = (url: string) => {
@@ -115,14 +117,14 @@ export const resolveVideoUrl = async (url: string) => {
 
 export const extractInstagramType = (url: string) => {
   if (url.includes("/reel/")) {
-    return "reel";
+    return "reel" satisfies "p" | "reel" | "tv";
   }
 
   if (url.includes("/tv/")) {
-    return "tv";
+    return "tv" satisfies "p" | "reel" | "tv";
   }
 
-  return "p";
+  return "p" satisfies "p" | "reel" | "tv";
 };
 
 const hostMarkerId = (url: string, markers: string[], id: string) =>

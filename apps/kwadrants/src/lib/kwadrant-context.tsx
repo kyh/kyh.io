@@ -48,7 +48,7 @@ const stringEntries = (value: JsonValue | undefined) => {
   const object = asJsonObject(value);
 
   if (!object) {
-    return {};
+    return {} satisfies LabelValues;
   }
 
   const entries: LabelValues = {};
@@ -121,9 +121,11 @@ const getInitialState = () => {
         quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
         tags: parsed.tags || [],
         theme: parsed.theme || "light",
-      };
+      } satisfies KwadrantState;
     }
-  } catch {}
+  } catch {
+    return defaultState;
+  }
 
   return defaultState;
 };

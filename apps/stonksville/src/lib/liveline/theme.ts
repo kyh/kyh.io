@@ -14,16 +14,16 @@ export const parseColorRgb = (color: string) => {
       Number.parseInt(h.slice(0, 2), 16),
       Number.parseInt(h.slice(2, 4), 16),
       Number.parseInt(h.slice(4, 6), 16),
-    ];
+    ] satisfies [number, number, number];
   }
 
   const rgb = RGB_RE.exec(color)?.groups;
 
   if (rgb) {
-    return [Number(rgb.r), Number(rgb.g), Number(rgb.b)];
+    return [Number(rgb.r), Number(rgb.g), Number(rgb.b)] satisfies [number, number, number];
   }
 
-  return [128, 128, 128];
+  return [128, 128, 128] satisfies [number, number, number];
 };
 
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r}, ${g}, ${b}, ${a})`;
@@ -67,7 +67,7 @@ export const resolveTheme = (color: string, mode: ThemeMode) => {
     tooltipBorder: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.08)",
     tooltipText: isDark ? "#e5e5e5" : "#1a1a1a",
     valueFont: '600 11px "SF Mono", Menlo, monospace',
-  };
+  } satisfies LivelinePalette;
 };
 
 /** Default color palette for multi-series when no colors specified: blue, red, green, amber, violet, pink, cyan, orange. */

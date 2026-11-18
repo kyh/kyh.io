@@ -31,10 +31,10 @@ export const createIntro = ({ built, cleared, still }: IntroOptions) => {
     },
     get phase() {
       if (clock === null) {
-        return "done";
+        return "done" satisfies IntroPhase;
       }
 
-      return clock < built ? "building" : "clearing";
+      return (clock < built ? "building" : "clearing") satisfies IntroPhase;
     },
     get pullBack() {
       return taken || clock === null || clock >= built
@@ -43,7 +43,7 @@ export const createIntro = ({ built, cleared, still }: IntroOptions) => {
     },
     step: (elapsed: number) => {
       if (clock === null) {
-        return { cleared: false, opened: false };
+        return { cleared: false, opened: false } satisfies IntroStep;
       }
 
       clock += Math.min(elapsed, LONGEST_FRAME);
@@ -55,7 +55,7 @@ export const createIntro = ({ built, cleared, still }: IntroOptions) => {
         clock = null;
       }
 
-      return { cleared: clearing, opened: opening };
+      return { cleared: clearing, opened: opening } satisfies IntroStep;
     },
     take: () => {
       taken = true;

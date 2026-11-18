@@ -144,12 +144,8 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
     const chunkIndex = index;
 
     const settled = (async () => {
-      try {
-        await publish(sourceId, sessionId, chunkIndex, chunk, seconds, chunkOnAir);
-      } catch {
-      } finally {
-        uploads.delete(chunkIndex);
-      }
+      await publish(sourceId, sessionId, chunkIndex, chunk, seconds, chunkOnAir).catch(() => null);
+      uploads.delete(chunkIndex);
     })();
 
     uploads.set(chunkIndex, settled);
@@ -215,9 +211,7 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
     queue = (async () => {
       await previous;
 
-      try {
-        await step();
-      } catch {}
+      await step().catch(() => null);
     })();
   };
 
@@ -248,5 +242,5 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
         recorder.stop();
       }
     },
-  };
+  } satisfies Recorder;
 };

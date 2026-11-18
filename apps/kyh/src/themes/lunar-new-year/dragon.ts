@@ -6,7 +6,7 @@ import type { Emotes } from "../follower/emote";
 import type { Spring } from "../follower/solid";
 import type { Point } from "../follower/walk";
 import type { Stacking } from "./dragon-pose";
-import type { Course, Swim } from "./dragon-swim";
+import type { Swim, Course } from "./dragon-swim";
 import { flickChain, stepChain } from "../follower/chain";
 import { createEmotes, PETTED_S, reached, say, sayWithHeart, stepEmotes } from "../follower/emote";
 import {
@@ -213,7 +213,7 @@ const TAIL: Stuff = { damp: 6, drag: 0.004, keep: 0.1, keepTip: 0.03, rub: 0.3, 
 const clamp = (value: number, most: number) => Math.max(-most, Math.min(most, value));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
-const emptyChain = () => ({ knots: [], owed: 0 });
+const emptyChain = () => ({ knots: [], owed: 0 }) satisfies Chain;
 
 const createDragon = (at: Point) => {
   const seed = Math.round(at.x * 7919 + at.y * 7);
@@ -280,7 +280,7 @@ const createDragon = (at: Point) => {
     way: 1,
     whiskers: [emptyChain(), emptyChain()],
     wound: 0,
-  };
+  } satisfies Dragon;
 };
 
 const circling = (swim: Swim, x: number, z: number, radius: number, way: 1 | -1) => {
@@ -328,7 +328,7 @@ const courseOfCircle = (dragon: Dragon, at: Point) => {
     radius: mix(RADIUS, COIL_RADIUS, winding),
     speed: Math.min(topOf(swim.heading), Math.max(mix(CRUISE * 0.8, COIL_CRUISE, winding), speed)),
     weave: mix(CIRCLE_WEAVE * (1 - winding), WEAVE, chase.x * smooth(swim.speed / 300)),
-  };
+  } satisfies Course;
 };
 
 const facedHeading = (heading: number) => (Math.cos(heading) >= 0 ? 0.95 : Math.PI - 0.95);
@@ -343,7 +343,7 @@ const courseOfLunge = (swim: Swim, lunge: Lunge) => {
   const radius = mix(Math.max(arc, LUNGE_RADIUS), tight, smooth((off - 0.5) / 0.6));
   const speed = Math.min(topOf(swim.heading) * 1.3, radius * MOST_TURN);
 
-  return { heading, height: 0, radius, speed, weave: 0 };
+  return { heading, height: 0, radius, speed, weave: 0 } satisfies Course;
 };
 
 const courseOf = (dragon: Dragon, at: Point) => {
@@ -355,14 +355,14 @@ const courseOf = (dragon: Dragon, at: Point) => {
   }
 
   if (lunge) {
-    return courseOfLunge(swim, lunge);
+    return courseOfLunge(swim, lunge) satisfies Course;
   }
 
   if (greetDue > 0 || greet > 0) {
     const heading = facedHeading(swim.heading);
     const turned = Math.abs(wrap(heading - swim.heading)) < 0.4;
 
-    return turned ? stopped : { ...stopped, heading, radius: 16, speed: 80 };
+    return (turned ? stopped : { ...stopped, heading, radius: 16, speed: 80 }) satisfies Course;
   }
 
   if (held) {
@@ -372,10 +372,16 @@ const courseOf = (dragon: Dragon, at: Point) => {
   if (act === "curl") {
     const heading = swim.heading + dragon.way * 1.4;
 
-    return { heading, height: 0, radius: CURL_RADIUS, speed: CURL_SPEED, weave: 0 };
+    return {
+      heading,
+      height: 0,
+      radius: CURL_RADIUS,
+      speed: CURL_SPEED,
+      weave: 0,
+    } satisfies Course;
   }
 
-  return courseOfCircle(dragon, at);
+  return courseOfCircle(dragon, at) satisfies Course;
 };
 
 const clearing = (swim: Swim) => {

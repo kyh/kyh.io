@@ -65,10 +65,11 @@ const MOST_OWED = 0.1;
 const ITERATIONS = 8;
 const SPLIT = 4;
 
-const rotate = (x: number, y: number, angle: number) => ({
-  x: x * Math.cos(angle) - y * Math.sin(angle),
-  y: x * Math.sin(angle) + y * Math.cos(angle),
-});
+const rotate = (x: number, y: number, angle: number) =>
+  ({
+    x: x * Math.cos(angle) - y * Math.sin(angle),
+    y: x * Math.sin(angle) + y * Math.cos(angle),
+  }) satisfies Point;
 
 const round = <T>(items: readonly T[]) =>
   items.flatMap((item, index) => {
@@ -211,7 +212,7 @@ export const createGhost = (at: Point) => {
 
   const mood = createMood(Math.round(at.x * 7919 + at.y));
 
-  return { back, knots, mood, owed: 0, tilt: 0, time: 0, vx: 0, vy: 0, x, y };
+  return { back, knots, mood, owed: 0, tilt: 0, time: 0, vx: 0, vy: 0, x, y } satisfies Ghost;
 };
 
 const frameOf = (knots: readonly Knot[]) => {
@@ -402,15 +403,6 @@ export const stepGhost = (ghost: Ghost, pointer: Point, moved: Point, seconds: n
   });
 };
 
-interface GhostPaths extends FacePaths {
-  /** The whole of it: its face and its outline. */
-  body: string;
-  /** Its side turned from the light: right of its middle, as it's turned. */
-  shade: string;
-  /** Folds up the sheet from the hem's cusps, in ink. */
-  creases: string;
-}
-
 const loop = (points: readonly Point[], at: Point) => {
   const p = (q: Point) => point(q.x - at.x, q.y - at.y);
   const middle = (a: Point, b: Point) => p({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
@@ -489,7 +481,12 @@ const scalloped = (knots: readonly Knot[]) => {
   return drawn;
 };
 
-/** Its paths about the head's middle, for an <svg> moved there. */
+interface GhostPaths extends FacePaths {
+  body: string;
+  shade: string;
+  creases: string;
+}
+
 export const ghostPaths = (ghost: Ghost) => {
   const at = { x: ghost.x, y: ghost.y };
 
@@ -528,5 +525,5 @@ export const ghostPaths = (ghost: Ghost) => {
     y: Math.max(-1.6, Math.min(1.6, ghost.vy / 140)),
   };
 
-  return { body, creases, shade, ...facePaths(ghost.mood, look, ghost.tilt) };
+  return { body, creases, shade, ...facePaths(ghost.mood, look, ghost.tilt) } satisfies GhostPaths;
 };

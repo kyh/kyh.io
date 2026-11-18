@@ -37,7 +37,13 @@ const fieldOver = (sketches: readonly Sketch[]) => {
   const columns = Math.ceil((maxX - minX) / STEP) + 1;
   const rows = Math.ceil((maxZ - minZ) / STEP) + 1;
 
-  return { columns, rows, tops: new Float32Array(columns * rows), x: minX, z: minZ };
+  return {
+    columns,
+    rows,
+    tops: new Float32Array(columns * rows),
+    x: minX,
+    z: minZ,
+  } satisfies Field | null;
 };
 
 const fill = (

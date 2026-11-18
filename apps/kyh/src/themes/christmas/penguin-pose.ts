@@ -57,17 +57,19 @@ const SHOULDER: Vec3 = [1, 27, 10];
 const FOOT = [4.4, 2.5] as const;
 const LEG = 3;
 
-const axesOf = (radii: Vec3) => [
-  [radii[0], 0, 0],
-  [0, radii[1], 0],
-  [0, 0, radii[2]],
-];
+const axesOf = (radii: Vec3) =>
+  [
+    [radii[0], 0, 0],
+    [0, radii[1], 0],
+    [0, 0, radii[2]],
+  ] satisfies Vec3[];
 
-const squatOf = (squash: number) => [
-  [1 + squash / 2, 0, 0],
-  [0, 1 - squash, 0],
-  [0, 0, 1 + squash / 2],
-];
+const squatOf = (squash: number) =>
+  [
+    [1 + squash / 2, 0, 0],
+    [0, 1 - squash, 0],
+    [0, 0, 1 + squash / 2],
+  ] satisfies Mat3;
 
 const frameOf = (penguin: Penguin, steady = false) => {
   const { rig } = penguin;
@@ -247,10 +249,10 @@ const arcOf = (frame: Frame, way: 1 | -1) => {
     const b = at(index + 1);
 
     if (!a || !b) {
-      return [0, 0, 0];
+      return [0, 0, 0] satisfies Vec3;
     }
 
-    return mix(a.at, b.at, a.near / (a.near - b.near));
+    return mix(a.at, b.at, a.near / (a.near - b.near)) satisfies Vec3;
   };
 
   const arc: Vec3[] = [crossing(entering)];
@@ -268,11 +270,12 @@ const arcOf = (frame: Frame, way: 1 | -1) => {
 
 const knotAngleOf = (slide: number) => KNOT + (Math.PI * 0.55 - KNOT) * slide;
 
-const knotOf = (slide: number) => [
-  SCARF[0] + Math.cos(knotAngleOf(slide)) * SCARF_RADII[0],
-  SCARF[1] - 1,
-  Math.sin(knotAngleOf(slide)) * SCARF_RADII[1],
-];
+const knotOf = (slide: number) =>
+  [
+    SCARF[0] + Math.cos(knotAngleOf(slide)) * SCARF_RADII[0],
+    SCARF[1] - 1,
+    Math.sin(knotAngleOf(slide)) * SCARF_RADII[1],
+  ] satisfies Vec3;
 
 /**
  * Where one of its scarf's ends (0 the long, 1 the short) would hang at rest
@@ -364,7 +367,7 @@ const solid = (name: string, outline: Ellipse) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
 const tailOf = (slide: number) => mix([-8, 3.5, 0], [-1.5, -0.5, 0], slide);
@@ -447,11 +450,17 @@ export const orderOf = (penguin: Penguin) => {
     ["beak", depthOf(head.point([HEAD_R, 0, 0]))],
     ["tail", depthOf(frame.place(tailOf(frame.slide)))],
     ["scarf-end", depthOf(frame.place(knotOf(frame.slide)))],
-    ...([1, -1] as const).map((side, index) => [
-      `flipper-${index}`,
-      depthOf(flipperOf(penguin, frame, side, index).center),
-    ]),
-    ...[0, 1].map((index) => [`foot-${index}`, depthOf(footOf(penguin, frame, index).at)]),
+    ...([1, -1] as const).map(
+      (side, index) =>
+        [`flipper-${index}`, depthOf(flipperOf(penguin, frame, side, index).center)] satisfies [
+          string,
+          number,
+        ],
+    ),
+    ...[0, 1].map(
+      (index) =>
+        [`foot-${index}`, depthOf(footOf(penguin, frame, index).at)] satisfies [string, number],
+    ),
   ];
 
   const sides: Record<string, number> =
@@ -528,5 +537,5 @@ export const penguinPose = (penguin: Penguin) => {
     order: penguin.stack.length > 0 ? penguin.stack : orderOf(penguin),
     parts,
     say: penguin.emotes.line,
-  };
+  } satisfies Pose;
 };

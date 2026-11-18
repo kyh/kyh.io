@@ -135,7 +135,6 @@ export const Follower = () => {
         <Beard />
       </g>
       <g data-layer="neck">
-        {}
         {NECK.map(([name, width]) => (
           <path key={`${name}-ink`} data-part={name} style={stroked(width + ink(2.4))} />
         ))}

@@ -46,7 +46,10 @@ interface Session {
 
 type ProgramResult = { program: LiveProgram; formatLabel?: string } | { reason: string };
 
-const requestProgram = async (sourceId: string, opening: boolean) => {
+const requestProgram: (sourceId: string, opening: boolean) => Promise<ProgramResult> = async (
+  sourceId,
+  opening,
+) => {
   const answer = await requestJson(
     "/api/live",
     livePayloadSchema,
@@ -65,27 +68,22 @@ const requestProgram = async (sourceId: string, opening: boolean) => {
 
 export const LiveScreen = (props: LiveScreenProps) => {
   const videoRef = useVideoPlayback(props.muted, props.paused);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const sessionRef = useRef<Session | undefined>(undefined);
   const [stream, setStream] = useState<MediaStream | undefined>();
   const versionRef = useRef(0);
   const programsRef = useRef(new Map<number, LiveProgram>());
   const shownVersionRef = useRef(0);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const tickerTimerRef = useRef<number | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const nextTimerRef = useRef<number | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const recorderRef = useRef<Recorder | undefined>(undefined);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const streamRef = useRef<MediaStream | undefined>(undefined);
   const formatLabelRef = useRef("live");
   const testStreamRef = useRef(false);
   const testProgramsRef = useRef(0);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- React 19's useRef requires the initial value
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
 
+  // oxlint-disable-next-line no-empty-function -- nothing to settle before a session opens
   const settleRef = useRef<() => void>(() => {});
 
   const emitProgram = useEffectEvent(props.onProgram);
@@ -234,7 +232,6 @@ export const LiveScreen = (props: LiveScreenProps) => {
 
       const handlers = {
         onData: (raw: string) => {
-          // oxlint-disable-next-line no-use-before-define -- the handler closes over the session it is registered on
           if (sessionRef.current !== session) {
             return;
           }
@@ -287,6 +284,10 @@ export const LiveScreen = (props: LiveScreenProps) => {
               );
               closeSession();
               break;
+            }
+
+            default: {
+              message.data satisfies never;
             }
           }
         },

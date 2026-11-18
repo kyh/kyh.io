@@ -85,15 +85,7 @@ test("an appearance is the same object until it changes, as a snapshot must be",
 });
 
 test("a tap back to the system's own light or dark forgets the pick, so the theme follows the system again", () => {
-  const kept = new Map<string, string>();
-
-  const storage = {
-    getItem: (key: string) => kept.get(key) ?? null,
-    removeItem: (key: string) => kept.delete(key),
-    setItem: (key: string, value: string) => kept.set(key, value),
-  };
-
-  Object.assign(globalThis, { localStorage: storage });
+  localStorage.clear();
   mock.timers.enable({ apis: ["Date"], now: new Date(2026, 5, 15) });
 
   try {
@@ -106,12 +98,12 @@ test("a tap back to the system's own light or dark forgets the pick, so the them
 
     toggleTheme();
     assert.equal(currentAppearance().mode, "dark");
-    assert.equal(kept.get("theme"), "dark");
+    assert.equal(localStorage.getItem("theme"), "dark");
     toggleTheme();
     assert.equal(currentAppearance().mode, "light");
-    assert.equal(kept.has("theme"), false);
+    assert.equal(localStorage.getItem("theme"), null);
   } finally {
-    Reflect.deleteProperty(globalThis, "localStorage");
+    localStorage.clear();
     mock.timers.reset();
     chooseTheme(calendarTheme());
   }

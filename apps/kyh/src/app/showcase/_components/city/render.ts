@@ -117,7 +117,7 @@ export const createMaterials = (initial: Scheme, adapt?: (material: Material) =>
         material.linewidth = WEIGHTS[weight] * inkScale;
       }
     },
-  };
+  } satisfies Materials;
 };
 
 const SIGN_HEIGHT_PX = 128;

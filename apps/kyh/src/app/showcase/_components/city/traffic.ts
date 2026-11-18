@@ -83,6 +83,9 @@ const createGraph = () => {
 
       return graph.nodes.length - 1;
     },
+  } satisfies Graph & {
+    node: (id: string, x: number, z: number) => number;
+    both: (a: number, b: number) => void;
   };
 };
 

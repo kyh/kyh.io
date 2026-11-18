@@ -114,7 +114,7 @@ const houseLot = (random: Random, lot: Footprint, ridge: "x" | "z", front: Side)
     w,
     x: lot.x + (lot.w - w) / 2,
     z: lot.z + (lot.d - d) / 2,
-  };
+  } satisfies HouseSpec;
 };
 
 type HouseCell =

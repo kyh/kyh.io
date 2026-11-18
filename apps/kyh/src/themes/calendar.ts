@@ -14,10 +14,8 @@ export const dateOf = (key: number) =>
   new Date(Math.floor(key / 10_000), (Math.floor(key / 100) % 100) - 1, key % 100);
 
 /** From one date (month, day) to a later one in the same year. */
-export const span = (year: number, from: [number, number], to: [number, number]) => [
-  dayOf(year, ...from),
-  dayOf(year, ...to),
-];
+export const span = (year: number, from: [number, number], to: [number, number]) =>
+  [dayOf(year, ...from), dayOf(year, ...to)] satisfies Window;
 
 /** Some days either side of one date. */
 export const around = (center: number, before: number, after: number) => {
@@ -26,7 +24,7 @@ export const around = (center: number, before: number, after: number) => {
   return [
     dayOf(date.getFullYear(), date.getMonth() + 1, date.getDate(), -before),
     dayOf(date.getFullYear(), date.getMonth() + 1, date.getDate(), after),
-  ];
+  ] satisfies Window;
 };
 
 /** Western Easter Sunday (the anonymous Gregorian computus). */

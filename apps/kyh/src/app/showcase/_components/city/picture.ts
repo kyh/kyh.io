@@ -31,22 +31,20 @@ type Point = readonly [number, number];
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-const cross = (a: Vec3, b: Vec3) => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
+const cross = (a: Vec3, b: Vec3) =>
+  [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] satisfies Vec3;
 
 const RIGHT = (() => {
   const [x, , z] = VIEW;
   const size = Math.hypot(x, z);
 
-  return [z / size, 0, -x / size];
+  return [z / size, 0, -x / size] satisfies Vec3;
 })();
 
 const UP = cross(VIEW, RIGHT);
 
-const project = (point: Vec3) => [dot(point, RIGHT) * SCALE, -dot(point, UP) * SCALE];
+const project = (point: Vec3) =>
+  [dot(point, RIGHT) * SCALE, -dot(point, UP) * SCALE] satisfies Point;
 
 interface Facet {
   token: Token;
@@ -87,9 +85,11 @@ const facetOf = (token: Token, [a, b, c]: readonly Vec3[]) => {
     [c, a],
   ] as const;
 
-  return area > 0
-    ? { corners, depths, edges, facing, token }
-    : { corners: corners.toReversed(), depths: depths.toReversed(), edges, facing, token };
+  return (
+    area > 0
+      ? { corners, depths, edges, facing, token }
+      : { corners: corners.toReversed(), depths: depths.toReversed(), edges, facing, token }
+  ) satisfies Facet | null;
 };
 
 const depthAt = ({ corners: [a, b, c], depths }: Facet, p: Point) => {
@@ -156,7 +156,7 @@ const triplesOf = (positions: readonly number[], size: number) =>
     Array.from({ length: size }, (__, corner) => {
       const at = (index * size + corner) * 3;
 
-      return [positions[at] ?? 0, positions[at + 1] ?? 0, positions[at + 2] ?? 0];
+      return [positions[at] ?? 0, positions[at + 1] ?? 0, positions[at + 2] ?? 0] satisfies Vec3;
     }),
   );
 
@@ -192,18 +192,16 @@ const patchesOf = (sketch: Sketch, solidIndex: number) => {
   const caps = [...facings.values()].filter((group) => group.length >= CAP);
   const side = facets.filter((facet) => (facings.get(facet.facing)?.length ?? 0) < CAP);
 
-  return [...caps, side]
-    .filter((group) => group.length > 0)
-    .map((group) => {
-      const depths = group.flatMap((facet) => facet.depths);
-      let depth = 0;
+  return (side.length > 0 ? [...caps, side] : caps).map((group) => {
+    const depths = group.flatMap((facet) => facet.depths);
+    let depth = 0;
 
-      for (const value of depths) {
-        depth += value / depths.length;
-      }
+    for (const value of depths) {
+      depth += value / depths.length;
+    }
 
-      return { depth, facets: group, solid: solidIndex };
-    });
+    return { depth, facets: group, solid: solidIndex };
+  });
 };
 
 const behind = (a: Patch, b: Patch) => {
@@ -241,7 +239,7 @@ const nextOf = (patches: readonly Patch[], left: ReadonlySet<number>, waiting: n
 };
 
 const ordered = (patches: readonly Patch[]) => {
-  const after = patches.map(() => []);
+  const after: number[][] = patches.map(() => []);
   const waiting = patches.map(() => 0);
 
   for (const [i, a] of patches.entries()) {
@@ -284,7 +282,10 @@ const round = (n: number) => Math.round(n * 10) / 10;
 const pathOf = (points: readonly Point[], closed: boolean) =>
   `M${points.map(([x, y]) => `${round(x)} ${round(y)}`).join("L")}${closed ? "Z" : ""}`;
 
-const recorder = (sketches: Sketch[], place: (point: Vec3) => Vec3) => {
+const recorder: (sketches: Sketch[], place: (point: Vec3) => Vec3) => Placed = (
+  sketches,
+  place,
+) => {
   const fresh = () => {
     const sketch = createSketch();
     sketches.push(sketch);
@@ -402,5 +403,5 @@ export const pictureOf = (draw: (pen: Placed) => void, time: Time) => {
   const width = Math.max(...xs) + pad - left;
   const height = Math.max(...ys) + pad - top;
 
-  return { box: [round(left), round(top), round(width), round(height)], layers };
+  return { box: [round(left), round(top), round(width), round(height)], layers } satisfies Picture;
 };

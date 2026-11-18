@@ -36,7 +36,7 @@ export const createSites = (
     scene.add(built.group);
     builds.push(built);
 
-    return { built, work };
+    return { built, work } satisfies Placed<T>;
   };
 
   const yards = works.yards.map((yard) => {

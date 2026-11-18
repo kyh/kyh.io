@@ -78,8 +78,8 @@ export const reviewChange = async (ports: Ports, { lookModel, model }: Models, p
   if (grade === undefined) {
     return {
       error: `${model}'s answer did not fit the scorecard:\n\n${answer.text.slice(0, 1500)}`,
-    };
+    } satisfies Reviewed;
   }
 
-  return { grade };
+  return { grade } satisfies Reviewed;
 };

@@ -14,7 +14,12 @@ const parseRgba = (color: string) => {
   const [r, g, b] = parseColorRgb(color);
   const alpha = RGBA_RE.exec(color)?.groups?.alpha;
 
-  return [r, g, b, alpha === undefined ? 1 : Number(alpha)];
+  return [r, g, b, alpha === undefined ? 1 : Number(alpha)] satisfies [
+    number,
+    number,
+    number,
+    number,
+  ];
 };
 
 const blendColor = (c1: string, c2: string, t: number) => {

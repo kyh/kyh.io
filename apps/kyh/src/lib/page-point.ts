@@ -13,10 +13,11 @@ export interface Viewport {
 }
 
 /** A spot on screen (client pixels) as a spot on the page. */
-export const toPage = (x: number, y: number, view: Viewport) => ({
-  fromCenter: Math.round(x + view.scrollX - view.width / 2),
-  fromTop: Math.round(y + view.scrollY),
-});
+export const toPage = (x: number, y: number, view: Viewport) =>
+  ({
+    fromCenter: Math.round(x + view.scrollX - view.width / 2),
+    fromTop: Math.round(y + view.scrollY),
+  }) satisfies PagePoint;
 
 /** A spot on the page as a spot on this screen (client pixels). */
 export const toScreen = (point: PagePoint, view: Viewport) => ({
@@ -25,8 +26,9 @@ export const toScreen = (point: PagePoint, view: Viewport) => ({
 });
 
 /** This window's viewport, read fresh. */
-export const readViewport = () => ({
-  scrollX: window.scrollX,
-  scrollY: window.scrollY,
-  width: document.documentElement.clientWidth,
-});
+export const readViewport = () =>
+  ({
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
+    width: document.documentElement.clientWidth,
+  }) satisfies Viewport;

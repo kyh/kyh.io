@@ -90,7 +90,6 @@ export const Follower = () => {
       </defs>
       {[0, 1].map((index) => (
         <g key={`tail-${index}`} data-layer={`tail-${index}`}>
-          {}
           <path data-part={`tail-${index}`} style={filled("festiveGreenShade")} />
           <path data-part={`tail-${index}`} fill={`url(#${id}-dots)`} />
           <path data-part={`tail-${index}`} style={stroked(inked(0.9))} />
@@ -110,7 +109,6 @@ export const Follower = () => {
       <g data-layer="head">
         <Solid name="head" id={id} fill="skin" shade="skinDark" ink={inked(1)} />
         <Shaded name="hair" id={id} fill="pumpkin" shade="pumpkinShade" by={1.1} ink={inked(0.7)} />
-        {}
         {[0, 1].map((index) => (
           <g key={`ear-${index}`} data-part={`ear-${index}-shown`}>
             <path data-part={`ear-${index}`} style={filled("skin")} />
@@ -119,7 +117,6 @@ export const Follower = () => {
         ))}
       </g>
       <g data-layer="face">
-        {}
         <path data-part="beard" style={stroked(inked(2))} />
         <path data-part="tuft" style={stroked(inked(2))} />
         <Shaded name="beard" id={id} fill="pumpkin" shade="pumpkinShade" by={0.7} />

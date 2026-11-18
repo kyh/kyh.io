@@ -83,7 +83,6 @@ export const Follower = () => {
       <defs>
         <ShadeDots id={`${id}-dots`} size={inked(0.9)} />
       </defs>
-      {}
       <g data-layer="legs">
         {[0, 1].map((index) => (
           <g key={`leg-${index}`}>
@@ -112,18 +111,15 @@ export const Follower = () => {
         </g>
       ))}
       <g data-layer="torso">
-        {}
         <Ring name="scarf-back" />
         <path data-part="body" style={stroked(OUTLINE)} />
         <path data-part="head" style={stroked(OUTLINE)} />
         <Black name="body" id={id} />
         <Black name="head" id={id} />
-        {}
         <Solid name="front" id={id} fill="white" shade="whiteShade" ink={inked(0.7)} />
         <Eye index={0} />
         <Eye index={1} />
         <Ring name="scarf" />
-        {}
         <g data-part="head-over" style={{ opacity: 0 }}>
           <path data-part="head" style={stroked(OUTLINE)} />
           <Black name="head" id={id} clip="head-over" />

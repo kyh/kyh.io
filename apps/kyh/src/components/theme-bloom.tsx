@@ -94,12 +94,10 @@ const WedgeRing = ({ theme, own, still, keyed, light }: WedgesProps) => (
           />
         }
       >
-        {}
         <svg className="theme-bloom-face" viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
           <path d={d} />
         </svg>
         <span className="theme-bloom-piece" style={{ left, top }}>
-          {}
           <ThemeIcon appearance={{ mode: own, theme: id }} look="piece" />
         </span>
       </Menu.RadioItem>
@@ -169,7 +167,6 @@ export const ThemeBloom = ({ anchor, open, onOpenChange }: ThemeBloomProps) => {
                 }
               >
                 <Wedges theme={theme} own={own} still={still} keyed={keyed} light={light} />
-                {}
                 <button
                   type="button"
                   tabIndex={-1}
@@ -187,7 +184,6 @@ export const ThemeBloom = ({ anchor, open, onOpenChange }: ThemeBloomProps) => {
                       exit={{ opacity: 0, scale: still ? 1 : 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      {}
                       <ThemeIcon appearance={{ mode: own, theme: shown }} look="glyph" />
                     </motion.span>
                   </AnimatePresence>

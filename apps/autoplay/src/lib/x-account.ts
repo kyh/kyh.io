@@ -5,18 +5,13 @@ import { account } from "@/db/drizzle-schema";
 import { env } from "@/lib/env";
 import { refreshXToken } from "@/lib/x-api";
 
+const EXPIRY_MARGIN_MS = 60_000;
+
 interface XAccount {
   accessToken: string;
-  /** The X user id (the provider account id), used in timeline paths. */
   xUserId: string;
 }
 
-const EXPIRY_MARGIN_MS = 60_000;
-
-/**
- * A usable X access token for a better-auth user, or undefined when the user
- * has no X grant or it can no longer be refreshed (sign in again).
- */
 export const freshXAccount = async (userId: string) => {
   if (db === undefined || env.X_CLIENT_ID === undefined || env.X_CLIENT_SECRET === undefined) {
     return;
@@ -38,15 +33,17 @@ export const freshXAccount = async (userId: string) => {
   const usable = expiresAt === undefined || expiresAt > Date.now() + EXPIRY_MARGIN_MS;
 
   if (usable) {
-    return { accessToken: row.accessToken, xUserId: row.accountId };
+    return { accessToken: row.accessToken, xUserId: row.accountId } satisfies XAccount | undefined;
   }
 
   if (row.refreshToken === null) {
     return;
   }
 
+  let grant: Awaited<ReturnType<typeof refreshXToken>>;
+
   try {
-    const grant = await refreshXToken(env.X_CLIENT_ID, env.X_CLIENT_SECRET, row.refreshToken);
+    grant = await refreshXToken(env.X_CLIENT_ID, env.X_CLIENT_SECRET, row.refreshToken);
     await db
       .update(account)
       .set({
@@ -56,9 +53,9 @@ export const freshXAccount = async (userId: string) => {
         updatedAt: new Date(),
       })
       .where(eq(account.id, row.id));
-
-    return { accessToken: grant.accessToken, xUserId: row.accountId };
   } catch {
     return;
   }
+
+  return { accessToken: grant.accessToken, xUserId: row.accountId } satisfies XAccount | undefined;
 };

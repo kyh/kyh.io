@@ -87,9 +87,7 @@ const stopStreamer = async (streamer: Streamer) => {
     return;
   }
 
-  try {
-    await streamer.child.return({ code: null, signal: null });
-  } catch {}
+  await streamer.child.return({ code: null, signal: null }).catch(() => null);
 };
 
 const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting" }) => {
@@ -131,15 +129,20 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
   screen.streamer = { kind: "off" };
   screen.mounted = null;
   const reason = lastWords(output) || "the streamer stopped";
-  await update($, view, () => ({ kind: "failed", reason }));
+  await update($, view, () => ({ kind: "failed", reason }) satisfies View);
 };
 
 const startStreamer = async ($: EngineInterface) => {
   if ((await $.env.get("OS")) === "Windows_NT") {
-    await update($, view, () => ({
-      kind: "failed",
-      reason: "Commuting Clawders runs on macOS and Linux",
-    }));
+    await update(
+      $,
+      view,
+      () =>
+        ({
+          kind: "failed",
+          reason: "Commuting Clawders runs on macOS and Linux",
+        }) satisfies View,
+    );
 
     return;
   }
@@ -223,21 +226,23 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
   screen.latest = frame;
 
   if (!mounted || mounted.mode !== screen.mode || !sameSize(mounted, frame)) {
-    await update($, view, () => ({
-      columns: frame.columns,
-      kind: "live",
-      mode: screen.mode,
-      rows: frame.rows,
-    }));
+    await update(
+      $,
+      view,
+      () =>
+        ({
+          columns: frame.columns,
+          kind: "live",
+          mode: screen.mode,
+          rows: frame.rows,
+        }) satisfies View,
+    );
 
     return;
   }
 
-  let deny: string | undefined = "the pane is closed";
+  const { deny } = await blit($, frame, imagePath).catch(() => ({ deny: "the pane is closed" }));
 
-  try {
-    ({ deny } = await blit($, frame, imagePath));
-  } catch {}
   if (deny && screen.mode === "image") {
     screen.mode = "cells";
 
@@ -265,7 +270,7 @@ const pull = async ($: EngineInterface) => {
 
   screen.isPulling = true;
 
-  try {
+  const pullOnce = async () => {
     const since = screen.latest?.frame ?? -1;
 
     const url = frameUrl(since, screen.mode, size.columns, size.rows, {
@@ -279,10 +284,10 @@ const pull = async ($: EngineInterface) => {
     if (frame) {
       await show($, frame, streamer.imagePath);
     }
-  } catch {
-  } finally {
-    screen.isPulling = false;
-  }
+  };
+
+  await pullOnce().catch(() => null);
+  screen.isPulling = false;
 };
 
 const setRun = async ($: EngineInterface, next: Run) => {

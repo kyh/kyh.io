@@ -110,7 +110,7 @@ const routeOf = (points: Point[]) => {
     at.push((at.at(-1) ?? 0) + (a && b ? Math.hypot(b.x - a.x, b.z - a.z) : 0));
   }
 
-  return { at, length: at.at(-1) ?? 0, points };
+  return { at, length: at.at(-1) ?? 0, points } satisfies Route;
 };
 
 const along = (route: Route, s: number) => {
@@ -186,7 +186,7 @@ export const truckPose = (truck: Truck, t: number) => {
   const gone = truck.leaves + truck.driveOut;
 
   if (t < setOff || t > gone) {
-    return { heading: 0, scale: 0, shown: false, x: 0, z: 0 };
+    return { heading: 0, scale: 0, shown: false, x: 0, z: 0 } satisfies TruckPose;
   }
 
   let place = along(truck.arrive, truck.arrive.length);
@@ -205,7 +205,7 @@ export const truckPose = (truck: Truck, t: number) => {
 
   const scale = shownBetween(t, setOff, gone, POP);
 
-  return { heading: place.heading, scale, shown: true, x: place.x, z: place.z };
+  return { heading: place.heading, scale, shown: true, x: place.x, z: place.z } satisfies TruckPose;
 };
 
 const STEP = 0.05;
@@ -232,7 +232,7 @@ const trackOf = (truck: Truck) => {
     box.maxZ = Math.max(box.maxZ, pose.z);
   }
 
-  return { at, box, first };
+  return { at, box, first } satisfies Track;
 };
 
 const meets = (a: Track, shift: number, b: Track) => {
@@ -325,7 +325,7 @@ const trucksFor = (
         leave,
         leaves: due + UNLOAD,
         parked: due,
-      };
+      } satisfies Truck;
     }).map((truck) => ({ track: trackOf(truck), truck }));
 
     const waits = Array.from({ length: Math.floor(MOST_WAIT / WAIT_STEP) + 1 }, (_, n) => n);
@@ -410,12 +410,17 @@ export const cranePose = (crane: Crane, t: number) => {
   const up = shownBetween(t, crane.start - ERECT, crane.done + ERECT, ERECT);
 
   if (up <= 0) {
-    return { jib: 0, mast: 0, reach: 0, shown: false };
+    return { jib: 0, mast: 0, reach: 0, shown: false } satisfies CranePose;
   }
 
   const sections = Math.max(3, Math.round(crane.mast / 0.6));
   const mast = Math.ceil(clamp01(up / 0.8) * sections) / sections;
   const swing = Math.sin((t - crane.start) * 1.4 + crane.aim * 3) * 0.25;
 
-  return { jib: crane.aim + swing, mast, reach: clamp01(up * 5 - 4), shown: true };
+  return {
+    jib: crane.aim + swing,
+    mast,
+    reach: clamp01(up * 5 - 4),
+    shown: true,
+  } satisfies CranePose;
 };

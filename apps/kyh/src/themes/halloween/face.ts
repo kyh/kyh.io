@@ -39,15 +39,16 @@ const CHEEK_X = EYE_SEP + EYE_R + 1.6;
 const CHEEK_Y = EYE_Y + 1.9;
 const STARTLE_S = 0.45;
 
-export const createMood = (seed: number) => ({
-  blink: 0,
-  blinkTarget: 0,
-  excite: 0,
-  nextBlink: 1.2,
-  random: createRandom(seed),
-  squint: 0,
-  squintHold: 0,
-});
+export const createMood = (seed: number) =>
+  ({
+    blink: 0,
+    blinkTarget: 0,
+    excite: 0,
+    nextBlink: 1.2,
+    random: createRandom(seed),
+    squint: 0,
+    squintHold: 0,
+  }) satisfies Mood;
 
 /** A click anywhere startles it: it flinches, screwing its eyes into > < for a moment. */
 export const startle = (mood: Mood) => {
@@ -166,7 +167,7 @@ export const facePaths = (mood: Mood, look: Point, tilt: number) => {
 
   const blush = Math.min(1, 0.55 * (1 + mood.squint * 0.6));
 
-  return { blush, cheeks, eyes, mouth, shine, squints };
+  return { blush, cheeks, eyes, mouth, shine, squints } satisfies FacePaths;
 };
 
 /** The squint's stroke, in the head's pixels. */

@@ -292,7 +292,7 @@ export const createHoneyDrops = (world: Group) => {
           stream.flow = Math.max(0.05, Math.min(1, flow));
         }
       },
-    };
+    } satisfies Pour;
   };
 
   const trail = (stream: Stream, seconds: number) => {

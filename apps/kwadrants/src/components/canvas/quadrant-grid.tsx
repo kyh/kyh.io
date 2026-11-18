@@ -78,10 +78,8 @@ export const QuadrantGrid = ({
 
   return (
     <>
-      {}
       <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={themeColors.bg} />
 
-      {}
       <Rect x={bx} y={by} width={width / 2} height={height / 2} fill={colors.topLeft} />
       <Rect x={centerX} y={by} width={width / 2} height={height / 2} fill={colors.topRight} />
       <Rect x={bx} y={centerY} width={width / 2} height={height / 2} fill={colors.bottomLeft} />
@@ -93,10 +91,8 @@ export const QuadrantGrid = ({
         fill={colors.bottomRight}
       />
 
-      {}
       {renderGrid()}
 
-      {}
       <Line
         points={[centerX, by, centerX, by + height]}
         stroke={themeColors.axis}

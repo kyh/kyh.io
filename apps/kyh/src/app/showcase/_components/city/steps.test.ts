@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { Steps } from "./steps";
 import { finish, runFor } from "./steps";
 
 const counting = function* counting(log: number[], steps: number) {

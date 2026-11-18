@@ -26,12 +26,13 @@ const id = (value: number) => {
   return out;
 };
 
-const element = (value: number, body: number[]) => [
-  ...id(value),
-  // oxlint-disable-next-line no-bitwise -- EBML: one-byte size with its length marker bit
-  0x80 | body.length,
-  ...body,
-];
+const element = (value: number, body: number[]) =>
+  [
+    ...id(value),
+    // oxlint-disable-next-line no-bitwise -- EBML: one-byte size with its length marker bit
+    0x80 | body.length,
+    ...body,
+  ] satisfies number[];
 
 const stream = () =>
   new Uint8Array([

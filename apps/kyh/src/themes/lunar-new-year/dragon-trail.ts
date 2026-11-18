@@ -17,23 +17,25 @@ export interface Trail {
 
 const SPACING = 2;
 
-const between = (a: Mark, b: Mark, t: number) => ({
-  h: a.h + (b.h - a.h) * t,
-  roll: a.roll + (b.roll - a.roll) * t,
-  x: a.x + (b.x - a.x) * t,
-  z: a.z + (b.z - a.z) * t,
-});
+const between = (a: Mark, b: Mark, t: number) =>
+  ({
+    h: a.h + (b.h - a.h) * t,
+    roll: a.roll + (b.roll - a.roll) * t,
+    x: a.x + (b.x - a.x) * t,
+    z: a.z + (b.z - a.z) * t,
+  }) satisfies Mark;
 
 /** A trail `reach` long, straight back from `head` along `heading`. */
-export const createTrail = (head: Mark, heading: number, reach: number) => ({
-  head,
-  marks: Array.from({ length: Math.ceil(reach / SPACING) + 2 }, (_, index) => ({
-    ...head,
-    x: head.x - Math.cos(heading) * index * SPACING,
-    z: head.z - Math.sin(heading) * index * SPACING,
-  })),
-  since: 0,
-});
+export const createTrail = (head: Mark, heading: number, reach: number) =>
+  ({
+    head,
+    marks: Array.from({ length: Math.ceil(reach / SPACING) + 2 }, (_, index) => ({
+      ...head,
+      x: head.x - Math.cos(heading) * index * SPACING,
+      z: head.z - Math.sin(heading) * index * SPACING,
+    })),
+    since: 0,
+  }) satisfies Trail;
 
 /** The head moved on to `to`: a mark laid at each `SPACING` it passed. */
 export const extendTrail = (trail: Trail, to: Mark) => {

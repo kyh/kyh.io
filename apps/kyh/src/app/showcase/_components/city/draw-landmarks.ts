@@ -1,5 +1,5 @@
 import type { Bounds, DrawLandmark } from "./landmark";
-import type { CityPlan, Lot, LotSize, PlanEntry } from "./plan";
+import type { CityPlan, Lot, LotSize } from "./plan";
 import type { Sketch } from "./sketch";
 import { CURB_TOP } from "./draw-blocks";
 import { drawFounding, drawUiCapsule, drawVibedgames, drawYoursSincerely } from "./landmarks-large";
@@ -25,7 +25,6 @@ import {
 } from "./landmarks-small";
 import { hashString } from "@/lib/random";
 import { createSketch } from "./sketch";
-import type { Steps } from "./steps";
 import { finish } from "./steps";
 
 export type ProjectKind = "venture" | "project" | "mini-app" | "template";

@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
-const X_API_BASE = "https://api.x.com/2";
+import { env } from "@/lib/env";
+
+const X_API_BASE = env.X_API_URL ?? "https://api.x.com/2";
+const X_TOKEN_URL = `${X_API_BASE}/oauth2/token`;
 
 export class XApiError extends Error {
   status: number;
@@ -21,17 +23,13 @@ const apiErrorSchema = z.object({
 });
 
 const errorFromResponse = async (response: Response) => {
-  let message = `X API request failed (${response.status})`;
+  const body = apiErrorSchema.safeParse(await response.json().catch(() => null));
 
-  try {
-    const body = apiErrorSchema.parse(await response.json());
-    const detail = body.detail ?? body.error_description ?? body.title ?? body.error;
+  const detail = body.success
+    ? (body.data.detail ?? body.data.error_description ?? body.data.title ?? body.data.error)
+    : undefined;
 
-    if (detail !== undefined) {
-      message = detail;
-    }
-  } catch {}
-  return new XApiError(response.status, message);
+  return new XApiError(response.status, detail ?? `X API request failed (${response.status})`);
 };
 
 const tokenResponseSchema = z.object({
@@ -78,7 +76,7 @@ export const refreshXToken = async (
     accessToken: grant.access_token,
     expiresAt: Date.now() + grant.expires_in * 1000,
     refreshToken: grant.refresh_token,
-  };
+  } satisfies TokenGrant;
 };
 
 const xUserSchema = z.object({
@@ -173,11 +171,6 @@ const xGet = async <T>(accessToken: string, url: URL, schema: z.ZodType<T>) => {
   return schema.parse(await response.json());
 };
 
-interface TimelinePage {
-  posts: FeedPost[];
-  nextToken?: string;
-}
-
 const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>) => {
   const usersById = new Map((timeline.includes?.users ?? []).map((user) => [user.id, user]));
 
@@ -206,6 +199,11 @@ const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>) => 
   });
 };
 
+interface TimelinePage {
+  posts: FeedPost[];
+  nextToken?: string;
+}
+
 const fetchTimeline = async (accessToken: string, path: string, paginationToken?: string) => {
   const url = new URL(`${X_API_BASE}${path}`);
 
@@ -219,7 +217,10 @@ const fetchTimeline = async (accessToken: string, path: string, paginationToken?
 
   const timeline = await xGet(accessToken, url, timelineResponseSchema);
 
-  return { nextToken: timeline.meta?.next_token, posts: postsFromResponse(timeline) };
+  return {
+    nextToken: timeline.meta?.next_token,
+    posts: postsFromResponse(timeline),
+  } satisfies TimelinePage;
 };
 
 const timelinePath = (source: FeedSource, userId: string) =>
@@ -245,13 +246,13 @@ export const fetchFeedPage = async (
   if (source !== undefined) {
     const page = await fetchTimeline(accessToken, timelinePath(source, userId), paginationToken);
 
-    return { source, ...page };
+    return { source, ...page } satisfies FeedPage;
   }
 
   try {
     const page = await fetchTimeline(accessToken, timelinePath("home", userId), paginationToken);
 
-    return { source: "home", ...page };
+    return { source: "home", ...page } satisfies FeedPage;
   } catch (error) {
     if (error instanceof XApiError && error.status === 402) {
       throw new XApiError(402, "X API credits exhausted — top up at console.x.com");
@@ -263,7 +264,7 @@ export const fetchFeedPage = async (
 
     const page = await fetchTimeline(accessToken, timelinePath("own", userId), paginationToken);
 
-    return { source: "own", ...page };
+    return { source: "own", ...page } satisfies FeedPage;
   }
 };
 

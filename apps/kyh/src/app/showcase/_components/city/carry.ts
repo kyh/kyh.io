@@ -52,7 +52,7 @@ const hangingOver = (
   const under = (altitude: number) => {
     const up = altitude / view[1];
 
-    return { x: seen.x + view[0] * up, y: 0, z: seen.z + view[2] * up };
+    return { x: seen.x + view[0] * up, y: 0, z: seen.z + view[2] * up } satisfies Spot;
   };
 
   let altitude = surfaceAt(seen.x, seen.z) + height;
@@ -89,7 +89,7 @@ export const pickUp = (
     samples: [{ t, x: spot.x, z: spot.z }],
     seen,
     spot,
-  };
+  } satisfies Held;
 };
 
 /** Carries what's held to follow the pointer, rising as it goes. */
@@ -106,7 +106,7 @@ export const carryTo = (ground: Ground, held: Held, pointer: Spot, t: number) =>
     samples: [...held.samples, { t, x: spot.x, z: spot.z }].slice(-SAMPLES),
     seen,
     spot,
-  };
+  } satisfies Held;
 };
 
 const velocityOf = (samples: Held["samples"]) => {

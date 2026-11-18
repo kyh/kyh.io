@@ -91,5 +91,5 @@ export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo) 
       images: [video.poster],
       title,
     },
-  };
+  } satisfies Metadata;
 };

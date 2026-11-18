@@ -35,7 +35,7 @@ export const bounce = (
   const vx = spider.vx + ax * dt;
   const vy = spider.vy + ay * dt;
 
-  return { vx, vy, x: spider.x + vx * dt, y: spider.y + vy * dt };
+  return { vx, vy, x: spider.x + vx * dt, y: spider.y + vy * dt } satisfies Spider;
 };
 
 /** Where the bounce comes to rest: straight down, the thread stretched by its weight. */
@@ -58,5 +58,10 @@ export const climb = (spider: Spider, home: { x: number; y: number }, seconds: n
     return null;
   }
 
-  return { vx: 0, vy: 0, x: spider.x + (dx / left) * step, y: spider.y + (dy / left) * step };
+  return {
+    vx: 0,
+    vy: 0,
+    x: spider.x + (dx / left) * step,
+    y: spider.y + (dy / left) * step,
+  } satisfies Spider | null;
 };

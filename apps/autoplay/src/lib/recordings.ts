@@ -202,19 +202,19 @@ export const sessionFile = async (channelKey: string, sessionId: string, owner: 
   const known = await knownFile(sessionId);
 
   if (known !== undefined) {
-    return { url: known.url };
+    return { url: known.url } satisfies { url: string } | { refused: "unknown" | "on-air" };
   }
 
   const rows = await sessionRows(channelKey, sessionId);
 
   if (rows[0]?.index !== 0) {
-    return { refused: "unknown" };
+    return { refused: "unknown" } satisfies { url: string } | { refused: "unknown" | "on-air" };
   }
 
   const lastAt = Math.max(0, ...rows.map((row) => row.recordedAt));
 
   if (!owner && Date.now() - lastAt < FILE_AFTER_MS) {
-    return { refused: "on-air" };
+    return { refused: "on-air" } satisfies { url: string } | { refused: "unknown" | "on-air" };
   }
 
   const parts: Uint8Array[] = [];
@@ -260,5 +260,5 @@ export const sessionFile = async (channelKey: string, sessionId: string, owner: 
     url: stored.url,
   });
 
-  return { url: stored.url };
+  return { url: stored.url } satisfies { url: string } | { refused: "unknown" | "on-air" };
 };

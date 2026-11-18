@@ -95,7 +95,6 @@ const ProjectAppIcon = ({
         />
       </div>
 
-      {}
       <motion.div
         ref={labelRef}
         className="text-foreground truncate rounded-md px-1.5 py-0.5 text-center text-xs leading-none font-medium"
@@ -114,7 +113,6 @@ const ProjectAppIcon = ({
       </motion.div>
       <span className="sr-only">{description}</span>
 
-      {}
       <AnimatePresence>
         {shouldExpand && (
           <motion.div

@@ -21,7 +21,6 @@ export const Follower = () => {
       <path data-part="shade" fill={`url(#${id}-dots)`} />
       <path data-part="creases" style={{ fill: "none", stroke: INK, strokeWidth: 0.9 }} />
       <path data-part="body" style={{ fill: "none", stroke: INK, strokeWidth: 1.4 }} />
-      {}
       <path data-part="cheeks" style={{ fill: townColor("accentPink") }} />
       <path data-part="eyes" style={{ fill: townColor("screen") }} />
       <path data-part="mouth" style={{ fill: townColor("screen") }} />

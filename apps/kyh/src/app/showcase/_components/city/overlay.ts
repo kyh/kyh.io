@@ -79,7 +79,7 @@ const makeBubble = (root: HTMLElement) => {
   element.append(icon, text);
   root.append(element);
 
-  return { element, icon, seen: true, text };
+  return { element, icon, seen: true, text } satisfies Bubble;
 };
 
 const makePuff = (root: HTMLElement) => {
@@ -93,7 +93,7 @@ const makePuff = (root: HTMLElement) => {
   element.append(svg);
   root.append(element);
 
-  return { element, path, seen: true };
+  return { element, path, seen: true } satisfies Puff;
 };
 
 const RISE = 34;
@@ -144,7 +144,7 @@ const makePointer = (root: HTMLElement) => {
   element.append(svg, line);
   root.append(element);
 
-  return { element, line, seen: true };
+  return { element, line, seen: true } satisfies Pointer;
 };
 
 const sweep = <K, T extends { element: HTMLElement; seen: boolean }>(items: Map<K, T>) => {

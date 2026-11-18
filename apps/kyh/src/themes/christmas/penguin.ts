@@ -171,7 +171,7 @@ const createPenguin = (at: Point) => {
     time: 0,
     turning: { goal: 0, way: 0 },
     walker,
-  };
+  } satisfies Penguin;
 };
 
 const isUp = (penguin: Penguin) => penguin.go.going === "walk" && penguin.rig.slide.x < 0.3;

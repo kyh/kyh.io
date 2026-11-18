@@ -215,7 +215,9 @@ const scoreOf = (value: string) => {
     return;
   }
 
-  return { score: Math.min(10, Number(found.score)), why: (found.why ?? "").trim() };
+  return { score: Math.min(10, Number(found.score)), why: (found.why ?? "").trim() } satisfies
+    | Score
+    | undefined;
 };
 
 const fixOf = (value: string) => {
@@ -233,7 +235,7 @@ const fixOf = (value: string) => {
     return;
   }
 
-  return { source, text: value.slice(0, at).trim() };
+  return { source, text: value.slice(0, at).trim() } satisfies Fix | undefined;
 };
 
 const riskOf = (value: string) => {
@@ -276,7 +278,11 @@ export const parseGrade = (text: string) => {
     return;
   }
 
-  return { fixes: fixes.slice(0, 3), risk, scores: { confidence, idiomatic, scope, simplicity } };
+  return {
+    fixes: fixes.slice(0, 3),
+    risk,
+    scores: { confidence, idiomatic, scope, simplicity },
+  } satisfies Grade | undefined;
 };
 
 export const verdictOf = (grade: Grade) => {

@@ -77,18 +77,18 @@ const getClosestPosition = (px: number, py: number) => {
   const isTop = py < window.innerHeight / 2;
 
   if (isTop && isLeft) {
-    return "top-left";
+    return "top-left" satisfies PanelPosition;
   }
 
   if (isTop) {
-    return "top-right";
+    return "top-right" satisfies PanelPosition;
   }
 
   if (isLeft) {
-    return "bottom-left";
+    return "bottom-left" satisfies PanelPosition;
   }
 
-  return "bottom-right";
+  return "bottom-right" satisfies PanelPosition;
 };
 
 const resetStoredState = () => {
@@ -612,7 +612,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   return (
     <>
-      {}
       {isDragging &&
         PANEL_POSITIONS.map((pos) => {
           const snapPos = getSnapPosition(pos, dragGhostSize);
@@ -638,7 +637,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           );
         })}
 
-      {}
       <motion.div
         ref={islandRef}
         drag

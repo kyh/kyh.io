@@ -34,7 +34,7 @@ const drawTown = (list: CityProject[]) => {
   return { placed: drawLots(sketch, plan, list), sketch };
 };
 
-const signsIn = (sketch: ReturnType<typeof createSketch>) => [
+const signsIn: (sketch: ReturnType<typeof createSketch>) => string[] = (sketch) => [
   ...sketch.signs.map((sign) => sign.text),
   ...sketch.parts.flatMap((piece) => signsIn(piece.sketch)),
 ];

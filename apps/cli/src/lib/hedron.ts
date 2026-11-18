@@ -102,7 +102,13 @@ export interface Scanline {
   spans: Span[];
 }
 
-const project = (yaw: number, pitch: number, radius: number, cx: number, cy: number) => {
+const project: (
+  yaw: number,
+  pitch: number,
+  radius: number,
+  cx: number,
+  cy: number,
+) => ProjectedVertex[] = (yaw, pitch, radius, cx, cy) => {
   const cyaw = Math.cos(yaw);
   const syaw = Math.sin(yaw);
   const cpit = Math.cos(pitch);
@@ -189,7 +195,12 @@ const rasterizeFace = (
   }
 };
 
-const brailleCell = (levels: Float64Array, pixelW: number, cellX: number, cellY: number) => {
+const brailleCell: (
+  levels: Float64Array,
+  pixelW: number,
+  cellX: number,
+  cellY: number,
+) => Omit<Span, "x"> | null = (levels, pixelW, cellX, cellY) => {
   let dots = 0;
   let sum = 0;
   let covered = 0;
@@ -237,7 +248,10 @@ const brailleCell = (levels: Float64Array, pixelW: number, cellX: number, cellY:
 
   const level = Math.max(1, Math.round((sum / covered) * (DITHER_LEVELS - 1)));
 
-  return { color: LEVEL_COLORS[level], text: String.fromCodePoint(0x28_00 + dots) };
+  return { color: LEVEL_COLORS[level], text: String.fromCodePoint(0x28_00 + dots) } satisfies Omit<
+    Span,
+    "x"
+  > | null;
 };
 
 export const renderHedron = (w: number, h: number, ms: number) => {
@@ -246,7 +260,7 @@ export const renderHedron = (w: number, h: number, ms: number) => {
   const radius = Math.min(pixelW, pixelH) / 2 - 1;
 
   if (radius <= 4) {
-    return [];
+    return [] satisfies Scanline[];
   }
 
   const levels = new Float64Array(pixelW * pixelH).fill(-1);

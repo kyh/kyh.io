@@ -169,9 +169,8 @@ const scriptOf = (program: string, words: readonly string[]) => {
   return first === "t" || (program === "bun" && first === "test") ? "test" : first;
 };
 
-const scriptKinds = (name: string) => [
-  ...(SCRIPTS.find(([pattern]) => pattern.test(name))?.[1] ?? []),
-];
+const scriptKinds = (name: string) =>
+  [...(SCRIPTS.find(([pattern]) => pattern.test(name))?.[1] ?? [])] satisfies Kind[];
 
 const kindsOf = (program: string, args: readonly string[]) => {
   const words = positionals(args);
@@ -183,27 +182,27 @@ const kindsOf = (program: string, args: readonly string[]) => {
     sub === "install" ||
     sub === "help"
   ) {
-    return [];
+    return [] satisfies Kind[];
   }
 
   if (PACKAGE_MANAGERS.has(program)) {
-    return scriptKinds(scriptOf(program, words));
+    return scriptKinds(scriptOf(program, words)) satisfies Kind[];
   }
 
   if (TASK_RUNNERS.has(program)) {
-    return words.filter((word) => word !== "run").flatMap(scriptKinds);
+    return words.filter((word) => word !== "run").flatMap(scriptKinds) satisfies Kind[];
   }
 
   if ((program === "node" || program === "tsx") && args.includes("--test")) {
-    return ["test"];
+    return ["test"] satisfies Kind[];
   }
 
   if (program === "claude" && args.includes("--plugin-dir")) {
-    return ["e2e"];
+    return ["e2e"] satisfies Kind[];
   }
 
   if (["curl", "http", "wget", "xh"].includes(program)) {
-    return args.some((arg) => LOCAL_URL.test(arg)) ? ["e2e"] : [];
+    return (args.some((arg) => LOCAL_URL.test(arg)) ? ["e2e"] : []) satisfies Kind[];
   }
 
   const found =
@@ -212,7 +211,7 @@ const kindsOf = (program: string, args: readonly string[]) => {
     TOOLS.get(program) ??
     [];
 
-  return [...found];
+  return [...found] satisfies Kind[];
 };
 
 const gitEdits = (sub: string, args: readonly string[]) => {
@@ -312,7 +311,7 @@ const merge = (effects: readonly Effect[]) => {
     isMasked: effects.some((effect) => effect.isMasked),
     isQuiet: !isEdit && kinds.length === 0 && effects.every((effect) => effect.isQuiet),
     kinds,
-  };
+  } satisfies Effect;
 };
 
 const commandEffect = (
@@ -338,7 +337,7 @@ const commandEffect = (
   };
 };
 
-const bashEffect = (line: string, root: string) => {
+const bashEffect: (line: string, root: string) => Effect = (line, root) => {
   let place: Place = { isCwdInside: true, root };
   const commands = commandsOf(line);
 
@@ -373,12 +372,14 @@ export const effectOf = (call: Call, root: string) => {
   if (EDIT_TOOLS.has(call.tool)) {
     const isEdit = !call.isError && isRepoPath(call.file, { isCwdInside: true, root });
 
-    return isEdit ? { ...QUIET, isEdit, isQuiet: false } : QUIET;
+    return (isEdit ? { ...QUIET, isEdit, isQuiet: false } : QUIET) satisfies Effect;
   }
 
   if (call.tool === "Bash" && !call.isBackground) {
     return bashEffect(call.command, root);
   }
 
-  return BROWSER_TOOL.test(call.tool) ? { ...QUIET, isQuiet: false, kinds: ["e2e"] } : QUIET;
+  return (
+    BROWSER_TOOL.test(call.tool) ? { ...QUIET, isQuiet: false, kinds: ["e2e"] } : QUIET
+  ) satisfies Effect;
 };

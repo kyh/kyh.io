@@ -25,15 +25,16 @@ for (let i = 0; i < 5; i += 1) {
 
 const GRAPH = roadGraph({ junctions, roads });
 
-const lot = (start: number, top: number, x = 17) => ({
-  d: 4,
-  kind: "lot",
-  start,
-  top,
-  w: 4,
-  x,
-  z: 17,
-});
+const lot = (start: number, top: number, x = 17) =>
+  ({
+    d: 4,
+    kind: "lot",
+    start,
+    top,
+    w: 4,
+    x,
+    z: 17,
+  }) satisfies Site;
 
 const block: Site = { d: 6, kind: "block", start: 1.5, top: null, w: 6, x: 9, z: 9 };
 

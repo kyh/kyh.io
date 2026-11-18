@@ -29,10 +29,10 @@ export interface Line {
 
 export const lineOf = ({ typing, said }: Chat) => {
   if (typing !== null) {
-    return { text: typing, typing: true };
+    return { text: typing, typing: true } satisfies Line | null;
   }
 
-  return said ? { text: said.text, typing: false } : null;
+  return (said ? { text: said.text, typing: false } : null) satisfies Line | null;
 };
 
 /** The keys a press carries that chat cares about. */
@@ -78,37 +78,46 @@ export const editDraft = (
   const printable = characters(press.key).length === 1;
 
   if (draft === null) {
-    return printable && press.key !== " " && !claims(press.key)
-      ? { draft: cleanLine(press.key), kind: "draft" }
-      : null;
+    return (
+      printable && press.key !== " " && !claims(press.key)
+        ? { draft: cleanLine(press.key), kind: "draft" }
+        : null
+    ) satisfies ChatEdit | null;
   }
 
   if (press.key === "Enter") {
     const text = cleanLine(draft).trimEnd();
 
-    return text ? { kind: "send", text } : { kind: "cancel" };
+    return (text ? { kind: "send", text } : { kind: "cancel" }) satisfies ChatEdit | null;
   }
 
   if (press.key === "Escape") {
-    return { kind: "cancel" };
+    return { kind: "cancel" } satisfies ChatEdit | null;
   }
 
   if (press.key === "Backspace") {
-    return { draft: characters(draft).slice(0, -1).join(""), kind: "draft" };
+    return {
+      draft: characters(draft).slice(0, -1).join(""),
+      kind: "draft",
+    } satisfies ChatEdit | null;
   }
 
-  return { draft: printable ? cleanLine(draft + press.key) : draft, kind: "draft" };
+  return {
+    draft: printable ? cleanLine(draft + press.key) : draft,
+    kind: "draft",
+  } satisfies ChatEdit | null;
 };
 
 /** The state that says a visitor is typing `draft`, or has stopped. */
-export const draftState = (draft: string | null) => ({ typing: draft ?? "" });
+export const draftState = (draft: string | null) => ({ typing: draft ?? "" }) satisfies JsonRecord;
 
 /** The state that sends `text` at `now` on the room's clock. */
-export const sayState = (text: string, now: number) => ({
-  said: text,
-  saidAt: Math.round(now),
-  typing: "",
-});
+export const sayState = (text: string, now: number) =>
+  ({
+    said: text,
+    saidAt: Math.round(now),
+    typing: "",
+  }) satisfies JsonRecord;
 
 const parsed = new WeakMap<
   JsonRecord,
@@ -140,5 +149,8 @@ export const readChat = (state: JsonRecord, now: number) => {
   const { typing, said, saidAt } = parse(state);
   const up = said !== "" && saidAt !== null && now >= saidAt - 1000 && now < saidAt + SHOW_MS;
 
-  return { said: up && saidAt !== null ? { text: said, until: saidAt + SHOW_MS } : null, typing };
+  return {
+    said: up && saidAt !== null ? { text: said, until: saidAt + SHOW_MS } : null,
+    typing,
+  } satisfies Chat;
 };

@@ -3,7 +3,6 @@ import type { Sketch, Vec3 } from "./sketch";
 import { tree } from "./draw-kit";
 import { paint, WALLS } from "./palette";
 import { ball, box, face, gable, line, part, round } from "./sketch";
-import type { Steps } from "./steps";
 import { finish } from "./steps";
 
 const CROPS: Record<Field["crop"], "field" | "fieldGreen" | "soil"> = {

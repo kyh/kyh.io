@@ -174,11 +174,12 @@ const frameOf = (bunny: Bunny) => {
   const thin = 1 / Math.sqrt(long);
   const breath = 1 + (0.015 + 0.01 * rig.doze.x) * Math.sin(bunny.breath);
 
-  const stretched = (local: Vec3) => [
-    MIDDLE[0] + (local[0] - MIDDLE[0]) * long,
-    MIDDLE[1] + (local[1] - MIDDLE[1]) * thin,
-    local[2] * Math.sqrt(thin),
-  ];
+  const stretched = (local: Vec3) =>
+    [
+      MIDDLE[0] + (local[0] - MIDDLE[0]) * long,
+      MIDDLE[1] + (local[1] - MIDDLE[1]) * thin,
+      local[2] * Math.sqrt(thin),
+    ] satisfies Vec3;
 
   const turn = (direction: Vec3) => apply(yaw, apply(rear, apply(body, direction)));
 
@@ -238,11 +239,8 @@ const surfaceOf = (radii: Vec3, way: Vec3) => {
   };
 };
 
-const axesOf = (radii: Vec3, turn: (v: Vec3) => Vec3) => [
-  turn([radii[0], 0, 0]),
-  turn([0, radii[1], 0]),
-  turn([0, 0, radii[2]]),
-];
+const axesOf = (radii: Vec3, turn: (v: Vec3) => Vec3) =>
+  [turn([radii[0], 0, 0]), turn([0, radii[1], 0]), turn([0, 0, radii[2]])] satisfies Vec3[];
 
 const roundOf = (v: Vec3) => depthOf([v[0], 0, v[2]]);
 
@@ -291,23 +289,18 @@ const earDepthOf = (points: readonly Vec3[], head: Head) => {
   return roundOf(sub(root, head.at)) * 2.5 + Math.max(0, roundOf(sub(middle, root))) * 0.8;
 };
 
-const tailRestOf = (bunny: Bunny) => [
-  TAIL,
-  add(TAIL, scale(normalize([-1, 0.5 + bunny.rig.tail.x, 0]), TAIL_OUT)),
-];
+const tailRestOf = (bunny: Bunny) =>
+  [TAIL, add(TAIL, scale(normalize([-1, 0.5 + bunny.rig.tail.x, 0]), TAIL_OUT))] satisfies Vec3[];
 
 const reachOf = (from: Vec3, foot: Vec3, reach: number) => {
   const off = sub(foot, from);
   const far = Math.hypot(off[0], off[1], off[2]);
 
-  return far > reach ? scale(off, (reach - far) / far) : [0, 0, 0];
+  return (far > reach ? scale(off, (reach - far) / far) : [0, 0, 0]) satisfies Vec3;
 };
 
-const worldOf = (footing: Footing, at: { x: number; z: number }) => [
-  footing.x - at.x,
-  footing.height,
-  footing.z - at.z,
-];
+const worldOf = (footing: Footing, at: { x: number; z: number }) =>
+  [footing.x - at.x, footing.height, footing.z - at.z] satisfies Vec3;
 
 const hindOf = (bunny: Bunny, frame: Frame, footing: Footing, side: 1 | -1) => {
   const { binky, thump } = frame.acts;
@@ -413,16 +406,16 @@ const smoothLine = (points: readonly Point[], pieces = 4) => {
     if (index < 0) {
       const next = points[1] ?? first;
 
-      return { x: 2 * first.x - next.x, y: 2 * first.y - next.y };
+      return { x: 2 * first.x - next.x, y: 2 * first.y - next.y } satisfies Point;
     }
 
     if (index >= points.length) {
       const before = points.at(-2) ?? last;
 
-      return { x: 2 * last.x - before.x, y: 2 * last.y - before.y };
+      return { x: 2 * last.x - before.x, y: 2 * last.y - before.y } satisfies Point;
     }
 
-    return points[index] ?? first;
+    return (points[index] ?? first) satisfies Point;
   };
 
   const line: Point[] = [];
@@ -519,7 +512,7 @@ const solid = (name: string, outline: Ellipse) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
 const ringOf = (center: Vec3, r: number) =>
@@ -575,7 +568,8 @@ const puffPath = (center: Point, r: number, shift: Point = UNMOVED) => {
 const unitOf = (point: Vec3, { center, radii, turn }: Ellipsoid) => {
   const [ax, ay, az] = [turn([1, 0, 0]), turn([0, 1, 0]), turn([0, 0, 1])];
 
-  const unit = (v: Vec3) => [dot(ax, v) / radii[0], dot(ay, v) / radii[1], dot(az, v) / radii[2]];
+  const unit = (v: Vec3) =>
+    [dot(ax, v) / radii[0], dot(ay, v) / radii[1], dot(az, v) / radii[2]] satisfies Vec3;
 
   return { e: unit(TOWARD_CAMERA), q: unit(sub(point, center)) };
 };
@@ -609,11 +603,12 @@ const aroundOf = (outlines: readonly Ellipse[]) => {
 };
 
 const bodyOf = (frame: Frame, bunch: number) => {
-  const stretch = (radii: Vec3, breath = 1) => [
-    radii[0] * frame.long * breath,
-    radii[1] * frame.thin * breath,
-    radii[2] * Math.sqrt(frame.thin) * breath,
-  ];
+  const stretch = (radii: Vec3, breath = 1) =>
+    [
+      radii[0] * frame.long * breath,
+      radii[1] * frame.thin * breath,
+      radii[2] * Math.sqrt(frame.thin) * breath,
+    ] satisfies Vec3;
 
   const torso = frame.place(TORSO);
   const chest = frame.place(CHEST);
@@ -877,7 +872,7 @@ const sideOf = (
   was: boolean | undefined,
   otherwise: boolean,
 ) => {
-  const margins = solids.map((one) => aheadOf(point, one)).filter((margin) => margin !== null);
+  const margins = solids.flatMap((one) => aheadOf(point, one) ?? []);
 
   if (margins.length === 0) {
     return was ?? otherwise;
@@ -935,28 +930,37 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
     ["head", headDepth],
     ["muzzle", headDepth + (sides.pads === false ? -OVER.muzzle : OVER.muzzle)],
     ["tail", torsoDepth + (sides.tail ? OVER.tail : -OVER.tail)],
-    ...ears.map(({ depth }, index) => [
-      `ear-${index}`,
-      sides[`ear-${index}`]
-        ? torsoDepth + OVER.earOver
-        : Math.min(headDepth + depth, torsoDepth - OVER.ear),
-    ]),
-    ...body.haunches.map((_, index) => [
-      `haunch-${index}`,
-      torsoDepth + (sides[`haunch-${index}`] ? OVER.haunch : -OVER.haunch),
-    ]),
+    ...ears.map(
+      ({ depth }, index) =>
+        [
+          `ear-${index}`,
+          sides[`ear-${index}`]
+            ? torsoDepth + OVER.earOver
+            : Math.min(headDepth + depth, torsoDepth - OVER.ear),
+        ] satisfies [string, number],
+    ),
+    ...body.haunches.map(
+      (_, index) =>
+        [
+          `haunch-${index}`,
+          torsoDepth + (sides[`haunch-${index}`] ? OVER.haunch : -OVER.haunch),
+        ] satisfies [string, number],
+    ),
     ...hinds.map(({ kicked }, index) => {
       if (!sides[`haunch-${index}`]) {
-        return [`hind-${index}`, torsoDepth - OVER.haunch - 0.3];
+        return [`hind-${index}`, torsoDepth - OVER.haunch - 0.3] satisfies [string, number];
       }
 
-      return [`hind-${index}`, torsoDepth + (kicked ? OVER.kicked : OVER.hind)];
+      return [`hind-${index}`, torsoDepth + (kicked ? OVER.kicked : OVER.hind)] satisfies [
+        string,
+        number,
+      ];
     }),
     ...geometry.fores.map((_, index) => {
       const beside = torsoDepth + (sides[`fore-${index}`] ? OVER.fore : -OVER.fore);
 
       if (bunny.rig.groom.x < PAWS_UP) {
-        return [`fore-${index}`, beside];
+        return [`fore-${index}`, beside] satisfies [string, number];
       }
 
       return [
@@ -964,7 +968,7 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
         sides[`fore-${index}-head`]
           ? Math.max(headDepth, torsoDepth) + 2 * OVER.muzzle
           : Math.min(beside, headDepth - 2 * OVER.muzzle),
-      ];
+      ] satisfies [string, number];
     }),
   ];
 
@@ -981,7 +985,7 @@ const hindParts = (geometry: Geometry, hind: Hind, index: number) => {
   return [
     [`hind-leg-${index}`, { d: limbPath(joint, 1.9, heel, 1.25) }],
     ...solid(`hind-${index}`, footSolid(hind.heel, hind.toe, 1.7, 1.3, frame)),
-  ];
+  ] satisfies [string, Part][];
 };
 
 const foreParts = (geometry: Geometry, { ahead: way, at: paw, shoulder }: Fore, index: number) => {
@@ -1006,7 +1010,7 @@ const foreParts = (geometry: Geometry, { ahead: way, at: paw, shoulder }: Fore, 
       },
     ],
     ...solid(`fore-${index}`, footSolid(heel, toe, 1.4, 1.1, frame)),
-  ];
+  ] satisfies [string, Part][];
 };
 
 export const bunnyPose = (bunny: Bunny) => {
@@ -1040,21 +1044,27 @@ export const bunnyPose = (bunny: Bunny) => {
     ...body.haunches.flatMap(({ outline }, index) => solid(`haunch-${index}`, outline)),
     ...solid("head", ellipseOf(head.at, axesOf(HEAD_RADII, head.direction))),
     ...eyesOf(bunny, head),
-    ...muzzle.pads.flatMap(({ outline }, index) => [
-      ...solid(`pad-${index}`, outline),
-      [
-        `pad-ink-${index}`,
-        { d: ellipsePath(outline), opacity: bunny.sides.pads === false ? 0 : 1 },
-      ],
-    ]),
+    ...muzzle.pads.flatMap(
+      ({ outline }, index) =>
+        [
+          ...solid(`pad-${index}`, outline),
+          [
+            `pad-ink-${index}`,
+            { d: ellipsePath(outline), opacity: bunny.sides.pads === false ? 0 : 1 },
+          ],
+        ] satisfies [string, Part][],
+    ),
     ["nose", { d: muzzle.nose }],
     ["mouth", { d: muzzle.mouth }],
     ["whiskers", { d: muzzle.whiskers }],
-    ...ears.flatMap(({ lining, whole, wholeLit }, index) => [
-      [`ear-${index}`, { d: whole }],
-      [`ear-${index}-lit`, { d: wholeLit }],
-      [`lining-${index}`, lining],
-    ]),
+    ...ears.flatMap(
+      ({ lining, whole, wholeLit }, index) =>
+        [
+          [`ear-${index}`, { d: whole }],
+          [`ear-${index}-lit`, { d: wholeLit }],
+          [`lining-${index}`, lining],
+        ] satisfies [string, Part][],
+    ),
     ["tail", { d: puffPath(tailAt, TAIL_R) }],
     ["tail-lit", { d: puffPath(tailAt, TAIL_R, { x: LIGHT.x * tailLit, y: LIGHT.y * tailLit }) }],
     ...geometry.hinds.flatMap((hind, index) => hindParts(geometry, hind, index)),
@@ -1070,5 +1080,5 @@ export const bunnyPose = (bunny: Bunny) => {
     order: orderOf(bunny, geometry, ears),
     parts,
     say: bunny.emotes.line,
-  };
+  } satisfies Pose;
 };

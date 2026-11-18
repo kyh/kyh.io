@@ -47,7 +47,7 @@ const snowOf = (random: Random, index: number) => {
     turn: 0,
     wind: 0,
     x: random.range(0, 100),
-  };
+  } satisfies Piece;
 };
 
 const leafOf = (random: Random, index: number, kinds: number) => {
@@ -66,7 +66,7 @@ const leafOf = (random: Random, index: number, kinds: number) => {
     turn: motion === "tumble" ? random.range(0.9, 1.6) : random.range(1.2, 2.4),
     wind: random.range(4, 18),
     x: random.range(-10, 95),
-  };
+  } satisfies Piece;
 };
 
 const layoutOf = (drift: Drift, kinds: number) => {

@@ -95,11 +95,12 @@ export interface Paint {
   right: Token;
 }
 
-export const paint = (top: Token, left: Token = top, right: Token = left) => ({
-  left,
-  right,
-  top,
-});
+export const paint = (top: Token, left: Token = top, right: Token = left) =>
+  ({
+    left,
+    right,
+    top,
+  }) satisfies Paint;
 
 export const WALLS = paint("top", "wallLeft", "wallRight");
 
@@ -203,7 +204,7 @@ export const oklab = (hex: string) => {
     0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
     1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
     0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
-  ];
+  ] satisfies Lab;
 };
 
 export const fromOklab = ([lightness, a, b]: Lab) => {
@@ -376,12 +377,12 @@ const FAMILY_GAP = 0.6;
 
 const familiesOf = (areas: ReadonlyMap<Token, number>) => {
   const weighed = [...areas]
-    .filter(([token]) => !FOLIAGE.has(token))
-    .map(([token, area]) => ({
-      hex: PALETTE[token].day,
-      weight: area * chromaOf(PALETTE[token].day),
-    }))
-    .filter(({ hex }) => chromaOf(hex) > NEUTRAL_CHROMA)
+    .flatMap(([token, area]) => {
+      const hex = PALETTE[token].day;
+      const chroma = chromaOf(hex);
+
+      return FOLIAGE.has(token) || chroma <= NEUTRAL_CHROMA ? [] : [{ hex, weight: area * chroma }];
+    })
     .toSorted((first, second) => second.weight - first.weight);
 
   const families: { hex: string; hue: number }[] = [];
@@ -416,7 +417,7 @@ const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]) 
       : { ...mainTurn, hue: family.hue };
   });
 
-  return (hex) => {
+  return ((hex) => {
     const [lightness, a, b] = oklab(hex);
 
     if (Math.hypot(a, b) < NEUTRAL_CHROMA) {
@@ -435,7 +436,7 @@ const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]) 
     const { cos, sin } = nearest;
 
     return fromOklab([lightness, a * cos - b * sin, a * sin + b * cos]);
-  };
+  }) satisfies Tint;
 };
 
 const GLOW_LIGHTNESS: Record<Time, readonly [number, number]> = {
@@ -456,7 +457,7 @@ const glowOf = (hex: string) => {
     return fromOklab([Math.min(high, Math.max(low, lightness)), a * boost, b * boost]);
   };
 
-  return { day: at("day"), night: at("night") };
+  return { day: at("day"), night: at("night") } satisfies Record<Time, string>;
 };
 
 /** How a building looks lit: the tint it paints itself with, and the glow round its lot. */
@@ -469,11 +470,11 @@ const greyedTo = (grey: string) => {
   const [target] = oklab(grey);
   const scale = Math.min(1, target + 0.25);
 
-  return (hex) => {
+  return ((hex) => {
     const [lightness, a, b] = oklab(hex);
 
     return Math.hypot(a, b) < NEUTRAL_CHROMA ? hex : fromOklab([lightness * scale, 0, 0]);
-  };
+  }) satisfies Tint;
 };
 
 /**
@@ -488,12 +489,15 @@ export const lookOf = (areas: ReadonlyMap<Token, number>, colors: readonly strin
   const [grey] = colors;
 
   if (first === undefined && grey !== undefined) {
-    return { glow: glowOf(grey), tint: greyedTo(grey) };
+    return { glow: glowOf(grey), tint: greyedTo(grey) } satisfies Look;
   }
 
   if (first === undefined) {
-    return { glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day), tint: untinted };
+    return {
+      glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day),
+      tint: untinted,
+    } satisfies Look;
   }
 
-  return { glow: glowOf(first), tint: turnOnto(areas, colored) };
+  return { glow: glowOf(first), tint: turnOnto(areas, colored) } satisfies Look;
 };

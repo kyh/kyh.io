@@ -17,11 +17,12 @@ const TEST = {
   tool_use_id: "t2",
 };
 
-const messages = (reply: string) => [
-  { role: "user", text: "Add a health check and test it", toolUses: [] },
-  { role: "assistant", text: "", toolUses: [WRITE, TEST] },
-  { role: "assistant", text: reply, toolUses: [] },
-];
+const messages = (reply: string) =>
+  [
+    { role: "user", text: "Add a health check and test it", toolUses: [] },
+    { role: "assistant", text: "", toolUses: [WRITE, TEST] },
+    { role: "assistant", text: reply, toolUses: [] },
+  ] satisfies SessionMessage[];
 
 const REPLY = "Added src/health.ts after src/version.ts; tests pass.";
 

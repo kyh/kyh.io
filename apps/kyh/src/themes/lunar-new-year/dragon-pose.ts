@@ -1,4 +1,4 @@
-import type { Chain, Hang } from "../follower/chain";
+import type { Chain } from "../follower/chain";
 import type { Part, Pose } from "../follower/creature";
 import type { Ellipsoid, Vec3 } from "../follower/solid";
 import type { Point } from "../follower/walk";
@@ -65,7 +65,7 @@ const ON_BODY = 5;
 
 const SOLIDS = new Set(["jaw", "muzzle", "skull"]);
 
-const side3 = ([x, y, z]: Vec3, side: number) => [x, y, z * side];
+const side3 = ([x, y, z]: Vec3, side: number) => [x, y, z * side] satisfies Vec3;
 
 const buildFrame = (dragon: Dragon) => {
   const head = headFrameOf(dragon);
@@ -106,11 +106,12 @@ const headOf = (dragon: Dragon, frame: HeadFrame) => {
 
 type Head = ReturnType<typeof headOf>;
 
-const solidOf = (head: Head, center: Vec3, radii: Vec3) => ({
-  center: head.point(center),
-  radii: scale(radii, HEAD_SIZE),
-  turn: head.direction,
-});
+const solidOf = (head: Head, center: Vec3, radii: Vec3) =>
+  ({
+    center: head.point(center),
+    radii: scale(radii, HEAD_SIZE),
+    turn: head.direction,
+  }) satisfies Ellipsoid;
 
 const solidParts = (name: string, body: Ellipsoid) => {
   const { lit, whole } = solidPaths(ellipseOf(body.center, axesOf(body)));
@@ -118,7 +119,7 @@ const solidParts = (name: string, body: Ellipsoid) => {
   return [
     [name, { d: whole }],
     [`${name}-lit`, { d: lit }],
-  ];
+  ] satisfies [string, Part][];
 };
 
 const through = (side: readonly Point[]) => {
@@ -148,7 +149,7 @@ const ribbonPath = (points: readonly Point[], width: number) => {
     return {
       x: here.x + (side * half * (a.y - b.y)) / length,
       y: here.y + (side * half * (b.x - a.x)) / length,
-    };
+    } satisfies Point;
   };
 
   const leftSide = points.map((_, index) => offset(index, 1));
@@ -213,7 +214,7 @@ const tuftPoints = (rings: readonly Ring[], index: number) => {
   const ring = rings.at(-1);
 
   if (!ring) {
-    return [];
+    return [] satisfies Vec3[];
   }
 
   const fan = (index - (TUFTS - 1) / 2) * 0.55;
@@ -224,7 +225,7 @@ const tuftPoints = (rings: readonly Ring[], index: number) => {
 
   return Array.from({ length: TUFT_LINKS + 1 }, (_, link) =>
     add(ring.at, scale(out, (12 - Math.abs(fan) * 3) * (link / TUFT_LINKS))),
-  );
+  ) satisfies Vec3[];
 };
 
 const hangFrom = (points: readonly Vec3[], origin: Point) => hangOf(points.map(toScreen), origin);
@@ -306,7 +307,7 @@ const eyesOf = (dragon: Dragon, head: Head) => {
         `brow-${index}`,
         { d: linePath(brow), opacity: round(smooth((facing(browFaces) - 0.1) / 0.15)) },
       ],
-    ];
+    ] satisfies [string, Part][];
   });
 };
 
@@ -346,13 +347,14 @@ const lipsOf = (head: Head) =>
     return [`lip-${index}`, { d: linePath(line), opacity: round(shown) }];
   });
 
-const fang = (at: Vec3, down: number) => [
-  add(at, [0.9, 0, 0]),
-  add(at, [-0.9, 0, 0]),
-  add(at, [0, 0, 0.6]),
-  add(at, [0, 0, -0.6]),
-  add(at, [0.2, down, 0]),
-];
+const fang = (at: Vec3, down: number) =>
+  [
+    add(at, [0.9, 0, 0]),
+    add(at, [-0.9, 0, 0]),
+    add(at, [0, 0, 0.6]),
+    add(at, [0, 0, -0.6]),
+    add(at, [0.2, down, 0]),
+  ] satisfies Vec3[];
 
 const fangsOf = (dragon: Dragon, head: Head) => {
   const long = 1.5 + 1.2 * dragon.rig.jaw.x;
@@ -444,7 +446,7 @@ const depthsOf = (dragon: Dragon) => {
 
   return {
     body: new Map<string, number>([
-      ...held.map((depth, index) => [`seg-${index}`, depth]),
+      ...held.map((depth, index) => [`seg-${index}`, depth] satisfies [string, number]),
       ["head", headDepth],
     ]),
     head: new Map<string, number>([
@@ -452,14 +454,18 @@ const depthsOf = (dragon: Dragon) => {
       ["muzzle", depthOf(head.point(MUZZLE))],
       ["jaw", depthOf(head.point(head.hinged(JAW))) - 1],
       ["beard", depthOf(head.point(head.hinged([9.5, -5, 0]))) - 1.5],
-      ...[1, -1].flatMap((side, index) => [
-        [`whisker-${index}`, depthOf(head.point(side3([12, -1, 8], side)))],
-      ]),
+      ...[1, -1].flatMap(
+        (side, index) =>
+          [[`whisker-${index}`, depthOf(head.point(side3([12, -1, 8], side)))]] satisfies [
+            string,
+            number,
+          ][],
+      ),
       ...Array.from({ length: LOCKS }, (_, index) => {
         const { around } = LOCK_AT[index] ?? { around: 0 };
         const near = head.point([-6, 0.4 + 7 * Math.sin(around), 7 * Math.cos(around)]);
 
-        return [`mane-${index}`, depthOf(near)];
+        return [`mane-${index}`, depthOf(near)] satisfies [string, number];
       }),
     ]),
   };
@@ -521,7 +527,7 @@ export const stackingOf = (dragon: Dragon, was: Stacking | null) => {
     fins: finFacings(rings).map((facings, index) => heldOver(facings, was?.fins[index], FIN_TURN)),
     head: settle(was?.head ?? sorted(depths.head), depths.head, HEAD_MARGIN),
     legs: legFacings(rings).map((facings, index) => heldOver(facings, was?.legs[index], LEG_TURN)),
-  };
+  } satisfies Stacking;
 };
 
 /** Whether a point on the screen is on it: its head, or a ring of its body. */
@@ -560,7 +566,7 @@ export const noseAt = (dragon: Dragon) => {
   const frame = frameOf(dragon);
   const seen = toScreen(headOf(dragon, frame.head).point([NOSE[0] + 5, NOSE[1], 0]));
 
-  return { x: frame.origin.x + seen.x, y: frame.origin.y + seen.y };
+  return { x: frame.origin.x + seen.x, y: frame.origin.y + seen.y } satisfies Point;
 };
 
 const headOrder = (layers: readonly string[]) => {
@@ -617,14 +623,26 @@ export const dragonPose = (dragon: Dragon) => {
     ...eyesOf(dragon, head),
     ...nostrilsOf(head),
     ...lipsOf(head),
-    ...[1, -1].flatMap((side, index) => [
-      [`horn-${index}`, { d: hornOf(head, side) }],
-      [`ear-${index}`, { d: earOf(head, side) }],
-    ]),
-    ...dragon.whiskers.map((chain, index) => [`whisker-${index}`, { d: chainPath(chain, origin) }]),
-    ...dragon.mane.map((chain, index) => [`mane-${index}`, { d: ribbonOf(chain, origin, 4.6) }]),
+    ...[1, -1].flatMap(
+      (side, index) =>
+        [
+          [`horn-${index}`, { d: hornOf(head, side) }],
+          [`ear-${index}`, { d: earOf(head, side) }],
+        ] satisfies [string, Part][],
+    ),
+    ...dragon.whiskers.map(
+      (chain, index) =>
+        [`whisker-${index}`, { d: chainPath(chain, origin) }] satisfies [string, Part],
+    ),
+    ...dragon.mane.map(
+      (chain, index) =>
+        [`mane-${index}`, { d: ribbonOf(chain, origin, 4.6) }] satisfies [string, Part],
+    ),
     ["beard", { d: ribbonOf(dragon.beard, origin, 4.2) }],
-    ...dragon.tufts.map((chain, index) => [`tuft-${index}`, { d: ribbonOf(chain, origin, 5) }]),
+    ...dragon.tufts.map(
+      (chain, index) =>
+        [`tuft-${index}`, { d: ribbonOf(chain, origin, 5) }] satisfies [string, Part],
+    ),
     ...puffsOf(dragon, origin),
   ]) satisfies Record<string, Part>;
 
@@ -636,5 +654,5 @@ export const dragonPose = (dragon: Dragon) => {
     order: [...dragon.stacking.body, ...headOrder(dragon.stacking.head), "puffs"],
     parts,
     say: dragon.emotes.line,
-  };
+  } satisfies Pose;
 };

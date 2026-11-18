@@ -19,11 +19,12 @@ export interface ParticleState {
   burstCount: number;
 }
 
-export const createParticleState = () => ({
-  burstCount: 0,
-  cooldown: 0,
-  particles: [],
-});
+export const createParticleState = () =>
+  ({
+    burstCount: 0,
+    cooldown: 0,
+    particles: [],
+  }) satisfies ParticleState;
 
 const MAX_PARTICLES = 80;
 const PARTICLE_LIFETIME = 1;

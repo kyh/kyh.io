@@ -134,7 +134,7 @@ const WOBBLE_STEP = 1 / 240;
 
 const clamp = (n: number, most: number) => Math.max(-most, Math.min(most, n));
 
-const wobbleAt = (x: number) => ({ v: 0, x });
+const wobbleAt = (x: number) => ({ v: 0, x }) satisfies Wobble;
 
 const stepWobble = (
   wobble: Wobble,
@@ -194,7 +194,10 @@ const createLeprechaun = (at: Point) => {
       blink: springAt(0),
       brow: springAt(0),
       guard: springAt(0),
-      hands: [1, -1].map((side) => [wobbleAt(0.5), wobbleAt(15.4), wobbleAt(side * 6)]),
+      hands: [1, -1].map(
+        (side) =>
+          [wobbleAt(0.5), wobbleAt(15.4), wobbleAt(side * 6)] satisfies [Wobble, Wobble, Wobble],
+      ),
       hatPitch: wobbleAt(0),
       hatRise: wobbleAt(0),
       hatRoll: wobbleAt(0),

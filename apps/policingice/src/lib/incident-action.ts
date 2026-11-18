@@ -219,7 +219,9 @@ export const searchIncidents = async (data: {
 
       idx += 1;
     }
-  } catch {}
+  } catch (error) {
+    console.warn("Vector search unavailable, keyword results only:", error);
+  }
 
   const sortedResults = [...resultMap.values()]
     .toSorted((a, b) => b._score - a._score)

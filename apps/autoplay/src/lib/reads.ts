@@ -83,61 +83,62 @@ export const memoryReads = () => {
         return Promise.resolve(total);
       },
     },
-  };
+  } satisfies Reads;
 };
 
-export const databaseReads = (database: NonNullable<typeof db>) => ({
-  cache: {
-    get: async (key, schema) => {
-      const rows = await database
-        .select()
-        .from(sourceCache)
-        .where(eq(sourceCache.key, key))
-        .limit(1);
+export const databaseReads = (database: NonNullable<typeof db>) =>
+  ({
+    cache: {
+      get: async (key, schema) => {
+        const rows = await database
+          .select()
+          .from(sourceCache)
+          .where(eq(sourceCache.key, key))
+          .limit(1);
 
-      const [row] = rows;
+        const [row] = rows;
 
-      if (row === undefined) {
-        return;
-      }
+        if (row === undefined) {
+          return;
+        }
 
-      if (row.expiresAt <= Date.now()) {
-        await database.delete(sourceCache).where(eq(sourceCache.key, key));
+        if (row.expiresAt <= Date.now()) {
+          await database.delete(sourceCache).where(eq(sourceCache.key, key));
 
-        return;
-      }
+          return;
+        }
 
-      const parsed = schema.safeParse(row.value);
+        const parsed = schema.safeParse(row.value);
 
-      return parsed.success ? parsed.data : undefined;
+        return parsed.success ? parsed.data : undefined;
+      },
+      set: async (key, value, ttlMs) => {
+        const now = Date.now();
+        const expiresAt = now + ttlMs;
+        await database
+          .insert(sourceCache)
+          .values({ expiresAt, key, value })
+          .onConflictDoUpdate({ set: { expiresAt, value }, target: sourceCache.key });
+        await database.delete(sourceCache).where(lt(sourceCache.expiresAt, now));
+      },
     },
-    set: async (key, value, ttlMs) => {
-      const now = Date.now();
-      const expiresAt = now + ttlMs;
-      await database
-        .insert(sourceCache)
-        .values({ expiresAt, key, value })
-        .onConflictDoUpdate({ set: { expiresAt, value }, target: sourceCache.key });
-      await database.delete(sourceCache).where(lt(sourceCache.expiresAt, now));
-    },
-  },
-  spend: {
-    record: async (kind, channelKey, usd, at = Date.now()) => {
-      if (usd <= 0) {
-        return;
-      }
+    spend: {
+      record: async (kind, channelKey, usd, at = Date.now()) => {
+        if (usd <= 0) {
+          return;
+        }
 
-      await database
-        .insert(sourceRead)
-        .values({ channelKey, id: crypto.randomUUID(), kind, readAt: at, usd });
-    },
-    spent: async (kind, since) => {
-      const rows = await database
-        .select({ total: sql<number>`coalesce(sum(${sourceRead.usd}), 0)` })
-        .from(sourceRead)
-        .where(and(eq(sourceRead.kind, kind), gte(sourceRead.readAt, since)));
+        await database
+          .insert(sourceRead)
+          .values({ channelKey, id: crypto.randomUUID(), kind, readAt: at, usd });
+      },
+      spent: async (kind, since) => {
+        const rows = await database
+          .select({ total: sql<number>`coalesce(sum(${sourceRead.usd}), 0)` })
+          .from(sourceRead)
+          .where(and(eq(sourceRead.kind, kind), gte(sourceRead.readAt, since)));
 
-      return rows[0]?.total ?? 0;
+        return rows[0]?.total ?? 0;
+      },
     },
-  },
-});
+  }) satisfies Reads;

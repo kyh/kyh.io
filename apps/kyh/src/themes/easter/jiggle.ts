@@ -3,7 +3,7 @@ export interface Jiggle {
   v: number;
 }
 
-export const jiggleAt = (x: number) => ({ v: 0, x });
+export const jiggleAt = (x: number) => ({ v: 0, x }) satisfies Jiggle;
 
 /**
  * Steps a jiggle `seconds` on toward `goal`: `hertz` how fast it wobbles,

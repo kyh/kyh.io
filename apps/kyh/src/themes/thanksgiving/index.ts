@@ -1,22 +1,23 @@
 import type { Token } from "@/app/showcase/_components/city/palette";
-import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { around, nthWeekday } from "../calendar";
 import { namedConfetti } from "../theme";
+import type { Art } from "../art";
 
 const MAPLE_OUTLINE =
   "M12 2l1.6 4.2 2.8-1.4-.6 4.2 4-1.4-1.2 3.2 3.4 1.6-4.4 2 .8 2.2-5.2-1-.4 2.8h-1.6l-.4-2.8-5.2 1 .8-2.2-4.4-2 3.4-1.6-1.2-3.2 4 1.4-.6-4.2 2.8 1.4Z";
 
 const MAPLE_VEINS = "M12 15.6V5.5M12 13.4l5.4-2.6M12 13.4 6.6 10.8";
 
-const leaf = (outline: string, veins: string, stem: number, fill: Token, shade: Token) => ({
-  layers: [
-    { d: `M12 ${stem}v${22 - stem}`, strokeWidth: 1.9 },
-    { d: `M12 ${stem}v${22 - stem}`, stroke: shade, strokeWidth: 0.8 },
-    { d: outline, fill, shade },
-    { d: veins, strokeWidth: 0.4 },
-  ],
-});
+const leaf = (outline: string, veins: string, stem: number, fill: Token, shade: Token) =>
+  ({
+    layers: [
+      { d: `M12 ${stem}v${22 - stem}`, strokeWidth: 1.9 },
+      { d: `M12 ${stem}v${22 - stem}`, stroke: shade, strokeWidth: 0.8 },
+      { d: outline, fill, shade },
+      { d: veins, strokeWidth: 0.4 },
+    ],
+  }) satisfies Art;
 
 const MAPLE_LEAF = leaf(MAPLE_OUTLINE, MAPLE_VEINS, 14, "pumpkin", "pumpkinShade");
 const RED_MAPLE_LEAF = leaf(MAPLE_OUTLINE, MAPLE_VEINS, 14, "festiveRed", "festiveRedShade");

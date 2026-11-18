@@ -199,14 +199,14 @@ const walkHand = (leprechaun: Leprechaun, index: number) => {
     HANG[0] + swing * (1 + run * 0.3) + 1.6 * run,
     HANG[1] + 0.08 * swing * swing + 3.2 * run,
     side * (HANG[2] - 0.5 * run),
-  ];
+  ] satisfies Vec3;
 };
 
 const jigHand = (leprechaun: Leprechaun, index: number) => {
   const side = sideOf(index);
   const up = Math.floor(leprechaun.beat / 2) % 2 === index;
 
-  return up ? [0.6, 37.6, side * 9.6] : [-0.6, 18, side * 8.4];
+  return (up ? [0.6, 37.6, side * 9.6] : [-0.6, 18, side * 8.4]) satisfies Vec3;
 };
 
 const actHand = (leprechaun: Leprechaun, index: number, rest: Vec3) => {

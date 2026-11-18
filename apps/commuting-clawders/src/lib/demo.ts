@@ -164,7 +164,7 @@ export const demoAt = (time: number) => {
     at += beat.seconds;
   }
 
-  return { input, lines, run, spinner };
+  return { input, lines, run, spinner } satisfies DemoState;
 };
 
 export const formatTokens = (tokens: number) =>

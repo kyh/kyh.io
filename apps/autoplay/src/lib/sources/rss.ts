@@ -29,11 +29,9 @@ const textNodeSchema = z.union([
 
 type TextNode = z.infer<typeof textNodeSchema>;
 
-// oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- zod's .catch(), not a promise's
 const textField = textNodeSchema.optional().catch(undefined);
 const linkNodeSchema = z.union([textNodeSchema, z.array(textNodeSchema)]);
 
-// oxlint-disable-next-line promise/prefer-await-to-then, unicorn/no-useless-undefined -- zod's .catch(), not a promise's
 const linkField = linkNodeSchema.optional().catch(undefined);
 
 const textOf = (node: TextNode | undefined) => node?.text;
@@ -136,11 +134,14 @@ export const fetchFeed = async (url: string) => {
   if (parsed.data.rss !== undefined) {
     const { channel } = parsed.data.rss;
 
-    return { entries: channel.item ?? [], title: textOf(channel.title) ?? host };
+    return { entries: channel.item ?? [], title: textOf(channel.title) ?? host } satisfies Feed;
   }
 
   if (parsed.data.feed !== undefined) {
-    return { entries: parsed.data.feed.entry ?? [], title: textOf(parsed.data.feed.title) ?? host };
+    return {
+      entries: parsed.data.feed.entry ?? [],
+      title: textOf(parsed.data.feed.title) ?? host,
+    } satisfies Feed;
   }
 
   throw new Error("Not an RSS or Atom feed");

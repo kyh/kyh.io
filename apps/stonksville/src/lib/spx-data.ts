@@ -34,13 +34,13 @@ const parseRow = (fields: string[], previousClose: number | null) => {
       high: Math.max(open, close),
       low: Math.min(open, close),
       open,
-    };
+    } satisfies DailyBar | null;
   }
 
   if (numbers.length === 4) {
     const [open, high, low, close] = numbers;
 
-    return { close, date, hasRange: high > low, high, low, open };
+    return { close, date, hasRange: high > low, high, low, open } satisfies DailyBar | null;
   }
 
   return null;

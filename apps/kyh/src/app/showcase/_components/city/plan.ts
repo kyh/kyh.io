@@ -67,15 +67,14 @@ export interface Road {
   axis: "x" | "z";
 }
 
-const toGrid = (u: number, v: number) => [
-  CENTER + (u + v) * Math.SQRT1_2,
-  CENTER + (v - u) * Math.SQRT1_2,
-];
+const toGrid = (u: number, v: number) =>
+  [CENTER + (u + v) * Math.SQRT1_2, CENTER + (v - u) * Math.SQRT1_2] satisfies Point2;
 
-const toScreenAxes = (x: number, z: number) => [
-  (x - CENTER - (z - CENTER)) * Math.SQRT1_2,
-  (x - CENTER + (z - CENTER)) * Math.SQRT1_2,
-];
+const toScreenAxes = (x: number, z: number) =>
+  [
+    (x - CENTER - (z - CENTER)) * Math.SQRT1_2,
+    (x - CENTER + (z - CENTER)) * Math.SQRT1_2,
+  ] satisfies Point2;
 
 const reach = (angle: number) =>
   1 +
@@ -107,10 +106,10 @@ export const withinReach = (x: number, z: number, offset: number) => {
   const limit = reach(angle) + offset / radius;
 
   if (rho <= limit) {
-    return [x, z];
+    return [x, z] satisfies Point2;
   }
 
-  return toGrid(u * (limit / rho), v * (limit / rho));
+  return toGrid(u * (limit / rho), v * (limit / rho)) satisfies Point2;
 };
 
 /** The coast, or a line `offset` cells out to sea (negative: inland). */
@@ -207,12 +206,13 @@ const planGrid = () => {
   return { blocks, coast: coastline(), ...findRoads(blocks) };
 };
 
-const blockRect = (bx: number, bz: number) => ({
-  d: PERIOD - 1,
-  w: PERIOD - 1,
-  x: (ROAD_LINES[bx] ?? 0) + 1,
-  z: (ROAD_LINES[bz] ?? 0) + 1,
-});
+const blockRect = (bx: number, bz: number) =>
+  ({
+    d: PERIOD - 1,
+    w: PERIOD - 1,
+    x: (ROAD_LINES[bx] ?? 0) + 1,
+    z: (ROAD_LINES[bz] ?? 0) + 1,
+  }) satisfies Rect;
 
 const BLOCK_USES = {
   "1,4": "houses",
@@ -263,18 +263,20 @@ interface Slot extends Rect {
 const slotsFor = (block: Block) => {
   const base = `${block.bx},${block.bz}`;
   const { ring, x, z } = block;
-  const slot = (key: string, size: LotSize, rect: Rect) => ({ ...rect, key, ring, size });
+
+  const slot = (key: string, size: LotSize, rect: Rect) =>
+    ({ ...rect, key, ring, size }) satisfies Slot;
 
   switch (block.use) {
     case "landmark": {
-      return [slot(base, "large", block)];
+      return [slot(base, "large", block)] satisfies Slot[];
     }
 
     case "halves": {
       return [
         slot(`${base}:back`, "half", { d: 3, w: 6, x, z }),
         slot(`${base}:front`, "half", { d: 3, w: 6, x, z: z + 3 }),
-      ];
+      ] satisfies Slot[];
     }
 
     case "quarters": {
@@ -283,7 +285,7 @@ const slotsFor = (block: Block) => {
         slot(`${base}:ne`, "quarter", { d: 3, w: 3, x: x + 3, z }),
         slot(`${base}:sw`, "quarter", { d: 3, w: 3, x, z: z + 3 }),
         slot(`${base}:se`, "quarter", { d: 3, w: 3, x: x + 3, z: z + 3 }),
-      ];
+      ] satisfies Slot[];
     }
 
     case "templates": {
@@ -293,11 +295,11 @@ const slotsFor = (block: Block) => {
         slot(`${base}:t2`, "template", { d: 3, w: 2, x: x + 4, z: z + 3 }),
         slot(`${base}:t3`, "template", { d: 3, w: 3, x, z }),
         slot(`${base}:t4`, "template", { d: 3, w: 3, x: x + 3, z }),
-      ];
+      ] satisfies Slot[];
     }
 
     default: {
-      return [];
+      return [] satisfies Slot[];
     }
   }
 };
@@ -413,7 +415,7 @@ const WATER = 1;
 const TAKEN = 2;
 
 const createOccupancy = (blocks: readonly { bx: number; bz: number }[]) => {
-  const cells = Array.from({ length: GRID * GRID }, (_, index) => {
+  const cells: number[] = Array.from({ length: GRID * GRID }, (_, index) => {
     const x = index % GRID;
     const z = Math.floor(index / GRID);
 
@@ -688,5 +690,5 @@ export const planCity = (entries: readonly PlanEntry[], seed = 7) => {
     junctions: grid.junctions,
     lots: assignLots(entries, blocks, countryside.launch),
     roads: grid.roads,
-  };
+  } satisfies CityPlan;
 };

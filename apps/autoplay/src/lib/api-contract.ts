@@ -176,25 +176,23 @@ export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
 /** A route's answer as the client reads it: the payload, or the station's error. */
 export type Answer<T> = { data: T } | { error: string };
 
-export const jsonRequest = <Body extends object>(
-  method: "POST" | "DELETE" | "PATCH",
-  body: Body,
-) => ({
-  body: JSON.stringify(body),
-  headers: { "Content-Type": "application/json" },
-  method,
-});
+export const jsonRequest = <Body extends object>(method: "POST" | "DELETE" | "PATCH", body: Body) =>
+  ({
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+    method,
+  }) satisfies RequestInit;
 
 /**
  * A route's answer, parsed: the payload through `schema`, or the error the
  * station gave — `fallback` when it gave none a viewer could read.
  */
-export const requestJson = async <T>(
+export const requestJson: <T>(
   input: string,
   schema: z.ZodType<T>,
   fallback: string,
   init?: RequestInit,
-) => {
+) => Promise<Answer<T>> = async (input, schema, fallback, init) => {
   try {
     const response = await fetch(input, init);
     const body: unknown = await response.json().catch(() => null);

@@ -26,7 +26,7 @@ interface Flourish {
 
 const SPIN_CHANCE = 0.3;
 
-const sideOf = () => (Math.random() < 0.5 ? -1 : 1);
+const sideOf = () => (Math.random() < 0.5 ? -1 : 1) satisfies 1 | -1;
 
 const box = (w: number, h: number, d: number, material: THREE.Material, radius = 0.06) => {
   const mesh = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, radius), material);
