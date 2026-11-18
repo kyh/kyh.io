@@ -11,7 +11,17 @@ how a feature behaves is in its code.
   JSON-LD graph and the 404 body, each tested beside it.
 - Every page shares one `og:video` and its poster as `og:image`: the
   showcase's opening, recorded per theme (`pnpm og:video kyh`), picked by
-  `src/lib/todays-video.ts`.
+  `src/lib/todays-video.ts`. Next shallow-merges `metadata`, so a page that
+  set only `openGraph` would drop the layout's image and video:
+  `buildPageMetadata` builds the whole object for every page.
+- `/` negotiates on `Accept` (`content-negotiation.ts`, `middleware.ts`):
+  Markdown unless HTML is asked for by name, since `curl` and fetch defaults
+  send a wildcard or nothing. Every negotiated response appends `Vary: Accept`;
+  Next overwrites `Vary` on the prerendered `/` after middleware, so
+  `next.config.ts` repeats Next's router keys plus `Accept` for that path.
+- An unknown path hits `app/[...path]/route.ts`: a real 404 with a short body
+  (HTML for browsers, Markdown otherwise), not Next's `not-found`, which would
+  send a lost agent the whole app shell.
 
 ## Keeping in sync
 

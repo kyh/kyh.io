@@ -20,7 +20,7 @@ pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, ap
 
 - **Setup**: `pnpm install`, then `pnpm dev:<app>`. No bootstrap script, no Docker. `pnpm dev:kyh` and `pnpm dev:policingice` both bind :3000, so run one at a time.
 - **Verify**: `pnpm verify` for the static gate; drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` gets `typecheck` + `build` only.
-- **`pnpm lint` is a clean gate.** `oxlint.config.ts` extends the ultracite presets (core, react, next, anti-slop); every rule is an error. Fix the code, don't add config overrides; a `// oxlint-disable-next-line rule -- why` needs a stated reason.
+- **`pnpm lint` is a clean gate.** `oxlint.config.ts` extends the ultracite presets (core, react, next, anti-slop, landmines); every rule is an error. Fix the code, don't add config overrides; a `// oxlint-disable-next-line rule -- why` needs a stated reason. Landmines means no prose comments (only directives, a single-line `// WARNING:` for a dangerous recurring footgun, or TSDoc on exported API), no annotated return types (pin a contract with `satisfies` or a typed variable), no test doubles (real implementations; a local server for HTTP), and tests named `*.test.ts` beside their subject.
 - **policingice's database is remote production.** No local DB, no seed, no test login. Never run its `db:push`/`db:studio` or anything in `apps/policingice/scripts/`.
 
 ## Apps
@@ -261,11 +261,13 @@ way when adding a mod.
 - Load: `pnpm dev:<mod>` (`claude --plugin-dir apps/<mod>`), or
   `CLAUDE_CODE_PLUGIN_DIRS` in `~/.claude/settings.json` for every session and
   the desktop app. An interactive session hot-reloads the folder on save.
-- Tests split by suffix. `test/*.spec.ts`: the pure modules under node
+- Tests split by extension. `test/*.test.mts`: the pure modules under node
   (`pnpm test`, CI). `test/*.test.ts`: the hooks under `claude plugin test`
   with the engine mocked beneath (`test:mod`, local; needs `claude`). The kit
-  loads every `*.test.ts`, so node tests can't share the suffix.
-- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + specs,
+  loads every `*.test.ts` and `*.test.tsx` (never `.mts`) and refuses
+  `node:` imports, so node tests can't share the extension. Both names pass
+  landmines' `test-file-names`; never `.spec.ts`.
+- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node tests,
   node types) and `tsconfig.plugin.json` (hooks + `*.test.ts`, extending
   `@repo/claude-code-types/tsconfig.json`). `validate` is
   `claude plugin validate .`.
