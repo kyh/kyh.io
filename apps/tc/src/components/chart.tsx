@@ -42,6 +42,7 @@ const base = "#059669";
 const bonus = "#0ea5e9";
 const stock = "#f59e0b";
 const defaultMargin = { bottom: 0, left: 0, right: 0, top: 0 };
+
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: "rgba(0,0,0,0.8)",
@@ -59,9 +60,6 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
     useTooltip<TooltipData>();
 
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
-    // TooltipInPortal is rendered in a separate child of <body /> and positioned
-    // with page coordinates which should be updated on scroll. consider using
-    // Tooltip or TooltipWithBounds if you don't need to render inside a Portal
     scroll: true,
   });
 
@@ -70,9 +68,11 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
 
   const totals = data.map((current) => {
     let tc = 0;
+
     for (const k of keys) {
       tc += Number(current[k]);
     }
+
     return tc;
   });
 
@@ -91,7 +91,6 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
     range: [base, bonus, stock],
   });
 
-  // bounds
   const xMax = width;
   const yMax = height - margin.top - 100;
 
@@ -139,6 +138,7 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
                       if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                       }
+
                       const eventSvgCoords = localPoint(event);
                       const left = bar.x + bar.width / 2;
                       showTooltip({

@@ -1,14 +1,7 @@
-// The city is drawn the way Inkline Town draws its island: flat, unlit faces
-// in a handful of colors, outlined in ink. A sketch collects both, measured in
-// grid cells (x east, y up, z south), batched per color so the whole town
-// renders in a few dozen draw calls.
-//
-// The camera turns only in quarter turns, and each view is sketched on its
-// own: faces turned away are dropped, and ink goes on silhouettes (a visible
-// face meets a hidden one), creases and open edges.
 import type { Paint, Token } from "./palette";
 
 export type Vec3 = readonly [x: number, y: number, z: number];
+
 export type Weight = "hair" | "fine" | "bold";
 
 /** Toward the camera: a 45° heading and a 30° elevation, as in Inkline Town. */
@@ -22,12 +15,13 @@ export const VIEW: Vec3 = [
 export const HEADINGS = 4;
 
 /** Toward the camera after `heading` quarter turns, or part of one mid-turn; 0 is `VIEW`. */
-export const viewAt = (heading: number): Vec3 => {
+export const viewAt = (heading: number) => {
   const angle = (heading * Math.PI) / 2;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const [x, y, z] = VIEW;
-  return [x * cos - z * sin, y, x * sin + z * cos];
+
+  return [x * cos - z * sin, y, x * sin + z * cos] satisfies Vec3;
 };
 
 export interface LineBatch {
@@ -72,10 +66,10 @@ export interface Triangle {
   colors: Paint;
 }
 
-export const createSketch = (
-  view: Vec3 | null = VIEW,
-  covers: readonly Vec3[] = view ? [view] : [],
-): Sketch => ({
+export const createSketch: (view?: Vec3 | null, covers?: readonly Vec3[]) => Sketch = (
+  view = VIEW,
+  covers = view ? [view] : [],
+) => ({
   covers,
   faces: new Map(),
   lines: new Map(),
@@ -89,6 +83,7 @@ export const createSketch = (
 export const faceAreas = (sketch: Sketch, areas = new Map<Token, number>()) => {
   for (const [token, positions] of sketch.faces) {
     let area = 0;
+
     for (let index = 0; index + 8 < positions.length; index += 9) {
       const ax = (positions[index + 3] ?? 0) - (positions[index] ?? 0);
       const ay = (positions[index + 4] ?? 0) - (positions[index + 1] ?? 0);
@@ -96,7 +91,6 @@ export const faceAreas = (sketch: Sketch, areas = new Map<Token, number>()) => {
       const bx = (positions[index + 6] ?? 0) - (positions[index] ?? 0);
       const by = (positions[index + 7] ?? 0) - (positions[index + 1] ?? 0);
       const bz = (positions[index + 8] ?? 0) - (positions[index + 2] ?? 0);
-      // The triangle's area as the fixed camera sees it.
       area +=
         Math.abs(
           (ay * bz - az * by) * VIEW[0] +
@@ -104,61 +98,68 @@ export const faceAreas = (sketch: Sketch, areas = new Map<Token, number>()) => {
             (ax * by - ay * bx) * VIEW[2],
         ) / 2;
     }
+
     areas.set(token, (areas.get(token) ?? 0) + area);
   }
+
   for (const piece of sketch.parts) {
     faceAreas(piece.sketch, areas);
   }
+
   return areas;
 };
 
 export const part = (sketch: Sketch, name: string, origin: Vec3, turns = false) => {
   const child = createSketch(turns ? null : sketch.view, sketch.covers);
   sketch.parts.push({ name, origin, sketch: child });
+
   return child;
 };
 
-// Vector math, on tuples so a sketch stays plain data.
-
-const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-export const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const scale = (a: Vec3, k: number): Vec3 => [a[0] * k, a[1] * k, a[2] * k];
+const add = (a: Vec3, b: Vec3) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]] satisfies Vec3;
+export const sub = (a: Vec3, b: Vec3) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]] satisfies Vec3;
+const scale = (a: Vec3, k: number) => [a[0] * k, a[1] * k, a[2] * k] satisfies Vec3;
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const cross = (a: Vec3, b: Vec3): Vec3 => [
-  a[1] * b[2] - a[2] * b[1],
-  a[2] * b[0] - a[0] * b[2],
-  a[0] * b[1] - a[1] * b[0],
-];
+
+const cross = (a: Vec3, b: Vec3) =>
+  [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] satisfies Vec3;
+
 const length = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
 
-/** Whether a face turned this way shows in any view the sketch covers. */
 const sees = (sketch: Sketch, normal: Vec3) =>
   sketch.view === null || sketch.covers.some((view) => dot(normal, view) > 1e-4);
 
-const normalOf = (a: Vec3, b: Vec3, c: Vec3): Vec3 | null => {
+const normalOf = (a: Vec3, b: Vec3, c: Vec3) => {
   const n = cross(sub(b, a), sub(c, a));
   const size = length(n);
+
   return size < 1e-9 ? null : scale(n, 1 / size);
 };
 
 const faceBatch = (sketch: Sketch, token: Token) => {
   const existing = sketch.faces.get(token);
+
   if (existing) {
     return existing;
   }
+
   const created: number[] = [];
   sketch.faces.set(token, created);
+
   return created;
 };
 
 const lineBatch = (sketch: Sketch, token: Token, weight: Weight) => {
   const key = `${token}|${weight}`;
   const existing = sketch.lines.get(key);
+
   if (existing) {
     return existing;
   }
+
   const created: LineBatch = { positions: [], token, weight };
   sketch.lines.set(key, created);
+
   return created;
 };
 
@@ -175,10 +176,12 @@ export const line = (
 ) => {
   const { positions } = lineBatch(sketch, token, weight);
   let previous: Vec3 | null = null;
+
   for (const point of points) {
     if (previous) {
       positions.push(...previous, ...point);
     }
+
     previous = point;
   }
 };
@@ -190,6 +193,7 @@ export const loop = (
   token: Token = "ink",
 ) => {
   const [first] = points;
+
   if (first) {
     line(sketch, [...points, first], weight, token);
   }
@@ -203,17 +207,22 @@ export const face = (
   outline: Weight | null = "fine",
 ) => {
   const [first, ...rest] = points;
+
   if (!first) {
     return;
   }
+
   const target = faceBatch(sketch, token);
   let previous: Vec3 | null = null;
+
   for (const point of rest) {
     if (previous) {
       pushTriangle(target, first, previous, point);
     }
+
     previous = point;
   }
+
   if (outline) {
     loop(sketch, points, outline);
   }
@@ -223,12 +232,15 @@ export type Point2 = readonly [number, number];
 
 const signedArea = (points: readonly Point2[]) => {
   let area = 0;
+
   for (const [index, [x0, z0]] of points.entries()) {
     const next = points[(index + 1) % points.length];
+
     if (next) {
       area += x0 * next[1] - next[0] * z0;
     }
   }
+
   return area / 2;
 };
 
@@ -243,25 +255,30 @@ const isEar = (points: readonly Point2[], ring: readonly number[], at: number) =
   const a = points[ring[(at + count - 1) % count] ?? -1];
   const b = points[ring[at] ?? -1];
   const c = points[ring[(at + 1) % count] ?? -1];
+
   if (!a || !b || !c || turn(a, b, c) <= 0) {
     return false;
   }
+
   return ring.every((index) => {
     const p = points[index];
+
     return !p || p === a || p === b || p === c || !inTriangle(p, a, b, c);
   });
 };
 
-/** Ear clipping, for the simple outlines of coasts, lots and footprints. */
-const triangulate = (points: readonly Point2[]): [number, number, number][] => {
+const triangulate = (points: readonly Point2[]) => {
   const forward = points.map((_, index) => index);
   const ring = signedArea(points) > 0 ? forward : forward.toReversed();
   const triangles: [number, number, number][] = [];
+
   while (ring.length > 3) {
     const at = ring.findIndex((_, index) => isEar(points, ring, index));
+
     if (at === -1) {
       break;
     }
+
     const count = ring.length;
     triangles.push([
       ring[(at + count - 1) % count] ?? 0,
@@ -270,10 +287,13 @@ const triangulate = (points: readonly Point2[]): [number, number, number][] => {
     ]);
     ring.splice(at, 1);
   }
+
   const [a, b, c] = ring;
+
   if (ring.length === 3 && a !== undefined && b !== undefined && c !== undefined) {
     triangles.push([a, b, c]);
   }
+
   return triangles;
 };
 
@@ -286,14 +306,17 @@ export const ground = (
   ink: Weight | null = "fine",
 ) => {
   const target = faceBatch(sketch, token);
+
   for (const [i, j, k] of triangulate(outline)) {
     const a = outline[i];
     const b = outline[j];
     const c = outline[k];
+
     if (a && b && c) {
       pushTriangle(target, [a[0], y, a[1]], [b[0], y, b[1]], [c[0], y, c[1]]);
     }
   }
+
   if (ink) {
     loop(
       sketch,
@@ -310,10 +333,9 @@ interface EdgeRecord {
   fronts: boolean[];
 }
 
-// Corners are keyed by position, quantized to a 500th of a cell and packed
-// into one exact integer, so a shared edge is found without building strings.
 const QUANTUM = 500;
 const AXIS = 2 ** 17;
+
 const pointKey = (p: Vec3) =>
   (Math.round((p[0] + 128) * QUANTUM) * AXIS + Math.round((p[1] + 128) * QUANTUM)) * AXIS +
   Math.round((p[2] + 128) * QUANTUM);
@@ -326,37 +348,44 @@ const recordEdge = (edges: EdgeMap, a: Vec3, b: Vec3, normal: Vec3, isFront: boo
   const low = Math.min(ka, kb);
   const high = Math.max(ka, kb);
   let row = edges.get(low);
+
   if (!row) {
     row = new Map();
     edges.set(low, row);
   }
+
   let edge = row.get(high);
+
   if (!edge) {
     edge = { a, b, fronts: [], normals: [] };
     row.set(high, edge);
   }
+
   edge.normals.push(normal);
   edge.fronts.push(isFront);
 };
 
 const isInked = (edge: EdgeRecord, creaseCos: number) => {
   const visible = edge.fronts.filter(Boolean).length;
+
   if (visible === 0) {
     return false;
   }
-  // An open edge of a visible face, or a visible face meeting a hidden one.
+
   if (edge.fronts.length === 1 || visible < edge.fronts.length) {
     return true;
   }
+
   const [first, second] = edge.normals;
+
   return first !== undefined && second !== undefined && dot(first, second) < creaseCos;
 };
 
-/** Which token a face takes: flat tops, then faces on the camera's left (lit) or right (shade). */
-const tokenFor = (colors: Paint, normal: Vec3, view: Vec3): Token => {
+const tokenFor = (colors: Paint, normal: Vec3, view: Vec3) => {
   if (normal[1] > 0.86) {
     return colors.top;
   }
+
   return normal[0] * view[2] - normal[2] * view[0] <= 0 ? colors.left : colors.right;
 };
 
@@ -371,20 +400,26 @@ export const solid = (
   crease = 38,
 ) => {
   const edges: EdgeMap = new Map();
+
   for (const { a, b, c, colors } of triangles) {
     const normal = normalOf(a, b, c);
+
     if (normal) {
       const isFront = sees(sketch, normal);
+
       if (isFront) {
         pushTriangle(faceBatch(sketch, tokenFor(colors, normal, sketch.view ?? VIEW)), a, b, c);
       }
+
       recordEdge(edges, a, b, normal, isFront);
       recordEdge(edges, b, c, normal, isFront);
       recordEdge(edges, c, a, normal, isFront);
     }
   }
+
   const creaseCos = Math.cos((crease * Math.PI) / 180);
   const { positions } = lineBatch(sketch, "ink", weight);
+
   for (const row of edges.values()) {
     for (const edge of row.values()) {
       if (isInked(edge, creaseCos)) {
@@ -394,29 +429,32 @@ export const solid = (
   }
 };
 
-// Building blocks. Each returns outward-wound triangles: pass several to one
-// `solid` call when they form one closed shape.
-
-/** A planar polygon, wound to face `outward`, split into triangles. */
-const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint): Triangle[] => {
+const polygon = (points: readonly Vec3[], outward: Vec3, colors: Paint) => {
   const [first, second, third] = points;
+
   if (!first || !second || !third) {
-    return [];
+    return [] satisfies Triangle[];
   }
+
   const normal = normalOf(first, second, third);
   const ordered = normal && dot(normal, outward) < 0 ? points.toReversed() : points;
   const [origin, ...rest] = ordered;
+
   if (!origin) {
-    return [];
+    return [] satisfies Triangle[];
   }
+
   const triangles: Triangle[] = [];
   let previous: Vec3 | null = null;
+
   for (const point of rest) {
     if (previous) {
       triangles.push({ a: origin, b: previous, c: point, colors });
     }
+
     previous = point;
   }
+
   return triangles;
 };
 
@@ -430,8 +468,9 @@ export interface BoxSpec {
   colors: Paint;
 }
 
-export const boxTriangles = ({ x, z, w, d, y = 0, h, colors }: BoxSpec): Triangle[] => {
+export const boxTriangles = ({ x, z, w, d, y = 0, h, colors }: BoxSpec) => {
   const [x1, y1, z1] = [x + w, y + h, z + d];
+
   return [
     ...polygon(
       [
@@ -493,7 +532,7 @@ export const boxTriangles = ({ x, z, w, d, y = 0, h, colors }: BoxSpec): Triangl
       [0, -1, 0],
       colors,
     ),
-  ];
+  ] satisfies Triangle[];
 };
 
 export const box = (sketch: Sketch, spec: BoxSpec, weight: Weight = "fine") => {
@@ -514,11 +553,13 @@ export interface RoundSpec {
   colors: Paint;
 }
 
-const ring = (spec: RoundSpec, y: number, radius: number): Vec3[] => {
+const ring = (spec: RoundSpec, y: number, radius: number) => {
   const segments = spec.segments ?? 16;
   const squash = spec.squash ?? 1;
+
   return Array.from({ length: segments }, (_, index) => {
     const angle = (index / segments) * Math.PI * 2 + Math.PI / segments;
+
     return [
       spec.x + Math.cos(angle) * radius,
       y,
@@ -528,27 +569,32 @@ const ring = (spec: RoundSpec, y: number, radius: number): Vec3[] => {
 };
 
 /** A cylinder, cone or frustum standing on its base. */
-export const roundTriangles = (spec: RoundSpec): Triangle[] => {
+export const roundTriangles = (spec: RoundSpec) => {
   const y0 = spec.y ?? 0;
   const y1 = y0 + spec.h;
   const top = spec.top ?? spec.r;
   const bottomRing = ring(spec, y0, spec.r);
   const topRing = ring(spec, y1, top);
   const triangles: Triangle[] = [];
+
   for (const [index, a] of bottomRing.entries()) {
     const b = bottomRing[(index + 1) % bottomRing.length];
     const c = topRing[(index + 1) % topRing.length];
     const d = topRing[index];
+
     if (b && c && d) {
       const mid = scale(add(a, b), 0.5);
       const outward: Vec3 = [mid[0] - spec.x, (spec.r - top) * 0.5, mid[2] - spec.z];
       triangles.push(...polygon(top > 0 ? [a, b, c, d] : [a, b, d], outward, spec.colors));
     }
   }
+
   if (top > 0) {
     triangles.push(...polygon(topRing, [0, 1, 0], spec.colors));
   }
+
   triangles.push(...polygon(bottomRing, [0, -1, 0], spec.colors));
+
   return triangles;
 };
 
@@ -569,21 +615,25 @@ export interface BallSpec {
   detail?: number;
 }
 
-export const ballTriangles = (spec: BallSpec): Triangle[] => {
+export const ballTriangles = (spec: BallSpec) => {
   const detail = spec.detail ?? 10;
   const rings = Math.max(4, Math.round(detail * 0.7));
   const center: Vec3 = [spec.x, spec.y, spec.z];
   const radii: Vec3 = [spec.r * (spec.rx ?? 1), spec.r * (spec.ry ?? 1), spec.r * (spec.rz ?? 1)];
-  const at = (lat: number, lon: number): Vec3 => {
+
+  const at = (lat: number, lon: number) => {
     const phi = (lat / rings) * Math.PI;
     const theta = (lon / detail) * Math.PI * 2;
+
     return [
       center[0] + Math.sin(phi) * Math.cos(theta) * radii[0],
       center[1] + Math.cos(phi) * radii[1],
       center[2] + Math.sin(phi) * Math.sin(theta) * radii[2],
-    ];
+    ] satisfies Vec3;
   };
+
   const triangles: Triangle[] = [];
+
   for (let lat = 0; lat < rings; lat += 1) {
     for (let lon = 0; lon < detail; lon += 1) {
       const a = at(lat, lon);
@@ -593,14 +643,17 @@ export const ballTriangles = (spec: BallSpec): Triangle[] => {
       const mid = scale(add(add(a, b), add(c, d)), 0.25);
       const outward = sub(mid, center);
       let corners = [a, b, c, d];
+
       if (lat === 0) {
         corners = [a, c, d];
       } else if (lat === rings - 1) {
         corners = [a, b, c];
       }
+
       triangles.push(...polygon(corners, outward, spec.colors));
     }
   }
+
   return triangles;
 };
 
@@ -624,8 +677,7 @@ export interface RoofSpec {
   overhang?: number;
 }
 
-/** A pitched roof with gable ends. */
-const gableTriangles = (spec: RoofSpec): Triangle[] => {
+const gableTriangles = (spec: RoofSpec) => {
   const over = spec.overhang ?? 0.06;
   const x0 = spec.x - over;
   const z0 = spec.z - over;
@@ -634,8 +686,10 @@ const gableTriangles = (spec: RoofSpec): Triangle[] => {
   const { y } = spec;
   const top = y + spec.rise;
   const ends = spec.ends ?? spec.colors;
+
   if (spec.ridge === "x") {
     const zm = (z0 + z1) / 2;
+
     return [
       ...polygon(
         [
@@ -685,9 +739,11 @@ const gableTriangles = (spec: RoofSpec): Triangle[] => {
         [0, -1, 0],
         ends,
       ),
-    ];
+    ] satisfies Triangle[];
   }
+
   const xm = (x0 + x1) / 2;
+
   return [
     ...polygon(
       [
@@ -737,15 +793,14 @@ const gableTriangles = (spec: RoofSpec): Triangle[] => {
       [0, -1, 0],
       ends,
     ),
-  ];
+  ] satisfies Triangle[];
 };
 
 export const gable = (sketch: Sketch, spec: RoofSpec, weight: Weight = "fine") => {
   solid(sketch, gableTriangles(spec), weight);
 };
 
-/** A hipped roof; with `peak` at 0 the ridge shrinks to a point (a pyramid). */
-const hipTriangles = (spec: RoofSpec & { peak?: number }): Triangle[] => {
+const hipTriangles = (spec: RoofSpec & { peak?: number }) => {
   const over = spec.overhang ?? 0.06;
   const x0 = spec.x - over;
   const z0 = spec.z - over;
@@ -758,16 +813,20 @@ const hipTriangles = (spec: RoofSpec & { peak?: number }): Triangle[] => {
   const half = ((spec.ridge === "x" ? x1 - x0 : z1 - z0) / 2) * (spec.peak ?? 0.45);
   const ridgeA: Vec3 = spec.ridge === "x" ? [xm - half, top, zm] : [xm, top, zm - half];
   const ridgeB: Vec3 = spec.ridge === "x" ? [xm + half, top, zm] : [xm, top, zm + half];
+
   const corners: Vec3[] = [
     [x0, y, z0],
     [x1, y, z0],
     [x1, y, z1],
     [x0, y, z1],
   ];
+
   const [c00, c10, c11, c01] = corners;
+
   if (!c00 || !c10 || !c11 || !c01) {
-    return [];
+    return [] satisfies Triangle[];
   }
+
   const sides: [Vec3[], Vec3][] =
     spec.ridge === "x"
       ? [
@@ -806,14 +865,19 @@ const hipTriangles = (spec: RoofSpec & { peak?: number }): Triangle[] => {
             [0, 1, -1],
           ],
         ];
+
   const triangles: Triangle[] = [];
+
   for (const [points, outward] of sides) {
     const unique = points.filter(
       (point, index) => points.findIndex((other) => pointKey(other) === pointKey(point)) === index,
     );
+
     triangles.push(...polygon(unique, outward, spec.colors));
   }
+
   triangles.push(...polygon(corners, [0, -1, 0], spec.colors));
+
   return triangles;
 };
 
@@ -824,9 +888,6 @@ export const hip = (
 ) => {
   solid(sketch, hipTriangles(spec), weight);
 };
-
-// Details that sit on a wall: windows, doors, signs. A wall is named by the
-// way it faces, and only the two the camera sees carry details.
 
 /** A building's walls: the front faces +z and the side +x, as the first view sees them; the back and far side face away. */
 export type Side = "front" | "side" | "back" | "farSide";
@@ -865,7 +926,7 @@ const WALL_POINTS: Record<Side, (spec: WallSpec, along: number, y: number, out: 
 };
 
 /** A point on a building's wall: `along` runs left to right, seen from outside. */
-export const onWall = (spec: WallSpec, side: Side, along: number, y: number, out = 0.004): Vec3 =>
+export const onWall = (spec: WallSpec, side: Side, along: number, y: number, out = 0.004) =>
   WALL_POINTS[side](spec, along, y, out);
 
 export const wallLength = (spec: { w: number; d: number }, side: Side) =>
@@ -891,6 +952,7 @@ export const pane = (
   if (!seesWall(sketch, spec.side)) {
     return;
   }
+
   face(
     sketch,
     token,
@@ -911,7 +973,7 @@ export interface Frame {
   v: Vec3;
 }
 
-const inFrame = (frame: Frame, [a, b]: Point2): Vec3 =>
+const inFrame = (frame: Frame, [a, b]: Point2) =>
   add(frame.origin, add(scale(frame.u, a), scale(frame.v, b)));
 
 /**
@@ -923,17 +985,19 @@ export const extrudeTriangles = (
   frame: Frame,
   depth: Vec3,
   colors: Paint,
-): Triangle[] => {
+) => {
   const ccw = signedArea(outline) > 0;
   const back = outline.map((point) => inFrame(frame, point));
   const front = back.map((point) => add(point, depth));
   const triangles: Triangle[] = [];
+
   for (const [index, [x0, y0]] of outline.entries()) {
     const next = outline[(index + 1) % outline.length];
     const a = back[index];
     const b = back[(index + 1) % back.length];
     const c = front[(index + 1) % front.length];
     const d = front[index];
+
     if (next && a && b && c && d) {
       const [x1, y1] = next;
       const edgeNormal2: Point2 = ccw ? [y1 - y0, x0 - x1] : [y0 - y1, x1 - x0];
@@ -941,6 +1005,7 @@ export const extrudeTriangles = (
       triangles.push(...polygon([a, b, c, d], outward, colors));
     }
   }
+
   for (const [i, j, k] of triangulate(outline)) {
     const fa = front[i];
     const fb = front[j];
@@ -948,6 +1013,7 @@ export const extrudeTriangles = (
     const ba = back[i];
     const bb = back[j];
     const bc = back[k];
+
     if (fa && fb && fc && ba && bb && bc) {
       triangles.push(
         ...polygon([fa, fb, fc], scale(depth, 1), colors),
@@ -955,6 +1021,7 @@ export const extrudeTriangles = (
       );
     }
   }
+
   return triangles;
 };
 
@@ -970,9 +1037,10 @@ export const extrude = (
 };
 
 /** Points around an ellipse, for round outlines in a frame. */
-export const ellipse = (rx: number, ry: number, segments = 20, cx = 0, cy = 0): Point2[] =>
+export const ellipse = (rx: number, ry: number, segments = 20, cx = 0, cy = 0) =>
   Array.from({ length: segments }, (_, index) => {
     const angle = (index / segments) * Math.PI * 2;
+
     return [cx + Math.cos(angle) * rx, cy + Math.sin(angle) * ry] satisfies Point2;
   });
 
@@ -985,34 +1053,33 @@ export interface Screen {
 }
 
 /** Turn a point about an axis through `pivot`, by `angle` radians. */
-export const rotate = (point: Vec3, pivot: Vec3, axis: "x" | "y" | "z", angle: number): Vec3 => {
+export const rotate = (point: Vec3, pivot: Vec3, axis: "x" | "y" | "z", angle: number) => {
   const [x, y, z] = sub(point, pivot);
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   let turned: Vec3 = [x * c - y * s, x * s + y * c, z];
+
   if (axis === "x") {
     turned = [x, y * c - z * s, y * s + z * c];
   } else if (axis === "y") {
     turned = [x * c + z * s, y, -x * s + z * c];
   }
+
   return add(turned, pivot);
 };
 
 /** Move every corner of some triangles: tilt a capsule, lay a cylinder down. */
-export const mapTriangles = (
-  triangles: readonly Triangle[],
-  move: (point: Vec3) => Vec3,
-): Triangle[] =>
+export const mapTriangles = (triangles: readonly Triangle[], move: (point: Vec3) => Vec3) =>
   triangles.map(({ a, b, c, colors }) => ({ a: move(a), b: move(b), c: move(c), colors }));
 
 /** A round rod from one point to another, at any slant: bones, broomsticks. */
-export const rodTriangles = (from: Vec3, to: Vec3, r: number, colors: Paint): Triangle[] => {
+export const rodTriangles = (from: Vec3, to: Vec3, r: number, colors: Paint) => {
   const h = length(sub(to, from));
   const along = scale(sub(to, from), 1 / h);
-  // Two directions square to it, for the rod's round.
   const square = cross(Math.abs(along[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], along);
   const side = scale(square, 1 / length(square));
   const other = cross(along, side);
+
   return mapTriangles(roundTriangles({ colors, h, r, segments: 6, x: 0, z: 0 }), ([x, y, z]) =>
     add(from, add(scale(side, x), add(scale(along, y), scale(other, z)))),
   );
@@ -1041,9 +1108,13 @@ export interface Placed {
   solid: (triangles: readonly Triangle[], weight?: Weight, crease?: number) => void;
 }
 
-export const placed = (sketch: Sketch, place: (point: Vec3) => Vec3 = (point) => point): Placed => {
+export const placed: (sketch: Sketch, place?: (point: Vec3) => Vec3) => Placed = (
+  sketch,
+  place = (point) => point,
+) => {
   const solidOf = (triangles: readonly Triangle[], weight: Weight = "fine", crease?: number) =>
     solid(sketch, mapTriangles(triangles, place), weight, crease);
+
   return {
     ball: (spec, weight = "fine") => solidOf(ballTriangles(spec), weight, 70),
     line: (points, weight = "fine", token = "ink") =>

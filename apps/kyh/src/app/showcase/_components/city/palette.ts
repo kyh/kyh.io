@@ -1,6 +1,3 @@
-// Every color in the city, by day (ink on paper, after Inkline Town) and by
-// night (pale ink on slate, windows lit). Geometry is batched per token, so a
-// theme switch recolors a few dozen materials and rebuilds nothing.
 import type { ListedTheme } from "@/themes";
 import type { Town } from "./town-theme";
 
@@ -88,6 +85,7 @@ export const PALETTE = {
 } as const;
 
 export type Token = keyof typeof PALETTE;
+
 export type Time = "day" | "night";
 
 /** Which token a face takes, by the way it faces: up, toward +z or toward +x. */
@@ -97,11 +95,12 @@ export interface Paint {
   right: Token;
 }
 
-export const paint = (top: Token, left: Token = top, right: Token = left): Paint => ({
-  left,
-  right,
-  top,
-});
+export const paint = (top: Token, left: Token = top, right: Token = left) =>
+  ({
+    left,
+    right,
+    top,
+  }) satisfies Paint;
 
 export const WALLS = paint("top", "wallLeft", "wallRight");
 
@@ -123,7 +122,6 @@ export const ROOFS = [
 
 export const ROOF_GRAY = paint("roofGray", "roofGray", "roofGrayShade");
 
-// The colors a theme's decorations, the blimp and what flies with it share.
 export const RED = paint("festiveRed", "festiveRed", "festiveRedShade");
 export const GREEN = paint("festiveGreen", "festiveGreen", "festiveGreenShade");
 export const GOLD = paint("gold", "gold", "goldShade");
@@ -166,6 +164,7 @@ export const ACCENTS = [
 
 const channels = (hex: string) => {
   const value = Number.parseInt(hex.slice(1), 16);
+
   return [Math.floor(value / 65_536) % 256, Math.floor(value / 256) % 256, value % 256] as const;
 };
 
@@ -174,6 +173,7 @@ export const greyOf = (hex: string) => {
   const [r, g, b] = channels(hex);
   const luma = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
   const channel = luma.toString(16).padStart(2, "0");
+
   return `#${channel}${channel}${channel}`;
 };
 
@@ -191,7 +191,7 @@ const toGamma = (channel: number) =>
   channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055;
 
 /** OKLab, where turning a hue keeps its lightness. */
-export const oklab = (hex: string): Lab => {
+export const oklab = (hex: string) => {
   const [red, green, blue] = channels(hex);
   const r = toLinear(red / 255);
   const g = toLinear(green / 255);
@@ -199,22 +199,25 @@ export const oklab = (hex: string): Lab => {
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+
   return [
     0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
     1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
     0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
-  ];
+  ] satisfies Lab;
 };
 
 export const fromOklab = ([lightness, a, b]: Lab) => {
   const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
   const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
   const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+
   const rgb = [
     4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ];
+
   return `#${rgb
     .map((channel) =>
       Math.round(Math.min(1, Math.max(0, toGamma(Math.max(0, channel)))) * 255)
@@ -224,7 +227,6 @@ export const fromOklab = ([lightness, a, b]: Lab) => {
     .join("")}`;
 };
 
-/** Trees stay green when their building lights up: a purple oak reads as a mistake, not a brand. */
 const FOLIAGE: ReadonlySet<Token> = new Set<Token>(["pine", "pineShade", "tree", "treeShade"]);
 
 /** A theme's colors for some tokens, by day and by night. */
@@ -232,16 +234,18 @@ export type Repaint = Partial<Record<Token, Record<Time, string>>>;
 
 const SNOW = { day: "#fbfcfd", night: "#b4c0cc" };
 const SNOW_SHADE = { day: "#e2e9f0", night: "#97a4b1" };
+
 /** A roof's two slopes' tokens, for each roof. */
 export const slopesOf = (roofs: readonly Paint[]) =>
   roofs.flatMap(({ right, top }) => [top, right]);
+
 const ROOF_TOKENS = slopesOf([...ROOFS, ROOF_GRAY]);
 
 /**
  * Everything a snowfall settles on: roofs, the flat tops, the grounds and the
  * trees' crowns, white in the grey town rather than turned to the theme's hue.
  */
-export const snowfall = (): Repaint => {
+export const snowfall = () => {
   const repaint: Repaint = {
     hedge: SNOW_SHADE,
     pine: { day: "#e9f0ea", night: "#a3b2a8" },
@@ -249,12 +253,15 @@ export const snowfall = (): Repaint => {
     tree: { day: "#eef3ee", night: "#a8b6ad" },
     treeShade: { day: "#cfdccf", night: "#84958a" },
   };
+
   for (const token of ["field", "fieldGreen", "land", "lawn", "sand", "top"] as const) {
     repaint[token] = SNOW;
   }
+
   for (const token of ROOF_TOKENS) {
     repaint[token] = token.endsWith("Shade") ? SNOW_SHADE : SNOW;
   }
+
   return repaint;
 };
 
@@ -265,18 +272,14 @@ export interface Scheme {
   town: Town;
 }
 
-/** Slate's hue and its chroma in its darks; the chroma fades toward white. */
 const SLATE_HUE = 257;
 const SLATE_CHROMA = 0.042;
 
-/**
- * A grey of the same lightness, turned to `hue` (OKLCH degrees) as Tailwind's
- * slate is: its tint kept through the darks and faded toward white.
- */
 const slateOf = (hex: string, hue: number, chroma = SLATE_CHROMA) => {
   const [lightness] = oklab(greyOf(hex));
   const amount = chroma * Math.min(1, (1 - lightness) / 0.25);
   const angle = (hue * Math.PI) / 180;
+
   return fromOklab([lightness, amount * Math.cos(angle), amount * Math.sin(angle)]);
 };
 
@@ -289,11 +292,10 @@ export const greyIn = (hex: string, { theme: { tint }, time }: Scheme) => {
   if (tint) {
     return slateOf(hex, tint.hue, SLATE_CHROMA * tint.chroma);
   }
+
   return time === "day" ? greyOf(hex) : slateOf(hex, SLATE_HUE);
 };
 
-// Each scheme's greys, worked out once per token: a repaint is a lookup per
-// run of faces, not two trips through OKLab.
 const greys = new Map<string, string>();
 
 /** A token's color in the scheme: the theme's repaint of it, else its own, by day or night. */
@@ -306,144 +308,156 @@ export const colorIn = (token: Token, { time, town }: Scheme) =>
  */
 export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tint = untinted) => {
   if (!colorful) {
-    // The theme's own colors stay in color in the grey town.
     const { repaint, vivid } = scheme.town;
+
     if (repaint?.[token] || vivid?.has(token)) {
       return colorIn(token, scheme);
     }
+
     const key = `${scheme.time}|${scheme.theme.id}|${token}`;
     let grey = greys.get(key);
+
     if (grey === undefined) {
       grey = greyIn(colorIn(token, scheme), scheme);
       greys.set(key, grey);
     }
+
     return grey;
   }
+
   const hex = colorIn(token, scheme);
+
   return FOLIAGE.has(token) ? hex : tint(hex);
 };
 
-/** Below this a color is black, white or grey: it has no hue to lend or turn. */
 const NEUTRAL_CHROMA = 0.03;
 
 const chromaOf = (hex: string) => {
   const [, a, b] = oklab(hex);
+
   return Math.hypot(a, b);
 };
 
 /** The colored token covering the most of a building, weighted by how colorful it is. */
-export const dominant = (areas: ReadonlyMap<Token, number>): Token | null => {
+export const dominant = (areas: ReadonlyMap<Token, number>) => {
   let best: Token | null = null;
   let bestWeight = 0;
+
   for (const [token, area] of areas) {
     const chroma = chromaOf(PALETTE[token].day);
+
     if (chroma > NEUTRAL_CHROMA && area * chroma > bestWeight) {
       best = token;
       bestWeight = area * chroma;
     }
   }
+
   return best;
 };
 
-/** The turn and saturation that carry one color's hue onto another's. */
 const turnBetween = (from: string, to: string) => {
   const [, fromA, fromB] = oklab(from);
   const [, toA, toB] = oklab(to);
   const turn = Math.atan2(toB, toA) - Math.atan2(fromB, fromA);
   const stretch = Math.min(1.5, Math.max(0.5, Math.hypot(toA, toB) / Math.hypot(fromA, fromB)));
+
   return { cos: Math.cos(turn) * stretch, sin: Math.sin(turn) * stretch };
 };
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
+
   return Math.atan2(b, a);
 };
 
 const hueGap = (from: number, to: number) =>
   Math.abs(Math.atan2(Math.sin(to - from), Math.cos(to - from)));
 
-/** Hues closer than this (about 35°) are one family: a roof, its shaded slope, its awning. */
 const FAMILY_GAP = 0.6;
 
-/**
- * A building's colored tokens grouped into families of hue, the one covering
- * most first, each named by its heaviest color.
- */
 const familiesOf = (areas: ReadonlyMap<Token, number>) => {
   const weighed = [...areas]
-    .filter(([token]) => !FOLIAGE.has(token))
-    .map(([token, area]) => ({
-      hex: PALETTE[token].day,
-      weight: area * chromaOf(PALETTE[token].day),
-    }))
-    .filter(({ hex }) => chromaOf(hex) > NEUTRAL_CHROMA)
+    .flatMap(([token, area]) => {
+      const hex = PALETTE[token].day;
+      const chroma = chromaOf(hex);
+
+      return FOLIAGE.has(token) || chroma <= NEUTRAL_CHROMA ? [] : [{ hex, weight: area * chroma }];
+    })
     .toSorted((first, second) => second.weight - first.weight);
+
   const families: { hex: string; hue: number }[] = [];
+
   for (const { hex } of weighed) {
     const hue = hueOf(hex);
+
     if (!families.some((family) => hueGap(family.hue, hue) < FAMILY_GAP)) {
       families.push({ hex, hue });
     }
   }
+
   return families;
 };
 
-/**
- * Turns a building's hue families onto its project's colors, the biggest onto
- * the first, the next onto the second, and so on; families past the icon's
- * colors turn with the biggest, keeping their offset from it, so a one-color
- * icon still leaves a building more than one color. Lightness stays put and
- * near-greys stay as they are, so pastel roofs stay pastel, shaded slopes
- * stay shaded and night stays night.
- */
-const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]): Tint => {
+const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]) => {
   const families = familiesOf(areas);
   const [main] = families;
   const [first] = colors;
+
   if (main === undefined || first === undefined) {
     return untinted;
   }
+
   const mainTurn = { hue: main.hue, ...turnBetween(main.hex, first) };
+
   const turns = families.map((family, index) => {
     const onto = colors[index];
+
     return onto
       ? { hue: family.hue, ...turnBetween(family.hex, onto) }
       : { ...mainTurn, hue: family.hue };
   });
-  return (hex) => {
+
+  return ((hex) => {
     const [lightness, a, b] = oklab(hex);
+
     if (Math.hypot(a, b) < NEUTRAL_CHROMA) {
       return hex;
     }
+
     const hue = Math.atan2(b, a);
     let nearest = mainTurn;
+
     for (const turn of turns) {
       if (hueGap(turn.hue, hue) < hueGap(nearest.hue, hue)) {
         nearest = turn;
       }
     }
+
     const { cos, sin } = nearest;
+
     return fromOklab([lightness, a * cos - b * sin, a * sin + b * cos]);
-  };
+  }) satisfies Tint;
 };
 
 const GLOW_LIGHTNESS: Record<Time, readonly [number, number]> = {
   day: [0.45, 0.72],
   night: [0.68, 0.85],
 };
+
 const GLOW_CHROMA = 0.1;
 
-/** A color as a glow on the ground: dark enough to show by day, light enough by night, never washed out. */
-const glowOf = (hex: string): Record<Time, string> => {
+const glowOf = (hex: string) => {
   const [lightness, a, b] = oklab(hex);
   const chroma = Math.hypot(a, b);
-  // A grey's faint hue, boosted, would glow in a color it doesn't have.
   const boost = chroma >= NEUTRAL_CHROMA ? Math.max(1, GLOW_CHROMA / chroma) : 0;
+
   const at = (time: Time) => {
     const [low, high] = GLOW_LIGHTNESS[time];
+
     return fromOklab([Math.min(high, Math.max(low, lightness)), a * boost, b * boost]);
   };
-  return { day: at("day"), night: at("night") };
+
+  return { day: at("day"), night: at("night") } satisfies Record<Time, string>;
 };
 
 /** How a building looks lit: the tint it paints itself with, and the glow round its lot. */
@@ -452,18 +466,15 @@ export interface Look {
   glow: Record<Time, string>;
 }
 
-/**
- * Turns a building's colors to greys, darkened toward `grey`, as turnOnto
- * turns them onto a hue: what's grey already stays as it is, and each colored
- * face keeps its place between light and shade, scaled into the grey's range.
- */
-const greyedTo = (grey: string): Tint => {
+const greyedTo = (grey: string) => {
   const [target] = oklab(grey);
   const scale = Math.min(1, target + 0.25);
-  return (hex) => {
+
+  return ((hex) => {
     const [lightness, a, b] = oklab(hex);
+
     return Math.hypot(a, b) < NEUTRAL_CHROMA ? hex : fromOklab([lightness * scale, 0, 0]);
-  };
+  }) satisfies Tint;
 };
 
 /**
@@ -472,15 +483,21 @@ const greyedTo = (grey: string): Tint => {
  * Without colors to go by, it keeps the colors it was drawn in and glows in
  * its main one.
  */
-export const lookOf = (areas: ReadonlyMap<Token, number>, colors: readonly string[] = []): Look => {
+export const lookOf = (areas: ReadonlyMap<Token, number>, colors: readonly string[] = []) => {
   const colored = colors.filter((hex) => chromaOf(hex) >= NEUTRAL_CHROMA);
   const [first] = colored;
   const [grey] = colors;
+
   if (first === undefined && grey !== undefined) {
-    return { glow: glowOf(grey), tint: greyedTo(grey) };
+    return { glow: glowOf(grey), tint: greyedTo(grey) } satisfies Look;
   }
+
   if (first === undefined) {
-    return { glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day), tint: untinted };
+    return {
+      glow: glowOf(PALETTE[dominant(areas) ?? "accentBlue"].day),
+      tint: untinted,
+    } satisfies Look;
   }
-  return { glow: glowOf(first), tint: turnOnto(areas, colored) };
+
+  return { glow: glowOf(first), tint: turnOnto(areas, colored) } satisfies Look;
 };

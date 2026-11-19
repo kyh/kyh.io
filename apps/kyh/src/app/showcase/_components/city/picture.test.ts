@@ -15,12 +15,15 @@ test("a hat's picture frames its brim's middle and draws its faces and ink", () 
 
 test("a band round a crown goes on after the crown it wraps, and its ink after it", () => {
   const { layers } = pictureOf(witchHat, "night");
+
   const band = layers.findLastIndex(
     (layer) => layer.kind === "faces" && layer.fill === PALETTE.accentPurple.night,
   );
+
   const crown = layers.findIndex(
     (layer) => layer.kind === "faces" && layer.fill === PALETTE.screen.night,
   );
+
   assert.ok(crown !== -1 && band > crown);
   assert.ok(layers.slice(band).some((layer) => layer.kind === "ink"));
 });

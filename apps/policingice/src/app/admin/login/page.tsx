@@ -32,6 +32,7 @@ const AdminLogin = () => {
 
             try {
               const result = await authClient.signIn.email({ email, password });
+
               if (result.error) {
                 setErrors({ form: result.error.message ?? "Login failed" });
               } else {
@@ -40,6 +41,7 @@ const AdminLogin = () => {
             } catch {
               setErrors({ form: "Login failed" });
             }
+
             setIsLoading(false);
           }}
         >

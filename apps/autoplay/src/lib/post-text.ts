@@ -1,8 +1,3 @@
-// Post text as it should read on screen. A t.co link carries no meaning to a
-// viewer — it is the single ugliest thing in a caption — and X's HTML entities
-// arrive raw in the API payload. Mentions and hashtags stay: unlike in a video
-// prompt, they are part of how the post reads.
-
 const URL_PATTERN = /https?:\/\/\S+/gu;
 
 const ENTITIES = new Map([
@@ -13,9 +8,9 @@ const ENTITIES = new Map([
   ["&#39;", "'"],
 ]);
 
-export const displayPostText = (text: string): string =>
+export const displayPostText = (text: string) =>
   text
-    .replace(URL_PATTERN, "")
+    .replaceAll(URL_PATTERN, "")
     .replaceAll(/&(?:amp|lt|gt|quot|#39);/gu, (entity) => ENTITIES.get(entity) ?? entity)
     .replaceAll(/\s+/gu, " ")
     .trim();

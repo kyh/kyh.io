@@ -22,15 +22,9 @@ type DisplayRow =
   | { kind: "spacer"; label: string }
   | { kind: "item"; item: Item; index: number };
 
-// Fixed field widths, sized so marker+idx+name+desc+host + gutters == innerWidth
-// exactly (prevents the selected row from wrapping).
-// "▶ " / "  "
 const MARKER = 2;
-// "01 "
 const IDX = 3;
-// name → desc
 const GUT1 = 1;
-// desc → host
 const GUT2 = 2;
 
 const columns = (innerWidth: number) => {
@@ -38,9 +32,9 @@ const columns = (innerWidth: number) => {
   const host = showHost ? Math.min(20, Math.max(12, Math.floor(innerWidth * 0.24))) : 0;
   const fixed = MARKER + IDX + GUT1 + (showHost ? GUT2 + host : 0);
   const avail = Math.max(0, innerWidth - fixed);
-  // clamp name to what's actually available so the row never exceeds innerWidth
   const name = Math.min(avail, Math.min(22, Math.max(12, Math.floor(avail * 0.42))));
   const desc = Math.max(0, avail - name);
+
   return { desc, host, name, showHost };
 };
 
@@ -60,6 +54,7 @@ const ItemRow = ({
   col: Cols;
 }) => {
   const bg = selected ? color.accent : undefined;
+
   const fg = selected
     ? { desc: color.black, host: color.accentDim, idx: color.black, name: color.black }
     : { desc: color.dim, host: color.faint, idx: color.accentDim, name: color.text };
@@ -93,25 +88,26 @@ const ItemRow = ({
   );
 };
 
-const buildRows = (sections: Section[]): DisplayRow[] => {
+const buildRows = (sections: Section[]) => {
   const rows: DisplayRow[] = [];
   let index = 0;
+
   for (const section of sections) {
-    // blank line between sections so each group reads as its own block
     if (rows.length > 0) {
       rows.push({ kind: "spacer", label: section.label });
     }
+
     rows.push({ kind: "header", label: section.label });
+
     for (const item of section.items) {
       rows.push({ index, item, kind: "item" });
       index += 1;
     }
   }
+
   return rows;
 };
 
-// Keep the selected row (and, when possible, its section header) in view without
-// relying on scrollbox focus.
 const windowRows = (rows: DisplayRow[], selectedIndex: number, maxRows: number) => {
   if (rows.length <= maxRows) {
     return { clippedBottom: false, clippedTop: false, rows };
@@ -120,6 +116,7 @@ const windowRows = (rows: DisplayRow[], selectedIndex: number, maxRows: number) 
   const selRow = rows.findIndex((r) => r.kind === "item" && r.index === selectedIndex);
   let start = Math.max(0, selRow - Math.floor(maxRows / 2));
   start = Math.min(start, rows.length - maxRows);
+
   if (start > 0 && rows[start - 1]?.kind === "header" && selRow - start < maxRows - 1) {
     start -= 1;
   }
@@ -156,6 +153,7 @@ export const Directory = ({ sections, selectedIndex, innerWidth, maxRows }: Dire
           if (row.kind === "spacer") {
             return <Text key={`spacer-${row.label}`}> </Text>;
           }
+
           if (row.kind === "header") {
             return (
               <Box key={`section-${row.label}`} flexDirection="row">
@@ -166,6 +164,7 @@ export const Directory = ({ sections, selectedIndex, innerWidth, maxRows }: Dire
               </Box>
             );
           }
+
           return (
             <ItemRow
               key={row.item.title}

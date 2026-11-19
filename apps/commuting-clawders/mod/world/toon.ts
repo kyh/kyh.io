@@ -1,5 +1,3 @@
-// The painted look: flat bands of light instead of smooth
-// shading. Every painted surface shares one three-step ramp.
 import * as THREE from "three";
 
 const ramp = (() => {
@@ -8,6 +6,7 @@ const ramp = (() => {
   texture.minFilter = THREE.NearestFilter;
   texture.magFilter = THREE.NearestFilter;
   texture.needsUpdate = true;
+
   return texture;
 })();
 

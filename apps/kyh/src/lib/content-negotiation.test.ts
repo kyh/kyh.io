@@ -22,13 +22,10 @@ test("recognises a browser asking for a document", () => {
 });
 
 test("HTML is served only when it was asked for by name", () => {
-  // Browsers and crawlers.
   assert.equal(prefersHtml("text/html,application/xhtml+xml,*/*;q=0.8"), true);
-  // curl, most fetch defaults, and agents that state a preference.
   assert.equal(prefersHtml("*/*"), false);
   assert.equal(prefersHtml(""), false);
   assert.equal(prefersHtml(null), false);
   assert.equal(prefersHtml("text/markdown"), false);
-  // An explicit markdown preference wins even alongside html.
   assert.equal(prefersHtml("text/html,text/markdown"), false);
 });

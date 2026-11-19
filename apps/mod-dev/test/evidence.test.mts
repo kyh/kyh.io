@@ -7,7 +7,7 @@ import type { Ledger, Row, Use } from "../hooks/evidence";
 
 const ROOT = "/repo";
 
-const call = (tool: string, fields: Partial<Use> = {}): Use => ({
+const call = (tool: string, fields: Partial<Use> = {}) => ({
   command: "",
   file: "",
   isBackground: false,
@@ -16,15 +16,15 @@ const call = (tool: string, fields: Partial<Use> = {}): Use => ({
   tool,
   ...fields,
 });
+
 const bash = (command: string, fields: Partial<Use> = {}) => call("Bash", { command, ...fields });
 const edit = (file: string, fields: Partial<Use> = {}) => call("Edit", { file, ...fields });
 
 const ledger = (...uses: Use[]) => ledgerOf(uses, ROOT);
 
-// What one Bash call shows up as on the ledger: its kinds and whether it
-// edits, or "quiet" when it is left off.
 const countsAs = (command: string) => {
   const [step] = ledger(bash(command)).steps;
+
   return step === undefined ? "quiet" : { isEdit: step.isEdit, kinds: step.kinds.join("+") };
 };
 
@@ -99,6 +99,7 @@ describe("what a Bash call counts as", () => {
   it("counts an inline script that writes files as an edit", () => {
     const script =
       "python3 - <<'EOF'\np = 'src/a.ts'\nopen(p, 'w').write('x')\nEOF\nnpx tsc --noEmit";
+
     assert.deepEqual(countsAs(script), { isEdit: true, kinds: "static" });
     assert.deepEqual(countsAs(`node -e "require('fs').writeFileSync('a.json', '{}')"`), {
       isEdit: true,
@@ -111,7 +112,6 @@ describe("what a Bash call counts as", () => {
   });
 
   it("reads a heredoc as the script of the command it feeds, not of its neighbours", () => {
-    // `cat` writes the script out of the repository; `tsx` then runs it from a file.
     const written = "cat > /tmp/x.ts <<'EOF'\nwriteFileSync('a', 'b')\nEOF\nnpx tsx /tmp/x.ts";
     assert.deepEqual(countsAs(written), { isEdit: false, kinds: "" });
     assert.deepEqual(countsAs("bash <<'EOF'\npnpm test\nEOF"), { isEdit: false, kinds: "test" });
@@ -138,6 +138,7 @@ describe("ledgerOf", () => {
       edit("/repo/src/b.ts", { isError: true }),
       call("Write", { file: "/repo/src/a.ts" }),
     );
+
     assert.deepEqual(files, ["src/a.ts"]);
     assert.equal(lastEdit, 4);
     assert.deepEqual(
@@ -158,7 +159,6 @@ describe("ledgerOf", () => {
       false,
     );
     assert.equal(ledger(bash("pnpm test | tail", { output: "# fail 0" })).steps[0]?.isPassed, true);
-    // Unpiped, a passing run that mentions errors still passes.
     assert.equal(
       ledger(bash("pnpm test", { output: "ok - reports 2 errors" })).steps[0]?.isPassed,
       true,
@@ -173,9 +173,11 @@ describe("ledgerOf", () => {
         toolUses: [call("Agent", { agentId: "a1" }), bash("pnpm lint")],
       },
     ];
+
     const agents = new Map<string, Row[]>([
       ["a1", [{ role: "assistant", text: "", toolUses: [edit("/repo/x.ts")] }]],
     ]);
+
     assert.deepEqual(
       usesOf(rows, agents).map((use) => use.tool),
       ["Agent", "Edit", "Bash"],
@@ -236,6 +238,7 @@ describe("ledgerText", () => {
         bash("pnpm test", { isError: true, output: "boom\n1 failed" }),
       ),
     );
+
     assert.match(text, /^1 edit; the last at step 1 of 3 tool calls\./u);
     assert.match(text, /Files edited: src\/a\.ts/u);
     assert.match(text, /0 {2}test pass stale {2}pnpm test/u);
@@ -257,6 +260,7 @@ describe("looksFailed", () => {
     ]) {
       assert.equal(looksFailed(output), true, output);
     }
+
     for (const output of ["# pass 3\n# fail 0", "Found 0 errors", "all good"]) {
       assert.equal(looksFailed(output), false, output);
     }

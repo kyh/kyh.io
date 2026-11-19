@@ -4,23 +4,27 @@ import type { LivelinePoint } from "../types";
  * Binary search to find interpolated value at a given time.
  * Returns null if time is outside data range.
  */
-export const interpolateAtTime = (points: LivelinePoint[], time: number): number | null => {
+export const interpolateAtTime = (points: LivelinePoint[], time: number) => {
   if (points.length === 0) {
     return null;
   }
+
   if (time <= points[0].time) {
     return points[0].value;
   }
+
   const last = points.at(-1);
+
   if (last === undefined || time >= last.time) {
     return last?.value ?? null;
   }
 
-  // Binary search for the interval containing `time`
   let lo = 0;
   let hi = points.length - 1;
+
   while (hi - lo > 1) {
     const mid = Math.floor((lo + hi) / 2);
+
     if (points[mid].time <= time) {
       lo = mid;
     } else {
@@ -31,9 +35,12 @@ export const interpolateAtTime = (points: LivelinePoint[], time: number): number
   const p1 = points[lo];
   const p2 = points[hi];
   const dt = p2.time - p1.time;
+
   if (dt === 0) {
     return p1.value;
   }
+
   const t = (time - p1.time) / dt;
+
   return p1.value + (p2.value - p1.value) * t;
 };

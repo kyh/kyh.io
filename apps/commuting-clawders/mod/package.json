@@ -13,7 +13,7 @@
     "clean": "git clean -xdf .cache .turbo node_modules",
     "session": "pnpm build && claude --plugin-dir .",
     "lint": "oxlint --report-unused-disable-directives",
-    "test": "tsx --test \"test/*.spec.ts\"",
+    "test": "tsx --test \"test/*.test.mts\"",
     "test:mod": "claude plugin test .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.world.json && tsc --noEmit -p tsconfig.plugin.json",
     "validate": "claude plugin validate .",

@@ -36,6 +36,7 @@ test("Easter falls on its known Sundays", () => {
     2027: 20_270_328,
     2038: 20_380_425,
   };
+
   for (const [year, sunday] of Object.entries(known)) {
     assert.equal(easterSunday(Number(year)), sunday, year);
     assert.equal(dateOf(sunday).getDay(), 0);

@@ -32,7 +32,9 @@ type IslandMode =
   | "export"
   | "grid"
   | "layout";
+
 type PanelPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
 interface PanelSize {
   width: number;
   height: number;
@@ -41,14 +43,17 @@ interface PanelSize {
 const PANEL_POSITION_KEY = "kwadrant-panel-position";
 const MARGIN = 16;
 const DEFAULT_PANEL_SIZE: PanelSize = { height: 200, width: 140 };
+
 const PANEL_POSITIONS: readonly PanelPosition[] = [
   "top-left",
   "top-right",
   "bottom-left",
   "bottom-right",
 ];
+
 const GRID_TYPES: readonly GridType[] = ["none", "squares", "dots"];
 const GRID_LABELS: Record<GridType, string> = { dots: "Dots", none: "None", squares: "Squares" };
+
 const QUADRANT_OPTIONS: readonly {
   key: keyof QuadrantColors;
   label: string;
@@ -67,19 +72,23 @@ const isPanelPosition = (value: string | null): value is PanelPosition =>
 
 const isLayoutType = (value: string): value is LayoutType => value === "axis" || value === "edge";
 
-const getClosestPosition = (px: number, py: number): PanelPosition => {
+const getClosestPosition = (px: number, py: number) => {
   const isLeft = px < window.innerWidth / 2;
   const isTop = py < window.innerHeight / 2;
+
   if (isTop && isLeft) {
-    return "top-left";
+    return "top-left" satisfies PanelPosition;
   }
+
   if (isTop) {
-    return "top-right";
+    return "top-right" satisfies PanelPosition;
   }
+
   if (isLeft) {
-    return "bottom-left";
+    return "bottom-left" satisfies PanelPosition;
   }
-  return "bottom-right";
+
+  return "bottom-right" satisfies PanelPosition;
 };
 
 const resetStoredState = () => {
@@ -136,6 +145,7 @@ const SelectButton = ({
 }) => {
   const selectedClass = isDark ? "bg-white text-gray-900" : "bg-gray-900 text-white";
   const idleClass = isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100";
+
   return (
     <button
       type="button"
@@ -159,16 +169,21 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const [mode, setMode] = useState<IslandMode>("idle");
   const [tagText, setTagText] = useState("");
   const [tagColor, setTagColor] = useState<string>(DEFAULT_TAG_COLOR);
+
   const [position, setPosition] = useState<PanelPosition>(() => {
     if (typeof window === "undefined") {
       return "bottom-left";
     }
+
     const storedPosition = localStorage.getItem(PANEL_POSITION_KEY);
+
     if (isPanelPosition(storedPosition)) {
       return storedPosition;
     }
+
     return "bottom-left";
   });
+
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredPosition, setHoveredPosition] = useState<PanelPosition>("bottom-left");
   const [dragGhostSize, setDragGhostSize] = useState(DEFAULT_PANEL_SIZE);
@@ -176,14 +191,14 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const islandRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
+
   const { addTag, addImage, state, setQuadrantColor, setGridType, setLayoutType, setTheme } =
     useKwadrant();
+
   const isDark = state.theme === "dark";
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  // Hides the panel until it has been measured and snapped, without the extra
-  // render an `isReady` state would cost.
   const opacity = useMotionValue(0);
 
   const getSnapPosition = useCallback(
@@ -198,6 +213,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     if (!islandRef.current || isDragging) {
       return;
     }
+
     const rect = islandRef.current.getBoundingClientRect();
     panelSizeRef.current = { height: rect.height, width: rect.width };
     const pos = getSnapPosition(position, panelSizeRef.current);
@@ -206,35 +222,38 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     opacity.set(1);
   }, [getSnapPosition, isDragging, opacity, position, x, y]);
 
-  // Re-snap whenever the panel is measured differently — on mount, on window
-  // resize, and whenever opening a menu changes the panel's own size.
   useLayoutEffect(() => {
     const island = islandRef.current;
+
     if (!island) {
       return;
     }
+
     updatePosition();
 
     const observer = new ResizeObserver(updatePosition);
     observer.observe(island);
     window.addEventListener("resize", updatePosition);
+
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", updatePosition);
     };
   }, [updatePosition]);
 
-  // Click outside to close menu
   useEffect(() => {
     if (mode === "idle") {
       return;
     }
+
     const handleClickOutside = (e: MouseEvent) => {
       if (islandRef.current && e.target instanceof Node && !islandRef.current.contains(e.target)) {
         setMode("idle");
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mode]);
 
@@ -248,6 +267,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     info: { point: { x: number; y: number } },
   ) => {
     const newPos = getClosestPosition(info.point.x, info.point.y);
+
     if (newPos !== hoveredPosition) {
       setHoveredPosition(newPos);
     }
@@ -273,14 +293,15 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     if (!tagText.trim()) {
       return;
     }
+
     addTag({ color: tagColor, text: tagText.trim(), x: centerX, y: centerY });
     setTagText("");
-    // Keep input focused for multiple adds
     tagInputRef.current?.focus();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file?.type.startsWith("image/")) {
       return;
     }
@@ -288,9 +309,11 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       const src = reader.result;
+
       if (src === null || src instanceof ArrayBuffer) {
         return;
       }
+
       const img = new window.Image();
       img.addEventListener("load", () => {
         const maxSize = 150;
@@ -313,11 +336,13 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
     if (!stageRef.current) {
       return;
     }
+
     const dataURL = stageRef.current.toDataURL({
       mimeType: format === "jpeg" ? "image/jpeg" : "image/png",
       pixelRatio: 2,
       quality: 0.9,
     });
+
     const link = document.createElement("a");
     link.download = `kwadrant.${format}`;
     link.href = dataURL;
@@ -489,9 +514,11 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           <div className="flex flex-col gap-1">
             {getAllLayouts().map((layout) => {
               const layoutType = layout.id;
+
               if (!isLayoutType(layoutType)) {
                 return null;
               }
+
               return (
                 <SelectButton
                   key={layoutType}
@@ -585,11 +612,11 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
   return (
     <>
-      {/* Ghost placement indicators */}
       {isDragging &&
         PANEL_POSITIONS.map((pos) => {
           const snapPos = getSnapPosition(pos, dragGhostSize);
           const isHovered = hoveredPosition === pos;
+
           return (
             <motion.div
               key={pos}
@@ -610,7 +637,6 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           );
         })}
 
-      {/* Main panel */}
       <motion.div
         ref={islandRef}
         drag

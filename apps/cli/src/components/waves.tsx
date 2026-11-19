@@ -11,7 +11,6 @@ interface WavesProps {
   fg?: string;
 }
 
-// Animated interference/plasma strip used as a live "signal" readout.
 export const Waves = ({ width, height, fps = 12, fg = color.accentDim }: WavesProps) => {
   const { time } = useAnimation({ interval: Math.round(1000 / fps) });
   const frame = useMemo(() => renderWaves(width, height, time).join("\n"), [width, height, time]);

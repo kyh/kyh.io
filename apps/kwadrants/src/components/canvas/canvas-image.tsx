@@ -39,13 +39,13 @@ export const CanvasImage = ({
     img.src = src;
   }, [src]);
 
-  // Settle animation
   useEffect(() => {
     if (!isSettling) {
       return;
     }
 
     let frame = 0;
+
     const animate = () => {
       frame += 1;
       const t = frame / 20;
@@ -54,6 +54,7 @@ export const CanvasImage = ({
         setScale(1);
         setRotation(0);
         setIsSettling(false);
+
         return;
       }
 
@@ -66,6 +67,7 @@ export const CanvasImage = ({
     };
 
     frameRef.current = requestAnimationFrame(animate);
+
     return () => cancelAnimationFrame(frameRef.current);
   }, [isSettling]);
 

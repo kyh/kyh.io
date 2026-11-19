@@ -1,6 +1,3 @@
-// Run by `claude plugin test` against the engine itself: the mod's hooks with
-// the transcript, git, the repository's files and the reviewer answered
-// beneath.
 import type { CommandRunInput, ModelCompleteRequest, On, SessionMessage } from "claude-code";
 import { expect, mock, test } from "claude-code/testing";
 
@@ -12,6 +9,7 @@ const WRITE = {
   tool: "Write",
   tool_use_id: "t1",
 };
+
 const TEST = {
   input: { command: "pnpm test" },
   text: "# pass 1\n# fail 0",
@@ -19,11 +17,12 @@ const TEST = {
   tool_use_id: "t2",
 };
 
-const messages = (reply: string): SessionMessage[] => [
-  { role: "user", text: "Add a health check and test it", toolUses: [] },
-  { role: "assistant", text: "", toolUses: [WRITE, TEST] },
-  { role: "assistant", text: reply, toolUses: [] },
-];
+const messages = (reply: string) =>
+  [
+    { role: "user", text: "Add a health check and test it", toolUses: [] },
+    { role: "assistant", text: "", toolUses: [WRITE, TEST] },
+    { role: "assistant", text: reply, toolUses: [] },
+  ] satisfies SessionMessage[];
 
 const REPLY = "Added src/health.ts after src/version.ts; tests pass.";
 
@@ -47,7 +46,6 @@ fix: make it nicer | taste`;
 
 const NOT_READY = `${ANSWER.replace("idiomatic: 8", "idiomatic: 6")}\nfix: tighten the name | src/index.ts:3`;
 
-// The root package: tests, no typecheck, and a dev server when `isApp`.
 const packageJson = (isApp: boolean) =>
   JSON.stringify({
     name: "app",
@@ -76,9 +74,7 @@ const ran = (stdout: string, exitCode = 0) => ({
 });
 
 interface World {
-  // The judge's answers in order, the last one repeated.
   answers?: readonly string[];
-  // The looker's answers in order, then "done".
   looks?: readonly string[];
   diff?: string;
   diffExit?: number;
@@ -86,8 +82,6 @@ interface World {
   reply?: string;
 }
 
-// The world beneath the mod: the transcript, git, the root package.json and
-// one source file, the reviewer, and the tools a push would run.
 const world = (
   on: On,
   {
@@ -99,7 +93,6 @@ const world = (
     reply = REPLY,
   }: World = {},
 ) => {
-  // What the judge and the looker were asked.
   const asked: ModelCompleteRequest[] = [];
   const looked: ModelCompleteRequest[] = [];
   const read: string[] = [];
@@ -112,12 +105,13 @@ const world = (
     if (e.argv[1] === "grep") {
       return ran("src/version.ts:1:export const version = () => '1';\n");
     }
+
     return e.argv[0] === "git" ? ran(`${ROOT}\n`) : ran(diff, diffExit);
   });
-  // Elsewhere, an empty read stands for no file.
   on("fs.read", (_$, e) => {
     read.push(e.path);
     const text = e.path === `${ROOT}/package.json` ? packageJson(isApp) : FILES.get(e.path);
+
     return { value: text ?? "" };
   });
   on("fs.ancestors", (_$, e) => ({
@@ -128,27 +122,34 @@ const world = (
     if (String(e.system).startsWith("You prepare a code review.")) {
       const text = looks[looked.length] ?? "done";
       looked.push(e);
+
       return { value: { isAnswered: true, text, usage: USAGE } };
     }
+
     const text = answers[Math.min(asked.length, answers.length - 1)] ?? "";
     asked.push(e);
+
     return { value: { isAnswered: true, text, usage: USAGE } };
   });
   on("tool.call", (_$, e) => {
     shipped.push(e.tool === "Bash" ? e.command : e.tool);
+
     return { result: {}, text: "" };
   });
   on("ui.status", (_$, e) => {
     statuses.push(e.text);
+
     return { value: undefined };
   });
   on("ui.toast", (_$, e) => {
     toasts.push(e.text);
+
     return { value: undefined };
   });
   on("ui.open", () => ({ value: { isPlaced: true } }));
   on("classic.SessionStart", () => ({}));
   on("classic.Stop", () => ({}));
+
   return { asked, looked, read, shipped, statuses, toasts };
 };
 
@@ -254,6 +255,7 @@ test("the session registers /score and shows what is verified", async ($, on) =>
   const registered: string[] = [];
   on("command.register", (_$, e) => {
     registered.push(e.name);
+
     return { value: { command: e.name } };
   });
   on("session.start", (_$, e) => ({ cwd: e.cwd }));
@@ -297,10 +299,12 @@ test("the gate passes the reviewer's cited fixes back to Claude", async ($, on) 
 
 test("the gate lets go after three tries", async ($, on) => {
   const { toasts } = world(on, { answers: [NOT_READY] });
+
   for (const _ of [1, 2, 3]) {
     const { block } = await $.classic.Stop(stop());
     expect(block).toContain("the reviewer says fix first");
   }
+
   const { block } = await $.classic.Stop(stop());
   expect(block).toBe(undefined);
   expect(toasts).toEqual(["mod-dev: still not proven; /score shows what's missing"]);
@@ -378,16 +382,19 @@ for (const surface of ["terminal", "desktop"] as const) {
     const reply = `${REPLY}\nUnverified: e2e — no browser here`;
     world(on, { answers: [NOT_READY], isApp: true, reply });
     await $.classic.Stop(stop(reply));
+
     const band = await $.ui.mount({
       component: "AbovePrompt",
       plugin: "mod-dev",
       props: BAND,
       surface,
     });
+
     expect(await band.find({ text: /✓ test/u })).toBeDefined();
     expect(await band.find({ text: /\? e2e/u })).toBeDefined();
     expect(await band.find({ text: /● fix first 8·6·9·9/u })).toBeDefined();
     expect(await band.find({ key: "details" })).toBeDefined();
+
     const pane = await $.ui.mount({
       component: "Pane",
       plugin: "mod-dev",
@@ -395,6 +402,7 @@ for (const surface of ["terminal", "desktop"] as const) {
       requestId: "mod-dev",
       surface,
     });
+
     expect(await pane.find({ text: /● fix first · idiomatic 6 < 7/u })).toBeDefined();
     expect(await pane.find({ text: "██████░░░░" })).toBeDefined();
     expect(await pane.find({ text: /no browser here/u })).toBeDefined();

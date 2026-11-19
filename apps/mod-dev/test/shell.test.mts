@@ -17,6 +17,7 @@ describe("commandsOf", () => {
     const [cat, lint] = commandsOf(
       "cat > src/a.ts <<'EOF'\npnpm test && rm -rf /\nEOF\npnpm lint 2>&1",
     );
+
     assert.equal(cat?.input, "pnpm test && rm -rf /");
     assert.deepEqual(cat?.words.slice(0, 4), ["cat", ">", "src/a.ts", "<<"]);
     assert.deepEqual(lint, { input: "", op: "", words: ["pnpm", "lint"] });

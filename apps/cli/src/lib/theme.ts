@@ -1,5 +1,3 @@
-// Sci-fi terminal palette — near-black canvas, a single teal accent, and a
-// tight grayscale ramp. Inspired by edex-ui / dex-ui system dashboards.
 export const color = {
   accent: "#5EEAD4",
   accentDim: "#2F6F63",
@@ -13,8 +11,6 @@ export const color = {
   text: "#E6E6E6",
 } as const;
 
-// Corners and edge for the panel rules Ink can't draw itself (a border with a
-// label bitten into it); the sides use Ink's matching `single` style.
 export const panelBorder = {
   bottomLeft: "└",
   bottomRight: "┘",

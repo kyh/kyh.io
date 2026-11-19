@@ -1,9 +1,3 @@
-// A theme's piece as data: layers of paths in a 24×24 box, drawn the way
-// the showcase draws its town (after Inkline Town): flat faces in the town's
-// palette, outlined in its ink, the side turned from the light (right of the
-// middle) in a darker color and dotted as the town's shade is. `piece.tsx`
-// draws it, wherever it shows: the easter-egg bursts, the themes menu and the
-// drift. Pure.
 import type { Token } from "@/app/showcase/_components/city/palette";
 
 export interface Layer {
@@ -46,6 +40,7 @@ export const ellipse = (cx: number, cy: number, rx: number, ry: number, rotate =
   const dx = round(rx * Math.cos(angle));
   const dy = round(rx * Math.sin(angle));
   const arc = `a${rx} ${ry} ${rotate} 1 0`;
+
   return `M${round(cx - dx)} ${round(cy - dy)}${arc} ${2 * dx} ${2 * dy}${arc} ${-2 * dx} ${-2 * dy}Z`;
 };
 
@@ -65,8 +60,10 @@ export const placed = (
   const sin = Math.sin(turn);
   const moved = points.map(([x, y]) => point(at[0] + x * cos - y * sin, at[1] + x * sin + y * cos));
   const [start, ...curves] = moved;
+
   const triples = Array.from({ length: curves.length / 3 }, (_, index) =>
     curves.slice(index * 3, index * 3 + 3).join(" "),
   );
+
   return `M${start}${triples.map((triple) => `C${triple}`).join("")}Z`;
 };

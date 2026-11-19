@@ -4,7 +4,6 @@ import test from "node:test";
 import * as cli from "../../../cli/src/data/content";
 import { projects, workHistory } from "./data";
 
-// The CLI ships to npm on its own, so it can't import this file; it keeps a copy.
 const withoutEmoji = (text: string) =>
   text
     .replaceAll(/\p{Extended_Pictographic}️?/gu, "")

@@ -1,16 +1,5 @@
 "use client";
 
-// What hangs in the page's top corners in a theme that has it: cobwebs at
-// Halloween (`web.ts`), a spider on each, one walking round its web and one
-// dropping on its thread and climbing back. CSS-animated (global.css), under
-// the dock and the cursors; a visitor who'd rather not see motion gets the
-// spiders sitting still.
-//
-// They can be played with. A mouse brushing a web pushes its strands aside,
-// and they wobble back when it leaves. A spider can be picked off its web and
-// carried on its thread; let go, it bounces on the thread (`bungee.ts`) and
-// climbs back to where it was taken, and its CSS takes it on from there.
-// Both run straight on the DOM, a frame at a time, never through React.
 import { useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 
@@ -33,41 +22,39 @@ import {
 } from "./web";
 
 type Side = "left" | "right";
+
 interface Point {
   x: number;
   y: number;
 }
 
-/** The bend's spring: how hard it pulls toward the mouse being there or not, and how it's slowed. */
 const BEND_STIFFNESS = 170;
 const BEND_DAMPING = 9;
-/** The longest a spider bounces before it climbs anyway. */
 const BOUNCE_MS = 5000;
-/** The fastest a spider is thrown, in the web's pixels a second. */
 const THROW = 2000;
-/** Pixels it keeps inside the screen, carried or bouncing. */
 const MARGIN = 14;
 
-/** Where a point on the screen falls in a corner's web: scaled on a phone, mirrored on the right. */
-const localIn = (corner: HTMLElement, side: Side, x: number, y: number): Point => {
+const localIn = (corner: HTMLElement, side: Side, x: number, y: number) => {
   const rect = corner.getBoundingClientRect();
   const scale = rect.width / WEB_SIZE;
+
   return {
     x: (side === "left" ? x - rect.left : rect.right - x) / scale,
     y: (y - rect.top) / scale,
-  };
+  } satisfies Point;
 };
 
-/** The web's pixels a spider can be in and still be on the screen (and the page). */
 const boundsIn = (corner: HTMLElement, side: Side) => {
   const a = localIn(corner, side, MARGIN, MARGIN);
   const b = localIn(corner, side, window.innerWidth - MARGIN, window.innerHeight - MARGIN);
+
   const page = localIn(
     corner,
     side,
     0,
     document.documentElement.scrollHeight - window.scrollY - MARGIN,
   );
+
   return {
     bottom: Math.min(b.y, page.y),
     left: Math.min(a.x, b.x),
@@ -78,13 +65,12 @@ const boundsIn = (corner: HTMLElement, side: Side) => {
 
 type Bounds = ReturnType<typeof boundsIn>;
 
-const clampTo = (bounds: Bounds, { x, y }: Point): Point => ({
-  x: Math.min(bounds.right, Math.max(bounds.left, x)),
-  y: Math.min(bounds.bottom, Math.max(bounds.top, y)),
-});
+const clampTo = (bounds: Bounds, { x, y }: Point) =>
+  ({
+    x: Math.min(bounds.right, Math.max(bounds.left, x)),
+    y: Math.min(bounds.bottom, Math.max(bounds.top, y)),
+  }) satisfies Point;
 
-// Each gait its own <svg>, so its step turns the whole box: the compositor's
-// work, where a <path> turning inside one <svg> repaints it every frame.
 const Spider = () => (
   <>
     {([0, 1] as const).map((gait) => (
@@ -99,21 +85,16 @@ const Spider = () => (
   </>
 );
 
-/** A spider taken off its web, and where it goes back to. */
 interface Taken {
   phase: "held" | "bounce" | "climb";
   body: Body;
-  /** Where its thread is tied. */
   anchor: Point;
-  /** The thread it bounces on. */
   length: number;
-  /** Where it was taken from, where its CSS picks it up again. */
   home: Point;
   since: number;
   bounds: Bounds;
 }
 
-/** A mouse brushing the web pushes it aside, on a spring that wobbles back when it leaves. */
 const useBend = (
   side: Side,
   corner: React.RefObject<HTMLDivElement | null>,
@@ -125,6 +106,7 @@ const useBend = (
     if (still) {
       return;
     }
+
     const bend: Bend = { strength: 0, x: 0, y: 0 };
     let speed = 0;
     let target = 0;
@@ -133,15 +115,18 @@ const useBend = (
 
     const draw = () => {
       web.current?.setAttribute("d", webPath(bend));
+
       if (walker.current) {
         walker.current.style.offsetPath = `path("${walkPath(bend)}")`;
       }
     };
+
     const tick = (now: number) => {
       const seconds = Math.min((now - last) / 1000, 1 / 30);
       last = now;
       speed += (BEND_STIFFNESS * (target - bend.strength) - BEND_DAMPING * speed) * seconds;
       bend.strength += speed * seconds;
+
       if (Math.abs(target - bend.strength) < 0.002 && Math.abs(speed) < 0.002) {
         bend.strength = target;
         speed = 0;
@@ -149,38 +134,46 @@ const useBend = (
       } else {
         frame = requestAnimationFrame(tick);
       }
+
       draw();
     };
+
     const unsubscribe = subscribeToPointer(() => {
       const at = lastPointer();
+
       if (!corner.current || at?.kind !== "mouse") {
         return;
       }
-      // Hung from the page's top and never scaled up, a web is never lower on the screen than
-      // this: below it, a web at rest needn't be measured (a forced layout every move).
+
       if (at.y > WEB_SIZE + BEND_REACH && target === 0 && bend.strength === 0) {
         return;
       }
+
       const local = localIn(corner.current, side, at.x, at.y);
+
       const near =
         local.x > -BEND_REACH &&
         local.y > -BEND_REACH &&
         local.x < WEB_SIZE + BEND_REACH &&
         local.y < WEB_SIZE + BEND_REACH;
-      // Leaving, the web wobbles back about where the mouse last touched it.
+
       if (near) {
         bend.x = local.x;
         bend.y = local.y;
       }
+
       target = near ? 1 : 0;
+
       if (near || bend.strength !== 0) {
         if (frame === 0) {
           last = performance.now();
           frame = requestAnimationFrame(tick);
         }
+
         draw();
       }
     });
+
     return () => {
       unsubscribe();
       cancelAnimationFrame(frame);
@@ -188,7 +181,6 @@ const useBend = (
   }, [side, corner, web, walker, still]);
 };
 
-/** A spider can be picked off its web, carried, let go to bounce on its thread, and climbs home. */
 const useBungee = (
   side: Side,
   corner: React.RefObject<HTMLDivElement | null>,
@@ -202,9 +194,11 @@ const useBungee = (
     const homeEl = home.current;
     const freeEl = free.current;
     const threadEl = thread.current;
+
     if (!cornerEl || !homeEl || !freeEl || !threadEl) {
       return;
     }
+
     let taken: Taken | null = null;
     let frame = 0;
     let last = 0;
@@ -215,10 +209,10 @@ const useBungee = (
       if (!taken) {
         return;
       }
+
       const { anchor, body, phase } = taken;
       const dx = body.x - anchor.x;
       const dy = body.y - anchor.y;
-      // Head away from where its thread's tied, as it hangs; toward it as it climbs.
       const away = Math.hypot(dx, dy) < 1 ? 90 : (Math.atan2(dy, dx) * 180) / Math.PI;
       freeEl.style.translate = `${body.x}px ${body.y}px`;
       freeEl.style.rotate = `${phase === "climb" ? away + 180 : away}deg`;
@@ -228,19 +222,24 @@ const useBungee = (
       threadEl.setAttribute("x2", `${body.x}`);
       threadEl.setAttribute("y2", `${body.y}`);
     };
+
     const finish = () => {
       taken = null;
       freeEl.hidden = true;
       threadEl.style.display = "none";
       delete cornerEl.dataset.taken;
     };
+
     const tick = (now: number) => {
       frame = 0;
+
       if (!taken || taken.phase === "held") {
         return;
       }
+
       const seconds = (now - last) / 1000;
       last = now;
+
       if (taken.phase === "bounce") {
         const body = bounce(taken.body, taken.anchor, taken.length, seconds);
         const kept = clampTo(taken.bounds, body);
@@ -249,17 +248,22 @@ const useBungee = (
           vy: kept.y === body.y ? body.vy : 0,
           ...kept,
         };
+
         if (settled(taken.body, taken.anchor, taken.length) || now - taken.since > BOUNCE_MS) {
           taken.phase = "climb";
         }
       } else {
         const body = climb(taken.body, taken.home, seconds);
+
         if (!body) {
           finish();
+
           return;
         }
+
         taken.body = body;
       }
+
       draw();
       frame = requestAnimationFrame(tick);
     };
@@ -268,17 +272,20 @@ const useBungee = (
       if (event.button !== 0) {
         return;
       }
+
       event.preventDefault();
       const at = localIn(cornerEl, side, event.clientX, event.clientY);
+
       if (!taken) {
         const rect = homeEl.getBoundingClientRect();
+
         const from = localIn(
           cornerEl,
           side,
           rect.left + rect.width / 2,
           rect.top + rect.height / 2,
         );
-        // The walker's thread is tied where it's taken from; the dropper's, where it hangs from.
+
         const anchor = side === "left" ? from : { x: HANG.x, y: HANG.y };
         taken = {
           anchor,
@@ -293,6 +300,7 @@ const useBungee = (
         freeEl.hidden = false;
         threadEl.style.display = "";
       }
+
       cancelAnimationFrame(frame);
       frame = 0;
       taken.phase = "held";
@@ -302,36 +310,45 @@ const useBungee = (
       freeEl.setPointerCapture(event.pointerId);
       draw();
     };
+
     const move = (event: PointerEvent) => {
       if (taken?.phase !== "held") {
         return;
       }
+
       const at = localIn(cornerEl, side, event.clientX, event.clientY);
       const seconds = (event.timeStamp - sample.t) / 1000;
+
       if (seconds > 0) {
         const fling = (from: number, to: number, was: number) =>
           Math.max(-THROW, Math.min(THROW, 0.6 * ((to - from) / seconds) + 0.4 * was));
+
         taken.body = {
           ...clampTo(taken.bounds, { x: at.x + grip.x, y: at.y + grip.y }),
           vx: fling(sample.x, at.x, taken.body.vx),
           vy: fling(sample.y, at.y, taken.body.vy),
         };
       }
+
       sample = { t: event.timeStamp, x: at.x, y: at.y };
       draw();
     };
+
     const release = (event: PointerEvent) => {
       if (taken?.phase !== "held") {
         return;
       }
-      // A throw held still before letting go isn't one.
+
       if (event.timeStamp - sample.t > 80) {
         taken.body = { ...taken.body, vx: 0, vy: 0 };
       }
+
       if (still) {
         finish();
+
         return;
       }
+
       taken.phase = "bounce";
       taken.since = performance.now();
       last = taken.since;
@@ -343,6 +360,7 @@ const useBungee = (
     freeEl.addEventListener("pointermove", move);
     freeEl.addEventListener("pointerup", release);
     freeEl.addEventListener("pointercancel", release);
+
     return () => {
       cancelAnimationFrame(frame);
       homeEl.removeEventListener("pointerdown", grab);
@@ -405,17 +423,20 @@ const Web = ({ side }: { side: Side }) => {
   );
 };
 
-/** Scrolled out of sight, the corners' CSS animations hold still (global.css): nobody sees them beat. */
 const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
   useEffect(() => {
     const element = corners.current;
+
     if (!shown || !element) {
       return;
     }
+
     const observer = new IntersectionObserver(([entry]) => {
       element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
     });
+
     observer.observe(element);
+
     return () => observer.disconnect();
   }, [corners, shown]);
 };
@@ -424,9 +445,11 @@ export const ThemeCorners = () => {
   const { corners } = themeOf(useTheme());
   const ref = useRef<HTMLDivElement>(null);
   usePausedOffscreen(ref, corners !== null);
+
   if (corners === null) {
     return null;
   }
+
   return (
     <div ref={ref} className="theme-corners" data-corners={corners} aria-hidden="true">
       <Web side="left" />

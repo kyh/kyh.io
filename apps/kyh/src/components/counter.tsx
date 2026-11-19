@@ -48,26 +48,28 @@ interface CounterProps {
 
 const sum = (values: number[]) => {
   let total = 0;
+
   for (const value of values) {
     total += value;
   }
+
   return total;
 };
 
-/** Letter widths in `font`, the one the counter is set in; nothing until it's known. */
 const generateTextStats = (font: string | null) => {
   const cache = new Map<string, number>();
   const fromCache = (letter: string) => cache.get(letter) ?? 0;
 
-  // safety for nodejs/ssr
   if (font === null || typeof document === "undefined") {
     return fromCache;
   }
 
   const context = document.createElement("canvas").getContext("2d");
+
   if (!context) {
     return fromCache;
   }
+
   context.font = font;
 
   return (letter: string) => {
@@ -83,11 +85,13 @@ const transition = { ease: "easeOut" } satisfies Transition;
 
 export const Counter = ({ text, height = "1em" }: CounterProps) => {
   const [font, setFont] = useState<string | null>(null);
+
   const measure = useCallback((node: HTMLDivElement | null) => {
     if (node) {
       setFont(getComputedStyle(node).font);
     }
   }, []);
+
   const getTextStats = useMemo(() => generateTextStats(font), [font]);
 
   const baseStyles = {
@@ -118,7 +122,6 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
           const x = sum(stats.slice(0, index));
           const width = stats[index];
 
-          // animate from the right to left, so we need to invert the index
           const key = `${textArray.length - index}`;
 
           return (

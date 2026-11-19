@@ -1,6 +1,3 @@
-// Cars and people, drawn as instances: one mesh per part for the whole
-// crowd, each outlined by a slightly larger copy drawn inside out in ink.
-// Whatever is up in the air (carried, or falling) gets a soft shadow below.
 import type { BufferGeometry } from "three";
 import {
   BackSide,
@@ -29,6 +26,7 @@ const CAR_TOKENS: Token[] = [
   "white",
   "accentGreen",
 ];
+
 const COAT_TOKENS: Token[] = [
   "accentRed",
   "accentBlue",
@@ -41,10 +39,9 @@ const COAT_TOKENS: Token[] = [
   "trunk",
   "accentPink",
 ];
+
 const SKIN_TOKENS: Token[] = ["skin", "skin", "skinDark"];
-/** How far an outline stands out from its shape, in cells. */
 const INK = 0.012;
-/** The most shadows drawn at once: one per thing in the air. */
 const SHADOWS = 24;
 
 /** Where and how one car or person is drawn this frame. */
@@ -67,24 +64,26 @@ export interface Placement {
   shadowSize: number;
 }
 
-export const placement = (): Placement => ({
-  heading: 0,
-  leanX: 0,
-  leanZ: 0,
-  shadowSize: 0,
-  shadowX: 0,
-  shadowY: 0,
-  shadowZ: 0,
-  shown: true,
-  size: 1,
-  x: 0,
-  y: 0,
-  z: 0,
-});
+export const placement: () => Placement = () =>
+  ({
+    heading: 0,
+    leanX: 0,
+    leanZ: 0,
+    shadowSize: 0,
+    shadowX: 0,
+    shadowY: 0,
+    shadowZ: 0,
+    shown: true,
+    size: 1,
+    x: 0,
+    y: 0,
+    z: 0,
+  }) satisfies Placement;
 
 const boxPair = (w: number, h: number, d: number, y: number, x = 0) => {
   const fill = new BoxGeometry(w, h, d).translate(x, y, 0);
   const outline = new BoxGeometry(w + INK * 2, h + INK * 2, d + INK * 2).translate(x, y, 0);
+
   return [fill, outline] as const;
 };
 
@@ -100,14 +99,17 @@ export const createActors = (
   const ink = new MeshBasicMaterial({ color: shade("ink", scheme, false), side: BackSide });
   const tinted = new MeshBasicMaterial({ color: "#ffffff" });
   const cabin = new MeshBasicMaterial({ color: shade("glassDim", scheme, false) });
+
   const shadowMaterial = new MeshBasicMaterial({
     color: "#000000",
     depthWrite: false,
     opacity: 0.16,
     transparent: true,
   });
+
   const layers: Layer[] = [];
   const geometries: BufferGeometry[] = [];
+
   const layer = (
     geometry: BufferGeometry,
     material: MeshBasicMaterial,
@@ -119,33 +121,40 @@ export const createActors = (
     mesh.frustumCulled = false;
     geometries.push(geometry);
     layers.push({ mesh, tokens });
+
     return mesh;
   };
+
   const [carBody, carBodyInk] = boxPair(0.38, 0.09, 0.19, 0.075);
   const [carTop, carTopInk] = boxPair(0.2, 0.07, 0.16, 0.15, -0.03);
+
   const carColors = Array.from(
     { length: counts.cars },
     (_, index) => CAR_TOKENS[index % CAR_TOKENS.length] ?? "white",
   );
+
   const carMeshes = [
     layer(carBodyInk, ink, counts.cars, null),
     layer(carBody, tinted, counts.cars, carColors),
     layer(carTopInk, ink, counts.cars, null),
     layer(carTop, cabin, counts.cars, null),
   ];
+
   const [body, bodyInk] = boxPair(0.075, 0.15, 0.055, 0.1);
   const head = new SphereGeometry(0.036, 8, 6).translate(0, 0.22, 0);
   const headInk = new SphereGeometry(0.036 + INK, 8, 6).translate(0, 0.22, 0);
+
   const person = (count: number, offset: number) => {
     const coats = Array.from(
       { length: count },
       (_, index) => COAT_TOKENS[((index + offset) * 7) % COAT_TOKENS.length] ?? "navy",
     );
+
     const skins = Array.from(
       { length: count },
       (_, index) => SKIN_TOKENS[(index + offset) % SKIN_TOKENS.length] ?? "skin",
     );
-    // Each group gets its own geometry copies, so disposing one never frees another's.
+
     return [
       layer(bodyInk.clone(), ink, count, null),
       layer(body.clone(), tinted, count, coats),
@@ -153,11 +162,14 @@ export const createActors = (
       layer(head.clone(), tinted, count, skins),
     ];
   };
+
   const walkerMeshes = person(counts.walkers, 0);
   const visitorMeshes = person(counts.visitors, 3);
+
   for (const geometry of [body, bodyInk, head, headInk]) {
     geometry.dispose();
   }
+
   const shadowGeometry = new CircleGeometry(0.15, 16).rotateX(-Math.PI / 2);
   geometries.push(shadowGeometry);
   const shadows = new InstancedMesh(shadowGeometry, shadowMaterial, SHADOWS);
@@ -167,21 +179,24 @@ export const createActors = (
 
   const paintLayers = (next: Scheme) => {
     const color = new Color();
+
     for (const { mesh, tokens } of layers) {
       if (tokens) {
         for (const [index, token] of tokens.entries()) {
           mesh.setColorAt(index, color.set(shade(token, next, false)));
         }
+
         if (mesh.instanceColor) {
           mesh.instanceColor.needsUpdate = true;
         }
       }
     }
+
     ink.color.set(shade("ink", next, false));
     cabin.color.set(shade("glassDim", next, false));
-    // Shadows fall softer by day.
     shadowMaterial.opacity = next.time === "day" ? 0.16 : 0.3;
   };
+
   paintLayers(scheme);
 
   const matrix = new Matrix4();
@@ -197,21 +212,25 @@ export const createActors = (
   let shadowCount = 0;
 
   const sized = new Vector3();
+
   const place = (meshes: InstancedMesh[], placements: readonly Placement[]) => {
     for (const [index, spot] of placements.entries()) {
       position.set(spot.x, spot.y, spot.z);
       yaw.setFromAxisAngle(up, -spot.heading);
       const tilt = Math.hypot(spot.leanX, spot.leanZ);
+
       if (tilt > 1e-4) {
-        // Lean the top toward (leanX, leanZ): turn about the level axis across it.
         lean.setFromAxisAngle(axis.set(spot.leanZ / tilt, 0, -spot.leanX / tilt), tilt);
         yaw.premultiply(lean);
       }
+
       const scale = spot.shown ? spot.size : 0;
       matrix.compose(position, yaw, scale > 0 ? sized.setScalar(scale) : none);
+
       for (const mesh of meshes) {
         mesh.setMatrixAt(index, matrix);
       }
+
       if (scale > 0 && spot.shadowSize > 0 && shadowCount < SHADOWS) {
         shadowAt.set(spot.shadowX, spot.shadowY + 0.006, spot.shadowZ);
         shadowSize.set(spot.shadowSize, 1, spot.shadowSize);
@@ -220,6 +239,7 @@ export const createActors = (
         shadowCount += 1;
       }
     }
+
     for (const mesh of meshes) {
       mesh.instanceMatrix.needsUpdate = true;
     }
@@ -230,6 +250,7 @@ export const createActors = (
       for (const geometry of geometries) {
         geometry.dispose();
       }
+
       ink.dispose();
       tinted.dispose();
       cabin.dispose();

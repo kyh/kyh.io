@@ -21,8 +21,9 @@ import "@/styles/global.css";
  * The defaults every route starts from (a 404 keeps them whole): today's clip
  * as `og:video` and its poster leading `og:image`, as on the homepage.
  */
-export const generateMetadata = async (): Promise<Metadata> => {
+export const generateMetadata = async () => {
   const video = await todaysVideo();
+
   return {
     description: siteConfig.description,
     icons: [
@@ -76,7 +77,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
       images: [video.poster],
       title: siteConfig.name,
     },
-  };
+  } satisfies Metadata;
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (

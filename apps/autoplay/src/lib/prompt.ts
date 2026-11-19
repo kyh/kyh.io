@@ -1,20 +1,8 @@
 import { today } from "@/lib/day";
 
-// Turns programming into prompts for the director model.
-//
-// A session is opened on a WORLD: the format of the channel — a sitcom, a
-// news network — described once, which the model keeps in memory so that
-// characters, sets and running jokes persist across every program. Each
-// program is then a SEGMENT: the next thing that happens in that world,
-// which is where a post comes in. A post is not a shot list: it carries
-// links, handles, hashtags and opinions, and handed over raw the model tries
-// to render an argument. So the noise is stripped and what remains is framed
-// as the subject of the next segment.
-
 const URL_PATTERN = /https?:\/\/\S+/gu;
 const MENTION_PATTERN = /@\w+/gu;
 const HASHTAG_PATTERN = /#(?<word>\w+)/gu;
-/** Long posts blur the subject; a segment only ever depicts the opening idea. */
 const MAX_SUBJECT_LENGTH = 300;
 
 export interface Format {
@@ -41,12 +29,6 @@ export const FORMATS: readonly Format[] = [
     world:
       "A continuous satirical news network covering an entirely fictional world, rendered as handcrafted stop-motion claymation: sculpted plasticine anchors with visible fingerprints and seams, miniature cardboard-and-paint studio and city sets, practical lighting, and the slightly stepped motion of frame-by-frame animation. Every shot, person, place, and on-screen element must remain visibly clay stop-motion—never live action, photorealistic, or CGI-smooth. Preserve the recurring anchors, correspondents, studio, cities, political institutions, and consequences of earlier reports. Move through breaking news, field reports, weather, interviews, sports, entertainment, and fake commercials while treating increasingly absurd events with total broadcast seriousness. Clearly remain fictional and avoid impersonating real outlets or people.",
   },
-  // {
-  //   id: "music-video",
-  //   label: "music-video channel",
-  //   world:
-  //     "An always-on original music-video channel receiving broadcasts from alternate realities. Every transmission introduces a new fictional performer, genre, era, world, and visual language, from medieval hip-hop to underwater soul or robot garage rock. Connect videos with seamless portal jumps, distorted signals, and reality glitches. Never imitate or depict real performers, copyrighted songs, or existing franchises.",
-  // },
   {
     id: "pirate-tv",
     label: "pirate television network",
@@ -67,33 +49,38 @@ export const FORMATS: readonly Format[] = [
  * The day is UTC and the pick is a hash of it, so it changes overnight and
  * never depends on who asked.
  */
-export const pickFormat = (day: string = today()): Format => {
+export const pickFormat = (day: string = today()) => {
   let hash = 0;
+
   for (const char of day) {
     hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 2 ** 32;
   }
+
   const format = FORMATS[hash % FORMATS.length];
+
   if (format === undefined) {
     throw new Error("no formats");
   }
+
   return format;
 };
 
-const clean = (text: string): string =>
+const clean = (text: string) =>
   text
-    .replace(URL_PATTERN, "")
-    .replace(MENTION_PATTERN, "")
-    // A hashtag's word is usually the subject — keep it, drop the hash.
-    .replace(HASHTAG_PATTERN, "$<word>")
+    .replaceAll(URL_PATTERN, "")
+    .replaceAll(MENTION_PATTERN, "")
+    .replaceAll(HASHTAG_PATTERN, "$<word>")
     .replaceAll(/\s+/gu, " ")
     .trim();
 
-const truncate = (text: string): string => {
+const truncate = (text: string) => {
   if (text.length <= MAX_SUBJECT_LENGTH) {
     return text;
   }
+
   const clipped = text.slice(0, MAX_SUBJECT_LENGTH);
   const lastStop = Math.max(clipped.lastIndexOf(". "), clipped.lastIndexOf(", "));
+
   return lastStop > MAX_SUBJECT_LENGTH / 2 ? clipped.slice(0, lastStop) : clipped;
 };
 
@@ -102,14 +89,16 @@ const truncate = (text: string): string => {
  * purpose: the world is in the model's memory, and "the next segment" reads
  * as a scene in a sitcom and a report on a news desk alike.
  */
-export const buildSegmentPrompt = (text: string, authorName: string): string => {
+export const buildSegmentPrompt = (text: string, authorName: string) => {
   const subject = truncate(clean(text));
+
   if (subject === "") {
     return `Next segment: a brief interlude in the same world, inspired by ${authorName} — a lull between programs, the station's own texture. Keep every character, set and style exactly as established.`;
   }
+
   return `Next segment, in the same world and with the same cast, sets and style: the story is about this — "${subject}". Depict it literally where it can be pictured and evoke its mood where it cannot. No on-screen text, captions, subtitles, watermarks or user interface.`;
 };
 
 /** What a session opens on: the world, then its first segment. */
-export const buildOpeningPrompt = (world: string, firstSegment: string): string =>
+export const buildOpeningPrompt = (world: string, firstSegment: string) =>
   `${world}\n\n${firstSegment}`;

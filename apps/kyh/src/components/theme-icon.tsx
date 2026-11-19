@@ -6,12 +6,10 @@ import { themeOf } from "@/themes";
 import { PieceIcon } from "@/themes/piece";
 import type { Appearance } from "@/themes/store";
 
-/** The sun or the moon, morphing into each other. */
 const SunMoon = ({ isLight }: { isLight: boolean }) => {
-  // One mask per icon: the themes menu draws a sun and a moon beside the toggle's own.
   const mask = useSvgId("moon-mask");
+
   return (
-    // Turned by motion, not a CSS transition: the store holds those still while it repaints.
     <motion.svg
       viewBox="0 0 18 18"
       width="100%"
@@ -103,6 +101,7 @@ interface ThemeIconProps {
 /** A theme's icon, filling its box: its glyph or piece, or (the default theme) the sun or moon. */
 export const ThemeIcon = ({ appearance: { mode, theme }, look }: ThemeIconProps) => {
   const { art, glyph } = themeOf(theme);
+
   if (glyph === null) {
     return (
       <span className="block size-full">
@@ -110,6 +109,7 @@ export const ThemeIcon = ({ appearance: { mode, theme }, look }: ThemeIconProps)
       </span>
     );
   }
+
   return look === "piece" ? (
     <PieceIcon art={art} className="block size-full" />
   ) : (

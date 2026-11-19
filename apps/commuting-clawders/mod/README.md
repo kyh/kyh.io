@@ -149,12 +149,13 @@ pnpm -F @repo/commuting-clawders-mod typecheck  # pure modules + streamer, the w
 pnpm -F @repo/commuting-clawders-mod validate   # what Claude Code will load
 ```
 
-Tests come in two kinds, split by suffix. `test/*.spec.ts` cover the pure
+Tests come in two kinds, split by extension. `test/*.test.mts` cover the pure
 modules under node and run in `pnpm test` and CI. `test/*.test.ts` run the
 hooks inside Claude Code's own test kit, with the engine beneath mocked
 (`claude-code/testing`); they need the `claude` CLI, so they're local only.
-`claude plugin test` loads every `*.test.ts` in the folder, which is why the
-node tests can't share the suffix.
+`claude plugin test` loads every `*.test.ts` and `*.test.tsx` in the folder and
+refuses any import but relative files and `claude-code`, which is why the node
+tests are `.mts`.
 
 The hooks type-check against `packages/claude-code-types`, the plugin API's
 declarations pinned from the Claude Code version on that file's first line.

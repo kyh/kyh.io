@@ -7,8 +7,11 @@ export interface LivelinePoint {
 }
 
 export type Momentum = "up" | "down" | "flat";
+
 export type ThemeMode = "light" | "dark";
+
 export type WindowStyle = "default" | "rounded" | "text";
+
 export type BadgeVariant = "default" | "minimal";
 
 export interface ReferenceLine {
@@ -61,17 +64,13 @@ export interface LivelineProps {
   data: LivelinePoint[];
   value: number;
 
-  // Multi-series mode — when provided, overrides data/value/color
   series?: LivelineSeries[];
 
-  // Appearance
   theme?: ThemeMode;
   color?: string;
 
-  // Time
   window?: number;
 
-  // Feature flags
   grid?: boolean;
   badge?: boolean;
   momentum?: boolean | Momentum;
@@ -95,29 +94,23 @@ export interface LivelineProps {
   /** Show pointed tail on badge pill (default: true) */
   badgeTail?: boolean;
 
-  // Time window buttons
   windows?: WindowOption[];
   onWindowChange?: (secs: number) => void;
   windowStyle?: WindowStyle;
 
-  // Badge
   /** Badge visual style: 'default' (accent) or 'minimal' (white + grey text) */
   badgeVariant?: BadgeVariant;
 
-  // Crosshair
   /** Vertical offset for crosshair tooltip text (default: 14) */
   tooltipY?: number;
   /** Stroke outline around crosshair tooltip text for readability (default: true) */
   tooltipOutline?: boolean;
 
-  // Orderbook
   orderbook?: OrderbookData;
 
-  // Y-axis range override — when both provided, disables auto-ranging
   minValue?: number;
   maxValue?: number;
 
-  // Optional
   referenceLine?: ReferenceLine;
   formatValue?: (v: number) => string;
   formatTime?: (t: number) => string;
@@ -131,7 +124,6 @@ export interface LivelineProps {
   /** Stroke width of the main line in px (default: 2) */
   lineWidth?: number;
 
-  // Candlestick mode
   /** Chart type (default: 'line') */
   mode?: "line" | "candle";
   /** OHLC candle data (required when mode='candle') */
@@ -167,19 +159,15 @@ export interface CandlePoint {
 }
 
 export interface LivelinePalette {
-  // Line
   line: string;
   lineWidth: number;
 
-  // Fill gradient
   fillTop: string;
   fillBottom: string;
 
-  // Grid
   gridLine: string;
   gridLabel: string;
 
-  // Dot
   dotUp: string;
   dotDown: string;
   dotFlat: string;
@@ -187,32 +175,25 @@ export interface LivelinePalette {
   glowDown: string;
   glowFlat: string;
 
-  // Badge
   badgeOuterBg: string;
   badgeOuterShadow: string;
   badgeBg: string;
   badgeText: string;
 
-  // Dash line
   dashLine: string;
 
-  // Reference line
   refLine: string;
   refLabel: string;
 
-  // Time axis
   timeLabel: string;
 
-  // Crosshair
   crosshairLine: string;
   tooltipBg: string;
   tooltipText: string;
   tooltipBorder: string;
 
-  // Background (for color fading — labels fade toward bg instead of alpha)
   bgRgb: [number, number, number];
 
-  // Fonts
   labelFont: string;
   valueFont: string;
   badgeFont: string;

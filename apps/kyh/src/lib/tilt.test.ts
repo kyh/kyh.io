@@ -24,9 +24,7 @@ test("near vertical, gamma flipping sides doesn't throw figures sideways", () =>
 });
 
 test("landscape keeps down as down", () => {
-  // Turned counterclockwise: the device's right edge points at the floor
   close(tiltGravity(0, 90, 90), 0, 1);
-  // Turned clockwise: its left edge does
   close(tiltGravity(0, -90, 270), 0, 1);
 });
 

@@ -15,42 +15,46 @@ const BACKGROUND = "#0e0a10";
 const LINE = "#34d399";
 const BET = "#facc15";
 
-/**
- * The chart's shape, not its numbers: a fixed random walk, so the card needs no
- * market data at build and reads the same every time. No axis, no prices.
- */
 const sparkline = (count: number, width: number, height: number) => {
   let seed = 7;
+
   const random = () => {
     seed = (seed * 16_807) % 2_147_483_647;
+
     return seed / 2_147_483_647;
   };
+
   const values: number[] = [];
   let value = 0;
+
   for (let index = 0; index < count; index += 1) {
     value += (random() - 0.47) * 1.6;
     values.push(value);
   }
+
   const min = Math.min(...values);
   const max = Math.max(...values);
+
   return values
     .map((point, index) => {
       const x = (index / (count - 1)) * width;
       const y = height - ((point - min) / (max - min || 1)) * height;
+
       return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(" ");
 };
 
-// Cached, so the card prerenders: a file read alone keeps it from the build.
 const fontData = async () => {
   "use cache";
   cacheLife("max");
   const font = await readFile(path.join(process.cwd(), "src/app/geist-mono-bold.ttf"));
+
   return font.toString("base64");
 };
 
 const CHART = { height: 260, width: 640 };
+
 const bets = [
   { label: "2.0x", x: 700, y: 250 },
   { label: "3.5x", x: 790, y: 190 },
@@ -59,6 +63,7 @@ const bets = [
 
 const OpenGraphImage = async () => {
   const data = Buffer.from(await fontData(), "base64");
+
   return new ImageResponse(
     <div
       style={{

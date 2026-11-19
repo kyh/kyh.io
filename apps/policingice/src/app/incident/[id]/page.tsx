@@ -17,8 +17,6 @@ import { siteName } from "@/lib/site";
 import { getIncident, parseId } from "./get-incident";
 import { IncidentDetail } from "./incident-detail";
 
-// Statically rendered whole, so an unknown id answers 404: with partial
-// prefetching, a route that may stream starts its 200 before notFound() lands.
 export const ensureStatic = "navigation";
 
 export const generateStaticParams = async () => {
@@ -30,26 +28,23 @@ export const generateStaticParams = async () => {
     )
     .orderBy(desc(incidents.createdAt))
     .limit(100);
+
   return rows.map((row) => ({ id: String(row.id) }));
 };
 
-// Per-incident title, description and canonical. The card (opengraph-image.tsx
-// beside this page) is text only: an incident's footage, and anyone in it, never
-// becomes a preview.
-export const generateMetadata = async ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> => {
+export const generateMetadata = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const incidentId = parseId(id);
   const incident = incidentId === null ? null : await getIncident(incidentId);
+
   if (!incident) {
-    return { robots: { index: false } };
+    return { robots: { index: false } } satisfies Metadata;
   }
+
   const title = incidentTitle(incident);
   const description = incidentDescription(incident);
   const path = incidentPath(incident.id);
+
   return {
     alternates: { canonical: path },
     description,
@@ -63,17 +58,19 @@ export const generateMetadata = async ({
     },
     title,
     twitter: { card: "summary_large_image", description, title },
-  };
+  } satisfies Metadata;
 };
 
 const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-  // A non-numeric id would reach the query as NaN and fail it: answer 404 instead.
   const incidentId = parseId(id);
+
   if (incidentId === null) {
     notFound();
   }
+
   const incident = await getIncident(incidentId);
+
   if (!incident) {
     notFound();
   }

@@ -1,12 +1,9 @@
-// Chat between visitors, carried in each one's player state: what they're
-// typing and the last line they sent, with when. A visitor holds one draft and
-// one line, each replaced by the next and gone when they leave, so nothing
-// piles up; a line shows for SHOW_MS after it was sent, by the room's clock.
 import type { JsonRecord } from "@vibedgames/multiplayer";
 import { asText } from "@/lib/wire";
 
 /** The longest line, in characters. */
 export const MAX_CHARS = 120;
+
 /** How long a sent line stays up (ms). */
 export const SHOW_MS = 6000;
 
@@ -30,11 +27,12 @@ export interface Line {
   typing: boolean;
 }
 
-export const lineOf = ({ typing, said }: Chat): Line | null => {
+export const lineOf = ({ typing, said }: Chat) => {
   if (typing !== null) {
-    return { text: typing, typing: true };
+    return { text: typing, typing: true } satisfies Line | null;
   }
-  return said ? { text: said.text, typing: false } : null;
+
+  return (said ? { text: said.text, typing: false } : null) satisfies Line | null;
 };
 
 /** The keys a press carries that chat cares about. */
@@ -72,40 +70,55 @@ export const editDraft = (
   draft: string | null,
   press: ChatKey,
   claims: (key: string) => boolean = () => false,
-): ChatEdit | null => {
+) => {
   if (press.altKey || press.ctrlKey || press.metaKey) {
     return null;
   }
+
   const printable = characters(press.key).length === 1;
+
   if (draft === null) {
-    return printable && press.key !== " " && !claims(press.key)
-      ? { draft: cleanLine(press.key), kind: "draft" }
-      : null;
+    return (
+      printable && press.key !== " " && !claims(press.key)
+        ? { draft: cleanLine(press.key), kind: "draft" }
+        : null
+    ) satisfies ChatEdit | null;
   }
+
   if (press.key === "Enter") {
     const text = cleanLine(draft).trimEnd();
-    return text ? { kind: "send", text } : { kind: "cancel" };
+
+    return (text ? { kind: "send", text } : { kind: "cancel" }) satisfies ChatEdit | null;
   }
+
   if (press.key === "Escape") {
-    return { kind: "cancel" };
+    return { kind: "cancel" } satisfies ChatEdit | null;
   }
+
   if (press.key === "Backspace") {
-    return { draft: characters(draft).slice(0, -1).join(""), kind: "draft" };
+    return {
+      draft: characters(draft).slice(0, -1).join(""),
+      kind: "draft",
+    } satisfies ChatEdit | null;
   }
-  return { draft: printable ? cleanLine(draft + press.key) : draft, kind: "draft" };
+
+  return {
+    draft: printable ? cleanLine(draft + press.key) : draft,
+    kind: "draft",
+  } satisfies ChatEdit | null;
 };
 
 /** The state that says a visitor is typing `draft`, or has stopped. */
-export const draftState = (draft: string | null): JsonRecord => ({ typing: draft ?? "" });
+export const draftState = (draft: string | null) => ({ typing: draft ?? "" }) satisfies JsonRecord;
 
 /** The state that sends `text` at `now` on the room's clock. */
-export const sayState = (text: string, now: number): JsonRecord => ({
-  said: text,
-  saidAt: Math.round(now),
-  typing: "",
-});
+export const sayState = (text: string, now: number) =>
+  ({
+    said: text,
+    saidAt: Math.round(now),
+    typing: "",
+  }) satisfies JsonRecord;
 
-/** A state's chat fields, cleaned once per state object: state is replaced, never changed, on each update. */
 const parsed = new WeakMap<
   JsonRecord,
   { typing: string | null; said: string; saidAt: number | null }
@@ -113,22 +126,31 @@ const parsed = new WeakMap<
 
 const parse = (state: JsonRecord) => {
   const cached = parsed.get(state);
+
   if (cached) {
     return cached;
   }
+
   const typing = cleanLine(asText(state.typing));
+
   const fields = {
     said: cleanLine(asText(state.said)),
     saidAt: Number.isFinite(state.saidAt) ? Number(state.saidAt) : null,
     typing: typing === "" ? null : typing,
   };
+
   parsed.set(state, fields);
+
   return fields;
 };
 
 /** A visitor's chat from their state at `now` on the room's clock; anything off the wire is cleaned. */
-export const readChat = (state: JsonRecord, now: number): Chat => {
+export const readChat = (state: JsonRecord, now: number) => {
   const { typing, said, saidAt } = parse(state);
   const up = said !== "" && saidAt !== null && now >= saidAt - 1000 && now < saidAt + SHOW_MS;
-  return { said: up && saidAt !== null ? { text: said, until: saidAt + SHOW_MS } : null, typing };
+
+  return {
+    said: up && saidAt !== null ? { text: said, until: saidAt + SHOW_MS } : null,
+    typing,
+  } satisfies Chat;
 };

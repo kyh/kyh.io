@@ -23,15 +23,12 @@ import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import { readSharedOrder } from "@/lib/shared-order";
 import { createSiteRoom } from "@/lib/site-room";
 
-// Pointers go out on a steady clock, stamped so each visitor's browser can
-// blend between them (components/cursor.tsx): smooth without flooding the room.
-// The town sends its pointers at the same rate (city/net.ts).
 const SEND_RATE = 15;
 
 const NONE: PlayerMap = {};
 const NO_ONE: Visitor[] = [];
 const NO_ENTRY: JsonValue = null;
-/** A subscription that never fires, for reads that should hold still. */
+
 // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
 const ignore = () => () => {};
 
@@ -39,27 +36,28 @@ const SiteRoomContext = createContext<SiteRoom | null>(null);
 
 const useSiteRoom = () => {
   const room = useContext(SiteRoomContext);
+
   if (!room) {
     throw new Error("Multiplayer hooks need a <MultiplayerProvider> above them.");
   }
+
   return room;
 };
 
-/** Where this visitor's pointer is, sent on a steady clock while it changes. */
 const usePointerBroadcast = (room: SiteRoom) => {
   useEffect(() => {
     let moved = false;
     const rate = new FixedRate(SEND_RATE);
     let last = performance.now();
     let frame = 0;
-    // The clock runs only while there's a move to send: a still page wakes no frames.
+
     const tick = (now: number) => {
       const at = lastPointer();
+
       if (!at) {
         moved = false;
       } else if (rate.due(now - last) && moved) {
         moved = false;
-        // A lifted finger leaves no cursor behind.
         room.point(
           pointerLifted()
             ? { fromCenter: null, fromTop: null }
@@ -70,18 +68,22 @@ const usePointerBroadcast = (room: SiteRoom) => {
               },
         );
       }
+
       last = now;
       frame = moved ? requestAnimationFrame(tick) : 0;
     };
+
     const wake = () => {
       moved = true;
+
       if (frame === 0) {
         frame = requestAnimationFrame(tick);
       }
     };
+
     const stop = subscribeToPointer(wake);
-    // Scrolling slides the page under a still pointer.
     window.addEventListener("scroll", wake, { passive: true });
+
     return () => {
       cancelAnimationFrame(frame);
       stop();
@@ -113,18 +115,21 @@ export const MultiplayerProvider = ({ children }: { children: React.ReactNode })
 /** Everyone else on the site, as the site draws them. */
 export const usePlayers = () => {
   const room = useSiteRoom();
+
   return useSyncExternalStore(room.subscribe, room.others, () => NONE);
 };
 
 /** Everyone else on the site and the page they're on, unmoved by their pointers. */
 export const useRoster = () => {
   const room = useSiteRoom();
+
   return useSyncExternalStore(room.subscribe, room.roster, () => NO_ONE);
 };
 
 /** This visitor's own colors, once they're in the room. */
 export const useSelf = () => {
   const room = useSiteRoom();
+
   return useSyncExternalStore(room.subscribe, room.self, () => null);
 };
 
@@ -140,6 +145,7 @@ export const useChat = (enabled: boolean) => {
     if (!enabled) {
       return;
     }
+
     return listenForChat({
       onDraft: (next) => {
         setDraft(next);
@@ -151,6 +157,7 @@ export const useChat = (enabled: boolean) => {
       },
     });
   }, [enabled, room]);
+
   return { draft, said };
 };
 
@@ -163,28 +170,33 @@ export const useChat = (enabled: boolean) => {
  */
 export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) => string) => {
   const room = useSiteRoom();
-  // The room's entry as it stood when a tile was picked up; undefined when none is held.
   const [heldAt, setHeldAt] = useState<JsonValue | undefined>();
   const held = heldAt !== undefined;
+
   const live = useSyncExternalStore(
     held ? ignore : room.subscribe,
     () => room.order(grid) ?? NO_ENTRY,
     () => NO_ENTRY,
   );
+
   const entry = held ? heldAt : live;
+
   const ordered = useMemo(() => {
     const keys = items.map(keyOf);
     const order = readSharedOrder(entry, keys)?.order ?? keys;
     const byKey = new Map(items.map((item) => [keyOf(item), item]));
+
     return order.flatMap((key) => byKey.get(key) ?? []);
   }, [entry, items, keyOf]);
+
   const handleDrop = useCallback((order: string[]) => room.drop(grid, order), [room, grid]);
+
   const handleHold = useCallback(
     (holding: boolean) => setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined),
     [room, grid],
   );
-  // The order the room already had when this visitor arrived lands in place;
-  // only moves made since (anyone's drop) slide.
+
   const settling = room.joinedWith(grid, entry);
+
   return { handleDrop, handleHold, items: ordered, settling };
 };

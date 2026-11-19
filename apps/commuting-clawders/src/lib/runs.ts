@@ -1,11 +1,7 @@
-// A run as the mod posts it: who played, and what the run came to when
-// Claude went quiet. Anyone can post, so every number is bounded.
 import * as z from "zod/mini";
 
 const count = (min: number, max: number) => z.int().check(z.minimum(min), z.maximum(max));
 
-// The most a run can write per second it lasted, with parallel subagents, and
-// a head start for a first reply that lands before a second has passed.
 export const MAX_TOKENS_PER_SECOND = 500;
 export const TOKEN_HEAD_START = 4000;
 

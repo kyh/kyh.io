@@ -1,4 +1,3 @@
-// How the showcase's town dresses for St. Patrick's Day (`Town` in city/town-theme.ts).
 import { topHatTrim } from "@/app/showcase/_components/city/blimp";
 import { topHat } from "@/app/showcase/_components/city/hats";
 import { giantShamrock } from "@/app/showcase/_components/city/decor-giants";

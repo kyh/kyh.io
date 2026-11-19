@@ -3,6 +3,7 @@ import { animate } from "motion";
 const COLORS = ["#34d399", "#6ee7b7", "#a7f3d0", "#fbbf24", "#fcd34d", "#ffffff"];
 
 const PIECE_FORMS = ["circle", "rect", "rect", "strip", "strip"] as const;
+
 type PieceForm = (typeof PIECE_FORMS)[number];
 
 interface PieceGeometry {
@@ -61,6 +62,7 @@ const computeKeyframes = (params: {
 
     if (step > 0) {
       const targetTick = Math.round((step * ticks) / KEYFRAME_STEPS);
+
       while (tick < targetTick) {
         x += Math.cos(angle) * velocity + drift;
         y += Math.sin(angle) * velocity + gravity * 3;
@@ -74,6 +76,7 @@ const computeKeyframes = (params: {
     const wy = y;
 
     let scale: number;
+
     if (t < SCALE_DURATION_FRACTION * 0.6) {
       scale = (t / (SCALE_DURATION_FRACTION * 0.6)) * 1.15;
     } else if (t < SCALE_DURATION_FRACTION) {
@@ -86,6 +89,7 @@ const computeKeyframes = (params: {
     const rotateY = tiltRotations * 360 * t;
 
     let opacityKeyframe: number;
+
     if (t <= 0.5) {
       opacityKeyframe = 1;
     } else if (t <= 0.8) {
@@ -141,6 +145,7 @@ export const fireConfetti = (
   } = opts;
 
   const container = document.createElement("div");
+
   if (parent) {
     container.style.cssText =
       "position:absolute;inset:0;pointer-events:none;z-index:99999;overflow:hidden";

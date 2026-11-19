@@ -1,15 +1,4 @@
 #!/usr/bin/env npx tsx
-/**
- * Delete Admin User
- *
- * Deletes a user from the database by email address.
- *
- * Usage:
- *   pnpm with-env tsx scripts/delete-admin.ts <email>
- *
- * Example:
- *   pnpm with-env tsx scripts/delete-admin.ts admin@example.com
- */
 import { eq } from "drizzle-orm";
 
 import { db } from "../src/db/drizzle-client";

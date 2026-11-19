@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 
 import type { PageMetadataInput } from "@/lib/page-metadata";
@@ -16,9 +15,10 @@ import { themeOn } from "@/themes";
 export const todaysVideo = async () => {
   "use cache";
   cacheLife("hours");
+
   return siteVideoFor(themeOn(new Date()));
 };
 
 /** A page's metadata (`buildPageMetadata`) with today's clip as its `og:video`. */
-export const todaysPageMetadata = async (content: PageMetadataInput): Promise<Metadata> =>
+export const todaysPageMetadata = async (content: PageMetadataInput) =>
   buildPageMetadata(content, await todaysVideo());

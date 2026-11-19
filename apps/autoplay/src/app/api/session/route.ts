@@ -11,31 +11,28 @@ import {
 } from "@/lib/env";
 import { ensureSources, isOwnerHandle, listChannels } from "@/lib/lineup";
 
-// Who is watching and what they can tune to. Loading a session is also when
-// the lineup catches up with the grants the user holds: a Google consent that
-// landed a minute ago becomes a channel here, with no further step.
-
-const googleFor = (owner: boolean): SessionPayload["google"] => {
+const googleFor = (owner: boolean) => {
   if (!googleConfigured) {
-    return "unconfigured";
+    return "unconfigured" satisfies SessionPayload["google"];
   }
-  return googleOpenToAll || owner ? "ready" : "owner-only";
+
+  return (googleOpenToAll || owner ? "ready" : "owner-only") satisfies SessionPayload["google"];
 };
 
-export const GET = async (): Promise<NextResponse> => {
-  // Per request, always: without the auth keys nothing here reads the request,
-  // and the build would freeze the answer.
+export const GET = async () => {
   await connection();
   const session = await getSession();
+
   if (session !== null) {
     await ensureSources(session);
   }
+
   const owner = session !== null && isOwnerHandle(session.user.username);
+
   const payload: SessionPayload = {
     channels: await listChannels(session),
     google: googleFor(owner),
     liveReady: env.FAL_KEY !== undefined,
-    // better-auth exists only with the X app, a secret and the database to keep users in.
     loginReady: auth !== undefined,
     missingKeys: missingEnvKeys(),
     recordReady: recordingConfigured,
@@ -48,5 +45,6 @@ export const GET = async (): Promise<NextResponse> => {
             username: session.user.username ?? session.user.name,
           },
   };
+
   return NextResponse.json(payload);
 };

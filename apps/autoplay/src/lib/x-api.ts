@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-// Thin typed client for the X API v2 endpoints this app uses: the home
-// timeline (with an own-posts fallback for API tiers that can't read it),
-// plus the token refresh for grants better-auth stores in the account table.
+import { env } from "@/lib/env";
 
-const X_TOKEN_URL = "https://api.x.com/2/oauth2/token";
-const X_API_BASE = "https://api.x.com/2";
+const X_API_BASE = env.X_API_URL ?? "https://api.x.com/2";
+const X_TOKEN_URL = `${X_API_BASE}/oauth2/token`;
 
 export class XApiError extends Error {
   status: number;
@@ -24,18 +22,14 @@ const apiErrorSchema = z.object({
   title: z.string().optional(),
 });
 
-const errorFromResponse = async (response: Response): Promise<XApiError> => {
-  let message = `X API request failed (${response.status})`;
-  try {
-    const body = apiErrorSchema.parse(await response.json());
-    const detail = body.detail ?? body.error_description ?? body.title ?? body.error;
-    if (detail !== undefined) {
-      message = detail;
-    }
-  } catch {
-    // Non-JSON error body — keep the status message.
-  }
-  return new XApiError(response.status, message);
+const errorFromResponse = async (response: Response) => {
+  const body = apiErrorSchema.safeParse(await response.json().catch(() => null));
+
+  const detail = body.success
+    ? (body.data.detail ?? body.data.error_description ?? body.data.title ?? body.data.error)
+    : undefined;
+
+  return new XApiError(response.status, detail ?? `X API request failed (${response.status})`);
 };
 
 const tokenResponseSchema = z.object({
@@ -56,8 +50,9 @@ export const refreshXToken = async (
   clientId: string,
   clientSecret: string,
   refreshToken: string,
-): Promise<TokenGrant> => {
+) => {
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
   const response = await fetch(X_TOKEN_URL, {
     body: new URLSearchParams({
       client_id: clientId,
@@ -70,15 +65,18 @@ export const refreshXToken = async (
     },
     method: "POST",
   });
+
   if (!response.ok) {
     throw await errorFromResponse(response);
   }
+
   const grant = tokenResponseSchema.parse(await response.json());
+
   return {
     accessToken: grant.access_token,
     expiresAt: Date.now() + grant.expires_in * 1000,
     refreshToken: grant.refresh_token,
-  };
+  } satisfies TokenGrant;
 };
 
 const xUserSchema = z.object({
@@ -142,10 +140,11 @@ export interface FeedPage {
   nextToken?: string;
 }
 
-const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): number => {
+const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined) => {
   if (metrics === undefined) {
     return 0;
   }
+
   return (
     (metrics.like_count ?? 0) +
     2 * (metrics.reply_count ?? 0) +
@@ -154,7 +153,6 @@ const scoreFromMetrics = (metrics: z.infer<typeof metricsSchema> | undefined): n
   );
 };
 
-/** What every posts endpoint is asked to return: the fields postsFromResponse reads. */
 const POST_FIELDS = {
   expansions: "author_id,referenced_tweets.id",
   "tweet.fields": "created_at,author_id,note_tweet,referenced_tweets,public_metrics",
@@ -163,36 +161,30 @@ const POST_FIELDS = {
 
 const TIMELINE_PARAMS = { max_results: "50", ...POST_FIELDS } as const;
 
-/** A GET against the API, parsed; a refusal becomes an XApiError with X's own words. */
-const xGet = async <T>(accessToken: string, url: URL, schema: z.ZodType<T>): Promise<T> => {
+const xGet = async <T>(accessToken: string, url: URL, schema: z.ZodType<T>) => {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+
   if (!response.ok) {
     throw await errorFromResponse(response);
   }
+
   return schema.parse(await response.json());
 };
 
-interface TimelinePage {
-  posts: FeedPost[];
-  nextToken?: string;
-}
-
-/** Shape returned by every endpoint that hands back posts + expansions. */
-const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>): FeedPost[] => {
+const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>) => {
   const usersById = new Map((timeline.includes?.users ?? []).map((user) => [user.id, user]));
+
   const referencedById = new Map(
     (timeline.includes?.tweets ?? []).map((tweet) => [tweet.id, tweet]),
   );
 
   return (timeline.data ?? []).map((post) => {
-    // Retweet text arrives truncated ("RT @…"); use the referenced post's
-    // full text so the video prompt sees the whole thing. Long posts carry
-    // their full text in note_tweet.
     const retweetRef = (post.referenced_tweets ?? []).find((ref) => ref.type === "retweeted");
     const source = retweetRef === undefined ? post : (referencedById.get(retweetRef.id) ?? post);
     const text = source.note_tweet?.text ?? source.text;
 
     const author = post.author_id === undefined ? undefined : usersById.get(post.author_id);
+
     return {
       author: {
         name: author?.name ?? "Unknown",
@@ -201,31 +193,37 @@ const postsFromResponse = (timeline: z.infer<typeof timelineResponseSchema>): Fe
       },
       createdAt: post.created_at,
       id: post.id,
-      // A retweet's own metrics are near zero; the referenced original's
-      // engagement is what makes it "popular".
       score: scoreFromMetrics(source.public_metrics),
       text,
     };
   });
 };
 
-const fetchTimeline = async (
-  accessToken: string,
-  path: string,
-  paginationToken?: string,
-): Promise<TimelinePage> => {
+interface TimelinePage {
+  posts: FeedPost[];
+  nextToken?: string;
+}
+
+const fetchTimeline = async (accessToken: string, path: string, paginationToken?: string) => {
   const url = new URL(`${X_API_BASE}${path}`);
+
   for (const [key, value] of Object.entries(TIMELINE_PARAMS)) {
     url.searchParams.set(key, value);
   }
+
   if (paginationToken !== undefined) {
     url.searchParams.set("pagination_token", paginationToken);
   }
+
   const timeline = await xGet(accessToken, url, timelineResponseSchema);
-  return { nextToken: timeline.meta?.next_token, posts: postsFromResponse(timeline) };
+
+  return {
+    nextToken: timeline.meta?.next_token,
+    posts: postsFromResponse(timeline),
+  } satisfies TimelinePage;
 };
 
-const timelinePath = (source: FeedSource, userId: string): string =>
+const timelinePath = (source: FeedSource, userId: string) =>
   source === "home"
     ? `/users/${userId}/timelines/reverse_chronological`
     : `/users/${userId}/tweets`;
@@ -244,36 +242,32 @@ export const fetchFeedPage = async (
   userId: string,
   source?: FeedSource,
   paginationToken?: string,
-): Promise<FeedPage> => {
+) => {
   if (source !== undefined) {
     const page = await fetchTimeline(accessToken, timelinePath(source, userId), paginationToken);
-    return { source, ...page };
+
+    return { source, ...page } satisfies FeedPage;
   }
+
   try {
     const page = await fetchTimeline(accessToken, timelinePath("home", userId), paginationToken);
-    return { source: "home", ...page };
+
+    return { source: "home", ...page } satisfies FeedPage;
   } catch (error) {
     if (error instanceof XApiError && error.status === 402) {
       throw new XApiError(402, "X API credits exhausted — top up at console.x.com");
     }
+
     if (!(error instanceof XApiError && error.status === 403)) {
       throw error;
     }
+
     const page = await fetchTimeline(accessToken, timelinePath("own", userId), paginationToken);
-    return { source: "own", ...page };
+
+    return { source: "own", ...page } satisfies FeedPage;
   }
 };
 
-// ---------------------------------------------------------------------------
-// Trend-sourced candidates. The home timeline is chronological, so the most
-// engaging thing in it is only the best of the last 50 posts. Trends say what
-// the viewer's corner of X is actually talking about, and search can filter on
-// engagement server-side — better material, and cheaper than a timeline page.
-
-// Only the name is depended on. Everything else X returns here is loosely
-// typed on purpose: `post_count` arrives as "421 posts", not a number, and a
-// strict schema turns a cosmetic surprise into a silent fallback to the
-// timeline for the life of the deployment.
 const trendSchema = z.object({
   trend_name: z.string(),
 });
@@ -288,17 +282,16 @@ const trendsResponseSchema = z.object({
  * callers should treat as "no trends" and fall back to the timeline rather
  * than as an error.
  */
-export const fetchPersonalizedTrends = async (accessToken: string): Promise<string[]> => {
+export const fetchPersonalizedTrends = async (accessToken: string) => {
   const url = new URL(`${X_API_BASE}/users/personalized_trends`);
   url.searchParams.set("personalized_trend.fields", "trend_name");
   const body = await xGet(accessToken, url, trendsResponseSchema);
+
   return (body.data ?? []).map((trend) => trend.trend_name);
 };
 
 const SEARCH_PARAMS = {
   max_results: "10",
-  // Relevancy is reported not to paginate; that is fine, one page is all a
-  // single program needs.
   sort_order: "relevancy",
   ...POST_FIELDS,
 } as const;
@@ -321,25 +314,24 @@ const STOP_WORDS = new Set(["the", "a", "an", "this", "that", "new", "how", "why
  * Precision is the acceptable loss: `min_likes` and relevancy ordering decide
  * what actually airs, and the trend only has to point at roughly the subject.
  */
-export const trendKeyword = (trend: string): string => {
+export const trendKeyword = (trend: string) => {
   const head = (trend.split(":")[0] ?? trend).replaceAll('"', "");
+
   const words = head
     .split(/\s+/u)
     .map((word) => word.replaceAll(/[^\p{L}\p{N}'’-]/gu, "").replace(/['’]s$/u, ""))
     .filter((word) => word !== "");
+
   const meaningful = words.filter((word) => !STOP_WORDS.has(word.toLowerCase()));
   const named = meaningful.find((word) => word[0] !== word[0]?.toLowerCase());
+
   return named ?? meaningful[0] ?? words[0] ?? trend;
 };
 
-/**
- * Longest keyword worth sending. Real subjects are a word; anything past this
- * is malformed input, and X rejects the whole query once it exceeds 512 chars.
- */
 const MAX_KEYWORD_LENGTH = 64;
 
 /** A trend's subject as a search query, filtered on engagement by X itself. */
-export const trendQuery = (trend: string, minLikes: number): string =>
+export const trendQuery = (trend: string, minLikes: number) =>
   `${trendKeyword(trend).slice(0, MAX_KEYWORD_LENGTH)} min_likes:${minLikes} -is:reply lang:en`;
 
 /**
@@ -347,15 +339,13 @@ export const trendQuery = (trend: string, minLikes: number): string =>
  * engagement operators were deprecated in Jan 2026 and restored in May 2026 —
  * if they regress again X answers 400, which the caller treats as no results.
  */
-export const searchTrendPosts = async (
-  accessToken: string,
-  trend: string,
-  minLikes: number,
-): Promise<FeedPost[]> => {
+export const searchTrendPosts = async (accessToken: string, trend: string, minLikes: number) => {
   const url = new URL(`${X_API_BASE}/tweets/search/recent`);
   url.searchParams.set("query", trendQuery(trend, minLikes));
+
   for (const [key, value] of Object.entries(SEARCH_PARAMS)) {
     url.searchParams.set(key, value);
   }
+
   return postsFromResponse(await xGet(accessToken, url, timelineResponseSchema));
 };

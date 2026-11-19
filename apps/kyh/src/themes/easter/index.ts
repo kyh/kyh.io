@@ -1,7 +1,3 @@
-// Easter: Good Friday to Easter Monday, light and turned lilac. A find throws
-// painted eggs; the town hides pastel eggs by the doors, in the gardens and
-// round the pond, keeps its pastel roofs in their colors, stands a giant egg
-// in the fountain and flies HAPPY EASTER with bunny ears.
 import type { Art } from "../art";
 import type { Theme } from "../theme";
 import { circle, EGG } from "../art";
@@ -33,7 +29,6 @@ export const theme = {
     { back: "#ffe0ec", front: "#ff9fc3" },
     { back: "#dcefff", front: "#8cc8f5" },
   ],
-  // Good Friday to Easter Monday.
   corners: null,
   days: (year) => around(easterSunday(year), 2, 1),
   drift: null,

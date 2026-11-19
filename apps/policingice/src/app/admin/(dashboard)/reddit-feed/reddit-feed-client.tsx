@@ -17,9 +17,10 @@ interface FeedPost {
   published: string;
 }
 
-const normalizeUrl = (url: string): string => {
+const normalizeUrl = (url: string) => {
   try {
     const u = new URL(url);
+
     return `${u.origin}${u.pathname}`.replace(/\/$/u, "");
   } catch {
     return url.split("?")[0].replace(/\/$/u, "");
@@ -45,6 +46,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
 
   const handleAdd = async (post: FeedPost) => {
     setAddingUrl(post.link);
+
     try {
       const result = await createFromFeed({
         published: post.published,
@@ -61,6 +63,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
     } catch {
       toast.error("Failed to create");
     }
+
     setAddingUrl(null);
   };
 

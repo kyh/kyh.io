@@ -21,6 +21,7 @@ const AdminCreate = () => {
     .split("\n")
     .map((u) => u.trim())
     .filter(Boolean);
+
   const validUrls = urls.filter((u) => isValidVideoUrl(u));
   const invalidUrls = urls.filter((u) => !isValidVideoUrl(u));
   const incidentCount = groupAsOne ? 1 : validUrls.length;
@@ -34,6 +35,7 @@ const AdminCreate = () => {
         className="space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
+
           if (validUrls.length === 0) {
             return;
           }
@@ -53,18 +55,21 @@ const AdminCreate = () => {
               location: location || undefined,
               urls: validUrls,
             });
+
             if (res.created > 0) {
               toast.success(`Created ${res.created} incident(s)`);
               setUrlsText("");
               formRef.current?.reset();
               router.refresh();
             }
+
             if (res.skipped > 0) {
               toast(`Skipped ${res.skipped} existing URL(s)`);
             }
           } catch {
             toast.error("Failed to create incidents");
           }
+
           setIsSubmitting(false);
         }}
       >

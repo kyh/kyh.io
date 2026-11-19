@@ -7,7 +7,7 @@ import { db } from "@/db/drizzle-client";
 
 const siteUrl = "https://www.policingice.com";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap() {
   cacheLife("hours");
   cacheTag("incidents");
 
@@ -32,5 +32,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${siteUrl}/incident/${incident.id}`,
   }));
 
-  return [...staticPages, ...incidentPages];
+  return [...staticPages, ...incidentPages] satisfies MetadataRoute.Sitemap;
 }

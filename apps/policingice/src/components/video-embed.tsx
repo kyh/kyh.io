@@ -40,9 +40,6 @@ interface EmbedErrorBoundaryProps {
   children: ReactNode;
 }
 
-// Third-party embeds (react-tweet especially) can throw at render time when a
-// platform changes its API response shape. Contain the blast radius to the
-// embed instead of unmounting the whole page.
 class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: boolean }> {
   constructor(props: EmbedErrorBoundaryProps) {
     super(props);
@@ -73,6 +70,7 @@ const YouTubeEmbed = ({ videoId }: { videoId: string }) => (
 
 const LazyTweet = lazy(async () => {
   const mod = await import("react-tweet");
+
   return { default: mod.Tweet };
 });
 
@@ -90,9 +88,9 @@ const TweetNotFoundLink = ({ url }: { url: string }) => (
   </div>
 );
 
-// react-tweet's TweetNotFound slot takes no url prop, so it gets bound here
 const makeTweetComponents = (url: string) => {
   const TweetNotFound = () => <TweetNotFoundLink url={url} />;
+
   return { TweetNotFound };
 };
 
@@ -154,6 +152,7 @@ const InstagramEmbed = ({ postId, type }: { postId: string; type: "p" | "reel" |
 
 const RedditEmbed = ({ url }: { url: string }) => {
   const cleanUrl = url.split("?")[0].replace(/\/$/u, "");
+
   const embedUrl = `${cleanUrl.replace(
     "www.reddit.com",
     "www.redditmedia.com",
@@ -186,26 +185,34 @@ export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
       case "youtube": {
         return <YouTubeEmbed videoId={videoId} />;
       }
+
       case "twitter": {
         return <TwitterEmbed tweetId={videoId} url={url} />;
       }
+
       case "tiktok": {
         return <TikTokEmbed videoId={videoId} />;
       }
+
       case "facebook": {
         return <FacebookEmbed url={url} />;
       }
+
       case "instagram": {
         const type = extractInstagramType(url);
+
         return <InstagramEmbed postId={videoId} type={type} />;
       }
+
       case "reddit": {
         return <RedditEmbed url={url} />;
       }
+
       case "linkedin":
       case "pinterest": {
         return <FallbackLink url={url} platform={platform} />;
       }
+
       default: {
         return <FallbackLink url={url} platform={platform} />;
       }

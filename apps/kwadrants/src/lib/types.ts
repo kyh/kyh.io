@@ -16,6 +16,7 @@ export interface CanvasImage {
 }
 
 export type LabelValues = Record<string, string>;
+
 export type LayoutLabels = Record<string, LabelValues>;
 
 export interface QuadrantColors {
@@ -26,7 +27,9 @@ export interface QuadrantColors {
 }
 
 export type GridType = "none" | "squares" | "dots";
+
 export type LayoutType = "axis" | "edge";
+
 export type ThemeType = "light" | "dark";
 
 export interface KwadrantState {

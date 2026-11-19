@@ -92,14 +92,17 @@ const callout = (g, value) => {
 
 export const createTooltipEvents = (data, x) => {
   const bisect = bisector((d) => d.date).left;
+
   const onMouseEvent = (mx) => {
     const date = x.invert(mx);
     const index = bisect(data, date, 1);
     const a = data[index - 1];
     const b = data[index];
+
     if (a && b) {
       return date - a.date > b.date - date ? b : a;
     }
+
     return {};
   };
 

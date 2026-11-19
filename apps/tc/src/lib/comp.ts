@@ -37,6 +37,7 @@ const calculateBonus = (year = "1", signOnBonus = "0", targetBonus = "0") => {
   if (year === "1") {
     return Number(signOnBonus || "0") + Number(targetBonus || "0");
   }
+
   return Number(targetBonus || "0");
 };
 
@@ -44,12 +45,14 @@ const calculateStocks = (shares = "0", strikePrice = "0", shareValue = "0") => {
   const total =
     Number(shares || "0") * Number(shareValue || "0") -
     Number(shares || "0") * Number(strikePrice || "0");
+
   return Math.max(total, 0);
 };
 
 const compoundInterest = (principle = 0, rate = 0, time = 1, n = 1) => {
   const amount = principle * (1 + rate / n) ** (n * time);
   const interest = amount - principle;
+
   return interest;
 };
 
@@ -67,6 +70,7 @@ const calculateShareValueFromMultiple = (
   }
 
   const interest = compoundInterest(price, rate / 100, Math.trunc(Number(year)));
+
   return (price + interest).toFixed(2);
 };
 
@@ -84,23 +88,18 @@ const calculateShareValueFromRevenue = (
 export const useCompHooks = () => {
   const [data, setData] = useState(baseData);
 
-  // cash comp
   const [base, setBase] = useState("");
   const [signOnBonus, setSignOnBonus] = useState("");
   const [targetBonus, setTargetBonus] = useState("");
 
-  // stock info
   const [shareType, setShareType] = useState("iso");
   const [iso, setIso] = useState("");
   const [strikePrice, setStrikePrice] = useState("");
   const [rsu, setRsu] = useState("");
 
-  // stock comp
   const [shareCalcType, setShareCalcType] = useState<ShareCalcType>("current");
-  // common
   const [preferredSharePrice, setPreferredSharePrice] = useState("");
   const [expectedGrowthMultiple, setExpectedGrowthMultiple] = useState("");
-  // revenue
   const [sharesOutstanding, setSharesOutstanding] = useState("");
   const [expectedRevenue, setExpectedRevenue] = useState("");
   const [revenueMultiple, setRevenueMultiple] = useState("");

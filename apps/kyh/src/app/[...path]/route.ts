@@ -6,14 +6,6 @@ import { buildNotFoundMarkdown } from "@/lib/markdown";
 import { buildNotFoundHtml } from "@/lib/not-found-html";
 import { todaysVideo } from "@/lib/todays-video";
 
-/**
- * Catch-all 404. Static routes and files in `public/` are matched first, so this
- * only ever sees paths that genuinely do not exist.
- *
- * Next's default `not-found` renders the app shell, which means a lost agent pays
- * for the whole homepage bundle to be told nothing is there. This returns a real
- * 404 with a short body instead: HTML for browsers, markdown for everything else.
- */
 const handle = async (req: NextRequest) => {
   const { pathname } = req.nextUrl;
   const html = prefersHtml(req.headers.get("accept"));

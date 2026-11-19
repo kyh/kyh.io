@@ -9,7 +9,7 @@
     "dev": "pnpm with-env next dev",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "tsx --test --experimental-webstorage --localstorage-file=node_modules/.test-localstorage \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },

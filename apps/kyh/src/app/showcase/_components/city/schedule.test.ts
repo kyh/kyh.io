@@ -1,21 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { Block, Lot } from "./plan";
 import { createSchedule, LEAD, RISE } from "./schedule";
+import type { Block, Lot } from "./plan";
 
-const block = (x: number, z: number): Block => ({
-  bx: 0,
-  bz: 0,
-  d: 6,
-  ring: 0,
-  seed: 1,
-  use: "offices",
-  w: 6,
-  x,
-  z,
-});
-const lot = (slug: string, x: number, z: number): Lot => ({ d: 2, size: "half", slug, w: 2, x, z });
+const block = (x: number, z: number) =>
+  ({
+    bx: 0,
+    bz: 0,
+    d: 6,
+    ring: 0,
+    seed: 1,
+    use: "offices",
+    w: 6,
+    x,
+    z,
+  }) satisfies Block;
+
+const lot = (slug: string, x: number, z: number) =>
+  ({ d: 2, size: "half", slug, w: 2, x, z }) satisfies Lot;
 
 const PLAN = {
   blocks: [block(33, 33), block(60, 60)],

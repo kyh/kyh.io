@@ -8,26 +8,29 @@ import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-ut
 
 const MAX_INPUT_LENGTH = 2048;
 
-const sanitizeInput = (input?: string): string | undefined => {
+const sanitizeInput = (input?: string) => {
   if (!input) {
-    return undefined;
+    return;
   }
+
   return input.slice(0, MAX_INPUT_LENGTH);
 };
 
-const extractUrls = (text: string): string[] => {
+const extractUrls = (text: string) => {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/giu;
   const matches = text.match(urlRegex) ?? [];
+
   return matches.map((url) => url.replace(/[.,;:!?)]+$/u, ""));
 };
 
-const findVideoUrl = (url?: string, text?: string, title?: string): string | null => {
+const findVideoUrl = (url?: string, text?: string, title?: string) => {
   if (url && isValidVideoUrl(url)) {
     return url;
   }
 
   if (text) {
     const found = extractUrls(text).find(isValidVideoUrl);
+
     if (found) {
       return found;
     }
@@ -35,6 +38,7 @@ const findVideoUrl = (url?: string, text?: string, title?: string): string | nul
 
   if (title) {
     const found = extractUrls(title).find(isValidVideoUrl);
+
     if (found) {
       return found;
     }
@@ -59,10 +63,8 @@ const ShareHandler = async ({
     redirect("/?error=invalid_url");
   }
 
-  // Resolve Twitter/X URLs to get the actual embeddable URL
   videoUrl = await resolveVideoUrl(videoUrl);
 
-  // Check if URL already exists
   const existingVideo = await db.query.videos.findFirst({
     where: { url: videoUrl },
   });
@@ -71,8 +73,8 @@ const ShareHandler = async ({
     redirect(`/incident/${existingVideo.incidentId}`);
   }
 
-  // Create new incident with transaction to ensure atomicity
   const platform = detectPlatform(videoUrl);
+
   const incident = await db.transaction(async (tx) => {
     const [newIncident] = await tx
       .insert(incidents)
@@ -94,7 +96,6 @@ const ShareHandler = async ({
   redirect(`/incident/${incident.id}`);
 };
 
-// The share-target handler: it files a link and redirects, so it is never a page to index.
 export const metadata: Metadata = { robots: { follow: false, index: false } };
 
 const SharePage = ({

@@ -75,7 +75,6 @@ const FLASHCARDS = [
 const AGENT_PHOTO = { height: 280, width: 210 };
 const agentPhoto = (number: string) => `/agent-${number}.jpg`;
 
-// The popup mounts on open, so without a head start its photos arrive late.
 const warmAgents = () => {
   for (const { number } of AGENT_FILES) {
     const { props } = getImageProps({ ...AGENT_PHOTO, alt: "", src: agentPhoto(number) });
@@ -84,9 +83,10 @@ const warmAgents = () => {
 };
 
 const label = "font-mono text-[11px] leading-[1.45] tracking-[0.06em] uppercase";
+
 const popupClassName =
   "origin-(--transform-origin) border-2 border-foreground bg-background shadow-[5px_5px_0] shadow-foreground outline-none transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100";
-// An index card: a red rule across the top, faint blue lines below it.
+
 const indexCard =
   "border border-foreground/25 bg-white bg-[linear-gradient(to_bottom,transparent_34px,var(--red)_34px,var(--red)_36px,transparent_36px),repeating-linear-gradient(to_bottom,transparent_0_23px,#c9d8ee_23px_24px)] shadow-[0_1px_3px] shadow-foreground/20";
 
@@ -97,7 +97,6 @@ const Note = ({
 }: {
   children: ReactNode;
   label: string;
-  /** Called when the pointer or focus arrives, before it opens. */
   onWarm?: () => void;
 }) => (
   <Popover.Root>
@@ -137,12 +136,13 @@ const arrow = (direction: "left" | "right") => (
 const stepButton =
   "grid size-8 place-items-center border border-foreground outline-none hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red";
 
-/** The agents on file, one at a time. */
 const AgentNote = () => {
   const [index, setIndex] = useState(0);
   const agent = AGENT_FILES[index];
+
   const step = (by: number) =>
     setIndex((current) => (current + by + AGENT_FILES.length) % AGENT_FILES.length);
+
   return (
     <Note label={AGENTS} onWarm={warmAgents}>
       {agent && (
@@ -191,16 +191,15 @@ const AgentNote = () => {
   );
 };
 
-/** The agents' study deck: a term on the front, what to do with it on the back. */
 const Flashcards = () => {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const card = FLASHCARDS[index];
+
   if (!card) {
     return null;
   }
-  // The card face is keyed by its term, so the next card arrives face up
-  // rather than flipping back with its answer showing.
+
   return (
     <div className="w-[300px] p-4">
       <Popover.Title className={label}>
@@ -281,6 +280,7 @@ const annotate = (part: string) => {
   if (part === AGENTS) {
     return <AgentNote />;
   }
+
   if (part === SUBREDDIT) {
     return (
       <Note label={SUBREDDIT}>
@@ -288,6 +288,7 @@ const annotate = (part: string) => {
       </Note>
     );
   }
+
   return part;
 };
 

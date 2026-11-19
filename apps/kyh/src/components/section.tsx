@@ -34,6 +34,7 @@ interface SectionProps {
 
 export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
   const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
+
   const combinedClasses = ["flex flex-col gap-4", scrollMarginClasses, className]
     .filter(Boolean)
     .join(" ");

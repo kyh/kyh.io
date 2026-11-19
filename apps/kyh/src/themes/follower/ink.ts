@@ -1,6 +1,3 @@
-// How a follower's drawing is painted, in the showcase town's hand
-// (`../piece.tsx`): a flat face in a palette color, inked round or not, and a
-// line in ink or a palette color. Colors follow the page's light or dark.
 import type { Token } from "@/app/showcase/_components/city/palette";
 import { INK, townColor } from "../piece";
 

@@ -1,8 +1,3 @@
-// Turns sketches into three.js objects. A sketch's faces become one unlit
-// mesh colored per vertex, pushed back a hair so ink drawn on their edges
-// wins the depth test; ink becomes fat screen-space lines, one batch per
-// color and weight. A built sketch repaints itself in place: in greys, or in
-// its true colors while hovered, by day or by night.
 import {
   BufferGeometry,
   CanvasTexture,
@@ -25,7 +20,6 @@ import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
 import { SHADE, shade } from "./palette";
 import { createShadowDots } from "./shadow-dots";
 
-/** Ink widths in CSS pixels at zoom 1. */
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
 export interface Materials {
@@ -43,16 +37,16 @@ export interface Materials {
 }
 
 /** Materials for the town; `adapt` sees every one made, to change how it draws (grow.ts raises the town). */
-export const createMaterials = (
-  initial: Scheme,
-  adapt?: (material: Material) => void,
-): Materials => {
+export const createMaterials = (initial: Scheme, adapt?: (material: Material) => void) => {
   let scheme = initial;
   let inkScale = 1;
+
   const adopt = <M extends Material>(material: M) => {
     adapt?.(material);
+
     return material;
   };
+
   const faces = adopt(
     new MeshBasicMaterial({
       polygonOffset: true,
@@ -62,22 +56,27 @@ export const createMaterials = (
       vertexColors: true,
     }),
   );
+
   const dots = createShadowDots(scheme.time);
   const raised = faces.onBeforeCompile.bind(faces);
   faces.onBeforeCompile = (shader, renderer) => {
     raised(shader, renderer);
     dots.patch(shader);
   };
+
   const lines = new Map<
     string,
     { material: LineMaterial; token: Token; weight: Weight; colorful: boolean }
   >();
+
   const line = (token: Token, weight: Weight, colorful = false) => {
     const key = `${token}|${weight}|${colorful}`;
     const existing = lines.get(key);
+
     if (existing) {
       return existing.material;
     }
+
     const material = adopt(
       new LineMaterial({
         alphaToCoverage: true,
@@ -85,13 +84,17 @@ export const createMaterials = (
         linewidth: WEIGHTS[weight] * inkScale,
       }),
     );
+
     lines.set(key, { colorful, material, token, weight });
+
     return material;
   };
+
   return {
     adopt,
     dispose: () => {
       faces.dispose();
+
       for (const { material } of lines.values()) {
         material.dispose();
       }
@@ -102,19 +105,19 @@ export const createMaterials = (
     setScheme: (next) => {
       scheme = next;
       dots.setTime(next.time);
+
       for (const { colorful, material, token } of lines.values()) {
         material.color.set(shade(token, scheme, colorful));
       }
     },
     setZoom: (zoom) => {
-      // Ink thickens as you lean in, but slower than the drawing grows, so a
-      // zoomed-out town stays legible and a close-up stays delicate.
       inkScale = Math.min(2.4, Math.max(0.55, zoom ** 0.55));
+
       for (const { material, weight } of lines.values()) {
         material.linewidth = WEIGHTS[weight] * inkScale;
       }
     },
-  };
+  } satisfies Materials;
 };
 
 const SIGN_HEIGHT_PX = 128;
@@ -122,7 +125,6 @@ const SIGN_FONT = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 const fontAt = (size: number) => `700 ${size}px ${SIGN_FONT}`;
 
-/** The largest type that fits these lines in the box. */
 const fitLines = (
   context: CanvasRenderingContext2D,
   lines: readonly string[],
@@ -132,10 +134,10 @@ const fitLines = (
   const tallest = (height * 0.74) / lines.length;
   context.font = fontAt(tallest);
   const widest = Math.max(...lines.map((text) => context.measureText(text).width));
+
   return widest > width * 0.9 ? (tallest * width * 0.9) / widest : tallest;
 };
 
-/** One line, or two if breaking at a space lets the name be set bigger. */
 const layoutSign = (
   context: CanvasRenderingContext2D,
   text: string,
@@ -144,17 +146,19 @@ const layoutSign = (
 ) => {
   let best = { lines: [text], size: fitLines(context, [text], width, height) };
   const words = text.split(" ");
+
   for (let split = 1; split < words.length; split += 1) {
     const lines = [words.slice(0, split).join(" "), words.slice(split).join(" ")];
     const size = fitLines(context, lines, width, height);
+
     if (size > best.size * 1.15) {
       best = { lines, size };
     }
   }
+
   return best;
 };
 
-/** White glyphs on a clear canvas; the material tints them. */
 const signTexture = (sign: Sign) => {
   const width = Math.hypot(...sign.across);
   const height = Math.hypot(...sign.up);
@@ -162,6 +166,7 @@ const signTexture = (sign: Sign) => {
   canvas.height = SIGN_HEIGHT_PX;
   canvas.width = Math.max(32, Math.round((SIGN_HEIGHT_PX * width) / height));
   const context = canvas.getContext("2d");
+
   if (context) {
     const { lines, size } = layoutSign(context, sign.text, canvas.width, SIGN_HEIGHT_PX);
     context.font = fontAt(size);
@@ -170,14 +175,17 @@ const signTexture = (sign: Sign) => {
     context.textBaseline = "middle";
     const leading = size * 1.05;
     const top = SIGN_HEIGHT_PX * 0.53 - (leading * (lines.length - 1)) / 2;
+
     for (const [index, text] of lines.entries()) {
       context.fillText(text, canvas.width / 2, top + index * leading);
     }
   }
+
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 8;
   texture.minFilter = LinearMipmapLinearFilter;
+
   return texture;
 };
 
@@ -187,6 +195,7 @@ const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
     origin[1] + across[1] * u + up[1] * v,
     origin[2] + across[2] * u + up[2] * v,
   ];
+
   const geometry = new BufferGeometry();
   geometry.setAttribute(
     "position",
@@ -197,6 +206,7 @@ const quad = (origin: Vec3, across: Vec3, up: Vec3) => {
   );
   geometry.setAttribute("uv", new Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
+
   return geometry;
 };
 
@@ -215,20 +225,24 @@ const screenMesh = (screen: Screen, materials: Materials) => {
   canvas.height = SCREEN_HEIGHT_PX;
   canvas.width = Math.round(SCREEN_HEIGHT_PX * aspect);
   const context = canvas.getContext("2d");
+
   if (!context) {
     return null;
   }
+
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
+
   const mesh = new Mesh(
     quad(screen.origin, screen.across, screen.up),
     materials.adopt(new MeshBasicMaterial({ map: texture, side: DoubleSide })),
   );
+
   mesh.renderOrder = 2;
+
   return { mesh, screen: { canvas, context, texture } };
 };
 
-/** Where a token's vertices sit in a face mesh, to repaint them. */
 interface Run {
   token: Token;
   start: number;
@@ -259,51 +273,64 @@ interface Workshop {
 
 const faceMesh = (sketch: Sketch, workshop: Workshop) => {
   let vertices = 0;
+
   for (const positions of sketch.faces.values()) {
     vertices += positions.length / 3;
   }
+
   if (vertices === 0) {
     return null;
   }
+
   const positions = new Float32Array(vertices * 3);
   const runs: Run[] = [];
   let start = 0;
+
   for (const [token, coordinates] of sketch.faces) {
     positions.set(coordinates, start * 3);
     runs.push({ count: coordinates.length / 3, start, token });
     start += coordinates.length / 3;
   }
+
   const shadow = new Float32Array(vertices);
+
   for (const { token, start: first, count } of runs) {
     shadow.fill(SHADE.has(token) ? 1 : 0, first, first + count);
   }
+
   const colors = new Float32BufferAttribute(new Float32Array(vertices * 3), 3);
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
   geometry.setAttribute("color", colors);
   geometry.setAttribute("shadow", new Float32BufferAttribute(shadow, 1));
   workshop.painters.push({ colors, runs });
+
   return new Mesh(geometry, workshop.materials.faces);
 };
 
 const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   const faces = faceMesh(sketch, workshop);
+
   if (faces) {
     target.add(faces);
   }
+
   for (const batch of sketch.lines.values()) {
     if (batch.positions.length > 0) {
       const geometry = new LineSegmentsGeometry();
       geometry.setPositions(batch.positions);
+
       const segments = new LineSegments2(
         geometry,
         workshop.materials.line(batch.token, batch.weight),
       );
+
       segments.renderOrder = 1;
       workshop.lines.push({ segments, token: batch.token, weight: batch.weight });
       target.add(segments);
     }
   }
+
   for (const sign of sketch.signs) {
     const material = workshop.materials.adopt(
       new MeshBasicMaterial({
@@ -313,18 +340,22 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
         transparent: true,
       }),
     );
+
     const mesh = new Mesh(quad(sign.origin, sign.across, sign.up), material);
     mesh.renderOrder = 2;
     workshop.signs.push({ material, token: sign.token });
     target.add(mesh);
   }
+
   for (const screen of sketch.screens) {
     const live = screenMesh(screen, workshop.materials);
+
     if (live) {
       workshop.built.screens.set(screen.name, live.screen);
       target.add(live.mesh);
     }
   }
+
   for (const piece of sketch.parts) {
     const group = new Group();
     group.position.set(...piece.origin);
@@ -335,29 +366,28 @@ const buildInto = (sketch: Sketch, workshop: Workshop, target: Group) => {
   }
 };
 
-// Parsed colors by hex: a repaint sets every run of faces, and parsing the
-// same few dozen strings for each is most of its cost. Every scheme's and
-// every project's colors are a few hundred at most.
 const parsed = new Map<string, Color>();
 
 const colorOf = (hex: string) => {
   let color = parsed.get(hex);
+
   if (!color) {
     color = new Color(hex);
     parsed.set(hex, color);
   }
+
   return color;
 };
 
-/** Lines that stay grey even in color: the color is in the washes. */
 const INK: ReadonlySet<Token> = new Set<Token>(["ink", "inkSoft"]);
 
 /** `tint` turns its colors, when shown, toward its project's own. */
-export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built => {
+export const build = (sketch: Sketch, materials: Materials, tint?: Tint) => {
   const group = new Group();
   const painters: Painter[] = [];
   const signs: Workshop["signs"] = [];
   const lines: Workshop["lines"] = [];
+
   const built: Built = {
     dispose: () => {
       group.traverse((object) => {
@@ -365,10 +395,12 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
           object.geometry.dispose();
         }
       });
+
       for (const { material } of signs) {
         material.map?.dispose();
         material.dispose();
       }
+
       for (const { texture } of built.screens.values()) {
         texture.dispose();
       }
@@ -377,20 +409,24 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
     paint: (scheme, colorful) => {
       for (const { colors, runs } of painters) {
         const { array } = colors;
+
         for (const { token, start, count } of runs) {
           const { r, g, b } = colorOf(shade(token, scheme, colorful, tint));
+
           for (let at = start * 3, end = (start + count) * 3; at < end; at += 3) {
             array[at] = r;
             array[at + 1] = g;
             array[at + 2] = b;
           }
         }
+
         colors.needsUpdate = true;
       }
+
       for (const { material, token } of signs) {
         material.color.set(shade(token, scheme, colorful, tint));
       }
-      // A line in a color of its own (the rainbow's bands, the sleigh's runners) shows it.
+
       for (const line of lines) {
         line.segments.material = materials.line(
           line.token,
@@ -402,6 +438,8 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint): Built 
     parts: new Map(),
     screens: new Map(),
   };
+
   buildInto(sketch, { built, lines, materials, painters, signs }, group);
+
   return built;
 };

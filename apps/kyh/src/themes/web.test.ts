@@ -23,6 +23,7 @@ test("the web stays in its corner's box, and the spider hangs on it", () => {
   for (const n of numbers(WEB_PATH)) {
     assert.ok(n >= 0 && n <= WEB_SIZE, `${n}`);
   }
+
   assert.ok(WEB_PATH.includes(WALK));
   assert.ok(HANG.x > 0 && HANG.y > 0 && Math.hypot(HANG.x, HANG.y) < WEB_SIZE);
 });
@@ -38,9 +39,9 @@ test("a bend pushes the web aside round the mouse and leaves the rest still", ()
   assert.equal(webPath({ strength: 0, x: 60, y: 60 }), WEB_PATH);
   const near = webPath({ strength: 1, x: 60, y: 60 });
   assert.notEqual(near, WEB_PATH);
-  // The corner and the spokes' far ends stay tied.
   assert.ok(near.startsWith("M0 0"));
   assert.equal(near.split("M").length, WEB_PATH.split("M").length);
+
   for (const spoke of WEB_PATH.split("M").slice(1, 7)) {
     const end = spoke.split("L").at(-1);
     assert.ok(end && near.includes(end));

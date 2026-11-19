@@ -14,14 +14,15 @@ import {
 
 const appDir = path.join(import.meta.dirname, "..", "app");
 
-/** Where Next serves each documented path from; anything unmapped is an invented endpoint. */
 const routeFile = (route: string) => {
   if (route === "/") {
     return path.join(appDir, "(home)", "page.tsx");
   }
+
   if (route === "/sitemap.xml") {
     return path.join(appDir, "sitemap.ts");
   }
+
   return path.join(appDir, ...route.split("/"), "route.ts");
 };
 
@@ -53,6 +54,7 @@ test("every operation is described well enough for function calling", () => {
   const ids = operations.map((operation) => operation.operationId);
 
   assert.equal(new Set(ids).size, ids.length, "duplicate operationId");
+
   for (const operation of operations) {
     assert.match(operation.operationId, /^[a-z][A-Za-z]+$/u);
     assert.ok(operation.summary.length > 0, `${operation.operationId} has no summary`);
@@ -62,6 +64,7 @@ test("every operation is described well enough for function calling", () => {
     assert.ok(ok, `${operation.operationId} has no 200 response`);
     const mediaTypes = Object.values(ok.content);
     assert.ok(mediaTypes.length > 0, `${operation.operationId} has no content type`);
+
     for (const media of mediaTypes) {
       assert.ok("type" in media.schema, `${operation.operationId} has an untyped schema`);
     }

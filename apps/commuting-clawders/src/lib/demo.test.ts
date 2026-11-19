@@ -1,17 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { BEATS, LOOP_SECONDS, demoAt, formatTokens } from "../src/lib/demo";
+import { BEATS, LOOP_SECONDS, demoAt, formatTokens } from "./demo";
 
-// When each beat starts, in seconds into the loop.
 const starts: number[] = [];
 let at = 1.5;
 let totalTokens = 0;
+
 for (const beat of BEATS) {
   starts.push(at);
   at += beat.seconds;
   totalTokens += beat.kind === "work" ? beat.tokens : 0;
 }
+
 const firstWork = BEATS.findIndex((beat) => beat.kind === "work");
 const secondWork = BEATS.findIndex((beat, index) => index > firstWork && beat.kind === "work");
 const firstTokens = BEATS.find((beat) => beat.kind === "work")?.tokens ?? 0;

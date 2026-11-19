@@ -12,7 +12,6 @@ export interface ContactLink {
 
 export const name = "Kaiyu Hsu";
 
-// "KYH" in the cfonts `block` face, the big logo in the identity panel.
 export const callsign = [
   "██╗  ██╗ ██╗   ██╗ ██╗  ██╗",
   "██║ ██╔╝ ╚██╗ ██╔╝ ██║  ██║",
@@ -24,15 +23,12 @@ export const callsign = [
 
 export const heroText = `Hello world. You can call me Kai since we're pretty much friends now. I enjoy creating things for the internet. By day, I get to do that through investing, advising, and building products you may not have heard of, yet. Welcome to my corner of the web.`;
 
-// Readout lines for the STATUS panel.
 export const profile = {
   channel: "KYH.IO",
   location: "SAN FRANCISCO, CA",
   role: "DESIGN ENGINEER",
 } as const;
 
-// Mirrors apps/kyh/src/lib/data.ts (order, titles, descriptions, urls);
-// apps/kyh/src/lib/data.test.ts fails until it matches. Emoji stripped for the terminal.
 export const projects: Item[] = [
   {
     description: "A game studio for your agent",

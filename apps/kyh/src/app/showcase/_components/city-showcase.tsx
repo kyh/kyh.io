@@ -24,6 +24,7 @@ interface CityMount extends CityCallbacks {
 
 const loadCity = async (host: HTMLElement, mount: CityMount) => {
   const { createCity } = await import("./city/engine");
+
   return createCity(host, { ...mount, shared: true });
 };
 
@@ -34,6 +35,7 @@ const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 const subscribeMotion = (onChange: () => void) => {
   const query = matchMedia(REDUCED_MOTION);
   query.addEventListener("change", onChange);
+
   return () => query.removeEventListener("change", onChange);
 };
 
@@ -44,11 +46,11 @@ const usePrefersReducedMotion = () =>
     () => false,
   );
 
-/** The city by day or night, as the site is, dressed for its theme. */
-const settingOf = ({ mode, theme }: Appearance): Setting => ({
-  theme,
-  time: mode === "dark" ? "night" : "day",
-});
+const settingOf = ({ mode, theme }: Appearance) =>
+  ({
+    theme,
+    time: mode === "dark" ? "night" : "day",
+  }) satisfies Setting;
 
 interface TourToggleProps {
   touring: boolean;
@@ -75,7 +77,6 @@ const TourToggle = ({ touring, onToggle }: TourToggleProps) => (
   </button>
 );
 
-/** Turns the town a quarter turn, as `]` does. */
 const TurnButton = ({ onTurn }: { onTurn: () => void }) => (
   <button type="button" aria-label="Turn the town" className={PANEL_BUTTON} onClick={onTurn}>
     <RotateCcw aria-hidden="true" className="size-3.5" strokeWidth={2.25} />
@@ -92,60 +93,60 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<City | null>(null);
   const pinsRef = useRef(new Map<string, HTMLElement>());
-  // The theme needs the visitor's date and their light or dark, which a render
-  // (on the server too) can't read: the city starts in the default's and
-  // takes theirs on mount.
   const settingRef = useRef<Setting>({ theme: DEFAULT_THEME, time: "day" });
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [lit, setLit] = useState<string | null>(null);
   const [touring, setTouring] = useState(false);
 
-  // Not `body:has(.city)`: cacheComponents keeps this route mounted, hidden,
-  // after leaving it, and only effects learn that it has gone.
   useEffect(() => {
     document.body.dataset.city = "";
+
     return () => {
       delete document.body.dataset.city;
     };
   }, []);
 
-  // The theme reaches the city by subscription, not a render of the page;
-  // first, so the city is built in it.
   useEffect(() => {
     const update = () => {
       settingRef.current = settingOf(currentAppearance());
       cityRef.current?.setSetting(settingRef.current);
     };
+
     update();
+
     return subscribeToTheme(update);
   }, []);
 
   useEffect(() => {
     const host = containerRef.current;
     const surface = rootRef.current;
+
     if (!host || !surface) {
       return;
     }
+
     const urls = new Map(projects.map((project) => [project.slug, project.url]));
     let isMounted = true;
-    // A card lingers a beat after its building goes dark, so a mouse crossing
-    // from the building onto its card doesn't close and reopen it.
     let closing: ReturnType<typeof setTimeout> | undefined;
+
     const show = (slug: string | null) => {
       clearTimeout(closing);
+
       if (slug) {
         setLit(slug);
       } else {
         closing = setTimeout(() => setLit(null), CARD_LINGER_MS);
       }
     };
+
     const mount = async () => {
       try {
         const city = await loadCity(host, {
           onHover: show,
           onOpen: (slug) => {
             const url = urls.get(slug);
+
             if (url) {
               window.open(url, "_blank", "noopener,noreferrer");
             }
@@ -157,26 +158,30 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           setting: settingRef.current,
           surface,
         });
+
         if (!isMounted) {
           city.dispose();
+
           return;
         }
+
         cityRef.current = city;
-        // The theme or its light or dark may have changed while the city loaded.
         city.setSetting(settingRef.current);
         city.setPins(pinsRef.current);
         setStatus("ready");
+
         if (process.env.NODE_ENV === "development") {
           Object.assign(window, { city });
         }
       } catch {
-        // No WebGL: the projects are listed plainly instead.
         if (isMounted) {
           setStatus("failed");
         }
       }
     };
+
     void mount();
+
     return () => {
       isMounted = false;
       clearTimeout(closing);
@@ -196,7 +201,6 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   return (
     <div ref={rootRef} className="city fixed inset-0 bg-[var(--city-sea)]">
       <div ref={containerRef} className="absolute inset-0" />
-      {/* Visitors' lines and other people's pointers, under the pins so a lit card stays on top. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {status === "failed" ? (
         <PinList projects={projects} />

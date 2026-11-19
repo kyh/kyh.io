@@ -77,7 +77,6 @@ export const projects: ProjectType[] = [
     type: "project",
     url: "https://www.edgestories.com",
   },
-  // Mini Apps
   {
     colors: ["#207e56"],
     description:
@@ -171,7 +170,6 @@ export const projects: ProjectType[] = [
     type: "mini-app",
     url: "https://idlebiz.com",
   },
-  // Templates
   {
     colors: ["#000000"],
     description: "An AI native starter kit to build, launch, and scale your next project",
@@ -245,8 +243,6 @@ export interface ConnectLink {
   social: SocialKind;
 }
 
-// Single source of truth for social links, consumed by the homepage
-// ConnectList and the /markdown agent view so they can't drift.
 export const connectLinks: ConnectLink[] = [
   { href: social.twitter, label: "Twitter", social: "twitter", value: "@kaiyuhsu" },
   { href: social.github, label: "GitHub", social: "github", value: "@kyh" },

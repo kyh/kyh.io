@@ -14,7 +14,6 @@ const hostOf = (url: string) => {
   }
 };
 
-/** The icon opening into the card, and closing back down into it. */
 const MORPH = { damping: 32, stiffness: 420, type: "spring" } as const;
 
 interface PinProps {
@@ -47,34 +46,27 @@ export const Pin = ({ project, isLit, ref, onHover, onFocus, onTap }: PinProps) 
         style={{ borderRadius: isLit ? 8 : 9 }}
         aria-label={`${project.title}, ${hostOf(project.url)}: ${project.description}`}
         onPointerMove={(event) => {
-          // Only a pointer that moves takes the icon: one gliding under a
-          // resting cursor during the flyover leaves the show running. A
-          // finger moving is a drag, not a hover.
           if (event.pointerType !== "touch" && (event.movementX !== 0 || event.movementY !== 0)) {
             onHover(project.slug);
           }
         }}
         onPointerLeave={(event) => {
-          // A finger leaves as it lifts: the card it opened stays open.
           if (event.pointerType !== "touch") {
             onHover(null);
           }
         }}
         onPointerDown={(event) => {
-          // Read at the press: Safari reports a tap's click as a mouse's.
           event.currentTarget.dataset.press = event.pointerType;
         }}
         onClick={(event) => {
-          // A keyboard's click (detail 0) always follows the link.
           const isTouch = event.detail > 0 && event.currentTarget.dataset.press === "touch";
+
           if (isTouch && !isLit) {
             event.preventDefault();
             onTap(project.slug);
           }
         }}
         onFocus={(event) => {
-          // Only the keyboard's focus brings the building into view; a click
-          // or tap focuses the link too, on its way to opening it.
           if (event.currentTarget.matches(":focus-visible")) {
             onFocus(project.slug);
           }

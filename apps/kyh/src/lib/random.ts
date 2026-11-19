@@ -1,6 +1,3 @@
-// Park–Miller minimal standard generator: deterministic across runs and
-// machines, so the city is the same town on every visit and the headings
-// scramble the same on the server as in the browser.
 const MODULUS = 2_147_483_647;
 const MULTIPLIER = 48_271;
 
@@ -15,30 +12,37 @@ export interface Random {
   pick: <T>(items: readonly T[]) => T;
 }
 
-export const createRandom = (seed: number): Random => {
+export const createRandom = (seed: number) => {
   let state = Math.abs(Math.floor(seed)) % MODULUS;
+
   if (state === 0) {
     state = 1;
   }
+
   const next = () => {
     state = (state * MULTIPLIER) % MODULUS;
+
     return (state - 1) / (MODULUS - 1);
   };
+
   const range = (min: number, max: number) => min + next() * (max - min);
   const int = (min: number, max: number) => Math.floor(range(min, max));
+
   return {
     chance: (probability) => next() < probability,
     int,
     next,
     pick: (items) => {
       const item = items[int(0, items.length)];
+
       if (item === undefined) {
         throw new RangeError("Cannot pick from an empty list");
       }
+
       return item;
     },
     range,
-  };
+  } satisfies Random;
 };
 
 /**
@@ -48,14 +52,17 @@ export const createRandom = (seed: number): Random => {
  */
 export const seedOf = (seed: number) => Math.abs(Math.floor(seed)) % MODULUS || 1;
 export const advance = (state: number) => (state * MULTIPLIER) % MODULUS;
+
 /** A state's draw, uniform in [0, 1). */
 export const drawOf = (state: number) => (state - 1) / (MODULUS - 1);
 
 /** A stable number for a string, to seed per-building variety. */
 export const hashString = (text: string) => {
   let hash = 7;
+
   for (const char of text) {
     hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % MODULUS;
   }
+
   return hash;
 };

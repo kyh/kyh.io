@@ -9,14 +9,12 @@ const escapeHtml = (value: string) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
-/** Descriptions are authored as markdown-ish text; only code spans need markup. */
 const renderDescription = (description: string) =>
   escapeHtml(description).replaceAll(/`(?<code>[^`]+)`/gu, "<code>$<code></code>");
 
 const listItem = (route: SiteRoute) =>
   `<li><a href="${route.path}">${escapeHtml(route.title)}</a> <span>${renderDescription(route.description)}</span></li>`;
 
-/** The site's clip as `og:video`, with its poster, as every other page carries it. */
 const videoTags = (video: SiteVideo) =>
   [
     `<meta property="og:title" content="${escapeHtml(siteConfig.name)}">`,

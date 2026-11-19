@@ -24,21 +24,21 @@ const rule = (
   align: "left" | "right",
 ) => {
   const fill = Math.max(0, width - 2);
+
   if (!label || label.length + 2 > fill) {
     return `${left}${panelBorder.horizontal.repeat(fill)}${right}`;
   }
+
   const rest = panelBorder.horizontal.repeat(fill - label.length - 1);
+
   const middle =
     align === "left"
       ? `${panelBorder.horizontal}${label}${rest}`
       : `${rest}${label}${panelBorder.horizontal}`;
+
   return `${left}${middle}${right}`;
 };
 
-// A single HUD frame: thin squared border with a tiny uppercase label bitten
-// into the top edge, matching the reference terminal dashboards. Ink borders
-// take no labels, so the top and bottom edges are drawn as text at the
-// measured width.
 export const Panel = ({
   title,
   bottomTitle,

@@ -1,8 +1,3 @@
-// A spider picked off its web, for `corners.tsx`: held, it's carried on its
-// thread; let go, it falls and bounces on the thread as on a bungee, from
-// where it was taken, then climbs back up it. In the web's own pixels, +y
-// down. Pure.
-
 export interface Spider {
   x: number;
   y: number;
@@ -10,17 +5,13 @@ export interface Spider {
   vy: number;
 }
 
-/** Pixels a second squared down. */
 const GRAVITY = 1400;
-/** The thread's pull per pixel stretched, a second squared. */
 const SPRING = 30;
-/** How fast its swing dies, a second. */
 const DRAG = 1.6;
+
 /** How much thread it's let go with beyond its own, which the bounce hangs below. */
 export const SLACK = 30;
-/** Pixels a second it climbs. */
 const CLIMB = 70;
-/** A step's longest, so a slow frame can't fling it. */
 const MAX_STEP = 1 / 30;
 
 /**
@@ -32,7 +23,7 @@ export const bounce = (
   anchor: { x: number; y: number },
   length: number,
   seconds: number,
-): Spider => {
+) => {
   const dt = Math.min(seconds, MAX_STEP);
   const dx = spider.x - anchor.x;
   const dy = spider.y - anchor.y;
@@ -43,7 +34,8 @@ export const bounce = (
   const ay = GRAVITY - pull * dy - DRAG * spider.vy;
   const vx = spider.vx + ax * dt;
   const vy = spider.vy + ay * dt;
-  return { vx, vy, x: spider.x + vx * dt, y: spider.y + vy * dt };
+
+  return { vx, vy, x: spider.x + vx * dt, y: spider.y + vy * dt } satisfies Spider;
 };
 
 /** Where the bounce comes to rest: straight down, the thread stretched by its weight. */
@@ -56,17 +48,20 @@ export const settled = (spider: Spider, anchor: { x: number; y: number }, length
   Math.abs(spider.y - anchor.y - restingReach(length)) < 8;
 
 /** One step of the climb toward home; null once it's there. */
-export const climb = (
-  spider: Spider,
-  home: { x: number; y: number },
-  seconds: number,
-): Spider | null => {
+export const climb = (spider: Spider, home: { x: number; y: number }, seconds: number) => {
   const dx = home.x - spider.x;
   const dy = home.y - spider.y;
   const left = Math.hypot(dx, dy);
   const step = CLIMB * Math.min(seconds, MAX_STEP);
+
   if (left <= step) {
     return null;
   }
-  return { vx: 0, vy: 0, x: spider.x + (dx / left) * step, y: spider.y + (dy / left) * step };
+
+  return {
+    vx: 0,
+    vy: 0,
+    x: spider.x + (dx / left) * step,
+    y: spider.y + (dy / left) * step,
+  } satisfies Spider | null;
 };

@@ -29,6 +29,7 @@ export const AxisLabels = ({ layout, labels, bounds, theme, onLabelClick }: Axis
     <>
       {layout.labels.map((labelDef) => {
         const pos = labelDef.position(bounds);
+
         return (
           <Text
             key={labelDef.key}

@@ -1,6 +1,3 @@
-// One drawing of the world: the renderer, the scene, the run it shows and
-// the HUD over it. The streamed page (main.ts) and an embedding page
-// (mount.ts) each drive one, a frame at a time.
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
@@ -16,8 +13,6 @@ export interface Frame {
   height: number;
   isActive: boolean;
   isCoarse: boolean;
-  // What the HUD pill shows: the run's tokens, or for the world on its own
-  // the distance run.
   score: number | "distance";
 }
 
@@ -33,7 +28,6 @@ export const createView = ({ pixelRatio = 1, sizesCanvas = false } = {}) => {
 
   const world = createScene(renderer);
   const hud = createHud();
-  // Only what glows (lamps, headlights, coins) crosses the threshold.
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.45, 0.4, 0.9);
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(world.scene, world.camera));
@@ -44,30 +38,33 @@ export const createView = ({ pixelRatio = 1, sizesCanvas = false } = {}) => {
 
   const resize = (width: number, height: number) => {
     const size = renderer.getSize(new THREE.Vector2());
+
     if (size.x === width && size.y === height) {
       return;
     }
+
     renderer.setSize(width, height, sizesCanvas);
     composer.setSize(width, height);
     world.resize(width, height);
   };
 
   const draw = (frame: Frame, dt: number) => {
-    // A run that stopped is over: the next one starts a fresh game.
     if (frame.isActive && !wasActive) {
       game = freshGame();
     }
+
     wasActive = frame.isActive;
     resize(frame.width, frame.height);
     world.setCoarse(frame.isCoarse);
-    // Bloom at a blocks render is a smear across half the pane.
     bloom.enabled = !frame.isCoarse;
+
     if (frame.isActive) {
       step(game, dt);
     }
+
     world.update(game, dt, frame.isActive);
     composer.render(dt);
-    // Blocks can't carry text this small; the pane's status line has the score.
+
     if (!frame.isCoarse) {
       const score = frame.score === "distance" ? Math.floor(game.score) : frame.score;
       hud.draw(frame.width, frame.height, score, game.coins);
@@ -79,7 +76,6 @@ export const createView = ({ pixelRatio = 1, sizesCanvas = false } = {}) => {
 
   return {
     canvas: renderer.domElement,
-    // The run's coins so far, for whoever reports it.
     coins: () => game.coins,
     dispose: () => renderer.dispose(),
     draw,

@@ -12,17 +12,21 @@ const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
 });
+
 const anton = Anton({ subsets: ["latin"], variable: "--font-anton", weight: "400" });
+
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-plex-mono",
   weight: ["400", "500"],
 });
+
 const blackletter = UnifrakturMaguntia({
   subsets: ["latin"],
   variable: "--font-blackletter",
   weight: "400",
 });
+
 const fonts = [fraunces, anton, plexMono, blackletter].map((font) => font.variable).join(" ");
 
 const title = `${siteConfig.name}: ${siteConfig.tagline}`;

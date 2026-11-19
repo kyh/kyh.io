@@ -8,6 +8,7 @@ import { buildPageMetadata, ogVideoOf, siteVideoFor } from "./page-metadata";
 test("every canonical route shares the theme's clip as og:video", () => {
   for (const { id } of THEMES) {
     const video = siteVideoFor(id);
+
     for (const route of siteRoutes) {
       const { openGraph } = buildPageMetadata(route, video);
       assert.deepEqual(openGraph?.videos, [ogVideoOf(video)], `${id} ${route.path}`);
@@ -17,6 +18,7 @@ test("every canonical route shares the theme's clip as og:video", () => {
 
 test("every canonical route shares the clip's poster as its only image", () => {
   const video = siteVideoFor(THEMES[0].id);
+
   for (const route of siteRoutes) {
     const { openGraph, twitter } = buildPageMetadata(route, video);
     assert.deepEqual(openGraph?.images, [video.poster], route.path);

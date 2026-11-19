@@ -9,7 +9,6 @@ const near = (a: { x: number; z: number }, b: { x: number; z: number }) =>
   Math.hypot(a.x - b.x, a.z - b.z) < 1e-9;
 
 const FLAT: Ground = { surfaceAt: () => 0, view: VIEW };
-/** A roof 3 cells up over x from 10 to 20. */
 const ROOFED: Ground = { surfaceAt: (x) => (x >= 10 && x <= 20 ? 3 : 0), view: VIEW };
 
 test("picked up, it stays where the hand took hold of it, and rises as it's carried", () => {
@@ -31,7 +30,7 @@ test("it hangs on the view ray through where it's seen, so it never leaves the h
     { x: 9, y: 0, z: 3 },
     16,
   );
-  // Back down the view ray from where it hangs lands where it's seen.
+
   const up = held.altitude / VIEW[1];
   assert.ok(Math.abs(held.spot.x - VIEW[0] * up - held.seen.x) < 1e-9);
   assert.ok(Math.abs(held.spot.z - VIEW[2] * up - held.seen.z) < 1e-9);
@@ -45,9 +44,11 @@ test("over a roof it hangs over the roof, not in it", () => {
 
 test("let go, it's flung the way it was moving, and dropped straight when still", () => {
   let held = pickUp(FLAT, "c1", undefined, { x: 0, y: 0, z: 0 }, 0);
+
   for (let step = 1; step <= 6; step += 1) {
     held = carryTo(FLAT, held, { x: step * 0.5, y: 0, z: 0 }, step * 16);
   }
+
   const flung = throwOf(held);
   assert.ok(flung.toward.x > flung.from.x, "onward");
   const still = throwOf(pickUp(FLAT, "c2", undefined, { x: 1, y: 0, z: 1 }, 0));

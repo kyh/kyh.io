@@ -14,6 +14,7 @@
         "OWNER_X_USERNAME",
         "TURSO_AUTH_TOKEN",
         "TURSO_DATABASE_URL",
+        "X_API_URL",
         "X_CLIENT_ID",
         "X_CLIENT_SECRET"
       ],

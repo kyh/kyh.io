@@ -1,39 +1,49 @@
 import type { VideoPlatform } from "@/db/drizzle-schema";
 
-export const detectPlatform = (url: string): VideoPlatform => {
+export const detectPlatform: (url: string) => VideoPlatform = (url) => {
   const u = url.toLowerCase();
+
   if (u.includes("twitter.com") || u.includes("x.com")) {
     return "twitter";
   }
+
   if (u.includes("youtube.com") || u.includes("youtu.be")) {
     return "youtube";
   }
+
   if (u.includes("tiktok.com")) {
     return "tiktok";
   }
+
   if (u.includes("facebook.com") || u.includes("fb.watch")) {
     return "facebook";
   }
+
   if (u.includes("instagram.com")) {
     return "instagram";
   }
+
   if (u.includes("linkedin.com")) {
     return "linkedin";
   }
+
   if (u.includes("pinterest.com") || u.includes("pin.it")) {
     return "pinterest";
   }
+
   if (u.includes("reddit.com") || u.includes("redd.it")) {
     return "reddit";
   }
+
   throw new Error(
     "Unsupported platform. Use Twitter, YouTube, TikTok, Facebook, Instagram, LinkedIn, Pinterest, or Reddit links.",
   );
 };
 
-export const isValidVideoUrl = (url: string): boolean => {
+export const isValidVideoUrl = (url: string) => {
   try {
     detectPlatform(url);
+
     return true;
   } catch {
     return false;
@@ -41,22 +51,24 @@ export const isValidVideoUrl = (url: string): boolean => {
 };
 
 const FETCH_TIMEOUT_MS = 5000;
+
+// WARNING: SSRF guard; every fetch and every redirect it follows must land on one of these hosts.
 const ALLOWED_TWITTER_HOSTS = new Set(["twitter.com", "x.com"]);
 
-// Validate URL is from allowed Twitter/X domains (SSRF protection)
-const isAllowedTwitterHost = (url: string): boolean => {
+const isAllowedTwitterHost = (url: string) => {
   try {
     const parsed = new URL(url);
+
     return ALLOWED_TWITTER_HOSTS.has(parsed.hostname);
   } catch {
     return false;
   }
 };
 
-// Fetch with timeout
-const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
+const fetchWithTimeout = async (url: string, options: RequestInit) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {
@@ -64,37 +76,31 @@ const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Resp
   }
 };
 
-// Resolve Twitter/X URLs that use /i/status/ format to the actual URL with username
-export const resolveVideoUrl = async (url: string): Promise<string> => {
-  // Check if it's a Twitter/X URL with /i/status/ pattern
+export const resolveVideoUrl = async (url: string) => {
   if (!/^https?:\/\/(?:twitter\.com|x\.com)\/i\/status\/\d+/u.test(url)) {
     return url;
   }
 
-  // SSRF protection: only allow requests to twitter.com/x.com
   if (!isAllowedTwitterHost(url)) {
     return url;
   }
 
   try {
-    // Fetch with redirect: manual to get the Location header
     const response = await fetchWithTimeout(url, {
       method: "HEAD",
       redirect: "manual",
     });
 
     const location = response.headers.get("location");
-    // Validate redirect is also to allowed host
+
     if (location && isAllowedTwitterHost(location) && isValidVideoUrl(location)) {
       return location;
     }
 
-    // If no redirect, try following with GET
     const getResponse = await fetchWithTimeout(url, {
       redirect: "follow",
     });
 
-    // Validate final URL is to allowed host
     if (
       getResponse.url &&
       isAllowedTwitterHost(getResponse.url) &&
@@ -109,22 +115,22 @@ export const resolveVideoUrl = async (url: string): Promise<string> => {
   return url;
 };
 
-// Extract Instagram post type from URL
-export const extractInstagramType = (url: string): "p" | "reel" | "tv" => {
+export const extractInstagramType = (url: string) => {
   if (url.includes("/reel/")) {
-    return "reel";
+    return "reel" satisfies "p" | "reel" | "tv";
   }
+
   if (url.includes("/tv/")) {
-    return "tv";
+    return "tv" satisfies "p" | "reel" | "tv";
   }
-  return "p";
+
+  return "p" satisfies "p" | "reel" | "tv";
 };
 
-const hostMarkerId = (url: string, markers: string[], id: string): string | null =>
+const hostMarkerId = (url: string, markers: string[], id: string) =>
   markers.some((marker) => url.includes(marker)) ? id : null;
 
 const extractors: Record<VideoPlatform, (url: string) => string | null> = {
-  // Facebook URLs vary widely, just check it's a valid FB URL
   facebook: (url) => hostMarkerId(url, ["facebook.com", "fb.watch"], "facebook"),
   instagram: (url) => /instagram\.com\/(?:p|reel|tv)\/(?<id>[^/?]+)/u.exec(url)?.groups?.id ?? null,
   linkedin: (url) => hostMarkerId(url, ["linkedin.com"], "linkedin"),
@@ -141,6 +147,4 @@ const extractors: Record<VideoPlatform, (url: string) => string | null> = {
     null,
 };
 
-// Returns video ID for embedding
-export const extractVideoId = (url: string, platform: VideoPlatform): string | null =>
-  extractors[platform](url);
+export const extractVideoId = (url: string, platform: VideoPlatform) => extractors[platform](url);

@@ -1,11 +1,3 @@
-/**
- * Content negotiation for the two representations this site serves.
- *
- * Browsers and crawlers send `Accept: text/html,...`; bare tooling (`curl`,
- * most fetch defaults) sends a wildcard Accept, or none at all. HTML is only the
- * right default for the first group, so we serve markdown unless HTML was asked
- * for by name. Every response built on this must send `Vary: Accept`.
- */
 const HTML_TYPES = ["text/html", "application/xhtml+xml"];
 
 export const acceptsMarkdown = (accept: string | null) =>
@@ -13,6 +5,7 @@ export const acceptsMarkdown = (accept: string | null) =>
 
 export const acceptsHtml = (accept: string | null) => {
   const value = (accept ?? "").toLowerCase();
+
   return HTML_TYPES.some((type) => value.includes(type));
 };
 

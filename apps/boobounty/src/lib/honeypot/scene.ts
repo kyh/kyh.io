@@ -33,24 +33,19 @@ import { JAR_RADIUS, createHoneypot } from "./models";
 import { createSticker } from "./sticker";
 
 const BACKGROUND = "#fcf3cf";
-// The middle of the jar's body, so the jar sits at the center of the frame.
 const TARGET = new Vector3(0, 1, 0);
 const FOV = 28;
 const ELEVATION = 0.44;
-// Left alone, the jar sways around its front, label to the viewer, then settles.
 const SWAY = { after: 1.5, amplitude: 0.32, fade: 3, period: 9, rate: 1.4, seconds: 12 };
-// A touch held this still this long on the dipper picks it up instead of scrolling.
 const TOUCH_HOLD_MS = 160;
 const VELOCITY_WINDOW_MS = 80;
 const STALE_RELEASE_MS = 40;
 
-// Framing in world units around TARGET: tight like a product shot, with room
-// above for the carried dipper and around for its drizzle.
 const framing = (aspect: number) =>
   aspect < 1 ? { halfHeight: 2.6, halfWidth: 2.3 } : { halfHeight: 2.45, halfWidth: 2.6 };
 
-// The dipper lifts and drizzles a curve on its own once, to show what it does.
 const DEMO = { duration: 2.2, start: 0.9 };
+
 const DEMO_PATH = new CatmullRomCurve3([
   new Vector3(0.95, 0, 0.6),
   new Vector3(1.55, 0, 0.75),
@@ -68,38 +63,41 @@ export interface HoneypotEvents {
   onCarry: (held: boolean) => void;
 }
 
-// A softbox's light falls off toward its edges; a hard-edged panel stamps a
-// crisp white dash on every rib of the jar.
 const falloff = (t: number) => Math.sin(Math.PI * t) ** 1.5;
 
 const softboxTexture = () => {
   const width = 64;
   const height = 128;
   const data = new Uint8Array(width * height * 4);
+
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const value = Math.round(255 * falloff((x + 0.5) / width) * falloff((y + 0.5) / height));
       data.set([value, value, value, 255], (y * width + x) * 4);
     }
   }
+
   const texture = new DataTexture(data, width, height);
   texture.needsUpdate = true;
+
   return texture;
 };
 
-/** A dim studio for reflections: a dark shell, a softbox above, two tall strips, a warm card behind. */
 const studio = () => {
   const room = new Scene();
   const shell = new SphereGeometry(10, 32, 16);
   const position = shell.getAttribute("position");
   const colors: number[] = [];
+
   for (let index = 0; index < position.count; index += 1) {
     const t = (position.getY(index) / 10 + 1) / 2;
     const value = 0.02 + 0.1 * t * t;
     colors.push(value, value * 0.98, value * 0.95);
   }
+
   shell.setAttribute("color", new Float32BufferAttribute(colors, 3));
   room.add(new Mesh(shell, new MeshBasicMaterial({ side: BackSide, vertexColors: true })));
+
   const lights = [
     { at: [0, 8, 0], intensity: 6, size: [7, 7] },
     { at: [-6, 2.5, 2.5], intensity: 6, size: [3, 8] },
@@ -107,10 +105,13 @@ const studio = () => {
     { at: [0, 2, -7], color: "#ffe2b8", intensity: 3, size: [6, 4] },
     { at: [0, -0.05, 0], intensity: 1.8, size: [12, 12] },
   ];
+
   const softbox = softboxTexture();
+
   for (const { at, color = "#ffffff", intensity, size } of lights) {
     const [w = 1, h = 1] = size;
     const [x = 0, y = 0, z = 0] = at;
+
     const panel = new Mesh(
       new PlaneGeometry(w, h),
       new MeshBasicMaterial({
@@ -119,10 +120,12 @@ const studio = () => {
         side: DoubleSide,
       }),
     );
+
     panel.position.set(x, y, z);
     panel.lookAt(0, 1, 0);
     room.add(panel);
   }
+
   return { room, softbox };
 };
 
@@ -131,16 +134,21 @@ const radialTexture = (stops: [number, string][]) => {
   canvas.width = 256;
   canvas.height = 256;
   const context = canvas.getContext("2d");
+
   if (context) {
     const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
+
     for (const [offset, color] of stops) {
       gradient.addColorStop(offset, color);
     }
+
     context.fillStyle = gradient;
     context.fillRect(0, 0, 256, 256);
   }
+
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
+
   return texture;
 };
 
@@ -149,8 +157,10 @@ const floorDecal = (size: number, texture: CanvasTexture, y: number) => {
     new PlaneGeometry(size, size),
     new MeshBasicMaterial({ depthWrite: false, map: texture, transparent: true }),
   );
+
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = y;
+
   return mesh;
 };
 
@@ -159,16 +169,20 @@ const disposeTree = (root: Object3D) => {
     if (!(object instanceof Mesh)) {
       return;
     }
+
     object.geometry.dispose();
+
     const materials: Material[] = Array.isArray(object.material)
       ? object.material
       : [object.material];
+
     for (const material of materials) {
       for (const value of Object.values(material)) {
         if (value instanceof CanvasTexture) {
           value.dispose();
         }
       }
+
       material.dispose();
     }
   });
@@ -180,7 +194,6 @@ interface Press {
   downY: number;
   rotationAtGrab: number;
   samples: { t: number; x: number }[];
-  /** Where the dipper was picked up, in the scene's frame; absent while turning. */
   carryFrom: Vector3 | undefined;
 }
 
@@ -194,7 +207,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   renderer.toneMapping = NeutralToneMapping;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFShadowMap;
-  // Honey blurs what it shows (a roughness floor), so half resolution is invisible.
   renderer.transmissionResolutionScale = 0.5;
 
   const scene = new Scene();
@@ -209,7 +221,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 100);
   const print = createHalftone(renderer, BACKGROUND);
 
-  // Backlit, so the honey's glow and shadow fall toward the viewer.
   const sun = new DirectionalLight("#fff6ea", 2.2);
   sun.position.set(-1.4, 9, -3.4);
   sun.castShadow = true;
@@ -227,6 +238,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     new PlaneGeometry(40, 40),
     new ShadowMaterial({ color: new Color("#3a1800"), opacity: 0.22 }),
   );
+
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
@@ -243,7 +255,6 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     ),
   );
 
-  // Light through the honey pools into a warm spot inside its shadow.
   const caustic = floorDecal(
     2.2,
     radialTexture([
@@ -253,6 +264,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     ]),
     0.003,
   );
+
   caustic.position.set(0.3, 0.003, 0.95);
   caustic.scale.set(1.1, 1.5, 1);
   caustic.rotation.z = 0.35;
@@ -268,6 +280,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   world.add(sticker.mesh);
 
   let dirty = true;
+
   const resize = () => {
     const width = canvas.clientWidth;
     const height = Math.max(canvas.clientHeight, 1);
@@ -287,19 +300,21 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     );
     camera.lookAt(TARGET);
     camera.updateProjectionMatrix();
-    // setSize clears the drawing buffer; draw now rather than show a blank frame.
     print.render(scene, camera);
     dirty = true;
   };
+
   resize();
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(canvas);
 
   const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   let reducedMotion = motionQuery.matches;
+
   const onMotionChange = (event: MediaQueryListEvent) => {
     reducedMotion = event.matches;
   };
+
   motionQuery.addEventListener("change", onMotionChange);
 
   const raycaster = new Raycaster();
@@ -317,13 +332,13 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
   const onDipper = (clientX: number, clientY: number) => {
     aimRay(clientX, clientY);
+
     return raycaster.intersectObject(honeypot.grip).length > 0;
   };
 
   let spin = 0;
   let idleFor = 0;
   let press: Press | undefined;
-  // Waits until the picture is properly in view; skipped for reduced motion.
   let demo: number | undefined;
   let demoPending = true;
   let touchedAt: number | undefined;
@@ -331,13 +346,12 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   const unitsPerPixel = () =>
     (2 * camera.position.distanceTo(TARGET) * Math.tan((FOV * Math.PI) / 360)) /
     Math.max(canvas.clientHeight, 1);
+
   const radiansPerPixel = () => unitsPerPixel() / JAR_RADIUS;
 
-  // A drag moves the dipper over the floor as far as it moves on screen: across
-  // the screen is across the floor, down the screen is toward the viewer,
-  // stretched by the floor's foreshortening.
   const carryTo = (from: Vector3, dx: number, dy: number) => {
     const units = unitsPerPixel();
+
     return world.worldToLocal(
       new Vector3(from.x + dx * units, 0, from.z + (dy * units) / Math.sin(ELEVATION)),
     );
@@ -347,6 +361,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     if (demo !== undefined && demo < 0) {
       dipper.drop();
     }
+
     demo = undefined;
     demoPending = false;
   };
@@ -355,6 +370,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     if (!press) {
       return;
     }
+
     if (press.carryFrom) {
       dipper.drop();
       events.onCarry(false);
@@ -362,6 +378,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       const recent = press.samples.filter(
         (sample) => event.timeStamp - sample.t < VELOCITY_WINDOW_MS,
       );
+
       const [oldest] = recent;
       const newest = recent.at(-1);
       const fresh = newest && event.timeStamp - newest.t < STALE_RELEASE_MS;
@@ -370,6 +387,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
           ? ((newest.x - oldest.x) / ((newest.t - oldest.t) / 1000)) * radiansPerPixel()
           : 0;
     }
+
     press = undefined;
     idleFor = 0;
   };
@@ -378,17 +396,21 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     if (event.button !== 0 || !event.isPrimary) {
       return;
     }
+
     canvas.setPointerCapture(event.pointerId);
     stopDemo();
+
     const carryFrom = onDipper(event.clientX, event.clientY)
       ? world.localToWorld(dipper.tip())
       : undefined;
+
     if (carryFrom) {
       const point = carryTo(carryFrom, 0, 0);
       dipper.lift(point.x, point.z);
       dipper.hover(false);
       events.onCarry(true);
     }
+
     press = {
       carryFrom,
       downX: event.clientX,
@@ -404,20 +426,26 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   const onPointerMove = (event: PointerEvent) => {
     if (!press && event.pointerType === "mouse") {
       dipper.hover(onDipper(event.clientX, event.clientY));
+
       return;
     }
+
     if (!press || press.id !== event.pointerId) {
       return;
     }
+
     if (press.carryFrom) {
       const point = carryTo(
         press.carryFrom,
         event.clientX - press.downX,
         event.clientY - press.downY,
       );
+
       dipper.moveTo(point.x, point.z);
+
       return;
     }
+
     press.samples = [
       ...press.samples.filter((sample) => event.timeStamp - sample.t < VELOCITY_WINDOW_MS),
       { t: event.timeStamp, x: event.clientX },
@@ -430,11 +458,10 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       endPress(event);
     }
   };
+
   const onPointerLost = () => endPress();
   const onPointerLeave = () => dipper.hover(false);
 
-  // A swipe that starts on the dipper still scrolls the page; a touch held on
-  // it first carries it, and from then on the page stays put.
   const onTouchStart = (event: TouchEvent) => {
     const [touch] = event.touches;
     touchedAt =
@@ -442,6 +469,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
         ? event.timeStamp
         : undefined;
   };
+
   const onTouchMove = (event: TouchEvent) => {
     if (touchedAt !== undefined && event.timeStamp - touchedAt >= TOUCH_HOLD_MS) {
       event.preventDefault();
@@ -478,22 +506,28 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
   let last = performance.now();
 
-  // `demo` counts down to the drizzle; past zero it is how long the drizzle has run.
   const stepDemo = (seconds: number) => {
     if (demo === undefined) {
       return;
     }
+
     demo -= seconds;
+
     if (demo > 0) {
       return;
     }
+
     const t = -demo / DEMO.duration;
+
     if (t >= 1) {
       dipper.drop();
       demo = undefined;
+
       return;
     }
+
     const point = DEMO_PATH.getPoint(t);
+
     if (dipper.held()) {
       dipper.moveTo(point.x, point.z);
     } else {
@@ -508,16 +542,21 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     stepDemo(seconds);
 
     let swaying = false;
+
     if (!press) {
       spin *= Math.exp(-seconds * 3);
       world.rotation.y += spin * seconds;
+
       if (Math.abs(spin) < 0.05) {
         idleFor += seconds;
       }
+
       const t = idleFor - SWAY.after;
+
       if (!reducedMotion && t > 0 && t < SWAY.seconds + SWAY.fade + 4) {
         const ramp =
           Math.min(1, t) * Math.min(1, Math.max(0, (SWAY.seconds + SWAY.fade - t) / SWAY.fade));
+
         const front = Math.round(world.rotation.y / (Math.PI * 2)) * Math.PI * 2;
         const goal = front + SWAY.amplitude * ramp * Math.sin((Math.PI * 2 * t) / SWAY.period);
         world.rotation.y += (goal - world.rotation.y) * (1 - Math.exp(-SWAY.rate * seconds));
@@ -527,6 +566,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
     const carried = dipper.update(seconds, world.rotation.y);
     drops.update(seconds);
+
     const moving =
       press !== undefined ||
       demo !== undefined ||
@@ -534,6 +574,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       Math.abs(spin) > 1e-3 ||
       swaying ||
       drops.active();
+
     if (moving || dirty) {
       print.render(scene, camera);
       dirty = false;
@@ -541,6 +582,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
   };
 
   let disposed = false;
+
   const visibility = new IntersectionObserver(
     ([entry]) => {
       if (entry?.isIntersecting) {
@@ -549,6 +591,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       } else {
         renderer.setAnimationLoop(null);
       }
+
       if (demoPending && !reducedMotion && entry && entry.intersectionRatio >= 0.6) {
         demoPending = false;
         demo = DEMO.start;
@@ -557,17 +600,19 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     { threshold: [0, 0.6] },
   );
 
-  // Compile every shader before the first frame, so the reveal doesn't stutter.
   const reveal = async () => {
     await sticker.ready();
     await print.compile(scene, camera);
+
     if (disposed) {
       return;
     }
+
     print.render(scene, camera);
     events.onReady();
     visibility.observe(canvas);
   };
+
   void reveal();
 
   return () => {

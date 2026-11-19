@@ -5,9 +5,6 @@ import { PUBLIC_CHANNEL } from "./api-contract";
 import type { ChannelSummary } from "./api-contract";
 import { screenState, surfaceOf } from "./screen-state";
 
-// The one value the chrome reads: which player runs, and what the picture,
-// the badge and the overlays say about it.
-
 const ownerLive: ChannelSummary = { ...PUBLIC_CHANNEL, mode: "live" };
 const own: ChannelSummary = { kind: "rss", label: "Feed", mode: "live", number: 2, sourceId: "s1" };
 

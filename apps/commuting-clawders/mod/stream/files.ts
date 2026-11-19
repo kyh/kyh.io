@@ -1,5 +1,3 @@
-// The built world (`vite build` into dist/world), served to Chrome as files.
-
 import path from "node:path";
 
 const TYPES = new Map(
@@ -17,10 +15,9 @@ const TYPES = new Map(
 export const contentType = (file: string) =>
   TYPES.get(path.extname(file)) ?? "application/octet-stream";
 
-// The file a request names inside `root` (the page for `/`); null for one
-// that would climb out of it.
 export const assetPath = (root: string, url: string) => {
   const { pathname } = new URL(url, "http://world");
   const file = path.join(root, decodeURIComponent(pathname === "/" ? "/index.html" : pathname));
+
   return file.startsWith(`${root}${path.sep}`) ? file : null;
 };

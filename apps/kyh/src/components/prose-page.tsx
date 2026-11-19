@@ -9,6 +9,7 @@ import type { ContentLink, PageContent } from "@/lib/page-content";
 
 const LinkRow = ({ link }: { link: ContentLink }) => {
   const isInternal = link.href.startsWith("/");
+
   const body = (
     <>
       <span className="text-foreground-highlighted">{link.label}</span>

@@ -4,6 +4,7 @@ import test from "node:test";
 import { LAG, SPELL, scrambleFrame, scrambleTicks } from "./scramble";
 
 const noise = ["#"];
+
 const frame = (text: string, tick: number, reading = "") =>
   scrambleFrame(text, reading, tick, noise, Math.random);
 

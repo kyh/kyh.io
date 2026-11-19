@@ -1,5 +1,6 @@
 export const siteUrl = "https://www.policingice.com";
 export const siteName = "Policing ICE";
+
 export const siteDescription =
   "Documenting and tracking incidents of ICE overreach across the United States. Community-driven accountability through video evidence.";
 

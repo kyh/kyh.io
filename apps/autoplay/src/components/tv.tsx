@@ -17,11 +17,6 @@ import { LiveScreen } from "@/components/live-screen";
 import { ReplayScreen } from "@/components/replay-screen";
 import { SourcesDialog } from "@/components/sources-dialog";
 
-// The TV. One full-bleed screen, static while it tunes, a status bar with the
-// program on air. A channel the viewer owns is a live session in this browser;
-// the public channel, for anyone but its owner — and for the owner once the
-// day's budget is spent — is the replay of what it recorded while live.
-
 const login = () => {
   void authClient.signIn.social({ callbackURL: "/", provider: "twitter" });
 };
@@ -43,36 +38,26 @@ interface ScreenProps {
   urlError?: string;
 }
 
-/** Pixels the ticker travels per second — a readable walking pace. */
 const MARQUEE_SPEED = 45;
-/** Rough character width at the status bar's 11px monospace. */
 const CHAR_WIDTH = 6.6;
-/** How long a caption takes to roll off as the next rolls on. */
 const ROLL_MS = 400;
 
-/** What the ticker shows: the program or recording on air. */
 type OnAir = Pick<
   LiveProgram,
   "itemId" | "kind" | "text" | "link" | "authorName" | "authorUsername"
 >;
 
-/** The account behind a program: an @handle on X, a sender address, a feed host, a channel name. */
-const handle = (program: OnAir): string =>
+const handle = (program: OnAir) =>
   program.kind === "x" ? `@${program.authorUsername}` : program.authorUsername;
 
-/** How the ticker credits a program; the @handle convention is X's alone. */
-const attribution = (program: OnAir): string =>
+const attribution = (program: OnAir) =>
   program.kind === "x" ? handle(program) : program.authorName;
 
-const caption = (program: OnAir): string =>
-  `${displayPostText(program.text)} — ${attribution(program)}`;
+const caption = (program: OnAir) => `${displayPostText(program.text)} — ${attribution(program)}`;
 
-/**
- * One caption, scrolling. Duration is derived from the text's length rather
- * than fixed, or a long post would race past while a short one crawled.
- */
 const MarqueeCopy = (props: { text: string; roll: "on" | "off" }) => {
   const seconds = Math.max(8, (props.text.length * CHAR_WIDTH) / MARQUEE_SPEED);
+
   return (
     <div
       className="marquee-copy"
@@ -87,27 +72,23 @@ const MarqueeCopy = (props: { text: string; roll: "on" | "off" }) => {
   );
 };
 
-/**
- * The status bar cannot show a whole post, so it scrolls one — and is the
- * link to it. A change of program rolls the caption over rather than cutting,
- * since the picture it captions never cuts either: the old caption keeps
- * scrolling as it rolls off, and the new one rolls on beneath it. Hovering
- * pauses the scroll, which is how you read the end of a sentence you just
- * missed, and opens the whole post as a card.
- */
 const Ticker = (props: { program: OnAir }) => {
   const { program } = props;
   const [seen, setSeen] = useState(program);
   const [leaving, setLeaving] = useState<OnAir | undefined>();
+
   if (seen.itemId !== program.itemId) {
     setSeen(program);
     setLeaving(seen);
   }
+
   useEffect(() => {
     if (leaving === undefined) {
       return;
     }
+
     const timer = window.setTimeout(() => setLeaving(undefined), ROLL_MS);
+
     return () => window.clearTimeout(timer);
   }, [leaving]);
   const host = program.link === undefined ? undefined : URL.parse(program.link)?.host;
@@ -159,8 +140,7 @@ const Ticker = (props: { program: OnAir }) => {
   );
 };
 
-const channelNumber = (channel: ChannelSummary): string =>
-  `CH ${String(channel.number).padStart(2, "0")}`;
+const channelNumber = (channel: ChannelSummary) => `CH ${String(channel.number).padStart(2, "0")}`;
 
 interface OffAirPanelProps {
   reason: string;
@@ -246,13 +226,14 @@ const StatusCaption = ({ program, urlError, tuning }: StatusCaptionProps) => {
   if (program !== undefined) {
     return <Ticker program={program} />;
   }
+
   if (urlError !== undefined) {
     return <span className="truncate select-text">{urlError}</span>;
   }
+
   return <span className="truncate">{tuning ? "Tuning in…" : "No signal"}</span>;
 };
 
-/** The badge at the status bar's right: on air live, or a replay, off air when the live signal dropped. */
 const ScreenBadge = ({ screen }: { screen: ScreenState }) => {
   if (screen.status === "live") {
     return (
@@ -261,9 +242,11 @@ const ScreenBadge = ({ screen }: { screen: ScreenState }) => {
       </div>
     );
   }
+
   if (screen.status !== "replay") {
     return null;
   }
+
   if (screen.liveDown === undefined) {
     return (
       <div className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase">
@@ -271,6 +254,7 @@ const ScreenBadge = ({ screen }: { screen: ScreenState }) => {
       </div>
     );
   }
+
   return (
     <div
       className="status-field min-w-16 shrink-0 justify-center whitespace-nowrap tracking-widest uppercase"
@@ -289,12 +273,10 @@ const TvScreen = (props: ScreenProps) => {
   const [paused, setPaused] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  // The test stream stands in for fal, so it counts as fal being there. It
-  // is read off the URL, which the server render cannot see.
+
   const testStream = useSyncExternalStore(
-    () => () => {
-      /* empty */
-    },
+    // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
+    () => () => {},
     testStreamRequested,
     () => false,
   );
@@ -304,10 +286,13 @@ const TvScreen = (props: ScreenProps) => {
       if (event.code !== "Space" && event.key !== "k") {
         return;
       }
+
       event.preventDefault();
       setPaused((value) => !value);
     };
+
     window.addEventListener("keydown", onKey);
+
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
@@ -338,7 +323,6 @@ const TvScreen = (props: ScreenProps) => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col p-1">
-        {/* The screen itself: a sunken well in the plastic. */}
         <div className="bevel-in relative min-h-0 w-full flex-1 overflow-hidden bg-screen">
           {surface === "live" && liveReady && (
             <LiveScreen
@@ -382,7 +366,6 @@ const TvScreen = (props: ScreenProps) => {
           )}
         </div>
 
-        {/* Status bar: caption and controls in one strip, browser-style. */}
         <div className="status-bar mt-1 flex shrink-0 items-center gap-px px-1 pt-1 pb-0.5">
           <PlaybackControls
             playing={playing}
@@ -472,17 +455,15 @@ export interface TvProps {
   urlError?: string;
 }
 
-/** Wraps in both directions: ch− on CH 01 lands on the last channel. */
-const channelAt = (channels: ChannelSummary[], tuned: number): ChannelSummary => {
+const channelAt = (channels: ChannelSummary[], tuned: number) => {
   const count = channels.length;
+
   return channels[((tuned % count) + count) % count] ?? PUBLIC_CHANNEL;
 };
 
 export const Tv = (props: TvProps) => {
   const [tuned, setTuned] = useState(0);
   const [muted, setMuted] = useState(true);
-  // The lineup as last told by the station; the sources dialog updates it
-  // without a reload.
   const [lineup, setLineup] = useState<ChannelSummary[] | undefined>();
 
   if (props.session === undefined) {
@@ -506,8 +487,6 @@ export const Tv = (props: TvProps) => {
   const channels = lineup ?? props.session.channels;
   const channel = channelAt(channels, tuned);
 
-  // A channel change remounts the screen: the session, the players and the
-  // ticker are all bound to the channel they were opened for.
   return (
     <TvScreen
       key={channel.sourceId}

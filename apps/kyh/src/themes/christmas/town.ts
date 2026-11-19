@@ -1,4 +1,3 @@
-// How the showcase's town dresses for Christmas (`Town` in city/town-theme.ts).
 import { santaTrim } from "@/app/showcase/_components/city/blimp";
 import { santaHat } from "@/app/showcase/_components/city/hats";
 import { townTree } from "@/app/showcase/_components/city/decor-giants";

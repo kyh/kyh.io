@@ -1,6 +1,3 @@
-// What the buildings do while you watch: the invader marches, letters drift
-// off and vanish, the dish scans, Clawd runs laps, a rocket goes up now and
-// then, the TV flips channels, and the ticker and the books only ever go up.
 import type { Group } from "three";
 
 import type { Built, LiveScreen } from "./render";
@@ -16,9 +13,8 @@ const GONE = 43;
 /** The moving parts and screens of every built sketch, by name. */
 export type Rig = Pick<Built, "parts" | "screens">;
 
-/** Screens are grey too, as the rest of the town is, until their building is lit. */
-const toneFor = (colorful: boolean, scheme: Scheme): Tint =>
-  colorful ? (hex) => hex : (hex) => greyIn(hex, scheme);
+const toneFor = (colorful: boolean, scheme: Scheme) =>
+  (colorful ? (hex) => hex : (hex) => greyIn(hex, scheme)) satisfies Tint;
 
 const family = (built: Rig, prefix: string) =>
   [...built.parts.entries()]
@@ -26,27 +22,32 @@ const family = (built: Rig, prefix: string) =>
     .toSorted(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
     .map(([, group]) => group);
 
-/** A point and heading at distance `s` around the stadium track. */
 const aroundTrack = (s: number, radius: number) => {
   const { straight } = TRACK;
   const bend = Math.PI * radius;
   const total = straight * 2 + bend * 2;
   const d = ((s % total) + total) % total;
+
   if (d < straight) {
     return { heading: 0, x: -straight / 2 + d, z: radius };
   }
+
   if (d < straight + bend) {
     const angle = Math.PI / 2 - (d - straight) / radius;
+
     return {
       heading: angle - Math.PI / 2,
       x: straight / 2 + Math.cos(angle) * radius,
       z: Math.sin(angle) * radius,
     };
   }
+
   if (d < straight * 2 + bend) {
     return { heading: Math.PI, x: straight / 2 - (d - straight - bend), z: -radius };
   }
+
   const angle = -Math.PI / 2 - (d - straight * 2 - bend) / radius;
+
   return {
     heading: angle - Math.PI / 2,
     x: -straight / 2 + Math.cos(angle) * radius,
@@ -66,9 +67,11 @@ const drawTicker = (screen: LiveScreen, time: number, tone: Tint) => {
   context.fillStyle = tone("#6fe39a");
   const { width } = context.measureText(TICKER);
   const offset = (time * 46) % width;
+
   for (let x = -offset; x < canvas.width; x += width) {
     context.fillText(TICKER, x, canvas.height * 0.55);
   }
+
   screen.texture.needsUpdate = true;
 };
 
@@ -78,8 +81,8 @@ const drawTelevision = (screen: LiveScreen, time: number, tone: Tint) => {
   const { canvas, context } = screen;
   const { width, height } = canvas;
   const channel = Math.floor(time / 3) % 3;
+
   if (channel === 0) {
-    // Static between channels.
     for (let y = 0; y < height; y += 4) {
       for (let x = 0; x < width; x += 4) {
         const shade = Math.floor(Math.random() * 200 + 40);
@@ -92,6 +95,7 @@ const drawTelevision = (screen: LiveScreen, time: number, tone: Tint) => {
       context.fillStyle = tone(color);
       context.fillRect((index * width) / BARS.length, 0, width / BARS.length + 1, height);
     }
+
     context.fillStyle = "#111";
     context.fillRect(0, height * 0.7, width, height * 0.3);
     context.fillStyle = "#f4f4ef";
@@ -100,7 +104,6 @@ const drawTelevision = (screen: LiveScreen, time: number, tone: Tint) => {
     context.fillText("CH 01", width / 2, height * 0.9);
     context.textAlign = "start";
   } else {
-    // Whatever the feed is dreaming up: a sun over rolling hills.
     const sky = context.createLinearGradient(0, 0, 0, height);
     sky.addColorStop(0, tone("#ffb27a"));
     sky.addColorStop(1, tone("#ffe7a8"));
@@ -119,19 +122,20 @@ const drawTelevision = (screen: LiveScreen, time: number, tone: Tint) => {
     context.fillStyle = tone("#4f8f6a");
     context.beginPath();
     context.moveTo(0, height);
+
     for (let x = 0; x <= width; x += 4) {
       context.lineTo(x, height * 0.72 + Math.sin(x / 9 + time) * height * 0.06);
     }
+
     context.lineTo(width, height);
     context.fill();
   }
+
   screen.texture.needsUpdate = true;
 };
 
-/** What the company's made so far: it only ever goes up. */
 const earnings = (time: number) => `$${Math.floor(1200 + time * 37).toLocaleString("en-US")}`;
 
-/** The computer on IdleBiz's roof: its own app window, the books ticking over. */
 const drawLedger = (screen: LiveScreen, time: number, tone: Tint) => {
   const { canvas, context } = screen;
   const { width, height } = canvas;
@@ -140,12 +144,14 @@ const drawLedger = (screen: LiveScreen, time: number, tone: Tint) => {
   context.fillRect(0, 0, width, height);
   context.fillStyle = tone("#475079");
   context.fillRect(0, 0, width, bar);
+
   for (const [index, color] of ["#e0645a", "#ebb04a", "#5cb867"].entries()) {
     context.fillStyle = tone(color);
     context.beginPath();
     context.arc(bar * (0.6 + index * 0.7), bar / 2, bar * 0.22, 0, Math.PI * 2);
     context.fill();
   }
+
   context.fillStyle = tone("#4280dd");
   context.fillRect(width * 0.08, bar + height * 0.12, width * 0.84, height * 0.52);
   context.font = `700 ${height * 0.3}px ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -154,6 +160,7 @@ const drawLedger = (screen: LiveScreen, time: number, tone: Tint) => {
   const text = earnings(time);
   const textY = bar + height * 0.38;
   context.fillText(text, width * 0.13, textY);
+
   if (time % 1 < 0.5) {
     const { width: textWidth } = context.measureText(text);
     context.fillRect(
@@ -163,6 +170,7 @@ const drawLedger = (screen: LiveScreen, time: number, tone: Tint) => {
       height * 0.24,
     );
   }
+
   screen.texture.needsUpdate = true;
 };
 
@@ -173,7 +181,7 @@ export interface Animations {
 
 const base = (groups: readonly Group[]) => groups.map((group) => group.position.clone());
 
-export const createAnimations = (built: Rig, { launches }: { launches: boolean }): Animations => {
+export const createAnimations = (built: Rig, { launches }: { launches: boolean }) => {
   const frames = family(built, "vibedgames:frame:");
   const letters = family(built, "yourssincerely:letter:");
   const letterBase = base(letters);
@@ -199,6 +207,7 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
   const flyLetters = (time: number) => {
     for (const [index, letter] of letters.entries()) {
       const origin = letterBase[index];
+
       if (origin) {
         const t = (((time / 7 + index / letters.length) % 1) + 1) % 1;
         letter.position.set(
@@ -206,7 +215,6 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
           origin.y + t * 1.9,
           origin.z - t * 0.3,
         );
-        // Written in disappearing ink: each letter shrinks to nothing.
         const size = t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.85) ** 0.6;
         letter.scale.setScalar(Math.max(0.001, size));
       }
@@ -216,6 +224,7 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
   const runLaps = (time: number) => {
     for (const [index, runner] of runners.entries()) {
       const origin = runnerBase[index];
+
       if (origin) {
         const lane = TRACK.radius + 0.25 - index * 0.2;
         const pose = aroundTrack(time * (1.15 + index * 0.12) + index * 2.2, lane);
@@ -233,13 +242,16 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
     if (!rocket || !rocketBase) {
       return;
     }
+
     const phase = launches ? time % LAUNCH_PERIOD : 0;
     const burning = phase >= IGNITION && phase < GONE;
     rocket.visible = phase < GONE;
+
     if (flame) {
       flame.visible = burning;
       flame.scale.set(1, 0.8 + Math.random() * 0.5, 1);
     }
+
     const climb = phase >= LIFTOFF ? 0.55 * (phase - LIFTOFF) ** 2 : 0;
     const shake = burning && phase < LIFTOFF + 1 ? (Math.random() - 0.5) * 0.03 : 0;
     rocket.position.set(rocketBase.x + shake, rocketBase.y + climb, rocketBase.z);
@@ -248,47 +260,61 @@ export const createAnimations = (built: Rig, { launches }: { launches: boolean }
   return {
     update: (time, lit, scheme) => {
       const frame = Math.floor(time / 0.6) % 2;
+
       for (const [index, group] of frames.entries()) {
         group.visible = index === frame;
       }
+
       flyLetters(time);
+
       if (capsule) {
         capsule.position.y = capsuleY + Math.sin(time * 1.3) * 0.1;
       }
+
       if (dish) {
         dish.rotation.y = time * 0.7;
       }
+
       runLaps(time);
       launch(time);
+
       for (const beacon of beacons) {
         beacon.visible = time % 1.6 < 0.8;
       }
+
       for (const [index, blade] of blades.entries()) {
         blade.rotation.z = -time * (index % 2 === 0 ? 0.9 : 0.6);
       }
+
       for (const [index, dot] of dots.entries()) {
         const origin = dotBase[index];
+
         if (origin) {
           dot.position.y = origin.y + Math.max(0, Math.sin(time * 5 - index * 0.7)) * 0.09;
         }
       }
+
       if (camera) {
         camera.rotation.y = Math.sin(time * 0.45) * 1.1 + 2;
       }
+
       if (ticker) {
         drawTicker(ticker, time, toneFor(lit("stonksville"), scheme));
       }
-      // The TV refreshes at broadcast-ish rates, not every frame.
+
       const tvFrame = Math.floor(time * 12);
+
       if (tv && tvFrame !== lastTv) {
         lastTv = tvFrame;
         drawTelevision(tv, time, toneFor(lit("autoplay"), scheme));
       }
+
       const ledgerFrame = Math.floor(time * 4);
+
       if (ledger && ledgerFrame !== lastLedger) {
         lastLedger = ledgerFrame;
         drawLedger(ledger, time, toneFor(lit("idlebiz"), scheme));
       }
     },
-  };
+  } satisfies Animations;
 };

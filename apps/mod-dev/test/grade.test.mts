@@ -26,11 +26,9 @@ fix: use a class here | best practice`;
 const sources = (fix: string) =>
   parseGrade(`${ANSWER}\nfix: ${fix}`)?.fixes.map((one) => one.source);
 
-const grade = (
-  scores: [number, number, number, number],
-  level: Grade["risk"]["level"] = "low",
-): Grade => {
+const grade = (scores: [number, number, number, number], level: Grade["risk"]["level"] = "low") => {
   const [confidence, idiomatic, simplicity, scope] = scores;
+
   return {
     fixes: [],
     risk: { level, why: "" },
@@ -67,6 +65,7 @@ describe("parseGrade", () => {
     const parsed = parseGrade(
       "Here you go:\n- **Confidence**: 7/10 — fresh tests\n- idiomatic: 8 - ok\n- simplicity: 12 : long\n- scope: 9\n- Risk: HIGH — migration",
     );
+
     assert.equal(parsed?.scores.confidence.score, 7);
     assert.equal(parsed?.scores.confidence.why, "fresh tests");
     assert.equal(parsed?.scores.simplicity.score, 10);
@@ -124,6 +123,7 @@ describe("scorecardOf", () => {
   it("draws the verdict, a row per dimension, the fixes, the checks and the footer", () => {
     const parsed = parseGrade(ANSWER.replace("both asks done", "a | b"));
     assert.ok(parsed);
+
     const card = scorecardOf(
       parsed,
       [
@@ -132,6 +132,7 @@ describe("scorecardOf", () => {
       ],
       "verified: static ✓",
     );
+
     assert.match(card, /^\*\*fix first\*\* · confidence 6 < 8 for medium risk\n/u);
     assert.match(
       card,
@@ -183,6 +184,7 @@ describe("what the grader reads", () => {
       ledger: ledgerOf([], "/repo"),
       reply: replyOf(rows),
     });
+
     assert.match(prompt, /<requests>\n1\. Add a \/health route\n<\/requests>/u);
     assert.match(prompt, /<reply>\nAdded it\. Tests pass\.\n<\/reply>/u);
     assert.match(prompt, /<ledger>\nNo edits through tools in 0 tool calls\./u);

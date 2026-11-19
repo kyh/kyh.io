@@ -1,11 +1,3 @@
-// How the dragon gets about (`dragon.ts`): it swims. It has a heading and a
-// speed and goes only along its nose, steering no tighter than a turning
-// radius, so it can't pivot, stop short or swing round on the spot: a turn is
-// a curve its body then lies along (`dragon-trail.ts`). A turn past a certain
-// size is committed to, one way, till it's done. Stepped in fixed pieces, so
-// its path is the same at any frame rate. On the ground: x along the screen,
-// z toward the camera (a screen pixel down is 1 / sin(PITCH) of it), in its
-// pixels. Pure (state is stepped in place, for a frame's sake).
 import type { Spring } from "../follower/solid";
 import type { Mark, Trail } from "./dragon-trail";
 import { PITCH, smooth, springAt, stepSpring } from "../follower/solid";
@@ -44,34 +36,30 @@ export interface Swim {
 
 /** Seconds a step: fine enough that it's stepped at least once in a 240Hz frame. */
 export const STEP = 1 / 240;
-/** Fastest it goes on the screen, pixels a second: straight up it, that's far more of the ground. */
 const TOP = 560;
-/** How hard it speeds up and brakes, screen pixels a second squared. */
 const SPEEDS_UP = 900;
 const BRAKES = 2400;
+
 /** How hard it turns at most (radians a second), and how quickly it takes up a turn (a second). */
 export const MOST_TURN = 6.5;
 const TAKES_TURN = 16;
-/** How much of how far it's off its heading it turns by, a second. */
 const STEERS = 8;
-/** Off by more than this it commits to a way round; within this it's come round. */
 const COMMIT = 2.2;
 const COMPLETE = 1;
-/** Ground pixels of one whole weave. */
 const WEAVE_LENGTH = 104;
 
 const SIN = Math.sin(PITCH);
 
 export const wrap = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
-/** How much of a ground pixel going this way shows on the screen. */
 const shownOf = (heading: number) => Math.hypot(Math.cos(heading), Math.sin(heading) * SIN);
 
 /** Its top speed on the ground this way. */
 export const topOf = (heading: number) => TOP / shownOf(heading);
 
-export const createSwim = (x: number, z: number, heading: number, reach: number): Swim => {
+export const createSwim = (x: number, z: number, heading: number, reach: number) => {
   const head: Mark = { h: 0, roll: 0, x, z };
+
   return {
     committed: 0,
     h: springAt(0),
@@ -83,23 +71,24 @@ export const createSwim = (x: number, z: number, heading: number, reach: number)
     weave: 0,
     x,
     z,
-  };
+  } satisfies Swim;
 };
 
-/** How far it has to turn, the way it's committed to if it's in a big turn. */
 const offOf = (swim: Swim, goal: number) => {
   const off = wrap(goal - swim.heading);
   const size = Math.abs(off);
+
   if (size < COMPLETE) {
     swim.committed = 0;
   } else if (size > COMMIT && swim.committed === 0) {
-    // Already turning, it carries on that way; else round by the camera, so its face shows.
     const through = Math.abs(swim.turn) > 1 ? swim.turn : wrap(Math.PI / 2 - swim.heading);
     swim.committed = through >= 0 ? 1 : -1;
   }
+
   if (swim.committed !== 0 && Math.sign(off) !== swim.committed) {
     return off + swim.committed * Math.PI * 2;
   }
+
   return off;
 };
 
@@ -109,9 +98,7 @@ export const stepSwim = (swim: Swim, course: Course, h: number) => {
   const most = Math.min(MOST_TURN, Math.max(swim.speed, 16) / course.radius);
   const want = Math.max(-most, Math.min(most, off * STEERS));
   swim.turn += (want - swim.turn) * (1 - Math.exp(-TAKES_TURN * h));
-  // Stopped, it can't turn: it has to swim round.
   swim.heading = wrap(swim.heading + swim.turn * Math.min(1, swim.speed / 16) * h);
-  // Slowing for a sharp turn, so it's a curve and not a skid.
   const easing = 1 - 0.4 * smooth((Math.abs(off) - 0.7) / 1.5);
   const goal = Math.min(course.speed * easing, topOf(swim.heading) * 1.4);
   const shown = shownOf(swim.heading);

@@ -1,14 +1,5 @@
 "use client";
 
-// What follows a mouse on St. Patrick's Day: a leprechaun (`leprechaun.ts`),
-// built in the round (`leprechaun-pose.ts`) and drawn in the showcase town's
-// hand as the theme's pieces are (`piece.tsx`): flat faces, each solid's side
-// from the light in its shade under the shade dots, ink round the outside. A
-// green coat with its tails in the darker green under the shade dots, a black belt and gold
-// buckles, green breeches, white stockings, black shoes, a red beard and hair,
-// a buckled green hat, and a gold coin to flip. Each `data-layer` is one part
-// the stage stacks by how near the camera it is; each `data-part` is posed a
-// frame at a time.
 import type { Token } from "@/app/showcase/_components/city/palette";
 import { useSvgId } from "@/lib/svg-id";
 import { filled, stroked } from "../follower/ink";
@@ -18,23 +9,13 @@ import { ShadeDots } from "../piece";
 import { leprechaun } from "./leprechaun";
 import { SIZE } from "./leprechaun-acts";
 
-/** Ink `width` screen pixels wide, as the ghost's is, though he's drawn bigger (`SIZE`). */
 const inked = (width: number) => width / SIZE;
 
-/** Up and to the left, where the town's light comes from. */
 const LIGHT = { x: -0.55, y: -0.83 };
-/** Ink round a limb drawn as a thick line: this much wider than it. */
 const LIMB_INK = inked(1.5);
 
-/** The lit side of a part: the part moved `by` toward the light. */
 const toLight = (by: number) => `translate(${LIGHT.x * by} ${LIGHT.y * by})`;
 
-/**
- * A solid of any outline (a beard, a hat's crown) drawn as the town draws
- * one: all of it in its shade under the shade dots, then itself moved toward
- * the light in its color, kept inside it, so the shade's left a crescent on
- * the far side.
- */
 const Shaded = ({
   name,
   id,
@@ -63,7 +44,6 @@ const Shaded = ({
   </>
 );
 
-/** A limb drawn as a thick line, inked, its shaded side toward the far side from the light. */
 const Limb = ({
   name,
   width,
@@ -102,6 +82,7 @@ const Arm = ({ index }: { index: number }) => (
 
 export const Follower = () => {
   const id = useSvgId("leprechaun");
+
   return (
     <Stage creature={leprechaun} box={{ height: 140, width: 140, x: -70, y: -115 }} size={SIZE}>
       <defs>
@@ -109,7 +90,6 @@ export const Follower = () => {
       </defs>
       {[0, 1].map((index) => (
         <g key={`tail-${index}`} data-layer={`tail-${index}`}>
-          {/* Darker than his breeches, all under the shade dots: a flap of coat, not a leg. */}
           <path data-part={`tail-${index}`} style={filled("festiveGreenShade")} />
           <path data-part={`tail-${index}`} fill={`url(#${id}-dots)`} />
           <path data-part={`tail-${index}`} style={stroked(inked(0.9))} />
@@ -129,7 +109,6 @@ export const Follower = () => {
       <g data-layer="head">
         <Solid name="head" id={id} fill="skin" shade="skinDark" ink={inked(1)} />
         <Shaded name="hair" id={id} fill="pumpkin" shade="pumpkinShade" by={1.1} ink={inked(0.7)} />
-        {/* His ears, standing out from his head over his hair (and under his beard, on the face). */}
         {[0, 1].map((index) => (
           <g key={`ear-${index}`} data-part={`ear-${index}-shown`}>
             <path data-part={`ear-${index}`} style={filled("skin")} />
@@ -138,7 +117,6 @@ export const Follower = () => {
         ))}
       </g>
       <g data-layer="face">
-        {/* Ink round the jaw's beard and its point together, under both, so the seam's covered. */}
         <path data-part="beard" style={stroked(inked(2))} />
         <path data-part="tuft" style={stroked(inked(2))} />
         <Shaded name="beard" id={id} fill="pumpkin" shade="pumpkinShade" by={0.7} />

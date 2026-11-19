@@ -8,6 +8,7 @@ export const getIncidents = async (data: { offset?: number; limit?: number }) =>
   cacheTag("incidents");
   const limit = data.limit ?? 10;
   const offset = data.offset ?? 0;
+
   const results = await db.query.incidents.findMany({
     limit: limit + 1,
     offset,
@@ -19,7 +20,9 @@ export const getIncidents = async (data: { offset?: number; limit?: number }) =>
     where: { deletedAt: { isNull: true }, reportCount: { lt: 3 }, status: "approved" },
     with: { videos: true },
   });
+
   const hasMore = results.length > limit;
+
   return {
     incidents: results.slice(0, limit),
     nextOffset: hasMore ? offset + limit : undefined,
