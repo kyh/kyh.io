@@ -80,7 +80,7 @@ export const buildStructuredData = () =>
       {
         "@id": PERSON_ID,
         "@type": "Person",
-        alternateName: ["Kai", "Kai-Yu Hsu", "Kai Hsu", siteConfig.shortName],
+        alternateName: ["Kai", "Kai-Yu Hsu", "Kai Yu Hsu", "Kai Hsu", siteConfig.shortName],
         description: siteConfig.description,
         email: `mailto:${siteConfig.email}`,
         image: `${siteConfig.url}/og.jpg`,
