@@ -1,12 +1,14 @@
 export const siteConfig = {
   creator: "@kaiyuhsu",
   description:
-    "Building things for the interwebs. By day, I get to do that through investing, advising, and working on products you may not have heard of (yet)",
+    "Kaiyu Hsu (Kai, @kyh) works on engineering and research at Sequoia Capital. Previously Vercel, Google and Amazon. Builds Vibedgames, UICapsule, Yours Sincerely and more.",
   email: "kai@kyh.io",
   name: "Kaiyu Hsu",
   shortName: "kyh",
   /** The site, as distinct from `name` — the person. */
   siteName: "kyh.io",
+  /** The homepage and share-card title: the name plus what sets it apart in search. */
+  title: "Kaiyu Hsu — Engineering & Research at Sequoia",
   url: process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.kyh.io",
 };
 

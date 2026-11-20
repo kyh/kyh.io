@@ -61,14 +61,14 @@ export interface PageMetadataInput {
  * Next shallow-merges `metadata`, so a page that sets `openGraph` replaces the
  * layout's entirely — including the image and the video. Build the whole
  * object here so every page keeps `og:image`, `og:video`, `og:type` and a
- * canonical URL. The homepage's title is the site's name alone, not "Home | …".
+ * canonical URL. The homepage's title is `siteConfig.title`, not "Home | …".
  *
  * Every page shares one picture: the site's clip as `og:video` and its poster
  * as `og:image`, so any link to the site unfurls as the same town.
  */
 export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo) => {
   const isHome = content.path === "/";
-  const title = isHome ? siteConfig.name : `${content.title} | ${siteConfig.name}`;
+  const title = isHome ? siteConfig.title : `${content.title} | ${siteConfig.name}`;
 
   return {
     alternates: { canonical: content.path },
@@ -83,7 +83,7 @@ export const buildPageMetadata = (content: PageMetadataInput, video: SiteVideo) 
       url: content.path,
       videos: [ogVideoOf(video)],
     },
-    title: isHome ? { absolute: siteConfig.name } : content.title,
+    title: isHome ? { absolute: siteConfig.title } : content.title,
     twitter: {
       card: "summary_large_image",
       creator: siteConfig.creator,
