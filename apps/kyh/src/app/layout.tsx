@@ -58,7 +58,7 @@ export const generateMetadata = async () => {
       images: [video.poster],
       locale: "en-US",
       siteName: siteConfig.name,
-      title: siteConfig.name,
+      title: siteConfig.title,
       type: "website",
       url: siteConfig.url,
       videos: [ogVideoOf(video)],
@@ -67,7 +67,7 @@ export const generateMetadata = async () => {
       "apple-mobile-web-app-title": siteConfig.shortName,
     },
     title: {
-      default: siteConfig.name,
+      default: siteConfig.title,
       template: `%s | ${siteConfig.name}`,
     },
     twitter: {
@@ -75,7 +75,7 @@ export const generateMetadata = async () => {
       creator: siteConfig.creator,
       description: siteConfig.description,
       images: [video.poster],
-      title: siteConfig.name,
+      title: siteConfig.title,
     },
   } satisfies Metadata;
 };
