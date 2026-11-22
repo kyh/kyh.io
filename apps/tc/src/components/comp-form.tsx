@@ -19,9 +19,6 @@ const shareCalcTypeLabels = {
 };
 
 export const CompForm = ({ comp }: Props) => {
-  // `comp.updateData` reads the field state via closure, so it has to run after
-  // the edits that triggered it have been applied — hence the request counter
-  // rather than a direct call from the handlers.
   const [updateRequest, setUpdateRequest] = useState(0);
   const appliedRequest = useRef(0);
   const modalProps = useModal();
@@ -32,6 +29,7 @@ export const CompForm = ({ comp }: Props) => {
     if (appliedRequest.current === updateRequest) {
       return;
     }
+
     appliedRequest.current = updateRequest;
     comp.updateData();
   }, [comp, updateRequest]);

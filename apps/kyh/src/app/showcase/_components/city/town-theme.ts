@@ -1,13 +1,3 @@
-// What the town dresses in for a theme (each src/themes folder's `town.ts`,
-// listed in `TOWNS`). A theme decorates five kinds of spot the
-// town leaves open: beside the cottages' doors, a garden's open corner, round
-// the pond, the square and the ball courts, and the square's middle, for one
-// giant piece (the town's tree at Christmas, a skeleton at Halloween). Drawn
-// into a sketch of their own per view, so a theme change swaps them without
-// redrawing the town (engine.ts), and shown in color: the town is grey, its
-// decorations aren't. It can repaint the town itself, string lights, send
-// its people's emotes up, and dress the sky (the blimp's look, what flies
-// over), drawn by blimp.ts and sky.ts. Pure.
 import type { Random } from "@/lib/random";
 import type { ThemeId } from "@/themes";
 import { createRandom, hashString } from "@/lib/random";
@@ -16,15 +6,13 @@ import { TOWNS } from "@/themes/towns";
 import type { BlimpLook } from "./blimp";
 import type { Kind } from "./open-spots";
 import type { Emote } from "./overlay";
-import type { Repaint, Scheme, Time, Token } from "./palette";
+import type { Repaint, Time, Token, Scheme } from "./palette";
 import type { CityPlan } from "./plan";
 import type { Flyer } from "./sky";
-import type { Sketch } from "./sketch";
-import type { Steps } from "./steps";
+import type { Placed, Sketch } from "./sketch";
 import { eaveLights } from "./decor-props";
 import { KINDS, openSpots } from "./open-spots";
 
-/** How many spots are decorated between steps, when drawn over frames. */
 const SPOTS_A_STEP = 12;
 
 /** Something a theme puts at one spot. */
@@ -37,7 +25,9 @@ export type Prop = (sketch: Sketch, x: number, z: number, random: Random) => voi
  * the town is grey, as do any `vivid` tokens it keeps in their own colors; the
  * lights it strings round every cottage's eaves and along the blimp's back;
  * what its people send up (life.ts floats it); how the blimp looks and what
- * else flies over (sky-scene.ts flies both).
+ * else flies over (sky-scene.ts flies both); and the hat the site's logo
+ * wears (`hat`, in its own frame as hats.ts draws them, pictured off the
+ * showcase by picture.ts).
  */
 export interface Town extends Partial<Record<Kind, Prop>> {
   repaint?: Repaint;
@@ -46,6 +36,7 @@ export interface Town extends Partial<Record<Kind, Prop>> {
   emote?: Emote;
   blimp?: BlimpLook;
   flyer?: Flyer;
+  hat?: (hat: Placed) => void;
 }
 
 /** What the city is drawn in: day or night, and the theme, as the site shows them. */
@@ -55,7 +46,7 @@ export interface Setting {
 }
 
 /** A setting with its theme and town looked up, as the city paints it. */
-export const schemeOf = ({ theme, time }: Setting): Scheme => ({
+export const schemeOf: ({ theme, time }: Setting) => Scheme = ({ theme, time }) => ({
   theme: themeOf(theme),
   time,
   town: TOWNS[theme],
@@ -66,30 +57,34 @@ export const schemeOf = ({ theme, time }: Setting): Scheme => ({
  * since each kind of spot gets its own stream of chances.
  * @yields {void} every few spots, so it can be spread over frames.
  */
-export const decorSteps = function* decorSteps(
-  sketch: Sketch,
-  plan: CityPlan,
-  id: ThemeId,
-): Steps<void> {
+export const decorSteps = function* decorSteps(sketch: Sketch, plan: CityPlan, id: ThemeId) {
   const town = TOWNS[id];
   const spots = openSpots(plan);
+
   for (const kind of KINDS) {
     const prop = town[kind];
+
     if (!prop) {
       continue;
     }
+
     const random = createRandom(hashString(`${id}:${kind}`));
+
     for (const [index, [x, z]] of spots[kind].entries()) {
       prop(sketch, x, z, random);
+
       if (index % SPOTS_A_STEP === SPOTS_A_STEP - 1) {
         yield;
       }
     }
+
     yield;
   }
+
   if (town.lights) {
     for (const [index, house] of spots.houses.entries()) {
       eaveLights(sketch, house, town.lights);
+
       if (index % SPOTS_A_STEP === SPOTS_A_STEP - 1) {
         yield;
       }

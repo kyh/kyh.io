@@ -1,13 +1,3 @@
-// What a theme is: the config every theme's folder exports from its
-// `index.ts` as `theme`, one field per effect, each read where the effect
-// happens: the days it runs (the calendar), its light or dark and grey tint
-// (the page's paint), its piece and confetti (easter-egg finds), its glyph
-// (the theme toggle) and what falls across every page (`drift.tsx`). How the
-// showcase's town dresses is the folder's `town.ts` (`Town` in
-// city/town-theme.ts), kept apart so the town's drawing code loads only on
-// the showcase. A new effect is a field here (or on `Town`), a value in each
-// theme, and a read where it shows; a new theme is a folder and a line in
-// `index.ts` and `towns.ts`. Pure.
 import { colorNamed, GOLD } from "@/lib/color";
 import type { Art } from "./art";
 import type { Window } from "./calendar";
@@ -21,8 +11,17 @@ export interface GreyTint {
 /** The site's two color schemes, which every theme is one of. */
 export type Mode = "light" | "dark";
 
-/** What falls across every page: snow drifting down, or leaves tumbling. */
+/** How what falls across every page falls: snow drifting down, or leaves fluttering and tumbling. */
 export type Drift = "snow" | "leaves";
+
+/** What falls across every page, and the pieces it's made of, mixed (`drift.tsx`). */
+export interface Fall {
+  kind: Drift;
+  pieces: readonly Art[];
+}
+
+/** What hangs in the page's top corners: cobwebs, a spider on each. */
+export type Corners = "webs";
 
 /** One side of a bit of confetti and its flip side. */
 export interface ConfettiSide {
@@ -40,17 +39,19 @@ export interface Theme {
   mode: Mode | null;
   /** Null keeps the site's own slate. */
   tint: GreyTint | null;
-  /** What an easter-egg find throws, and what falls across the page if the theme has `drift`. */
+  /** What an easter-egg find throws. */
   art: Art;
   /** Its icon as a line drawing in the 24×24 box, stroked as the dock's other icons are; null (the default theme) wears the sun or moon. */
   glyph: string | null;
   confetti: readonly ConfettiSide[];
-  drift: Drift | null;
+  drift: Fall | null;
+  corners: Corners | null;
 }
 
 /** Confetti in the site's named colors (lib/color.ts): each name's color, its hue on the back. */
-export const namedConfetti = (...names: string[]): ConfettiSide[] =>
+export const namedConfetti = (...names: string[]) =>
   names.map((name) => {
     const look = colorNamed(name) ?? GOLD;
+
     return { back: look.hue, front: look.color };
   });

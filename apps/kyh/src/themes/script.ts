@@ -1,19 +1,9 @@
-// Paints the theme onto the page before first paint, so it doesn't load in
-// the wrong light or slate (or the browser's bar in the wrong color) and turn
-// at hydration: the calendar's theme, with its own light or dark, else the
-// visitor's kept light or dark, else their system's. The page can't run the
-// calendar yet, so its windows are worked out here for a span of years; past
-// it, the store (store.ts) still paints the page once it runs. Pure.
 import { BAR_SELECTOR, barColor, CHROMA_PROPERTY, HUE_PROPERTY, MODE_KEY } from "./paint";
 import { DEFAULT_THEME, THEMES, windowIn } from "./index";
 
 const FIRST_YEAR = 2026;
 const LAST_YEAR = 2036;
 
-/**
- * Every theme's windows in some years, flat as [from, to, theme index, …],
- * first theme first so the first match runs.
- */
 const windowsBetween = (first: number, last: number) =>
   THEMES.flatMap((theme, index) =>
     Array.from({ length: last - first + 1 }, (_, offset) => windowIn(theme, first + offset))
@@ -23,7 +13,6 @@ const windowsBetween = (first: number, last: number) =>
 
 const tints = THEMES.map(({ id, tint }) => (tint ? [id, tint.hue, tint.chroma] : null));
 const modes = THEMES.map(({ mode }) => mode);
-/** Each theme's bar, by light and by dark. */
 const bars = THEMES.map(({ tint }) => [barColor("light", tint), barColor("dark", tint)]);
 const plain = THEMES.findIndex(({ id }) => id === DEFAULT_THEME);
 

@@ -48,40 +48,19 @@ const colorSchemes = {
   ],
 };
 
-// static d3 setup
 const margin = {
   bottom: 10,
   left: 10,
   right: 10,
   top: 10,
 };
-// this should be dynamic, espcially with the numbers only growing each day.
-// for now there is just a scale for each of the fields.
-
-/*
-const limit = [
-  1,
-  5,
-  10,
-  25,
-  50,
-  100,
-  250,
-  500,
-  1000,
-  2500,
-  5000,
-  10000,
-  25000,
-  50000,
-]
-*/
 
 const colorLimits = {
   death: [5, 10, 25, 50, 100, 250, 500],
   positive: [100, 250, 500, 1000, 2500, 5000, 10_000],
   totalTestResults: [1000, 5000, 7500, 10_000, 12_500, 15_000, 25_000],
 };
+
 const { 3: strokeWhite, 6: strokeGrey } = colorSchemes.gray;
 
 const getColor = {
@@ -108,17 +87,20 @@ const States = ({
   getValue,
   path,
 }) => {
-  // below function should use getValue
   const getColorFromFeature = (d) => {
     if (!useChoropleth) {
       return "transparent";
     }
+
     const value = getValue(d) || 0;
     const normalizationPopulation = 1_000_000;
     const normalizedValue = value / (d.properties.population / normalizationPopulation);
+
     return getColor[currentField](normalizedValue);
   };
+
   const strokeColor = useChoropleth ? getStrokeColor[currentField] : strokeGrey;
+
   const states = geoJson.features.map((d) => (
     <path
       key={`path${d.properties.NAME}`}
@@ -135,6 +117,7 @@ const States = ({
       }}
     />
   ));
+
   return (
     <>
       <g>{states}</g>
@@ -152,7 +135,6 @@ const States = ({
 };
 
 const Bubbles = ({ geoJson, r, getValue }) => {
-  // filter out "states" outside of render area (should be hoisted)
   const features = geoJson.features.filter((d) => d.properties.centroidCoordinates[0]);
 
   const createBubble = (d, i, property) => {
@@ -161,6 +143,7 @@ const Bubbles = ({ geoJson, r, getValue }) => {
       cy: d.properties.centroidCoordinates[1],
       r: r(getValue(d, property)),
     };
+
     return (
       <circle
         key={property + i}
@@ -170,8 +153,10 @@ const Bubbles = ({ geoJson, r, getValue }) => {
       />
     );
   };
+
   const testBubbles = features.map((d, i) => createBubble(d, i, "totalTestResults"));
   const positiveBubbles = features.map((d, i) => createBubble(d, i, "positive"));
+
   return (
     <>
       <g className="test-bubbles">{testBubbles}</g>
@@ -188,6 +173,7 @@ const BubbleLegend = ({ r, maxValue, width, height }) => {
     formatLegendEntry(maxValue * 0.5),
     formatLegendEntry(maxValue),
   ];
+
   const legendBubbles = legendData.map((d) => (
     <circle
       key={`legendBubbles${d}`}
@@ -198,6 +184,7 @@ const BubbleLegend = ({ r, maxValue, width, height }) => {
       fill="none"
     />
   ));
+
   const legendLines = legendData.map((d) => (
     <line
       key={`legendLines${d}`}
@@ -209,6 +196,7 @@ const BubbleLegend = ({ r, maxValue, width, height }) => {
       strokeDasharray="5 5"
     />
   ));
+
   const legendText = legendData.map((d) => (
     <text
       key={`legendText${d}`}
@@ -220,6 +208,7 @@ const BubbleLegend = ({ r, maxValue, width, height }) => {
       {formatNumber(d)}
     </text>
   ));
+
   return (
     <svg width={width} height={height} style={{ overflow: "visible" }}>
       {legendBubbles}
@@ -239,6 +228,7 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
   const totalTestResultsNorm = getValue(d, "totalTestResults", true);
   const death = getValue(d, "death");
   const deathNorm = getValue(d, "death", true);
+
   return (
     <div
       className="bg-opacity-75 pointer-events-none absolute rounded-md bg-gray-800 p-2 shadow-sm"
@@ -291,6 +281,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
       ],
       StatesWithPopulation,
     );
+
     return geoPath().projection(projection);
   }, []);
 
@@ -298,6 +289,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
     if (!rawStateData || !rawStateData.length || !path) {
       return null;
     }
+
     const createMapFromArray = (array, keyField, valueField = null) =>
       Object.assign(
         {},
@@ -305,10 +297,13 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
           [a[keyField]]: valueField ? a[valueField] : a,
         })),
       );
+
     const groupedByState = nest()
       .key((d) => d.state)
       .entries(rawStateData);
+
     const stateMap = createMapFromArray(groupedByState, "key", "values");
+
     const joinedFeatures = StatesWithPopulation.features.map((feature) => ({
       ...feature,
       properties: {
@@ -317,11 +312,14 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
         dailyData: createMapFromArray(stateMap[feature.properties.STUSPS], "date"),
       },
     }));
+
     const tempData = { ...StatesWithPopulation, features: joinedFeatures };
+
     return tempData;
   }, [rawStateData, path]);
 
   const [hoveredState, setHoveredState] = useState(null);
+
   const maxValue = useMemo(
     () =>
       data &&
@@ -332,6 +330,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
       ),
     [data],
   );
+
   const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
 
   return (

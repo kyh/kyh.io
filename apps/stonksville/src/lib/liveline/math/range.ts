@@ -17,6 +17,7 @@ export const computeRange = (
     if (p.value < targetMin) {
       targetMin = p.value;
     }
+
     if (p.value > targetMax) {
       targetMax = p.value;
     }
@@ -25,15 +26,16 @@ export const computeRange = (
   if (currentValue < targetMin) {
     targetMin = currentValue;
   }
+
   if (currentValue > targetMax) {
     targetMax = currentValue;
   }
 
-  // Include reference line so it's always visible
   if (referenceValue !== undefined) {
     if (referenceValue < targetMin) {
       targetMin = referenceValue;
     }
+
     if (referenceValue > targetMax) {
       targetMax = referenceValue;
     }

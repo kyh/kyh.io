@@ -44,7 +44,7 @@ interface EditModeProps {
 
 type IncidentModalProps = CreateModeProps | EditModeProps;
 
-const withoutKey = (errors: Record<number, string>, key: number): Record<number, string> =>
+const withoutKey = (errors: Record<number, string>, key: number) =>
   Object.fromEntries(Object.entries(errors).filter(([k]) => Number(k) !== key));
 
 export const IncidentModal = (props: IncidentModalProps) => {
@@ -55,7 +55,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [videoError, setVideoError] = useState("");
 
-  // Video URL inputs for create mode
   const [inputKeys, setInputKeys] = useState([0]);
   const [urlErrors, setUrlErrors] = useState<Record<number, string>>({});
   const nextKeyRef = useRef(1);
@@ -69,7 +68,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
     onClose();
   };
 
-  // Create mode: video URL management
   const addVideoUrl = () => {
     setInputKeys([...inputKeys, nextKeyRef.current]);
     nextKeyRef.current += 1;
@@ -91,32 +89,38 @@ export const IncidentModal = (props: IncidentModalProps) => {
     }
   };
 
-  // Edit mode: add video
   const handleAddVideo = async () => {
     if (mode !== "edit") {
       return;
     }
+
     const url = addVideoRef.current?.value.trim();
+
     if (!url) {
       return;
     }
 
     if (!isValidVideoUrl(url)) {
       setVideoError("Use a supported platform link");
+
       return;
     }
 
     setIsSubmitting(true);
     setVideoError("");
+
     try {
       await props.onAddVideo(url);
+
       if (addVideoRef.current) {
         addVideoRef.current.value = "";
       }
+
       toast.success("Video added");
     } catch {
       toast.error("Failed to add video");
     }
+
     setIsSubmitting(false);
   };
 
@@ -133,6 +137,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
       incidentDate: incidentDate || undefined,
       location: location || undefined,
     };
+
     const videoUrls =
       mode === "create"
         ? inputKeys
@@ -144,10 +149,12 @@ export const IncidentModal = (props: IncidentModalProps) => {
       setUrlErrors({
         [inputKeys[0]]: "At least one valid video URL required",
       });
+
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       if (mode === "create") {
         await props.onSubmit({ ...details, videoUrls });
@@ -160,6 +167,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
     } catch {
       toast.error(mode === "create" ? "Failed to submit" : "Failed to save");
     }
+
     setIsSubmitting(false);
   };
 
@@ -174,7 +182,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
         <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
           <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-            {/* Video URLs - Create mode */}
             {mode === "create" && (
               <div>
                 <label htmlFor="video-0" className="mb-1 block text-sm">
@@ -220,7 +227,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
               </div>
             )}
 
-            {/* Existing videos - Edit mode */}
             {mode === "edit" && (
               <>
                 <div>
@@ -264,7 +270,6 @@ export const IncidentModal = (props: IncidentModalProps) => {
               </>
             )}
 
-            {/* Shared fields */}
             <Field.Root name="location">
               <Field.Label className="mb-1 block text-sm">Location (optional)</Field.Label>
               <Field.Control

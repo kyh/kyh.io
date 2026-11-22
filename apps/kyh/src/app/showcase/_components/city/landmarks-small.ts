@@ -1,5 +1,3 @@
-// The mini apps and templates: half-block and quarter-block buildings, and
-// the row of identical houses the templates fork from.
 import type { Footprint } from "./draw-kit";
 import type { DrawLandmark, Site } from "./landmark";
 import type { Point2, Sketch, Vec3 } from "./sketch";
@@ -29,7 +27,6 @@ import { ball, box, ellipse, extrude, face, gable, line, part, round } from "./s
 
 const METAL = paint("metal", "metal", "metalDark");
 
-/** A row of columns standing in front of a wall. */
 const colonnade = (sketch: Sketch, wall: Footprint, y: number, count: number, height: number) => {
   for (let index = 0; index < count; index += 1) {
     const x = wall.x + 0.18 + (index * (wall.w - 0.36)) / (count - 1);
@@ -43,6 +40,7 @@ const colonnade = (sketch: Sketch, wall: Footprint, y: number, count: number, he
       z: wall.z + wall.d + 0.2,
     });
   }
+
   box(sketch, {
     colors: PLAZA,
     d: 0.4,
@@ -62,8 +60,6 @@ const colonnade = (sketch: Sketch, wall: Footprint, y: number, count: number, he
     z: wall.z + wall.d,
   });
 };
-
-// Stonksville: a stock exchange with a ticker and a line that only goes up.
 
 const STONKS: Point2[] = [
   [0, 0],
@@ -101,7 +97,6 @@ export const drawStonksville: DrawLandmark = (sketch, site, title) => {
     origin: [hall.x + 0.25, y0 + height - 0.13, hall.z + hall.d + 0.365],
     up: [0, 0.13, 0],
   });
-  // The green line, cut out and standing at the corner.
   cutout(
     sketch,
     STONKS,
@@ -132,10 +127,9 @@ export const drawStonksville: DrawLandmark = (sketch, site, title) => {
       y: y0 + 0.05,
     },
   );
+
   return bounds(hall, y0, height + 0.5);
 };
-
-// Autoplay: a TV studio with a giant set on the roof and a mast.
 
 export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
   const y0 = plaza(sketch, site);
@@ -156,7 +150,6 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
     w: 1.15,
     y: y0 + height - 0.35,
   });
-  // The set: a giant television, rabbit ears and all.
   const tv = { d: 0.8, w: 1.25, x: studio.x + 0.75, z: studio.z + 0.5 };
   const top = y0 + height;
   box(sketch, {
@@ -165,6 +158,7 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
     h: 0.92,
     y: top + 0.08,
   });
+
   for (const x of [tv.x + 0.15, tv.x + tv.w - 0.25]) {
     box(
       sketch,
@@ -172,6 +166,7 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
       "hair",
     );
   }
+
   face(
     sketch,
     "screen",
@@ -189,6 +184,7 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
     origin: [tv.x + 0.15, top + 0.25, tv.z + tv.d + 0.008],
     up: [0, 0.6, 0],
   });
+
   for (const knob of [0.45, 0.65]) {
     ball(
       sketch,
@@ -203,6 +199,7 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
       "hair",
     );
   }
+
   line(
     sketch,
     [
@@ -219,9 +216,9 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
     ],
     "fine",
   );
-  // A lattice mast with a light that blinks at night.
   const mx = site.x + site.w - 1;
   const mz = site.z + 0.9;
+
   for (const [dx, dz] of [
     [-0.12, -0.12],
     [0.12, -0.12],
@@ -236,6 +233,7 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
       "fine",
     );
   }
+
   for (let y = 0.4; y < 2.6; y += 0.45) {
     const t = 1 - y / 2.9;
     line(
@@ -249,15 +247,15 @@ export const drawAutoplay: DrawLandmark = (sketch, site, title) => {
       "hair",
     );
   }
+
   ball(
     part(sketch, "autoplay:beacon", [mx, y0 + 2.95, mz]),
     { colors: paint("accentRed"), detail: 8, r: 0.07, x: 0, y: 0, z: 0 },
     "hair",
   );
+
   return bounds(studio, y0, height + 1.1);
 };
-
-// Total Compensation Calculator: a little bank with a coin on top.
 
 export const drawBank: DrawLandmark = (sketch, site, title) => {
   const y0 = plaza(sketch, site);
@@ -280,14 +278,15 @@ export const drawBank: DrawLandmark = (sketch, site, title) => {
       y: y0 + height - 0.16,
     },
   );
-  // A gold coin standing on the roof.
   const coin = ellipse(0.42, 0.42, 22);
   const cx = bank.x + bank.w / 2;
+
   const coinFace = {
     origin: [cx, y0 + height + 0.54, bank.z + 0.7] satisfies Vec3,
     u: [1, 0, 0] satisfies Vec3,
     v: [0, 1, 0] satisfies Vec3,
   };
+
   extrude(
     sketch,
     coin,
@@ -302,7 +301,6 @@ export const drawBank: DrawLandmark = (sketch, site, title) => {
     token: "white",
     up: [0, 0.44, 0],
   });
-  // An armored truck at the curb.
   box(sketch, {
     colors: paint("navy"),
     d: 0.26,
@@ -312,10 +310,9 @@ export const drawBank: DrawLandmark = (sketch, site, title) => {
     y: y0,
     z: site.z + site.d - 0.55,
   });
+
   return bounds(bank, y0, height + 1);
 };
-
-// Covid-19 Dashboard: a clinic with a red cross and a chart out front.
 
 const CROSS: Point2[] = [
   [-0.12, -0.36],
@@ -358,7 +355,6 @@ export const drawClinic: DrawLandmark = (sketch, site, title) => {
     w: 1.4,
     y: y0 + height - 0.46,
   });
-  // The dashboard: a board with a chart that bends the right way.
   const chart = { d: 0.08, w: 1.1, x: site.x + site.w - 1.4, z: site.z + site.d - 0.6 };
   billboard(sketch, {
     colors: paint("screen"),
@@ -372,6 +368,7 @@ export const drawClinic: DrawLandmark = (sketch, site, title) => {
     y: y0,
     z: chart.z,
   });
+
   const bend: Point2[] = [
     [0.1, 0.1],
     [0.3, 0.2],
@@ -380,13 +377,13 @@ export const drawClinic: DrawLandmark = (sketch, site, title) => {
     [0.78, 0.2],
     [1, 0.14],
   ];
+
   line(
     sketch,
     bend.map(([u, v]) => [chart.x + u, y0 + 0.2 + v, chart.z + 0.1] satisfies Vec3),
     "fine",
     "accentGreen",
   );
-  // An ambulance at the door.
   const van = { d: 0.28, w: 0.62, x: clinic.x + 2.4, z: site.z + site.d - 0.5 };
   box(sketch, { ...van, colors: paint("white", "white", "wallRight"), h: 0.26, y: y0 });
   box(
@@ -402,10 +399,9 @@ export const drawClinic: DrawLandmark = (sketch, site, title) => {
     },
     "hair",
   );
+
   return bounds(clinic, y0, height + 0.9);
 };
-
-// Policing Ice: a civic watch house with a camera that keeps turning.
 
 export const drawWatchHouse: DrawLandmark = (sketch, site, title) => {
   const y0 = plaza(sketch, site);
@@ -427,7 +423,6 @@ export const drawWatchHouse: DrawLandmark = (sketch, site, title) => {
     y: y0 + height - 0.37,
   });
   rooftop(sketch, inset(house, 0.2), y0 + height, 11);
-  // REC: a red light by the door, and the camera mast.
   ball(
     sketch,
     {
@@ -462,7 +457,6 @@ export const drawWatchHouse: DrawLandmark = (sketch, site, title) => {
     { colors: paint("screen"), d: 0.1, h: 0.1, w: 0.06, x: 0.22, y: 0.02, z: -0.05 },
     "hair",
   );
-  // A news van with its dish up.
   const van = { d: 0.3, w: 0.66, x: site.x + site.w - 1.6, z: site.z + site.d - 0.55 };
   box(sketch, { ...van, colors: paint("white", "white", "wallRight"), h: 0.3, y: y0 });
   round(sketch, {
@@ -475,10 +469,9 @@ export const drawWatchHouse: DrawLandmark = (sketch, site, title) => {
     y: y0 + 0.36,
     z: van.z + 0.15,
   });
+
   return bounds(house, y0, height + 0.4);
 };
-
-// Kwadrants: four towers on a two-by-two grid, one for each quadrant.
 
 const QUADRANTS = [ROOFS[0], ROOFS[1], ROOFS[2], ROOFS[3]];
 
@@ -488,7 +481,6 @@ export const drawKwadrants: DrawLandmark = (sketch, site, title) => {
   const cz = site.z + site.d / 2;
   const size = 0.95;
   const gap = 0.3;
-  // The axes, painted on the plaza.
   line(
     sketch,
     [
@@ -506,15 +498,18 @@ export const drawKwadrants: DrawLandmark = (sketch, site, title) => {
     "fine",
   );
   let top = y0;
+
   for (const [index, quadrant] of QUADRANTS.entries()) {
     const right = index % 2 === 1;
     const front = index >= 2;
+
     const rect = {
       d: size,
       w: size,
       x: right ? cx + gap / 2 : cx - gap / 2 - size,
       z: front ? cz + gap / 2 : cz - gap / 2 - size,
     };
+
     const floors = [5, 4, 3, 6][index] ?? 4;
     const height = floors * FLOOR;
     box(sketch, { ...rect, colors: WALLS, h: height, y: y0 });
@@ -528,6 +523,7 @@ export const drawKwadrants: DrawLandmark = (sketch, site, title) => {
     });
     top = Math.max(top, y0 + height + 0.1);
   }
+
   billboard(sketch, {
     colors: paint("signBoard"),
     h: 0.3,
@@ -544,14 +540,13 @@ export const drawKwadrants: DrawLandmark = (sketch, site, title) => {
     { kind: "round", size: 1, x: site.x + site.w - 0.45, z: site.z + site.d - 0.45 },
     y0,
   );
+
   return bounds(
     { d: size * 2 + gap, w: size * 2 + gap, x: cx - size - gap / 2, z: cz - size - gap / 2 },
     y0,
     top - y0,
   );
 };
-
-// Keiko and Friends: a sticker shop with a giant sticker on the roof.
 
 export const drawStickerShop: DrawLandmark = (sketch, site, title) => {
   const y0 = plaza(sketch, site);
@@ -562,14 +557,15 @@ export const drawStickerShop: DrawLandmark = (sketch, site, title) => {
   windows(sketch, shop, { columns: 3, floors: 1, side: "front", y: y0 + FLOOR + 0.12 });
   windows(sketch, shop, { columns: 2, floors: 2, side: "side", y: y0 + 0.12 });
   parapet(sketch, shop, y0 + height, paint("white", "white", "wallRight"));
-  // The sticker: a cat's face, peeled up at one corner.
   const face3: Vec3 = [shop.x + shop.w / 2, y0 + height + 0.55, shop.z + 0.6];
   const head = [...ellipse(0.48, 0.42, 26)];
+
   const ears: Point2[] = [
     [-0.42, 0.18],
     [-0.36, 0.62],
     [-0.12, 0.38],
   ];
+
   extrude(
     sketch,
     head,
@@ -577,6 +573,7 @@ export const drawStickerShop: DrawLandmark = (sketch, site, title) => {
     [0, 0, 0.07],
     paint("white", "white", "wallRight"),
   );
+
   for (const flip of [1, -1]) {
     extrude(
       sketch,
@@ -602,6 +599,7 @@ export const drawStickerShop: DrawLandmark = (sketch, site, title) => {
       null,
     );
   }
+
   line(
     sketch,
     [
@@ -633,26 +631,27 @@ export const drawStickerShop: DrawLandmark = (sketch, site, title) => {
       y: y0 + 0.04,
     },
   );
+
   return bounds(shop, y0, height + 1.1);
 };
 
-// LoremLLM: a print shop thinking out loud on its roof.
-
-const bubble = (w: number, h: number): Point2[] => {
+const bubble = (w: number, h: number) => {
   const corner = 0.14;
   const points: Point2[] = [];
+
   const arc = (cx: number, cy: number, from: number) => {
     for (let step = 0; step <= 4; step += 1) {
       const angle = from + (step / 4) * (Math.PI / 2);
       points.push([cx + Math.cos(angle) * corner, cy + Math.sin(angle) * corner]);
     }
   };
+
   arc(w - corner, corner, -Math.PI / 2);
   arc(w - corner, h - corner, 0);
   arc(corner, h - corner, Math.PI / 2);
   arc(corner, corner, Math.PI);
-  // The tail, pointing down at the shop.
   points.splice(-1, 0, [0.22, 0], [0.1, -0.2], [0.42, 0]);
+
   return points;
 };
 
@@ -673,14 +672,17 @@ export const drawPrintShop: DrawLandmark = (sketch, site, title) => {
     [0, 0, 0.07],
     paint("white", "white", "wallRight"),
   );
+
   for (let index = 0; index < 3; index += 1) {
     const dot = part(sketch, `loremllm:dot:${index}`, [
       origin[0] + 0.36 + index * 0.24,
       origin[1] + 0.3,
       origin[2] + 0.1,
     ]);
+
     ball(dot, { colors: paint("ink"), detail: 8, r: 0.055, x: 0, y: 0, z: 0 }, "hair");
   }
+
   board(
     sketch,
     { d: 0.1, w: 1.6, x: site.x + 0.5, z: site.z + site.d - 0.4 },
@@ -695,11 +697,9 @@ export const drawPrintShop: DrawLandmark = (sketch, site, title) => {
       y: y0 + 0.04,
     },
   );
+
   return bounds(shop, y0, height + 1.3);
 };
-
-// IdleBiz: a little office run by its computers, with a big beige one on the
-// roof keeping the books.
 
 const CASING = paint("white", "white", "wallRight");
 
@@ -713,7 +713,6 @@ export const drawIdleBiz: DrawLandmark = (sketch, site, title) => {
   windows(sketch, office, { columns: 2, floors: 2, side: "side", y: y0 + 0.12 });
   parapet(sketch, office, y0 + height);
   const top = y0 + height;
-  // The computer: a deep CRT on a short neck and foot.
   const foot = { d: 0.45, w: 0.7, x: office.x + 0.6, z: office.z + 0.45 };
   box(sketch, { ...foot, colors: CASING, h: 0.06, y: top });
   box(sketch, {
@@ -783,10 +782,9 @@ export const drawIdleBiz: DrawLandmark = (sketch, site, title) => {
       y: y0 + 0.04,
     },
   );
+
   return bounds(office, y0, height + 1.2);
 };
-
-// The templates: the same house, forked five times, each with its own name.
 
 export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {
   const y0 = site.y;
@@ -827,7 +825,7 @@ export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {
     y: y0 + 0.03 + height + 0.12,
     z: home.z + 0.3,
   });
-  // The name on a post by the path, the one thing that differs.
+
   if (title.length > 0) {
     const post = {
       d: 0.05,
@@ -835,6 +833,7 @@ export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {
       x: site.x + 0.15,
       z: site.z + site.d - 0.35,
     };
+
     line(
       sketch,
       [
@@ -853,6 +852,7 @@ export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {
       y: y0 + 0.16,
     });
   }
+
   box(
     sketch,
     {
@@ -875,10 +875,9 @@ export const drawTemplateHouse: DrawLandmark = (sketch, site, title) => {
     "fine",
   );
   bush(sketch, home.x - 0.12, home.z + home.d + 0.2, 1, y0);
+
   return bounds(home, y0, height + 0.5);
 };
-
-// Unclaimed lots, and projects without a bespoke building.
 
 const SHOP_NAMES = ["CAFE", "BOOKS", "BAKERY", "RECORDS", "FLOWERS", "BIKES"];
 
@@ -891,8 +890,10 @@ export const drawGenericLot = (
 ) => {
   const random = createRandom(seed);
   const name = title.length > 0 ? title.toUpperCase() : random.pick(SHOP_NAMES);
+
   if (size === "large" || size === "launch") {
     const y = tower(sketch, inset(site, 1.3), random.int(8, 13), seed, random.pick(ACCENTS));
+
     if (title.length > 0) {
       billboard(sketch, {
         colors: paint("signBoard"),
@@ -905,8 +906,10 @@ export const drawGenericLot = (
         z: site.z + site.d - 0.6,
       });
     }
+
     return bounds(inset(site, 1.3), site.y, y - site.y);
   }
+
   if (size === "half") {
     const rect = { d: 1.5, w: site.w - 1, x: site.x + 0.5, z: site.z + 0.5 };
     slab(sketch, {
@@ -928,11 +931,14 @@ export const drawGenericLot = (
       w: Math.min(2.2, rect.w - 0.4),
       y: site.y + 0.36,
     });
+
     return bounds(rect, site.y, 3 * FLOOR + 0.2);
   }
+
   if (size === "template") {
     return drawTemplateHouse(sketch, site, title);
   }
+
   const rect = inset(site, 0.5);
   const y0 = site.y;
   box(sketch, { ...rect, colors: WALLS, h: 2 * FLOOR, y: y0 });
@@ -957,5 +963,6 @@ export const drawGenericLot = (
   });
   lamp(sketch, site.x + site.w - 0.3, site.z + site.d - 0.3, y0);
   parkedCar(sketch, site.x + 0.5, site.z + site.d - 0.25, "x", hashString(name));
+
   return bounds(rect, y0, 2 * FLOOR + 0.4);
 };

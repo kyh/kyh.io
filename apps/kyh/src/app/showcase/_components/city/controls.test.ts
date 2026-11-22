@@ -6,6 +6,7 @@ import { createPresses, createSpotlight, IDLE_MS, isHover, keyMove } from "./con
 const spotlight = (options: { still?: boolean } = {}) => {
   const tours: boolean[] = [];
   const clock = { now: 0, takes: 0, tours };
+
   const lights = createSpotlight<string>({
     now: () => clock.now,
     onTake: () => {
@@ -16,6 +17,7 @@ const spotlight = (options: { still?: boolean } = {}) => {
     },
     still: options.still ?? false,
   });
+
   return { clock, lights };
 };
 
@@ -49,7 +51,6 @@ test("a resting cursor's recheck is no hover", () => {
   assert.equal(isHover("mouse", 0, 0), false);
   assert.equal(isHover("mouse", 1, 0), true);
   assert.equal(isHover("mouse", 0, -2), true);
-  // Fingers and pens don't hover the town; they tap it.
   assert.equal(isHover("touch", 4, 4), false);
   assert.equal(isHover("pen", 4, 4), false);
 });
@@ -78,7 +79,6 @@ test("a mouse tap opens at once; a finger shows first and opens on the second ta
   assert.equal(lights.tap("kwadrants", "touch"), null);
   assert.equal(lights.lit, "kwadrants");
   assert.equal(lights.tap("kwadrants", "touch"), "kwadrants");
-  // A tap on open ground lets the building go.
   assert.equal(lights.tap(null, "touch"), null);
   assert.equal(lights.lit, null);
   assert.equal(clock.takes, 0);
@@ -137,7 +137,6 @@ test("a press that stays put is a tap; one that travels is a drag", () => {
   assert.deepEqual(presses.move(1, 106, 100), { dx: 6, dy: 0, kind: "drag", started: true });
   assert.deepEqual(presses.move(1, 110, 98), { dx: 4, dy: -2, kind: "drag", started: false });
   assert.equal(presses.release(1, 0), "drag");
-  // A right press that stays put is neither.
   presses.press(1, 100, 100);
   assert.equal(presses.release(1, 2), null);
 });
@@ -179,6 +178,7 @@ test("arrows pan, plus and minus zoom, letters leave the view to chat", () => {
   assert.deepEqual(keyMove("-"), { factor: 0.8, kind: "zoom" });
   assert.deepEqual(keyMove("]"), { by: 1, kind: "turn" });
   assert.deepEqual(keyMove("["), { by: -1, kind: "turn" });
+
   for (const key of ["Shift", "x", "1", "Tab", "Enter", " "]) {
     assert.equal(keyMove(key), null, key);
   }

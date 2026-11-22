@@ -1,14 +1,9 @@
-// Shade set as a halftone: faces in shadow carry a fine checker of ink dots
-// over their wash, in screen space like an ordered dither, so the shaded side
-// of every building reads as printed while lit faces stay flat.
 import type { WebGLProgramParametersWithUniforms } from "three";
 
 import type { Time } from "./palette";
 
-/** Dot size in CSS pixels. */
 const DOT = 2;
 
-/** How a dot changes the wash under it: darker by day, paler by night, as ink would. */
 const INK: Record<Time, number> = { day: 0.8, night: 1.3 };
 
 export const createShadowDots = (time: Time) => {
@@ -16,6 +11,7 @@ export const createShadowDots = (time: Time) => {
     dotCell: { value: DOT },
     dotInk: { value: INK[time] },
   };
+
   return {
     patch: (shader: WebGLProgramParametersWithUniforms) => {
       Object.assign(shader.uniforms, uniforms);

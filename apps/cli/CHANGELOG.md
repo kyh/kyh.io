@@ -1,5 +1,9 @@
 # kyh
 
+## 0.4.1 — 2026-10-29
+
+- projects: add Commuting Clawders and IdleBiz
+
 ## 0.4.0 — 2026-10-10
 
 - Rebuilt on Ink + Node: one pure-JS package (Node ≥ 22), no Bun, no compiled binaries, no `@kyh/cli-*` platform packages

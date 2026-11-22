@@ -1,6 +1,5 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-// One finished run as the mod posted it; the leaderboard is each name's best.
 export const run = sqliteTable(
   "run",
   {

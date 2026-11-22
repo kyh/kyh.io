@@ -25,7 +25,7 @@ export const drawEmpty = (
   now_ms = 0,
   skipLine = false,
   emptyText?: string,
-): void => {
+) => {
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
   const centerY = pad.top + chartH / 2;
@@ -38,20 +38,17 @@ export const drawEmpty = (
   ctx.save();
   ctx.font = "400 12px system-ui, -apple-system, sans-serif";
 
-  // Measure text to know gap size
   const textW = ctx.measureText(text).width;
-  // padding around text
   const gapHalf = textW / 2 + 20;
-  // gradient fade width on each side
   const fadeW = 30;
 
   if (!skipLine) {
     const scroll = now_ms * LOADING_SCROLL_SPEED;
     const breath = loadingBreath(now_ms);
 
-    // Breathing squiggly line — same shape as drawLoading but grey
     const numPts = 32;
     const pts: [number, number][] = [];
+
     for (let i = 0; i <= numPts; i += 1) {
       const t = i / numPts;
       const x = pad.left + t * chartW;
@@ -70,8 +67,6 @@ export const drawEmpty = (
     ctx.stroke();
   }
 
-  // Gradient gap — erases whatever line is on the canvas in the text region.
-  // Always drawn (even with skipLine) so it fades in over the morphing chart line.
   ctx.save();
   ctx.globalCompositeOperation = "destination-out";
   const gapLeft = cx - gapHalf - fadeW;
@@ -83,12 +78,10 @@ export const drawEmpty = (
   eraseGrad.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = eraseGrad;
   ctx.globalAlpha = alpha;
-  // Erase tall enough to cover the line's full amplitude
   const eraseH = amplitude * 2 + palette.lineWidth + 6;
   ctx.fillRect(gapLeft, centerY - eraseH / 2, gapRight - gapLeft, eraseH);
   ctx.restore();
 
-  // "No data to display" text
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.globalAlpha = 0.35 * alpha;

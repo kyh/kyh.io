@@ -13,7 +13,7 @@
     "dev": "pnpm with-env next dev --turbopack -p 3016",
     "lint": "oxlint --report-unused-disable-directives",
     "start": "pnpm with-env next start",
-    "test": "tsx --test \"test/*.spec.ts\"",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e .env --"
   },

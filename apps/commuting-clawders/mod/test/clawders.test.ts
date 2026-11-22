@@ -1,5 +1,3 @@
-// Run by `claude plugin test` against the engine itself: the mod's hooks with
-// the clock, the environment, git and the leaderboard answered beneath.
 import type { Engine } from "claude-code/testing";
 import type { On } from "claude-code";
 import { expect, mock, test } from "claude-code/testing";
@@ -10,7 +8,6 @@ const ran = (stdout: string, exitCode = 0) => ({
   value: { exitCode, isStderrTruncated: false, isStdoutTruncated: false, stderr: "", stdout },
 });
 
-// The world beneath the mod: what it opened, and every run it posted.
 const world = (on: On, { rank = 3 } = {}) => {
   const clock = mock.clock(on);
   mock.env(on, {});
@@ -19,10 +16,12 @@ const world = (on: On, { rank = 3 } = {}) => {
   on("process.run", (_$, e) => ran(e.argv[0] === "git" ? "Kai\n" : "Darwin\n"));
   on("ui.open", (_$, e) => {
     opened.push(e.title);
+
     return { value: { isPlaced: true } };
   });
   on("http.fetch", (_$, e) => {
     posted.push({ body: JSON.parse(e.init?.body ?? "null"), url: e.url });
+
     return { value: { headers: {}, ok: true, status: 201, text: JSON.stringify({ rank }) } };
   });
   on("session.start", (_$, e) => ({ cwd: e.cwd }));
@@ -45,13 +44,12 @@ const world = (on: On, { rank = 3 } = {}) => {
       },
     };
   });
+
   return { clock, opened, posted };
 };
 
 const start = { cwd: "/repo", isInteractive: true, surface: "terminal" } as const;
 
-// One model request inside a turn; the mock beneath reads its output tokens
-// from the model name.
 const step = async ($: Engine, tokens: number, agentId?: string) => {
   const stream = $.turn.step({
     agentId,
@@ -60,7 +58,9 @@ const step = async ($: Engine, tokens: number, agentId?: string) => {
     model: String(tokens),
     turnId: "t",
   });
+
   let piece = await stream.next();
+
   while (!piece.done) {
     piece = await stream.next();
   }

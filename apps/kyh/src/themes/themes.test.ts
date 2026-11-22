@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { missingGradients } from "./art";
+import { FOLLOWERS } from "./followers";
 import { DEFAULT_THEME, THEMES, themeOn, windowIn } from "./index";
 
 const on = (year: number, month: number, day: number) => themeOn(new Date(year, month - 1, day));
@@ -23,21 +23,21 @@ test("the calendar picks each holiday's theme, and the default between them", ()
 });
 
 test("where two overlap, the one listed first runs", () => {
-  // 2029's Lunar New Year's Eve, Feb 12, falls in Valentine's week.
   assert.equal(on(2029, 2, 12), "lunarNewYear");
   assert.equal(on(2029, 2, 10), "valentines");
 });
 
-test("each theme is whole: one id, its art's gradients, confetti, and only the default runs always, keeps the visitor's light or dark and wears the sun or moon", () => {
+test("each theme is whole: one id, its art, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it has nothing following the mouse", () => {
   assert.equal(new Set(THEMES.map(({ id }) => id)).size, THEMES.length);
+
   for (const theme of THEMES) {
     assert.ok(theme.art.layers.length > 0, theme.id);
-    assert.deepEqual(missingGradients(theme.art), [], theme.id);
     assert.ok(theme.confetti.length > 0, theme.id);
     assert.equal("days" in theme, theme.id !== DEFAULT_THEME, theme.id);
     assert.equal(theme.tint === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.mode === null, theme.id === DEFAULT_THEME, theme.id);
     assert.equal(theme.glyph === null, theme.id === DEFAULT_THEME, theme.id);
+    assert.equal(FOLLOWERS[theme.id] === null, theme.id === DEFAULT_THEME, theme.id);
   }
 });
 

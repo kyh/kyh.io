@@ -9,13 +9,14 @@ const miniApps = projects.filter((p) => p.type === "mini-app");
 
 const templates = projects.filter((p) => p.type === "template");
 
-const toAppItem = (p: (typeof projects)[number]): ProjectAppItem => ({
-  description: p.description,
-  iconSrc: p.favicon,
-  key: p.slug,
-  name: p.title,
-  url: p.url,
-});
+const toAppItem = (p: (typeof projects)[number]) =>
+  ({
+    description: p.description,
+    iconSrc: p.favicon,
+    key: p.slug,
+    name: p.title,
+    url: p.url,
+  }) satisfies ProjectAppItem;
 
 const tiles: SortableTile[] = [
   ...projectsAndVentures.map((p) => ({ app: toAppItem(p), key: p.slug, kind: "app" as const })),

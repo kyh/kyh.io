@@ -82,13 +82,17 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
 
   const handleAddVideo = async () => {
     const url = newVideoRef.current?.value.trim();
+
     if (!url) {
       return;
     }
+
     await addVideo({ incidentId: incident.id, url });
+
     if (newVideoRef.current) {
       newVideoRef.current.value = "";
     }
+
     router.refresh();
     toast.success("Video added");
   };
@@ -220,20 +224,26 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
 
   const handleToggleStatus = async (id: number) => {
     const result = await toggleIncidentStatus({ id });
+
     if (!result.success) {
       toast.error("Failed to update status");
+
       return;
     }
+
     router.refresh();
     toast.success(result.newStatus === "approved" ? "Approved" : "Hidden");
   };
 
   const handleTogglePinned = async (id: number) => {
     const result = await toggleIncidentPinned({ id });
+
     if (!result.success) {
       toast.error("Failed to pin");
+
       return;
     }
+
     router.refresh();
     toast.success(result.newPinned ? "Pinned" : "Unpinned");
   };
@@ -243,6 +253,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
     if (!confirm("Delete this incident?")) {
       return;
     }
+
     await adminDeleteIncident({ id });
     router.refresh();
     toast.success("Deleted");
@@ -256,7 +267,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
         <p className="text-sm text-muted-foreground">No incidents.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[900px] text-sm select-text">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 pr-3 font-normal">ID</th>

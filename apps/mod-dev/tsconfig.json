@@ -13,6 +13,6 @@
     "hooks/proof.ts",
     "hooks/review.ts",
     "hooks/shell.ts",
-    "test/*.spec.ts"
+    "test/*.test.mts"
   ]
 }

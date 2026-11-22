@@ -1,11 +1,8 @@
-// Outside the grid: woods, farms with barns and windmills, wind turbines on
-// the far shore, a lighthouse on the point and a pier for the boats.
 import type { CityPlan, Field, Spot } from "./plan";
 import type { Sketch, Vec3 } from "./sketch";
 import { tree } from "./draw-kit";
 import { paint, WALLS } from "./palette";
 import { ball, box, face, gable, line, part, round } from "./sketch";
-import type { Steps } from "./steps";
 import { finish } from "./steps";
 
 const CROPS: Record<Field["crop"], "field" | "fieldGreen" | "soil"> = {
@@ -29,6 +26,7 @@ const drawField = (sketch: Sketch, field: Field) => {
     "hair",
   );
   const rows = field.rows === "x" ? d : w;
+
   for (let offset = 0.25; offset < rows - 0.1; offset += 0.25) {
     const points: [Vec3, Vec3] =
       field.rows === "x"
@@ -40,6 +38,7 @@ const drawField = (sketch: Sketch, field: Field) => {
             [x + offset, y + 0.002, z + 0.12],
             [x + offset, y + 0.002, z + d - 0.12],
           ];
+
     line(sketch, points, "hair", "inkSoft");
   }
 };
@@ -88,7 +87,6 @@ const drawBarn = (sketch: Sketch, { x, z }: Spot) => {
   });
 };
 
-/** Four sails on a cross, drawn flat facing +z so they can turn. */
 const drawSails = (sketch: Sketch, length: number, width: number, blades: number) => {
   for (let index = 0; index < blades; index += 1) {
     const angle = (index / blades) * Math.PI * 2;
@@ -163,6 +161,7 @@ const drawLighthouse = (sketch: Sketch, { x, z }: Spot) => {
     z,
   });
   const bands = 5;
+
   for (let index = 0; index < bands; index += 1) {
     const bottom = 0.12 + index * 0.42;
     const r0 = 0.36 - index * 0.035;
@@ -177,6 +176,7 @@ const drawLighthouse = (sketch: Sketch, { x, z }: Spot) => {
       z,
     });
   }
+
   const top = 0.12 + bands * 0.42;
   round(sketch, { colors: paint("metalDark"), h: 0.05, r: 0.3, segments: 14, x, y: top, z });
   round(sketch, {
@@ -202,6 +202,7 @@ const drawPier = (sketch: Sketch, pier: { x: number; z: number; w: number; d: nu
     y: 0.08,
     z: pier.z,
   });
+
   for (let along = 0.4; along < pier.d; along += 0.9) {
     for (const side of [0.2, 0.8]) {
       line(
@@ -214,6 +215,7 @@ const drawPier = (sketch: Sketch, pier: { x: number; z: number; w: number; d: nu
       );
     }
   }
+
   box(sketch, {
     colors: WALLS,
     d: 0.6,
@@ -237,35 +239,39 @@ const drawPier = (sketch: Sketch, pier: { x: number; z: number; w: number; d: nu
 };
 
 /** The countryside a piece at a time, yielding between pieces. */
-export const countrysideSteps = function* countrysideSteps(
-  sketch: Sketch,
-  plan: CityPlan,
-): Steps<void> {
+export const countrysideSteps = function* countrysideSteps(sketch: Sketch, plan: CityPlan) {
   const { countryside } = plan;
+
   for (const field of countryside.fields) {
     drawField(sketch, field);
     yield;
   }
+
   for (const barn of countryside.barns) {
     drawBarn(sketch, barn);
     yield;
   }
+
   for (const [index, spot] of countryside.windmills.entries()) {
     drawWindmill(sketch, spot, index);
     yield;
   }
+
   for (const [index, spot] of countryside.turbines.entries()) {
     drawTurbine(sketch, spot, index);
     yield;
   }
+
   if (countryside.lighthouse) {
     drawLighthouse(sketch, countryside.lighthouse);
     yield;
   }
+
   if (countryside.pier) {
     drawPier(sketch, countryside.pier);
     yield;
   }
+
   for (const spot of countryside.trees) {
     tree(sketch, spot, 0);
   }

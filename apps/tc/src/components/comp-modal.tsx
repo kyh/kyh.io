@@ -250,12 +250,12 @@ export const CompModal = ({
     if (!query) {
       setSearchResults([]);
       setSearchLoading(false);
+
       return;
     }
 
     setSearchLoading(true);
 
-    // Mock data for demonstration - API functionality removed
     setTimeout(() => {
       setSearchResults([]);
       setSearchLoading(false);
@@ -268,12 +268,12 @@ export const CompModal = ({
     if (!query) {
       setCompaniesData([]);
       setCompaniesLoading(false);
+
       return;
     }
 
     setCompaniesLoading(true);
 
-    // Mock data for demonstration - API functionality removed
     setTimeout(() => {
       setCompaniesData([]);
       setCompaniesLoading(false);
@@ -289,15 +289,18 @@ export const CompModal = ({
     if (isoCurrent) {
       setExpectedGrowthMultiple(c.year5ChangePercent.toFixed(2));
     }
+
     if (rsuCurrent) {
       setPreferredSharePrice((c.marketcap / c.sharesOutstanding).toFixed(2));
       setExpectedGrowthMultiple(((c.year5ChangePercent / 5) * 100).toFixed(2));
     }
+
     if (revenueBased) {
       setSharesOutstanding(c.sharesOutstanding.toString());
       setExpectedRevenue(c.revenue.toString());
       setRevenueMultiple(c.revenuePerShare.toString());
     }
+
     requestUpdate();
     handleClose();
   };
@@ -305,6 +308,7 @@ export const CompModal = ({
   const viewProps = { isoCurrent, revenueBased, rsuCurrent };
 
   let results;
+
   if (companiesLoading && !companiesData.length) {
     results = (
       <div className="flex flex-1 items-center justify-center">
@@ -409,6 +413,7 @@ export const CompModal = ({
                       if (actionMeta.action === "input-change") {
                         loadOptions(value);
                       }
+
                       return value;
                     }}
                     options={searchResults}

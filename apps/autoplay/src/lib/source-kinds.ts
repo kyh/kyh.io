@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-// The kinds of source a channel can be, and what the client and the server
-// both know about them — small enough to reach the browser bundle untouched.
-// The adapters (src/lib/sources) and the lineup (src/lib/lineup.ts) hold the
-// rest.
 export const SOURCE_KINDS = ["x", "gmail", "rss", "youtube"] as const;
 
 export type SourceKind = (typeof SOURCE_KINDS)[number];

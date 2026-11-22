@@ -1,6 +1,3 @@
-// Particles: gold sparkles where a coin is taken, dust where Clawd lands and
-// runs, stars where it crashes, and wind streaks rushing past. Each kind is
-// one pooled THREE.Points cloud, its positions rewritten every frame.
 import * as THREE from "three";
 
 interface Particle {
@@ -20,12 +17,12 @@ interface CloudOptions {
   texture: THREE.Texture;
 }
 
-// A soft round dot, or a four-point twinkle.
 const sprite = (isStar: boolean) => {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
   const ctx = canvas.getContext("2d");
+
   if (ctx) {
     const glow = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     glow.addColorStop(0, "rgba(255,255,255,1)");
@@ -33,9 +30,11 @@ const sprite = (isStar: boolean) => {
     glow.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, 64, 64);
+
     if (isStar) {
       ctx.fillStyle = "rgba(255,255,255,0.9)";
       ctx.beginPath();
+
       for (const [x, y] of [
         [32, 0],
         [36, 28],
@@ -48,15 +47,14 @@ const sprite = (isStar: boolean) => {
       ]) {
         ctx.lineTo(x ?? 0, y ?? 0);
       }
+
       ctx.fill();
     }
   }
+
   return new THREE.CanvasTexture(canvas);
 };
 
-// Round sprites sized in world units, each with its own color, fade and
-// growth; PointsMaterial has no per-point alpha, which dust needs to thin
-// out rather than darken.
 const cloudMaterial = (options: CloudOptions) =>
   new THREE.ShaderMaterial({
     blending: options.blending,
@@ -99,16 +97,20 @@ const createCloud = (scene: THREE.Scene, options: CloudOptions & { growth: numbe
   const colors = new Float32Array(options.count * 3);
   const alphas = new Float32Array(options.count);
   const grows = new Float32Array(options.count);
+
   const attributes = {
     alpha: new THREE.BufferAttribute(alphas, 1),
     color: new THREE.BufferAttribute(colors, 3),
     grow: new THREE.BufferAttribute(grows, 1),
     position: new THREE.BufferAttribute(positions, 3),
   };
+
   const geometry = new THREE.BufferGeometry();
+
   for (const [name, attribute] of Object.entries(attributes)) {
     geometry.setAttribute(name, attribute);
   }
+
   const material = cloudMaterial(options);
   const points = new THREE.Points(geometry, material);
   points.frustumCulled = false;
@@ -119,26 +121,31 @@ const createCloud = (scene: THREE.Scene, options: CloudOptions & { growth: numbe
     if (live.length >= options.count) {
       live.shift();
     }
+
     live.push({ ...particle, age: 0 });
   };
 
-  // `drift` moves everything toward the camera with the world.
   const update = (dt: number, drift: number) => {
     for (let i = live.length - 1; i >= 0; i -= 1) {
       const p = live[i];
+
       if (!p) {
         continue;
       }
+
       p.age += dt;
+
       if (p.age >= p.life) {
         live.splice(i, 1);
         continue;
       }
+
       p.velocity.y -= options.gravity * dt;
       p.velocity.multiplyScalar(Math.max(0, 1 - options.drag * dt));
       p.position.addScaledVector(p.velocity, dt);
       p.position.z += drift;
     }
+
     for (let i = 0; i < options.count; i += 1) {
       const p = live[i];
       const t = p ? p.age / p.life : 1;
@@ -147,6 +154,7 @@ const createCloud = (scene: THREE.Scene, options: CloudOptions & { growth: numbe
       alphas[i] = p ? 1 - t * t : 0;
       grows[i] = 1 + t * options.growth;
     }
+
     for (const attribute of Object.values(attributes)) {
       attribute.needsUpdate = true;
     }
@@ -165,7 +173,9 @@ const GOLD = [
   new THREE.Color(0xff_f4_b0),
   new THREE.Color(0xff_ff_ff),
 ];
+
 const DUST = new THREE.Color(0x8a_76_66);
+
 const IMPACT = [
   new THREE.Color(0xff_ff_ff),
   new THREE.Color(0xff_c4_3a),
@@ -180,6 +190,7 @@ const around = (spread: number) => (Math.random() - 0.5) * spread;
 export const createVfx = (scene: THREE.Scene) => {
   const star = sprite(true);
   const dot = sprite(false);
+
   const sparkles = createCloud(scene, {
     blending: THREE.AdditiveBlending,
     count: 240,
@@ -189,7 +200,7 @@ export const createVfx = (scene: THREE.Scene) => {
     size: 0.45,
     texture: star,
   });
-  // Dust darkens the ground it rises from; additive would only brighten it.
+
   const dust = createCloud(scene, {
     blending: THREE.NormalBlending,
     count: 200,
@@ -199,6 +210,7 @@ export const createVfx = (scene: THREE.Scene) => {
     size: 0.9,
     texture: dot,
   });
+
   const streaks = createCloud(scene, {
     blending: THREE.AdditiveBlending,
     count: 90,
@@ -208,6 +220,7 @@ export const createVfx = (scene: THREE.Scene) => {
     size: 0.35,
     texture: dot,
   });
+
   let isCoarse = false;
 
   const coin = (at: THREE.Vector3) => {
@@ -248,15 +261,15 @@ export const createVfx = (scene: THREE.Scene) => {
         velocity: direction.multiplyScalar(6 + Math.random() * 6),
       });
     }
+
     puff(at.clone().setY(0.2), 14, 1.6);
   };
 
-  // Wind past the camera, faster as the run speeds up; pictures only, since
-  // in blocks a streak is a stray pixel.
   const wind = (camera: THREE.Camera, speed: number, dt: number) => {
     if (isCoarse || Math.random() > speed * dt * 0.5) {
       return;
     }
+
     const side = Math.random() < 0.5 ? -1 : 1;
     streaks.emit({
       color: new THREE.Color(0xff_ff_ff).multiplyScalar(0.6),
@@ -271,8 +284,7 @@ export const createVfx = (scene: THREE.Scene) => {
   };
 
   let pixelsPerUnit = 300;
-  // In two-pixel blocks sparkles need a little more size to register, and
-  // dust less, or it fogs the whole lane.
+
   const sizeAll = () => {
     sparkles.scale(pixelsPerUnit, isCoarse ? 1.15 : 1);
     dust.scale(pixelsPerUnit, isCoarse ? 0.9 : 1);
@@ -285,7 +297,6 @@ export const createVfx = (scene: THREE.Scene) => {
     sizeAll();
   };
 
-  // Point sizes are in pixels: a world unit's pixels at unit distance.
   const resize = (height: number, fov: number) => {
     pixelsPerUnit = height / (2 * Math.tan(THREE.MathUtils.degToRad(fov) / 2));
     sizeAll();

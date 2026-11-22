@@ -4,18 +4,12 @@ import type { NextRequest } from "next/server";
 import { acceptsMarkdown } from "@/lib/content-negotiation";
 import { discoveryLinks } from "@/lib/openapi";
 
-// Agent discovery on the homepage:
-// - Link header (RFC 8288) advertises the markdown view as an alternate, plus
-//   the OpenAPI description and API catalog.
-// - Content negotiation: agents sending `Accept: text/markdown` get the
-//   markdown version while browsers keep the HTML default.
-// - `Vary: Accept` is appended (never set) on both branches so it joins Next's
-//   own `rsc, next-router-*` values instead of replacing them. Without it a CDN
-//   can hand the cached HTML to an agent asking for markdown, or vice versa.
 export const middleware = (req: NextRequest) => {
   if (acceptsMarkdown(req.headers.get("accept"))) {
     const res = NextResponse.rewrite(new URL("/markdown", req.url));
+    // WARNING: append Vary, never set it: setting drops Next's own keys and a CDN serves HTML and Markdown to the wrong client.
     res.headers.append("Vary", "Accept");
+
     return res;
   }
 
@@ -28,6 +22,7 @@ export const middleware = (req: NextRequest) => {
     ].join(", "),
   );
   res.headers.append("Vary", "Accept");
+
   return res;
 };
 

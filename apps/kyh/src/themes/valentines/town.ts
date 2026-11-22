@@ -1,4 +1,3 @@
-// How the showcase's town dresses for Valentine's Day (`Town` in city/town-theme.ts).
 import { heartCrest } from "@/app/showcase/_components/city/blimp";
 import { fountainHeart } from "@/app/showcase/_components/city/decor-giants";
 import { balloon } from "@/app/showcase/_components/city/decor-props";

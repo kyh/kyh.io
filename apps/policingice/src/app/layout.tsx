@@ -4,14 +4,15 @@ import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme";
 import { Toaster } from "@/components/toast";
 
+import { serializeJsonLd, siteJsonLd } from "@/lib/incident-seo";
+import { ogImage, siteDescription, siteName, siteUrl } from "@/lib/site";
+
 import "./styles/globals.css";
 
-const siteUrl = "https://www.policingice.com";
-const siteName = "Policing ICE";
-const siteDescription =
-  "Documenting and tracking incidents of ICE overreach across the United States. Community-driven accountability through video evidence.";
+const siteJsonLdBody = serializeJsonLd(siteJsonLd);
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/" },
   description: siteDescription,
   icons: [
     { rel: "icon", type: "image/svg+xml", url: "/favicon/favicon.svg" },
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   openGraph: {
     description: siteDescription,
-    images: [{ height: 630, url: "/og-image.png", width: 1200 }],
+    images: [ogImage],
+    locale: "en-US",
     siteName,
     title: siteName,
     type: "website",
@@ -32,11 +34,11 @@ export const metadata: Metadata = {
   other: {
     "theme-color": "#ffffff",
   },
-  title: siteName,
+  title: { default: siteName, template: `%s | ${siteName}` },
   twitter: {
     card: "summary_large_image",
     description: siteDescription,
-    images: ["/og-image.png"],
+    images: [ogImage],
     title: siteName,
   },
 };
@@ -44,6 +46,11 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" suppressHydrationWarning>
     <body>
+      <script
+        type="application/ld+json"
+        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; serializeJsonLd escapes `<`
+        dangerouslySetInnerHTML={{ __html: siteJsonLdBody }}
+      />
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <a
           href="#main-content"

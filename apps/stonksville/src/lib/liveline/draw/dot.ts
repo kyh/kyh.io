@@ -6,10 +6,11 @@ import { lerp } from "../math/lerp";
 const PULSE_INTERVAL = 1500;
 const PULSE_DURATION = 900;
 
-const lerpColor = (a: [number, number, number], b: [number, number, number], t: number): string => {
+const lerpColor = (a: [number, number, number], b: [number, number, number], t: number) => {
   const r = Math.round(a[0] + (b[0] - a[0]) * t);
   const g = Math.round(a[1] + (b[1] - a[1]) * t);
   const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+
   return `rgb(${r},${g},${bl})`;
 };
 
@@ -22,13 +23,13 @@ export const drawDot = (
   pulse = true,
   scrubAmount = 0,
   now_ms: number = performance.now(),
-): void => {
+) => {
   const baseAlpha = ctx.globalAlpha;
   const dim = scrubAmount * 0.7;
 
-  // Expanding ring pulse (accent colored, every 1.5s) — suppress when dimmed
   if (pulse && dim < 0.3) {
     const t = (now_ms % PULSE_INTERVAL) / PULSE_DURATION;
+
     if (t < 1) {
       const radius = 9 + t * 12;
       const pulseAlpha = 0.35 * (1 - t) * (1 - dim * 3);
@@ -41,10 +42,8 @@ export const drawDot = (
     }
   }
 
-  // Outer bg color for blending
   const outerRgb = parseColorRgb(palette.badgeOuterBg);
 
-  // White outer circle with subtle shadow
   ctx.save();
   ctx.globalAlpha = baseAlpha;
   ctx.shadowColor = palette.badgeOuterShadow;
@@ -56,16 +55,17 @@ export const drawDot = (
   ctx.fill();
   ctx.restore();
 
-  // Colored inner dot — blend toward outer bg when dimmed
   ctx.globalAlpha = baseAlpha;
   ctx.beginPath();
   ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+
   if (dim > 0.01) {
     const lineRgb = parseColorRgb(palette.line);
     ctx.fillStyle = lerpColor(lineRgb, outerRgb, dim);
   } else {
     ctx.fillStyle = palette.line;
   }
+
   ctx.fill();
 };
 
@@ -78,12 +78,12 @@ export const drawMultiDot = (
   pulse = true,
   now_ms: number = performance.now(),
   radius = 3,
-): void => {
+) => {
   const baseAlpha = ctx.globalAlpha;
 
-  // Expanding ring pulse (series-colored, every 1.5s)
   if (pulse) {
     const t = (now_ms % PULSE_INTERVAL) / PULSE_DURATION;
+
     if (t < 1) {
       const ringRadius = 9 + t * 10;
       const pulseAlpha = 0.3 * (1 - t);
@@ -96,7 +96,6 @@ export const drawMultiDot = (
     }
   }
 
-  // Solid colored dot (no white outer, no shadow)
   ctx.globalAlpha = baseAlpha;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -111,7 +110,7 @@ export const drawSimpleDot = (
   y: number,
   color: string,
   radius = 3,
-): void => {
+) => {
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = color;
@@ -128,10 +127,9 @@ export const drawArrows = (
   arrows: ArrowState,
   dt: number,
   now_ms: number = performance.now(),
-): void => {
+) => {
   const baseAlpha = ctx.globalAlpha;
 
-  // Update arrow opacities — fade out old direction fully before fading in new
   const upTarget = momentum === "up" ? 1 : 0;
   const downTarget = momentum === "down" ? 1 : 0;
 
@@ -149,24 +147,26 @@ export const drawArrows = (
   if (arrows.up < 0.01) {
     arrows.up = 0;
   }
+
   if (arrows.down < 0.01) {
     arrows.down = 0;
   }
+
   if (arrows.up > 0.99) {
     arrows.up = 1;
   }
+
   if (arrows.down > 0.99) {
     arrows.down = 1;
   }
 
-  // Draw chevrons — directional cascade animation.
-  // UP: bottom arrow fires first, then top (energy moves upward).
-  // DOWN: top arrow fires first, then bottom.
   const cycle = (now_ms % 1400) / 1400;
+
   const drawChevrons = (dir: -1 | 1, opacity: number) => {
     if (opacity < 0.01) {
       return;
     }
+
     const baseX = x + 19;
     const baseY = y;
 
@@ -177,8 +177,6 @@ export const drawArrows = (
     ctx.lineJoin = "round";
 
     for (let i = 0; i < 2; i += 1) {
-      // Stagger: arrow 0 brightens at t=0, arrow 1 at t=0.2
-      // Both always visible (min 0.3), cascade just brightens each in sequence
       const start = i * 0.2;
       const dur = 0.35;
       const localT = cycle - start;

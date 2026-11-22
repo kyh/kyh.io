@@ -24,6 +24,7 @@ const KwadrantApp = () => {
     requestAnimationFrame(updateSize);
 
     const observer = new ResizeObserver(updateSize);
+
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }

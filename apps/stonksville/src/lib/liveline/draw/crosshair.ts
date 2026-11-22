@@ -15,24 +15,27 @@ interface Segment {
 const SEPARATOR = "  ·  ";
 const DOT_SEGMENT_WIDTH = 12;
 
-/** "TIME  ·  ● Label Value  ·  ● Label Value" — the dot is drawn as a circle, not text. */
 const buildSegments = (
   palette: LivelinePalette,
   timeText: string,
   entries: MultiSeriesHoverEntry[],
   formatValue: (v: number) => string,
-): Segment[] => {
+) => {
   const segments: Segment[] = [{ color: palette.gridLabel, text: timeText }];
+
   for (const e of entries) {
     segments.push(
       { color: palette.gridLabel, text: SEPARATOR },
       { color: e.color, isDot: true, text: " " },
     );
+
     if (e.label) {
       segments.push({ color: palette.gridLabel, text: `${e.label} ` });
     }
+
     segments.push({ color: palette.tooltipText, text: formatValue(e.value) });
   }
+
   return segments;
 };
 
@@ -57,7 +60,6 @@ export const drawCrosshair = (
   const { h, pad, toY } = layout;
   const y = toY(hoverValue);
 
-  // Vertical line (solid, like Kalshi)
   ctx.save();
   ctx.globalAlpha = scrubOpacity * 0.5;
   ctx.strokeStyle = palette.crosshairLine;
@@ -68,9 +70,8 @@ export const drawCrosshair = (
   ctx.stroke();
   ctx.restore();
 
-  // Dot at intersection — solid accent color, always fully opaque.
-  // Radius scales with scrubOpacity for smooth appear/disappear.
   const dotRadius = 4 * Math.min(scrubOpacity * 3, 1);
+
   if (dotRadius > 0.5) {
     ctx.globalAlpha = 1;
     ctx.beginPath();
@@ -79,8 +80,6 @@ export const drawCrosshair = (
     ctx.fill();
   }
 
-  // Top label: "$VALUE - TIME" — fixed at top, moves horizontally only
-  // Skip text for small containers (text is ~200px wide)
   if (scrubOpacity < 0.1 || layout.w < 300) {
     return;
   }
@@ -98,25 +97,23 @@ export const drawCrosshair = (
   const timeW = ctx.measureText(timeText).width;
   const totalW = valueW + sepW + timeW;
 
-  // Center on crosshair, clamp to chart bounds
-  // Right edge of tooltip text aligns with the right edge of the live dot circle
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
   const dotRightEdge = liveDotX === undefined ? layout.w - pad.right : liveDotX + 7;
   const maxX = dotRightEdge - totalW;
+
   if (tx < minX) {
     tx = minX;
   }
+
   if (tx > maxX) {
     tx = maxX;
   }
 
-  // offset from top
   const ty = pad.top + (tooltipY ?? 14) + 10;
 
   ctx.textAlign = "left";
 
-  // Text outline for readability against the chart
   if (tooltipOutline) {
     ctx.strokeStyle = palette.tooltipBg;
     ctx.lineWidth = 3;
@@ -125,11 +122,9 @@ export const drawCrosshair = (
     ctx.strokeText(separator + timeText, tx + valueW, ty);
   }
 
-  // Value (dark)
   ctx.fillStyle = palette.tooltipText;
   ctx.fillText(valueText, tx, ty);
 
-  // Separator + time (lighter)
   ctx.fillStyle = palette.gridLabel;
   ctx.fillText(separator + timeText, tx + valueW, ty);
 
@@ -157,7 +152,6 @@ export const drawMultiCrosshair = (
 
   const { h, pad, toY } = layout;
 
-  // Vertical line (solid, matching single-series)
   ctx.save();
   ctx.globalAlpha = scrubOpacity * 0.5;
   ctx.strokeStyle = palette.crosshairLine;
@@ -168,11 +162,11 @@ export const drawMultiCrosshair = (
   ctx.stroke();
   ctx.restore();
 
-  // Dots at each series intersection — radius scales with scrubOpacity,
-  // alpha stays at 1 (matching single-series crosshair dot behavior)
   const dotRadius = 4 * Math.min(scrubOpacity * 3, 1);
+
   if (dotRadius > 0.5) {
     ctx.globalAlpha = 1;
+
     for (const entry of entries) {
       const y = toY(entry.value);
       ctx.beginPath();
@@ -186,58 +180,61 @@ export const drawMultiCrosshair = (
     return;
   }
 
-  // Inline text at top — same style as single-series crosshair
-  // Format: "TIME  ·  ● Label Value  ·  ● Label Value"
   ctx.save();
   ctx.globalAlpha = scrubOpacity;
   ctx.font = '400 13px "SF Mono", Menlo, monospace';
   ctx.textAlign = "left";
 
   const segments = buildSegments(palette, formatTime(hoverTime), entries, formatValue);
+
   const segWidths = segments.map((seg) =>
     seg.isDot ? DOT_SEGMENT_WIDTH : ctx.measureText(seg.text).width,
   );
+
   let totalW = 0;
+
   for (const w of segWidths) {
     totalW += w;
   }
 
-  // Position — center on crosshair, clamp to chart bounds
-  // Right edge of tooltip aligns with the right edge of live dots (matching single-series)
   let tx = hoverX - totalW / 2;
   const minX = pad.left + 4;
   const dotRightEdge = liveDotX === undefined ? layout.w - pad.right : liveDotX + 7;
   const maxX = dotRightEdge - totalW;
+
   if (tx < minX) {
     tx = minX;
   }
+
   if (tx > maxX) {
     tx = maxX;
   }
 
   const ty = pad.top + (tooltipY ?? 14) + 10;
 
-  // Outline pass
   if (tooltipOutline !== false) {
     ctx.strokeStyle = palette.tooltipBg;
     ctx.lineWidth = 3;
     ctx.lineJoin = "round";
     let ox = tx;
+
     for (let i = 0; i < segments.length; i += 1) {
       const seg = segments[i];
+
       if (!seg.isDot) {
         ctx.strokeText(seg.text, ox, ty);
       }
+
       ox += segWidths[i];
     }
   }
 
-  // Fill pass
   let ox = tx;
+
   for (let i = 0; i < segments.length; i += 1) {
     const seg = segments[i];
+
     if (seg.isDot) {
-      // Draw small colored circle inline
       ctx.beginPath();
       ctx.arc(ox + 4, ty - 4, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = seg.color;
@@ -246,6 +243,7 @@ export const drawMultiCrosshair = (
       ctx.fillStyle = seg.color;
       ctx.fillText(seg.text, ox, ty);
     }
+
     ox += segWidths[i];
   }
 

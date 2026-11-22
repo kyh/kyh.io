@@ -21,11 +21,13 @@ const NIGHT: Scheme = schemeOf({ theme: DEFAULT_THEME, time: "night" });
 
 const hueOf = (hex: string) => {
   const [, a, b] = oklab(hex);
+
   return Math.atan2(b, a);
 };
 
 const hueGap = (from: string, to: string) => {
   const turn = hueOf(to) - hueOf(from);
+
   return Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn)));
 };
 
@@ -51,6 +53,7 @@ test("each family of hues takes the icon's colors in turn", () => {
     ["roofBlueShade", 6],
     ["accentOrange", 2],
   ]);
+
   const { tint } = lookOf(areas, ["#77c5f1", "#e27337"]);
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), "#77c5f1") < 0.05);
   assert.ok(hueGap(tint(PALETTE.accentOrange.day), "#e27337") < 0.05);
@@ -62,6 +65,7 @@ test("a one-color icon still leaves a building more than one hue", () => {
     ["roofBlue", 10],
     ["accentOrange", 2],
   ]);
+
   const { tint } = lookOf(areas, ["#de35df"]);
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), tint(PALETTE.accentOrange.day)) > 1);
 });
@@ -78,6 +82,7 @@ test("the main color is the colored token covering the most, greys aside", () =>
     ["navy", 10],
     ["accentYellow", 1],
   ]);
+
   assert.equal(dominant(areas), "navy");
   assert.equal(dominant(areasOf([["wallLeft", 100]])), null);
 });
@@ -105,6 +110,7 @@ test("a lit building's trees stay green and take none of its colors", () => {
     ["tree", 100],
     ["roofBlue", 10],
   ]);
+
   const { tint } = lookOf(areas, ["#de35df", "#f1a50e"]);
   assert.equal(shade("tree", DAY, true, tint), PALETTE.tree.day);
   assert.ok(hueGap(tint(PALETTE.roofBlue.day), "#de35df") < 0.05, "a tree took the main color");
@@ -130,6 +136,7 @@ test("a theme's tint turns the greys by day and by night", () => {
 
 const chroma = (hex: string) => {
   const [, a, b] = oklab(hex);
+
   return Math.hypot(a, b);
 };
 

@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-
 import type { CityProject } from "./_components/city/draw-landmarks";
 import { projects } from "@/lib/data";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/showcase" },
-  description: "Everything I've built, as a city you can fly over.",
-  title: "Showcase",
-};
+export const generateMetadata = () =>
+  todaysPageMetadata({
+    description: "Always on a side quest",
+    path: "/showcase",
+    title: "Showcase",
+  });
 
 const cityProjects: CityProject[] = projects.map((project) => ({
   colors: project.colors,
@@ -22,7 +22,6 @@ const cityProjects: CityProject[] = projects.map((project) => ({
 
 const Page = () => (
   <main>
-    {/* The city is drawn on a canvas; each building's icon is a real link. */}
     <h1 className="sr-only">Showcase: a city of everything I&apos;ve built</h1>
     <CityShowcase projects={cityProjects} />
   </main>

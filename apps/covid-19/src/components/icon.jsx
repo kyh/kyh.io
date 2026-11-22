@@ -31,9 +31,11 @@ const iconSizeMap = {
 export const Icon = ({ icon = "", size = "sm", ...rest }) => {
   const iconPath = iconMap[icon];
   const iconSize = iconSizeMap[size];
+
   if (!iconPath) {
     return null;
   }
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

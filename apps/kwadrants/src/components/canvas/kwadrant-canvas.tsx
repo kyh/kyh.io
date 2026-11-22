@@ -77,6 +77,7 @@ const LabelEditor = ({
 export const KwadrantCanvas = ({ ref, width, height }: KwadrantCanvasProps) => {
   const { state, updateTagPosition, removeTag, updateImagePosition, removeImage, updateLabel } =
     useKwadrant();
+
   const [editingLabel, setEditingLabel] = useState<{
     key: string;
     position: { x: number; y: number };
@@ -85,21 +86,22 @@ export const KwadrantCanvas = ({ ref, width, height }: KwadrantCanvasProps) => {
   const layout = getLayout(state.layoutType);
   const bounds = useMemo(() => layout.getBounds(width, height), [layout, width, height]);
 
-  // Get current labels with defaults
   const currentLabels = useMemo(() => {
     const stored = state.layoutLabels[state.layoutType] ?? {};
     const defaults = getDefaultLabels(layout);
+
     return { ...defaults, ...stored };
   }, [state.layoutLabels, state.layoutType, layout]);
 
-  // Derive editor positions from layout label definitions
   const getEditorPosition = (key: string) => {
     const labelDef = layout.labels.find((l) => l.key === key);
+
     if (!labelDef) {
       return { x: 0, y: 0 };
     }
+
     const pos = labelDef.position(bounds);
-    // Adjust for editor offset
+
     return {
       x: pos.x - (labelDef.textProps?.offsetX ?? 0),
       y: pos.y - 10,
@@ -110,7 +112,6 @@ export const KwadrantCanvas = ({ ref, width, height }: KwadrantCanvasProps) => {
     setEditingLabel({ key, position: getEditorPosition(key) });
   };
 
-  // Check if this label is on right edge (for axis layout xPositive)
   const isRightEdgeLabel = editingLabel?.key === "xPositive" && state.layoutType === "axis";
 
   return (

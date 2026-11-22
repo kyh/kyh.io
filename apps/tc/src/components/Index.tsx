@@ -20,10 +20,12 @@ const productHuntBadge = (
 
 const Index = () => {
   const comp = useCompHooks();
+
   const totalTc = comp.data.reduce<number>(
     (acc, curr) => acc + curr.base + curr.bonus + curr.stock,
     0,
   );
+
   const avgTc = totalTc / comp.data.length;
 
   return (

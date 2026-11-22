@@ -11,22 +11,23 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 export const AvatarGroup = () => {
   const pathname = usePathname();
-  // None on the server: a color picked per page load would mismatch SSR.
   const color = useSyncExternalStore(subscribeToOwnColor, ownColor, () => null);
   const awake = useEggsAwake();
+
   const players = useRoster().toSorted(
     (a, b) => Number(b.pathname === pathname) - Number(a.pathname === pathname),
   );
+
   const onlyMe = players.length < 1;
 
   return (
     <ul className="mr-2 flex transition-opacity duration-[230ms] ease-out">
       <AnimatePresence mode="popLayout">
         <motion.li
-          className="-mr-2 rounded-full shadow-md"
+          className="relative -mr-2 rounded-full shadow-md"
+          data-hat-perch="me"
           style={{ zIndex: players.length }}
           initial={{ opacity: 0, scale: 0.8 }}
-          // Alone it fades back, unless it's catching easter eggs or gone gold.
           animate={{ opacity: onlyMe && !awake ? 0.2 : 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
@@ -55,6 +56,7 @@ export const AvatarGroup = () => {
           const anotherPage = player.pathname !== pathname;
 
           let label = "Visitor";
+
           if (anotherPage) {
             label += " (on another page)";
           }

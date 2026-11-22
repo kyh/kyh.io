@@ -5,9 +5,11 @@ import { createIntro } from "./intro";
 
 const run = (intro: ReturnType<typeof createIntro>, frames: number, elapsed = 1 / 60) => {
   const steps = [];
+
   for (let frame = 0; frame < frames; frame += 1) {
     steps.push(intro.step(elapsed));
   }
+
   return steps;
 };
 

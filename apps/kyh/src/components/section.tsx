@@ -16,7 +16,9 @@ export const SectionHeading = ({ children, id }: { children: string; id?: string
       id={id}
       as="h2"
       trigger="hover"
-      className="text-foreground-highlighted scroll-mt-[120px] leading-none font-medium sm:scroll-mt-[100px]"
+      className="text-foreground-highlighted relative scroll-mt-[120px] leading-none font-medium sm:scroll-mt-[100px]"
+      data-hat-perch={`title:${children}`}
+      data-hat-sits="text"
     >
       {children}
     </ScrambleText>
@@ -32,6 +34,7 @@ interface SectionProps {
 
 export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
   const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
+
   const combinedClasses = ["flex flex-col gap-4", scrollMarginClasses, className]
     .filter(Boolean)
     .join(" ");

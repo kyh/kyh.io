@@ -115,6 +115,7 @@ export const defaultSteps: Step[] = [
 export const useAbout = () => {
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+
   const handleJoyrideCallback: EventHandler = ({ action, index, type, status }) => {
     if (action === ACTIONS.CLOSE || status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRun(false);
@@ -154,7 +155,7 @@ const Tooltip = ({
     {step.title && (
       <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">{step.title}</h1>
     )}
-    {step.content}
+    <div className="select-text">{step.content}</div>
     <footer className="mt-5 flex items-center justify-between">
       <div className="flex gap-1">
         {defaultSteps.map((_s, i) => (

@@ -18,7 +18,15 @@
     @apply bg-background text-foreground;
     overscroll-behavior: none;
     touch-action: manipulation;
+    /* A game, not a document: nothing is text but what you type. */
+    -webkit-user-select: none;
     user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable]:not([contenteditable="false"]) {
+    -webkit-user-select: text;
+    user-select: text;
   }
   html,
   body {

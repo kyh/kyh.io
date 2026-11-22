@@ -17,7 +17,7 @@ interface FeedPost {
   published: string;
 }
 
-const decodeHTMLEntities = (text: string): string =>
+const decodeHTMLEntities = (text: string) =>
   text
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
@@ -26,10 +26,9 @@ const decodeHTMLEntities = (text: string): string =>
     .replaceAll("&#39;", "'")
     .replaceAll("&apos;", "'");
 
-const feedField = (entry: string, pattern: RegExp): string =>
-  pattern.exec(entry)?.groups?.value ?? "";
+const feedField = (entry: string, pattern: RegExp) => pattern.exec(entry)?.groups?.value ?? "";
 
-const parseAtomFeed = (xml: string): FeedPost[] => {
+const parseAtomFeed = (xml: string) => {
   const posts: FeedPost[] = [];
 
   for (const match of xml.matchAll(/<entry>(?<body>[\s\S]*?)<\/entry>/gu)) {
@@ -55,25 +54,29 @@ const parseAtomFeed = (xml: string): FeedPost[] => {
   return posts;
 };
 
-const normalizeUrl = (url: string): string => {
+const normalizeUrl = (url: string) => {
   try {
     const u = new URL(url);
+
     return `${u.origin}${u.pathname}`.replace(/\/$/u, "");
   } catch {
     return url.split("?")[0].replace(/\/$/u, "");
   }
 };
 
-const parseLocalDate = (dateStr: string): Date => {
+const parseLocalDate = (dateStr: string) => {
   const [year, month, day] = dateStr.split("-").map(Number);
+
   return new Date(year, month - 1, day);
 };
 
 const requireAdmin = async () => {
   const session = await getSession();
+
   if (!session?.user || session.user.isAnonymous) {
     throw new Error("Unauthorized");
   }
+
   return session.user;
 };
 
@@ -85,6 +88,7 @@ export const getAllIncidents = async () => {
     where: { deletedAt: { isNull: true } },
     with: { videos: true },
   });
+
   return results;
 };
 
@@ -107,6 +111,7 @@ export const updateIncident = async (data: {
     })
     .where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -114,6 +119,7 @@ export const toggleIncidentStatus = async (data: { id: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({ where: { id: data.id } });
+
   if (!incident) {
     return { error: "Not found", success: false };
   }
@@ -121,6 +127,7 @@ export const toggleIncidentStatus = async (data: { id: number }) => {
   const newStatus = incident.status === "approved" ? "hidden" : "approved";
   await db.update(incidents).set({ status: newStatus }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
+
   return { newStatus, success: true };
 };
 
@@ -128,6 +135,7 @@ export const toggleIncidentPinned = async (data: { id: number }) => {
   await requireAdmin();
 
   const incident = await db.query.incidents.findFirst({ where: { id: data.id } });
+
   if (!incident) {
     return { error: "Not found", success: false };
   }
@@ -135,6 +143,7 @@ export const toggleIncidentPinned = async (data: { id: number }) => {
   const newPinned = !incident.pinned;
   await db.update(incidents).set({ pinned: newPinned }).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
+
   return { newPinned, success: true };
 };
 
@@ -143,6 +152,7 @@ export const adminDeleteIncident = async (data: { id: number }) => {
 
   await db.delete(incidents).where(eq(incidents.id, data.id));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -156,6 +166,7 @@ export const addVideo = async (data: { incidentId: number; url: string }) => {
     url: data.url,
   });
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -165,6 +176,7 @@ export const updateVideo = async (data: { id: number; url: string }) => {
   const platform = detectPlatform(data.url);
   await db.update(videos).set({ platform, url: data.url }).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -173,6 +185,7 @@ export const deleteVideo = async (data: { id: number }) => {
 
   await db.delete(videos).where(eq(videos.id, data.id));
   revalidateTag("incidents", "max");
+
   return { success: true };
 };
 
@@ -186,6 +199,7 @@ export const bulkCreateIncidents = async (data: {
   await requireAdmin();
 
   const validUrls = data.urls.filter((url) => isValidVideoUrl(url));
+
   if (validUrls.length === 0) {
     return { created: 0, error: "No valid URLs", skipped: 0 };
   }
@@ -195,6 +209,7 @@ export const bulkCreateIncidents = async (data: {
   const existingVideos = await db.query.videos.findMany({
     where: { url: { in: resolvedUrls } },
   });
+
   const existingUrls = new Set(existingVideos.map((v) => v.url));
   const newUrls = resolvedUrls.filter((url) => !existingUrls.has(url));
 
@@ -224,9 +239,12 @@ export const bulkCreateIncidents = async (data: {
     );
 
     revalidateTag("incidents", "max");
+
     return { created: 1, skipped: existingUrls.size };
   }
+
   let created = 0;
+
   for (const url of newUrls) {
     const [incident] = await db
       .insert(incidents)
@@ -247,6 +265,7 @@ export const bulkCreateIncidents = async (data: {
   }
 
   revalidateTag("incidents", "max");
+
   return { created, skipped: existingUrls.size };
 };
 
@@ -270,6 +289,7 @@ export const getFeedPosts = async () => {
     columns: { url: true },
     where: { url: { like: "%reddit.com%" } },
   });
+
   const existingUrls = existingVideos.map((v) => normalizeUrl(v.url));
 
   return { existingUrls, posts };
@@ -302,5 +322,6 @@ export const createFromFeed = async (data: { url: string; title: string; publish
   });
 
   revalidateTag("incidents", "max");
+
   return { incidentId: incident.id, success: true };
 };

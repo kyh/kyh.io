@@ -19,12 +19,11 @@ const sunkenBorder: CSSProperties = {
   boxShadow: "inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf",
 };
 
-// Cached, so the card prerenders: a file read alone keeps it from the build.
-// Bytes come back out of the cache as plain arrays, so the font goes in as base64.
 const fontData = async () => {
   "use cache";
   cacheLife("max");
   const font = await readFile(path.join(process.cwd(), "src/app/geist-mono-bold.ttf"));
+
   return font.toString("base64");
 };
 

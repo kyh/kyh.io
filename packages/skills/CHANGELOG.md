@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.3 — 2026-11-11
+
+- CLAUDE.md: build features in, don't bolt on; propose the refactor first when clean needs one
+
+## 0.2.2 — 2026-11-10
+
+- drop `ai-elements` and `make-interfaces-feel-better`
+- install prunes every unlisted skill, incl. from repos dropped from external-skills.json
+- `i` alias for `install`
+
 ## 0.2.1 — 2026-10-10
 
 - drop hand-installed skills from unmanaged

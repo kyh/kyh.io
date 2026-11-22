@@ -22,6 +22,7 @@ test("the city is the same town on every visit", () => {
 
 test("every project gets exactly one lot, and lots never overlap", () => {
   const { lots } = planCity(ENTRIES);
+
   for (const entry of ENTRIES) {
     assert.equal(
       lots.filter((lot) => lot.slug === entry.slug).length,
@@ -29,6 +30,7 @@ test("every project gets exactly one lot, and lots never overlap", () => {
       `${entry.slug} has no lot`,
     );
   }
+
   for (const [index, lot] of lots.entries()) {
     for (const other of lots.slice(index + 1)) {
       assert.ok(!overlaps(lot, other), `${lot.slug || "spare"} overlaps ${other.slug || "spare"}`);
@@ -49,7 +51,9 @@ test("a city that runs out of lots makes room instead of dropping projects", () 
     size: "large",
     slug: `p${index}`,
   }));
+
   const { lots } = planCity(crowd);
+
   for (const entry of crowd) {
     assert.ok(
       lots.some((lot) => lot.slug === entry.slug),
@@ -60,6 +64,7 @@ test("a city that runs out of lots makes room instead of dropping projects", () 
 
 test("every block and lot is on dry land", () => {
   const { blocks, lots } = planCity(ENTRIES);
+
   for (const rect of [...blocks, ...lots]) {
     for (const [x, z] of [
       [rect.x, rect.z],
@@ -75,16 +80,20 @@ test("every block and lot is on dry land", () => {
 test("every junction can be driven to from every other", () => {
   const { junctions, roads } = planCity(ENTRIES);
   const neighbors = new Map<string, string[]>();
+
   for (const road of roads) {
     neighbors.set(road.from, [...(neighbors.get(road.from) ?? []), road.to]);
     neighbors.set(road.to, [...(neighbors.get(road.to) ?? []), road.from]);
   }
+
   const [start] = junctions;
   assert.ok(start);
   const seen = new Set([start.id]);
   const queue = [start.id];
+
   while (queue.length > 0) {
     const id = queue.shift() ?? "";
+
     for (const next of neighbors.get(id) ?? []) {
       if (!seen.has(next)) {
         seen.add(next);
@@ -92,11 +101,13 @@ test("every junction can be driven to from every other", () => {
       }
     }
   }
+
   assert.equal(seen.size, junctions.length);
 });
 
 test("the view stops a few cells out to sea and is left alone short of it", () => {
   assert.deepEqual(withinReach(CENTER, CENTER, 4), [CENTER, CENTER]);
+
   for (let index = 0; index < 32; index += 1) {
     const angle = (index / 32) * Math.PI * 2;
     const [x, z] = withinReach(CENTER + Math.cos(angle) * 500, CENTER + Math.sin(angle) * 500, 4);

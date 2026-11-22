@@ -3,13 +3,16 @@ import { cacheLife } from "next/cache";
 
 import { absoluteUrl, siteRoutes } from "@/lib/config";
 
-// Cached so the build prerenders it: `new Date()` alone makes the route dynamic.
 // oxlint-disable-next-line require-await -- "use cache" only takes an async function
-const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+const sitemap = async () => {
   "use cache";
   cacheLife("max");
   const lastModified = new Date().toISOString();
-  return siteRoutes.map((route) => ({ lastModified, url: absoluteUrl(route.path) }));
+
+  return siteRoutes.map((route) => ({
+    lastModified,
+    url: absoluteUrl(route.path),
+  })) satisfies MetadataRoute.Sitemap;
 };
 
 export default sitemap;

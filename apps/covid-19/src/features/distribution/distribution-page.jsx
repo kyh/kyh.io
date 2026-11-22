@@ -17,7 +17,6 @@ export const DistributionPage = () => {
   const [playing, setPlaying] = useState(false);
 
   const dates = useMemo(() => set(raw.map((s) => s.date).toReversed()).values(), [raw]);
-  // holds the date of the displayed day. calculated using the slider index
   const currentDate = useMemo(() => dates[sliderIndex], [dates, sliderIndex]);
 
   const getValue = useMemo(
@@ -43,9 +42,8 @@ export const DistributionPage = () => {
     [currentDate, raw],
   );
 
-  // The slider starts on the most recent day, and playback stops on its own
-  // once it gets back there.
   const [knownDateCount, setKnownDateCount] = useState(0);
+
   if (dates.length !== knownDateCount) {
     setKnownDateCount(dates.length);
     setSliderIndex(dates.length > 0 ? dates.length - 1 : 0);
@@ -60,6 +58,7 @@ export const DistributionPage = () => {
     }
 
     const interval = setInterval(() => setSliderIndex((index) => index + 1), 300);
+
     return () => clearInterval(interval);
   }, [isPlaying]);
 
@@ -67,13 +66,17 @@ export const DistributionPage = () => {
     if (dates.length === 0) {
       return;
     }
+
     if (isPlaying) {
       setPlaying(false);
+
       return;
     }
+
     if (atEnd) {
       setSliderIndex(0);
     }
+
     setPlaying(true);
   };
 

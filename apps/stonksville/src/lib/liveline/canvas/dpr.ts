@@ -1,8 +1,9 @@
 /** Get device pixel ratio, clamped to reasonable range. */
-export const getDpr = (): number => {
+export const getDpr = () => {
   if (typeof window === "undefined") {
     return 1;
   }
+
   return Math.min(window.devicePixelRatio || 1, 3);
 };
 

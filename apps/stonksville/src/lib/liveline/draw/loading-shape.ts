@@ -14,7 +14,7 @@ export const LOADING_SCROLL_SPEED = 0.001;
  * @param amplitude Wave height in pixels (chartH * LOADING_AMPLITUDE_RATIO)
  * @param scroll    Time-based scroll offset (now_ms * LOADING_SCROLL_SPEED)
  */
-export const loadingY = (t: number, centerY: number, amplitude: number, scroll: number): number =>
+export const loadingY = (t: number, centerY: number, amplitude: number, scroll: number) =>
   centerY +
   amplitude *
     (Math.sin(t * 9.4 + scroll) * 0.55 +
@@ -22,5 +22,4 @@ export const loadingY = (t: number, centerY: number, amplitude: number, scroll: 
       Math.sin(t * 4.2 + scroll * 0.7) * 0.15);
 
 /** Breathing alpha for the loading line and chart line at reveal=0. */
-export const loadingBreath = (now_ms: number): number =>
-  0.22 + 0.08 * Math.sin((now_ms / 1200) * Math.PI);
+export const loadingBreath = (now_ms: number) => 0.22 + 0.08 * Math.sin((now_ms / 1200) * Math.PI);

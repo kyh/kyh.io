@@ -5,9 +5,6 @@ import { useState } from "react";
 import { jsonRequest, okPayloadSchema, requestJson } from "@/lib/api-contract";
 import { WindowDialog } from "@/components/window-dialog";
 
-// The door. A new viewer gives the invite code once; the station answers with
-// a cookie, and the X sign-in that follows is allowed to create their account.
-
 interface InviteDialogProps {
   onInvited: () => void;
   onClose: () => void;
@@ -21,6 +18,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
   const submit = async () => {
     setBusy(true);
     setError(undefined);
+
     try {
       const answer = await requestJson(
         "/api/invite",
@@ -28,6 +26,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
         "Couldn't check the code",
         jsonRequest("POST", { code }),
       );
+
       if ("error" in answer) {
         setError(answer.error);
       } else {
@@ -36,6 +35,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : "Couldn't check the code");
     }
+
     setBusy(false);
   };
 
@@ -45,6 +45,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
         className="m-3 space-y-2 text-[11px]"
         onSubmit={(event) => {
           event.preventDefault();
+
           if (code.trim() !== "") {
             void submit();
           }
@@ -73,7 +74,7 @@ export const InviteDialog = (props: InviteDialogProps) => {
             enter
           </button>
         </div>
-        {error !== undefined && <p className="text-[10px] text-red-700">{error}</p>}
+        {error !== undefined && <p className="text-[10px] text-red-700 select-text">{error}</p>}
         <button
           type="button"
           onClick={props.onInvited}

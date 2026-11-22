@@ -1,9 +1,8 @@
 import { useRef, useState, useLayoutEffect, useMemo, useCallback } from "react";
-import type { CSSProperties, RefObject } from "react";
+import type { RefObject, CSSProperties } from "react";
 import type {
   BadgeVariant,
   DegenOptions,
-  LivelinePalette,
   LivelineProps,
   LivelineSeries,
   Momentum,
@@ -24,10 +23,9 @@ const defaultFormatTime = (t: number) => {
   const h = d.getHours().toString().padStart(2, "0");
   const m = d.getMinutes().toString().padStart(2, "0");
   const s = d.getSeconds().toString().padStart(2, "0");
+
   return `${h}:${m}:${s}`;
 };
-
-// --- Prop defaults ---
 
 interface Appearance {
   theme: ThemeMode;
@@ -61,22 +59,23 @@ const resolveAppearance = ({
   formatTime = defaultFormatTime,
   lerpSpeed = 0.08,
   cursor = "crosshair",
-}: LivelineProps): Appearance => ({
-  badge,
-  badgeTail,
-  badgeVariant,
-  color,
-  cursor,
-  fill,
-  formatTime,
-  formatValue,
-  grid,
-  lerpSpeed,
-  pulse,
-  theme,
-  tooltipOutline,
-  tooltipY,
-});
+}: LivelineProps) =>
+  ({
+    badge,
+    badgeTail,
+    badgeVariant,
+    color,
+    cursor,
+    fill,
+    formatTime,
+    formatValue,
+    grid,
+    lerpSpeed,
+    pulse,
+    theme,
+    tooltipOutline,
+    tooltipY,
+  }) satisfies Appearance;
 
 interface Behavior {
   windowSecs: number;
@@ -104,59 +103,58 @@ const resolveBehavior = ({
   mode = "line",
   seriesToggleCompact = false,
   windowStyle = "default",
-}: LivelineProps): Behavior => ({
-  exaggerate,
-  loading,
-  mode,
-  momentum,
-  paused,
-  scrub,
-  seriesToggleCompact,
-  showValue,
-  valueMomentumColor,
-  windowSecs,
-  windowStyle,
-});
+}: LivelineProps) =>
+  ({
+    exaggerate,
+    loading,
+    mode,
+    momentum,
+    paused,
+    scrub,
+    seriesToggleCompact,
+    showValue,
+    valueMomentumColor,
+    windowSecs,
+    windowStyle,
+  }) satisfies Behavior;
 
 interface MomentumSetting {
   showMomentum: boolean;
   momentumOverride: Momentum | undefined;
 }
 
-/** Boolean enables auto-detect, a Momentum string overrides it. */
-const resolveMomentum = (momentum: boolean | Momentum): MomentumSetting => ({
-  momentumOverride: momentum === true || momentum === false ? undefined : momentum,
-  showMomentum: momentum !== false,
-});
+const resolveMomentum = (momentum: boolean | Momentum) =>
+  ({
+    momentumOverride: momentum === true || momentum === false ? undefined : momentum,
+    showMomentum: momentum !== false,
+  }) satisfies MomentumSetting;
 
-/** Explicit degen options win; `true` enables the defaults. */
-const resolveDegen = (degen: LivelineProps["degen"]): DegenOptions | undefined => {
+const resolveDegen = (degen: LivelineProps["degen"]) => {
   if (degen === true) {
-    return {};
+    return {} satisfies DegenOptions | undefined;
   }
-  return degen === false ? undefined : degen;
+
+  return (degen === false ? undefined : degen) satisfies DegenOptions | undefined;
 };
 
-const resolvePadding = (
-  override: Padding | undefined,
-  badge: boolean,
-  grid: boolean,
-): Required<Padding> => {
+const resolvePadding = (override: Padding | undefined, badge: boolean, grid: boolean) => {
   let defaultRight = 12;
+
   if (badge) {
     defaultRight = 80;
   } else if (grid) {
     defaultRight = 54;
   }
+
   return {
     bottom: override?.bottom ?? 28,
     left: override?.left ?? 12,
     right: override?.right ?? defaultRight,
     top: override?.top ?? 12,
-  };
+  } satisfies Required<Padding>;
 };
 
-const initialWindowSecs = (windows: WindowOption[] | undefined, windowSecs: number): number =>
+const initialWindowSecs = (windows: WindowOption[] | undefined, windowSecs: number) =>
   windows && windows.length > 0 ? windows[0].secs : windowSecs;
 
 interface SingleSeriesFeatures {
@@ -166,47 +164,46 @@ interface SingleSeriesFeatures {
   showMomentum: boolean;
 }
 
-/** Badge, fill, momentum and degen are per-chart concerns that multi-series turns off. */
 const resolveSingleSeriesFeatures = (
   isMultiSeries: boolean,
   look: Appearance,
   showMomentum: boolean,
   degenOptions: DegenOptions | undefined,
-): SingleSeriesFeatures => {
+) => {
   if (isMultiSeries) {
-    return { degenOptions: undefined, showBadge: false, showFill: false, showMomentum: false };
+    return {
+      degenOptions: undefined,
+      showBadge: false,
+      showFill: false,
+      showMomentum: false,
+    } satisfies SingleSeriesFeatures;
   }
-  return { degenOptions, showBadge: look.badge, showFill: look.fill, showMomentum };
-};
 
-// --- Hooks ---
+  return {
+    degenOptions,
+    showBadge: look.badge,
+    showFill: look.fill,
+    showMomentum,
+  } satisfies SingleSeriesFeatures;
+};
 
 const usePalette = (color: string, theme: ThemeMode, lineWidth: number | undefined) =>
   useMemo(() => {
     const p = resolveTheme(color, theme);
+
     if (lineWidth !== undefined) {
       p.lineWidth = lineWidth;
     }
+
     return p;
   }, [color, theme, lineWidth]);
 
-interface EngineSeries {
-  id: string;
-  data: LivelineSeries["data"];
-  value: number;
-  palette: LivelinePalette;
-  label?: string;
-}
-
-/** Normalized multi-series config for the engine, palettes memoized on series ids + colors + theme. */
-const useMultiSeries = (
-  seriesProp: LivelineSeries[] | undefined,
-  theme: ThemeMode,
-): EngineSeries[] | undefined => {
+const useMultiSeries = (seriesProp: LivelineSeries[] | undefined, theme: ThemeMode) => {
   const seriesPalettes = useMemo(
     () => (seriesProp && seriesProp.length > 0 ? resolveSeriesPalettes(seriesProp, theme) : null),
     [seriesProp, theme],
   );
+
   return useMemo(
     () =>
       seriesProp && seriesPalettes
@@ -224,47 +221,53 @@ const useMultiSeries = (
   );
 };
 
-/** An empty series prop keeps the toggle row rendering the last real one. */
 const useStickySeries = (seriesProp: LivelineSeries[] | undefined) => {
   const [lastSeries, setLastSeries] = useState(seriesProp);
   const displaySeries = seriesProp && seriesProp.length > 0 ? seriesProp : lastSeries;
+
   if (displaySeries !== lastSeries) {
     setLastSeries(displaySeries);
   }
+
   return displaySeries;
 };
 
-/** Hidden-series set; the last visible series can't be hidden. */
 const useSeriesToggle = (
   seriesProp: LivelineSeries[] | undefined,
   onSeriesToggle: LivelineProps["onSeriesToggle"],
 ) => {
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set());
   const totalSeries = seriesProp?.length ?? 0;
+
   const toggleSeries = useCallback(
     (id: string) => {
       setHiddenSeries((prev) => {
         const next = new Set(prev);
+
         if (next.has(id)) {
           next.delete(id);
           onSeriesToggle?.(id, true);
+
           return next;
         }
+
         const visibleCount = totalSeries - next.size;
+
         if (visibleCount <= 1) {
           return prev;
         }
+
         next.add(id);
         onSeriesToggle?.(id, false);
+
         return next;
       });
     },
     [totalSeries, onSeriesToggle],
   );
+
   return { hiddenSeries, toggleSeries };
 };
-
-// --- Chrome styling ---
 
 interface ChromeColors {
   active: string;
@@ -293,41 +296,40 @@ const CHROME: Record<ThemeMode, ChromeColors> = {
 
 const BAR_PADDING: Record<WindowStyle, number> = { default: 2, rounded: 3, text: 0 };
 
-const pillRadius = (ws: WindowStyle): number => (ws === "rounded" ? 999 : 4);
+const pillRadius = (ws: WindowStyle) => (ws === "rounded" ? 999 : 4);
 
-const barStyle = (ws: WindowStyle, colors: ChromeColors): CSSProperties => ({
-  background: ws === "text" ? "transparent" : colors.barBg,
-  borderRadius: ws === "rounded" ? 999 : 6,
-  display: "inline-flex",
-  gap: ws === "text" ? 4 : 2,
-  padding: BAR_PADDING[ws],
-});
+const barStyle = (ws: WindowStyle, colors: ChromeColors) =>
+  ({
+    background: ws === "text" ? "transparent" : colors.barBg,
+    borderRadius: ws === "rounded" ? 999 : 6,
+    display: "inline-flex",
+    gap: ws === "text" ? 4 : 2,
+    padding: BAR_PADDING[ws],
+  }) satisfies CSSProperties;
 
 interface IndicatorPos {
   left: number;
   width: number;
 }
 
-const indicatorStyle = (
-  ws: WindowStyle,
-  colors: ChromeColors,
-  pos: IndicatorPos,
-): CSSProperties => ({
-  background: colors.indicator,
-  borderRadius: pillRadius(ws),
-  height: ws === "rounded" ? "calc(100% - 6px)" : "calc(100% - 4px)",
-  left: pos.left,
-  pointerEvents: "none",
-  position: "absolute",
-  top: ws === "rounded" ? 3 : 2,
-  transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-  width: pos.width,
-});
+const indicatorStyle = (ws: WindowStyle, colors: ChromeColors, pos: IndicatorPos) =>
+  ({
+    background: colors.indicator,
+    borderRadius: pillRadius(ws),
+    height: ws === "rounded" ? "calc(100% - 6px)" : "calc(100% - 4px)",
+    left: pos.left,
+    pointerEvents: "none",
+    position: "absolute",
+    top: ws === "rounded" ? 3 : 2,
+    transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+    width: pos.width,
+  }) satisfies CSSProperties;
 
-const measureIndicator = (bar: HTMLDivElement, btn: HTMLButtonElement): IndicatorPos => {
+const measureIndicator = (bar: HTMLDivElement, btn: HTMLButtonElement) => {
   const barRect = bar.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
-  return { left: btnRect.left - barRect.left, width: btnRect.width };
+
+  return { left: btnRect.left - barRect.left, width: btnRect.width } satisfies IndicatorPos;
 };
 
 const trackButton =
@@ -340,81 +342,75 @@ const trackButton =
     }
   };
 
-const windowButtonStyle = (
-  ws: WindowStyle,
-  colors: ChromeColors,
-  isActive: boolean,
-): CSSProperties => ({
-  background: "transparent",
-  border: "none",
-  borderRadius: pillRadius(ws),
-  color: isActive ? colors.active : colors.inactive,
-  cursor: "pointer",
-  fontFamily: "system-ui, -apple-system, sans-serif",
-  fontSize: 11,
-  fontWeight: isActive ? 600 : 400,
-  lineHeight: "16px",
-  padding: ws === "text" ? "2px 6px" : "3px 10px",
-  position: "relative",
-  transition: "color 0.2s, background 0.15s",
-  zIndex: 1,
-});
+const windowButtonStyle = (ws: WindowStyle, colors: ChromeColors, isActive: boolean) =>
+  ({
+    background: "transparent",
+    border: "none",
+    borderRadius: pillRadius(ws),
+    color: isActive ? colors.active : colors.inactive,
+    cursor: "pointer",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    fontSize: 11,
+    fontWeight: isActive ? 600 : 400,
+    lineHeight: "16px",
+    padding: ws === "text" ? "2px 6px" : "3px 10px",
+    position: "relative",
+    transition: "color 0.2s, background 0.15s",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
-const modeButtonStyle = (ws: WindowStyle): CSSProperties => ({
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  borderRadius: pillRadius(ws),
-  cursor: "pointer",
-  display: "flex",
-  padding: "5px 7px",
-  position: "relative",
-  zIndex: 1,
-});
+const modeButtonStyle = (ws: WindowStyle) =>
+  ({
+    alignItems: "center",
+    background: "transparent",
+    border: "none",
+    borderRadius: pillRadius(ws),
+    cursor: "pointer",
+    display: "flex",
+    padding: "5px 7px",
+    position: "relative",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
-const chipPadding = (ws: WindowStyle, compact: boolean): string => {
+const chipPadding = (ws: WindowStyle, compact: boolean) => {
   if (compact) {
     return ws === "text" ? "2px 4px" : "5px 7px";
   }
+
   return ws === "text" ? "2px 6px" : "3px 8px";
 };
 
-const chipStyle = (
-  ws: WindowStyle,
-  colors: ChromeColors,
-  isHidden: boolean,
-  compact: boolean,
-): CSSProperties => ({
-  alignItems: "center",
-  background: isHidden || ws === "text" ? "transparent" : colors.indicator,
-  border: "none",
-  borderRadius: pillRadius(ws),
-  color: isHidden ? colors.inactive : colors.active,
-  cursor: "pointer",
-  display: "flex",
-  fontFamily: "system-ui, -apple-system, sans-serif",
-  fontSize: 11,
-  fontWeight: 500,
-  gap: compact ? 0 : 4,
-  lineHeight: "16px",
-  opacity: isHidden ? 0.4 : 1,
-  padding: chipPadding(ws, compact),
-  position: "relative",
-  transition: "opacity 0.2s, background 0.15s, color 0.2s",
-  zIndex: 1,
-});
+const chipStyle = (ws: WindowStyle, colors: ChromeColors, isHidden: boolean, compact: boolean) =>
+  ({
+    alignItems: "center",
+    background: isHidden || ws === "text" ? "transparent" : colors.indicator,
+    border: "none",
+    borderRadius: pillRadius(ws),
+    color: isHidden ? colors.inactive : colors.active,
+    cursor: "pointer",
+    display: "flex",
+    fontFamily: "system-ui, -apple-system, sans-serif",
+    fontSize: 11,
+    fontWeight: 500,
+    gap: compact ? 0 : 4,
+    lineHeight: "16px",
+    opacity: isHidden ? 0.4 : 1,
+    padding: chipPadding(ws, compact),
+    position: "relative",
+    transition: "opacity 0.2s, background 0.15s, color 0.2s",
+    zIndex: 1,
+  }) satisfies CSSProperties;
 
-const chipDotStyle = (seriesColor: string, isHidden: boolean, compact: boolean): CSSProperties => ({
-  background: seriesColor,
-  borderRadius: "50%",
-  flexShrink: 0,
-  height: compact ? 8 : 6,
-  opacity: isHidden ? 0.4 : 1,
-  transition: "opacity 0.2s",
-  width: compact ? 8 : 6,
-});
-
-// --- Chrome components ---
+const chipDotStyle = (seriesColor: string, isHidden: boolean, compact: boolean) =>
+  ({
+    background: seriesColor,
+    borderRadius: "50%",
+    flexShrink: 0,
+    height: compact ? 8 : 6,
+    opacity: isHidden ? 0.4 : 1,
+    transition: "opacity 0.2s",
+    width: compact ? 8 : 6,
+  }) satisfies CSSProperties;
 
 interface ValueDisplayProps {
   valueRef: RefObject<HTMLSpanElement | null>;
@@ -457,6 +453,7 @@ const WindowBar = ({ windows, activeSecs, onSelect, ws, colors }: WindowBarProps
     const active = windows.find((w) => w.secs === activeSecs);
     const btn = active ? btnRefs.current.get(active.secs) : undefined;
     const bar = barRef.current;
+
     if (btn && bar) {
       setIndicator(measureIndicator(bar, btn));
     }
@@ -521,6 +518,7 @@ const ModeBar = ({ lineMode, onModeChange, ws, colors }: ModeBarProps) => {
   useLayoutEffect(() => {
     const btn = btnRefs.current.get(activeMode);
     const bar = barRef.current;
+
     if (btn && bar) {
       setIndicator(measureIndicator(bar, btn));
     }
@@ -583,6 +581,7 @@ const SeriesChips = ({
     {series.map((s, si) => {
       const isHidden = hidden.has(s.id);
       const seriesColor = s.color || SERIES_COLORS[si % SERIES_COLORS.length];
+
       return (
         <button
           key={s.id}
@@ -598,20 +597,20 @@ const SeriesChips = ({
   </div>
 );
 
-const controlRowStyle = (marginLeft: number): CSSProperties => ({
-  alignItems: "center",
-  display: "flex",
-  gap: 6,
-  marginBottom: 6,
-  marginLeft,
-});
+const controlRowStyle = (marginLeft: number) =>
+  ({
+    alignItems: "center",
+    display: "flex",
+    gap: 6,
+    marginBottom: 6,
+    marginLeft,
+  }) satisfies CSSProperties;
 
-const canvasStyle = (scrub: boolean, cursor: string): CSSProperties => ({
-  cursor: scrub ? cursor : "default",
-  display: "block",
-});
-
-// --- Component ---
+const canvasStyle = (scrub: boolean, cursor: string) =>
+  ({
+    cursor: scrub ? cursor : "default",
+    display: "block",
+  }) satisfies CSSProperties;
 
 export const Liveline = (props: LivelineProps) => {
   const {
@@ -640,6 +639,7 @@ export const Liveline = (props: LivelineProps) => {
     className,
     style,
   } = props;
+
   const look = resolveAppearance(props);
   const behavior = resolveBehavior(props);
 
@@ -653,19 +653,23 @@ export const Liveline = (props: LivelineProps) => {
   const isMultiSeries = seriesProp !== undefined && seriesProp.length > 0;
   const multiSeries = useMultiSeries(seriesProp, look.theme);
   const { showMomentum, momentumOverride } = resolveMomentum(behavior.momentum);
+
   const single = resolveSingleSeriesFeatures(
     isMultiSeries,
     look,
     showMomentum,
     resolveDegen(degen),
   );
+
   const pad = resolvePadding(padding, look.badge, look.grid);
   const colors = CHROME[look.theme];
 
   const [activeWindowSecs, setActiveWindowSecs] = useState(
     initialWindowSecs(windows, behavior.windowSecs),
   );
+
   const effectiveWindowSecs = windows ? activeWindowSecs : behavior.windowSecs;
+
   const selectWindow = (secs: number) => {
     setActiveWindowSecs(secs);
     onWindowChange?.(secs);

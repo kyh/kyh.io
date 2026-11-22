@@ -77,7 +77,6 @@ export const projects: ProjectType[] = [
     type: "project",
     url: "https://www.edgestories.com",
   },
-  // Mini Apps
   {
     colors: ["#207e56"],
     description:
@@ -116,6 +115,7 @@ export const projects: ProjectType[] = [
     url: "https://www.policingice.com",
   },
   {
+    colors: ["#000000"],
     description: "Mock responses for LLMs",
     favicon: getPublicFaviconUrl("loremllm.png"),
     slug: "loremllm",
@@ -170,8 +170,8 @@ export const projects: ProjectType[] = [
     type: "mini-app",
     url: "https://idlebiz.com",
   },
-  // Templates
   {
+    colors: ["#000000"],
     description: "An AI native starter kit to build, launch, and scale your next project",
     favicon: getPublicFaviconUrl("init.png"),
     slug: "init",
@@ -180,6 +180,7 @@ export const projects: ProjectType[] = [
     url: "https://init.kyh.io",
   },
   {
+    colors: ["#000000"],
     description: "Forkable Next.js template featuring a design canvas UI with AI integration",
     favicon: getPublicFaviconUrl("ai-design-canvas.png"),
     slug: "ai-canvas",
@@ -188,6 +189,7 @@ export const projects: ProjectType[] = [
     url: "https://canvas.kyh.io",
   },
   {
+    colors: ["#000000"],
     description: "Forkable Next.js template featuring an Excel-like UI with AI integration",
     favicon: getPublicFaviconUrl("ai-datagrid.png"),
     slug: "ai-datagrid",
@@ -196,6 +198,7 @@ export const projects: ProjectType[] = [
     url: "https://datagrid.kyh.io",
   },
   {
+    colors: ["#000000"],
     description: "Forkable Next.js template featuring an AI-powered notes app",
     favicon: getPublicFaviconUrl("ai-notes.png"),
     slug: "ai-notes",
@@ -204,6 +207,7 @@ export const projects: ProjectType[] = [
     url: "https://notes.kyh.io",
   },
   {
+    colors: ["#000000"],
     description: "Forkable Next.js template featuring an AI-powered calendar app",
     favicon: getPublicFaviconUrl("ai-schedule.png"),
     slug: "ai-schedule",
@@ -212,6 +216,7 @@ export const projects: ProjectType[] = [
     url: "https://calendar.kyh.io",
   },
   {
+    colors: ["#000000"],
     description: "Forkable Next.js template featuring an AI-powered communications app",
     favicon: getPublicFaviconUrl("ai-coms.png"),
     slug: "ai-coms",
@@ -238,8 +243,6 @@ export interface ConnectLink {
   social: SocialKind;
 }
 
-// Single source of truth for social links, consumed by the homepage
-// ConnectList and the /markdown agent view so they can't drift.
 export const connectLinks: ConnectLink[] = [
   { href: social.twitter, label: "Twitter", social: "twitter", value: "@kaiyuhsu" },
   { href: social.github, label: "GitHub", social: "github", value: "@kyh" },

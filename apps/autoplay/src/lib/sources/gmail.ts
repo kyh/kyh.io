@@ -3,15 +3,9 @@ import { z } from "zod";
 import { cachedPick, decodeEntities, fetchJson } from "./types";
 import type { AccessOf, Item, SourceContext } from "./types";
 
-// Gmail as a source: newsletters only. What counts is decided by the list
-// headers every newsletter platform sets, not by the search query — the query
-// just bounds how much recent mail is looked at. Mail has no engagement
-// signal, so the newest newsletter airs first and unread ones jump the queue.
-
 const GMAIL_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
 const LIST_QUERY = "newer_than:7d -in:chats -category:social";
 const MAX_MESSAGES = 40;
-/** An unread newsletter outranks a read one by this much: a day. */
 const UNREAD_BONUS_MINUTES = 24 * 60;
 const METADATA_HEADERS = ["From", "Subject", "List-Id", "List-Unsubscribe"];
 
@@ -36,42 +30,46 @@ interface Header {
   value: string;
 }
 
-interface Sender {
-  name: string;
-  address: string;
-}
-
 const gmailFetch = <T>(
   accessToken: string,
   path: string,
   params: [string, string][],
   schema: z.ZodType<T>,
-): Promise<T> => {
+) => {
   const url = new URL(`${GMAIL_BASE}/${path}`);
+
   for (const [key, value] of params) {
     url.searchParams.append(key, value);
   }
+
   return fetchJson("Gmail", url, accessToken, schema);
 };
 
-const header = (headers: Header[], name: string): string | undefined =>
+const header = (headers: Header[], name: string) =>
   headers.find((entry) => entry.name.toLowerCase() === name.toLowerCase())?.value;
 
-/** `"Name" <addr>`, `Name <addr>`, or a bare address. */
-export const parseFrom = (value: string): Sender => {
+interface Sender {
+  name: string;
+  address: string;
+}
+
+export const parseFrom = (value: string) => {
   const match = /^\s*"?(?<name>[^"<]*?)"?\s*<(?<address>[^>]+)>\s*$/u.exec(value);
+
   if (match === null) {
-    return { address: value.trim(), name: value.trim() };
+    return { address: value.trim(), name: value.trim() } satisfies Sender;
   }
+
   const address = (match.groups?.address ?? value).trim();
   const name = (match.groups?.name ?? "").trim();
-  return { address, name: name === "" ? address : name };
+
+  return { address, name: name === "" ? address : name } satisfies Sender;
 };
 
-export const isNewsletter = (headers: Header[]): boolean =>
+export const isNewsletter = (headers: Header[]) =>
   header(headers, "List-Id") !== undefined || header(headers, "List-Unsubscribe") !== undefined;
 
-const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
+const fetchNewsletters = async (access: AccessOf<"gmail">) => {
   const list = await gmailFetch(
     access.accessToken,
     "messages",
@@ -81,6 +79,7 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
     ],
     listSchema,
   );
+
   const messages = await Promise.all(
     (list.messages ?? []).map((entry) =>
       gmailFetch(
@@ -88,7 +87,7 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
         `messages/${entry.id}`,
         [
           ["format", "metadata"],
-          ...METADATA_HEADERS.map((name): [string, string] => ["metadataHeaders", name]),
+          ...METADATA_HEADERS.map((name) => ["metadataHeaders", name] satisfies [string, string]),
         ],
         messageSchema,
       ),
@@ -96,11 +95,14 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
   );
 
   const items: Item[] = [];
+
   for (const message of messages) {
     const headers = message.payload?.headers ?? [];
+
     if (!isNewsletter(headers)) {
       continue;
     }
+
     const subject = header(headers, "Subject") ?? "(no subject)";
     const from = parseFrom(header(headers, "From") ?? "");
     const receivedMs = Number(message.internalDate ?? 0);
@@ -115,6 +117,7 @@ const fetchNewsletters = async (access: AccessOf<"gmail">): Promise<Item[]> => {
       text: `${subject}. ${decodeEntities(message.snippet ?? "")}`.trim(),
     });
   }
+
   return items;
 };
 
@@ -122,5 +125,4 @@ export const pickGmailCandidate = (
   access: AccessOf<"gmail">,
   sourceId: string,
   context: SourceContext,
-): Promise<Item | undefined> =>
-  cachedPick(context, `gmail:${sourceId}`, () => fetchNewsletters(access));
+) => cachedPick(context, `gmail:${sourceId}`, () => fetchNewsletters(access));

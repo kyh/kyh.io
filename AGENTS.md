@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**kyh.io** is a personal pnpm + Turborepo monorepo of twelve _independent_ apps — four Next.js, four Vite SPAs, one Ink CLI, one Cloudflare Worker, two Claude Code mods. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**kyh.io** is a personal pnpm + Turborepo monorepo of thirteen _independent_ apps — six Next.js, four Vite SPAs, one Ink CLI, two Claude Code mods. There is no shared data layer, no shared UI package, and no cross-app runtime coupling: each app is its own product. This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -9,7 +9,7 @@ pnpm install
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — nine of the twelve apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
+That's the whole setup. There is no bootstrap script, no Docker, no local database — ten of the thirteen apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
 
 Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
 
@@ -29,6 +29,8 @@ cp apps/autoplay/.env.example apps/autoplay/.env        # optional to boot: with
 - Everything in `apps/policingice/scripts/` (`create-admin`, `delete-admin`, `enrich-*`, `embed-incidents`) writes to **production**. Never run them.
 - **There is no seeded login and no test account.** Nothing in this repo creates one. Any authenticated policingice flow (`/admin/*`) needs real credentials a human supplies; an agent cannot self-provision one. Verify admin changes with `pnpm verify` and a human check.
 
+`src/lib/auth-tables.test.ts` in policingice and autoplay is the only check that the hand-written Drizzle mirror of better-auth's tables has every model and field the library reads (matched on export key and property name, not column names); typecheck, lint and build never touch a database, so keep it when changing either side.
+
 **autoplay has its own Turso database** (clip archive), separate from policingice's. Its `pnpm -F @repo/autoplay db:push` targets that dedicated database and is safe to run; with no `TURSO_DATABASE_URL` the app falls back to an in-memory archive. No other app has a database. No `.env` is tracked — keep it that way; document new keys in the app's `.env.example`.
 
 ## Verify a change end-to-end
@@ -39,9 +41,11 @@ Static gate — run before every commit:
 pnpm verify       # typecheck · lint · format · test
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/bay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/commuting-clawders` and its `mod` and `apps/mod-dev` — the only apps with tests. The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/bay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/commuting-clawders` and its `mod` and `apps/mod-dev` — the only apps with tests (the mods' node tests are `test/*.test.mts`; see `CLAUDE.md` → Claude Code mods). The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
-**Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`); every rule is an error and `lint` fails on the first one. `no-await-in-loop` is the one deliberate override (sequential awaits are intentional). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
+**Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`, `landmines`); every rule is an error and `lint` fails on the first one. Two deliberate overrides: `no-await-in-loop` (sequential awaits are intentional: rate-limited source reads, ordered writes) and `anti-slop/require-safety-comment-for-type-assertion` (it demands a `// SAFETY:` comment that landmines' `no-comments` forbids). Prefer fixing code over `oxlint-disable` comments; when a rule is genuinely wrong for a line, disable that line with a `-- reason`.
+
+Landmines (`@interfere/landmines`) holds the code to: no prose comments (allowed: functional directives, one single-line `// WARNING:` for a dangerous recurring footgun, TSDoc on exported API); no annotated return types (pin a contract with `satisfies` or a typed variable: `const f: (a: A) => T = (a) => …`, which also types a recursive function); no test doubles (no patched globals or stubbed modules: `apps/kyh`'s tests run with Node's real `localStorage` via `--experimental-webstorage`, `apps/autoplay`'s live test serves feeds and X from a local HTTP server, with `X_API_URL` pointing the X client at it); no fixed sleeps, retries or raised timeouts in tests; tests named `*.test.ts` beside their subject or in the package's `test/`. Why something is the way it is goes in the commit or PR, not a comment.
 
 `verify` does not build. CI (`.github/workflows/ci.yml`) runs the same four checks, then rebuilds `apps/commuting-clawders/mod/dist` and fails if it differs from what's committed; Vercel builds the web apps on every PR.
 
@@ -69,6 +73,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `policingice`            | `pnpm dev:policingice`            | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)                |
 | `stonksville`            | `pnpm dev:stonksville`            | 3004                        | **Yes** — headless, no config                              |
 | `autoplay`               | `pnpm dev:autoplay`               | 3005                        | OFF AIR screen yes; live TV needs X + fal keys             |
+| `boobounty`              | `pnpm dev:boobounty`              | 3006                        | **Yes** — static, no config                                |
 | `bay`                    | `pnpm dev:bay`                    | 3017                        | Yes: `render` + `pyramid` are keyless; `paint` needs a key |
 | `kwadrants`              | `pnpm dev:kwadrants`              | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots                   |
 | `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                    |
@@ -93,10 +98,11 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,autoplay,commuting-clawders}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19,bay}` — Vite SPAs · `apps/cli` — Ink CLI (Node) · `apps/{commuting-clawders/mod,mod-dev}` — Claude Code mods (function hooks plugins)
+- `apps/{kyh,policingice,stonksville,autoplay,commuting-clawders,boobounty}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19,bay}` — Vite SPAs · `apps/cli` — Ink CLI (Node) · `apps/{commuting-clawders/mod,mod-dev}` — Claude Code mods (function hooks plugins)
 - `packages/{typescript,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/scripts/link.mjs` links it (and `external-skills.json`) into `~/.agents` / `~/.claude` on a **global** install only
 - `docs/mac-setup/` — machine setup notes (not a workspace)
 - `apps/policingice/src/lib/` — `auth.ts` (better-auth), `admin-action.ts` / `incident-action.ts` (Server Actions), `incident-query.ts` (`"use cache"` reads), `env.ts`, `format.ts`
 - `apps/{policingice,autoplay}/src/db/drizzle-schema.ts` — the two Drizzle schemas in the repo (separate Turso databases)
+- `scripts/og-video.mjs` — `pnpm og:video <kyh [theme|all]|stonksville|commuting-clawders|autoplay>` records an app's `og:video` (`public/og/*.mp4` + poster), stepped at 30fps in headless Chromium at 2x; needs ffmpeg and a global Playwright. kyh, stonksville and commuting-clawders are the real running app (kyh under `next dev -p 3100`, since `window.city` is dev-only; the others `next start` on 3004 / 3016), each clip's last beat crossfaded over its first so it loops; kyh records the showcase's opening (the town going up from downtown out while the camera pulls back, from its first frame, the theme picked first in the dock's themes menu on the homepage), the logo and "Kaiyu's corner of the internet" coming up over the finished town, once per theme; every page of the site serves the clip for the calendar's theme today as `og:video`, with its `VideoObject` in the layout (`src/lib/todays-video.ts`, cached hourly). Autoplay's is a drawn scene (`scripts/og-video/autoplay.html`), since its real page is OFF AIR without keys. Never part of `verify` or a build; bump the app's `uploadDate`/`duration` beside its metadata when you re-record
 - `CLAUDE.md` — per-app notes and conventions · `.claude/skills/release/` — the npm release workflow

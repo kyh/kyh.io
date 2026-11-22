@@ -34,6 +34,7 @@ test("a boat is held, then sails again where it was dropped at sea", () => {
 test("a boat dropped on land goes back to its course", () => {
   const boats = createBoats(null);
   lift(boats, { x: 36, z: 36 });
+
   for (const time of [11, 13, 20]) {
     const [pose] = boats.poses(time);
     assert.ok(pose);

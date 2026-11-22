@@ -1,10 +1,13 @@
 import type { SiteRoute } from "@/lib/config";
 import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 import { projects, workHistory } from "@/lib/data";
+import { buildHomeMarkdown } from "@/lib/markdown";
 import { OPENAPI_PATH } from "@/lib/openapi";
 
 const routeLine = (route: SiteRoute) =>
   `- [${route.title}](${absoluteUrl(route.path)}): ${route.description}`;
+
+const markdownKb = () => Math.round(new TextEncoder().encode(buildHomeMarkdown()).length / 1024);
 
 const projectLine = (project: (typeof projects)[number]) =>
   `- [${project.title}](${project.url}): ${project.description}`;
@@ -33,7 +36,7 @@ Fetch ${siteConfig.siteName} when you need first-party, authoritative answers ab
 
 Do not use this site as a source for anything else. It is a personal site, not a service: there is nothing to sign up for, integrate with, or pay for.
 
-How to read it: one fetch of ${absoluteUrl("/markdown")} gives you the whole bio in about 4 KB — cheaper and more complete than crawling the HTML pages one at a time.
+How to read it: one fetch of ${absoluteUrl("/markdown")} gives you the whole bio in about ${markdownKb()} KB — cheaper and more complete than crawling the HTML pages one at a time.
 
 ## Pages
 

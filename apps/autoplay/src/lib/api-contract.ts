@@ -2,10 +2,6 @@ import { z } from "zod";
 
 import { OWNER_SOURCE_ID, sourceKindSchema } from "@/lib/source-kinds";
 
-// Payloads exchanged between the API routes and the client. Routes build
-// these objects; the client re-parses responses through the same schemas, so
-// both sides agree on one contract.
-
 /** The model every channel streams through: what the client opens, and the only endpoint the proxy admits. */
 export const DIRECTOR_MODEL = "minimax/h3-max/director";
 
@@ -17,11 +13,6 @@ const userSummarySchema = z.object({
 
 export type UserSummary = z.infer<typeof userSummarySchema>;
 
-/**
- * One channel in a viewer's lineup. CH 01 is always the public owner channel.
- * "live" means this viewer's watching runs a session — it is their source;
- * "replay" means they watch what was recorded while its owner was on.
- */
 const channelSummarySchema = z.object({
   kind: sourceKindSchema,
   label: z.string(),
@@ -63,18 +54,15 @@ export const sessionPayloadSchema = z.object({
 
 export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
 
-/** The item on air, as the ticker reads it and the record keeps it. */
 const programFieldsSchema = z.object({
   authorName: z.string(),
   authorUsername: z.string(),
   itemId: z.string(),
   kind: sourceKindSchema,
-  /** The item on its service, which the ticker links to. */
   link: z.string().optional(),
   text: z.string(),
 });
 
-/** What a program is made of: the item on air and the prompt that directs it. */
 const liveProgramSchema = programFieldsSchema.extend({ prompt: z.string() });
 
 export type LiveProgram = z.infer<typeof liveProgramSchema>;
@@ -97,7 +85,6 @@ export const livePayloadSchema = z.discriminatedUnion("kind", [
 
 export type LivePayload = z.infer<typeof livePayloadSchema>;
 
-/** One chunk of a recorded session, as a replay appends it. */
 const recordingChunkSchema = programFieldsSchema.extend({
   index: z.number().int().nonnegative(),
   seconds: z.number(),
@@ -106,16 +93,12 @@ const recordingChunkSchema = programFieldsSchema.extend({
 
 export type RecordingChunk = z.infer<typeof recordingChunkSchema>;
 
-/** One live session as recorded: its chunks in order, which play as one stream. */
 const recordedSessionSchema = z.object({
   chunks: z.array(recordingChunkSchema).min(1),
-  /** The session as one file, once built: what a browser without MediaSource plays. */
   fileUrl: z.string().optional(),
   formatLabel: z.string(),
   sessionId: z.string(),
-  /** Unix ms of the first chunk. */
   startedAt: z.number(),
-  /** Unix ms of the newest chunk; a session still receiving chunks is on air. */
   updatedAt: z.number(),
 });
 
@@ -193,33 +176,35 @@ export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
 /** A route's answer as the client reads it: the payload, or the station's error. */
 export type Answer<T> = { data: T } | { error: string };
 
-export const jsonRequest = <Body extends object>(
-  method: "POST" | "DELETE" | "PATCH",
-  body: Body,
-): RequestInit => ({
-  body: JSON.stringify(body),
-  headers: { "Content-Type": "application/json" },
-  method,
-});
+export const jsonRequest = <Body extends object>(method: "POST" | "DELETE" | "PATCH", body: Body) =>
+  ({
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+    method,
+  }) satisfies RequestInit;
 
 /**
  * A route's answer, parsed: the payload through `schema`, or the error the
  * station gave — `fallback` when it gave none a viewer could read.
  */
-export const requestJson = async <T>(
+export const requestJson: <T>(
   input: string,
   schema: z.ZodType<T>,
   fallback: string,
   init?: RequestInit,
-): Promise<Answer<T>> => {
+) => Promise<Answer<T>> = async (input, schema, fallback, init) => {
   try {
     const response = await fetch(input, init);
     const body: unknown = await response.json().catch(() => null);
+
     if (!response.ok) {
       const failure = errorPayloadSchema.safeParse(body);
+
       return { error: failure.success ? failure.data.error : fallback };
     }
+
     const payload = schema.safeParse(body);
+
     return payload.success ? { data: payload.data } : { error: fallback };
   } catch {
     return { error: fallback };

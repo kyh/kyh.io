@@ -23,10 +23,11 @@ const offset = 10;
 export const CURSOR_ARROW =
   "M2.717 2.22918L15.9831 15.8743C16.5994 16.5083 16.1503 17.5714 15.2661 17.5714H9.35976C8.59988 17.5714 7.86831 17.8598 7.3128 18.3783L2.68232 22.7C2.0431 23.2966 1 22.8434 1 21.969V2.92626C1 2.02855 2.09122 1.58553 2.717 2.22918Z";
 
-const lerpPoint = (a: PagePoint, b: PagePoint, k: number): PagePoint => ({
-  fromCenter: lerp(a.fromCenter, b.fromCenter, k),
-  fromTop: lerp(a.fromTop, b.fromTop, k),
-});
+const lerpPoint = (a: PagePoint, b: PagePoint, k: number) =>
+  ({
+    fromCenter: lerp(a.fromCenter, b.fromCenter, k),
+    fromTop: lerp(a.fromTop, b.fromTop, k),
+  }) satisfies PagePoint;
 
 const HIDDEN = { transform: "translate(-100px, -100px)" };
 
@@ -38,29 +39,54 @@ const HIDDEN = { transform: "translate(-100px, -100px)" };
 export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: CursorProps) => {
   const gradient = useSvgId("cursor");
   const ref = useRef<HTMLDivElement>(null);
+
   // oxlint-disable-next-line react/hook-use-state -- made once per cursor and never replaced
   const [smooth] = useState(
-    // Extrapolating past the last spot parks a pointer that stopped (or a page that jumped) beyond where it is.
     () => new Interpolator<PagePoint>({ delayMs: 120, lerp: lerpPoint, maxExtrapolateMs: 0 }),
   );
 
+  const wake = useRef<() => void>(null);
+
   useEffect(() => {
     smooth.push(t, { fromCenter, fromTop });
+    wake.current?.();
   }, [smooth, t, fromCenter, fromTop]);
 
   useEffect(() => {
     let frame = 0;
+
     const draw = () => {
+      frame = 0;
       const point = smooth.sample();
+
       if (point && ref.current) {
         const view = readViewport();
         const { x, y } = toScreen(point, view);
         ref.current.style.transform = `translate(${x - offset}px, ${y - offset}px)`;
       }
-      frame = requestAnimationFrame(draw);
+
+      if (point !== smooth.latest) {
+        frame = requestAnimationFrame(draw);
+      }
     };
-    frame = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(frame);
+
+    const start = () => {
+      if (frame === 0) {
+        frame = requestAnimationFrame(draw);
+      }
+    };
+
+    wake.current = start;
+    start();
+    window.addEventListener("scroll", start, { passive: true });
+    window.addEventListener("resize", start);
+
+    return () => {
+      wake.current = null;
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", start);
+      window.removeEventListener("resize", start);
+    };
   }, [smooth]);
 
   const line = lineOf(chat);
@@ -69,7 +95,6 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
     <div
       ref={ref}
       className="pointer-events-none fixed top-0 left-0 z-[1]"
-      // Off screen until the first frame places it; only that loop moves it after.
       style={HIDDEN}
       aria-hidden="true"
     >

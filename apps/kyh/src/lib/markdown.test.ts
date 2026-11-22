@@ -10,6 +10,7 @@ test("the homepage markdown leads with a single h1 and covers every section", ()
 
   assert.match(markdown, /^# Kaiyu Hsu\n/u);
   assert.equal(markdown.match(/^# /gmu)?.length, 1);
+
   for (const heading of ["Highlights", "Work", "Projects", "Connect", "Pages", "For agents"]) {
     assert.match(markdown, new RegExp(`^## ${heading}$`, "mu"));
   }
@@ -31,7 +32,6 @@ test("the 404 body names the path and points somewhere useful", () => {
   assert.ok(markdown.includes(absoluteUrl("/llms.txt")));
   assert.ok(markdown.includes(absoluteUrl("/sitemap.xml")));
   assert.ok(markdown.includes(absoluteUrl("/")));
-  // Short enough that a lost agent can read it and move on.
   assert.ok(markdown.length < 2000, `404 body is ${markdown.length} chars`);
 });
 
@@ -47,11 +47,13 @@ test("prose pages render to markdown with a real heading outline", () => {
 
 test("markdown link targets are absolute so the document stands alone", () => {
   const markdown = prosePages.map(renderPageMarkdown).join("\n");
+
   const targets = [...markdown.matchAll(/\]\((?<href>[^)]+)\)/gu)].map(
     (match) => match.groups?.href,
   );
 
   assert.ok(targets.length > 0);
+
   for (const target of targets) {
     assert.ok(
       target?.startsWith("https://") || target?.startsWith("mailto:"),
@@ -68,6 +70,7 @@ test("no markdown view leaks a localhost URL", () => {
   ];
 
   assert.equal(siteConfig.url, "https://www.kyh.io");
+
   for (const document of documents) {
     assert.ok(!document.includes("localhost"));
   }

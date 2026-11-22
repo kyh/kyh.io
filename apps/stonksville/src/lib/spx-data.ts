@@ -15,15 +15,18 @@ export interface DailyBar {
 
 export const SPX_DATA_URL = "/api/spx";
 
-const parseRow = (fields: string[], previousClose: number | null): DailyBar | null => {
+const parseRow = (fields: string[], previousClose: number | null) => {
   const date = Date.parse(`${fields[0]}T00:00:00Z`);
   const numbers = fields.slice(1).map(Number);
+
   if (Number.isNaN(date) || numbers.some((n) => !Number.isFinite(n) || n <= 0)) {
     return null;
   }
+
   if (numbers.length === 1) {
     const [close] = numbers;
     const open = previousClose ?? close;
+
     return {
       close,
       date,
@@ -31,65 +34,82 @@ const parseRow = (fields: string[], previousClose: number | null): DailyBar | nu
       high: Math.max(open, close),
       low: Math.min(open, close),
       open,
-    };
+    } satisfies DailyBar | null;
   }
+
   if (numbers.length === 4) {
     const [open, high, low, close] = numbers;
-    return { close, date, hasRange: high > low, high, low, open };
+
+    return { close, date, hasRange: high > low, high, low, open } satisfies DailyBar | null;
   }
+
   return null;
 };
 
 /** Parse the `date,open,high,low,close` / `date,close` CSV into bars, oldest first. */
-export const parseSpxCsv = (text: string): DailyBar[] => {
+export const parseSpxCsv = (text: string) => {
   const bars: DailyBar[] = [];
   let previousClose: number | null = null;
+
   for (const line of text.split("\n")) {
     const row = line.trim();
+
     if (row === "" || row.startsWith("date")) {
       continue;
     }
+
     const bar = parseRow(row.split(","), previousClose);
+
     if (bar) {
       bars.push(bar);
       previousClose = bar.close;
     }
   }
+
   return bars;
 };
 
-export const loadSpxHistory = async (signal?: AbortSignal): Promise<DailyBar[]> => {
+export const loadSpxHistory = async (signal?: AbortSignal) => {
   const response = await fetch(SPX_DATA_URL, { signal });
+
   if (!response.ok) {
     throw new Error(`S&P history: HTTP ${response.status}`);
   }
+
   const bars = parseSpxCsv(await response.text());
+
   if (bars.length < 2) {
     throw new Error("S&P history: no rows");
   }
+
   return bars;
 };
 
 /** Index of the first bar on or after `isoDate` (YYYY-MM-DD), or null if unparseable / past the end. */
-export const findBarIndex = (bars: DailyBar[], isoDate: string): number | null => {
+export const findBarIndex = (bars: DailyBar[], isoDate: string) => {
   const target = Date.parse(`${isoDate}T00:00:00Z`);
+
   if (Number.isNaN(target)) {
     return null;
   }
+
   let lo = 0;
   let hi = bars.length;
+
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2);
+
     if (bars[mid].date < target) {
       lo = mid + 1;
     } else {
       hi = mid;
     }
   }
+
   return lo < bars.length ? lo : null;
 };
 
-export const formatTradingDate = (date: number, style: "short" | "long" = "long"): string =>
+export const formatTradingDate = (date: number, style: "short" | "long" = "long") =>
   new Date(date).toLocaleDateString(
     "en-US",
     style === "long"

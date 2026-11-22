@@ -1,18 +1,4 @@
 #!/usr/bin/env npx tsx
-/**
- * Enrich Incident Metadata
- *
- * Uses AI (xai/grok-3-fast) to extract metadata from incident videos:
- * - location: City and state where incident occurred
- * - description: Brief factual description of what happened
- * - incidentDate: Date of the incident (YYYY-MM-DD)
- *
- * Tracks processed incidents in .enriched-incidents.json to avoid reprocessing.
- *
- * Usage:
- *   pnpm with-env tsx scripts/enrich-metadata.ts        # Process unprocessed incidents
- *   pnpm with-env tsx scripts/enrich-metadata.ts -f     # Force reprocess all incidents
- */
 import * as fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -33,17 +19,19 @@ const { values: args } = parseArgs({
 const __dirname = import.meta.dirname;
 const PROCESSED_FILE = path.join(__dirname, ".enriched-incidents.json");
 
-const loadProcessedIds = (): Set<number> => {
+const loadProcessedIds: () => Set<number> = () => {
   try {
     if (fs.existsSync(PROCESSED_FILE)) {
       const data = z
         .object({ processedIds: z.array(z.number()).optional() })
         .parse(JSON.parse(fs.readFileSync(PROCESSED_FILE, "utf-8")));
+
       return new Set(data.processedIds);
     }
   } catch {
     console.warn("Could not load processed IDs, starting fresh");
   }
+
   return new Set();
 };
 
@@ -78,7 +66,7 @@ type Incident = Awaited<ReturnType<typeof db.query.incidents.findMany>>[number] 
   videos: { url: string; platform: string }[];
 };
 
-const getVideoContext = (videos: { url: string; platform: string }[]): string =>
+const getVideoContext = (videos: { url: string; platform: string }[]) =>
   videos.map((v) => `${v.platform}: ${v.url}`).join("\n");
 
 const partitionIncidents = (allIncidents: Incident[], processedIds: Set<number>) => {
@@ -93,6 +81,7 @@ const partitionIncidents = (allIncidents: Incident[], processedIds: Set<number>)
     }
 
     const isComplete = incident.location && incident.description && incident.incidentDate;
+
     if (isComplete) {
       processedIds.add(incident.id);
       skippedAlreadyComplete += 1;
@@ -152,14 +141,19 @@ const generateMetadata = async (incident: Incident) => {
   console.log(`  Tool results:`, JSON.stringify(toolResults));
 
   const jsonMatch = /\{[\s\S]*\}/u.exec(text);
+
   if (!jsonMatch) {
     return null;
   }
+
   const parsed = MetadataSchema.safeParse(JSON.parse(jsonMatch[0]));
+
   if (!parsed.success) {
     console.log(`  Failed to parse response:`, parsed.error);
+
     return null;
   }
+
   return parsed.data;
 };
 
@@ -167,6 +161,7 @@ const enrichIncident = async (incident: Incident) => {
   const generated = await generateMetadata(incident);
   const location = incident.location || generated?.location || incident.location;
   const description = incident.description || generated?.description || incident.description;
+
   const incidentDate =
     incident.incidentDate ||
     (generated?.incidentDate ? new Date(generated.incidentDate) : incident.incidentDate);
@@ -197,9 +192,11 @@ const main = async () => {
   }
 
   console.log("Fetching all incidents from database...");
+
   const allIncidents = await db.query.incidents.findMany({
     with: { videos: true },
   });
+
   console.log(`Found ${allIncidents.length} total incidents`);
 
   const { skippedAlreadyComplete, skippedAlreadyProcessed, toEnrich } = partitionIncidents(
@@ -211,6 +208,7 @@ const main = async () => {
     console.log(`Skipped ${skippedAlreadyComplete} incidents already complete in DB`);
     saveProcessedIds(processedIds);
   }
+
   if (skippedAlreadyProcessed > 0) {
     console.log(`Skipped ${skippedAlreadyProcessed} incidents already in processed file`);
   }
@@ -236,7 +234,6 @@ const main = async () => {
       saveProcessedIds(processedIds);
     } catch (error) {
       console.error(`  Error:`, error);
-      // Left out of the processed file on purpose so the next run retries it
     }
   }
 

@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 
 const AdminContent = async ({ children }: { children: React.ReactNode }) => {
   const session = await getSession();
+
   if (!session?.user || session.user.isAnonymous) {
     redirect("/admin/login");
   }

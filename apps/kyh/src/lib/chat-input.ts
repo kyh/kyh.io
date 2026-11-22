@@ -1,6 +1,3 @@
-// Typing from anywhere on a page, without a text box: one window listener,
-// ahead of every other (capture), that keeps each key for itself while a
-// draft is open so nothing underneath pans, plays or scrolls.
 import { editDraft } from "@/lib/chat";
 import { discoverEgg } from "@/easter-eggs/store";
 
@@ -11,7 +8,6 @@ interface ChatInputOptions {
   onSend: (text: string) => void;
 }
 
-/** Where typing already means something: a field, or a menu or list that jumps to what's typed. */
 const isField = (target: EventTarget | null) =>
   target instanceof HTMLInputElement ||
   target instanceof HTMLTextAreaElement ||
@@ -22,35 +18,46 @@ const isField = (target: EventTarget | null) =>
 /** Listen for typing; returns the way to stop. */
 export const listenForChat = ({ claims, onDraft, onSend }: ChatInputOptions) => {
   let draft: string | null = null;
+
   const close = () => {
     if (draft !== null) {
       draft = null;
       onDraft(null);
     }
   };
+
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.isComposing || isField(event.target)) {
       return;
     }
+
     const edit = editDraft(draft, event, claims);
+
     if (!edit) {
       return;
     }
+
     event.preventDefault();
     event.stopPropagation();
+
     if (edit.kind === "draft") {
       ({ draft } = edit);
       onDraft(draft);
+
       return;
     }
+
     close();
+
     if (edit.kind === "send") {
       onSend(edit.text);
       discoverEgg("chat");
     }
   };
+
   window.addEventListener("keydown", onKeyDown, { capture: true });
   window.addEventListener("blur", close);
+
   return () => {
     window.removeEventListener("keydown", onKeyDown, { capture: true });
     window.removeEventListener("blur", close);

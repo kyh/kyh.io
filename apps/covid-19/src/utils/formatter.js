@@ -7,6 +7,7 @@ export const parseDate = timeParse("%Y-%m-%d");
 
 export const formatDaily = (data) => {
   const dateString = data.date.toString();
+
   return {
     ...data,
     date: parseDate(dateString),
@@ -15,8 +16,10 @@ export const formatDaily = (data) => {
 
 export const formatDate = (date, pattern = "%b %e") => {
   const formatFn = timeFormat(pattern);
+
   if (date instanceof Date) {
     return formatFn(date);
   }
+
   return formatFn(parseDate(date));
 };

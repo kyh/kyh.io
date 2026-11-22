@@ -1,7 +1,3 @@
-// Hats for whatever in the sky wears one: the blimp in a theme's, Santa and
-// the witch in their own. Each is drawn in a frame of its own, the brim's
-// middle at the origin and the crown up +y, which `wearing` stands on a point
-// of its wearer, sized and leaning back. Pure.
 import type { Token } from "./palette";
 import type { Placed, Vec3 } from "./sketch";
 import { BLACK, paint, RED, WHITE } from "./palette";
@@ -11,6 +7,7 @@ import { face, rotate } from "./sketch";
 export const wearing = (pen: Placed, base: Vec3, size: number, lean: number) =>
   pen.moved(([x, y, z]) => {
     const [u, v, w] = rotate([x * size, y * size, z * size], [0, 0, 0], "z", lean);
+
     return [base[0] + u, base[1] + v, base[2] + w];
   });
 
@@ -35,7 +32,6 @@ export const witchHat = (hat: Placed) => {
     y: 0.07,
     z: 0,
   });
-  // The point flops back from the top of the crown.
   hat
     .moved((point) => rotate(point, [0, 0.4, 0], "z", 0.7))
     .round({ colors: BLACK, h: 0.34, r: 0.12, segments: 10, top: 0, x: 0, y: 0.4, z: 0 });
@@ -56,10 +52,35 @@ export const topHat = (hat: Placed, crown: Token, band: Token) => {
     y: 0.07,
     z: 0,
   });
+
   const square = (half: number, out: number) => {
     const at = (u: number, v: number) => hat.place([u, 0.115 + v, 0.24 + out]);
+
     return [at(-half, -half), at(half, -half), at(half, half), at(-half, half)];
   };
+
   face(hat.sketch, "gold", square(0.06, 0), "hair");
   face(hat.sketch, band, square(0.032, 0.004), null);
+};
+
+/** A bunny's ear, white with pink inside, standing up from the origin like a hat of its own. */
+export const bunnyEar = (ear: Placed) => {
+  ear.ball({ colors: WHITE, detail: 10, r: 0.1, ry: 3.2, rz: 0.45, x: 0, y: 0.32, z: 0 });
+  ear.ball({
+    colors: paint("accentPink"),
+    detail: 8,
+    r: 0.055,
+    ry: 4.4,
+    rz: 0.4,
+    x: 0,
+    y: 0.32,
+    z: 0.035,
+  });
+};
+
+/** A pair of bunny ears worn as a hat, side by side and leaning apart. */
+export const bunnyEars = (hat: Placed) => {
+  for (const side of [-1, 1]) {
+    bunnyEar(wearing(hat, [side * 0.13, 0, 0], 1, -side * 0.3));
+  }
 };

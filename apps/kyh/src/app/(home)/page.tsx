@@ -4,7 +4,11 @@ import { ScrambleText } from "@/components/animate-text";
 import { Logo } from "@/components/icons";
 import { Link } from "@/components/link";
 import { Section, SectionHeading, Separator, SubHeading } from "@/components/section";
+import { siteConfig } from "@/lib/config";
+import { todaysPageMetadata } from "@/lib/todays-video";
 import { getPublicAssetUrl } from "@/lib/public-assets";
+import { ThemeHat } from "@/themes/hat";
+import { HAT_PICTURES } from "@/themes/hat-pictures";
 import { ConnectList } from "./_components/connect-list";
 import { FigureCanvas } from "./_components/figure-canvas";
 import { SideQuests } from "./_components/side-quests";
@@ -13,19 +17,30 @@ import { TimeCounter } from "./_components/time-counter";
 import { ViewAsMenu } from "./_components/view-as-menu";
 import { WorkList } from "./_components/work-list";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/",
-    types: { "text/markdown": "/markdown" },
-  },
-};
+export const generateMetadata = async () =>
+  ({
+    ...(await todaysPageMetadata({
+      description: siteConfig.description,
+      path: "/",
+      title: siteConfig.name,
+    })),
+    alternates: {
+      canonical: "/",
+      types: { "text/markdown": "/markdown" },
+    },
+  }) satisfies Metadata;
 
 const Page = () => (
   <div className="relative isolate min-h-screen px-6 pt-30 pb-64">
     <div className="relative z-10 mx-auto flex w-full flex-col gap-10 sm:w-[560px]">
       <header className="flex items-center justify-between gap-2 py-4">
-        <div className="text-foreground-highlighted flex items-center" aria-label="Home">
+        <div
+          className="text-foreground-highlighted relative flex items-center"
+          aria-label="Home"
+          data-hat-perch="logo"
+        >
           <Logo />
+          <ThemeHat pictures={HAT_PICTURES} />
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <ViewAsMenu />
@@ -33,11 +48,13 @@ const Page = () => (
         </div>
       </header>
 
-      <Section id="intro" delay={0.1}>
+      <Section id="intro" className="select-text" delay={0.1}>
         <ScrambleText
           as="h1"
           trigger="both"
-          className="text-foreground-highlighted mb-3 text-lg leading-none font-medium"
+          className="text-foreground-highlighted relative mb-3 w-fit text-lg leading-none font-medium"
+          data-hat-perch="title:name"
+          data-hat-sits="text"
         >
           Kaiyu Hsu
         </ScrambleText>
@@ -51,7 +68,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="highlights" delay={0.3}>
+      <Section id="highlights" className="select-text" delay={0.3}>
         <SectionHeading id="highlights">Highlights</SectionHeading>
         <ul className="arrow-list">
           <li>Oversaw product growth from dozens to millions of users</li>
@@ -124,7 +141,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="work" delay={0.5}>
+      <Section id="work" className="select-text" delay={0.5}>
         <SectionHeading id="work">Work Life</SectionHeading>
         <WorkList />
       </Section>
@@ -138,7 +155,7 @@ const Page = () => (
 
       <Separator />
 
-      <Section id="other-activities" delay={0.9}>
+      <Section id="other-activities" className="select-text" delay={0.9}>
         <SectionHeading id="other-activities">Other Activities</SectionHeading>
         <p className="text-foreground mt-1">
           Beyond work, I love to learn about economics, psychology, and business. You&apos;ll

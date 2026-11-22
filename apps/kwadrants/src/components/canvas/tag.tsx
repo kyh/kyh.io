@@ -2,14 +2,16 @@ import type Konva from "konva";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Circle, Group, Rect, Text } from "react-konva";
 
-// Measure text width using canvas 2D context
-const measureText = (text: string, fontSize: number, fontFamily: string): number => {
+const measureText = (text: string, fontSize: number, fontFamily: string) => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+
   if (!ctx) {
     return text.length * fontSize * 0.6;
   }
+
   ctx.font = `${fontSize}px ${fontFamily}`;
+
   return ctx.measureText(text).width;
 };
 
@@ -38,13 +40,13 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
     [text],
   );
 
-  // Settle animation on mount
   useEffect(() => {
     if (!isSettling) {
       return;
     }
 
     let frame = 0;
+
     const animate = () => {
       frame += 1;
       const t = frame / 20;
@@ -53,10 +55,10 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
         setScale(1);
         setRotation(0);
         setIsSettling(false);
+
         return;
       }
 
-      // Ease out bounce
       const scaleValue = 1 + 0.1 * Math.cos(t * Math.PI * 2) * (1 - t);
       const rotValue = 4 * Math.sin(t * Math.PI * 3) * (1 - t);
 
@@ -66,6 +68,7 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
     };
 
     frameRef.current = requestAnimationFrame(animate);
+
     return () => cancelAnimationFrame(frameRef.current);
   }, [isSettling]);
 
@@ -84,7 +87,6 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
     const speed = Math.hypot(dx, dy);
     const tilt = Math.min(speed * 0.8, 8);
 
-    // Tilt in direction of movement
     setRotation(dx === 0 ? 0 : tilt * Math.sign(dx));
 
     lastPosRef.current = { x: node.x(), y: node.y() };
@@ -99,10 +101,8 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
     [id, onDragEnd],
   );
 
-  // matches px-3 / py-1.5
   const paddingX = 12;
   const paddingY = 6;
-  // font size + vertical padding
   const height = 14 + paddingY * 2;
   const width = Math.max(textWidth + paddingX * 2, 60);
 

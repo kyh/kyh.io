@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
 type ImageConfig = NonNullable<NextConfig["images"]>;
+
 type LocalPatterns = NonNullable<ImageConfig["localPatterns"]>;
+
 type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 
-const getRemotePatterns = (): RemotePatterns => {
+const getRemotePatterns = () => {
   const remotePatterns: RemotePatterns = [];
 
   if (ASSETS_URL) {
@@ -35,7 +37,7 @@ const getRemotePatterns = (): RemotePatterns => {
   return remotePatterns;
 };
 
-const getLocalPatterns = (): LocalPatterns => {
+const getLocalPatterns = () => {
   const localPatterns: LocalPatterns = [
     {
       pathname: "/assets/**",
@@ -52,9 +54,6 @@ const config: NextConfig = {
   headers: () =>
     Promise.resolve([
       {
-        // `/` negotiates HTML vs markdown on Accept (see middleware.ts). Next
-        // overwrites Vary on the prerendered HTML after middleware runs, so this
-        // repeats its router keys and appends Accept rather than setting it there.
         headers: [
           {
             key: "Vary",

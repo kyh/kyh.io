@@ -4,10 +4,6 @@ import type { CacheStore, SpendStore } from "@/lib/reads";
 import { sourceKindSchema } from "@/lib/source-kinds";
 import type { SourceKind } from "@/lib/source-kinds";
 
-// What every source has in common. A channel is a source; the programming in
-// src/lib/live.ts only ever sees items and access, never a post, a message, or
-// a feed entry, so a new kind is a new adapter and nothing else.
-
 /** One thing a source can turn into a program. A schema, since items come back out of the shared cache as data. */
 export const itemSchema = z.object({
   author: z.object({
@@ -50,28 +46,33 @@ export type AccessOf<K extends SourceKind> = Extract<SourceAccess, { kind: K }>;
  * The kind an item id carries as its prefix. Every adapter writes one; the
  * fallback to X only makes the function total.
  */
-export const itemKind = (itemId: string): SourceKind => {
+export const itemKind = (itemId: string) => {
   const prefix = itemId.slice(0, itemId.indexOf(":"));
   const parsed = sourceKindSchema.safeParse(prefix);
-  return parsed.success ? parsed.data : "x";
+
+  return (parsed.success ? parsed.data : "x") satisfies SourceKind;
 };
 
-export const bestOf = (items: Item[]): Item | undefined => {
+export const bestOf = (items: Item[]) => {
   let best: Item | undefined;
+
   for (const item of items) {
     if (best === undefined || item.score > best.score) {
       best = item;
     }
   }
+
   return best;
 };
 
 /** Minutes since the epoch: a recency score that stays comparable across kinds. */
-export const recencyScore = (iso?: string): number => {
+export const recencyScore = (iso?: string) => {
   if (iso === undefined) {
     return 0;
   }
+
   const ms = Date.parse(iso);
+
   return Number.isNaN(ms) ? 0 : Math.round(ms / 60_000);
 };
 
@@ -89,12 +90,14 @@ export const cachedPick = async (
   context: SourceContext,
   key: string,
   load: () => Promise<Item[]>,
-): Promise<Item | undefined> => {
+) => {
   let items = await context.cache.get(key, itemsSchema);
+
   if (items === undefined) {
     items = await load();
     await context.cache.set(key, items, SOURCE_CACHE_TTL_MS);
   }
+
   return bestOf(items.filter((item) => !context.aired.has(item.id)));
 };
 
@@ -104,11 +107,13 @@ export const fetchJson = async <T>(
   url: URL,
   accessToken: string,
   schema: z.ZodType<T>,
-): Promise<T> => {
+) => {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+
   if (!response.ok) {
     throw new Error(`${service} request failed (${response.status})`);
   }
+
   return schema.parse(await response.json());
 };
 
@@ -122,21 +127,24 @@ const NAMED_ENTITIES = new Map([
 ]);
 
 /** APIs hand back HTML-escaped snippets; a prompt should not read "&#39;". */
-export const decodeEntities = (text: string): string =>
+export const decodeEntities = (text: string) =>
   text.replaceAll(/&(?<entity>#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/gu, (whole, entity: string) => {
     if (entity.startsWith("#x") || entity.startsWith("#X")) {
       return String.fromCodePoint(Number.parseInt(entity.slice(2), 16));
     }
+
     if (entity.startsWith("#")) {
       return String.fromCodePoint(Math.trunc(Number(entity.slice(1))));
     }
+
     return NAMED_ENTITIES.get(entity.toLowerCase()) ?? whole;
   });
 
 /** Markup stripped, entities decoded, whitespace collapsed, length bounded. */
-export const plainText = (html: string, maxLength: number): string => {
+export const plainText = (html: string, maxLength: number) => {
   const text = decodeEntities(html.replaceAll(/<[^>]+>/gu, " "))
     .replaceAll(/\s+/gu, " ")
     .trim();
+
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 };

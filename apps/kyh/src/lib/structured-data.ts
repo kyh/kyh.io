@@ -1,5 +1,6 @@
 import { absoluteUrl, siteConfig } from "@/lib/config";
 import { workHistory } from "@/lib/data";
+import type { SiteVideo } from "@/lib/page-metadata";
 import { social } from "@/lib/social";
 
 const PERSON_ID = `${siteConfig.url}/#person`;
@@ -72,70 +73,113 @@ const [currentRole] = workHistory;
  * behind the domain; `WebSite` ties the two to the URL. No PostalAddress or
  * phone: a personal site has no office to list.
  */
-export const buildStructuredData = (): StructuredData => ({
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@id": PERSON_ID,
-      "@type": "Person",
-      alternateName: ["Kai", siteConfig.shortName],
-      description: siteConfig.description,
-      email: `mailto:${siteConfig.email}`,
-      image: `${siteConfig.url}/og.jpg`,
-      jobTitle: currentRole?.role ?? "Software Engineer",
-      knowsAbout: [
-        "Software engineering",
-        "Design engineering",
-        "Frontend architecture",
-        "Developer experience",
-        "Venture capital",
-      ],
-      mainEntityOfPage: absoluteUrl("/about"),
-      name: siteConfig.name,
-      sameAs,
-      url: siteConfig.url,
-      worksFor: {
-        "@type": "Organization",
-        name: currentRole?.company ?? siteConfig.siteName,
-        url: currentRole?.link ?? siteConfig.url,
-      },
-    },
-    {
-      "@id": ORGANIZATION_ID,
-      "@type": "Organization",
-      contactPoint: [
-        {
-          "@type": "ContactPoint",
-          areaServed: "Worldwide",
-          availableLanguage: ["English"],
-          contactType: "customer support",
-          email: siteConfig.email,
-          url: absoluteUrl("/contact"),
+export const buildStructuredData = () =>
+  ({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": PERSON_ID,
+        "@type": "Person",
+        alternateName: ["Kai", "Kai-Yu Hsu", "Kai Yu Hsu", "Kai Hsu", siteConfig.shortName],
+        description: siteConfig.description,
+        email: `mailto:${siteConfig.email}`,
+        image: `${siteConfig.url}/og.jpg`,
+        jobTitle: currentRole?.role ?? "Software Engineer",
+        knowsAbout: [
+          "Software engineering",
+          "Design engineering",
+          "Frontend architecture",
+          "Developer experience",
+          "Venture capital",
+        ],
+        mainEntityOfPage: absoluteUrl("/about"),
+        name: siteConfig.name,
+        sameAs,
+        url: siteConfig.url,
+        worksFor: {
+          "@type": "Organization",
+          name: currentRole?.company ?? siteConfig.siteName,
+          url: currentRole?.link ?? siteConfig.url,
         },
-      ],
-      description: siteConfig.description,
-      email: `mailto:${siteConfig.email}`,
-      founder: { "@id": PERSON_ID },
-      image: `${siteConfig.url}/og.jpg`,
-      logo: `${siteConfig.url}/favicon/web-app-manifest-512x512.png`,
-      name: siteConfig.siteName,
-      sameAs,
-      url: siteConfig.url,
-    },
-    {
-      "@id": WEBSITE_ID,
-      "@type": "WebSite",
-      about: { "@id": PERSON_ID },
-      alternateName: siteConfig.name,
-      description: siteConfig.description,
-      inLanguage: "en-US",
-      name: siteConfig.siteName,
-      publisher: { "@id": ORGANIZATION_ID },
-      url: siteConfig.url,
-    },
-  ],
-});
+      },
+      {
+        "@id": ORGANIZATION_ID,
+        "@type": "Organization",
+        contactPoint: [
+          {
+            "@type": "ContactPoint",
+            areaServed: "Worldwide",
+            availableLanguage: ["English"],
+            contactType: "customer support",
+            email: siteConfig.email,
+            url: absoluteUrl("/contact"),
+          },
+        ],
+        description: siteConfig.description,
+        email: `mailto:${siteConfig.email}`,
+        founder: { "@id": PERSON_ID },
+        image: `${siteConfig.url}/og.jpg`,
+        logo: `${siteConfig.url}/favicon/web-app-manifest-512x512.png`,
+        name: siteConfig.siteName,
+        sameAs,
+        url: siteConfig.url,
+      },
+      {
+        "@id": WEBSITE_ID,
+        "@type": "WebSite",
+        about: { "@id": PERSON_ID },
+        alternateName: siteConfig.name,
+        description: siteConfig.description,
+        inLanguage: "en-US",
+        name: siteConfig.siteName,
+        publisher: { "@id": ORGANIZATION_ID },
+        url: siteConfig.url,
+      },
+    ],
+  }) satisfies StructuredData;
+
+export interface VideoObjectNode {
+  "@context": "https://schema.org";
+  "@type": "VideoObject";
+  "@id": string;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  contentUrl: string;
+  embedUrl: string;
+  uploadDate: string;
+  duration: string;
+  width: number;
+  height: number;
+  isFamilyFriendly: boolean;
+  inLanguage: string;
+  author: { "@id": string };
+}
+
+/**
+ * The site's clip, the same one every page serves as `og:video` (a recording
+ * of the showcase's opening, embedded from `/showcase`). Its own script beside
+ * the site graph rather than a node in it; it points back at the Person by `@id`.
+ */
+export const buildVideoObject = (video: SiteVideo) =>
+  ({
+    "@context": "https://schema.org",
+    "@id": `${absoluteUrl("/showcase")}#video`,
+    "@type": "VideoObject",
+    author: { "@id": PERSON_ID },
+    contentUrl: video.url,
+    description: video.description,
+    duration: video.duration,
+    embedUrl: absoluteUrl("/showcase"),
+    height: video.height,
+    inLanguage: "en-US",
+    isFamilyFriendly: true,
+    name: video.name,
+    thumbnailUrl: video.poster.url,
+    uploadDate: video.uploadDate,
+    width: video.width,
+  }) satisfies VideoObjectNode;
 
 /** Escapes `<` so a value containing `</script>` can't end the inline tag early. */
-export const serializeStructuredData = (data: StructuredData) =>
-  JSON.stringify(data).replaceAll("<", String.raw`<`);
+export const serializeStructuredData = (data: StructuredData | VideoObjectNode) =>
+  JSON.stringify(data).replaceAll("<", String.raw`\u003c`);

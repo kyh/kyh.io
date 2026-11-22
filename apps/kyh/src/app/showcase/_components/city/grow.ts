@@ -1,9 +1,3 @@
-// How the town goes up on arrival, as the GPU draws it. Each building rises
-// from a slab on its lot a storey at a time: the storey being built rises
-// into place, and everything above waits, pressed flat on top of it. When
-// each thing starts rides on its geometry (`buildAt`), stamped once a build is
-// made, so one merged mesh still goes up building by building; every material
-// the town draws with reads it against one clock.
 import type { Material, WebGLProgramParametersWithUniforms } from "three";
 import { Float32BufferAttribute, InstancedBufferAttribute, Mesh, Vector3 } from "three";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
@@ -22,13 +16,7 @@ export const BUILT: StartAt = () => -1e4;
 /** The build clock once everything's up, however late it started. */
 export const ALL_BUILT = 1e6;
 
-/** The slab a building stands on before it goes up, just over the curb. */
 const FOOT = (CURB_TOP + 0.01).toFixed(2);
-/**
- * What's not built yet is pressed down onto what is, not flattened onto it:
- * kept in order, a sliver deep, so the roof stays on top and no two faces
- * share a plane and flicker.
- */
 const SQUASH = "0.004";
 
 const BUILD_GLSL = `
@@ -47,10 +35,10 @@ vec4 built(vec4 world, float at) {
 
 const MESH_PROJECTION = "#include <project_vertex>";
 
-/** Rewrite a vertex shader so its points go up with `growTime`, each from its own start. */
 const patch = (shader: WebGLProgramParametersWithUniforms, growTime: { value: number }) => {
   shader.uniforms.growTime = growTime;
   let body = shader.vertexShader;
+
   if (body.includes(MESH_PROJECTION)) {
     body = `attribute float buildAt;\n${body.replace(
       MESH_PROJECTION,
@@ -58,21 +46,23 @@ const patch = (shader: WebGLProgramParametersWithUniforms, growTime: { value: nu
       gl_Position = projectionMatrix * mvPosition;`,
     )}`;
   } else {
-    // Fat lines: both ends of each segment.
     for (const end of ["instanceStart", "instanceEnd"]) {
       body = body.replace(
         `modelViewMatrix * vec4( ${end}, 1.0 )`,
         `viewMatrix * built( modelMatrix * vec4( ${end}, 1.0 ), instanceBuildAt )`,
       );
     }
+
     body = `attribute float instanceBuildAt;\n${body}`;
   }
+
   shader.vertexShader = BUILD_GLSL + body;
 };
 
 /** The build clock every material reads: `adapt` each one the town draws with, `set` it each frame. */
 export const createGrowth = () => {
   const growTime = { value: 0 };
+
   return {
     adapt: (material: Material) => {
       material.onBeforeCompile = (shader) => patch(shader, growTime);
@@ -99,6 +89,7 @@ export const raise = (built: Built, startAt: StartAt) => {
       const starts = geometry.getAttribute("instanceStart");
       const ends = geometry.getAttribute("instanceEnd");
       const at = new Float32Array(starts.count);
+
       for (let index = 0; index < starts.count; index += 1) {
         point
           .set(
@@ -109,11 +100,13 @@ export const raise = (built: Built, startAt: StartAt) => {
           .applyMatrix4(object.matrixWorld);
         at[index] = startAt(point.x, point.z);
       }
+
       geometry.setAttribute("instanceBuildAt", new InstancedBufferAttribute(at, 1));
     } else if (object instanceof Mesh) {
       const { geometry } = object;
       const positions = geometry.getAttribute("position");
       const at = new Float32Array(positions.count);
+
       if (geometry.index) {
         geometry.computeBoundingBox();
         geometry.boundingBox?.getCenter(point).applyMatrix4(object.matrixWorld);
@@ -132,8 +125,10 @@ export const raise = (built: Built, startAt: StartAt) => {
           at.fill(startAt(point.x, point.z), vertex, vertex + 3);
         }
       }
+
       geometry.setAttribute("buildAt", new Float32BufferAttribute(at, 1));
     }
   });
+
   return built;
 };

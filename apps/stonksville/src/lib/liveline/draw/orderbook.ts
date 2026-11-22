@@ -26,40 +26,39 @@ export interface OrderbookState {
 }
 
 const MAX_LABELS = 50;
-// seconds
 const LABEL_LIFETIME = 6;
-// ms
 const SPAWN_INTERVAL = 40;
-// px
 const MIN_LABEL_GAP = 22;
-// px/s calm
 const BASE_SPEED = 60;
-// px/s during big activity
 const MAX_SPEED = 160;
 
-export const createOrderbookState = (): OrderbookState => ({
-  churnRate: 0,
-  labels: [],
-  prevAskTotal: 0,
-  prevBidTotal: 0,
-  smoothSpeed: BASE_SPEED,
-  spawnTimer: 0,
-});
+export const createOrderbookState = () =>
+  ({
+    churnRate: 0,
+    labels: [],
+    prevAskTotal: 0,
+    prevBidTotal: 0,
+    smoothSpeed: BASE_SPEED,
+    spawnTimer: 0,
+  }) satisfies OrderbookState;
 
-const mixColor = (from: Rgb, to: Rgb, t: number): string => {
+const mixColor = (from: Rgb, to: Rgb, t: number) => {
   const r = Math.round(from[0] + (to[0] - from[0]) * t);
   const g = Math.round(from[1] + (to[1] - from[1]) * t);
   const b = Math.round(from[2] + (to[2] - from[2]) * t);
+
   return `rgb(${r},${g},${b})`;
 };
 
-const formatSize = (size: number): string => {
+const formatSize = (size: number) => {
   if (size >= 10) {
     return `$${Math.round(size)}`;
   }
+
   if (size >= 1) {
     return `$${size.toFixed(1)}`;
   }
+
   return `$${size.toFixed(2)}`;
 };
 
@@ -69,32 +68,33 @@ interface BookTotals {
   askTotal: number;
 }
 
-const sumBook = (orderbook: OrderbookData): BookTotals => {
+const sumBook = (orderbook: OrderbookData) => {
   let maxSize = 0;
   let bidTotal = 0;
   let askTotal = 0;
+
   for (const [, size] of orderbook.bids) {
     bidTotal += size;
     maxSize = Math.max(maxSize, size);
   }
+
   for (const [, size] of orderbook.asks) {
     askTotal += size;
     maxSize = Math.max(maxSize, size);
   }
-  return { askTotal, bidTotal, maxSize };
+
+  return { askTotal, bidTotal, maxSize } satisfies BookTotals;
 };
 
-/**
- * Churn: how much total size changed since last frame, normalized by the
- * previous total so it's scale-independent. Fast attack, slower decay.
- */
-const updateChurn = (state: OrderbookState, { bidTotal, askTotal }: BookTotals): void => {
+const updateChurn = (state: OrderbookState, { bidTotal, askTotal }: BookTotals) => {
   const prevTotal = state.prevBidTotal + state.prevAskTotal;
   let churnSignal = 0;
+
   if (prevTotal > 0) {
     const delta = Math.abs(bidTotal - state.prevBidTotal) + Math.abs(askTotal - state.prevAskTotal);
     churnSignal = Math.min(delta / prevTotal, 1);
   }
+
   state.prevBidTotal = bidTotal;
   state.prevAskTotal = askTotal;
   const churnLerp = churnSignal > state.churnRate ? 0.3 : 0.05;
@@ -106,25 +106,33 @@ interface Level {
   green: boolean;
 }
 
-const pickWeightedLevel = (orderbook: OrderbookData): Level | undefined => {
+const pickWeightedLevel = (orderbook: OrderbookData) => {
   const allLevels: Level[] = [];
+
   for (const [, size] of orderbook.bids) {
     allLevels.push({ green: true, size });
   }
+
   for (const [, size] of orderbook.asks) {
     allLevels.push({ green: false, size });
   }
+
   let totalWeight = 0;
+
   for (const l of allLevels) {
     totalWeight += l.size;
   }
+
   let r = Math.random() * totalWeight;
+
   for (const l of allLevels) {
     r -= l.size;
+
     if (r <= 0) {
       return l;
     }
   }
+
   return allLevels[0];
 };
 
@@ -134,17 +142,20 @@ const spawnLabels = (
   dt: number,
   bottomY: number,
   maxSize: number,
-): void => {
+) => {
   state.spawnTimer += dt;
+
   while (state.spawnTimer >= SPAWN_INTERVAL && state.labels.length < MAX_LABELS) {
     state.spawnTimer -= SPAWN_INTERVAL;
 
     const tooClose = state.labels.some((l) => Math.abs(l.y - bottomY) < MIN_LABEL_GAP);
+
     if (tooClose) {
       break;
     }
 
     const picked = pickWeightedLevel(orderbook);
+
     if (!picked) {
       break;
     }
@@ -161,29 +172,34 @@ const spawnLabels = (
   }
 };
 
-/** Labels decelerate as they rise — fast at bottom, slow at top. Drops dead/offscreen ones in place. */
 const advanceLabels = (
   state: OrderbookState,
   speed: number,
   dtSec: number,
   topY: number,
   bottomY: number,
-): void => {
+) => {
   const range = bottomY - topY;
   let writeIdx = 0;
+
   for (const l of state.labels) {
     l.life -= dtSec;
+
     if (l.life <= 0) {
       continue;
     }
+
     const yProgress = range > 0 ? (l.y - topY) / range : 1;
     l.y -= speed * (0.7 + 0.3 * yProgress) * dtSec;
+
     if (l.y < topY - 14) {
       continue;
     }
+
     state.labels[writeIdx] = l;
     writeIdx += 1;
   }
+
   state.labels.length = writeIdx;
 };
 
@@ -202,7 +218,7 @@ export const drawOrderbook = (
   dt: number,
   state: OrderbookState,
   swingMagnitude: number,
-): void => {
+) => {
   const { pad, h, chartH } = layout;
   const dtSec = dt / 1000;
 
@@ -211,6 +227,7 @@ export const drawOrderbook = (
   }
 
   const totals = sumBook(orderbook);
+
   if (totals.maxSize === 0) {
     return;
   }
@@ -243,7 +260,6 @@ export const drawOrderbook = (
   for (const l of state.labels) {
     const lifeRatio = l.life / l.maxLife;
 
-    // Fade in quickly, fade out near top of chart
     const fadeIn = Math.min((1 - lifeRatio) * 10, 1);
     const yRatio = (l.y - topY) / chartH;
     const fadeOut = yRatio < 0.45 ? yRatio / 0.45 : 1;

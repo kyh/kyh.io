@@ -10,7 +10,6 @@ const LEADERBOARD_SIZE = 100;
 
 const best = sql<number>`max(${run.tokens})`;
 
-// SQLite fills the bare columns from the row max() picked: each player's best run.
 export const standings = () =>
   db
     .select({
@@ -27,7 +26,6 @@ export const standings = () =>
 
 export type Standing = Awaited<ReturnType<typeof standings>>[number];
 
-// Everything every run has come to, for the page's HUD.
 export const totals = async () => {
   const [row] = await db
     .select({
@@ -36,6 +34,7 @@ export const totals = async () => {
       tokens: sql<number>`coalesce(sum(${run.tokens}), 0)`,
     })
     .from(run);
+
   return row ?? { coins: 0, players: 0, tokens: 0 };
 };
 
@@ -44,38 +43,38 @@ export type Totals = Awaited<ReturnType<typeof totals>>;
 /** Tag on the cached board; a posted run expires it. */
 export const BOARD_TAG = "board";
 
-// The page's read: cached, refreshed at most every 10s and
-// sooner once a run lands, so the page prerenders with the board in its shell.
 export const board = async () => {
   "use cache";
   cacheTag(BOARD_TAG);
   cacheLife({ expire: 86_400, revalidate: 10 });
   const [rows, total] = await Promise.all([standings(), totals()]);
+
   return { rows, total };
 };
 
 const POSTS_PER_WINDOW = 20;
 const WINDOW_MS = 10 * 60 * 1000;
 
-// Whether this poster has room for another run: a finished run takes at least
-// the 5s grace, so 20 in 10 minutes is far past any real player.
 export const canPost = async (poster: string) => {
   const [row] = await db
     .select({ recent: count() })
     .from(run)
     .where(and(eq(run.poster, poster), gt(run.endedAt, Date.now() - WINDOW_MS)));
+
   return (row?.recent ?? 0) < POSTS_PER_WINDOW;
 };
 
-// Saves the run; the answer is where its player now stands.
 export const saveRun = async (posted: Run, poster: string) => {
   await db.insert(run).values({ ...posted, poster });
+
   const bests = db
     .select({ best: best.as("best") })
     .from(run)
     .groupBy(run.name)
     .as("bests");
+
   const mine = db.select({ best }).from(run).where(eq(run.name, posted.name));
   const [row] = await db.select({ ahead: count() }).from(bests).where(gt(bests.best, mine));
+
   return (row?.ahead ?? 0) + 1;
 };

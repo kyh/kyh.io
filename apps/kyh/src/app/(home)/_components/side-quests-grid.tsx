@@ -13,13 +13,11 @@ export type SortableTile =
 const tileKey = (tile: SortableTile) => tile.key;
 const appKey = (app: ProjectAppItem) => app.key;
 
-/** Moving an icon is an easter egg. */
 const reordering = (drop: (order: string[]) => void) => (order: string[]) => {
   drop(order);
   discoverEgg("reorder");
 };
 
-/** A folder whose apps are in the order everyone on the site has them in. */
 const SharedFolder = ({
   id,
   title,
@@ -30,6 +28,7 @@ const SharedFolder = ({
   items: ProjectAppItem[];
 }) => {
   const shared = useSharedOrder(id, items, appKey);
+
   return (
     <ProjectAppGroup
       title={title}
@@ -43,6 +42,7 @@ const SharedFolder = ({
 /** The side quests as an iOS home screen, its order shared by everyone on the site. */
 export const SideQuestsGrid = ({ tiles }: { tiles: SortableTile[] }) => {
   const shared = useSharedOrder("side-quests", tiles, tileKey);
+
   return (
     <SortableGrid
       items={shared.items}

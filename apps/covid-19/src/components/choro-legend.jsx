@@ -16,12 +16,15 @@ export const ChoroLegend = ({
   const height = heightProp ?? 44 + tickSize;
   const marginBottom = marginBottomProp ?? 16 + tickSize;
   const isHorizontal = width > height;
+
   const x = scaleLinear()
     .domain([-1, color.range().length - 1])
     .rangeRound([marginLeft, width - marginRight]);
+
   const y = scaleLinear()
     .domain([-1, color.range().length - 1])
     .rangeRound([marginTop, height - marginBottom]);
+
   const formatTick = format(tickFormat);
 
   const createRect = (d, i) => {
@@ -29,6 +32,7 @@ export const ChoroLegend = ({
       fill: d,
       key: `rect${d}`,
     };
+
     if (isHorizontal) {
       return (
         <rect
@@ -41,6 +45,7 @@ export const ChoroLegend = ({
         />
       );
     }
+
     return (
       <rect
         key={props.key}

@@ -10,10 +10,6 @@ import {
   normalizeInviteCode,
 } from "./invite";
 
-// The invite cookie is the only thing between a stranger with an X account
-// and the station's fal budget: it must name a code only with the secret's
-// signature, and a code has to read back exactly as it was minted.
-
 describe("invite codes", () => {
   it("are six letters or digits, whatever case they were typed in", () => {
     assert.equal(normalizeInviteCode(" vickie "), "VICKIE");
@@ -21,6 +17,7 @@ describe("invite codes", () => {
     assert.equal(isWellFormedInviteCode("VICK-E"), false);
     assert.equal(isWellFormedInviteCode("VICKI"), false);
     assert.equal(isWellFormedInviteCode("vickie"), false);
+
     for (let i = 0; i < 50; i += 1) {
       assert.equal(isWellFormedInviteCode(generateInviteCode()), true);
     }

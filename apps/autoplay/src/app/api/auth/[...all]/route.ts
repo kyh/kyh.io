@@ -3,7 +3,7 @@ import { toNextJsHandler } from "better-auth/next-js";
 
 import { auth } from "@/lib/auth";
 
-const offline = (): Response =>
+const offline = () =>
   NextResponse.json(
     {
       error: "Sign-in is not configured — set X_CLIENT_ID, X_CLIENT_SECRET and TURSO_DATABASE_URL",

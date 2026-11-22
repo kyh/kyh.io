@@ -20,6 +20,7 @@ test("the flyover runs out along the near side and back along the far side", () 
 test("the path passes over every stop", () => {
   const tour = createTour(STOPS);
   assert.ok(tour);
+
   for (const stop of STOPS) {
     const at = tour.at(tour.closest(stop.x, stop.z));
     assert.ok(Math.hypot(at.x - stop.x, at.z - stop.z) < 0.3, `${stop.slug} is off the path`);
@@ -33,6 +34,7 @@ test("the path is a loop that never jumps", () => {
   const end = tour.at(tour.length);
   assert.ok(Math.hypot(start.x - end.x, start.z - end.z) < 1e-6);
   let previous = start;
+
   for (let s = 0.25; s <= tour.length; s += 0.25) {
     const point = tour.at(s);
     assert.ok(Math.hypot(point.x - previous.x, point.z - previous.z) < 0.5, `jump at ${s}`);

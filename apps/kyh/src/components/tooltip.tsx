@@ -20,7 +20,6 @@ import { AnimatePresence, motion } from "motion/react";
 import type { Placement } from "@floating-ui/react";
 import { cn } from "cn";
 
-// Global lines context - lines are rendered once at provider level
 interface LinesPosition {
   x: number;
   y: number;
@@ -37,17 +36,16 @@ const TooltipLinesContext = React.createContext<TooltipLinesContextType | null>(
 const easeInOutQuint = (x: number) =>
   x < 0.5 ? 16 * x * x * x * x * x : 1 - (-2 * x + 2) ** 5 / 2;
 
-// Single set of lines rendered at provider level
 const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
   const [scrollHeight, setScrollHeight] = React.useState(0);
 
-  // The vertical line spans the whole document, so track the page height rather
-  // than sampling it once per tooltip open.
   React.useEffect(() => {
     const observer = new ResizeObserver(() =>
       setScrollHeight(document.documentElement.scrollHeight),
     );
+
     observer.observe(document.documentElement);
+
     return () => observer.disconnect();
   }, []);
 
@@ -101,7 +99,6 @@ const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
       setPosition(pos);
     } else {
       positionsRef.current.delete(id);
-      // Use any remaining open tooltip's position, or null
       const remaining = [...positionsRef.current.values()];
       setPosition(remaining.length > 0 ? (remaining.at(-1) ?? null) : null);
     }
@@ -157,9 +154,11 @@ const useTooltip = ({
     enabled: uncontrolled,
     move: false,
   });
+
   const focus = useFocus(context, {
     enabled: uncontrolled,
   });
+
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: "tooltip" });
 
@@ -203,15 +202,14 @@ const TooltipTrigger = ({
   ...props
 }: React.HTMLProps<HTMLElement> & { asChild?: boolean; ref?: React.Ref<HTMLElement> }) => {
   const context = useTooltipContext();
+
   const childrenRef = React.isValidElement<{ ref?: React.Ref<unknown> }>(children)
     ? children.props.ref
     : undefined;
+
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   if (asChild && React.isValidElement<React.HTMLProps<HTMLElement>>(children)) {
-    // SAFETY: asChild hands rendering to the child element, whose props are a
-    // DOM prop bag by contract; getReferenceProps only merges and augments
-    // them, so the merged object is valid HTMLProps for that element.
     // oxlint-disable-next-line react/no-clone-element -- asChild is the Slot pattern: the child element is the trigger, so its props must be merged onto it
     return React.cloneElement(children, {
       ...context.getReferenceProps({
@@ -245,8 +243,6 @@ const blocks = Array.from({ length: cols * rows }, (_, i) => i);
 const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
-// SAFETY: CSS custom properties are valid inline styles, but React.CSSProperties
-// has no index signature for `--*` keys; the object holds nothing else.
 const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
 
 const TooltipBlocks = ({ context }: { context: ContextType }) => {
@@ -297,20 +293,19 @@ const TooltipContent = ({
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
   const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
-  // SAFETY: `children` entered this component as ReactNode via props;
-  // getFloatingProps forwards it untouched inside its untyped prop bag.
   const children = floatingPropsChildren as React.ReactNode;
   const blockType = type === "block";
 
-  // Update global lines position when this tooltip opens/closes/moves
   React.useLayoutEffect(() => {
     if (!blockType || !linesContext) {
       return;
     }
+
     const { updatePosition } = linesContext;
 
     if (context.open && context.x !== null && context.y !== null) {
       const floatingEl = context.elements.floating;
+
       if (floatingEl) {
         updatePosition(tooltipId, {
           height: floatingEl.offsetHeight,

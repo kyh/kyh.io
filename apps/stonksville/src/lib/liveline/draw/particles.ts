@@ -19,19 +19,17 @@ export interface ParticleState {
   burstCount: number;
 }
 
-export const createParticleState = (): ParticleState => ({
-  burstCount: 0,
-  cooldown: 0,
-  particles: [],
-});
+export const createParticleState = () =>
+  ({
+    burstCount: 0,
+    cooldown: 0,
+    particles: [],
+  }) satisfies ParticleState;
 
 const MAX_PARTICLES = 80;
-// seconds
 const PARTICLE_LIFETIME = 1;
 const COOLDOWN_MS = 400;
-// fire when swing > 8% of visible range
 const MAGNITUDE_THRESHOLD = 0.08;
-// max consecutive fires before requiring a calm period
 const MAX_BURSTS = 3;
 
 /**
@@ -50,28 +48,27 @@ export const spawnOnSwing = (
   accentColor: string,
   dt: number,
   options?: DegenOptions,
-): number => {
+) => {
   state.cooldown = Math.max(0, state.cooldown - dt);
 
   if (momentum === "flat") {
     return 0;
   }
+
   if (state.cooldown > 0) {
     return 0;
   }
 
-  // Below threshold — reset burst counter (calm period)
   if (swingMagnitude < MAGNITUDE_THRESHOLD) {
     state.burstCount = 0;
+
     return 0;
   }
 
-  // Down-momentum disabled by default
   if (momentum === "down" && options?.downMomentum !== true) {
     return 0;
   }
 
-  // Burst limiter — max consecutive fires, resets on calm
   if (state.burstCount >= MAX_BURSTS) {
     return 0;
   }
@@ -81,8 +78,6 @@ export const spawnOnSwing = (
   const scale = options?.scale ?? 1;
   const isUp = momentum === "up";
 
-  // Burst falloff — first burst is biggest, subsequent taper off.
-  // Big swings (mag > 0.6) override the falloff so they always feel impactful.
   const mag = Math.min(swingMagnitude * 5, 1);
   const burstFalloff = mag > 0.6 ? 1 : ([1, 0.6, 0.35][state.burstCount] ?? 0.35);
   state.burstCount += 1;
@@ -91,7 +86,6 @@ export const spawnOnSwing = (
   const speedMultiplier = 1 + mag * 0.8;
 
   for (let i = 0; i < count && state.particles.length < MAX_PARTICLES; i += 1) {
-    // Wide burst — almost a full semicircle for maximum dispersal
     const baseAngle = isUp ? -Math.PI / 2 : Math.PI / 2;
     const spread = Math.PI * 1.2;
     const angle = baseAngle + (Math.random() - 0.5) * spread;
@@ -114,11 +108,7 @@ export const spawnOnSwing = (
 /**
  * Update and draw particles.
  */
-export const drawParticles = (
-  ctx: CanvasRenderingContext2D,
-  state: ParticleState,
-  dt: number,
-): void => {
+export const drawParticles = (ctx: CanvasRenderingContext2D, state: ParticleState, dt: number) => {
   if (state.particles.length === 0) {
     return;
   }
@@ -128,15 +118,16 @@ export const drawParticles = (
   ctx.save();
 
   let writeIdx = 0;
+
   for (const p of state.particles) {
     p.life -= dtSec / PARTICLE_LIFETIME;
+
     if (p.life <= 0) {
       continue;
     }
 
     p.x += p.vx * dtSec;
     p.y += p.vy * dtSec;
-    // less drag — particles travel further
     p.vx *= 0.95;
     p.vy *= 0.95;
 
@@ -149,6 +140,7 @@ export const drawParticles = (
     state.particles[writeIdx] = p;
     writeIdx += 1;
   }
+
   state.particles.length = writeIdx;
 
   ctx.restore();

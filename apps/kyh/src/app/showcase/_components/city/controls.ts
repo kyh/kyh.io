@@ -1,13 +1,6 @@
-// The rules of the visitor's hands, apart from the drawing, so each can be
-// tested on its own: which building is lit, when the flyover gives the camera
-// back and takes it again, whether a press was a tap, a drag or a pinch, and
-// what the keys do. engine.ts feeds these the browser's events and draws
-// what they decide.
-
 /** Left alone this long, the flyover picks up again. */
 export const IDLE_MS = 30_000;
-/** A press that travels farther than this, in CSS pixels, is a drag, not a tap. */
-export const DRAG_THRESHOLD = 5;
+const DRAG_THRESHOLD = 5;
 
 /**
  * Whether a pointer move over the town is a hover: a mouse that moved. A move
@@ -41,32 +34,31 @@ export const createSpotlight = <T>({ now, onTake, onTour, still }: SpotlightPort
   let touring = false;
   let paused = false;
   let idleSince = now();
+
   const setTouring = (next: boolean) => {
     if (touring !== next) {
       touring = next;
       onTour(next);
     }
   };
+
   const take = () => {
     idleSince = now();
     setTouring(false);
     passing = null;
     onTake();
   };
+
   return {
-    /** Something picked up: no building stays lit under the hand. */
     grab: () => {
       take();
       pointer = null;
     },
-    /** The mouse moved onto `hit`, or open ground. */
     hover: (hit: T | null) => {
       pointer = hit;
     },
-    /** Whether the flyover should take the camera back: nothing pressed, and the camera left alone long enough. */
     idle: (pressed: boolean) =>
       !touring && !paused && !still && !pressed && now() - idleSince > IDLE_MS,
-    /** The mouse left the town. A press still down keeps what it's on. */
     leave: (pressed: boolean) => {
       if (!pressed) {
         pointer = null;
@@ -75,50 +67,43 @@ export const createSpotlight = <T>({ now, onTake, onTour, still }: SpotlightPort
     get lit() {
       return pin ?? pointer ?? passing;
     },
-    /** The flyover is passing this building, or none. */
     pass: (entry: T | null) => {
       if (touring) {
         passing = entry;
       }
     },
-    /** The visitor stopped the flyover: it stays stopped until played again. */
     pause: () => {
       take();
       paused = true;
     },
-    /** A pin hovered or focused, or null once it's left. */
     pin: (entry: T | null) => {
       pin = entry;
     },
-    /** The flyover takes the camera; false if it already has it, or never runs. */
     play: () => {
       paused = false;
+
       if (touring || still) {
         return false;
       }
+
       setTouring(true);
+
       return true;
     },
-    /** The building under the mouse, or under a finger's first tap. */
     get pointer() {
       return pointer;
     },
-    /** The town moved under a resting mouse: light what's under it now. */
     recheck: (hit: T | null) => {
       pointer = hit;
     },
-    /** The visitor takes the camera: the flyover stops and lets its building go. */
     take,
-    /**
-     * A tap on `hit`, or on open ground: the building to open, if any. A mouse
-     * opens at once; a finger can't hover, so its first tap shows the building
-     * and its second opens it.
-     */
-    tap: (hit: T | null, pointerType: string): T | null => {
+    tap: (hit: T | null, pointerType: string) => {
       if (hit && (pointerType === "mouse" || pointer === hit)) {
         return hit;
       }
+
       pointer = hit;
+
       return null;
     },
     get touring() {
@@ -143,14 +128,17 @@ export const createPresses = () => {
   let dragged = false;
   let from = { x: 0, y: 0 };
   let spread = 0;
+
   const spreadOf = () => {
     const [a, b] = [...down.values()];
+
     return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
   };
+
   return {
-    /** The browser took the gesture back (a system swipe, a long press): never a tap. */
     cancel: (id: number) => {
       down.delete(id);
+
       if (down.size === 0) {
         spread = 0;
       }
@@ -159,54 +147,60 @@ export const createPresses = () => {
       return down.size;
     },
     has: (id: number) => down.has(id),
-    /** A pressed pointer moved: a drag, a pinch, or still within a tap. */
-    move: (id: number, x: number, y: number): PressMove | null => {
+    move: (id: number, x: number, y: number) => {
       const previous = down.get(id);
+
       if (!previous) {
         return null;
       }
+
       down.set(id, { x, y });
       const [a, b] = [...down.values()];
+
       if (down.size === 2 && a && b) {
         const next = spreadOf();
         const zoom = spread > 0 ? next / spread : null;
         spread = next;
+
         return {
           at: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
           dx: (x - previous.x) / 2,
           dy: (y - previous.y) / 2,
           kind: "pinch",
           zoom,
-        };
+        } satisfies PressMove | null;
       }
+
       const started = !dragged && Math.hypot(x - from.x, y - from.y) > DRAG_THRESHOLD;
       dragged ||= started;
-      return dragged ? { dx: x - previous.x, dy: y - previous.y, kind: "drag", started } : null;
+
+      return (
+        dragged ? { dx: x - previous.x, dy: y - previous.y, kind: "drag", started } : null
+      ) satisfies PressMove | null;
     },
     press: (id: number, x: number, y: number) => {
       down.set(id, { x, y });
+
       if (down.size === 1) {
         dragged = false;
         from = { x, y };
       } else {
-        // A second finger: a pinch, which is never a tap.
         spread = spreadOf();
         dragged = true;
       }
     },
-    /**
-     * A pointer lifted: "tap" if the press was one, "drag" if it ended a drag
-     * or pinch, null while other pointers stay down or if it never pressed here.
-     */
-    release: (id: number, button: number): "tap" | "drag" | null => {
+    release: (id: number, button: number) => {
       if (!down.delete(id) || down.size > 0) {
         return null;
       }
+
       spread = 0;
+
       if (dragged) {
-        return "drag";
+        return "drag" satisfies "tap" | "drag" | null;
       }
-      return button === 0 ? "tap" : null;
+
+      return (button === 0 ? "tap" : null) satisfies "tap" | "drag" | null;
     },
   };
 };
@@ -217,7 +211,6 @@ export type KeyMove =
   | { kind: "zoom"; factor: number }
   | { kind: "turn"; by: 1 | -1 };
 
-/** Which way each arrow moves the view, in screen directions. */
 const KEY_PANS = new Map<string, readonly [number, number]>([
   ["ArrowDown", [0, -1]],
   ["ArrowLeft", [1, 0]],
@@ -226,16 +219,20 @@ const KEY_PANS = new Map<string, readonly [number, number]>([
 ]);
 
 /** Arrows pan, + (or =) and - zoom, [ and ] turn; letters are for chat; any other key leaves the view be. */
-export const keyMove = (key: string): KeyMove | null => {
+export const keyMove = (key: string) => {
   const pan = KEY_PANS.get(key);
+
   if (pan) {
-    return { dx: pan[0], dy: pan[1], kind: "pan" };
+    return { dx: pan[0], dy: pan[1], kind: "pan" } satisfies KeyMove | null;
   }
+
   if (key === "[" || key === "]") {
-    return { by: key === "]" ? 1 : -1, kind: "turn" };
+    return { by: key === "]" ? 1 : -1, kind: "turn" } satisfies KeyMove | null;
   }
+
   if (key === "+" || key === "=") {
-    return { factor: 1.25, kind: "zoom" };
+    return { factor: 1.25, kind: "zoom" } satisfies KeyMove | null;
   }
-  return key === "-" ? { factor: 1 / 1.25, kind: "zoom" } : null;
+
+  return (key === "-" ? { factor: 1 / 1.25, kind: "zoom" } : null) satisfies KeyMove | null;
 };

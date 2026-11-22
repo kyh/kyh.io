@@ -6,13 +6,14 @@ import { createCrowd, createTraffic, roadGraph, sidewalkGraph } from "./traffic"
 
 const plan = planCity([]);
 
-/** Distance from a point to the nearest road's center line. */
 const offRoad = (x: number, z: number) => {
   const junctions = new Map(plan.junctions.map((junction) => [junction.id, junction]));
   let nearest = Infinity;
+
   for (const road of plan.roads) {
     const a = junctions.get(road.from);
     const b = junctions.get(road.to);
+
     if (a && b) {
       const t = Math.max(
         0,
@@ -22,21 +23,23 @@ const offRoad = (x: number, z: number) => {
             ((b.x - a.x) ** 2 + (b.z - a.z) ** 2),
         ),
       );
+
       nearest = Math.min(
         nearest,
         Math.hypot(x - (a.x + (b.x - a.x) * t), z - (a.z + (b.z - a.z) * t)),
       );
     }
   }
+
   return nearest;
 };
 
 test("cars stay in their lanes, through junctions and all", () => {
   const traffic = createTraffic(roadGraph(plan), 30);
+
   for (let tick = 1; tick <= 600; tick += 1) {
     for (const car of traffic.cars) {
       traffic.stepCar(car, tick);
-      // A lane is a fifth of a cell off the middle; a turn cuts its corner.
       assert.ok(
         offRoad(car.pose.x, car.pose.z) < 0.36,
         `car off road at ${car.pose.x}, ${car.pose.z}`,
@@ -47,6 +50,7 @@ test("cars stay in their lanes, through junctions and all", () => {
 
 test("people keep to the sidewalks and the crossings", () => {
   const crowd = createCrowd(sidewalkGraph(plan), 40);
+
   const onBlock = (x: number, z: number) =>
     plan.blocks.some(
       (block) =>
@@ -55,6 +59,7 @@ test("people keep to the sidewalks and the crossings", () => {
         z >= block.z - 1.1 &&
         z <= block.z + block.d + 1.1,
     );
+
   for (let tick = 1; tick <= 600; tick += 1) {
     for (const walker of crowd.walkers) {
       crowd.stepWalker(walker, tick);

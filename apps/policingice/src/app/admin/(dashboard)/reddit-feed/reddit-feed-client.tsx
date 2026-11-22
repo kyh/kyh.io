@@ -17,9 +17,10 @@ interface FeedPost {
   published: string;
 }
 
-const normalizeUrl = (url: string): string => {
+const normalizeUrl = (url: string) => {
   try {
     const u = new URL(url);
+
     return `${u.origin}${u.pathname}`.replace(/\/$/u, "");
   } catch {
     return url.split("?")[0].replace(/\/$/u, "");
@@ -45,6 +46,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
 
   const handleAdd = async (post: FeedPost) => {
     setAddingUrl(post.link);
+
     try {
       const result = await createFromFeed({
         published: post.published,
@@ -61,6 +63,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
     } catch {
       toast.error("Failed to create");
     }
+
     setAddingUrl(null);
   };
 
@@ -83,7 +86,7 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
         <p className="text-sm text-muted-foreground">No posts found.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
+          <table className="w-full min-w-[600px] text-sm select-text">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 pr-3 font-normal">Title</th>

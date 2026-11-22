@@ -22,9 +22,6 @@ import type { SourceKind } from "@/lib/source-kinds";
 import { Glyph } from "@/components/glyph";
 import { WindowDialog } from "@/components/window-dialog";
 
-// The lineup, edited. Connecting a Google scope or adding a feed creates its
-// channel with no further step; CH 01 is the station's and cannot be removed.
-
 interface SourcesDialogProps {
   channels: ChannelSummary[];
   google: SessionPayload["google"];
@@ -32,7 +29,6 @@ interface SourcesDialogProps {
   onClose: () => void;
 }
 
-/** One change to the lineup, as the sources route accepts it. */
 type LineupEdit =
   | { method: "POST"; body: z.infer<typeof addSourceRequestSchema> }
   | { method: "DELETE"; body: z.infer<typeof removeSourceRequestSchema> }
@@ -62,8 +58,10 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
     setBusy(true);
     setError(undefined);
     let applied = false;
+
     try {
       const result = await editLineup(edit);
+
       if ("error" in result) {
         setError(result.error);
       } else {
@@ -73,20 +71,27 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : "Couldn't update the lineup");
     }
+
     setBusy(false);
+
     return applied;
   };
 
   const addFeed = async () => {
     const url = feedUrl.trim();
+
     if (url === "") {
       return;
     }
+
     const body = addSourceRequestSchema.safeParse({ kind: "rss", url });
+
     if (!body.success) {
       setError("That doesn't look like a URL");
+
       return;
     }
+
     if (await apply({ body: body.data, method: "POST" })) {
       setFeedUrl("");
     }
@@ -97,9 +102,11 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
     const target = index + delta;
     const moving = order[index];
     const displaced = order[target];
+
     if (moving === undefined || displaced === undefined) {
       return;
     }
+
     order[index] = displaced;
     order[target] = moving;
     void apply({ body: { order }, method: "PATCH" });
@@ -211,7 +218,7 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
               add feed
             </button>
           </form>
-          {error !== undefined && <p className="text-[10px] text-red-700">{error}</p>}
+          {error !== undefined && <p className="text-[10px] text-red-700 select-text">{error}</p>}
         </div>
       </div>
     </WindowDialog>

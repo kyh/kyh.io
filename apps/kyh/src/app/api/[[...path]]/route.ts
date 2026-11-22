@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { OPENAPI_PATH } from "@/lib/openapi";
 import { buildNotFoundProblem } from "@/lib/problem";
 
-// Nothing lives under /api. Without this, the root catch-all answers with a
-// markdown 404, which API clients (and scanners probing for one) can't parse.
 const handle = (req: NextRequest) =>
   Response.json(buildNotFoundProblem(req.nextUrl.pathname), {
     headers: {

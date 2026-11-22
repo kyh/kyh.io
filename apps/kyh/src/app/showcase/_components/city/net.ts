@@ -1,9 +1,3 @@
-// The city's room on the vibedgames party server, so everyone looking at the
-// town sees the same one. Each browser steps the town itself (world.ts is
-// deterministic); the room carries only what can't be worked out alone: a
-// recent snapshot for whoever arrives, who is holding what, where things were
-// set down, and where everyone's pointer is. With no server in reach the city
-// plays on alone, down the same code path.
 import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
 import { FixedRate, Interpolator, lerp, MultiplayerClient } from "@vibedgames/multiplayer";
 
@@ -14,14 +8,10 @@ import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
 import { asFinite, asRecord } from "@/lib/wire";
 
-/** How often whoever hosts the room puts up a snapshot of the town (ms). */
 const SNAPSHOT_EVERY = 8000;
-/** A hold lapses this long after it was last renewed, so a holder who vanishes lets go (ms). */
 const HOLD_TTL = 12_000;
 const RENEW_EVERY = 4000;
-/** Everyone's pointer, and what they hold, goes out this many times a second. */
 const SEND_RATE = 15;
-/** Pointers are on the island or near it: anything else is noise. */
 const REACH = 140;
 
 export interface Spot {
@@ -56,52 +46,60 @@ interface NetOptions {
 }
 
 /** A dropped thing from the wire, or null for anything a real client wouldn't send. */
-export const readDrop = (payload: JsonValue): Drop | null => {
+export const readDrop = (payload: JsonValue) => {
   const record = asRecord(payload);
   const from = asRecord(record?.from);
   const key = record?.key;
   const state = record?.state;
+
   if (!record || !from || String(key) !== key || !parseActorKey(key) || !Array.isArray(state)) {
     return null;
   }
+
   const numbers = state.map(asFinite);
   const x = asFinite(from.x);
   const y = asFinite(from.y);
   const z = asFinite(from.z);
+
   if (numbers.length > 16 || x === null || y === null || z === null) {
     return null;
   }
+
   const values = numbers.filter((value) => value !== null);
-  return values.length === numbers.length ? { from: { x, y, z }, key, state: values } : null;
+
+  return (
+    values.length === numbers.length ? { from: { x, y, z }, key, state: values } : null
+  ) satisfies Drop | null;
 };
 
-/** A player's pointer from their state, and when they sent it; null while it's off the town. */
 const readPointer = (state: JsonRecord) => {
   const t = asFinite(state.t);
   const x = asFinite(state.x);
   const y = asFinite(state.y);
   const z = asFinite(state.z);
+
   if (state.on !== 1 || t === null || x === null || y === null || z === null) {
     return null;
   }
+
   const near = Math.abs(x) < REACH && Math.abs(z) < REACH && Math.abs(y) < 10;
+
   return near ? { spot: { x, y, z }, t } : null;
 };
 
-/** What a player says they're holding, if it names something in town. */
 const readHolding = (state: JsonRecord) =>
   String(state.h) === state.h && parseActorKey(state.h) ? state.h : null;
 
-const lerpSpot = (a: Spot, b: Spot, k: number): Spot => ({
-  x: lerp(a.x, b.x, k),
-  y: lerp(a.y, b.y, k),
-  z: lerp(a.z, b.z, k),
-});
+const lerpSpot = (a: Spot, b: Spot, k: number) =>
+  ({
+    x: lerp(a.x, b.x, k),
+    y: lerp(a.y, b.y, k),
+    z: lerp(a.z, b.z, k),
+  }) satisfies Spot;
 
 export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
   let client: MultiplayerClient | null = null;
   client = new MultiplayerClient({
-    // A dead server shouldn't hold up the town: after a few seconds it plays alone.
     fallbackMs: 6000,
     host: PARTY_HOST,
     maxPlayers: 32,
@@ -112,6 +110,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
     },
     onEvent: (event, payload, from) => {
       const drop = event === "drop" && from !== client?.playerId ? readDrop(payload) : null;
+
       if (drop) {
         onDrop(drop);
       }
@@ -133,7 +132,6 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       client?.destroy();
       client = null;
     },
-    /** Tell everyone else where it landed. */
     drop: (drop: Drop) => {
       const room = live();
       const me = room?.playerId;
@@ -143,7 +141,6 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
         me ? { except: me } : undefined,
       );
     },
-    /** Ask for `key`: first come, first served; `onHold` says who got it. */
     hold: (key: string) => {
       holding = key;
       renewedAt = performance.now();
@@ -156,28 +153,28 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       if (holding === key) {
         holding = null;
       }
+
       live()?.release(key);
     },
     get me() {
       return live()?.playerId ?? null;
     },
-    /** Milliseconds on the room's clock once it's measured, the local one until then. */
     now: () => {
       const room = live();
+
       return room && Number.isFinite(room.rtt) ? room.serverNow() : Date.now();
     },
     ownerOf: (key: string) => live()?.ownerOf(key) ?? null,
     get people() {
       return Object.keys(live()?.players ?? {}).length;
     },
-    /** Where this player's pointer is in the town, or null when it's elsewhere. */
     point: (spot: Spot | null) => {
       pointer = spot;
     },
-    /** Put up the town as it stands, if it's ours to put up and time for another. */
     publish: (pack: () => string, force = false) => {
       const room = live();
       const now = performance.now();
+
       if (
         room?.isHost &&
         room.connectionStatus === "connected" &&
@@ -187,23 +184,26 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
         room.updateSharedState({ town: pack() });
       }
     },
-    /** Everyone else in the room, with their pointers smoothed. */
-    remotes: (): Remote[] => {
+    remotes: () => {
       const room = live();
       const players = room?.players ?? {};
       const others: Remote[] = [];
+
       for (const [id, player] of Object.entries(players)) {
         if (id !== room?.playerId && player.connected !== false) {
           const state = player.state ?? {};
           const sent = readPointer(state);
           let smooth = remotes.get(id);
+
           if (!smooth) {
             smooth = new Interpolator<Spot>({ delayMs: 120, lerp: lerpSpot });
             remotes.set(id, smooth);
           }
+
           if (sent) {
             smooth.push(sent.t, sent.spot);
           }
+
           others.push({
             at: sent ? (smooth.sample() ?? null) : null,
             chat: readChat(state, room?.serverNow() ?? Date.now()),
@@ -213,46 +213,49 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
           });
         }
       }
+
       for (const id of remotes.keys()) {
         if (!(id in players)) {
           remotes.delete(id);
         }
       }
+
       return others;
     },
-    /** Send a line of chat, stamped on the room's clock. */
     say: (text: string) => {
       const room = live();
       room?.updateMyState(sayState(text, room.serverNow()));
     },
-    /** The latest snapshot of the town the room holds, if any. */
     get snapshot() {
       const town = live()?.sharedState.town;
+
       return String(town) === town ? town : null;
     },
     get status() {
       return live()?.connectionStatus ?? "offline";
     },
-    /** In the room, on its clock: what a snapshot's ticks need to mean the same here. */
     get synced() {
       const room = live();
+
       return room?.connectionStatus === "connected" && Number.isFinite(room.rtt);
     },
-    /** What this player is typing, or null once they stop. */
     type: (draft: string | null) => {
       live()?.updateMyState(draftState(draft));
     },
-    /** Each frame: send this player's pointer on a steady clock, and keep holds alive. */
     update: (deltaMs: number) => {
       const room = live();
+
       if (!room) {
         return;
       }
+
       const now = performance.now();
+
       if (holding && now - renewedAt > RENEW_EVERY) {
         renewedAt = now;
         room.claim(holding, { ttlMs: HOLD_TTL });
       }
+
       if (sending.due(deltaMs)) {
         room.updateMyState({
           h: holding ?? "",
