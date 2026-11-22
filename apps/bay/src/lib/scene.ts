@@ -131,6 +131,19 @@ export const area = (ring: Ring) => {
   return Math.abs(s) / 2;
 };
 
+export const touches = (box: Box, points: Point[], pad = 0) => {
+  const es = points.map((p) => p[0]);
+  const ns = points.map((p) => p[1]);
+
+  return (
+    points.length > 0 &&
+    Math.max(...es) >= box.e0 - pad &&
+    Math.min(...es) <= box.e1 + pad &&
+    Math.max(...ns) >= box.n0 - pad &&
+    Math.min(...ns) <= box.n1 + pad
+  );
+};
+
 export const inRing = (ring: Ring, e: number, n: number) => {
   let inside = false;
 

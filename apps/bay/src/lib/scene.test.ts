@@ -14,6 +14,7 @@ import {
   scatterTrees,
   seeded,
   spireOf,
+  touches,
   withoutBorrowedSpires,
 } from "./scene";
 
@@ -191,4 +192,19 @@ test("a tower a taller neighbour lent is taken off; one standing alone stays", (
   assert.equal(tall?.top, 100);
   const [alone] = withoutBorrowedSpires([block(0, 20, 90), block(200, 100)]);
   assert.equal(alone?.spire?.top, 90);
+});
+
+test("a footprint or road reaches into a box when its extent does, corners outside or not", () => {
+  const box = { e0: 0, e1: 100, n0: 0, n1: 100 };
+
+  assert.ok(touches(box, square(-50, -50, 200)));
+  assert.ok(
+    touches(box, [
+      [-500, 50],
+      [500, 50],
+    ]),
+  );
+  assert.ok(!touches(box, square(150, 0, 20)));
+  assert.ok(touches(box, square(110, 0, 20), 20));
+  assert.ok(!touches(box, []));
 });

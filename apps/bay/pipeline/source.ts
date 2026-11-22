@@ -21,6 +21,7 @@ import {
   roadOf,
   scatterTrees,
   spireOf,
+  touches,
   withoutBorrowedSpires,
 } from "../src/lib/scene";
 import { DATA } from "./common";
@@ -353,7 +354,7 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
         const [outer] = rings;
         const [first] = outer ?? [];
 
-        if (!(outer && first && outer.some((p) => inBox(box, p)))) {
+        if (!(outer && first && touches(box, outer))) {
           continue;
         }
 
@@ -411,7 +412,7 @@ export const frameScene: (
   grounds.set(proj, tileGround);
   const ground = await Promise.all(keys.map(tileGround));
   const areas = ground.flatMap((g) => g.areas);
-  const roads = ground.flatMap((g) => g.roads).filter((r) => r.line.some((p) => inBox(box, p, 50)));
+  const roads = ground.flatMap((g) => g.roads).filter((r) => touches(box, r.line, 50));
 
   const buildings = await buildingsIn(proj, keys, box, terrain);
 
