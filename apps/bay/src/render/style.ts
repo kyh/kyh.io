@@ -1,7 +1,3 @@
-// The look of the procedural map, after tinygyn's: clear midday colours, pale ground, cool grey
-// streets with white lines, fresh parks, clear water, buildings in tidy pastels, brick and glass,
-// trees as round bright canopies. Every colour the render uses is here.
-
 export const GROUND = {
   asphalt: "#a3a8ae",
   land: "#dcd6ca",
@@ -21,10 +17,8 @@ export const AREAS = {
   wood: "#7ab650",
 } as const;
 
-// painted bottom to top
 export const AREA_ORDER = ["water", "sand", "grass", "park", "pitch", "wood", "pier"] as const;
 
-// six wall and roof pairs for each look, picked by a building's tone
 export const BUILDINGS = {
   block: {
     roofs: ["#f2f1ee", "#e9e6e0", "#e4e0d9", "#dfe2e5", "#d3cec6", "#eeebe6"],
@@ -40,7 +34,6 @@ export const BUILDINGS = {
   },
 } as const;
 
-// the glass, frames and sills drawn over a wall
 export const WINDOW = { glass: "#7d95a9", glassTower: "#8aa7be", trim: "#ffffff" };
 
 export const TREES = ["#5fae3f", "#53a137", "#6dbb48", "#4d9634"];

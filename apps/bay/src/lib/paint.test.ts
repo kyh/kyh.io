@@ -13,14 +13,18 @@ import {
 
 const grid = { core: 8, margin: 4 };
 const size = frameSize(grid);
+
 const solid = (r: number, a: number) => {
   const px = new Uint8Array(size * size * 4);
+
   for (let p = 0; p < px.length; p += 4) {
     px[p] = r;
     px[p + 3] = a;
   }
+
   return px;
 };
+
 const at = (px: Uint8Array, x: number, y: number) => [
   ...px.subarray((y * size + x) * 4, (y * size + x) * 4 + 4),
 ];
@@ -29,6 +33,7 @@ test("tiles are painted out from the start, each after a neighbour", () => {
   const order = paintOrder(tileRange({ i: -2, j: -2 }, { i: 2, j: 1 }), { i: 0, j: 0 });
   assert.equal(order[0], "0_0");
   assert.equal(order.length, 20);
+
   for (const [n, key] of order.entries()) {
     if (n > 0) {
       const { i, j } = parseKey(key);
@@ -60,17 +65,17 @@ test("compose pastes what's painted over the render and masks it to be kept", ()
 
 test("blend: the output takes the core, fades into what's painted, and fills what isn't", () => {
   const painted = solid(0, 0);
-  // the left margin already painted (a neighbour)
+
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < grid.margin; x += 1) {
       painted.set([100, 0, 0, 255], (y * size + x) * 4);
     }
   }
+
   const next = blend(grid, painted, solid(200, 255));
   assert.deepEqual(at(next, 0, 8), [100, 0, 0, 255]);
   assert.deepEqual(at(next, 2, 8), [150, 0, 0, 255]);
   assert.deepEqual(at(next, 8, 8), [200, 0, 0, 255]);
-  // the unpainted right margin takes the output, painted only as much as its weight
   assert.deepEqual(at(next, size - 1, 8), [200, 0, 0, 0]);
   assert.equal(paintedShare(next) > paintedShare(painted), true);
 });
@@ -80,10 +85,12 @@ test("waves: the first tile alone, then tiles beside the painted and apart from 
   assert.deepEqual(nextWave(order, new Set(), 10), ["0_0"]);
   const painted = new Set(["0_0"]);
   const all = new Set(order);
+
   for (let round = 0; painted.size < all.size; round += 1) {
     assert.ok(round < 25, "waves stop coming before the area is painted");
     const wave = nextWave(order, painted, 10);
     assert.ok(wave.length > 0);
+
     for (const [n, key] of wave.entries()) {
       const t = parseKey(key);
       assert.ok(!painted.has(key));
@@ -92,6 +99,7 @@ test("waves: the first tile alone, then tiles beside the painted and apart from 
           .map(parseKey)
           .some((p) => Math.max(Math.abs(p.i - t.i), Math.abs(p.j - t.j)) === 1),
       );
+
       for (const other of wave.slice(n + 1).map(parseKey)) {
         assert.ok(
           Math.max(Math.abs(other.i - t.i), Math.abs(other.j - t.j)) > 1,
@@ -99,10 +107,12 @@ test("waves: the first tile alone, then tiles beside the painted and apart from 
         );
       }
     }
+
     for (const key of wave) {
       painted.add(key);
     }
   }
+
   assert.equal(nextWave(order, painted, 10).length, 0);
   assert.equal(nextWave(order, new Set(["0_0"]), 2).length, 2);
 });

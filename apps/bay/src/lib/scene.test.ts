@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { Area, Building, Ring, Road, Terrain } from "./scene";
+import type { Area, Building, Point, Ring, Road, Terrain } from "./scene";
 import {
   area,
   areaOf,
@@ -17,18 +17,16 @@ import {
   withoutBorrowedSpires,
 } from "./scene";
 
-// a tree's place, to compare two frames' trees
 const key = (t: { e: number; n: number }) => `${t.e.toFixed(3)}:${t.n.toFixed(3)}`;
 
-// a plain street along a line
-const road = (line: [number, number][]): Road => ({
+const road: (line: [number, number][]) => Road = (line) => ({
   bridge: false,
   kind: "street",
   line,
   width: 10,
 });
 
-const square = (x: number, y: number, s: number): Ring => [
+const square: (x: number, y: number, s: number) => Ring = (x, y, s) => [
   [x, y],
   [x + s, y],
   [x + s, y + s],
@@ -70,7 +68,6 @@ test("a park grows the same trees whichever frame asks, and only inside it", () 
   const half = scatterTrees(park, { e0: -50, e1: 100, n0: -50, n1: 250 });
   assert.ok(whole.length > 50);
   assert.ok(whole.every((t) => t.e >= 0 && t.e <= 200 && t.n >= 0 && t.n <= 200));
-  // every tree the half frame grows is one the whole frame grows too, so frames agree on a seam
   const all = new Set(whole.map(key));
   assert.ok(half.every((t) => all.has(key(t))));
   assert.equal(
@@ -98,21 +95,18 @@ test("buildings, trees, roads and ground classes", () => {
 });
 
 test("a tower stands in the middle of a big footprint whose peak stands well above its roof", () => {
-  // the Ferry Building, near enough: 200 by 50 m, roof at 18 m, clock tower to 75 m
-  const ferry = [square(0, 0, 50).map(([e, n]): [number, number] => [e * 4, n])];
+  const ferry = [square(0, 0, 50).map(([e, n]) => [e * 4, n] satisfies Point)];
   assert.deepEqual(centroid(ferry[0] ?? []), [100, 25]);
   const spire = spireOf(ferry, 18, 75);
   assert.ok(spire);
   assert.equal(spire.top, 75);
   assert.equal(spire.e, 100);
   assert.ok(spire.side >= 4 && spire.side <= 12);
-  // a chimney's rise, or a small footprint, is no tower
   assert.equal(spireOf(ferry, 18, 25), null);
   assert.equal(spireOf([square(0, 0, 10)], 10, 60), null);
 });
 
 test("crossings: across each street a step back from the junction, not off a road's end", () => {
-  // a cross: four crossings, two across each road
   const cross = crossingsOf([
     road([
       [-100, 0],
@@ -123,11 +117,13 @@ test("crossings: across each street a step back from the junction, not off a roa
       [0, 100],
     ]),
   ]);
+
   assert.equal(cross.length, 4);
+
   for (const c of cross) {
     assert.equal(Math.round(Math.hypot(c.e, c.n) * 10) / 10, 7.5);
   }
-  // a T: the stem ends at the junction, so there is no crossing beyond its end
+
   const tee = crossingsOf([
     road([
       [-100, 0],
@@ -138,9 +134,10 @@ test("crossings: across each street a step back from the junction, not off a roa
       [0, 100],
     ]),
   ]);
+
   assert.equal(tee.length, 3);
   assert.ok(tee.every((c) => c.n > -1));
-  // pieces of one street meeting end to end, straight on or with a slight kink, are no junction
+
   const pieces = crossingsOf([
     road([
       [-100, 0],
@@ -151,8 +148,8 @@ test("crossings: across each street a step back from the junction, not off a roa
       [100, 5],
     ]),
   ]);
+
   assert.equal(pieces.length, 0);
-  // bridges and paths get none
   assert.equal(
     crossingsOf([
       {
@@ -171,8 +168,7 @@ test("crossings: across each street a step back from the junction, not off a roa
   );
 });
 
-// a 40 m block along the east, with a tower to a peak if it has one
-const block = (e: number, top: number, peak?: number): Building => {
+const block: (e: number, top: number, peak?: number) => Building = (e, top, peak) => {
   const b: Building = {
     base: 0,
     id: String(e),
@@ -181,9 +177,11 @@ const block = (e: number, top: number, peak?: number): Building => {
     tone: 0,
     top,
   };
+
   if (peak !== undefined) {
     b.spire = { e: e + 20, n: 20, side: 6, top: peak };
   }
+
   return b;
 };
 

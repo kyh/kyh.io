@@ -1,6 +1,3 @@
-// The places the map names and search finds, at their ground's elevation above the sea: the
-// heights the map's terrain and buildings stand at.
-
 export interface Place {
   name: string;
   lat: number;
@@ -8,7 +5,12 @@ export interface Place {
   height: number;
 }
 
-const place = (name: string, lat: number, lon: number, elevation: number): Place => ({
+const place: (name: string, lat: number, lon: number, elevation: number) => Place = (
+  name,
+  lat,
+  lon,
+  elevation,
+) => ({
   height: elevation,
   lat,
   lon,
