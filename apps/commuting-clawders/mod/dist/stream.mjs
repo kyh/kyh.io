@@ -5,7 +5,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
-//#region stream/chrome.ts
+// stream/chrome.ts
 var chromePaths = (platform, env) => {
 	if (env.CHROME_PATH) return [env.CHROME_PATH];
 	if (platform === "darwin") return ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
@@ -38,8 +38,7 @@ var chromeArgs = (profileDir, url) => [
 	"--use-mock-keychain",
 	url
 ];
-//#endregion
-//#region stream/files.ts
+// stream/files.ts
 var TYPES = new Map(Object.entries({
 	".css": "text/css",
 	".html": "text/html; charset=utf-8",
@@ -55,8 +54,7 @@ var assetPath = (root, url) => {
 	const file = path.join(root, decodeURIComponent(pathname === "/" ? "/index.html" : pathname));
 	return file.startsWith(`${root}${path.sep}`) ? file : null;
 };
-//#endregion
-//#region stream/frame.ts
+// stream/frame.ts
 var CELL_ASPECT = 2.1;
 var PER_COLUMN = {
 	cells: 4,
@@ -193,8 +191,7 @@ var toCells = (rgba, width, height, columns, rows) => {
 	}
 	return cells;
 };
-//#endregion
-//#region stream/stream.ts
+// stream/stream.ts
 var ABANDONED_MS = 15e3;
 var { values } = parseArgs({ options: {
 	image: { type: "string" },
@@ -363,5 +360,4 @@ if (executable) {
 	process.stderr.write("chrome: Google Chrome not found; set CHROME_PATH to its executable\n");
 	await shutdown(1);
 }
-//#endregion
 export {};
