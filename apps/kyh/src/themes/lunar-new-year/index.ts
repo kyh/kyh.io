@@ -32,7 +32,7 @@ export const theme = {
   days: (year) => {
     const first = lunarNewYear(year);
 
-    return first === null ? null : around(first, 3, 14);
+    return first === null ? null : around(first, 1, 6);
   },
   drift: null,
   glyph: LANTERN_GLYPH,
