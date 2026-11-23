@@ -30,7 +30,7 @@ export const theme = {
     { back: "#dcefff", front: "#8cc8f5" },
   ],
   corners: null,
-  days: (year) => around(easterSunday(year), 2, 1),
+  days: (year) => around(easterSunday(year), 7, 2),
   drift: null,
   glyph: EGG,
   id: "easter",

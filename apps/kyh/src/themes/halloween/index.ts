@@ -40,7 +40,7 @@ export const theme = {
     { back: "hsl(270, 20%, 30%)", front: "hsl(270, 25%, 12%)" },
   ],
   corners: "webs",
-  days: (year) => span(year, [10, 25], [10, 31]),
+  days: (year) => span(year, [10, 18], [11, 2]),
   drift: null,
   glyph: BAT_GLYPH,
   id: "halloween",

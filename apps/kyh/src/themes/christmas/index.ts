@@ -46,7 +46,7 @@ export const theme = {
     ...namedConfetti("gold"),
   ],
   corners: null,
-  days: (year) => span(year, [12, 15], [12, 26]),
+  days: (year) => span(year, [12, 5], [12, 31]),
   drift: { kind: "snow", pieces: [SNOWFLAKE] },
   glyph: SNOWFLAKE_GLYPH,
   id: "christmas",

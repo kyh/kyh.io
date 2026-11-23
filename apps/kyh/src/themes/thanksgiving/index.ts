@@ -48,7 +48,7 @@ export const theme = {
     ...namedConfetti("orange", "gold"),
   ],
   corners: null,
-  days: (year) => around(nthWeekday(year, 11, 4, 4), 3, 3),
+  days: (year) => around(nthWeekday(year, 11, 4, 4), 7, 4),
   drift: { kind: "leaves", pieces: [MAPLE_LEAF, RED_MAPLE_LEAF, OAK_LEAF, BIRCH_LEAF] },
   glyph: MAPLE_GLYPH,
   id: "thanksgiving",

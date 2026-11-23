@@ -14,17 +14,22 @@ test("the calendar picks each holiday's theme, and the default between them", ()
   assert.equal(on(2026, 4, 5), "easter");
   assert.equal(on(2026, 4, 6), "easter");
   assert.equal(on(2026, 7, 4), DEFAULT_THEME);
-  assert.equal(on(2026, 10, 24), DEFAULT_THEME);
-  assert.equal(on(2026, 10, 25), "halloween");
-  assert.equal(on(2026, 10, 31), "halloween");
-  assert.equal(on(2026, 11, 1), DEFAULT_THEME);
+  assert.equal(on(2026, 10, 17), DEFAULT_THEME);
+  assert.equal(on(2026, 10, 18), "halloween");
+  assert.equal(on(2026, 11, 2), "halloween");
+  assert.equal(on(2026, 11, 3), DEFAULT_THEME);
   assert.equal(on(2026, 11, 26), "thanksgiving");
-  assert.equal(on(2026, 12, 25), "christmas");
+  assert.equal(on(2026, 11, 30), "thanksgiving");
+  assert.equal(on(2026, 12, 4), DEFAULT_THEME);
+  assert.equal(on(2026, 12, 5), "christmas");
+  assert.equal(on(2026, 12, 31), "christmas");
 });
 
 test("where two overlap, the one listed first runs", () => {
   assert.equal(on(2029, 2, 12), "lunarNewYear");
   assert.equal(on(2029, 2, 10), "valentines");
+  assert.equal(on(2035, 3, 19), "stPatricks");
+  assert.equal(on(2035, 3, 20), "easter");
 });
 
 test("each theme is whole: one id, its art, confetti, and only the default runs always, keeps the visitor's light or dark wears the sun or moon, and only it has nothing following the mouse", () => {
