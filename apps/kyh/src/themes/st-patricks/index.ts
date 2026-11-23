@@ -43,7 +43,7 @@ export const theme = {
   art: SHAMROCK,
   confetti: [{ back: "#86efac", front: "#15803d" }, ...namedConfetti("green", "green", "gold")],
   corners: null,
-  days: (year) => span(year, [3, 14], [3, 17]),
+  days: (year) => span(year, [3, 10], [3, 19]),
   drift: null,
   glyph: SHAMROCK_GLYPH,
   id: "stPatricks",

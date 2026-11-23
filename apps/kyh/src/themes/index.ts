@@ -9,11 +9,11 @@ import { theme as stPatricks } from "./st-patricks";
 import { theme as thanksgiving } from "./thanksgiving";
 import { theme as valentines } from "./valentines";
 
-/** In calendar order; where two overlap, the one listed first runs. */
+/** In calendar order, but Valentine's before Lunar New Year, whose long run it interrupts; where two overlap, the one listed first runs. */
 export const THEMES = [
   classic,
-  lunarNewYear,
   valentines,
+  lunarNewYear,
   stPatricks,
   easter,
   halloween,
