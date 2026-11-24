@@ -211,6 +211,14 @@ export const hullPath = (points: readonly Vec3[]) => {
   return `${hull.map((p, index) => `${index === 0 ? "M" : "L"}${round(p.x)} ${round(p.y)}`).join("")}Z`;
 };
 
+/** A shaded solid seen round some points (a hat's crown), as `solidPaths`: its lit part shifted toward the light by `size` of it. */
+export const hullSolidPaths = (points: readonly Vec3[], size: number) => {
+  const shift = size * 0.32;
+  const toward: Vec3 = [LIGHT.x * shift, -(LIGHT.y * shift) / COS, 0];
+
+  return { lit: hullPath(points.map((p) => add(p, toward))), whole: hullPath(points) };
+};
+
 /** Two directions square to `normal` and to each other: the plane a flat disc lies in. */
 export const tangentsOf = (normal: Vec3) => {
   const n = normalize(normal);

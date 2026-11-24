@@ -38,19 +38,28 @@ const FRAMES = 20;
 export const LANDING_MS = 380;
 
 /**
+ * Where a landing is at `t` (0 to 1): how much of the way from where it was
+ * let go is still `left`, its `scale` from `bigger` times bigger down to its
+ * own size, and its `turn` (degrees) from `lean` off its tilt, with a little
+ * overshoot and a wobble still.
+ */
+export const landingAt = (t: number, bigger: number, lean: number) => ({
+  left: (1 - t) ** 3 - 0.12 * Math.sin(t * Math.PI) * (1 - t),
+  scale: 1 + bigger * (1 - t) ** 2 + 0.06 * Math.cos(t * Math.PI * 2) * t * (1 - t) * 4,
+  turn: lean * (1 - t) ** 4 + 4 * Math.sin(t * Math.PI * 3) * (1 - t),
+});
+
+/**
  * The landing's keyframes: from `from` pixels away (the brim let go less where
  * it rests), carried bigger and leaning `lean` degrees off its own `tilt`, it
  * drops onto its perch with a little overshoot and wobbles still.
  */
 export const landing = (from: { x: number; y: number }, tilt: number, lean: number) =>
   Array.from({ length: FRAMES + 1 }, (_, frame) => {
-    const t = frame / FRAMES;
-    const left = (1 - t) ** 3 - 0.12 * Math.sin(t * Math.PI) * (1 - t);
-    const scale = 1 + 0.15 * (1 - t) ** 2 + 0.06 * Math.cos(t * Math.PI * 2) * t * (1 - t) * 4;
-    const rotate = tilt + lean * (1 - t) ** 4 + 4 * Math.sin(t * Math.PI * 3) * (1 - t);
+    const { left, scale, turn } = landingAt(frame / FRAMES, 0.15, lean);
 
     return {
-      rotate: `${Math.round(rotate * 100) / 100}deg`,
+      rotate: `${Math.round((tilt + turn) * 100) / 100}deg`,
       scale: Math.round(scale * 1000) / 1000,
       translate: `${Math.round(from.x * left * 10) / 10}px ${Math.round(from.y * left * 10) / 10}px`,
     };
