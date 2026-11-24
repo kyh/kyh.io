@@ -7,7 +7,7 @@ import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import { FOLLOWERS } from "../followers";
 import { useTheme } from "../store";
 
-const useMouseSeen = () => {
+const usePointerSeen = () => {
   const [seen, setSeen] = useState(false);
   useEffect(() => {
     if (seen) {
@@ -15,7 +15,7 @@ const useMouseSeen = () => {
     }
 
     const check = () => {
-      if (lastPointer()?.kind === "mouse") {
+      if (lastPointer()) {
         setSeen(true);
       }
     };
@@ -31,7 +31,7 @@ const useMouseSeen = () => {
 export const ThemeFollower = () => {
   const theme = useTheme();
   const still = useReducedMotion();
-  const seen = useMouseSeen();
+  const seen = usePointerSeen();
   const Follower = FOLLOWERS[theme];
 
   if (!Follower || still || !seen) {

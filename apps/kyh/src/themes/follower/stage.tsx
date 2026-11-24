@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
-import { lastPointer, subscribeToPointer } from "@/lib/pointer";
+import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import type { Creature, Part } from "./creature";
 import { INK, townColor } from "../piece";
 
@@ -169,22 +169,27 @@ export const Stage = <State,>({
       stop();
     };
 
+    let lifted = false;
+
     const follow = () => {
       const at = lastPointer();
 
-      if (at?.kind !== "mouse") {
-        if (frame !== 0) {
-          leave();
-        }
+      if (!at) {
+        return;
+      }
+
+      if (mouse && at.kind === "touch" && pointerLifted()) {
+        lifted = true;
 
         return;
       }
 
-      if (mouse && frame !== 0) {
+      if (mouse && frame !== 0 && !lifted) {
         moved = { x: moved.x + at.x - mouse.x, y: moved.y + at.y - mouse.y };
       }
 
       mouse = { x: at.x, y: at.y };
+      lifted = false;
 
       if (state === null) {
         state = creature.create(at);
@@ -198,12 +203,12 @@ export const Stage = <State,>({
 
     const unsubscribe = subscribeToPointer(follow);
 
-    if (document.documentElement.matches(":hover")) {
+    if (lastPointer()?.kind === "touch" || document.documentElement.matches(":hover")) {
       follow();
     }
 
     const poke = (event: PointerEvent) => {
-      if (state !== null && frame !== 0 && event.pointerType === "mouse") {
+      if (state !== null && frame !== 0) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };
