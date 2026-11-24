@@ -10,6 +10,8 @@ import { ThemeScript } from "@/themes/theme-script";
 import { ThemeCorners } from "@/themes/corners";
 import { ThemeDrift } from "@/themes/drift";
 import { ThemeFollower } from "@/themes/follower";
+import { ThemeGarland } from "@/themes/garland";
+import { ThemeSky } from "@/themes/sky";
 import { siteConfig } from "@/lib/config";
 import { JsonLd, VideoJsonLd } from "@/components/json-ld";
 import { ogVideoOf } from "@/lib/page-metadata";
@@ -90,8 +92,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
       <VideoJsonLd />
       <Providers>
         <div className="blur-header" aria-hidden="true" />
+        <ThemeSky />
         <ThemeDrift />
         <ThemeCorners />
+        <ThemeGarland />
         <ThemeFollower />
         <Multiplayer />
         <Dock />

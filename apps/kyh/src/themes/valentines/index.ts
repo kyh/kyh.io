@@ -20,9 +20,11 @@ export const theme = {
   corners: null,
   days: (year) => span(year, [2, 10], [2, 14]),
   drift: null,
+  garland: null,
   glyph: HEART,
   id: "valentines",
   mode: "light",
   name: "Valentine's Day",
+  sky: null,
   tint: { chroma: 2, hue: 350 },
 } as const satisfies Theme;
