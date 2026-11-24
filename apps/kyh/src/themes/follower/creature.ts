@@ -1,4 +1,5 @@
 import type { Point } from "./walk";
+import type { Crown } from "./wear";
 
 /** One drawn part this frame; what's left out stays as it was. */
 export interface Part {
@@ -20,6 +21,18 @@ export interface Pose {
    * back to front, for one turning in the round: what's nearer is drawn over.
    */
   order?: readonly string[];
+  /** Where the homepage hat sits on it, in its own pixels about `at`: for one that can wear it. */
+  crown?: Crown;
+}
+
+/**
+ * The homepage hat let go onto it: where it was, about its crown (its own
+ * pixels), how far it was turned off the crown's tilt (degrees), and how many
+ * times bigger it was than it's worn.
+ */
+export interface Landing extends Point {
+  turn: number;
+  scale: number;
 }
 
 export interface Creature<State> {
@@ -29,4 +42,8 @@ export interface Creature<State> {
   /** A click at `at`: on it, or anywhere. */
   poke: (state: State, at: Point) => void;
   pose: (state: State) => Pose;
+  /** Where the homepage hat is carried on the screen, each step; null, it isn't. */
+  eye?: (state: State, hat: Point | null) => void;
+  /** The homepage hat put on it (`landing` from where it was let go), or taken off (null). */
+  wear?: (state: State, landing: Landing | null) => void;
 }

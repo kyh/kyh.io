@@ -3,6 +3,7 @@ import type { Part, Pose } from "../follower/creature";
 import type { Ellipse, Mat3, Vec3 } from "../follower/solid";
 import type { Turkey } from "./turkey";
 import { round } from "../art";
+import { LANDING_MS, landingAt } from "../perch";
 import { chainAbout, chainPath } from "../follower/chain";
 import { footIn, groundSpeedOf, legTo } from "../follower/feet";
 import {
@@ -18,6 +19,7 @@ import {
   ellipsePath,
   facing,
   hullPath,
+  hullSolidPaths,
   linePath,
   linesPath,
   mix,
@@ -357,6 +359,7 @@ const headOf = (turkey: Turkey, frame: Frame) => {
     eyes,
     neck,
     root,
+    turned,
     snood: hang(local(3.7, 1.9), [1.8, 0.1, 0], snoodLength),
     wattle: hang(local(1.2, -4.2), [-0.4, -1.6, 0], 6.5),
   };
@@ -401,6 +404,99 @@ export const fleshOf = (turkey: Turkey) => {
     snood: hanging(snood),
     wattle: hanging(wattle),
   } satisfies Record<"beard" | "snood" | "wattle", { floor: number; points: Point[] }>;
+};
+
+const HAT = {
+  back: 0.2,
+  band: [1.5, 4.5],
+  base: 6,
+  brim: 11.5,
+  buckle: 1.7,
+  seat: 4.6,
+  tall: 14,
+  top: 6.8,
+} as const;
+
+const RING = 24;
+const ARC = 12;
+
+const unturn = (m: Mat3, v: Vec3) =>
+  [
+    m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2],
+    m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2],
+    m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2],
+  ] satisfies Vec3;
+
+const crownRadius = (y: number) => HAT.base + ((HAT.top - HAT.base) * y) / HAT.tall;
+
+const landedOf = (turkey: Turkey, seat: Point) => {
+  const { drop, wornFor } = turkey.hat;
+  const t = wornFor / (LANDING_MS / 1000);
+
+  if (!drop || t >= 1) {
+    return "";
+  }
+
+  const { left, scale: grown, turn } = landingAt(t, drop.scale - 1, drop.turn);
+  const x = round(seat.x + drop.x * left);
+  const y = round(seat.y + drop.y * left);
+
+  return `translate(${x} ${y}) rotate(${round(turn)}) scale(${round(grown)}) translate(${-seat.x} ${-seat.y})`;
+};
+
+const hatOf = (turkey: Turkey, head: { at: Vec3; turned: Mat3 }) => {
+  const seat = add(head.at, apply(head.turned, [-0.6, HAT.seat, 0]));
+  const turned = compose(head.turned, pitchOf(HAT.back + turkey.rig.tip.x));
+  const local = (x: number, y: number, z = 0) => add(seat, apply(turned, [x, y, z]));
+
+  const ring = (radius: number, y: number) =>
+    Array.from({ length: RING }, (_, index) => {
+      const angle = (index / RING) * Math.PI * 2;
+
+      return local(radius * Math.cos(angle), y, radius * Math.sin(angle));
+    });
+
+  const disc = (radius: number, y: number) =>
+    ellipseOf(local(0, y), [apply(turned, [radius, 0, 0]), apply(turned, [0, 0, radius])]);
+
+  const camera = unturn(turned, TOWARD_CAMERA);
+  const near = Math.atan2(camera[2], camera[0]);
+
+  const arc = (y: number) =>
+    Array.from({ length: ARC + 1 }, (_, index) => {
+      const angle = near - Math.PI / 2 + (Math.PI * index) / ARC;
+      const radius = crownRadius(y) + 0.15;
+
+      return local(radius * Math.cos(angle), y, radius * Math.sin(angle));
+    });
+
+  const [low, high] = HAT.band;
+  const middle = (low + high) / 2;
+  const out = crownRadius(middle) + 0.25;
+
+  const square = (half: number) => [
+    local(out, middle - half, -half),
+    local(out, middle - half, half),
+    local(out, middle + half, half),
+    local(out, middle + half, -half),
+  ];
+
+  const up = toScreen(apply(turned, [0, 1, 0]));
+  const shownFront = smooth((facing(apply(turned, [1, 0, 0])) - 0.05) / 0.2);
+  const at = toScreen(seat);
+
+  return {
+    angle: round((Math.atan2(up.x, -up.y) * 180) / Math.PI),
+    at,
+    band: `${linePath([...arc(low), ...arc(high).toReversed()])}Z`,
+    brim: solidPaths(disc(HAT.brim, 0.3)),
+    buckle: { d: `${hullPath(square(HAT.buckle))}`, opacity: round(shownFront) },
+    clasp: { d: `${hullPath(square(HAT.buckle * 0.5))}`, opacity: round(shownFront) },
+    crown: hullSolidPaths([...ring(HAT.base, 0), ...ring(HAT.top, HAT.tall)], HAT.base),
+    landed: landedOf(turkey, at),
+    lid: ellipsePath(disc(HAT.top, HAT.tall)),
+    top: toScreen(local(0, HAT.tall)),
+  };
 };
 
 const legOf = (turkey: Turkey, frame: Frame, index: number) => {
@@ -466,6 +562,7 @@ const layersOf = (
   );
 
   const tailDepth = turkey.tailNear ? torsoDepth + 0.5 : torsoDepth - 2;
+  const hatDepth = Math.max(headDepth, faceDepth) + 0.02;
 
   const layers: [string, number][] = [
     ["torso", torsoDepth],
@@ -473,6 +570,7 @@ const layersOf = (
     ["neck", neckDepth],
     ["head", headDepth],
     ["face", faceDepth],
+    ["hat", hatDepth],
     ...wings.map(
       ({ facing: side }, index) =>
         [
@@ -505,6 +603,7 @@ export const turkeyPose = (turkey: Turkey) => {
   const wings = ([1, -1] as const).map((side) => wingOf(frame, side));
   const feathers = feathersOf(frame);
   const head = headOf(turkey, frame);
+  const hat = hatOf(turkey, head);
   const legs = legsOf(turkey, frame);
   const neckShown = round(1 - smooth((turkey.rig.doze.x - 0.45) * 2.5));
   const beardShown = round(1 - smooth(turkey.rig.doze.x * 1.4));
@@ -551,6 +650,15 @@ export const turkeyPose = (turkey: Turkey) => {
     ["beak", { d: head.beak }],
     ["snood", { d: chainPath(turkey.snood, turkey.walker, SIZE) }],
     ["wattle", { d: chainPath(turkey.wattle, turkey.walker, SIZE) }],
+    ["hat", { opacity: turkey.hat.worn ? 1 : 0, transform: hat.landed }],
+    ["hat-brim", { d: hat.brim.whole }],
+    ["hat-brim-lit", { d: hat.brim.lit }],
+    ["hat-crown", { d: hat.crown.whole }],
+    ["hat-crown-lit", { d: hat.crown.lit }],
+    ["hat-band", { d: hat.band }],
+    ["hat-lid", { d: hat.lid }],
+    ["hat-buckle", hat.buckle],
+    ["hat-clasp", hat.clasp],
     ...legs.flatMap(
       ({ drumstick, lit, shank, toes }, index) =>
         [
@@ -567,9 +675,12 @@ export const turkeyPose = (turkey: Turkey) => {
   const top = toScreen(head.at);
   const fanTop = toScreen(frame.place([TAIL[0], TAIL[1] + 36 * frame.fan, 0]));
 
+  const hatTop = turkey.hat.worn ? hat.top.y : top.y;
+
   return {
     at: { x: turkey.walker.x, y: turkey.walker.y },
-    bubble: { x: top.x, y: Math.min(top.y, fanTop.y) - 16 },
+    bubble: { x: top.x, y: Math.min(top.y, hatTop, fanTop.y) - 16 },
+    crown: { angle: hat.angle, width: HAT.brim * 2, x: hat.at.x, y: hat.at.y },
     order: layers,
     parts,
     say: turkey.emotes.line,

@@ -5,7 +5,19 @@ import { useEffect, useRef } from "react";
 
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
 import type { Creature, Part } from "./creature";
+import type { Crown } from "./wear";
 import { INK, townColor } from "../piece";
+import {
+  canGrabHat,
+  carriedHat,
+  crownOf,
+  droppedHat,
+  grabHat,
+  isHatWorn,
+  setCrown,
+  subscribeToHat,
+  takeHatOff,
+} from "./wear";
 
 const FADE_MS = 300;
 const POP_MS = 220;
@@ -17,6 +29,8 @@ interface Box {
   width: number;
   height: number;
 }
+
+const turnOf = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180;
 
 const apply = (element: SVGElement, part: Part) => {
   if (part.d !== undefined) {
@@ -64,6 +78,7 @@ export const Stage = <State,>({
     }
 
     let stacked = "";
+    const hat = layers.get("hat");
 
     const restack = (order: readonly string[]) => {
       const key = order.join(" ");
@@ -125,6 +140,7 @@ export const Stage = <State,>({
         return;
       }
 
+      creature.eye?.(state, carriedHat());
       creature.step(state, mouse, moved, Math.max(0, now - last) / 1000);
       last = now;
       moved = { x: 0, y: 0 };
@@ -143,6 +159,11 @@ export const Stage = <State,>({
 
       if (pose.order) {
         restack(pose.order);
+      }
+
+      if (creature.wear && pose.crown) {
+        const { angle, width, x, y } = pose.crown;
+        setCrown({ angle, width: width * size, x: pose.at.x + x * size, y: pose.at.y + y * size });
       }
 
       if (pose.say !== said) {
@@ -164,10 +185,53 @@ export const Stage = <State,>({
       frame = 0;
     };
 
+    let wearing = false;
+    let worn: Crown | null = null;
+
+    const dress = () => {
+      const on = isHatWorn();
+      const grabbable = on && canGrabHat() && frame !== 0;
+      hat?.style.setProperty("pointer-events", grabbable ? "auto" : "none");
+
+      if (state === null || !creature.wear) {
+        return;
+      }
+
+      const drop = droppedHat();
+      const at = crownOf();
+
+      if (on && drop && at && drop !== worn) {
+        worn = drop;
+        creature.wear(state, {
+          scale: drop.width / Math.max(at.width, 1),
+          turn: turnOf(drop.angle - at.angle),
+          x: (drop.x - at.x) / size,
+          y: (drop.y - at.y) / size,
+        });
+      } else if (!on && wearing) {
+        creature.wear(state, null);
+      }
+
+      wearing = on;
+    };
+
     const leave = () => {
       show(false);
       stop();
+      setCrown(null);
+      dress();
     };
+
+    const unsubscribeFromHat = subscribeToHat(dress);
+
+    const grab = (event: PointerEvent) => {
+      if (event.button === 0 && grabHat(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    hat?.addEventListener("pointerdown", grab);
 
     const follow = () => {
       const at = lastPointer();
@@ -188,11 +252,13 @@ export const Stage = <State,>({
 
       if (state === null) {
         state = creature.create(at);
+        dress();
       }
 
       if (frame === 0) {
         show(true);
         start();
+        dress();
       }
     };
 
@@ -203,7 +269,9 @@ export const Stage = <State,>({
     }
 
     const poke = (event: PointerEvent) => {
-      if (state !== null && frame !== 0 && event.pointerType === "mouse") {
+      const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
+
+      if (state !== null && frame !== 0 && event.pointerType === "mouse" && !onHat) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };
@@ -213,6 +281,10 @@ export const Stage = <State,>({
 
     return () => {
       unsubscribe();
+      unsubscribeFromHat();
+      hat?.removeEventListener("pointerdown", grab);
+      setCrown(null);
+      takeHatOff();
       window.removeEventListener("pointerdown", poke, { capture: true });
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
