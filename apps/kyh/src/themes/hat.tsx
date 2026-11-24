@@ -1,12 +1,21 @@
 "use client";
 
 import { useReducedMotion } from "motion/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useEffectEvent,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { useSvgId } from "@/lib/svg-id";
 import type { HatPictures } from "./hat-pictures";
+import type { Crown } from "./follower/wear";
 import type { Perch } from "./perch";
+import { carryHat, isHatWorn, putHatOn, setHatGrabber, subscribeToHat } from "./follower/wear";
 import { HOME, LANDING_MS, landing, leanFor, perchFor } from "./perch";
 import { ShadeDots } from "./piece";
 import { useTheme } from "./store";
@@ -33,6 +42,14 @@ interface Held extends Point {
 }
 
 const STILL_MS = 90;
+const CARRIED = 1.15;
+const LIFT_MS = 200;
+
+interface Grip {
+  clientX: number;
+  clientY: number;
+  pointerId: number;
+}
 
 const perchesOnScreen = () =>
   [...document.querySelectorAll<HTMLElement>("[data-hat-perch]")].flatMap((element) => {
@@ -60,8 +77,34 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const landFrom = useRef<Held | null>(null);
   const carrying = useRef<AbortController | null>(null);
   const carriedHat = useRef<HTMLSpanElement>(null);
+  const lift = useRef<Crown | null>(null);
+  const wornByFollower = useSyncExternalStore(subscribeToHat, isHatWorn, () => false);
 
   useEffect(() => () => carrying.current?.abort(), []);
+
+  useLayoutEffect(() => {
+    const from = lift.current;
+    const carried = carriedHat.current;
+
+    if (!held || !from || !carried || !picture) {
+      return;
+    }
+
+    lift.current = null;
+
+    if (still) {
+      return;
+    }
+
+    const shown = (picture.box[2] ?? 0) * SCALE;
+    carried.animate(
+      [
+        { rotate: `${from.angle}deg`, scale: from.width / Math.max(shown, 1) },
+        { rotate: `${TILT}deg`, scale: CARRIED },
+      ],
+      { duration: LIFT_MS, easing: "cubic-bezier(0.3, 1.4, 0.6, 1)" },
+    );
+  }, [held, picture, still]);
 
   useLayoutEffect(() => {
     const from = landFrom.current;
@@ -83,6 +126,92 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     });
   }, [held, still]);
 
+  const carry = (event: Grip, at: Point, from?: Crown) => {
+    const grip = { x: at.x - event.clientX, y: at.y - event.clientY };
+    const brimAt = (move: PointerEvent) => ({ x: move.clientX + grip.x, y: move.clientY + grip.y });
+    const { pointerId } = event;
+    carrying.current?.abort();
+    const controller = new AbortController();
+    carrying.current = controller;
+    const { signal } = controller;
+    let lastX = event.clientX;
+    let lean = 0;
+    let standing = 0;
+    signal.addEventListener("abort", () => {
+      clearTimeout(standing);
+      carryHat(null);
+    });
+
+    const drop = (up: PointerEvent) => {
+      if (up.pointerId !== pointerId) {
+        return;
+      }
+
+      controller.abort();
+      const brim = brimAt(up);
+
+      const shown = carriedHat.current
+        ? Number(getComputedStyle(carriedHat.current).rotate.replace("deg", ""))
+        : TILT + lean;
+
+      const angle = Number.isFinite(shown) ? shown : TILT + lean;
+      const width = (picture?.box[2] ?? 0) * SCALE * CARRIED;
+
+      if (putHatOn({ ...brim, angle, width })) {
+        landFrom.current = null;
+        setHost(null);
+        setHeld(null);
+
+        return;
+      }
+
+      const perches = perchesOnScreen();
+
+      const key = perchFor(
+        brim,
+        perches.map(({ perch }) => perch),
+      );
+
+      landFrom.current = { ...brim, lean: angle - TILT };
+      setHost(
+        key === HOME ? null : (perches.find(({ perch }) => perch.key === key)?.element ?? null),
+      );
+      setHeld(null);
+    };
+
+    const move = (to: PointerEvent) => {
+      if (to.pointerId !== pointerId) {
+        return;
+      }
+
+      lean = leanFor(to.clientX - lastX);
+      lastX = to.clientX;
+      const brim = brimAt(to);
+      carryHat(brim);
+      setHeld({ ...brim, lean });
+      clearTimeout(standing);
+      standing = window.setTimeout(() => {
+        lean = 0;
+        setHeld({ ...brim, lean });
+      }, STILL_MS);
+    };
+
+    window.addEventListener("pointermove", move, { signal });
+    window.addEventListener("pointerup", drop, { signal });
+    window.addEventListener("pointercancel", drop, { signal });
+    carryHat(at);
+    lift.current = from ?? null;
+    setHeld({ lean: 0, ...at });
+  };
+
+  const grabbed = useEffectEvent((event: PointerEvent, from: Crown) => carry(event, from, from));
+
+  useEffect(() => {
+    setHatGrabber((event, from) => grabbed(event, from));
+
+    return () => setHatGrabber(null);
+  }, []);
+
   if (!picture) {
     return null;
   }
@@ -102,63 +231,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
       animation.cancel();
     }
 
-    const grip = { x: at.left - event.clientX, y: at.top - event.clientY };
-    const brimAt = (move: PointerEvent) => ({ x: move.clientX + grip.x, y: move.clientY + grip.y });
-    const { pointerId } = event;
-    carrying.current?.abort();
-    const carry = new AbortController();
-    carrying.current = carry;
-    const { signal } = carry;
-    let lastX = event.clientX;
-    let lean = 0;
-    let standing = 0;
-    signal.addEventListener("abort", () => clearTimeout(standing));
-
-    const drop = (up: PointerEvent) => {
-      if (up.pointerId !== pointerId) {
-        return;
-      }
-
-      carry.abort();
-      const brim = brimAt(up);
-      const perches = perchesOnScreen();
-
-      const key = perchFor(
-        brim,
-        perches.map(({ perch }) => perch),
-      );
-
-      const shown = carriedHat.current
-        ? Number(getComputedStyle(carriedHat.current).rotate.replace("deg", ""))
-        : TILT + lean;
-
-      landFrom.current = { ...brim, lean: Number.isFinite(shown) ? shown - TILT : lean };
-      setHost(
-        key === HOME ? null : (perches.find(({ perch }) => perch.key === key)?.element ?? null),
-      );
-      setHeld(null);
-    };
-
-    const move = (to: PointerEvent) => {
-      if (to.pointerId !== pointerId) {
-        return;
-      }
-
-      lean = leanFor(to.clientX - lastX);
-      lastX = to.clientX;
-      const brim = brimAt(to);
-      setHeld({ ...brim, lean });
-      clearTimeout(standing);
-      standing = window.setTimeout(() => {
-        lean = 0;
-        setHeld({ ...brim, lean });
-      }, STILL_MS);
-    };
-
-    window.addEventListener("pointermove", move, { signal });
-    window.addEventListener("pointerup", drop, { signal });
-    window.addEventListener("pointercancel", drop, { signal });
-    setHeld({ lean: 0, x: at.left, y: at.top });
+    carry(event, { x: at.left, y: at.top });
   };
 
   const [left, top, width, height] = picture.box;
@@ -223,7 +296,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
   const worn = (
     <span
       ref={hat}
-      className={`pointer-events-none absolute z-[2] size-0 ${held ? "invisible" : ""}`}
+      className={`pointer-events-none absolute z-[2] size-0 ${held || wornByFollower ? "invisible" : ""}`}
       style={{ right: seat.right, rotate: `${TILT}deg`, top: seat.top }}
       aria-hidden="true"
     >
@@ -242,7 +315,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
             style={{
               left: held.x,
               rotate: `${TILT + held.lean}deg`,
-              scale: 1.15,
+              scale: CARRIED,
               top: held.y,
               transition: still ? undefined : "rotate 120ms ease-out",
             }}
