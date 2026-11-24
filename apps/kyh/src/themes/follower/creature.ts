@@ -30,7 +30,7 @@ export interface Pose {
  * pixels), how far it was turned off the crown's tilt (degrees), and how many
  * times bigger it was than it's worn.
  */
-export interface Drop extends Point {
+export interface Landing extends Point {
   turn: number;
   scale: number;
 }
@@ -44,6 +44,6 @@ export interface Creature<State> {
   pose: (state: State) => Pose;
   /** Where the homepage hat is carried on the screen, each step; null, it isn't. */
   eye?: (state: State, hat: Point | null) => void;
-  /** The homepage hat put on it (`drop`), or taken off (null). */
-  wear?: (state: State, drop: Drop | null) => void;
+  /** The homepage hat put on it (`landing` from where it was let go), or taken off (null). */
+  wear?: (state: State, landing: Landing | null) => void;
 }

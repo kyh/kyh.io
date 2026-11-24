@@ -10,6 +10,7 @@ import { turkey } from "./turkey";
 import { FEATHERS, SIZE } from "./turkey-pose";
 
 const ink = (width: number) => width / SIZE;
+const HAT_REACH = 10;
 
 const NECK = [
   ["neck", 5, "accentRed"],
@@ -156,14 +157,20 @@ export const Follower = () => {
         <Flesh name="snood" width={2.1} />
         <path data-part="beak" style={filled("hay", ink(0.8))} />
       </g>
-      <g data-layer="hat" style={{ cursor: "grab" }}>
-        <g data-part="hat" style={{ opacity: 0 }}>
-          <Solid name="hat-brim" id={id} fill="screen" shade="screen" ink={ink(1)} />
-          <Solid name="hat-crown" id={id} fill="screen" shade="screen" ink={ink(1)} />
-          <path data-part="hat-band" style={filled("screen", ink(0.7))} />
-          <path data-part="hat-lid" style={filled("screen", ink(1))} />
-          <path data-part="hat-buckle" style={filled("gold", ink(0.6))} />
-          <path data-part="hat-clasp" style={filled("screen")} />
+      <g data-layer="hat" data-hat style={{ cursor: "grab" }}>
+        <g
+          data-part="hat"
+          className="[&_path]:[vector-effect:non-scaling-stroke]"
+          style={{ opacity: 0 }}
+        >
+          <Solid name="hat-brim" id={id} fill="screen" shade="screen" ink={1} />
+          <Solid name="hat-crown" id={id} fill="screen" shade="screen" ink={1} />
+          <path data-part="hat-band" style={filled("skinDark", 0.7)} />
+          <path data-part="hat-lid" style={filled("screen", 1)} />
+          <path data-part="hat-buckle" style={filled("gold", 0.6)} />
+          <path data-part="hat-clasp" style={filled("skinDark")} />
+          <path data-part="hat-crown" style={{ ...stroked(HAT_REACH), stroke: "transparent" }} />
+          <path data-part="hat-brim" style={{ ...stroked(HAT_REACH), stroke: "transparent" }} />
         </g>
       </g>
     </Stage>

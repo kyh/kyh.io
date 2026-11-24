@@ -15,7 +15,14 @@ import { useSvgId } from "@/lib/svg-id";
 import type { HatPictures } from "./hat-pictures";
 import type { Crown } from "./follower/wear";
 import type { Perch } from "./perch";
-import { carryHat, isHatWorn, putHatOn, setHatGrabber, subscribeToHat } from "./follower/wear";
+import {
+  carryHat,
+  crownOf,
+  isHatWorn,
+  putHatOn,
+  setHatGrabber,
+  subscribeToHat,
+} from "./follower/wear";
 import { HOME, LANDING_MS, landing, leanFor, perchFor } from "./perch";
 import { ShadeDots } from "./piece";
 import { useTheme } from "./store";
@@ -157,15 +164,21 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
       const angle = Number.isFinite(shown) ? shown : TILT + lean;
       const width = (picture?.box[2] ?? 0) * SCALE * CARRIED;
 
-      if (putHatOn({ ...brim, angle, width })) {
+      const perches = perchesOnScreen();
+      const crown = crownOf();
+      const toCrown = crown ? Math.hypot(crown.x - brim.x, crown.y - brim.y) : Infinity;
+
+      const toPerch = Math.min(
+        ...perches.map(({ perch }) => Math.hypot(perch.x - brim.x, perch.y - brim.y)),
+      );
+
+      if (toCrown < toPerch && putHatOn({ ...brim, angle, width })) {
         landFrom.current = null;
         setHost(null);
         setHeld(null);
 
         return;
       }
-
-      const perches = perchesOnScreen();
 
       const key = perchFor(
         brim,
@@ -204,7 +217,9 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     setHeld({ lean: 0, ...at });
   };
 
-  const grabbed = useEffectEvent((event: PointerEvent, from: Crown) => carry(event, from, from));
+  const grabbed = useEffectEvent((event: PointerEvent, from: Crown) =>
+    carry(event, { x: from.x, y: from.y }, from),
+  );
 
   useEffect(() => {
     setHatGrabber((event, from) => grabbed(event, from));
@@ -254,6 +269,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
           <ShadeDots id={dots} size={DOT} />
         </defs>
         <g
+          data-hat
           strokeLinecap="round"
           strokeLinejoin="round"
           className={carried ? undefined : "pointer-events-auto cursor-grab"}

@@ -1,6 +1,6 @@
 import type { Random } from "@/lib/random";
 import { createRandom } from "@/lib/random";
-import type { Creature, Drop } from "../follower/creature";
+import type { Creature, Landing } from "../follower/creature";
 import type { Emotes } from "../follower/emote";
 import type { Feet, Steps } from "../follower/feet";
 import type { Spring } from "../follower/solid";
@@ -78,8 +78,8 @@ interface Hat {
   worn: boolean;
   /** Seconds since it was put on. */
   wornFor: number;
-  /** Where it was let go, about where it's worn (`Drop`), to land from. */
-  drop: Drop | null;
+  /** Where it was let go, about where it's worn, to land from. */
+  drop: Landing | null;
   /** Its head, forward from its feet (its own pixels), the last step: what its hat lags behind. */
   headWas: number;
 }
@@ -167,10 +167,10 @@ const PECK_BOW = 0.4;
 const MOST_HELD = 15;
 const SLEEP_SIDE = 0.44;
 const TUCKED = 2.5;
-const EYE_REACH = 150;
+const EYE_REACH = 110;
 const CRANE_HEAD: Point = { x: 14, y: 80 };
 const MOST_TIP = 0.4;
-const TIP_LAG = 0.005;
+const TIP_LAG = 0.009;
 
 const createTurkey = (at: Point) => {
   const seed = Math.round(at.x * 7919 + at.y * 31);
@@ -240,7 +240,8 @@ const gobble = (turkey: Turkey, now: boolean) => {
   return false;
 };
 
-const isOn = (turkey: Turkey, at: Point) => isOnWalker(turkey.walker, at, 28 * SIZE, 80 * SIZE);
+const isOn = (turkey: Turkey, at: Point) =>
+  isOnWalker(turkey.walker, at, 28 * SIZE, (turkey.hat.worn ? 100 : 80) * SIZE);
 
 const envelope = (turkey: Turkey, act: Act, edge = 4) => {
   if (turkey.act !== act) {
@@ -471,7 +472,7 @@ const stepHat = (turkey: Turkey, seconds: number) => {
   }
 
   const lag = Math.max(-MOST_TIP, Math.min(MOST_TIP, thrust * TIP_LAG));
-  stepSpring(rig.tip, hat.worn ? lag : 0, 9, seconds);
+  stepSpring(rig.tip, hat.worn ? lag : 0, 7, seconds);
 };
 
 const bobOf = (turkey: Turkey) => {
@@ -558,7 +559,7 @@ const eyeHat = (turkey: Turkey, at: Point | null) => {
   turkey.hat.carried = at;
 };
 
-const wearHat = (turkey: Turkey, drop: Drop | null) => {
+const wearHat = (turkey: Turkey, drop: Landing | null) => {
   const { hat } = turkey;
   turkey.walker.still = Math.min(turkey.walker.still, STRUT_S - 1);
 
@@ -571,8 +572,7 @@ const wearHat = (turkey: Turkey, drop: Drop | null) => {
     return;
   }
 
-  hat.worn = false;
-  hat.drop = null;
+  Object.assign(hat, { drop: null, noticed: true, worn: false });
   say(turkey.emotes, UNHATTED, true);
 };
 

@@ -185,18 +185,13 @@ export const Stage = <State,>({
       frame = 0;
     };
 
-    const leave = () => {
-      show(false);
-      stop();
-      setCrown(null);
-    };
-
     let wearing = false;
     let worn: Crown | null = null;
 
     const dress = () => {
       const on = isHatWorn();
-      hat?.style.setProperty("pointer-events", on && canGrabHat() ? "auto" : "none");
+      const grabbable = on && canGrabHat() && frame !== 0;
+      hat?.style.setProperty("pointer-events", grabbable ? "auto" : "none");
 
       if (state === null || !creature.wear) {
         return;
@@ -220,6 +215,13 @@ export const Stage = <State,>({
       wearing = on;
     };
 
+    const leave = () => {
+      show(false);
+      stop();
+      setCrown(null);
+      dress();
+    };
+
     const unsubscribeFromHat = subscribeToHat(dress);
 
     const grab = (event: PointerEvent) => {
@@ -235,8 +237,6 @@ export const Stage = <State,>({
       const at = lastPointer();
 
       if (at?.kind !== "mouse") {
-        takeHatOff();
-
         if (frame !== 0) {
           leave();
         }
@@ -258,6 +258,7 @@ export const Stage = <State,>({
       if (frame === 0) {
         show(true);
         start();
+        dress();
       }
     };
 
@@ -268,7 +269,9 @@ export const Stage = <State,>({
     }
 
     const poke = (event: PointerEvent) => {
-      if (state !== null && frame !== 0 && event.pointerType === "mouse") {
+      const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
+
+      if (state !== null && frame !== 0 && event.pointerType === "mouse" && !onHat) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };

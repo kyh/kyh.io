@@ -407,14 +407,14 @@ export const fleshOf = (turkey: Turkey) => {
 };
 
 const HAT = {
-  back: 0.16,
-  band: [1.1, 3.3],
-  base: 4.9,
-  brim: 8.4,
-  buckle: 1.25,
-  seat: 4.3,
-  tall: 10.5,
-  top: 4.3,
+  back: 0.2,
+  band: [1.5, 4.5],
+  base: 6,
+  brim: 11.5,
+  buckle: 1.7,
+  seat: 5.4,
+  tall: 14,
+  top: 6.8,
 } as const;
 
 const RING = 24;
