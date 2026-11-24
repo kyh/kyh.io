@@ -472,7 +472,8 @@ const stepHat = (turkey: Turkey, seconds: number) => {
   }
 
   const lag = Math.max(-MOST_TIP, Math.min(MOST_TIP, thrust * TIP_LAG));
-  stepSpring(rig.tip, hat.worn ? lag : 0, 7, seconds);
+  const held = turkey.act === "gobble" ? 0.3 : 1;
+  stepSpring(rig.tip, hat.worn ? lag * held : 0, 7, seconds);
 };
 
 const bobOf = (turkey: Turkey) => {

@@ -412,7 +412,7 @@ const HAT = {
   base: 6,
   brim: 11.5,
   buckle: 1.7,
-  seat: 5.4,
+  seat: 4.6,
   tall: 14,
   top: 6.8,
 } as const;

@@ -10,7 +10,7 @@ import { turkey } from "./turkey";
 import { FEATHERS, SIZE } from "./turkey-pose";
 
 const ink = (width: number) => width / SIZE;
-const HAT_REACH = 10;
+const HAT_REACH = 16;
 
 const NECK = [
   ["neck", 5, "accentRed"],
