@@ -21,6 +21,7 @@ import {
 
 const FADE_MS = 300;
 const POP_MS = 220;
+const TAP_SLOP = 10;
 
 /** The box its <svg> draws, in its own pixels about where it is. */
 interface Box {
@@ -273,7 +274,9 @@ export const Stage = <State,>({
       follow();
     }
 
-    const poke = (event: PointerEvent) => {
+    let pressed: { id: number; x: number; y: number } | null = null;
+
+    const pokeAt = (event: PointerEvent) => {
       const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
 
       if (state !== null && frame !== 0 && !onHat) {
@@ -281,7 +284,33 @@ export const Stage = <State,>({
       }
     };
 
+    const poke = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") {
+        pokeAt(event);
+      } else {
+        pressed = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      }
+    };
+
+    const tap = (event: PointerEvent) => {
+      const down = pressed;
+      pressed = null;
+
+      if (
+        down?.id === event.pointerId &&
+        Math.hypot(event.clientX - down.x, event.clientY - down.y) < TAP_SLOP
+      ) {
+        pokeAt(event);
+      }
+    };
+
+    const cancel = () => {
+      pressed = null;
+    };
+
     window.addEventListener("pointerdown", poke, { capture: true, passive: true });
+    window.addEventListener("pointerup", tap, { capture: true, passive: true });
+    window.addEventListener("pointercancel", cancel, { capture: true, passive: true });
     document.documentElement.addEventListener("mouseleave", leave);
 
     return () => {
@@ -291,6 +320,8 @@ export const Stage = <State,>({
       setCrown(null);
       takeHatOff();
       window.removeEventListener("pointerdown", poke, { capture: true });
+      window.removeEventListener("pointerup", tap, { capture: true });
+      window.removeEventListener("pointercancel", cancel, { capture: true });
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
     };
