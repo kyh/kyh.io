@@ -189,7 +189,7 @@ export const Stage = <State,>({
       }
 
       mouse = { x: at.x, y: at.y };
-      lifted = false;
+      lifted = at.kind === "touch" && pointerLifted();
 
       if (state === null) {
         state = creature.create(at);

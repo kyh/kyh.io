@@ -43,6 +43,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("pointerdown", onPointer, options);
   window.addEventListener("touchmove", onTouchMove, options);
   window.addEventListener("touchend", onTouchEnd);
+  window.addEventListener("touchcancel", onTouchEnd);
 }
 
 /** Where the pointer last was, even after a finger lifts; null before it's moved. */
