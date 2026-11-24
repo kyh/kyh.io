@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { bulbsOf, COLORS, HOOK, PER_SPAN, SAG, SPAN, wirePath } from "./lights";
+import { bulbsOf, COLORS, HOOK, PER_SPAN, PHASES, SAG, SPAN, wirePath } from "./lights";
 
 test("bulbs hang on the wire, between its hooks and its lowest dip", () => {
   const bulbs = bulbsOf(4);
@@ -23,13 +23,16 @@ test("the middle bulb of a scallop hangs lowest and straight, the outer ones lea
   assert.ok(left.tilt > 0);
 });
 
-test("neighbors differ in color, and every bulb is mid-twinkle when the page opens", () => {
+test("neighbors differ in color and never dim together, and every twinkle has its bulbs", () => {
   const bulbs = bulbsOf(6);
 
   for (const [index, bulb] of bulbs.entries()) {
     assert.equal(bulb.color, index % COLORS);
-    assert.ok(bulb.delay <= 0 && -bulb.delay < bulb.period);
+    assert.ok(bulb.phase >= 0 && bulb.phase < PHASES);
+    assert.notEqual(bulb.phase, bulbs[index - 1]?.phase);
   }
+
+  assert.equal(new Set(bulbs.map(({ phase }) => phase)).size, PHASES);
 });
 
 test("the wire is one curve per scallop", () => {

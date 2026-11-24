@@ -1,34 +1,44 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import type { Bulb } from "./lights";
 import { themeOf } from "./index";
-import { bulbsOf, HOOK, SAG, SPAN, SPANS, wirePath } from "./lights";
+import { bulbsOf, HOOK, PHASES, SAG, SPAN, SPANS, wirePath } from "./lights";
 import { useTheme } from "./store";
 
 const WIRE = wirePath();
 const BULBS = bulbsOf();
+const WIDTH = SPAN * SPANS;
 const HEIGHT = HOOK + SAG + 16;
+const DRAWS_ITS_OWN = new Set(["/showcase"]);
+const BULB = "M0 3C-3.4 3-3.9 6.6-3.2 9.2-2.6 11.6-1.3 14 0 14s2.6-2.4 3.2-4.8C3.9 6.6 3.4 3 0 3Z";
+const BULB_SHADE = "M0 3c3.4 0 3.9 3.6 3.2 6.2C2.6 11.6 1.3 14 0 14Z";
 
-const Bulb = ({ bulb }: { bulb: (typeof BULBS)[number] }) => (
+const LightBulb = ({ bulb }: { bulb: Bulb }) => (
   <g
     transform={`translate(${bulb.x} ${bulb.y}) rotate(${bulb.tilt})`}
     className="light"
     data-color={bulb.color}
-    style={
-      {
-        "--light-delay": `${bulb.delay}s`,
-        "--light-period": `${bulb.period}s`,
-      } as React.CSSProperties
-    }
   >
-    <circle cy={8.5} r={8} className="light-glow" />
+    <path d={BULB} className="light-bulb" />
+    <path d={BULB_SHADE} className="light-shade" />
+    <path d={BULB} className="light-ink" />
     <rect x={-2.2} y={-0.6} width={4.4} height={3.8} rx={0.8} className="light-cap" />
-    <path
-      d="M0 3C-3.4 3-3.9 6.6-3.2 9.2-2.6 11.6-1.3 14 0 14s2.6-2.4 3.2-4.8C3.9 6.6 3.4 3 0 3Z"
-      className="light-bulb"
-    />
   </g>
+);
+
+const Layer = ({ children, phase }: { children: React.ReactNode; phase?: number }) => (
+  <svg
+    width={WIDTH}
+    height={HEIGHT}
+    viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+    className="theme-garland-layer"
+    data-phase={phase}
+  >
+    {children}
+  </svg>
 );
 
 const usePausedOffscreen = (garland: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
@@ -51,26 +61,33 @@ const usePausedOffscreen = (garland: React.RefObject<HTMLDivElement | null>, sho
 
 export const ThemeGarland = () => {
   const { garland } = themeOf(useTheme());
+  const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
-  usePausedOffscreen(ref, garland !== null);
+  const shown = garland !== null && !DRAWS_ITS_OWN.has(pathname);
+  usePausedOffscreen(ref, shown);
 
-  if (garland === null) {
+  if (!shown) {
     return null;
   }
 
   return (
-    <div ref={ref} className="theme-garland" data-garland={garland} aria-hidden="true">
-      <svg
-        width={SPAN * SPANS}
-        height={HEIGHT}
-        viewBox={`0 0 ${SPAN * SPANS} ${HEIGHT}`}
-        className="block overflow-visible"
-      >
+    <div
+      ref={ref}
+      className="theme-garland"
+      data-garland={garland}
+      style={{ height: HEIGHT }}
+      aria-hidden="true"
+    >
+      <Layer>
         <path d={WIRE} className="light-wire" />
-        {BULBS.map((bulb, index) => (
-          <Bulb key={index} bulb={bulb} />
-        ))}
-      </svg>
+      </Layer>
+      {Array.from({ length: PHASES }, (_, phase) => (
+        <Layer key={phase} phase={phase}>
+          {BULBS.filter((bulb) => bulb.phase === phase).map((bulb) => (
+            <LightBulb key={`${bulb.x}`} bulb={bulb} />
+          ))}
+        </Layer>
+      ))}
     </div>
   );
 };

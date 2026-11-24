@@ -25,11 +25,12 @@ export interface Bulb {
   /** Degrees off hanging straight down, as the wire tips it. */
   tilt: number;
   color: number;
-  /** Seconds into its twinkle when the page opens (negative, so it's mid-twinkle). */
-  delay: number;
-  /** Seconds a twinkle takes. */
-  period: number;
+  /** Which of the twinkles it dims with; never its neighbor's. */
+  phase: number;
 }
+
+/** Bulbs twinkle in this many groups, each its own layer, so the twinkling is the compositor's work, not the page's. */
+export const PHASES = 4;
 
 const along = (t: number) => {
   const y = HOOK + 4 * SAG * t * (1 - t);
@@ -50,15 +51,16 @@ export const wirePath = (spans = SPANS) =>
 export const bulbsOf = (spans = SPANS, seed = 25) => {
   const random = createRandom(seed);
 
+  let phase = 0;
+
   return Array.from({ length: spans * PER_SPAN }, (_, index) => {
     const t = ((index % PER_SPAN) + 0.5) / PER_SPAN;
     const { slope, y } = along(t);
-    const period = random.range(2.4, 4.8);
+    phase = (phase + random.int(1, PHASES)) % PHASES;
 
     return {
       color: index % COLORS,
-      delay: round(-random.range(0, period)),
-      period: round(period),
+      phase,
       tilt: round((Math.atan(slope) * 180) / Math.PI / 2),
       x: round(Math.floor(index / PER_SPAN) * SPAN + t * SPAN),
       y: round(y),
