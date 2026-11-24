@@ -45,9 +45,11 @@ export const theme = {
   corners: null,
   days: (year) => span(year, [3, 10], [3, 19]),
   drift: null,
+  garland: null,
   glyph: SHAMROCK_GLYPH,
   id: "stPatricks",
   mode: "light",
   name: "St. Patrick's Day",
+  sky: null,
   tint: { chroma: 2, hue: 140 },
 } as const satisfies Theme;

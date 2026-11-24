@@ -32,9 +32,11 @@ export const theme = {
   corners: null,
   days: (year) => around(easterSunday(year), 7, 2),
   drift: null,
+  garland: null,
   glyph: EGG,
   id: "easter",
   mode: "light",
   name: "Easter",
+  sky: null,
   tint: { chroma: 1.5, hue: 320 },
 } as const satisfies Theme;

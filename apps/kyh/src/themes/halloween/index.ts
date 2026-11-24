@@ -42,9 +42,11 @@ export const theme = {
   corners: "webs",
   days: (year) => span(year, [10, 18], [11, 2]),
   drift: null,
+  garland: null,
   glyph: BAT_GLYPH,
   id: "halloween",
   mode: "dark",
   name: "Halloween",
+  sky: null,
   tint: { chroma: 2.5, hue: 295 },
 } as const satisfies Theme;

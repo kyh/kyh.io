@@ -48,9 +48,11 @@ export const theme = {
   corners: null,
   days: (year) => span(year, [12, 5], [12, 31]),
   drift: { kind: "snow", pieces: [SNOWFLAKE] },
+  garland: "lights",
   glyph: SNOWFLAKE_GLYPH,
   id: "christmas",
   mode: "dark",
   name: "Christmas",
+  sky: null,
   tint: { chroma: 2, hue: 165 },
 } as const satisfies Theme;

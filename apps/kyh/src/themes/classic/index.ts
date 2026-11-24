@@ -12,9 +12,11 @@ export const theme = {
   confetti: namedConfetti("gold", "gold", "crimson", "blue", "green", "plum"),
   corners: null,
   drift: null,
+  garland: null,
   glyph: null,
   id: "classic",
   mode: null,
   name: "Light / Dark",
+  sky: null,
   tint: null,
 } as const satisfies Theme;

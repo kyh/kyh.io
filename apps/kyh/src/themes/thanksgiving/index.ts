@@ -50,9 +50,11 @@ export const theme = {
   corners: null,
   days: (year) => around(nthWeekday(year, 11, 4, 4), 7, 4),
   drift: { kind: "leaves", pieces: [MAPLE_LEAF, RED_MAPLE_LEAF, OAK_LEAF, BIRCH_LEAF] },
+  garland: null,
   glyph: MAPLE_GLYPH,
   id: "thanksgiving",
   mode: "light",
   name: "Thanksgiving",
+  sky: null,
   tint: { chroma: 2, hue: 60 },
 } as const satisfies Theme;
