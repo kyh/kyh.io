@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
-import { lastPointer, subscribeToPointer } from "@/lib/pointer";
+import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import type { Creature, Part } from "./creature";
 import type { Crown } from "./wear";
 import { INK, townColor } from "../piece";
@@ -21,6 +21,7 @@ import {
 
 const FADE_MS = 300;
 const POP_MS = 220;
+const TAP_SLOP = 10;
 
 /** The box its <svg> draws, in its own pixels about where it is. */
 interface Box {
@@ -222,6 +223,8 @@ export const Stage = <State,>({
       dress();
     };
 
+    let lifted = false;
+
     const unsubscribeFromHat = subscribeToHat(dress);
 
     const grab = (event: PointerEvent) => {
@@ -236,19 +239,22 @@ export const Stage = <State,>({
     const follow = () => {
       const at = lastPointer();
 
-      if (at?.kind !== "mouse") {
-        if (frame !== 0) {
-          leave();
-        }
+      if (!at) {
+        return;
+      }
+
+      if (mouse && at.kind === "touch" && pointerLifted()) {
+        lifted = true;
 
         return;
       }
 
-      if (mouse && frame !== 0) {
+      if (mouse && frame !== 0 && !lifted) {
         moved = { x: moved.x + at.x - mouse.x, y: moved.y + at.y - mouse.y };
       }
 
       mouse = { x: at.x, y: at.y };
+      lifted = at.kind === "touch" && pointerLifted();
 
       if (state === null) {
         state = creature.create(at);
@@ -264,19 +270,47 @@ export const Stage = <State,>({
 
     const unsubscribe = subscribeToPointer(follow);
 
-    if (document.documentElement.matches(":hover")) {
+    if (lastPointer()?.kind === "touch" || document.documentElement.matches(":hover")) {
       follow();
     }
 
-    const poke = (event: PointerEvent) => {
+    let pressed: { id: number; x: number; y: number } | null = null;
+
+    const pokeAt = (event: PointerEvent) => {
       const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
 
-      if (state !== null && frame !== 0 && event.pointerType === "mouse" && !onHat) {
+      if (state !== null && frame !== 0 && !onHat) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };
 
+    const poke = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") {
+        pokeAt(event);
+      } else {
+        pressed = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      }
+    };
+
+    const tap = (event: PointerEvent) => {
+      const down = pressed;
+      pressed = null;
+
+      if (
+        down?.id === event.pointerId &&
+        Math.hypot(event.clientX - down.x, event.clientY - down.y) < TAP_SLOP
+      ) {
+        pokeAt(event);
+      }
+    };
+
+    const cancel = () => {
+      pressed = null;
+    };
+
     window.addEventListener("pointerdown", poke, { capture: true, passive: true });
+    window.addEventListener("pointerup", tap, { capture: true, passive: true });
+    window.addEventListener("pointercancel", cancel, { capture: true, passive: true });
     document.documentElement.addEventListener("mouseleave", leave);
 
     return () => {
@@ -286,6 +320,8 @@ export const Stage = <State,>({
       setCrown(null);
       takeHatOff();
       window.removeEventListener("pointerdown", poke, { capture: true });
+      window.removeEventListener("pointerup", tap, { capture: true });
+      window.removeEventListener("pointercancel", cancel, { capture: true });
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
     };

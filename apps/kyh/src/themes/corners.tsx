@@ -3,7 +3,7 @@
 import { useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 
-import { lastPointer, subscribeToPointer } from "@/lib/pointer";
+import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import type { Spider as Body } from "./bungee";
 import { bounce, climb, SLACK, settled } from "./bungee";
 import { themeOf } from "./index";
@@ -141,9 +141,11 @@ const useBend = (
     const unsubscribe = subscribeToPointer(() => {
       const at = lastPointer();
 
-      if (!corner.current || at?.kind !== "mouse") {
+      if (!corner.current || !at) {
         return;
       }
+
+      const gone = at.kind === "touch" && pointerLifted();
 
       if (at.y > WEB_SIZE + BEND_REACH && target === 0 && bend.strength === 0) {
         return;
@@ -152,6 +154,7 @@ const useBend = (
       const local = localIn(corner.current, side, at.x, at.y);
 
       const near =
+        !gone &&
         local.x > -BEND_REACH &&
         local.y > -BEND_REACH &&
         local.x < WEB_SIZE + BEND_REACH &&
