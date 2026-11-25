@@ -262,6 +262,8 @@ export const Stage = <State,>({
 
       if (!mouse || !onPage()) {
         holder.current?.animate([{ opacity: 0 }], { duration: 0, fill: "forwards" });
+        stop();
+        setCrown(null);
 
         return;
       }
