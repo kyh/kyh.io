@@ -234,6 +234,9 @@ export const Stage = <State,>({
       dress();
     };
 
+    const onPage = () =>
+      lastPointer()?.kind === "touch" || document.documentElement.matches(":hover");
+
     let exit: Animation | null = null;
 
     goAway.current = (gone) => {
@@ -257,7 +260,9 @@ export const Stage = <State,>({
         return;
       }
 
-      if (!mouse) {
+      if (!mouse || !onPage()) {
+        holder.current?.animate([{ opacity: 0 }], { duration: 0, fill: "forwards" });
+
         return;
       }
 
@@ -319,7 +324,7 @@ export const Stage = <State,>({
 
     const unsubscribe = subscribeToPointer(follow);
 
-    if (lastPointer()?.kind === "touch" || document.documentElement.matches(":hover")) {
+    if (onPage()) {
       follow();
     }
 
