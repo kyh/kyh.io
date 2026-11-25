@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "motion/react";
+import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { lastPointer, subscribeToPointer } from "@/lib/pointer";
@@ -28,13 +29,25 @@ const usePointerSeen = () => {
   return seen;
 };
 
+const useBeenHome = () => {
+  const home = usePathname() === "/";
+  const [been, setBeen] = useState(home);
+
+  if (home && !been) {
+    setBeen(true);
+  }
+
+  return been;
+};
+
 export const ThemeFollower = () => {
   const theme = useTheme();
   const still = useReducedMotion();
   const seen = usePointerSeen();
+  const beenHome = useBeenHome();
   const Follower = FOLLOWERS[theme];
 
-  if (!Follower || still || !seen) {
+  if (!Follower || still || !seen || !beenHome) {
     return null;
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
@@ -21,6 +22,8 @@ import {
 
 const FADE_MS = 300;
 const POP_MS = 220;
+const POP = "cubic-bezier(0.3, 1.6, 0.6, 1)";
+const AWAY_SCALE = 0.4;
 const TAP_SLOP = 10;
 
 /** The box its <svg> draws, in its own pixels about where it is. */
@@ -63,6 +66,14 @@ export const Stage = <State,>({
   const drawing = useRef<SVGSVGElement>(null);
   const bubble = useRef<HTMLSpanElement>(null);
   const words = useRef<HTMLSpanElement>(null);
+  const home = usePathname() === "/";
+  const away = useRef(!home);
+  const goAway = useRef<((gone: boolean) => void) | null>(null);
+
+  useEffect(() => {
+    away.current = !home;
+    goAway.current?.(!home);
+  }, [home]);
 
   useEffect(() => {
     const parts = new Map<string, SVGElement[]>();
@@ -130,7 +141,7 @@ export const Stage = <State,>({
           { opacity: 0, scale: 0.4 },
           { opacity: 1, scale: 1 },
         ],
-        { duration: POP_MS, easing: "cubic-bezier(0.3, 1.6, 0.6, 1)", fill: "forwards" },
+        { duration: POP_MS, easing: POP, fill: "forwards" },
       );
     };
 
@@ -167,7 +178,7 @@ export const Stage = <State,>({
         setCrown({ angle, width: width * size, x: pose.at.x + x * size, y: pose.at.y + y * size });
       }
 
-      if (pose.say !== said) {
+      if (pose.say !== said && !away.current) {
         speak(pose.say);
       }
 
@@ -191,7 +202,7 @@ export const Stage = <State,>({
 
     const dress = () => {
       const on = isHatWorn();
-      const grabbable = on && canGrabHat() && frame !== 0;
+      const grabbable = on && canGrabHat() && frame !== 0 && !away.current;
       hat?.style.setProperty("pointer-events", grabbable ? "auto" : "none");
 
       if (state === null || !creature.wear) {
@@ -220,6 +231,44 @@ export const Stage = <State,>({
       show(false);
       stop();
       setCrown(null);
+      dress();
+    };
+
+    let exit: Animation | null = null;
+
+    goAway.current = (gone) => {
+      exit?.cancel();
+      exit = null;
+
+      if (gone) {
+        speak(null);
+        dress();
+        exit =
+          holder.current?.animate([{ opacity: 0, scale: AWAY_SCALE }], {
+            duration: FADE_MS,
+            easing: "ease-in",
+            fill: "forwards",
+          }) ?? null;
+        exit?.addEventListener("finish", () => {
+          stop();
+          setCrown(null);
+        });
+
+        return;
+      }
+
+      if (!mouse) {
+        return;
+      }
+
+      holder.current?.animate(
+        [
+          { opacity: 0, scale: AWAY_SCALE },
+          { opacity: 1, scale: 1 },
+        ],
+        { duration: POP_MS * 2, easing: POP, fill: "forwards" },
+      );
+      start();
       dress();
     };
 
@@ -261,7 +310,7 @@ export const Stage = <State,>({
         dress();
       }
 
-      if (frame === 0) {
+      if (frame === 0 && !away.current) {
         show(true);
         start();
         dress();
@@ -279,7 +328,7 @@ export const Stage = <State,>({
     const pokeAt = (event: PointerEvent) => {
       const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
 
-      if (state !== null && frame !== 0 && !onHat) {
+      if (state !== null && frame !== 0 && !onHat && !away.current) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };
@@ -314,6 +363,8 @@ export const Stage = <State,>({
     document.documentElement.addEventListener("mouseleave", leave);
 
     return () => {
+      goAway.current = null;
+      exit?.cancel();
       unsubscribe();
       unsubscribeFromHat();
       hat?.removeEventListener("pointerdown", grab);
