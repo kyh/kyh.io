@@ -65,7 +65,9 @@ The rest is by hand:
   loads only the current theme's, and only once a pointer is on it
   (`follower/index.tsx`): a phone loads one on its first touch. A touch sets
   where it heads, a drag leads it, and it stays at the last spot once the
-  finger lifts; a mouse leaving the page hides it. Never import a follower
+  finger lifts; a mouse leaving the page hides it. Only the home page shows
+  one: leaving it shrinks the follower out, coming back pops it in, and a
+  visit that never reaches `/` loads none. Never import a follower
   statically.
 - `follower/` is the followers' kit: `creature.ts` (the contract: create, step,
   poke, pose), `stage.tsx` (runs one on the DOM a frame at a time, poses its
