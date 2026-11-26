@@ -11,7 +11,8 @@
       "Bash(pnpm format:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm dev:*)",
-      "Bash(agent-browser:*)"
+      "Bash(agent-browser:*)",
+      "Bash(pnpm bootstrap:*)"
     ],
     "deny": [
       "Bash(pnpm db:push:*)",
@@ -28,7 +29,9 @@
       "Bash(tsx scripts/:*)",
       "Bash(npx tsx scripts/:*)",
       "Bash(tsx apps/policingice/scripts/:*)",
-      "Bash(npx tsx apps/policingice/scripts/:*)"
+      "Bash(npx tsx apps/policingice/scripts/:*)",
+      "Bash(pnpm db:push-remote:*)",
+      "Bash(pnpm * db:push-remote:*)"
     ]
   },
   "hooks": {

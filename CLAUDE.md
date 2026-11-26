@@ -18,7 +18,7 @@ pnpm test          # run tests (apps/autoplay, apps/vis-ml, apps/policingice, ap
 
 `AGENTS.md` is the full workflow — read it first. The essentials:
 
-- **Setup**: `pnpm install`, then `pnpm dev:<app>`. No bootstrap script, no Docker. `pnpm dev:kyh` and `pnpm dev:policingice` both bind :3000, so run one at a time.
+- **Setup**: `pnpm install && pnpm bootstrap --yes` (each app's `.env` from its example, clawders' local database), then `pnpm dev:<app>`. No Docker. `pnpm dev:kyh` and `pnpm dev:policingice` both bind :3000, so run one at a time.
 - **Verify**: `pnpm verify` for the static gate; drive a running app with `agent-browser` for runtime checks. `apps/kyh` is the safest browser surface (no DB, no auth, no required keys); `apps/cli` gets `typecheck` + `build` only.
 - **`pnpm lint` is a clean gate.** `oxlint.config.ts` extends the ultracite presets (core, react, next, anti-slop, landmines); every rule is an error. Fix the code, don't add config overrides; a `// oxlint-disable-next-line rule -- why` needs a stated reason. Landmines means no prose comments (only directives, a single-line `// WARNING:` for a dangerous recurring footgun, or TSDoc on exported API), no annotated return types (pin a contract with `satisfies` or a typed variable), no test doubles (real implementations; a local server for HTTP), and tests named `*.test.ts` beside their subject.
 - **policingice's database is remote production.** No local DB, no seed, no test login. Never run its `db:push`/`db:studio` or anything in `apps/policingice/scripts/`.
