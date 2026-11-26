@@ -180,9 +180,9 @@ function ModelControls({
           max={15_000}
           step={100}
           value={model.weight}
-          onChange={(event) =>
-            onModelChange({ weight: Number(event.currentTarget.value), bias: model.bias })
-          }
+          onChange={(event) => {
+            onModelChange({ weight: Number(event.currentTarget.value), bias: model.bias });
+          }}
         />
         <label htmlFor="model-weight">
           Weight: <output htmlFor="model-weight">{currency.format(model.weight)}</output>
@@ -197,9 +197,9 @@ function ModelControls({
             max={80_000}
             step={100}
             value={model.bias}
-            onChange={(event) =>
-              onModelChange({ weight: model.weight, bias: Number(event.currentTarget.value) })
-            }
+            onChange={(event) => {
+              onModelChange({ weight: model.weight, bias: Number(event.currentTarget.value) });
+            }}
           />
           <label htmlFor="model-bias">
             Bias: <output htmlFor="model-bias">{currency.format(model.bias)}</output>

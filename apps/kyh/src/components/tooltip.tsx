@@ -40,13 +40,15 @@ const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
   const [scrollHeight, setScrollHeight] = React.useState(0);
 
   React.useEffect(() => {
-    const observer = new ResizeObserver(() =>
-      setScrollHeight(document.documentElement.scrollHeight),
-    );
+    const observer = new ResizeObserver(() => {
+      setScrollHeight(document.documentElement.scrollHeight);
+    });
 
     observer.observe(document.documentElement);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -246,7 +248,7 @@ const totalDelay = calculateDelay(cols * rows);
 const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
 
 const TooltipBlocks = ({ context }: { context: ContextType }) => {
-  if (!context?.x || !context.y) {
+  if (context === null || context.x === undefined || context.x === 0 || !context.y) {
     return null;
   }
 

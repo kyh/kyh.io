@@ -131,7 +131,7 @@ export const ThemeDrift = () => {
   const still = useReducedMotion();
   const id = useSvgId("piece");
 
-  if (drift === null || still) {
+  if (drift === null || still === true) {
     return null;
   }
 

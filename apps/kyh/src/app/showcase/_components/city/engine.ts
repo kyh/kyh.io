@@ -336,7 +336,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
     const pointer = spotAt(event.clientX, event.clientY);
     const key = life.actorAt(at.x, at.y);
 
-    if (key) {
+    if (key !== null && key !== "") {
       return life.grab(key, pointer) ? "actor" : null;
     }
 
@@ -579,7 +579,7 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
   const onDoubleClick = (event: MouseEvent) => {
     const at = local(event.clientX, event.clientY);
 
-    if (!pick(event.clientX, event.clientY) && !life.actorAt(at.x, at.y)) {
+    if (!pick(event.clientX, event.clientY) && (life.actorAt(at.x, at.y) ?? "") === "") {
       takeControl();
       cam.zoomAt(1.8, event.clientX, event.clientY);
     }
@@ -773,7 +773,9 @@ export const createCity = (container: HTMLElement, options: CityOptions) => {
 
   if (intro.phase === "done") {
     playTour(0);
-    warmUp = window.setTimeout(() => views.drawAhead(heading), 3000);
+    warmUp = window.setTimeout(() => {
+      views.drawAhead(heading);
+    }, 3000);
   } else {
     life.setOpen(false);
   }

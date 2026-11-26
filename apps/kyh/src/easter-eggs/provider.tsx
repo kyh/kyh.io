@@ -128,9 +128,13 @@ const LABEL_HOLD = 900;
 const BurstLabel = ({ label }: { label: string }) => {
   const [shown, setShown] = useState(true);
   useEffect(() => {
-    const timer = window.setTimeout(() => setShown(false), LABEL_HOLD);
+    const timer = window.setTimeout(() => {
+      setShown(false);
+    }, LABEL_HOLD);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -265,10 +269,9 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
     return subscribeToEggs(celebrate);
   }, [still, pop]);
 
-  const done = useCallback(
-    (id: number) => setBursts((current) => current.filter((burst) => burst.id !== id)),
-    [],
-  );
+  const done = useCallback((id: number) => {
+    setBursts((current) => current.filter((burst) => burst.id !== id));
+  }, []);
 
   const catching = bursts.length > 0;
   const themes = [...new Set(bursts.map((burst) => burst.theme))];

@@ -48,7 +48,9 @@ export const LivelineTransition = ({
     setMounted((prev) => new Set([...prev, active]));
 
     let raf1 = requestAnimationFrame(() => {
-      raf1 = requestAnimationFrame(() => setVisible(active));
+      raf1 = requestAnimationFrame(() => {
+        setVisible(active);
+      });
     });
 
     const timer = setTimeout(() => {

@@ -137,7 +137,7 @@ export const asksOf = (rows: readonly Row[]) =>
   rows.flatMap((row) => {
     const ask = row.role === "user" ? row.text.replaceAll(NOISE, "").trim() : "";
 
-    return ask === "" || SKILL.test(ask) ? [] : [ask];
+    return ask === "" || ask.startsWith("Base directory for this skill: ") ? [] : [ask];
   });
 
 export const replyOf = (rows: readonly Row[]) =>

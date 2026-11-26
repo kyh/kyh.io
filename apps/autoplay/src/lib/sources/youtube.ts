@@ -53,7 +53,7 @@ const videosSchema = z.object({
     .optional(),
 });
 
-const ytFetch = <T>(
+const ytFetch = async <T>(
   accessToken: string,
   path: string,
   params: Record<string, string>,
@@ -65,7 +65,7 @@ const ytFetch = <T>(
     url.searchParams.set(key, value);
   }
 
-  return fetchJson("YouTube", url, accessToken, schema);
+  return await fetchJson("YouTube", url, accessToken, schema);
 };
 
 const uploadsPlaylistId = (channelId: string) => `UU${channelId.slice(2)}`;
@@ -137,8 +137,8 @@ const fetchUploads = async (access: AccessOf<"youtube">) => {
   return items;
 };
 
-export const pickYoutubeCandidate = (
+export const pickYoutubeCandidate = async (
   access: AccessOf<"youtube">,
   sourceId: string,
   context: SourceContext,
-) => cachedPick(context, `youtube:${sourceId}`, () => fetchUploads(access));
+) => await cachedPick(context, `youtube:${sourceId}`, async () => await fetchUploads(access));

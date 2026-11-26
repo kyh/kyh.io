@@ -55,7 +55,9 @@ const usePausedOffscreen = (garland: React.RefObject<HTMLDivElement | null>, sho
 
     observer.observe(element);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [garland, shown]);
 };
 

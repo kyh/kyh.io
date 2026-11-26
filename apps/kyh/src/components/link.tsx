@@ -32,10 +32,10 @@ export const Link = ({
 }: LinkProps) => {
   let content: React.ReactNode = null;
   let action: React.ReactNode = null;
-  const actionClassName = noStyles ? "" : `link ${active ? "active" : ""}`;
+  const actionClassName = noStyles ? "" : `link ${active === true ? "active" : ""}`;
   const actionDataText = noStyles ? "" : children;
 
-  if (href) {
+  if (href !== undefined && href !== "") {
     if (href.startsWith("/")) {
       action = (
         <NextLink
@@ -103,7 +103,7 @@ export const Link = ({
     );
   }
 
-  if (src) {
+  if (src !== undefined && src !== "") {
     const isRelativeUrl = (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
     content = (
       <a href={href} {...(isRelativeUrl ? {} : { rel: "noreferrer noopener", target: "_blank" })}>

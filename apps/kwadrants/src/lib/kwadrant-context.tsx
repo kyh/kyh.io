@@ -104,7 +104,7 @@ const getInitialState = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
 
-    if (stored) {
+    if (stored !== null && stored !== "") {
       const storedJson = asJsonObject(JSON.parse(stored) as JsonValue);
 
       if (!storedJson) {
@@ -138,7 +138,9 @@ export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }, 300);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [state]);
 
   const addTag = useCallback((tag: Omit<Tag, "id">) => {

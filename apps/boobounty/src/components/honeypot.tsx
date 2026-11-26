@@ -5,7 +5,7 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 type Status = "loading" | "ready" | "failed";
 
-const loadScene = () => import("@/lib/honeypot/scene");
+const loadScene = async () => await import("@/lib/honeypot/scene");
 
 interface HoneypotProps {
   /** Someone picked the dipper up, or put it down. */
@@ -37,8 +37,12 @@ const Honeypot = ({ onCarry }: HoneypotProps) => {
 
         teardown = mountHoneypot(canvas, {
           onCarry: carry,
-          onLost: () => setStatus("failed"),
-          onReady: () => setStatus("ready"),
+          onLost: () => {
+            setStatus("failed");
+          },
+          onReady: () => {
+            setStatus("ready");
+          },
         });
       } catch {
         setStatus("failed");

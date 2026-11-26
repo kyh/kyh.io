@@ -34,7 +34,8 @@ const MOBILE_BREAKPOINT = 768;
 const mobileQuery =
   typeof window === "undefined" ? null : window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
-const getFutureRatio = () => (mobileQuery?.matches ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP);
+const getFutureRatio = () =>
+  mobileQuery?.matches === true ? FUTURE_RATIO_MOBILE : FUTURE_RATIO_DESKTOP;
 
 const HALF_CELL_MS = (GRID_CELL_SECONDS * 1000) / 2;
 const MIN_HALF_ROWS = 10;
@@ -83,7 +84,7 @@ const formatPrice = (price: number) => (price >= 100 ? price.toFixed(0) : price.
 
 const resolveStartIndex = (bars: DailyBar[]) => {
   const from = new URLSearchParams(window.location.search).get("from");
-  const requested = from ? findBarIndex(bars, from) : null;
+  const requested = from !== null && from !== "" ? findBarIndex(bars, from) : null;
 
   if (requested !== null) {
     return Math.max(requested, HISTORY_DAYS);
@@ -397,7 +398,9 @@ export const TradingChart = () => {
 
     observer.observe(container);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -405,56 +408,58 @@ export const TradingChart = () => {
     let engine: ReplayEngine | null = null;
     let unsubscribe: (() => void) | null = null;
 
-    const run = async () => {
-      let bars: DailyBar[];
+    const run = () => {
+      void (async () => {
+        let bars: DailyBar[];
 
-      try {
-        bars = await loadSpxHistory(controller.signal);
-      } catch {
-        if (!controller.signal.aborted) {
-          setFeed("error");
+        try {
+          bars = await loadSpxHistory(controller.signal);
+        } catch {
+          if (!controller.signal.aborted) {
+            setFeed("error");
+          }
+
+          return;
         }
 
-        return;
-      }
+        if (controller.signal.aborted) {
+          return;
+        }
 
-      if (controller.signal.aborted) {
-        return;
-      }
+        const replay = new ReplayEngine(bars, resolveStartIndex(bars), {
+          dayMs: GRID_CELL_SECONDS * 1000,
+          historySeconds: CHART_WINDOW,
+        });
 
-      const replay = new ReplayEngine(bars, resolveStartIndex(bars), {
-        dayMs: GRID_CELL_SECONDS * 1000,
-        historySeconds: CHART_WINDOW,
-      });
+        engine = replay;
+        engineRef.current = replay;
 
-      engine = replay;
-      engineRef.current = replay;
+        unsubscribe = replay.subscribe((point) => {
+          setLivePrice(point.price);
+          setTradingDate(replay.getCurrentBar().date);
 
-      unsubscribe = replay.subscribe((point) => {
-        setLivePrice(point.price);
+          const history = replay.getHistoryRaw();
+          const now = Date.now();
+          stateRef.current = updateBlocks(stateRef.current, point.price, now, history);
+          targetRangeRef.current = fitRange(history, now, priceToLevel(point.price));
+
+          setChartData(history.map((p) => ({ time: p.time / 1000, value: priceToLevel(p.price) })));
+        });
+
+        replay.start();
+
+        const startRange = fitRange(
+          replay.getHistoryRaw(),
+          Date.now(),
+          priceToLevel(replay.getCurrentPrice()),
+        );
+
+        rangeRef.current = startRange;
+        targetRangeRef.current = startRange;
+        setLivePrice(replay.getCurrentPrice());
         setTradingDate(replay.getCurrentBar().date);
-
-        const history = replay.getHistoryRaw();
-        const now = Date.now();
-        stateRef.current = updateBlocks(stateRef.current, point.price, now, history);
-        targetRangeRef.current = fitRange(history, now, priceToLevel(point.price));
-
-        setChartData(history.map((p) => ({ time: p.time / 1000, value: priceToLevel(p.price) })));
-      });
-
-      replay.start();
-
-      const startRange = fitRange(
-        replay.getHistoryRaw(),
-        Date.now(),
-        priceToLevel(replay.getCurrentPrice()),
-      );
-
-      rangeRef.current = startRange;
-      targetRangeRef.current = startRange;
-      setLivePrice(replay.getCurrentPrice());
-      setTradingDate(replay.getCurrentBar().date);
-      setFeed("live");
+        setFeed("live");
+      })();
     };
 
     run();
@@ -550,7 +555,9 @@ export const TradingChart = () => {
 
     animRef.current = requestAnimationFrame(render);
 
-    return () => cancelAnimationFrame(animRef.current);
+    return () => {
+      cancelAnimationFrame(animRef.current);
+    };
   }, []);
 
   const prevBlocksRef = useRef<Block[]>([]);
@@ -570,7 +577,7 @@ export const TradingChart = () => {
       const dims = computeDims(width, height, Date.now(), range.min, range.max, getFutureRatio());
 
       for (const b of next.blocks) {
-        if (b.touched && !prevById.get(b.id)?.touched) {
+        if (b.touched && prevById.get(b.id)?.touched !== true) {
           const count = 3 + Math.floor(Math.random() * 5);
           textBalloons([
             {
@@ -598,7 +605,9 @@ export const TradingChart = () => {
       prevBlocksRef.current = next.blocks;
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const getClickDims = useCallback(() => {

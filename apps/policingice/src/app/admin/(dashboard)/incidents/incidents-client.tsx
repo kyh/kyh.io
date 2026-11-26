@@ -35,12 +35,16 @@ const VideoEditInput = ({ video, onUpdate, onDelete }: VideoEditInputProps) => (
     <input
       type="text"
       defaultValue={video.url}
-      onBlur={(e) => onUpdate(video.id, e.target.value, video.url)}
+      onBlur={(e) => {
+        onUpdate(video.id, e.target.value, video.url);
+      }}
       className="w-48 border-b border-input bg-transparent py-1 text-xs outline-none"
     />
     <button
       type="button"
-      onClick={() => onDelete(video.id)}
+      onClick={() => {
+        onDelete(video.id);
+      }}
       className="cursor-pointer text-xs text-destructive hover:text-destructive"
     >
       ×
@@ -83,7 +87,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
   const handleAddVideo = async () => {
     const url = newVideoRef.current?.value.trim();
 
-    if (!url) {
+    if (url === undefined || url === "") {
       return;
     }
 
@@ -162,8 +166,12 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
             <VideoEditInput
               key={video.id}
               video={video}
-              onUpdate={handleUpdateVideo}
-              onDelete={handleDeleteVideo}
+              onUpdate={(videoId, newUrl, originalUrl) => {
+                void handleUpdateVideo(videoId, newUrl, originalUrl);
+              }}
+              onDelete={(videoId) => {
+                void handleDeleteVideo(videoId);
+              }}
             />
           ))}
           <div className="flex items-center gap-1">
@@ -181,7 +189,9 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
             />
             <button
               type="button"
-              onClick={handleAddVideo}
+              onClick={() => {
+                void handleAddVideo();
+              }}
               className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
             >
               +
@@ -200,7 +210,13 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
         )}
       </td>
       <td className="py-3 text-muted-foreground">
-        <Form id={formId} onSubmit={handleSubmit} className="hidden" />
+        <Form
+          id={formId}
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="hidden"
+        />
         <button type="submit" form={formId} className="cursor-pointer hover:text-foreground">
           save
         </button>
@@ -245,7 +261,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
     }
 
     router.refresh();
-    toast.success(result.newPinned ? "Pinned" : "Unpinned");
+    toast.success(result.newPinned === true ? "Pinned" : "Unpinned");
   };
 
   const handleDelete = async (id: number) => {
@@ -288,8 +304,12 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                   <IncidentEditRow
                     key={incident.id}
                     incident={incident}
-                    onCancel={() => setEditingId(null)}
-                    onSaved={() => setEditingId(null)}
+                    onCancel={() => {
+                      setEditingId(null);
+                    }}
+                    onSaved={() => {
+                      setEditingId(null);
+                    }}
                   />
                 ) : (
                   <tr key={incident.id} className="border-b border-border">
@@ -302,7 +322,11 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="py-3 pr-3">
                       <button
                         type="button"
-                        onClick={() => handleToggleStatus(incident.id)}
+                        onClick={() => {
+                          void (async () => {
+                            await handleToggleStatus(incident.id);
+                          })();
+                        }}
                         className="cursor-pointer"
                       >
                         {incident.status === "approved" ? (
@@ -315,7 +339,11 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="py-3 pr-3">
                       <button
                         type="button"
-                        onClick={() => handleTogglePinned(incident.id)}
+                        onClick={() => {
+                          void (async () => {
+                            await handleTogglePinned(incident.id);
+                          })();
+                        }}
                         className="cursor-pointer"
                       >
                         {incident.pinned ? (
@@ -339,7 +367,9 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                     <td className="py-3 text-muted-foreground">
                       <button
                         type="button"
-                        onClick={() => setPreviewingIncident(incident)}
+                        onClick={() => {
+                          setPreviewingIncident(incident);
+                        }}
                         className="cursor-pointer hover:text-foreground"
                       >
                         preview
@@ -347,7 +377,9 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       {" · "}
                       <button
                         type="button"
-                        onClick={() => setEditingId(incident.id)}
+                        onClick={() => {
+                          setEditingId(incident.id);
+                        }}
                         className="cursor-pointer hover:text-foreground"
                       >
                         edit
@@ -355,7 +387,11 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       {" · "}
                       <button
                         type="button"
-                        onClick={() => handleDelete(incident.id)}
+                        onClick={() => {
+                          void (async () => {
+                            await handleDelete(incident.id);
+                          })();
+                        }}
                         className="cursor-pointer hover:text-destructive"
                       >
                         delete
@@ -371,7 +407,9 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
 
       <Dialog.Root
         open={!!previewingIncident}
-        onOpenChange={(open) => !open && setPreviewingIncident(null)}
+        onOpenChange={(open) => {
+          !open && setPreviewingIncident(null);
+        }}
       >
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
@@ -384,7 +422,9 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
               <>
                 <div className="mb-4 text-sm text-muted-foreground">
                   #{previewingIncident.id}
-                  {previewingIncident.location && ` · ${previewingIncident.location}`}
+                  {previewingIncident.location !== null &&
+                    previewingIncident.location !== "" &&
+                    ` · ${previewingIncident.location}`}
                   {previewingIncident.incidentDate &&
                     ` · ${formatDate(previewingIncident.incidentDate) ?? "—"}`}
                 </div>

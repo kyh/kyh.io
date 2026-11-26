@@ -200,5 +200,10 @@ export const fireConfetti = (
     animate(el, keyframes, { duration, ease: "linear" });
   }
 
-  setTimeout(() => container.remove(), (duration + 0.5) * 1000);
+  setTimeout(
+    () => {
+      container.remove();
+    },
+    (duration + 0.5) * 1000,
+  );
 };

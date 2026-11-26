@@ -103,7 +103,7 @@ const useBend = (
   still: boolean | null,
 ) => {
   useEffect(() => {
-    if (still) {
+    if (still === true) {
       return;
     }
 
@@ -346,7 +346,7 @@ const useBungee = (
         taken.body = { ...taken.body, vx: 0, vy: 0 };
       }
 
-      if (still) {
+      if (still === true) {
         finish();
 
         return;
@@ -440,7 +440,9 @@ const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, sho
 
     observer.observe(element);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [corners, shown]);
 };
 

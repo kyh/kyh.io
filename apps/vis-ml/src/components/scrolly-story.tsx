@@ -30,8 +30,12 @@ function useActiveStep(firstStepId: string, container: RefObject<HTMLElement | n
       { rootMargin: "-42% 0px -42% 0px", threshold: 0 },
     );
 
-    elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
+    elements.forEach((element) => {
+      observer.observe(element);
+    });
+    return () => {
+      observer.disconnect();
+    };
   }, [container]);
 
   return activeStepId;

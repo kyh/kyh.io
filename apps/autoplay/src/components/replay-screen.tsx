@@ -93,7 +93,7 @@ const playSession = (
   };
 
   const finish = () => {
-    if (!stopped && source.readyState === "open" && !buffer?.updating) {
+    if (!stopped && source.readyState === "open" && buffer?.updating !== true) {
       source.endOfStream();
     }
   };
@@ -452,8 +452,14 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
     }
 
     setPlayingId(session.sessionId);
-    const onChunk = (chunk: RecordingChunk) => emitProgram(chunk);
-    const onDone = () => setCursor((value) => value + 1);
+
+    const onChunk = (chunk: RecordingChunk) => {
+      emitProgram(chunk);
+    };
+
+    const onDone = () => {
+      setCursor((value) => value + 1);
+    };
 
     const latest = () =>
       sessionsRef.current.find((entry) => entry.sessionId === session.sessionId) ?? session;

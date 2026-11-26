@@ -33,44 +33,46 @@ const AdminCreate = () => {
       <Form
         ref={formRef}
         className="space-y-4"
-        onSubmit={async (e) => {
-          e.preventDefault();
+        onSubmit={(e) => {
+          void (async (e) => {
+            e.preventDefault();
 
-          if (validUrls.length === 0) {
-            return;
-          }
-
-          const formData = new FormData(e.currentTarget);
-          const location = formString(formData, "location").trim();
-          const description = formString(formData, "description").trim();
-          const incidentDate = formString(formData, "incidentDate");
-
-          setIsSubmitting(true);
-
-          try {
-            const res = await bulkCreateIncidents({
-              description: description || undefined,
-              groupAsOne,
-              incidentDate: incidentDate || undefined,
-              location: location || undefined,
-              urls: validUrls,
-            });
-
-            if (res.created > 0) {
-              toast.success(`Created ${res.created} incident(s)`);
-              setUrlsText("");
-              formRef.current?.reset();
-              router.refresh();
+            if (validUrls.length === 0) {
+              return;
             }
 
-            if (res.skipped > 0) {
-              toast(`Skipped ${res.skipped} existing URL(s)`);
-            }
-          } catch {
-            toast.error("Failed to create incidents");
-          }
+            const formData = new FormData(e.currentTarget);
+            const location = formString(formData, "location").trim();
+            const description = formString(formData, "description").trim();
+            const incidentDate = formString(formData, "incidentDate");
 
-          setIsSubmitting(false);
+            setIsSubmitting(true);
+
+            try {
+              const res = await bulkCreateIncidents({
+                description: description || undefined,
+                groupAsOne,
+                incidentDate: incidentDate || undefined,
+                location: location || undefined,
+                urls: validUrls,
+              });
+
+              if (res.created > 0) {
+                toast.success(`Created ${res.created} incident(s)`);
+                setUrlsText("");
+                formRef.current?.reset();
+                router.refresh();
+              }
+
+              if (res.skipped > 0) {
+                toast(`Skipped ${res.skipped} existing URL(s)`);
+              }
+            } catch {
+              toast.error("Failed to create incidents");
+            }
+
+            setIsSubmitting(false);
+          })(e);
         }}
       >
         <Field.Root name="urls">
@@ -79,7 +81,13 @@ const AdminCreate = () => {
           </Field.Label>
           <Field.Control
             render={
-              <textarea rows={8} value={urlsText} onChange={(e) => setUrlsText(e.target.value)} />
+              <textarea
+                rows={8}
+                value={urlsText}
+                onChange={(e) => {
+                  setUrlsText(e.target.value);
+                }}
+              />
             }
             className="w-full rounded border border-border bg-transparent p-2 text-sm outline-none focus:border-muted-foreground"
             placeholder="https://x.com/user/status/123&#10;https://youtube.com/watch?v=abc&#10;https://tiktok.com/@user/video/456"
@@ -101,7 +109,9 @@ const AdminCreate = () => {
               type="radio"
               name="grouping"
               checked={!groupAsOne}
-              onChange={() => setGroupAsOne(false)}
+              onChange={() => {
+                setGroupAsOne(false);
+              }}
             />
             1 incident per URL
           </label>
@@ -110,7 +120,9 @@ const AdminCreate = () => {
               type="radio"
               name="grouping"
               checked={groupAsOne}
-              onChange={() => setGroupAsOne(true)}
+              onChange={() => {
+                setGroupAsOne(true);
+              }}
             />
             Group as 1 incident
           </label>

@@ -44,7 +44,7 @@ test("a bend pushes the web aside round the mouse and leaves the rest still", ()
 
   for (const spoke of WEB_PATH.split("M").slice(1, 7)) {
     const end = spoke.split("L").at(-1);
-    assert.ok(end && near.includes(end));
+    assert.ok(end !== undefined && end !== "" && near.includes(end));
   }
 });
 

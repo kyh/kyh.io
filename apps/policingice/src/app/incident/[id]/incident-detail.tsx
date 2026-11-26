@@ -34,7 +34,9 @@ const IncidentArticle = ({
 
     shortcuts.registerIncident(incidentId, ref.current);
 
-    return () => shortcuts.unregisterIncident(incidentId);
+    return () => {
+      shortcuts.unregisterIncident(incidentId);
+    };
   }, [incidentId, shortcuts]);
 
   return <article ref={ref}>{children}</article>;
@@ -147,8 +149,12 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
               unjustifiedCount={counts.unjustified}
               justifiedCount={counts.justified}
               userVote={userVote}
-              onVote={handleVote}
-              onReport={handleReport}
+              onVote={(type) => {
+                void handleVote(type);
+              }}
+              onReport={() => {
+                void handleReport();
+              }}
               reported={reported}
             />
           </IncidentArticle>

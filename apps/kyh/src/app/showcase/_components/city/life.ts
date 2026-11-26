@@ -169,69 +169,78 @@ export const createLife = (options: LifeOptions) => {
   const landingTick = (from: Spot, to: Pose) =>
     world.tick + Math.ceil((flightOf(from, to) + BOUNCE_MS) / TICK_MS) + 1;
 
-  const net = options.room
-    ? createNet({
-        onDrop: (drop: Drop) => {
-          const pose = world.place(drop.key, drop.state);
+  const net =
+    options.room !== null && options.room !== ""
+      ? createNet({
+          onDrop: (drop: Drop) => {
+            const pose = world.place(drop.key, drop.state);
 
-          if (pose) {
-            theirs.delete(drop.key);
-            startFall(drop.key, drop.from, pose);
-          }
-        },
-        onHold: (key, owner) => {
-          if (owner === null) {
-            theirs.delete(key);
-            const parsed = parseActorKey(key);
+            if (pose) {
+              theirs.delete(drop.key);
+              startFall(drop.key, drop.from, pose);
+            }
+          },
+          onHold: (key, owner) => {
+            if (owner === null) {
+              theirs.delete(key);
+              const parsed = parseActorKey(key);
 
-            const stranded =
-              parsed &&
-              held?.key !== key &&
-              !air.has(key) &&
-              world.isHeld(parsed.kind, parsed.index);
+              const stranded =
+                parsed &&
+                held?.key !== key &&
+                !air.has(key) &&
+                world.isHeld(parsed.kind, parsed.index);
 
-            if (stranded) {
-              const hand = leans.get(key);
-              const spot = shown.get(key);
+              if (stranded === true) {
+                const hand = leans.get(key);
+                const spot = shown.get(key);
 
-              const from = hand
-                ? { x: hand.x, y: LIFT + surfaceAt(hand.x, hand.z), z: hand.z }
-                : { x: spot?.x ?? 0, y: spot?.y ?? 0, z: spot?.z ?? 0 };
+                const from = hand
+                  ? { x: hand.x, y: LIFT + surfaceAt(hand.x, hand.z), z: hand.z }
+                  : { x: spot?.x ?? 0, y: spot?.y ?? 0, z: spot?.z ?? 0 };
 
-              const landed = world.land(key, from.x, from.z, world.tick);
+                const landed = world.land(key, from.x, from.z, world.tick);
 
-              if (landed) {
-                world.land(key, from.x, from.z, landingTick(from, landed.pose));
-                startFall(key, from, landed.pose);
+                if (landed) {
+                  world.land(key, from.x, from.z, landingTick(from, landed.pose));
+                  startFall(key, from, landed.pose);
+                }
               }
+
+              return;
             }
 
-            return;
-          }
+            if (owner === net?.me) {
+              return;
+            }
 
-          if (owner === net?.me) {
-            return;
-          }
+            theirs.set(key, owner);
 
-          theirs.set(key, owner);
+            if (held?.key === key) {
+              held = null;
+            }
 
-          if (held?.key === key) {
-            held = null;
-          }
-
-          air.delete(key);
-          world.hold(key);
-        },
-        room: options.room,
-      })
-    : null;
+            air.delete(key);
+            world.hold(key);
+          },
+          room: options.room,
+        })
+      : null;
 
   const now = () => net?.now() ?? Date.now();
 
   const adopt = (target: number) => {
     const snapshot = net?.snapshot;
 
-    if (!net || !snapshot || snapshot === adopted || net.isHost || !net.synced) {
+    if (
+      !net ||
+      snapshot === undefined ||
+      snapshot === null ||
+      snapshot === "" ||
+      snapshot === adopted ||
+      net.isHost ||
+      !net.synced
+    ) {
       return;
     }
 
@@ -357,7 +366,7 @@ export const createLife = (options: LifeOptions) => {
       const age = tick - visitor.said;
       const spot = visitors[index];
 
-      if (spot?.shown && visitor.quote % TALKATIVE === 0 && age >= 0 && age < SAYING) {
+      if (spot?.shown === true && visitor.quote % TALKATIVE === 0 && age >= 0 && age < SAYING) {
         const head = options.toScreen(spot.x, spot.y + 0.34, spot.z);
 
         if (head.x > -80 && head.x < width + 80 && head.y > -40 && head.y < height + 40) {
@@ -407,7 +416,7 @@ export const createLife = (options: LifeOptions) => {
       const seen = people.filter((key) => {
         const spot = shown.get(key);
 
-        if (!spot?.shown || puffs.some((puff) => puff.key === key)) {
+        if (spot?.shown !== true || puffs.some((puff) => puff.key === key)) {
           return false;
         }
 
@@ -427,7 +436,7 @@ export const createLife = (options: LifeOptions) => {
     for (const puff of puffs) {
       const spot = shown.get(puff.key);
 
-      if (spot?.shown) {
+      if (spot?.shown === true) {
         const head = options.toScreen(spot.x, spot.y + 0.28, spot.z);
         overlay.emote(puff.id, emote, head.x, head.y, (time - puff.born) / EMOTE_MS);
       }
@@ -475,7 +484,7 @@ export const createLife = (options: LifeOptions) => {
       world.advanceTo(target, CATCH_UP);
     }
 
-    if (net?.isHost) {
+    if (net?.isHost === true) {
       net.publish(world.pack, net.snapshot === null);
     }
   };
@@ -567,7 +576,7 @@ export const createLife = (options: LifeOptions) => {
       screen: (key: string) => {
         const spot = shown.get(key);
 
-        return spot?.shown ? options.toScreen(spot.x, spot.y + 0.08, spot.z) : null;
+        return spot?.shown === true ? options.toScreen(spot.x, spot.y + 0.08, spot.z) : null;
       },
       settled,
       status: net?.status ?? "offline",

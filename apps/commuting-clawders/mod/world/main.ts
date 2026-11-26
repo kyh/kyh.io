@@ -60,9 +60,9 @@ const sendOnce = async () => {
   isSending = false;
 };
 
-const pause = (ms: number) =>
+const pause = async (ms: number) =>
   // oxlint-disable-next-line promise/avoid-new -- a timer has no promise form
-  new Promise((resolve) => {
+  await new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 
@@ -87,7 +87,11 @@ const loop = async () => {
     await pause(IDLE_FRAME_MS);
   }
 
-  requestAnimationFrame(loop);
+  requestAnimationFrame(() => {
+    void loop();
+  });
 };
 
-requestAnimationFrame(loop);
+requestAnimationFrame(() => {
+  void loop();
+});

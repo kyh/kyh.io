@@ -48,7 +48,7 @@ const blocksAtom = atom({ key: "blocks", plugin: "mod-dev" } as const, 0);
 const rootOf = async ($: EngineInterface) => {
   const git = await $.process.run(["git", "rev-parse", "--show-toplevel"]).catch(() => null);
 
-  return git?.exitCode === 0 ? git.stdout.trim() : $.session.root();
+  return git?.exitCode === 0 ? git.stdout.trim() : await $.session.root();
 };
 
 const useOf = ({ agentId, input, isError, text, tool }: ToolUseSummary) =>
@@ -186,7 +186,17 @@ const runLook = async ($: EngineInterface, root: string, look: Look) => {
     }
 
     const { stdout } = await $.process.run(
-      ["git", "grep", "-n", "-I", "-E", "-e", look.target, "--", ...(look.path ? [look.path] : [])],
+      [
+        "git",
+        "grep",
+        "-n",
+        "-I",
+        "-E",
+        "-e",
+        look.target,
+        "--",
+        ...(look.path !== undefined && look.path !== "" ? [look.path] : []),
+      ],
       { cwd: root, timeoutMs: 20_000 },
     );
 
@@ -218,7 +228,7 @@ const portsOf = ($: EngineInterface, root: string) =>
         };
       }
     },
-    look: (look) => runLook($, root, look),
+    look: async (look) => await runLook($, root, look),
   }) satisfies Ports;
 
 type Proof =
@@ -385,7 +395,7 @@ export const register: Register = (on, options) => {
       void showStatus($);
     });
 
-    return next(e);
+    return await next(e);
   });
 
   on("classic.SessionStart", async ($, e, next) => {
@@ -399,9 +409,10 @@ export const register: Register = (on, options) => {
   on("prompt.submit", async ($, e, next) => {
     await update($, blocksAtom, () => 0);
 
-    return next(e);
+    return await next(e);
   });
 
+  // oxlint-disable-next-line typescript/promise-function-async -- returns a promise only on some paths
   on("turn.complete", ($, e, next) => {
     if (e.agentId === undefined) {
       $.clock.after(1, () => {
@@ -419,7 +430,7 @@ export const register: Register = (on, options) => {
       isGated && !isWaiting ? await blockOf($, models, e.last_assistant_message ?? "") : undefined;
 
     if (block === undefined) {
-      return next(e);
+      return await next(e);
     }
 
     await update($, blocksAtom, (n) => n + 1);
@@ -431,13 +442,13 @@ export const register: Register = (on, options) => {
 
   on("classic.PreToolUse", async ($, e, next) => {
     if (!isGated || !isShipping(e.tool, e.tool === "Bash" ? e.command : "")) {
-      return next(e);
+      return await next(e);
     }
 
     const { ledger } = await readSession($);
 
     if (ledger.lastEdit === -1) {
-      return next(e);
+      return await next(e);
     }
 
     const proof = await prove($, models, {});
@@ -447,7 +458,7 @@ export const register: Register = (on, options) => {
     }
 
     if (proof.kind !== "graded" || proof.isReady) {
-      return next(e);
+      return await next(e);
     }
 
     const { reasons, verdict } = verdictOf(proof.grade);
@@ -473,7 +484,7 @@ export const register: Register = (on, options) => {
     const review = await read($, reviewAtom);
 
     if (e.props.hasSurvey || (checks.length === 0 && review.phase === "idle")) {
-      return next(e);
+      return await next(e);
     }
 
     const { Box, Button, Text } = $.ui.resolve(e);
@@ -496,7 +507,10 @@ export const register: Register = (on, options) => {
         <Button
           key="details"
           label="Details"
-          onPress={() => $.ui.open({ id: PANE, title: "mod-dev" })}
+          // oxlint-disable-next-line typescript/promise-function-async -- returns a promise only on some paths
+          onPress={() => {
+            $.ui.open({ id: PANE, title: "mod-dev" });
+          }}
         />
       </Box>
     );

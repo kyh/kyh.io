@@ -186,11 +186,11 @@ const toItems = (url: string, feed: Feed) => {
   return items;
 };
 
-export const pickRssCandidate = (
+export const pickRssCandidate = async (
   access: AccessOf<"rss">,
   sourceId: string,
   context: SourceContext,
 ) =>
-  cachedPick(context, `rss:${sourceId}`, async () =>
+  await cachedPick(context, `rss:${sourceId}`, async () =>
     toItems(access.url, await fetchFeed(access.url)),
   );

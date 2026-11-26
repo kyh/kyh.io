@@ -216,7 +216,9 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   };
 
   recorder.ondataavailable = (event) => {
-    enqueue(() => ingest(event.data));
+    enqueue(async () => {
+      await ingest(event.data);
+    });
   };
 
   const requestFile = async () => {

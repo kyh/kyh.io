@@ -42,8 +42,12 @@ export const AxisLabels = ({ layout, labels, bounds, theme, onLabelClick }: Axis
             offsetX={labelDef.textProps?.offsetX}
             offsetY={labelDef.textProps?.offsetY}
             {...baseProps}
-            onClick={() => onLabelClick(labelDef.key)}
-            onTap={() => onLabelClick(labelDef.key)}
+            onClick={() => {
+              onLabelClick(labelDef.key);
+            }}
+            onTap={() => {
+              onLabelClick(labelDef.key);
+            }}
           />
         );
       })}

@@ -40,7 +40,7 @@ export const POST = async (request: NextRequest) => {
     return errorResponse(400, error instanceof Error ? error.message : "Couldn't read that feed");
   }
 
-  return lineupResponse(viewer.session);
+  return await lineupResponse(viewer.session);
 };
 
 export const DELETE = async (request: NextRequest) => {
@@ -58,7 +58,7 @@ export const DELETE = async (request: NextRequest) => {
 
   await removeSource(viewer.session, body.data.sourceId);
 
-  return lineupResponse(viewer.session);
+  return await lineupResponse(viewer.session);
 };
 
 export const PATCH = async (request: NextRequest) => {
@@ -76,5 +76,5 @@ export const PATCH = async (request: NextRequest) => {
 
   await reorderSources(viewer.session, body.data.order);
 
-  return lineupResponse(viewer.session);
+  return await lineupResponse(viewer.session);
 };

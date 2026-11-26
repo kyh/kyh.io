@@ -59,13 +59,13 @@ export const IncidentCardContent = ({
         header={
           <Link href={`/incident/${incidentId}`}>
             {location}
-            {location && displayDate && <> · </>}
+            {location !== null && location !== "" && displayDate && <> · </>}
             {displayDate && formatDate(displayDate)}
           </Link>
         }
         headerRight={
           <>
-            {pinned && (
+            {pinned === true && (
               <Pin className="h-4 w-4 fill-yellow-500 text-yellow-500" aria-label="Pinned" />
             )}
             {headerRight}
@@ -77,7 +77,9 @@ export const IncidentCardContent = ({
         <fieldset className="flex items-center gap-4" aria-label="Vote on this incident">
           <button
             type="button"
-            onClick={() => onVote("unjustified")}
+            onClick={() => {
+              onVote("unjustified");
+            }}
             className={cn(
               "cursor-pointer",
               userVote === "unjustified"
@@ -91,7 +93,9 @@ export const IncidentCardContent = ({
           </button>
           <button
             type="button"
-            onClick={() => onVote("justified")}
+            onClick={() => {
+              onVote("justified");
+            }}
             className={cn(
               "cursor-pointer",
               userVote === "justified"
@@ -122,13 +126,15 @@ export const IncidentCardContent = ({
               disabled={reported}
               className={cn(
                 "cursor-pointer",
-                reported
+                reported === true
                   ? "text-muted-foreground/40"
                   : "text-muted-foreground hover:text-destructive",
               )}
-              aria-label={reported ? "This incident has been reported" : "Report this incident"}
+              aria-label={
+                reported === true ? "This incident has been reported" : "Report this incident"
+              }
             >
-              {reported ? "reported" : "report"}
+              {reported === true ? "reported" : "report"}
             </button>
           )}
         </div>

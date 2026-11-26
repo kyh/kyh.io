@@ -50,6 +50,7 @@ class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: 
     return { hasError: true };
   }
 
+  // oxlint-disable-next-line typescript/promise-function-async -- React 19's ReactNode includes Promise; this returns synchronously
   render() {
     return this.state.hasError ? this.props.fallback : this.props.children;
   }
@@ -176,7 +177,7 @@ const RedditEmbed = ({ url }: { url: string }) => {
 export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   const videoId = extractVideoId(url, platform);
 
-  if (!videoId) {
+  if (videoId === null || videoId === "") {
     return <FallbackLink url={url} platform={platform} />;
   }
 

@@ -25,7 +25,7 @@ const standing = (
   at: Vec3,
   depth: number,
   colors = GOLD,
-) =>
+) => {
   extrude(
     sketch,
     outline,
@@ -33,6 +33,7 @@ const standing = (
     [0, 0, depth],
     colors,
   );
+};
 
 const STAR: readonly Point2[] = Array.from({ length: 10 }, (_, index) => {
   const angle = Math.PI / 2 + (index / 10) * Math.PI * 2;
@@ -121,10 +122,14 @@ export const townTree = (sketch: Sketch, x: number, z: number, random: Random) =
  */
 export const giantSkeleton = (sketch: Sketch, cx: number, cz: number) => {
   const pen = facing(sketch, cx - 1.7, cz);
-  const bone = (from: Vec3, to: Vec3, r: number) => pen.rod(from, to, r, WHITE);
 
-  const knob = (at: Vec3, r: number, detail = 6) =>
+  const bone = (from: Vec3, to: Vec3, r: number) => {
+    pen.rod(from, to, r, WHITE);
+  };
+
+  const knob = (at: Vec3, r: number, detail = 6) => {
     pen.ball({ colors: WHITE, detail, r, x: at[0], y: at[1], z: at[2] });
+  };
 
   pen.ball({ colors: WHITE, detail: 12, r: 0.17, ry: 1.1, x: 0, y: 2, z: 0.02 });
   pen.ball({ colors: WHITE, detail: 8, r: 0.11, rx: 0.95, ry: 0.6, x: 0, y: 1.85, z: 0.06 });

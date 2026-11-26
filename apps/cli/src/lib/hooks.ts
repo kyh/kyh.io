@@ -12,7 +12,9 @@ export const useClock = () => {
       setUptime(Date.now() - start);
     }, 1000);
 
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+    };
   }, []);
 
   return { now, uptime };

@@ -61,7 +61,7 @@ const step = async ($: Engine, tokens: number, agentId?: string) => {
 
   let piece = await stream.next();
 
-  while (!piece.done) {
+  while (piece.done !== true) {
     piece = await stream.next();
   }
 };

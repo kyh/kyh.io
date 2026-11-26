@@ -3,7 +3,7 @@ import path from "node:path";
 type Env = Readonly<Record<string, string | undefined>>;
 
 export const chromePaths = (platform: NodeJS.Platform, env: Env) => {
-  if (env.CHROME_PATH) {
+  if (env.CHROME_PATH !== undefined && env.CHROME_PATH !== "") {
     return [env.CHROME_PATH] satisfies string[];
   }
 
@@ -13,7 +13,9 @@ export const chromePaths = (platform: NodeJS.Platform, env: Env) => {
 
   if (platform === "win32") {
     return [env.LOCALAPPDATA, env.PROGRAMFILES, env["PROGRAMFILES(X86)"]].flatMap((base) =>
-      base ? [path.win32.join(base, "Google", "Chrome", "Application", "chrome.exe")] : [],
+      base !== undefined && base !== ""
+        ? [path.win32.join(base, "Google", "Chrome", "Application", "chrome.exe")]
+        : [],
     ) satisfies string[];
   }
 

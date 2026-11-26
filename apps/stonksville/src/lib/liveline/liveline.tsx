@@ -467,7 +467,9 @@ const WindowBar = ({ windows, activeSecs, onSelect, ws, colors }: WindowBarProps
           key={w.secs}
           type="button"
           ref={trackButton(btnRefs, w.secs)}
-          onClick={() => onSelect(w.secs)}
+          onClick={() => {
+            onSelect(w.secs);
+          }}
           style={windowButtonStyle(ws, colors, w.secs === activeSecs)}
         >
           {w.label}
@@ -510,7 +512,7 @@ interface ModeBarProps {
 }
 
 const ModeBar = ({ lineMode, onModeChange, ws, colors }: ModeBarProps) => {
-  const activeMode: ChartMode = lineMode ? "line" : "candle";
+  const activeMode: ChartMode = lineMode === true ? "line" : "candle";
   const barRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Map<ChartMode, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState<IndicatorPos | null>(null);
@@ -533,7 +535,9 @@ const ModeBar = ({ lineMode, onModeChange, ws, colors }: ModeBarProps) => {
         type="button"
         aria-label="Line chart"
         ref={trackButton(btnRefs, "line")}
-        onClick={() => onModeChange("line")}
+        onClick={() => {
+          onModeChange("line");
+        }}
         style={modeButtonStyle(ws)}
       >
         <LineIcon color={iconColor("line")} active={activeMode === "line"} />
@@ -542,7 +546,9 @@ const ModeBar = ({ lineMode, onModeChange, ws, colors }: ModeBarProps) => {
         type="button"
         aria-label="Candlestick chart"
         ref={trackButton(btnRefs, "candle")}
-        onClick={() => onModeChange("candle")}
+        onClick={() => {
+          onModeChange("candle");
+        }}
         style={modeButtonStyle(ws)}
       >
         <CandleIcon color={iconColor("candle")} />
@@ -586,7 +592,9 @@ const SeriesChips = ({
         <button
           key={s.id}
           type="button"
-          onClick={() => onToggle(s.id)}
+          onClick={() => {
+            onToggle(s.id);
+          }}
           style={chipStyle(ws, colors, isHidden, compact)}
         >
           <span style={chipDotStyle(seriesColor, isHidden, compact)} />

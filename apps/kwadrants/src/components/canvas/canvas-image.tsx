@@ -35,7 +35,9 @@ export const CanvasImage = ({
   useEffect(() => {
     const img = new window.Image();
     img.crossOrigin = "anonymous";
-    img.addEventListener("load", () => setImage(img));
+    img.addEventListener("load", () => {
+      setImage(img);
+    });
     img.src = src;
   }, [src]);
 
@@ -68,7 +70,9 @@ export const CanvasImage = ({
 
     frameRef.current = requestAnimationFrame(animate);
 
-    return () => cancelAnimationFrame(frameRef.current);
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+    };
   }, [isSettling]);
 
   const handleDragStart = useCallback(() => {
@@ -115,8 +119,12 @@ export const CanvasImage = ({
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+      }}
     >
       <Image
         image={image}
@@ -134,8 +142,12 @@ export const CanvasImage = ({
         <Group
           x={width / 2 - 8}
           y={-height / 2 - 8}
-          onClick={() => onRemove(id)}
-          onTap={() => onRemove(id)}
+          onClick={() => {
+            onRemove(id);
+          }}
+          onTap={() => {
+            onRemove(id);
+          }}
         >
           <Circle radius={10} fill="#ef4444" />
           <Text

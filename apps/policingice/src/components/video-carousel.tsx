@@ -48,7 +48,9 @@ export const VideoCarousel = ({
 
     shortcuts.registerCarousel(incidentId, emblaApi ?? null);
 
-    return () => shortcuts.unregisterCarousel(incidentId);
+    return () => {
+      shortcuts.unregisterCarousel(incidentId);
+    };
   }, [incidentId, emblaApi, shortcuts]);
 
   const subscribeToEmbla = useCallback(
@@ -107,7 +109,9 @@ export const VideoCarousel = ({
     const observer = new ResizeObserver(updateHeight);
     observer.observe(slide);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [selectedIndex, updateHeight]);
 
   useEffect(() => {
@@ -119,8 +123,14 @@ export const VideoCarousel = ({
       return;
     }
 
-    const onDragStart = () => setIsDragging(true);
-    const onDragEnd = () => setIsDragging(false);
+    const onDragStart = () => {
+      setIsDragging(true);
+    };
+
+    const onDragEnd = () => {
+      setIsDragging(false);
+    };
+
     emblaApi.on("pointerDown", onDragStart);
     emblaApi.on("pointerUp", onDragEnd);
 

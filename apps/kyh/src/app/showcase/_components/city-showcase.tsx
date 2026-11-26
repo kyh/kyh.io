@@ -36,7 +36,9 @@ const subscribeMotion = (onChange: () => void) => {
   const query = matchMedia(REDUCED_MOTION);
   query.addEventListener("change", onChange);
 
-  return () => query.removeEventListener("change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+  };
 };
 
 const usePrefersReducedMotion = () =>
@@ -133,10 +135,12 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
     const show = (slug: string | null) => {
       clearTimeout(closing);
 
-      if (slug) {
+      if (slug !== null && slug !== "") {
         setLit(slug);
       } else {
-        closing = setTimeout(() => setLit(null), CARD_LINGER_MS);
+        closing = setTimeout(() => {
+          setLit(null);
+        }, CARD_LINGER_MS);
       }
     };
 
@@ -147,7 +151,7 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
           onOpen: (slug) => {
             const url = urls.get(slug);
 
-            if (url) {
+            if (url !== undefined && url !== "") {
               window.open(url, "_blank", "noopener,noreferrer");
             }
           },

@@ -173,5 +173,5 @@ export const pickXCandidate = async (
     return trending;
   }
 
-  return pickTimelineCandidate(access, sourceId, context);
+  return await pickTimelineCandidate(access, sourceId, context);
 };

@@ -9,7 +9,7 @@ import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-ut
 const MAX_INPUT_LENGTH = 2048;
 
 const sanitizeInput = (input?: string) => {
-  if (!input) {
+  if (input === undefined || input === "") {
     return;
   }
 
@@ -24,22 +24,22 @@ const extractUrls = (text: string) => {
 };
 
 const findVideoUrl = (url?: string, text?: string, title?: string) => {
-  if (url && isValidVideoUrl(url)) {
+  if (url !== undefined && url !== "" && isValidVideoUrl(url)) {
     return url;
   }
 
-  if (text) {
+  if (text !== undefined && text !== "") {
     const found = extractUrls(text).find(isValidVideoUrl);
 
-    if (found) {
+    if (found !== undefined && found !== "") {
       return found;
     }
   }
 
-  if (title) {
+  if (title !== undefined && title !== "") {
     const found = extractUrls(title).find(isValidVideoUrl);
 
-    if (found) {
+    if (found !== undefined && found !== "") {
       return found;
     }
   }
@@ -59,7 +59,7 @@ const ShareHandler = async ({
 
   let videoUrl = findVideoUrl(url, text, title);
 
-  if (!videoUrl) {
+  if (videoUrl === null || videoUrl === "") {
     redirect("/?error=invalid_url");
   }
 

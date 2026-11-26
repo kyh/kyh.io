@@ -167,5 +167,5 @@ export const getSession = cache(async () => {
     return null;
   }
 
-  return auth.api.getSession({ headers: await headers() });
+  return await auth.api.getSession({ headers: await headers() });
 });

@@ -5,7 +5,7 @@ const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 
 const escapeXml = (str: string | null | undefined) => {
-  if (!str) {
+  if (str === undefined || str === null || str === "") {
     return "";
   }
 
@@ -49,7 +49,7 @@ const feedUrl = (page: number, limit: number, before: string | null) => {
     params.set("page", String(page));
   }
 
-  if (before) {
+  if (before !== null && before !== "") {
     params.set("before", before);
   }
 
@@ -69,7 +69,7 @@ export const GET = async (request: Request) => {
 
   const page = Math.max(1, Math.trunc(Number(pageParam ?? "")) || 1);
   const offset = (page - 1) * limit;
-  const beforeDate = beforeParam ? new Date(beforeParam) : null;
+  const beforeDate = beforeParam !== null && beforeParam !== "" ? new Date(beforeParam) : null;
 
   const results = await db.query.incidents.findMany({
     limit,
@@ -100,7 +100,7 @@ export const GET = async (request: Request) => {
     <description>Documenting incidents of ICE overreach</description>
     <language>en-us</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
-    <atom:link href="${selfUrl}" rel="self" type="application/rss+xml"/>${nextUrl ? `\n    <atom:link href="${nextUrl}" rel="next" type="application/rss+xml"/>` : ""}${prevUrl ? `\n    <atom:link href="${prevUrl}" rel="previous" type="application/rss+xml"/>` : ""}
+    <atom:link href="${selfUrl}" rel="self" type="application/rss+xml"/>${nextUrl !== null && nextUrl !== "" ? `\n    <atom:link href="${nextUrl}" rel="next" type="application/rss+xml"/>` : ""}${prevUrl !== null && prevUrl !== "" ? `\n    <atom:link href="${prevUrl}" rel="previous" type="application/rss+xml"/>` : ""}
 ${results
   .map((incident) => {
     const incidentDateObj = incident.incidentDate ? new Date(incident.incidentDate) : null;
@@ -110,7 +110,11 @@ ${results
 
     const dateStr = incidentDateObj ? formatReadableDate(incidentDateObj) : null;
     const location = incident.location ?? "Unknown Location";
-    const title = dateStr ? `${dateStr} - ${escapeXml(location)}` : escapeXml(location);
+
+    const title =
+      dateStr !== null && dateStr !== ""
+        ? `${dateStr} - ${escapeXml(location)}`
+        : escapeXml(location);
 
     const description = escapeXml(incident.description);
 

@@ -140,8 +140,9 @@ const AgentNote = () => {
   const [index, setIndex] = useState(0);
   const agent = AGENT_FILES[index];
 
-  const step = (by: number) =>
+  const step = (by: number) => {
     setIndex((current) => (current + by + AGENT_FILES.length) % AGENT_FILES.length);
+  };
 
   return (
     <Note label={AGENTS} onWarm={warmAgents}>
@@ -168,7 +169,9 @@ const AgentNote = () => {
             <button
               aria-label="Previous agent"
               className={stepButton}
-              onClick={() => step(-1)}
+              onClick={() => {
+                step(-1);
+              }}
               type="button"
             >
               {arrow("left")}
@@ -179,7 +182,9 @@ const AgentNote = () => {
             <button
               aria-label="Next agent"
               className={stepButton}
-              onClick={() => step(1)}
+              onClick={() => {
+                step(1);
+              }}
               type="button"
             >
               {arrow("right")}
@@ -218,7 +223,9 @@ const Flashcards = () => {
           aria-label={`Flip card: ${card.front}`}
           aria-pressed={flipped}
           className="absolute inset-0 cursor-pointer perspective-[900px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red"
-          onClick={() => setFlipped((side) => !side)}
+          onClick={() => {
+            setFlipped((side) => !side);
+          }}
           type="button"
         >
           <span

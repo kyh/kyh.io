@@ -70,7 +70,9 @@ export const IncidentCard = ({ incident }: { incident: IncidentSummary }) => {
         <div style={{ display: "flex", fontSize: 64, fontWeight: 700, lineHeight: 1.1 }}>
           {place}
         </div>
-        {date ? <div style={{ color: ACCENT, display: "flex", fontSize: 32 }}>{date}</div> : null}
+        {date !== null && date !== "" ? (
+          <div style={{ color: ACCENT, display: "flex", fontSize: 32 }}>{date}</div>
+        ) : null}
         <div style={{ color: "#a1a1aa", display: "flex", fontSize: 30, lineHeight: 1.4 }}>
           {incidentDescription(incident)}
         </div>

@@ -23,7 +23,9 @@ export const CompForm = ({ comp }: Props) => {
   const appliedRequest = useRef(0);
   const modalProps = useModal();
 
-  const requestUpdate = () => setUpdateRequest((n) => n + 1);
+  const requestUpdate = () => {
+    setUpdateRequest((n) => n + 1);
+  };
 
   useEffect(() => {
     if (appliedRequest.current === updateRequest) {
@@ -50,7 +52,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.base}
-                  onValueChange={({ value }) => comp.setBase(value)}
+                  onValueChange={({ value }) => {
+                    comp.setBase(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -66,7 +70,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.signOnBonus}
-                  onValueChange={({ value }) => comp.setSignOnBonus(value)}
+                  onValueChange={({ value }) => {
+                    comp.setSignOnBonus(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -82,7 +88,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.targetBonus}
-                  onValueChange={({ value }) => comp.setTargetBonus(value)}
+                  onValueChange={({ value }) => {
+                    comp.setTargetBonus(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -133,7 +141,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.iso}
-                    onValueChange={({ value }) => comp.setIso(value)}
+                    onValueChange={({ value }) => {
+                      comp.setIso(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -149,7 +159,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.strikePrice}
-                    onValueChange={({ value }) => comp.setStrikePrice(value)}
+                    onValueChange={({ value }) => {
+                      comp.setStrikePrice(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -164,7 +176,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.rsu}
-                    onValueChange={({ value }) => comp.setRsu(value)}
+                    onValueChange={({ value }) => {
+                      comp.setRsu(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -180,7 +194,9 @@ export const CompForm = ({ comp }: Props) => {
               <button
                 type="button"
                 className="estimate-modal-button p-1"
-                onClick={() => modalProps.openModal()}
+                onClick={() => {
+                  modalProps.openModal();
+                }}
               >
                 <span className="sr-only">Find out for me</span>
                 <svg
@@ -251,7 +267,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.preferredSharePrice}
-                    onValueChange={({ value }) => comp.setPreferredSharePrice(value)}
+                    onValueChange={({ value }) => {
+                      comp.setPreferredSharePrice(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -273,7 +291,9 @@ export const CompForm = ({ comp }: Props) => {
                     allowNegative
                     suffix={comp.shareType === "rsu" ? "%" : "x"}
                     value={comp.expectedGrowthMultiple}
-                    onValueChange={({ value }) => comp.setExpectedGrowthMultiple(value)}
+                    onValueChange={({ value }) => {
+                      comp.setExpectedGrowthMultiple(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -293,7 +313,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.sharesOutstanding}
-                    onValueChange={({ value }) => comp.setSharesOutstanding(value)}
+                    onValueChange={({ value }) => {
+                      comp.setSharesOutstanding(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -309,7 +331,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.expectedRevenue}
-                    onValueChange={({ value }) => comp.setExpectedRevenue(value)}
+                    onValueChange={({ value }) => {
+                      comp.setExpectedRevenue(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -325,7 +349,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.revenueMultiple}
-                    onValueChange={({ value }) => comp.setRevenueMultiple(value)}
+                    onValueChange={({ value }) => {
+                      comp.setRevenueMultiple(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />

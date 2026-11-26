@@ -190,7 +190,7 @@ const xAccess: (userId: string) => Promise<Access> = async (userId) => {
 const accessFor: (row: SourceRow, userId: string) => Promise<Access> = async (row, userId) => {
   switch (row.kind) {
     case "x": {
-      return xAccess(userId);
+      return await xAccess(userId);
     }
 
     case "gmail":

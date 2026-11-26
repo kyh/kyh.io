@@ -19,12 +19,12 @@ export const POST = async (request: NextRequest) => {
   try {
     const result = await handleUpload({
       body,
-      onBeforeGenerateToken: (pathname) => {
+      onBeforeGenerateToken: async (pathname) => {
         if (!pathname.startsWith(`recordings/${OWNER_SOURCE_ID}/`)) {
           throw new Error("Not a recording path");
         }
 
-        return Promise.resolve({
+        return await Promise.resolve({
           addRandomSuffix: true,
           allowedContentTypes: ["video/webm"],
           maximumSizeInBytes: MAX_CHUNK_BYTES,

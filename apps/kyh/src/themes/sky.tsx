@@ -157,7 +157,7 @@ export const ThemeSky = () => {
   const still = useReducedMotion();
   const pathname = usePathname();
   const ref = useRef<HTMLCanvasElement>(null);
-  const shown = sky !== null && !still && !DRAWS_ITS_OWN.has(pathname);
+  const shown = sky !== null && still !== true && !DRAWS_ITS_OWN.has(pathname);
   useFireworks(ref, shown);
 
   if (!shown) {

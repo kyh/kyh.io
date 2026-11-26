@@ -12,7 +12,7 @@ const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 const getRemotePatterns = () => {
   const remotePatterns: RemotePatterns = [];
 
-  if (ASSETS_URL) {
+  if (ASSETS_URL !== undefined && ASSETS_URL !== "") {
     const { hostname } = new URL(ASSETS_URL);
 
     remotePatterns.push({
@@ -51,8 +51,8 @@ const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   cacheComponents: true,
-  headers: () =>
-    Promise.resolve([
+  headers: async () =>
+    await Promise.resolve([
       {
         headers: [
           {
@@ -69,8 +69,8 @@ const config: NextConfig = {
     remotePatterns: getRemotePatterns(),
   },
   partialPrefetching: true,
-  redirects: () =>
-    Promise.resolve([
+  redirects: async () =>
+    await Promise.resolve([
       {
         destination: "/showcase",
         permanent: true,

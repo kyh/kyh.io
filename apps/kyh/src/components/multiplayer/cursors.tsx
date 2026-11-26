@@ -90,9 +90,16 @@ const Cursors = () => {
       return;
     }
 
-    const timer = window.setTimeout(() => setWoken((count) => count + 1), nextUntil - now() + 50);
+    const timer = window.setTimeout(
+      () => {
+        setWoken((count) => count + 1);
+      },
+      nextUntil - now() + 50,
+    );
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [nextUntil, now]);
 
   return (

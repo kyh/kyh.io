@@ -34,7 +34,9 @@ const TAG = "[@kyh/skills]";
 let DRY = false;
 let failed = false;
 
-const log = (...a: unknown[]) => console.log(TAG, ...a);
+const log = (...a: unknown[]) => {
+  console.log(TAG, ...a);
+};
 
 const warn = (...a: unknown[]) => {
   failed = true;
@@ -338,12 +340,13 @@ const runSkills = async (args: string[], bin: string | null, okMessage: string) 
   }
 };
 
-const addRepo = ([repo, names]: [string, string[]], bin: string | null) =>
-  runSkills(
+const addRepo = async ([repo, names]: [string, string[]], bin: string | null) => {
+  await runSkills(
     ["add", repo, "-g", ...names.flatMap((n) => ["-s", n]), "-y"],
     bin,
     `added ${names.length} skills from ${repo}`,
   );
+};
 
 const unlistedSkills = (manifest: Map<string, string[]>) => {
   try {
@@ -451,7 +454,9 @@ const installExternalSkills = async () => {
   }
 
   log(`installing external skills from ${manifest.size} repos (concurrency ${limit})…`);
-  await pool([...manifest], limit, (entry) => addRepo(entry, bin));
+  await pool([...manifest], limit, async (entry) => {
+    await addRepo(entry, bin);
+  });
 
   const stale = unlistedSkills(manifest);
 

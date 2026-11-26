@@ -8,7 +8,14 @@ const {
   OWNER_X_USERNAME: owner,
 } = process.env;
 
-if (!url || !secret || !owner) {
+if (
+  url === undefined ||
+  url === "" ||
+  secret === undefined ||
+  secret === "" ||
+  owner === undefined ||
+  owner === ""
+) {
   throw new Error("TURSO_DATABASE_URL, BETTER_AUTH_SECRET and OWNER_X_USERNAME are required");
 }
 

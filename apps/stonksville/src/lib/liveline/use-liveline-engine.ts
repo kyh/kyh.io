@@ -313,7 +313,7 @@ const createEngineState: (config: EngineConfig) => EngineState = (config) =>
     lastHover: null,
     lastHoverEntries: [],
     lastMultiSeries: [],
-    loadingAlpha: config.loading ? 1 : 0,
+    loadingAlpha: config.loading === true ? 1 : 0,
     orderbookState: createOrderbookState(),
     particleState: createParticleState(),
     pauseProgress: 0,
@@ -953,14 +953,14 @@ const updateCandleWindowTransition = (
 };
 
 const snapshotPausedCandles = (cs: CandleState, cfg: EngineConfig) => {
-  if (cfg.paused && cs.pausedCandles === null && cfg.candles && cfg.candles.length > 0) {
+  if (cfg.paused === true && cs.pausedCandles === null && cfg.candles && cfg.candles.length > 0) {
     cs.pausedCandles = [...cfg.candles];
     cs.pausedLive = cfg.liveCandle ?? null;
     cs.pausedLineData = cfg.lineData ? [...cfg.lineData] : null;
     cs.pausedLineValue = cfg.lineValue ?? null;
   }
 
-  if (!cfg.paused) {
+  if (cfg.paused !== true) {
     cs.pausedCandles = null;
     cs.pausedLive = null;
     cs.pausedLineData = null;
@@ -995,17 +995,17 @@ const snapshotPausedData = (state: EngineState, cfg: EngineConfig, isCandle: boo
     return;
   }
 
-  if (cfg.isMultiSeries && cfg.multiSeries) {
+  if (cfg.isMultiSeries === true && cfg.multiSeries) {
     snapshotPausedMulti(state, cfg.paused ?? false, cfg.multiSeries);
 
     return;
   }
 
-  if (cfg.paused && state.pausedData === null && cfg.data.length >= 2) {
+  if (cfg.paused === true && state.pausedData === null && cfg.data.length >= 2) {
     state.pausedData = [...cfg.data];
   }
 
-  if (!cfg.paused) {
+  if (cfg.paused !== true) {
     state.pausedData = null;
   }
 };
@@ -1021,7 +1021,7 @@ const updatePauseTiming = (
   dt: number,
   noMotion: boolean,
 ) => {
-  const pauseTarget = paused ? 1 : 0;
+  const pauseTarget = paused === true ? 1 : 0;
   state.pauseProgress = noMotion
     ? pauseTarget
     : lerp(state.pauseProgress, pauseTarget, PAUSE_PROGRESS_SPEED, dt);
@@ -1030,7 +1030,7 @@ const updatePauseTiming = (
 
   state.timeDebt += (dt / 1000) * pauseProgress;
 
-  if (!paused && state.timeDebt > 0.001) {
+  if (paused !== true && state.timeDebt > 0.001) {
     const catchUpSpeed = state.timeDebt > 10 ? PAUSE_CATCHUP_SPEED_FAST : PAUSE_CATCHUP_SPEED;
     state.timeDebt = lerp(state.timeDebt, 0, catchUpSpeed, dt);
 
@@ -1048,7 +1048,7 @@ const updateLoadingAlpha = (
   dt: number,
   noMotion: boolean,
 ) => {
-  const target = loading ? 1 : 0;
+  const target = loading === true ? 1 : 0;
   state.loadingAlpha = noMotion
     ? target
     : lerp(state.loadingAlpha, target, LOADING_ALPHA_SPEED, dt);
@@ -1112,7 +1112,7 @@ const updateStash = (
     }));
   }
 
-  if (hasData && !cfg.isMultiSeries) {
+  if (hasData && cfg.isMultiSeries !== true) {
     state.lastMultiSeries = [];
     state.lastData = points;
   }
@@ -1124,7 +1124,7 @@ const updateStash = (
 
 const updateLineModeProg = (cs: CandleState, lineMode: boolean | undefined, nowMs: number) => {
   const lmt = cs.lineModeTrans;
-  const target = lineMode ? 1 : 0;
+  const target = lineMode === true ? 1 : 0;
 
   if (lmt.to !== target) {
     lmt.from = cs.lineModeProg;
@@ -1162,7 +1162,9 @@ const resolveFrameData = (state: EngineState, cfg: EngineConfig) => {
   const candles: CandlePoint[] = isCandle ? (state.candle.pausedCandles ?? cfg.candles ?? []) : [];
 
   const hasMultiData =
-    cfg.isMultiSeries && cfg.multiSeries ? cfg.multiSeries.some((s) => s.data.length >= 2) : false;
+    cfg.isMultiSeries === true && cfg.multiSeries
+      ? cfg.multiSeries.some((s) => s.data.length >= 2)
+      : false;
 
   const hasData = isCandle ? candles.length >= 2 : hasMultiData || points.length >= 2;
 
@@ -1174,7 +1176,7 @@ const computePhase = (state: EngineState, frame: Frame, data: FrameData) => {
   const { isCandle, hasData, hasMultiData, points } = data;
   const { pauseProgress, pausedDt } = updatePauseTiming(state, cfg.paused, dt, noMotion);
   const loadingAlpha = updateLoadingAlpha(state, cfg.loading, dt, noMotion);
-  const revealTarget = !cfg.loading && hasData ? 1 : 0;
+  const revealTarget = cfg.loading !== true && hasData ? 1 : 0;
   const chartReveal = updateChartReveal(state, revealTarget, dt, noMotion);
 
   const { useStash, useMultiStash } = updateStash(
@@ -1230,7 +1232,7 @@ const drawRevealOverlay = (frame: Frame, phase: FramePhase) => {
   const { ctx, w, h, pad, cfg, nowMs } = frame;
   const bgAlpha = 1 - phase.chartReveal;
 
-  if (bgAlpha > 0.01 && phase.revealTarget === 0 && !cfg.loading) {
+  if (bgAlpha > 0.01 && phase.revealTarget === 0 && cfg.loading !== true) {
     const bgEmptyAlpha = (1 - phase.loadingAlpha) * bgAlpha;
 
     if (bgEmptyAlpha > 0.01) {
@@ -1808,7 +1810,7 @@ const advanceCandleTiming = (
     buffer,
   );
 
-  const densityTarget = cfg.lineMode && cs.lineModeProg >= 0.3 && hasTickData ? 1 : 0;
+  const densityTarget = cfg.lineMode === true && cs.lineModeProg >= 0.3 && hasTickData ? 1 : 0;
   const lineDensityProg = updateLineDensity(cs, densityTarget, nowMs);
 
   const window = updateCandleWindowTransition(
@@ -2011,7 +2013,7 @@ const measureLabelReserve = (
   series: SeriesInput[],
   chartReveal: number,
 ) => {
-  if (!series.some((s) => s.label)) {
+  if ((series.some((s) => s.label) ?? undefined) === undefined) {
     return 0;
   }
 
@@ -2019,7 +2021,7 @@ const measureLabelReserve = (
   let maxLabelW = 0;
 
   for (const s of series) {
-    if (s.label) {
+    if (s.label !== undefined && s.label !== "") {
       const lw = ctx.measureText(s.label).width;
 
       if (lw > maxLabelW) {
@@ -2089,7 +2091,7 @@ const updateSeriesAlphas = (
 ) => {
   for (const s of series) {
     const alpha = state.seriesAlpha.get(s.id) ?? 1;
-    const target = hiddenIds?.has(s.id) ? 0 : 1;
+    const target = hiddenIds?.has(s.id) === true ? 0 : 1;
     const next = noMotion ? target : lerp(alpha, target, SERIES_TOGGLE_SPEED, pausedDt);
     state.seriesAlpha.set(s.id, snapToUnit(next, 0.01));
   }
@@ -2545,7 +2547,7 @@ const renderFrame = (state: EngineState, frame: Frame) => {
   }
 
   const activeMulti =
-    cfg.isMultiSeries && cfg.multiSeries && cfg.multiSeries.length > 0
+    cfg.isMultiSeries === true && cfg.multiSeries && cfg.multiSeries.length > 0
       ? cfg.multiSeries
       : undefined;
 
@@ -2671,7 +2673,9 @@ export const useLivelineEngine = (
     const rect = container.getBoundingClientRect();
     state.size = { h: rect.height, w: rect.width };
 
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+    };
   }, [containerRef]);
 
   useEffect(() => {
@@ -2748,7 +2752,9 @@ export const useLivelineEngine = (
 
     mql.addEventListener("change", onChange);
 
-    return () => mql.removeEventListener("change", onChange);
+    return () => {
+      mql.removeEventListener("change", onChange);
+    };
   }, []);
 
   useEffect(() => {

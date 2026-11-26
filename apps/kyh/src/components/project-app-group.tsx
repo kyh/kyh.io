@@ -64,8 +64,12 @@ const ProjectAppIcon = ({
     setIsHovered(true);
   };
 
-  const Wrapper = url ? motion.a : motion.div;
-  const wrapperProps = url ? { href: url, rel: "noopener noreferrer", target: "_blank" } : {};
+  const Wrapper = url !== undefined && url !== "" ? motion.a : motion.div;
+
+  const wrapperProps =
+    url !== undefined && url !== ""
+      ? { href: url, rel: "noopener noreferrer", target: "_blank" }
+      : {};
 
   return (
     <Wrapper
@@ -74,7 +78,9 @@ const ProjectAppIcon = ({
       data-slot="app"
       draggable={false}
       onHoverStart={handleHoverStart}
-      onHoverEnd={() => setIsHovered(false)}
+      onHoverEnd={() => {
+        setIsHovered(false);
+      }}
     >
       <div
         className={cn(
@@ -152,7 +158,9 @@ const OpenGridItem = ({
   const closeDelay = offsetsReady ? closeStaggerDelay : 0;
 
   const setRef = useCallback(
-    (el: HTMLDivElement | null) => registerRef(item.key, el),
+    (el: HTMLDivElement | null) => {
+      registerRef(item.key, el);
+    },
     [registerRef, item.key],
   );
 
@@ -254,9 +262,13 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
       return;
     }
 
-    const frame = requestAnimationFrame(() => setItemOffsets(measureOffsets(origin)));
+    const frame = requestAnimationFrame(() => {
+      setItemOffsets(measureOffsets(origin));
+    });
 
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+    };
   }, [isOpen, origin, measureOffsets]);
 
   const close = () => {
@@ -264,13 +276,20 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
       setItemOffsets(measureOffsets(origin));
     }
 
-    requestAnimationFrame(() => setIsOpen(false));
+    requestAnimationFrame(() => {
+      setIsOpen(false);
+    });
   };
 
   const offsetsReady = isOpen && origin && Object.keys(itemOffsets).length === items.length;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => (open ? setIsOpen(true) : close())}>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        open ? setIsOpen(true) : close();
+      }}
+    >
       <MotionConfig transition={springTransition}>
         <div className="flex items-center justify-center" data-slot="app-group">
           <motion.div
@@ -377,12 +396,12 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
                   className="grid w-full grid-cols-3 gap-4 sm:max-w-[400px] sm:grid-cols-4 sm:gap-5"
                   renderTile={(item, idx) => (
                     <OpenGridItem
-                      key={`${item.key}-${offsetsReady ? "ready" : "wait"}`}
+                      key={`${item.key}-${offsetsReady === true ? "ready" : "wait"}`}
                       item={item}
                       idx={idx}
                       registerRef={registerRef}
                       itemOffsets={itemOffsets}
-                      offsetsReady={!!offsetsReady}
+                      offsetsReady={offsetsReady === true}
                     />
                   )}
                 />

@@ -144,8 +144,10 @@ const main = async () => {
 
     try {
       const context = [
-        incident.location && `Location: ${incident.location}`,
-        incident.description && `Description: ${incident.description}`,
+        incident.location !== null && incident.location !== "" && `Location: ${incident.location}`,
+        incident.description !== null &&
+          incident.description !== "" &&
+          `Description: ${incident.description}`,
         `Video: ${video.url}`,
       ]
         .filter(Boolean)

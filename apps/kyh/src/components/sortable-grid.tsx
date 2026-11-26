@@ -143,8 +143,12 @@ const Tile = ({ value, index, editing, settling, onLongPress, onHold, children }
       dragMomentum={false}
       whileDrag={{ scale: 1.12 }}
       transition={settling ? settleTransition : layoutSpring}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={() => setDragging(false)}
+      onDragStart={() => {
+        setDragging(true);
+      }}
+      onDragEnd={() => {
+        setDragging(false);
+      }}
       onPointerDown={handlePointerDown}
       onClickCapture={(e) => {
         if (editing && isOwn(e)) {
@@ -155,7 +159,7 @@ const Tile = ({ value, index, editing, settling, onLongPress, onHold, children }
       onContextMenu={(e) => {
         const pressing = press.current && !press.current.signal.aborted;
 
-        if ((editing || pressing) && isOwn(e)) {
+        if ((editing || pressing === true) && isOwn(e)) {
           e.preventDefault();
         }
       }}
@@ -214,7 +218,9 @@ export const SortableGrid = <T,>({
 
     grid.addEventListener("touchmove", onTouchMove, { passive: false });
 
-    return () => grid.removeEventListener("touchmove", onTouchMove);
+    return () => {
+      grid.removeEventListener("touchmove", onTouchMove);
+    };
   }, []);
 
   const reorder = (next: string[]) => {
@@ -261,7 +267,9 @@ export const SortableGrid = <T,>({
             index={index}
             editing={editing}
             settling={settling}
-            onLongPress={() => setEditing(true)}
+            onLongPress={() => {
+              setEditing(true);
+            }}
             onHold={hold}
           >
             {renderTile(item, index)}

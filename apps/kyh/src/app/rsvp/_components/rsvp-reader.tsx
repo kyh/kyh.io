@@ -110,7 +110,7 @@ export const RSVPReader = () => {
     } else if (state.status === "playing") {
       const word = words[state.wordIndex];
 
-      if (!word) {
+      if (word === undefined || word === "") {
         return;
       }
 
@@ -195,7 +195,9 @@ export const RSVPReader = () => {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [togglePlayPause, goToPrevWord, goToNextWord]);
 
   let playButtonContent = <PlayIcon />;

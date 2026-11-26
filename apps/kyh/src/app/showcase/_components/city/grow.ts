@@ -65,7 +65,9 @@ export const createGrowth = () => {
 
   return {
     adapt: (material: Material) => {
-      material.onBeforeCompile = (shader) => patch(shader, growTime);
+      material.onBeforeCompile = (shader) => {
+        patch(shader, growTime);
+      };
     },
     set: (seconds: number) => {
       growTime.value = seconds;

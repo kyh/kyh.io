@@ -56,22 +56,22 @@ export const memoryReads = () => {
 
   return {
     cache: {
-      get: (key, schema) => Promise.resolve(lookup(key, schema)),
-      set: (key, value, ttlMs) => {
+      get: async (key, schema) => await Promise.resolve(lookup(key, schema)),
+      set: async (key, value, ttlMs) => {
         entries.set(key, { expiresAt: Date.now() + ttlMs, value });
 
-        return Promise.resolve();
+        await Promise.resolve();
       },
     },
     spend: {
-      record: (kind, channelKey, usd, at = Date.now()) => {
+      record: async (kind, channelKey, usd, at = Date.now()) => {
         if (usd > 0) {
           ledger.push({ at, channelKey, kind, usd });
         }
 
-        return Promise.resolve();
+        await Promise.resolve();
       },
-      spent: (kind, since) => {
+      spent: async (kind, since) => {
         let total = 0;
 
         for (const row of ledger) {
@@ -80,7 +80,7 @@ export const memoryReads = () => {
           }
         }
 
-        return Promise.resolve(total);
+        return await Promise.resolve(total);
       },
     },
   } satisfies Reads;

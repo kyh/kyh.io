@@ -98,7 +98,7 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
     for (;;) {
       const piece = await streamer.child.next();
 
-      if (piece.done) {
+      if (piece.done === true) {
         ending = piece.value;
         break;
       }
@@ -194,6 +194,7 @@ const closeScreen = async ($: EngineInterface) => {
 
 const sameSize = (a: Size, b: Size) => a.columns === b.columns && a.rows === b.rows;
 
+// oxlint-disable-next-line typescript/promise-function-async -- returns a promise only on some paths
 const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
   frame.cells === undefined
     ? $.ui.blit({
@@ -243,13 +244,13 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
 
   const { deny } = await blit($, frame, imagePath).catch(() => ({ deny: "the pane is closed" }));
 
-  if (deny && screen.mode === "image") {
+  if (deny !== "" && screen.mode === "image") {
     screen.mode = "cells";
 
     return;
   }
 
-  if (deny) {
+  if (deny !== "") {
     await closeScreen($);
 
     return;
@@ -362,13 +363,13 @@ export const register: Register = (on, options) => {
       void pull($);
     });
 
-    return next(e);
+    return await next(e);
   });
 
   on("turn.start", async ($, e, next) => {
     await setRun($, startTurn(run, await $.clock.now()));
 
-    return next(e);
+    return await next(e);
   });
 
   on("turn.step", async function* countTokens($, e, next) {
@@ -383,14 +384,14 @@ export const register: Register = (on, options) => {
   });
 
   on("turn.complete", async ($, e, next) => {
-    if (!e.agentId) {
+    if (e.agentId === "") {
       await setRun($, endTurn(run, await $.clock.now()));
       $.clock.after(GRACE_MS, () => {
         void finish($);
       });
     }
 
-    return next(e);
+    return await next(e);
   });
 
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {

@@ -44,8 +44,8 @@ const config = resolveProxyConfig({
     }
 
     return targetOf(behavior.getHeader) === HEARTBEAT_URL
-      ? programming.mayContinue(viewer)
-      : programming.mayOpen(viewer);
+      ? await programming.mayContinue(viewer)
+      : await programming.mayOpen(viewer);
   },
 });
 
@@ -96,11 +96,13 @@ export const POST = async (request: NextRequest) => {
   const behavior: ProxyBehavior<Response> = {
     getHeader: (name) => request.headers.get(name),
     getHeaders: () => fromHeaders(request.headers),
-    getRequestBody: () => Promise.resolve(body),
+    getRequestBody: async () => await Promise.resolve(body),
     id: "nextjs-app-router",
     method: request.method,
     respondWith: (status, data) => NextResponse.json(data, { headers: responseHeaders, status }),
-    sendHeader: (name, value) => responseHeaders.set(name, value),
+    sendHeader: (name, value) => {
+      responseHeaders.set(name, value);
+    },
     sendResponse: responsePassthrough,
   };
 

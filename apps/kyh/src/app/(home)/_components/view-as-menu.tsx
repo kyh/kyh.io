@@ -63,7 +63,9 @@ export const ViewAsMenu = () => {
           <TooltipTrigger
             className={iconButtonClassName}
             aria-label="Open with CLI"
-            onClick={handleCopyCommand}
+            onClick={() => {
+              void handleCopyCommand();
+            }}
           >
             <TerminalIcon />
           </TooltipTrigger>

@@ -52,7 +52,9 @@ const LazyIncidentCard = ({
 
     shortcuts.registerIncident(incidentId, ref.current);
 
-    return () => shortcuts.unregisterIncident(incidentId);
+    return () => {
+      shortcuts.unregisterIncident(incidentId);
+    };
   }, [incidentId, shortcuts]);
 
   useEffect(() => {
@@ -74,7 +76,9 @@ const LazyIncidentCard = ({
 
     observer.observe(el);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -142,7 +146,13 @@ const readFeedParams = (searchParams: URLSearchParams) => {
   const start = searchParams.get("start") || undefined;
   const end = searchParams.get("end") || undefined;
   const error = searchParams.get("error") || undefined;
-  const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
+
+  const searchKey =
+    (q !== undefined && q !== "") ||
+    (start !== undefined && start !== "") ||
+    (end !== undefined && end !== "")
+      ? JSON.stringify([q, start, end])
+      : null;
 
   return { end, error, q, searchKey, start };
 };
@@ -172,15 +182,15 @@ export const IncidentFeed = ({
       );
       const params = new URLSearchParams();
 
-      if (q) {
+      if (q !== undefined && q !== "") {
         params.set("q", q);
       }
 
-      if (start) {
+      if (start !== undefined && start !== "") {
         params.set("start", start);
       }
 
-      if (end) {
+      if (end !== undefined && end !== "") {
         params.set("end", end);
       }
 
@@ -276,7 +286,7 @@ export const IncidentFeed = ({
   }, [router]);
 
   const loadMore = useCallback(async () => {
-    if (!nextOffset || isLoading) {
+    if (nextOffset === undefined || nextOffset === 0 || isLoading) {
       return;
     }
 
@@ -310,7 +320,12 @@ export const IncidentFeed = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && nextOffset && !isLoading) {
+        if (
+          entries[0].isIntersecting &&
+          nextOffset !== undefined &&
+          nextOffset !== 0 &&
+          !isLoading
+        ) {
           void loadMore();
         }
       },
@@ -319,7 +334,9 @@ export const IncidentFeed = ({
 
     observer.observe(ref);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [nextOffset, isLoading, searchResults, loadMore]);
 
   const handleVote = useCallback(
@@ -432,7 +449,7 @@ export const IncidentFeed = ({
       const result = await togglePinIncident({ incidentId });
 
       if (result.success) {
-        toast.success(result.pinned ? "Pinned" : "Unpinned");
+        toast.success(result.pinned === true ? "Pinned" : "Unpinned");
         router.refresh();
       } else {
         toast.error("Failed to pin");
@@ -474,11 +491,11 @@ export const IncidentFeed = ({
     }) => {
       const result = await createIncident(data);
 
-      if (result.autoApproved) {
+      if (result.autoApproved === true) {
         router.refresh();
       }
 
-      toast.success(result.merged ? "Added to existing incident" : "Added to feed");
+      toast.success(result.merged === true ? "Added to existing incident" : "Added to feed");
     },
     [router],
   );
@@ -517,7 +534,9 @@ export const IncidentFeed = ({
               Documenting incidents of ICE overreach.{" "}
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setIsModalOpen(true);
+                }}
                 className="cursor-pointer text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 aria-label="Submit a new incident"
               >
@@ -565,7 +584,11 @@ export const IncidentFeed = ({
                       unjustifiedCount={unjustifiedCount}
                       justifiedCount={justifiedCount}
                       userVote={userVote}
-                      onVote={(type) => handleVote(incident.id, type)}
+                      onVote={(type) => {
+                        void (async (type) => {
+                          await handleVote(incident.id, type);
+                        })(type);
+                      }}
                       pinned={incident.pinned}
                       headerRight={
                         <Menu.Root>
@@ -586,13 +609,19 @@ export const IncidentFeed = ({
                                 </Menu.Item>
                                 <Menu.Item
                                   className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                  onClick={() => setEditingIncident(incident)}
+                                  onClick={() => {
+                                    setEditingIncident(incident);
+                                  }}
                                 >
                                   Edit
                                 </Menu.Item>
                                 <Menu.Item
                                   className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
-                                  onClick={() => handleReport(incident.id)}
+                                  onClick={() => {
+                                    void (async () => {
+                                      await handleReport(incident.id);
+                                    })();
+                                  }}
                                 >
                                   Report
                                 </Menu.Item>
@@ -601,19 +630,31 @@ export const IncidentFeed = ({
                                     <Menu.Separator className="my-1 border-t border-border" />
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handlePin(incident.id)}
+                                      onClick={() => {
+                                        void (async () => {
+                                          await handlePin(incident.id);
+                                        })();
+                                      }}
                                     >
                                       {incident.pinned ? "Unpin" : "Pin"}
                                     </Menu.Item>
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handleHide(incident.id)}
+                                      onClick={() => {
+                                        void (async () => {
+                                          await handleHide(incident.id);
+                                        })();
+                                      }}
                                     >
                                       Hide
                                     </Menu.Item>
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handleDelete(incident.id)}
+                                      onClick={() => {
+                                        void (async () => {
+                                          await handleDelete(incident.id);
+                                        })();
+                                      }}
                                     >
                                       Delete
                                     </Menu.Item>
@@ -634,7 +675,7 @@ export const IncidentFeed = ({
           {searchResults === null && (
             <div ref={loadMoreRef} className="py-8">
               {isLoading && <span className="text-sm text-muted-foreground">Loading...</span>}
-              {!nextOffset && allIncidents.length > 0 && (
+              {(nextOffset === undefined || nextOffset === 0) && allIncidents.length > 0 && (
                 <span className="text-sm text-muted-foreground/40">&mdash;</span>
               )}
             </div>
@@ -644,7 +685,9 @@ export const IncidentFeed = ({
         <IncidentModal
           mode="create"
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+          }}
           onSubmit={handleSubmit}
         />
 
@@ -658,7 +701,9 @@ export const IncidentFeed = ({
               location: editingIncident.location,
               videos: editingIncident.videos,
             }}
-            onClose={() => setEditingIncident(null)}
+            onClose={() => {
+              setEditingIncident(null);
+            }}
             onAddVideo={handleAddVideo}
             onUpdate={handleUpdateIncident}
           />

@@ -114,7 +114,7 @@ export const drawCandlesticks = (
     const isLive = c.time === liveTime;
     let color = isLive && liveBullBlend >= 0 ? blendColor(liveBullBlend) : directionColor(isBull);
 
-    if (accentColor && accentBlend > 0.01) {
+    if (accentColor !== undefined && accentColor !== "" && accentBlend > 0.01) {
       color = blendToAccent(color, accentColor, accentBlend);
     }
 

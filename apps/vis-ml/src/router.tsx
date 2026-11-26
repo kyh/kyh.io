@@ -57,7 +57,9 @@ function RouteLayout() {
       document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
     });
 
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+    };
   }, [location.pathname]);
 
   return (

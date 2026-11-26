@@ -80,7 +80,11 @@ const partitionIncidents = (allIncidents: Incident[], processedIds: Set<number>)
       continue;
     }
 
-    const isComplete = incident.location && incident.description && incident.incidentDate;
+    const isComplete =
+      incident.location !== null &&
+      incident.location !== "" &&
+      incident.description &&
+      incident.incidentDate;
 
     if (isComplete) {
       processedIds.add(incident.id);
@@ -159,12 +163,25 @@ const generateMetadata = async (incident: Incident) => {
 
 const enrichIncident = async (incident: Incident) => {
   const generated = await generateMetadata(incident);
-  const location = incident.location || generated?.location || incident.location;
-  const description = incident.description || generated?.description || incident.description;
+
+  const location =
+    (incident.location === null || incident.location === ""
+      ? generated?.location
+      : incident.location) || incident.location;
+
+  const description =
+    (incident.description === null || incident.description === ""
+      ? generated?.description
+      : incident.description) || incident.description;
 
   const incidentDate =
     incident.incidentDate ||
-    (generated?.incidentDate ? new Date(generated.incidentDate) : incident.incidentDate);
+    (generated !== null &&
+    generated.incidentDate !== undefined &&
+    generated.incidentDate !== null &&
+    generated.incidentDate !== ""
+      ? new Date(generated.incidentDate)
+      : incident.incidentDate);
 
   const hasChanges =
     location !== incident.location ||

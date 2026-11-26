@@ -67,7 +67,10 @@ const isAllowedTwitterHost = (url: string) => {
 
 const fetchWithTimeout = async (url: string, options: RequestInit) => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, FETCH_TIMEOUT_MS);
 
   try {
     return await fetch(url, { ...options, signal: controller.signal });
@@ -93,7 +96,12 @@ export const resolveVideoUrl = async (url: string) => {
 
     const location = response.headers.get("location");
 
-    if (location && isAllowedTwitterHost(location) && isValidVideoUrl(location)) {
+    if (
+      location !== null &&
+      location !== "" &&
+      isAllowedTwitterHost(location) &&
+      isValidVideoUrl(location)
+    ) {
       return location;
     }
 

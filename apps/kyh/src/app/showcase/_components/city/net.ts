@@ -138,7 +138,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       room?.sendEvent(
         "drop",
         { from: { ...drop.from }, key: drop.key, state: [...drop.state] },
-        me ? { except: me } : undefined,
+        me !== undefined && me !== null && me !== "" ? { except: me } : undefined,
       );
     },
     hold: (key: string) => {
@@ -176,7 +176,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
       const now = performance.now();
 
       if (
-        room?.isHost &&
+        room?.isHost === true &&
         room.connectionStatus === "connected" &&
         (force || now - publishedAt > SNAPSHOT_EVERY)
       ) {
@@ -251,7 +251,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
 
       const now = performance.now();
 
-      if (holding && now - renewedAt > RENEW_EVERY) {
+      if (holding !== null && holding !== "" && now - renewedAt > RENEW_EVERY) {
         renewedAt = now;
         room.claim(holding, { ttlMs: HOLD_TTL });
       }

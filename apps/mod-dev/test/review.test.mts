@@ -21,21 +21,21 @@ const portsOf = (looks: readonly Answer[], judge?: Answer) => {
   let looked = 0;
 
   const ports: Ports = {
-    complete: (request) => {
+    complete: async (request) => {
       calls.push(request);
 
       if (request.system === SYSTEM) {
-        return Promise.resolve(judge ?? { text: SCORECARD });
+        return await Promise.resolve(judge ?? { text: SCORECARD });
       }
 
       looked += 1;
 
-      return Promise.resolve(looks[looked - 1] ?? { text: "done" });
+      return await Promise.resolve(looks[looked - 1] ?? { text: "done" });
     },
-    look: (look) => {
+    look: async (look) => {
       read.push(look);
 
-      return Promise.resolve(`(${look.target})`);
+      return await Promise.resolve(`(${look.target})`);
     },
   };
 

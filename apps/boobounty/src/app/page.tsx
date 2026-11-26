@@ -164,7 +164,7 @@ const Home = () => (
                   className="relative flex flex-col border-2 border-foreground p-4 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-0"
                   key={pack.name}
                 >
-                  {pack.popular && (
+                  {pack.popular === true && (
                     <span className="absolute -top-5 -right-3 grid size-[68px] rotate-12 place-items-center bg-red text-center font-headline text-[13px] leading-[1.05] text-background uppercase [clip-path:polygon(50%_0,61%_14%,79%_9%,80%_27%,97%_33%,88%_50%,97%_67%,80%_73%,79%_91%,61%_86%,50%_100%,39%_86%,21%_91%,20%_73%,3%_67%,12%_50%,3%_33%,20%_27%,21%_9%,39%_14%)]">
                       Most
                       <br />

@@ -39,7 +39,7 @@ const { values } = parseArgs({
 
 const { image: imagePath, socket: socketPath, world: worldDir } = values;
 
-if (!imagePath || !socketPath || !worldDir) {
+if (imagePath === "" || socketPath === "" || worldDir === "") {
   process.stderr.write("usage: stream.js --world <dir> --socket <path> --image <path>\n");
   process.exit(2);
 }
@@ -146,7 +146,7 @@ const world = path.resolve(worldDir);
 const serveWorld = (request: http.IncomingMessage, response: http.ServerResponse) => {
   const file = assetPath(world, request.url ?? "/");
 
-  if (!file || !existsSync(file)) {
+  if (file === "" || !existsSync(file)) {
     response.statusCode = 404;
     response.end();
 
@@ -157,20 +157,22 @@ const serveWorld = (request: http.IncomingMessage, response: http.ServerResponse
   response.end(readFileSync(file));
 };
 
-const page = http.createServer(async (request, response) => {
-  if (request.method !== "POST" || request.url !== "/frame") {
-    serveWorld(request, response);
+const page = http.createServer((request, response) => {
+  void (async (request, response) => {
+    if (request.method !== "POST" || request.url !== "/frame") {
+      serveWorld(request, response);
 
-    return;
-  }
+      return;
+    }
 
-  try {
-    await takeFrame(request, response);
-  } catch (error) {
-    process.stderr.write(`frame: ${String(error)}\n`);
-    response.statusCode = 500;
-    response.end();
-  }
+    try {
+      await takeFrame(request, response);
+    } catch (error) {
+      process.stderr.write(`frame: ${String(error)}\n`);
+      response.statusCode = 500;
+      response.end();
+    }
+  })(request, response);
 });
 
 page.listen(0, "127.0.0.1");
@@ -206,31 +208,39 @@ const shutdown = async (code: number) => {
   process.exit(code);
 };
 
-process.on("SIGTERM", async () => {
-  await shutdown(0);
-});
-
-process.on("SIGINT", async () => {
-  await shutdown(0);
-});
-
-setInterval(async () => {
-  if (Date.now() - lastAsked > ABANDONED_MS) {
+process.on("SIGTERM", () => {
+  void (async () => {
     await shutdown(0);
-  }
+  })();
+});
+
+process.on("SIGINT", () => {
+  void (async () => {
+    await shutdown(0);
+  })();
+});
+
+setInterval(() => {
+  void (async () => {
+    if (Date.now() - lastAsked > ABANDONED_MS) {
+      await shutdown(0);
+    }
+  })();
 }, 1000);
 
 const executable = chromePaths(process.platform, process.env).find((file) => existsSync(file));
 
-if (executable) {
+if (executable === "") {
+  process.stderr.write("chrome: Google Chrome not found; set CHROME_PATH to its executable\n");
+  await shutdown(1);
+} else {
   chrome = spawn(executable, chromeArgs(profileDir, `http://127.0.0.1:${port}/?stream`), {
     stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"],
   });
-  chrome.once("exit", async (code) => {
-    process.stderr.write(`chrome: exited (${code ?? "signal"})\n`);
-    await shutdown(1);
+  chrome.once("exit", (code) => {
+    void (async (code) => {
+      process.stderr.write(`chrome: exited (${code ?? "signal"})\n`);
+      await shutdown(1);
+    })(code);
   });
-} else {
-  process.stderr.write("chrome: Google Chrome not found; set CHROME_PATH to its executable\n");
-  await shutdown(1);
 }

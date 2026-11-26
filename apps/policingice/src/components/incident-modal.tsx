@@ -96,7 +96,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
 
     const url = addVideoRef.current?.value.trim();
 
-    if (!url) {
+    if (url === undefined || url === "") {
       return;
     }
 
@@ -176,12 +176,23 @@ export const IncidentModal = (props: IncidentModalProps) => {
   const submittingText = mode === "create" ? "Submitting..." : "Saving...";
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        !open && handleClose();
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/20" />
         <Dialog.Popup className="fixed top-[15vh] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border border-border bg-background p-6">
           <Dialog.Title className="sr-only">{title}</Dialog.Title>
-          <Form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          <Form
+            ref={formRef}
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             {mode === "create" && (
               <div>
                 <label htmlFor="video-0" className="mb-1 block text-sm">
@@ -193,9 +204,9 @@ export const IncidentModal = (props: IncidentModalProps) => {
                       <div className="flex gap-2">
                         <Field.Control
                           type="url"
-                          onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
-                            validateUrl(key, e.target.value)
-                          }
+                          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                            validateUrl(key, e.target.value);
+                          }}
                           placeholder="https://x.com/..."
                           className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                           aria-label={`Video URL ${index + 1}`}
@@ -203,7 +214,9 @@ export const IncidentModal = (props: IncidentModalProps) => {
                         {inputKeys.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => removeVideoUrl(key)}
+                            onClick={() => {
+                              removeVideoUrl(key);
+                            }}
                             className="cursor-pointer text-sm text-muted-foreground hover:text-foreground"
                             aria-label={`Remove video URL ${index + 1}`}
                           >
@@ -247,7 +260,9 @@ export const IncidentModal = (props: IncidentModalProps) => {
                   <Field.Control
                     ref={addVideoRef}
                     type="url"
-                    onChange={() => setVideoError("")}
+                    onChange={() => {
+                      setVideoError("");
+                    }}
                     placeholder="https://x.com/..."
                     className="w-full border-b border-input bg-transparent py-1 text-sm focus:border-foreground focus:outline-none"
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -260,7 +275,9 @@ export const IncidentModal = (props: IncidentModalProps) => {
                   {videoError && <p className="mt-1 text-xs text-destructive">{videoError}</p>}
                   <button
                     type="button"
-                    onClick={handleAddVideo}
+                    onClick={() => {
+                      void handleAddVideo();
+                    }}
                     disabled={isSubmitting}
                     className="mt-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
                   >

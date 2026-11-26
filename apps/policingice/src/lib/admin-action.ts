@@ -73,7 +73,7 @@ const parseLocalDate = (dateStr: string) => {
 const requireAdmin = async () => {
   const session = await getSession();
 
-  if (!session?.user || session.user.isAnonymous) {
+  if (!session?.user || session.user.isAnonymous === true) {
     throw new Error("Unauthorized");
   }
 
@@ -105,7 +105,10 @@ export const updateIncident = async (data: {
     .update(incidents)
     .set({
       description: data.description,
-      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+      incidentDate:
+        data.incidentDate !== undefined && data.incidentDate !== ""
+          ? parseLocalDate(data.incidentDate)
+          : null,
       location: data.location,
       status: data.status,
     })
@@ -217,7 +220,10 @@ export const bulkCreateIncidents = async (data: {
     return { created: 0, skipped: validUrls.length };
   }
 
-  const incidentDate = data.incidentDate ? new Date(data.incidentDate) : new Date();
+  const incidentDate =
+    data.incidentDate !== undefined && data.incidentDate !== ""
+      ? new Date(data.incidentDate)
+      : new Date();
 
   if (data.groupAsOne) {
     const [incident] = await db

@@ -254,7 +254,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
 
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [mode]);
 
   const handleDragStart = () => {
@@ -302,7 +304,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    if (!file?.type.startsWith("image/")) {
+    if (file?.type.startsWith("image/") !== true) {
       return;
     }
 
@@ -356,7 +358,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-1">
             <MenuButton
-              onClick={() => setMode("adding-tag")}
+              onClick={() => {
+                setMode("adding-tag");
+              }}
               icon={<Tag size={18} />}
               label="Tag"
               isDark={isDark}
@@ -382,8 +386,12 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               ref={tagInputRef}
               type="text"
               value={tagText}
-              onChange={(e) => setTagText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+              onChange={(e) => {
+                setTagText(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                e.key === "Enter" && handleAddTag();
+              }}
               placeholder="Tag name..."
               autoFocus
               className={cn(
@@ -398,7 +406,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 <button
                   type="button"
                   key={c}
-                  onClick={() => setTagColor(c)}
+                  onClick={() => {
+                    setTagColor(c);
+                  }}
                   aria-label={`Use ${c} tag color`}
                   aria-pressed={tagColor === c}
                   className={cn(
@@ -461,7 +471,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 <input
                   type="color"
                   value={state.quadrantColors[key]}
-                  onChange={(e) => setQuadrantColor(key, e.target.value)}
+                  onChange={(e) => {
+                    setQuadrantColor(key, e.target.value);
+                  }}
                   className="h-6 w-6 cursor-pointer rounded border-0"
                 />
                 <span className={cn("text-xs", isDark ? "text-gray-400" : "text-gray-600")}>
@@ -477,13 +489,17 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-1">
             <MenuButton
-              onClick={() => handleExport("png")}
+              onClick={() => {
+                handleExport("png");
+              }}
               icon={<Download size={18} />}
               label="PNG"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => handleExport("jpeg")}
+              onClick={() => {
+                handleExport("jpeg");
+              }}
               icon={<Download size={18} />}
               label="JPEG"
               isDark={isDark}
@@ -499,7 +515,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
               <SelectButton
                 key={type}
                 selected={state.gridType === type}
-                onClick={() => setGridType(type)}
+                onClick={() => {
+                  setGridType(type);
+                }}
                 isDark={isDark}
               >
                 {GRID_LABELS[type]}
@@ -523,7 +541,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 <SelectButton
                   key={layoutType}
                   selected={state.layoutType === layoutType}
-                  onClick={() => setLayoutType(layoutType)}
+                  onClick={() => {
+                    setLayoutType(layoutType);
+                  }}
                   isDark={isDark}
                 >
                   {layout.displayName}
@@ -549,7 +569,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             </button>
             <button
               type="button"
-              onClick={() => setMode("idle")}
+              onClick={() => {
+                setMode("idle");
+              }}
               className={cn(
                 "w-full rounded-md border px-3 py-1.5 text-sm transition-colors",
                 isDark
@@ -567,37 +589,49 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         return (
           <div className="flex flex-col gap-1">
             <MenuButton
-              onClick={() => setMode("add-menu")}
+              onClick={() => {
+                setMode("add-menu");
+              }}
               icon={<Plus size={18} />}
               label="Add"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => setMode("colors")}
+              onClick={() => {
+                setMode("colors");
+              }}
               icon={<Palette size={18} />}
               label="Colors"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => setMode("grid")}
+              onClick={() => {
+                setMode("grid");
+              }}
               icon={<Grid3X3 size={18} />}
               label="Grid"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => setMode("layout")}
+              onClick={() => {
+                setMode("layout");
+              }}
               icon={<Layout size={18} />}
               label="Layout"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => setMode("export")}
+              onClick={() => {
+                setMode("export");
+              }}
               icon={<Download size={18} />}
               label="Export"
               isDark={isDark}
             />
             <MenuButton
-              onClick={() => setMode("confirm-reset")}
+              onClick={() => {
+                setMode("confirm-reset");
+              }}
               icon={<RotateCcw size={18} />}
               label="Reset"
               isDark={isDark}
@@ -665,7 +699,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             {backTarget && (
               <button
                 type="button"
-                onClick={() => setMode(backTarget)}
+                onClick={() => {
+                  setMode(backTarget);
+                }}
                 aria-label="Back"
                 className={cn(
                   "rounded p-1 transition-colors",
@@ -678,7 +714,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
           </div>
           <button
             type="button"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => {
+              setTheme(isDark ? "light" : "dark");
+            }}
             aria-label={isDark ? "Use light theme" : "Use dark theme"}
             className={cn(
               "rounded p-1 transition-colors",

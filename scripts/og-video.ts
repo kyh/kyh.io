@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs"
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium } from "playwright";
+import type { Browser, Page } from "playwright";
 
 interface CityDebug {
   intro: { built: number; clock: number; phase: string };
@@ -65,7 +66,7 @@ const inOrder = async <T>(
   await items.reduce<Promise<unknown>>(async (done, item, index) => {
     await done;
 
-    return run(item, index);
+    return await run(item, index);
   }, Promise.resolve());
 };
 
@@ -152,7 +153,9 @@ const kyhCapture = (theme: string): CaptureApp => ({
   block: ["party.vibedgames.com", "vercel-scripts.com", "vitals.vercel-insights.com"],
   colorScheme: "light",
   crf: 33,
-  frame: (page, index) => page.evaluate(kyhFrame, { fade: KYH_MARK_FADE, seconds: index / FPS }),
+  frame: async (page, index) => {
+    await page.evaluate(kyhFrame, { fade: KYH_MARK_FADE, seconds: index / FPS });
+  },
   frames: 270,
   gl: true,
   out: `apps/kyh/public/og/showcase${theme === "classic" ? "" : `-${theme}`}`,
@@ -163,13 +166,17 @@ const kyhCapture = (theme: string): CaptureApp => ({
     await menu.waitFor({ timeout: 120_000 });
     await menu.focus();
     await page.keyboard.press("ArrowUp");
-    await inOrder(times(20), () => step(33));
+    await inOrder(times(20), async () => {
+      await step(33);
+    });
 
     await page.evaluate((name) => {
       document.querySelector<HTMLElement>(`[role=menuitemradio][aria-label="${name}"]`)?.click();
     }, KYH_THEMES[theme] ?? "");
 
-    await inOrder(times(180), () => step(33));
+    await inOrder(times(180), async () => {
+      await step(33);
+    });
 
     await page.mouse.move(0, 0);
     await page.evaluate(() => {
@@ -240,7 +247,7 @@ const apps: Record<string, (theme: string) => App> = {
   }),
   kyh: kyhCapture,
   stonksville: () => ({
-    aim: (page) => page.evaluate(stonksPriceY),
+    aim: async (page) => await page.evaluate(stonksPriceY),
     clicks: [
       ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 500 + i * 50, dy, x: 1058 })),
       ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 5500 + i * 50, dy, x: 1058 })),
@@ -436,8 +443,8 @@ const encode = ({ crf, fade = 0, frames, framesDir, out, poster }: Encode) => {
   ]);
 };
 
-const shoot = (page: Page, framesDir: string, frame: number) =>
-  page.screenshot({
+const shoot = async (page: Page, framesDir: string, frame: number) =>
+  await page.screenshot({
     path: path.join(framesDir, `f${String(frame).padStart(4, "0")}.png`),
     timeout: 300_000,
   });
@@ -480,11 +487,14 @@ const recordCapture = async (browser: Browser, app: CaptureApp, framesDir: strin
   });
 
   await Promise.all(
-    (app.block ?? []).map((host) =>
-      context.route(
-        (target) => target.hostname.endsWith(host),
-        (route) => route.abort(),
-      ),
+    (app.block ?? []).map(
+      async (host) =>
+        await context.route(
+          (target) => target.hostname.endsWith(host),
+          async (route) => {
+            await route.abort();
+          },
+        ),
     ),
   );
 

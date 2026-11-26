@@ -60,13 +60,13 @@ export const memoryAiredStore = () => {
   const aired = new Map<string, Set<string>>();
 
   return {
-    aired: (channelKey) => Promise.resolve(new Set(aired.get(channelKey))),
-    mark: (channelKey, itemId) => {
+    aired: async (channelKey) => await Promise.resolve(new Set(aired.get(channelKey))),
+    mark: async (channelKey, itemId) => {
       const channel = aired.get(channelKey) ?? new Set<string>();
       channel.add(itemId);
       aired.set(channelKey, channel);
 
-      return Promise.resolve();
+      await Promise.resolve();
     },
   } satisfies AiredStore;
 };
@@ -75,23 +75,23 @@ export const memorySessionStore = () => {
   const sessions = new Map<string, SessionSpan>();
 
   return {
-    open: (id, userId, at) => {
+    open: async (id, userId, at) => {
       if (!sessions.has(id)) {
         sessions.set(id, { seenAt: at, startedAt: at, userId });
       }
 
-      return Promise.resolve();
+      await Promise.resolve();
     },
-    spans: (since) =>
-      Promise.resolve([...sessions.values()].filter((session) => session.startedAt >= since)),
-    touch: (id, userId, at) => {
+    spans: async (since) =>
+      await Promise.resolve([...sessions.values()].filter((session) => session.startedAt >= since)),
+    touch: async (id, userId, at) => {
       const session = sessions.get(id);
 
       if (session !== undefined && session.userId === userId) {
         session.seenAt = at;
       }
 
-      return Promise.resolve();
+      await Promise.resolve();
     },
   } satisfies SessionStore;
 };
@@ -168,11 +168,13 @@ export const createProgramming = (store: AiredStore, sessions: SessionStore, rea
   const mayContinue = async (viewer: BudgetViewer) =>
     (await budgetLeft(viewer)) > -OVERRUN_GRACE_SECONDS * usdPerSecond();
 
-  const sessionOpened = (id: string, viewer: BudgetViewer, at: number = Date.now()) =>
-    sessions.open(id, viewer.userId, at);
+  const sessionOpened = async (id: string, viewer: BudgetViewer, at: number = Date.now()) => {
+    await sessions.open(id, viewer.userId, at);
+  };
 
-  const sessionSeen = (id: string, viewer: BudgetViewer, at: number = Date.now()) =>
-    sessions.touch(id, viewer.userId, at);
+  const sessionSeen = async (id: string, viewer: BudgetViewer, at: number = Date.now()) => {
+    await sessions.touch(id, viewer.userId, at);
+  };
 
   const nextProgram = async (
     channelKey: string,

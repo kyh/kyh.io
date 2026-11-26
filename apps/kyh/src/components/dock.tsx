@@ -12,7 +12,7 @@ import { discoverEgg } from "@/easter-eggs/store";
 import { DEFAULT_THEME, themeOf } from "@/themes";
 import { nextTap, toggleTheme, useAppearance } from "@/themes/store";
 
-const loadBloom = () => import("@/components/theme-bloom");
+const loadBloom = async () => await import("@/components/theme-bloom");
 
 const ThemeBloom = lazy(async () => {
   const { ThemeBloom: loaded } = await loadBloom();
@@ -20,7 +20,7 @@ const ThemeBloom = lazy(async () => {
   return { default: loaded };
 });
 
-const fetchBloom = () => loadBloom().catch(() => null);
+const fetchBloom = async () => await loadBloom().catch(() => null);
 
 const HOLD_MS = 450;
 
@@ -130,7 +130,7 @@ const DockItem = ({
       data-hat-perch={`dock:${label}`}
     >
       <AnimatePresence>
-        {hovered && (
+        {hovered === true && (
           <motion.div
             initial={{ opacity: 0, x: "-50%", y: 10 }}
             animate={{ opacity: 1, x: "-50%", y: 0 }}
@@ -147,7 +147,7 @@ const DockItem = ({
       >
         {children}
       </motion.div>
-      {active && (
+      {active === true && (
         <div className="bg-foreground-faded absolute -bottom-2 left-1/2 h-[3px] w-[3px] -translate-x-1/2 animate-[fadeInScaleX_0.6s_cubic-bezier(0.23,1,0.32,1)] rounded-full" />
       )}
     </motion.div>
@@ -242,7 +242,9 @@ export const Dock = () => {
     }, HOLD_MS);
   };
 
-  const release = () => window.clearTimeout(holding.current);
+  const release = () => {
+    window.clearTimeout(holding.current);
+  };
 
   const plain = appearance.theme === DEFAULT_THEME;
   const next = nextTap(appearance);
@@ -269,8 +271,12 @@ export const Dock = () => {
       {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the pointer only magnifies the icons under it; nothing is activated by it */}
       <nav
         className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
-        onMouseMove={(event) => follow(event.nativeEvent.x)}
-        onMouseLeave={() => follow(Infinity)}
+        onMouseMove={(event) => {
+          follow(event.nativeEvent.x);
+        }}
+        onMouseLeave={() => {
+          follow(Infinity);
+        }}
       >
         {links.map(({ href, label, icon }) => (
           <Link
@@ -281,8 +287,12 @@ export const Dock = () => {
               mouseX.set(Infinity);
               setHovered(null);
             }}
-            onPointerEnter={(event) => hover(event, href)}
-            onPointerLeave={() => setHovered(null)}
+            onPointerEnter={(event) => {
+              hover(event, href);
+            }}
+            onPointerLeave={() => {
+              setHovered(null);
+            }}
           >
             <DockItem
               label={label}
@@ -317,7 +327,9 @@ export const Dock = () => {
               event.preventDefault();
             }
           }}
-          onContextMenu={(event) => event.preventDefault()}
+          onContextMenu={(event) => {
+            event.preventDefault();
+          }}
           onKeyDown={(event) => {
             held.current = false;
 

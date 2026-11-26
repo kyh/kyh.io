@@ -5,7 +5,7 @@ export type Steps<T> = Generator<void, T, void>;
 export const finish = <T>(steps: Steps<T>) => {
   let step = steps.next();
 
-  while (!step.done) {
+  while (step.done !== true) {
     step = steps.next();
   }
 
@@ -20,9 +20,9 @@ export const runFor = <T>(steps: Steps<T>, budget: number, now = () => performan
   const start = now();
   let step = steps.next();
 
-  while (!step.done && now() - start < budget) {
+  while (step.done !== true && now() - start < budget) {
     step = steps.next();
   }
 
-  return step.done ? { value: step.value } : undefined;
+  return step.done === true ? { value: step.value } : undefined;
 };

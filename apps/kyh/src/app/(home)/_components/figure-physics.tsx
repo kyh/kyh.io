@@ -161,7 +161,9 @@ export const FigurePhysics = () => {
 
     observer.observe(containerRef.current);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [pausePhysics, resumePhysics]);
 
   useEffect(() => {
@@ -346,7 +348,9 @@ export const FigurePhysics = () => {
     };
 
     if (needsPermission) {
-      canvas.addEventListener("touchend", requestOrientationPermission);
+      canvas.addEventListener("touchend", () => {
+        void requestOrientationPermission();
+      });
     } else {
       window.addEventListener("deviceorientation", handleOrientation);
     }
@@ -422,7 +426,9 @@ export const FigurePhysics = () => {
       canvas.removeEventListener("pointerdown", wakePhysics);
       canvas.removeEventListener("click", handleClick);
       canvas.removeEventListener("touchend", handleTouch);
-      canvas.removeEventListener("touchend", requestOrientationPermission);
+      canvas.removeEventListener("touchend", () => {
+        void requestOrientationPermission();
+      });
       window.removeEventListener("deviceorientation", handleOrientation);
       Mouse.clearSourceEvents(mouse);
       Events.off(engine, "collisionStart");

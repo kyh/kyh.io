@@ -47,7 +47,7 @@ export const ThemeFollower = () => {
   const beenHome = useBeenHome();
   const Follower = FOLLOWERS[theme];
 
-  if (!Follower || still || !seen || !beenHome) {
+  if (!Follower || still === true || !seen || !beenHome) {
     return null;
   }
 

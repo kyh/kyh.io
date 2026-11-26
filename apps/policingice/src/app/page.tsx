@@ -14,7 +14,7 @@ const IncidentFeedLoader = async () => {
     getUserVotes({ incidentIds: incidents.map((i) => i.id) }),
   ]);
 
-  const isAdmin = !!session?.user && !session.user.isAnonymous;
+  const isAdmin = !!session?.user && session.user.isAnonymous !== true;
 
   return (
     <IncidentFeed

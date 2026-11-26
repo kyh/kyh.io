@@ -21,7 +21,9 @@ const subscribeMotion = (onChange: () => void) => {
   const query = matchMedia(REDUCED_MOTION);
   query.addEventListener("change", onChange);
 
-  return () => query.removeEventListener("change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+  };
 };
 
 const usePrefersReducedMotion = () =>
@@ -143,7 +145,9 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
       setCoins(worldRef.current?.coins() ?? 0);
     }, TICK_MS);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, [isStill]);
 
   useEffect(() => {
@@ -223,7 +227,9 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
             aria-controls="terminal"
             aria-pressed={isLeaderboardOpen}
             className="pane-button"
-            onClick={() => setIsLeaderboardOpen((isOpen) => !isOpen)}
+            onClick={() => {
+              setIsLeaderboardOpen((isOpen) => !isOpen);
+            }}
             type="button"
           >
             [Leaderboard]

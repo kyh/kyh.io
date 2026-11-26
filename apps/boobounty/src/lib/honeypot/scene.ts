@@ -383,7 +383,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
       const newest = recent.at(-1);
       const fresh = newest && event.timeStamp - newest.t < STALE_RELEASE_MS;
       spin =
-        oldest && newest && fresh && newest.t > oldest.t
+        oldest && newest && fresh === true && newest.t > oldest.t
           ? ((newest.x - oldest.x) / ((newest.t - oldest.t) / 1000)) * radiansPerPixel()
           : 0;
     }
@@ -459,8 +459,13 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
     }
   };
 
-  const onPointerLost = () => endPress();
-  const onPointerLeave = () => dipper.hover(false);
+  const onPointerLost = () => {
+    endPress();
+  };
+
+  const onPointerLeave = () => {
+    dipper.hover(false);
+  };
 
   const onTouchStart = (event: TouchEvent) => {
     const [touch] = event.touches;
@@ -585,7 +590,7 @@ export const mountHoneypot = (canvas: HTMLCanvasElement, events: HoneypotEvents)
 
   const visibility = new IntersectionObserver(
     ([entry]) => {
-      if (entry?.isIntersecting) {
+      if (entry?.isIntersecting === true) {
         last = performance.now();
         renderer.setAnimationLoop(frame);
       } else {

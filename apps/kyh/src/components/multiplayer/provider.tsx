@@ -189,10 +189,17 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
     return order.flatMap((key) => byKey.get(key) ?? []);
   }, [entry, items, keyOf]);
 
-  const handleDrop = useCallback((order: string[]) => room.drop(grid, order), [room, grid]);
+  const handleDrop = useCallback(
+    (order: string[]) => {
+      room.drop(grid, order);
+    },
+    [room, grid],
+  );
 
   const handleHold = useCallback(
-    (holding: boolean) => setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined),
+    (holding: boolean) => {
+      setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined);
+    },
     [room, grid],
   );
 

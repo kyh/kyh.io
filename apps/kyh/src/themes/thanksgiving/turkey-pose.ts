@@ -490,8 +490,8 @@ const hatOf = (turkey: Turkey, head: { at: Vec3; turned: Mat3 }) => {
     at,
     band: `${linePath([...arc(low), ...arc(high).toReversed()])}Z`,
     brim: solidPaths(disc(HAT.brim, 0.3)),
-    buckle: { d: `${hullPath(square(HAT.buckle))}`, opacity: round(shownFront) },
-    clasp: { d: `${hullPath(square(HAT.buckle * 0.5))}`, opacity: round(shownFront) },
+    buckle: { d: hullPath(square(HAT.buckle)), opacity: round(shownFront) },
+    clasp: { d: hullPath(square(HAT.buckle * 0.5)), opacity: round(shownFront) },
     crown: hullSolidPaths([...ring(HAT.base, 0), ...ring(HAT.top, HAT.tall)], HAT.base),
     landed: landedOf(turkey, at),
     lid: ellipsePath(disc(HAT.top, HAT.tall)),
@@ -576,7 +576,7 @@ const layersOf = (
         [
           `wing-${index}`,
           torsoDepth +
-            (turkey.wingOver[index] ? 1 : -1) * (0.01 + 6 * Math.abs(side - OVER_BODY)) +
+            (turkey.wingOver[index] === true ? 1 : -1) * (0.01 + 6 * Math.abs(side - OVER_BODY)) +
             index * 1e-3,
         ] satisfies [string, number],
     ),
@@ -620,9 +620,9 @@ export const turkeyPose = (turkey: Turkey) => {
           ...solid(`wing-${index}`, outline),
           [
             `wing-ink-${index}`,
-            { d: ellipsePath(outline), opacity: turkey.wingOver[index] ? 0 : 1 },
+            { d: ellipsePath(outline), opacity: turkey.wingOver[index] === true ? 0 : 1 },
           ],
-          [`wing-edge-${index}`, { d: edge, opacity: turkey.wingOver[index] ? 1 : 0 }],
+          [`wing-edge-${index}`, { d: edge, opacity: turkey.wingOver[index] === true ? 1 : 0 }],
           [`primaries-${index}`, { d: primaries, opacity: drawnOut > 0 ? 1 : 0 }],
           [`bars-${index}`, { d: bars, opacity: drawnOut > 0 ? 1 : 0 }],
         ] satisfies [string, Part][],

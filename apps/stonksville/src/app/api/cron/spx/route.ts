@@ -8,7 +8,11 @@ import { fetchSpxCsv, hasBlobStore, storeCsv } from "@/lib/spx-source";
 export const GET = async (request: Request) => {
   const secret = process.env.CRON_SECRET;
 
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (
+    secret === undefined ||
+    secret === "" ||
+    request.headers.get("authorization") !== `Bearer ${secret}`
+  ) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
