@@ -223,8 +223,7 @@ const brailleCell: (
       const threshold = BAYER8[py % 8]?.[px % 8] ?? 0.5;
 
       if (light > threshold) {
-        // oxlint-disable-next-line no-bitwise -- a braille glyph is a bitmask of its 8 dots
-        dots |= bit;
+        dots += bit;
       }
 
       if (threshold < minThreshold) {

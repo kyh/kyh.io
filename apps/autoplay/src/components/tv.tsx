@@ -38,6 +38,14 @@ interface ScreenProps {
   urlError?: string;
 }
 
+const subscribeToHistory = (onChange: () => void) => {
+  window.addEventListener("popstate", onChange);
+
+  return () => {
+    window.removeEventListener("popstate", onChange);
+  };
+};
+
 const MARQUEE_SPEED = 45;
 const CHAR_WIDTH = 6.6;
 const ROLL_MS = 400;
@@ -280,12 +288,7 @@ const TvScreen = (props: ScreenProps) => {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const testStream = useSyncExternalStore(
-    // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
-    () => () => {},
-    testStreamRequested,
-    () => false,
-  );
+  const testStream = useSyncExternalStore(subscribeToHistory, testStreamRequested, () => false);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

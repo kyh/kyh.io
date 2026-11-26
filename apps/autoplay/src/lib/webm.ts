@@ -22,23 +22,16 @@ export const readVint = (bytes: Uint8Array, at: number, id: boolean) => {
     return null;
   }
 
-  let length = 1;
-
-  // oxlint-disable-next-line no-bitwise -- EBML: leading zero bits of the first byte give the width
-  while ((first & (0x80 >> (length - 1))) === 0) {
-    length += 1;
-  }
+  const length = Math.clz32(first) - 23;
 
   if (at + length > bytes.length) {
     return null;
   }
 
-  // oxlint-disable-next-line no-bitwise -- EBML: the bits below the length marker
-  const mask = 0xff >> length;
-  // oxlint-disable-next-line no-bitwise -- EBML: the bits below the length marker
-  let value = id ? first : first & mask;
-  // oxlint-disable-next-line no-bitwise -- EBML: the bits below the length marker
-  let unknown = (first & mask) === mask;
+  const marker = 2 ** (8 - length);
+  const payload = first % marker;
+  let value = id ? first : payload;
+  let unknown = payload === marker - 1;
 
   for (let k = 1; k < length; k += 1) {
     const byte = bytes[at + k] ?? 0;
@@ -87,8 +80,7 @@ const encodeSize = (value: number) => {
     rest = Math.floor(rest / 256);
   }
 
-  // oxlint-disable-next-line no-bitwise -- EBML: length marker bit over the top byte
-  out[0] = (0x80 >> (length - 1)) | rest;
+  out[0] = 2 ** (8 - length) + rest;
 
   return out;
 };

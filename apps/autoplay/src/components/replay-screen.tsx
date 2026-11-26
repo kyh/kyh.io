@@ -65,7 +65,7 @@ const mimeTypeFor = (header: ArrayBuffer) =>
     : VIDEO_ONLY_MIME_TYPE;
 
 interface Player {
-  poke: () => void;
+  poke?: () => void;
   stop: () => void;
 }
 
@@ -310,8 +310,6 @@ const playSessionFile = (
   })();
 
   return {
-    // oxlint-disable-next-line no-empty-function -- a file plays itself; there is nothing to append
-    poke: () => {},
     stop: () => {
       stopped = true;
       video.removeEventListener("timeupdate", onTime);
@@ -348,7 +346,7 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       if (list !== undefined) {
         sessionsRef.current = list;
         setSessions(list);
-        playerRef.current?.poke();
+        playerRef.current?.poke?.();
       } else if (sessionsRef.current.length === 0) {
         setSessions([]);
       }

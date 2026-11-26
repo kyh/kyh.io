@@ -83,8 +83,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
 
-  // oxlint-disable-next-line no-empty-function -- nothing to settle before a session opens
-  const settleRef = useRef<() => void>(() => {});
+  const settleRef = useRef<(() => void) | undefined>(undefined);
 
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);
@@ -373,7 +372,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
 
   useEffect(() => {
     pausedRef.current = props.paused;
-    settleRef.current();
+    settleRef.current?.();
   }, [props.paused]);
 
   return <TvVideo videoRef={videoRef} muted={props.muted} />;
