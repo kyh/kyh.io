@@ -400,7 +400,9 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
                 setTagText(e.target.value);
               }}
               onKeyDown={(e) => {
-                e.key === "Enter" && handleAddTag();
+                if (e.key === "Enter") {
+                  handleAddTag();
+                }
               }}
               placeholder="Tag name..."
               autoFocus
@@ -595,7 +597,7 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
         );
       }
 
-      default: {
+      case "idle": {
         return (
           <div className="flex flex-col gap-1">
             <MenuButton
@@ -648,6 +650,10 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
             />
           </div>
         );
+      }
+
+      default: {
+        return mode satisfies never;
       }
     }
   };

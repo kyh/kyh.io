@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+import { z } from "zod";
+
 import type {
   CanvasImage,
   GridType,
@@ -33,57 +35,63 @@ interface KwadrantContextValue {
 
 const KwadrantContext = createContext<KwadrantContextValue | null>(null);
 
-type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+const labelsSchema = z.record(z.string(), z.string());
 
-interface JsonObject {
-  [key: string]: JsonValue;
-}
+const storedSchema = z.object({
+  axisLabels: labelsSchema.optional().catch(undefined),
+  edgeLabels: labelsSchema.optional().catch(undefined),
+  gridType: z.enum(["none", "squares", "dots"]).catch("none"),
+  images: z
+    .array(
+      z.object({
+        height: z.number(),
+        id: z.string(),
+        src: z.string(),
+        width: z.number(),
+        x: z.number(),
+        y: z.number(),
+      }),
+    )
+    .catch([]),
+  layoutLabels: z.record(z.string(), labelsSchema).optional().catch(undefined),
+  layoutType: z.enum(["axis", "edge"]).catch("axis"),
+  quadrantColors: z
+    .object({
+      bottomLeft: z.string(),
+      bottomRight: z.string(),
+      topLeft: z.string(),
+      topRight: z.string(),
+    })
+    .catch(DEFAULT_QUADRANT_COLORS),
+  tags: z
+    .array(
+      z.object({
+        color: z.string(),
+        id: z.string(),
+        text: z.string(),
+        x: z.number(),
+        y: z.number(),
+      }),
+    )
+    .catch([]),
+  theme: z.enum(["light", "dark"]).catch("light"),
+});
 
-const asJsonObject = (value: JsonValue | undefined) =>
-  value instanceof Object && !Array.isArray(value) ? value : null;
-
-const isString = (value: JsonValue | undefined): value is string => String(value) === value;
-
-const stringEntries = (value: JsonValue | undefined) => {
-  const object = asJsonObject(value);
-
-  if (!object) {
-    return {} satisfies LabelValues;
-  }
-
-  const entries: LabelValues = {};
-
-  for (const [key, entry] of Object.entries(object)) {
-    if (isString(entry)) {
-      entries[key] = entry;
-    }
-  }
-
-  return entries;
-};
-
-const migrateState = (stored: JsonObject) => {
-  if (stored.layoutLabels) {
-    return stored as Partial<KwadrantState>;
-  }
-
+const migrateLabels = (
+  axisLabels: LabelValues | undefined,
+  edgeLabels: LabelValues | undefined,
+) => {
   const layoutLabels: LayoutLabels = { ...DEFAULT_LAYOUT_LABELS };
 
-  const axisLabels = stringEntries(stored.axisLabels);
-
-  if (Object.keys(axisLabels).length > 0) {
+  if (axisLabels !== undefined && Object.keys(axisLabels).length > 0) {
     layoutLabels.axis = { ...DEFAULT_LAYOUT_LABELS.axis, ...axisLabels };
   }
 
-  const edgeLabels = stringEntries(stored.edgeLabels);
-
-  if (Object.keys(edgeLabels).length > 0) {
+  if (edgeLabels !== undefined && Object.keys(edgeLabels).length > 0) {
     layoutLabels.edge = { ...DEFAULT_LAYOUT_LABELS.edge, ...edgeLabels };
   }
 
-  const { axisLabels: _oldAxis, edgeLabels: _oldEdge, ...rest } = stored;
-
-  return { ...rest, layoutLabels } as Partial<KwadrantState>;
+  return layoutLabels;
 };
 
 const getInitialState = () => {
@@ -104,30 +112,25 @@ const getInitialState = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
 
-    if (stored !== null && stored !== "") {
-      const storedJson = asJsonObject(JSON.parse(stored) as JsonValue);
-
-      if (!storedJson) {
-        return defaultState;
-      }
-
-      const parsed = migrateState(storedJson);
-
-      return {
-        gridType: parsed.gridType || "none",
-        images: parsed.images || [],
-        layoutLabels: parsed.layoutLabels || DEFAULT_LAYOUT_LABELS,
-        layoutType: parsed.layoutType || "axis",
-        quadrantColors: parsed.quadrantColors || DEFAULT_QUADRANT_COLORS,
-        tags: parsed.tags || [],
-        theme: parsed.theme || "light",
-      } satisfies KwadrantState;
+    if (stored === null || stored === "") {
+      return defaultState;
     }
+
+    const parsed = storedSchema.safeParse(JSON.parse(stored));
+
+    if (!parsed.success) {
+      return defaultState;
+    }
+
+    const { axisLabels, edgeLabels, layoutLabels, ...rest } = parsed.data;
+
+    return {
+      ...rest,
+      layoutLabels: layoutLabels ?? migrateLabels(axisLabels, edgeLabels),
+    } satisfies KwadrantState;
   } catch {
     return defaultState;
   }
-
-  return defaultState;
 };
 
 export const KwadrantProvider = ({ children }: { children: ReactNode }) => {
