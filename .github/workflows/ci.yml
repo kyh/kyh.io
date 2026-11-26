@@ -41,3 +41,28 @@ jobs:
           pnpm -F @repo/commuting-clawders-mod build
           git diff --exit-code -- apps/commuting-clawders/mod/dist
           test -z "$(git status --porcelain -- apps/commuting-clawders/mod/dist)"
+
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+
+      - name: Build kyh
+        run: pnpm -F @repo/kyh build
+
+      - name: Start kyh
+        run: pnpm -F @repo/kyh start > "$RUNNER_TEMP/kyh.log" 2>&1 &
+
+      - name: Smoke
+        run: pnpm smoke
+
+      - name: kyh log
+        if: failure()
+        run: cat "$RUNNER_TEMP/kyh.log"

@@ -28,6 +28,7 @@
     "lint:fix": "oxlint --fix",
     "format:fix": "oxfmt --write",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "smoke": "node scripts/smoke.ts",
     "og:video": "node scripts/og-video.ts"
   },
   "devDependencies": {
