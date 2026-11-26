@@ -1,12 +1,17 @@
 import { Suspense } from "react";
 
-import { getSession } from "@/lib/auth";
-import { getUserVotes } from "@/lib/incident-action";
-import { getIncidents } from "@/lib/incident-query";
+import { DatabaseNotConfigured } from "@/components/database-not-configured";
+import { databaseConfigured } from "@/lib/env";
 
 import { IncidentFeed } from "./incident-feed";
 
-const IncidentFeedLoader = async () => {
+const loadFeed = async () => {
+  const [{ getSession }, { getUserVotes }, { getIncidents }] = await Promise.all([
+    import("@/lib/auth"),
+    import("@/lib/incident-action"),
+    import("@/lib/incident-query"),
+  ]);
+
   const { incidents, nextOffset } = await getIncidents({});
 
   const [session, userVotes] = await Promise.all([
@@ -14,7 +19,20 @@ const IncidentFeedLoader = async () => {
     getUserVotes({ incidentIds: incidents.map((i) => i.id) }),
   ]);
 
-  const isAdmin = !!session?.user && !session.user.isAnonymous;
+  return {
+    incidents,
+    isAdmin: !!session?.user && !session.user.isAnonymous,
+    nextOffset,
+    userVotes,
+  };
+};
+
+const IncidentFeedLoader = async () => {
+  if (!databaseConfigured) {
+    return <DatabaseNotConfigured />;
+  }
+
+  const { incidents, isAdmin, nextOffset, userVotes } = await loadFeed();
 
   return (
     <IncidentFeed

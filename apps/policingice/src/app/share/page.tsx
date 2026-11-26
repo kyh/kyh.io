@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { db } from "@/db/drizzle-client";
+import { DatabaseNotConfigured } from "@/components/database-not-configured";
 import { incidents, videos } from "@/db/drizzle-schema";
+import { databaseConfigured } from "@/lib/env";
 import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
 
 const MAX_INPUT_LENGTH = 2048;
@@ -47,11 +48,18 @@ const findVideoUrl = (url?: string, text?: string, title?: string) => {
   return null;
 };
 
+const loadDatabase = () => import("@/db/drizzle-client");
+
 const ShareHandler = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) => {
+  if (!databaseConfigured) {
+    return <DatabaseNotConfigured />;
+  }
+
+  const { db } = await loadDatabase();
   const params = await searchParams;
   const url = sanitizeInput(params.url);
   const text = sanitizeInput(params.text);
