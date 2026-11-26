@@ -5,6 +5,7 @@ import type {
   ProcessSpawnChunk,
   ProcessSpawnResult,
   Register,
+  TurnStepResult,
 } from "claude-code";
 
 import type { View } from "../types";
@@ -151,8 +152,6 @@ const startStreamer = async ($: EngineInterface) => {
   }
 
   screen.streamer = { kind: "launching" };
-  // oxlint-disable-next-line prefer-destructuring -- the engine reads $ from source and refuses any spelling but $.plugin.root
-  const root = $.plugin.root;
 
   const [tmpDir, term, termProgram] = await Promise.all([
     $.env.get("TMPDIR"),
@@ -170,15 +169,15 @@ const startStreamer = async ($: EngineInterface) => {
   const child = $.process.spawn({
     argv: [
       "node",
-      `${root}/dist/stream.mjs`,
+      `${$.plugin.root}/dist/stream.mjs`,
       "--world",
-      `${root}/dist/world`,
+      `${$.plugin.root}/dist/world`,
       "--socket",
       socketPath,
       "--image",
       imagePath,
     ],
-    cwd: root,
+    cwd: $.plugin.root,
   });
 
   const streamer = { child, imagePath, kind: "starting", socketPath } as const;
@@ -346,6 +345,14 @@ const finish = async ($: EngineInterface) => {
   }
 };
 
+const tally = async ($: EngineInterface, result: TurnStepResult) => {
+  if (result.usage) {
+    await setRun($, addTokens(run, result.usage.output_tokens));
+  }
+
+  return result;
+};
+
 export const register: Register = (on, options) => {
   const leaderboardUrl = String(options.leaderboardUrl ?? "");
   const isPosting = options.leaderboard !== false && leaderboardUrl.length > 0;
@@ -375,14 +382,7 @@ export const register: Register = (on, options) => {
   });
 
   on("turn.step", async function* countTokens($, e, next) {
-    // oxlint-disable-next-line node/callback-return -- the usage arrives in what the chain returns
-    const result = yield* next(e);
-
-    if (result.usage) {
-      await setRun($, addTokens(run, result.usage.output_tokens));
-    }
-
-    return result;
+    return await tally($, yield* next(e));
   });
 
   on("turn.complete", async ($, e, next) => {

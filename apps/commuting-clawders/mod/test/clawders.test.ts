@@ -28,8 +28,9 @@ const world = (on: On, { rank = 3 } = {}) => {
   on("session.start", (_$, e) => ({ cwd: e.cwd }));
   on("turn.start", (_$, e) => ({ turnId: e.turnId }));
   on("turn.complete", () => ({ text: "" }));
-  // oxlint-disable-next-line require-yield -- the model beneath answers whole: no chunks, only the result
   on("turn.step", async function* answer(_$, e) {
+    yield* [];
+
     return {
       answer: "",
       index: e.index,

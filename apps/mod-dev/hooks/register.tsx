@@ -83,7 +83,10 @@ const rowOf = ({ role, text, toolUses }: SessionMessage) =>
 const readSession = async ($: EngineInterface) => {
   const messages = await $.session.messages();
   const rows = messages.map(rowOf);
-  const agentIds = new Set(rows.flatMap((row) => row.toolUses.flatMap(({ agentId }) => agentId ?? [])));
+
+  const agentIds = new Set(
+    rows.flatMap((row) => row.toolUses.flatMap(({ agentId }) => agentId ?? [])),
+  );
 
   const found = await Promise.all(
     [...agentIds].map(async (agentId) => {
@@ -362,6 +365,11 @@ const prove = async (
   return { card, checks, grade, isReady: verdict === "ready", kind: "graded" } satisfies Proof;
 };
 
+const underBlock = <Result extends { block?: unknown }>(
+  result: Result,
+  block: NonNullable<Result["block"]>,
+) => (result.block === undefined ? { ...result, block } : result);
+
 const blockOf = async ($: EngineInterface, models: Models, reply: string) => {
   if (isAsking(reply)) {
     return null;
@@ -418,13 +426,10 @@ export const register: Register = (on, options) => {
     return await next(e);
   });
 
-  on("classic.SessionStart", async ($, e, next) => {
-    // oxlint-disable-next-line node/callback-return -- the bar joins what the chain returns
-    const result = await next(e);
-    const context = [...(result.additionalContext ?? []), BAR];
+  const withBar = <Result extends { additionalContext?: readonly string[] }>(result: Result) =>
+    isGated ? { ...result, additionalContext: [...(result.additionalContext ?? []), BAR] } : result;
 
-    return isGated ? { ...result, additionalContext: context } : result;
-  });
+  on("classic.SessionStart", async ($, e, next) => withBar(await next(e)));
 
   on("prompt.submit", async ($, e, next) => {
     await update($, blocksAtom, () => 0);
@@ -453,10 +458,8 @@ export const register: Register = (on, options) => {
     }
 
     await update($, blocksAtom, (n) => n + 1);
-    // oxlint-disable-next-line node/callback-return -- a block from beneath stands over this one
-    const result = await next(e);
 
-    return result.block === undefined ? { ...result, block } : result;
+    return underBlock(await next(e), block);
   });
 
   on("classic.PreToolUse", async ($, e, next) => {
