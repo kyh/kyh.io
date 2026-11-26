@@ -111,28 +111,36 @@ const fetchUploads = async (access: AccessOf<"youtube">) => {
       .map((entry) => entry.contentDetails.videoId),
   );
 
-  const items: Item[] = [];
+  const batches = await Promise.all(
+    Array.from({ length: Math.ceil(videoIds.length / VIDEOS_PER_CALL) }, async (_, batch) => {
+      const start = batch * VIDEOS_PER_CALL;
 
-  for (let start = 0; start < videoIds.length; start += VIDEOS_PER_CALL) {
-    const videos = await ytFetch(
-      access.accessToken,
-      "videos",
-      { id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(","), part: "snippet,statistics" },
-      videosSchema,
-    );
+      const videos = await ytFetch(
+        access.accessToken,
+        "videos",
+        {
+          id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(","),
+          part: "snippet,statistics",
+        },
+        videosSchema,
+      );
 
-    for (const video of videos.items ?? []) {
-      items.push({
-        author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
-        createdAt: video.snippet.publishedAt,
-        id: `youtube:${video.id}`,
-        kind: "youtube",
-        link: `https://www.youtube.com/watch?v=${video.id}`,
-        score: Number(video.statistics?.viewCount ?? 0),
-        text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
-      });
-    }
-  }
+      return (videos.items ?? []).map(
+        (video) =>
+          ({
+            author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
+            createdAt: video.snippet.publishedAt,
+            id: `youtube:${video.id}`,
+            kind: "youtube",
+            link: `https://www.youtube.com/watch?v=${video.id}`,
+            score: Number(video.statistics?.viewCount ?? 0),
+            text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
+          }) satisfies Item,
+      );
+    }),
+  );
+
+  const items = batches.flat();
 
   return items;
 };

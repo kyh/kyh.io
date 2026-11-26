@@ -134,7 +134,7 @@ with [agent-browser](https://github.com/vercel-labs/agent-browser) against a
 running deployment:
 
 ```sh
-pnpm with-env node e2e/owner-cookie.mjs > /tmp/owner-cookie   # signs the owner's live session
+pnpm with-env node e2e/owner-cookie.ts > /tmp/owner-cookie   # signs the owner's live session
 BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
 ```
 

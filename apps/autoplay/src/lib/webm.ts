@@ -155,9 +155,10 @@ const findSegment = (bytes: Uint8Array) => {
 
   const segmentSizeAt = segmentAt + segment.length;
 
-  return { segmentBody: segmentSizeAt + segmentSize.length, segmentSizeAt } satisfies
-    | { segmentSizeAt: number; segmentBody: number }
-    | null;
+  return { segmentBody: segmentSizeAt + segmentSize.length, segmentSizeAt } satisfies {
+    segmentSizeAt: number;
+    segmentBody: number;
+  } | null;
 };
 
 /**

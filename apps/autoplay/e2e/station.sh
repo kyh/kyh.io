@@ -3,7 +3,7 @@
 #
 #   BASE_URL=https://autoplay.kyh.io OWNER_COOKIE=/tmp/owner-cookie zsh e2e/station.sh
 #
-# OWNER_COOKIE is the file e2e/owner-cookie.mjs prints. With LIVE=1 the run
+# OWNER_COOKIE is the file e2e/owner-cookie.ts prints. With LIVE=1 the run
 # opens ONE real director session as the owner (~75 seconds, billed at fal's
 # 60s minimum), records it, and then watches the replay anonymously; the
 # default LIVE=0 skips the session and checks the replay of whatever is

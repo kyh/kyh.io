@@ -35,10 +35,7 @@ describe("invite cookie", () => {
     );
     assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE`), null);
     assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE.forged`), null);
-    assert.equal(
-      inviteFromCookie(`${INVITE_COOKIE}=${value.replace("VICKIE", "SESAME")}`),
-      null,
-    );
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=${value.replace("VICKIE", "SESAME")}`), null);
     assert.equal(inviteFromCookie(), null);
   });
 });

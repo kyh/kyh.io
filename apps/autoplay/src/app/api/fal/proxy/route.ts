@@ -43,7 +43,7 @@ const config = resolveProxyConfig({
       return false;
     }
 
-    return targetOf(behavior.getHeader) === HEARTBEAT_URL
+    return targetOf((name) => behavior.getHeader(name)) === HEARTBEAT_URL
       ? await programming.mayContinue(viewer)
       : await programming.mayOpen(viewer);
   },
@@ -109,7 +109,11 @@ export const POST = async (request: NextRequest) => {
   const response = await handleRequest(behavior, config);
 
   if (response.ok) {
-    await meter(targetOf(behavior.getHeader), body, response);
+    await meter(
+      targetOf((name) => behavior.getHeader(name)),
+      body,
+      response,
+    );
   }
 
   return response;

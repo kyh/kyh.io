@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { createClient } from "@libsql/client";
+import { z } from "zod";
 
 const {
   TURSO_DATABASE_URL: url,
@@ -26,13 +27,14 @@ const { rows } = await db.execute({
   sql: "select s.token from session s join user u on u.id = s.user_id where lower(u.username) = lower(?) and s.expires_at > ? order by s.updated_at desc limit 1",
 });
 
-const token = rows[0]?.token;
+const live = z.object({ token: z.string() }).safeParse(rows[0]);
 
-if (token === undefined) {
+if (!live.success) {
   throw new Error("the owner has no live session — sign in on the site first");
 }
 
-const signature = createHmac("sha256", secret).update(String(token)).digest("base64");
+const { token } = live.data;
+const signature = createHmac("sha256", secret).update(token).digest("base64");
 
 const name = process.argv.includes("--insecure")
   ? "autoplay.session_token"
