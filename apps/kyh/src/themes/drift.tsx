@@ -88,7 +88,7 @@ const styleOf = ({ delay, dip, duration, size, sway, swing, turn, wind, x }: Pie
     "--leaf-dip": `${dip}px`,
     "--leaf-swing": `${swing}s`,
     "--leaf-turn": `${turn}s`,
-  }) as React.CSSProperties;
+  }) satisfies React.CSSProperties;
 
 const Falling = ({
   piece,
@@ -131,7 +131,7 @@ export const ThemeDrift = () => {
   const still = useReducedMotion();
   const id = useSvgId("piece");
 
-  if (drift === null || still) {
+  if (drift === null || still === true) {
     return null;
   }
 

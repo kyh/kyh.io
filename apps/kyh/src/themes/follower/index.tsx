@@ -11,19 +11,21 @@ import { useTheme } from "../store";
 const usePointerSeen = () => {
   const [seen, setSeen] = useState(false);
   useEffect(() => {
-    if (seen) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (!seen) {
+      const check = () => {
+        if (lastPointer()) {
+          setSeen(true);
+        }
+      };
+
+      check();
+
+      cleanup = subscribeToPointer(check);
     }
 
-    const check = () => {
-      if (lastPointer()) {
-        setSeen(true);
-      }
-    };
-
-    check();
-
-    return subscribeToPointer(check);
+    return cleanup;
   }, [seen]);
 
   return seen;
@@ -47,7 +49,7 @@ export const ThemeFollower = () => {
   const beenHome = useBeenHome();
   const Follower = FOLLOWERS[theme];
 
-  if (!Follower || still || !seen || !beenHome) {
+  if (!Follower || still === true || !seen || !beenHome) {
     return null;
   }
 

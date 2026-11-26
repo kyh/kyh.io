@@ -24,7 +24,14 @@ export const createSiteRoom = () => {
   let page: string | null = null;
 
   const announce = () => {
-    const self = client?.playerId ? client.players[client.playerId] : undefined;
+    const self =
+      client !== null &&
+      client.playerId !== undefined &&
+      client.playerId !== null &&
+      client.playerId !== ""
+        ? client.players[client.playerId]
+        : undefined;
+
     const look = ownColorName();
 
     if (
@@ -58,7 +65,7 @@ export const createSiteRoom = () => {
   const onEvent = (event: string, payload: JsonValue, from: string) => {
     const slice = HOST_SLICES.find((candidate) => candidate.event === event);
 
-    if (!slice || !client?.isHost) {
+    if (!slice || client?.isHost !== true) {
       return;
     }
 

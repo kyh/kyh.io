@@ -20,15 +20,17 @@ const world = (on: On, { rank = 3 } = {}) => {
     return { value: { isPlaced: true } };
   });
   on("http.fetch", (_$, e) => {
-    posted.push({ body: JSON.parse(e.init?.body ?? "null"), url: e.url });
+    const body: unknown = JSON.parse(e.init?.body ?? "null");
+    posted.push({ body, url: e.url });
 
     return { value: { headers: {}, ok: true, status: 201, text: JSON.stringify({ rank }) } };
   });
   on("session.start", (_$, e) => ({ cwd: e.cwd }));
   on("turn.start", (_$, e) => ({ turnId: e.turnId }));
   on("turn.complete", () => ({ text: "" }));
-  // oxlint-disable-next-line require-yield -- the model beneath answers whole: no chunks, only the result
   on("turn.step", async function* answer(_$, e) {
+    yield* [];
+
     return {
       answer: "",
       index: e.index,
@@ -59,11 +61,15 @@ const step = async ($: Engine, tokens: number, agentId?: string) => {
     turnId: "t",
   });
 
-  let piece = await stream.next();
+  const drain: () => Promise<void> = async () => {
+    const piece = await stream.next();
 
-  while (!piece.done) {
-    piece = await stream.next();
-  }
+    if (piece.done !== true) {
+      await drain();
+    }
+  };
+
+  await drain();
 };
 
 const turn = async ($: Engine, tokens: number) => {

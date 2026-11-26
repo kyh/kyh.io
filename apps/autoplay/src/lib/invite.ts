@@ -44,7 +44,7 @@ export const validateInviteCode = async (raw: string) => {
   const code = normalizeInviteCode(raw);
 
   if (!isWellFormedInviteCode(code) || db === undefined) {
-    return;
+    return null;
   }
 
   const rows = await db
@@ -53,7 +53,7 @@ export const validateInviteCode = async (raw: string) => {
     .where(and(eq(inviteCode.code, code), available(Date.now())))
     .limit(1);
 
-  return rows.length === 0 ? undefined : code;
+  return rows.length === 0 ? null : code;
 };
 
 /** Take one use of `code`; false when it was spent, expired or revoked meanwhile. */
@@ -78,11 +78,7 @@ const sign = (code: string, secret: string) =>
 export const inviteCookieValue = (code: string) => {
   const secret = env.BETTER_AUTH_SECRET;
 
-  if (secret === undefined) {
-    return;
-  }
-
-  return `${code}.${sign(code, secret)}` satisfies string | undefined;
+  return secret === undefined ? undefined : `${code}.${sign(code, secret)}`;
 };
 
 /** The code a cookie header names, if its signature holds. */
@@ -90,7 +86,7 @@ export const inviteFromCookie = (cookieHeader?: string | null) => {
   const secret = env.BETTER_AUTH_SECRET;
 
   if (secret === undefined) {
-    return;
+    return null;
   }
 
   const value = (cookieHeader ?? "")
@@ -100,17 +96,17 @@ export const inviteFromCookie = (cookieHeader?: string | null) => {
     ?.slice(INVITE_COOKIE.length + 1);
 
   if (value === undefined) {
-    return;
+    return null;
   }
 
   const [code, signature] = decodeURIComponent(value).split(".");
 
   if (code === undefined || signature === undefined || !isWellFormedInviteCode(code)) {
-    return;
+    return null;
   }
 
   const expected = Buffer.from(sign(code, secret));
   const given = Buffer.from(signature);
 
-  return given.length === expected.length && timingSafeEqual(given, expected) ? code : undefined;
+  return given.length === expected.length && timingSafeEqual(given, expected) ? code : null;
 };

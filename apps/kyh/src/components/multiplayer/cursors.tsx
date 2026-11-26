@@ -86,13 +86,22 @@ const Cursors = () => {
   }
 
   useEffect(() => {
-    if (!Number.isFinite(nextUntil)) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (Number.isFinite(nextUntil)) {
+      const timer = window.setTimeout(
+        () => {
+          setWoken((count) => count + 1);
+        },
+        nextUntil - now() + 50,
+      );
+
+      cleanup = () => {
+        window.clearTimeout(timer);
+      };
     }
 
-    const timer = window.setTimeout(() => setWoken((count) => count + 1), nextUntil - now() + 50);
-
-    return () => window.clearTimeout(timer);
+    return cleanup;
   }, [nextUntil, now]);
 
   return (

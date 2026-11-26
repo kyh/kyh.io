@@ -16,7 +16,7 @@ export const GET = async (request: NextRequest) => {
 
   const source = await resolveSource(sourceId, await getSession());
 
-  if (source === undefined) {
+  if (source === null) {
     return errorResponse(404, "No such channel");
   }
 

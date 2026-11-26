@@ -330,7 +330,7 @@ const nostrilsOf = (head: Head) =>
         ),
         opacity: round(smooth((facing(normal) - 0.02) / 0.2)),
       },
-    ];
+    ] satisfies [string, Part];
   });
 
 const lipsOf = (head: Head) =>
@@ -344,7 +344,7 @@ const lipsOf = (head: Head) =>
 
     const shown = smooth((facing(head.direction([0, -0.2, side])) - 0.05) / 0.3);
 
-    return [`lip-${index}`, { d: linePath(line), opacity: round(shown) }];
+    return [`lip-${index}`, { d: linePath(line), opacity: round(shown) }] satisfies [string, Part];
   });
 
 const fang = (at: Vec3, down: number) =>
@@ -558,7 +558,7 @@ const puffsOf = (dragon: Dragon, origin: Point) =>
         d: shown ? ellipsePath({ angle: 0, cx: x - origin.x, cy: y - origin.y, rx: r, ry: r }) : "",
         opacity: shown ? round(0.7 * Math.min(1, t * 8, (1 - t) * 1.8)) : 0,
       },
-    ];
+    ] satisfies [string, Part];
   });
 
 /** Where its breath leaves it, on the screen: a little off the end of its nose. */
@@ -609,7 +609,7 @@ export const dragonPose = (dragon: Dragon) => {
     .map((solid) => ellipsePath(ellipseOf(solid.center, axesOf(solid))))
     .join("");
 
-  const parts = Object.fromEntries([
+  const parts = Object.fromEntries<Part>([
     ...body,
     ...legsOf(rings, dragon.stacking.legs, dragon.swim.weave * 1.6, dragon.tuck),
     ["head-ink", { d: outline }],

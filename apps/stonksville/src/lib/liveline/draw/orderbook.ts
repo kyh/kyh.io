@@ -133,7 +133,7 @@ const pickWeightedLevel = (orderbook: OrderbookData) => {
     }
   }
 
-  return allLevels[0];
+  return allLevels.at(0);
 };
 
 const spawnLabels = (
@@ -156,7 +156,7 @@ const spawnLabels = (
 
     const picked = pickWeightedLevel(orderbook);
 
-    if (!picked) {
+    if (picked === undefined) {
       break;
     }
 

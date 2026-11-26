@@ -19,7 +19,8 @@
     "motion": "^14.14.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-konva": "^19.3.2"
+    "react-konva": "^19.3.2",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@kyh/tsconfig": "workspace:^",

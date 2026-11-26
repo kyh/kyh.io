@@ -1,3 +1,5 @@
+import { graphemesOf } from "@/lib/graphemes";
+
 /**
  * What each scrambled heading says in Chinese (traditional, as in Taiwan),
  * spelled in zhuyin with its tones. A heading's scramble churns through the
@@ -27,16 +29,16 @@ export const ZHUYIN = new Map([
 ]);
 
 /** Every zhuyin symbol: what an untranslated heading scrambles through. */
-export const GLYPHS = [
-  ..."ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
-];
+export const GLYPHS = graphemesOf(
+  "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
+);
 
 /** `text` read out in zhuyin without its tones, or "" when it has no translation. */
 export const readingOf = (text: string) => (ZHUYIN.get(text) ?? "").replaceAll(/[ˊˇˋ˙]/gu, "");
 
 /** What `text` scrambles through: the letters of its own spelling, or all of zhuyin without one. */
 export const scrambleChars = (text: string) => {
-  const spelling = [...readingOf(text)].filter((symbol) => symbol !== " ");
+  const spelling = graphemesOf(readingOf(text)).filter((symbol) => symbol !== " ");
 
   return spelling.length > 0 ? [...new Set(spelling)] : GLYPHS;
 };

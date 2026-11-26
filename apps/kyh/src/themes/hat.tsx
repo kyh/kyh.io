@@ -63,7 +63,7 @@ const perchesOnScreen = () =>
     const rect = element.getBoundingClientRect();
     const key = element.dataset.hatPerch;
 
-    if (!key || rect.width === 0 || element.closest("[role=dialog]")) {
+    if (key === undefined || key === "" || rect.width === 0 || element.closest("[role=dialog]")) {
       return [];
     }
 
@@ -99,7 +99,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
 
     lift.current = null;
 
-    if (still) {
+    if (still === true) {
       return;
     }
 
@@ -124,7 +124,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     landFrom.current = null;
     const to = placed.getBoundingClientRect();
 
-    if (still) {
+    if (still === true) {
       return;
     }
 
@@ -217,14 +217,18 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
     setHeld({ lean: 0, ...at });
   };
 
-  const grabbed = useEffectEvent((event: PointerEvent, from: Crown) =>
-    carry(event, { x: from.x, y: from.y }, from),
-  );
+  const grabbed = useEffectEvent((event: PointerEvent, from: Crown) => {
+    carry(event, { x: from.x, y: from.y }, from);
+  });
 
   useEffect(() => {
-    setHatGrabber((event, from) => grabbed(event, from));
+    setHatGrabber((event, from) => {
+      grabbed(event, from);
+    });
 
-    return () => setHatGrabber(null);
+    return () => {
+      setHatGrabber(null);
+    };
   }, []);
 
   if (!picture) {
@@ -333,7 +337,7 @@ export const ThemeHat = ({ pictures }: { pictures: HatPictures }) => {
               rotate: `${TILT + held.lean}deg`,
               scale: CARRIED,
               top: held.y,
-              transition: still ? undefined : "rotate 120ms ease-out",
+              transition: still === true ? undefined : "rotate 120ms ease-out",
             }}
             aria-hidden="true"
           >

@@ -83,31 +83,35 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const idleRef = useRef<number | undefined>(undefined);
   const pausedRef = useRef(props.paused);
 
-  // oxlint-disable-next-line no-empty-function -- nothing to settle before a session opens
-  const settleRef = useRef<() => void>(() => {});
+  const settleRef = useRef<(() => void) | undefined>(undefined);
 
   const emitProgram = useEffectEvent(props.onProgram);
   const emitState = useEffectEvent(props.onState);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const video = videoRef.current;
 
-    if (video === null || stream === undefined) {
-      return;
+    if (video !== null && stream !== undefined) {
+      video.srcObject = stream;
+
+      void playQuietly(video);
+
+      let cancelled = false;
+
+      video.requestVideoFrameCallback(() => {
+        if (!cancelled) {
+          emitState({ status: "live" });
+        }
+      });
+
+      cleanup = () => {
+        cancelled = true;
+      };
     }
 
-    video.srcObject = stream;
-    void playQuietly(video);
-    let cancelled = false;
-    video.requestVideoFrameCallback(() => {
-      if (!cancelled) {
-        emitState({ status: "live" });
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    return cleanup;
   }, [stream, videoRef]);
 
   useEffect(() => {
@@ -368,7 +372,7 @@ export const LiveScreen = (props: LiveScreenProps) => {
 
   useEffect(() => {
     pausedRef.current = props.paused;
-    settleRef.current();
+    settleRef.current?.();
   }, [props.paused]);
 
   return <TvVideo videoRef={videoRef} muted={props.muted} />;

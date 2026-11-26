@@ -21,8 +21,9 @@ const set = (x: number, y: number, kind: Pointer["kind"]) => {
   notify();
 };
 
-const onPointer = (event: PointerEvent) =>
+const onPointer = (event: PointerEvent) => {
   set(event.clientX, event.clientY, event.pointerType === "mouse" ? "mouse" : "touch");
+};
 
 const onTouchMove = (event: TouchEvent) => {
   const [touch] = event.touches;

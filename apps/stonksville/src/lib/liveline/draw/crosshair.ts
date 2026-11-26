@@ -114,7 +114,7 @@ export const drawCrosshair = (
 
   ctx.textAlign = "left";
 
-  if (tooltipOutline) {
+  if (tooltipOutline === true) {
     ctx.strokeStyle = palette.tooltipBg;
     ctx.lineWidth = 3;
     ctx.lineJoin = "round";
@@ -188,7 +188,7 @@ export const drawMultiCrosshair = (
   const segments = buildSegments(palette, formatTime(hoverTime), entries, formatValue);
 
   const segWidths = segments.map((seg) =>
-    seg.isDot ? DOT_SEGMENT_WIDTH : ctx.measureText(seg.text).width,
+    seg.isDot === true ? DOT_SEGMENT_WIDTH : ctx.measureText(seg.text).width,
   );
 
   let totalW = 0;
@@ -221,7 +221,7 @@ export const drawMultiCrosshair = (
     for (let i = 0; i < segments.length; i += 1) {
       const seg = segments[i];
 
-      if (!seg.isDot) {
+      if (seg.isDot !== true) {
         ctx.strokeText(seg.text, ox, ty);
       }
 
@@ -234,7 +234,7 @@ export const drawMultiCrosshair = (
   for (let i = 0; i < segments.length; i += 1) {
     const seg = segments[i];
 
-    if (seg.isDot) {
+    if (seg.isDot === true) {
       ctx.beginPath();
       ctx.arc(ox + 4, ty - 4, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = seg.color;

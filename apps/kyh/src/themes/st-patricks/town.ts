@@ -13,7 +13,9 @@ export const town: Town = {
     trim: topHatTrim("festiveGreen", "screen"),
   },
   centerpiece: giantShamrock,
-  hat: (hat) => topHat(hat, "festiveGreen", "screen"),
+  hat: (hat) => {
+    topHat(hat, "festiveGreen", "screen");
+  },
   lights: ["festiveGreen", "gold"],
   porch: (sketch, x, z, random) => {
     if (random.chance(0.4)) {

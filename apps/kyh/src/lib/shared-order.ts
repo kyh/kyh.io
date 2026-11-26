@@ -1,6 +1,6 @@
 import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
 
-import { asRecord } from "@/lib/wire";
+import { asRecord, isText } from "@/lib/wire";
 
 export const REORDER = "reorder";
 
@@ -24,10 +24,7 @@ export interface ReorderIntent {
 const PROTOTYPE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 const asKey = (value: JsonValue | undefined) =>
-  String(value) === value &&
-  value.length > 0 &&
-  value.length <= MAX_KEY &&
-  !PROTOTYPE_KEYS.has(value)
+  isText(value) && value.length > 0 && value.length <= MAX_KEY && !PROTOTYPE_KEYS.has(value)
     ? value
     : null;
 
@@ -51,7 +48,9 @@ export const parseReorder = (payload: JsonValue) => {
   const order = keyList(record?.order);
   const n = asCount(record?.n);
 
-  return (grid && order && n !== null ? { grid, n, order } : null) satisfies ReorderIntent | null;
+  return (
+    grid !== null && grid !== "" && order && n !== null ? { grid, n, order } : null
+  ) satisfies ReorderIntent | null;
 };
 
 /**
@@ -63,7 +62,7 @@ export const applyReorder = (orders: JsonValue | undefined, intent: ReorderInten
   const next: JsonRecord = {};
 
   for (const [grid, entry] of Object.entries(asRecord(orders) ?? {})) {
-    if (Object.keys(next).length < MAX_GRIDS && asKey(grid) && asRecord(entry)) {
+    if (Object.keys(next).length < MAX_GRIDS && (asKey(grid) ?? "") !== "" && asRecord(entry)) {
       next[grid] = entry;
     }
   }
@@ -97,7 +96,7 @@ export const readSharedOrder = (entry: JsonValue | undefined, keys: string[]) =>
   const order = keyList(record?.order);
   const n = asCount(record?.n);
 
-  if (!by || !order || n === null) {
+  if (by === null || by === "" || !order || n === null) {
     return null;
   }
 

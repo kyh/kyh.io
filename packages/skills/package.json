@@ -4,10 +4,10 @@
   "description": "Personal Claude Code + Codex skills, MCP servers, and global instructions. `npx @kyh/skills install` copies them into a canonical ~/.agents store (and ~/.claude).",
   "license": "MIT",
   "bin": {
-    "kyh-skills": "scripts/cli.mjs"
+    "kyh-skills": "dist/cli.js"
   },
   "files": [
-    "scripts",
+    "dist",
     "skills",
     "CLAUDE.md",
     "mcp.json",
@@ -18,11 +18,20 @@
     "access": "public"
   },
   "scripts": {
-    "install:local": "node scripts/cli.mjs install",
-    "check:external": "node scripts/cli.mjs check"
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm build",
+    "install:local": "node src/cli.ts install",
+    "check:external": "node src/cli.ts check",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "skills": "^1.9.0"
+    "skills": "^1.9.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "workspace:^",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=24"

@@ -1,17 +1,19 @@
 import { useEffect, useRef } from "react";
-import { Link, Outlet, ScrollRestoration, useLocation, type RouteObject } from "react-router-dom";
+import { Link, Outlet, ScrollRestoration, useLocation } from "react-router-dom";
+import type { RouteObject } from "react-router-dom";
 
 import { PageMetadata } from "./components/page-metadata";
-import { availableLessons, defaultLesson, lessonPath, type AvailableLesson } from "./curriculum";
+import { availableLessons, defaultLesson, lessonPath } from "./curriculum";
+import type { AvailableLesson } from "./curriculum";
 import { lessonPages } from "./lesson-registry";
 
-function LessonRoute({
+const LessonRoute = ({
   lesson,
   canonicalPath,
 }: {
   lesson: AvailableLesson;
   canonicalPath: string;
-}) {
+}) => {
   const Lesson = lessonPages[lesson.slug];
 
   return (
@@ -24,9 +26,9 @@ function LessonRoute({
       <Lesson />
     </>
   );
-}
+};
 
-function NotFoundPage() {
+const NotFoundPage = () => {
   const location = useLocation();
 
   return (
@@ -42,22 +44,29 @@ function NotFoundPage() {
       </main>
     </>
   );
-}
+};
 
-function RouteLayout() {
+const RouteLayout = () => {
   const location = useLocation();
   const previousPath = useRef(location.pathname);
 
   useEffect(() => {
     const pathChanged = previousPath.current !== location.pathname;
     previousPath.current = location.pathname;
-    if (!pathChanged) return;
 
-    const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
-    });
+    let cleanup: (() => void) | undefined;
 
-    return () => cancelAnimationFrame(frame);
+    if (pathChanged) {
+      const frame = requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
+      });
+
+      cleanup = () => {
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    return cleanup;
   }, [location.pathname]);
 
   return (
@@ -66,7 +75,7 @@ function RouteLayout() {
       <ScrollRestoration />
     </>
   );
-}
+};
 
 const lessonRoutes: RouteObject[] = availableLessons.map((lesson) => ({
   path: lessonPath(lesson.slug),

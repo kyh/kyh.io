@@ -1,5 +1,6 @@
 import type { JsonRecord } from "@vibedgames/multiplayer";
 import { asText } from "@/lib/wire";
+import { graphemesOf } from "@/lib/graphemes";
 
 /** The longest line, in characters. */
 export const MAX_CHARS = 120;
@@ -48,11 +49,9 @@ export type ChatEdit =
   | { kind: "send"; text: string }
   | { kind: "cancel" };
 
-const characters = (text: string) => [...text];
-
 /** One line of plain text: no control characters, spaces collapsed, at most MAX_CHARS. */
 export const cleanLine = (text: string) =>
-  characters(
+  graphemesOf(
     text
       .replaceAll(/\p{Cc}/gu, " ")
       .replaceAll(/\s+/gu, " ")
@@ -75,7 +74,7 @@ export const editDraft = (
     return null;
   }
 
-  const printable = characters(press.key).length === 1;
+  const printable = graphemesOf(press.key).length === 1;
 
   if (draft === null) {
     return (
@@ -97,7 +96,7 @@ export const editDraft = (
 
   if (press.key === "Backspace") {
     return {
-      draft: characters(draft).slice(0, -1).join(""),
+      draft: graphemesOf(draft).slice(0, -1).join(""),
       kind: "draft",
     } satisfies ChatEdit | null;
   }

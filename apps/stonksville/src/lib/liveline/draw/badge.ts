@@ -15,8 +15,8 @@ export const badgeSvgPath = (pillW: number, pillH: number, tailLen: number, tail
     `L${cx},0`,
     `A${r},${r},0,0,1,${cx},${pillH}`,
     `L${tl},${pillH}`,
-    `C${tailLen + 2},${pillH},${3},${r + tailSpread},0,${r}`,
-    `C${3},${r - tailSpread},${tailLen + 2},0,${tl},0`,
+    `C${tailLen + 2},${pillH},3,${r + tailSpread},0,${r}`,
+    `C3,${r - tailSpread},${tailLen + 2},0,${tl},0`,
     "Z",
   ].join(" ");
 };

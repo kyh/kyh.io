@@ -13,13 +13,20 @@ export const CopyCommand = ({ command }: { command: string }) => {
       setLabel("Select it");
     }
 
-    setTimeout(() => setLabel("Copy"), 1600);
+    setTimeout(() => {
+      setLabel("Copy");
+    }, 1600);
   };
 
   return (
     <div className="command">
       <code>{command}</code>
-      <button onClick={copy} type="button">
+      <button
+        onClick={() => {
+          void copy();
+        }}
+        type="button"
+      >
         {label}
       </button>
     </div>

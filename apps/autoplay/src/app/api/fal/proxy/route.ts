@@ -43,9 +43,9 @@ const config = resolveProxyConfig({
       return false;
     }
 
-    return targetOf(behavior.getHeader) === HEARTBEAT_URL
-      ? programming.mayContinue(viewer)
-      : programming.mayOpen(viewer);
+    return targetOf((name) => behavior.getHeader(name)) === HEARTBEAT_URL
+      ? await programming.mayContinue(viewer)
+      : await programming.mayOpen(viewer);
   },
 });
 
@@ -55,12 +55,12 @@ const heartbeatOf = (body: string) => {
   try {
     parsed = JSON.parse(body);
   } catch {
-    return;
+    return null;
   }
 
   const beat = heartbeatSchema.safeParse(parsed);
 
-  return beat.success ? beat.data.session_id : undefined;
+  return beat.success ? beat.data.session_id : null;
 };
 
 const meter = async (target: string | undefined, body: string, response: Response) => {
@@ -80,7 +80,7 @@ const meter = async (target: string | undefined, body: string, response: Respons
     } else if (target === HEARTBEAT_URL) {
       const sessionId = heartbeatOf(body);
 
-      if (sessionId !== undefined) {
+      if (sessionId !== null) {
         await programming.sessionSeen(sessionId, viewer);
       }
     }
@@ -96,18 +96,24 @@ export const POST = async (request: NextRequest) => {
   const behavior: ProxyBehavior<Response> = {
     getHeader: (name) => request.headers.get(name),
     getHeaders: () => fromHeaders(request.headers),
-    getRequestBody: () => Promise.resolve(body),
+    getRequestBody: async () => await Promise.resolve(body),
     id: "nextjs-app-router",
     method: request.method,
     respondWith: (status, data) => NextResponse.json(data, { headers: responseHeaders, status }),
-    sendHeader: (name, value) => responseHeaders.set(name, value),
+    sendHeader: (name, value) => {
+      responseHeaders.set(name, value);
+    },
     sendResponse: responsePassthrough,
   };
 
   const response = await handleRequest(behavior, config);
 
   if (response.ok) {
-    await meter(targetOf(behavior.getHeader), body, response);
+    await meter(
+      targetOf((name) => behavior.getHeader(name)),
+      body,
+      response,
+    );
   }
 
   return response;

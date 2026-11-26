@@ -21,7 +21,7 @@ const loadFeed = async () => {
 
   return {
     incidents,
-    isAdmin: !!session?.user && !session.user.isAnonymous,
+    isAdmin: session?.user !== undefined && session.user.isAnonymous !== true,
     nextOffset,
     userVotes,
   };

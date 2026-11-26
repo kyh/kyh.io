@@ -176,7 +176,17 @@ export type ErrorPayload = z.infer<typeof errorPayloadSchema>;
 /** A route's answer as the client reads it: the payload, or the station's error. */
 export type Answer<T> = { data: T } | { error: string };
 
-export const jsonRequest = <Body extends object>(method: "POST" | "DELETE" | "PATCH", body: Body) =>
+/** Every body the browser sends the station. */
+export type RequestBody =
+  | z.input<typeof addSourceRequestSchema>
+  | z.input<typeof inviteRequestSchema>
+  | z.input<typeof liveRequestSchema>
+  | z.input<typeof recordingRequestSchema>
+  | z.input<typeof removeSourceRequestSchema>
+  | z.input<typeof reorderSourcesRequestSchema>
+  | z.input<typeof replayFileRequestSchema>;
+
+export const jsonRequest = (method: "POST" | "DELETE" | "PATCH", body: RequestBody) =>
   ({
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },

@@ -11,6 +11,7 @@ import {
   buildOpenApiDocument,
   discoveryLinks,
 } from "./openapi";
+import type { OpenApiDocument } from "./openapi";
 
 const appDir = path.join(import.meta.dirname, "..", "app");
 
@@ -50,7 +51,8 @@ test("every documented path has a real route handler", () => {
 });
 
 test("every operation is described well enough for function calling", () => {
-  const operations = Object.values(buildOpenApiDocument().paths).map((item) => item.get);
+  const doc: OpenApiDocument = buildOpenApiDocument();
+  const operations = Object.values(doc.paths).map((item) => item.get);
   const ids = operations.map((operation) => operation.operationId);
 
   assert.equal(new Set(ids).size, ids.length, "duplicate operationId");
@@ -61,7 +63,7 @@ test("every operation is described well enough for function calling", () => {
     assert.ok(operation.description.length >= 15, `${operation.operationId} is thin`);
 
     const ok = operation.responses["200"];
-    assert.ok(ok, `${operation.operationId} has no 200 response`);
+    assert.ok(ok !== undefined, `${operation.operationId} has no 200 response`);
     const mediaTypes = Object.values(ok.content);
     assert.ok(mediaTypes.length > 0, `${operation.operationId} has no content type`);
 

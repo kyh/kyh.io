@@ -139,13 +139,22 @@ export const addChunk = async (row: Omit<typeof recording.$inferInsert, "id" | "
     return;
   }
 
-  for (const old of expired) {
-    await db.delete(recording).where(eq(recording.id, old.id));
-  }
-
-  for (const old of expiredFiles) {
-    await db.delete(recordingFile).where(eq(recordingFile.sessionId, old.sessionId));
-  }
+  await Promise.all([
+    expired.length > 0 &&
+      db.delete(recording).where(
+        inArray(
+          recording.id,
+          expired.map((old) => old.id),
+        ),
+      ),
+    expiredFiles.length > 0 &&
+      db.delete(recordingFile).where(
+        inArray(
+          recordingFile.sessionId,
+          expiredFiles.map((old) => old.sessionId),
+        ),
+      ),
+  ]);
 };
 
 const sessionRows = async (channelKey: string, sessionId: string) => {
@@ -217,17 +226,17 @@ export const sessionFile = async (channelKey: string, sessionId: string, owner: 
     return { refused: "on-air" } satisfies { url: string } | { refused: "unknown" | "on-air" };
   }
 
-  const parts: Uint8Array[] = [];
+  const parts = await Promise.all(
+    rows.map(async (row) => {
+      const response = await fetch(row.url);
 
-  for (const row of rows) {
-    const response = await fetch(row.url);
+      if (!response.ok) {
+        throw new Error(`Chunk ${row.index} answered ${response.status}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`Chunk ${row.index} answered ${response.status}`);
-    }
-
-    parts.push(new Uint8Array(await response.arrayBuffer()));
-  }
+      return new Uint8Array(await response.arrayBuffer());
+    }),
+  );
 
   const stream = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
   let offset = 0;

@@ -13,7 +13,9 @@ export const town: Town = {
     trim: topHatTrim("screen", "screen"),
   },
   centerpiece: giantTurkey,
-  hat: (hat) => topHat(hat, "screen", "skinDark"),
+  hat: (hat) => {
+    topHat(hat, "screen", "skinDark");
+  },
   lights: ["pumpkin", "gold", "festiveRed"],
   porch: (sketch, x, z) => {
     pumpkin(sketch, x, z);
@@ -24,7 +26,9 @@ export const town: Town = {
     tree: { day: "#f0a85a", night: "#9a5522" },
     treeShade: { day: "#dd7f3c", night: "#7e3f18" },
   },
-  shore: (sketch, x, z) => pumpkin(sketch, x, z, 0.9),
+  shore: (sketch, x, z) => {
+    pumpkin(sketch, x, z, 0.9);
+  },
   square: (sketch, x, z) => {
     hayBale(sketch, x - 0.12, z);
     hayBale(sketch, x + 0.12, z);

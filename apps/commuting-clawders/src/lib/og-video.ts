@@ -4,7 +4,7 @@ export const description = "Keep Clawd running";
 
 /**
  * The site's live demo, recorded from a running build by `pnpm og:video
- * commuting-clawders` (scripts/og-video.mjs at the repo root): the scripted
+ * commuting-clawders` (scripts/og-video.ts at the repo root): the scripted
  * Claude Code session (src/lib/demo.ts) beside the real game, Clawd running
  * while the score ticks up a point a token. Its last beat is crossfaded over
  * its first, so it loops.

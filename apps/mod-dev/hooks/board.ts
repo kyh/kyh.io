@@ -47,13 +47,7 @@ export const statusLine = (
   status: string | undefined,
   review: { phase: string; verdict?: Verdict },
 ) => {
-  if (status === undefined) {
-    return;
-  }
+  const suffix = review.phase === "reviewing" ? "reviewing…" : review.verdict;
 
-  if (review.phase === "reviewing") {
-    return `${status} · reviewing…`;
-  }
-
-  return review.verdict === undefined ? status : `${status} · ${review.verdict}`;
+  return status === undefined || suffix === undefined ? status : `${status} · ${suffix}`;
 };

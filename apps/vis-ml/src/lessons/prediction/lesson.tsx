@@ -1,9 +1,11 @@
 import { useState } from "react";
 
-import { ScrollyStory, type StorySteps } from "../../components/scrolly-story";
+import { ScrollyStory } from "../../components/scrolly-story";
+import type { StorySteps } from "../../components/scrolly-story";
 import { salaryData } from "./data";
 import { makeFirstGuess } from "./model";
-import { PredictionGraphic, type PredictionScene } from "./prediction-graphic";
+import { PredictionGraphic } from "./prediction-graphic";
+import type { PredictionScene } from "./prediction-graphic";
 
 const steps: StorySteps<PredictionScene> = [
   {
@@ -158,7 +160,7 @@ const steps: StorySteps<PredictionScene> = [
   },
 ];
 
-export function PredictionLesson() {
+export const PredictionLesson = () => {
   const [model, setModel] = useState(() => makeFirstGuess(salaryData));
 
   return (
@@ -176,4 +178,4 @@ export function PredictionLesson() {
       />
     </main>
   );
-}
+};

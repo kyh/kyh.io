@@ -77,7 +77,9 @@ export const createView = ({ pixelRatio = 1, sizesCanvas = false } = {}) => {
   return {
     canvas: renderer.domElement,
     coins: () => game.coins,
-    dispose: () => renderer.dispose(),
+    dispose: () => {
+      renderer.dispose();
+    },
     draw,
     gl: renderer.getContext(),
   };

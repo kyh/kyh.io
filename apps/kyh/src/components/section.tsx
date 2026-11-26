@@ -3,7 +3,7 @@ import { HashIcon } from "@/components/icons";
 
 export const SectionHeading = ({ children, id }: { children: string; id?: string }) => (
   <div className="group -ml-5 flex items-center gap-2">
-    {id && (
+    {id !== undefined && id !== "" && (
       <a
         href={`#${id}`}
         className="text-foreground-faded hover:text-foreground-highlighted hover:bg-background-hover -m-1 -translate-y-0.75 rounded-sm p-1 opacity-0 transition-[color,background-color,opacity] duration-150 group-hover:opacity-100 focus-visible:opacity-100"
@@ -33,7 +33,8 @@ interface SectionProps {
 }
 
 export const Section = ({ children, className, id, delay = 0 }: SectionProps) => {
-  const scrollMarginClasses = id ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
+  const scrollMarginClasses =
+    id !== undefined && id !== "" ? "scroll-mt-[120px] sm:scroll-mt-[100px]" : "";
 
   const combinedClasses = ["flex flex-col gap-4", scrollMarginClasses, className]
     .filter(Boolean)

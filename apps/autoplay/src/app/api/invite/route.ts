@@ -18,7 +18,7 @@ export const POST = async (request: NextRequest) => {
   }
 
   const code = await validateInviteCode(body.data.code);
-  const value = code === undefined ? undefined : inviteCookieValue(code);
+  const value = code === null ? undefined : inviteCookieValue(code);
 
   if (value === undefined) {
     return errorResponse(403, "That invite code isn't valid");

@@ -48,7 +48,7 @@ const vectorRowSchema = z.object({
 const requireAdmin = async () => {
   const session = await getSession();
 
-  if (!session?.user || session.user.isAnonymous) {
+  if (!session?.user || session.user.isAnonymous === true) {
     throw new Error("Unauthorized");
   }
 
@@ -60,6 +60,11 @@ const parseLocalDate = (dateStr: string) => {
 
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
+
+const dateOf = (seconds: number | null) =>
+  seconds !== null && seconds !== 0 ? new Date(seconds * 1000) : null;
+
+const given = (value: string | undefined): value is string => value !== undefined && value !== "";
 
 const newestFirst = (inc: typeof incidents) => [
   desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
@@ -74,8 +79,10 @@ export const searchIncidents = async (data: {
   startDate?: string;
   endDate?: string;
 }) => {
-  const rangeStart = data.startDate ? parseLocalDate(data.startDate) : undefined;
-  const rangeEnd = data.endDate ? parseLocalDate(data.endDate) : undefined;
+  const rangeStart = given(data.startDate) ? parseLocalDate(data.startDate) : undefined;
+
+  const rangeEnd = given(data.endDate) ? parseLocalDate(data.endDate) : undefined;
+
   rangeEnd?.setDate(rangeEnd.getDate() + 1);
 
   const baseFilter = {
@@ -85,7 +92,7 @@ export const searchIncidents = async (data: {
     status: "approved",
   } as const;
 
-  if (!data.query) {
+  if (!given(data.query)) {
     const results = await db.query.incidents.findMany({
       limit: 50,
       orderBy: newestFirst,
@@ -128,13 +135,13 @@ export const searchIncidents = async (data: {
     let dateConditions = "";
     const args: (string | number)[] = [vectorStr];
 
-    if (data.startDate) {
+    if (given(data.startDate)) {
       const start = Math.floor(parseLocalDate(data.startDate).getTime() / 1000);
       dateConditions += " AND i.incident_date >= ?";
       args.push(start);
     }
 
-    if (data.endDate) {
+    if (given(data.endDate)) {
       const end = parseLocalDate(data.endDate);
       end.setDate(end.getDate() + 1);
       dateConditions += " AND i.incident_date <= ?";
@@ -176,12 +183,12 @@ export const searchIncidents = async (data: {
         entry = {
           distance: row.vec_distance,
           incident: {
-            createdAt: row.created_at ? new Date(row.created_at * 1000) : null,
-            deletedAt: row.deleted_at ? new Date(row.deleted_at * 1000) : null,
+            createdAt: dateOf(row.created_at),
+            deletedAt: dateOf(row.deleted_at),
             description: row.description,
             embedding: row.embedding,
             id,
-            incidentDate: row.incident_date ? new Date(row.incident_date * 1000) : null,
+            incidentDate: dateOf(row.incident_date),
             justifiedCount: row.justified_count,
             location: row.location,
             pinned: row.pinned === 1,
@@ -194,9 +201,9 @@ export const searchIncidents = async (data: {
         vectorIncidents.set(id, entry);
       }
 
-      if (row.vid && row.url && row.platform) {
+      if (row.vid !== null && row.vid !== 0 && row.url !== null && row.url !== "" && row.platform) {
         entry.incident.videos.push({
-          createdAt: row.v_created_at ? new Date(row.v_created_at * 1000) : null,
+          createdAt: dateOf(row.v_created_at),
           id: row.vid,
           incidentId: id,
           platform: row.platform,
@@ -238,7 +245,7 @@ export const getUserVotes = async (data: { incidentIds: number[] }) => {
 
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return {};
   }
 
@@ -258,7 +265,7 @@ export const getUserVotes = async (data: { incidentIds: number[] }) => {
 export const getUserVote = async (data: { incidentId: number }) => {
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return null;
   }
 
@@ -277,7 +284,7 @@ export const createIncident = async (data: {
 }) => {
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return { error: "Unauthorized", incident: null };
   }
 
@@ -316,7 +323,10 @@ export const createIncident = async (data: {
     .insert(incidents)
     .values({
       description: data.description,
-      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : new Date(),
+      incidentDate:
+        data.incidentDate !== undefined && data.incidentDate !== ""
+          ? parseLocalDate(data.incidentDate)
+          : new Date(),
       location: data.location,
       status: "approved",
     })
@@ -341,7 +351,7 @@ export const submitVote = async (data: {
 }) => {
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return { error: "No session", success: false };
   }
 
@@ -409,7 +419,7 @@ export const reportIncident = async (data: { incidentId: number }) => {
 export const addVideoToIncident = async (data: { incidentId: number; url: string }) => {
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return { error: "Unauthorized", success: false };
   }
 
@@ -433,7 +443,7 @@ export const updateIncidentDetails = async (data: {
 }) => {
   const session = await getSession();
 
-  if (!session?.user.id) {
+  if (session === null || session.user.id === undefined || session.user.id === "") {
     return { error: "Unauthorized", success: false };
   }
 
@@ -441,7 +451,10 @@ export const updateIncidentDetails = async (data: {
     .update(incidents)
     .set({
       description: data.description ?? null,
-      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+      incidentDate:
+        data.incidentDate !== undefined && data.incidentDate !== ""
+          ? parseLocalDate(data.incidentDate)
+          : null,
       location: data.location ?? null,
     })
     .where(eq(incidents.id, data.incidentId));

@@ -19,7 +19,11 @@ export const LeadPhoto = ({ className }: { className: string }) => {
   return (
     <figure className={className}>
       <div className="relative h-[clamp(340px,min(46vw,calc(100svh-300px)),600px)] overflow-hidden border border-foreground">
-        <Honeypot onCarry={(held) => setMoment(held ? "handled" : "after")} />
+        <Honeypot
+          onCarry={(held) => {
+            setMoment(held ? "handled" : "after");
+          }}
+        />
       </div>
       <figcaption
         aria-live="polite"

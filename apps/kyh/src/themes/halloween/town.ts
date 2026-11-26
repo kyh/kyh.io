@@ -28,7 +28,9 @@ export const town: Town = {
     glass: { day: "#dbe6ea", night: "#ff9a3c" },
     glassDim: { day: "#dbe6ea", night: "#d9661f" },
   },
-  shore: (sketch, x, z) => pumpkin(sketch, x, z, 0.9),
+  shore: (sketch, x, z) => {
+    pumpkin(sketch, x, z, 0.9);
+  },
   square: (sketch, x, z, random) => {
     deadTree(sketch, x, z, random);
     gravestone(sketch, x - 0.22, z + 0.12);

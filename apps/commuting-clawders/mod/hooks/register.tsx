@@ -5,6 +5,7 @@ import type {
   ProcessSpawnChunk,
   ProcessSpawnResult,
   Register,
+  TurnStepResult,
 } from "claude-code";
 
 import type { View } from "../types";
@@ -94,25 +95,28 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
   let output = "";
   let ending: ProcessSpawnResult | null = null;
 
-  try {
-    for (;;) {
-      const piece = await streamer.child.next();
+  const drain: () => Promise<ProcessSpawnResult> = async () => {
+    const piece = await streamer.child.next();
 
-      if (piece.done) {
-        ending = piece.value;
-        break;
-      }
-
-      output = (output + piece.value.text).slice(-LOG_MAX);
-
-      if (
-        screen.streamer === streamer &&
-        piece.value.stream === "stdout" &&
-        output.includes("ready")
-      ) {
-        screen.streamer = { ...streamer, kind: "live" };
-      }
+    if (piece.done === true) {
+      return piece.value;
     }
+
+    output = (output + piece.value.text).slice(-LOG_MAX);
+
+    if (
+      screen.streamer === streamer &&
+      piece.value.stream === "stdout" &&
+      output.includes("ready")
+    ) {
+      screen.streamer = { ...streamer, kind: "live" };
+    }
+
+    return await drain();
+  };
+
+  try {
+    ending = await drain();
   } catch (error) {
     output += `\n${String(error)}`;
   }
@@ -148,8 +152,6 @@ const startStreamer = async ($: EngineInterface) => {
   }
 
   screen.streamer = { kind: "launching" };
-  // oxlint-disable-next-line prefer-destructuring -- the engine reads $ from source and refuses any spelling but $.plugin.root
-  const root = $.plugin.root;
 
   const [tmpDir, term, termProgram] = await Promise.all([
     $.env.get("TMPDIR"),
@@ -167,15 +169,15 @@ const startStreamer = async ($: EngineInterface) => {
   const child = $.process.spawn({
     argv: [
       "node",
-      `${root}/dist/stream.mjs`,
+      `${$.plugin.root}/dist/stream.mjs`,
       "--world",
-      `${root}/dist/world`,
+      `${$.plugin.root}/dist/world`,
       "--socket",
       socketPath,
       "--image",
       imagePath,
     ],
-    cwd: root,
+    cwd: $.plugin.root,
   });
 
   const streamer = { child, imagePath, kind: "starting", socketPath } as const;
@@ -194,9 +196,9 @@ const closeScreen = async ($: EngineInterface) => {
 
 const sameSize = (a: Size, b: Size) => a.columns === b.columns && a.rows === b.rows;
 
-const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
+const blit = async ($: EngineInterface, frame: Frame, imagePath: string) =>
   frame.cells === undefined
-    ? $.ui.blit({
+    ? await $.ui.blit({
         key: SCREEN,
         requestId: PANE,
         source: {
@@ -207,7 +209,7 @@ const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
           width: frame.width,
         },
       })
-    : $.ui.blit({
+    : await $.ui.blit({
         cells: frame.cells,
         columns: frame.columns,
         key: SCREEN,
@@ -243,13 +245,13 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
 
   const { deny } = await blit($, frame, imagePath).catch(() => ({ deny: "the pane is closed" }));
 
-  if (deny && screen.mode === "image") {
+  if (deny !== undefined && deny !== "" && screen.mode === "image") {
     screen.mode = "cells";
 
     return;
   }
 
-  if (deny) {
+  if (deny !== undefined && deny !== "") {
     await closeScreen($);
 
     return;
@@ -343,6 +345,14 @@ const finish = async ($: EngineInterface) => {
   }
 };
 
+const tally = async ($: EngineInterface, result: TurnStepResult) => {
+  if (result.usage) {
+    await setRun($, addTokens(run, result.usage.output_tokens));
+  }
+
+  return result;
+};
+
 export const register: Register = (on, options) => {
   const leaderboardUrl = String(options.leaderboardUrl ?? "");
   const isPosting = options.leaderboard !== false && leaderboardUrl.length > 0;
@@ -362,35 +372,28 @@ export const register: Register = (on, options) => {
       void pull($);
     });
 
-    return next(e);
+    return await next(e);
   });
 
   on("turn.start", async ($, e, next) => {
     await setRun($, startTurn(run, await $.clock.now()));
 
-    return next(e);
+    return await next(e);
   });
 
   on("turn.step", async function* countTokens($, e, next) {
-    // oxlint-disable-next-line node/callback-return -- the usage arrives in what the chain returns
-    const result = yield* next(e);
-
-    if (result.usage) {
-      await setRun($, addTokens(run, result.usage.output_tokens));
-    }
-
-    return result;
+    return await tally($, yield* next(e));
   });
 
   on("turn.complete", async ($, e, next) => {
-    if (!e.agentId) {
+    if (e.agentId === undefined || e.agentId === "") {
       await setRun($, endTurn(run, await $.clock.now()));
       $.clock.after(GRACE_MS, () => {
         void finish($);
       });
     }
 
-    return next(e);
+    return await next(e);
   });
 
   on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {

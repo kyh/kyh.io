@@ -70,7 +70,7 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
     let tc = 0;
 
     for (const k of keys) {
-      tc += Number(current[k]);
+      tc += current[k];
     }
 
     return tc;
@@ -168,7 +168,7 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
       </svg>
       {tooltipOpen && tooltipData && (
         <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
-          <p className="text-xs text-slate-400">Year {tooltipData.bar.data["year"]}</p>
+          <p className="text-xs text-slate-400">Year {tooltipData.bar.data.year}</p>
           <p className="mt-1 text-xs text-slate-50 capitalize">{tooltipData.key} compensation</p>
           <NumericFormat
             style={{ color: colorScale(tooltipData.key) }}

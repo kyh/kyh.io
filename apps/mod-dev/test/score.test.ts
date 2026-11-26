@@ -300,10 +300,17 @@ test("the gate passes the reviewer's cited fixes back to Claude", async ($, on) 
 test("the gate lets go after three tries", async ($, on) => {
   const { toasts } = world(on, { answers: [NOT_READY] });
 
-  for (const _ of [1, 2, 3]) {
+  const tryStop: (left: number) => Promise<void> = async (left) => {
+    if (left === 0) {
+      return;
+    }
+
     const { block } = await $.classic.Stop(stop());
     expect(block).toContain("the reviewer says fix first");
-  }
+    await tryStop(left - 1);
+  };
+
+  await tryStop(3);
 
   const { block } = await $.classic.Stop(stop());
   expect(block).toBe(undefined);

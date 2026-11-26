@@ -3,13 +3,12 @@ import test from "node:test";
 
 import type { Built } from "./render";
 import type { Object3D } from "three";
-import { Mesh } from "three";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 
 import type { StartAt } from "./grow";
 import { BUILT, raise } from "./grow";
 import { WALLS } from "./palette";
-import { build, createMaterials } from "./render";
+import { build, createMaterials, isMesh } from "./render";
 import { schemeOf } from "./town-theme";
 import { box, createSketch, part } from "./sketch";
 
@@ -18,7 +17,7 @@ const stampOf = (object: Object3D) => {
     return object.geometry.getAttribute("instanceBuildAt");
   }
 
-  return object instanceof Mesh ? object.geometry.getAttribute("buildAt") : null;
+  return isMesh(object) ? object.geometry.getAttribute("buildAt") : null;
 };
 
 const stamps = (built: Built) => {
@@ -26,11 +25,11 @@ const stamps = (built: Built) => {
   built.group.traverse((object) => {
     const at = stampOf(object);
 
-    if (object instanceof Mesh) {
-      assert.ok(at, "stamped");
+    if (isMesh(object)) {
+      assert.ok(at !== null, "stamped");
     }
 
-    if (at) {
+    if (at !== null) {
       for (let index = 0; index < at.count; index += 1) {
         starts.add(at.getX(index));
       }
@@ -52,7 +51,10 @@ const twoBoxes = () => {
 };
 
 test("every face and ink line is stamped with the start of where it stands, a part by its place in town", () => {
-  assert.deepEqual([...stamps(raise(twoBoxes(), westThenEast))].toSorted(), [1, 2]);
+  assert.deepEqual(
+    [...stamps(raise(twoBoxes(), westThenEast))].toSorted((a, b) => a - b),
+    [1, 2],
+  );
 });
 
 test("what's never built is stamped as built long ago", () => {

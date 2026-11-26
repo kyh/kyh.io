@@ -11,8 +11,7 @@ export const runSchema = z
     name: z.pipe(
       z.pipe(
         z.string(),
-        // oxlint-disable-next-line no-control-regex -- control characters are exactly what to strip
-        z.transform((name) => name.replaceAll(/[\u0000-\u001F\u007F]/gu, "").trim()),
+        z.transform((name) => name.replaceAll(/\p{Cc}/gu, "").trim()),
       ),
       z.string().check(z.minLength(1), z.maxLength(32)),
     ),

@@ -56,7 +56,7 @@ test("markdown link targets are absolute so the document stands alone", () => {
 
   for (const target of targets) {
     assert.ok(
-      target?.startsWith("https://") || target?.startsWith("mailto:"),
+      target?.startsWith("https://") === true || target?.startsWith("mailto:") === true,
       `${target} is not absolute`,
     );
   }

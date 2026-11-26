@@ -31,7 +31,8 @@ const Bracket = ({ x, y }: { x: "left" | "right"; y: "top" | "bottom" }) => (
  * thumbnail or a face.
  */
 export const IncidentCard = ({ incident }: { incident: IncidentSummary }) => {
-  const place = incident.location?.trim() || `Incident #${incident.id}`;
+  const location = incident.location?.trim() ?? "";
+  const place = location === "" ? `Incident #${incident.id}` : location;
   const date = formatDate(incident.incidentDate ?? incident.createdAt);
 
   return (
@@ -70,7 +71,9 @@ export const IncidentCard = ({ incident }: { incident: IncidentSummary }) => {
         <div style={{ display: "flex", fontSize: 64, fontWeight: 700, lineHeight: 1.1 }}>
           {place}
         </div>
-        {date ? <div style={{ color: ACCENT, display: "flex", fontSize: 32 }}>{date}</div> : null}
+        {date !== null && date !== "" ? (
+          <div style={{ color: ACCENT, display: "flex", fontSize: 32 }}>{date}</div>
+        ) : null}
         <div style={{ color: "#a1a1aa", display: "flex", fontSize: 30, lineHeight: 1.4 }}>
           {incidentDescription(incident)}
         </div>

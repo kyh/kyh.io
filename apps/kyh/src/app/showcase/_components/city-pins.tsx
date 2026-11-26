@@ -71,7 +71,9 @@ export const Pin = ({ project, isLit, ref, onHover, onFocus, onTap }: PinProps) 
             onFocus(project.slug);
           }
         }}
-        onBlur={() => onHover(null)}
+        onBlur={() => {
+          onHover(null);
+        }}
       >
         <motion.span layout transition={MORPH} className="flex items-center gap-2">
           <motion.span layout transition={MORPH} className="block shrink-0">

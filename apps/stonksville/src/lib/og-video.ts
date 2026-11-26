@@ -2,7 +2,7 @@ import { siteConfig } from "@/lib/site-config";
 
 /**
  * The real game, recorded from a running build by `pnpm og:video
- * stonksville` (scripts/og-video.mjs at the repo root): the S&P 500 replaying
+ * stonksville` (scripts/og-video.ts at the repo root): the S&P 500 replaying
  * a stretch of its real daily history while bets go down on the grid ahead of
  * the price. Its last beat is crossfaded over its first, so it loops.
  */

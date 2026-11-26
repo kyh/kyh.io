@@ -5,7 +5,9 @@ import { egg } from "@/app/showcase/_components/city/decor-props";
 import { PASTEL_ROOFS, slopesOf } from "@/app/showcase/_components/city/palette";
 import type { Prop, Town } from "@/app/showcase/_components/city/town-theme";
 
-const pastelEgg: Prop = (sketch, x, z, random) => egg(sketch, x, z, random.pick(PASTEL_ROOFS));
+const pastelEgg: Prop = (sketch, x, z, random) => {
+  egg(sketch, x, z, random.pick(PASTEL_ROOFS));
+};
 
 export const town: Town = {
   blimp: {

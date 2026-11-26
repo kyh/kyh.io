@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Listbox, RadioGroup } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Radio,
+  RadioGroup,
+} from "@headlessui/react";
 import { NumericFormat } from "react-number-format";
 
 import type { CompHooksType } from "@/lib/comp";
@@ -23,7 +30,9 @@ export const CompForm = ({ comp }: Props) => {
   const appliedRequest = useRef(0);
   const modalProps = useModal();
 
-  const requestUpdate = () => setUpdateRequest((n) => n + 1);
+  const requestUpdate = () => {
+    setUpdateRequest((n) => n + 1);
+  };
 
   useEffect(() => {
     if (appliedRequest.current === updateRequest) {
@@ -50,7 +59,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.base}
-                  onValueChange={({ value }) => comp.setBase(value)}
+                  onValueChange={({ value }) => {
+                    comp.setBase(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -66,7 +77,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.signOnBonus}
-                  onValueChange={({ value }) => comp.setSignOnBonus(value)}
+                  onValueChange={({ value }) => {
+                    comp.setSignOnBonus(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -82,7 +95,9 @@ export const CompForm = ({ comp }: Props) => {
                 <NumericFormat
                   {...currencyInputFormatProps}
                   value={comp.targetBonus}
-                  onValueChange={({ value }) => comp.setTargetBonus(value)}
+                  onValueChange={({ value }) => {
+                    comp.setTargetBonus(value);
+                  }}
                   onBlur={requestUpdate}
                   {...fieldProps}
                 />
@@ -105,20 +120,20 @@ export const CompForm = ({ comp }: Props) => {
               }}
               onBlur={requestUpdate}
             >
-              <RadioGroup.Option value="iso">
+              <Radio value="iso">
                 {({ checked }) => (
                   <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     ISO
                   </span>
                 )}
-              </RadioGroup.Option>
-              <RadioGroup.Option value="rsu">
+              </Radio>
+              <Radio value="rsu">
                 {({ checked }) => (
                   <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     RSU
                   </span>
                 )}
-              </RadioGroup.Option>
+              </Radio>
             </RadioGroup>
           </legend>
           {comp.shareType === "iso" && (
@@ -133,7 +148,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.iso}
-                    onValueChange={({ value }) => comp.setIso(value)}
+                    onValueChange={({ value }) => {
+                      comp.setIso(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -149,7 +166,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.strikePrice}
-                    onValueChange={({ value }) => comp.setStrikePrice(value)}
+                    onValueChange={({ value }) => {
+                      comp.setStrikePrice(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -164,7 +183,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.rsu}
-                    onValueChange={({ value }) => comp.setRsu(value)}
+                    onValueChange={({ value }) => {
+                      comp.setRsu(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -180,7 +201,9 @@ export const CompForm = ({ comp }: Props) => {
               <button
                 type="button"
                 className="estimate-modal-button p-1"
-                onClick={() => modalProps.openModal()}
+                onClick={() => {
+                  modalProps.openModal();
+                }}
               >
                 <span className="sr-only">Find out for me</span>
                 <svg
@@ -211,31 +234,31 @@ export const CompForm = ({ comp }: Props) => {
               }}
             >
               <div className="relative">
-                <Listbox.Button className="text-emerald-500">
+                <ListboxButton className="text-emerald-500">
                   {shareCalcTypeLabels[comp.shareCalcType]}
-                </Listbox.Button>
-                <Listbox.Options className="ring-opacity-5 absolute right-0 z-10 mt-1 max-h-60 w-[200px] overflow-auto rounded-lg bg-black text-sm shadow-lg ring-1 ring-black focus:outline-hidden">
-                  <Listbox.Option
+                </ListboxButton>
+                <ListboxOptions className="ring-opacity-5 absolute right-0 z-10 mt-1 max-h-60 w-[200px] overflow-auto rounded-lg bg-black text-sm shadow-lg ring-1 ring-black focus:outline-hidden">
+                  <ListboxOption
                     value="current"
-                    className={({ active }) =>
+                    className={({ focus }) =>
                       `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
+                        focus ? "bg-emerald-900 text-emerald-100" : ""
                       }`
                     }
                   >
                     Growth Based
-                  </Listbox.Option>
-                  <Listbox.Option
+                  </ListboxOption>
+                  <ListboxOption
                     value="revenue"
-                    className={({ active }) =>
+                    className={({ focus }) =>
                       `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
+                        focus ? "bg-emerald-900 text-emerald-100" : ""
                       }`
                     }
                   >
                     Revenue Based
-                  </Listbox.Option>
-                </Listbox.Options>
+                  </ListboxOption>
+                </ListboxOptions>
               </div>
             </Listbox>
           </legend>
@@ -251,7 +274,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.preferredSharePrice}
-                    onValueChange={({ value }) => comp.setPreferredSharePrice(value)}
+                    onValueChange={({ value }) => {
+                      comp.setPreferredSharePrice(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -273,7 +298,9 @@ export const CompForm = ({ comp }: Props) => {
                     allowNegative
                     suffix={comp.shareType === "rsu" ? "%" : "x"}
                     value={comp.expectedGrowthMultiple}
-                    onValueChange={({ value }) => comp.setExpectedGrowthMultiple(value)}
+                    onValueChange={({ value }) => {
+                      comp.setExpectedGrowthMultiple(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -293,7 +320,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.sharesOutstanding}
-                    onValueChange={({ value }) => comp.setSharesOutstanding(value)}
+                    onValueChange={({ value }) => {
+                      comp.setSharesOutstanding(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -309,7 +338,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...currencyInputFormatProps}
                     value={comp.expectedRevenue}
-                    onValueChange={({ value }) => comp.setExpectedRevenue(value)}
+                    onValueChange={({ value }) => {
+                      comp.setExpectedRevenue(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />
@@ -325,7 +356,9 @@ export const CompForm = ({ comp }: Props) => {
                   <NumericFormat
                     {...staticInputFormatProps}
                     value={comp.revenueMultiple}
-                    onValueChange={({ value }) => comp.setRevenueMultiple(value)}
+                    onValueChange={({ value }) => {
+                      comp.setRevenueMultiple(value);
+                    }}
                     onBlur={requestUpdate}
                     {...fieldProps}
                   />

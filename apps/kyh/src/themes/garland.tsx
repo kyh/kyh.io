@@ -43,19 +43,23 @@ const Layer = ({ children, phase }: { children: React.ReactNode; phase?: number 
 
 const usePausedOffscreen = (garland: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const element = garland.current;
 
-    if (!shown || !element) {
-      return;
+    if (shown && element) {
+      const observer = new IntersectionObserver(([entry]) => {
+        element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
+      });
+
+      observer.observe(element);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(([entry]) => {
-      element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
-    });
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
+    return cleanup;
   }, [garland, shown]);
 };
 

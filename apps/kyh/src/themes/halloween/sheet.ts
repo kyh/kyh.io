@@ -135,7 +135,8 @@ const REST: readonly Rest[] = (() => {
 
     const a = fine[segment] ?? { x: 0, y: 0 };
     const b = fine[(segment + 1) % fine.length] ?? a;
-    const t = (at - walked) / (lengths[segment] || 1);
+    const length = lengths[segment] ?? 0;
+    const t = (at - walked) / (length === 0 ? 1 : length);
     const x = a.x + (b.x - a.x) * t;
     const y = a.y + (b.y - a.y) * t;
     const down = Math.min(1, Math.max(0, (y + 2) / (DROP + 2)));

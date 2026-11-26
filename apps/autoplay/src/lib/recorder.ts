@@ -91,13 +91,13 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
     for (;;) {
       const id = readVint(pending, cursor, true);
 
-      if (id === undefined) {
+      if (id === null) {
         return;
       }
 
       const size = readVint(pending, cursor + id.length, false);
 
-      if (size === undefined) {
+      if (size === null) {
         return;
       }
 
@@ -106,13 +106,13 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
       if (id.value === EBML_CLUSTER) {
         const timecodeId = readVint(pending, body, true);
 
-        if (timecodeId === undefined) {
+        if (timecodeId === null) {
           return;
         }
 
         const timecodeSize = readVint(pending, body + timecodeId.length, false);
 
-        if (timecodeSize === undefined) {
+        if (timecodeSize === null) {
           return;
         }
 
@@ -216,7 +216,9 @@ export const createRecorder = (stream: MediaStream, sourceId: string, onAir: OnA
   };
 
   recorder.ondataavailable = (event) => {
-    enqueue(() => ingest(event.data));
+    enqueue(async () => {
+      await ingest(event.data);
+    });
   };
 
   const requestFile = async () => {

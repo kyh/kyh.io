@@ -134,13 +134,15 @@ const drawBackdrop = (
 ) => {
   if (opts.referenceLine) {
     const { referenceLine } = opts;
-    withAlpha(ctx, reveal, () => drawReferenceLine(ctx, layout, palette, referenceLine));
+    withAlpha(ctx, reveal, () => {
+      drawReferenceLine(ctx, layout, palette, referenceLine);
+    });
   }
 
   if (opts.showGrid) {
-    withAlpha(ctx, revealRamp(reveal, 0.15, 0.7), () =>
-      drawGrid(ctx, layout, palette, opts.formatValue, opts.gridState, opts.dt),
-    );
+    withAlpha(ctx, revealRamp(reveal, 0.15, 0.7), () => {
+      drawGrid(ctx, layout, palette, opts.formatValue, opts.gridState, opts.dt);
+    });
   }
 };
 
@@ -159,7 +161,7 @@ const drawTimeAxisAt = (
   alpha: number,
   opts: TimeAxisOptions,
 ) => {
-  withAlpha(ctx, alpha, () =>
+  withAlpha(ctx, alpha, () => {
     drawTimeAxis(
       ctx,
       layout,
@@ -169,8 +171,8 @@ const drawTimeAxisAt = (
       opts.formatTime,
       opts.timeAxisState,
       opts.dt,
-    ),
-  );
+    );
+  });
 };
 
 export interface DrawOptions {
@@ -233,12 +235,12 @@ const drawLiveTip = (
 
   const dotAlpha = reveal < 0.3 ? 0 : (reveal - 0.3) / 0.7;
   const showPulse = opts.showPulse && reveal > 0.6 && pause < 0.5;
-  withAlpha(ctx, dotAlpha, () =>
-    drawDot(ctx, lastPt[0], lastPt[1], palette, showPulse, dotScrub, opts.now_ms),
-  );
+  withAlpha(ctx, dotAlpha, () => {
+    drawDot(ctx, lastPt[0], lastPt[1], palette, showPulse, dotScrub, opts.now_ms);
+  });
 
   if (opts.showMomentum) {
-    withAlpha(ctx, revealRamp(reveal, 0.6, 1) * (1 - pause), () =>
+    withAlpha(ctx, revealRamp(reveal, 0.6, 1) * (1 - pause), () => {
       drawArrows(
         ctx,
         lastPt[0],
@@ -248,8 +250,8 @@ const drawLiveTip = (
         opts.arrowState,
         opts.dt,
         opts.now_ms,
-      ),
-    );
+      );
+    });
   }
 
   if (opts.particleState && reveal > 0.9) {
@@ -289,7 +291,7 @@ export const drawFrame = (
 
   if (opts.orderbookData && opts.orderbookState) {
     const { orderbookData, orderbookState } = opts;
-    withAlpha(ctx, reveal, () =>
+    withAlpha(ctx, reveal, () => {
       drawOrderbook(
         ctx,
         layout,
@@ -298,8 +300,8 @@ export const drawFrame = (
         opts.dt,
         orderbookState,
         opts.swingMagnitude,
-      ),
-    );
+      );
+    });
   }
 
   const scrubX = opts.scrubAmount > 0.05 ? opts.hoverX : null;
@@ -463,7 +465,7 @@ const drawSeriesEndpoints = (
       drawSimpleDot(ctx, x, y, entry.palette.line, 3);
     }
 
-    if (entry.label) {
+    if (entry.label !== undefined && entry.label !== "") {
       ctx.font =
         '600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
       ctx.textAlign = "left";
@@ -664,7 +666,7 @@ const drawCandleLayer = (
   const accentCol = lp > 0.01 ? palette.line : undefined;
   const { pad, chartW, chartH } = layout;
 
-  const drawCurrent = () =>
+  const drawCurrent = () => {
     drawCandlesticks(
       ctx,
       layout,
@@ -679,6 +681,7 @@ const drawCandleLayer = (
       accentCol,
       lp,
     );
+  };
 
   ctx.save();
   ctx.beginPath();
@@ -778,12 +781,12 @@ export const drawCandleFrame = (
   const colorBlend = lp > 0.001 ? opts.lineModeProg / lp : 1;
 
   if (opts.showGrid) {
-    withAlpha(ctx, revealRamp(reveal, 0.25, 0.6), () =>
-      drawGrid(ctx, layout, palette, opts.formatValue, opts.gridState, opts.dt),
-    );
+    withAlpha(ctx, revealRamp(reveal, 0.25, 0.6), () => {
+      drawGrid(ctx, layout, palette, opts.formatValue, opts.gridState, opts.dt);
+    });
   }
 
-  let linePts: Point[] | undefined;
+  let linePts: Point[] | null = null;
 
   if (lp > 0.01 && opts.lineVisible.length >= 2) {
     const scrubX = opts.scrubAmount > 0.05 ? opts.hoverX : null;
@@ -816,9 +819,9 @@ export const drawCandleFrame = (
   if (lastPt && lp > 0.5 && reveal > 0.3) {
     const dotAlpha = (lp - 0.5) * 2 * ((reveal - 0.3) / 0.7);
     const showPulse = lp > 0.8 && reveal > 0.6;
-    withAlpha(ctx, dotAlpha, () =>
-      drawDot(ctx, lastPt[0], lastPt[1], palette, showPulse, opts.scrubAmount, opts.now_ms),
-    );
+    withAlpha(ctx, dotAlpha, () => {
+      drawDot(ctx, lastPt[0], lastPt[1], palette, showPulse, opts.scrubAmount, opts.now_ms);
+    });
   }
 
   drawTimeAxisAt(ctx, layout, palette, revealRamp(reveal, 0.25, 0.6), {

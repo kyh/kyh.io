@@ -3,8 +3,8 @@ import { projects } from "@/lib/data";
 import { todaysPageMetadata } from "@/lib/todays-video";
 import { CityShowcase } from "./_components/city-showcase";
 
-export const generateMetadata = () =>
-  todaysPageMetadata({
+export const generateMetadata = async () =>
+  await todaysPageMetadata({
     description: "Always on a side quest",
     path: "/showcase",
     title: "Showcase",

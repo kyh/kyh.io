@@ -722,7 +722,7 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
     BALL.map((axis) => scale(axis, HEAD_R)),
   );
 
-  const parts = Object.fromEntries([
+  const parts = Object.fromEntries<Part>([
     ...solid("coat", coat.outline),
     ["belt", { d: coat.belt }],
     ["belt-buckle", { d: coat.buckle, opacity: round(coat.buckleShown) }],
@@ -780,11 +780,11 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
   const top = body + 10;
 
   const armKeys = [0, 1].map((index) => {
-    if (leprechaun.armOverHead[index]) {
+    if (leprechaun.armOverHead[index] === true) {
       return top + 1 + index * 0.01;
     }
 
-    return body + (leprechaun.armFront[index] ? 0.4 : -0.4) + index * 0.01;
+    return body + (leprechaun.armFront[index] === true ? 0.4 : -0.4) + index * 0.01;
   });
 
   const doff = doffOf(leprechaun);
@@ -810,7 +810,7 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
       (index) =>
         [
           `tail-${index}`,
-          body + (leprechaun.tailFront[index] ? 0.3 : -0.3) + index * 0.01,
+          body + (leprechaun.tailFront[index] === true ? 0.3 : -0.3) + index * 0.01,
         ] satisfies [string, number],
     ),
     ...[0, 1].map(

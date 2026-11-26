@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { Component, lazy, Suspense, useMemo } from "react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
@@ -36,8 +36,8 @@ const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform 
 );
 
 interface EmbedErrorBoundaryProps {
-  fallback: ReactNode;
-  children: ReactNode;
+  fallback: ReactElement;
+  children: ReactElement;
 }
 
 class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: boolean }> {
@@ -158,25 +158,23 @@ const RedditEmbed = ({ url }: { url: string }) => {
     "www.redditmedia.com",
   )}/?ref_source=embed&ref=share&embed=true&showmedia=true&showedits=false`;
 
-  /* oxlint-disable react/iframe-missing-sandbox -- third-party player needs scripts and same-origin, which is the combination the rule forbids */
   return (
     <iframe
       src={embedUrl}
+      // oxlint-disable-next-line react/iframe-missing-sandbox -- third-party player needs scripts and same-origin, which is the combination the rule forbids
       sandbox="allow-scripts allow-same-origin allow-popups"
-      style={{ border: "none" }}
+      style={{ border: "none", overflow: "hidden" }}
       height="500"
       width="100%"
-      scrolling="no"
       title="Reddit post"
     />
   );
-  /* oxlint-enable react/iframe-missing-sandbox */
 };
 
 export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {
   const videoId = extractVideoId(url, platform);
 
-  if (!videoId) {
+  if (videoId === null || videoId === "") {
     return <FallbackLink url={url} platform={platform} />;
   }
 

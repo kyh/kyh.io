@@ -310,7 +310,7 @@ export const shade = (token: Token, scheme: Scheme, colorful: boolean, tint: Tin
   if (!colorful) {
     const { repaint, vivid } = scheme.town;
 
-    if (repaint?.[token] || vivid?.has(token)) {
+    if (repaint?.[token] || vivid?.has(token) === true) {
       return colorIn(token, scheme);
     }
 
@@ -412,7 +412,7 @@ const turnOnto = (areas: ReadonlyMap<Token, number>, colors: readonly string[]) 
   const turns = families.map((family, index) => {
     const onto = colors[index];
 
-    return onto
+    return onto !== undefined && onto !== ""
       ? { hue: family.hue, ...turnBetween(family.hex, onto) }
       : { ...mainTurn, hue: family.hue };
   });

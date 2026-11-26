@@ -65,7 +65,7 @@ const mimeTypeFor = (header: ArrayBuffer) =>
     : VIDEO_ONLY_MIME_TYPE;
 
 interface Player {
-  poke: () => void;
+  poke?: () => void;
   stop: () => void;
 }
 
@@ -93,7 +93,7 @@ const playSession = (
   };
 
   const finish = () => {
-    if (!stopped && source.readyState === "open" && !buffer?.updating) {
+    if (!stopped && source.readyState === "open" && buffer?.updating !== true) {
       source.endOfStream();
     }
   };
@@ -310,8 +310,6 @@ const playSessionFile = (
   })();
 
   return {
-    // oxlint-disable-next-line no-empty-function -- a file plays itself; there is nothing to append
-    poke: () => {},
     stop: () => {
       stopped = true;
       video.removeEventListener("timeupdate", onTime);
@@ -348,7 +346,7 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
       if (list !== undefined) {
         sessionsRef.current = list;
         setSessions(list);
-        playerRef.current?.poke();
+        playerRef.current?.poke?.();
       } else if (sessionsRef.current.length === 0) {
         setSessions([]);
       }
@@ -422,55 +420,58 @@ export const ReplayScreen = (props: ReplayScreenProps) => {
 
   const loaded = sessions !== undefined;
   useEffect(() => {
-    if (!loaded) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (loaded) {
+      const video = videoRef.current;
+
+      const list = sessionsRef.current;
+
+      if (video !== null && list.length !== 0) {
+        const streaming = canReplay();
+
+        if (!(!streaming && !canPlayFile())) {
+          const start = cursor % list.length;
+
+          const session = streaming
+            ? list[start]
+            : [...list.slice(start), ...list.slice(0, start)].find(
+                (entry) => !isOnAir(entry) && !failed.has(entry.sessionId),
+              );
+
+          if (session !== undefined) {
+            setPlayingId(session.sessionId);
+
+            const onChunk = (chunk: RecordingChunk) => {
+              emitProgram(chunk);
+            };
+
+            const onDone = () => {
+              setCursor((value) => value + 1);
+            };
+
+            const latest = () =>
+              sessionsRef.current.find((entry) => entry.sessionId === session.sessionId) ?? session;
+
+            const player = streaming
+              ? playSession(video, session, latest, onChunk, onDone)
+              : playSessionFile(video, props.sourceId, session, onChunk, onDone, () => {
+                  setFailed((known) => new Set([...known, session.sessionId]));
+                  onDone();
+                });
+
+            playerRef.current = player;
+
+            cleanup = () => {
+              playerRef.current = undefined;
+              player.stop();
+            };
+          }
+        }
+      }
     }
 
-    const video = videoRef.current;
-    const list = sessionsRef.current;
-
-    if (video === null || list.length === 0) {
-      return;
-    }
-
-    const streaming = canReplay();
-
-    if (!streaming && !canPlayFile()) {
-      return;
-    }
-
-    const start = cursor % list.length;
-
-    const session = streaming
-      ? list[start]
-      : [...list.slice(start), ...list.slice(0, start)].find(
-          (entry) => !isOnAir(entry) && !failed.has(entry.sessionId),
-        );
-
-    if (session === undefined) {
-      return;
-    }
-
-    setPlayingId(session.sessionId);
-    const onChunk = (chunk: RecordingChunk) => emitProgram(chunk);
-    const onDone = () => setCursor((value) => value + 1);
-
-    const latest = () =>
-      sessionsRef.current.find((entry) => entry.sessionId === session.sessionId) ?? session;
-
-    const player = streaming
-      ? playSession(video, session, latest, onChunk, onDone)
-      : playSessionFile(video, props.sourceId, session, onChunk, onDone, () => {
-          setFailed((known) => new Set([...known, session.sessionId]));
-          onDone();
-        });
-
-    playerRef.current = player;
-
-    return () => {
-      playerRef.current = undefined;
-      player.stop();
-    };
+    return cleanup;
   }, [cursor, loaded, failed, props.sourceId, videoRef]);
 
   return <TvVideo videoRef={videoRef} muted={props.muted} />;

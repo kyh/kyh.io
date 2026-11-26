@@ -53,7 +53,7 @@ const videosSchema = z.object({
     .optional(),
 });
 
-const ytFetch = <T>(
+const ytFetch = async <T>(
   accessToken: string,
   path: string,
   params: Record<string, string>,
@@ -65,7 +65,7 @@ const ytFetch = <T>(
     url.searchParams.set(key, value);
   }
 
-  return fetchJson("YouTube", url, accessToken, schema);
+  return await fetchJson("YouTube", url, accessToken, schema);
 };
 
 const uploadsPlaylistId = (channelId: string) => `UU${channelId.slice(2)}`;
@@ -111,34 +111,42 @@ const fetchUploads = async (access: AccessOf<"youtube">) => {
       .map((entry) => entry.contentDetails.videoId),
   );
 
-  const items: Item[] = [];
+  const batches = await Promise.all(
+    Array.from({ length: Math.ceil(videoIds.length / VIDEOS_PER_CALL) }, async (_, batch) => {
+      const start = batch * VIDEOS_PER_CALL;
 
-  for (let start = 0; start < videoIds.length; start += VIDEOS_PER_CALL) {
-    const videos = await ytFetch(
-      access.accessToken,
-      "videos",
-      { id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(","), part: "snippet,statistics" },
-      videosSchema,
-    );
+      const videos = await ytFetch(
+        access.accessToken,
+        "videos",
+        {
+          id: videoIds.slice(start, start + VIDEOS_PER_CALL).join(","),
+          part: "snippet,statistics",
+        },
+        videosSchema,
+      );
 
-    for (const video of videos.items ?? []) {
-      items.push({
-        author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
-        createdAt: video.snippet.publishedAt,
-        id: `youtube:${video.id}`,
-        kind: "youtube",
-        link: `https://www.youtube.com/watch?v=${video.id}`,
-        score: Number(video.statistics?.viewCount ?? 0),
-        text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
-      });
-    }
-  }
+      return (videos.items ?? []).map(
+        (video) =>
+          ({
+            author: { name: video.snippet.channelTitle, username: video.snippet.channelTitle },
+            createdAt: video.snippet.publishedAt,
+            id: `youtube:${video.id}`,
+            kind: "youtube",
+            link: `https://www.youtube.com/watch?v=${video.id}`,
+            score: Number(video.statistics?.viewCount ?? 0),
+            text: `${video.snippet.title}. ${plainText(video.snippet.description ?? "", MAX_DESCRIPTION_LENGTH)}`.trim(),
+          }) satisfies Item,
+      );
+    }),
+  );
+
+  const items = batches.flat();
 
   return items;
 };
 
-export const pickYoutubeCandidate = (
+export const pickYoutubeCandidate = async (
   access: AccessOf<"youtube">,
   sourceId: string,
   context: SourceContext,
-) => cachedPick(context, `youtube:${sourceId}`, () => fetchUploads(access));
+) => await cachedPick(context, `youtube:${sourceId}`, async () => await fetchUploads(access));

@@ -3,6 +3,7 @@
 import type { Transition } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { graphemesOf } from "@/lib/graphemes";
 
 interface VerticalProps {
   letter: string;
@@ -99,7 +100,7 @@ export const Counter = ({ text, height = "1em" }: CounterProps) => {
     lineHeight: Number.isFinite(height) ? `${height}px` : height,
   };
 
-  const textArray = [...String(text)];
+  const textArray = graphemesOf(String(text));
   const stats = textArray.map(getTextStats);
   const totalWidth = Math.ceil(sum(stats));
 

@@ -42,8 +42,10 @@ export const computeRange = (
   }
 
   const rawRange = targetMax - targetMin;
-  const marginFactor = exaggerate ? 0.01 : 0.12;
-  const minRange = rawRange * (exaggerate ? 0.02 : 0.1) || (exaggerate ? 0.04 : 0.4);
+  const marginFactor = exaggerate === true ? 0.01 : 0.12;
+
+  const minRange =
+    rawRange * (exaggerate === true ? 0.02 : 0.1) || (exaggerate === true ? 0.04 : 0.4);
 
   if (rawRange < minRange) {
     const mid = (targetMin + targetMax) / 2;

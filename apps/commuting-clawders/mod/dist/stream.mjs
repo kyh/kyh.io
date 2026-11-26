@@ -4,16 +4,17 @@ import { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSyn
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { buffer } from "node:stream/consumers";
 import { parseArgs } from "node:util";
 // stream/chrome.ts
 var chromePaths = (platform, env) => {
-	if (env.CHROME_PATH) return [env.CHROME_PATH];
+	if (env.CHROME_PATH !== void 0 && env.CHROME_PATH !== "") return [env.CHROME_PATH];
 	if (platform === "darwin") return ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
 	if (platform === "win32") return [
 		env.LOCALAPPDATA,
 		env.PROGRAMFILES,
 		env["PROGRAMFILES(X86)"]
-	].flatMap((base) => base ? [path.win32.join(base, "Google", "Chrome", "Application", "chrome.exe")] : []);
+	].flatMap((base) => base !== void 0 && base !== "" ? [path.win32.join(base, "Google", "Chrome", "Application", "chrome.exe")] : []);
 	return [
 		"/opt/google/chrome/chrome",
 		"/usr/bin/google-chrome",
@@ -199,7 +200,7 @@ var { values } = parseArgs({ options: {
 	world: { type: "string" }
 } });
 var { image: imagePath, socket: socketPath, world: worldDir } = values;
-if (!imagePath || !socketPath || !worldDir) {
+if (imagePath === void 0 || imagePath === "" || socketPath === void 0 || socketPath === "" || worldDir === void 0 || worldDir === "") {
 	process.stderr.write("usage: stream.js --world <dir> --socket <path> --image <path>\n");
 	process.exit(2);
 }
@@ -214,14 +215,9 @@ var latest = null;
 var lastAsked = Date.now();
 var chrome = null;
 var profileDir = mkdtempSync(path.join(os.tmpdir(), "commuting-clawders-chrome-"));
-var readBody = async (request) => {
-	const chunks = [];
-	for await (const chunk of request) chunks.push(Buffer.from(chunk));
-	return Buffer.concat(chunks);
-};
 var header = (request, name) => Number(request.headers[name] ?? 0);
 var takeFrame = async (request, response) => {
-	const body = await readBody(request);
+	const body = await buffer(request);
 	const width = header(request, "x-width");
 	const height = header(request, "x-height");
 	if (width > 0 && height > 0 && body.length === width * height * 4) {
@@ -286,7 +282,7 @@ var answer = (request, response) => {
 var world = path.resolve(worldDir);
 var serveWorld = (request, response) => {
 	const file = assetPath(world, request.url ?? "/");
-	if (!file || !existsSync(file)) {
+	if (file === null || !existsSync(file)) {
 		response.statusCode = 404;
 		response.end();
 		return;
@@ -294,7 +290,7 @@ var serveWorld = (request, response) => {
 	response.setHeader("content-type", contentType(file));
 	response.end(readFileSync(file));
 };
-var page = http.createServer(async (request, response) => {
+var servePage = async (request, response) => {
 	if (request.method !== "POST" || request.url !== "/frame") {
 		serveWorld(request, response);
 		return;
@@ -306,6 +302,9 @@ var page = http.createServer(async (request, response) => {
 		response.statusCode = 500;
 		response.end();
 	}
+};
+var page = http.createServer((request, response) => {
+	servePage(request, response);
 });
 page.listen(0, "127.0.0.1");
 await once(page, "listening");
@@ -334,17 +333,17 @@ var shutdown = async (code) => {
 	});
 	process.exit(code);
 };
-process.on("SIGTERM", async () => {
-	await shutdown(0);
+process.on("SIGTERM", () => {
+	shutdown(0);
 });
-process.on("SIGINT", async () => {
-	await shutdown(0);
+process.on("SIGINT", () => {
+	shutdown(0);
 });
-setInterval(async () => {
-	if (Date.now() - lastAsked > ABANDONED_MS) await shutdown(0);
+setInterval(() => {
+	if (Date.now() - lastAsked > ABANDONED_MS) shutdown(0);
 }, 1e3);
 var executable = chromePaths(process.platform, process.env).find((file) => existsSync(file));
-if (executable) {
+if (executable !== void 0 && executable !== "") {
 	chrome = spawn(executable, chromeArgs(profileDir, `http://127.0.0.1:${port}/?stream`), { stdio: [
 		"ignore",
 		"ignore",
@@ -352,9 +351,9 @@ if (executable) {
 		"pipe",
 		"pipe"
 	] });
-	chrome.once("exit", async (code) => {
+	chrome.once("exit", (code) => {
 		process.stderr.write(`chrome: exited (${code ?? "signal"})\n`);
-		await shutdown(1);
+		shutdown(1);
 	});
 } else {
 	process.stderr.write("chrome: Google Chrome not found; set CHROME_PATH to its executable\n");

@@ -25,7 +25,7 @@ const rule = (
 ) => {
   const fill = Math.max(0, width - 2);
 
-  if (!label || label.length + 2 > fill) {
+  if (label === undefined || label === "" || label.length + 2 > fill) {
     return `${left}${panelBorder.horizontal.repeat(fill)}${right}`;
   }
 
@@ -67,7 +67,7 @@ export const Panel = ({
           panelBorder.topLeft,
           panelBorder.topRight,
           measured,
-          title ? ` ${title} ` : undefined,
+          title !== undefined && title !== "" ? ` ${title} ` : undefined,
           "left",
         )}
       </Text>
@@ -88,7 +88,7 @@ export const Panel = ({
           panelBorder.bottomLeft,
           panelBorder.bottomRight,
           measured,
-          bottomTitle ? ` ${bottomTitle} ` : undefined,
+          bottomTitle !== undefined && bottomTitle !== "" ? ` ${bottomTitle} ` : undefined,
           "right",
         )}
       </Text>

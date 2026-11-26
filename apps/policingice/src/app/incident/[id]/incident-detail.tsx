@@ -28,13 +28,17 @@ const IncidentArticle = ({
   const shortcuts = useKeyboardShortcuts();
 
   useEffect(() => {
-    if (!shortcuts) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (shortcuts) {
+      shortcuts.registerIncident(incidentId, ref.current);
+
+      cleanup = () => {
+        shortcuts.unregisterIncident(incidentId);
+      };
     }
 
-    shortcuts.registerIncident(incidentId, ref.current);
-
-    return () => shortcuts.unregisterIncident(incidentId);
+    return cleanup;
   }, [incidentId, shortcuts]);
 
   return <article ref={ref}>{children}</article>;
@@ -147,8 +151,12 @@ export const IncidentDetail = ({ incident }: IncidentDetailProps) => {
               unjustifiedCount={counts.unjustified}
               justifiedCount={counts.justified}
               userVote={userVote}
-              onVote={handleVote}
-              onReport={handleReport}
+              onVote={(type) => {
+                void handleVote(type);
+              }}
+              onReport={() => {
+                void handleReport();
+              }}
               reported={reported}
             />
           </IncidentArticle>

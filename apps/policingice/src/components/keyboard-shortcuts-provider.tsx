@@ -89,7 +89,9 @@ const KeyboardShortcutsHelp = () => {
         <span className="text-muted-foreground/40">·</span>
         <button
           type="button"
-          onClick={() => setTheme(isDark ? "light" : "dark")}
+          onClick={() => {
+            setTheme(isDark ? "light" : "dark");
+          }}
           className="cursor-pointer hover:text-foreground"
           aria-label="Toggle theme"
           title={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -190,7 +192,9 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -276,7 +280,9 @@ export const KeyboardShortcutsProvider = ({ children }: KeyboardShortcutsProvide
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [activeIncidentId]);
 
   const value = useMemo(

@@ -46,11 +46,7 @@ export const viewport: Viewport = {
 const RootLayout = ({ children }: { children: ReactNode }) => (
   <html className={mono.variable} lang="en">
     <body>
-      <script
-        type="application/ld+json"
-        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; `<` is escaped so no value can close the tag
-        dangerouslySetInnerHTML={{ __html: serializedStructuredData }}
-      />
+      <script type="application/ld+json">{serializedStructuredData}</script>
       {children}
     </body>
   </html>

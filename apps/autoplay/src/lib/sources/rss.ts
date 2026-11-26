@@ -37,11 +37,7 @@ const linkField = linkNodeSchema.optional().catch(undefined);
 const textOf = (node: TextNode | undefined) => node?.text;
 
 const linkOf = (value: TextNode | TextNode[] | undefined) => {
-  if (value === undefined) {
-    return;
-  }
-
-  const links = Array.isArray(value) ? value : [value];
+  const links = value === undefined ? [] : [value].flat();
   let fallback: string | undefined;
 
   for (const node of links) {
@@ -186,11 +182,11 @@ const toItems = (url: string, feed: Feed) => {
   return items;
 };
 
-export const pickRssCandidate = (
+export const pickRssCandidate = async (
   access: AccessOf<"rss">,
   sourceId: string,
   context: SourceContext,
 ) =>
-  cachedPick(context, `rss:${sourceId}`, async () =>
+  await cachedPick(context, `rss:${sourceId}`, async () =>
     toItems(access.url, await fetchFeed(access.url)),
   );

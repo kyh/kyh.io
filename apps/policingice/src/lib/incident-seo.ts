@@ -21,16 +21,20 @@ export const incidentPath = (id: number) => `/incident/${id}`;
 export const incidentTitle = (incident: IncidentSummary) => {
   const place = incident.location?.trim();
   const date = formatDate(incident.incidentDate ?? incident.createdAt);
-  const head = place ? `Incident in ${place}` : `Incident #${incident.id}`;
 
-  return date ? `${head} · ${date}` : head;
+  const head =
+    place !== undefined && place !== "" ? `Incident in ${place}` : `Incident #${incident.id}`;
+
+  return date !== null && date !== "" ? `${head} · ${date}` : head;
 };
 
 export const incidentDescription = (incident: IncidentSummary) => {
   const text = incident.description?.replaceAll(/\s+/gu, " ").trim();
 
   return clip(
-    text && text.length > 0 ? text : `A documented incident of ICE activity on ${siteName}.`,
+    text !== undefined && text !== "" && text.length > 0
+      ? text
+      : `A documented incident of ICE activity on ${siteName}.`,
     MAX_DESCRIPTION,
   );
 };
@@ -51,7 +55,8 @@ export const incidentJsonLd = (incident: IncidentSummary) => {
       {
         "@id": `${url}#article`,
         "@type": "Article",
-        contentLocation: place ? { "@type": "Place", name: place } : undefined,
+        contentLocation:
+          place !== undefined && place !== "" ? { "@type": "Place", name: place } : undefined,
         dateCreated: happened?.toISOString(),
         datePublished: incident.createdAt?.toISOString(),
         description: incidentDescription(incident),

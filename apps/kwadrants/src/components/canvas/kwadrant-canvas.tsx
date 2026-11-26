@@ -50,7 +50,9 @@ const LabelEditor = ({
       aria-label="Edit canvas label"
       type="text"
       value={text}
-      onChange={(e) => setText(e.target.value)}
+      onChange={(e) => {
+        setText(e.target.value);
+      }}
       onKeyDown={handleKeyDown}
       onBlur={() => {
         onSave(text);
@@ -59,14 +61,14 @@ const LabelEditor = ({
       autoFocus
       className={cn(
         "absolute rounded border px-1 text-xs shadow-lg focus:ring-1 focus:ring-blue-500 focus:outline-none",
-        isDark
+        isDark === true
           ? "border-gray-600 bg-gray-800 text-white"
           : "border-gray-300 bg-white text-gray-900",
       )}
       style={{
         height: 20,
-        left: isRightEdge ? "auto" : position.x,
-        right: isRightEdge ? 16 : "auto",
+        left: isRightEdge === true ? "auto" : position.x,
+        right: isRightEdge === true ? 16 : "auto",
         top: position.y,
         width: 70,
       }}
@@ -157,7 +159,9 @@ export const KwadrantCanvas = ({ ref, width, height }: KwadrantCanvasProps) => {
           onSave={(value) => {
             updateLabel(state.layoutType, editingLabel.key, value);
           }}
-          onClose={() => setEditingLabel(null)}
+          onClose={() => {
+            setEditingLabel(null);
+          }}
         />
       )}
     </div>
