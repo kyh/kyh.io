@@ -29,9 +29,6 @@ const NONE: PlayerMap = {};
 const NO_ONE: Visitor[] = [];
 const NO_ENTRY: JsonValue = null;
 
-// oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
-const ignore = () => () => {};
-
 const SiteRoomContext = createContext<SiteRoom | null>(null);
 
 const useSiteRoom = () => {
@@ -176,7 +173,7 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
   const held = heldAt !== undefined;
 
   const live = useSyncExternalStore(
-    held ? ignore : room.subscribe,
+    room.subscribe,
     () => room.order(grid) ?? NO_ENTRY,
     () => NO_ENTRY,
   );

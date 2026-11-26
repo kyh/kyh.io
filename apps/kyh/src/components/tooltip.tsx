@@ -16,6 +16,7 @@ import {
   useRole,
 } from "@floating-ui/react";
 import { AnimatePresence, motion } from "motion/react";
+import { useRender } from "@base-ui/react/use-render";
 
 import type { Placement } from "@floating-ui/react";
 import { cn } from "cn";
@@ -197,43 +198,22 @@ const Tooltip = ({ children, ...options }: { children: React.ReactNode } & Toolt
   return <TooltipContext.Provider value={tooltip}>{children}</TooltipContext.Provider>;
 };
 
-const TooltipTrigger = ({
-  children,
-  asChild = false,
-  ref: propRef,
-  ...props
-}: React.HTMLProps<HTMLElement> & { asChild?: boolean; ref?: React.Ref<HTMLElement> }) => {
+const TooltipTrigger = ({ render, ref, type, ...props }: useRender.ComponentProps<"button">) => {
   const context = useTooltipContext();
 
-  const childrenRef = React.isValidElement<{ ref?: React.Ref<unknown> }>(children)
-    ? children.props.ref
-    : undefined;
+  const triggerProps = {
+    ...props,
+    "data-side": context.placement.split("-")[0],
+    "data-state": context.open ? "open" : "closed",
+    type: render === undefined ? (type ?? "button") : type,
+  };
 
-  const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
-
-  if (asChild && React.isValidElement<React.HTMLProps<HTMLElement>>(children)) {
-    const triggerProps = {
-      ...props,
-      ...children.props,
-      "data-side": context.placement.split("-")[0],
-      "data-state": context.open ? "open" : "closed",
-    };
-
-    // oxlint-disable-next-line react/no-clone-element -- asChild is the Slot pattern: the child element is the trigger, so its props must be merged onto it
-    return React.cloneElement(children, { ...context.getReferenceProps(triggerProps), ref });
-  }
-
-  return (
-    <button
-      type="button"
-      ref={ref}
-      data-state={context.open ? "open" : "closed"}
-      data-side={context.placement.split("-")[0]}
-      {...context.getReferenceProps(props)}
-    >
-      {children}
-    </button>
-  );
+  return useRender({
+    defaultTagName: "button",
+    props: context.getReferenceProps(triggerProps),
+    ref: ref === undefined ? context.refs.setReference : [context.refs.setReference, ref],
+    render,
+  });
 };
 
 const cols = 11;

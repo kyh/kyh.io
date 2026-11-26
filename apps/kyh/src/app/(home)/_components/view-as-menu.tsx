@@ -50,11 +50,13 @@ export const ViewAsMenu = () => {
     <div className="flex h-4 items-center gap-2">
       <Tooltip>
         <AnimateSection delay={0.1}>
-          <TooltipTrigger asChild>
-            <Link className={iconButtonClassName} aria-label="Speed read" href="/rsvp">
-              <TextIcon />
-            </Link>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Link className={iconButtonClassName} aria-label="Speed read" href="/rsvp">
+                <TextIcon />
+              </Link>
+            }
+          />
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">Speed read</TooltipContent>
       </Tooltip>
@@ -101,17 +103,19 @@ export const ViewAsMenu = () => {
       </Tooltip>
       <Tooltip>
         <AnimateSection delay={0.2}>
-          <TooltipTrigger asChild>
-            <a
-              className={iconButtonClassName}
-              aria-label="View as Markdown"
-              href="/markdown"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MarkdownIcon />
-            </a>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <a
+                className={iconButtonClassName}
+                aria-label="View as Markdown"
+                href="/markdown"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MarkdownIcon />
+              </a>
+            }
+          />
         </AnimateSection>
         <TooltipContent className="px-2 py-0.5 text-xs">View as Markdown</TooltipContent>
       </Tooltip>

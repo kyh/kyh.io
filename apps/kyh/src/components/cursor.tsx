@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import type { RefObject } from "react";
 import { Interpolator, lerp } from "@vibedgames/multiplayer";
 
 import type { Chat } from "@/lib/chat";
@@ -31,6 +32,16 @@ const lerpPoint = (a: PagePoint, b: PagePoint, k: number) =>
 
 const HIDDEN = { transform: "translate(-100px, -100px)" };
 
+const smoothOf = (holder: RefObject<Interpolator<PagePoint> | null>) => {
+  holder.current ??= new Interpolator<PagePoint>({
+    delayMs: 120,
+    lerp: lerpPoint,
+    maxExtrapolateMs: 0,
+  });
+
+  return holder.current;
+};
+
 /**
  * Another visitor's pointer, played back a beat behind what they sent and
  * blended between their updates (as the town's pointers are), so it glides at
@@ -40,19 +51,17 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
   const gradient = useSvgId("cursor");
   const ref = useRef<HTMLDivElement>(null);
 
-  // oxlint-disable-next-line react/hook-use-state -- made once per cursor and never replaced
-  const [smooth] = useState(
-    () => new Interpolator<PagePoint>({ delayMs: 120, lerp: lerpPoint, maxExtrapolateMs: 0 }),
-  );
+  const smoothRef = useRef<Interpolator<PagePoint>>(null);
 
   const wake = useRef<() => void>(null);
 
   useEffect(() => {
-    smooth.push(t, { fromCenter, fromTop });
+    smoothOf(smoothRef).push(t, { fromCenter, fromTop });
     wake.current?.();
-  }, [smooth, t, fromCenter, fromTop]);
+  }, [t, fromCenter, fromTop]);
 
   useEffect(() => {
+    const smooth = smoothOf(smoothRef);
     let frame = 0;
 
     const draw = () => {
@@ -87,7 +96,7 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
       window.removeEventListener("scroll", start);
       window.removeEventListener("resize", start);
     };
-  }, [smooth]);
+  }, []);
 
   const line = lineOf(chat);
 

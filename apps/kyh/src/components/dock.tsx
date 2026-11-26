@@ -1,7 +1,7 @@
 "use client";
 
 import type { MotionValue } from "motion/react";
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
@@ -217,6 +217,7 @@ export const Dock = () => {
   const pathname = usePathname();
   const appearance = useAppearance();
   const mouseX = useMotionValue(Infinity);
+  const navRef = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const [blooming, setBlooming] = useState(false);
@@ -260,23 +261,42 @@ export const Dock = () => {
     }
   };
 
-  const follow = (x: number) => {
+  const follow = useEffectEvent((x: number) => {
     if (!blooming) {
       mouseX.set(x);
     }
-  };
+  });
+
+  useEffect(() => {
+    const nav = navRef.current;
+    let cleanup: (() => void) | undefined;
+
+    if (nav !== null) {
+      const onMove = (event: MouseEvent) => {
+        follow(event.x);
+      };
+
+      const onLeave = () => {
+        follow(Infinity);
+      };
+
+      nav.addEventListener("mousemove", onMove);
+      nav.addEventListener("mouseleave", onLeave);
+
+      cleanup = () => {
+        nav.removeEventListener("mousemove", onMove);
+        nav.removeEventListener("mouseleave", onLeave);
+      };
+    }
+
+    return cleanup;
+  }, []);
 
   return (
     <div className="pointer-events-none fixed right-0 bottom-[4vh] left-0 z-10 flex h-[70px] items-center justify-center">
-      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the pointer only magnifies the icons under it; nothing is activated by it */}
       <nav
+        ref={navRef}
         className="pointer-events-auto relative isolate flex h-full items-center gap-2 rounded-[20px] bg-[var(--dock-bg)] p-3 shadow-[0_30px_60px_0_var(--dock-shadow)]"
-        onMouseMove={(event) => {
-          follow(event.nativeEvent.x);
-        }}
-        onMouseLeave={() => {
-          follow(Infinity);
-        }}
       >
         {links.map(({ href, label, icon }) => (
           <Link
