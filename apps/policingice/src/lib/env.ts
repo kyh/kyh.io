@@ -8,11 +8,6 @@ const databaseUrl = z
 const envSchema = z.object({
   AI_GATEWAY_API_KEY: z.string().optional(),
   BETTER_AUTH_SECRET: z.string().optional(),
-  EMAIL_FROM: z
-    .string()
-    .optional()
-    .transform((value) => (value === undefined || value === "" ? "onboarding@resend.dev" : value)),
-  RESEND_API_KEY: z.string().optional(),
   TURSO_AUTH_TOKEN: z.string().optional(),
   TURSO_DATABASE_URL: databaseUrl,
   XAI_API_KEY: z.string().optional(),

@@ -17,7 +17,6 @@
   --accent-foreground: hsl(240 5.9% 10%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
-  --success: hsl(142 71% 32%);
   --border: hsl(240 5.9% 90%);
   --input: hsl(240 5.9% 90%);
   --ring: hsl(240 5.9% 10%);
@@ -56,7 +55,6 @@
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-success: var(--success);
 
   --color-border: var(--border);
   --color-input: var(--input);
@@ -93,7 +91,6 @@
   --accent-foreground: hsl(0 0% 98%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
-  --success: hsl(142 69% 58%);
   --border: hsl(240 3.7% 15.9%);
   --input: hsl(240 3.7% 15.9%);
   --ring: hsl(240 4.9% 83.9%);
@@ -185,16 +182,4 @@
   --tweet-quoted-bg-color-hover: hsl(240 3.7% 15.9%);
   --tweet-color-blue-primary: hsl(0 0% 98%);
   --tweet-color-blue-primary-hover: hsl(240 5% 64.9%);
-}
-
-@keyframes otp-caret-blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  50.01%,
-  100% {
-    opacity: 0;
-  }
 }
