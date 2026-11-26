@@ -1,11 +1,11 @@
 import { defineConfig } from "drizzle-kit";
 
-import { env } from "./src/lib/env";
+import { env, requireDatabaseUrl } from "./src/lib/env";
 
 export default defineConfig({
   dbCredentials: {
     authToken: env.TURSO_AUTH_TOKEN,
-    url: env.TURSO_DATABASE_URL,
+    url: requireDatabaseUrl(),
   },
   dialect: "turso",
   out: "./drizzle",
