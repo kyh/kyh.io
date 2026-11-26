@@ -23,6 +23,12 @@ export interface Fall {
 /** What hangs in the page's top corners: cobwebs, a spider on each. */
 export type Corners = "webs";
 
+/** What's strung along the top of the page: Christmas lights, twinkling. */
+export type Garland = "lights";
+
+/** What goes off behind every page: fireworks, bursting and falling. */
+export type Sky = "fireworks";
+
 /** One side of a bit of confetti and its flip side. */
 export interface ConfettiSide {
   front: string;
@@ -46,6 +52,8 @@ export interface Theme {
   confetti: readonly ConfettiSide[];
   drift: Fall | null;
   corners: Corners | null;
+  garland: Garland | null;
+  sky: Sky | null;
 }
 
 /** Confetti in the site's named colors (lib/color.ts): each name's color, its hue on the back. */

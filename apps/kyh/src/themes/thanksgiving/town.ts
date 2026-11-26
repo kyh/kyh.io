@@ -13,7 +13,7 @@ export const town: Town = {
     trim: topHatTrim("screen", "screen"),
   },
   centerpiece: giantTurkey,
-  hat: (hat) => topHat(hat, "screen", "screen"),
+  hat: (hat) => topHat(hat, "screen", "skinDark"),
   lights: ["pumpkin", "gold", "festiveRed"],
   porch: (sketch, x, z) => {
     pumpkin(sketch, x, z);

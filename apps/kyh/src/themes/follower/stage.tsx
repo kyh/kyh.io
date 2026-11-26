@@ -1,14 +1,30 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
-import { lastPointer, subscribeToPointer } from "@/lib/pointer";
+import { lastPointer, pointerLifted, subscribeToPointer } from "@/lib/pointer";
 import type { Creature, Part } from "./creature";
+import type { Crown } from "./wear";
 import { INK, townColor } from "../piece";
+import {
+  canGrabHat,
+  carriedHat,
+  crownOf,
+  droppedHat,
+  grabHat,
+  isHatWorn,
+  setCrown,
+  subscribeToHat,
+  takeHatOff,
+} from "./wear";
 
 const FADE_MS = 300;
 const POP_MS = 220;
+const POP = "cubic-bezier(0.3, 1.6, 0.6, 1)";
+const AWAY_SCALE = 0.4;
+const TAP_SLOP = 10;
 
 /** The box its <svg> draws, in its own pixels about where it is. */
 interface Box {
@@ -17,6 +33,8 @@ interface Box {
   width: number;
   height: number;
 }
+
+const turnOf = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180;
 
 const apply = (element: SVGElement, part: Part) => {
   if (part.d !== undefined) {
@@ -48,6 +66,14 @@ export const Stage = <State,>({
   const drawing = useRef<SVGSVGElement>(null);
   const bubble = useRef<HTMLSpanElement>(null);
   const words = useRef<HTMLSpanElement>(null);
+  const home = usePathname() === "/";
+  const away = useRef(!home);
+  const goAway = useRef<((gone: boolean) => void) | null>(null);
+
+  useEffect(() => {
+    away.current = !home;
+    goAway.current?.(!home);
+  }, [home]);
 
   useEffect(() => {
     const parts = new Map<string, SVGElement[]>();
@@ -64,6 +90,7 @@ export const Stage = <State,>({
     }
 
     let stacked = "";
+    const hat = layers.get("hat");
 
     const restack = (order: readonly string[]) => {
       const key = order.join(" ");
@@ -114,7 +141,7 @@ export const Stage = <State,>({
           { opacity: 0, scale: 0.4 },
           { opacity: 1, scale: 1 },
         ],
-        { duration: POP_MS, easing: "cubic-bezier(0.3, 1.6, 0.6, 1)", fill: "forwards" },
+        { duration: POP_MS, easing: POP, fill: "forwards" },
       );
     };
 
@@ -125,6 +152,7 @@ export const Stage = <State,>({
         return;
       }
 
+      creature.eye?.(state, carriedHat());
       creature.step(state, mouse, moved, Math.max(0, now - last) / 1000);
       last = now;
       moved = { x: 0, y: 0 };
@@ -145,7 +173,12 @@ export const Stage = <State,>({
         restack(pose.order);
       }
 
-      if (pose.say !== said) {
+      if (creature.wear && pose.crown) {
+        const { angle, width, x, y } = pose.crown;
+        setCrown({ angle, width: width * size, x: pose.at.x + x * size, y: pose.at.y + y * size });
+      }
+
+      if (pose.say !== said && !away.current) {
         speak(pose.say);
       }
 
@@ -164,56 +197,189 @@ export const Stage = <State,>({
       frame = 0;
     };
 
+    let wearing = false;
+    let worn: Crown | null = null;
+
+    const dress = () => {
+      const on = isHatWorn();
+      const grabbable = on && canGrabHat() && frame !== 0 && !away.current;
+      hat?.style.setProperty("pointer-events", grabbable ? "auto" : "none");
+
+      if (state === null || !creature.wear) {
+        return;
+      }
+
+      const drop = droppedHat();
+      const at = crownOf();
+
+      if (on && drop && at && drop !== worn) {
+        worn = drop;
+        creature.wear(state, {
+          scale: drop.width / Math.max(at.width, 1),
+          turn: turnOf(drop.angle - at.angle),
+          x: (drop.x - at.x) / size,
+          y: (drop.y - at.y) / size,
+        });
+      } else if (!on && wearing) {
+        creature.wear(state, null);
+      }
+
+      wearing = on;
+    };
+
     const leave = () => {
       show(false);
       stop();
+      setCrown(null);
+      dress();
     };
 
-    const follow = () => {
-      const at = lastPointer();
+    const onPage = () =>
+      lastPointer()?.kind === "touch" || document.documentElement.matches(":hover");
 
-      if (at?.kind !== "mouse") {
-        if (frame !== 0) {
-          leave();
-        }
+    let exit: Animation | null = null;
+
+    goAway.current = (gone) => {
+      exit?.cancel();
+      exit = null;
+
+      if (gone) {
+        speak(null);
+        dress();
+        exit =
+          holder.current?.animate([{ opacity: 0, scale: AWAY_SCALE }], {
+            duration: FADE_MS,
+            easing: "ease-in",
+            fill: "forwards",
+          }) ?? null;
+        exit?.addEventListener("finish", () => {
+          stop();
+          setCrown(null);
+        });
 
         return;
       }
 
-      if (mouse && frame !== 0) {
+      if (!mouse || !onPage()) {
+        holder.current?.animate([{ opacity: 0 }], { duration: 0, fill: "forwards" });
+        stop();
+        setCrown(null);
+
+        return;
+      }
+
+      holder.current?.animate(
+        [
+          { opacity: 0, scale: AWAY_SCALE },
+          { opacity: 1, scale: 1 },
+        ],
+        { duration: POP_MS * 2, easing: POP, fill: "forwards" },
+      );
+      start();
+      dress();
+    };
+
+    let lifted = false;
+
+    const unsubscribeFromHat = subscribeToHat(dress);
+
+    const grab = (event: PointerEvent) => {
+      if (event.button === 0 && grabHat(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    hat?.addEventListener("pointerdown", grab);
+
+    const follow = () => {
+      const at = lastPointer();
+
+      if (!at) {
+        return;
+      }
+
+      if (mouse && at.kind === "touch" && pointerLifted()) {
+        lifted = true;
+
+        return;
+      }
+
+      if (mouse && frame !== 0 && !lifted) {
         moved = { x: moved.x + at.x - mouse.x, y: moved.y + at.y - mouse.y };
       }
 
       mouse = { x: at.x, y: at.y };
+      lifted = at.kind === "touch" && pointerLifted();
 
       if (state === null) {
         state = creature.create(at);
+        dress();
       }
 
-      if (frame === 0) {
+      if (frame === 0 && !away.current) {
         show(true);
         start();
+        dress();
       }
     };
 
     const unsubscribe = subscribeToPointer(follow);
 
-    if (document.documentElement.matches(":hover")) {
+    if (onPage()) {
       follow();
     }
 
-    const poke = (event: PointerEvent) => {
-      if (state !== null && frame !== 0 && event.pointerType === "mouse") {
+    let pressed: { id: number; x: number; y: number } | null = null;
+
+    const pokeAt = (event: PointerEvent) => {
+      const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
+
+      if (state !== null && frame !== 0 && !onHat && !away.current) {
         creature.poke(state, { x: event.clientX, y: event.clientY });
       }
     };
 
+    const poke = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") {
+        pokeAt(event);
+      } else {
+        pressed = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      }
+    };
+
+    const tap = (event: PointerEvent) => {
+      const down = pressed;
+      pressed = null;
+
+      if (
+        down?.id === event.pointerId &&
+        Math.hypot(event.clientX - down.x, event.clientY - down.y) < TAP_SLOP
+      ) {
+        pokeAt(event);
+      }
+    };
+
+    const cancel = () => {
+      pressed = null;
+    };
+
     window.addEventListener("pointerdown", poke, { capture: true, passive: true });
+    window.addEventListener("pointerup", tap, { capture: true, passive: true });
+    window.addEventListener("pointercancel", cancel, { capture: true, passive: true });
     document.documentElement.addEventListener("mouseleave", leave);
 
     return () => {
+      goAway.current = null;
+      exit?.cancel();
       unsubscribe();
+      unsubscribeFromHat();
+      hat?.removeEventListener("pointerdown", grab);
+      setCrown(null);
+      takeHatOff();
       window.removeEventListener("pointerdown", poke, { capture: true });
+      window.removeEventListener("pointerup", tap, { capture: true });
+      window.removeEventListener("pointercancel", cancel, { capture: true });
       document.documentElement.removeEventListener("mouseleave", leave);
       stop();
     };

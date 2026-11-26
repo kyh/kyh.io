@@ -5,19 +5,13 @@
 ## Quickstart (headless)
 
 ```sh
-pnpm install
+pnpm install && pnpm bootstrap --yes
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — ten of the thirteen apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
+That's the whole setup. There is no Docker and no shared database — eleven of the fourteen apps run with `pnpm install` alone, and `pnpm bootstrap` sets up the env files and the one local database. Node >= 24, pnpm 12 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
 
-Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
-
-```sh
-cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, project images fall back to a local placeholder
-cp apps/policingice/.env.example apps/policingice/.env  # required: any DB-backed route throws without TURSO_DATABASE_URL
-cp apps/autoplay/.env.example apps/autoplay/.env        # optional to boot: without it the app renders a setup checklist; X + fal keys unlock the real flow
-```
+Apps with an `.env.example` read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts). Each example holds local-dev defaults, with secrets blank or a local-only dummy. `pnpm bootstrap` copies each missing one and pushes commuting-clawders' schema to its local `file:local.db`, and is safe to re-run. kyh gets its project images, commuting-clawders its database, autoplay renders a setup checklist until X + fal keys are filled in, and policingice still needs its production URL (see below).
 
 `pnpm dev` starts _everything_ at once via `turbo watch`. Prefer a single `pnpm dev:<app>` — `dev:kyh` and `dev:policingice` both bind :3000 and cannot run together.
 
@@ -49,7 +43,7 @@ Landmines (`@interfere/landmines`) holds the code to: no prose comments (allowed
 
 `verify` does not build. CI (`.github/workflows/ci.yml`) runs the same four checks, then rebuilds `apps/commuting-clawders/mod/dist` and fails if it differs from what's committed; Vercel builds the web apps on every PR.
 
-Runtime — drive a real app with [agent-browser](https://github.com/vercel-labs/agent-browser) (installed globally; `npm i -g agent-browser && agent-browser install` if missing). `apps/kyh` is the safest surface: no database, no auth, no required keys — every route renders on a clone with no `.env` (verified by curling `/` and `/showcase` with the file moved aside).
+Runtime — drive a real app with [agent-browser](https://github.com/vercel-labs/agent-browser) (installed globally; `npm i -g agent-browser` if missing — it finds an installed Chrome or Chromium on its own, so run `agent-browser install` only where there is none). `apps/kyh` is the safest surface: no database, no auth, no required keys — every route renders on a clone with no `.env` (verified by curling `/` and `/showcase` with the file moved aside).
 
 ```sh
 pnpm dev:kyh &                                  # → :3000, or the next free port — read the log
@@ -79,7 +73,7 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 | `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                    |
 | `vis-ml`                 | `pnpm dev:vis-ml`                 | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                              |
 | `covid-19`               | `pnpm dev:covid`                  | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                    |
-| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — `.env` from example + `db:push` (local file)     |
+| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — after `pnpm bootstrap` (local file)              |
 | `cli`                    | `pnpm dev:cli`                    | —                           | No — Ink terminal UI, needs a real TTY                     |
 | `commuting-clawders/mod` | `pnpm dev:commuting-clawders-mod` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY      |
 | `mod-dev`                | `pnpm dev:mod-dev`                | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"`     |

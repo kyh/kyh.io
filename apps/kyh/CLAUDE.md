@@ -62,8 +62,12 @@ The rest is by hand:
   drawing) beside its pure creature (`halloween/ghost.ts`,
   `thanksgiving/turkey.ts`, …), registry `FOLLOWERS` in `followers.ts`, keyed
   by theme (null for none, as the default theme has), each `lazy`: a page
-  loads only the current theme's, and only once a mouse is on it
-  (`follower/index.tsx`), so a phone never loads one. Never import a follower
+  loads only the current theme's, and only once a pointer is on it
+  (`follower/index.tsx`): a phone loads one on its first touch. A touch sets
+  where it heads, a drag leads it, and it stays at the last spot once the
+  finger lifts; a mouse leaving the page hides it. Only the home page shows
+  one: leaving it shrinks the follower out, coming back pops it in, and a
+  visit that never reaches `/` loads none. Never import a follower
   statically.
 - `follower/` is the followers' kit: `creature.ts` (the contract: create, step,
   poke, pose), `stage.tsx` (runs one on the DOM a frame at a time, poses its

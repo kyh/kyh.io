@@ -493,9 +493,148 @@ html[data-tint] {
   .spider-legs,
   .spider-walk,
   .spider-drop,
-  .spider-thread {
+  .spider-thread,
+  .theme-garland-layer {
     animation: none;
   }
+}
+
+/* What's strung along the top of the page in a theme that has it
+   (src/themes/garland.tsx): Christmas lights on a dipping wire, drawn as
+   the theme's art is, in the showcase town's festive colors
+   (city/palette.ts). The bulbs twinkle in a few groups, each its own layer
+   dimming on opacity alone, so the twinkling costs the page nothing. Like
+   the webs they hang from the top of the page, not the screen, so they
+   scroll away with it, and pause once they have. */
+.theme-garland {
+  --wire: #3d4943;
+  --cap: #a9b0b3;
+  --light-0: #d93a3a;
+  --light-1: #3f8f55;
+  --light-2: #e8b22e;
+  --light-3: #4f78c4;
+  --light-4: #e58aa6;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+
+  [data-theme="dark"] & {
+    --wire: #a9bab3;
+    --cap: #3a464c;
+    --light-0: #ff5a52;
+    --light-1: #4fae68;
+    --light-2: #ffc94a;
+    --light-3: #7aa5ff;
+    --light-4: #ff9ec0;
+  }
+
+  @media (width < 40rem) {
+    zoom: 0.75;
+  }
+}
+
+.theme-garland-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+
+  &[data-phase] {
+    will-change: opacity;
+    animation: light-twinkle 3.4s ease-in-out infinite;
+  }
+
+  &[data-phase="1"] {
+    animation-duration: 4.1s;
+    animation-delay: -1.3s;
+  }
+  &[data-phase="2"] {
+    animation-duration: 2.9s;
+    animation-delay: -2.2s;
+  }
+  &[data-phase="3"] {
+    animation-duration: 4.7s;
+    animation-delay: -0.6s;
+  }
+}
+
+.light-wire {
+  fill: none;
+  stroke: var(--wire);
+  stroke-width: 1.2;
+}
+
+.light {
+  --light: var(--light-0);
+
+  &[data-color="1"] {
+    --light: var(--light-1);
+  }
+  &[data-color="2"] {
+    --light: var(--light-2);
+  }
+  &[data-color="3"] {
+    --light: var(--light-3);
+  }
+  &[data-color="4"] {
+    --light: var(--light-4);
+  }
+}
+
+.light-bulb {
+  fill: var(--light);
+}
+
+/* The bulb's side turned from the light: its own color, darker. */
+.light-shade {
+  fill: color-mix(in oklch, var(--light) 78%, black);
+}
+
+.light-ink,
+.light-cap {
+  stroke: var(--wire);
+  stroke-width: 0.8;
+}
+
+.light-ink {
+  fill: none;
+}
+
+.light-cap {
+  fill: var(--cap);
+}
+
+/* Most of the time lit; now and then it dims and comes back. */
+@keyframes light-twinkle {
+  0%,
+  55%,
+  100% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.3;
+  }
+}
+
+.theme-garland[data-offscreen] .theme-garland-layer {
+  animation-play-state: paused;
+}
+
+/* What goes off behind every page in a theme that has it
+   (src/themes/sky.tsx): fireworks on a canvas fixed behind everything,
+   the page's own background under them, faint enough to read over. */
+.theme-sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 @theme inline {

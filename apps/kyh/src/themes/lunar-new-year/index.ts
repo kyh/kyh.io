@@ -35,9 +35,11 @@ export const theme = {
     return first === null ? null : around(first, 1, 6);
   },
   drift: null,
+  garland: null,
   glyph: LANTERN_GLYPH,
   id: "lunarNewYear",
   mode: "dark",
   name: "Lunar New Year",
+  sky: "fireworks",
   tint: { chroma: 2.5, hue: 25 },
 } as const satisfies Theme;
