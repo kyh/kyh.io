@@ -727,7 +727,8 @@ export const Liveline = (props: LivelineProps) => {
     windowSecs: effectiveWindowSecs,
   });
 
-  const showWindows = windows !== undefined && windows.length > 0;
+  const windowChoices = windows !== undefined && windows.length > 0 ? windows : null;
+  const showWindows = windowChoices !== null;
   const showSeriesToggle = (displaySeries?.length ?? 0) > 1;
   const showControls = showWindows || onModeChange !== undefined || showSeriesToggle;
   const ws = behavior.windowStyle;
@@ -740,9 +741,9 @@ export const Liveline = (props: LivelineProps) => {
 
       {showControls && (
         <div style={controlRowStyle(pad.left)}>
-          {showWindows && windows && (
+          {windowChoices !== null && (
             <WindowBar
-              windows={windows}
+              windows={windowChoices}
               activeSecs={activeWindowSecs}
               onSelect={selectWindow}
               ws={ws}

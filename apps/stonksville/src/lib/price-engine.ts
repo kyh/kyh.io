@@ -150,7 +150,9 @@ export class ReplayEngine {
   subscribe(listener: (point: PricePoint) => void) {
     this.listeners.add(listener);
 
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   start() {

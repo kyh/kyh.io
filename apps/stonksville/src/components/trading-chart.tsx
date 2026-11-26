@@ -386,9 +386,9 @@ export const TradingChart = () => {
 
     if (container) {
       const observer = new ResizeObserver((entries) => {
-        const [entry] = entries;
+        const entry = entries.at(0);
 
-        if (entry) {
+        if (entry !== undefined) {
           const { width, height } = entry.contentRect;
           sizeRef.current = { height, width };
           setRightPad(Math.round(width * getFutureRatio()) || 200);

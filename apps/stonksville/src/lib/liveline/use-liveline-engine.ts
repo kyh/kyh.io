@@ -2013,7 +2013,7 @@ const measureLabelReserve = (
   series: SeriesInput[],
   chartReveal: number,
 ) => {
-  if ((series.some((s) => s.label) ?? undefined) === undefined) {
+  if (!series.some((s) => s.label !== undefined && s.label !== "")) {
     return 0;
   }
 
@@ -2663,9 +2663,9 @@ export const useLivelineEngine = (
 
     if (container) {
       const ro = new ResizeObserver((entries) => {
-        const [entry] = entries;
+        const entry = entries.at(0);
 
-        if (!entry) {
+        if (entry === undefined) {
           return;
         }
 

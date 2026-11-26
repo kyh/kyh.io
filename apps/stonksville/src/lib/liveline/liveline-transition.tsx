@@ -77,7 +77,7 @@ export const LivelineTransition = ({
       style={{ height: "100%", position: "relative", width: "100%", ...style }}
     >
       {childArray.map((child) => {
-        const key = String(child.key ?? "");
+        const key = child.key ?? "";
 
         if (!mounted.has(key)) {
           return null;
