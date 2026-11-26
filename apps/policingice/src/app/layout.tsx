@@ -46,11 +46,7 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" suppressHydrationWarning>
     <body>
-      <script
-        type="application/ld+json"
-        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; serializeJsonLd escapes `<`
-        dangerouslySetInnerHTML={{ __html: siteJsonLdBody }}
-      />
+      <script type="application/ld+json">{siteJsonLdBody}</script>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <a
           href="#main-content"

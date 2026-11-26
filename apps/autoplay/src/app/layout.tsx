@@ -53,11 +53,7 @@ interface LayoutProps {
 const RootLayout = (props: LayoutProps) => (
   <html lang="en">
     <body className="antialiased">
-      <script
-        type="application/ld+json"
-        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; `<` is escaped so no value can close the tag
-        dangerouslySetInnerHTML={{ __html: serializedStructuredData }}
-      />
+      <script type="application/ld+json">{serializedStructuredData}</script>
       {props.children}
     </body>
   </html>

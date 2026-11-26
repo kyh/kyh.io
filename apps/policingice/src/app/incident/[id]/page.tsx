@@ -77,11 +77,7 @@ const IncidentPage = async ({ params }: { params: Promise<{ id: string }> }) => 
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        // oxlint-disable-next-line react/no-danger -- the only way to emit a JSON-LD body; serializeJsonLd escapes `<`
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(incidentJsonLd(incident)) }}
-      />
+      <script type="application/ld+json">{serializeJsonLd(incidentJsonLd(incident))}</script>
       <IncidentDetail incident={incident} />
     </>
   );
