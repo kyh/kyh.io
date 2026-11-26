@@ -158,10 +158,10 @@ const RedditEmbed = ({ url }: { url: string }) => {
     "www.redditmedia.com",
   )}/?ref_source=embed&ref=share&embed=true&showmedia=true&showedits=false`;
 
-  /* oxlint-disable react/iframe-missing-sandbox -- third-party player needs scripts and same-origin, which is the combination the rule forbids */
   return (
     <iframe
       src={embedUrl}
+      // oxlint-disable-next-line react/iframe-missing-sandbox -- third-party player needs scripts and same-origin, which is the combination the rule forbids
       sandbox="allow-scripts allow-same-origin allow-popups"
       style={{ border: "none", overflow: "hidden" }}
       height="500"
@@ -169,7 +169,6 @@ const RedditEmbed = ({ url }: { url: string }) => {
       title="Reddit post"
     />
   );
-  /* oxlint-enable react/iframe-missing-sandbox */
 };
 
 export const VideoEmbed = ({ url, platform }: VideoEmbedProps) => {

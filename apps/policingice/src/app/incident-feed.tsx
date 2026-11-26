@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Search, X } from "lucide-react";
 
 import { IncidentCardContent } from "@/components/incident-card-content";
+import { useConfirmDelete } from "@/components/confirm-delete";
 import { IncidentModal } from "@/components/incident-modal";
 import {
   KeyboardShortcutsProvider,
@@ -439,11 +440,6 @@ export const IncidentFeed = ({
 
   const handleDelete = useCallback(
     async (incidentId: number) => {
-      // oxlint-disable-next-line no-alert -- admin-only destructive action; native confirm is deliberate
-      if (!confirm("Delete this incident?")) {
-        return;
-      }
-
       const result = await deleteIncident({ incidentId });
 
       if (result.success) {
@@ -455,6 +451,8 @@ export const IncidentFeed = ({
     },
     [router],
   );
+
+  const { ask: askDelete, dialog: deleteDialog } = useConfirmDelete(handleDelete);
 
   const handlePin = useCallback(
     async (incidentId: number) => {
@@ -661,9 +659,7 @@ export const IncidentFeed = ({
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
                                       onClick={() => {
-                                        void (async () => {
-                                          await handleDelete(incident.id);
-                                        })();
+                                        askDelete(incident.id);
                                       }}
                                     >
                                       Delete
@@ -718,6 +714,7 @@ export const IncidentFeed = ({
             onUpdate={handleUpdateIncident}
           />
         )}
+        {deleteDialog}
       </main>
     </KeyboardShortcutsProvider>
   );

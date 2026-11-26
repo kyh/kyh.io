@@ -6,6 +6,7 @@ import { Form } from "@base-ui/react/form";
 import { useRouter } from "next/navigation";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
+import { useConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "@/components/toast";
 import { VideoCarousel } from "@/components/video-carousel";
 import { formString } from "@/lib/form-utils";
@@ -265,15 +266,12 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
   };
 
   const handleDelete = async (id: number) => {
-    // oxlint-disable-next-line no-alert -- admin-only destructive action; native confirm is deliberate
-    if (!confirm("Delete this incident?")) {
-      return;
-    }
-
     await adminDeleteIncident({ id });
     router.refresh();
     toast.success("Deleted");
   };
+
+  const { ask: askDelete, dialog: deleteDialog } = useConfirmDelete(handleDelete);
 
   return (
     <div>
@@ -388,9 +386,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
                       <button
                         type="button"
                         onClick={() => {
-                          void (async () => {
-                            await handleDelete(incident.id);
-                          })();
+                          askDelete(incident.id);
                         }}
                         className="cursor-pointer hover:text-destructive"
                       >
@@ -436,6 +432,7 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>
+      {deleteDialog}
     </div>
   );
 };

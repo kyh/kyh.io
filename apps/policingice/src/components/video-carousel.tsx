@@ -57,17 +57,12 @@ export const VideoCarousel = ({
 
   const subscribeToEmbla = useCallback(
     (onStoreChange: () => void) => {
-      if (!emblaApi) {
-        // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
-        return () => {};
-      }
-
-      emblaApi.on("select", onStoreChange);
-      emblaApi.on("reInit", onStoreChange);
+      emblaApi?.on("select", onStoreChange);
+      emblaApi?.on("reInit", onStoreChange);
 
       return () => {
-        emblaApi.off("select", onStoreChange);
-        emblaApi.off("reInit", onStoreChange);
+        emblaApi?.off("select", onStoreChange);
+        emblaApi?.off("reInit", onStoreChange);
       };
     },
     [emblaApi],
