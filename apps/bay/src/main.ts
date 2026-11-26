@@ -15,7 +15,7 @@ import {
 } from "./lib/view";
 import type { View } from "./lib/view";
 
-const BASE = (import.meta.env.VITE_TILES_URL ?? "/data").replace(/\/$/u, "");
+const BASE = (import.meta.env.VITE_TILES_URL || "/data").replace(/\/$/u, "");
 
 const byId = <T extends HTMLElement>(id: string, kind: new () => T) => {
   const el = document.querySelector(`#${id}`);
@@ -37,7 +37,7 @@ if (!(ctx && mini)) {
 }
 
 const response = await fetch(`${BASE}/manifest.json`).catch(() => null);
-const manifest: Manifest | null = response?.ok ? await response.json() : null;
+const manifest: Manifest | null = response?.ok ? await response.json().catch(() => null) : null;
 
 if (!manifest) {
   byId("empty", HTMLDivElement).hidden = false;
