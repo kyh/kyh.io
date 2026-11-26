@@ -249,30 +249,29 @@ export const bulkCreateIncidents = async (data: {
     return { created: 1, skipped: existingUrls.size };
   }
 
-  let created = 0;
+  await Promise.all(
+    newUrls.map(async (url) => {
+      const [incident] = await db
+        .insert(incidents)
+        .values({
+          description: data.description ?? null,
+          incidentDate,
+          location: data.location ?? null,
+          status: "approved",
+        })
+        .returning();
 
-  for (const url of newUrls) {
-    const [incident] = await db
-      .insert(incidents)
-      .values({
-        description: data.description ?? null,
-        incidentDate,
-        location: data.location ?? null,
-        status: "approved",
-      })
-      .returning();
-
-    await db.insert(videos).values({
-      incidentId: incident.id,
-      platform: detectPlatform(url),
-      url,
-    });
-    created += 1;
-  }
+      await db.insert(videos).values({
+        incidentId: incident.id,
+        platform: detectPlatform(url),
+        url,
+      });
+    }),
+  );
 
   revalidateTag("incidents", "max");
 
-  return { created, skipped: existingUrls.size };
+  return { created: newUrls.length, skipped: existingUrls.size };
 };
 
 export const getFeedPosts = async () => {

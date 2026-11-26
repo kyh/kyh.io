@@ -209,7 +209,7 @@ export const VideoCarousel = ({
               </div>
             )}
           </div>
-          {headerRight && <div className="flex items-center gap-2">{headerRight}</div>}
+          {hasHeaderRight && <div className="flex items-center gap-2">{headerRight}</div>}
         </div>
       )}
 

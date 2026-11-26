@@ -34,7 +34,7 @@ const AdminCreate = () => {
         ref={formRef}
         className="space-y-4"
         onSubmit={(e) => {
-          void (async (e) => {
+          void (async () => {
             e.preventDefault();
 
             if (validUrls.length === 0) {
@@ -72,7 +72,7 @@ const AdminCreate = () => {
             }
 
             setIsSubmitting(false);
-          })(e);
+          })();
         }}
       >
         <Field.Root name="urls">

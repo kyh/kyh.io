@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { Component, lazy, Suspense, useMemo } from "react";
 
 import type { VideoPlatform } from "@/db/drizzle-schema";
@@ -36,8 +36,8 @@ const FallbackLink = ({ url, platform }: { url: string; platform: VideoPlatform 
 );
 
 interface EmbedErrorBoundaryProps {
-  fallback: ReactNode;
-  children: ReactNode;
+  fallback: ReactElement;
+  children: ReactElement;
 }
 
 class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: boolean }> {
@@ -50,7 +50,6 @@ class EmbedErrorBoundary extends Component<EmbedErrorBoundaryProps, { hasError: 
     return { hasError: true };
   }
 
-  // oxlint-disable-next-line typescript/promise-function-async -- React 19's ReactNode includes Promise; this returns synchronously
   render() {
     return this.state.hasError ? this.props.fallback : this.props.children;
   }
@@ -164,10 +163,9 @@ const RedditEmbed = ({ url }: { url: string }) => {
     <iframe
       src={embedUrl}
       sandbox="allow-scripts allow-same-origin allow-popups"
-      style={{ border: "none" }}
+      style={{ border: "none", overflow: "hidden" }}
       height="500"
       width="100%"
-      scrolling="no"
       title="Reddit post"
     />
   );

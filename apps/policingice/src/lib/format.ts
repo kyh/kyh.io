@@ -7,7 +7,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 
 /** Returns null for missing or unparseable dates; callers pick their own placeholder. */
 export const formatDate = (value: Date | string | null | undefined) => {
-  if (!value) {
+  if (value === null || value === undefined || value === "") {
     return null;
   }
 

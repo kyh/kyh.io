@@ -101,7 +101,7 @@ const SearchForm = ({
   isSearching,
 }: {
   formRef: React.RefObject<HTMLFormElement | null>;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   q: string | undefined;
   start: string | undefined;
   end: string | undefined;
@@ -146,10 +146,16 @@ const SearchForm = ({
 );
 
 const readFeedParams = (searchParams: URLSearchParams) => {
-  const q = searchParams.get("q") || undefined;
-  const start = searchParams.get("start") || undefined;
-  const end = searchParams.get("end") || undefined;
-  const error = searchParams.get("error") || undefined;
+  const paramOf = (name: string) => {
+    const value = searchParams.get(name);
+
+    return value === null || value === "" ? undefined : value;
+  };
+
+  const q = paramOf("q");
+  const start = paramOf("start");
+  const end = paramOf("end");
+  const error = paramOf("error");
 
   const searchKey =
     (q !== undefined && q !== "") ||
@@ -253,7 +259,7 @@ export const IncidentFeed = ({
   }, [q, start, end, searchKey]);
 
   const handleSearch = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
+    (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const query = formString(formData, "q").trim();
@@ -591,9 +597,7 @@ export const IncidentFeed = ({
                       justifiedCount={justifiedCount}
                       userVote={userVote}
                       onVote={(type) => {
-                        void (async (type) => {
-                          await handleVote(incident.id, type);
-                        })(type);
+                        void handleVote(incident.id, type);
                       }}
                       pinned={incident.pinned}
                       headerRight={

@@ -124,7 +124,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
     setIsSubmitting(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
@@ -142,7 +142,7 @@ export const IncidentModal = (props: IncidentModalProps) => {
       mode === "create"
         ? inputKeys
             .map((key) => formString(formData, `video-${key}`).trim())
-            .filter((url) => url && isValidVideoUrl(url))
+            .filter((url) => url !== "" && isValidVideoUrl(url))
         : [];
 
     if (mode === "create" && videoUrls.length === 0) {
@@ -179,7 +179,9 @@ export const IncidentModal = (props: IncidentModalProps) => {
     <Dialog.Root
       open={isOpen}
       onOpenChange={(open) => {
-        !open && handleClose();
+        if (!open) {
+          handleClose();
+        }
       }}
     >
       <Dialog.Portal>

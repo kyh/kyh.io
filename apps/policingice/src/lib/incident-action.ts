@@ -61,6 +61,11 @@ const parseLocalDate = (dateStr: string) => {
   return new Date(parts[0], parts[1] - 1, parts[2]);
 };
 
+const dateOf = (seconds: number | null) =>
+  seconds !== null && seconds !== 0 ? new Date(seconds * 1000) : null;
+
+const given = (value: string | undefined): value is string => value !== undefined && value !== "";
+
 const newestFirst = (inc: typeof incidents) => [
   desc(sql`IFNULL(${inc.incidentDate}, 9999999999)`),
   desc(inc.id),
@@ -74,13 +79,9 @@ export const searchIncidents = async (data: {
   startDate?: string;
   endDate?: string;
 }) => {
-  const rangeStart =
-    data.startDate !== undefined && data.startDate !== ""
-      ? parseLocalDate(data.startDate)
-      : undefined;
+  const rangeStart = given(data.startDate) ? parseLocalDate(data.startDate) : undefined;
 
-  const rangeEnd =
-    data.endDate !== undefined && data.endDate !== "" ? parseLocalDate(data.endDate) : undefined;
+  const rangeEnd = given(data.endDate) ? parseLocalDate(data.endDate) : undefined;
 
   rangeEnd?.setDate(rangeEnd.getDate() + 1);
 
@@ -91,7 +92,7 @@ export const searchIncidents = async (data: {
     status: "approved",
   } as const;
 
-  if (data.query === undefined || data.query === "") {
+  if (!given(data.query)) {
     const results = await db.query.incidents.findMany({
       limit: 50,
       orderBy: newestFirst,
@@ -134,13 +135,13 @@ export const searchIncidents = async (data: {
     let dateConditions = "";
     const args: (string | number)[] = [vectorStr];
 
-    if (data.startDate !== undefined && data.startDate !== "") {
+    if (given(data.startDate)) {
       const start = Math.floor(parseLocalDate(data.startDate).getTime() / 1000);
       dateConditions += " AND i.incident_date >= ?";
       args.push(start);
     }
 
-    if (data.endDate !== undefined && data.endDate !== "") {
+    if (given(data.endDate)) {
       const end = parseLocalDate(data.endDate);
       end.setDate(end.getDate() + 1);
       dateConditions += " AND i.incident_date <= ?";
@@ -182,21 +183,12 @@ export const searchIncidents = async (data: {
         entry = {
           distance: row.vec_distance,
           incident: {
-            createdAt:
-              row.created_at !== null && row.created_at !== 0
-                ? new Date(row.created_at * 1000)
-                : null,
-            deletedAt:
-              row.deleted_at !== null && row.deleted_at !== 0
-                ? new Date(row.deleted_at * 1000)
-                : null,
+            createdAt: dateOf(row.created_at),
+            deletedAt: dateOf(row.deleted_at),
             description: row.description,
             embedding: row.embedding,
             id,
-            incidentDate:
-              row.incident_date !== null && row.incident_date !== 0
-                ? new Date(row.incident_date * 1000)
-                : null,
+            incidentDate: dateOf(row.incident_date),
             justifiedCount: row.justified_count,
             location: row.location,
             pinned: row.pinned === 1,
@@ -211,10 +203,7 @@ export const searchIncidents = async (data: {
 
       if (row.vid !== null && row.vid !== 0 && row.url !== null && row.url !== "" && row.platform) {
         entry.incident.videos.push({
-          createdAt:
-            row.v_created_at !== null && row.v_created_at !== 0
-              ? new Date(row.v_created_at * 1000)
-              : null,
+          createdAt: dateOf(row.v_created_at),
           id: row.vid,
           incidentId: id,
           platform: row.platform,

@@ -37,12 +37,13 @@ const main = async () => {
 
   console.log(`Found ${incidents.length} incidents to embed`);
 
-  for (const incident of incidents) {
+  const embedOne = async (incident: (typeof incidents)[number]) => {
     const textToEmbed = [incident.location, incident.description].filter(Boolean).join(" - ");
 
     if (!textToEmbed) {
       console.log(`Incident ${incident.id}: no text to embed, skipping`);
-      continue;
+
+      return;
     }
 
     console.log(`Incident ${incident.id}: embedding "${textToEmbed.slice(0, 50)}..."`);
@@ -59,7 +60,20 @@ const main = async () => {
     } catch (error) {
       console.error(`  Error:`, error);
     }
-  }
+  };
+
+  const embedFrom: (index: number) => Promise<void> = async (index) => {
+    const incident = incidents[index];
+
+    if (incident === undefined) {
+      return;
+    }
+
+    await embedOne(incident);
+    await embedFrom(index + 1);
+  };
+
+  await embedFrom(0);
 
   console.log("\nDone!");
 };

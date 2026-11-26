@@ -22,7 +22,7 @@ const AdminLogin = () => {
           errors={errors}
           className="space-y-4"
           onSubmit={(e) => {
-            void (async (e) => {
+            void (async () => {
               e.preventDefault();
               setErrors({});
               setIsLoading(true);
@@ -44,7 +44,7 @@ const AdminLogin = () => {
               }
 
               setIsLoading(false);
-            })(e);
+            })();
           }}
         >
           <Field.Root name="email">

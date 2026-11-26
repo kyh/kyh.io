@@ -31,7 +31,8 @@ const Bracket = ({ x, y }: { x: "left" | "right"; y: "top" | "bottom" }) => (
  * thumbnail or a face.
  */
 export const IncidentCard = ({ incident }: { incident: IncidentSummary }) => {
-  const place = incident.location?.trim() || `Incident #${incident.id}`;
+  const location = incident.location?.trim() ?? "";
+  const place = location === "" ? `Incident #${incident.id}` : location;
   const date = formatDate(incident.incidentDate ?? incident.createdAt);
 
   return (

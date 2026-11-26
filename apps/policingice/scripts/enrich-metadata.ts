@@ -66,6 +66,9 @@ type Incident = Awaited<ReturnType<typeof db.query.incidents.findMany>>[number] 
   videos: { url: string; platform: string }[];
 };
 
+const filled = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value !== "";
+
 const getVideoContext = (videos: { url: string; platform: string }[]) =>
   videos.map((v) => `${v.platform}: ${v.url}`).join("\n");
 
@@ -81,10 +84,7 @@ const partitionIncidents = (allIncidents: Incident[], processedIds: Set<number>)
     }
 
     const isComplete =
-      incident.location !== null &&
-      incident.location !== "" &&
-      incident.description &&
-      incident.incidentDate;
+      filled(incident.location) && filled(incident.description) && incident.incidentDate !== null;
 
     if (isComplete) {
       processedIds.add(incident.id);
@@ -165,23 +165,19 @@ const enrichIncident = async (incident: Incident) => {
   const generated = await generateMetadata(incident);
 
   const location =
-    (incident.location === null || incident.location === ""
-      ? generated?.location
-      : incident.location) || incident.location;
+    !filled(incident.location) && filled(generated?.location)
+      ? generated.location
+      : incident.location;
 
   const description =
-    (incident.description === null || incident.description === ""
-      ? generated?.description
-      : incident.description) || incident.description;
+    !filled(incident.description) && filled(generated?.description)
+      ? generated.description
+      : incident.description;
+
+  const generatedDate = generated?.incidentDate;
 
   const incidentDate =
-    incident.incidentDate ||
-    (generated !== null &&
-    generated.incidentDate !== undefined &&
-    generated.incidentDate !== null &&
-    generated.incidentDate !== ""
-      ? new Date(generated.incidentDate)
-      : incident.incidentDate);
+    incident.incidentDate ?? (filled(generatedDate) ? new Date(generatedDate) : null);
 
   const hasChanges =
     location !== incident.location ||
@@ -197,6 +193,44 @@ const enrichIncident = async (incident: Incident) => {
   } else {
     console.log(`  No updates needed`);
   }
+};
+
+const enrichNext = async (incident: Incident, processedIds: Set<number>) => {
+  console.log(`\nProcessing incident ${incident.id}...`);
+
+  const videoContext = getVideoContext(
+    incident.videos.map((v) => ({ platform: v.platform, url: v.url })),
+  );
+
+  if (!videoContext) {
+    console.log(`  No videos, skipping`);
+    processedIds.add(incident.id);
+
+    return;
+  }
+
+  try {
+    await enrichIncident(incident);
+    processedIds.add(incident.id);
+    saveProcessedIds(processedIds);
+  } catch (error) {
+    console.error(`  Error:`, error);
+  }
+};
+
+const enrichFrom: (
+  incidents: Incident[],
+  processedIds: Set<number>,
+  index: number,
+) => Promise<void> = async (incidents, processedIds, index) => {
+  const incident = incidents[index];
+
+  if (incident === undefined) {
+    return;
+  }
+
+  await enrichNext(incident, processedIds);
+  await enrichFrom(incidents, processedIds, index + 1);
 };
 
 const main = async () => {
@@ -232,27 +266,7 @@ const main = async () => {
 
   console.log(`Found ${toEnrich.length} incidents to enrich`);
 
-  for (const incident of toEnrich) {
-    console.log(`\nProcessing incident ${incident.id}...`);
-
-    const videoContext = getVideoContext(
-      incident.videos.map((v) => ({ platform: v.platform, url: v.url })),
-    );
-
-    if (!videoContext) {
-      console.log(`  No videos, skipping`);
-      processedIds.add(incident.id);
-      continue;
-    }
-
-    try {
-      await enrichIncident(incident);
-      processedIds.add(incident.id);
-      saveProcessedIds(processedIds);
-    } catch (error) {
-      console.error(`  Error:`, error);
-    }
-  }
+  await enrichFrom(toEnrich, processedIds, 0);
 
   saveProcessedIds(processedIds);
   console.log("\nDone!");

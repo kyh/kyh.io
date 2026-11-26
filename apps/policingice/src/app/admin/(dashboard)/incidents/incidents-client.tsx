@@ -62,7 +62,7 @@ const IncidentEditRow = ({ incident, onCancel, onSaved }: IncidentEditRowProps) 
   const router = useRouter();
   const newVideoRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     await updateIncident({
@@ -408,7 +408,9 @@ export const AdminIncidentsClient = ({ initialIncidents }: AdminIncidentsClientP
       <Dialog.Root
         open={!!previewingIncident}
         onOpenChange={(open) => {
-          !open && setPreviewingIncident(null);
+          if (!open) {
+            setPreviewingIncident(null);
+          }
         }}
       >
         <Dialog.Portal>

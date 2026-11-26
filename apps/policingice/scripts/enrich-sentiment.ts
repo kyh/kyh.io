@@ -2,7 +2,7 @@
 import * as fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { gateway, generateObject } from "ai";
+import { Output, gateway, generateText } from "ai";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -137,7 +137,7 @@ const main = async () => {
 
   console.log(`Found ${incidentsToEnrich.length} incidents to enrich`);
 
-  for (const incident of incidentsToEnrich) {
+  const enrichOne = async (incident: (typeof incidentsToEnrich)[number]) => {
     const [video] = incident.videos;
     console.log(`\nProcessing incident ${incident.id}...`);
     console.log(`  Video: ${video.url}`);
@@ -153,8 +153,9 @@ const main = async () => {
         .filter(Boolean)
         .join("\n");
 
-      const { object } = await generateObject({
+      const { output: object } = await generateText({
         model: gateway("xai/grok-3-fast"),
+        output: Output.object({ schema: SentimentSchema }),
         prompt: `Analyze the public sentiment in the replies and comments on this Twitter/X thread about an ICE incident.
 
 ${context}
@@ -164,7 +165,6 @@ Look at the replies, quote tweets, and engagement on this post. Based on what pe
 - unjustifiedScore: What percentage of commenters view the ICE action as unjustified? (1-100)
 
 Analyze the real public discourse in the thread, not a prediction.`,
-        schema: SentimentSchema,
       });
 
       const justified = jitter(object.justifiedScore);
@@ -197,7 +197,20 @@ Analyze the real public discourse in the thread, not a prediction.`,
     } catch (error) {
       console.error(`  Error:`, error);
     }
-  }
+  };
+
+  const enrichFrom: (index: number) => Promise<void> = async (index) => {
+    const incident = incidentsToEnrich[index];
+
+    if (incident === undefined) {
+      return;
+    }
+
+    await enrichOne(incident);
+    await enrichFrom(index + 1);
+  };
+
+  await enrichFrom(0);
 
   saveProgress(progress);
   console.log("\nDone!");
