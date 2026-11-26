@@ -1,47 +1,59 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode, RefObject } from "react";
 
-export type StoryStep<Scene> = {
+export interface StoryStep<Scene> {
   id: string;
   body: ReactNode;
   scene: Scene;
-};
+}
 
 export type StorySteps<Scene> = readonly [StoryStep<Scene>, ...StoryStep<Scene>[]];
 
-type ScrollyStoryProps<Scene> = {
+interface ScrollyStoryProps<Scene> {
   steps: StorySteps<Scene>;
   renderGraphic: (scene: Scene) => ReactNode;
-};
+}
 
-function useActiveStep(firstStepId: string, container: RefObject<HTMLElement | null>) {
+const useActiveStep = (firstStepId: string, container: RefObject<HTMLElement | null>) => {
   const [activeStepId, setActiveStepId] = useState(firstStepId);
 
   useEffect(() => {
     const elements = container.current?.querySelectorAll<HTMLElement>("[data-story-step]");
-    if (elements === undefined) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const id = entry.target.getAttribute("data-story-step");
-          if (id !== null) setActiveStepId(id);
-        }
-      },
-      { rootMargin: "-42% 0px -42% 0px", threshold: 0 },
-    );
+    let cleanup: (() => void) | undefined;
 
-    elements.forEach((element) => {
-      observer.observe(element);
-    });
-    return () => {
-      observer.disconnect();
-    };
+    if (elements !== undefined) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const id =
+              entry.isIntersecting && entry.target instanceof HTMLElement
+                ? entry.target.dataset.storyStep
+                : undefined;
+
+            if (id !== undefined) {
+              setActiveStepId(id);
+            }
+          }
+        },
+        { rootMargin: "-42% 0px -42% 0px", threshold: 0 },
+      );
+
+      for (const element of elements) {
+        observer.observe(element);
+      }
+
+      cleanup = () => {
+        observer.disconnect();
+      };
+    }
+
+    return cleanup;
   }, [container]);
 
   return activeStepId;
-}
+};
 
-export function ScrollyStory<Scene>({ steps, renderGraphic }: ScrollyStoryProps<Scene>) {
+export const ScrollyStory = <Scene,>({ steps, renderGraphic }: ScrollyStoryProps<Scene>) => {
   const container = useRef<HTMLElement>(null);
   const activeStepId = useActiveStep(steps[0].id, container);
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
@@ -51,6 +63,7 @@ export function ScrollyStory<Scene>({ steps, renderGraphic }: ScrollyStoryProps<
       <article>
         {steps.map((step) => {
           const isActive = step.id === activeStep.id;
+
           return (
             <div
               className="step"
@@ -67,4 +80,4 @@ export function ScrollyStory<Scene>({ steps, renderGraphic }: ScrollyStoryProps<
       <figure aria-live="polite">{renderGraphic(activeStep.scene)}</figure>
     </section>
   );
-}
+};

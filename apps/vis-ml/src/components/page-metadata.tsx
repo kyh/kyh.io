@@ -2,17 +2,17 @@ import { useEffect } from "react";
 
 const siteUrl = "https://vis-ml.kyh.io";
 
-type PageMetadataProps = {
+interface PageMetadataProps {
   title: string;
   description: string;
   path: string;
-};
-
-function setMetaContent(selector: string, content: string) {
-  document.querySelector<HTMLMetaElement>(selector)?.setAttribute("content", content);
 }
 
-export function PageMetadata({ title, description, path }: PageMetadataProps) {
+const setMetaContent = (selector: string, content: string) => {
+  document.querySelector<HTMLMetaElement>(selector)?.setAttribute("content", content);
+};
+
+export const PageMetadata = ({ title, description, path }: PageMetadataProps) => {
   useEffect(() => {
     const canonicalUrl = new URL(path, siteUrl).toString();
 
@@ -29,4 +29,4 @@ export function PageMetadata({ title, description, path }: PageMetadataProps) {
   }, [description, path, title]);
 
   return null;
-}
+};

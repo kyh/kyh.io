@@ -1,5 +1,0 @@
-{
-  "rules": {
-    "nextjs/no-html-link-for-pages": "off"
-  }
-}
