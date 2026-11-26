@@ -5,15 +5,7 @@ import { defineConfig } from "vite";
 const root = import.meta.dirname;
 
 export default defineConfig({
-  esbuild: {
-    include: /src\/.*\.[tj]sx?$/u,
-    loader: "jsx",
-  },
-  plugins: [
-    react({
-      include: [/\.jsx?$/u, /\.tsx?$/u],
-    }),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       components: path.resolve(root, "src/components"),
@@ -22,9 +14,5 @@ export default defineConfig({
       hooks: path.resolve(root, "src/hooks"),
       utils: path.resolve(root, "src/utils"),
     },
-  },
-  test: {
-    environment: "jsdom",
-    setupFiles: "./src/setup-tests.js",
   },
 });

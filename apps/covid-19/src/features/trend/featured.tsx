@@ -2,16 +2,30 @@ import { Card } from "components/card";
 import { LineChart } from "components/line-chart";
 import { StatCard, StatRow } from "components/stat-card";
 import { differenceInDays } from "date-fns";
+import type { CountKey, Day } from "utils/daily";
 import { formatNumber } from "utils/formatter";
 import { stateAbbrevToFullname } from "utils/map-utils";
 import { growthRate } from "utils/stats";
 
-import { DataFilter, SELECTIONS } from "./data-filter";
+import { DataFilter } from "./data-filter";
+import type { Selection } from "./data-filter";
 
 const now = new Date();
 
+interface Labels {
+  days: number;
+  deathChange: string;
+  deathKey: CountKey;
+  deathTotal: string;
+  deathTotalComparator: string;
+  positiveChange: string;
+  positiveKey: CountKey;
+  positiveTotal: string;
+  positiveTotalComparator: string;
+}
+
 const selectionToLabels = {
-  [SELECTIONS.time]: {
+  time: {
     days: 2,
     deathChange: "% increase in Deaths",
     deathKey: "death",
@@ -22,7 +36,7 @@ const selectionToLabels = {
     positiveTotal: "Total Cases today",
     positiveTotalComparator: "Total Cases yesterday",
   },
-  [SELECTIONS.trendDay]: {
+  trendDay: {
     days: 2,
     deathChange: "1 day average change in Deaths",
     deathKey: "deathIncrease",
@@ -33,7 +47,7 @@ const selectionToLabels = {
     positiveTotal: "New Cases today",
     positiveTotalComparator: "New Cases yesterday",
   },
-  [SELECTIONS.trendWeek]: {
+  trendWeek: {
     days: 8,
     deathChange: "7 day average change in Deaths",
     deathKey: "deathIncrease",
@@ -44,7 +58,7 @@ const selectionToLabels = {
     positiveTotal: "New cases today",
     positiveTotalComparator: "New cases 7 days ago",
   },
-  [SELECTIONS.trendBiWeek]: {
+  trendBiWeek: {
     days: 15,
     deathChange: "14 day average change in Deaths",
     deathKey: "deathIncrease",
@@ -55,7 +69,7 @@ const selectionToLabels = {
     positiveTotal: "New cases today",
     positiveTotalComparator: "New cases 14 days ago",
   },
-  [SELECTIONS.trendMonth]: {
+  trendMonth: {
     days: 31,
     deathChange: "1 month average change in Deaths",
     deathKey: "deathIncrease",
@@ -66,7 +80,22 @@ const selectionToLabels = {
     positiveTotal: "New cases today",
     positiveTotalComparator: "New cases 1 month ago",
   },
+} satisfies Record<Selection, Labels>;
+
+const changeOf = (from: Day | undefined, to: Day | undefined, key: CountKey) => {
+  const before = from?.[key];
+  const after = to?.[key];
+
+  return before === undefined || after === undefined ? "N/A" : `${growthRate(before, after)}%`;
 };
+
+interface FeaturedProps {
+  dailyData: readonly Day[];
+  selectedState: string | undefined;
+  selectedFilter: Selection;
+  onSelectFilter: (selection: Selection) => void;
+  isLoading: boolean;
+}
 
 export const Featured = ({
   dailyData,
@@ -74,16 +103,19 @@ export const Featured = ({
   selectedFilter,
   onSelectFilter,
   isLoading,
-}) => {
+}: FeaturedProps) => {
   const [firstDay] = dailyData;
   const today = dailyData.at(-1);
   const label = selectionToLabels[selectedFilter];
-  const comparator = dailyData[dailyData.length - label.days];
+  const comparator = dailyData.at(-label.days);
 
   return (
     <section className="featured-content flex flex-1 flex-col px-4 sm:px-0">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg">{stateAbbrevToFullname[selectedState] || "United States"}</h1>
+        <h1 className="text-lg">
+          {(selectedState === undefined ? undefined : stateAbbrevToFullname.get(selectedState)) ??
+            "United States"}
+        </h1>
         <DataFilter selected={selectedFilter} onSelectFilter={onSelectFilter} />
       </div>
       <div className="mb-4 grid-cols-4 gap-4 sm:grid">
@@ -91,14 +123,14 @@ export const Featured = ({
           label="Total Cases"
           pointClassname="bg-teal-500"
           pointShadeClassname="bg-teal-800"
-          value={today && formatNumber(today.positive)}
+          value={formatNumber(today?.positive)}
           isLoading={isLoading}
         />
         <StatCard
           label="First Case"
           pointClassname="bg-yellow-500"
           pointShadeClassname="bg-yellow-800"
-          value={differenceInDays(now, firstDay && firstDay.date)}
+          value={firstDay === undefined ? "Unknown" : differenceInDays(now, firstDay.date)}
           suffix="days ago"
           isLoading={isLoading}
         />
@@ -106,14 +138,14 @@ export const Featured = ({
           label="Recovered"
           pointClassname="bg-purple-500"
           pointShadeClassname="bg-purple-800"
-          value={today && today.recovered ? formatNumber(today.recovered) : "Unknown"}
+          value={formatNumber(today?.recovered)}
           isLoading={isLoading}
         />
         <StatCard
           label="Deaths"
           pointClassname="bg-pink-500"
           pointShadeClassname="bg-pink-800"
-          value={today && today.death ? formatNumber(today.death) : "Unknown"}
+          value={formatNumber(today?.death)}
           isLoading={isLoading}
         />
       </div>
@@ -122,22 +154,20 @@ export const Featured = ({
           <StatRow
             className="mb-1"
             label={label.positiveChange}
-            value={
-              today && `${growthRate(comparator[label.positiveKey], today[label.positiveKey])}%`
-            }
+            value={changeOf(comparator, today, label.positiveKey)}
             isLoading={isLoading}
             lowercase
           />
           <StatRow
             className="mb-1"
             label={label.positiveTotal}
-            value={today && formatNumber(today[label.positiveKey])}
+            value={formatNumber(today?.[label.positiveKey])}
             isLoading={isLoading}
             lowercase
           />
           <StatRow
             label={label.positiveTotalComparator}
-            value={comparator ? formatNumber(comparator[label.positiveKey]) : "N/A"}
+            value={comparator === undefined ? "N/A" : formatNumber(comparator[label.positiveKey])}
             isLoading={isLoading}
             lowercase
           />
@@ -146,20 +176,20 @@ export const Featured = ({
           <StatRow
             className="mb-1"
             label={label.deathChange}
-            value={today && `${growthRate(comparator[label.deathKey], today[label.deathKey])}%`}
+            value={changeOf(comparator, today, label.deathKey)}
             isLoading={isLoading}
             lowercase
           />
           <StatRow
             className="mb-1"
             label={label.deathTotal}
-            value={today && formatNumber(today[label.deathKey])}
+            value={formatNumber(today?.[label.deathKey])}
             isLoading={isLoading}
             lowercase
           />
           <StatRow
             label={label.deathTotalComparator}
-            value={comparator ? formatNumber(comparator[label.deathKey]) : "N/A"}
+            value={comparator === undefined ? "N/A" : formatNumber(comparator[label.deathKey])}
             isLoading={isLoading}
             lowercase
           />

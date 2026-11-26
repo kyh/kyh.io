@@ -1,13 +1,51 @@
-import React, { useMemo, useState } from "react";
-import { max } from "d3-array";
-import { nest } from "d3-collection";
-import { format } from "d3-format";
-import { geoAlbersUsa, geoPath } from "d3-geo";
-import { scaleSqrt, scaleThreshold } from "d3-scale";
-import StatesWithPopulation from "data/states.json";
-import { formatDate, formatNumber, parseDate } from "utils/formatter";
+import { useMemo, useState } from "react";
+import { format, geoAlbersUsa, geoPath, group, index, max, scaleSqrt, scaleThreshold } from "d3";
+import type { GeoPath, ScalePower } from "d3";
+import statesGeoJson from "data/states.json";
+import type { Feature, MultiPolygon, Polygon } from "geojson";
+import type { MapField, StateDay } from "utils/daily";
+import { formatDate, formatNumber } from "utils/formatter";
+import { z } from "zod";
 
 import { ChoroLegend } from "./choro-legend";
+
+const ring = z.array(z.array(z.number()));
+
+const stateGeoSchema = z.object({
+  features: z.array(
+    z.object({
+      geometry: z.discriminatedUnion("type", [
+        z.object({ coordinates: z.array(ring), type: z.literal("Polygon") }),
+        z.object({ coordinates: z.array(z.array(ring)), type: z.literal("MultiPolygon") }),
+      ]),
+      properties: z.object({ NAME: z.string(), STUSPS: z.string(), population: z.number() }),
+      type: z.literal("Feature"),
+    }),
+  ),
+  type: z.literal("FeatureCollection"),
+});
+
+const statesWithPopulation = stateGeoSchema.parse(statesGeoJson);
+
+type StateFeature = (typeof statesWithPopulation.features)[number];
+
+export interface MapState extends Feature<Polygon | MultiPolygon> {
+  properties: StateFeature["properties"] & {
+    centroidCoordinates: [number, number];
+    dailyData: ReadonlyMap<string, StateDay>;
+  };
+}
+
+export type GetValue = (state: MapState, field: MapField, normalized?: boolean) => number;
+
+interface Hovered {
+  coordinates: [number, number];
+  state: MapState;
+}
+
+type StatePath = GeoPath<unknown, MapState | StateFeature>;
+
+type BubbleScale = ScalePower<number, number>;
 
 const colorSchemes = {
   gray: [
@@ -46,7 +84,7 @@ const colorSchemes = {
     "#05505c",
     "#014451",
   ],
-};
+} as const;
 
 const margin = {
   bottom: 10,
@@ -55,7 +93,7 @@ const margin = {
   top: 10,
 };
 
-const colorLimits = {
+const colorLimits: Record<MapField, number[]> = {
   death: [5, 10, 25, 50, 100, 250, 500],
   positive: [100, 250, 500, 1000, 2500, 5000, 10_000],
   totalTestResults: [1000, 5000, 7500, 10_000, 12_500, 15_000, 25_000],
@@ -69,7 +107,7 @@ const getColor = {
   totalTestResults: scaleThreshold(colorLimits.totalTestResults, colorSchemes.gray),
 };
 
-const getStrokeColor = {
+const getStrokeColor: Record<MapField, string> = {
   death: strokeWhite,
   positive: strokeGrey,
   totalTestResults: strokeGrey,
@@ -78,21 +116,31 @@ const getStrokeColor = {
 const mapWidth = window.innerWidth < 910 ? window.innerWidth - 30 : 910;
 const mapHeight = 520;
 
+interface StatesProps {
+  states: readonly MapState[];
+  useChoropleth: boolean;
+  currentField: MapField;
+  hoveredState: Hovered | undefined;
+  onHover: (hovered: Hovered) => void;
+  getValue: GetValue;
+  path: StatePath;
+}
+
 const States = ({
-  geoJson,
+  states,
   useChoropleth,
   currentField,
   hoveredState,
-  setHoveredState,
+  onHover,
   getValue,
   path,
-}) => {
-  const getColorFromFeature = (d) => {
+}: StatesProps) => {
+  const getColorFromFeature = (d: MapState) => {
     if (!useChoropleth) {
       return "transparent";
     }
 
-    const value = getValue(d) || 0;
+    const value = getValue(d, currentField);
     const normalizationPopulation = 1_000_000;
     const normalizedValue = value / (d.properties.population / normalizationPopulation);
 
@@ -101,29 +149,26 @@ const States = ({
 
   const strokeColor = useChoropleth ? getStrokeColor[currentField] : strokeGrey;
 
-  const states = geoJson.features.map((d) => (
+  const paths = states.map((d) => (
     <path
       key={`path${d.properties.NAME}`}
-      d={path(d)}
+      d={path(d) ?? undefined}
       className="states"
       fill={getColorFromFeature(d)}
       stroke={strokeColor}
       pointerEvents="all"
       onMouseEnter={() => {
-        setHoveredState({
-          coordinates: [d.properties.centroidCoordinates[0], d.properties.centroidCoordinates[1]],
-          state: d,
-        });
+        onHover({ coordinates: d.properties.centroidCoordinates, state: d });
       }}
     />
   ));
 
   return (
     <>
-      <g>{states}</g>
-      {hoveredState && (
+      <g>{paths}</g>
+      {hoveredState !== undefined && (
         <path
-          d={path(hoveredState.state)}
+          d={path(hoveredState.state) ?? undefined}
           className="hovered-states"
           fill="transparent"
           stroke={colorSchemes.gray[4]}
@@ -134,25 +179,25 @@ const States = ({
   );
 };
 
-const Bubbles = ({ geoJson, r, getValue }) => {
-  const features = geoJson.features.filter((d) => d.properties.centroidCoordinates[0]);
+interface BubblesProps {
+  states: readonly MapState[];
+  r: BubbleScale;
+  getValue: GetValue;
+}
 
-  const createBubble = (d, i, property) => {
-    const props = {
-      cx: d.properties.centroidCoordinates[0],
-      cy: d.properties.centroidCoordinates[1],
-      r: r(getValue(d, property)),
-    };
+const Bubbles = ({ states, r, getValue }: BubblesProps) => {
+  const features = states.filter((d) => Number.isFinite(d.properties.centroidCoordinates[0]));
 
-    return (
-      <circle
-        key={property + i}
-        fill={property === "positive" ? colorSchemes.teal[5] : colorSchemes.gray[5]}
-        {...props}
-        fillOpacity={property === "positive" ? 0.8 : 0.2}
-      />
-    );
-  };
+  const createBubble = (d: MapState, i: number, property: MapField) => (
+    <circle
+      key={property + i}
+      fill={property === "positive" ? colorSchemes.teal[5] : colorSchemes.gray[5]}
+      cx={d.properties.centroidCoordinates[0]}
+      cy={d.properties.centroidCoordinates[1]}
+      r={r(getValue(d, property))}
+      fillOpacity={property === "positive" ? 0.8 : 0.2}
+    />
+  );
 
   const testBubbles = features.map((d, i) => createBubble(d, i, "totalTestResults"));
   const positiveBubbles = features.map((d, i) => createBubble(d, i, "positive"));
@@ -165,9 +210,16 @@ const Bubbles = ({ geoJson, r, getValue }) => {
   );
 };
 
-const formatLegendEntry = (d) => Math.trunc(Number(format(".1r")(d)));
+const formatLegendEntry = (d: number) => Math.trunc(Number(format(".1r")(d)));
 
-const BubbleLegend = ({ r, maxValue, width, height }) => {
+interface BubbleLegendProps {
+  r: BubbleScale;
+  maxValue: number;
+  width: number;
+  height: number;
+}
+
+const BubbleLegend = ({ r, maxValue, width, height }: BubbleLegendProps) => {
   const legendData = [
     formatLegendEntry(maxValue * 0.1),
     formatLegendEntry(maxValue * 0.5),
@@ -218,7 +270,13 @@ const BubbleLegend = ({ r, maxValue, width, height }) => {
   );
 };
 
-const Tooltip = ({ hoveredState, currentDate, getValue }) => {
+interface TooltipProps {
+  hoveredState: Hovered;
+  currentDate: string | undefined;
+  getValue: GetValue;
+}
+
+const Tooltip = ({ hoveredState, currentDate, getValue }: TooltipProps) => {
   const { coordinates, state } = hoveredState;
   const d = state;
   const [x, y] = coordinates;
@@ -241,7 +299,7 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
               {d.properties.NAME}
             </th>
             <th className="px-2 text-right align-middle text-xs font-normal">
-              ({formatDate(parseDate(currentDate))})
+              ({currentDate === undefined ? "" : formatDate(currentDate)})
             </th>
           </tr>
           <tr className="text-sm font-normal">
@@ -272,66 +330,60 @@ const Tooltip = ({ hoveredState, currentDate, getValue }) => {
   );
 };
 
-export const Map = ({ rawStateData, currentField, currentDate, getValue, useChoropleth }) => {
+const joinStates = (rawStateData: readonly StateDay[], path: StatePath) => {
+  const byState = group(rawStateData, (d) => d.state);
+
+  return statesWithPopulation.features.map((feature) => ({
+    ...feature,
+    properties: {
+      ...feature.properties,
+      centroidCoordinates: path.centroid(feature),
+      dailyData: index(byState.get(feature.properties.STUSPS) ?? [], (d) => d.day),
+    },
+  })) satisfies MapState[];
+};
+
+interface MapProps {
+  rawStateData: readonly StateDay[];
+  currentField: MapField;
+  currentDate: string | undefined;
+  getValue: GetValue;
+  useChoropleth: boolean;
+}
+
+export const Map = ({
+  rawStateData,
+  currentField,
+  currentDate,
+  getValue,
+  useChoropleth,
+}: MapProps) => {
   const path = useMemo(() => {
     const projection = geoAlbersUsa().fitExtent(
       [
         [margin.left, margin.top],
         [mapWidth - margin.right, mapHeight - margin.bottom],
       ],
-      StatesWithPopulation,
+      statesWithPopulation,
     );
 
-    return geoPath().projection(projection);
+    return geoPath<unknown, MapState | StateFeature>(projection);
   }, []);
 
-  const data = useMemo(() => {
-    if (!rawStateData || !rawStateData.length || !path) {
-      return null;
-    }
+  const states = useMemo(() => joinStates(rawStateData, path), [rawStateData, path]);
 
-    const createMapFromArray = (array, keyField, valueField = null) =>
-      Object.assign(
-        {},
-        ...array.map((a) => ({
-          [a[keyField]]: valueField ? a[valueField] : a,
-        })),
-      );
-
-    const groupedByState = nest()
-      .key((d) => d.state)
-      .entries(rawStateData);
-
-    const stateMap = createMapFromArray(groupedByState, "key", "values");
-
-    const joinedFeatures = StatesWithPopulation.features.map((feature) => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        centroidCoordinates: path.centroid(feature),
-        dailyData: createMapFromArray(stateMap[feature.properties.STUSPS], "date"),
-      },
-    }));
-
-    const tempData = { ...StatesWithPopulation, features: joinedFeatures };
-
-    return tempData;
-  }, [rawStateData, path]);
-
-  const [hoveredState, setHoveredState] = useState(null);
+  const [hoveredState, setHoveredState] = useState<Hovered>();
 
   const maxValue = useMemo(
     () =>
-      data &&
       max(
-        data.features
-          .flatMap((d) => Object.values(d.properties.dailyData))
-          .map((d) => d.totalTestResults),
-      ),
-    [data],
+        states.flatMap((d) => [...d.properties.dailyData.values()]),
+        (d) => d.totalTestResults,
+      ) ?? 0,
+    [states],
   );
 
-  const r = useMemo(() => maxValue && scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
+  const r = useMemo(() => scaleSqrt().domain([0, maxValue]).range([0, 50]), [maxValue]);
 
   return (
     <div className="relative">
@@ -346,7 +398,7 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
             spaceBetween={2}
           />
         ) : (
-          <BubbleLegend data={data} r={r} maxValue={maxValue} height={150} width={150} />
+          <BubbleLegend r={r} maxValue={maxValue} height={150} width={150} />
         )}
       </div>
 
@@ -355,23 +407,21 @@ export const Map = ({ rawStateData, currentField, currentDate, getValue, useChor
           width={mapWidth}
           height={mapHeight}
           onMouseLeave={() => {
-            if (hoveredState) {
-              setHoveredState(null);
-            }
+            setHoveredState(undefined);
           }}
         >
-          {!useChoropleth && <Bubbles geoJson={data} getValue={getValue} r={r} />}
+          {!useChoropleth && <Bubbles states={states} getValue={getValue} r={r} />}
           <States
-            geoJson={data}
+            states={states}
             useChoropleth={useChoropleth}
             currentField={currentField}
             getValue={getValue}
             hoveredState={hoveredState}
-            setHoveredState={setHoveredState}
+            onHover={setHoveredState}
             path={path}
           />
         </svg>
-        {!!hoveredState && (
+        {hoveredState !== undefined && (
           <Tooltip hoveredState={hoveredState} getValue={getValue} currentDate={currentDate} />
         )}
       </div>

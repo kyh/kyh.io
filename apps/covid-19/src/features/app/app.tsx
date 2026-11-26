@@ -13,14 +13,7 @@ import {
 } from "react-router-dom";
 import { SWRConfig } from "swr";
 
-const swrConfig = {
-  fetcher: async (...args) => {
-    const res = await fetch(...args);
-
-    return res.json();
-  },
-  refreshInterval: 300_000,
-};
+const swrConfig = { refreshInterval: 300_000 };
 
 const AppLayout = () => (
   <SWRConfig value={swrConfig}>

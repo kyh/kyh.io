@@ -1,4 +1,10 @@
-export const Input = ({ label, ...rest }) => (
+import type { InputHTMLAttributes } from "react";
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+export const Input = ({ label, ...rest }: InputProps) => (
   <div>
     <label htmlFor={label} className="sr-only">
       {label}

@@ -1,5 +1,8 @@
 {
+  "extends": "@kyh/tsconfig/base.json",
   "compilerOptions": {
+    "lib": ["ES2023", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
     "paths": {
       "components/*": ["./src/components/*"],
       "data/*": ["./src/data/*"],
@@ -8,5 +11,6 @@
       "utils/*": ["./src/utils/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "vite.config.ts", "postcss.config.js"],
+  "exclude": ["node_modules"]
 }

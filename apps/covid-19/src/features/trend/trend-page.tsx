@@ -1,28 +1,33 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { PageContainer } from "components/page-container";
 import { Sidebar } from "features/trend/sidebar";
 import { useGetStatesDailyData } from "hooks/use-get-states-daily-data";
 import { useGetUSDailyData } from "hooks/use-get-us-daily-data";
 
-import { SELECTIONS } from "./data-filter";
+import { isSelection } from "./data-filter";
+import type { Selection } from "./data-filter";
 import { Featured } from "./featured";
 
 import "./trend-page.css";
+
+const storedFilter = () => {
+  const stored = localStorage.getItem("selectedFilter");
+
+  return stored !== null && isSelection(stored) ? stored : "time";
+};
 
 export const TrendPage = () => {
   const { isLoading: isLoadingDaily, data: usDailyData } = useGetUSDailyData();
   const { isLoading: isLoadingStates, data: statesDailyData, states } = useGetStatesDailyData();
 
   const [selectedState, setSelectedState] = useState(
-    localStorage.getItem("selectedState") || undefined,
+    () => localStorage.getItem("selectedState") ?? undefined,
   );
 
-  const [selectedFilter, setSelectedFilter] = useState(
-    localStorage.getItem("selectedFilter") || SELECTIONS.time,
-  );
+  const [selectedFilter, setSelectedFilter] = useState<Selection>(storedFilter);
 
-  const onSelectState = (state) => {
-    if (selectedState === state) {
+  const onSelectState = (state: string | undefined) => {
+    if (state === undefined || state === selectedState) {
       localStorage.removeItem("selectedState");
       setSelectedState(undefined);
     } else {
@@ -31,7 +36,7 @@ export const TrendPage = () => {
     }
   };
 
-  const onSelectFilter = (selection) => {
+  const onSelectFilter = (selection: Selection) => {
     localStorage.setItem("selectedFilter", selection);
     setSelectedFilter(selection);
   };
@@ -47,7 +52,10 @@ export const TrendPage = () => {
         usDailyData={usDailyData}
       />
       <Featured
-        dailyData={statesDailyData[selectedState] || usDailyData}
+        dailyData={
+          (selectedState === undefined ? undefined : statesDailyData.get(selectedState)) ??
+          usDailyData
+        }
         selectedState={selectedState}
         selectedFilter={selectedFilter}
         onSelectFilter={onSelectFilter}

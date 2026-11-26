@@ -1,4 +1,6 @@
-export const iconMap = {
+import type { SVGProps } from "react";
+
+const iconMap = {
   pause: (
     <path
       fillRule="evenodd"
@@ -28,13 +30,13 @@ const iconSizeMap = {
   xs: "12px",
 };
 
-export const Icon = ({ icon = "", size = "sm", ...rest }) => {
-  const iconPath = iconMap[icon];
-  const iconSize = iconSizeMap[size];
+interface IconProps extends SVGProps<SVGSVGElement> {
+  icon: keyof typeof iconMap;
+  size?: keyof typeof iconSizeMap;
+}
 
-  if (!iconPath) {
-    return null;
-  }
+export const Icon = ({ icon, size = "sm", ...rest }: IconProps) => {
+  const iconSize = iconSizeMap[size];
 
   return (
     <svg
@@ -45,7 +47,7 @@ export const Icon = ({ icon = "", size = "sm", ...rest }) => {
       height={iconSize}
       {...rest}
     >
-      {iconPath}
+      {iconMap[icon]}
     </svg>
   );
 };

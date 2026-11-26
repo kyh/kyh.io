@@ -1,5 +1,18 @@
-import { format } from "d3-format";
-import { scaleLinear } from "d3-scale";
+import { format, scaleLinear } from "d3";
+import type { ScaleThreshold } from "d3";
+
+interface ChoroLegendProps {
+  color: ScaleThreshold<number, string>;
+  tickSize?: number;
+  width?: number;
+  height?: number;
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  tickFormat: string;
+  spaceBetween?: number;
+}
 
 export const ChoroLegend = ({
   color,
@@ -12,7 +25,7 @@ export const ChoroLegend = ({
   marginLeft = 0,
   tickFormat,
   spaceBetween = 0,
-} = {}) => {
+}: ChoroLegendProps) => {
   const height = heightProp ?? 44 + tickSize;
   const marginBottom = marginBottomProp ?? 16 + tickSize;
   const isHorizontal = width > height;
@@ -27,7 +40,7 @@ export const ChoroLegend = ({
 
   const formatTick = format(tickFormat);
 
-  const createRect = (d, i) => {
+  const createRect = (d: string, i: number) => {
     const props = {
       fill: d,
       key: `rect${d}`,
@@ -62,7 +75,7 @@ export const ChoroLegend = ({
     <svg
       width={width}
       height={height}
-      viewBox={[0, 0, width, height]}
+      viewBox={`0 0 ${width} ${height}`}
       style={{ display: "block", overflow: "visible" }}
     >
       <g>{color.range().map(createRect)}</g>
@@ -77,7 +90,7 @@ export const ChoroLegend = ({
           ))}
         </g>
       ) : (
-        <g width="100%" y={0} widths="20" fontSize="11" textAnchor="middle">
+        <g width="100%" y={0} fontSize="11" textAnchor="middle">
           {color.domain().map((tick, i) => (
             <g className="tick" key={tick} transform={`translate(0 ${y(i)})`}>
               <text fill="currentColor">{formatTick(tick)}</text>

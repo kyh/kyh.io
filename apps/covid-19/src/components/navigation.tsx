@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 
-const Link = ({ to, children }) => (
+const Link = ({ to, children }: { to: string; children: ReactNode }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>

@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "components/icon";
 import { Loader } from "components/loader";
 import { Map } from "components/map";
+import type { GetValue } from "components/map";
 import { PageContainer } from "components/page-container";
 import { StatCard } from "components/stat-card";
-import { sum } from "d3-array";
-import { set } from "d3-collection";
+import { sum } from "d3";
 import { useGetStatesDailyData } from "hooks/use-get-states-daily-data";
 import { formatDate, formatNumber } from "utils/formatter";
 
@@ -16,29 +16,33 @@ export const DistributionPage = () => {
   const [sliderIndex, setSliderIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  const dates = useMemo(() => set(raw.map((s) => s.date).toReversed()).values(), [raw]);
-  const currentDate = useMemo(() => dates[sliderIndex], [dates, sliderIndex]);
+  const dates = useMemo(() => [...new Set(raw.map((s) => s.day).toReversed())], [raw]);
+  const currentDate = dates[sliderIndex];
+  const [firstDate] = dates;
+  const lastDate = dates.at(-1);
 
-  const getValue = useMemo(
+  const getValue = useMemo<GetValue>(
     () =>
       (d, field, normalized = false) =>
-        ((d.properties.dailyData[currentDate] && d.properties.dailyData[currentDate][field]) || 0) /
+        ((currentDate === undefined
+          ? undefined
+          : d.properties.dailyData.get(currentDate)?.[field]) ?? 0) /
         (normalized ? d.properties.population / 1_000_000 : 1),
     [currentDate],
   );
 
   const sumTotalTestResults = useMemo(
-    () => sum(raw, (day) => (day.date === currentDate ? day.totalTestResults : 0)),
+    () => sum(raw, (day) => (day.day === currentDate ? day.totalTestResults : 0)),
     [currentDate, raw],
   );
 
   const sumPositive = useMemo(
-    () => sum(raw, (day) => (day.date === currentDate ? day.positive : 0)),
+    () => sum(raw, (day) => (day.day === currentDate ? day.positive : 0)),
     [currentDate, raw],
   );
 
   const sumNegative = useMemo(
-    () => sum(raw, (day) => (day.date === currentDate ? day.negative : 0)),
+    () => sum(raw, (day) => (day.day === currentDate ? day.negative : 0)),
     [currentDate, raw],
   );
 
@@ -53,13 +57,19 @@ export const DistributionPage = () => {
   const isPlaying = playing && !atEnd;
 
   useEffect(() => {
-    if (!isPlaying) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setSliderIndex((index) => index + 1);
+      }, 300);
+
+      cleanup = () => {
+        clearInterval(interval);
+      };
     }
 
-    const interval = setInterval(() => setSliderIndex((index) => index + 1), 300);
-
-    return () => clearInterval(interval);
+    return cleanup;
   }, [isPlaying]);
 
   const togglePlaying = () => {
@@ -93,7 +103,7 @@ export const DistributionPage = () => {
                 type="button"
                 disabled={dates.length === 0}
                 className="mr-2"
-                onClick={() => togglePlaying()}
+                onClick={togglePlaying}
                 role="switch"
                 aria-label={isPlaying ? "Stop animation" : "Start animation"}
                 aria-checked={isPlaying}
@@ -106,7 +116,7 @@ export const DistributionPage = () => {
                   <rect x="0" y="0" rx="4" ry="4" width="100%" height="100%" />
                 </Loader>
               ) : (
-                <span>{formatDate(currentDate, "%B %d")}</span>
+                <span>{currentDate === undefined ? "" : formatDate(currentDate, "%B %d")}</span>
               )}
             </h1>
           </div>
@@ -115,7 +125,9 @@ export const DistributionPage = () => {
               <input
                 aria-label="Displayed date"
                 className="w-64"
-                onChange={(event) => setSliderIndex(Math.trunc(Number(event.target.value)))}
+                onChange={(event) => {
+                  setSliderIndex(Math.trunc(Number(event.target.value)));
+                }}
                 min={0}
                 max={dates.length - 1}
                 value={sliderIndex}
@@ -129,8 +141,12 @@ export const DistributionPage = () => {
                 </Loader>
               ) : (
                 <>
-                  <span className="text-xs">{formatDate(dates[0])}</span>
-                  <span className="text-xs">{formatDate(dates.at(-1))}</span>
+                  <span className="text-xs">
+                    {firstDate === undefined ? "" : formatDate(firstDate)}
+                  </span>
+                  <span className="text-xs">
+                    {lastDate === undefined ? "" : formatDate(lastDate)}
+                  </span>
                 </>
               )}
             </div>
