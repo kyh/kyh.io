@@ -9,15 +9,15 @@ pnpm install
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no bootstrap script, no Docker, no local database — ten of the thirteen apps run with `pnpm install` alone. Node >= 24, pnpm 10.33 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
+That's the whole setup. There is no bootstrap script, no Docker, no local database — ten of the thirteen apps run with `pnpm install` alone. Node >= 24, pnpm 12 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
 
-Three apps read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts):
+Apps with an `.env.example` read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts). Each example holds local-dev defaults with secrets blank, so copying them all is the setup:
 
 ```sh
-cp apps/kyh/.env.example apps/kyh/.env                  # optional: without it, project images fall back to a local placeholder
-cp apps/policingice/.env.example apps/policingice/.env  # required: any DB-backed route throws without TURSO_DATABASE_URL
-cp apps/autoplay/.env.example apps/autoplay/.env        # optional to boot: without it the app renders a setup checklist; X + fal keys unlock the real flow
+for f in apps/*/.env.example; do cp -n "$f" "${f%.example}"; done
 ```
+
+kyh gets its project images, commuting-clawders a local `file:local.db` (run its `db:push`), autoplay renders a setup checklist until X + fal keys are filled in, and policingice still needs its production URL (see below).
 
 `pnpm dev` starts _everything_ at once via `turbo watch`. Prefer a single `pnpm dev:<app>` — `dev:kyh` and `dev:policingice` both bind :3000 and cannot run together.
 
