@@ -722,7 +722,7 @@ export const leprechaunPose = (leprechaun: Leprechaun) => {
     BALL.map((axis) => scale(axis, HEAD_R)),
   );
 
-  const parts = Object.fromEntries([
+  const parts = Object.fromEntries<Part>([
     ...solid("coat", coat.outline),
     ["belt", { d: coat.belt }],
     ["belt-buckle", { d: coat.buckle, opacity: round(coat.buckleShown) }],

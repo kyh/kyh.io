@@ -491,7 +491,7 @@ export const penguinPose = (penguin: Penguin) => {
   const tailAxes = [apply(pitchOf(-0.7), [4.5, 0, 0]), [0, 1.2, 0], [0, 0, 2.6]] satisfies Vec3[];
   const ends = [0, 1].map((which) => scarfEndOf(penguin, frame, which));
 
-  const parts = Object.fromEntries([
+  const parts = Object.fromEntries<Part>([
     ...solid("body", bodyOutline),
     [
       "front",

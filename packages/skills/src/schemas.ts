@@ -30,5 +30,7 @@ export const claudeConfigSchema = z.looseObject({
 export const readJson = <S extends z.ZodType>(file: string, schema: S) =>
   schema.parse(JSON.parse(readFileSync(file, "utf-8")));
 
-export const messageOf = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+export const failure = z.union([
+  z.object({ code: z.string().optional(), message: z.string() }),
+  z.unknown().transform((value) => ({ code: undefined, message: String(value) })),
+]);

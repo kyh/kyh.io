@@ -1,3 +1,5 @@
+import { graphemesOf } from "@/lib/graphemes";
+
 /**
  * The heading scramble, after rauno.me/projects: the text types itself out one
  * glyph a tick and the real letters settle left to right LAG ticks behind.
@@ -9,7 +11,7 @@ export const TICK_MS = 50;
 export const LAG = 10;
 export const SPELL = 5;
 
-const widthOf = (text: string, reading: string) => Math.max([...text].length, [...reading].length);
+const widthOf = (text: string, reading: string) => Math.max(graphemesOf(text).length, graphemesOf(reading).length);
 
 /** How many ticks `text` takes to settle completely over `reading`. */
 export const scrambleTicks = (text: string, reading = "") => widthOf(text, reading) + LAG;
@@ -22,8 +24,8 @@ export const scrambleFrame = (
   glyphs: readonly string[],
   random: () => number,
 ) => {
-  const letters = [...text];
-  const spelled = [...reading];
+  const letters = graphemesOf(text);
+  const spelled = graphemesOf(reading);
   const end = Math.min(tick, widthOf(text, reading));
   let frame = "";
 

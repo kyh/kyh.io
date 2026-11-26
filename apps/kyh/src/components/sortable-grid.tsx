@@ -50,7 +50,7 @@ const wiggleStyle = (index: number) =>
   ({
     "--wiggle-delay": `${-((index * 0.07) % 0.28)}s`,
     "--wiggle-dir": index % 2 === 0 ? 1 : -1,
-  }) as React.CSSProperties;
+  }) satisfies React.CSSProperties;
 
 const isOwn = (e: SyntheticEvent<HTMLElement>) =>
   e.target instanceof Node && e.currentTarget.contains(e.target);

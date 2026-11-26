@@ -114,7 +114,7 @@ export const Cursor = ({ at: { fromCenter, fromTop }, t, color, hue, chat }: Cur
         </defs>
         <path d={CURSOR_ARROW} fill={`url(#${gradient})`} stroke={hue} strokeWidth="2" />
       </svg>
-      {line !== null && color && hue && (
+      {line !== null && color !== undefined && color !== "" && hue !== undefined && hue !== "" && (
         <div className="absolute top-5 left-4">
           <ChatBubble line={line} color={color} hue={hue} />
         </div>

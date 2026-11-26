@@ -1,6 +1,6 @@
 import type { JsonRecord, JsonValue } from "@vibedgames/multiplayer";
 
-import { asRecord } from "@/lib/wire";
+import { asRecord, isText } from "@/lib/wire";
 
 export const REORDER = "reorder";
 
@@ -24,7 +24,7 @@ export interface ReorderIntent {
 const PROTOTYPE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 const asKey = (value: JsonValue | undefined) =>
-  String(value) === value &&
+  isText(value) &&
   value.length > 0 &&
   value.length <= MAX_KEY &&
   !PROTOTYPE_KEYS.has(value)

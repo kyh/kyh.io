@@ -1,8 +1,9 @@
 import type { Material, WebGLProgramParametersWithUniforms } from "three";
-import { Float32BufferAttribute, InstancedBufferAttribute, Mesh, Vector3 } from "three";
+import { Float32BufferAttribute, InstancedBufferAttribute, Vector3 } from "three";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 
 import type { Built } from "./render";
+import { isMesh } from "./render";
 import { CURB_TOP } from "./draw-blocks";
 import { FLOOR } from "./draw-kit";
 import { RISE } from "./schedule";
@@ -104,16 +105,12 @@ export const raise = (built: Built, startAt: StartAt) => {
       }
 
       geometry.setAttribute("instanceBuildAt", new InstancedBufferAttribute(at, 1));
-    } else if (object instanceof Mesh) {
+    } else if (isMesh(object)) {
       const { geometry } = object;
       const positions = geometry.getAttribute("position");
       const at = new Float32Array(positions.count);
 
-      if (geometry.index) {
-        geometry.computeBoundingBox();
-        geometry.boundingBox?.getCenter(point).applyMatrix4(object.matrixWorld);
-        at.fill(startAt(point.x, point.z));
-      } else {
+      if (geometry.index === null) {
         for (let vertex = 0; vertex + 2 < positions.count; vertex += 3) {
           point
             .set(
@@ -126,6 +123,10 @@ export const raise = (built: Built, startAt: StartAt) => {
             .applyMatrix4(object.matrixWorld);
           at.fill(startAt(point.x, point.z), vertex, vertex + 3);
         }
+      } else {
+        geometry.computeBoundingBox();
+        geometry.boundingBox?.getCenter(point).applyMatrix4(object.matrixWorld);
+        at.fill(startAt(point.x, point.z));
       }
 
       geometry.setAttribute("buildAt", new Float32BufferAttribute(at, 1));

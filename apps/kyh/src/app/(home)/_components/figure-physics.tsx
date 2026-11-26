@@ -26,6 +26,11 @@ const getRenderProps = (isLight: boolean) => ({
   strokeStyle: isLight ? "black" : "white",
 });
 
+const hasPermissionPrompt = (
+  target: typeof DeviceOrientationEvent,
+): target is typeof DeviceOrientationEvent & { requestPermission: () => Promise<PermissionState> } =>
+  "requestPermission" in target;
+
 const isEventListener = (value: unknown): value is EventListener => typeof value === "function";
 
 const INITIAL_FIGURE_COUNT = 20;
@@ -180,8 +185,11 @@ export const FigurePhysics = () => {
 
       engineRef.current = engine;
 
+      const surface = document.createElement("canvas");
+      containerRef.current.append(surface);
+
       const render = Render.create({
-        element: containerRef.current,
+        canvas: surface,
         engine,
         options: {
           background: "transparent",
@@ -331,20 +339,20 @@ export const FigurePhysics = () => {
 
       let orientationRequested = false;
 
-      const needsPermission =
-        typeof DeviceOrientationEvent !== "undefined" &&
-        "requestPermission" in DeviceOrientationEvent;
+      const orientation =
+        typeof DeviceOrientationEvent !== "undefined" && hasPermissionPrompt(DeviceOrientationEvent)
+          ? DeviceOrientationEvent
+          : null;
 
       const requestOrientationPermission = async () => {
-        if (orientationRequested) {
+        if (orientationRequested || orientation === null) {
           return;
         }
 
         orientationRequested = true;
 
         try {
-          // @ts-expect-error - requestPermission is iOS specific
-          const permission = await DeviceOrientationEvent.requestPermission();
+          const permission = await orientation.requestPermission();
 
           if (permission === "granted") {
             window.addEventListener("deviceorientation", handleOrientation);
@@ -354,12 +362,14 @@ export const FigurePhysics = () => {
         }
       };
 
-      if (needsPermission) {
-        canvas.addEventListener("touchend", () => {
-          void requestOrientationPermission();
-        });
-      } else {
+      const askOrientation = () => {
+        void requestOrientationPermission();
+      };
+
+      if (orientation === null) {
         window.addEventListener("deviceorientation", handleOrientation);
+      } else {
+        canvas.addEventListener("touchend", askOrientation);
       }
 
       Events.on(engine, "afterUpdate", () => {
@@ -437,9 +447,7 @@ export const FigurePhysics = () => {
         canvas.removeEventListener("pointerdown", wakePhysics);
         canvas.removeEventListener("click", handleClick);
         canvas.removeEventListener("touchend", handleTouch);
-        canvas.removeEventListener("touchend", () => {
-          void requestOrientationPermission();
-        });
+        canvas.removeEventListener("touchend", askOrientation);
         window.removeEventListener("deviceorientation", handleOrientation);
         Mouse.clearSourceEvents(mouse);
         Events.off(engine, "collisionStart");

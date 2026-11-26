@@ -111,7 +111,7 @@ export const carryTo = (ground: Ground, held: Held, pointer: Spot, t: number) =>
 
 const velocityOf = (samples: Held["samples"]) => {
   const last = samples.at(-1);
-  const first = samples.find((sample) => last && last.t - sample.t < 140) ?? last;
+  const first = samples.find((sample) => last !== undefined && last.t - sample.t < 140) ?? last;
 
   if (!last || !first || last.t - first.t < 16) {
     return { x: 0, z: 0 };

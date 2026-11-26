@@ -608,7 +608,7 @@ export const turkeyPose = (turkey: Turkey) => {
   const neckShown = round(1 - smooth((turkey.rig.doze.x - 0.45) * 2.5));
   const beardShown = round(1 - smooth(turkey.rig.doze.x * 1.4));
 
-  const parts = Object.fromEntries([
+  const parts = Object.fromEntries<Part>([
     ...solid("body", body.back.outline),
     ...solid("breast", body.breast.outline),
     ["beard", { d: chainPath(turkey.beard, turkey.walker, SIZE), opacity: beardShown }],

@@ -12,9 +12,11 @@ import {
 
 test("each egg is found once, and only a new find is heard", () => {
   const heard: string[] = [];
+
   const stop = subscribeToEggs((id) => {
     heard.push(id);
   });
+
   discoverEgg("lift");
   discoverEgg("lift");
   discoverEgg("chat");

@@ -289,7 +289,11 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
     <Dialog.Root
       open={isOpen}
       onOpenChange={(open) => {
-        open ? setIsOpen(true) : close();
+        if (open) {
+          setIsOpen(true);
+        } else {
+          close();
+        }
       }}
     >
       <MotionConfig transition={springTransition}>

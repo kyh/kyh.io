@@ -14,6 +14,7 @@ import {
 import { discoverEgg } from "@/easter-eggs/store";
 import { RSVP_CONTENT, RSVP_SETTINGS } from "./rsvp-config";
 import { cn } from "cn";
+import { graphemesOf } from "@/lib/graphemes";
 
 type RSVPState =
   | { status: "countdown"; count: number }
@@ -58,7 +59,7 @@ const getCurrentIndex = (state: RSVPState, totalWords: number) => {
 };
 
 const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => {
-  const letters = [...word];
+  const letters = graphemesOf(word);
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
 
   return (

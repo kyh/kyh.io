@@ -298,8 +298,16 @@ const slotsFor = (block: Block) => {
       ] satisfies Slot[];
     }
 
-    default: {
+    case "apartments":
+    case "houses":
+    case "offices":
+    case "park":
+    case "plaza": {
       return [] satisfies Slot[];
+    }
+
+    default: {
+      return block.use satisfies never;
     }
   }
 };

@@ -596,7 +596,7 @@ const lookGoal = (dragon: Dragon, pointer: Point) => {
 
 const stepHead = (dragon: Dragon, pointer: Point, dt: number) => {
   const { rig, swim } = dragon;
-  const striking = dragon.act === "snap" || dragon.lunge;
+  const striking = dragon.act === "snap" || dragon.lunge !== null;
   stepSpring(rig.look, lookGoal(dragon, pointer), striking ? 20 : 8, dt);
 
   const roaring =

@@ -10,7 +10,7 @@ import {
   claudeConfigSchema,
   externalSkillsSchema,
   mcpSchema,
-  messageOf,
+  failure,
   packageBinSchema,
   readJson,
   skillLockSchema,
@@ -20,9 +20,6 @@ import {
 const require = createRequire(import.meta.url);
 
 const closeEventSchema = z.tuple([z.number().nullable()]).rest(z.unknown());
-
-const codeOf = (error: unknown) =>
-  error instanceof Error && "code" in error ? String(error.code) : messageOf(error);
 
 const PKG_ROOT = path.resolve(import.meta.dirname, "..");
 const HOME = os.homedir();
@@ -226,10 +223,11 @@ const link = (src: string, dest: string) => {
       log(`linked ${rel}`);
     } catch (error) {
       fs.cpSync(src, dest, { recursive: true });
-      log(`copied ${rel} (symlink failed: ${codeOf(error)})`);
+      const { code, message } = failure.parse(error);
+      log(`copied ${rel} (symlink failed: ${code ?? message})`);
     }
   } catch (error) {
-    warn(`failed to place ${rel}: ${messageOf(error)}`);
+    warn(`failed to place ${rel}: ${failure.parse(error).message}`);
   }
 };
 
@@ -336,7 +334,7 @@ const runSkills = async (args: string[], bin: string | null, okMessage: string) 
       warn(`${label} failed (exit ${code})`);
     }
   } catch (error) {
-    warn(`${label} failed: ${messageOf(error)}`);
+    warn(`${label} failed: ${failure.parse(error).message}`);
   }
 };
 
@@ -382,7 +380,7 @@ const readManifest = (file: string) => {
   try {
     return new Map(Object.entries(readJson(file, externalSkillsSchema).skills));
   } catch (error) {
-    warn(`could not parse external-skills.json: ${messageOf(error)}`);
+    warn(`could not parse external-skills.json: ${failure.parse(error).message}`);
 
     return null;
   }
@@ -502,7 +500,7 @@ const readServers = (src: string) => {
   try {
     return readJson(src, mcpSchema).mcpServers;
   } catch (error) {
-    warn(`could not parse mcp.json: ${messageOf(error)}`);
+    warn(`could not parse mcp.json: ${failure.parse(error).message}`);
 
     return null;
   }
@@ -516,7 +514,9 @@ const readClaudeConfig = (dest: string) => {
   try {
     return readJson(dest, claudeConfigSchema);
   } catch (error) {
-    warn(`~/.claude.json is not valid JSON — skipping MCP merge (${messageOf(error)}).`);
+    warn(
+      `~/.claude.json is not valid JSON — skipping MCP merge (${failure.parse(error).message}).`,
+    );
 
     return null;
   }
@@ -571,7 +571,7 @@ const step = async (fn: () => void | Promise<void>) => {
   try {
     await fn();
   } catch (error) {
-    warn(`${fn.name} failed: ${messageOf(error)}`);
+    warn(`${fn.name} failed: ${failure.parse(error).message}`);
   }
 };
 

@@ -35,7 +35,7 @@ test("prototype keys are never grids or tiles", () => {
   assert.equal(parseReorder({ grid: "g", n: 1, order: ["constructor"] }), null);
 
   const orders = applyReorder(
-    JSON.parse('{"__proto__": {"by": "p", "n": 0, "order": []}}'),
+    Object.fromEntries([["__proto__", { by: "p", n: 0, order: [] }]]),
     { grid: "g", n: 0, order: ["a"] },
     "p",
   );

@@ -212,16 +212,15 @@ const TooltipTrigger = ({
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   if (asChild && React.isValidElement<React.HTMLProps<HTMLElement>>(children)) {
+    const triggerProps = {
+      ...props,
+      ...children.props,
+      "data-side": context.placement.split("-")[0],
+      "data-state": context.open ? "open" : "closed",
+    };
+
     // oxlint-disable-next-line react/no-clone-element -- asChild is the Slot pattern: the child element is the trigger, so its props must be merged onto it
-    return React.cloneElement(children, {
-      ...context.getReferenceProps({
-        ...props,
-        ...children.props,
-        "data-side": context.placement.split("-")[0],
-        "data-state": context.open ? "open" : "closed",
-      } as React.HTMLProps<HTMLElement>),
-      ref,
-    });
+    return React.cloneElement(children, { ...context.getReferenceProps(triggerProps), ref });
   }
 
   return (
@@ -245,7 +244,7 @@ const blocks = Array.from({ length: cols * rows }, (_, i) => i);
 const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
-const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
+const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } satisfies React.CSSProperties;
 
 const TooltipBlocks = ({ context }: { context: ContextType }) => {
   if (context === null || context.x === undefined || context.x === 0 || !context.y) {
@@ -294,8 +293,8 @@ const TooltipContent = ({
   const linesContext = React.useContext(TooltipLinesContext);
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
-  const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
-  const children = floatingPropsChildren as React.ReactNode;
+  const { children, ...rest } = props;
+  const floatingProps = context.getFloatingProps(rest);
   const blockType = type === "block";
 
   React.useLayoutEffect(() => {

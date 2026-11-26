@@ -6,7 +6,7 @@ import { draftState, readChat, sayState } from "@/lib/chat";
 import { lookOf, ownColorName } from "@/lib/color";
 import { PARTY, PARTY_HOST } from "@/lib/party";
 import { parseActorKey } from "./world";
-import { asFinite, asRecord } from "@/lib/wire";
+import { asFinite, asRecord, isText } from "@/lib/wire";
 
 const SNAPSHOT_EVERY = 8000;
 const HOLD_TTL = 12_000;
@@ -52,7 +52,7 @@ export const readDrop = (payload: JsonValue) => {
   const key = record?.key;
   const state = record?.state;
 
-  if (!record || !from || String(key) !== key || !parseActorKey(key) || !Array.isArray(state)) {
+  if (!record || !from || !isText(key) || !parseActorKey(key) || !Array.isArray(state)) {
     return null;
   }
 
@@ -88,7 +88,7 @@ const readPointer = (state: JsonRecord) => {
 };
 
 const readHolding = (state: JsonRecord) =>
-  String(state.h) === state.h && parseActorKey(state.h) ? state.h : null;
+  isText(state.h) && parseActorKey(state.h) ? state.h : null;
 
 const lerpSpot = (a: Spot, b: Spot, k: number) =>
   ({
@@ -229,7 +229,7 @@ export const createNet = ({ onDrop, onHold, room: roomId }: NetOptions) => {
     get snapshot() {
       const town = live()?.sharedState.town;
 
-      return String(town) === town ? town : null;
+      return isText(town) ? town : null;
     },
     get status() {
       return live()?.connectionStatus ?? "offline";

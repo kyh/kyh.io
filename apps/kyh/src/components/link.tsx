@@ -18,6 +18,56 @@ interface LinkProps {
   active?: boolean;
 }
 
+interface ActionProps {
+  children: React.ReactNode;
+  className: string;
+  dataText: React.ReactNode;
+  href?: string;
+  noAction: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}
+
+const actionOf = ({
+  children,
+  className,
+  dataText,
+  href,
+  noAction,
+  onMouseEnter,
+  onMouseLeave,
+}: ActionProps) => {
+  const hover = { onBlur: onMouseLeave, onFocus: onMouseEnter, onMouseEnter, onMouseLeave };
+
+  if (href === undefined || href === "") {
+    return noAction ? (
+      <span className={className} data-text={dataText}>
+        {children}
+      </span>
+    ) : (
+      <button type="button" className={className} data-text={dataText} {...hover}>
+        {children}
+      </button>
+    );
+  }
+
+  if (href.startsWith("/")) {
+    return (
+      <NextLink className={className} href={href} data-text={dataText} {...hover}>
+        {children}
+      </NextLink>
+    );
+  }
+
+  const external = href.startsWith("#") ? {} : { rel: "noopener noreferrer", target: "_blank" };
+
+  return (
+    <a className={className} href={href} data-text={dataText} {...external} {...hover}>
+      {children}
+    </a>
+  );
+};
+
 export const Link = ({
   children,
   href,
@@ -31,77 +81,16 @@ export const Link = ({
   active,
 }: LinkProps) => {
   let content: React.ReactNode = null;
-  let action: React.ReactNode = null;
-  const actionClassName = noStyles ? "" : `link ${active === true ? "active" : ""}`;
-  const actionDataText = noStyles ? "" : children;
 
-  if (href !== undefined && href !== "") {
-    if (href.startsWith("/")) {
-      action = (
-        <NextLink
-          className={actionClassName}
-          href={href}
-          data-text={actionDataText}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          onFocus={onMouseEnter}
-          onBlur={onMouseLeave}
-        >
-          {children}
-        </NextLink>
-      );
-    } else if (href.startsWith("#")) {
-      action = (
-        <a
-          className={actionClassName}
-          href={href}
-          data-text={actionDataText}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          onFocus={onMouseEnter}
-          onBlur={onMouseLeave}
-        >
-          {children}
-        </a>
-      );
-    } else {
-      action = (
-        <a
-          className={actionClassName}
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-text={actionDataText}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          onFocus={onMouseEnter}
-          onBlur={onMouseLeave}
-        >
-          {children}
-        </a>
-      );
-    }
-  } else if (noAction) {
-    action = (
-      <span className={actionClassName} data-text={actionDataText}>
-        {children}
-      </span>
-    );
-  } else {
-    action = (
-      <button
-        type="button"
-        className={actionClassName}
-        data-text={actionDataText}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onFocus={onMouseEnter}
-        onBlur={onMouseLeave}
-      >
-        {children}
-      </button>
-    );
-  }
+  const action = actionOf({
+    children,
+    className: noStyles ? "" : `link ${active === true ? "active" : ""}`,
+    dataText: noStyles ? "" : children,
+    href,
+    noAction,
+    onMouseEnter,
+    onMouseLeave,
+  });
 
   if (src !== undefined && src !== "") {
     const isRelativeUrl = (href?.startsWith("/") ?? false) || (href?.startsWith("#") ?? false);
