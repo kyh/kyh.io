@@ -28,6 +28,7 @@
     "drizzle-orm": "1.0.0-rc.4",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "catalog:",
+    "motion": "^14.14.0",
     "next": "catalog:",
     "next-themes": "^0.4.6",
     "react": "catalog:",
