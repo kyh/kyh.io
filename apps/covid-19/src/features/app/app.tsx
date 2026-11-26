@@ -3,6 +3,7 @@ import { Navigation } from "components/navigation";
 import { AboutPage } from "features/about/about-page";
 import { ComparePage } from "features/compare/compare-page";
 import { DistributionPage } from "features/distribution/distribution-page";
+import { NotFoundPage } from "features/not-found/not-found-page";
 import { TrendPage } from "features/trend/trend-page";
 import {
   createBrowserRouter,
@@ -35,6 +36,7 @@ const router = createBrowserRouter(
       <Route path="/distribution" element={<DistributionPage />} />
       <Route path="/compare" element={<ComparePage />} />
       <Route path="/about" element={<AboutPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Route>,
   ),
 );
