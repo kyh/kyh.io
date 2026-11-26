@@ -15,7 +15,9 @@ const feed = (n: number) =>
 
 const xCalls: string[] = [];
 
-const sendJson = <Body extends object>(response: ServerResponse, body: Body) => {
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+const sendJson = (response: ServerResponse, body: Json) => {
   response.writeHead(200, { "Content-Type": "application/json" });
   response.end(JSON.stringify(body));
 };

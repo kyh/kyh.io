@@ -39,17 +39,18 @@ const main = async () => {
   }
 
   const chunks = session.chunks.toSorted((a, b) => a.index - b.index);
-  const parts: Uint8Array[] = [];
 
-  for (const chunk of chunks) {
-    const file = await fetch(chunk.url);
+  const parts = await Promise.all(
+    chunks.map(async (chunk) => {
+      const file = await fetch(chunk.url);
 
-    if (!file.ok) {
-      throw new Error(`Chunk ${chunk.index} answered ${file.status}`);
-    }
+      if (!file.ok) {
+        throw new Error(`Chunk ${chunk.index} answered ${file.status}`);
+      }
 
-    parts.push(new Uint8Array(await file.arrayBuffer()));
-  }
+      return new Uint8Array(await file.arrayBuffer());
+    }),
+  );
 
   const bytes = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
   let offset = 0;

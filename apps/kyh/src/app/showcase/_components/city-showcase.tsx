@@ -36,7 +36,9 @@ const subscribeMotion = (onChange: () => void) => {
   const query = matchMedia(REDUCED_MOTION);
   query.addEventListener("change", onChange);
 
-  return () => query.removeEventListener("change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+  };
 };
 
 const usePrefersReducedMotion = () =>
@@ -119,75 +121,82 @@ export const CityShowcase = ({ projects }: CityShowcaseProps) => {
   }, []);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const host = containerRef.current;
+
     const surface = rootRef.current;
 
-    if (!host || !surface) {
-      return;
+    if (host && surface) {
+      const urls = new Map(projects.map((project) => [project.slug, project.url]));
+
+      let isMounted = true;
+
+      let closing: ReturnType<typeof setTimeout> | undefined;
+
+      const show = (slug: string | null) => {
+        clearTimeout(closing);
+
+        if (slug !== null && slug !== "") {
+          setLit(slug);
+        } else {
+          closing = setTimeout(() => {
+            setLit(null);
+          }, CARD_LINGER_MS);
+        }
+      };
+
+      const mount = async () => {
+        try {
+          const city = await loadCity(host, {
+            onHover: show,
+            onOpen: (slug) => {
+              const url = urls.get(slug);
+
+              if (url !== undefined && url !== "") {
+                window.open(url, "_blank", "noopener,noreferrer");
+              }
+            },
+            onTour: setTouring,
+            overlay: overlayRef.current,
+            projects,
+            reducedMotion,
+            setting: settingRef.current,
+            surface,
+          });
+
+          if (!isMounted) {
+            city.dispose();
+
+            return;
+          }
+
+          cityRef.current = city;
+          city.setSetting(settingRef.current);
+          city.setPins(pinsRef.current);
+          setStatus("ready");
+
+          if (process.env.NODE_ENV === "development") {
+            Object.assign(window, { city });
+          }
+        } catch {
+          if (isMounted) {
+            setStatus("failed");
+          }
+        }
+      };
+
+      void mount();
+
+      cleanup = () => {
+        isMounted = false;
+        clearTimeout(closing);
+        cityRef.current?.dispose();
+        cityRef.current = null;
+      };
     }
 
-    const urls = new Map(projects.map((project) => [project.slug, project.url]));
-    let isMounted = true;
-    let closing: ReturnType<typeof setTimeout> | undefined;
-
-    const show = (slug: string | null) => {
-      clearTimeout(closing);
-
-      if (slug) {
-        setLit(slug);
-      } else {
-        closing = setTimeout(() => setLit(null), CARD_LINGER_MS);
-      }
-    };
-
-    const mount = async () => {
-      try {
-        const city = await loadCity(host, {
-          onHover: show,
-          onOpen: (slug) => {
-            const url = urls.get(slug);
-
-            if (url) {
-              window.open(url, "_blank", "noopener,noreferrer");
-            }
-          },
-          onTour: setTouring,
-          overlay: overlayRef.current,
-          projects,
-          reducedMotion,
-          setting: settingRef.current,
-          surface,
-        });
-
-        if (!isMounted) {
-          city.dispose();
-
-          return;
-        }
-
-        cityRef.current = city;
-        city.setSetting(settingRef.current);
-        city.setPins(pinsRef.current);
-        setStatus("ready");
-
-        if (process.env.NODE_ENV === "development") {
-          Object.assign(window, { city });
-        }
-      } catch {
-        if (isMounted) {
-          setStatus("failed");
-        }
-      }
-    };
-
-    void mount();
-
-    return () => {
-      isMounted = false;
-      clearTimeout(closing);
-      cityRef.current?.dispose();
-      cityRef.current = null;
-    };
+    return cleanup;
   }, [projects, reducedMotion]);
 
   const pinRef = (slug: string) => (element: HTMLDivElement | null) => {

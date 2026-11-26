@@ -121,7 +121,11 @@ export const RedditFeedClient = ({ posts, existingUrls }: RedditFeedClientProps)
                       ) : (
                         <button
                           type="button"
-                          onClick={() => handleAdd(post)}
+                          onClick={() => {
+                            void (async () => {
+                              await handleAdd(post);
+                            })();
+                          }}
                           disabled={isAdding}
                           className="cursor-pointer text-green-600 hover:text-green-700 disabled:opacity-50"
                         >

@@ -295,16 +295,25 @@ const recorder: (sketches: Sketch[], place: (point: Vec3) => Vec3) => Placed = (
 
   const loose = fresh();
 
-  const solidOf: Placed["solid"] = (triangles, weight, crease) =>
+  const solidOf: Placed["solid"] = (triangles, weight, crease) => {
     solid(fresh(), mapTriangles(triangles, place), weight ?? "fine", crease);
+  };
 
   return {
-    ball: (spec, weight) => solidOf(ballTriangles(spec), weight, 70),
-    line: (points, weight, token) => line(fresh(), points.map(place), weight, token),
+    ball: (spec, weight) => {
+      solidOf(ballTriangles(spec), weight, 70);
+    },
+    line: (points, weight, token) => {
+      line(fresh(), points.map(place), weight, token);
+    },
     moved: (move) => recorder(sketches, (point) => place(move(point))),
     place,
-    rod: (from, to, r, colors) => solidOf(rodTriangles(from, to, r, colors)),
-    round: (spec, weight) => solidOf(roundTriangles(spec), weight),
+    rod: (from, to, r, colors) => {
+      solidOf(rodTriangles(from, to, r, colors));
+    },
+    round: (spec, weight) => {
+      solidOf(roundTriangles(spec), weight);
+    },
     sketch: loose,
     solid: solidOf,
   };

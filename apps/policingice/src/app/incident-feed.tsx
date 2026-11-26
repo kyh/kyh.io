@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Search, X } from "lucide-react";
 
 import { IncidentCardContent } from "@/components/incident-card-content";
+import { useConfirmDelete } from "@/components/confirm-delete";
 import { IncidentModal } from "@/components/incident-modal";
 import {
   KeyboardShortcutsProvider,
@@ -46,35 +47,43 @@ const LazyIncidentCard = ({
   const shortcuts = useKeyboardShortcuts();
 
   useEffect(() => {
-    if (!shortcuts) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (shortcuts) {
+      shortcuts.registerIncident(incidentId, ref.current);
+
+      cleanup = () => {
+        shortcuts.unregisterIncident(incidentId);
+      };
     }
 
-    shortcuts.registerIncident(incidentId, ref.current);
-
-    return () => shortcuts.unregisterIncident(incidentId);
+    return cleanup;
   }, [incidentId, shortcuts]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const el = ref.current;
 
-    if (!el) {
-      return;
+    if (el) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" },
+      );
+
+      observer.observe(el);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(el);
-
-    return () => observer.disconnect();
+    return cleanup;
   }, []);
 
   return (
@@ -93,7 +102,7 @@ const SearchForm = ({
   isSearching,
 }: {
   formRef: React.RefObject<HTMLFormElement | null>;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   q: string | undefined;
   start: string | undefined;
   end: string | undefined;
@@ -138,11 +147,23 @@ const SearchForm = ({
 );
 
 const readFeedParams = (searchParams: URLSearchParams) => {
-  const q = searchParams.get("q") || undefined;
-  const start = searchParams.get("start") || undefined;
-  const end = searchParams.get("end") || undefined;
-  const error = searchParams.get("error") || undefined;
-  const searchKey = q || start || end ? JSON.stringify([q, start, end]) : null;
+  const paramOf = (name: string) => {
+    const value = searchParams.get(name);
+
+    return value === null || value === "" ? undefined : value;
+  };
+
+  const q = paramOf("q");
+  const start = paramOf("start");
+  const end = paramOf("end");
+  const error = paramOf("error");
+
+  const searchKey =
+    (q !== undefined && q !== "") ||
+    (start !== undefined && start !== "") ||
+    (end !== undefined && end !== "")
+      ? JSON.stringify([q, start, end])
+      : null;
 
   return { end, error, q, searchKey, start };
 };
@@ -172,15 +193,15 @@ export const IncidentFeed = ({
       );
       const params = new URLSearchParams();
 
-      if (q) {
+      if (q !== undefined && q !== "") {
         params.set("q", q);
       }
 
-      if (start) {
+      if (start !== undefined && start !== "") {
         params.set("start", start);
       }
 
-      if (end) {
+      if (end !== undefined && end !== "") {
         params.set("end", end);
       }
 
@@ -239,7 +260,7 @@ export const IncidentFeed = ({
   }, [q, start, end, searchKey]);
 
   const handleSearch = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
+    (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const query = formString(formData, "q").trim();
@@ -276,7 +297,7 @@ export const IncidentFeed = ({
   }, [router]);
 
   const loadMore = useCallback(async () => {
-    if (!nextOffset || isLoading) {
+    if (nextOffset === undefined || nextOffset === 0 || isLoading) {
       return;
     }
 
@@ -302,24 +323,33 @@ export const IncidentFeed = ({
   }, [nextOffset, isLoading]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const ref = loadMoreRef.current;
 
-    if (!ref || searchResults !== null) {
-      return;
+    if (ref && searchResults === null) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0].isIntersecting &&
+            nextOffset !== undefined &&
+            nextOffset !== 0 &&
+            !isLoading
+          ) {
+            void loadMore();
+          }
+        },
+        { threshold: 0.1 },
+      );
+
+      observer.observe(ref);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && nextOffset && !isLoading) {
-          void loadMore();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    observer.observe(ref);
-
-    return () => observer.disconnect();
+    return cleanup;
   }, [nextOffset, isLoading, searchResults, loadMore]);
 
   const handleVote = useCallback(
@@ -410,11 +440,6 @@ export const IncidentFeed = ({
 
   const handleDelete = useCallback(
     async (incidentId: number) => {
-      // oxlint-disable-next-line no-alert -- admin-only destructive action; native confirm is deliberate
-      if (!confirm("Delete this incident?")) {
-        return;
-      }
-
       const result = await deleteIncident({ incidentId });
 
       if (result.success) {
@@ -427,12 +452,14 @@ export const IncidentFeed = ({
     [router],
   );
 
+  const { ask: askDelete, dialog: deleteDialog } = useConfirmDelete(handleDelete);
+
   const handlePin = useCallback(
     async (incidentId: number) => {
       const result = await togglePinIncident({ incidentId });
 
       if (result.success) {
-        toast.success(result.pinned ? "Pinned" : "Unpinned");
+        toast.success(result.pinned === true ? "Pinned" : "Unpinned");
         router.refresh();
       } else {
         toast.error("Failed to pin");
@@ -474,11 +501,11 @@ export const IncidentFeed = ({
     }) => {
       const result = await createIncident(data);
 
-      if (result.autoApproved) {
+      if (result.autoApproved === true) {
         router.refresh();
       }
 
-      toast.success(result.merged ? "Added to existing incident" : "Added to feed");
+      toast.success(result.merged === true ? "Added to existing incident" : "Added to feed");
     },
     [router],
   );
@@ -517,7 +544,9 @@ export const IncidentFeed = ({
               Documenting incidents of ICE overreach.{" "}
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setIsModalOpen(true);
+                }}
                 className="cursor-pointer text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 aria-label="Submit a new incident"
               >
@@ -565,7 +594,9 @@ export const IncidentFeed = ({
                       unjustifiedCount={unjustifiedCount}
                       justifiedCount={justifiedCount}
                       userVote={userVote}
-                      onVote={(type) => handleVote(incident.id, type)}
+                      onVote={(type) => {
+                        void handleVote(incident.id, type);
+                      }}
                       pinned={incident.pinned}
                       headerRight={
                         <Menu.Root>
@@ -586,13 +617,19 @@ export const IncidentFeed = ({
                                 </Menu.Item>
                                 <Menu.Item
                                   className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                  onClick={() => setEditingIncident(incident)}
+                                  onClick={() => {
+                                    setEditingIncident(incident);
+                                  }}
                                 >
                                   Edit
                                 </Menu.Item>
                                 <Menu.Item
                                   className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
-                                  onClick={() => handleReport(incident.id)}
+                                  onClick={() => {
+                                    void (async () => {
+                                      await handleReport(incident.id);
+                                    })();
+                                  }}
                                 >
                                   Report
                                 </Menu.Item>
@@ -601,19 +638,29 @@ export const IncidentFeed = ({
                                     <Menu.Separator className="my-1 border-t border-border" />
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handlePin(incident.id)}
+                                      onClick={() => {
+                                        void (async () => {
+                                          await handlePin(incident.id);
+                                        })();
+                                      }}
                                     >
                                       {incident.pinned ? "Unpin" : "Pin"}
                                     </Menu.Item>
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handleHide(incident.id)}
+                                      onClick={() => {
+                                        void (async () => {
+                                          await handleHide(incident.id);
+                                        })();
+                                      }}
                                     >
                                       Hide
                                     </Menu.Item>
                                     <Menu.Item
                                       className="block w-full cursor-pointer px-3 py-1.5 text-left text-destructive hover:bg-muted data-[highlighted]:bg-muted"
-                                      onClick={() => handleDelete(incident.id)}
+                                      onClick={() => {
+                                        askDelete(incident.id);
+                                      }}
                                     >
                                       Delete
                                     </Menu.Item>
@@ -634,7 +681,7 @@ export const IncidentFeed = ({
           {searchResults === null && (
             <div ref={loadMoreRef} className="py-8">
               {isLoading && <span className="text-sm text-muted-foreground">Loading...</span>}
-              {!nextOffset && allIncidents.length > 0 && (
+              {(nextOffset === undefined || nextOffset === 0) && allIncidents.length > 0 && (
                 <span className="text-sm text-muted-foreground/40">&mdash;</span>
               )}
             </div>
@@ -644,7 +691,9 @@ export const IncidentFeed = ({
         <IncidentModal
           mode="create"
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+          }}
           onSubmit={handleSubmit}
         />
 
@@ -658,11 +707,14 @@ export const IncidentFeed = ({
               location: editingIncident.location,
               videos: editingIncident.videos,
             }}
-            onClose={() => setEditingIncident(null)}
+            onClose={() => {
+              setEditingIncident(null);
+            }}
             onAddVideo={handleAddVideo}
             onUpdate={handleUpdateIncident}
           />
         )}
+        {deleteDialog}
       </main>
     </KeyboardShortcutsProvider>
   );

@@ -38,6 +38,14 @@ interface ScreenProps {
   urlError?: string;
 }
 
+const subscribeToHistory = (onChange: () => void) => {
+  window.addEventListener("popstate", onChange);
+
+  return () => {
+    window.removeEventListener("popstate", onChange);
+  };
+};
+
 const MARQUEE_SPEED = 45;
 const CHAR_WIDTH = 6.6;
 const ROLL_MS = 400;
@@ -83,13 +91,19 @@ const Ticker = (props: { program: OnAir }) => {
   }
 
   useEffect(() => {
-    if (leaving === undefined) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (leaving !== undefined) {
+      const timer = window.setTimeout(() => {
+        setLeaving(undefined);
+      }, ROLL_MS);
+
+      cleanup = () => {
+        window.clearTimeout(timer);
+      };
     }
 
-    const timer = window.setTimeout(() => setLeaving(undefined), ROLL_MS);
-
-    return () => window.clearTimeout(timer);
+    return cleanup;
   }, [leaving]);
   const host = program.link === undefined ? undefined : URL.parse(program.link)?.host;
 
@@ -274,12 +288,7 @@ const TvScreen = (props: ScreenProps) => {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const testStream = useSyncExternalStore(
-    // oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
-    () => () => {},
-    testStreamRequested,
-    () => false,
-  );
+  const testStream = useSyncExternalStore(subscribeToHistory, testStreamRequested, () => false);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -293,7 +302,9 @@ const TvScreen = (props: ScreenProps) => {
 
     window.addEventListener("keydown", onKey);
 
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   const liveReady = session.liveReady || testStream;
@@ -301,7 +312,10 @@ const TvScreen = (props: ScreenProps) => {
   const screen = screenState(surface, liveReady, live, replay);
   const playing = screen.status === "live" || screen.status === "replay";
   const canSignIn = session.user === null && session.loginReady;
-  const openInvite = () => setInviteOpen(true);
+
+  const openInvite = () => {
+    setInviteOpen(true);
+  };
 
   return (
     <main className="flex h-dvh flex-col bg-chrome font-mono">
@@ -371,7 +385,9 @@ const TvScreen = (props: ScreenProps) => {
             playing={playing}
             paused={paused}
             muted={props.muted}
-            onTogglePause={() => setPaused((value) => !value)}
+            onTogglePause={() => {
+              setPaused((value) => !value);
+            }}
             onToggleMute={props.onToggleMute}
           />
 
@@ -388,7 +404,9 @@ const TvScreen = (props: ScreenProps) => {
           {session.user !== null && (
             <button
               type="button"
-              onClick={() => setSourcesOpen(true)}
+              onClick={() => {
+                setSourcesOpen(true);
+              }}
               className="y2k-btn status-btn ml-px cursor-pointer"
             >
               sources
@@ -437,13 +455,22 @@ const TvScreen = (props: ScreenProps) => {
         </div>
       </div>
 
-      {inviteOpen && <InviteDialog onInvited={login} onClose={() => setInviteOpen(false)} />}
+      {inviteOpen && (
+        <InviteDialog
+          onInvited={login}
+          onClose={() => {
+            setInviteOpen(false);
+          }}
+        />
+      )}
       {session.user !== null && sourcesOpen && (
         <SourcesDialog
           channels={props.channels}
           google={session.google}
           onLineup={props.onLineup}
-          onClose={() => setSourcesOpen(false)}
+          onClose={() => {
+            setSourcesOpen(false);
+          }}
         />
       )}
     </main>
@@ -493,11 +520,17 @@ export const Tv = (props: TvProps) => {
       session={props.session}
       channel={channel}
       channels={channels}
-      onPrev={() => setTuned((value) => value - 1)}
-      onNext={() => setTuned((value) => value + 1)}
+      onPrev={() => {
+        setTuned((value) => value - 1);
+      }}
+      onNext={() => {
+        setTuned((value) => value + 1);
+      }}
       onLineup={setLineup}
       muted={muted}
-      onToggleMute={() => setMuted((value) => !value)}
+      onToggleMute={() => {
+        setMuted((value) => !value);
+      }}
       urlError={props.urlError}
     />
   );

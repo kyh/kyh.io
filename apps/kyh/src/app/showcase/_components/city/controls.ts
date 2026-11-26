@@ -98,7 +98,7 @@ export const createSpotlight = <T>({ now, onTake, onTour, still }: SpotlightPort
     },
     take,
     tap: (hit: T | null, pointerType: string) => {
-      if (hit && (pointerType === "mouse" || pointer === hit)) {
+      if (hit !== null && (pointerType === "mouse" || pointer === hit)) {
         return hit;
       }
 

@@ -1,28 +1,28 @@
 import { get, put } from "@vercel/blob";
+import { z } from "zod";
 
 const SYMBOL = "^GSPC";
 const PERIOD_START = -2_208_988_800;
 const BLOB_PATH = "stonksville/spx-daily.csv";
 const BLOB_CACHE_SECONDS = 3600;
 
-interface ChartResponse {
-  chart: {
-    error: { code: string; description: string } | null;
-    result:
-      | {
-          timestamp?: number[];
-          indicators: {
-            quote: {
-              open: (number | null)[];
-              high: (number | null)[];
-              low: (number | null)[];
-              close: (number | null)[];
-            }[];
-          };
-        }[]
-      | null;
-  };
-}
+const bars = z.array(z.number().nullable());
+
+const chartResponseSchema = z.object({
+  chart: z.object({
+    error: z.object({ code: z.string(), description: z.string() }).nullable(),
+    result: z
+      .array(
+        z.object({
+          indicators: z.object({
+            quote: z.array(z.object({ close: bars, high: bars, low: bars, open: bars })),
+          }),
+          timestamp: z.array(z.number()).optional(),
+        }),
+      )
+      .nullable(),
+  }),
+});
 
 const chartUrl = () => {
   const url = new URL(
@@ -51,7 +51,7 @@ export const fetchSpxCsv = async () => {
     throw new Error(`Yahoo Finance responded ${response.status} ${response.statusText}`);
   }
 
-  const body = (await response.json()) as ChartResponse;
+  const body = chartResponseSchema.parse(await response.json());
   const result = body.chart.result?.[0];
 
   if (!result?.timestamp) {

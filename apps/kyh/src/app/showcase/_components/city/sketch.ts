@@ -1112,17 +1112,25 @@ export const placed: (sketch: Sketch, place?: (point: Vec3) => Vec3) => Placed =
   sketch,
   place = (point) => point,
 ) => {
-  const solidOf = (triangles: readonly Triangle[], weight: Weight = "fine", crease?: number) =>
+  const solidOf = (triangles: readonly Triangle[], weight: Weight = "fine", crease?: number) => {
     solid(sketch, mapTriangles(triangles, place), weight, crease);
+  };
 
   return {
-    ball: (spec, weight = "fine") => solidOf(ballTriangles(spec), weight, 70),
-    line: (points, weight = "fine", token = "ink") =>
-      line(sketch, points.map(place), weight, token),
+    ball: (spec, weight = "fine") => {
+      solidOf(ballTriangles(spec), weight, 70);
+    },
+    line: (points, weight = "fine", token = "ink") => {
+      line(sketch, points.map(place), weight, token);
+    },
     moved: (move) => placed(sketch, (point) => place(move(point))),
     place,
-    rod: (from, to, r, colors) => solidOf(rodTriangles(from, to, r, colors)),
-    round: (spec, weight = "fine") => solidOf(roundTriangles(spec), weight),
+    rod: (from, to, r, colors) => {
+      solidOf(rodTriangles(from, to, r, colors));
+    },
+    round: (spec, weight = "fine") => {
+      solidOf(roundTriangles(spec), weight);
+    },
     sketch,
     solid: solidOf,
   };

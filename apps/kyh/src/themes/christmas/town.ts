@@ -18,12 +18,16 @@ export const town: Town = {
   flyer: drawSleigh,
   hat: santaHat,
   lights: ["festiveRed", "gold", "festiveGreen", "accentBlue"],
-  porch: (sketch, x, z, random) => christmasTree(sketch, x, z, random, 0.42),
+  porch: (sketch, x, z, random) => {
+    christmasTree(sketch, x, z, random, 0.42);
+  },
   repaint: snowfall(),
   square: (sketch, x, z, random) => {
     christmasTree(sketch, x, z, random, 1.25);
     present(sketch, x + 0.2, z + 0.16, RED);
     present(sketch, x - 0.18, z + 0.2, GREEN, 0.8);
   },
-  yard: (sketch, x, z) => snowman(sketch, x, z),
+  yard: (sketch, x, z) => {
+    snowman(sketch, x, z);
+  },
 };

@@ -30,7 +30,7 @@ interface Header {
   value: string;
 }
 
-const gmailFetch = <T>(
+const gmailFetch = async <T>(
   accessToken: string,
   path: string,
   params: [string, string][],
@@ -42,7 +42,7 @@ const gmailFetch = <T>(
     url.searchParams.append(key, value);
   }
 
-  return fetchJson("Gmail", url, accessToken, schema);
+  return await fetchJson("Gmail", url, accessToken, schema);
 };
 
 const header = (headers: Header[], name: string) =>
@@ -81,16 +81,17 @@ const fetchNewsletters = async (access: AccessOf<"gmail">) => {
   );
 
   const messages = await Promise.all(
-    (list.messages ?? []).map((entry) =>
-      gmailFetch(
-        access.accessToken,
-        `messages/${entry.id}`,
-        [
-          ["format", "metadata"],
-          ...METADATA_HEADERS.map((name) => ["metadataHeaders", name] satisfies [string, string]),
-        ],
-        messageSchema,
-      ),
+    (list.messages ?? []).map(
+      async (entry) =>
+        await gmailFetch(
+          access.accessToken,
+          `messages/${entry.id}`,
+          [
+            ["format", "metadata"],
+            ...METADATA_HEADERS.map((name) => ["metadataHeaders", name] satisfies [string, string]),
+          ],
+          messageSchema,
+        ),
     ),
   );
 
@@ -121,8 +122,8 @@ const fetchNewsletters = async (access: AccessOf<"gmail">) => {
   return items;
 };
 
-export const pickGmailCandidate = (
+export const pickGmailCandidate = async (
   access: AccessOf<"gmail">,
   sourceId: string,
   context: SourceContext,
-) => cachedPick(context, `gmail:${sourceId}`, () => fetchNewsletters(access));
+) => await cachedPick(context, `gmail:${sourceId}`, async () => await fetchNewsletters(access));

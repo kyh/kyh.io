@@ -13,12 +13,12 @@ const follower = (load: () => Promise<{ Follower: ComponentType }>) =>
   });
 
 export const FOLLOWERS: Record<ThemeId, Follower | null> = {
-  christmas: follower(() => import("./christmas/follower")),
+  christmas: follower(async () => await import("./christmas/follower")),
   classic: null,
-  easter: follower(() => import("./easter/follower")),
-  halloween: follower(() => import("./halloween/follower")),
-  lunarNewYear: follower(() => import("./lunar-new-year/follower")),
-  stPatricks: follower(() => import("./st-patricks/follower")),
-  thanksgiving: follower(() => import("./thanksgiving/follower")),
-  valentines: follower(() => import("./valentines/follower")),
+  easter: follower(async () => await import("./easter/follower")),
+  halloween: follower(async () => await import("./halloween/follower")),
+  lunarNewYear: follower(async () => await import("./lunar-new-year/follower")),
+  stPatricks: follower(async () => await import("./st-patricks/follower")),
+  thanksgiving: follower(async () => await import("./thanksgiving/follower")),
+  valentines: follower(async () => await import("./valentines/follower")),
 };

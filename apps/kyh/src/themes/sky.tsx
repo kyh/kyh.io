@@ -39,116 +39,130 @@ const trail = (context: CanvasRenderingContext2D, { vx, vy, x, y }: Mover) => {
 
 const useFireworks = (canvas: React.RefObject<HTMLCanvasElement | null>, running: boolean) => {
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const element = canvas.current;
+
     const context = element?.getContext("2d");
 
-    if (!running || !element || !context) {
-      return;
-    }
+    if (running && element && context) {
+      const show = createShow(Math.floor(Math.random() * 1_000_000));
 
-    const show = createShow(Math.floor(Math.random() * 1_000_000));
-    let width = 0;
-    let height = 0;
-    let ratio = 0;
-    let frame = 0;
-    let last = performance.now();
-    let blank = true;
+      let width = 0;
 
-    const fit = () => {
-      const next = ratioFor(element.clientWidth, element.clientHeight);
+      let height = 0;
 
-      if (element.clientWidth === width && element.clientHeight === height && next === ratio) {
-        return;
-      }
+      let ratio = 0;
 
-      width = element.clientWidth;
-      height = element.clientHeight;
-      ratio = next;
-      element.setAttribute("width", `${Math.round(width * ratio)}`);
-      element.setAttribute("height", `${Math.round(height * ratio)}`);
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      context.lineCap = "round";
-      context.lineWidth = 2.5;
-      blank = true;
-    };
+      let frame = 0;
 
-    const draw = () => {
-      if (show.rockets.length === 0 && show.sparks.length === 0) {
-        if (!blank) {
-          context.clearRect(0, 0, width, height);
-          blank = true;
+      let last = performance.now();
+
+      let blank = true;
+
+      const fit = () => {
+        const next = ratioFor(element.clientWidth, element.clientHeight);
+
+        if (element.clientWidth === width && element.clientHeight === height && next === ratio) {
+          return;
         }
 
-        return;
-      }
+        width = element.clientWidth;
+        height = element.clientHeight;
+        ratio = next;
+        element.setAttribute("width", `${Math.round(width * ratio)}`);
+        element.setAttribute("height", `${Math.round(height * ratio)}`);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        context.lineCap = "round";
+        context.lineWidth = 2.5;
+        blank = true;
+      };
 
-      blank = false;
-      const colors = document.documentElement.dataset.theme === "dark" ? NIGHT : DAY;
-      context.clearRect(0, 0, width, height);
-
-      for (let color = 0; color < COLORS; color += 1) {
-        context.strokeStyle = colors[color] ?? "white";
-        context.globalAlpha = 0.9;
-        context.beginPath();
-
-        for (const rocket of show.rockets) {
-          if (rocket.color === color) {
-            trail(context, rocket);
+      const draw = () => {
+        if (show.rockets.length === 0 && show.sparks.length === 0) {
+          if (!blank) {
+            context.clearRect(0, 0, width, height);
+            blank = true;
           }
+
+          return;
         }
 
-        context.stroke();
+        blank = false;
+        const colors = document.documentElement.dataset.theme === "dark" ? NIGHT : DAY;
+        context.clearRect(0, 0, width, height);
 
-        for (let fade = 0; fade < FADES; fade += 1) {
-          context.globalAlpha = (fade + 1) / FADES;
+        for (let color = 0; color < COLORS; color += 1) {
+          context.strokeStyle = colors[color] ?? "white";
+          context.globalAlpha = 0.9;
           context.beginPath();
 
-          for (const spark of show.sparks) {
-            if (
-              spark.color === color &&
-              Math.min(FADES - 1, Math.floor(glowOf(spark) * FADES)) === fade
-            ) {
-              trail(context, spark);
+          for (const rocket of show.rockets) {
+            if (rocket.color === color) {
+              trail(context, rocket);
             }
           }
 
           context.stroke();
+
+          for (let fade = 0; fade < FADES; fade += 1) {
+            context.globalAlpha = (fade + 1) / FADES;
+            context.beginPath();
+
+            for (const spark of show.sparks) {
+              if (
+                spark.color === color &&
+                Math.min(FADES - 1, Math.floor(glowOf(spark) * FADES)) === fade
+              ) {
+                trail(context, spark);
+              }
+            }
+
+            context.stroke();
+          }
         }
-      }
 
-      context.globalAlpha = 1;
-    };
+        context.globalAlpha = 1;
+      };
 
-    const tick = (now: number) => {
-      stepShow(show, (now - last) / 1000, width, height);
-      last = now;
-      draw();
-      frame = requestAnimationFrame(tick);
-    };
-
-    const pause = () => {
-      cancelAnimationFrame(frame);
-      frame = 0;
-
-      if (!document.hidden) {
-        last = performance.now();
+      const tick = (now: number) => {
+        stepShow(show, (now - last) / 1000, width, height);
+        last = now;
+        draw();
         frame = requestAnimationFrame(tick);
-      }
-    };
+      };
 
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(element);
-    window.addEventListener("resize", fit);
-    document.addEventListener("visibilitychange", pause);
-    frame = requestAnimationFrame(tick);
+      const pause = () => {
+        cancelAnimationFrame(frame);
+        frame = 0;
 
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener("resize", fit);
-      document.removeEventListener("visibilitychange", pause);
-    };
+        if (!document.hidden) {
+          last = performance.now();
+          frame = requestAnimationFrame(tick);
+        }
+      };
+
+      fit();
+
+      const observer = new ResizeObserver(fit);
+
+      observer.observe(element);
+
+      window.addEventListener("resize", fit);
+
+      document.addEventListener("visibilitychange", pause);
+
+      frame = requestAnimationFrame(tick);
+
+      cleanup = () => {
+        cancelAnimationFrame(frame);
+        observer.disconnect();
+        window.removeEventListener("resize", fit);
+        document.removeEventListener("visibilitychange", pause);
+      };
+    }
+
+    return cleanup;
   }, [canvas, running]);
 };
 
@@ -157,7 +171,7 @@ export const ThemeSky = () => {
   const still = useReducedMotion();
   const pathname = usePathname();
   const ref = useRef<HTMLCanvasElement>(null);
-  const shown = sky !== null && !still && !DRAWS_ITS_OWN.has(pathname);
+  const shown = sky !== null && still !== true && !DRAWS_ITS_OWN.has(pathname);
   useFireworks(ref, shown);
 
   if (!shown) {

@@ -287,9 +287,12 @@ way when adding a mod.
   loads every `*.test.ts` and `*.test.tsx` (never `.mts`) and refuses
   `node:` imports, so node tests can't share the extension. Both names pass
   landmines' `test-file-names`; never `.spec.ts`.
-- `pnpm typecheck` runs two configs: `tsconfig.json` (pure modules + node tests,
-  node types) and `tsconfig.plugin.json` (hooks + `*.test.ts`, extending
-  `@repo/claude-code-types/tsconfig.json`). `validate` is
+- `pnpm typecheck` runs each config `tsconfig.json` references (it holds no
+  files, so editors and the linter find every file's own):
+  `tsconfig.node.json` (pure modules + node tests, node types) and
+  `tsconfig.plugin.json` (hooks + `*.test.ts`, extending
+  `@repo/claude-code-types/tsconfig.json`); commuting-clawders adds
+  `tsconfig.world.json` (the browser world). `validate` is
   `claude plugin validate .`.
 - `packages/claude-code-types/claude-code.d.ts` is the plugin API pinned from
   the Claude Code version on its first line, shared by every mod; lint and

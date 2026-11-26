@@ -16,7 +16,8 @@ Cut new npm versions of the publishable packages in this repo. Replaces the old 
   - **skills** → `@kyh/skills` → `packages/skills` → tag `@kyh/skills@`
   - **configs** → `@kyh/tsconfig` → `packages/typescript` → tag `@kyh/tsconfig@`
 - All are public (`publishConfig.access: "public"`).
-- Only `kyh` (the CLI) has a `build` script. `@kyh/skills` and `@kyh/tsconfig` publish files as-is — no build.
+- `kyh` (the CLI) and `@kyh/skills` have a `build` script; `@kyh/tsconfig` publishes its files as-is — no build.
+- **skills** compiles `src/*.ts` to `dist/` with `tsc` (`prepack` runs it, so `pnpm publish` always ships a fresh build); `bin` is `dist/cli.js`.
 - **cli** is one pure-JS package: `pnpm build` (esbuild) bundles `src/` into `apps/cli/dist/index.js` with `ink` and `react` left as runtime `dependencies`, and `files` limits the tarball to `dist/` + `CHANGELOG.md`. It publishes from `apps/cli` like the others.
 - Many internal apps (`@repo/*`) consume `@kyh/tsconfig` via the workspace catalog. Rolling a new version out to **other repos'** catalogs is a separate concern — see the global `publish-and-sync-packages` skill. This skill is npm-only and does not touch downstream consumers.
 - Current branch: !`git -C /Users/kyh/Documents/Projects/kyh/kyh.io rev-parse --abbrev-ref HEAD`
@@ -77,9 +78,9 @@ Terse bullets — sacrifice grammar for concision. If unsure, show the proposed 
 ### 4. Install + build
 
 - `pnpm install` from repo root — defensive; deps may be unlinked after a pull.
-- Only `cli` has a `build` script — force a clean build:
+- `cli` and `skills` have a `build` script — force a clean build:
   - `pnpm --filter <name> build`
-- `skills` and `configs` have no build — skip.
+- `configs` has no build — skip.
 
 ### 5. Publish
 

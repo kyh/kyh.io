@@ -94,6 +94,22 @@ const insertSource = async (database: NonNullable<typeof db>, userId: string, en
     });
 };
 
+const insertSources: (
+  database: NonNullable<typeof db>,
+  userId: string,
+  entries: NewSource[],
+  index: number,
+) => Promise<void> = async (database, userId, entries, index) => {
+  const entry = entries[index];
+
+  if (entry === undefined) {
+    return;
+  }
+
+  await insertSource(database, userId, entry);
+  await insertSources(database, userId, entries, index + 1);
+};
+
 const grantedScopes = (scope: string | null) => (scope ?? "").split(/[,\s]+/u);
 
 /**
@@ -138,9 +154,7 @@ export const ensureSources = async (viewer: NonNullable<Viewer>) => {
     }
   }
 
-  for (const entry of wanted) {
-    await insertSource(db, viewer.user.id, entry);
-  }
+  await insertSources(db, viewer.user.id, wanted, 0);
 };
 
 export const listChannels = async (viewer: Viewer) => {
@@ -169,12 +183,12 @@ const parseRssConfig = (row: SourceRow) => {
   try {
     config = JSON.parse(row.config ?? "null");
   } catch {
-    return;
+    return null;
   }
 
   const parsed = rssConfigSchema.safeParse(config);
 
-  return parsed.success ? parsed.data : undefined;
+  return parsed.success ? parsed.data : null;
 };
 
 type Access = { access: SourceAccess } | { noAccessReason: string };
@@ -182,7 +196,7 @@ type Access = { access: SourceAccess } | { noAccessReason: string };
 const xAccess: (userId: string) => Promise<Access> = async (userId) => {
   const grant = await freshXAccount(userId);
 
-  return grant === undefined
+  return grant === null
     ? { noAccessReason: "X connection expired — sign in again" }
     : { access: { accessToken: grant.accessToken, kind: "x", xUserId: grant.xUserId } };
 };
@@ -190,7 +204,7 @@ const xAccess: (userId: string) => Promise<Access> = async (userId) => {
 const accessFor: (row: SourceRow, userId: string) => Promise<Access> = async (row, userId) => {
   switch (row.kind) {
     case "x": {
-      return xAccess(userId);
+      return await xAccess(userId);
     }
 
     case "gmail":
@@ -206,7 +220,7 @@ const accessFor: (row: SourceRow, userId: string) => Promise<Access> = async (ro
     case "rss": {
       const config = parseRssConfig(row);
 
-      return config === undefined
+      return config === null
         ? { noAccessReason: "This feed's settings are unreadable — remove and re-add it" }
         : { access: { kind: "rss", url: config.url } };
     }
@@ -235,18 +249,22 @@ const resolved = (channelKey: string, kind: SourceKind, outcome: Access) =>
 export const resolveSource = async (sourceId: string, viewer: Viewer) => {
   if (sourceId === OWNER_SOURCE_ID) {
     if (viewer === null || !isOwnerHandle(viewer.user.username)) {
-      return { channelKey: OWNER_SOURCE_ID, kind: "x", mode: "replay" } satisfies
-        | ResolvedSource
-        | undefined;
+      return {
+        channelKey: OWNER_SOURCE_ID,
+        kind: "x",
+        mode: "replay",
+      } satisfies ResolvedSource | null;
     }
 
-    return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id)) satisfies
-      | ResolvedSource
-      | undefined;
+    return resolved(
+      OWNER_SOURCE_ID,
+      "x",
+      await xAccess(viewer.user.id),
+    ) satisfies ResolvedSource | null;
   }
 
   if (viewer === null || db === undefined) {
-    return;
+    return null;
   }
 
   const rows = await db
@@ -260,12 +278,14 @@ export const resolveSource = async (sourceId: string, viewer: Viewer) => {
   const [row] = rows;
 
   if (row === undefined) {
-    return;
+    return null;
   }
 
-  return resolved(row.id, row.kind, await accessFor(row, viewer.user.id)) satisfies
-    | ResolvedSource
-    | undefined;
+  return resolved(
+    row.id,
+    row.kind,
+    await accessFor(row, viewer.user.id),
+  ) satisfies ResolvedSource | null;
 };
 
 /**
@@ -309,10 +329,15 @@ export const reorderSources = async (viewer: NonNullable<Viewer>, order: string[
     return;
   }
 
-  for (const [index, sourceId] of order.entries()) {
-    await db
-      .update(source)
-      .set({ position: index + 1 })
-      .where(and(eq(source.id, sourceId), eq(source.userId, viewer.user.id)));
-  }
+  const database = db;
+
+  await Promise.all(
+    order.map(
+      async (sourceId, index) =>
+        await database
+          .update(source)
+          .set({ position: index + 1 })
+          .where(and(eq(source.id, sourceId), eq(source.userId, viewer.user.id))),
+    ),
+  );
 };

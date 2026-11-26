@@ -14,9 +14,13 @@ export const town: Town = {
   },
   centerpiece: lanternGate,
   lights: ["festiveRed", "festiveRed", "gold"],
-  porch: (sketch, x, z) => lanternPost(sketch, x, z),
+  porch: (sketch, x, z) => {
+    lanternPost(sketch, x, z);
+  },
   repaint: { glass: { day: "#dbe6ea", night: "#ff7a5c" } },
-  shore: (sketch, x, z) => lanternPost(sketch, x, z, 0.3),
+  shore: (sketch, x, z) => {
+    lanternPost(sketch, x, z, 0.3);
+  },
   square: (sketch, x, z) => {
     lanternPost(sketch, x - 0.15, z, 0.62);
     lantern(placedIn(sketch), [x + 0.1, GROUND + 0.25, z + 0.08], 1.6);

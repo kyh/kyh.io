@@ -1,5 +1,6 @@
 import { salaryData } from "./data";
-import { makeFirstGuess, meanAbsoluteError, predict, type RegressionModel } from "./model";
+import { makeFirstGuess, meanAbsoluteError, predict } from "./model";
+import type { RegressionModel } from "./model";
 
 export type PredictionScene =
   | { kind: "offer" }
@@ -7,11 +8,11 @@ export type PredictionScene =
   | { kind: "formula"; stage: "plain" | "weight" | "prediction" | "bias" }
   | { kind: "chart"; stage: "points" | "line" | "residuals" | "error" | "weight" | "bias" };
 
-type PredictionGraphicProps = {
+interface PredictionGraphicProps {
   scene: PredictionScene;
   model: RegressionModel;
   onModelChange: (model: RegressionModel) => void;
-};
+}
 
 const chart = {
   width: 600,
@@ -36,33 +37,34 @@ const currency = new Intl.NumberFormat("en-US", {
 
 const averageYears =
   salaryData.reduce((total, observation) => total + observation.years, 0) / salaryData.length;
+
 const averageSalary =
   salaryData.reduce((total, observation) => total + observation.salary, 0) / salaryData.length;
 
-function xPosition(years: number) {
+const xPosition = (years: number) => {
   const plotWidth = chart.width - chart.left - chart.right;
-  return chart.left + (years / chart.maxYears) * plotWidth;
-}
 
-function yPosition(salary: number) {
+  return chart.left + (years / chart.maxYears) * plotWidth;
+};
+
+const yPosition = (salary: number) => {
   const plotHeight = chart.height - chart.top - chart.bottom;
   const visibleSalary = Math.min(chart.maxSalary, Math.max(0, salary));
+
   return chart.top + (1 - visibleSalary / chart.maxSalary) * plotHeight;
-}
+};
 
-function OfferGraphic() {
-  return (
-    <div className="offer">
-      <h2>Offer Letter</h2>
-      <h3>$xxx,xxx</h3>
-      {Array.from({ length: 5 }, (_, index) => (
-        <div className="offer-line" key={index} />
-      ))}
-    </div>
-  );
-}
+const OfferGraphic = () => (
+  <div className="offer">
+    <h2>Offer Letter</h2>
+    <h3>$xxx,xxx</h3>
+    {Array.from({ length: 5 }, (_, index) => (
+      <div className="offer-line" key={index} />
+    ))}
+  </div>
+);
 
-function DatasetGraphic({ scene }: { scene: Extract<PredictionScene, { kind: "dataset" }> }) {
+const DatasetGraphic = ({ scene }: { scene: Extract<PredictionScene, { kind: "dataset" }> }) => {
   const emphasizeRelationship = scene.stage === "relationship" || scene.stage === "average";
 
   return (
@@ -107,9 +109,9 @@ function DatasetGraphic({ scene }: { scene: Extract<PredictionScene, { kind: "da
       ) : null}
     </div>
   );
-}
+};
 
-function FormulaNode({
+const FormulaNode = ({
   symbol,
   description,
   className,
@@ -117,16 +119,14 @@ function FormulaNode({
   symbol: string;
   description: string;
   className?: string;
-}) {
-  return (
-    <div className={className}>
-      <div className="visual">{symbol}</div>
-      <div className="visual-description">{description}</div>
-    </div>
-  );
-}
+}) => (
+  <div className={className}>
+    <div className="visual">{symbol}</div>
+    <div className="visual-description">{description}</div>
+  </div>
+);
 
-function FormulaGraphic({ scene }: { scene: Extract<PredictionScene, { kind: "formula" }> }) {
+const FormulaGraphic = ({ scene }: { scene: Extract<PredictionScene, { kind: "formula" }> }) => {
   const showBias = scene.stage === "bias";
   const showPrediction = scene.stage === "prediction";
   const focusWeight = scene.stage === "weight";
@@ -159,9 +159,9 @@ function FormulaGraphic({ scene }: { scene: Extract<PredictionScene, { kind: "fo
       ) : null}
     </div>
   );
-}
+};
 
-function ModelControls({
+const ModelControls = ({
   model,
   showBias,
   onModelChange,
@@ -169,48 +169,46 @@ function ModelControls({
   model: RegressionModel;
   showBias: boolean;
   onModelChange: (model: RegressionModel) => void;
-}) {
-  return (
-    <div className="chart-sliders">
-      <div className="chart-weight">
+}) => (
+  <div className="chart-sliders">
+    <div className="chart-weight">
+      <input
+        id="model-weight"
+        type="range"
+        min={0}
+        max={15_000}
+        step={100}
+        value={model.weight}
+        onChange={(event) => {
+          onModelChange({ weight: Number(event.currentTarget.value), bias: model.bias });
+        }}
+      />
+      <label htmlFor="model-weight">
+        Weight: <output htmlFor="model-weight">{currency.format(model.weight)}</output>
+      </label>
+    </div>
+    {showBias ? (
+      <div className="chart-bias">
         <input
-          id="model-weight"
+          id="model-bias"
           type="range"
           min={0}
-          max={15_000}
+          max={80_000}
           step={100}
-          value={model.weight}
-          onChange={(event) =>
-            onModelChange({ weight: Number(event.currentTarget.value), bias: model.bias })
-          }
+          value={model.bias}
+          onChange={(event) => {
+            onModelChange({ weight: model.weight, bias: Number(event.currentTarget.value) });
+          }}
         />
-        <label htmlFor="model-weight">
-          Weight: <output htmlFor="model-weight">{currency.format(model.weight)}</output>
+        <label htmlFor="model-bias">
+          Bias: <output htmlFor="model-bias">{currency.format(model.bias)}</output>
         </label>
       </div>
-      {showBias ? (
-        <div className="chart-bias">
-          <input
-            id="model-bias"
-            type="range"
-            min={0}
-            max={80_000}
-            step={100}
-            value={model.bias}
-            onChange={(event) =>
-              onModelChange({ weight: model.weight, bias: Number(event.currentTarget.value) })
-            }
-          />
-          <label htmlFor="model-bias">
-            Bias: <output htmlFor="model-bias">{currency.format(model.bias)}</output>
-          </label>
-        </div>
-      ) : null}
-    </div>
-  );
-}
+    ) : null}
+  </div>
+);
 
-function PredictionChart({
+const PredictionChart = ({
   scene,
   model,
   onModelChange,
@@ -218,7 +216,7 @@ function PredictionChart({
   scene: Extract<PredictionScene, { kind: "chart" }>;
   model: RegressionModel;
   onModelChange: (model: RegressionModel) => void;
-}) {
+}) => {
   const showLine = scene.stage !== "points";
   const showResiduals = ["residuals", "error", "weight", "bias"].includes(scene.stage);
   const showError = ["error", "weight", "bias"].includes(scene.stage);
@@ -259,7 +257,7 @@ function PredictionChart({
               y2={yPosition(salary)}
             />
             <text className="axis-tick" x={chart.left - 10} y={yPosition(salary) + 4}>
-              ${salary / 1_000}k
+              ${salary / 1000}k
             </text>
           </g>
         ))}
@@ -332,11 +330,20 @@ function PredictionChart({
       </footer>
     </div>
   );
-}
+};
 
-export function PredictionGraphic({ scene, model, onModelChange }: PredictionGraphicProps) {
-  if (scene.kind === "offer") return <OfferGraphic />;
-  if (scene.kind === "dataset") return <DatasetGraphic scene={scene} />;
-  if (scene.kind === "formula") return <FormulaGraphic scene={scene} />;
+export const PredictionGraphic = ({ scene, model, onModelChange }: PredictionGraphicProps) => {
+  if (scene.kind === "offer") {
+    return <OfferGraphic />;
+  }
+
+  if (scene.kind === "dataset") {
+    return <DatasetGraphic scene={scene} />;
+  }
+
+  if (scene.kind === "formula") {
+    return <FormulaGraphic scene={scene} />;
+  }
+
   return <PredictionChart scene={scene} model={model} onModelChange={onModelChange} />;
-}
+};

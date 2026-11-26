@@ -21,28 +21,30 @@ const AdminLogin = () => {
         <Form
           errors={errors}
           className="space-y-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setErrors({});
-            setIsLoading(true);
+          onSubmit={(e) => {
+            void (async () => {
+              e.preventDefault();
+              setErrors({});
+              setIsLoading(true);
 
-            const formData = new FormData(e.currentTarget);
-            const email = formString(formData, "email");
-            const password = formString(formData, "password");
+              const formData = new FormData(e.currentTarget);
+              const email = formString(formData, "email");
+              const password = formString(formData, "password");
 
-            try {
-              const result = await authClient.signIn.email({ email, password });
+              try {
+                const result = await authClient.signIn.email({ email, password });
 
-              if (result.error) {
-                setErrors({ form: result.error.message ?? "Login failed" });
-              } else {
-                router.push("/admin");
+                if (result.error) {
+                  setErrors({ form: result.error.message ?? "Login failed" });
+                } else {
+                  router.push("/admin");
+                }
+              } catch {
+                setErrors({ form: "Login failed" });
               }
-            } catch {
-              setErrors({ form: "Login failed" });
-            }
 
-            setIsLoading(false);
+              setIsLoading(false);
+            })();
           }}
         >
           <Field.Root name="email">

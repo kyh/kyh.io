@@ -29,9 +29,6 @@ const NONE: PlayerMap = {};
 const NO_ONE: Visitor[] = [];
 const NO_ENTRY: JsonValue = null;
 
-// oxlint-disable-next-line no-empty-function -- there is nothing to unsubscribe
-const ignore = () => () => {};
-
 const SiteRoomContext = createContext<SiteRoom | null>(null);
 
 const useSiteRoom = () => {
@@ -142,20 +139,22 @@ export const useChat = (enabled: boolean) => {
   const [draft, setDraft] = useState<string | null>(null);
   const [said, setSaid] = useState<Said | null>(null);
   useEffect(() => {
-    if (!enabled) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (enabled) {
+      cleanup = listenForChat({
+        onDraft: (next) => {
+          setDraft(next);
+          room.type(next);
+        },
+        onSend: (text) => {
+          setSaid({ text, until: room.now() + SHOW_MS });
+          room.say(text);
+        },
+      });
     }
 
-    return listenForChat({
-      onDraft: (next) => {
-        setDraft(next);
-        room.type(next);
-      },
-      onSend: (text) => {
-        setSaid({ text, until: room.now() + SHOW_MS });
-        room.say(text);
-      },
-    });
+    return cleanup;
   }, [enabled, room]);
 
   return { draft, said };
@@ -174,7 +173,7 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
   const held = heldAt !== undefined;
 
   const live = useSyncExternalStore(
-    held ? ignore : room.subscribe,
+    room.subscribe,
     () => room.order(grid) ?? NO_ENTRY,
     () => NO_ENTRY,
   );
@@ -189,10 +188,17 @@ export const useSharedOrder = <T,>(grid: string, items: T[], keyOf: (item: T) =>
     return order.flatMap((key) => byKey.get(key) ?? []);
   }, [entry, items, keyOf]);
 
-  const handleDrop = useCallback((order: string[]) => room.drop(grid, order), [room, grid]);
+  const handleDrop = useCallback(
+    (order: string[]) => {
+      room.drop(grid, order);
+    },
+    [room, grid],
+  );
 
   const handleHold = useCallback(
-    (holding: boolean) => setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined),
+    (holding: boolean) => {
+      setHeldAt(holding ? (room.order(grid) ?? NO_ENTRY) : undefined);
+    },
     [room, grid],
   );
 

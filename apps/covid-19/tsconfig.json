@@ -1,0 +1,16 @@
+{
+  "extends": "@kyh/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "paths": {
+      "components/*": ["./src/components/*"],
+      "data/*": ["./src/data/*"],
+      "features/*": ["./src/features/*"],
+      "hooks/*": ["./src/hooks/*"],
+      "utils/*": ["./src/utils/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "postcss.config.js"],
+  "exclude": ["node_modules"]
+}

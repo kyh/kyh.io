@@ -5,22 +5,26 @@ import { pickXCandidate } from "./x";
 import { pickYoutubeCandidate } from "./youtube";
 
 /** The item that should air next on a source, or undefined when nothing new qualifies. */
-export const pickCandidate = (access: SourceAccess, sourceId: string, context: SourceContext) => {
+export const pickCandidate = async (
+  access: SourceAccess,
+  sourceId: string,
+  context: SourceContext,
+) => {
   switch (access.kind) {
     case "x": {
-      return pickXCandidate(access, sourceId, context);
+      return await pickXCandidate(access, sourceId, context);
     }
 
     case "gmail": {
-      return pickGmailCandidate(access, sourceId, context);
+      return await pickGmailCandidate(access, sourceId, context);
     }
 
     case "rss": {
-      return pickRssCandidate(access, sourceId, context);
+      return await pickRssCandidate(access, sourceId, context);
     }
 
     case "youtube": {
-      return pickYoutubeCandidate(access, sourceId, context);
+      return await pickYoutubeCandidate(access, sourceId, context);
     }
 
     default: {

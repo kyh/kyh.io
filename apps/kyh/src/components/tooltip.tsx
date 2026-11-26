@@ -16,6 +16,7 @@ import {
   useRole,
 } from "@floating-ui/react";
 import { AnimatePresence, motion } from "motion/react";
+import { useRender } from "@base-ui/react/use-render";
 
 import type { Placement } from "@floating-ui/react";
 import { cn } from "cn";
@@ -40,13 +41,15 @@ const TooltipLines = ({ position }: { position: LinesPosition | null }) => {
   const [scrollHeight, setScrollHeight] = React.useState(0);
 
   React.useEffect(() => {
-    const observer = new ResizeObserver(() =>
-      setScrollHeight(document.documentElement.scrollHeight),
-    );
+    const observer = new ResizeObserver(() => {
+      setScrollHeight(document.documentElement.scrollHeight);
+    });
 
     observer.observe(document.documentElement);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -195,44 +198,22 @@ const Tooltip = ({ children, ...options }: { children: React.ReactNode } & Toolt
   return <TooltipContext.Provider value={tooltip}>{children}</TooltipContext.Provider>;
 };
 
-const TooltipTrigger = ({
-  children,
-  asChild = false,
-  ref: propRef,
-  ...props
-}: React.HTMLProps<HTMLElement> & { asChild?: boolean; ref?: React.Ref<HTMLElement> }) => {
+const TooltipTrigger = ({ render, ref, type, ...props }: useRender.ComponentProps<"button">) => {
   const context = useTooltipContext();
 
-  const childrenRef = React.isValidElement<{ ref?: React.Ref<unknown> }>(children)
-    ? children.props.ref
-    : undefined;
+  const triggerProps = {
+    ...props,
+    "data-side": context.placement.split("-")[0],
+    "data-state": context.open ? "open" : "closed",
+    type: render === undefined ? (type ?? "button") : type,
+  };
 
-  const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
-
-  if (asChild && React.isValidElement<React.HTMLProps<HTMLElement>>(children)) {
-    // oxlint-disable-next-line react/no-clone-element -- asChild is the Slot pattern: the child element is the trigger, so its props must be merged onto it
-    return React.cloneElement(children, {
-      ...context.getReferenceProps({
-        ...props,
-        ...children.props,
-        "data-side": context.placement.split("-")[0],
-        "data-state": context.open ? "open" : "closed",
-      } as React.HTMLProps<HTMLElement>),
-      ref,
-    });
-  }
-
-  return (
-    <button
-      type="button"
-      ref={ref}
-      data-state={context.open ? "open" : "closed"}
-      data-side={context.placement.split("-")[0]}
-      {...context.getReferenceProps(props)}
-    >
-      {children}
-    </button>
-  );
+  return useRender({
+    defaultTagName: "button",
+    props: context.getReferenceProps(triggerProps),
+    ref: ref === undefined ? context.refs.setReference : [context.refs.setReference, ref],
+    render,
+  });
 };
 
 const cols = 11;
@@ -243,10 +224,10 @@ const blocks = Array.from({ length: cols * rows }, (_, i) => i);
 const calculateDelay = (n: number) => baseDelay * Math.floor(n / cols) + baseDelay * (n % cols);
 const totalDelay = calculateDelay(cols * rows);
 
-const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } as React.CSSProperties;
+const tooltipBlocksStyle = { "--cols": cols, "--rows": rows } satisfies React.CSSProperties;
 
 const TooltipBlocks = ({ context }: { context: ContextType }) => {
-  if (!context?.x || !context.y) {
+  if (context === null || context.x === undefined || context.x === 0 || !context.y) {
     return null;
   }
 
@@ -292,35 +273,37 @@ const TooltipContent = ({
   const linesContext = React.useContext(TooltipLinesContext);
   const tooltipId = React.useId();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
-  const { children: floatingPropsChildren, ...floatingProps } = context.getFloatingProps(props);
-  const children = floatingPropsChildren as React.ReactNode;
+  const { children, ...rest } = props;
+  const floatingProps = context.getFloatingProps(rest);
   const blockType = type === "block";
 
   React.useLayoutEffect(() => {
-    if (!blockType || !linesContext) {
-      return;
-    }
+    let cleanup: (() => void) | undefined;
 
-    const { updatePosition } = linesContext;
+    if (blockType && linesContext) {
+      const { updatePosition } = linesContext;
 
-    if (context.open && context.x !== null && context.y !== null) {
-      const floatingEl = context.elements.floating;
+      if (context.open && context.x !== null && context.y !== null) {
+        const floatingEl = context.elements.floating;
 
-      if (floatingEl) {
-        updatePosition(tooltipId, {
-          height: floatingEl.offsetHeight,
-          width: floatingEl.offsetWidth,
-          x: context.x,
-          y: context.y,
-        });
+        if (floatingEl) {
+          updatePosition(tooltipId, {
+            height: floatingEl.offsetHeight,
+            width: floatingEl.offsetWidth,
+            x: context.x,
+            y: context.y,
+          });
+        }
+      } else {
+        updatePosition(tooltipId, null);
       }
-    } else {
-      updatePosition(tooltipId, null);
+
+      cleanup = () => {
+        updatePosition(tooltipId, null);
+      };
     }
 
-    return () => {
-      updatePosition(tooltipId, null);
-    };
+    return cleanup;
   }, [
     blockType,
     context.open,

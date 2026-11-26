@@ -43,7 +43,7 @@ test("enter sends the line, or drops a blank one", () => {
 
 test("a line is one line of at most MAX_CHARS", () => {
   assert.equal(cleanLine("a\n\tb\u0000c"), "a b c");
-  assert.equal([...cleanLine("x".repeat(500))].length, MAX_CHARS);
+  assert.equal(cleanLine("x".repeat(500)).length, MAX_CHARS);
   assert.equal(editDraft("x".repeat(MAX_CHARS), press("y"))?.kind, "draft");
 });
 

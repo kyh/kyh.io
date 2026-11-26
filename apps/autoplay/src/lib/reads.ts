@@ -15,8 +15,9 @@ export const DAILY_READ_BUDGET_USD = {
 
 export interface CacheStore {
   /** What is under `key`, if it is there and has not expired — parsed, since it comes back as data. */
-  get: <T>(key: string, schema: z.ZodType<T>) => Promise<T | undefined>;
-  set: <T extends object>(key: string, value: T, ttlMs: number) => Promise<void>;
+  get: <T>(key: string, schema: z.ZodType<T>) => Promise<T | null>;
+  /** Writes `value` under `key` for `ttlMs`, unless it fails the schema `get` would read it back with. */
+  set: <T>(key: string, schema: z.ZodType<T>, value: T, ttlMs: number) => Promise<void>;
 }
 
 export interface SpendStore {
@@ -40,38 +41,42 @@ export const memoryReads = () => {
     const entry = entries.get(key);
 
     if (entry === undefined) {
-      return;
+      return null;
     }
 
     if (entry.expiresAt <= Date.now()) {
       entries.delete(key);
 
-      return;
+      return null;
     }
 
     const parsed = schema.safeParse(entry.value);
 
-    return parsed.success ? parsed.data : undefined;
+    return parsed.success ? parsed.data : null;
   };
 
   return {
     cache: {
-      get: (key, schema) => Promise.resolve(lookup(key, schema)),
-      set: (key, value, ttlMs) => {
-        entries.set(key, { expiresAt: Date.now() + ttlMs, value });
+      get: async (key, schema) => await Promise.resolve(lookup(key, schema)),
+      set: async (key, schema, value, ttlMs) => {
+        const parsed = schema.safeParse(value);
 
-        return Promise.resolve();
+        if (parsed.success) {
+          entries.set(key, { expiresAt: Date.now() + ttlMs, value: parsed.data });
+        }
+
+        await Promise.resolve();
       },
     },
     spend: {
-      record: (kind, channelKey, usd, at = Date.now()) => {
+      record: async (kind, channelKey, usd, at = Date.now()) => {
         if (usd > 0) {
           ledger.push({ at, channelKey, kind, usd });
         }
 
-        return Promise.resolve();
+        await Promise.resolve();
       },
-      spent: (kind, since) => {
+      spent: async (kind, since) => {
         let total = 0;
 
         for (const row of ledger) {
@@ -80,7 +85,7 @@ export const memoryReads = () => {
           }
         }
 
-        return Promise.resolve(total);
+        return await Promise.resolve(total);
       },
     },
   } satisfies Reads;
@@ -99,22 +104,29 @@ export const databaseReads = (database: NonNullable<typeof db>) =>
         const [row] = rows;
 
         if (row === undefined) {
-          return;
+          return null;
         }
 
         if (row.expiresAt <= Date.now()) {
           await database.delete(sourceCache).where(eq(sourceCache.key, key));
 
-          return;
+          return null;
         }
 
         const parsed = schema.safeParse(row.value);
 
-        return parsed.success ? parsed.data : undefined;
+        return parsed.success ? parsed.data : null;
       },
-      set: async (key, value, ttlMs) => {
+      set: async (key, schema, written, ttlMs) => {
         const now = Date.now();
         const expiresAt = now + ttlMs;
+        const parsed = schema.safeParse(written);
+
+        if (!parsed.success) {
+          return;
+        }
+
+        const value = parsed.data;
         await database
           .insert(sourceCache)
           .values({ expiresAt, key, value })

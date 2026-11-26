@@ -13,31 +13,34 @@ const useEditMode = () => {
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (!editing) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (editing) {
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.target instanceof Element && e.target.closest('[data-slot="tile"]')) {
+          return;
+        }
+
+        setEditing(false);
+      };
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setEditing(false);
+        }
+      };
+
+      document.addEventListener("pointerdown", onPointerDown);
+
+      document.addEventListener("keydown", onKeyDown);
+
+      cleanup = () => {
+        document.removeEventListener("pointerdown", onPointerDown);
+        document.removeEventListener("keydown", onKeyDown);
+      };
     }
 
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.target instanceof Element && e.target.closest('[data-slot="tile"]')) {
-        return;
-      }
-
-      setEditing(false);
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setEditing(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    return cleanup;
   }, [editing]);
 
   return [editing, setEditing] as const;
@@ -47,7 +50,7 @@ const wiggleStyle = (index: number) =>
   ({
     "--wiggle-delay": `${-((index * 0.07) % 0.28)}s`,
     "--wiggle-dir": index % 2 === 0 ? 1 : -1,
-  }) as React.CSSProperties;
+  }) satisfies React.CSSProperties;
 
 const isOwn = (e: SyntheticEvent<HTMLElement>) =>
   e.target instanceof Node && e.currentTarget.contains(e.target);
@@ -143,8 +146,12 @@ const Tile = ({ value, index, editing, settling, onLongPress, onHold, children }
       dragMomentum={false}
       whileDrag={{ scale: 1.12 }}
       transition={settling ? settleTransition : layoutSpring}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={() => setDragging(false)}
+      onDragStart={() => {
+        setDragging(true);
+      }}
+      onDragEnd={() => {
+        setDragging(false);
+      }}
       onPointerDown={handlePointerDown}
       onClickCapture={(e) => {
         if (editing && isOwn(e)) {
@@ -155,7 +162,7 @@ const Tile = ({ value, index, editing, settling, onLongPress, onHold, children }
       onContextMenu={(e) => {
         const pressing = press.current && !press.current.signal.aborted;
 
-        if ((editing || pressing) && isOwn(e)) {
+        if ((editing || pressing === true) && isOwn(e)) {
           e.preventDefault();
         }
       }}
@@ -200,21 +207,25 @@ export const SortableGrid = <T,>({
   const order = moving ?? items.map(keyOf);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const grid = gridRef.current;
 
-    if (!grid) {
-      return;
+    if (grid) {
+      const onTouchMove = (e: TouchEvent) => {
+        if (scrollLocked.current && e.cancelable) {
+          e.preventDefault();
+        }
+      };
+
+      grid.addEventListener("touchmove", onTouchMove, { passive: false });
+
+      cleanup = () => {
+        grid.removeEventListener("touchmove", onTouchMove);
+      };
     }
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (scrollLocked.current && e.cancelable) {
-        e.preventDefault();
-      }
-    };
-
-    grid.addEventListener("touchmove", onTouchMove, { passive: false });
-
-    return () => grid.removeEventListener("touchmove", onTouchMove);
+    return cleanup;
   }, []);
 
   const reorder = (next: string[]) => {
@@ -261,7 +272,9 @@ export const SortableGrid = <T,>({
             index={index}
             editing={editing}
             settling={settling}
-            onLongPress={() => setEditing(true)}
+            onLongPress={() => {
+              setEditing(true);
+            }}
             onHold={hold}
           >
             {renderTile(item, index)}

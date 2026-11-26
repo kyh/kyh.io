@@ -64,7 +64,12 @@ interface WedgesProps {
 }
 
 const WedgeRing = ({ theme, own, still, keyed, light }: WedgesProps) => (
-  <Menu.RadioGroup value={theme} onValueChange={(id: ThemeId) => chooseTheme(id)}>
+  <Menu.RadioGroup
+    value={theme}
+    onValueChange={(id: ThemeId) => {
+      chooseTheme(id);
+    }}
+  >
     {RING.map(({ clip, d, id, index, left, name, top }) => (
       <Menu.RadioItem
         key={id}
@@ -79,13 +84,17 @@ const WedgeRing = ({ theme, own, still, keyed, light }: WedgesProps) => (
             light(id, true);
           }
         }}
-        onPointerLeave={() => light(id, false)}
+        onPointerLeave={() => {
+          light(id, false);
+        }}
         onFocus={() => {
           if (keyed.current) {
             light(id, true);
           }
         }}
-        onBlur={() => light(id, false)}
+        onBlur={() => {
+          light(id, false);
+        }}
         render={
           <motion.div
             initial={still ? { opacity: 0 } : { opacity: 0, rotate: -20, scale: 0.6 }}
@@ -173,7 +182,9 @@ export const ThemeBloom = ({ anchor, open, onOpenChange }: ThemeBloomProps) => {
                   aria-label="Close themes"
                   className="theme-bloom-hub"
                   style={{ inset: CENTER - HUB }}
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => {
+                    onOpenChange(false);
+                  }}
                 >
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span

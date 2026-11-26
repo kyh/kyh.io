@@ -38,8 +38,8 @@ const connectGoogle = (scope: string) => {
   void authClient.linkSocial({ callbackURL: "/", provider: "google", scopes: [scope] });
 };
 
-const editLineup = (edit: LineupEdit) =>
-  requestJson(
+const editLineup = async (edit: LineupEdit) =>
+  await requestJson(
     "/api/sources",
     channelsPayloadSchema,
     "Couldn't change the lineup",
@@ -133,7 +133,9 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                   <button
                     type="button"
                     disabled={busy || index <= 1}
-                    onClick={() => move(index - 1, -1)}
+                    onClick={() => {
+                      move(index - 1, -1);
+                    }}
                     aria-label="Move up"
                     className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
                   >
@@ -142,7 +144,9 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                   <button
                     type="button"
                     disabled={busy || index >= props.channels.length - 1}
-                    onClick={() => move(index - 1, 1)}
+                    onClick={() => {
+                      move(index - 1, 1);
+                    }}
                     aria-label="Move down"
                     className="y2k-btn status-btn cursor-pointer disabled:cursor-default"
                   >
@@ -173,7 +177,9 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
                   key={entry.kind}
                   type="button"
                   disabled={has(entry.kind)}
-                  onClick={() => connectGoogle(entry.scope)}
+                  onClick={() => {
+                    connectGoogle(entry.scope);
+                  }}
                   className="y2k-btn cursor-pointer px-3 py-1 text-[10px] tracking-widest uppercase disabled:cursor-default"
                 >
                   {has(entry.kind)
@@ -205,7 +211,9 @@ export const SourcesDialog = (props: SourcesDialogProps) => {
               type="url"
               required
               value={feedUrl}
-              onChange={(event) => setFeedUrl(event.target.value)}
+              onChange={(event) => {
+                setFeedUrl(event.target.value);
+              }}
               placeholder="https://example.com/feed.xml"
               aria-label="Feed URL"
               className="bevel-in min-w-0 flex-1 bg-white px-2 py-1 text-[11px] outline-none"

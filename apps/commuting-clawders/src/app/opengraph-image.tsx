@@ -13,7 +13,7 @@ export const size = { height: 630, width: 1200 };
 
 const NAVY = "#1a1f3a";
 
-const asset = (file: string) => readFile(path.join(process.cwd(), file));
+const asset = async (file: string) => await readFile(path.join(process.cwd(), file));
 
 const assets = async () => {
   "use cache";

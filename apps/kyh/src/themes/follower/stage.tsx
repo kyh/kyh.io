@@ -333,7 +333,7 @@ export const Stage = <State,>({
     let pressed: { id: number; x: number; y: number } | null = null;
 
     const pokeAt = (event: PointerEvent) => {
-      const onHat = event.target instanceof Element && event.target.closest("[data-hat]");
+      const onHat = event.target instanceof Element && event.target.closest("[data-hat]") !== null;
 
       if (state !== null && frame !== 0 && !onHat && !away.current) {
         creature.poke(state, { x: event.clientX, y: event.clientY });

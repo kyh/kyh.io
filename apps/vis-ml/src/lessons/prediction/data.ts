@@ -1,8 +1,8 @@
-export type SalaryObservation = {
+export interface SalaryObservation {
   id: string;
   years: number;
   salary: number;
-};
+}
 
 export const salaryData: readonly SalaryObservation[] = [
   { id: "A", years: 1, salary: 39_000 },

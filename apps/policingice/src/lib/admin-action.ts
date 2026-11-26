@@ -73,7 +73,7 @@ const parseLocalDate = (dateStr: string) => {
 const requireAdmin = async () => {
   const session = await getSession();
 
-  if (!session?.user || session.user.isAnonymous) {
+  if (!session?.user || session.user.isAnonymous === true) {
     throw new Error("Unauthorized");
   }
 
@@ -105,7 +105,10 @@ export const updateIncident = async (data: {
     .update(incidents)
     .set({
       description: data.description,
-      incidentDate: data.incidentDate ? parseLocalDate(data.incidentDate) : null,
+      incidentDate:
+        data.incidentDate !== undefined && data.incidentDate !== ""
+          ? parseLocalDate(data.incidentDate)
+          : null,
       location: data.location,
       status: data.status,
     })
@@ -217,7 +220,10 @@ export const bulkCreateIncidents = async (data: {
     return { created: 0, skipped: validUrls.length };
   }
 
-  const incidentDate = data.incidentDate ? new Date(data.incidentDate) : new Date();
+  const incidentDate =
+    data.incidentDate !== undefined && data.incidentDate !== ""
+      ? new Date(data.incidentDate)
+      : new Date();
 
   if (data.groupAsOne) {
     const [incident] = await db
@@ -243,30 +249,29 @@ export const bulkCreateIncidents = async (data: {
     return { created: 1, skipped: existingUrls.size };
   }
 
-  let created = 0;
+  await Promise.all(
+    newUrls.map(async (url) => {
+      const [incident] = await db
+        .insert(incidents)
+        .values({
+          description: data.description ?? null,
+          incidentDate,
+          location: data.location ?? null,
+          status: "approved",
+        })
+        .returning();
 
-  for (const url of newUrls) {
-    const [incident] = await db
-      .insert(incidents)
-      .values({
-        description: data.description ?? null,
-        incidentDate,
-        location: data.location ?? null,
-        status: "approved",
-      })
-      .returning();
-
-    await db.insert(videos).values({
-      incidentId: incident.id,
-      platform: detectPlatform(url),
-      url,
-    });
-    created += 1;
-  }
+      await db.insert(videos).values({
+        incidentId: incident.id,
+        platform: detectPlatform(url),
+        url,
+      });
+    }),
+  );
 
   revalidateTag("incidents", "max");
 
-  return { created, skipped: existingUrls.size };
+  return { created: newUrls.length, skipped: existingUrls.size };
 };
 
 export const getFeedPosts = async () => {

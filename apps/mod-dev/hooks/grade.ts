@@ -61,8 +61,6 @@ const MAX_INSTRUCTIONS = 40_000;
 const NOISE =
   /<(?<tag>command-args|command-message|command-name|local-command-caveat|local-command-stderr|local-command-stdout|system-reminder|task-notification)>[\s\S]*?<\/\k<tag>>/gu;
 
-const SKILL = /^Base directory for this skill: /u;
-
 const LINE =
   /^[\s*`_-]*(?<key>confidence|idiomatic|simplicity|scope|risk|fix)[\s*`_]*:\s*(?<value>.+)$/gimu;
 
@@ -137,7 +135,7 @@ export const asksOf = (rows: readonly Row[]) =>
   rows.flatMap((row) => {
     const ask = row.role === "user" ? row.text.replaceAll(NOISE, "").trim() : "";
 
-    return ask === "" || SKILL.test(ask) ? [] : [ask];
+    return ask === "" || ask.startsWith("Base directory for this skill: ") ? [] : [ask];
   });
 
 export const replyOf = (rows: readonly Row[]) =>
@@ -211,13 +209,9 @@ export const promptOf = ({ asks, checks, diff, instructions, ledger, reply }: Pa
 const scoreOf = (value: string) => {
   const found = SCORE.exec(value)?.groups;
 
-  if (found === undefined) {
-    return;
-  }
-
-  return { score: Math.min(10, Number(found.score)), why: (found.why ?? "").trim() } satisfies
-    | Score
-    | undefined;
+  return found === undefined
+    ? undefined
+    : ({ score: Math.min(10, Number(found.score)), why: (found.why ?? "").trim() } satisfies Score);
 };
 
 const fixOf = (value: string) => {
@@ -231,22 +225,18 @@ const fixOf = (value: string) => {
           .replaceAll("`", "")
           .trim();
 
-  if (!SOURCE.test(source)) {
-    return;
-  }
-
-  return { source, text: value.slice(0, at).trim() } satisfies Fix | undefined;
+  return SOURCE.test(source)
+    ? ({ source, text: value.slice(0, at).trim() } satisfies Fix)
+    : undefined;
 };
 
 const riskOf = (value: string) => {
   const found = LEVEL.exec(value)?.groups;
   const level = RISKS.find((risk) => risk === found?.level?.toLowerCase());
 
-  if (found === undefined || level === undefined) {
-    return;
-  }
-
-  return { level, why: (found.why ?? "").trim() };
+  return found === undefined || level === undefined
+    ? undefined
+    : { level, why: (found.why ?? "").trim() };
 };
 
 export const parseGrade = (text: string) => {
@@ -274,15 +264,17 @@ export const parseGrade = (text: string) => {
   const scope = scoreOf(values.get("scope") ?? "");
   const risk = riskOf(values.get("risk") ?? "");
 
-  if (!confidence || !idiomatic || !simplicity || !scope || !risk) {
-    return;
-  }
-
-  return {
-    fixes: fixes.slice(0, 3),
-    risk,
-    scores: { confidence, idiomatic, scope, simplicity },
-  } satisfies Grade | undefined;
+  return confidence === undefined ||
+    idiomatic === undefined ||
+    simplicity === undefined ||
+    scope === undefined ||
+    risk === undefined
+    ? undefined
+    : ({
+        fixes: fixes.slice(0, 3),
+        risk,
+        scores: { confidence, idiomatic, scope, simplicity },
+      } satisfies Grade);
 };
 
 export const verdictOf = (grade: Grade) => {

@@ -52,13 +52,19 @@ const backLights = (blimp: Placed, colors: readonly Token[]) => {
 const BROW = 0.5;
 const brow: Vec3 = [BROW, backAt(BROW) - 0.06, 0];
 
-export const santaTrim: Trim = (blimp) => santaHat(wearing(blimp, brow, 1, 0.5));
+export const santaTrim: Trim = (blimp) => {
+  santaHat(wearing(blimp, brow, 1, 0.5));
+};
 
-export const witchTrim: Trim = (blimp) => witchHat(wearing(blimp, brow, 1, 0.2));
+export const witchTrim: Trim = (blimp) => {
+  witchHat(wearing(blimp, brow, 1, 0.2));
+};
 
 /** A top hat in a crown color and a band, its gold buckle facing the camera. */
 export const topHatTrim = (crown: Token, band: Token) =>
-  ((blimp) => topHat(wearing(blimp, brow, 1, 0.15), crown, band)) satisfies Trim;
+  ((blimp) => {
+    topHat(wearing(blimp, brow, 1, 0.15), crown, band);
+  }) satisfies Trim;
 
 /** Bunny ears, side by side and leaning apart, each standing on the back where it is. */
 export const bunnyEarTrim: Trim = (blimp) => {
@@ -128,7 +134,11 @@ export const drawBlimp = (
     "fine",
     70,
   );
-  const fin = (points: Vec3[]) => face(sketch, fins, points.map(place), "fine");
+
+  const fin = (points: Vec3[]) => {
+    face(sketch, fins, points.map(place), "fine");
+  };
+
   fin([
     [-1.3, 0.1, 0],
     [-1.75, 0.62, 0],

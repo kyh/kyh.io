@@ -1,16 +1,8 @@
 {
-  "extends": "@kyh/tsconfig/base.json",
-  "compilerOptions": {
-    "types": ["node"]
-  },
-  "include": [
-    "hooks/game.ts",
-    "hooks/run.ts",
-    "hooks/screen.ts",
-    "hooks/sfx.ts",
-    "stream",
-    "test/*.test.mts",
-    "vite.config.ts",
-    "vite.stream.config.ts"
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.world.json" },
+    { "path": "./tsconfig.plugin.json" }
   ]
 }

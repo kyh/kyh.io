@@ -356,7 +356,7 @@ export const createHoneyDrops = (world: Group) => {
 
     const length = Math.max(0, stream.top - stream.bottom);
 
-    if (stream.puddle && stream.puddle !== "jar" && length > 0) {
+    if (stream.puddle !== undefined && stream.puddle !== "jar" && length > 0) {
       const { puddle } = stream;
       puddle.radius = Math.min(
         MAX_VOLUME_RADIUS,

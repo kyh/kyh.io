@@ -60,15 +60,13 @@ const sendOnce = async () => {
   isSending = false;
 };
 
-const pause = (ms: number) =>
-  // oxlint-disable-next-line promise/avoid-new -- a timer has no promise form
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
 let last = performance.now();
 
-const loop = async () => {
+const nextFrame = () => {
+  requestAnimationFrame(loop);
+};
+
+const loop = () => {
   const now = performance.now();
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
@@ -84,10 +82,10 @@ const loop = async () => {
   }
 
   if (isStreamed && !frame.isActive) {
-    await pause(IDLE_FRAME_MS);
+    setTimeout(nextFrame, IDLE_FRAME_MS);
+  } else {
+    nextFrame();
   }
-
-  requestAnimationFrame(loop);
 };
 
 requestAnimationFrame(loop);

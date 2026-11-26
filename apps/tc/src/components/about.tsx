@@ -152,7 +152,7 @@ const Tooltip = ({
     className="max-w-sm rounded-sm bg-black p-6 text-sm text-slate-200 shadow-xl"
     {...tooltipProps}
   >
-    {step.title && (
+    {step.title !== undefined && (
       <h1 className="mb-5 text-2xl leading-6 font-bold text-slate-50">{step.title}</h1>
     )}
     <div className="select-text">{step.content}</div>

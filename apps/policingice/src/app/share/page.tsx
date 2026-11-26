@@ -2,19 +2,15 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { db } from "@/db/drizzle-client";
+import { DatabaseNotConfigured } from "@/components/database-not-configured";
 import { incidents, videos } from "@/db/drizzle-schema";
+import { databaseConfigured } from "@/lib/env";
 import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-utils";
 
 const MAX_INPUT_LENGTH = 2048;
 
-const sanitizeInput = (input?: string) => {
-  if (!input) {
-    return;
-  }
-
-  return input.slice(0, MAX_INPUT_LENGTH);
-};
+const sanitizeInput = (input?: string) =>
+  input === undefined || input === "" ? undefined : input.slice(0, MAX_INPUT_LENGTH);
 
 const extractUrls = (text: string) => {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/giu;
@@ -24,22 +20,22 @@ const extractUrls = (text: string) => {
 };
 
 const findVideoUrl = (url?: string, text?: string, title?: string) => {
-  if (url && isValidVideoUrl(url)) {
+  if (url !== undefined && url !== "" && isValidVideoUrl(url)) {
     return url;
   }
 
-  if (text) {
+  if (text !== undefined && text !== "") {
     const found = extractUrls(text).find(isValidVideoUrl);
 
-    if (found) {
+    if (found !== undefined && found !== "") {
       return found;
     }
   }
 
-  if (title) {
+  if (title !== undefined && title !== "") {
     const found = extractUrls(title).find(isValidVideoUrl);
 
-    if (found) {
+    if (found !== undefined && found !== "") {
       return found;
     }
   }
@@ -47,11 +43,18 @@ const findVideoUrl = (url?: string, text?: string, title?: string) => {
   return null;
 };
 
+const loadDatabase = async () => await import("@/db/drizzle-client");
+
 const ShareHandler = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) => {
+  if (!databaseConfigured) {
+    return <DatabaseNotConfigured />;
+  }
+
+  const { db } = await loadDatabase();
   const params = await searchParams;
   const url = sanitizeInput(params.url);
   const text = sanitizeInput(params.text);
@@ -59,7 +62,7 @@ const ShareHandler = async ({
 
   let videoUrl = findVideoUrl(url, text, title);
 
-  if (!videoUrl) {
+  if (videoUrl === null || videoUrl === "") {
     redirect("/?error=invalid_url");
   }
 
@@ -93,7 +96,7 @@ const ShareHandler = async ({
     return newIncident;
   });
 
-  redirect(`/incident/${incident.id}`);
+  return redirect(`/incident/${incident.id}`);
 };
 
 export const metadata: Metadata = { robots: { follow: false, index: false } };

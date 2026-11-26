@@ -93,9 +93,9 @@ export const cachedPick = async (
 ) => {
   let items = await context.cache.get(key, itemsSchema);
 
-  if (items === undefined) {
+  if (items === null) {
     items = await load();
-    await context.cache.set(key, items, SOURCE_CACHE_TTL_MS);
+    await context.cache.set(key, itemsSchema, items, SOURCE_CACHE_TTL_MS);
   }
 
   return bestOf(items.filter((item) => !context.aired.has(item.id)));

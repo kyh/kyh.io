@@ -131,9 +131,9 @@ export class ReplayEngine {
   private history: PricePoint[] = [];
   private lastTick = 0;
   private currentPrice: number;
-  private paths = new Map<number, number[]>();
+  private readonly paths = new Map<number, number[]>();
   private intervalId: ReturnType<typeof setInterval> | null = null;
-  private listeners = new Set<(point: PricePoint) => void>();
+  private readonly listeners = new Set<(point: PricePoint) => void>();
 
   constructor(bars: DailyBar[], startIndex: number, config: Partial<ReplayConfig> = {}) {
     if (bars.length === 0) {
@@ -150,7 +150,9 @@ export class ReplayEngine {
   subscribe(listener: (point: PricePoint) => void) {
     this.listeners.add(listener);
 
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   start() {
@@ -167,7 +169,9 @@ export class ReplayEngine {
       this.push(t, false);
     }
 
-    this.intervalId = setInterval(() => this.advance(), tickInterval);
+    this.intervalId = setInterval(() => {
+      this.advance();
+    }, tickInterval);
   }
 
   stop() {

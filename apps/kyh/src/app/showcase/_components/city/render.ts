@@ -10,7 +10,7 @@ import {
   MeshBasicMaterial,
   SRGBColorSpace,
 } from "three";
-import type { Material } from "three";
+import type { Material, Object3D } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
@@ -19,6 +19,9 @@ import type { Scheme, Tint, Token } from "./palette";
 import type { Screen, Sign, Sketch, Vec3, Weight } from "./sketch";
 import { SHADE, shade } from "./palette";
 import { createShadowDots } from "./shadow-dots";
+
+/** Whether a scene object is a mesh, typed with its default geometry and material. */
+export const isMesh = (object: Object3D): object is Mesh => object instanceof Mesh;
 
 const WEIGHTS: Record<Weight, number> = { bold: 2.1, fine: 1.35, hair: 0.8 };
 
@@ -391,7 +394,7 @@ export const build = (sketch: Sketch, materials: Materials, tint?: Tint) => {
   const built: Built = {
     dispose: () => {
       group.traverse((object) => {
-        if (object instanceof Mesh || object instanceof LineSegments2) {
+        if (isMesh(object) || object instanceof LineSegments2) {
           object.geometry.dispose();
         }
       });

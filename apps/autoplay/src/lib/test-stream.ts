@@ -125,10 +125,9 @@ export const openTestStreamSession = (handlers: Handlers) => {
 
       const version = sent.prompt_version;
       timers.push(
-        window.setTimeout(
-          () => emit({ buffer_depth_seconds: 1, prompt_version: version, type: "chunk" }),
-          CHUNK_DELAY_MS,
-        ),
+        window.setTimeout(() => {
+          emit({ buffer_depth_seconds: 1, prompt_version: version, type: "chunk" });
+        }, CHUNK_DELAY_MS),
       );
     },
   } satisfies TestStreamSession;

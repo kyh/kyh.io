@@ -323,7 +323,7 @@ export const trendKeyword = (trend: string) => {
     .filter((word) => word !== "");
 
   const meaningful = words.filter((word) => !STOP_WORDS.has(word.toLowerCase()));
-  const named = meaningful.find((word) => word[0] !== word[0]?.toLowerCase());
+  const named = meaningful.find((word) => /^\p{Lu}/u.test(word));
 
   return named ?? meaningful[0] ?? words[0] ?? trend;
 };

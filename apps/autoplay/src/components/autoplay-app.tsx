@@ -20,11 +20,9 @@ const takeUrlError = () => {
   const params = new URLSearchParams(window.location.search);
   const error = params.get("error");
 
-  if (error === null) {
-    return;
+  if (error !== null) {
+    window.history.replaceState(null, "", window.location.pathname);
   }
-
-  window.history.replaceState(null, "", window.location.pathname);
 
   return error;
 };
@@ -39,7 +37,7 @@ export const AutoplayApp = () => {
     const boot = async () => {
       const error = takeUrlError();
 
-      if (error !== undefined) {
+      if (error !== null) {
         setUrlError(error);
       }
 

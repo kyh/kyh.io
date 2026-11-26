@@ -41,35 +41,39 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
   );
 
   useEffect(() => {
-    if (!isSettling) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (isSettling) {
+      let frame = 0;
+
+      const animate = () => {
+        frame += 1;
+        const t = frame / 20;
+
+        if (t >= 1) {
+          setScale(1);
+          setRotation(0);
+          setIsSettling(false);
+
+          return;
+        }
+
+        const scaleValue = 1 + 0.1 * Math.cos(t * Math.PI * 2) * (1 - t);
+        const rotValue = 4 * Math.sin(t * Math.PI * 3) * (1 - t);
+
+        setScale(scaleValue);
+        setRotation(rotValue);
+        frameRef.current = requestAnimationFrame(animate);
+      };
+
+      frameRef.current = requestAnimationFrame(animate);
+
+      cleanup = () => {
+        cancelAnimationFrame(frameRef.current);
+      };
     }
 
-    let frame = 0;
-
-    const animate = () => {
-      frame += 1;
-      const t = frame / 20;
-
-      if (t >= 1) {
-        setScale(1);
-        setRotation(0);
-        setIsSettling(false);
-
-        return;
-      }
-
-      const scaleValue = 1 + 0.1 * Math.cos(t * Math.PI * 2) * (1 - t);
-      const rotValue = 4 * Math.sin(t * Math.PI * 3) * (1 - t);
-
-      setScale(scaleValue);
-      setRotation(rotValue);
-      frameRef.current = requestAnimationFrame(animate);
-    };
-
-    frameRef.current = requestAnimationFrame(animate);
-
-    return () => cancelAnimationFrame(frameRef.current);
+    return cleanup;
   }, [isSettling]);
 
   const handleDragStart = useCallback(() => {
@@ -117,8 +121,12 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+      }}
     >
       <Rect
         x={-width / 2}
@@ -146,8 +154,12 @@ export const Tag = ({ id, text, x, y, color, onDragEnd, onRemove }: TagProps) =>
         <Group
           x={width / 2 - 4}
           y={-height / 2 - 4}
-          onClick={() => onRemove(id)}
-          onTap={() => onRemove(id)}
+          onClick={() => {
+            onRemove(id);
+          }}
+          onTap={() => {
+            onRemove(id);
+          }}
         >
           <Circle radius={8} fill="#ef4444" />
           <Text

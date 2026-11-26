@@ -61,7 +61,7 @@ const keepMode = (mode: "light" | "dark" | null) => {
   }
 };
 
-const systemMode = () => (system?.matches ? "dark" : "light") satisfies Mode;
+const systemMode = () => (system?.matches === true ? "dark" : "light") satisfies Mode;
 
 const ownMode = () => {
   if (typeof window === "undefined") {
@@ -113,7 +113,9 @@ const withoutTransitions = (repaint: () => void) => {
   document.head.append(still);
   repaint();
   getComputedStyle(document.body).getPropertyValue("color");
-  setTimeout(() => still.remove(), 1);
+  setTimeout(() => {
+    still.remove();
+  }, 1);
 };
 
 const paint = (change: boolean) => {
@@ -125,7 +127,10 @@ const paint = (change: boolean) => {
 
   painted = shownAs(appearance);
   const { mode, theme } = appearance;
-  const repaint = () => paintTheme(page(), theme, mode);
+
+  const repaint = () => {
+    paintTheme(page(), theme, mode);
+  };
 
   if (change) {
     withoutTransitions(repaint);

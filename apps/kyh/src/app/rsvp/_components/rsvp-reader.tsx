@@ -14,6 +14,7 @@ import {
 import { discoverEgg } from "@/easter-eggs/store";
 import { RSVP_CONTENT, RSVP_SETTINGS } from "./rsvp-config";
 import { cn } from "cn";
+import { graphemesOf } from "@/lib/graphemes";
 
 type RSVPState =
   | { status: "countdown"; count: number }
@@ -58,7 +59,7 @@ const getCurrentIndex = (state: RSVPState, totalWords: number) => {
 };
 
 const WordDisplay = ({ word, orpIndex }: { word: string; orpIndex: number }) => {
-  const letters = [...word];
+  const letters = graphemesOf(word);
   const offset = (orpIndex + 0.5 - letters.length / 2) * 0.6;
 
   return (
@@ -110,18 +111,16 @@ export const RSVPReader = () => {
     } else if (state.status === "playing") {
       const word = words[state.wordIndex];
 
-      if (!word) {
-        return;
+      if (word !== undefined && word !== "") {
+        timeoutRef.current = setTimeout(() => {
+          const nextIndex = state.wordIndex + 1;
+          setState(
+            nextIndex >= words.length
+              ? { status: "finished" }
+              : { status: "playing", wordIndex: nextIndex },
+          );
+        }, getWordDuration(word));
       }
-
-      timeoutRef.current = setTimeout(() => {
-        const nextIndex = state.wordIndex + 1;
-        setState(
-          nextIndex >= words.length
-            ? { status: "finished" }
-            : { status: "playing", wordIndex: nextIndex },
-        );
-      }, getWordDuration(word));
     }
 
     return () => {
@@ -195,7 +194,9 @@ export const RSVPReader = () => {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [togglePlayPause, goToPrevWord, goToNextWord]);
 
   let playButtonContent = <PlayIcon />;

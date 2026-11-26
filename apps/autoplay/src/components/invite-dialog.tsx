@@ -61,7 +61,9 @@ export const InviteDialog = (props: InviteDialogProps) => {
             autoFocus
             autoComplete="off"
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            onChange={(event) => {
+              setCode(event.target.value);
+            }}
             placeholder="invite code"
             aria-label="Invite code"
             className="bevel-in min-w-0 flex-1 bg-white px-2 py-1 text-[11px] outline-none"

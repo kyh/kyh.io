@@ -923,18 +923,18 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
   const { body, hinds } = geometry;
   const { sides } = bunny;
   const torsoDepth = depthOf(body.torsoAt);
-  const headDepth = torsoDepth + (sides.head ? OVER.head : -OVER.head);
+  const headDepth = torsoDepth + (sides.head === true ? OVER.head : -OVER.head);
 
   const layers: [string, number][] = [
     ["torso", torsoDepth],
     ["head", headDepth],
     ["muzzle", headDepth + (sides.pads === false ? -OVER.muzzle : OVER.muzzle)],
-    ["tail", torsoDepth + (sides.tail ? OVER.tail : -OVER.tail)],
+    ["tail", torsoDepth + (sides.tail === true ? OVER.tail : -OVER.tail)],
     ...ears.map(
       ({ depth }, index) =>
         [
           `ear-${index}`,
-          sides[`ear-${index}`]
+          sides[`ear-${index}`] === true
             ? torsoDepth + OVER.earOver
             : Math.min(headDepth + depth, torsoDepth - OVER.ear),
         ] satisfies [string, number],
@@ -943,11 +943,11 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
       (_, index) =>
         [
           `haunch-${index}`,
-          torsoDepth + (sides[`haunch-${index}`] ? OVER.haunch : -OVER.haunch),
+          torsoDepth + (sides[`haunch-${index}`] === true ? OVER.haunch : -OVER.haunch),
         ] satisfies [string, number],
     ),
     ...hinds.map(({ kicked }, index) => {
-      if (!sides[`haunch-${index}`]) {
+      if (sides[`haunch-${index}`] !== true) {
         return [`hind-${index}`, torsoDepth - OVER.haunch - 0.3] satisfies [string, number];
       }
 
@@ -957,7 +957,7 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
       ];
     }),
     ...geometry.fores.map((_, index) => {
-      const beside = torsoDepth + (sides[`fore-${index}`] ? OVER.fore : -OVER.fore);
+      const beside = torsoDepth + (sides[`fore-${index}`] === true ? OVER.fore : -OVER.fore);
 
       if (bunny.rig.groom.x < PAWS_UP) {
         return [`fore-${index}`, beside] satisfies [string, number];
@@ -965,7 +965,7 @@ const orderOf = (bunny: Bunny, geometry: Geometry, ears: readonly { depth: numbe
 
       return [
         `fore-${index}`,
-        sides[`fore-${index}-head`]
+        sides[`fore-${index}-head`] === true
           ? Math.max(headDepth, torsoDepth) + 2 * OVER.muzzle
           : Math.min(beside, headDepth - 2 * OVER.muzzle),
       ] satisfies [string, number];

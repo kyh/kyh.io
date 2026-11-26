@@ -140,10 +140,14 @@ export const createWorld = (
         ? {
             index,
             kind,
-            land: (x: number, z: number, wait: number) => traffic.landing(car, x, z, wait),
+            land: (x: number, z: number, wait: number) => {
+              traffic.landing(car, x, z, wait);
+            },
             pack: () => traffic.pack(car),
             pose: car.pose,
-            unpack: (values: readonly number[]) => traffic.unpack(car, values),
+            unpack: (values: readonly number[]) => {
+              traffic.unpack(car, values);
+            },
           }
         : null;
     }
@@ -155,10 +159,14 @@ export const createWorld = (
         ? {
             index,
             kind,
-            land: (x: number, z: number, wait: number) => crowd.landing(walker, x, z, wait),
+            land: (x: number, z: number, wait: number) => {
+              crowd.landing(walker, x, z, wait);
+            },
             pack: () => crowd.pack(walker),
             pose: walker.pose,
-            unpack: (values: readonly number[]) => crowd.unpack(walker, values),
+            unpack: (values: readonly number[]) => {
+              crowd.unpack(walker, values);
+            },
           }
         : null;
     }
@@ -169,10 +177,14 @@ export const createWorld = (
       ? {
           index,
           kind,
-          land: (x: number, z: number, wait: number) => visitors.landing(visitor, x, z, wait),
+          land: (x: number, z: number, wait: number) => {
+            visitors.landing(visitor, x, z, wait);
+          },
           pack: () => visitors.pack(visitor),
           pose: visitor.pose,
-          unpack: (values: readonly number[]) => visitors.unpack(visitor, values),
+          unpack: (values: readonly number[]) => {
+            visitors.unpack(visitor, values);
+          },
         }
       : null;
   };

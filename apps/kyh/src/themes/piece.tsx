@@ -47,7 +47,7 @@ const swingOf = ({ swing }: Layer) => {
     "--swing-to": `${swing.to}deg`,
     "--swing-x": `${swing.at[0]}px`,
     "--swing-y": `${swing.at[1]}px`,
-  } as React.CSSProperties;
+  } satisfies React.CSSProperties;
 
   return { className: "piece-swing", style };
 };

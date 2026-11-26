@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   title: "Admin",
 };
 
-const AdminLayout = ({ children }: { children: React.ReactNode }) => children;
+const AdminLayout = async ({ children }: { children: React.ReactNode }) => await children;
 
 export default AdminLayout;

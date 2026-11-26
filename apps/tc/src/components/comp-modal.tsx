@@ -210,7 +210,9 @@ const CompaniesTable = ({
             <button
               type="button"
               className="inline-flex items-center rounded-md border border-slate-600 px-2 py-1 text-xs text-white transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
-              onClick={() => onUse(c)}
+              onClick={() => {
+                onUse(c);
+              }}
             >
               Use
             </button>
@@ -340,7 +342,9 @@ export const CompModal = ({
                 "relative inline-flex items-center rounded-l-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden",
                 view === "estimate" && "bg-slate-800",
               )}
-              onClick={() => setView("estimate")}
+              onClick={() => {
+                setView("estimate");
+              }}
             >
               <span className="sr-only">Estimate Equity Value</span>
               <svg
@@ -369,7 +373,9 @@ export const CompModal = ({
                 "relative -ml-px inline-flex items-center rounded-r-md border border-slate-600 bg-black px-2 py-2 text-sm transition hover:bg-emerald-900 focus:z-10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden",
                 view === "terminology" && "bg-slate-800",
               )}
-              onClick={() => setView("terminology")}
+              onClick={() => {
+                setView("terminology");
+              }}
             >
               <span className="sr-only">Terminology</span>
               <svg
@@ -413,11 +419,11 @@ export const CompModal = ({
                       if (actionMeta.action === "input-change") {
                         loadOptions(value);
                       }
-
-                      return value;
                     }}
                     options={searchResults}
-                    onChange={(selected) => loadCompaniesData(selected ?? [])}
+                    onChange={(selected) => {
+                      loadCompaniesData(selected ?? []);
+                    }}
                     isSearchable={companiesData.length < 3}
                     openMenuOnFocus={false}
                     openMenuOnClick={false}

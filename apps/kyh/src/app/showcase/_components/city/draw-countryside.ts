@@ -278,5 +278,6 @@ export const countrysideSteps = function* countrysideSteps(sketch: Sketch, plan:
 };
 
 /** The same, all at once. */
-export const drawCountryside = (sketch: Sketch, plan: CityPlan) =>
+export const drawCountryside = (sketch: Sketch, plan: CityPlan) => {
   finish(countrysideSteps(sketch, plan));
+};

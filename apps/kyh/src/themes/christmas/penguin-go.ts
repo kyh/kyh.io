@@ -104,8 +104,9 @@ const goTo = (go: Go, going: Going) => {
   go.fast = 0;
 };
 
-const coast = (walker: Walker, pointer: Point, moved: Point, seconds: number) =>
+const coast = (walker: Walker, pointer: Point, moved: Point, seconds: number) => {
   stepWalker(walker, { ...WALK, accel: 0 }, pointer, moved, seconds, true);
+};
 
 const brake = (walker: Walker, rate: number, seconds: number) => {
   const keep = walker.speed > 0 ? Math.max(0, walker.speed - rate * seconds) / walker.speed : 0;

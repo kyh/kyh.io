@@ -1,14 +1,14 @@
-type LessonCore = {
+interface LessonCore {
   number: number;
   unit: "Foundations" | "Models" | "Generalization" | "Practice";
   title: string;
   summary: string;
-};
+}
 
-type LessonPage = {
+interface LessonPage {
   title: string;
   description: string;
-};
+}
 
 export type AvailableLessonDefinition = LessonCore & {
   status: "available";
@@ -24,11 +24,11 @@ export type PlannedLessonDefinition = LessonCore & {
 
 export type CurriculumLessonDefinition = AvailableLessonDefinition | PlannedLessonDefinition;
 
-function defineCurriculum<
+const defineCurriculum = <
   const Lessons extends readonly [AvailableLessonDefinition, ...CurriculumLessonDefinition[]],
->(lessons: Lessons): Lessons {
-  return lessons;
-}
+>(
+  lessons: Lessons,
+) => lessons;
 
 export const curriculum = defineCurriculum([
   {
@@ -104,16 +104,14 @@ export const curriculum = defineCurriculum([
 ]);
 
 export type AvailableLesson = Extract<(typeof curriculum)[number], { status: "available" }>;
+
 export type AvailableLessonSlug = AvailableLesson["slug"];
 
 export const defaultLesson: AvailableLesson = curriculum[0];
 
-function isAvailableLesson(lesson: (typeof curriculum)[number]): lesson is AvailableLesson {
-  return lesson.status === "available";
-}
+const isAvailableLesson = (lesson: (typeof curriculum)[number]): lesson is AvailableLesson =>
+  lesson.status === "available";
 
 export const availableLessons: readonly AvailableLesson[] = curriculum.filter(isAvailableLesson);
 
-export function lessonPath(slug: AvailableLessonSlug): `/lessons/${AvailableLessonSlug}` {
-  return `/lessons/${slug}`;
-}
+export const lessonPath = (slug: AvailableLessonSlug) => `/lessons/${slug}` as const;

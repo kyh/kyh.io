@@ -48,14 +48,25 @@ const blocksAtom = atom({ key: "blocks", plugin: "mod-dev" } as const, 0);
 const rootOf = async ($: EngineInterface) => {
   const git = await $.process.run(["git", "rev-parse", "--show-toplevel"]).catch(() => null);
 
-  return git?.exitCode === 0 ? git.stdout.trim() : $.session.root();
+  return git?.exitCode === 0 ? git.stdout.trim() : await $.session.root();
+};
+
+const textIn = (input: ToolUseSummary["input"], key: string) => {
+  try {
+    return String.prototype.valueOf.call(input[key] ?? "");
+  } catch {
+    return "";
+  }
 };
 
 const useOf = ({ agentId, input, isError, text, tool }: ToolUseSummary) =>
   ({
     agentId,
-    command: String(input.command ?? ""),
-    file: String(input.file_path ?? input.notebook_path ?? ""),
+    command: textIn(input, "command"),
+    file: textIn(
+      input,
+      input.file_path === undefined || input.file_path === null ? "notebook_path" : "file_path",
+    ),
     isBackground: input.run_in_background === true,
     isError: isError === true,
     output: text ?? "",
@@ -72,17 +83,20 @@ const rowOf = ({ role, text, toolUses }: SessionMessage) =>
 const readSession = async ($: EngineInterface) => {
   const messages = await $.session.messages();
   const rows = messages.map(rowOf);
-  const agents = new Map<string, readonly Row[]>();
 
-  for (const { agentId } of rows.flatMap((row) => row.toolUses)) {
-    if (agentId !== undefined) {
-      const found = await $.session.messages({ agentId });
+  const agentIds = new Set(
+    rows.flatMap((row) => row.toolUses.flatMap(({ agentId }) => agentId ?? [])),
+  );
 
-      if (Array.isArray(found)) {
-        agents.set(agentId, found.map(rowOf));
-      }
-    }
-  }
+  const found = await Promise.all(
+    [...agentIds].map(async (agentId) => {
+      const answered = await $.session.messages({ agentId });
+
+      return Array.isArray(answered) ? [[agentId, answered.map(rowOf)] as const] : [];
+    }),
+  );
+
+  const agents = new Map<string, readonly Row[]>(found.flat());
 
   const root = await rootOf($);
 
@@ -100,28 +114,30 @@ const readText = async ($: EngineInterface, path: string) => {
 };
 
 const checksFor = async ($: EngineInterface, { ledger, root }: Session, reply: string) => {
-  const packages = new Map<string, Package | undefined>();
+  const packages = new Map<string, Promise<Package | undefined>>();
 
   const packageIn = async (dir: string) => {
-    if (!packages.has(dir)) {
-      const json = await readText($, `${root}/${dir ? `${dir}/` : ""}package.json`);
-      packages.set(dir, packageFrom(dir, json));
-    }
+    const pending =
+      packages.get(dir) ??
+      readText($, `${root}/${dir ? `${dir}/` : ""}package.json`).then((json) =>
+        packageFrom(dir, json),
+      );
 
-    return packages.get(dir);
+    packages.set(dir, pending);
+
+    return await pending;
   };
 
-  const owners = new Map<string, Package | undefined>();
+  const ownerOf: (dirs: readonly string[]) => Promise<Package | undefined> = async ([
+    dir,
+    ...rest
+  ]) => (dir === undefined ? undefined : ((await packageIn(dir)) ?? (await ownerOf(rest))));
 
-  for (const file of ledger.files) {
-    let found: Package | undefined;
-
-    for (const dir of dirsUp(file)) {
-      found ??= await packageIn(dir);
-    }
-
-    owners.set(file, found);
-  }
+  const owners = new Map(
+    await Promise.all(
+      ledger.files.map(async (file) => [file, await ownerOf(dirsUp(file))] as const),
+    ),
+  );
 
   const manager = managerOf(await readText($, `${root}/package.json`));
   const needs = needsOf(ledger.files, (file) => owners.get(file), manager);
@@ -151,9 +167,16 @@ const instructionsOf = async ($: EngineInterface, files: readonly string[], root
   await scan({ names: INSTRUCTION_FILES });
   const byDir = new Map(files.map((file) => [file.slice(0, file.lastIndexOf("/") + 1), file]));
 
-  for (const file of [...byDir.values()].slice(0, MAX_DIRS)) {
+  const scanEach: (rest: readonly string[]) => Promise<void> = async ([file, ...rest]) => {
+    if (file === undefined) {
+      return;
+    }
+
     await scan({ below: root, names: INSTRUCTION_FILES, of: `${root}/${file}` });
-  }
+    await scanEach(rest);
+  };
+
+  await scanEach([...byDir.values()].slice(0, MAX_DIRS));
 
   return [...found].map(
     ([path, content]) =>
@@ -186,7 +209,17 @@ const runLook = async ($: EngineInterface, root: string, look: Look) => {
     }
 
     const { stdout } = await $.process.run(
-      ["git", "grep", "-n", "-I", "-E", "-e", look.target, "--", ...(look.path ? [look.path] : [])],
+      [
+        "git",
+        "grep",
+        "-n",
+        "-I",
+        "-E",
+        "-e",
+        look.target,
+        "--",
+        ...(look.path !== undefined && look.path !== "" ? [look.path] : []),
+      ],
       { cwd: root, timeoutMs: 20_000 },
     );
 
@@ -218,7 +251,7 @@ const portsOf = ($: EngineInterface, root: string) =>
         };
       }
     },
-    look: (look) => runLook($, root, look),
+    look: async (look) => await runLook($, root, look),
   }) satisfies Ports;
 
 type Proof =
@@ -332,21 +365,26 @@ const prove = async (
   return { card, checks, grade, isReady: verdict === "ready", kind: "graded" } satisfies Proof;
 };
 
+const underBlock = <Result extends { block?: unknown }>(
+  result: Result,
+  block: NonNullable<Result["block"]>,
+) => (result.block === undefined ? { ...result, block } : result);
+
 const blockOf = async ($: EngineInterface, models: Models, reply: string) => {
   if (isAsking(reply)) {
-    return;
+    return null;
   }
 
   if ((await read($, blocksAtom)) >= MAX_BLOCKS) {
     $.ui.toast("mod-dev: still not proven; /score shows what's missing");
 
-    return;
+    return null;
   }
 
   const session = await readSession($);
 
   if (session.ledger.lastEdit === -1) {
-    return;
+    return null;
   }
 
   const gaps = gapsOf(await checksFor($, session, reply));
@@ -358,7 +396,7 @@ const blockOf = async ($: EngineInterface, models: Models, reply: string) => {
   const proof = await prove($, models, { reply });
 
   if (proof.kind !== "graded" || proof.isReady) {
-    return;
+    return null;
   }
 
   const { reasons, verdict } = verdictOf(proof.grade);
@@ -385,59 +423,54 @@ export const register: Register = (on, options) => {
       void showStatus($);
     });
 
-    return next(e);
+    return await next(e);
   });
 
-  on("classic.SessionStart", async ($, e, next) => {
-    // oxlint-disable-next-line node/callback-return -- the bar joins what the chain returns
-    const result = await next(e);
-    const context = [...(result.additionalContext ?? []), BAR];
+  const withBar = <Result extends { additionalContext?: readonly string[] }>(result: Result) =>
+    isGated ? { ...result, additionalContext: [...(result.additionalContext ?? []), BAR] } : result;
 
-    return isGated ? { ...result, additionalContext: context } : result;
-  });
+  on("classic.SessionStart", async ($, e, next) => withBar(await next(e)));
 
   on("prompt.submit", async ($, e, next) => {
     await update($, blocksAtom, () => 0);
 
-    return next(e);
+    return await next(e);
   });
 
-  on("turn.complete", ($, e, next) => {
+  on("turn.complete", async ($, e, next) => {
     if (e.agentId === undefined) {
       $.clock.after(1, () => {
         void showStatus($);
       });
     }
 
-    return next(e);
+    return await next(e);
   });
 
   on("classic.Stop", async ($, e, next) => {
     const isWaiting = isWaitingOn(e.background_tasks ?? []);
 
     const block =
-      isGated && !isWaiting ? await blockOf($, models, e.last_assistant_message ?? "") : undefined;
+      isGated && !isWaiting ? await blockOf($, models, e.last_assistant_message ?? "") : null;
 
-    if (block === undefined) {
-      return next(e);
+    if (block === null) {
+      return await next(e);
     }
 
     await update($, blocksAtom, (n) => n + 1);
-    // oxlint-disable-next-line node/callback-return -- a block from beneath stands over this one
-    const result = await next(e);
 
-    return result.block === undefined ? { ...result, block } : result;
+    return underBlock(await next(e), block);
   });
 
   on("classic.PreToolUse", async ($, e, next) => {
     if (!isGated || !isShipping(e.tool, e.tool === "Bash" ? e.command : "")) {
-      return next(e);
+      return await next(e);
     }
 
     const { ledger } = await readSession($);
 
     if (ledger.lastEdit === -1) {
-      return next(e);
+      return await next(e);
     }
 
     const proof = await prove($, models, {});
@@ -447,7 +480,7 @@ export const register: Register = (on, options) => {
     }
 
     if (proof.kind !== "graded" || proof.isReady) {
-      return next(e);
+      return await next(e);
     }
 
     const { reasons, verdict } = verdictOf(proof.grade);
@@ -473,7 +506,7 @@ export const register: Register = (on, options) => {
     const review = await read($, reviewAtom);
 
     if (e.props.hasSurvey || (checks.length === 0 && review.phase === "idle")) {
-      return next(e);
+      return await next(e);
     }
 
     const { Box, Button, Text } = $.ui.resolve(e);
@@ -496,7 +529,9 @@ export const register: Register = (on, options) => {
         <Button
           key="details"
           label="Details"
-          onPress={() => $.ui.open({ id: PANE, title: "mod-dev" })}
+          onPress={() => {
+            void $.ui.open({ id: PANE, title: "mod-dev" });
+          }}
         />
       </Box>
     );

@@ -33,7 +33,11 @@ What to read:
 const lookAround = async ({ complete, look }: Ports, lookModel: string, packet: string) => {
   const looked: string[] = [];
 
-  for (let round = 1; round <= MAX_ROUNDS; round += 1) {
+  const lookRound: (round: number) => Promise<void> = async (round) => {
+    if (round > MAX_ROUNDS) {
+      return;
+    }
+
     const answer = await complete({
       model: lookModel,
       prompt: [packet, ...looked].join("\n\n"),
@@ -43,17 +47,18 @@ const lookAround = async ({ complete, look }: Ports, lookModel: string, packet: 
     const looks = "text" in answer ? looksOf(answer.text) : [];
 
     if (looks.length === 0) {
-      break;
+      return;
     }
 
-    const results: { look: Look; text: string }[] = [];
-
-    for (const one of looks) {
-      results.push({ look: one, text: await look(one) });
-    }
+    const results = await Promise.all(
+      looks.map(async (one) => ({ look: one, text: await look(one) })),
+    );
 
     looked.push(lookedText(round, results));
-  }
+    await lookRound(round + 1);
+  };
+
+  await lookRound(1);
 
   return looked;
 };

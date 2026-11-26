@@ -376,7 +376,7 @@ export const tree = (sketch: Sketch, { x, z, kind, size }: Tree, y = 0) => {
       break;
     }
 
-    default: {
+    case "round": {
       line(
         sketch,
         [
@@ -395,6 +395,11 @@ export const tree = (sketch: Sketch, { x, z, kind, size }: Tree, y = 0) => {
         y: y + 0.36 * size,
         z,
       });
+      break;
+    }
+
+    default: {
+      break;
     }
   }
 };
