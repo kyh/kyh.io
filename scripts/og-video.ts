@@ -59,15 +59,25 @@ interface CaptureApp {
 
 type App = CaptureApp | SceneApp;
 
-const inOrder = async <T>(
-  items: readonly T[],
-  run: (item: T, index: number) => Promise<unknown>,
-) => {
-  await items.reduce<Promise<unknown>>(async (done, item, index) => {
-    await done;
+type Run<T> = (item: T, index: number) => Promise<void>;
 
-    return await run(item, index);
-  }, Promise.resolve());
+const drain: <T>(each: Iterator<T>, run: Run<T>, index: number) => Promise<void> = async (
+  each,
+  run,
+  index,
+) => {
+  const next = each.next();
+
+  if (next.done === true) {
+    return;
+  }
+
+  await run(next.value, index);
+  await drain(each, run, index + 1);
+};
+
+const inOrder = async <T>(items: Iterable<T>, run: Run<T>) => {
+  await drain(items[Symbol.iterator](), run, 0);
 };
 
 const times = (count: number) => Array.from({ length: count }, (_, index) => index);
@@ -79,16 +89,16 @@ const HEIGHT = 630;
 const FPS = 30;
 const FADE = 18;
 
-const KYH_THEMES: Record<string, string> = {
-  christmas: "Christmas",
-  classic: "Light / Dark",
-  easter: "Easter",
-  halloween: "Halloween",
-  "lunar-new-year": "Lunar New Year",
-  "st-patricks": "St. Patrick's Day",
-  thanksgiving: "Thanksgiving",
-  valentines: "Valentine's Day",
-};
+const KYH_THEMES = new Map([
+  ["christmas", "Christmas"],
+  ["classic", "Light / Dark"],
+  ["easter", "Easter"],
+  ["halloween", "Halloween"],
+  ["lunar-new-year", "Lunar New Year"],
+  ["st-patricks", "St. Patrick's Day"],
+  ["thanksgiving", "Thanksgiving"],
+  ["valentines", "Valentine's Day"],
+]);
 
 const kyhLogo = () => {
   const source = readFileSync(path.join(root, "apps/kyh/src/components/icons.tsx"), "utf-8");
@@ -134,7 +144,8 @@ const KYH_MARK_FADE = 0.8;
 
 const kyhFrame = ({ fade, seconds }: { fade: number; seconds: number }) => {
   const { intro, view } = window.city.debug();
-  const built = (window.__ogBuilt ??= intro.built);
+  window.__ogBuilt ??= intro.built;
+  const built = window.__ogBuilt;
 
   if (window.__ogHeld !== true && intro.phase === "building" && intro.clock >= intro.built - 0.25) {
     window.__ogHeld = true;
@@ -149,52 +160,61 @@ const kyhFrame = ({ fade, seconds }: { fade: number; seconds: number }) => {
   }
 };
 
-const kyhCapture = (theme: string): CaptureApp => ({
-  block: ["party.vibedgames.com", "vercel-scripts.com", "vitals.vercel-insights.com"],
-  colorScheme: "light",
-  crf: 33,
-  frame: async (page, index) => {
-    await page.evaluate(kyhFrame, { fade: KYH_MARK_FADE, seconds: index / FPS });
-  },
-  frames: 270,
-  gl: true,
-  out: `apps/kyh/public/og/showcase${theme === "classic" ? "" : `-${theme}`}`,
-  path: "/",
-  poster: 255,
-  prepare: async (page, step) => {
-    const menu = page.locator("button[aria-haspopup=menu]:has(.dock-item)");
-    await menu.waitFor({ timeout: 120_000 });
-    await menu.focus();
-    await page.keyboard.press("ArrowUp");
-    await inOrder(times(20), async () => {
-      await step(33);
-    });
+const kyhCapture = (theme: string) =>
+  ({
+    block: ["party.vibedgames.com", "vercel-scripts.com", "vitals.vercel-insights.com"],
+    colorScheme: "light",
+    crf: 33,
+    frame: async (page, index) => {
+      await page.evaluate(kyhFrame, { fade: KYH_MARK_FADE, seconds: index / FPS });
+    },
+    frames: 270,
+    gl: true,
+    out: `apps/kyh/public/og/showcase${theme === "classic" ? "" : `-${theme}`}`,
+    path: "/",
+    poster: 255,
+    prepare: async (page, step) => {
+      const menu = page.locator("button[aria-haspopup=menu]:has(.dock-item)");
+      await menu.waitFor({ timeout: 120_000 });
+      await menu.focus();
+      await page.keyboard.press("ArrowUp");
+      await inOrder(times(20), async () => {
+        await step(33);
+      });
 
-    await page.evaluate((name) => {
-      document.querySelector<HTMLElement>(`[role=menuitemradio][aria-label="${name}"]`)?.click();
-    }, KYH_THEMES[theme] ?? "");
+      await page.evaluate(
+        (name) => {
+          document
+            .querySelector<HTMLElement>(`[role=menuitemradio][aria-label="${name}"]`)
+            ?.click();
+        },
+        KYH_THEMES.get(theme) ?? "",
+      );
 
-    await inOrder(times(180), async () => {
-      await step(33);
-    });
+      await inOrder(times(180), async () => {
+        await step(33);
+      });
 
-    await page.mouse.move(0, 0);
-    await page.evaluate(() => {
-      document.querySelector<HTMLElement>('a[href="/showcase"]')?.click();
-    });
+      await page.mouse.move(0, 0);
+      await page.evaluate(() => {
+        document.querySelector<HTMLElement>('a[href="/showcase"]')?.click();
+      });
 
-    await page
-      .waitForFunction(() => "city" in window, null, { polling: 200, timeout: 120_000 })
-      .catch((error: unknown) => {
+      try {
+        await page.waitForFunction(() => "city" in window, null, {
+          polling: 200,
+          timeout: 120_000,
+        });
+      } catch (error) {
         throw new Error("The showcase never made its town (is apps/kyh running under next dev?)", {
           cause: error,
         });
-      });
+      }
 
-    await page.evaluate(kyhOverlay, { line: "Kaiyu's corner of the internet", logo: kyhLogo() });
-  },
-  url: "http://localhost:3100",
-});
+      await page.evaluate(kyhOverlay, { line: "Kaiyu's corner of the internet", logo: kyhLogo() });
+    },
+    url: "http://localhost:3100",
+  }) satisfies CaptureApp;
 
 const stonksPriceY = () => {
   for (const canvas of document.querySelectorAll("canvas")) {
@@ -208,18 +228,17 @@ const stonksPriceY = () => {
       canvas.height,
     );
 
-    let best: { green: number; y: number | null } = { green: 100, y: null };
     const data = column?.data ?? new Uint8ClampedArray();
 
-    for (let i = 0; i < data.length; i += 4) {
-      const green = (data[i + 1] ?? 0) - (data[i] ?? 0);
+    const [best] = Array.from({ length: data.length / 4 }, (_, pixel) => ({
+      alpha: data[pixel * 4 + 3] ?? 0,
+      green: (data[pixel * 4 + 1] ?? 0) - (data[pixel * 4] ?? 0),
+      y: Math.floor(pixel / (column?.width ?? 1)) / scale,
+    }))
+      .filter(({ alpha, green }) => alpha > 200 && green > 100)
+      .toSorted((a, b) => b.green - a.green);
 
-      if ((data[i + 3] ?? 0) > 200 && green > best.green) {
-        best = { green, y: Math.floor(i / 4 / (column?.width ?? 1)) / scale };
-      }
-    }
-
-    if (best.y !== null) {
+    if (best !== undefined) {
       return best.y;
     }
   }
@@ -227,51 +246,62 @@ const stonksPriceY = () => {
   return 315;
 };
 
-const apps: Record<string, (theme: string) => App> = {
-  autoplay: () => ({
-    crf: 30,
-    out: "apps/autoplay/public/og/og",
-    posterMs: 2600,
-    scene: "autoplay",
-  }),
-  "commuting-clawders": () => ({
-    crf: 28,
-    frames: 240,
-    gl: true,
-    out: "apps/commuting-clawders/public/og/og",
-    path: "/",
-    poster: 90,
-    skipMs: 6000,
-    timers: true,
-    url: "http://localhost:3016",
-  }),
-  kyh: kyhCapture,
-  stonksville: () => ({
-    aim: async (page) => await page.evaluate(stonksPriceY),
-    clicks: [
-      ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 500 + i * 50, dy, x: 1058 })),
-      ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 5500 + i * 50, dy, x: 1058 })),
-      { atMs: 17_000, dy: 0, x: 1123 },
-      { atMs: 19_000, dy: 20, x: 1123 },
-    ],
-    crf: 28,
-    frames: 240,
-    out: "apps/stonksville/public/og/og",
-    path: "/",
-    poster: 236,
-    seed: 3,
-    skipMs: 16_000,
-    timers: true,
-    url: "http://localhost:3004",
-  }),
-};
+const apps = new Map<string, (theme: string) => App>([
+  [
+    "autoplay",
+    () => ({
+      crf: 30,
+      out: "apps/autoplay/public/og/og",
+      posterMs: 2600,
+      scene: "autoplay",
+    }),
+  ],
+  [
+    "commuting-clawders",
+    () => ({
+      crf: 28,
+      frames: 240,
+      gl: true,
+      out: "apps/commuting-clawders/public/og/og",
+      path: "/",
+      poster: 90,
+      skipMs: 6000,
+      timers: true,
+      url: "http://localhost:3016",
+    }),
+  ],
+  ["kyh", kyhCapture],
+  [
+    "stonksville",
+    () => ({
+      aim: async (page) => await page.evaluate(stonksPriceY),
+      clicks: [
+        ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 500 + i * 50, dy, x: 1058 })),
+        ...[-24, -12, 0, 12, 24].map((dy, i) => ({ atMs: 5500 + i * 50, dy, x: 1058 })),
+        { atMs: 17_000, dy: 0, x: 1123 },
+        { atMs: 19_000, dy: 20, x: 1123 },
+      ],
+      crf: 28,
+      frames: 240,
+      out: "apps/stonksville/public/og/og",
+      path: "/",
+      poster: 236,
+      seed: 3,
+      skipMs: 16_000,
+      timers: true,
+      url: "http://localhost:3004",
+    }),
+  ],
+]);
+
+type Callback = (...args: unknown[]) => void;
 
 interface PendingTimer {
   args: unknown[];
   due: number;
   every: number;
   id: number;
-  run: TimerHandler;
+  run: Callback;
 }
 
 const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: boolean }) => {
@@ -291,14 +321,34 @@ const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: bool
   let pending: PendingTimer[] = [];
   let nextId = 1;
 
-  const SteppedDate = new Proxy(RealDate, {
-    construct: (target, args, newTarget) =>
-      Reflect.construct(target, args.length === 0 ? [base + elapsed] : args, newTarget),
-    get: (target, key, receiver) =>
-      key === "now" ? () => base + elapsed : Reflect.get(target, key, receiver),
-  });
+  type Parts = [
+    year: number,
+    monthIndex: number,
+    date?: number,
+    hours?: number,
+    minutes?: number,
+    seconds?: number,
+    ms?: number,
+  ];
 
-  window.Date = SteppedDate;
+  class SteppedDate extends RealDate {
+    constructor(...args: [] | [value: number | string | Date] | Parts) {
+      if (args.length === 0) {
+        super(base + elapsed);
+      } else if (args.length === 1) {
+        super(args[0]);
+      } else {
+        const [year, monthIndex, ...rest] = args;
+        super(year, monthIndex, ...rest);
+      }
+    }
+
+    static override now() {
+      return base + elapsed;
+    }
+  }
+
+  Object.assign(window, { Date: SteppedDate });
   performance.now = () => elapsed;
   window.requestAnimationFrame = (onFrame) => {
     nextId += 1;
@@ -317,7 +367,7 @@ const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: bool
 
   if (timers) {
     const schedule = (
-      run: TimerHandler,
+      run: Callback,
       delay: number | undefined,
       every: boolean,
       args: unknown[],
@@ -339,9 +389,9 @@ const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: bool
     Object.assign(window, {
       clearInterval: clear,
       clearTimeout: clear,
-      setInterval: (run: TimerHandler, delay?: number, ...args: unknown[]) =>
+      setInterval: (run: Callback, delay?: number, ...args: unknown[]) =>
         schedule(run, delay, true, args),
-      setTimeout: (run: TimerHandler, delay?: number, ...args: unknown[]) =>
+      setTimeout: (run: Callback, delay?: number, ...args: unknown[]) =>
         schedule(run, delay, false, args),
     });
   }
@@ -368,9 +418,7 @@ const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: bool
         clear(next.id);
       }
 
-      if (next.run instanceof Function) {
-        Reflect.apply(next.run, window, next.args);
-      }
+      next.run(...next.args);
     }
   };
 
@@ -521,7 +569,7 @@ const recordCapture = async (browser: Browser, app: CaptureApp, framesDir: strin
     }, ms);
   };
 
-  const skip = async (until: number): Promise<void> => {
+  const skip: (until: number) => Promise<void> = async (until) => {
     if (clock >= until) {
       return;
     }
@@ -580,10 +628,10 @@ const record = async (name: string, app: App) => {
 
 const main = async () => {
   const [name = "", variant] = process.argv.slice(2);
-  const entry = apps[name];
+  const entry = apps.get(name);
 
   if (entry === undefined) {
-    throw new Error(`Usage: pnpm og:video <${Object.keys(apps).join("|")}> [kyh theme|all]`);
+    throw new Error(`Usage: pnpm og:video <${[...apps.keys()].join("|")}> [kyh theme|all]`);
   }
 
   if (name !== "kyh") {
@@ -592,11 +640,11 @@ const main = async () => {
     return;
   }
 
-  const themes = variant === "all" ? Object.keys(KYH_THEMES) : [variant ?? "classic"];
+  const themes = variant === "all" ? [...KYH_THEMES.keys()] : [variant ?? "classic"];
 
   await inOrder(themes, async (theme) => {
-    if (!(theme in KYH_THEMES)) {
-      throw new Error(`No kyh theme "${theme}": ${Object.keys(KYH_THEMES).join(", ")}`);
+    if (!KYH_THEMES.has(theme)) {
+      throw new Error(`No kyh theme "${theme}": ${[...KYH_THEMES.keys()].join(", ")}`);
     }
 
     await record(`kyh-${theme}`, kyhCapture(theme));
