@@ -223,40 +223,50 @@ export const FloatingIsland = ({ stageRef, canvasSize }: FloatingIslandProps) =>
   }, [getSnapPosition, isDragging, opacity, position, x, y]);
 
   useLayoutEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const island = islandRef.current;
 
-    if (!island) {
-      return;
+    if (island) {
+      updatePosition();
+
+      const observer = new ResizeObserver(updatePosition);
+
+      observer.observe(island);
+
+      window.addEventListener("resize", updatePosition);
+
+      cleanup = () => {
+        observer.disconnect();
+        window.removeEventListener("resize", updatePosition);
+      };
     }
 
-    updatePosition();
-
-    const observer = new ResizeObserver(updatePosition);
-    observer.observe(island);
-    window.addEventListener("resize", updatePosition);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updatePosition);
-    };
+    return cleanup;
   }, [updatePosition]);
 
   useEffect(() => {
-    if (mode === "idle") {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (mode !== "idle") {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (
+          islandRef.current &&
+          e.target instanceof Node &&
+          !islandRef.current.contains(e.target)
+        ) {
+          setMode("idle");
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+
+      cleanup = () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
 
-    const handleClickOutside = (e: MouseEvent) => {
-      if (islandRef.current && e.target instanceof Node && !islandRef.current.contains(e.target)) {
-        setMode("idle");
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return cleanup;
   }, [mode]);
 
   const handleDragStart = () => {

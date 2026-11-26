@@ -1364,7 +1364,7 @@ const updateLiveCandle = (cs: CandleState, rawLive: CandlePoint | undefined, pau
     cs.liveBirthAlpha = 1;
     cs.liveBull = 0.5;
 
-    return;
+    return null;
   }
 
   let dc = cs.displayCandle;
@@ -1846,7 +1846,7 @@ const collectCandleSet = (
   state: EngineState,
   timing: CandleTiming,
   candles: CandlePoint[],
-  smoothLive: CandlePoint | undefined,
+  smoothLive: CandlePoint | null,
   phase: FramePhase,
 ) => {
   const cs = state.candle;
@@ -1879,7 +1879,7 @@ const collectCandleSet = (
     } satisfies CandleSet;
   }
 
-  return { candles: visible, live: smoothLive, oldCandles } satisfies CandleSet;
+  return { candles: visible, live: smoothLive ?? undefined, oldCandles } satisfies CandleSet;
 };
 
 const buildMorphLine = (
@@ -2634,111 +2634,128 @@ export const useLivelineEngine = (
   const stateRef = useRef(createEngineState(config));
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const state = stateRef.current;
+
     const container = containerRef.current;
 
-    if (!container) {
-      return;
+    if (container) {
+      const badge = createBadgeEls(container);
+
+      state.badge = badge;
+
+      cleanup = () => {
+        badge.container.remove();
+        state.badge = null;
+      };
     }
 
-    const badge = createBadgeEls(container);
-    state.badge = badge;
-
-    return () => {
-      badge.container.remove();
-      state.badge = null;
-    };
+    return cleanup;
   }, [containerRef]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const state = stateRef.current;
+
     const container = containerRef.current;
 
-    if (!container) {
-      return;
+    if (container) {
+      const ro = new ResizeObserver((entries) => {
+        const [entry] = entries;
+
+        if (!entry) {
+          return;
+        }
+
+        const { width, height } = entry.contentRect;
+        state.size = { h: height, w: width };
+      });
+
+      ro.observe(container);
+
+      const rect = container.getBoundingClientRect();
+
+      state.size = { h: rect.height, w: rect.width };
+
+      cleanup = () => {
+        ro.disconnect();
+      };
     }
 
-    const ro = new ResizeObserver((entries) => {
-      const [entry] = entries;
-
-      if (!entry) {
-        return;
-      }
-
-      const { width, height } = entry.contentRect;
-      state.size = { h: height, w: width };
-    });
-
-    ro.observe(container);
-    const rect = container.getBoundingClientRect();
-    state.size = { h: rect.height, w: rect.width };
-
-    return () => {
-      ro.disconnect();
-    };
+    return cleanup;
   }, [containerRef]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const state = stateRef.current;
+
     const container = containerRef.current;
 
-    if (!container) {
-      return;
+    if (container) {
+      const onMove = (e: MouseEvent) => {
+        if (!configRef.current.scrub) {
+          return;
+        }
+
+        const rect = container.getBoundingClientRect();
+        state.hoverX = e.clientX - rect.left;
+      };
+
+      const onLeave = () => {
+        state.hoverX = null;
+        configRef.current.onHover?.(null);
+      };
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (!configRef.current.scrub || e.touches.length !== 1) {
+          return;
+        }
+
+        const rect = container.getBoundingClientRect();
+        state.hoverX = e.touches[0].clientX - rect.left;
+      };
+
+      const onTouchMove = (e: TouchEvent) => {
+        if (!configRef.current.scrub || e.touches.length !== 1) {
+          return;
+        }
+
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        state.hoverX = e.touches[0].clientX - rect.left;
+      };
+
+      const onTouchEnd = () => {
+        state.hoverX = null;
+        configRef.current.onHover?.(null);
+      };
+
+      container.addEventListener("mousemove", onMove);
+
+      container.addEventListener("mouseleave", onLeave);
+
+      container.addEventListener("touchstart", onTouchStart, { passive: true });
+
+      container.addEventListener("touchmove", onTouchMove, { passive: false });
+
+      container.addEventListener("touchend", onTouchEnd);
+
+      container.addEventListener("touchcancel", onTouchEnd);
+
+      cleanup = () => {
+        container.removeEventListener("mousemove", onMove);
+        container.removeEventListener("mouseleave", onLeave);
+        container.removeEventListener("touchstart", onTouchStart);
+        container.removeEventListener("touchmove", onTouchMove);
+        container.removeEventListener("touchend", onTouchEnd);
+        container.removeEventListener("touchcancel", onTouchEnd);
+      };
     }
 
-    const onMove = (e: MouseEvent) => {
-      if (!configRef.current.scrub) {
-        return;
-      }
-
-      const rect = container.getBoundingClientRect();
-      state.hoverX = e.clientX - rect.left;
-    };
-
-    const onLeave = () => {
-      state.hoverX = null;
-      configRef.current.onHover?.(null);
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (!configRef.current.scrub || e.touches.length !== 1) {
-        return;
-      }
-
-      const rect = container.getBoundingClientRect();
-      state.hoverX = e.touches[0].clientX - rect.left;
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!configRef.current.scrub || e.touches.length !== 1) {
-        return;
-      }
-
-      e.preventDefault();
-      const rect = container.getBoundingClientRect();
-      state.hoverX = e.touches[0].clientX - rect.left;
-    };
-
-    const onTouchEnd = () => {
-      state.hoverX = null;
-      configRef.current.onHover?.(null);
-    };
-
-    container.addEventListener("mousemove", onMove);
-    container.addEventListener("mouseleave", onLeave);
-    container.addEventListener("touchstart", onTouchStart, { passive: true });
-    container.addEventListener("touchmove", onTouchMove, { passive: false });
-    container.addEventListener("touchend", onTouchEnd);
-    container.addEventListener("touchcancel", onTouchEnd);
-
-    return () => {
-      container.removeEventListener("mousemove", onMove);
-      container.removeEventListener("mouseleave", onLeave);
-      container.removeEventListener("touchstart", onTouchStart);
-      container.removeEventListener("touchmove", onTouchMove);
-      container.removeEventListener("touchend", onTouchEnd);
-      container.removeEventListener("touchcancel", onTouchEnd);
-    };
+    return cleanup;
   }, [containerRef]);
 
   useEffect(() => {

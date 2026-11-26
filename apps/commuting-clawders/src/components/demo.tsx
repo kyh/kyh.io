@@ -106,48 +106,52 @@ export const Demo = ({ standings, totals }: { standings: Standing[]; totals: Tot
   const state = demoAt(time);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const host = hostRef.current;
 
-    if (!host) {
-      return;
+    if (host) {
+      let isMounted = true;
+
+      const mount = async () => {
+        const world = await loadWorld(host);
+
+        if (isMounted) {
+          worldRef.current = world;
+        } else {
+          world.dispose();
+        }
+      };
+
+      void mount();
+
+      cleanup = () => {
+        isMounted = false;
+        worldRef.current?.dispose();
+        worldRef.current = null;
+      };
     }
 
-    let isMounted = true;
-
-    const mount = async () => {
-      const world = await loadWorld(host);
-
-      if (isMounted) {
-        worldRef.current = world;
-      } else {
-        world.dispose();
-      }
-    };
-
-    void mount();
-
-    return () => {
-      isMounted = false;
-      worldRef.current?.dispose();
-      worldRef.current = null;
-    };
+    return cleanup;
   }, []);
 
   useEffect(() => {
-    if (isStill) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (!isStill) {
+      const startedAt = performance.now();
+
+      const timer = setInterval(() => {
+        setElapsed((performance.now() - startedAt) / 1000);
+        setCoins(worldRef.current?.coins() ?? 0);
+      }, TICK_MS);
+
+      cleanup = () => {
+        clearInterval(timer);
+      };
     }
 
-    const startedAt = performance.now();
-
-    const timer = setInterval(() => {
-      setElapsed((performance.now() - startedAt) / 1000);
-      setCoins(worldRef.current?.coins() ?? 0);
-    }, TICK_MS);
-
-    return () => {
-      clearInterval(timer);
-    };
+    return cleanup;
   }, [isStill]);
 
   useEffect(() => {

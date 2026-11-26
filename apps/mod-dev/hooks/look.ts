@@ -29,23 +29,23 @@ const lookOf = (kind: LookKind, arg: string) => {
     const path = found?.path;
 
     if (path !== undefined && !isSafePath(path)) {
-      return;
+      return null;
     }
 
     return (
       path === undefined ? { kind, target: arg } : { kind, path, target: found?.pattern ?? arg }
-    ) satisfies Look | undefined;
+    ) satisfies Look | null;
   }
 
   const range = RANGE.exec(arg)?.groups;
   const target = range?.path ?? arg.replace(/\/$/u, "");
 
   if (!isSafePath(target) && !(kind === "list" && target === ".")) {
-    return;
+    return null;
   }
 
   if (range === undefined) {
-    return { kind, target } satisfies Look | undefined;
+    return { kind, target } satisfies Look | null;
   }
 
   const from = Number(range.from);
@@ -55,7 +55,7 @@ const lookOf = (kind: LookKind, arg: string) => {
     kind,
     target,
     to: range.to === undefined ? from + MAX_LINES - 1 : Number(range.to),
-  } satisfies Look | undefined;
+  } satisfies Look | null;
 };
 
 export const looksOf = (text: string) => {
@@ -63,9 +63,9 @@ export const looksOf = (text: string) => {
 
   for (const { groups = {} } of text.matchAll(LOOK)) {
     const kind = KINDS.find((one) => one === groups.kind?.toLowerCase());
-    const look = kind === undefined ? undefined : lookOf(kind, groups.arg ?? "");
+    const look = kind === undefined ? null : lookOf(kind, groups.arg ?? "");
 
-    if (look !== undefined) {
+    if (look !== null) {
       looks.push(look);
     }
   }

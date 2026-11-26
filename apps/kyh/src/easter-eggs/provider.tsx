@@ -283,15 +283,17 @@ export const EasterEggProvider = ({ children }: { children: React.ReactNode }) =
   }, [found, catching]);
 
   useEffect(() => {
-    if (!gilded) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (gilded) {
+      document.documentElement.style.cursor = GOLD_CURSOR;
+
+      cleanup = () => {
+        document.documentElement.style.cursor = "";
+      };
     }
 
-    document.documentElement.style.cursor = GOLD_CURSOR;
-
-    return () => {
-      document.documentElement.style.cursor = "";
-    };
+    return cleanup;
   }, [gilded]);
 
   const value = useMemo(

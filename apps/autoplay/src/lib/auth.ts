@@ -30,15 +30,13 @@ interface TwitterProviderConfig {
   clientSecret: string;
 }
 
-const twitterProvider = () => {
-  if (env.X_CLIENT_ID === undefined || env.X_CLIENT_SECRET === undefined) {
-    return;
-  }
-
-  return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET } satisfies
-    | TwitterProviderConfig
-    | undefined;
-};
+const twitterProvider = () =>
+  env.X_CLIENT_ID === undefined || env.X_CLIENT_SECRET === undefined
+    ? undefined
+    : ({
+        clientId: env.X_CLIENT_ID,
+        clientSecret: env.X_CLIENT_SECRET,
+      } satisfies TwitterProviderConfig);
 
 interface GoogleProviderConfig {
   clientId: string;
@@ -47,20 +45,17 @@ interface GoogleProviderConfig {
   prompt: "select_account consent";
 }
 
-const googleProvider = () => {
-  if (env.GOOGLE_CLIENT_ID === undefined || env.GOOGLE_CLIENT_SECRET === undefined) {
-    return;
-  }
-
-  return {
-    google: {
-      accessType: "offline",
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      prompt: "select_account consent",
-    },
-  } satisfies { google: GoogleProviderConfig } | undefined;
-};
+const googleProvider = () =>
+  env.GOOGLE_CLIENT_ID === undefined || env.GOOGLE_CLIENT_SECRET === undefined
+    ? undefined
+    : ({
+        google: {
+          accessType: "offline",
+          clientId: env.GOOGLE_CLIENT_ID,
+          clientSecret: env.GOOGLE_CLIENT_SECRET,
+          prompt: "select_account consent",
+        },
+      } satisfies { google: GoogleProviderConfig });
 
 const cookieHeader = (ctx: { headers?: Headers; request?: Request } | null | undefined) =>
   ctx?.headers?.get("cookie") ?? ctx?.request?.headers.get("cookie");
@@ -84,7 +79,7 @@ const createAuth = (
           after: async (user, ctx) => {
             const code = inviteFromCookie(cookieHeader(ctx));
 
-            if (code === undefined) {
+            if (code === null) {
               return;
             }
 
@@ -101,7 +96,7 @@ const createAuth = (
           before: async (user, ctx) => {
             const code = inviteFromCookie(cookieHeader(ctx));
 
-            if (code === undefined || (await validateInviteCode(code)) === undefined) {
+            if (code === null || (await validateInviteCode(code)) === null) {
               throw new APIError("FORBIDDEN", { message: "invite_required" });
             }
 
@@ -140,24 +135,13 @@ const createAuth = (
   });
 
 const buildAuth = () => {
-  if (db === undefined) {
-    return;
-  }
-
   // WARNING: without its own secret better-auth throws on every production request; stay OFF AIR instead.
   const secret = env.BETTER_AUTH_SECRET;
-
-  if (secret === undefined) {
-    return;
-  }
-
   const twitter = twitterProvider();
 
-  if (twitter === undefined) {
-    return;
-  }
-
-  return createAuth(db, twitter, secret);
+  return db === undefined || secret === undefined || twitter === undefined
+    ? undefined
+    : createAuth(db, twitter, secret);
 };
 
 export const auth = buildAuth();

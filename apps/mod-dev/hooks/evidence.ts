@@ -128,19 +128,15 @@ export const stateOf = (
   return (last.isPassed ? "pass" : "fail") satisfies State;
 };
 
-export const statusOf = (ledger: Ledger) => {
-  if (ledger.lastEdit === -1) {
-    return;
-  }
-
-  const parts = KINDS.flatMap((kind) => {
+const partsOf = (ledger: Ledger) =>
+  KINDS.flatMap((kind) => {
     const state = stateOf(ledger, kind);
 
     return kind === "build" && state === "none" ? [] : [`${kind} ${MARKS[state]}`];
   });
 
-  return `verified: ${parts.join(" · ")}`;
-};
+export const statusOf = (ledger: Ledger) =>
+  ledger.lastEdit === -1 ? undefined : `verified: ${partsOf(ledger).join(" · ")}`;
 
 const stepLine = (step: Step, lastEdit: number) => {
   const what: string[] = [];

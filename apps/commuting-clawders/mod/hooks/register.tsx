@@ -94,25 +94,28 @@ const watch = async ($: EngineInterface, streamer: Streamer & { kind: "starting"
   let output = "";
   let ending: ProcessSpawnResult | null = null;
 
-  try {
-    for (;;) {
-      const piece = await streamer.child.next();
+  const drain: () => Promise<ProcessSpawnResult> = async () => {
+    const piece = await streamer.child.next();
 
-      if (piece.done === true) {
-        ending = piece.value;
-        break;
-      }
-
-      output = (output + piece.value.text).slice(-LOG_MAX);
-
-      if (
-        screen.streamer === streamer &&
-        piece.value.stream === "stdout" &&
-        output.includes("ready")
-      ) {
-        screen.streamer = { ...streamer, kind: "live" };
-      }
+    if (piece.done === true) {
+      return piece.value;
     }
+
+    output = (output + piece.value.text).slice(-LOG_MAX);
+
+    if (
+      screen.streamer === streamer &&
+      piece.value.stream === "stdout" &&
+      output.includes("ready")
+    ) {
+      screen.streamer = { ...streamer, kind: "live" };
+    }
+
+    return await drain();
+  };
+
+  try {
+    ending = await drain();
   } catch (error) {
     output += `\n${String(error)}`;
   }
@@ -194,10 +197,9 @@ const closeScreen = async ($: EngineInterface) => {
 
 const sameSize = (a: Size, b: Size) => a.columns === b.columns && a.rows === b.rows;
 
-// oxlint-disable-next-line typescript/promise-function-async -- returns a promise only on some paths
-const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
+const blit = async ($: EngineInterface, frame: Frame, imagePath: string) =>
   frame.cells === undefined
-    ? $.ui.blit({
+    ? await $.ui.blit({
         key: SCREEN,
         requestId: PANE,
         source: {
@@ -208,7 +210,7 @@ const blit = ($: EngineInterface, frame: Frame, imagePath: string) =>
           width: frame.width,
         },
       })
-    : $.ui.blit({
+    : await $.ui.blit({
         cells: frame.cells,
         columns: frame.columns,
         key: SCREEN,
@@ -244,13 +246,13 @@ const show = async ($: EngineInterface, frame: Frame, imagePath: string) => {
 
   const { deny } = await blit($, frame, imagePath).catch(() => ({ deny: "the pane is closed" }));
 
-  if (deny !== "" && screen.mode === "image") {
+  if (deny !== undefined && deny !== "" && screen.mode === "image") {
     screen.mode = "cells";
 
     return;
   }
 
-  if (deny !== "") {
+  if (deny !== undefined && deny !== "") {
     await closeScreen($);
 
     return;
@@ -384,7 +386,7 @@ export const register: Register = (on, options) => {
   });
 
   on("turn.complete", async ($, e, next) => {
-    if (e.agentId === "") {
+    if (e.agentId === undefined || e.agentId === "") {
       await setRun($, endTurn(run, await $.clock.now()));
       $.clock.after(GRACE_MS, () => {
         void finish($);

@@ -67,9 +67,9 @@ const elements = (bytes: Uint8Array, from: number, to: number) => {
     const elementId = readVint(bytes, cursor, true);
 
     const size =
-      elementId === undefined ? undefined : readVint(bytes, cursor + elementId.length, false);
+      elementId === null ? null : readVint(bytes, cursor + elementId.length, false);
 
-    if (elementId === undefined || size === undefined) {
+    if (elementId === null || size === null) {
       break;
     }
 

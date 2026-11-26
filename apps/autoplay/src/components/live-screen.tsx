@@ -90,24 +90,29 @@ export const LiveScreen = (props: LiveScreenProps) => {
   const emitState = useEffectEvent(props.onState);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const video = videoRef.current;
 
-    if (video === null || stream === undefined) {
-      return;
+    if (video !== null && stream !== undefined) {
+      video.srcObject = stream;
+
+      void playQuietly(video);
+
+      let cancelled = false;
+
+      video.requestVideoFrameCallback(() => {
+        if (!cancelled) {
+          emitState({ status: "live" });
+        }
+      });
+
+      cleanup = () => {
+        cancelled = true;
+      };
     }
 
-    video.srcObject = stream;
-    void playQuietly(video);
-    let cancelled = false;
-    video.requestVideoFrameCallback(() => {
-      if (!cancelled) {
-        emitState({ status: "live" });
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    return cleanup;
   }, [stream, videoRef]);
 
   useEffect(() => {

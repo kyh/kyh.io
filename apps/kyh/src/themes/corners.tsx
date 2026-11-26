@@ -103,84 +103,90 @@ const useBend = (
   still: boolean | null,
 ) => {
   useEffect(() => {
-    if (still === true) {
-      return;
-    }
+    let cleanup: (() => void) | undefined;
 
-    const bend: Bend = { strength: 0, x: 0, y: 0 };
-    let speed = 0;
-    let target = 0;
-    let frame = 0;
-    let last = 0;
+    if (still !== true) {
+      const bend: Bend = { strength: 0, x: 0, y: 0 };
 
-    const draw = () => {
-      web.current?.setAttribute("d", webPath(bend));
+      let speed = 0;
 
-      if (walker.current) {
-        walker.current.style.offsetPath = `path("${walkPath(bend)}")`;
-      }
-    };
+      let target = 0;
 
-    const tick = (now: number) => {
-      const seconds = Math.min((now - last) / 1000, 1 / 30);
-      last = now;
-      speed += (BEND_STIFFNESS * (target - bend.strength) - BEND_DAMPING * speed) * seconds;
-      bend.strength += speed * seconds;
+      let frame = 0;
 
-      if (Math.abs(target - bend.strength) < 0.002 && Math.abs(speed) < 0.002) {
-        bend.strength = target;
-        speed = 0;
-        frame = 0;
-      } else {
-        frame = requestAnimationFrame(tick);
-      }
+      let last = 0;
 
-      draw();
-    };
+      const draw = () => {
+        web.current?.setAttribute("d", webPath(bend));
 
-    const unsubscribe = subscribeToPointer(() => {
-      const at = lastPointer();
+        if (walker.current) {
+          walker.current.style.offsetPath = `path("${walkPath(bend)}")`;
+        }
+      };
 
-      if (!corner.current || !at) {
-        return;
-      }
+      const tick = (now: number) => {
+        const seconds = Math.min((now - last) / 1000, 1 / 30);
+        last = now;
+        speed += (BEND_STIFFNESS * (target - bend.strength) - BEND_DAMPING * speed) * seconds;
+        bend.strength += speed * seconds;
 
-      const gone = at.kind === "touch" && pointerLifted();
-
-      if (at.y > WEB_SIZE + BEND_REACH && target === 0 && bend.strength === 0) {
-        return;
-      }
-
-      const local = localIn(corner.current, side, at.x, at.y);
-
-      const near =
-        !gone &&
-        local.x > -BEND_REACH &&
-        local.y > -BEND_REACH &&
-        local.x < WEB_SIZE + BEND_REACH &&
-        local.y < WEB_SIZE + BEND_REACH;
-
-      if (near) {
-        bend.x = local.x;
-        bend.y = local.y;
-      }
-
-      target = near ? 1 : 0;
-
-      if (near || bend.strength !== 0) {
-        if (frame === 0) {
-          last = performance.now();
+        if (Math.abs(target - bend.strength) < 0.002 && Math.abs(speed) < 0.002) {
+          bend.strength = target;
+          speed = 0;
+          frame = 0;
+        } else {
           frame = requestAnimationFrame(tick);
         }
 
         draw();
-      }
-    });
+      };
 
-    return () => {
-      unsubscribe();
-      cancelAnimationFrame(frame);
-    };
+      const unsubscribe = subscribeToPointer(() => {
+        const at = lastPointer();
+
+        if (!corner.current || !at) {
+          return;
+        }
+
+        const gone = at.kind === "touch" && pointerLifted();
+
+        if (at.y > WEB_SIZE + BEND_REACH && target === 0 && bend.strength === 0) {
+          return;
+        }
+
+        const local = localIn(corner.current, side, at.x, at.y);
+
+        const near =
+          !gone &&
+          local.x > -BEND_REACH &&
+          local.y > -BEND_REACH &&
+          local.x < WEB_SIZE + BEND_REACH &&
+          local.y < WEB_SIZE + BEND_REACH;
+
+        if (near) {
+          bend.x = local.x;
+          bend.y = local.y;
+        }
+
+        target = near ? 1 : 0;
+
+        if (near || bend.strength !== 0) {
+          if (frame === 0) {
+            last = performance.now();
+            frame = requestAnimationFrame(tick);
+          }
+
+          draw();
+        }
+      });
+
+      cleanup = () => {
+        unsubscribe();
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    return cleanup;
   }, [side, corner, web, walker, still]);
 };
 
@@ -193,186 +199,199 @@ const useBungee = (
   still: boolean | null,
 ) => {
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const cornerEl = corner.current;
+
     const homeEl = home.current;
+
     const freeEl = free.current;
+
     const threadEl = thread.current;
 
-    if (!cornerEl || !homeEl || !freeEl || !threadEl) {
-      return;
-    }
+    if (cornerEl && homeEl && freeEl && threadEl) {
+      let taken: Taken | null = null;
 
-    let taken: Taken | null = null;
-    let frame = 0;
-    let last = 0;
-    let grip: Point = { x: 0, y: 0 };
-    let sample = { t: 0, x: 0, y: 0 };
+      let frame = 0;
 
-    const draw = () => {
-      if (!taken) {
-        return;
-      }
+      let last = 0;
 
-      const { anchor, body, phase } = taken;
-      const dx = body.x - anchor.x;
-      const dy = body.y - anchor.y;
-      const away = Math.hypot(dx, dy) < 1 ? 90 : (Math.atan2(dy, dx) * 180) / Math.PI;
-      freeEl.style.translate = `${body.x}px ${body.y}px`;
-      freeEl.style.rotate = `${phase === "climb" ? away + 180 : away}deg`;
-      freeEl.dataset.phase = phase;
-      threadEl.setAttribute("x1", `${anchor.x}`);
-      threadEl.setAttribute("y1", `${anchor.y}`);
-      threadEl.setAttribute("x2", `${body.x}`);
-      threadEl.setAttribute("y2", `${body.y}`);
-    };
+      let grip: Point = { x: 0, y: 0 };
 
-    const finish = () => {
-      taken = null;
-      freeEl.hidden = true;
-      threadEl.style.display = "none";
-      delete cornerEl.dataset.taken;
-    };
+      let sample = { t: 0, x: 0, y: 0 };
 
-    const tick = (now: number) => {
-      frame = 0;
-
-      if (!taken || taken.phase === "held") {
-        return;
-      }
-
-      const seconds = (now - last) / 1000;
-      last = now;
-
-      if (taken.phase === "bounce") {
-        const body = bounce(taken.body, taken.anchor, taken.length, seconds);
-        const kept = clampTo(taken.bounds, body);
-        taken.body = {
-          vx: kept.x === body.x ? body.vx : 0,
-          vy: kept.y === body.y ? body.vy : 0,
-          ...kept,
-        };
-
-        if (settled(taken.body, taken.anchor, taken.length) || now - taken.since > BOUNCE_MS) {
-          taken.phase = "climb";
+      const draw = () => {
+        if (!taken) {
+          return;
         }
-      } else {
-        const body = climb(taken.body, taken.home, seconds);
 
-        if (!body) {
+        const { anchor, body, phase } = taken;
+        const dx = body.x - anchor.x;
+        const dy = body.y - anchor.y;
+        const away = Math.hypot(dx, dy) < 1 ? 90 : (Math.atan2(dy, dx) * 180) / Math.PI;
+        freeEl.style.translate = `${body.x}px ${body.y}px`;
+        freeEl.style.rotate = `${phase === "climb" ? away + 180 : away}deg`;
+        freeEl.dataset.phase = phase;
+        threadEl.setAttribute("x1", `${anchor.x}`);
+        threadEl.setAttribute("y1", `${anchor.y}`);
+        threadEl.setAttribute("x2", `${body.x}`);
+        threadEl.setAttribute("y2", `${body.y}`);
+      };
+
+      const finish = () => {
+        taken = null;
+        freeEl.hidden = true;
+        threadEl.style.display = "none";
+        delete cornerEl.dataset.taken;
+      };
+
+      const tick = (now: number) => {
+        frame = 0;
+
+        if (!taken || taken.phase === "held") {
+          return;
+        }
+
+        const seconds = (now - last) / 1000;
+        last = now;
+
+        if (taken.phase === "bounce") {
+          const body = bounce(taken.body, taken.anchor, taken.length, seconds);
+          const kept = clampTo(taken.bounds, body);
+          taken.body = {
+            vx: kept.x === body.x ? body.vx : 0,
+            vy: kept.y === body.y ? body.vy : 0,
+            ...kept,
+          };
+
+          if (settled(taken.body, taken.anchor, taken.length) || now - taken.since > BOUNCE_MS) {
+            taken.phase = "climb";
+          }
+        } else {
+          const body = climb(taken.body, taken.home, seconds);
+
+          if (!body) {
+            finish();
+
+            return;
+          }
+
+          taken.body = body;
+        }
+
+        draw();
+        frame = requestAnimationFrame(tick);
+      };
+
+      const grab = (event: PointerEvent) => {
+        if (event.button !== 0) {
+          return;
+        }
+
+        event.preventDefault();
+        const at = localIn(cornerEl, side, event.clientX, event.clientY);
+
+        if (!taken) {
+          const rect = homeEl.getBoundingClientRect();
+
+          const from = localIn(
+            cornerEl,
+            side,
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2,
+          );
+
+          const anchor = side === "left" ? from : { x: HANG.x, y: HANG.y };
+          taken = {
+            anchor,
+            body: { vx: 0, vy: 0, ...from },
+            bounds: boundsIn(cornerEl, side),
+            home: from,
+            length: Math.hypot(from.x - anchor.x, from.y - anchor.y) + SLACK,
+            phase: "held",
+            since: 0,
+          };
+          cornerEl.dataset.taken = "";
+          freeEl.hidden = false;
+          threadEl.style.display = "";
+        }
+
+        cancelAnimationFrame(frame);
+        frame = 0;
+        taken.phase = "held";
+        taken.bounds = boundsIn(cornerEl, side);
+        grip = { x: taken.body.x - at.x, y: taken.body.y - at.y };
+        sample = { t: event.timeStamp, x: at.x, y: at.y };
+        freeEl.setPointerCapture(event.pointerId);
+        draw();
+      };
+
+      const move = (event: PointerEvent) => {
+        if (taken?.phase !== "held") {
+          return;
+        }
+
+        const at = localIn(cornerEl, side, event.clientX, event.clientY);
+        const seconds = (event.timeStamp - sample.t) / 1000;
+
+        if (seconds > 0) {
+          const fling = (from: number, to: number, was: number) =>
+            Math.max(-THROW, Math.min(THROW, 0.6 * ((to - from) / seconds) + 0.4 * was));
+
+          taken.body = {
+            ...clampTo(taken.bounds, { x: at.x + grip.x, y: at.y + grip.y }),
+            vx: fling(sample.x, at.x, taken.body.vx),
+            vy: fling(sample.y, at.y, taken.body.vy),
+          };
+        }
+
+        sample = { t: event.timeStamp, x: at.x, y: at.y };
+        draw();
+      };
+
+      const release = (event: PointerEvent) => {
+        if (taken?.phase !== "held") {
+          return;
+        }
+
+        if (event.timeStamp - sample.t > 80) {
+          taken.body = { ...taken.body, vx: 0, vy: 0 };
+        }
+
+        if (still === true) {
           finish();
 
           return;
         }
 
-        taken.body = body;
-      }
+        taken.phase = "bounce";
+        taken.since = performance.now();
+        last = taken.since;
+        frame = requestAnimationFrame(tick);
+      };
 
-      draw();
-      frame = requestAnimationFrame(tick);
-    };
+      homeEl.addEventListener("pointerdown", grab);
 
-    const grab = (event: PointerEvent) => {
-      if (event.button !== 0) {
-        return;
-      }
+      freeEl.addEventListener("pointerdown", grab);
 
-      event.preventDefault();
-      const at = localIn(cornerEl, side, event.clientX, event.clientY);
+      freeEl.addEventListener("pointermove", move);
 
-      if (!taken) {
-        const rect = homeEl.getBoundingClientRect();
+      freeEl.addEventListener("pointerup", release);
 
-        const from = localIn(
-          cornerEl,
-          side,
-          rect.left + rect.width / 2,
-          rect.top + rect.height / 2,
-        );
+      freeEl.addEventListener("pointercancel", release);
 
-        const anchor = side === "left" ? from : { x: HANG.x, y: HANG.y };
-        taken = {
-          anchor,
-          body: { vx: 0, vy: 0, ...from },
-          bounds: boundsIn(cornerEl, side),
-          home: from,
-          length: Math.hypot(from.x - anchor.x, from.y - anchor.y) + SLACK,
-          phase: "held",
-          since: 0,
-        };
-        cornerEl.dataset.taken = "";
-        freeEl.hidden = false;
-        threadEl.style.display = "";
-      }
-
-      cancelAnimationFrame(frame);
-      frame = 0;
-      taken.phase = "held";
-      taken.bounds = boundsIn(cornerEl, side);
-      grip = { x: taken.body.x - at.x, y: taken.body.y - at.y };
-      sample = { t: event.timeStamp, x: at.x, y: at.y };
-      freeEl.setPointerCapture(event.pointerId);
-      draw();
-    };
-
-    const move = (event: PointerEvent) => {
-      if (taken?.phase !== "held") {
-        return;
-      }
-
-      const at = localIn(cornerEl, side, event.clientX, event.clientY);
-      const seconds = (event.timeStamp - sample.t) / 1000;
-
-      if (seconds > 0) {
-        const fling = (from: number, to: number, was: number) =>
-          Math.max(-THROW, Math.min(THROW, 0.6 * ((to - from) / seconds) + 0.4 * was));
-
-        taken.body = {
-          ...clampTo(taken.bounds, { x: at.x + grip.x, y: at.y + grip.y }),
-          vx: fling(sample.x, at.x, taken.body.vx),
-          vy: fling(sample.y, at.y, taken.body.vy),
-        };
-      }
-
-      sample = { t: event.timeStamp, x: at.x, y: at.y };
-      draw();
-    };
-
-    const release = (event: PointerEvent) => {
-      if (taken?.phase !== "held") {
-        return;
-      }
-
-      if (event.timeStamp - sample.t > 80) {
-        taken.body = { ...taken.body, vx: 0, vy: 0 };
-      }
-
-      if (still === true) {
+      cleanup = () => {
+        cancelAnimationFrame(frame);
+        homeEl.removeEventListener("pointerdown", grab);
+        freeEl.removeEventListener("pointerdown", grab);
+        freeEl.removeEventListener("pointermove", move);
+        freeEl.removeEventListener("pointerup", release);
+        freeEl.removeEventListener("pointercancel", release);
         finish();
+      };
+    }
 
-        return;
-      }
-
-      taken.phase = "bounce";
-      taken.since = performance.now();
-      last = taken.since;
-      frame = requestAnimationFrame(tick);
-    };
-
-    homeEl.addEventListener("pointerdown", grab);
-    freeEl.addEventListener("pointerdown", grab);
-    freeEl.addEventListener("pointermove", move);
-    freeEl.addEventListener("pointerup", release);
-    freeEl.addEventListener("pointercancel", release);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      homeEl.removeEventListener("pointerdown", grab);
-      freeEl.removeEventListener("pointerdown", grab);
-      freeEl.removeEventListener("pointermove", move);
-      freeEl.removeEventListener("pointerup", release);
-      freeEl.removeEventListener("pointercancel", release);
-      finish();
-    };
+    return cleanup;
   }, [side, corner, home, free, thread, still]);
 };
 
@@ -428,21 +447,23 @@ const Web = ({ side }: { side: Side }) => {
 
 const usePausedOffscreen = (corners: React.RefObject<HTMLDivElement | null>, shown: boolean) => {
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const element = corners.current;
 
-    if (!shown || !element) {
-      return;
+    if (shown && element) {
+      const observer = new IntersectionObserver(([entry]) => {
+        element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
+      });
+
+      observer.observe(element);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(([entry]) => {
-      element.toggleAttribute("data-offscreen", entry?.isIntersecting === false);
-    });
-
-    observer.observe(element);
-
-    return () => {
-      observer.disconnect();
-    };
+    return cleanup;
   }, [corners, shown]);
 };
 

@@ -42,15 +42,17 @@ export const VideoCarousel = ({
   const [containerHeight, setContainerHeight] = useState<number | undefined>();
 
   useEffect(() => {
-    if (incidentId === undefined || !shortcuts) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (incidentId !== undefined && shortcuts) {
+      shortcuts.registerCarousel(incidentId, emblaApi ?? null);
+
+      cleanup = () => {
+        shortcuts.unregisterCarousel(incidentId);
+      };
     }
 
-    shortcuts.registerCarousel(incidentId, emblaApi ?? null);
-
-    return () => {
-      shortcuts.unregisterCarousel(incidentId);
-    };
+    return cleanup;
   }, [incidentId, emblaApi, shortcuts]);
 
   const subscribeToEmbla = useCallback(
@@ -98,20 +100,23 @@ export const VideoCarousel = ({
   }, [selectedIndex]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const slide = slidesRef.current.get(selectedIndex);
 
-    if (!slide) {
-      return;
+    if (slide) {
+      updateHeight();
+
+      const observer = new ResizeObserver(updateHeight);
+
+      observer.observe(slide);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(slide);
-
-    return () => {
-      observer.disconnect();
-    };
+    return cleanup;
   }, [selectedIndex, updateHeight]);
 
   useEffect(() => {
@@ -119,25 +124,28 @@ export const VideoCarousel = ({
   }, [selectedIndex, onSlideChange]);
 
   useEffect(() => {
-    if (!emblaApi) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (emblaApi) {
+      const onDragStart = () => {
+        setIsDragging(true);
+      };
+
+      const onDragEnd = () => {
+        setIsDragging(false);
+      };
+
+      emblaApi.on("pointerDown", onDragStart);
+
+      emblaApi.on("pointerUp", onDragEnd);
+
+      cleanup = () => {
+        emblaApi.off("pointerDown", onDragStart);
+        emblaApi.off("pointerUp", onDragEnd);
+      };
     }
 
-    const onDragStart = () => {
-      setIsDragging(true);
-    };
-
-    const onDragEnd = () => {
-      setIsDragging(false);
-    };
-
-    emblaApi.on("pointerDown", onDragStart);
-    emblaApi.on("pointerUp", onDragEnd);
-
-    return () => {
-      emblaApi.off("pointerDown", onDragStart);
-      emblaApi.off("pointerUp", onDragEnd);
-    };
+    return cleanup;
   }, [emblaApi]);
 
   if (videos.length === 0) {

@@ -38,34 +38,37 @@ export const LivelineTransition = ({
   const prevRef = useRef(active);
 
   useEffect(() => {
-    if (active === prevRef.current) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (active !== prevRef.current) {
+      const oldKey = prevRef.current;
+
+      prevRef.current = active;
+
+      setMounted((prev) => new Set([...prev, active]));
+
+      let raf1 = requestAnimationFrame(() => {
+        raf1 = requestAnimationFrame(() => {
+          setVisible(active);
+        });
+      });
+
+      const timer = setTimeout(() => {
+        setMounted((prev) => {
+          const next = new Set(prev);
+          next.delete(oldKey);
+
+          return next;
+        });
+      }, duration + 50);
+
+      cleanup = () => {
+        cancelAnimationFrame(raf1);
+        clearTimeout(timer);
+      };
     }
 
-    const oldKey = prevRef.current;
-    prevRef.current = active;
-
-    setMounted((prev) => new Set([...prev, active]));
-
-    let raf1 = requestAnimationFrame(() => {
-      raf1 = requestAnimationFrame(() => {
-        setVisible(active);
-      });
-    });
-
-    const timer = setTimeout(() => {
-      setMounted((prev) => {
-        const next = new Set(prev);
-        next.delete(oldKey);
-
-        return next;
-      });
-    }, duration + 50);
-
-    return () => {
-      cancelAnimationFrame(raf1);
-      clearTimeout(timer);
-    };
+    return cleanup;
   }, [active, duration]);
 
   return (

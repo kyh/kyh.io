@@ -11,19 +11,21 @@ import { useTheme } from "../store";
 const usePointerSeen = () => {
   const [seen, setSeen] = useState(false);
   useEffect(() => {
-    if (seen) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (!seen) {
+      const check = () => {
+        if (lastPointer()) {
+          setSeen(true);
+        }
+      };
+
+      check();
+
+      cleanup = subscribeToPointer(check);
     }
 
-    const check = () => {
-      if (lastPointer()) {
-        setSeen(true);
-      }
-    };
-
-    check();
-
-    return subscribeToPointer(check);
+    return cleanup;
   }, [seen]);
 
   return seen;

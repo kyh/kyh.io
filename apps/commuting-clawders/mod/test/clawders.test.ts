@@ -20,7 +20,8 @@ const world = (on: On, { rank = 3 } = {}) => {
     return { value: { isPlaced: true } };
   });
   on("http.fetch", (_$, e) => {
-    posted.push({ body: JSON.parse(e.init?.body ?? "null"), url: e.url });
+    const body: unknown = JSON.parse(e.init?.body ?? "null");
+    posted.push({ body, url: e.url });
 
     return { value: { headers: {}, ok: true, status: 201, text: JSON.stringify({ rank }) } };
   });
@@ -59,11 +60,15 @@ const step = async ($: Engine, tokens: number, agentId?: string) => {
     turnId: "t",
   });
 
-  let piece = await stream.next();
+  const drain: () => Promise<void> = async () => {
+    const piece = await stream.next();
 
-  while (piece.done !== true) {
-    piece = await stream.next();
-  }
+    if (piece.done !== true) {
+      await drain();
+    }
+  };
+
+  await drain();
 };
 
 const turn = async ($: Engine, tokens: number) => {

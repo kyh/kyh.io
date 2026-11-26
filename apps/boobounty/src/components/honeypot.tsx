@@ -18,43 +18,46 @@ const Honeypot = ({ onCarry }: HoneypotProps) => {
   const carry = useEffectEvent(onCarry);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const canvas = canvasRef.current;
 
-    if (!canvas) {
-      return;
+    if (canvas) {
+      let teardown: (() => void) | undefined;
+
+      let cancelled = false;
+
+      const mount = async () => {
+        try {
+          const { mountHoneypot } = await loadScene();
+
+          if (cancelled) {
+            return;
+          }
+
+          teardown = mountHoneypot(canvas, {
+            onCarry: carry,
+            onLost: () => {
+              setStatus("failed");
+            },
+            onReady: () => {
+              setStatus("ready");
+            },
+          });
+        } catch {
+          setStatus("failed");
+        }
+      };
+
+      void mount();
+
+      cleanup = () => {
+        cancelled = true;
+        teardown?.();
+      };
     }
 
-    let teardown: (() => void) | undefined;
-    let cancelled = false;
-
-    const mount = async () => {
-      try {
-        const { mountHoneypot } = await loadScene();
-
-        if (cancelled) {
-          return;
-        }
-
-        teardown = mountHoneypot(canvas, {
-          onCarry: carry,
-          onLost: () => {
-            setStatus("failed");
-          },
-          onReady: () => {
-            setStatus("ready");
-          },
-        });
-      } catch {
-        setStatus("failed");
-      }
-    };
-
-    void mount();
-
-    return () => {
-      cancelled = true;
-      teardown?.();
-    };
+    return cleanup;
   }, []);
 
   return (

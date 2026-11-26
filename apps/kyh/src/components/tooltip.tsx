@@ -299,30 +299,32 @@ const TooltipContent = ({
   const blockType = type === "block";
 
   React.useLayoutEffect(() => {
-    if (!blockType || !linesContext) {
-      return;
-    }
+    let cleanup: (() => void) | undefined;
 
-    const { updatePosition } = linesContext;
+    if (blockType && linesContext) {
+      const { updatePosition } = linesContext;
 
-    if (context.open && context.x !== null && context.y !== null) {
-      const floatingEl = context.elements.floating;
+      if (context.open && context.x !== null && context.y !== null) {
+        const floatingEl = context.elements.floating;
 
-      if (floatingEl) {
-        updatePosition(tooltipId, {
-          height: floatingEl.offsetHeight,
-          width: floatingEl.offsetWidth,
-          x: context.x,
-          y: context.y,
-        });
+        if (floatingEl) {
+          updatePosition(tooltipId, {
+            height: floatingEl.offsetHeight,
+            width: floatingEl.offsetWidth,
+            x: context.x,
+            y: context.y,
+          });
+        }
+      } else {
+        updatePosition(tooltipId, null);
       }
-    } else {
-      updatePosition(tooltipId, null);
+
+      cleanup = () => {
+        updatePosition(tooltipId, null);
+      };
     }
 
-    return () => {
-      updatePosition(tooltipId, null);
-    };
+    return cleanup;
   }, [
     blockType,
     context.open,

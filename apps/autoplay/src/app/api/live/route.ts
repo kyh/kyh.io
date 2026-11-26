@@ -26,7 +26,7 @@ export const POST = async (request: NextRequest) => {
 
   const source = await resolveSource(body.data.sourceId, viewer.session);
 
-  if (source === undefined) {
+  if (source === null) {
     return errorResponse(404, "No such channel");
   }
 

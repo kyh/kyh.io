@@ -211,20 +211,37 @@ export const dirsUp = (file: string) => {
   return [...[...parts.keys()].map((n) => parts.slice(0, parts.length - n).join("/")), ""];
 };
 
-export const packageFrom = (dir: string, json: string) => {
-  let parsed: { name?: unknown; scripts?: Record<string, string> };
+const fieldsOf = (json: string) => {
+  try {
+    const parsed: unknown = JSON.parse(json);
+
+    return parsed instanceof Object ? parsed : {};
+  } catch {
+    return null;
+  }
+};
+
+const nameOf = (json: string, dir: string) => {
+  const fields = fieldsOf(json);
 
   try {
-    parsed = JSON.parse(json) as typeof parsed;
+    return fields !== null && "name" in fields && fields.name !== undefined
+      ? String.prototype.valueOf.call(fields.name)
+      : dir || ".";
   } catch {
-    return;
+    return dir || ".";
   }
-
-  const { name, scripts = {} } = parsed;
-
-  return {
-    dir,
-    name: name === undefined ? dir || "." : String(name),
-    scripts: Object.keys(scripts),
-  } satisfies Package | undefined;
 };
+
+const scriptsOf = (json: string) => {
+  const fields = fieldsOf(json);
+
+  return fields !== null && "scripts" in fields && fields.scripts instanceof Object
+    ? Object.keys(fields.scripts)
+    : [];
+};
+
+export const packageFrom = (dir: string, json: string) =>
+  fieldsOf(json) === null
+    ? undefined
+    : ({ dir, name: nameOf(json, dir), scripts: scriptsOf(json) } satisfies Package);

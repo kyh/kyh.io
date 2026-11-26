@@ -110,18 +110,16 @@ export const RSVPReader = () => {
     } else if (state.status === "playing") {
       const word = words[state.wordIndex];
 
-      if (word === undefined || word === "") {
-        return;
+      if (word !== undefined && word !== "") {
+        timeoutRef.current = setTimeout(() => {
+          const nextIndex = state.wordIndex + 1;
+          setState(
+            nextIndex >= words.length
+              ? { status: "finished" }
+              : { status: "playing", wordIndex: nextIndex },
+          );
+        }, getWordDuration(word));
       }
-
-      timeoutRef.current = setTimeout(() => {
-        const nextIndex = state.wordIndex + 1;
-        setState(
-          nextIndex >= words.length
-            ? { status: "finished" }
-            : { status: "playing", wordIndex: nextIndex },
-        );
-      }, getWordDuration(word));
     }
 
     return () => {

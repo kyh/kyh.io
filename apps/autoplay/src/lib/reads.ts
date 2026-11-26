@@ -15,7 +15,7 @@ export const DAILY_READ_BUDGET_USD = {
 
 export interface CacheStore {
   /** What is under `key`, if it is there and has not expired — parsed, since it comes back as data. */
-  get: <T>(key: string, schema: z.ZodType<T>) => Promise<T | undefined>;
+  get: <T>(key: string, schema: z.ZodType<T>) => Promise<T | null>;
   set: <T extends object>(key: string, value: T, ttlMs: number) => Promise<void>;
 }
 
@@ -40,18 +40,18 @@ export const memoryReads = () => {
     const entry = entries.get(key);
 
     if (entry === undefined) {
-      return;
+      return null;
     }
 
     if (entry.expiresAt <= Date.now()) {
       entries.delete(key);
 
-      return;
+      return null;
     }
 
     const parsed = schema.safeParse(entry.value);
 
-    return parsed.success ? parsed.data : undefined;
+    return parsed.success ? parsed.data : null;
   };
 
   return {
@@ -99,18 +99,18 @@ export const databaseReads = (database: NonNullable<typeof db>) =>
         const [row] = rows;
 
         if (row === undefined) {
-          return;
+          return null;
         }
 
         if (row.expiresAt <= Date.now()) {
           await database.delete(sourceCache).where(eq(sourceCache.key, key));
 
-          return;
+          return null;
         }
 
         const parsed = schema.safeParse(row.value);
 
-        return parsed.success ? parsed.data : undefined;
+        return parsed.success ? parsed.data : null;
       },
       set: async (key, value, ttlMs) => {
         const now = Date.now();

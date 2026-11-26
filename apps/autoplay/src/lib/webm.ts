@@ -19,7 +19,7 @@ export const readVint = (bytes: Uint8Array, at: number, id: boolean) => {
   const first = bytes[at];
 
   if (first === undefined || first === 0) {
-    return;
+    return null;
   }
 
   let length = 1;
@@ -30,7 +30,7 @@ export const readVint = (bytes: Uint8Array, at: number, id: boolean) => {
   }
 
   if (at + length > bytes.length) {
-    return;
+    return null;
   }
 
   // oxlint-disable-next-line no-bitwise -- EBML: the bits below the length marker
@@ -49,7 +49,7 @@ export const readVint = (bytes: Uint8Array, at: number, id: boolean) => {
     }
   }
 
-  return { length, unknown: !id && unknown, value } satisfies Vint | undefined;
+  return { length, unknown: !id && unknown, value } satisfies Vint | null;
 };
 
 export const readUint = (bytes: Uint8Array, at: number, length: number) => {
@@ -105,13 +105,13 @@ const timecodeScaleOf = (bytes: Uint8Array, info: Element) => {
   while (cursor < info.body + info.size) {
     const id = readVint(bytes, cursor, true);
 
-    if (id === undefined) {
+    if (id === null) {
       break;
     }
 
     const size = readVint(bytes, cursor + id.length, false);
 
-    if (size === undefined || size.unknown) {
+    if (size === null || size.unknown) {
       break;
     }
 
@@ -130,34 +130,34 @@ const timecodeScaleOf = (bytes: Uint8Array, info: Element) => {
 const findSegment = (bytes: Uint8Array) => {
   const header = readVint(bytes, 0, true);
 
-  if (header === undefined || header.value !== EBML_HEADER) {
-    return;
+  if (header === null || header.value !== EBML_HEADER) {
+    return null;
   }
 
   const headerSize = readVint(bytes, header.length, false);
 
-  if (headerSize === undefined || headerSize.unknown) {
-    return;
+  if (headerSize === null || headerSize.unknown) {
+    return null;
   }
 
   const segmentAt = header.length + headerSize.length + headerSize.value;
   const segment = readVint(bytes, segmentAt, true);
 
-  if (segment === undefined || segment.value !== EBML_SEGMENT) {
-    return;
+  if (segment === null || segment.value !== EBML_SEGMENT) {
+    return null;
   }
 
   const segmentSize = readVint(bytes, segmentAt + segment.length, false);
 
-  if (segmentSize === undefined || segmentSize.length !== 8) {
-    return;
+  if (segmentSize === null || segmentSize.length !== 8) {
+    return null;
   }
 
   const segmentSizeAt = segmentAt + segment.length;
 
   return { segmentBody: segmentSizeAt + segmentSize.length, segmentSizeAt } satisfies
     | { segmentSizeAt: number; segmentBody: number }
-    | undefined;
+    | null;
 };
 
 /**
@@ -172,7 +172,7 @@ const findSegment = (bytes: Uint8Array) => {
 export const finalizeWebm = (bytes: Uint8Array<ArrayBuffer>, durationSeconds: number) => {
   const found = findSegment(bytes);
 
-  if (found === undefined) {
+  if (found === null) {
     return bytes;
   }
 
@@ -186,13 +186,13 @@ export const finalizeWebm = (bytes: Uint8Array<ArrayBuffer>, durationSeconds: nu
   while (cursor < bytes.length) {
     const id = readVint(bytes, cursor, true);
 
-    if (id === undefined) {
+    if (id === null) {
       return bytes;
     }
 
     const size = readVint(bytes, cursor + id.length, false);
 
-    if (size === undefined) {
+    if (size === null) {
       return bytes;
     }
 

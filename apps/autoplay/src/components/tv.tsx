@@ -83,17 +83,19 @@ const Ticker = (props: { program: OnAir }) => {
   }
 
   useEffect(() => {
-    if (leaving === undefined) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (leaving !== undefined) {
+      const timer = window.setTimeout(() => {
+        setLeaving(undefined);
+      }, ROLL_MS);
+
+      cleanup = () => {
+        window.clearTimeout(timer);
+      };
     }
 
-    const timer = window.setTimeout(() => {
-      setLeaving(undefined);
-    }, ROLL_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
+    return cleanup;
   }, [leaving]);
   const host = program.link === undefined ? undefined : URL.parse(program.link)?.host;
 

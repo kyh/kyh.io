@@ -380,27 +380,29 @@ export const TradingChart = () => {
   });
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const container = containerRef.current;
 
-    if (!container) {
-      return;
+    if (container) {
+      const observer = new ResizeObserver((entries) => {
+        const [entry] = entries;
+
+        if (entry) {
+          const { width, height } = entry.contentRect;
+          sizeRef.current = { height, width };
+          setRightPad(Math.round(width * getFutureRatio()) || 200);
+        }
+      });
+
+      observer.observe(container);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new ResizeObserver((entries) => {
-      const [entry] = entries;
-
-      if (entry) {
-        const { width, height } = entry.contentRect;
-        sizeRef.current = { height, width };
-        setRightPad(Math.round(width * getFutureRatio()) || 200);
-      }
-    });
-
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-    };
+    return cleanup;
   }, []);
 
   useEffect(() => {

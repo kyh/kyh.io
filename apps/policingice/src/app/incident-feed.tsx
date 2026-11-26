@@ -46,39 +46,43 @@ const LazyIncidentCard = ({
   const shortcuts = useKeyboardShortcuts();
 
   useEffect(() => {
-    if (!shortcuts) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (shortcuts) {
+      shortcuts.registerIncident(incidentId, ref.current);
+
+      cleanup = () => {
+        shortcuts.unregisterIncident(incidentId);
+      };
     }
 
-    shortcuts.registerIncident(incidentId, ref.current);
-
-    return () => {
-      shortcuts.unregisterIncident(incidentId);
-    };
+    return cleanup;
   }, [incidentId, shortcuts]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const el = ref.current;
 
-    if (!el) {
-      return;
+    if (el) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        },
+        { rootMargin: "200px" },
+      );
+
+      observer.observe(el);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(el);
-
-    return () => {
-      observer.disconnect();
-    };
+    return cleanup;
   }, []);
 
   return (
@@ -312,31 +316,33 @@ export const IncidentFeed = ({
   }, [nextOffset, isLoading]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const ref = loadMoreRef.current;
 
-    if (!ref || searchResults !== null) {
-      return;
+    if (ref && searchResults === null) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0].isIntersecting &&
+            nextOffset !== undefined &&
+            nextOffset !== 0 &&
+            !isLoading
+          ) {
+            void loadMore();
+          }
+        },
+        { threshold: 0.1 },
+      );
+
+      observer.observe(ref);
+
+      cleanup = () => {
+        observer.disconnect();
+      };
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          nextOffset !== undefined &&
-          nextOffset !== 0 &&
-          !isLoading
-        ) {
-          void loadMore();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    observer.observe(ref);
-
-    return () => {
-      observer.disconnect();
-    };
+    return cleanup;
   }, [nextOffset, isLoading, searchResults, loadMore]);
 
   const handleVote = useCallback(

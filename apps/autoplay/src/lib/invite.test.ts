@@ -33,12 +33,12 @@ describe("invite cookie", () => {
       inviteFromCookie(`other=1; ${INVITE_COOKIE}=${encodeURIComponent(value)}`),
       "VICKIE",
     );
-    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE`), undefined);
-    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE.forged`), undefined);
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE`), null);
+    assert.equal(inviteFromCookie(`${INVITE_COOKIE}=VICKIE.forged`), null);
     assert.equal(
       inviteFromCookie(`${INVITE_COOKIE}=${value.replace("VICKIE", "SESAME")}`),
-      undefined,
+      null,
     );
-    assert.equal(inviteFromCookie(), undefined);
+    assert.equal(inviteFromCookie(), null);
   });
 });

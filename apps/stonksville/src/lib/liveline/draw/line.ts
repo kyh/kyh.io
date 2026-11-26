@@ -146,7 +146,7 @@ export const drawLine = (
   pts.push([tipX, morphY(clampY(toY(smoothValue)), tipX)]);
 
   if (pts.length < 2) {
-    return;
+    return null;
   }
 
   let lineAlpha = 1;

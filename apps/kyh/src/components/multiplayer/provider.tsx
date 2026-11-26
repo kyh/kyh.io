@@ -142,20 +142,22 @@ export const useChat = (enabled: boolean) => {
   const [draft, setDraft] = useState<string | null>(null);
   const [said, setSaid] = useState<Said | null>(null);
   useEffect(() => {
-    if (!enabled) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (enabled) {
+      cleanup = listenForChat({
+        onDraft: (next) => {
+          setDraft(next);
+          room.type(next);
+        },
+        onSend: (text) => {
+          setSaid({ text, until: room.now() + SHOW_MS });
+          room.say(text);
+        },
+      });
     }
 
-    return listenForChat({
-      onDraft: (next) => {
-        setDraft(next);
-        room.type(next);
-      },
-      onSend: (text) => {
-        setSaid({ text, until: room.now() + SHOW_MS });
-        room.say(text);
-      },
-    });
+    return cleanup;
   }, [enabled, room]);
 
   return { draft, said };

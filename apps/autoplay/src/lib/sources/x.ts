@@ -76,7 +76,7 @@ const pickTrendCandidate = async (
   const { aired, cache, spend } = context;
   let trends = await cache.get(trendsKey(sourceId), trendsSchema);
 
-  if (trends === undefined) {
+  if (trends === null) {
     try {
       trends = await fetchPersonalizedTrends(access.accessToken);
       await spend.record("x", sourceId, USD_PER_TRENDS_CALL);
@@ -88,7 +88,7 @@ const pickTrendCandidate = async (
   }
 
   if (trends.length === 0) {
-    return;
+    return null;
   }
 
   const cursor = await cache.get(cursorKey(sourceId), cursorSchema);
@@ -97,7 +97,7 @@ const pickTrendCandidate = async (
   const trend = trends[next % trends.length];
 
   if (trend === undefined) {
-    return;
+    return null;
   }
 
   let posts: z.infer<typeof searchSchema>;
@@ -107,10 +107,10 @@ const pickTrendCandidate = async (
       (await cache.get(searchKey(trend), searchSchema)) ??
       (await searchFresh(context, access.accessToken, sourceId, trend));
   } catch {
-    return;
+    return null;
   }
 
-  return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id)));
+  return bestOf(posts.map(toItem).filter((item) => !aired.has(item.id))) ?? null;
 };
 
 const pickTimelineCandidate = async (
@@ -121,7 +121,7 @@ const pickTimelineCandidate = async (
   const { aired, cache, spend } = context;
   let feed = await cache.get(feedKey(sourceId), feedCacheSchema);
 
-  if (feed === undefined) {
+  if (feed === null) {
     const page = await fetchFeedPage(access.accessToken, access.xUserId);
     await spend.record("x", sourceId, pageUsd(page));
     feed = { nextToken: page.nextToken, pages: 1, posts: page.posts, source: page.source };
@@ -169,7 +169,7 @@ export const pickXCandidate = async (
 ) => {
   const trending = await pickTrendCandidate(access, sourceId, context);
 
-  if (trending !== undefined) {
+  if (trending !== null) {
     return trending;
   }
 

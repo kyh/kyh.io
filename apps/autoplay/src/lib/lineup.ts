@@ -169,12 +169,12 @@ const parseRssConfig = (row: SourceRow) => {
   try {
     config = JSON.parse(row.config ?? "null");
   } catch {
-    return;
+    return null;
   }
 
   const parsed = rssConfigSchema.safeParse(config);
 
-  return parsed.success ? parsed.data : undefined;
+  return parsed.success ? parsed.data : null;
 };
 
 type Access = { access: SourceAccess } | { noAccessReason: string };
@@ -182,7 +182,7 @@ type Access = { access: SourceAccess } | { noAccessReason: string };
 const xAccess: (userId: string) => Promise<Access> = async (userId) => {
   const grant = await freshXAccount(userId);
 
-  return grant === undefined
+  return grant === null
     ? { noAccessReason: "X connection expired — sign in again" }
     : { access: { accessToken: grant.accessToken, kind: "x", xUserId: grant.xUserId } };
 };
@@ -206,7 +206,7 @@ const accessFor: (row: SourceRow, userId: string) => Promise<Access> = async (ro
     case "rss": {
       const config = parseRssConfig(row);
 
-      return config === undefined
+      return config === null
         ? { noAccessReason: "This feed's settings are unreadable — remove and re-add it" }
         : { access: { kind: "rss", url: config.url } };
     }
@@ -237,16 +237,16 @@ export const resolveSource = async (sourceId: string, viewer: Viewer) => {
     if (viewer === null || !isOwnerHandle(viewer.user.username)) {
       return { channelKey: OWNER_SOURCE_ID, kind: "x", mode: "replay" } satisfies
         | ResolvedSource
-        | undefined;
+        | null;
     }
 
     return resolved(OWNER_SOURCE_ID, "x", await xAccess(viewer.user.id)) satisfies
       | ResolvedSource
-      | undefined;
+      | null;
   }
 
   if (viewer === null || db === undefined) {
-    return;
+    return null;
   }
 
   const rows = await db
@@ -260,12 +260,12 @@ export const resolveSource = async (sourceId: string, viewer: Viewer) => {
   const [row] = rows;
 
   if (row === undefined) {
-    return;
+    return null;
   }
 
   return resolved(row.id, row.kind, await accessFor(row, viewer.user.id)) satisfies
     | ResolvedSource
-    | undefined;
+    | null;
 };
 
 /**

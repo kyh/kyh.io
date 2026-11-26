@@ -55,12 +55,12 @@ const heartbeatOf = (body: string) => {
   try {
     parsed = JSON.parse(body);
   } catch {
-    return;
+    return null;
   }
 
   const beat = heartbeatSchema.safeParse(parsed);
 
-  return beat.success ? beat.data.session_id : undefined;
+  return beat.success ? beat.data.session_id : null;
 };
 
 const meter = async (target: string | undefined, body: string, response: Response) => {
@@ -80,7 +80,7 @@ const meter = async (target: string | undefined, body: string, response: Respons
     } else if (target === HEARTBEAT_URL) {
       const sessionId = heartbeatOf(body);
 
-      if (sessionId !== undefined) {
+      if (sessionId !== null) {
         await programming.sessionSeen(sessionId, viewer);
       }
     }

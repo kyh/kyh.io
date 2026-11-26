@@ -786,7 +786,7 @@ export const drawCandleFrame = (
     });
   }
 
-  let linePts: Point[] | undefined;
+  let linePts: Point[] | null = null;
 
   if (lp > 0.01 && opts.lineVisible.length >= 2) {
     const scrubX = opts.scrubAmount > 0.05 ? opts.hoverX : null;

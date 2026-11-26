@@ -13,31 +13,34 @@ const useEditMode = () => {
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (!editing) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (editing) {
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.target instanceof Element && e.target.closest('[data-slot="tile"]')) {
+          return;
+        }
+
+        setEditing(false);
+      };
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setEditing(false);
+        }
+      };
+
+      document.addEventListener("pointerdown", onPointerDown);
+
+      document.addEventListener("keydown", onKeyDown);
+
+      cleanup = () => {
+        document.removeEventListener("pointerdown", onPointerDown);
+        document.removeEventListener("keydown", onKeyDown);
+      };
     }
 
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.target instanceof Element && e.target.closest('[data-slot="tile"]')) {
-        return;
-      }
-
-      setEditing(false);
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setEditing(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    return cleanup;
   }, [editing]);
 
   return [editing, setEditing] as const;
@@ -204,23 +207,25 @@ export const SortableGrid = <T,>({
   const order = moving ?? items.map(keyOf);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const grid = gridRef.current;
 
-    if (!grid) {
-      return;
+    if (grid) {
+      const onTouchMove = (e: TouchEvent) => {
+        if (scrollLocked.current && e.cancelable) {
+          e.preventDefault();
+        }
+      };
+
+      grid.addEventListener("touchmove", onTouchMove, { passive: false });
+
+      cleanup = () => {
+        grid.removeEventListener("touchmove", onTouchMove);
+      };
     }
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (scrollLocked.current && e.cancelable) {
-        e.preventDefault();
-      }
-    };
-
-    grid.addEventListener("touchmove", onTouchMove, { passive: false });
-
-    return () => {
-      grid.removeEventListener("touchmove", onTouchMove);
-    };
+    return cleanup;
   }, []);
 
   const reorder = (next: string[]) => {

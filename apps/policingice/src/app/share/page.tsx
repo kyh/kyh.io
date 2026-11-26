@@ -8,13 +8,8 @@ import { detectPlatform, isValidVideoUrl, resolveVideoUrl } from "@/lib/video-ut
 
 const MAX_INPUT_LENGTH = 2048;
 
-const sanitizeInput = (input?: string) => {
-  if (input === undefined || input === "") {
-    return;
-  }
-
-  return input.slice(0, MAX_INPUT_LENGTH);
-};
+const sanitizeInput = (input?: string) =>
+  input === undefined || input === "" ? undefined : input.slice(0, MAX_INPUT_LENGTH);
 
 const extractUrls = (text: string) => {
   const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/giu;

@@ -14,7 +14,7 @@ interface XAccount {
 
 export const freshXAccount = async (userId: string) => {
   if (db === undefined || env.X_CLIENT_ID === undefined || env.X_CLIENT_SECRET === undefined) {
-    return;
+    return null;
   }
 
   const rows = await db
@@ -26,18 +26,18 @@ export const freshXAccount = async (userId: string) => {
   const [row] = rows;
 
   if (row === undefined || row.accessToken === null) {
-    return;
+    return null;
   }
 
   const expiresAt = row.accessTokenExpiresAt?.getTime();
   const usable = expiresAt === undefined || expiresAt > Date.now() + EXPIRY_MARGIN_MS;
 
   if (usable) {
-    return { accessToken: row.accessToken, xUserId: row.accountId } satisfies XAccount | undefined;
+    return { accessToken: row.accessToken, xUserId: row.accountId } satisfies XAccount | null;
   }
 
   if (row.refreshToken === null) {
-    return;
+    return null;
   }
 
   let grant: Awaited<ReturnType<typeof refreshXToken>>;
@@ -54,8 +54,8 @@ export const freshXAccount = async (userId: string) => {
       })
       .where(eq(account.id, row.id));
   } catch {
-    return;
+    return null;
   }
 
-  return { accessToken: grant.accessToken, xUserId: row.accountId } satisfies XAccount | undefined;
+  return { accessToken: grant.accessToken, xUserId: row.accountId } satisfies XAccount | null;
 };

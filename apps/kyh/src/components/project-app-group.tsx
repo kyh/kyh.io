@@ -258,17 +258,19 @@ const ProjectAppFolder = ({ title, items, onDrop, onHold }: ProjectAppGroupProps
   );
 
   useLayoutEffect(() => {
-    if (!isOpen || !origin) {
-      return;
+    let cleanup: (() => void) | undefined;
+
+    if (isOpen && origin) {
+      const frame = requestAnimationFrame(() => {
+        setItemOffsets(measureOffsets(origin));
+      });
+
+      cleanup = () => {
+        cancelAnimationFrame(frame);
+      };
     }
 
-    const frame = requestAnimationFrame(() => {
-      setItemOffsets(measureOffsets(origin));
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
+    return cleanup;
   }, [isOpen, origin, measureOffsets]);
 
   const close = () => {
