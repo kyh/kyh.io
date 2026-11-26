@@ -55,7 +55,7 @@ agent-browser screenshot /tmp/after.png
 agent-browser close
 ```
 
-Set `AGENT_BROWSER_SESSION=<name>` to get an isolated browser rather than sharing the default one with whatever else is running.
+Give each agent its own browser with `AGENT_BROWSER_SESSION=<repo>-<task>` (or `--session`): the default one is shared. Locate by `snapshot -i` refs or `find role … --name`, never `find text`, which can match a hidden duplicate label. A background tab gets no animation frames, so menus won't open: `agent-browser tab keep live` fixes it.
 
 Don't stop at typecheck — exercise the actual page and look at the result.
 
