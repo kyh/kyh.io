@@ -373,6 +373,7 @@ canvas.addEventListener(
   (e) => {
     e.preventDefault();
     trip = null;
+    glide = { vx: 0, vy: 0 };
     const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
     setView(zoomAt(view, screen, factor, e.clientX, e.clientY));
   },

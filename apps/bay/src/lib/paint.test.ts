@@ -116,3 +116,13 @@ test("waves: the first tile alone, then tiles beside the painted and apart from 
   assert.equal(nextWave(order, painted, 10).length, 0);
   assert.equal(nextWave(order, new Set(["0_0"]), 2).length, 2);
 });
+
+test("waves: an area apart from everything painted starts from one tile of its own", () => {
+  const far = paintOrder(tileRange({ i: 40, j: 40 }, { i: 42, j: 42 }), { i: 0, j: 0 });
+  const painted = new Set(["0_0", "1_0"]);
+  const wave = nextWave(far, painted, 10);
+
+  assert.equal(wave.length, 1);
+  assert.ok(far.includes(wave[0] ?? ""));
+  assert.ok(nextWave(far, new Set([...painted, ...wave]), 10).length > 0);
+});

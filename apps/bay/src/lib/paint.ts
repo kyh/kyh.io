@@ -22,17 +22,19 @@ const apart = (a: { i: number; j: number }, b: { i: number; j: number }) =>
 
 export const nextWave = (order: string[], painted: Set<string>, limit: number) => {
   const done = [...painted].map(parseKey);
+  const beside = (t: { i: number; j: number }) => done.some((d) => apart(d, t) === 1);
+  const fresh = !order.some((k) => !painted.has(k) && beside(parseKey(k)));
   const wave: string[] = [];
 
   for (const key of order) {
-    if (wave.length >= limit || (done.length === 0 && wave.length === 1)) {
+    if (wave.length >= limit || (fresh && wave.length === 1)) {
       break;
     }
 
     const t = parseKey(key);
     const free = !painted.has(key) && wave.every((w) => apart(parseKey(w), t) > 1);
 
-    if (free && (done.length === 0 || done.some((d) => apart(d, t) === 1))) {
+    if (free && (fresh || beside(t))) {
       wave.push(key);
     }
   }
