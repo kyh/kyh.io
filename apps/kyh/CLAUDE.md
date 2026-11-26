@@ -15,9 +15,9 @@ how a feature behaves is in its code.
   set only `openGraph` would drop the layout's image and video:
   `buildPageMetadata` builds the whole object for every page.
 - `/` negotiates on `Accept` (`content-negotiation.ts`, `middleware.ts`):
-  Markdown unless HTML is asked for by name, since `curl` and fetch defaults
-  send a wildcard or nothing. Every negotiated response appends `Vary: Accept`;
-  Next overwrites `Vary` on the prerendered `/` after middleware, so
+  the HTML site, and Markdown only when `text/markdown` is asked for by name,
+  as an agent does. A wildcard or no `Accept` gets HTML. Every negotiated
+  response appends `Vary: Accept`; Next overwrites `Vary` on the prerendered `/` after middleware, so
   `next.config.ts` repeats Next's router keys plus `Accept` for that path.
 - An unknown path hits `app/[...path]/route.ts`: a real 404 with a short body
   (HTML for browsers, Markdown otherwise), not Next's `not-found`, which would
