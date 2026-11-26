@@ -70,7 +70,7 @@ const Chart = ({ data, width, height, margin = defaultMargin }: BarStackProps) =
     let tc = 0;
 
     for (const k of keys) {
-      tc += Number(current[k]);
+      tc += current[k];
     }
 
     return tc;

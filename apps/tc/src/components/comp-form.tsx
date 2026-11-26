@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Listbox, RadioGroup } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Radio,
+  RadioGroup,
+} from "@headlessui/react";
 import { NumericFormat } from "react-number-format";
 
 import type { CompHooksType } from "@/lib/comp";
@@ -113,20 +120,20 @@ export const CompForm = ({ comp }: Props) => {
               }}
               onBlur={requestUpdate}
             >
-              <RadioGroup.Option value="iso">
+              <Radio value="iso">
                 {({ checked }) => (
                   <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     ISO
                   </span>
                 )}
-              </RadioGroup.Option>
-              <RadioGroup.Option value="rsu">
+              </Radio>
+              <Radio value="rsu">
                 {({ checked }) => (
                   <span className={cn("cursor-pointer transition", checked && "text-emerald-600")}>
                     RSU
                   </span>
                 )}
-              </RadioGroup.Option>
+              </Radio>
             </RadioGroup>
           </legend>
           {comp.shareType === "iso" && (
@@ -227,31 +234,31 @@ export const CompForm = ({ comp }: Props) => {
               }}
             >
               <div className="relative">
-                <Listbox.Button className="text-emerald-500">
+                <ListboxButton className="text-emerald-500">
                   {shareCalcTypeLabels[comp.shareCalcType]}
-                </Listbox.Button>
-                <Listbox.Options className="ring-opacity-5 absolute right-0 z-10 mt-1 max-h-60 w-[200px] overflow-auto rounded-lg bg-black text-sm shadow-lg ring-1 ring-black focus:outline-hidden">
-                  <Listbox.Option
+                </ListboxButton>
+                <ListboxOptions className="ring-opacity-5 absolute right-0 z-10 mt-1 max-h-60 w-[200px] overflow-auto rounded-lg bg-black text-sm shadow-lg ring-1 ring-black focus:outline-hidden">
+                  <ListboxOption
                     value="current"
-                    className={({ active }) =>
+                    className={({ focus }) =>
                       `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
+                        focus ? "bg-emerald-900 text-emerald-100" : ""
                       }`
                     }
                   >
                     Growth Based
-                  </Listbox.Option>
-                  <Listbox.Option
+                  </ListboxOption>
+                  <ListboxOption
                     value="revenue"
-                    className={({ active }) =>
+                    className={({ focus }) =>
                       `relative cursor-pointer px-4 py-2 select-none ${
-                        active ? "bg-emerald-900 text-emerald-100" : ""
+                        focus ? "bg-emerald-900 text-emerald-100" : ""
                       }`
                     }
                   >
                     Revenue Based
-                  </Listbox.Option>
-                </Listbox.Options>
+                  </ListboxOption>
+                </ListboxOptions>
               </div>
             </Listbox>
           </legend>

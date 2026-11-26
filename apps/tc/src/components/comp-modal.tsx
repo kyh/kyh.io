@@ -419,8 +419,6 @@ export const CompModal = ({
                       if (actionMeta.action === "input-change") {
                         loadOptions(value);
                       }
-
-                      return value;
                     }}
                     options={searchResults}
                     onChange={(selected) => {

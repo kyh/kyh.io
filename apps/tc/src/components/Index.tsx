@@ -62,7 +62,7 @@ const Index = () => {
               {!!avgTc && <span className="ml-1 text-xs text-slate-400">(per year)</span>}
             </div>
           </div>
-          <ParentSize className="mt-10" parentSizeStyles={{ height: "auto", width: "100%" }}>
+          <ParentSize className="mt-10" style={{ height: "auto", width: "100%" }}>
             {({ width }) => <Chart width={width} height={400} data={comp.data} />}
           </ParentSize>
           <div className="relative -mt-8 w-full overflow-x-auto">
