@@ -29,7 +29,9 @@ export const ZHUYIN = new Map([
 ]);
 
 /** Every zhuyin symbol: what an untranslated heading scrambles through. */
-export const GLYPHS = graphemesOf("ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ");
+export const GLYPHS = graphemesOf(
+  "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ",
+);
 
 /** `text` read out in zhuyin without its tones, or "" when it has no translation. */
 export const readingOf = (text: string) => (ZHUYIN.get(text) ?? "").replaceAll(/[ˊˇˋ˙]/gu, "");

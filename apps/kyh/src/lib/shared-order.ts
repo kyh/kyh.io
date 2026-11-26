@@ -24,10 +24,7 @@ export interface ReorderIntent {
 const PROTOTYPE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 const asKey = (value: JsonValue | undefined) =>
-  isText(value) &&
-  value.length > 0 &&
-  value.length <= MAX_KEY &&
-  !PROTOTYPE_KEYS.has(value)
+  isText(value) && value.length > 0 && value.length <= MAX_KEY && !PROTOTYPE_KEYS.has(value)
     ? value
     : null;
 

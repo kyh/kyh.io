@@ -28,8 +28,9 @@ const getRenderProps = (isLight: boolean) => ({
 
 const hasPermissionPrompt = (
   target: typeof DeviceOrientationEvent,
-): target is typeof DeviceOrientationEvent & { requestPermission: () => Promise<PermissionState> } =>
-  "requestPermission" in target;
+): target is typeof DeviceOrientationEvent & {
+  requestPermission: () => Promise<PermissionState>;
+} => "requestPermission" in target;
 
 const isEventListener = (value: unknown): value is EventListener => typeof value === "function";
 

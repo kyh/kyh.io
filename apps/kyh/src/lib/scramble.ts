@@ -11,7 +11,8 @@ export const TICK_MS = 50;
 export const LAG = 10;
 export const SPELL = 5;
 
-const widthOf = (text: string, reading: string) => Math.max(graphemesOf(text).length, graphemesOf(reading).length);
+const widthOf = (text: string, reading: string) =>
+  Math.max(graphemesOf(text).length, graphemesOf(reading).length);
 
 /** How many ticks `text` takes to settle completely over `reading`. */
 export const scrambleTicks = (text: string, reading = "") => widthOf(text, reading) + LAG;

@@ -51,7 +51,10 @@ const twoBoxes = () => {
 };
 
 test("every face and ink line is stamped with the start of where it stands, a part by its place in town", () => {
-  assert.deepEqual([...stamps(raise(twoBoxes(), westThenEast))].toSorted((a, b) => a - b), [1, 2]);
+  assert.deepEqual(
+    [...stamps(raise(twoBoxes(), westThenEast))].toSorted((a, b) => a - b),
+    [1, 2],
+  );
 });
 
 test("what's never built is stamped as built long ago", () => {

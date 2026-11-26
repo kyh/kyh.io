@@ -5,7 +5,8 @@ export const asRecord = (value: JsonValue | undefined) =>
   value instanceof Object && !Array.isArray(value) ? value : null;
 
 /** Whether a wire value is a string. */
-export const isText = (value: JsonValue | undefined): value is string => value?.constructor === String;
+export const isText = (value: JsonValue | undefined): value is string =>
+  value?.constructor === String;
 
 /** A string, or "". */
 export const asText = (value: JsonValue | undefined) => (isText(value) ? value : "");

@@ -61,7 +61,6 @@ const MAX_INSTRUCTIONS = 40_000;
 const NOISE =
   /<(?<tag>command-args|command-message|command-name|local-command-caveat|local-command-stderr|local-command-stdout|system-reminder|task-notification)>[\s\S]*?<\/\k<tag>>/gu;
 
-
 const LINE =
   /^[\s*`_-]*(?<key>confidence|idiomatic|simplicity|scope|risk|fix)[\s*`_]*:\s*(?<value>.+)$/gimu;
 
