@@ -8,6 +8,7 @@ Personal monorepo. Uses pnpm workspaces + turborepo.
 pnpm dev:<app>     # dev server for specific app
 pnpm build         # build all
 pnpm verify        # typecheck · lint · format · test — run before committing
+pnpm smoke         # drive a running apps/kyh: pages, Markdown, llms.txt, OpenAPI, 404s (CI runs it)
 pnpm lint          # lint all (oxlint)
 pnpm typecheck     # typecheck all
 pnpm format        # check formatting (oxfmt); format:fix writes
