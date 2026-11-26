@@ -1,11 +1,76 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { chromium, type Browser, type Page } from "playwright";
 
-const require = createRequire(import.meta.url);
+interface CityDebug {
+  intro: { built: number; clock: number; phase: string };
+  view: { x: number; z: number; zoom: number };
+}
+
+declare global {
+  interface Window {
+    __ogBuilt?: number;
+    __ogHeld?: boolean;
+    __ogStep: (ms: number) => void;
+    city: { debug: () => CityDebug; look: (x: number, z: number, zoom: number) => void };
+    scene: { duration: number; render: (ms: number) => void };
+    sceneReady: Promise<unknown>;
+  }
+}
+
+type Step = (ms: number) => Promise<void>;
+
+interface Click {
+  atMs: number;
+  dy: number;
+  x: number;
+  y?: number;
+}
+
+interface SceneApp {
+  crf: number;
+  out: string;
+  posterMs: number;
+  scene: string;
+}
+
+interface CaptureApp {
+  aim?: (page: Page) => Promise<number>;
+  block?: string[];
+  clicks?: Click[];
+  colorScheme?: "dark" | "light";
+  crf: number;
+  frame?: (page: Page, index: number) => Promise<void>;
+  frames: number;
+  gl?: boolean;
+  out: string;
+  path: string;
+  poster: number;
+  prepare?: (page: Page, step: Step) => Promise<void>;
+  seed?: number;
+  skipMs?: number;
+  timers?: boolean;
+  url: string;
+}
+
+type App = CaptureApp | SceneApp;
+
+const inOrder = async <T>(
+  items: readonly T[],
+  run: (item: T, index: number) => Promise<unknown>,
+) => {
+  await items.reduce<Promise<unknown>>(async (done, item, index) => {
+    await done;
+
+    return run(item, index);
+  }, Promise.resolve());
+};
+
+const times = (count: number) => Array.from({ length: count }, (_, index) => index);
+
 const root = path.resolve(import.meta.dirname, "..");
 
 const WIDTH = 1200;
@@ -13,7 +78,7 @@ const HEIGHT = 630;
 const FPS = 30;
 const FADE = 18;
 
-const KYH_THEMES = {
+const KYH_THEMES: Record<string, string> = {
   christmas: "Christmas",
   classic: "Light / Dark",
   easter: "Easter",
@@ -35,13 +100,14 @@ const kyhLogo = () => {
   ];
 
   return `<svg viewBox="0 0 1026 1026" width="100" height="100" aria-hidden="true"><rect width="1026" height="1026" rx="100" fill="var(--body-color-highlighted)"/><g fill="var(--bg-highlighted)" transform="translate(272 257)">${paths
-    .map(({ groups }) => `<path d="${groups?.d}" transform="${groups?.transform}"/>`)
+    .map(({ groups }) => `<path d="${groups?.d ?? ""}" transform="${groups?.transform ?? ""}"/>`)
     .join("")}</g></svg>`;
 };
 
-const kyhOverlay = ({ logo, line }) => {
+const kyhOverlay = ({ logo, line }: { line: string; logo: string }) => {
   const city = getComputedStyle(document.querySelector(".city") ?? document.body);
-  const sea = city.getPropertyValue("--city-sea").trim() || "#e7e7e7";
+  const seaColor = city.getPropertyValue("--city-sea").trim();
+  const sea = seaColor === "" ? "#e7e7e7" : seaColor;
   const style = document.createElement("style");
   style.textContent = `
     .fixed:has(.dock-item), div.fixed.top-6.right-6, div.fixed.top-0.left-0, .city > .absolute.top-6.left-6, nextjs-portal { display: none !important; }
@@ -54,22 +120,27 @@ const kyhOverlay = ({ logo, line }) => {
   const mark = document.createElement("div");
   mark.id = "og-mark";
   mark.innerHTML = `${logo}<p></p>`;
-  mark.querySelector("p").textContent = line;
+  const caption = mark.querySelector("p");
+
+  if (caption !== null) {
+    caption.textContent = line;
+  }
+
   document.body.append(mark);
 };
 
 const KYH_MARK_FADE = 0.8;
 
-const kyhFrame = ({ fade, seconds }) => {
+const kyhFrame = ({ fade, seconds }: { fade: number; seconds: number }) => {
   const { intro, view } = window.city.debug();
-  window.__ogBuilt ??= intro.built;
+  const built = (window.__ogBuilt ??= intro.built);
 
-  if (!window.__ogHeld && intro.phase === "building" && intro.clock >= intro.built - 0.25) {
+  if (window.__ogHeld !== true && intro.phase === "building" && intro.clock >= intro.built - 0.25) {
     window.__ogHeld = true;
     window.city.look(view.x, view.z, view.zoom);
   }
 
-  const shown = Math.min(1, Math.max(0, (seconds - (window.__ogBuilt - 0.5)) / fade));
+  const shown = Math.min(1, Math.max(0, (seconds - (built - 0.5)) / fade));
   const mark = document.querySelector("#og-mark");
 
   if (mark instanceof HTMLElement) {
@@ -77,7 +148,7 @@ const kyhFrame = ({ fade, seconds }) => {
   }
 };
 
-const kyhCapture = (theme) => ({
+const kyhCapture = (theme: string): CaptureApp => ({
   block: ["party.vibedgames.com", "vercel-scripts.com", "vitals.vercel-insights.com"],
   colorScheme: "light",
   crf: 33,
@@ -92,29 +163,26 @@ const kyhCapture = (theme) => ({
     await menu.waitFor({ timeout: 120_000 });
     await menu.focus();
     await page.keyboard.press("ArrowUp");
-
-    for (let i = 0; i < 20; i += 1) {
-      await step(33);
-    }
+    await inOrder(times(20), () => step(33));
 
     await page.evaluate((name) => {
-      document.querySelector(`[role=menuitemradio][aria-label="${name}"]`)?.click();
-    }, KYH_THEMES[theme]);
+      document.querySelector<HTMLElement>(`[role=menuitemradio][aria-label="${name}"]`)?.click();
+    }, KYH_THEMES[theme] ?? "");
 
-    for (let i = 0; i < 180; i += 1) {
-      await step(33);
-    }
+    await inOrder(times(180), () => step(33));
 
     await page.mouse.move(0, 0);
-    await page.evaluate(() => document.querySelector('a[href="/showcase"]')?.click());
+    await page.evaluate(() => {
+      document.querySelector<HTMLElement>('a[href="/showcase"]')?.click();
+    });
 
-    for (let i = 0; !(await page.evaluate(() => "city" in window)); i += 1) {
-      if (i > 600) {
-        throw new Error("The showcase never made its town (is apps/kyh running under next dev?)");
-      }
-
-      await page.waitForTimeout(200);
-    }
+    await page
+      .waitForFunction(() => "city" in window, null, { polling: 200, timeout: 120_000 })
+      .catch((error: unknown) => {
+        throw new Error("The showcase never made its town (is apps/kyh running under next dev?)", {
+          cause: error,
+        });
+      });
 
     await page.evaluate(kyhOverlay, { line: "Kaiyu's corner of the internet", logo: kyhLogo() });
   },
@@ -133,13 +201,13 @@ const stonksPriceY = () => {
       canvas.height,
     );
 
-    let best = { green: 100, y: null };
-    const data = column?.data ?? [];
+    let best: { green: number; y: number | null } = { green: 100, y: null };
+    const data = column?.data ?? new Uint8ClampedArray();
 
     for (let i = 0; i < data.length; i += 4) {
-      const green = data[i + 1] - data[i];
+      const green = (data[i + 1] ?? 0) - (data[i] ?? 0);
 
-      if (data[i + 3] > 200 && green > best.green) {
+      if ((data[i + 3] ?? 0) > 200 && green > best.green) {
         best = { green, y: Math.floor(i / 4 / (column?.width ?? 1)) / scale };
       }
     }
@@ -152,7 +220,7 @@ const stonksPriceY = () => {
   return 315;
 };
 
-const apps = {
+const apps: Record<string, (theme: string) => App> = {
   autoplay: () => ({
     crf: 30,
     out: "apps/autoplay/public/og/og",
@@ -191,7 +259,15 @@ const apps = {
   }),
 };
 
-const steppedClock = ({ seed, timers }) => {
+interface PendingTimer {
+  args: unknown[];
+  due: number;
+  every: number;
+  id: number;
+  run: TimerHandler;
+}
+
+const steppedClock = ({ seed, timers }: { seed: number | undefined; timers: boolean }) => {
   if (seed !== undefined) {
     let state = seed;
     Math.random = () => {
@@ -204,22 +280,16 @@ const steppedClock = ({ seed, timers }) => {
   const RealDate = Date;
   const base = RealDate.now();
   let elapsed = 0;
-  let frames = [];
-  let pending = [];
+  let frames: { id: number; onFrame: FrameRequestCallback }[] = [];
+  let pending: PendingTimer[] = [];
   let nextId = 1;
 
-  class SteppedDate extends RealDate {
-    constructor(...args) {
-      if (args.length === 0) {
-        super(base + elapsed);
-      } else {
-        super(...args);
-      }
-    }
-    static now() {
-      return base + elapsed;
-    }
-  }
+  const SteppedDate = new Proxy(RealDate, {
+    construct: (target, args, newTarget) =>
+      Reflect.construct(target, args.length === 0 ? [base + elapsed] : args, newTarget),
+    get: (target, key, receiver) =>
+      key === "now" ? () => base + elapsed : Reflect.get(target, key, receiver),
+  });
 
   window.Date = SteppedDate;
   performance.now = () => elapsed;
@@ -234,14 +304,20 @@ const steppedClock = ({ seed, timers }) => {
     frames = frames.filter((entry) => entry.id !== id);
   };
 
-  const clear = (id) => {
+  const clear = (id?: number) => {
     pending = pending.filter((timer) => timer.id !== id);
   };
 
   if (timers) {
-    const schedule = (run, delay, every, args) => {
+    const schedule = (
+      run: TimerHandler,
+      delay: number | undefined,
+      every: boolean,
+      args: unknown[],
+    ) => {
       nextId += 1;
-      const wait = Math.max(0, Number(delay) || 0);
+      const requested = Number(delay);
+      const wait = Math.max(0, Number.isNaN(requested) ? 0 : requested);
       pending.push({
         args,
         due: elapsed + wait,
@@ -253,35 +329,41 @@ const steppedClock = ({ seed, timers }) => {
       return nextId;
     };
 
-    window.setTimeout = (run, delay, ...args) => schedule(run, delay, false, args);
-    window.setInterval = (run, delay, ...args) => schedule(run, delay, true, args);
-    window.clearTimeout = clear;
-    window.clearInterval = clear;
+    Object.assign(window, {
+      clearInterval: clear,
+      clearTimeout: clear,
+      setInterval: (run: TimerHandler, delay?: number, ...args: unknown[]) =>
+        schedule(run, delay, true, args),
+      setTimeout: (run: TimerHandler, delay?: number, ...args: unknown[]) =>
+        schedule(run, delay, false, args),
+    });
   }
 
-  const runTimers = (until) => {
+  const runTimers = (until: number) => {
     for (let fired = 0; fired < 10_000; fired += 1) {
-      let next = null;
+      let next: PendingTimer | null = null;
 
       for (const timer of pending) {
-        if (timer.due <= until && (!next || timer.due < next.due)) {
+        if (timer.due <= until && (next === null || timer.due < next.due)) {
           next = timer;
         }
       }
 
-      if (!next) {
+      if (next === null) {
         return;
       }
 
       elapsed = Math.max(elapsed, next.due);
 
-      if (next.every) {
+      if (next.every > 0) {
         next.due += next.every;
       } else {
         clear(next.id);
       }
 
-      next.run(...next.args);
+      if (next.run instanceof Function) {
+        Reflect.apply(next.run, window, next.args);
+      }
     }
   };
 
@@ -298,11 +380,20 @@ const steppedClock = ({ seed, timers }) => {
   };
 };
 
-const ffmpeg = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args]);
+const ffmpeg = (args: string[]) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args]);
 
 const H264 = ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-profile:v", "high", "-preset", "slow"];
 
-const encode = ({ crf, fade = 0, frames, framesDir, out, poster }) => {
+interface Encode {
+  crf: number;
+  fade?: number;
+  frames: number;
+  framesDir: string;
+  out: string;
+  poster: number;
+}
+
+const encode = ({ crf, fade = 0, frames, framesDir, out, poster }: Encode) => {
   const input = ["-framerate", String(FPS), "-i", path.join(framesDir, "f%04d.png")];
   const scale = `scale=${WIDTH}:${HEIGHT}:flags=lanczos`;
 
@@ -345,23 +436,13 @@ const encode = ({ crf, fade = 0, frames, framesDir, out, poster }) => {
   ]);
 };
 
-const loadPlaywright = () => {
-  try {
-    return require("playwright");
-  } catch {
-    throw new Error(
-      "Playwright isn't installed here. Point NODE_PATH at a global install (NODE_PATH=$(npm root -g)) or `npm i -g playwright`.",
-    );
-  }
-};
-
-const shoot = (page, framesDir, frame) =>
+const shoot = (page: Page, framesDir: string, frame: number) =>
   page.screenshot({
     path: path.join(framesDir, `f${String(frame).padStart(4, "0")}.png`),
     timeout: 300_000,
   });
 
-const recordScene = async (browser, app, framesDir) => {
+const recordScene = async (browser: Browser, app: SceneApp, framesDir: string) => {
   const page = await browser.newPage({
     deviceScaleFactor: 2,
     viewport: { height: HEIGHT, width: WIDTH },
@@ -377,15 +458,20 @@ const recordScene = async (browser, app, framesDir) => {
 
   const frames = Math.round((duration / 1000) * FPS);
 
-  for (let frame = 0; frame < frames; frame += 1) {
-    await page.evaluate((ms) => window.scene.render(ms), (frame * 1000) / FPS);
+  await inOrder(times(frames), async (frame) => {
+    await page.evaluate(
+      (ms) => {
+        window.scene.render(ms);
+      },
+      (frame * 1000) / FPS,
+    );
     await shoot(page, framesDir, frame);
-  }
+  });
 
   return { frames, poster: Math.min(frames - 1, Math.round((app.posterMs / 1000) * FPS)) };
 };
 
-const recordCapture = async (browser, app, framesDir) => {
+const recordCapture = async (browser: Browser, app: CaptureApp, framesDir: string) => {
   const context = await browser.newContext({
     colorScheme: app.colorScheme ?? "dark",
     deviceScaleFactor: 2,
@@ -393,12 +479,14 @@ const recordCapture = async (browser, app, framesDir) => {
     viewport: { height: HEIGHT, width: WIDTH },
   });
 
-  for (const host of app.block ?? []) {
-    await context.route(
-      (target) => target.hostname.endsWith(host),
-      (route) => route.abort(),
-    );
-  }
+  await Promise.all(
+    (app.block ?? []).map((host) =>
+      context.route(
+        (target) => target.hostname.endsWith(host),
+        (route) => route.abort(),
+      ),
+    ),
+  );
 
   await context.addInitScript(steppedClock, { seed: app.seed, timers: app.timers ?? false });
   const page = await context.newPage();
@@ -406,56 +494,69 @@ const recordCapture = async (browser, app, framesDir) => {
   await page.waitForTimeout(3000);
   let clock = 0;
 
-  const step = async (ms) => {
-    for (const click of app.clicks ?? []) {
-      if (click.atMs >= clock && click.atMs < clock + ms) {
-        await page.mouse.click(click.x, click.y ?? (await app.aim(page)) + click.dy);
-      }
-    }
+  const aim = async (click: Click) => click.y ?? (await (app.aim?.(page) ?? 0)) + click.dy;
+
+  const step: Step = async (ms) => {
+    const due = (app.clicks ?? []).filter(
+      (click) => click.atMs >= clock && click.atMs < clock + ms,
+    );
+
+    await inOrder(due, async (click) => {
+      await page.mouse.click(click.x, await aim(click));
+    });
 
     clock += ms;
-    await page.evaluate((by) => window.__ogStep(by), ms);
+    await page.evaluate((by) => {
+      window.__ogStep(by);
+    }, ms);
+  };
+
+  const skip = async (until: number): Promise<void> => {
+    if (clock >= until) {
+      return;
+    }
+
+    await step(1000 / FPS);
+    await page.waitForTimeout(10);
+    await skip(until);
   };
 
   await step(0);
   await page.waitForTimeout(1000);
   await app.prepare?.(page, step);
 
-  while (clock < (app.skipMs ?? 0)) {
-    await step(1000 / FPS);
-    await page.waitForTimeout(10);
-  }
+  await skip(app.skipMs ?? 0);
 
-  for (let frame = 0; frame < app.frames + FADE; frame += 1) {
-    await app.frame?.(page, frame, app.frames);
+  await inOrder(times(app.frames + FADE), async (frame) => {
+    await app.frame?.(page, frame);
     await step(1000 / FPS);
     await shoot(page, framesDir, frame);
-  }
+  });
 
   await context.close();
 
   return { fade: FADE, frames: app.frames, poster: app.poster };
 };
 
-const record = async (name, app) => {
+const record = async (name: string, app: App) => {
   const out = path.resolve(root, app.out);
   mkdirSync(path.dirname(out), { recursive: true });
   const framesDir = mkdtempSync(path.join(tmpdir(), `og-${name}-`));
-  const { chromium } = loadPlaywright();
-  let args = [];
+  let args: string[] = [];
 
-  if (app.scene) {
+  if ("scene" in app) {
     args = ["--allow-file-access-from-files"];
-  } else if (app.gl) {
+  } else if (app.gl === true) {
     args = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
   }
 
   const browser = await chromium.launch({ args });
 
   try {
-    const shot = app.scene
-      ? await recordScene(browser, app, framesDir)
-      : await recordCapture(browser, app, framesDir);
+    const shot =
+      "scene" in app
+        ? await recordScene(browser, app, framesDir)
+        : await recordCapture(browser, app, framesDir);
 
     encode({ crf: app.crf, framesDir, out, ...shot });
   } finally {
@@ -468,28 +569,28 @@ const record = async (name, app) => {
 };
 
 const main = async () => {
-  const [name, variant] = process.argv.slice(2);
+  const [name = "", variant] = process.argv.slice(2);
   const entry = apps[name];
 
-  if (!entry) {
+  if (entry === undefined) {
     throw new Error(`Usage: pnpm og:video <${Object.keys(apps).join("|")}> [kyh theme|all]`);
   }
 
   if (name !== "kyh") {
-    await record(name, entry());
+    await record(name, entry(""));
 
     return;
   }
 
   const themes = variant === "all" ? Object.keys(KYH_THEMES) : [variant ?? "classic"];
 
-  for (const theme of themes) {
+  await inOrder(themes, async (theme) => {
     if (!(theme in KYH_THEMES)) {
       throw new Error(`No kyh theme "${theme}": ${Object.keys(KYH_THEMES).join(", ")}`);
     }
 
     await record(`kyh-${theme}`, kyhCapture(theme));
-  }
+  });
 };
 
 await main();

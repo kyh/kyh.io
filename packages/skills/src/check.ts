@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
+import { externalSkillsSchema, readJson, skillLockSchema } from "./schemas.ts";
 
 const here = import.meta.dirname;
 const lockPath = path.join(homedir(), ".agents", ".skill-lock.json");
@@ -10,12 +11,10 @@ const extPath = path.join(here, "..", "external-skills.json");
 
 const NON_REPO = new Set(["motion"]);
 
-const read = (p) => JSON.parse(readFileSync(p, "utf-8"));
-
-const skillNames = (dir) =>
+const skillNames = (dir: string) =>
   existsSync(dir) ? readdirSync(dir).filter((n) => !n.startsWith(".")) : [];
 
-const report = (title, items) => {
+const report = (title: string, items: string[]) => {
   if (items.length === 0) {
     return;
   }
@@ -27,30 +26,38 @@ const report = (title, items) => {
   }
 };
 
-export const check = () => {
-  let lock;
-
+const readLock = () => {
   try {
-    lock = read(lockPath);
+    return readJson(lockPath, skillLockSchema);
   } catch {
+    return null;
+  }
+};
+
+export const check = () => {
+  const lock = readLock();
+
+  if (lock === null) {
     console.log(`skip: no lock at ${lockPath} (nothing to check on this machine)`);
 
     return true;
   }
 
-  const ext = read(extPath);
-  const listed = new Map(Object.entries(ext.skills ?? {}));
+  const ext = readJson(extPath, externalSkillsSchema);
+  const listed = new Map(Object.entries(ext.skills));
   const unmanaged = new Set(ext.unmanaged);
 
-  const installed = Object.entries(lock.skills ?? {}).filter(
-    ([name, meta]) => !NON_REPO.has(name) && meta.source,
+  const installed = Object.entries(lock.skills).flatMap(([name, meta]) =>
+    NON_REPO.has(name) || meta.source === undefined || meta.source === ""
+      ? []
+      : [{ name, source: meta.source }],
   );
 
-  const installedNames = new Set(installed.map(([name]) => name));
+  const installedNames = new Set(installed.map(({ name }) => name));
 
   const unlisted = installed
-    .filter(([name, meta]) => !listed.get(meta.source)?.includes(name))
-    .map(([name, meta]) => `${meta.source}: ${name}`)
+    .filter(({ name, source }) => listed.get(source)?.includes(name) !== true)
+    .map(({ name, source }) => `${source}: ${name}`)
     .toSorted();
 
   const notInstalled = [...listed]
@@ -69,18 +76,18 @@ export const check = () => {
   report("NOT INSTALLED (listed in external-skills.json, missing locally):", notInstalled);
   report("UNTRACKED in ~/.claude/skills (not in ~/.agents, so not in the lock):", untracked);
 
-  if (unlisted.length || notInstalled.length || untracked.length) {
+  if (unlisted.length > 0 || notInstalled.length > 0 || untracked.length > 0) {
     console.error("\nfail: external-skills.json is out of sync.");
 
-    if (unlisted.length) {
+    if (unlisted.length > 0) {
       console.error("  - list the skills you want to keep; `kyh-skills install` removes the rest.");
     }
 
-    if (notInstalled.length) {
+    if (notInstalled.length > 0) {
       console.error("  - run `kyh-skills install` to install them, or drop them from the list.");
     }
 
-    if (untracked.length) {
+    if (untracked.length > 0) {
       console.error(
         "  - reinstall them via `npx skills add <repo> -g -s <skill> -y` and list them," +
           " or, if a skill has no repo, list it under `unmanaged`.",

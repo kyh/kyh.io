@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { check } from "./check.mjs";
-import { install } from "./install.mjs";
+import { check } from "./check.ts";
+import { install } from "./install.ts";
 
 const USAGE = `Usage: npx @kyh/skills@latest <command>
 

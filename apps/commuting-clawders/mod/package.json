@@ -15,7 +15,7 @@
     "lint": "oxlint --report-unused-disable-directives",
     "test": "tsx --test \"test/*.test.mts\"",
     "test:mod": "claude plugin test .",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.world.json && tsc --noEmit -p tsconfig.plugin.json",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.world.json && tsc --noEmit -p tsconfig.plugin.json",
     "validate": "claude plugin validate .",
     "world": "vite"
   },

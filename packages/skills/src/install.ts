@@ -5,8 +5,24 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
+import { z } from "zod";
+import {
+  claudeConfigSchema,
+  externalSkillsSchema,
+  mcpSchema,
+  messageOf,
+  packageBinSchema,
+  readJson,
+  skillLockSchema,
+  stateSchema,
+} from "./schemas.ts";
 
 const require = createRequire(import.meta.url);
+
+const closeEventSchema = z.tuple([z.number().nullable()]).rest(z.unknown());
+
+const codeOf = (error: unknown) =>
+  error instanceof Error && "code" in error ? String(error.code) : messageOf(error);
 
 const PKG_ROOT = path.resolve(import.meta.dirname, "..");
 const HOME = os.homedir();
@@ -18,16 +34,16 @@ const TAG = "[@kyh/skills]";
 let DRY = false;
 let failed = false;
 
-const log = (...a) => console.log(TAG, ...a);
+const log = (...a: unknown[]) => console.log(TAG, ...a);
 
-const warn = (...a) => {
+const warn = (...a: unknown[]) => {
   failed = true;
   console.warn(TAG, ...a);
 };
 
-const tilde = (p) => p.replace(HOME, "~");
+const tilde = (p: string) => p.replace(HOME, "~");
 
-const backupPath = (p) => {
+const backupPath = (p: string) => {
   let bak = `${p}.bak`;
 
   if (fs.existsSync(bak)) {
@@ -37,7 +53,7 @@ const backupPath = (p) => {
   return bak;
 };
 
-const sameContent = (a, b) => {
+const sameContent: (a: string, b: string) => boolean = (a, b) => {
   try {
     const sa = fs.statSync(a);
     const sb = fs.statSync(b);
@@ -62,7 +78,7 @@ const sameContent = (a, b) => {
   }
 };
 
-const samePath = (a, b) => {
+const samePath = (a: string, b: string) => {
   try {
     return fs.realpathSync(a) === fs.realpathSync(b);
   } catch {
@@ -70,7 +86,7 @@ const samePath = (a, b) => {
   }
 };
 
-const isSymlink = (p) => {
+const isSymlink = (p: string) => {
   try {
     return fs.lstatSync(p).isSymbolicLink();
   } catch {
@@ -78,7 +94,7 @@ const isSymlink = (p) => {
   }
 };
 
-const ensureDir = (p) => {
+const ensureDir = (p: string) => {
   if (DRY || fs.existsSync(p)) {
     return;
   }
@@ -86,7 +102,7 @@ const ensureDir = (p) => {
   fs.mkdirSync(p, { recursive: true });
 };
 
-const hashFile = (p) => {
+const hashFile = (p: string) => {
   try {
     return createHash("sha256").update(fs.readFileSync(p)).digest("hex");
   } catch {
@@ -96,15 +112,13 @@ const hashFile = (p) => {
 
 const readState = () => {
   try {
-    const { claudeMd = null, skills = [] } = JSON.parse(fs.readFileSync(STATE_FILE, "utf-8"));
-
-    return { claudeMd, skills };
+    return readJson(STATE_FILE, stateSchema);
   } catch {
     return { claudeMd: null, skills: [] };
   }
 };
 
-const writeState = (state) => {
+const writeState = (state: z.infer<typeof stateSchema>) => {
   if (DRY) {
     return;
   }
@@ -115,7 +129,7 @@ const writeState = (state) => {
 
 const LEGACY_TARGET = /[\\/](?:@kyh[\\/]skills|packages[\\/]skills)[\\/]/u;
 
-const isLegacyLink = (p) => {
+const isLegacyLink = (p: string) => {
   if (!isSymlink(p)) {
     return false;
   }
@@ -123,16 +137,18 @@ const isLegacyLink = (p) => {
   return LEGACY_TARGET.test(path.resolve(path.dirname(p), fs.readlinkSync(p)));
 };
 
-const remove = (p, why) => {
+const remove = (p: string, why: string) => {
   if (DRY) {
-    return log(`would remove ${why} ${tilde(p)}`);
+    log(`would remove ${why} ${tilde(p)}`);
+
+    return;
   }
 
   fs.rmSync(p, { force: true, recursive: true });
   log(`removed ${why} ${tilde(p)}`);
 };
 
-const copy = (src, dest, owned) => {
+const copy = (src: string, dest: string, owned: boolean) => {
   const rel = tilde(dest);
 
   if (!isSymlink(dest) && sameContent(src, dest)) {
@@ -152,7 +168,9 @@ const copy = (src, dest, owned) => {
       const bak = backupPath(dest);
 
       if (DRY) {
-        return log(`would back up ${rel} -> ${path.basename(bak)} and copy`);
+        log(`would back up ${rel} -> ${path.basename(bak)} and copy`);
+
+        return;
       }
 
       fs.renameSync(dest, bak);
@@ -161,7 +179,9 @@ const copy = (src, dest, owned) => {
   }
 
   if (DRY) {
-    return log(`would copy ${rel}`);
+    log(`would copy ${rel}`);
+
+    return;
   }
 
   ensureDir(path.dirname(dest));
@@ -169,7 +189,7 @@ const copy = (src, dest, owned) => {
   log(`copied ${rel}`);
 };
 
-const link = (src, dest) => {
+const link = (src: string, dest: string) => {
   const rel = tilde(dest);
 
   try {
@@ -181,7 +201,9 @@ const link = (src, dest) => {
       }
 
       if (DRY) {
-        return log(`would relink ${rel}`);
+        log(`would relink ${rel}`);
+
+        return;
       }
 
       fs.unlinkSync(dest);
@@ -192,7 +214,9 @@ const link = (src, dest) => {
 
       return;
     } else if (DRY) {
-      return log(`would link ${rel}`);
+      log(`would link ${rel}`);
+
+      return;
     }
 
     try {
@@ -200,14 +224,14 @@ const link = (src, dest) => {
       log(`linked ${rel}`);
     } catch (error) {
       fs.cpSync(src, dest, { recursive: true });
-      log(`copied ${rel} (symlink failed: ${error.code ?? error.message})`);
+      log(`copied ${rel} (symlink failed: ${codeOf(error)})`);
     }
   } catch (error) {
-    warn(`failed to place ${rel}: ${error.message}`);
+    warn(`failed to place ${rel}: ${messageOf(error)}`);
   }
 };
 
-const pruneDangling = (dir, owner) => {
+const pruneDangling = (dir: string, owner: string) => {
   if (!fs.existsSync(dir)) {
     return;
   }
@@ -279,10 +303,10 @@ const installOwnSkills = () => {
 const skillsBin = () => {
   try {
     const pkgJson = require.resolve("skills/package.json");
-    const { bin } = JSON.parse(fs.readFileSync(pkgJson, "utf-8"));
+    const { bin } = readJson(pkgJson, packageBinSchema);
     const rel = bin instanceof Object ? bin.skills : bin;
 
-    if (rel) {
+    if (rel !== undefined && rel !== "") {
       return path.join(path.dirname(pkgJson), rel);
     }
   } catch {
@@ -292,16 +316,17 @@ const skillsBin = () => {
   return null;
 };
 
-const runSkills = async (args, bin, okMessage) => {
-  const [cmd, argv, useShell] = bin
-    ? [process.execPath, [bin, ...args], false]
-    : ["npx", ["-y", "skills", ...args], process.platform === "win32"];
+const runSkills = async (args: string[], bin: string | null, okMessage: string) => {
+  const [cmd, argv, useShell] =
+    bin === null
+      ? ["npx", ["-y", "skills", ...args], process.platform === "win32"]
+      : [process.execPath, [bin, ...args], false];
 
   const child = spawn(cmd, argv, { shell: useShell, stdio: "ignore" });
   const label = `skills ${args.slice(0, 2).join(" ")}`;
 
   try {
-    const [code] = await once(child, "close");
+    const [code] = closeEventSchema.parse(await once(child, "close"));
 
     if (code === 0) {
       log(okMessage);
@@ -309,48 +334,70 @@ const runSkills = async (args, bin, okMessage) => {
       warn(`${label} failed (exit ${code})`);
     }
   } catch (error) {
-    warn(`${label} failed: ${error.message}`);
+    warn(`${label} failed: ${messageOf(error)}`);
   }
 };
 
-const addRepo = ([repo, names], bin) =>
+const addRepo = ([repo, names]: [string, string[]], bin: string | null) =>
   runSkills(
     ["add", repo, "-g", ...names.flatMap((n) => ["-s", n]), "-y"],
     bin,
     `added ${names.length} skills from ${repo}`,
   );
 
-const unlistedSkills = (manifest) => {
-  let lock;
-
+const unlistedSkills = (manifest: Map<string, string[]>) => {
   try {
-    lock = JSON.parse(fs.readFileSync(path.join(AGENTS_DIR, ".skill-lock.json"), "utf-8"));
+    const lock = readJson(path.join(AGENTS_DIR, ".skill-lock.json"), skillLockSchema);
+
+    return Object.entries(lock.skills)
+      .filter(([name, meta]) => manifest.get(meta.source ?? "")?.includes(name) !== true)
+      .map(([name]) => name);
   } catch {
     return [];
   }
-
-  return Object.entries(lock.skills ?? {})
-    .filter(([name, meta]) => !manifest.get(meta.source)?.includes(name))
-    .map(([name]) => name);
 };
 
-const pool = async (items, limit, fn) => {
+const pool = async <T>(items: T[], limit: number, fn: (item: T) => Promise<void>) => {
   let next = 0;
 
-  const worker = async () => {
-    while (next < items.length) {
-      const item = items[next];
-      next += 1;
-      await fn(item);
+  const worker: () => Promise<void> = async () => {
+    const item = items[next];
+
+    if (next >= items.length || item === undefined) {
+      return;
     }
+
+    next += 1;
+    await fn(item);
+    await worker();
   };
 
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 };
 
+const readManifest = (file: string) => {
+  try {
+    return new Map(Object.entries(readJson(file, externalSkillsSchema).skills));
+  } catch (error) {
+    warn(`could not parse external-skills.json: ${messageOf(error)}`);
+
+    return null;
+  }
+};
+
+const concurrencyOf = (fallback = 1) => {
+  const raw = Number(process.env.KYH_SKILLS_CONCURRENCY);
+
+  return Math.max(1, Number.isNaN(raw) || raw === 0 ? fallback : raw);
+};
+
 const installExternalSkills = async () => {
-  if (process.env.KYH_SKILLS_NO_EXTERNAL) {
-    return log("KYH_SKILLS_NO_EXTERNAL set — skipping external skills.");
+  const skip = process.env.KYH_SKILLS_NO_EXTERNAL;
+
+  if (skip !== undefined && skip !== "") {
+    log("KYH_SKILLS_NO_EXTERNAL set — skipping external skills.");
+
+    return;
   }
 
   const file = path.join(PKG_ROOT, "external-skills.json");
@@ -359,28 +406,27 @@ const installExternalSkills = async () => {
     return;
   }
 
-  let manifest;
+  const manifest = readManifest(file);
 
-  try {
-    const { skills } = JSON.parse(fs.readFileSync(file, "utf-8"));
-    manifest = new Map(Object.entries(skills ?? {}));
-  } catch (error) {
-    return warn(`could not parse external-skills.json: ${error.message}`);
+  if (manifest === null) {
+    return;
   }
 
-  const invalid = [...manifest].filter(([, names]) => !Array.isArray(names) || names.length === 0);
+  const invalid = [...manifest].filter(([, names]) => names.length === 0);
 
-  if (invalid.length) {
-    return warn(
+  if (invalid.length > 0) {
+    warn(
       `external-skills.json: each repo needs a non-empty skill list (${invalid.map(([r]) => r).join(", ")}).`,
     );
+
+    return;
   }
 
   if (manifest.size === 0) {
     return;
   }
 
-  const limit = Math.max(1, Number(process.env.KYH_SKILLS_CONCURRENCY) || manifest.size);
+  const limit = concurrencyOf(manifest.size);
 
   if (DRY) {
     log(
@@ -388,7 +434,7 @@ const installExternalSkills = async () => {
     );
     const stale = unlistedSkills(manifest);
 
-    if (stale.length) {
+    if (stale.length > 0) {
       log(`would remove unlisted skills: ${stale.join(", ")}`);
     }
 
@@ -397,7 +443,7 @@ const installExternalSkills = async () => {
 
   const bin = skillsBin();
 
-  if (!bin) {
+  if (bin === null) {
     spawnSync("npx", ["-y", "skills", "--help"], {
       shell: process.platform === "win32",
       stdio: "ignore",
@@ -409,7 +455,7 @@ const installExternalSkills = async () => {
 
   const stale = unlistedSkills(manifest);
 
-  if (stale.length) {
+  if (stale.length > 0) {
     await runSkills(
       ["remove", ...stale, "-g", "-y"],
       bin,
@@ -447,6 +493,30 @@ const installClaudeMd = () => {
   writeState({ ...readState(), claudeMd: hashFile(src) });
 };
 
+const readServers = (src: string) => {
+  try {
+    return readJson(src, mcpSchema).mcpServers;
+  } catch (error) {
+    warn(`could not parse mcp.json: ${messageOf(error)}`);
+
+    return null;
+  }
+};
+
+const readClaudeConfig = (dest: string) => {
+  if (!fs.existsSync(dest)) {
+    return claudeConfigSchema.parse({});
+  }
+
+  try {
+    return readJson(dest, claudeConfigSchema);
+  } catch (error) {
+    warn(`~/.claude.json is not valid JSON — skipping MCP merge (${messageOf(error)}).`);
+
+    return null;
+  }
+};
+
 const mergeMcp = () => {
   const src = path.join(PKG_ROOT, "mcp.json");
 
@@ -454,12 +524,10 @@ const mergeMcp = () => {
     return;
   }
 
-  let servers;
+  const servers = readServers(src);
 
-  try {
-    servers = JSON.parse(fs.readFileSync(src, "utf-8")).mcpServers || {};
-  } catch (error) {
-    return warn(`could not parse mcp.json: ${error.message}`);
+  if (servers === null) {
+    return;
   }
 
   const names = Object.keys(servers);
@@ -469,17 +537,13 @@ const mergeMcp = () => {
   }
 
   const dest = path.join(HOME, ".claude.json");
-  let config = {};
+  const config = readClaudeConfig(dest);
 
-  if (fs.existsSync(dest)) {
-    try {
-      config = JSON.parse(fs.readFileSync(dest, "utf-8"));
-    } catch (error) {
-      return warn(`~/.claude.json is not valid JSON — skipping MCP merge (${error.message}).`);
-    }
+  if (config === null) {
+    return;
   }
 
-  const existing = config.mcpServers || {};
+  const existing = config.mcpServers ?? {};
   const added = names.filter((n) => !(n in existing));
 
   if (added.length === 0) {
@@ -489,22 +553,24 @@ const mergeMcp = () => {
   config.mcpServers = { ...servers, ...existing };
 
   if (DRY) {
-    return log(`would add mcpServers to ~/.claude.json: ${added.join(", ")}`);
+    log(`would add mcpServers to ~/.claude.json: ${added.join(", ")}`);
+
+    return;
   }
 
   fs.writeFileSync(dest, `${JSON.stringify(config, null, 2)}\n`);
   log(`added mcpServers to ~/.claude.json: ${added.join(", ")}`);
 };
 
-const step = async (fn) => {
+const step = async (fn: () => void | Promise<void>) => {
   try {
     await fn();
   } catch (error) {
-    warn(`${fn.name} failed: ${error?.message ?? error}`);
+    warn(`${fn.name} failed: ${messageOf(error)}`);
   }
 };
 
-export const install = async ({ dry = false } = {}) => {
+export const install = async ({ dry = false }: { dry?: boolean } = {}) => {
   DRY = dry;
   failed = false;
 

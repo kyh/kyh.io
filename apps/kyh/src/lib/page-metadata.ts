@@ -7,7 +7,7 @@ import { DEFAULT_THEME, themeOf } from "@/themes";
 /**
  * The site's clip, every page's `og:video`: the showcase's opening as it
  * really runs, `/showcase` recorded in headless Chromium from its first frame
- * by `pnpm og:video kyh <theme>` (scripts/og-video.mjs). The town goes up
+ * by `pnpm og:video kyh <theme>` (scripts/og-video.ts). The town goes up
  * storey by storey from downtown out while the camera pulls back, its trucks
  * drive off and its traffic comes out, and the site's logo comes up over the
  * finished town with "Kaiyu's corner of the internet" under it. One clip per
