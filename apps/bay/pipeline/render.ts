@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { createServer } from "vite";
 import { GRID, frameRect, frameSize, parseKey } from "../src/lib/grid";
 import { paintOrder } from "../src/lib/paint";
-import { PROJECTION, ROOT, chromeOptions, cli, ensureDirs, renderPath } from "./common";
+import { PROJECTION, ROOT, chromeOptions, inOrder, cli, ensureDirs, renderPath } from "./common";
 import { frameScene } from "./source";
 
 const SUPERSAMPLE = 2;
@@ -45,9 +45,11 @@ try {
   });
   await page.goto(`${server.resolvedUrls?.local[0] ?? "http://localhost:5173/"}render.html`);
   await page.waitForFunction(() => "bay" in window);
-  await page.evaluate((s) => window.bay.setup(s), size * SUPERSAMPLE);
+  await page.evaluate((s) => {
+    window.bay.setup(s);
+  }, size * SUPERSAMPLE);
 
-  for (const [n, tile] of todo.entries()) {
+  await inOrder([...todo.entries()], async ([n, tile]) => {
     const { i, j } = parseKey(tile);
     const started = Date.now();
     const rect = frameRect(GRID, i, j);
@@ -67,7 +69,7 @@ try {
     console.log(
       `[${n + 1}/${todo.length}] ${tile}: ${scene.buildings.length} buildings, ${scene.trees.length} trees in ${((Date.now() - started) / 1000).toFixed(1)}s`,
     );
-  }
+  });
 } finally {
   await browser.close();
   await server.close();

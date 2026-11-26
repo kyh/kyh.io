@@ -59,7 +59,7 @@ export const cli = () => {
 
   let keys: string[];
 
-  if (values.tiles) {
+  if (given(values.tiles)) {
     const [from, to] = values.tiles.split(":").map((s) => s.split(",").map(Number));
 
     if (!(from?.length === 2 && to?.length === 2) || [...from, ...to].some(Number.isNaN)) {
@@ -78,14 +78,49 @@ export const cli = () => {
     keys = areaTiles(box);
   }
 
-  const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY;
+  const limit = given(values.limit) ? Number(values.limit) : Number.POSITIVE_INFINITY;
   const from: Layer = values.from === "paint" ? "paint" : "render";
 
   return { discard: values.discard, force: values.force, from, go: values.go, keys, limit };
 };
 
+export const given = (value: string | undefined): value is string =>
+  value !== undefined && value !== "";
+
+export const inOrder = async <T>(items: Iterable<T>, step: (item: T) => Promise<void>) => {
+  const it = items[Symbol.iterator]();
+
+  const advance: () => Promise<void> = async () => {
+    const got = it.next();
+
+    if (got.done !== true) {
+      await step(got.value);
+      await advance();
+    }
+  };
+
+  await advance();
+};
+
+const cellsOf = (rect: { x: number; y: number; w: number; h: number }) => {
+  const c = GRID.core;
+  const cells: { i: number; j: number }[] = [];
+
+  for (let j = Math.floor(rect.y / c); j * c < rect.y + rect.h; j += 1) {
+    for (let i = Math.floor(rect.x / c); i * c < rect.x + rect.w; i += 1) {
+      cells.push({ i, j });
+    }
+  }
+
+  return cells;
+};
+
 export const ensureDirs = async () => {
-  await Promise.all([RENDERS, MOSAIC, PUBLIC].map((d) => mkdir(d, { recursive: true })));
+  await Promise.all(
+    [RENDERS, MOSAIC, PUBLIC].map(async (d) => {
+      await mkdir(d, { recursive: true });
+    }),
+  );
 };
 
 export const renderPath = (key: string) => path.join(RENDERS, `${key}.png`);
@@ -109,7 +144,7 @@ const readCore = async (key: string, layer: Layer) => {
   const c = GRID.core;
   const m = GRID.margin;
 
-  return sharp(file)
+  return await sharp(file)
     .extract({ height: c, left: m, top: m, width: c })
     .ensureAlpha()
     .raw()
@@ -122,25 +157,28 @@ export const readMosaic = async (
 ) => {
   const c = GRID.core;
   const out = new Uint8Array(rect.w * rect.h * 4);
+  const cells = cellsOf(rect);
 
-  for (let j = Math.floor(rect.y / c); j * c < rect.y + rect.h; j += 1) {
-    for (let i = Math.floor(rect.x / c); i * c < rect.x + rect.w; i += 1) {
-      const tile = await readCore(tileKey(i, j), layer);
+  const tiles = await Promise.all(
+    cells.map(async ({ i, j }) => await readCore(tileKey(i, j), layer)),
+  );
 
-      if (!tile) {
-        continue;
-      }
+  for (const [n, { i, j }] of cells.entries()) {
+    const tile = tiles[n];
 
-      const left = Math.max(rect.x, i * c);
-      const right = Math.min(rect.x + rect.w, (i + 1) * c);
+    if (!tile) {
+      continue;
+    }
 
-      for (let y = Math.max(rect.y, j * c); y < Math.min(rect.y + rect.h, (j + 1) * c); y += 1) {
-        const from = ((y - j * c) * c + (left - i * c)) * 4;
-        out.set(
-          tile.subarray(from, from + (right - left) * 4),
-          ((y - rect.y) * rect.w + (left - rect.x)) * 4,
-        );
-      }
+    const left = Math.max(rect.x, i * c);
+    const right = Math.min(rect.x + rect.w, (i + 1) * c);
+
+    for (let y = Math.max(rect.y, j * c); y < Math.min(rect.y + rect.h, (j + 1) * c); y += 1) {
+      const from = ((y - j * c) * c + (left - i * c)) * 4;
+      out.set(
+        tile.subarray(from, from + (right - left) * 4),
+        ((y - rect.y) * rect.w + (left - rect.x)) * 4,
+      );
     }
   }
 
@@ -165,48 +203,43 @@ export const writeMosaic = async (
 ) => {
   const c = GRID.core;
   const image = sharp(Buffer.from(pixels), { raw: { channels: 4, height: rect.h, width: rect.w } });
-  const writes: Promise<unknown>[] = [];
 
-  for (let j = Math.floor(rect.y / c); j * c < rect.y + rect.h; j += 1) {
-    for (let i = Math.floor(rect.x / c); i * c < rect.x + rect.w; i += 1) {
-      const left = Math.max(rect.x, i * c);
-      const top = Math.max(rect.y, j * c);
-      const right = Math.min(rect.x + rect.w, (i + 1) * c);
-      const bottom = Math.min(rect.y + rect.h, (j + 1) * c);
-      const tile = await readMosaic({ h: c, w: c, x: i * c, y: j * c });
+  const writeCell = async ({ i, j }: { i: number; j: number }) => {
+    const left = Math.max(rect.x, i * c);
+    const top = Math.max(rect.y, j * c);
+    const right = Math.min(rect.x + rect.w, (i + 1) * c);
+    const bottom = Math.min(rect.y + rect.h, (j + 1) * c);
+    const tile = await readMosaic({ h: c, w: c, x: i * c, y: j * c });
 
-      const part = await image
-        .clone()
-        .extract({
-          height: bottom - top,
-          left: left - rect.x,
-          top: top - rect.y,
-          width: right - left,
-        })
-        .raw()
-        .toBuffer();
+    const part = await image
+      .clone()
+      .extract({
+        height: bottom - top,
+        left: left - rect.x,
+        top: top - rect.y,
+        width: right - left,
+      })
+      .raw()
+      .toBuffer();
 
-      const w = right - left;
+    const w = right - left;
 
-      for (let y = 0; y < bottom - top; y += 1) {
-        const from = y * w * 4;
-        tile.set(part.subarray(from, from + w * 4), ((top - j * c + y) * c + (left - i * c)) * 4);
-      }
-
-      writes.push(
-        sharp(Buffer.from(tile), { raw: { channels: 4, height: c, width: c } })
-          .png()
-          .toFile(mosaicPath(tileKey(i, j))),
-      );
+    for (let y = 0; y < bottom - top; y += 1) {
+      const from = y * w * 4;
+      tile.set(part.subarray(from, from + w * 4), ((top - j * c + y) * c + (left - i * c)) * 4);
     }
-  }
 
-  await Promise.all(writes);
+    await sharp(Buffer.from(tile), { raw: { channels: 4, height: c, width: c } })
+      .png()
+      .toFile(mosaicPath(tileKey(i, j)));
+  };
+
+  await Promise.all(cellsOf(rect).map(writeCell));
 };
 
 export const chromeOptions = () => ({
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
-  ...(process.env.CHROME_PATH
+  ...(given(process.env.CHROME_PATH)
     ? { executablePath: process.env.CHROME_PATH }
     : { channel: "chrome" }),
 });

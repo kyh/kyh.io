@@ -3,7 +3,7 @@ import { copyFile, mkdir, readFile, readdir, rename, rm, writeFile } from "node:
 import path from "node:path";
 import sharp from "sharp";
 import { nextWave, paintOrder } from "../src/lib/paint";
-import { DATA, MOSAIC, cli, ensureDirs, isPainted, renderPath } from "./common";
+import { DATA, MOSAIC, cli, ensureDirs, given, inOrder, isPainted, renderPath } from "./common";
 import { SIZE, foldIn, png, prepare, visibleMask } from "./frames";
 import { PROMPT } from "./prompt";
 
@@ -28,11 +28,11 @@ const jobDirs = async () => {
 
 const folded: string[] = [];
 
-for (const tile of await jobDirs()) {
+const fold = async (tile: string) => {
   const output = path.join(JOBS, tile, "output.png");
 
   if (!existsSync(output)) {
-    continue;
+    return;
   }
 
   const body = await readFile(output);
@@ -41,32 +41,39 @@ for (const tile of await jobDirs()) {
     .metadata()
     .catch(() => null);
 
-  if (!(meta?.width && meta.height)) {
+  if (meta === null || meta.width === 0 || meta.height === 0) {
     console.error(`${tile}: output.png isn't a picture; leaving the job for another go`);
-    continue;
+
+    return;
   }
 
   if (Math.abs(meta.width / meta.height - 1) > 0.02) {
     console.error(
       `${tile}: output.png is ${meta.width}×${meta.height}, not square; leaving it for another go`,
     );
-    continue;
+
+    return;
   }
 
   await foldIn(tile, body);
   await rename(output, path.join(OUTPUTS, `${tile}.png`));
   await rm(path.join(JOBS, tile), { force: true, recursive: true });
   folded.push(tile);
-}
+};
+
+await inOrder(await jobDirs(), fold);
 
 if (folded.length > 0) {
   console.log(`folded in ${folded.length}: ${folded.join(", ")}`);
 }
 
 if (discard) {
-  for (const tile of await jobDirs()) {
-    await rm(path.join(JOBS, tile), { force: true, recursive: true });
-  }
+  const dropped = await jobDirs();
+  await Promise.all(
+    dropped.map(async (tile) => {
+      await rm(path.join(JOBS, tile), { force: true, recursive: true });
+    }),
+  );
 
   console.log("dropped the waiting jobs");
 }
@@ -92,15 +99,14 @@ const brief = (tile: string, share: number) =>
     "",
   ].join("\n");
 
-const paintedTiles = new Set<string>();
+const mosaicFiles = await readdir(MOSAIC);
+const mosaicTiles = mosaicFiles.map((name) => name.replace(/\.png$/u, ""));
 
-for (const name of await readdir(MOSAIC)) {
-  const tile = name.replace(/\.png$/u, "");
+const painted = await Promise.all(
+  mosaicTiles.map(async (tile) => !(force && keys.includes(tile)) && (await isPainted(tile))),
+);
 
-  if (!(force && keys.includes(tile)) && (await isPainted(tile))) {
-    paintedTiles.add(tile);
-  }
-}
+const paintedTiles = new Set(mosaicTiles.filter((_, n) => painted[n] === true));
 
 const order = paintOrder(keys, { i: 0, j: 0 });
 const left = order.filter((k) => !paintedTiles.has(k));
@@ -111,11 +117,13 @@ const waiting = await jobDirs();
 if (waiting.length === 0) {
   wave = nextWave(left, paintedTiles, Math.min(WAVE, limit));
 
-  if (wave.length > 0 && process.env.STYLE_REFERENCE) {
-    await copyFile(process.env.STYLE_REFERENCE, path.join(JOBS, "reference.png"));
+  const reference = process.env.STYLE_REFERENCE;
+
+  if (wave.length > 0 && given(reference)) {
+    await copyFile(reference, path.join(JOBS, "reference.png"));
   }
 
-  for (const tile of wave) {
+  const layOut = async (tile: string) => {
     if (!existsSync(renderPath(tile))) {
       throw new Error(`${tile} isn't rendered yet: run render for the area first`);
     }
@@ -130,7 +138,9 @@ if (waiting.length === 0) {
     }
 
     await writeFile(path.join(dir, "job.md"), brief(tile, share));
-  }
+  };
+
+  await inOrder(wave, layOut);
 }
 
 const pending = await jobDirs();

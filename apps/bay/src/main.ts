@@ -1,7 +1,7 @@
 import "./style.css";
 import { toCanvas } from "./lib/grid";
 import { PLACES } from "./lib/places";
-import { levelFor, parentOf, tilesIn } from "./lib/pyramid";
+import { ManifestSchema, levelFor, parentOf, tilesIn } from "./lib/pyramid";
 import type { Manifest } from "./lib/pyramid";
 import {
   clampView,
@@ -15,7 +15,12 @@ import {
 } from "./lib/view";
 import type { View } from "./lib/view";
 
-const BASE = (import.meta.env.VITE_TILES_URL || "/data").replace(/\/$/u, "");
+const TILES_URL = import.meta.env.VITE_TILES_URL;
+
+const BASE = (TILES_URL === undefined || TILES_URL === "" ? "/data" : TILES_URL).replace(
+  /\/$/u,
+  "",
+);
 
 const byId = <T extends HTMLElement>(id: string, kind: new () => T) => {
   const el = document.querySelector(`#${id}`);
@@ -37,7 +42,9 @@ if (!(ctx && mini)) {
 }
 
 const response = await fetch(`${BASE}/manifest.json`).catch(() => null);
-const manifest: Manifest | null = response?.ok ? await response.json().catch(() => null) : null;
+const body: unknown = response?.ok === true ? await response.json().catch(() => null) : null;
+const parsed = ManifestSchema.safeParse(body);
+const manifest: Manifest | null = parsed.success ? parsed.data : null;
 
 if (!manifest) {
   byId("empty", HTMLDivElement).hidden = false;
@@ -75,7 +82,7 @@ const load = (level: number, x: number, y: number) => {
     return bitmaps.get(key);
   }
 
-  if (!has[level]?.has(`${x}_${y}`)) {
+  if (has[level]?.has(`${x}_${y}`) !== true) {
     bitmaps.set(key, "missing");
 
     return "missing";
@@ -385,22 +392,28 @@ canvas.addEventListener("dblclick", (e) => {
   flyTo({ ...at, zoom: view.zoom * 2 });
 });
 
-const zoomBy = (factor: number) => flyTo({ ...view, zoom: view.zoom * factor });
+const zoomBy = (factor: number) => {
+  flyTo({ ...view, zoom: view.zoom * factor });
+};
 
-byId("zoom-in", HTMLButtonElement).addEventListener("click", () => zoomBy(2));
+byId("zoom-in", HTMLButtonElement).addEventListener("click", () => {
+  zoomBy(2);
+});
 
-byId("zoom-out", HTMLButtonElement).addEventListener("click", () => zoomBy(0.5));
+byId("zoom-out", HTMLButtonElement).addEventListener("click", () => {
+  zoomBy(0.5);
+});
 
-byId("home", HTMLButtonElement).addEventListener("click", () => flyTo(home()));
+byId("home", HTMLButtonElement).addEventListener("click", () => {
+  flyTo(home());
+});
 
-byId("share", HTMLButtonElement).addEventListener("click", async () => {
+byId("share", HTMLButtonElement).addEventListener("click", () => {
   const url = `${location.origin}${location.pathname}${formatHash(view)}`;
 
-  try {
-    await navigator.clipboard.writeText(url);
-  } catch {
+  navigator.clipboard.writeText(url).catch(() => {
     location.hash = formatHash(view);
-  }
+  });
 });
 
 window.addEventListener("keydown", (e) => {
@@ -478,7 +491,9 @@ const loop = (now: number) => {
     dirty = false;
     draw();
     window.clearTimeout(hashTimer);
-    hashTimer = window.setTimeout(() => history.replaceState(null, "", formatHash(view)), 300);
+    hashTimer = window.setTimeout(() => {
+      history.replaceState(null, "", formatHash(view));
+    }, 300);
   }
 
   requestAnimationFrame(loop);

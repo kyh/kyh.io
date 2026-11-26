@@ -597,7 +597,11 @@ const render = (projection: Projection, rect: Rect, frame: Frame) => {
 
   scene.traverse((o) => {
     if (o instanceof Mesh || o instanceof LineSegments) {
-      o.geometry.dispose();
+      const geometry: unknown = o.geometry;
+
+      if (geometry instanceof Geometry) {
+        geometry.dispose();
+      }
 
       for (const material of [o.material].flat()) {
         if (material instanceof MeshLambertMaterial) {

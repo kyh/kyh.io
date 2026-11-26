@@ -38,24 +38,28 @@ const HIGHEST = 600;
 const STEP = 4;
 
 const get = async (url: string) => {
-  for (let attempt = 1; ; attempt += 1) {
+  const attempt: (n: number) => Promise<Buffer> = async (n) => {
     const res = await fetch(url, { redirect: "follow" });
 
     if (res.ok) {
       return Buffer.from(await res.arrayBuffer());
     }
 
-    if (attempt === 3 || res.status < 500) {
+    if (n === 3 || res.status < 500) {
       throw new Error(`${url}: ${res.status}`);
     }
-  }
+
+    return await attempt(n + 1);
+  };
+
+  return await attempt(1);
 };
 
 const cached = async (name: string, fetcher: () => Promise<Buffer>) => {
   const file = path.join(SOURCE, name);
 
   if (existsSync(file)) {
-    return readFile(file);
+    return await readFile(file);
   }
 
   const body = await fetcher();
@@ -68,17 +72,17 @@ const cached = async (name: string, fetcher: () => Promise<Buffer>) => {
 const once = <T>(make: (key: string) => Promise<T>) => {
   const known = new Map<string, Promise<T>>();
 
-  return (key: string) => {
+  return async (key: string) => {
     const hit = known.get(key);
 
-    if (hit) {
-      return hit;
+    if (hit !== undefined) {
+      return await hit;
     }
 
     const made = make(key);
     known.set(key, made);
 
-    return made;
+    return await made;
   };
 };
 
@@ -162,7 +166,7 @@ const groundTile = (proj: Projection) => {
     const body = await cached(`ofm/${VECTOR_ZOOM}/${key}.pbf`, async () => {
       const url = await vectorTemplate("planet");
 
-      return get(
+      return await get(
         url.replace("{z}", String(VECTOR_ZOOM)).replace("{x}", String(x)).replace("{y}", String(y)),
       );
     });
@@ -215,8 +219,12 @@ const groundTile = (proj: Projection) => {
 const demTile = once(async (key) => {
   const [x, y] = key.split("_");
 
-  const body = await cached(`dem/${TERRAIN_ZOOM}/${key}.png`, () =>
-    get(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${TERRAIN_ZOOM}/${x}/${y}.png`),
+  const body = await cached(
+    `dem/${TERRAIN_ZOOM}/${key}.png`,
+    async () =>
+      await get(
+        `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${TERRAIN_ZOOM}/${x}/${y}.png`,
+      ),
   );
 
   return new Uint8Array(await sharp(body).removeAlpha().raw().toBuffer());
@@ -238,16 +246,19 @@ const elevation = async (lat: number, lon: number) => {
 const terrainFor: (proj: Projection, box: Box) => Promise<Terrain> = async (proj, box) => {
   const cols = Math.ceil((box.e1 - box.e0) / STEP) + 1;
   const rows = Math.ceil((box.n1 - box.n0) / STEP) + 1;
-  const heights: number[] = [];
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const e = box.e0 + col * STEP;
-      const n = box.n0 + row * STEP;
+  const points = Array.from({ length: rows * cols }, (_, k) => ({
+    e: box.e0 + (k % cols) * STEP,
+    n: box.n0 + Math.floor(k / cols) * STEP,
+  }));
+
+  const heights = await Promise.all(
+    points.map(async ({ e, n }) => {
       const { lat, lon } = toLatLon(proj, e, n);
-      heights.push((await elevation(lat, lon)) + curvature(e, n));
-    }
-  }
+
+      return (await elevation(lat, lon)) + curvature(e, n);
+    }),
+  );
 
   return { cols, e0: box.e0, heights, n0: box.n0, rows, step: STEP };
 };
@@ -286,9 +297,7 @@ const socrata = async (dataset: string, within: Within, select: string, key: str
   const body = await cached(
     `datasf/${dataset}/${hash(select)}/${VECTOR_ZOOM}_${key}.json`,
     async () => {
-      const rows: unknown[] = [];
-
-      for (let offset = 0; ; offset += 50_000) {
+      const from: (offset: number) => Promise<unknown[]> = async (offset) => {
         const query = new URLSearchParams({
           $limit: "50000",
           $offset: String(offset),
@@ -299,12 +308,11 @@ const socrata = async (dataset: string, within: Within, select: string, key: str
 
         const page = await get(`https://data.sf.gov/resource/${dataset}.json?${query}`);
         const list = Rows.parse(JSON.parse(page.toString()));
-        rows.push(...list);
 
-        if (list.length < 50_000) {
-          return Buffer.from(JSON.stringify(rows));
-        }
-      }
+        return list.length < 50_000 ? list : [...list, ...(await from(offset + 50_000))];
+      };
+
+      return Buffer.from(JSON.stringify(await from(0)));
     },
   );
 
@@ -318,14 +326,19 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
   const buildings: Building[] = [];
   const ids = new Set<string>();
 
-  for (const key of keys) {
-    const rows = await socrata(
-      "ynuv-fyni",
-      byGeometry("shape"),
-      "sf16_bldgid,median_1st_m,peak_1st_m,shape AS footprint",
-      key,
-    );
+  const pages = await Promise.all(
+    keys.map(
+      async (key) =>
+        await socrata(
+          "ynuv-fyni",
+          byGeometry("shape"),
+          "sf16_bldgid,median_1st_m,peak_1st_m,shape AS footprint",
+          key,
+        ),
+    ),
+  );
 
+  for (const rows of pages) {
     for (const row of rows) {
       const parsed = Footprint.safeParse(row);
 
@@ -375,9 +388,13 @@ const buildingsIn = async (proj: Projection, keys: string[], box: Box, terrain: 
 const streetTreesIn = async (proj: Projection, keys: string[], box: Box) => {
   const trees: Tree[] = [];
 
-  for (const key of keys) {
-    const rows = await socrata("tkzw-k3nq", byNumbers, "treeid,latitude,longitude,mapdbh", key);
+  const pages = await Promise.all(
+    keys.map(
+      async (key) => await socrata("tkzw-k3nq", byNumbers, "treeid,latitude,longitude,mapdbh", key),
+    ),
+  );
 
+  for (const rows of pages) {
     for (const row of rows) {
       const parsed = StreetTree.safeParse(row);
 

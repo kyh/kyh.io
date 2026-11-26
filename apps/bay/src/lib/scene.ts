@@ -189,7 +189,7 @@ export const scatterTrees = (areas: Area[], box: Box) => {
     const gap = SPACING[a.kind];
     const [outer] = a.rings;
 
-    if (!(gap && outer)) {
+    if (gap === undefined || outer === undefined) {
       continue;
     }
 

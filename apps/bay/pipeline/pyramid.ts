@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { GRID, parseKey, tileKey } from "../src/lib/grid";
 import { TILE, levelCount, parentOf } from "../src/lib/pyramid";
 import type { Manifest } from "../src/lib/pyramid";
-import { MOSAIC, PROJECTION, PUBLIC, RENDERS, cli, isPainted, readMosaic } from "./common";
+import { MOSAIC, PROJECTION, PUBLIC, RENDERS, cli, inOrder, isPainted, readMosaic } from "./common";
 
 const { from } = cli();
 const files = await readdir(from === "paint" ? MOSAIC : RENDERS).catch(() => []);
@@ -35,13 +35,11 @@ const rectOf = (tiles: { i: number; j: number }[]) => {
 
 const extent = rectOf(cores);
 
-const painted: { i: number; j: number }[] = [];
+const isShown = await Promise.all(
+  cores.map(async (t) => from === "render" || (await isPainted(tileKey(t.i, t.j)))),
+);
 
-for (const t of cores) {
-  if (from === "render" || (await isPainted(tileKey(t.i, t.j)))) {
-    painted.push(t);
-  }
-}
+const painted = cores.filter((_, n) => isShown[n] === true);
 
 const bounds = rectOf(painted.length > 0 ? painted : cores);
 
@@ -49,7 +47,11 @@ await mkdir(PUBLIC, { recursive: true });
 
 const old = await readdir(PUBLIC);
 
-await Promise.all(old.map((f) => rm(path.join(PUBLIC, f), { force: true, recursive: true })));
+await Promise.all(
+  old.map(async (f) => {
+    await rm(path.join(PUBLIC, f), { force: true, recursive: true });
+  }),
+);
 
 const file = (level: number, x: number, y: number) =>
   path.join(PUBLIC, String(level), `${x}_${y}.webp`);
@@ -58,20 +60,28 @@ const levels: string[][] = [[]];
 
 await mkdir(path.join(PUBLIC, "0"), { recursive: true });
 
+const bottom: { x: number; y: number }[] = [];
+
 for (let y = Math.floor(extent.y / TILE); y * TILE < extent.y + extent.h; y += 1) {
   for (let x = Math.floor(extent.x / TILE); x * TILE < extent.x + extent.w; x += 1) {
-    const pixels = await readMosaic({ h: TILE, w: TILE, x: x * TILE, y: y * TILE }, from);
-
-    if (pixels.some((v, n) => n % 4 === 3 && v > 0)) {
-      await sharp(Buffer.from(pixels), { raw: { channels: 4, height: TILE, width: TILE } })
-        .webp({ quality: 88 })
-        .toFile(file(0, x, y));
-      levels[0]?.push(`${x}_${y}`);
-    }
+    bottom.push({ x, y });
   }
 }
 
-for (let level = 1; level < levelCount(extent); level += 1) {
+await inOrder(bottom, async ({ x, y }) => {
+  const pixels = await readMosaic({ h: TILE, w: TILE, x: x * TILE, y: y * TILE }, from);
+
+  if (pixels.some((v, n) => n % 4 === 3 && v > 0)) {
+    await sharp(Buffer.from(pixels), { raw: { channels: 4, height: TILE, width: TILE } })
+      .webp({ quality: 88 })
+      .toFile(file(0, x, y));
+    levels[0]?.push(`${x}_${y}`);
+  }
+});
+
+const above = Array.from({ length: Math.max(0, levelCount(extent) - 1) }, (_, n) => n + 1);
+
+await inOrder(above, async (level) => {
   await mkdir(path.join(PUBLIC, String(level)), { recursive: true });
 
   const parents = new Set(
@@ -85,7 +95,7 @@ for (let level = 1; level < levelCount(extent); level += 1) {
 
   levels.push([...parents]);
 
-  for (const k of parents) {
+  await inOrder([...parents], async (k) => {
     const { i, j } = parseKey(k);
 
     const children = [0, 1]
@@ -112,8 +122,8 @@ for (let level = 1; level < levelCount(extent); level += 1) {
       .resize(TILE, TILE)
       .webp({ quality: 88 })
       .toFile(file(level, i, j));
-  }
-}
+  });
+});
 
 const manifest: Manifest = {
   bounds,

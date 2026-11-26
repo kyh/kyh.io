@@ -4,11 +4,13 @@ import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
 import { paintOrder } from "../src/lib/paint";
-import { DATA, cli, ensureDirs, isPainted, renderPath } from "./common";
+import { DATA, cli, ensureDirs, given, inOrder, isPainted, renderPath } from "./common";
 import { SIZE, foldIn, png, prepare } from "./frames";
 import { PROMPT } from "./prompt";
 
-const MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
+const MODEL = given(process.env.OPENAI_IMAGE_MODEL)
+  ? process.env.OPENAI_IMAGE_MODEL
+  : "gpt-image-1";
 
 const COST_PER_TILE = 0.2;
 const OUTPUTS = path.join(DATA, "paint");
@@ -17,7 +19,7 @@ const { force, go, keys, limit } = cli();
 const done = await Promise.all(keys.map(async (k) => !force && (await isPainted(k))));
 
 const todo = paintOrder(
-  keys.filter((_, n) => !done[n]),
+  keys.filter((_, n) => done[n] !== true),
   { i: 0, j: 0 },
 ).slice(0, limit);
 
@@ -40,7 +42,7 @@ if (!go) {
 
 const key = process.env.OPENAI_API_KEY;
 
-if (!key) {
+if (!given(key)) {
   throw new Error("OPENAI_API_KEY is missing: see .env.example");
 }
 
@@ -48,7 +50,8 @@ await ensureDirs();
 
 await mkdir(OUTPUTS, { recursive: true });
 
-const reference = process.env.STYLE_REFERENCE ? await readFile(process.env.STYLE_REFERENCE) : null;
+const referencePath = process.env.STYLE_REFERENCE;
+const reference = given(referencePath) ? await readFile(referencePath) : null;
 
 const Answer = z.object({ data: z.array(z.object({ b64_json: z.string() })).min(1) });
 
@@ -74,7 +77,7 @@ const edit = async (image: Buffer, mask: Buffer | null) => {
     form.append("mask", new Blob([new Uint8Array(mask)], { type: "image/png" }), "mask.png");
   }
 
-  for (let attempt = 1; ; attempt += 1) {
+  const send: (attempt: number) => Promise<Buffer> = async (attempt) => {
     const res = await fetch("https://api.openai.com/v1/images/edits", {
       body: form,
       headers: { authorization: `Bearer ${key}` },
@@ -84,7 +87,7 @@ const edit = async (image: Buffer, mask: Buffer | null) => {
     if (res.ok) {
       const b64 = Answer.parse(await res.json()).data[0]?.b64_json;
 
-      if (!b64) {
+      if (!given(b64)) {
         throw new Error("the model answered with no image");
       }
 
@@ -98,10 +101,14 @@ const edit = async (image: Buffer, mask: Buffer | null) => {
     }
 
     await sleep(2 ** attempt * 5000);
-  }
+
+    return await send(attempt + 1);
+  };
+
+  return await send(1);
 };
 
-for (const [n, tile] of todo.entries()) {
+const paintTile = async ([n, tile]: [number, string]) => {
   const started = Date.now();
   const { image, mask, share } = await prepare(tile, force);
   const output = await edit(await png(image), share > 0 ? await png(mask) : null);
@@ -110,4 +117,6 @@ for (const [n, tile] of todo.entries()) {
   console.log(
     `[${n + 1}/${todo.length}] ${tile}: ${Math.round(share * 100)}% context, ${((Date.now() - started) / 1000).toFixed(0)}s`,
   );
-}
+};
+
+await inOrder([...todo.entries()], paintTile);

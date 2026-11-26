@@ -5,8 +5,8 @@ import { readMosaic, renderPath, writeMosaic } from "./common";
 
 export const SIZE = frameSize(GRID);
 
-export const png = (pixels: Uint8Array) =>
-  sharp(Buffer.from(pixels), { raw: { channels: 4, height: SIZE, width: SIZE } })
+export const png = async (pixels: Uint8Array) =>
+  await sharp(Buffer.from(pixels), { raw: { channels: 4, height: SIZE, width: SIZE } })
     .png()
     .toBuffer();
 

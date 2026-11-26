@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Projection } from "./grid";
 
 export const TILE = 512;
@@ -9,6 +10,19 @@ export interface Manifest {
   projection: Projection;
   levels: string[][];
 }
+
+export const ManifestSchema: z.ZodType<Manifest> = z.object({
+  bounds: z.object({ h: z.number(), w: z.number(), x: z.number(), y: z.number() }),
+  levels: z.array(z.array(z.string())),
+  projection: z.object({
+    anchor: z.object({ height: z.number(), lat: z.number(), lon: z.number() }),
+    azimuth: z.number(),
+    mpp: z.number(),
+    tilt: z.number(),
+  }),
+  tile: z.number(),
+  updated: z.string(),
+});
 
 export const levelFor = (zoom: number, levels: number) =>
   Math.max(0, Math.min(levels - 1, Math.floor(Math.log2(1 / zoom))));

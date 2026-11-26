@@ -18,7 +18,9 @@ import {
   toLocal,
 } from "./grid";
 
-const near = (a: number, b: number, eps = 1e-3) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
+const near = (a: number, b: number, eps = 1e-3) => {
+  assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
+};
 
 test("the anchor is the canvas origin", () => {
   const at = toCanvas(SF, SF.anchor.lat, SF.anchor.lon, SF.anchor.height);
