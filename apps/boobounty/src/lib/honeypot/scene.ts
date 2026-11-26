@@ -164,9 +164,11 @@ const floorDecal = (size: number, texture: CanvasTexture, y: number) => {
   return mesh;
 };
 
+const isMesh = (object: Object3D): object is Mesh => object instanceof Mesh;
+
 const disposeTree = (root: Object3D) => {
   root.traverse((object) => {
-    if (!(object instanceof Mesh)) {
+    if (!isMesh(object)) {
       return;
     }
 
