@@ -43,4 +43,4 @@ https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 Skills, agents, MCP, and global instructions live in `@kyh/skills`. Install to
 symlink them into `~/.claude` and `~/.codex`:
 
-- `npm i -g @kyh/skills`
+- `npx @kyh/skills@latest install`
