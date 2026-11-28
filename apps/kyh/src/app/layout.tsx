@@ -86,6 +86,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang="en" className={GeistSans.className} suppressHydrationWarning>
     <head>
       <ThemeScript />
+      <link rel="me" href="https://portfolios.here/kaiyu-hsu" />
     </head>
     <body>
       <JsonLd />
