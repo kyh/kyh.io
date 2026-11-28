@@ -3,6 +3,7 @@ import { absoluteUrl, agentRoutes, siteConfig, siteRoutes } from "@/lib/config";
 import { projects, workHistory } from "@/lib/data";
 import { buildHomeMarkdown } from "@/lib/markdown";
 import { OPENAPI_PATH } from "@/lib/openapi";
+import { social } from "@/lib/social";
 
 const routeLine = (route: SiteRoute) =>
   `- [${route.title}](${absoluteUrl(route.path)}): ${route.description}`;
@@ -49,6 +50,15 @@ ${agentRoutes.map(routeLine).join("\n")}
 ## Projects
 
 ${projects.map(projectLine).join("\n")}
+
+## Contact
+
+- [Email](mailto:${siteConfig.email}): ${siteConfig.email}
+- [Twitter](${social.twitter}): @kaiyuhsu
+- [GitHub](${social.github}): @kyh
+- [Dribbble](${social.dribbble}): @kaiyuhsu
+- [LinkedIn](${social.linkedin}): @kyh
+- [Contact page](${absoluteUrl("/contact")}): every channel, and what to send.
 
 ## Optional
 

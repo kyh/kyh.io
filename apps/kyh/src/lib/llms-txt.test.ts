@@ -4,6 +4,7 @@ import test from "node:test";
 import { absoluteUrl, agentRoutes, siteRoutes } from "./config";
 import { buildLlmsTxt } from "./llms-txt";
 import { projects } from "./data";
+import { social } from "./social";
 
 test("follows the llms.txt shape: one h1, then a blockquote summary", () => {
   const lines = buildLlmsTxt().split("\n");
@@ -42,4 +43,15 @@ test("names the developer resources an agent would search for", () => {
   assert.ok(llms.includes("https://www.npmjs.com/package/kyh"));
   assert.ok(llms.includes("https://www.npmjs.com/package/@kyh/skills"));
   assert.ok(llms.includes("https://github.com/kyh/kyh.io"));
+});
+
+test("says how to reach him without another fetch", () => {
+  const llms = buildLlmsTxt();
+
+  assert.match(llms, /^## Contact$/mu);
+  assert.ok(llms.includes("mailto:kai@kyh.io"));
+
+  for (const url of Object.values(social)) {
+    assert.ok(llms.includes(url), `${url} is not listed`);
+  }
 });

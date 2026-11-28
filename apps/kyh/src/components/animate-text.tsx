@@ -132,15 +132,9 @@ export const ScrambleText = ({
       }}
       {...props}
     >
-      <span
-        ref={shownRef}
-        data-scramble
-        data-pending={trigger === "hover" ? undefined : ""}
-        aria-hidden
-      >
+      <span ref={shownRef} data-scramble data-pending={trigger === "hover" ? undefined : ""}>
         {text}
       </span>
-      <span className="sr-only">{text}</span>
     </Element>
   );
 };
