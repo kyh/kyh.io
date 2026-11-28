@@ -136,11 +136,9 @@ export const ScrambleText = ({
         ref={shownRef}
         data-scramble
         data-pending={trigger === "hover" ? undefined : ""}
-        aria-hidden
       >
         {text}
       </span>
-      <span className="sr-only">{text}</span>
     </Element>
   );
 };
