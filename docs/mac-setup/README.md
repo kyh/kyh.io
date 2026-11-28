@@ -17,12 +17,12 @@ https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 ## Applications
 
-- Editors: Zed (primary), Cursor
-- Dev Tools: Claude, Fork, Android Studio, Xcode
+- Editors: Zed
+- Dev Tools: Claude, Codex, Android Studio, Xcode
 - Browsers: Chrome
 - Design: Figma
-- Productivity: Raycast, CleanShot X, Screen Studio, Spokenly
-- Communication: Slack, Discord, Linear, Zoom, Typefully
+- Productivity: Raycast, CleanShot X, Screen Studio
+- Communication: Slack, Discord, Linear, Zoom
 - Entertainment: Spotify
 
 ## Shell Setup
