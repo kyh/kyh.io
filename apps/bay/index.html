@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>tiny bay · San Francisco</title>
+    <meta name="description" content="San Francisco as one painted isometric map." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <canvas id="map" aria-label="Painted map of San Francisco"></canvas>
+
+    <form id="search" class="search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <input
+        id="query"
+        type="search"
+        placeholder="Search a place"
+        autocomplete="off"
+        list="places"
+      />
+      <datalist id="places"></datalist>
+    </form>
+
+    <nav class="rail" aria-label="Map controls">
+      <button type="button" id="zoom-in" aria-label="Zoom in">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      </button>
+      <button type="button" id="zoom-out" aria-label="Zoom out">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+      </button>
+      <hr />
+      <button type="button" id="home" aria-label="Whole map">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="7" />
+          <circle cx="12" cy="12" r="2" />
+        </svg>
+      </button>
+      <button type="button" id="share" aria-label="Copy a link to this spot">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="6" cy="12" r="2.5" />
+          <circle cx="18" cy="6" r="2.5" />
+          <circle cx="18" cy="18" r="2.5" />
+          <path d="m8.2 10.8 7.6-3.6M8.2 13.2l7.6 3.6" />
+        </svg>
+      </button>
+    </nav>
+
+    <canvas id="minimap" class="minimap" aria-label="Whole map; click to go there"></canvas>
+
+    <p class="credit">
+      © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · DataSF · OpenFreeMap
+    </p>
+
+    <div id="empty" class="empty" hidden>
+      <h1>Nothing drawn yet</h1>
+      <p>
+        Render the tiles and cut them: <code>pnpm -F @repo/bay render</code>, then
+        <code>pyramid</code>. See the README.
+      </p>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

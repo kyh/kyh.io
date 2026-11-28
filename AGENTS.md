@@ -9,7 +9,7 @@ pnpm install && pnpm bootstrap --yes
 pnpm dev:kyh    # → http://localhost:3000
 ```
 
-That's the whole setup. There is no Docker and no shared database — ten of the thirteen apps run with `pnpm install` alone, and `pnpm bootstrap` sets up the env files and the one local database. Node >= 24, pnpm 12 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
+That's the whole setup. There is no Docker and no shared database — eleven of the fourteen apps run with `pnpm install` alone, and `pnpm bootstrap` sets up the env files and the one local database. Node >= 24, pnpm 12 (`packageManager` pins it); `pnpm dev:commuting-clawders-mod` and `pnpm dev:mod-dev` additionally need the `claude` CLI.
 
 Apps with an `.env.example` read a `.env`, loaded per-app by `dotenv-cli` (a missing file is not an error — the dev server still starts). Each example holds local-dev defaults, with secrets blank or a local-only dummy. `pnpm bootstrap` copies each missing one and pushes commuting-clawders' schema to its local `file:local.db`, and is safe to re-run. kyh gets its project images, commuting-clawders its database, autoplay renders a setup checklist until X + fal keys are filled in, and policingice still needs its production URL (see below).
 
@@ -35,7 +35,7 @@ Static gate — run before every commit:
 pnpm verify       # typecheck · lint · format · test
 ```
 
-`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/commuting-clawders` and its `mod` and `apps/mod-dev` — the only apps with tests (the mods' node tests are `test/*.test.mts`; see `CLAUDE.md` → Claude Code mods). The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
+`typecheck` runs `tsc --noEmit` per app via turbo, `format` is `oxfmt --check` (use `pnpm format:fix` to write), `test` is `tsx --test` in `apps/autoplay`, `apps/bay`, `apps/vis-ml`, `apps/policingice`, `apps/kyh`, `apps/commuting-clawders` and its `mod` and `apps/mod-dev` — the only apps with tests (the mods' node tests are `test/*.test.mts`; see `CLAUDE.md` → Claude Code mods). The two mods also have `validate` and a `test:mod` that runs their hooks against Claude Code itself (`claude plugin test`), local only. `apps/kyh`'s tests cover `src/lib/`: the markdown/`llms.txt`/404 bodies, the JSON-LD graph and `Accept` negotiation, all of which are pure functions on purpose so they can be asserted without a server.
 
 **Lint is a clean gate.** `oxlint.config.ts` extends the ultracite presets (`ultracite/oxlint/core`, `react`, `next`, `anti-slop`, `landmines`); every rule is an error and `lint` fails on the first one. It is type-aware (`options.typeAware`, run by the `oxlint-tsgolint` devDependency), so every file it reads sits in a tsconfig: a new script or config file goes in its workspace's `include`. No rule is turned off; the config only scopes `next` to the Next apps and lets `node:test`'s `describe`/`it` float. Sequential awaits are a recursive async step or `Promise.all`, never an `await` in a loop; a type assertion is a zod parse or a guard; external JSON is parsed with zod at the boundary. Fix the code rather than disabling a rule; when a rule is genuinely wrong for a line (a JSON-LD body React can only emit through `dangerouslySetInnerHTML`, a third-party player's sandbox), disable that line with a `-- reason` that says why no code fix exists.
 
@@ -61,21 +61,22 @@ Don't stop at typecheck — exercise the actual page and look at the result.
 
 ## Platform matrix
 
-| App                      | Dev command                       | Port                        | Agent-verifiable at runtime?                           |
-| ------------------------ | --------------------------------- | --------------------------- | ------------------------------------------------------ |
-| `kyh`                    | `pnpm dev:kyh`                    | 3000                        | **Yes** — headless, no config; has tests               |
-| `policingice`            | `pnpm dev:policingice`            | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)            |
-| `stonksville`            | `pnpm dev:stonksville`            | 3004                        | **Yes** — headless, no config                          |
-| `autoplay`               | `pnpm dev:autoplay`               | 3005                        | OFF AIR screen yes; live TV needs X + fal keys         |
-| `boobounty`              | `pnpm dev:boobounty`              | 3006                        | **Yes** — static, no config                            |
-| `kwadrants`              | `pnpm dev:kwadrants`              | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots               |
-| `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                |
-| `vis-ml`                 | `pnpm dev:vis-ml`                 | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                          |
-| `covid-19`               | `pnpm dev:covid`                  | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                |
-| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — after `pnpm bootstrap` (local file)          |
-| `cli`                    | `pnpm dev:cli`                    | —                           | No — Ink terminal UI, needs a real TTY                 |
-| `commuting-clawders/mod` | `pnpm dev:commuting-clawders-mod` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY  |
-| `mod-dev`                | `pnpm dev:mod-dev`                | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"` |
+| App                      | Dev command                       | Port                        | Agent-verifiable at runtime?                               |
+| ------------------------ | --------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| `kyh`                    | `pnpm dev:kyh`                    | 3000                        | **Yes** — headless, no config; has tests                   |
+| `policingice`            | `pnpm dev:policingice`            | 3000 (conflicts with `kyh`) | Public pages yes, `/admin/*` no (see above)                |
+| `stonksville`            | `pnpm dev:stonksville`            | 3004                        | **Yes** — headless, no config                              |
+| `autoplay`               | `pnpm dev:autoplay`               | 3005                        | OFF AIR screen yes; live TV needs X + fal keys             |
+| `boobounty`              | `pnpm dev:boobounty`              | 3006                        | **Yes** — static, no config                                |
+| `bay`                    | `pnpm dev:bay`                    | 3017                        | Yes: `render` + `pyramid` are keyless; `paint` needs a key |
+| `kwadrants`              | `pnpm dev:kwadrants`              | 5173 (Vite, auto-increment) | **Yes** — canvas app, prefer screenshots                   |
+| `tc`                     | `pnpm dev:tc`                     | 5173 (Vite, auto-increment) | **Yes**                                                    |
+| `vis-ml`                 | `pnpm dev:vis-ml`                 | 5173 (Vite, auto-increment) | **Yes** — also has unit tests                              |
+| `covid-19`               | `pnpm dev:covid`                  | 5173 (Vite, auto-increment) | **Yes** — plain JS, no `typecheck` task                    |
+| `commuting-clawders`     | `pnpm dev:commuting-clawders`     | 3016                        | **Yes** — after `pnpm bootstrap` (local file)              |
+| `cli`                    | `pnpm dev:cli`                    | —                           | No — Ink terminal UI, needs a real TTY                     |
+| `commuting-clawders/mod` | `pnpm dev:commuting-clawders-mod` | — (loads into `claude`)     | Hooks yes, headless: `test:mod`; the pane needs a TTY      |
+| `mod-dev`                | `pnpm dev:mod-dev`                | — (loads into `claude`)     | **Yes** — headless: `claude -p --resume <id> "/score"`     |
 
 The Vite apps all default to 5173 and auto-increment when it's taken; read the dev log for the port actually chosen rather than assuming.
 
@@ -91,7 +92,7 @@ The Vite apps all default to 5173 and auto-increment when it's taken; read the d
 
 ## Map
 
-- `apps/{kyh,policingice,stonksville,autoplay,commuting-clawders,boobounty}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19}` — Vite SPAs · `apps/cli` — Ink CLI (Node) · `apps/{commuting-clawders/mod,mod-dev}` — Claude Code mods (function hooks plugins)
+- `apps/{kyh,policingice,stonksville,autoplay,commuting-clawders,boobounty}` — Next.js 16 · `apps/{kwadrants,tc,vis-ml,covid-19,bay}` — Vite SPAs · `apps/cli` — Ink CLI (Node) · `apps/{commuting-clawders/mod,mod-dev}` — Claude Code mods (function hooks plugins)
 - `packages/{typescript,skills}` — published npm artifacts (`@kyh/tsconfig`, `@kyh/skills`), not internal libraries
 - `packages/skills/skills/` — the in-repo agent skill store; `packages/skills/src/install.ts` (built to `dist/` on pack, run by `kyh-skills install`) copies it (and `external-skills.json`) into `~/.agents` / `~/.claude`
 - `docs/mac-setup/` — machine setup notes (not a workspace)
